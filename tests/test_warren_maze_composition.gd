@@ -2215,11 +2215,33 @@ func test_partial_plates_are_tiled() -> void:
 			"maze_partial_plate_refused_count", -1))
 		var to_setback := int(fabric.audit.get(
 			"plot_flat_roof_partial_plate_count", -1))
-		print(("MAZE_TILED %s crowns=%d partial=%d tiled=%d tiles=%d " \
-			+ "refused=%d to_setback=%d modules=%s") % [_label(outcome),
-			faces_by_room.size(), partial_crowns, tiled, tiles, refused,
-			to_setback, fabric.audit.get(
-				"maze_partial_plate_tile_recipe_counts", {})])
+		# FIX ROUND 1, MINOR 1. Task E3b's gate 1 gave the tiling branch a
+		# second entry condition -- a COMPLETE plate a street stands on -- so
+		# `tiled` is no longer the count of partial plates and the identity
+		# below no longer closes without this term. It read as an equality only
+		# because no town in THIS corpus has a street-borne crown; `7/standard`,
+		# which does, is measured by the gate-1 test and not here. Taking the
+		# term from the audit rather than re-deriving it is deliberate: the
+		# derivation that matters (derived == published) is that test's job, and
+		# duplicating it here would only restate it.
+		var street_borne_full := int(fabric.audit.get(
+			"maze_street_borne_full_plate_count", -1))
+		# FIX ROUND 1, IMPORTANT 3. The sliver-repair branch that Task E3b
+		# shipped has no corpus town that reaches it, so these three are
+		# published zeroes here and the RULE is covered directly by
+		# `test_a_one_cell_maze_sliver_is_repaired_only_where_the_lid
+		# _continues`. What this test owes them is the same thing it owes the
+		# tiling counters: proof they are PUBLISHED, so a branch that stops
+		# emitting them is red rather than silently absent.
+		var lid_caps := int(fabric.audit.get("maze_lid_repair_cap_count", -1))
+		var lid_cells := int(fabric.audit.get("maze_lid_repair_cell_count", -1))
+		var lid_cross := int(fabric.audit.get("maze_cross_lineage_repairs", -1))
+		print(("MAZE_TILED %s crowns=%d partial=%d street_borne_full=%d " \
+			+ "tiled=%d tiles=%d refused=%d to_setback=%d lid_caps=%d " \
+			+ "lid_cells=%d lid_cross=%d modules=%s") % [_label(outcome),
+			faces_by_room.size(), partial_crowns, street_borne_full,
+			tiled, tiles, refused, to_setback, lid_caps, lid_cells, lid_cross,
+			fabric.audit.get("maze_partial_plate_tile_recipe_counts", {})])
 		assert_gte(tiled, 0,
 			"%s must publish maze_partial_plate_tiled_count" % _label(outcome))
 		assert_gte(tiles, 0,
@@ -2239,9 +2261,22 @@ func test_partial_plates_are_tiled() -> void:
 		assert_eq(to_setback, 0,
 			("%s sent %d partial flat plates to the finite setback " \
 				+ "vocabulary") % [_label(outcome), to_setback])
-		assert_eq(tiled + refused, partial_crowns,
-			("%s has %d partial flat plates but tiled %d and refused %d") % [
-				_label(outcome), partial_crowns, tiled, refused])
+		assert_gte(street_borne_full, 0,
+			"%s must publish maze_street_borne_full_plate_count" \
+				% _label(outcome))
+		assert_gte(lid_caps, 0,
+			"%s must publish maze_lid_repair_cap_count" % _label(outcome))
+		assert_gte(lid_cells, 0,
+			"%s must publish maze_lid_repair_cell_count" % _label(outcome))
+		assert_gte(lid_cross, 0,
+			"%s must publish maze_cross_lineage_repairs" % _label(outcome))
+		assert_lte(lid_cross, lid_caps,
+			("%s reports %d cross-lineage repairs out of %d repaired caps") % [
+				_label(outcome), lid_cross, lid_caps])
+		assert_eq(tiled + refused, partial_crowns + street_borne_full,
+			("%s has %d partial flat plates and %d full street-borne ones " \
+				+ "but tiled %d and refused %d") % [_label(outcome),
+				partial_crowns, street_borne_full, tiled, refused])
 		total_tiled += tiled
 		total_tiles += tiles
 		measured += 1
@@ -2261,6 +2296,16 @@ func test_partial_plates_are_tiled() -> void:
 ## sliver`), and it is measured here rather than assumed: the test re-derives
 ## which crowns carry public air from the sealed grid and requires the
 ## compiler's own count to agree.
+##
+## FIX ROUND 1, MINOR 7 -- THIS SOLVE IS DELIBERATELY UNCAPPED.
+## `PLANNER_SOLVE_MS_CEILING` is keyed by "seed/scale" and holds the FOUR
+## planner towns `_corpus()` walks; `7/standard` is not one of them, so
+## `test_planner_towns_solve_inside_their_ceilings` never reaches this solve and
+## nothing bounds its wall clock. That is a choice, not an omission: a ceiling
+## is worth its brittleness for the towns every run measures repeatedly, where a
+## regression shows up as a trend, and not for a single supporting solve whose
+## only job is to exercise one audit count. If this test ever starts dominating
+## the suite's wall clock, the fix is a row here rather than a silent tolerance.
 const STREET_BORNE_SEED := 7
 const STREET_BORNE_SCALE := &"standard"
 
@@ -2292,10 +2337,25 @@ func test_a_street_borne_crown_stays_in_the_flat_vocabulary() -> void:
 	# The derivation, from the plan rather than from the compiler: a flat crown
 	# is street-borne when any of its exposed roof faces has PUBLIC_AIR one band
 	# above -- the exact predicate `_touches_public_air` states.
+	#
+	# FIX ROUND 1, MINOR 2. Over the crowns that really reach that predicate,
+	# which is not all of them: a crown the plot model prefers pitched on and
+	# which WINS its pitched shell leaves the roof loop before the street-borne
+	# question is asked, so the compiler never counts it. Excluding the composed
+	# pitched crowns here is what makes `derived == published` hold BY
+	# CONSTRUCTION rather than because this seed happens to have no crown that
+	# is both pitched and street-borne. The list is the compiler's own, the same
+	# one the terrace-railing test reads for the same reason.
+	var pitched_rooms: Dictionary = {}
+	for room_id_value: Variant in fabric.audit.get("maze_pitched_roof_rooms",
+			[]) as Array:
+		pitched_rooms[StringName(room_id_value)] = true
 	var faces_by_room := _flat_crown_faces(plan)
 	var derived_street_borne := 0
 	var street_borne_rooms := PackedStringArray()
 	for room_id_value: Variant in faces_by_room.keys():
+		if pitched_rooms.has(StringName(room_id_value)):
+			continue
 		var carries_street := false
 		for face: Vector3i in faces_by_room[room_id_value] as Array[Vector3i]:
 			if plan.grid.use_at(face + Vector3i.UP) \
@@ -2334,40 +2394,54 @@ func test_a_one_cell_maze_sliver_is_repaired_only_where_the_lid_continues() \
 	## is a seam inside a horizontal plank surface, and on a maze crown that
 	## surface is the vernacular.
 	##
-	## Six cases, and the two that must stay refused are the point: a strip with
-	## no continuing neighbour at all, and one whose neighbour is a crown the
-	## plot model did NOT declare flat -- admitting that would read a pitched
-	## house's weather shoulder as a plank lid, which is the modular-lid defect
-	## the shed rule exists to prevent.
+	## SEVEN cases, and the three that must stay refused are the point: a strip
+	## with no continuing neighbour at all, one whose neighbour is a crown the
+	## plot model did NOT declare flat, and -- added by fix round 1, IMPORTANT 1
+	## -- one whose neighbour is flat but PREFERS PITCHED. Admitting either of
+	## the last two would read a pitched house's weather shoulder as a plank
+	## lid, which is the modular-lid defect the shed rule exists to prevent; the
+	## pitched-preferring case is the one the shipped rule got wrong, because a
+	## crown that prefers pitched is in `plot_flat_room_ids` like any other.
 	var strip: Array[Vector3i] = [Vector3i(0, 3, 7)]
 	var flat_crowns := {StringName("room.a"): true, StringName("room.b"): true}
+	var no_pitched: Dictionary = {}
 	var same_room := WarrenSpatialFabricCompiler._maze_lid_repair_neighbors(
 		strip, &"room.a", {Vector3i(1, 3, 7): StringName("room.a")},
-		flat_crowns)
+		flat_crowns, no_pitched)
 	assert_false(same_room.is_empty(),
 		"a strip whose own crown continues beside it is repaired")
 	assert_false(bool(same_room.get("cross_lineage", true)),
 		"and that is not a cross-lineage repair")
 	var across := WarrenSpatialFabricCompiler._maze_lid_repair_neighbors(strip,
-		&"room.a", {Vector3i(1, 3, 7): StringName("room.b")}, flat_crowns)
+		&"room.a", {Vector3i(1, 3, 7): StringName("room.b")}, flat_crowns,
+		no_pitched)
 	assert_false(across.is_empty(),
 		"a strip whose NEIGHBOUR lineage continues the lid is repaired too")
 	assert_true(bool(across.get("cross_lineage", false)),
 		"and that one is the cross-lineage repair this task exists for")
 	assert_true(WarrenSpatialFabricCompiler._maze_lid_repair_neighbors(strip,
-			&"room.a", {}, flat_crowns).is_empty(),
+			&"room.a", {}, flat_crowns, no_pitched).is_empty(),
 		"a strip with nothing beside it is the exposed shoulder, still refused")
 	assert_true(WarrenSpatialFabricCompiler._maze_lid_repair_neighbors(strip,
 			&"room.a", {Vector3i(1, 3, 7): StringName("room.c")},
-			flat_crowns).is_empty(),
+			flat_crowns, no_pitched).is_empty(),
 		"a neighbour the plot model never called flat carries no argument")
+	# The case fix round 1 adds. `room.b` is flat-stamped exactly as above and
+	# the ONLY difference is that the plot model asks a pitched shell of it, so
+	# this call is the same repair the second case accepts -- it must now be
+	# refused, and nothing else may change with it.
+	assert_true(WarrenSpatialFabricCompiler._maze_lid_repair_neighbors(strip,
+			&"room.a", {Vector3i(1, 3, 7): StringName("room.b")},
+			flat_crowns, {StringName("room.b"): true}).is_empty(),
+		"a neighbour that PREFERS PITCHED may be about to grow the very " \
+			+ "weather shoulder this repair assumes is a plank lid")
 	assert_true(WarrenSpatialFabricCompiler._maze_lid_repair_neighbors(strip,
 			&"room.a", {Vector3i(0, 4, 7): StringName("room.b")},
-			flat_crowns).is_empty(),
+			flat_crowns, no_pitched).is_empty(),
 		"a crown one band ABOVE is not this lid continuing")
 	assert_true(WarrenSpatialFabricCompiler._maze_lid_repair_neighbors(strip,
 			&"room.a", {Vector3i(1, 3, 7): StringName("room.b")},
-			{}).is_empty(),
+			{}, no_pitched).is_empty(),
 		"and a plan with no plot-flat crowns at all -- every legacy town " \
 			+ "-- is never repaired here")
 

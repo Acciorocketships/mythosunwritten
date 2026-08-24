@@ -11663,10 +11663,17 @@ static func _residual_bridge_span(cells: Array[Vector3i],
 			_residual_bridge_counts.get("one_side_bound", 0)) + 1
 	# Two exact socket bonds on distinct flanking rooms carry the room.
 	# Opposing walls are the classic street bridge; perpendicular walls are
-	# the corner-bridge form over a street bend. A single bound wall is never an
-	# inhabited residual room: even with brackets it reads as a complete 3 m room
-	# pasted onto the parent facade, which is the forbidden one-cell box rather
-	# than a shallow outcropping.
+	# the corner-bridge form over a street bend.
+	#
+	# A single bound wall WITHOUT a bracket course is never an inhabited
+	# residual room: it reads as a complete 3 m room pasted onto the parent
+	# facade, which is the forbidden one-cell box rather than a shallow
+	# outcropping. WITH one it is legal, and that is the branch below -- Task
+	# E3b's bracketed jetty, admitted only when `jetty_brackets` is asked for
+	# and a real course can be selected under the bearing edge. (Fix round 1,
+	# IMPORTANT 4: this sentence used to read "even with brackets" and argued
+	# against the branch thirty lines below it. The brackets are exactly what
+	# changes the verdict; the box is the UNbracketed form.)
 	var bound_directions: Array = bindings_by_direction.keys()
 	bound_directions.sort_custom(func(a: Variant, b: Variant) -> bool:
 		var left := a as Vector3i
@@ -11702,9 +11709,8 @@ static func _residual_bridge_span(cells: Array[Vector3i],
 	# (two), `_residual_room_candidate` carries it, and this function's
 	# `support_records` are what `WarrenSpatialFeatureSolver
 	# ._reserve_residual_jetty_supports` reserves as the measured bracket
-	# course. All three were dead: the search above returns only on a
-	# TWO-flank pair, so no span was ever a jetty and no bracket was ever
-	# reserved.
+	# course. All three were dead: the search above returns only on a TWO-flank
+	# pair, so no span was ever a jetty and no bracket was ever reserved.
 	#
 	# The form the three consumers describe, stated as the admission rule:
 	# ONE exact flank socket bond, plus a measured bracket course under the
@@ -11791,6 +11797,29 @@ static func _bridge_jetty_support_records(cells: Array[Vector3i],
 			"origin": Vector3i(edge[index].x, floor_band, edge[index].y),
 			"yaw_quarters": yaw,
 			"role": StringName("bridge_jetty_support.%02d" % (index / 2))})
+	# FIX ROUND 1, IMPORTANT 2 -- ONE COURSE, OR NO JETTY.
+	#
+	# `frontier_gateway_support` is a ONE-RECORD feature by contract, on both
+	# ends: `WarrenSpatialFeatureSolver._reserve_frontier_gateway_supports`
+	# refuses a geometry that needs more than one course, and
+	# `WarrenSpatialFabricCompiler._compile_frontier_gateway_supports` refuses
+	# any such feature outright ("lacks its anchored room or bracket"). A
+	# bearing edge of three or more columns tiles into two or more records, so
+	# emitting one here would stamp a room whose bracket course the compiler is
+	# certain to reject -- a town lost at the last stage to a fact provable at
+	# this one.
+	#
+	# Refusing it HERE is the graceful path: an empty course makes
+	# `_residual_bridge_span` return `{}`, which `_stamp_maze_bridges` already
+	# handles by RELEASING the span, exactly as it does for a span whose proved
+	# flanks do not bind. The cost is that a jetty may only span a bearing edge
+	# of one or two columns; the alternative is not a wider jetty but a dead
+	# town. Measured inert on the 24-town corpus -- the one composed jetty
+	# (`12/standard`) has a two-column edge and one record.
+	if out.size() != 1:
+		_residual_bridge_counts["jetty_course_not_single"] = int(
+			_residual_bridge_counts.get("jetty_course_not_single", 0)) + 1
+		return [] as Array[Dictionary]
 	return out
 
 

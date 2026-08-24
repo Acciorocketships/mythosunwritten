@@ -616,6 +616,40 @@ static func _reserve_residual_jetty_supports(grid: WarrenSpatialGrid,
 	## the measured bracket courses selected with the topology, and this adapter
 	## reserves those attachments before balconies or facade relief can spend the
 	## same envelope.
+	##
+	## FIX ROUND 1, IMPORTANT 2 -- THIS IS A TOWN-FAILING PATH, AND IT IS NEW.
+	##
+	## Until Task E3b nothing ever set `bridge_support_records`, so this loop
+	## never ran and the function could not refuse anything. It runs now, and a
+	## bracket conflict below returns empty with `last_failure` set, which
+	## `solve` turns into a rejected town. Task E3b's report claimed "no new
+	## rejection path"; that claim was wrong about this function and is
+	## corrected in its fix report.
+	##
+	## THE FAILURE IS KEPT BECAUSE A GRACEFUL RELEASE IS NOT AVAILABLE HERE,
+	## and the reason is that the decision was already taken two stages up. By
+	## the time this runs the jetty room is STAMPED and its bearing contract is
+	## committed: `WarrenSpatialFabricCompiler._room_recipe_id` reads
+	## `bridge_is_bracketed_jetty` off the room audit and returns a
+	## `room.jetty.*` shell whose `bearing_parent_count` is 1. Skipping the
+	## reservation would leave that shell standing on one flank with no course
+	## beneath it -- precisely the "box pasted on a facade" the volumetric
+	## solver's own comment forbids -- and clearing the flag instead would send
+	## the compiler to `room.bridge.*`, which demands two bearing parents this
+	## span does not have. Neither is a release; both are a worse town.
+	##
+	## The releasable half of this risk is handled where it IS releasable:
+	## `WarrenVolumetricSolver._bridge_jetty_support_records` now refuses a
+	## course of more than one record at STAMP time, because
+	## `frontier_gateway_support` is a one-record feature by contract and such
+	## a span would otherwise reach the compiler and fail there. What is left
+	## is a genuine conflict with a feature reserved BEFORE this pass (markets,
+	## courtyards, skywalks, gateways, landmarks), which cannot be foreseen at
+	## stamp time. The three sibling adapters that also reserve construction
+	## under an already-stamped room -- frontier gateway, arcade overhang and
+	## room overhang -- all fail the town on the same conflict for the same
+	## reason, so this is the house idiom rather than a new one; what is new is
+	## that a maze town can now reach it.
 	var out: Array[WarrenFeatureReservation] = []
 	if program == null:
 		last_failure = "residual jetties lack a construction program"
@@ -2433,9 +2467,8 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 	# TASK E3b. The measured envelopes of the balconies ACCEPTED IN THIS PASS.
 	# Each candidate was proved against `existing_features` and against the
 	# grid, and both are re-checked below -- but the grid is a lattice raster
-	# and
-	# the compiler's own gate is a measured AABB, which is strictly finer. Two
-	# balconies on different buildings at different bands therefore passed the
+	# and the compiler's own gate is a measured AABB, which is strictly
+	# finer. Two balconies on different buildings at different bands passed the
 	# raster and then collided in measured space, and `compile_feature_units`
 	# threw the town away for it (measured: `10/standard` under the +1-storey
 	# widening, `balcony.walkout.deep.right.orange.planted at (-9, 4, -3)`
@@ -3109,8 +3142,7 @@ static func _feature_bounds_overlap_unrelated_room(recipe: FabricRecipe,
 		strict_room_lineage: bool = false) -> bool:
 	## TASK E3b. `strict_room_lineage` narrows the SOURCE-LINEAGE exemption to
 	## the feature's own parent room, and it exists because the two sides of
-	## this
-	## fact disagreed. Here a balcony treated its whole `source_parcel_id` as a
+	## this fact disagreed. A balcony treated its whole `source_parcel_id` as a
 	## named seam; `WarrenSpatialFabricCompiler._feature_is_related_to_room`,
 	## which decides the same question when the ROOMS compile, relates a balcony
 	## to `balcony_room_id` and to nothing else. In a SEARCHED building the two

@@ -933,7 +933,8 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	rooms.sort_custom(func(a: WarrenRoomStamp, b: WarrenRoomStamp) -> bool:
 		# A street-bridge room may meet a half-storey-staggered flank whose
 		# base sits one band above its own; ordering bridges one band late
-		# guarantees both flank units exist before their bridge binds.
+		# guarantees every flank unit it names exists before it binds --
+		# two for the `room.bridge.*` arch, one for the bracketed jetty.
 		var a_y := a.lattice_origin.y + int(not (a.audit.get(
 			"bridge_support_room_ids", []) as Array).is_empty())
 		var b_y := b.lattice_origin.y + int(not (b.audit.get(
@@ -1042,10 +1043,13 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		bridge_support_room_ids.assign(room.audit.get(
 			"bridge_support_room_ids", []) as Array)
 		if not bridge_support_room_ids.is_empty():
-			# A street-bridge room bears on the two flanking rooms it spans
-			# between. Both bonds go through the exact strict socket adjacency;
-			# a bridge that cannot meet both flanks is a compile failure, never
-			# a silently floating room.
+			# A street-bridge room bears on the flanking rooms it spans
+			# between: TWO for the `room.bridge.*` arch, and exactly ONE for
+			# Task E3b's `room.jetty.*`, whose second bearing is the separately
+			# reserved bracket course rather than a wall. Every bond named here
+			# goes through the exact strict socket adjacency, whichever form it
+			# is; a bridge that cannot meet a flank it names is a compile
+			# failure, never a silently floating room.
 			for flank_room_id: StringName in bridge_support_room_ids:
 				var flank_room := room_by_id.get(flank_room_id) \
 					as WarrenRoomStamp
@@ -2873,6 +2877,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	# that reason, and removed rather than shipped dead; the sliver repair
 	# below is the half that is real.
 	var maze_street_borne_plate_count := 0
+	var maze_street_borne_full_plate_count := 0
 	var maze_cross_lineage_repairs := 0
 	var maze_lid_repair_cap_count := 0
 	var maze_lid_repair_cell_count := 0
@@ -3109,6 +3114,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		var street_borne := plot_flat \
 			and _touches_public_air(source.grid, face_cells)
 		maze_street_borne_plate_count += int(street_borne)
+		maze_street_borne_full_plate_count += int(street_borne and full)
 		if plot_flat and full and not street_borne:
 			# The plot's own slab, at the same lattice datum every full roof
 			# unit uses and exactly one band tall (the authored `roof.flat.*`
@@ -3354,14 +3360,29 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				# LINEAGE-AGNOSTIC half of this task: the continuing crown may
 				# belong to another lineage, provided every room involved --
 				# this one and each continuing neighbour -- is a maze flat
-				# stamp. The repaired cap is deliberately NOT counted in
+				# stamp that is not merely PREFERRING pitched (fix round 1,
+				# IMPORTANT 1). The repaired cap is deliberately NOT counted in
 				# `plain_cap_count`, for the same reason the tiling branch is
 				# not: the forbidden-plain-cap gate is about exposed shoulders,
 				# and this strip is proved not to be one.
+				#
+				# COVERAGE GAP, STATED (fix round 1, IMPORTANT 3). No corpus
+				# town reaches this branch: a plot-flat crown only arrives at
+				# the setback vocabulary when its tiling was refused by the
+				# whole-set probe, and `maze_partial_plate_refused_count` is 0
+				# on all 24 towns, so the three keys below are published as
+				# zeroes everywhere. The rule is covered DIRECTLY instead, by
+				# `test_a_one_cell_maze_sliver_is_repaired_only_where_the_lid
+				# _continues`, which drives this helper over six fixtures
+				# including the two that must stay refused; the corpus test
+				# asserts only that the keys are PUBLISHED. If a future change
+				# makes a crown refuse its tiling, this branch runs for the
+				# first time with only that fixture behind it.
 				var lid_repair: Dictionary = {}
 				if shed.is_empty() and plot_flat:
 					lid_repair = _maze_lid_repair_neighbors(row,
-						room_id, roof_room_id_by_face, plot_flat_room_ids)
+						room_id, roof_room_id_by_face, plot_flat_room_ids,
+						plot_pitched_room_ids)
 				if shed.is_empty() and not lid_repair.is_empty():
 					lid_repaired = true
 					maze_lid_repair_cap_count += 1
@@ -3745,6 +3766,19 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		# `_tiled + _refused` is every partial flat plate, and
 		# `plot_flat_roof_partial_plate_count` counts only the refused ones,
 		# because a tiled crown never reaches the setback vocabulary at all.
+		# FIX ROUND 1, MINOR 1 -- THESE THREE COUNT THE TILING BRANCH, NOT
+		# "PARTIAL PLATES". C5e named them when the branch had exactly one
+		# entry condition (a plate another storey stands on). Task E3b's gate 1
+		# gave it a second (a plate a STREET stands on), which admits crowns
+		# whose plate is COMPLETE, and the names were left behind: a full
+		# street-borne crown has been counted as a tiled "partial plate" ever
+		# since. The keys are kept -- they are pinned in the composition suite
+		# and renaming them would strand the pin -- and the meaning is stated
+		# here instead: crowns the tiling branch TILED, tiles it placed, and
+		# crowns it refused, over BOTH entry conditions.
+		# `maze_street_borne_full_plate_count` below is the term that makes
+		# `tiled + refused` add up against an independently derived count of
+		# partial crowns, which is how `test_partial_plates_are_tiled` reads it.
 		"maze_partial_plate_tiled_count": maze_tiled_plate_count,
 		"maze_partial_plate_tile_count": maze_plate_tile_count,
 		"maze_partial_plate_refused_count": maze_plate_refused_count,
@@ -3759,6 +3793,14 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		# `maze_cross_lineage_repairs` the subset whose continuing crown belongs
 		# to ANOTHER lineage -- the sliver repair proper.
 		"maze_street_borne_plate_count": maze_street_borne_plate_count,
+		# FIX ROUND 1, MINOR 1. The FULL subset of the above -- crowns whose
+		# plate is complete and which reach the tiling only because a street
+		# stands on it. They are the reason `maze_partial_plate_tiled_count` is
+		# not the count of PARTIAL plates any more (see its note), and the term
+		# that makes the tiling identity add up:
+		#   tiled + refused == partial crowns + street-borne FULL crowns.
+		"maze_street_borne_full_plate_count":
+			maze_street_borne_full_plate_count,
 		"maze_lid_repair_cap_count": maze_lid_repair_cap_count,
 		"maze_lid_repair_cell_count": maze_lid_repair_cell_count,
 		"maze_cross_lineage_repairs": maze_cross_lineage_repairs,
@@ -3885,7 +3927,8 @@ static func _cap_unit(room_id: StringName, row_index: int,
 
 static func _maze_lid_repair_neighbors(row: Array[Vector3i],
 		room_id: StringName, roof_room_id_by_face: Dictionary,
-		plot_flat_room_ids: Dictionary) -> Dictionary:
+		plot_flat_room_ids: Dictionary,
+		plot_pitched_room_ids: Dictionary) -> Dictionary:
 	## TASK E3b RULING 1, GATE 2. Does the flat lid CONTINUE across this
 	## setback strip's long edges? Returns `{}` when it does not -- the strip is
 	## then the exposed shoulder the shed rule exists for -- and otherwise
@@ -3895,12 +3938,24 @@ static func _maze_lid_repair_neighbors(row: Array[Vector3i],
 	## The proof, cell by cell: every cell of the strip must have at least one
 	## horizontal neighbour AT ITS OWN BAND that is another room's or this
 	## room's exposed ROOF FACE, and every such neighbour's room must be a maze
-	## flat crown (`plot_flat_room_ids`). Both halves matter. Without the first,
-	## a strip hanging off the end of a crown would be repaired; without the
-	## second, a pitched neighbour's weather shoulder would be read as a
-	## continuing plank lid, which is exactly the modular-lid defect the shed
-	## rule forbids. `plot_flat_room_ids` is EMPTY on every route-first and
+	## flat crown that is really going to be FLAT. Both halves matter. Without
+	## the first, a strip hanging off the end of a crown would be repaired;
+	## without the second, a pitched neighbour's weather shoulder would be read
+	## as a continuing plank lid, which is exactly the modular-lid defect the
+	## shed rule forbids. `plot_flat_room_ids` is EMPTY on every route-first and
 	## mass-first plan, so no legacy strip can be repaired here.
+	##
+	## FIX ROUND 1, IMPORTANT 1. `plot_flat_room_ids` alone is NOT the second
+	## half. It holds every flat-roofed stamp INCLUDING the pitched-preferring
+	## subset -- crowns the plot model marked flat in every structural respect
+	## but asks a pitched shell of first (`plot_pitched_room_ids`, the
+	## `pitched_preferred` branch above). A strip repaired against one of those
+	## is repaired against the very case the shed rule excludes, since that
+	## neighbour may be about to grow the weather shoulder this argument
+	## assumes is a plank lid. Whether it WINS that shell is decided later and
+	## in an order this scan cannot see, so the pitched-preferring set is
+	## refused outright rather than raced: a crown that merely prefers pitched
+	## is not a lid anyone may lean a repair on.
 	if row.is_empty() or plot_flat_room_ids.is_empty():
 		return {}
 	var strip: Dictionary = {}
@@ -3918,10 +3973,12 @@ static func _maze_lid_repair_neighbors(row: Array[Vector3i],
 				&""))
 			if neighbor_room.is_empty():
 				continue
-			if not plot_flat_room_ids.has(neighbor_room):
+			if not plot_flat_room_ids.has(neighbor_room) \
+					or plot_pitched_room_ids.has(neighbor_room):
 				# A neighbouring crown that is not a maze flat stamp cannot
 				# carry the argument, and admitting it here would be the
-				# lineage-agnostic rule reaching past the maze.
+				# lineage-agnostic rule reaching past the maze. One that only
+				# PREFERS pitched cannot carry it either: see the header.
 				return {}
 			continued = true
 			cross_lineage = cross_lineage or neighbor_room != room_id

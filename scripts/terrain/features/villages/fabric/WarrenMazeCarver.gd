@@ -1581,11 +1581,13 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 			# THE SEED-TIME MIRROR of the compiler's `bridge room ... has no
 			# built flank` gate. A bridge room is not carried by the street it
 			# spans: `WarrenVolumetricSolver._residual_bridge_span` binds it to
-			# two flanking ROOMS through their measured bearing sockets, and a
-			# socket only exists where a room really stands at the bridge's own
-			# band. Until Task E3 the carver proved only the passage wall --
-			# solid from the walk floor to its roof -- and a span whose flanks
-			# were bare rock two bands higher was seeded anyway. The plot
+			# flanking ROOMS through their measured bearing sockets -- two for
+			# the `room.bridge.*` arch, ONE for Task E3b's bracketed jetty --
+			# and a socket only exists where a room really stands at the
+			# bridge's own band. Until Task E3 the carver proved only the
+			# passage wall -- solid from the walk floor to its roof -- and a
+			# span whose flanks were bare rock two bands higher was seeded
+			# anyway. The plot
 			# planner then authored a bridge plot on it, composition stamped
 			# the room against whatever happened to be adjacent, and the fabric
 			# compiler killed the whole town a stage later when that flank

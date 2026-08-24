@@ -64,9 +64,8 @@ const BUILDING_CAP: Dictionary = {
 ## reading too, where eight of twelve stood 2), and the corpus at FIVE heights
 ## -- of 741 houses, 4 x 253, 5 x 66, 6 x 193, 8 x 146, 10 x 83. Every STANDARD
 ## town stands all five. The three narrower rows above exist only to dodge the
-## cost
-## the first one used to carry; that cost is gone, so they are superseded by
-## this table rather than re-measured. The sweep's wall clock rises with the
+## cost the first one used to carry; that cost is gone, so they are superseded
+## by this table rather than re-measured. The sweep's wall clock rises with the
 ## storeys, which is the price of them.
 const STOREY_BUDGET: Dictionary = {
 	&"compact": Vector2i(1, 3), &"standard": Vector2i(1, 4),
@@ -714,6 +713,24 @@ static func owned_columns(plan: WarrenMazeSourcePlan) -> Dictionary:
 ## costs one (`10/standard`, roofless house). The recoverable slots are real
 ## and the lever is here; what refuses them is the same room/roof vocabulary
 ## that refuses a taller house (see STOREY_BUDGET).
+##
+## TASK E3b DECLINED THIS, AND IT IS A DECLINE RATHER THAN AN OVERSIGHT.
+## E3b was funded to fix the two vocabulary gates and then re-apply E3's
+## measured attempts one at a time; it shipped the storey widening and stopped
+## the outcropping one, and it did NOT attempt this. Three reasons, in order:
+## the lever is a four-part change (narrowing this function, seeding reserved
+## floors into `claims`, a `_join` clause and `_reserved_gap_refusal`), neither
+## of E3b's exit targets depends on it, and the gates E3b actually fixed are
+## not the gates it died at -- of the five towns above, only `3/compact`'s
+## balcony envelope is in a family E3b touched (the lineage narrowing and the
+## accepted-balcony envelope, both maze-only).
+##
+## SO THE NUMBERS ABOVE ARE STALE IN ONE DIRECTION: they were measured before
+## those two balcony fixes and before every house grew a storey, and both move
+## this experiment. Whoever picks it up should RE-MEASURE from HEAD rather than
+## trust the five-town cost, and should expect the storey widening to have made
+## it harder (more rooms per plot, more chances at the room gate) and the
+## balcony fixes to have made it easier.
 static func blocked_columns(plan: WarrenMazeSourcePlan) -> Dictionary:
 	var out := owned_columns(plan)
 	for span_value: Variant in plan.excavation.bridge_spans:
