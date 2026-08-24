@@ -625,18 +625,29 @@ const BUILDABLE_COVERAGE_FLOOR := 0.91
 ## own metric moved the same way and stayed inside its floor (0.976 -> 0.926
 ## against 0.91).
 ##
-## The cause is measured, and it is momentum rather than the descent. A
-## straighter street is a LONGER STRAIGHT street, and `WarrenMazeCarver
-## ._alley_stride_is_legal` keeps every alley cell more than one block
-## thickness (2-4 cells, widest at the crown) from any other public cell on its
-## own datum. A spine that holds its line for six cells therefore shadows one
-## contiguous slab of the town's thickest mass, where a wandering spine of the
-## same length shadowed a scattered one, and fewer alleys can grow inside what
-## is left: measured on 43/large, 14 lanes/65 cells before and 11/52 after.
-## Running momentum WITHOUT the post-summit descent is worse on this metric and
-## on ownership both -- 0.840 slots, 0.886 buildable coverage (which fails its
-## floor), and 4/compact ownership at 0.6007 -- so the descent MITIGATES this
-## cost rather than causing it.
+## TASK E3 FALSIFIED E2'S ATTRIBUTION OF THE FILL RATE, and the correction is
+## worth more than the pin. E2 said this number fell because a straighter spine
+## shadows a contiguous slab under `WarrenMazeCarver._alley_stride_is_legal`'s
+## block-thickness separation. That explains the DENOMINATOR -- how many alleys
+## grow, and E2's own 209/233 -> 205/244 shows eleven more slots demanded --
+## and it explains nothing about the fill.
+##
+## E3 attributed all 214 unfilled slots on the 24-town corpus individually, by
+## joining each miss to the planner's own seed refusal, and NOT ONE of them is
+## the alley shadow:
+##
+##   * 101 -- the column carries an ASSET plot whose band interval does not
+##     cover the street's band, so that street is walled by the retained rock
+##     under a prefab rather than by a house;
+##   * 83 -- the column already carries a HOUSE less than MIN_HOUSE_BANDS away
+##     whose own interval does not reach this band;
+##   * 25 -- the column carries a DECK, which is flat and covers one band;
+##   * 5 -- no refusal recorded.
+##
+## The lever is `WarrenPlotPlanner.blocked_columns`, not the carver, and E3
+## measured what pulling it costs: 0.865 -> 0.909 corpus-wide and FIVE towns.
+## See that function's own note. Re-pin upward only, and read the breakdown
+## before believing any story about why this number moved.
 const FRONTING_SLOT_FLOOR := 0.79
 
 ## Street-fronting COLUMNS the four planner towns leave out of every plot.

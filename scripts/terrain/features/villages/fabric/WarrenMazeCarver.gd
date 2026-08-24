@@ -1523,8 +1523,18 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 	## its two ends. Review finding (2026-08-23, minor): the old check tested
 	## `cell.y` and the roof band only, so a crossing passage carved at
 	## cell.y + 1 left the flank hollow through the middle and still passed.
-	## WarrenExcavation._bridge_spans_are_legal re-checks the same interval
-	## against the FINAL carved set; the two readings must agree.
+	## WarrenExcavation._bridge_spans_are_legal re-checks the nominal interval
+	## against the FINAL carved set; this one is never narrower, so the two
+	## readings cannot disagree about a span this carver accepted.
+	##
+	## FIX 1, MINOR 5 -- the roof band is `slot_bands` where that is deeper
+	## than HEADROOM_BANDS. A span cell is always a LEVEL stride, whose bore is
+	## exactly HEADROOM_BANDS, so on this corpus the two are the same number
+	## and the `maxi` is inert -- but `slot_bands` is what
+	## `_bridge_room_storey` and `WarrenPlotPlanner._span_bridges` both read,
+	## and a wall proved one band short of the void it walls is a hole waiting
+	## for the first stride kind that carves deeper. Stated by construction
+	## rather than left as an empirical accident.
 	##
 	## TASK E3 RULING 3 -- and the flanks must be able to CARRY A ROOM at the
 	## bridge's own band, not merely to wall its passage. `record` is the
@@ -1540,19 +1550,18 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 	for cell: Vector3i in span:
 		var direction := directions.get(cell, Vector2i.ZERO) as Vector2i
 		if direction == Vector2i.ZERO:
-			_note_bridge_refusal(record,
-				"span cell %s has no travel direction" % cell)
+			record["reason"] = "span cell %s has no travel direction" % cell
 			return false
 		var column := Vector2i(cell.x, cell.z)
-		var roof_band := cell.y + WarrenPassageLatticeRules.HEADROOM_BANDS
+		var roof_band := cell.y + maxi(WarrenPassageLatticeRules.HEADROOM_BANDS,
+			excavation.slot_bands(cell))
 		for flank: Vector2i in _bridge_flank_columns(cell, direction):
 			if not flank_columns.has(flank):
 				flank_columns.append(flank)
 			for band in range(cell.y, roof_band + 1):
 				if not _column_is_solid_at(massif, excavation, flank, band):
-					_note_bridge_refusal(record,
-						("flank column %s is hollow at band %d, below the " \
-							+ "span's own roof") % [flank, band])
+					record["reason"] = ("flank column %s is hollow at band " \
+						+ "%d, below the span's own roof") % [flank, band]
 					return false
 			# THE SEED-TIME MIRROR of the compiler's `bridge room ... has no
 			# built flank` gate. A bridge room is not carried by the street it
@@ -1572,15 +1581,14 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 			# spends retained mass and risks the town.
 			for band in range(storey.x, storey.y):
 				if not _column_is_solid_at(massif, excavation, flank, band):
-					_note_bridge_refusal(record,
-						("flank column %s carries no room mass at band %d " \
-							+ "of the bridge storey [%d, %d)") % [flank, band,
-							storey.x, storey.y])
+					record["reason"] = ("flank column %s carries no room " \
+						+ "mass at band %d of the bridge storey [%d, %d)") \
+						% [flank, band, storey.x, storey.y]
 					return false
 		if massif.top_at(column) - cell.y \
 				< WarrenPassageLatticeRules.HEADROOM_BANDS + 2:
-			_note_bridge_refusal(record,
-				"column %s has no retained mass above the span" % column)
+			record["reason"] = \
+				"column %s has no retained mass above the span" % column
 			return false
 	return true
 
@@ -1601,10 +1609,6 @@ static func _bridge_room_storey(excavation: WarrenExcavation,
 			+ WarrenMazeSourcePlan.TUNNEL_ROOF_BANDS
 		floor_band = top if index == 0 else maxi(floor_band, top)
 	return Vector2i(floor_band, floor_band + WarrenBuildingParcel.STOREY_BANDS)
-
-
-static func _note_bridge_refusal(record: Dictionary, reason: String) -> void:
-	record["reason"] = reason
 
 
 static func _column_is_solid_at(massif: WarrenMassif,

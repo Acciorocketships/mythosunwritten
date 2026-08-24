@@ -574,12 +574,18 @@ func _neighbor_may_stay_covered(plan: WarrenMazeSourcePlan,
 ## point: before E3 the flat 24-town corpus composed **zero** bridge rooms and
 ## **zero** open bridge decks from all 27 spans, so every one of them was rock
 ## retained over a street plus two columns no house could claim. Removing 17 of
-## them moved the plot layer's own numbers the right way (street-fronting slots
-## 0.7740 -> 0.7750, buildable coverage 0.9449 -> 0.9460, pitched-eligible
-## crowns 245 -> 250) and cost nothing that was ever built. A softer bar --
-## the bridge's FLOOR band alone rather than its whole storey -- was measured
-## and rejected: it retains 11 spans instead of 10, so the storey the rule
-## really means costs one span over the corpus.
+## them cost nothing that was ever built, and what it bought the plot layer is
+## SMALL and is stated honestly rather than rounded up: buildable coverage
+## 0.9449 -> 0.9460 and pitched-eligible crowns 245 -> 250, both up, against
+## the street-fronting slot share 0.8652 -> 0.8651, which is two slots off both
+## sides of the ratio and is marginally DOWN. (An earlier draft of this note
+## quoted 0.7740 -> 0.7750 for the last row. Those numbers are a different
+## population -- a stricter "a house at exactly this band" reading, not the
+## plots suite's own `demanded_slots` metric -- and are struck.)
+##
+## A softer bar -- the bridge's FLOOR band alone rather than its whole storey
+## -- was measured and rejected: it retains 11 spans instead of 10, so the
+## storey the rule really means costs one span over the corpus.
 const BRIDGE_SPAN_SEED_FLOOR := 4
 
 

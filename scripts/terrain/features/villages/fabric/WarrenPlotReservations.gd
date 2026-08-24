@@ -312,15 +312,19 @@ static func _site_realises(plan: WarrenMazeSourcePlan, streets: Dictionary,
 	## band -- meets a neighbouring plot.
 	##
 	## This restates those two facts in macro columns, one per step below.
-	## `reach_*` is the union of body and clearance, so "inside this plot's own
-	## footprint" answers the body and the clearance together -- the footprint
-	## is column-exclusive, so mass this plot owns is mass no other plot can
-	## own -- and the eave halo is asked as one further fine cell of margin on
-	## the same box. That margin is deliberately CONSERVATIVE: the builder
-	## halos only the roof band and lets an eave overhang rock or a street,
-	## while this asks the whole box to keep its margin inside the plot. The
-	## mirror may refuse a site the builder would have taken; it may never
-	## accept one the builder refuses, and that direction is the whole property.
+	## `reach_*` is the union of body and clearance, so one box answers the body
+	## and the clearance together -- the footprint is column-exclusive, so mass
+	## this plot owns is mass no other plot can own -- and the eave halo is
+	## asked as one further fine cell of margin on the same box.
+	##
+	## TASK E3 RULING 4 -- the box must stay inside this plot's own footprint OR
+	## just off the massif, where no plot can ever stand (`_fine_box_inside`,
+	## which states the bound and the two builder refusals it does not model).
+	## What remains CONSERVATIVE is the halo: the builder halos only the roof
+	## band and lets an eave overhang rock or a street, while this asks the
+	## whole box for its cell of margin. The mirror may refuse a site the
+	## builder would have taken; it may never accept one the builder refuses,
+	## and that direction is the whole property.
 	##
 	## TASK C5c FIX 1, IMPORTANT 4 -- the two clauses that moved:
 	##
@@ -409,8 +413,8 @@ static func _macro_column(fine: Vector2i) -> Vector2i:
 static func _fine_box_inside(plan: WarrenMazeSourcePlan, columns: Dictionary,
 		doorway: Vector2i, side: Vector2i, lateral: Vector2i, forward: int,
 		left: int, right: int) -> bool:
-	## TASK E3 RULING 4. A column OFF THE MASSIF is as good as one this plot
-	## owns, and that is the whole of the alignment.
+	## TASK E3 RULING 4. A column just OFF THE MASSIF is as good as one this
+	## plot owns, and that is the whole of the alignment.
 	##
 	## The property this test exists for is the builder's: a prefab's measured
 	## envelope, plus the eave halo at its roof band, may not meet a
@@ -423,18 +427,54 @@ static func _fine_box_inside(plan: WarrenMazeSourcePlan, columns: Dictionary,
 	## An eave that overhangs the edge of the hill therefore meets nothing, and
 	## refusing it was pessimism with no property behind it.
 	##
+	## FIX 1, IMPORTANT 1 -- BUT ONLY AS FAR AS THE GRID REACHES. Plot ownership
+	## is not the builder's only spatial refusal: `_skywalk_body_fits_grid`
+	## demands `grid.contains(cell)` first, and the fine grid is the massif's
+	## own fine bounding box grown by
+	## `WarrenVolumetricSolver.GRID_PADDING_CELLS` (2) fine cells to each side.
+	## An envelope reaching three fine cells past the edge leaves the grid, the
+	## builder refuses it, and an unbounded exemption would have made the mirror
+	## OPTIMISTIC -- which with `realisable == realised == 2` has no slack left
+	## to absorb it. The exemption is therefore bounded to macro columns that
+	## touch the massif (Chebyshev 1): an adjacent macro column's far fine edge
+	## is exactly 2 fine cells past the massif's last fine cell on that axis,
+	## and the padding applies to x and z independently, so touching-adjacency
+	## is precisely the padded bound and never past it.
+	##
+	## WHAT THIS STILL DOES NOT MODEL, stated rather than assumed: the builder
+	## also refuses on `protected_owners` -- the market, skywalk, courtyard and
+	## gateway reservations committed before the landmark preplan, whose visual
+	## clearances this source-stage predicate cannot see -- and on the grid's
+	## VERTICAL extent, which no part of the mirror reads. Both are directions
+	## in which the builder can still refuse a site the mirror accepted, so the
+	## mirror's soundness is an empirical claim on this corpus rather than a
+	## proof. That is exactly what `test_assets_land`'s per-town
+	## `landmarks >= realisable` assertion is for, and why its accepted count is
+	## pinned two-sidedly: the day either of those bites, the pin is red.
+	##
 	## Measured: the mirror accepted 0 of 78 sites on the 24-town corpus before
 	## this and 2 after, against 2 landmarks the production pass really builds.
-	## It stays SOUND -- still stricter than the builder at every other point,
-	## still asking of the whole box what the builder asks only of the roof
-	## band -- which is the direction `test_assets_land` pins.
 	for step in range(0, forward + 1):
 		for across in range(-right, left + 1):
 			var column := _macro_column(doorway + side * step \
 				+ lateral * across)
-			if not columns.has(column) and plan.massif.has_column(column):
+			if columns.has(column):
+				continue
+			if plan.massif.has_column(column) \
+					or not _touches_the_massif(plan, column):
 				return false
 	return true
+
+
+static func _touches_the_massif(plan: WarrenMazeSourcePlan,
+		column: Vector2i) -> bool:
+	## Does this macro column share an edge or a corner with one the massif
+	## has? See `_fine_box_inside`: that is exactly the fine grid's own padding.
+	for dz in range(-1, 2):
+		for dx in range(-1, 2):
+			if plan.massif.has_column(column + Vector2i(dx, dz)):
+				return true
+	return false
 
 
 static func _fine_box_bears(plan: WarrenMazeSourcePlan, doorway: Vector2i,

@@ -3360,21 +3360,19 @@ func test_assets_land() -> void:
 		# moment the mirror is looser than the builder.
 		#
 		# TASK E2 turned this from an equality into the inequality the sentence
-		# above actually states, and the reason is that the equality had been
-		# passing VACUOUSLY -- as `0 == 0`, which is the very failure mode the
-		# note at the foot of this test was written to catch. The momentum bore
-		# changed that: 12/compact now stands a real prefab landmark, the first
-		# on this corpus, and 3/standard another. The mirror still calls neither
-		# site realisable, because it is a SOURCE-STAGE prediction (it runs in
-		# `WarrenPlotReservations._place_assets`, on the maze source plan, and
-		# refuses both for `body_outside_plot`) while the landmark that got
-		# built was sealed a stage later against the real spatial grid and its
-		# supports, by `WarrenFeatureReservation.seal`. The mirror being
-		# PESSIMISTIC costs the town nothing; the mirror being OPTIMISTIC is
-		# what would break the composition, and that is what is pinned. The
-		# gap is printed above so it cannot widen unnoticed, and the corpus
-		# assertion below -- which the `pending` escape used to swallow -- now
-		# genuinely bites for the first time.
+		# above actually states, because the equality had been passing
+		# VACUOUSLY as `0 == 0`. TASK E3 RULING 4 then gave both sides a value:
+		# the mirror accepts 12/compact's and 3/standard's sites and those are
+		# the same two towns that really stand a prefab landmark, so this reads
+		# `1 >= 1` on each of them and `0 >= 0` on the rest.
+		#
+		# It has no slack left, and that is deliberate. The mirror is still a
+		# SOURCE-STAGE prediction (`WarrenPlotReservations._site_realises`, on
+		# the maze source plan) of a builder that seals a stage later against
+		# the real spatial grid and its supports, and it models neither the
+		# feature reservations nor the grid's vertical extent that builder also
+		# refuses on. Its soundness is therefore an empirical claim about this
+		# corpus, and this assertion is the thing that checks it.
 		assert_gte(landmarks, realisable,
 			("%s realises %d landmarks for %d sites its planner called " \
 				+ "realisable; the mirror may never be looser than the " \
@@ -3392,13 +3390,12 @@ func test_assets_land() -> void:
 		("ruling 3 wants a landmark the production pass really builds; the " \
 			+ "corpus realises %d") % realised_total)
 	# SOUNDNESS, corpus-wide: `realised >= realisable` is the same property the
-	# per-town assertion states. On its own it is satisfied by 0 <= 2 and
-	# says little, so the measured PAIR is pinned beside it. The mirror is a
-	# source-stage prediction and is currently CONSERVATIVE — it accepts
-	# nothing while the production pass really builds two landmarks — and that
-	# is a fact worth a red test in either direction: a mirror that starts
-	# accepting sites is a re-pin someone has to look at, and a builder that
-	# stops realising trips the ratchet above.
+	# per-town assertion states. Until Task E3 it was satisfied by `0 <= 2` and
+	# said almost nothing; it now reads `2 <= 2` and is exactly tight, so the
+	# measured PAIR pinned beside it is what says WHICH 2. Both directions are
+	# red tests: a mirror that starts accepting more sites is a re-pin someone
+	# has to look at, and a builder that stops realising trips the ratchet
+	# above.
 	assert_gte(realised_total, realisable_total,
 		"the corpus must realise at least the sites the mirror accepted")
 	assert_eq(realisable_total, MIRROR_ACCEPTED_SITES,
@@ -4068,6 +4065,7 @@ func test_sloped_ground_composes() -> void:
 	## failure mode the ruling creates, and it is exactly what this catches.
 	var composed := 0
 	var short_rows := 0
+	var unproved_flank_neighbours := 0
 	var refused := PackedStringArray()
 	for outcome: Dictionary in _sloped_corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
@@ -4097,11 +4095,28 @@ func test_sloped_ground_composes() -> void:
 		assert_not_null(fabric, "%s must carry its compiled fabric" % key)
 		var standing: Dictionary = {} if fabric == null \
 			else _route_floor_standing(plan, fabric)
+		# TASK E3 RULING 3, FIX 1 MINOR 6. The seed-time flank proof is only
+		# half the fix; the other half is that `_stamp_maze_bridges` binds a
+		# span through the PROVED columns only. That path fails OPEN -- a
+		# neighbour outside the proved set is skipped, and a span with no
+		# bindable pair is released rather than bonded to a flank the carver
+		# never proved -- so nothing downstream goes red when it stops
+		# working. `step/12/compact` is the town that motivated the whole fix
+		# and its one span is exactly this case, so the skip counter is
+		# asserted here rather than left to be inferred from the town sealing.
+		var skipped := 0
+		for outcome_value: Variant in plan.audit.get("maze_bridge_outcomes",
+				[]) as Array:
+			var counts := (outcome_value as Dictionary).get("span_counts",
+				{}) as Dictionary
+			skipped += int(counts.get("unproved_flank_column", 0))
+		unproved_flank_neighbours += skipped
 		print(("MAZE_SLOPED_COMPOSE %s SEALED ms=%d relief=%d plots=%d " \
-			+ "frontage=%.3f unroomed=%.3f route_on_stone=%.3f holes=%s") % [
+			+ "frontage=%.3f unroomed=%.3f route_on_stone=%.3f " \
+			+ "unproved_flanks=%d holes=%s") % [
 			_label(outcome), int(outcome.ms), relief,
 			0 if source == null else source.plots.size(), frontage, share,
-			float(standing.get("share", -1.0)),
+			float(standing.get("share", -1.0)), skipped,
 			str(standing.get("holes", {}))])
 		assert_gte(relief, 3,
 			("%s must stand on real relief; the fixture handed the massif " \
@@ -4146,6 +4161,12 @@ func test_sloped_ground_composes() -> void:
 	assert_gt(short_rows, 0,
 		("no sloped row fell short of the advisory frontage bar; the branch " \
 			+ "the ruling created is untested here"))
+	# And so must the proved-flank restriction, for the same reason: it fails
+	# open, so an inert one looks exactly like a working one from the outside.
+	assert_gt(unproved_flank_neighbours, 0,
+		("no sloped row skipped a single unproved flank neighbour; the " \
+			+ "restriction Task E3 added to `_residual_bridge_span` is not " \
+			+ "being exercised anywhere in this corpus"))
 
 
 func test_solve_selected_rebuilds_the_maze_on_real_ground() -> void:
