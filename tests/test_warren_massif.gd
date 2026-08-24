@@ -8,6 +8,15 @@ extends GutTest
 const StampedGround = preload("res://tests/fixtures/warren_stamped_ground.gd")
 
 
+func after_each() -> void:
+	## NET. Only the Phase E tests below build under MODE_MAZE, and each of them
+	## restores the flag inline -- but an assertion that fails between the set
+	## and the restore would leak maze mode into every later suite in the
+	## process, which is the failure `test_warren_maze_composition` guards the
+	## same way.
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+
+
 func _hill(world_seed: int = 0) -> Dictionary:
 	return StampedGround.hill(WarrenMassifBuilder.RADIUS_CELLS + 1, world_seed)
 
@@ -472,14 +481,41 @@ const RIM_WALL_CEILING_BANDS := 2 * WarrenBuildingParcel.STOREY_BANDS + 1
 ## terrace can be more than one column wide. Widening the descent needs a wider
 ## footprint, which is WarrenVillageScaleProfile's decision. Re-pin upward when
 ## it is made.
+## Where each planner town's WIDEST equal-layer terrace lands, measured and
+## pinned two-sidedly with a guard of WIDEST_TERRACE_GUARD columns either side.
+## Measured under the noise massif: 12/compact 11, 4/compact 11, 3/standard 14,
+## 9/standard 21 columns. The maze plateau cap (16, or a sixth of the town) is
+## the ceiling the BUILDER enforces; this is the band the field actually
+## occupies, and it is the only form of the fact a test can falsify -- see the
+## comment at the assertion.
+const WIDEST_TERRACE_GUARD := 3
+const PLANNER_WIDEST_TERRACE: Dictionary = {
+	"12/compact": Vector2i(11 - WIDEST_TERRACE_GUARD,
+		11 + WIDEST_TERRACE_GUARD),
+	"4/compact": Vector2i(11 - WIDEST_TERRACE_GUARD,
+		11 + WIDEST_TERRACE_GUARD),
+	"3/standard": Vector2i(14 - WIDEST_TERRACE_GUARD,
+		14 + WIDEST_TERRACE_GUARD),
+	"9/standard": Vector2i(21 - WIDEST_TERRACE_GUARD,
+		21 + WIDEST_TERRACE_GUARD),
+}
+
 const TERRACE_CLUSTER_COUNT_FLOOR := 2
 const TERRACE_CLUSTER_MEAN_FLOOR := 2.25
 ## The plan's target, reported per town rather than asserted -- see the floor
 ## above for why it is not the gate.
 const TERRACE_CLUSTER_MEAN_TARGET := 4.0
 
+## The same measure over the WHOLE 24-town corpus rather than the four planner
+## towns: the mean of every town's own mean cluster size. Measured 3.83 (the
+## route-first flood fill scored 3.12 on the same corpus), pinned a guard step
+## under it. A per-town floor can be held hostage by the two compact towns
+## where the grade binds; this one moves when the field moves.
+const CORPUS_CLUSTER_MEAN_FLOOR := 3.5
 
-func _planner_massif(town: Dictionary) -> WarrenMassif:
+
+func _planner_massif(town: Dictionary,
+		ground_bands: Dictionary = {}) -> WarrenMassif:
 	## The terraced field is keyed to MODE_MAZE until Phase F deletes
 	## route-first (`WarrenMassifBuilder.is_maze_mode`), so the three Phase E
 	## metrics below have to ask for it. Everything ABOVE this line deliberately
@@ -489,7 +525,8 @@ func _planner_massif(town: Dictionary) -> WarrenMassif:
 	var profile := WarrenVillageScaleProfile.for_id(StringName(town["scale"]))
 	var restored := WarrenTownSolver.GENERATION_MODE
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
-	var massif := WarrenMassifBuilder.build(int(town["seed"]), {}, profile)
+	var massif := WarrenMassifBuilder.build(int(town["seed"]), ground_bands,
+		profile)
 	WarrenTownSolver.GENERATION_MODE = restored
 	return massif
 
@@ -542,6 +579,30 @@ func _layer_clusters(massif: WarrenMassif) -> Array[int]:
 				frontier.append(neighbor)
 		sizes.append(count)
 	return sizes
+
+
+func _step_histogram(massif: WarrenMassif) -> Dictionary:
+	## Every 4-neighbour pair of present columns, counted by how many TERRACES
+	## apart the two stand. Each pair once (RIGHT and DOWN only), so the shares
+	## are shares of edges and not of half-edges.
+	##
+	## This is the observable form of the descent grade: a town whose ramp runs
+	## at the neighbour-step gate's maximum spends nearly every edge on a
+	## two-terrace riser and has none left over for a flat, while a gentle town
+	## spends most of them at zero or one.
+	var counts: Dictionary = {}
+	var total := 0
+	for column: Vector2i in massif.columns:
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN]:
+			var neighbor := column + direction
+			if not massif.has_column(neighbor):
+				continue
+			var step := absi(massif.layer_at(column)
+				- massif.layer_at(neighbor)) / WarrenBuildingParcel.STOREY_BANDS
+			counts[step] = int(counts.get(step, 0)) + 1
+			total += 1
+	counts["total"] = total
+	return counts
 
 
 func _terrace_ladder(massif: WarrenMassif) -> Dictionary:
@@ -609,6 +670,19 @@ func test_the_terraces_are_clusters_and_not_per_column_noise() -> void:
 		gut.p(("%s: %d columns in %d terrace clusters, mean %.2f, %d single " \
 			+ "columns, widest %d") % [_planner_label(town), total,
 			sizes.size(), mean, singles, massif.widest_plateau_cells()])
+		# THE DESCENT GRADE, as steps. Reported, never pinned: how steep a town
+		# is allowed to look is Phase G's battery to judge, and the controller
+		# ruled (2026-08-23) that compact's two-terrace risers are measured
+		# here rather than changed. A share of two-terrace edges near 1.0 is a
+		# town spending every column on a riser, which is exactly why its
+		# terraces cannot be wider than one column.
+		var steps := _step_histogram(massif)
+		var edges := int(steps.get("total", 0))
+		gut.p(("  steps over %d neighbour pairs: 0 terraces %.3f, " \
+			+ "1 terrace %.3f, 2 terraces %.3f") % [edges,
+			float(int(steps.get(0, 0))) / float(maxi(1, edges)),
+			float(int(steps.get(1, 0))) / float(maxi(1, edges)),
+			float(int(steps.get(2, 0))) / float(maxi(1, edges))])
 		assert_gte(sizes.size(), TERRACE_CLUSTER_COUNT_FLOOR,
 			"%s has %d terrace clusters; a town needs several" % [
 				_planner_label(town), sizes.size()])
@@ -620,14 +694,20 @@ func test_the_terraces_are_clusters_and_not_per_column_noise() -> void:
 			gut.p(("%s is under the plan's %.1f target at %.2f -- expected " \
 				+ "on a town whose descent grade is against the step gate") \
 				% [_planner_label(town), TERRACE_CLUSTER_MEAN_TARGET, mean])
-		# Two-sided, because the merge that makes terraces cluster is the same
-		# machinery that would fuse them into a slab if it ran unchecked. The
-		# plateau gate is the builder's own ceiling; asserting it here is what
-		# stops a future field from buying its cluster mean with a platform.
-		assert_lte(massif.widest_plateau_cells(),
-			_maze_plateau_cap(massif.columns.size()),
-			"%s carries a %d-column terrace: that is a platform" % [
-				_planner_label(town), massif.widest_plateau_cells()])
+		# TWO-SIDED, AND MEASURED. Asserting the builder's own plateau CAP here
+		# proves nothing: `_shape_gate_failure` refuses a field over the cap
+		# before `build` ever returns one, so the assertion could only fire on a
+		# massif that cannot exist. What can drift, silently and in either
+		# direction, is where inside the cap the widest terrace actually lands:
+		# a field that started fusing would climb towards the cap, and one that
+		# started dithering would collapse towards one. Both are red here.
+		var widest := massif.widest_plateau_cells()
+		var band: Vector2i = PLANNER_WIDEST_TERRACE.get(_planner_label(town),
+			Vector2i(1, _maze_plateau_cap(massif.columns.size())))
+		assert_between(widest, band.x, band.y,
+			("%s's widest terrace is %d columns, outside the measured %d-%d " \
+			+ "band: the field is fusing terraces or thinning them") % [
+				_planner_label(town), widest, band.x, band.y])
 
 
 func test_the_planner_towns_have_measurably_different_silhouettes() -> void:
@@ -676,12 +756,21 @@ func test_the_planner_towns_have_measurably_different_silhouettes() -> void:
 	# across SCALES and rolls rather than inside one planner quartet, measured
 	# over the corpus -- which the massif alone is cheap enough to build whole.
 	var peak_set: Dictionary = {}
+	var corpus_means := 0.0
+	var corpus_towns := 0
 	for world_seed in range(1, 13):
 		for scale: StringName in [&"compact", &"standard"]:
 			var town := {"seed": world_seed, "scale": scale}
 			var massif := _planner_massif(town)
-			if massif != null:
-				peak_set[massif.core_top_bands] = true
+			if massif == null:
+				continue
+			peak_set[massif.core_top_bands] = true
+			var sizes := _layer_clusters(massif)
+			var total := 0
+			for size: int in sizes:
+				total += size
+			corpus_means += float(total) / float(maxi(1, sizes.size()))
+			corpus_towns += 1
 	var distinct_peaks: Array = peak_set.keys()
 	distinct_peaks.sort()
 	gut.p("planner peaks %s; corpus peaks %s" % [str(peaks),
@@ -689,3 +778,72 @@ func test_the_planner_towns_have_measurably_different_silhouettes() -> void:
 	assert_gte(distinct_peaks.size(), 2,
 		"every town in the corpus peaks at exactly the same height (%s)" \
 			% str(distinct_peaks))
+	# The four planner towns are two compact and two standard, and the compact
+	# pair is where the grade binds -- so a per-town floor alone can be held
+	# hostage by the two hardest towns while the field quietly gets worse
+	# everywhere else. This is the whole corpus's mean of means, which moves
+	# when the FIELD moves rather than when one town does.
+	assert_eq(corpus_towns, 24, "the corpus massif sweep lost a town")
+	var corpus_mean := corpus_means / float(maxi(1, corpus_towns))
+	gut.p("corpus mean of terrace-cluster means %.2f over %d towns" % [
+		corpus_mean, corpus_towns])
+	assert_gte(corpus_mean, CORPUS_CLUSTER_MEAN_FLOOR,
+		("the corpus averages %.2f columns per terrace cluster against a " \
+		+ "measured floor of %.2f") % [corpus_mean,
+			CORPUS_CLUSTER_MEAN_FLOOR])
+
+
+func test_the_maze_massif_is_deterministic_and_relief_neutral() -> void:
+	## PHASE E, inside the mode bracket. Two promises of the interface that no
+	## silhouette metric can see, so nothing else in this file would catch them
+	## breaking.
+	##
+	## DETERMINISM. The field is a pure function of (seed, ground, profile): the
+	## noise is seeded through this repository's own integer hash rather than
+	## any engine noise class, and every pass over the field iterates a sorted
+	## column order rather than a Dictionary's insertion order. A second build
+	## must therefore agree CELL FOR CELL, not merely in aggregate -- an
+	## order-dependent merge would still produce the same cluster mean.
+	##
+	## RELIEF NEUTRALITY. `ground_bands` relief adds UNDER the authored layer
+	## exactly as it does under the route-first profile (controller ruling 2).
+	## The route-first tests above pin this for the flood fill; the terraced
+	## field has to earn it separately, because its ramp is driven by DEPTH and
+	## an implementation that reached for the ground instead would pass every
+	## other test in this file.
+	var bands := _ground_frame("slope")
+	for town: Dictionary in PLANNER_TOWNS:
+		var flat := _planner_massif(town)
+		var again := _planner_massif(town)
+		var sloped := _planner_massif(town, bands)
+		assert_not_null(flat, "%s: %s" % [_planner_label(town),
+			WarrenMassifBuilder.last_failure])
+		assert_not_null(again, "%s rebuilt: %s" % [_planner_label(town),
+			WarrenMassifBuilder.last_failure])
+		assert_not_null(sloped, "%s on slope: %s" % [_planner_label(town),
+			WarrenMassifBuilder.last_failure])
+		if flat == null or again == null or sloped == null:
+			continue
+		assert_eq(again.columns.size(), flat.columns.size(),
+			"%s: the footprint moved between two builds" % _planner_label(town))
+		assert_eq(sloped.columns.size(), flat.columns.size(),
+			"%s: the ground moved the footprint" % _planner_label(town))
+		var relief := sloped.relief_bands()
+		assert_gt(relief, 0,
+			("%s: the sloped fixture handed the massif %d bands of relief, so " \
+			+ "it proves nothing") % [_planner_label(town), relief])
+		gut.p("%s: rebuilt identical, %d bands of relief under the field" % [
+			_planner_label(town), relief])
+		for column: Vector2i in flat.columns:
+			assert_eq(again.top_at(column), flat.top_at(column),
+				"%s: column %s differs between two builds of one seed" % [
+					_planner_label(town), column])
+			assert_true(sloped.has_column(column),
+				"%s: column %s vanished on sloped ground" % [
+					_planner_label(town), column])
+			assert_eq(sloped.layer_at(column), flat.layer_at(column),
+				("%s: the layer at %s changed thickness when the ground " \
+				+ "moved under it") % [_planner_label(town), column])
+			assert_eq(sloped.base_at(column), int(bands[column]),
+				"%s: column %s did not take its own input ground as its base" \
+					% [_planner_label(town), column])

@@ -66,16 +66,31 @@ extends RefCounted
 ##   and D already carried
 ##
 ## WHERE THE FLOOR BINDS, and it is geometry, not tuning. The ramp's grade is
-## (core - foot) / (depth - 1) storeys per column. A compact town is 8-11
-## columns across, so its deepest column is 4-5 cells from open ground, while
-## its scale profile demands a 12-15 band core: 6-7 storeys spent over 3-4
-## columns, which is 1.7-2.0 storeys per column -- at or against
-## MAX_STEP_TERRACES, the neighbour-step gate's own maximum. At that grade every
-## column is a mandatory riser between the two beside it and no terrace can be
-## wider than one column, so 12/compact (grade 2.00) cannot cluster at all and
-## sits at 2.89. The deep towns, where the grade falls to 1.2-1.5, reach
-## 4.4-6.8. Spending more columns on the descent needs a bigger footprint,
-## which is a scale-profile decision and not this builder's.
+## (core + SUMMIT_HEADROOM_TERRACES - RAMP_FOOT_TERRACES) / (depth - 1) storeys
+## per column, clamped to MAX_STEP_TERRACES. A compact town is 8-11 columns
+## across, so its deepest column is only 4-5 cells from open ground, while its
+## scale profile demands a 12-15 band core: five to six storeys of descent
+## spent over three or four columns. That is 1.5-2.0 storeys per column, at or
+## against MAX_STEP_TERRACES -- the neighbour-step gate's own maximum. At that
+## grade almost every column is a mandatory riser between the two beside it,
+## and a column that is a riser cannot also be part of a terrace.
+##
+## MEASURED AS STEPS, which is the grade in the form a test can see -- the
+## massif suite prints this per planner town and pins nothing, because how
+## steep a town may look is Phase G's battery to judge (controller ruling,
+## 2026-08-23: compact's two-terrace risers are measured here, not changed).
+## Share of 4-neighbour pairs standing 0 / 1 / 2 terraces apart:
+##
+##   12/compact  0.356 / 0.172 / 0.471   <- grade at the gate's maximum
+##   4/compact   0.464 / 0.268 / 0.268
+##   3/standard  0.442 / 0.281 / 0.276
+##   9/standard  0.514 / 0.212 / 0.275
+##
+## 12/compact spends nearly half its edges on a two-storey riser where the
+## others spend a quarter, and has the fewest flat edges of the four -- which
+## is exactly why it sits at 2.52 columns per terrace while 9/standard reaches
+## 4.85. Spending more columns on the descent needs a bigger footprint, which
+## is WarrenVillageScaleProfile's decision and not this builder's.
 const RADIUS_CELLS := 12
 
 ## Gaussian amplitude for both the bounded footprint and its inhabited height.
@@ -98,24 +113,13 @@ const MIN_CORE_BANDS := 16
 ## A town must expose at least five inhabited height terraces. Fewer terraces
 ## read as a single block; the reviewed corpus normally produces far more.
 const MIN_TERRACE_LEVELS := 5
-## Largest 4-connected run of one relative height: a terrace four columns
-## square. Wider than that is a platform, not a terrace, and parcelization
-## cannot break it into roofs and party walls fast enough to stop it reading as
-## a slab.
+## Largest 4-connected run of one relative height. A deep inhabited massif can
+## tolerate a three-by-three same-datum cluster: parcelization breaks it into
+## roofs and party walls rather than rendering one bare terrace slab. Larger
+## equal-height districts flatten the skyline and remain a hard failure.
 ##
-## RAISED FROM 9 BY PHASE E, deliberately and with the corpus measured either
-## side, because 9 and the user's direction cannot both hold. A boundary column
-## may stand one storey or two and nothing else -- MIN_LAYER_BANDS and the
-## two-storey rim ceiling are the whole alphabet the rim is allowed -- and a
-## compact town has 29-48 boundary columns. Two heights over 36 columns means
-## runs of about eighteen unless the field dithers the rim on purpose, which is
-## the thing the direction forbids. Measured on this field: at 9 the corpus
-## loses SEVEN towns to this gate alone (5/compact and 2, 6, 7, 9, 10, 11
-## standard), at 12 it loses three, at 16 it loses none -- and several towns
-## then sit exactly at 16, so the cap is holding them rather than idling
-## (uncapped, the same corpus reaches a 40-column run). The suite pins the run
-## two-sidedly, so a field that started producing slabs is a red test rather
-## than a silent drift.
+## ROUTE-FIRST'S VALUE, unchanged. What the terraced field needs instead, and
+## why, is MAZE_MAX_PLATEAU_CELLS.
 const MAX_PLATEAU_CELLS := 9
 const MIN_COLUMN_BANDS := 2
 ## A neighbouring pair of columns may step by at most this many bands OF
@@ -457,7 +461,7 @@ static func _terrace_ceilings(depths: Dictionary) -> Dictionary:
 static func _terrace_field(order: Array[Vector2i], depths: Dictionary,
 		ceilings: Dictionary, phase_seed: int, footprint_core: int,
 		minimum_core_bands: int) -> Dictionary:
-	## Steps 1-4 of the class comment: ramp, noise, quantize, cluster merge.
+	## Steps 1-5 of the class comment: ramp, noise, quantize, repair, merge.
 	var max_depth := 1
 	for column: Vector2i in order:
 		max_depth = maxi(max_depth, int(depths.get(column, 1)))
@@ -660,16 +664,22 @@ static func _terrace_is_legal(terraces: Dictionary, ceilings: Dictionary,
 
 static func _repair_steps(terraces: Dictionary, ceilings: Dictionary,
 		order: Array[Vector2i]) -> void:
-	## Safety net after the merge: lower any column that stands more than
-	## MAX_STEP_TERRACES over a neighbour or over its rim ceiling, until nothing
-	## does. Only ever lowers, so it terminates, and it cannot lower a column
-	## below MIN_TERRACES because every cap it computes is at least RIM_TERRACES
-	## or a neighbour's own height plus a full step.
+	## STEP 4, and it runs BEFORE the merge, not after it. Lower any column that
+	## stands more than MAX_STEP_TERRACES over a neighbour or over its rim
+	## ceiling, until nothing does. Only ever lowers, so it terminates, and it
+	## cannot lower a column below MIN_TERRACES because every cap it computes is
+	## at least RIM_TERRACES or a neighbour's own height plus a full step.
 	##
-	## The merge already refuses an illegal move, so on the measured corpus this
-	## changes nothing; it is here because "the merge checked" is an argument
-	## and "the field was repaired" is a fact, and the neighbour-step gate is
-	## the one gate the whole silhouette rests on.
+	## WHY HERE AND NOT LAST. What it repairs is QUANTIZATION: rounding each
+	## column of a continuous field independently can put two neighbours three
+	## terraces apart even though the field between them never was. That has to
+	## be true before the merge runs, because the merge decides what is legal by
+	## reading its neighbours' heights -- against an unrepaired field it would
+	## be reasoning from an illegal one.
+	##
+	## The gate then holds inductively rather than by a second sweep: the field
+	## is legal when the merge starts, and `_terrace_is_legal` refuses any move
+	## that would break it, so it is still legal when the merge stops.
 	var changed := true
 	while changed:
 		changed = false

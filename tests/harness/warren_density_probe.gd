@@ -123,9 +123,16 @@ func _run_maze(city_seeds: Array[String], label: String,
 		var profile := WarrenVillageScaleProfile.for_id(StringName(parts[1])) \
 			if parts.size() > 1 else WarrenVillageScaleProfile.select(city_seed)
 		var started := Time.get_ticks_msec()
+		# TASK E1. This probe measures MAZE towns, and the terraced massif is
+		# keyed to MODE_MAZE (WarrenMassifBuilder.is_maze_mode) until Phase F
+		# deletes route-first -- so without the bracket every density number
+		# here would describe the route-first massif instead.
+		var restored_mode := WarrenTownSolver.GENERATION_MODE
+		WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
 		var massif := WarrenMassifBuilder.build(city_seed, {}, profile)
 		var plan := WarrenMazeCarver.carve(city_seed, massif, profile) \
 			if massif != null else null
+		WarrenTownSolver.GENERATION_MODE = restored_mode
 		var elapsed := Time.get_ticks_msec() - started
 		if plan == null:
 			totals.failed += 1

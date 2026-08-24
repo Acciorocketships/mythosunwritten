@@ -89,9 +89,19 @@ func _ready() -> void:
 			WarrenVillageScaleProfile.for_id(_scale_id))
 	elif _maze_source:
 		var profile := WarrenVillageScaleProfile.for_id(_scale_id)
+		# TASK E1. The mode has to be set BEFORE the plan, not just around the
+		# solve: `WarrenMassifBuilder.is_maze_mode` keys the terraced massif to
+		# MODE_MAZE until Phase F deletes route-first, so planning first and
+		# switching after rendered a ROUTE-FIRST massif under a maze caption.
+		# `--maze-source` always plans a maze town, so this half of the bracket
+		# is unconditional -- `_generation_mode` still decides what the SOLVE
+		# runs under, which is what its own note below is about.
+		var restored_plan_mode := WarrenTownSolver.GENERATION_MODE
+		WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
 		# The whole one-pass site plan, not the bare bore: a plan without plots
 		# carries no town, and the block partitioner refuses to translate one.
 		var maze := WarrenMazeSitePlanner.plan(_world_seed, {}, profile)
+		WarrenTownSolver.GENERATION_MODE = restored_plan_mode
 		var source := WarrenMazeVolumeAdapter.to_volume_plan(maze) \
 			if maze != null else null
 		if source == null:
