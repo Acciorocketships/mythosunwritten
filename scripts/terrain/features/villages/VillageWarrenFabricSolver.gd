@@ -36,7 +36,16 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	# pin misses and stale pins simply fall through to it.
 	var pin := WarrenSolutionPinCache.pin_for(city_seed,
 		scale_profile.scale_id)
-	if bool(pin.get("failed", false)):
+	# One-pass maze generation carves exactly one town per seed: there is no
+	# attempt rotation to memo, resume, or prove exhausted. The pin is inert
+	# here — `solve_pinned` re-runs the same carve whatever it holds — and a
+	# FAILURE entry left by a searched run is evidence about a search this mode
+	# never performs, so it must not suppress the town. Nothing is written back
+	# for the mirror-image reason: the entry is keyed on (seed, scale) alone,
+	# so a maze outcome recorded here would lie to the searched mode too.
+	var searched := WarrenTownSolver.GENERATION_MODE \
+		!= WarrenTownSolver.MODE_MAZE
+	if searched and bool(pin.get("failed", false)):
 		return _rejected(&"volume_pinned_failure")
 	var preview: WarrenSpatialPlan = null
 	if pin.has("attempt"):
@@ -51,20 +60,21 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 			PRODUCTION_SEARCH_BUDGET_MS,
 			int(pin.get("attempts_tried", 0)))
 		if preview == null:
-			if WarrenVolumetricSolver.last_search_exhausted:
+			if searched and WarrenVolumetricSolver.last_search_exhausted:
 				WarrenSolutionPinCache.store_failure(city_seed,
 					scale_profile.scale_id)
-			else:
+			elif searched:
 				WarrenSolutionPinCache.store_progress(city_seed,
 					scale_profile.scale_id,
 					WarrenVolumetricSolver.last_search_attempts_tried)
 			return _rejected(StringName("volume_%s" %
 				WarrenVolumetricSolver.last_failure))
-		WarrenSolutionPinCache.store_success(city_seed,
-			scale_profile.scale_id,
-			int(preview.audit.get("production_selected_attempt", -1)),
-			String(preview.audit.get("production_selected_source_id", "")),
-			int(preview.audit.get("production_selected_variant", -1)))
+		if searched:
+			WarrenSolutionPinCache.store_success(city_seed,
+				scale_profile.scale_id,
+				int(preview.audit.get("production_selected_attempt", -1)),
+				String(preview.audit.get("production_selected_source_id", "")),
+				int(preview.audit.get("production_selected_variant", -1)))
 	# The selector has already compiled and quality-gated its winning preview.
 	# Reuse that output-pure derivative instead of repeating the complete measured
 	# facade/roof/public-realm transaction at the production adapter boundary.

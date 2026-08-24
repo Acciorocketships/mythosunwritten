@@ -30,7 +30,8 @@ var _capture_filter := ""
 var _trace_room_gate := false
 var _raw_frontier := false
 var _maze_source := false
-## `--mode <id>`; empty leaves WarrenTownSolver.GENERATION_MODE alone.
+## `--mode <id>` for the `--maze-source` and `--production-terrain-site`
+## routes; empty leaves WarrenTownSolver.GENERATION_MODE alone.
 var _generation_mode := StringName()
 var _probe_ranked_limit := 0
 var _camera := Camera3D.new()
@@ -65,7 +66,15 @@ func _ready() -> void:
 		get_tree().quit(0)
 		return
 	if _production_terrain_site:
+		# `--mode maze` must be in force for the production ADAPTER too:
+		# `VillageWarrenFabricSolver` and the solver beneath it both dispatch on
+		# GENERATION_MODE, so leaving it route-first here would render a
+		# SEARCHED town on the production site and label it a maze one.
+		var restored_production_mode := WarrenTownSolver.GENERATION_MODE
+		if _generation_mode != &"":
+			WarrenTownSolver.GENERATION_MODE = _generation_mode
 		var urban := _solve_production_site(catalog)
+		WarrenTownSolver.GENERATION_MODE = restored_production_mode
 		if urban == null or not urban.accepted \
 				or urban.volumetric_spatial == null \
 				or urban.fabric_plan == null:

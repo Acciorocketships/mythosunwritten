@@ -112,7 +112,9 @@ func _validate_volumetric_warren(program: VillageProgram) -> bool:
 				or String(fabric_audit.get("spatial_signature", "")) \
 					!= volumetric_spatial.deterministic_signature().sha256_text() \
 				or int(fabric_audit.get("rejected_unfloored_address_count", -1)) != 0 \
-				or not _scale_feature_contract_matches(fabric_audit):
+				or not _scale_feature_contract_matches(fabric_audit,
+					StringName(volumetric_spatial.audit.get(
+						"production_generation_mode", ""))):
 			return false
 		return _validate_compiled_fabric(program)
 	if volumetric_town == null or not volumetric_town.is_sealed() \
@@ -143,41 +145,74 @@ static func _required_market_count(audit: Dictionary) -> int:
 		else WarrenMarketSolver.REQUIRED_MARKETS
 
 
-static func _scale_feature_contract_matches(audit: Dictionary) -> bool:
+static func _scale_feature_contract_matches(audit: Dictionary,
+		generation_mode: StringName = &"") -> bool:
 	## Production selects the size profile before authoring the massif. The final
 	## transaction must validate against that same profile; the former hard-coded
 	## large-showcase counts rejected legitimate compact and standard villages
 	## after every topology, construction, and support proof had already passed.
+	##
+	## `generation_mode` is the pipeline the town was BUILT by, read from its own
+	## sealed audit rather than from `WarrenTownSolver.GENERATION_MODE`: a plan
+	## must validate the same whenever it is re-validated, and the streamed
+	## payload outlives the solve that produced it. An unnamed mode is a searched
+	## one, which keeps every legacy caller's contract exactly as it was.
 	var scale_id := StringName(audit.get("scale_profile_id", ""))
 	var profile := WarrenVillageScaleProfile.for_id(scale_id)
 	if profile == null or String(audit.get("scale_profile_signature", "")) \
 			!= profile.deterministic_signature():
 		return false
-	return int(audit.get("elevated_courtyard_count", -1)) \
-			== int(profile.requires_elevated_courtyard) \
+	var advisory := generation_mode == WarrenTownSolver.MODE_MAZE
+	return _meets_quota_floor(int(audit.get("elevated_courtyard_count", -1)),
+			int(profile.requires_elevated_courtyard), advisory) \
+		and int(audit.get("elevated_courtyard_count", -1)) \
+			<= int(profile.requires_elevated_courtyard) \
 		and (not profile.requires_elevated_courtyard \
-			or int(audit.get("courtyard_daylight_macro_column_count", 0)) \
-				>= WarrenElevatedFrontageSolver \
-					.MIN_COURTYARD_DAYLIGHT_COLUMNS) \
+			or _meets_quota_floor(int(audit.get(
+				"courtyard_daylight_macro_column_count", 0)),
+				WarrenElevatedFrontageSolver \
+					.MIN_COURTYARD_DAYLIGHT_COLUMNS, advisory)) \
 		and (not profile.requires_elevated_courtyard \
-			or int(audit.get("courtyard_underbuilt_macro_column_count", 0)) \
-				>= WarrenElevatedFrontageSolver \
-					.MIN_COURTYARD_UNDERBUILT_COLUMNS) \
-		and int(audit.get("covered_market_count", -1)) \
-			>= int(profile.requires_covered_market) \
+			or _meets_quota_floor(int(audit.get(
+				"courtyard_underbuilt_macro_column_count", 0)),
+				WarrenElevatedFrontageSolver \
+					.MIN_COURTYARD_UNDERBUILT_COLUMNS, advisory)) \
+		and _meets_quota_floor(int(audit.get("covered_market_count", -1)),
+			int(profile.requires_covered_market), advisory) \
 		and int(audit.get("covered_market_count", -1)) <= 1 \
-		and int(audit.get("prefab_landmark_count", -1)) \
-			>= profile.landmark_range.x \
+		and _meets_quota_floor(int(audit.get("prefab_landmark_count", -1)),
+			profile.landmark_range.x, advisory) \
 		and int(audit.get("prefab_landmark_count", -1)) \
 			<= profile.landmark_range.y \
-		and int(audit.get("enclosed_skywalk_count", -1)) \
-			>= profile.skywalk_range.x \
+		and _meets_quota_floor(int(audit.get("enclosed_skywalk_count", -1)),
+			profile.skywalk_range.x, advisory) \
 		and int(audit.get("enclosed_skywalk_count", -1)) \
 			<= profile.skywalk_range.y \
-		and int(audit.get("usable_balcony_count", -1)) \
-			>= profile.balcony_range.x \
-		and int(audit.get("room_outcropping_count", -1)) \
-			>= profile.cantilever_range.x
+		and _meets_quota_floor(int(audit.get("usable_balcony_count", -1)),
+			profile.balcony_range.x, advisory) \
+		and _meets_quota_floor(int(audit.get("room_outcropping_count", -1)),
+			profile.cantilever_range.x, advisory)
+
+
+static func _meets_quota_floor(measured: int, floor_value: int,
+		advisory: bool) -> bool:
+	## A richness FLOOR on the sealed transaction. The count must always be
+	## present -- a negative reads as an ABSENT audit key, which is a broken
+	## transaction rather than a shortfall -- but falling short of the size
+	## profile's floor is a rejection only where a rejection buys another
+	## candidate. One-pass maze generation has no other candidate, so refusing
+	## a fully partitioned town here yields no village at all; the shortfall
+	## becomes the audit fact the town ships with. This is exactly the policy
+	## `WarrenTownSolver.feature_quotas_are_advisory()` states and the
+	## composition, feature and spatial solvers already honour -- the
+	## production materialization contract was the last place still enforcing
+	## the searched mode's quotas against a one-pass town.
+	##
+	## Ceilings stay hard in every mode: an excess is not a shortfall, and
+	## nothing here relaxes a STRUCTURAL rule.
+	if measured < 0:
+		return false
+	return measured >= floor_value or advisory
 
 
 func _validate_compiled_fabric(program: VillageProgram) -> bool:

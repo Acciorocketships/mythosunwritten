@@ -366,6 +366,9 @@ func after_each() -> void:
 	## A leaked flag silently converts every later suite in the same process to
 	## maze mode, so restore it even when an assertion failed.
 	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+	# TASK D2: the pin round trip redirects the persistent cache at a scratch
+	# file. A leak would point every later solve in the process at it.
+	WarrenSolutionPinCache.override_path_for_tests("")
 
 
 func _solve(world_seed: int, scale_id: StringName,
@@ -3738,3 +3741,275 @@ func test_solve_selected_rebuilds_the_maze_on_real_ground() -> void:
 		assert_gt(matched, 0,
 			("%s: no cardinal quarter re-solved with its entrance landing " \
 				+ "where the preview's did") % label)
+
+
+## TASK D2. The pinned PRODUCTION settlement -- not a fixture, and not a
+## planner seed: the world seed, super cell and settlement the review harness
+## renders (`warren_spatial_review.gd --production-terrain-site --super-x 0
+## --super-z -1`). The id is ASSERTED rather than assumed, so a terrain change
+## that moves the site fails here instead of quietly re-pointing every
+## production assertion at some other town.
+const PRODUCTION_WORLD_SEED := 2697992464
+const PRODUCTION_SUPER_CELL := Vector2i(0, -1)
+const PRODUCTION_SETTLEMENT_ID := &"settlement.29bc5c240c52f84a"
+## The sampling radius `warren_spatial_review.gd` builds the site region at.
+const PRODUCTION_REGION_RADIUS := 5
+
+## Wall-clock ceiling for one WHOLE production solve on the terrain-worker
+## path: the preview, the four placement quarters' terrain sampling and
+## re-solves, the fabric compile and the materialization. Measured 4104 ms on
+## the pinned site; pinned at ~3x rather than this file's usual 1.5x because
+## the number that matters is the ORDER OF MAGNITUDE -- the searched pipeline
+## this replaces cost 154-210 s of startup, and the failure this guards
+## against is a fall back into a search, not a 30 % drift.
+const PRODUCTION_SOLVE_MS_CEILING := 12000
+
+## Where the pin round trip writes. The real `user://warren_solution_pins.json`
+## is never written by the suite; only the production solve above READS it,
+## which is deliberate (a maze town must build the same whatever it finds).
+const PIN_CACHE_TEST_PATH := "user://test_warren_maze_pins_d2.json"
+
+## The shape of a legacy SEARCHED-mode success pin: an attempt index, the
+## ranked source it selected and the partition variant. None of it means
+## anything in one-pass maze mode, which is the point of the round trip.
+const LEGACY_PIN_ATTEMPT := 11
+const LEGACY_PIN_SOURCE_ID := \
+	"warren.volume.mass.166029932462774723.arcade0.arcade1"
+const LEGACY_PIN_VARIANT := 1
+
+static var _production_site_cache: Dictionary = {}
+
+
+func _production_site() -> Dictionary:
+	## The real terrain the production adapter reads, built exactly the way
+	## `warren_spatial_review.gd --production-terrain-site` builds it: the
+	## planned settlement site of the pinned super cell, the immutable
+	## heightfield region around it, and the village program compiled from the
+	## shipped catalog. Empty means the fixture could not load headless.
+	##
+	## Cached for the whole file: `SettlementPlan.site_for` alone costs ~18 s
+	## and the catalog compile ~2.4 s, and neither is a fact about a town.
+	if not _production_site_cache.is_empty():
+		return _production_site_cache
+	var water := TerrainWorldTuning.make_water(PRODUCTION_WORLD_SEED)
+	var site := SettlementPlan.new(PRODUCTION_WORLD_SEED,
+		water).site_for(PRODUCTION_SUPER_CELL)
+	if site.is_empty():
+		return {}
+	var cell := site.cell as Vector2i
+	var region := TerrainWorldTuning.make_heightfield(PRODUCTION_WORLD_SEED,
+		water).compute_region(cell.x, cell.y, PRODUCTION_REGION_RADIUS)
+	var village_program := VillageProgram.compile({},
+		EnvironmentCatalog.load_default())
+	if village_program == null:
+		return {}
+	var frame := VillageFrame.from_mask(site, 1, region,
+		_dry_water_context(region, cell))
+	_production_site_cache = {
+		"cell": cell,
+		"terrain": VillageTerrainView.from_region(region),
+		"program": village_program,
+		"frame": frame,
+		"city_seed": VillagePlan.new(PRODUCTION_WORLD_SEED,
+			village_program)._warren_seed(frame),
+	}
+	return _production_site_cache
+
+
+static func _dry_water_context(region: HeightfieldRegion,
+		cell: Vector2i) -> WaterFieldContext:
+	## `VillageFrame.from_mask` requires a water context, and `SettlementPlan`
+	## already keeps every site at least `WATER_CLEARANCE` from planned water,
+	## so a dry context is the truthful stand-in here. This is the same helper
+	## `warren_spatial_review.gd` uses for the same reason.
+	var context := WaterFieldContext.new()
+	context._ctx = {"ponds": [], "rivers": [], "buckets": {},
+		"region": region}
+	context._region = region
+	var centre := Vector2(cell) * TerrainSurfaceField.TILE
+	var radius := float(PRODUCTION_REGION_RADIUS) * TerrainSurfaceField.TILE
+	context._coverage = Rect2(centre - Vector2.ONE * radius,
+		Vector2.ONE * radius * 2.0)
+	context._shore_limit = 0.0
+	return context
+
+
+func _solve_production(site: Dictionary) -> Dictionary:
+	## One REAL production solve: `VillageWarrenFabricSolver.solve` against the
+	## real terrain view, in maze mode, with exactly the arguments the terrain
+	## worker passes. Nothing here is a stand-in for the production entry.
+	var frame := site.frame as VillageFrame
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
+	var started_ms := Time.get_ticks_msec()
+	var urban := VillageWarrenFabricSolver.solve(
+		site.terrain as VillageTerrainView, int(site.city_seed),
+		frame.settlement_id, frame.centre, Vector2.RIGHT,
+		site.program as VillageProgram)
+	var elapsed_ms := Time.get_ticks_msec() - started_ms
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
+	return {
+		"urban": urban,
+		"ms": elapsed_ms,
+		"signature": "" if urban == null or urban.volumetric_spatial == null \
+			else urban.volumetric_spatial.deterministic_signature() \
+				.sha256_text(),
+	}
+
+
+func test_the_production_site_builds_a_maze_town_on_real_terrain() -> void:
+	## TASK D2 RULINGS 1, 3 and 5. Everything before this task solved a maze
+	## town from an AUTHORED band frame. This is the production entry point on
+	## the production settlement: the immutable heightfield sampled per
+	## cardinal placement quarter, the entrance lift measured against the real
+	## landing, and the sealed materialization contract that the streamed
+	## payload is built from.
+	##
+	## The pin cache is deliberately left pointed at the real user:// file: a
+	## maze town must build the same whatever it finds there, which is what
+	## `test_a_maze_town_round_trips_the_solution_pin_cache` proves separately.
+	var site := _production_site()
+	if site.is_empty():
+		pending(("the pinned production settlement did not load headless: " \
+			+ "SettlementPlan.site_for(%s) on world seed %d found no site, " \
+			+ "or the village program would not compile") % [
+				str(PRODUCTION_SUPER_CELL), PRODUCTION_WORLD_SEED])
+		return
+	var frame := site.frame as VillageFrame
+	assert_eq(String(frame.settlement_id), String(PRODUCTION_SETTLEMENT_ID),
+		("the pinned production site moved: this file's production " \
+			+ "assertions are about settlement %s at cell %s") % [
+				String(PRODUCTION_SETTLEMENT_ID), str(site.cell)])
+	var outcome := _solve_production(site)
+	var urban := outcome.urban as VillageUrbanFabricPlan
+	print(("MAZE_PRODUCTION settlement=%s cell=%s city_seed=%d scale=%s " \
+		+ "ms=%d accepted=%s reason=%s") % [String(frame.settlement_id),
+			str(site.cell), int(site.city_seed),
+			String(WarrenVillageScaleProfile.select(
+				int(site.city_seed)).scale_id), int(outcome.ms),
+			str(urban != null and urban.accepted),
+			String(urban.reason) if urban != null else "<null>"])
+	assert_not_null(urban,
+		"the production adapter returned nothing at all for the pinned site")
+	if urban == null:
+		return
+	assert_true(urban.accepted,
+		"the pinned production site refused to build a maze town: %s" \
+			% String(urban.reason))
+	if not urban.accepted:
+		return
+	print(("MAZE_PRODUCTION entries=%d meshes=%d lift=%.3f relief=%.3f " \
+		+ "origin=%s advisory=%s") % [urban.entries.size(),
+			urban.surface_meshes.size(), urban.terrain_entrance_lift_m,
+			urban.terrain_relief_m, str(urban.world_transform.origin),
+			str(urban.volumetric_spatial.audit.get("advisory_shortfalls", {}))])
+	assert_eq(urban.generation_kind,
+		VillageUrbanFabricPlan.GenerationKind.VOLUMETRIC_WARREN,
+		"the production site built something that is not a volumetric warren")
+	assert_not_null(urban.volumetric_spatial,
+		"the accepted production plan carries no spatial town")
+	if urban.volumetric_spatial == null:
+		return
+	assert_true(urban.volumetric_spatial.is_sealed(),
+		"the production site shipped an unsealed spatial plan")
+	assert_eq(String(urban.volumetric_spatial.audit.get(
+		"production_generation_mode", "")), String(WarrenTownSolver.MODE_MAZE),
+		"the production site did not build in maze mode")
+	assert_not_null(urban.volumetric_spatial.source_volume.mass_context.get(
+		&"maze_source_plan"),
+		"the production site built something that is not a maze town")
+	assert_false(urban.entries.is_empty(),
+		"the production town materialized no renderable entries")
+	assert_between(urban.terrain_entrance_lift_m, 0.0,
+		TraversalEnvelope.MAX_PLANNED_STEP,
+		"the production entrance lift is not a legal single planned step")
+	assert_between(urban.terrain_relief_m, 0.0,
+		VillageUrbanFabricPlan.MAX_FABRIC_TERRAIN_RELIEF,
+		"the production footprint's relief is outside the fabric budget")
+	assert_eq(int(urban.fabric_audit.get("walk_surface_component_count", -1)),
+		1, "the production town's public floor came apart into pieces")
+	assert_true(urban.validate(site.program as VillageProgram, &"village"),
+		("the production town failed the sealed materialization contract " \
+			+ "the streamed payload is built from"))
+	assert_lt(int(outcome.ms), PRODUCTION_SOLVE_MS_CEILING,
+		("the production solve has fallen back into a search: the whole " \
+			+ "maze-mode path is seconds, the searched pipeline it replaced " \
+			+ "cost 154-210 s"))
+
+
+func test_a_maze_town_round_trips_the_solution_pin_cache() -> void:
+	## TASK D2 RULING 2. `WarrenSolutionPinCache` memoizes an expensive STAGED
+	## SEARCH: which attempt, which ranked source, which partition variant
+	## sealed. One-pass maze mode has exactly one deterministic carve per town,
+	## so a pin carries no information the carve does not already reproduce.
+	##
+	## Three properties, all on the real production entry:
+	##   1. a maze solve writes NO pin (there is nothing to memo, and a pin
+	##      keyed on (seed, scale) alone would lie to the searched mode);
+	##   2. a stale legacy SUCCESS pin is consumed and ignored -- `pin_for`
+	##      hands it to `solve_pinned`, whose maze branch re-runs `_solve_maze`
+	##      and never touches the attempt frontier -- and the town is identical;
+	##   3. a stale FAILURE pin does not suppress the town. It is evidence
+	##      about a search that does not exist here, and before this task it
+	##      returned `volume_pinned_failure` without ever running the carve.
+	var site := _production_site()
+	if site.is_empty():
+		pending("the pinned production settlement did not load headless")
+		return
+	var city_seed := int(site.city_seed)
+	var scale_id := WarrenVillageScaleProfile.select(city_seed).scale_id
+	WarrenSolutionPinCache.override_path_for_tests(PIN_CACHE_TEST_PATH)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(
+		PIN_CACHE_TEST_PATH))
+	assert_true(WarrenSolutionPinCache.pin_for(city_seed, scale_id).is_empty(),
+		"the round trip must start from an empty cache")
+	var clean := _solve_production(site)
+	var baseline := String(clean.signature)
+	assert_true((clean.urban as VillageUrbanFabricPlan) != null \
+		and (clean.urban as VillageUrbanFabricPlan).accepted,
+		"the pinned production site must build with an empty pin cache")
+	assert_true(WarrenSolutionPinCache.pin_for(city_seed, scale_id).is_empty(),
+		("maze mode wrote a solution pin for a solve that has nothing to " \
+			+ "memo; a pin keyed on (seed, scale) alone would then lie to " \
+			+ "the searched mode about a search that never ran"))
+	WarrenSolutionPinCache.store_success(city_seed, scale_id,
+		LEGACY_PIN_ATTEMPT, LEGACY_PIN_SOURCE_ID, LEGACY_PIN_VARIANT)
+	var legacy := WarrenSolutionPinCache.pin_for(city_seed, scale_id)
+	assert_true(legacy.has("attempt"),
+		"the legacy pin did not store, so the round trip below is vacuous")
+	var pinned := _solve_production(site)
+	var pinned_urban := pinned.urban as VillageUrbanFabricPlan
+	print("MAZE_PRODUCTION_PIN legacy ms=%d accepted=%s signature_match=%s" % [
+		int(pinned.ms), str(pinned_urban != null and pinned_urban.accepted),
+		str(String(pinned.signature) == baseline)])
+	assert_true(pinned_urban != null and pinned_urban.accepted,
+		"a stale legacy success pin broke the maze path")
+	if pinned_urban != null and pinned_urban.accepted:
+		assert_eq(String(pinned.signature), baseline,
+			"the pinned solve built a different town from the unpinned one")
+		assert_false(pinned_urban.volumetric_spatial.audit.has(
+			"production_pin_hit"),
+			("the maze path ran the legacy attempt machinery: only " \
+				+ "`solve_pinned`'s searched branch stamps a pin hit"))
+	assert_eq(int(WarrenSolutionPinCache.pin_for(city_seed,
+		scale_id).get("attempt", -1)), LEGACY_PIN_ATTEMPT,
+		"the maze solve overwrote a searched mode's own memo")
+	WarrenSolutionPinCache.store_failure(city_seed, scale_id)
+	assert_true(bool(WarrenSolutionPinCache.pin_for(city_seed,
+		scale_id).get("failed", false)),
+		"the failure pin did not store, so the fall-through below is vacuous")
+	var after_failure := _solve_production(site)
+	var failed_urban := after_failure.urban as VillageUrbanFabricPlan
+	print("MAZE_PRODUCTION_PIN failure ms=%d accepted=%s reason=%s" % [
+		int(after_failure.ms),
+		str(failed_urban != null and failed_urban.accepted),
+		String(failed_urban.reason) if failed_urban != null else "<null>"])
+	assert_true(failed_urban != null and failed_urban.accepted,
+		("a stale FAILURE pin suppressed the maze town: it is evidence " \
+			+ "about a staged search that one-pass mode never runs, so it " \
+			+ "must fall through to the carve"))
+	if failed_urban != null and failed_urban.accepted:
+		assert_eq(String(after_failure.signature), baseline,
+			"falling through a failure pin built a different town")
+	WarrenSolutionPinCache.override_path_for_tests("")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(
+		PIN_CACHE_TEST_PATH))
