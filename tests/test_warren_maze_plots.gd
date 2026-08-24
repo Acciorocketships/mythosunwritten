@@ -2190,6 +2190,35 @@ func test_corpus_translates() -> void:
 ## one.
 const EXTERIOR_ROCK_CEILING := 0.32
 
+## TASK E4 -- the user's FIRST binding direction (2026-08-24) as a number:
+## "stone faces should concentrate toward the bottom 1-2 storeys relative to
+## ground or street level, not everywhere". The share of the town's exterior
+## stone faces standing MORE than two storeys over their own LOCAL public
+## floor (see WarrenMazeSourcePlan.exterior_stone_band_profile). This
+## REPLACES `exterior_rock_ratio` as the pinned exit metric -- the flat ratio
+## says how much skin is stone, and says nothing about where it stands, which
+## is the whole of the direction. The flat ratio stays as an audit fact and
+## keeps its own ceiling above.
+##
+## Measured on the four planner towns, 2026-08-24, on task E3b's tree:
+## 0/180, 0/137, 0/167 and 0/174 faces -- 0.0000 on all four, deepest offsets
+## -5 to -3 and highest +2 to +4 bands, so not one face of the source's own
+## derived stone stands more than two storeys over its local street. The
+## ceiling is the worst of those plus the usual 0.05 guard.
+##
+## THAT IS THE SOURCE'S HALF ONLY, and the number is 0 for a structural
+## reason, not a lucky one: `_rebuild_rock_shoulders` gives every no-plot
+## region the LOWEST floor of the plots bordering it, so derived rock is
+## stepped down to the town by construction. The stone a viewer actually sees
+## also includes retained PLOT mass the composition never roomed, which stands
+## at building heights -- that half is measured on the assembler's own shell
+## by `WarrenSpatialFabricCompiler.maze_stone_band_profile` and pinned in the
+## composition suite, where the towns are compiled. Read the two together.
+##
+## A CEILING, re-pinned DOWNWARD only: a rise past it is a regression to
+## report, never to accommodate.
+const EXTERIOR_STONE_HIGH_CEILING := 0.05
+
 ## Measured `maze_ownership_ratio` on the four planner towns, 2026-08-23 --
 ## plot-owned cells (parcels plus their back rooms) over the plan's own
 ## derived solid -- each minus a 0.05 guard, rounded down to two places:
@@ -2426,6 +2455,184 @@ func test_exterior_rock_ratio_is_pinned() -> void:
 		assert_lte(ratio, EXTERIOR_ROCK_CEILING,
 			"seed %d %s: exterior rock ratio %.4f is past its pinned ceiling" \
 				% [seed_value, scale, ratio])
+
+
+func test_nearest_datum_band_breaks_its_ties_deterministically() -> void:
+	## TASK E4 ruling 1's tie-break, stated on the pure function that owns it,
+	## so the rule is falsifiable without a town standing around it.
+	## `candidates` is {public floor band: the SMALLEST column distance that
+	## band stands at}; the answer is the datum nearest in three dimensions
+	## (column distance plus band difference), ties to the nearer COLUMN, and
+	## a remaining tie to the LOWER band.
+	assert_eq(WarrenMazeSourcePlan.nearest_datum_band({}, 7, 3), 3,
+		"a neighbourhood with no public floor answers the fallback ground")
+	assert_eq(WarrenMazeSourcePlan.nearest_datum_band({4: 1}, 9, 0), 4,
+		"one candidate is the answer however far above it the face stands")
+	# A face at band 9 between a street at band 4 one column away (3D distance
+	# 1 + 5 = 6) and a street at band 10 three columns away (3 + 1 = 4): the
+	# upper terrace's street is nearer, so the stone under it reads as ONE
+	# BAND BELOW street level rather than five bands above the street at the
+	# bottom of the hill. This is the whole reason the datum is local.
+	assert_eq(WarrenMazeSourcePlan.nearest_datum_band({4: 1, 10: 3}, 9, 0), 10,
+		"an upper terrace's street is the datum for the stone beneath it")
+	# Equal 3D distance (1 + 4 and 2 + 3): the nearer COLUMN wins, because
+	# that is the street this face actually fronts.
+	assert_eq(WarrenMazeSourcePlan.nearest_datum_band({5: 1, 12: 2}, 9, 0), 5,
+		"an equally-near datum in a nearer column wins")
+	# Equal 3D distance AND equal column distance: the LOWER band wins, so a
+	# tie can never flatter the metric by reading the face against the higher
+	# of two equally-near floors.
+	assert_eq(WarrenMazeSourcePlan.nearest_datum_band({7: 2, 11: 2}, 9, 0), 7,
+		"a full tie resolves DOWNWARD, never to the flattering datum")
+
+
+func test_local_public_datum_is_the_nearest_street_in_range() -> void:
+	## TASK E4 ruling 1: the datum a stone face is read against is the nearest
+	## street or deck floor within PUBLIC_DATUM_RADIUS columns, and the
+	## column's own terrain where none is in range. Falsified against
+	## `passage_cells` and the deck plots DIRECTLY rather than against the
+	## plan's own per-column bookkeeping, on a deterministic column sample.
+	const SAMPLE_COLUMNS := 40
+	for spec: Dictionary in PLANNER_SEEDS:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var plan := _sealed_town(seed_value, scale)
+		assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+		if plan == null:
+			continue
+		for cell: Vector3i in plan.passage_cells():
+			assert_eq(plan.local_public_datum(Vector2i(cell.x, cell.z), cell.y),
+				cell.y, ("seed %d %s: a street is its own column's datum at " \
+					+ "its own band") % [seed_value, scale])
+		assert_eq(plan.local_public_datum(Vector2i(1 << 20, 1 << 20), 5), 0,
+			"a column outside the massif has neither street nor ground")
+		var datums: Array[Vector3i] = []
+		datums.append_array(plan.passage_cells())
+		for plot: Dictionary in plan.plots:
+			if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_DECK:
+				continue
+			for cell_value: Variant in plot["cells"] as Array:
+				var column := cell_value as Vector2i
+				datums.append(Vector3i(column.x, int(plot["floor"]), column.y))
+		var columns := _sorted_columns(plan)
+		for index in mini(SAMPLE_COLUMNS, columns.size()):
+			var column := columns[index]
+			var ground := plan.massif.base_at(column)
+			for band in [ground, ground + 4, ground + 9]:
+				var best := Vector3i(1 << 20, 1 << 20, ground)
+				for datum: Vector3i in datums:
+					var distance := absi(datum.x - column.x) \
+						+ absi(datum.z - column.y)
+					if distance > WarrenMazeSourcePlan.PUBLIC_DATUM_RADIUS:
+						continue
+					var score := Vector3i(distance + absi(band - datum.y),
+						distance, datum.y)
+					if score.x < best.x or score.x == best.x \
+							and (score.y < best.y \
+								or score.y == best.y and score.z < best.z):
+						best = score
+				var expected := ground if best.x == 1 << 20 else best.z
+				assert_eq(plan.local_public_datum(column, band), expected,
+					("seed %d %s: column %s band %d reads its nearest " \
+						+ "public floor") % [seed_value, scale, column, band])
+
+
+func test_exterior_stone_band_profile_is_pinned() -> void:
+	## TASK E4 ruling 1 -- Phase E's exit metric, and the user's first binding
+	## direction as a number. Every exterior face of the town's derived STONE
+	## (four sides and two caps, the shell `SettlementFabricAssembler` skins)
+	## is placed against its own LOCAL public floor, and the pinned share is
+	## the one standing more than two storeys over it. Every count is
+	## re-derived here off `solid_at`, `plots` and `local_public_datum`
+	## directly, so the number the plan audits is falsified rather than
+	## trusted, and the whole per-band histogram is printed per town.
+	var worst := 0.0
+	for spec: Dictionary in PLANNER_SEEDS:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var plan := _sealed_town(seed_value, scale)
+		assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+		if plan == null:
+			continue
+		var measured := plan.exterior_stone_band_profile()
+		assert_eq(str(plan.audit.get("exterior_stone_band_profile", {})),
+			str(measured), "seal audits exactly what the accessor derives")
+		var faces := 0
+		var high := 0
+		var histogram: Dictionary = {}
+		var raised: Dictionary = {}
+		for column: Vector2i in plan.raised_shoulder_columns():
+			raised[column] = true
+		var raised_high := 0
+		for column: Vector2i in _sorted_columns(plan):
+			for band in range(plan.massif.base_at(column),
+					plan.column_ceiling(column)):
+				var cell := Vector3i(column.x, band, column.y)
+				if not plan.solid_at(cell):
+					continue
+				var owned := false
+				for plot: Dictionary in plan.plots:
+					if not (plot["cells"] as Array).has(column):
+						continue
+					if band >= int(plot["floor"]) and band < int(plot["top"]):
+						owned = true
+						break
+				if owned:
+					continue
+				var datum := plan.local_public_datum(column, band)
+				var offset := band - datum
+				for direction: Vector3i in \
+						WarrenMazeSourcePlan.STONE_FACE_OFFSETS:
+					var neighbour := cell + direction
+					if plan.solid_at(neighbour):
+						continue
+					# The street's own planked floor closes the top of the
+					# stone slab it walks on, exactly as the assembler's
+					# `paved` exception does.
+					if direction == Vector3i.UP \
+							and plan.passage_kinds.has(neighbour):
+						continue
+					faces += 1
+					histogram[offset] = int(histogram.get(offset, 0)) + 1
+					high += int(offset > WarrenMazeSourcePlan.LOW_STONE_BANDS)
+					raised_high += int(offset \
+						> WarrenMazeSourcePlan.LOW_STONE_BANDS \
+						and raised.has(column))
+		assert_eq(int(measured["faces"]), faces,
+			"seed %d %s: exterior stone face count" % [seed_value, scale])
+		assert_eq(int(measured["high_faces"]), high,
+			"seed %d %s: faces above two storeys" % [seed_value, scale])
+		assert_eq(int(measured["raised_shoulder_high_faces"]), raised_high,
+			"seed %d %s: high faces on raised-shoulder columns" % [seed_value,
+				scale])
+		assert_gt(faces, 0,
+			"seed %d %s has a stone shell to measure" % [seed_value, scale])
+		var offsets: Array = histogram.keys()
+		offsets.sort()
+		var rebuilt: Dictionary = {}
+		for offset_value: Variant in offsets:
+			rebuilt[int(offset_value)] = int(histogram[offset_value])
+		assert_eq(str(measured["band_histogram"]), str(rebuilt),
+			"seed %d %s: per-band histogram" % [seed_value, scale])
+		var ratio := float(measured["high_face_ratio"])
+		worst = maxf(worst, ratio)
+		gut.p(("seed %d %s: stone faces %d, above 2 storeys %d = %.4f " \
+			+ "(ceiling %.2f), of those %d on raised shoulders; %d faces " \
+			+ "read against bare ground, deepest %d, highest %d") % [
+				seed_value, scale, faces, high, ratio,
+				EXTERIOR_STONE_HIGH_CEILING, raised_high,
+				int(measured["grounded_faces"]), int(measured["min_offset"]),
+				int(measured["max_offset"])])
+		gut.p("seed %d %s: per-band histogram %s" % [seed_value, scale,
+			str(measured["band_histogram"])])
+		gut.p("seed %d %s: per-storey histogram %s" % [seed_value, scale,
+			str(measured["storey_histogram"])])
+		assert_lte(ratio, EXTERIOR_STONE_HIGH_CEILING,
+			("seed %d %s: %.4f of the stone shell stands more than two " \
+				+ "storeys over its local street, past the pinned ceiling") \
+				% [seed_value, scale, ratio])
+	gut.p("worst planner town: %.4f (ceiling %.2f)" % [worst,
+		EXTERIOR_STONE_HIGH_CEILING])
 
 
 func test_ownership_is_pinned_on_the_planner_seeds() -> void:

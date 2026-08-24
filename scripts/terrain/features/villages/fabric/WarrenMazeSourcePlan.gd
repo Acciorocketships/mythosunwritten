@@ -44,6 +44,40 @@ const PLOT_KINDS: Array[StringName] = [
 ## the codebase: WarrenPlotPlanner and WarrenBuildingParcel both read it here.
 const TUNNEL_ROOF_BANDS := 1
 
+## TASK E4 -- the user's FIRST binding direction (2026-08-24): "stone faces
+## should concentrate toward the bottom 1-2 storeys relative to ground or
+## street level, not everywhere". Two storeys is the allowance, and a storey
+## is WarrenBuildingParcel's own two bands, so a stone face standing more than
+## LOW_STONE_BANDS over the public floor it is read against is the thing the
+## direction is against. See exterior_stone_band_profile.
+const LOW_STONE_STOREYS := 2
+const LOW_STONE_BANDS := LOW_STONE_STOREYS * WarrenBuildingParcel.STOREY_BANDS
+
+## How far a stone face may look for the public floor it is read against, in
+## columns of MANHATTAN distance -- the lattice's own metric, the one
+## WarrenPassageLatticeRules.DIRECTIONS walks.
+##
+## THREE, argued from the town rather than picked: `block_thickness` tops out
+## at 4 columns on all 24 towns of the seed corpus (measured 2026-08-24 --
+## every histogram is {2: 64-77, 3: 34-48, 4: 1}), so the deepest interior
+## column of the thickest block this generator builds stands 2 columns from
+## the street bounding it, and 3 leaves a whole column of slack. It is also
+## small enough that no face is ever read against a street on the far side of
+## the town: 3 columns is 9 m at the macro cell, roughly one building. Beyond
+## the radius a face falls back to its own column's terrain -- the "ground
+## level" half of the direction.
+const PUBLIC_DATUM_RADIUS := 3
+
+## The six faces of a stone cell, in `SettlementFabricAssembler.
+## STONE_FACE_DIRECTIONS` order: four sides, then the sky-facing cap and the
+## floor-facing one (the roof of a bored passage). Stated here rather than
+## imported because the fabric layer is downstream of this file and a source
+## plan may not reach into it; the assembler's own header is the reason there
+## are six and not four, and the two lists must stay in the same order so a
+## face index means the same thing in both.
+const STONE_FACE_OFFSETS: Array[Vector3i] = [Vector3i.LEFT, Vector3i.RIGHT,
+	Vector3i.FORWARD, Vector3i.BACK, Vector3i.UP, Vector3i.DOWN]
+
 var world_seed: int
 var scale_profile: WarrenVillageScaleProfile
 var massif: WarrenMassif
@@ -189,6 +223,10 @@ func seal() -> bool:
 	# checks, which is what builds the sealed rock shoulders they read.
 	audit["street_floor_gaps"] = _street_floor_gaps()
 	audit["exterior_rock_ratio"] = exterior_rock_ratio()
+	# TASK E4 ruling 1. The flat ratio above stays an audit fact; THIS is the
+	# pinned exit metric, and the only one of the two that can see where the
+	# stone stands.
+	audit["exterior_stone_band_profile"] = exterior_stone_band_profile()
 	_sealed = true
 	return true
 
@@ -517,12 +555,7 @@ func exterior_rock_ratio() -> Dictionary:
 			if not exposed:
 				continue
 			exterior_cells += 1
-			var in_plot := false
-			for index: int in _plot_columns.get(column, []) as Array:
-				var plot := plots[index] as Dictionary
-				if band >= int(plot["floor"]) and band < int(plot["top"]):
-					in_plot = true
-					break
+			var in_plot := _band_in_plot(column, band)
 			plot_cells += int(in_plot)
 			rock_cells += int(not in_plot)
 	return {
@@ -531,6 +564,271 @@ func exterior_rock_ratio() -> Dictionary:
 		"plot_cells": plot_cells,
 		"ratio": float(rock_cells) / float(maxi(1, exterior_cells)),
 	}
+
+
+## PHASE E's exit metric, and the user's first binding direction (2026-08-24)
+## as a number: stone belongs in the bottom one or two storeys of whatever
+## stands beside it, "not everywhere". `exterior_rock_ratio` above says how
+## MUCH of the skin is stone and says nothing at all about WHERE it stands, so
+## it cannot see the difference between a coursed retaining base under every
+## street and the same tonnage piled six storeys up as bare mountain. This
+## does, and it replaces the flat ratio as the pinned exit metric; the flat
+## ratio stays an audit fact beside it.
+##
+## THE FACES. Every exterior face of derived STONE -- a solid cell in the
+## massif's own band range that no plot claims -- taken over
+## STONE_FACE_OFFSETS, so four sides and two caps, exactly the shell
+## `SettlementFabricAssembler.exposed_maze_stone_faces` skins downstream. A
+## face is exterior when the neighbour across it is not solid. The ONE
+## exception mirrors the assembler's own: a sky-facing cap under a passage
+## walk cell is the street's planked floor, which draws itself, so it is no
+## more part of the stone skin here than it is there. Counting FACES rather
+## than cells is what makes a four-sided tower of rock cost four times a
+## retaining course of the same height.
+##
+## THE DATUM. Each face is placed against `local_public_datum` for its own
+## column and band -- the nearest street or deck floor within
+## PUBLIC_DATUM_RADIUS columns, or its own terrain where none is in range --
+## and its band offset is `band - datum`. Local, because a terraced town has
+## no single ground: the retaining bank under an upper street is LOW stone
+## even where it stands eight bands over the market, and reading the whole
+## town against one datum would count the terracing task E3 shipped as a
+## defect.
+##
+## `{faces, low_faces, high_faces, high_face_ratio, band_histogram,
+## storey_histogram, grounded_faces, raised_shoulder_faces,
+## raised_shoulder_high_faces, min_offset, max_offset}`, with
+## `high_face_ratio = high/faces` the pinned number (0.0 for a town with no
+## stone skin at all) and `high` meaning `offset > LOW_STONE_BANDS`. Both
+## histograms are keyed in ascending order, so `str()` of one is a stable
+## printable record. `raised_shoulder_high_faces` is task E4 ruling 2's own
+## measurement: how much of the high stone stands on a column whose sealed
+## shoulder grew ABOVE its massif envelope (`raised_shoulder_columns`).
+##
+## Seal records the whole dictionary under
+## `audit["exterior_stone_band_profile"]`. Like the flat ratio, it is only
+## worth measuring once the sealed rock shoulders exist.
+func exterior_stone_band_profile() -> Dictionary:
+	var faces := 0
+	var high_faces := 0
+	var grounded_faces := 0
+	var raised_faces := 0
+	var raised_high_faces := 0
+	var min_offset := 0
+	var max_offset := 0
+	var band_counts: Dictionary = {}
+	var storey_counts: Dictionary = {}
+	if massif == null:
+		return _stone_band_profile(faces, high_faces, grounded_faces,
+			raised_faces, raised_high_faces, min_offset, max_offset,
+			band_counts, storey_counts)
+	var datums := _public_datum_columns()
+	var raised: Dictionary = {}
+	for column: Vector2i in raised_shoulder_columns():
+		raised[column] = true
+	var columns: Array[Vector2i] = []
+	columns.assign(massif.columns.keys())
+	columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
+	for column: Vector2i in columns:
+		var ground := massif.base_at(column)
+		var candidates := _datum_candidates(column, datums)
+		var on_raised_shoulder := raised.has(column)
+		for band in range(ground, column_ceiling(column)):
+			var cell := Vector3i(column.x, band, column.y)
+			if not solid_at(cell) or _band_in_plot(column, band):
+				continue
+			var offset := band - nearest_datum_band(candidates, band, ground)
+			var storey := 0 if offset <= 0 \
+				else (offset + WarrenBuildingParcel.STOREY_BANDS - 1) \
+					/ WarrenBuildingParcel.STOREY_BANDS
+			for direction: Vector3i in STONE_FACE_OFFSETS:
+				var neighbor := cell + direction
+				if solid_at(neighbor):
+					continue
+				if direction == Vector3i.UP and passage_kinds.has(neighbor):
+					continue
+				var high := int(offset > LOW_STONE_BANDS)
+				min_offset = offset if faces == 0 else mini(min_offset, offset)
+				max_offset = offset if faces == 0 else maxi(max_offset, offset)
+				faces += 1
+				high_faces += high
+				grounded_faces += int(candidates.is_empty())
+				raised_faces += int(on_raised_shoulder)
+				raised_high_faces += high * int(on_raised_shoulder)
+				band_counts[offset] = int(band_counts.get(offset, 0)) + 1
+				storey_counts[storey] = int(storey_counts.get(storey, 0)) + 1
+	return _stone_band_profile(faces, high_faces, grounded_faces, raised_faces,
+		raised_high_faces, min_offset, max_offset, band_counts, storey_counts)
+
+
+## The band a stone face at `column`/`band` is read against: the NEAREST
+## street or deck floor within PUBLIC_DATUM_RADIUS columns, and this column's
+## own terrain (`massif.base_at`) where no public floor is in range -- "ground
+## or street level", the user's own phrase, decided per face.
+##
+## The datums are the plot layer's public floors: every passage cell's own
+## walk band, and every DECK plot's floor. A BRIDGE's floor is deliberately
+## not one -- it stands on a street's headroom top, so the street beneath it
+## already supplies a datum in the same column, and admitting the higher one
+## would only raise the local ground and flatter the metric.
+##
+## Nearest means nearest in THREE dimensions -- column distance plus band
+## difference -- so the stone under an upper terrace's street is read against
+## that street rather than against the market at the bottom of the hill. See
+## `nearest_datum_band` for the tie-breaks.
+##
+## Zero for a column outside the massif, which has neither street nor ground.
+## O(the radius disc) per call: `exterior_stone_band_profile` builds one
+## candidate map per column and reuses it down the whole column, and this is
+## the single-query form the tests falsify that map against.
+func local_public_datum(column: Vector2i, band: int) -> int:
+	if massif == null or not massif.has_column(column):
+		return 0
+	return nearest_datum_band(public_datum_candidates(column), band,
+		massif.base_at(column))
+
+
+## The {public floor band: smallest column distance} map ONE column answers
+## with -- what `local_public_datum` hands `nearest_datum_band` -- exposed so
+## a consumer measuring many bands on the same column pays the radius disc
+## once per column rather than once per face. The fabric layer's own stone
+## shell (`WarrenSpatialFabricCompiler._maze_stone_skin_audit`) reads it that
+## way, over thousands of fine faces on a few hundred columns.
+##
+## Empty outside the massif. Feed the answer to `nearest_datum_band` with
+## `massif.base_at(column)` as the fallback and it is `local_public_datum` by
+## construction, so the per-face and per-column forms cannot disagree.
+func public_datum_candidates(column: Vector2i) -> Dictionary:
+	if massif == null or not massif.has_column(column):
+		return {}
+	return _datum_candidates(column, _public_datum_columns())
+
+
+## The datum band nearest to `band`, given `candidates` as {public floor band:
+## the SMALLEST column distance that band stands at}, and `fallback` where the
+## neighbourhood carries no public floor at all.
+##
+## Nearest in three dimensions: `distance + |band - candidate|`. Two
+## deterministic tie-breaks, in order:
+##
+##   1. the nearer COLUMN, because that is the street this face fronts;
+##   2. the LOWER band, so a tie can never flatter the measurement by reading
+##      a face against the higher of two equally-near floors.
+##
+## Pure, static and order-free -- the key sweep is sorted and only a STRICT
+## improvement replaces, so tie-break 2 holds by construction.
+static func nearest_datum_band(candidates: Dictionary, band: int,
+		fallback: int) -> int:
+	if candidates.is_empty():
+		return fallback
+	var bands: Array = candidates.keys()
+	bands.sort()
+	var best := int(bands[0])
+	var best_distance := int(candidates[best])
+	var best_score := best_distance + absi(band - best)
+	for index in range(1, bands.size()):
+		var candidate := int(bands[index])
+		var distance := int(candidates[candidate])
+		var score := distance + absi(band - candidate)
+		if score < best_score \
+				or score == best_score and distance < best_distance:
+			best = candidate
+			best_distance = distance
+			best_score = score
+	return best
+
+
+func _stone_band_profile(faces: int, high_faces: int, grounded_faces: int,
+		raised_faces: int, raised_high_faces: int, min_offset: int,
+		max_offset: int, band_counts: Dictionary,
+		storey_counts: Dictionary) -> Dictionary:
+	## The profile's one exit, so a town with no massif and a measured one are
+	## shaped identically. Both histograms are re-keyed in ascending order
+	## here: the walk above visits offsets in whatever order the columns
+	## happen to expose them, and a printed histogram that reads low-to-high
+	## is worth the second pass.
+	return {
+		"faces": faces,
+		"low_faces": faces - high_faces,
+		"high_faces": high_faces,
+		"high_face_ratio": float(high_faces) / float(maxi(1, faces)),
+		"band_histogram": ascending_histogram(band_counts),
+		"storey_histogram": ascending_histogram(storey_counts),
+		"grounded_faces": grounded_faces,
+		"raised_shoulder_faces": raised_faces,
+		"raised_shoulder_high_faces": raised_high_faces,
+		"min_offset": min_offset,
+		"max_offset": max_offset,
+	}
+
+
+## An int-keyed count map re-keyed in ASCENDING order, so `str()` of it is a
+## histogram a reader can read and a test can compare. Shared with the fabric
+## layer's own stone profile
+## (`WarrenSpatialFabricCompiler.maze_stone_band_profile`), which must print
+## its histograms in the same shape as this file's to be comparable with them.
+static func ascending_histogram(counts: Dictionary) -> Dictionary:
+	var keys: Array = counts.keys()
+	keys.sort()
+	var out: Dictionary = {}
+	for key: Variant in keys:
+		out[int(key)] = int(counts[key])
+	return out
+
+
+func _band_in_plot(column: Vector2i, band: int) -> bool:
+	## Is this band inside a plot standing on this column -- building rather
+	## than derived stone? The ONE reading both skin metrics share, so "how
+	## much of the skin is rock" and "how high does the rock stand" can never
+	## disagree about what a rock cell is.
+	for index: int in _plot_columns.get(column, []) as Array:
+		var plot := plots[index] as Dictionary
+		if band >= int(plot["floor"]) and band < int(plot["top"]):
+			return true
+	return false
+
+
+func _public_datum_columns() -> Dictionary:
+	## Vector2i column -> {public floor band: true}: every passage cell's own
+	## walk band, and every DECK plot's floor. See `local_public_datum` for
+	## why a bridge's floor is not one of them.
+	var out: Dictionary = {}
+	for cell: Vector3i in passage_kinds.keys():
+		var column := Vector2i(cell.x, cell.z)
+		var bands: Dictionary = out.get(column, {})
+		bands[cell.y] = true
+		out[column] = bands
+	for plot: Dictionary in plots:
+		if StringName(plot["kind"]) != PLOT_DECK:
+			continue
+		var floor_band := int(plot["floor"])
+		for cell_value: Variant in plot["cells"] as Array:
+			var deck_column := cell_value as Vector2i
+			var deck_bands: Dictionary = out.get(deck_column, {})
+			deck_bands[floor_band] = true
+			out[deck_column] = deck_bands
+	return out
+
+
+func _datum_candidates(column: Vector2i, datums: Dictionary) -> Dictionary:
+	## {public floor band: the smallest column distance it stands at} over the
+	## PUBLIC_DATUM_RADIUS-column Manhattan disc around `column` -- one
+	## column's whole answer to `nearest_datum_band`, however many bands are
+	## measured against it.
+	var out: Dictionary = {}
+	for offset_x in range(-PUBLIC_DATUM_RADIUS, PUBLIC_DATUM_RADIUS + 1):
+		var span := PUBLIC_DATUM_RADIUS - absi(offset_x)
+		for offset_z in range(-span, span + 1):
+			var neighbor: Variant = datums.get(column
+				+ Vector2i(offset_x, offset_z))
+			if neighbor == null:
+				continue
+			var distance := absi(offset_x) + absi(offset_z)
+			for band_value: Variant in (neighbor as Dictionary).keys():
+				var band := int(band_value)
+				if not out.has(band) or distance < int(out[band]):
+					out[band] = distance
+	return out
 
 
 func _first_carved_band(column: Vector2i, from_band: int,

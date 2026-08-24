@@ -3608,6 +3608,124 @@ func test_retained_stone_is_skinned() -> void:
 				% _label(outcome))
 
 
+## TASK E4 ruling 1 -- the user's FIRST binding direction (2026-08-24) on the
+## shell the renderer is really handed: "stone faces should concentrate toward
+## the bottom 1-2 storeys relative to ground or street level, not everywhere".
+## The share of `exposed_maze_stone_faces` standing more than two storeys over
+## their own LOCAL public floor (`WarrenMazeSourcePlan.local_public_datum`).
+##
+## Measured 2026-08-24 on task E3b's tree: seed 12/compact 54/1463 = 0.0369,
+## seed 4/compact 83/1151 = 0.0721, seed 3/standard 415/1653 = 0.2511,
+## seed 9/standard 240/1646 = 0.1458. The ceiling is the worst plus a 0.05
+## guard, rounded up to two places.
+##
+## THE COMPANION FACT, and the one worth acting on: on all four towns EVERY
+## high face stands on retained PLOT mass -- a building the composition never
+## roomed -- and not one on the source's own derived rock. The mountain is
+## already low; the stone that is not is a quarry block where a house was
+## planned, whose own ceiling is UNROOMED_PLOT_MASS_CEILING above.
+##
+## A CEILING, re-pinned DOWNWARD only: a rise past it is a regression to
+## report, never to accommodate.
+const MAZE_STONE_HIGH_FACE_CEILING := 0.31
+
+
+func test_retained_stone_concentrates_in_the_bottom_storeys() -> void:
+	## Every count is re-derived here off the shell `_exposed_stone_faces`
+	## already builds from the sealed plan alone, plus the source plan's own
+	## datum rule, so the profile the compiler audits is falsified rather than
+	## trusted -- and the whole per-band histogram is printed per town.
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		assert_not_null(fabric,
+			"%s must carry its compiled fabric" % _label(outcome))
+		if fabric == null:
+			continue
+		var maze_source := plan.source_volume.mass_context.get(
+			&"maze_source_plan") as WarrenMazeSourcePlan
+		assert_not_null(maze_source,
+			"%s must carry its maze source plan" % _label(outcome))
+		if maze_source == null:
+			continue
+		var faces := 0
+		var high := 0
+		var on_plot_mass := 0
+		var on_raised_shoulder := 0
+		var histogram: Dictionary = {}
+		var raised: Dictionary = {}
+		for column: Vector2i in maze_source.raised_shoulder_columns():
+			raised[column] = true
+		for key_value: Variant in _exposed_stone_faces(fabric).keys():
+			var key := key_value as Vector4i
+			var column := Vector2i(_macro_coordinate(key.x),
+				_macro_coordinate(key.z))
+			if not maze_source.massif.has_column(column):
+				continue
+			var offset := key.y - maze_source.local_public_datum(column, key.y)
+			var is_high := int(offset > WarrenMazeSourcePlan.LOW_STONE_BANDS)
+			var claimed := false
+			for plot: Dictionary in maze_source.plots:
+				if not (plot["cells"] as Array).has(column):
+					continue
+				if key.y >= int(plot["floor"]) and key.y < int(plot["top"]):
+					claimed = true
+					break
+			faces += 1
+			high += is_high
+			on_plot_mass += is_high * int(claimed)
+			on_raised_shoulder += is_high * int(raised.has(column))
+			histogram[offset] = int(histogram.get(offset, 0)) + 1
+		var audited_faces := int(fabric.audit.get(
+			"maze_stone_profiled_face_count", -1))
+		var audited_high := int(fabric.audit.get(
+			"maze_stone_high_face_count", -1))
+		var ratio := float(fabric.audit.get("maze_stone_high_face_ratio", 1.0))
+		print(("MAZE_STONE_BANDS %s faces=%d high=%d ratio=%.4f " \
+			+ "(ceiling %.2f) plot_mass_high=%d raised_shoulder_high=%d " \
+			+ "min=%d max=%d") % [_label(outcome), audited_faces,
+				audited_high, ratio, MAZE_STONE_HIGH_FACE_CEILING,
+				int(fabric.audit.get("maze_stone_plot_mass_high_face_count",
+					-1)),
+				int(fabric.audit.get(
+					"maze_stone_raised_shoulder_high_face_count", -1)),
+				int(fabric.audit.get("maze_stone_min_band_offset", 0)),
+				int(fabric.audit.get("maze_stone_max_band_offset", 0))])
+		print("MAZE_STONE_BANDS %s per-band %s" % [_label(outcome),
+			str(fabric.audit.get("maze_stone_band_histogram", {}))])
+		print("MAZE_STONE_BANDS %s per-storey %s" % [_label(outcome),
+			str(fabric.audit.get("maze_stone_storey_histogram", {}))])
+		assert_gt(faces, 0,
+			"%s must expose a stone shell to profile" % _label(outcome))
+		assert_eq(audited_faces, faces,
+			"%s profiled face count" % _label(outcome))
+		assert_eq(audited_high, high,
+			"%s faces above two storeys" % _label(outcome))
+		assert_eq(int(fabric.audit.get("maze_stone_plot_mass_high_face_count",
+			-1)), on_plot_mass,
+			"%s high faces standing on plot mass" % _label(outcome))
+		assert_eq(int(fabric.audit.get(
+			"maze_stone_raised_shoulder_high_face_count", -1)),
+			on_raised_shoulder,
+			"%s high faces on raised-shoulder columns" % _label(outcome))
+		assert_eq(str(fabric.audit.get("maze_stone_band_histogram", {})),
+			str(WarrenMazeSourcePlan.ascending_histogram(histogram)),
+			"%s per-band histogram" % _label(outcome))
+		assert_lte(ratio, MAZE_STONE_HIGH_FACE_CEILING,
+			("%s: %.4f of the rendered stone shell stands more than two " \
+				+ "storeys over its local street, past the pinned ceiling") \
+				% [_label(outcome), ratio])
+
+
+func _macro_coordinate(fine: int) -> int:
+	## The macro column coordinate a fine x or z belongs to -- FLOOR division,
+	## because `_fine_square` maps macro -3 onto fine -6 and -5 and GDScript's
+	## `-5 / 2` truncates to -2.
+	return (fine - posmod(fine, 2)) / 2
+
+
 func _asset_plot_records(world_seed: int, scale_id: StringName) -> Array:
 	## The planner's own asset outcomes, straight off a fresh source plan.
 	var maze := _planned_maze_source(world_seed, scale_id)

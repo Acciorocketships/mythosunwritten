@@ -317,7 +317,7 @@ func _record_metrics(city_seed: int, state: StringName,
 		carved: WarrenMazeSourcePlan) -> Dictionary:
 	var facts := {"plots": 0, "houses": 0, "assets": 0, "decks": 0,
 		"bridges": 0, "tiered": 0, "exterior_rock": -1.0, "coverage": -1.0,
-		"ownership": -1.0}
+		"ownership": -1.0, "stone_high": -1.0}
 	if plan != null:
 		for plot: Dictionary in plan.plots:
 			facts.plots += 1
@@ -331,13 +331,22 @@ func _record_metrics(city_seed: int, state: StringName,
 		if skin.is_empty():
 			skin = plan.exterior_rock_ratio()
 		facts.exterior_rock = float(skin.get("ratio", 0.0))
+		# TASK E4 ruling 1's source half, baked into the frame beside the flat
+		# ratio: the share of this state's exterior stone faces standing more
+		# than two storeys over their own local street or ground.
+		var bands: Dictionary = plan.audit.get(
+			"exterior_stone_band_profile", {}) as Dictionary
+		if bands.is_empty():
+			bands = plan.exterior_stone_band_profile()
+		facts.stone_high = float(bands.get("high_face_ratio", 0.0))
 		if state != &"bore" and state != &"tunnel":
 			facts.coverage = _fronting_coverage(carved, plan)
 		if state == &"final":
 			facts.ownership = _translated_ownership(plan)
 	var row := facts.duplicate()
 	row["scale"] = String(profile.scale_id)
-	for key: String in ["exterior_rock", "coverage", "ownership"]:
+	for key: String in ["exterior_rock", "coverage", "ownership",
+			"stone_high"]:
 		if float(row[key]) < 0.0:
 			row[key] = null
 	var by_state: Dictionary = _metrics.get(str(city_seed), {})
@@ -423,6 +432,7 @@ func _build_legend(root: Node3D, city_seed: int,
 		"exterior rock %s  coverage %s  ownership %s" % [
 			_ratio_text(facts.exterior_rock), _ratio_text(facts.coverage),
 			_ratio_text(facts.ownership)],
+		"stone above 2 storeys %s" % _ratio_text(facts.stone_high),
 		"%s rock  %s plot  %s passage  %s deck" % [_swatch(ROCK),
 			_swatch(PLOT_SHADES[4]), _swatch(PASSAGE), _swatch(DECK)],
 	]))

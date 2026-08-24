@@ -168,7 +168,15 @@ static func solve(source: WarrenSpatialPlan,
 		last_failure = "spatial exterior-air proof failed: %s" % \
 			FabricVolumeClassifier.last_failure
 		return null
-	var stone_audit := _maze_stone_skin_audit(result)
+	# TASK E4 ruling 1. `source_volume` is optional on a spatial plan (see
+	# WarrenSpatialPlan._source_route_lineage_audit), so the maze source is
+	# resolved defensively: without one the band profile below is all zeroes,
+	# exactly as it is for every legacy town.
+	var maze_source: WarrenMazeSourcePlan = null \
+		if source.source_volume == null \
+		else source.source_volume.mass_context.get(&"maze_source_plan") \
+			as WarrenMazeSourcePlan
+	var stone_audit := _maze_stone_skin_audit(result, maze_source)
 	if int(stone_audit.get("maze_stone_missing_face_count", 0)) > 0 \
 			or int(stone_audit.get("maze_stone_doubled_cap_count", 0)) > 0:
 		last_failure = "retained maze stone is not fully skinned: %s" % \
@@ -649,7 +657,8 @@ static func _maze_terrace_audit(plan: SettlementFabricPlan,
 	}
 
 
-static func _maze_stone_skin_audit(plan: SettlementFabricPlan) -> Dictionary:
+static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
+		maze_source: WarrenMazeSourcePlan = null) -> Dictionary:
 	## TASK C5b RULING 2 -- the skin is an IDENTITY, not a hope. The face rule
 	## and the payload are both the assembler's, so this audit states that the
 	## panels it emitted really COVER the shell it derived: every exposed face
@@ -669,7 +678,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan) -> Dictionary:
 	## covers the band beneath it -- so the gate in `solve` bites if the
 	## assembler's coursing or pairing ever leaves the mountain open.
 	if plan == null:
-		return {"maze_stone_cell_count": 0,
+		var empty := {"maze_stone_cell_count": 0,
 			"maze_stone_exposed_face_count": 0,
 			"maze_stone_expected_face_count": 0,
 			"maze_stone_rendered_face_count": 0,
@@ -681,6 +690,8 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan) -> Dictionary:
 			"maze_stone_bottom_slab_count": 0,
 			"maze_stone_faces_suppressed_by_paving": 0,
 			"maze_stone_faces_deferred_to_plinth": 0}
+		empty.merge(maze_stone_band_profile({}, null), true)
+		return empty
 	var retained := plan.retained_terrace_cells
 	var stone := SettlementFabricAssembler.maze_stone_cells(retained)
 	var solids := plan.transformed_cells(&"solid")
@@ -749,7 +760,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan) -> Dictionary:
 		missing_face_count += 1
 	var rendered := SettlementFabricAssembler.maze_stone_walls(retained,
 		solids, paved, plinths)
-	return {
+	var out := {
 		"maze_stone_cell_count": stone.size(),
 		"maze_stone_exposed_face_count": exposed.size(),
 		"maze_stone_expected_face_count": faces.size(),
@@ -763,6 +774,126 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan) -> Dictionary:
 		"maze_stone_faces_suppressed_by_paving": suppressed_by_paving,
 		"maze_stone_faces_deferred_to_plinth": deferred_to_plinth,
 	}
+	out.merge(maze_stone_band_profile(exposed, maze_source), true)
+	return out
+
+
+## TASK E4 ruling 1 -- the user's first binding direction measured on the
+## RENDERED shell rather than on the source's own derivation of it.
+##
+## `WarrenMazeSourcePlan.exterior_stone_band_profile` measures the source's
+## DERIVED rock: solid the plot layer gave to nobody. That is only half of
+## what a viewer calls stone. `WarrenVolumetricSolver._retain_maze_rock`
+## retains three more things as the same masonry -- a plot's roof band, the
+## span of a released bridge, and above all UNROOMED PLOT MASS, the building
+## the composition never managed to room (its own ceiling lives in the
+## composition suite) -- and every one of those stands at PLOT heights, which
+## is exactly where high stone would show. So the profile is measured a
+## second time here, over `exposed_maze_stone_faces`, which is the shell the
+## assembler really skins.
+##
+## Same datum rule, same threshold, same histogram shape as the source's, so
+## the two numbers are directly comparable; a fine cell's band IS its macro
+## band (`_fine_square` halves x and z only), and its column is that fine
+## column floor-divided by two.
+##
+## `maze_stone_plot_mass_*` splits out the faces standing on mass some plot
+## claims -- the difference between the two measurements, stated as a number
+## instead of left to be inferred -- and
+## `maze_stone_raised_shoulder_high_face_count` is task E4 ruling 2's
+## measurement on this side: how much of the high stone stands on a no-plot
+## column whose sealed shoulder grew above its own massif envelope. The two
+## splits are disjoint by definition, since a raised-shoulder column carries
+## no plot.
+##
+## Every key is zero on a legacy plan, which retains no maze stone and has no
+## maze source to read a datum from.
+static func maze_stone_band_profile(exposed: Dictionary,
+		maze_source: WarrenMazeSourcePlan) -> Dictionary:
+	var faces := 0
+	var high_faces := 0
+	var plot_mass_faces := 0
+	var plot_mass_high_faces := 0
+	var raised_shoulder_high_faces := 0
+	var min_offset := 0
+	var max_offset := 0
+	var band_counts: Dictionary = {}
+	var storey_counts: Dictionary = {}
+	if maze_source != null and maze_source.massif != null:
+		var candidates_by_column: Dictionary = {}
+		var plot_bands_by_column: Dictionary = {}
+		var raised: Dictionary = {}
+		for column: Vector2i in maze_source.raised_shoulder_columns():
+			raised[column] = true
+		# No sorted key walk: every accumulation below is a sum, a min, a max
+		# or a histogram bucket, and the two histograms leave through
+		# `ascending_histogram`, so the answer is order-free by construction.
+		for key_value: Variant in exposed.keys():
+			var key := key_value as Vector4i
+			var column := Vector2i(_macro_of(key.x), _macro_of(key.z))
+			if not maze_source.massif.has_column(column):
+				continue
+			if not candidates_by_column.has(column):
+				candidates_by_column[column] = \
+					maze_source.public_datum_candidates(column)
+				plot_bands_by_column[column] = _plot_bands_at(maze_source,
+					column)
+			var offset := key.y - WarrenMazeSourcePlan.nearest_datum_band(
+				candidates_by_column[column] as Dictionary, key.y,
+				maze_source.massif.base_at(column))
+			var storey := 0 if offset <= 0 \
+				else (offset + WarrenBuildingParcel.STOREY_BANDS - 1) \
+					/ WarrenBuildingParcel.STOREY_BANDS
+			var high := int(offset > WarrenMazeSourcePlan.LOW_STONE_BANDS)
+			var on_plot := int((plot_bands_by_column[column] as Dictionary) \
+				.has(key.y))
+			min_offset = offset if faces == 0 else mini(min_offset, offset)
+			max_offset = offset if faces == 0 else maxi(max_offset, offset)
+			faces += 1
+			high_faces += high
+			plot_mass_faces += on_plot
+			plot_mass_high_faces += high * on_plot
+			raised_shoulder_high_faces += high * int(raised.has(column))
+			band_counts[offset] = int(band_counts.get(offset, 0)) + 1
+			storey_counts[storey] = int(storey_counts.get(storey, 0)) + 1
+	return {
+		"maze_stone_profiled_face_count": faces,
+		"maze_stone_high_face_count": high_faces,
+		"maze_stone_high_face_ratio": float(high_faces) \
+			/ float(maxi(1, faces)),
+		"maze_stone_plot_mass_face_count": plot_mass_faces,
+		"maze_stone_plot_mass_high_face_count": plot_mass_high_faces,
+		"maze_stone_raised_shoulder_high_face_count": \
+			raised_shoulder_high_faces,
+		"maze_stone_band_histogram": WarrenMazeSourcePlan.ascending_histogram(
+			band_counts),
+		"maze_stone_storey_histogram": \
+			WarrenMazeSourcePlan.ascending_histogram(storey_counts),
+		"maze_stone_min_band_offset": min_offset,
+		"maze_stone_max_band_offset": max_offset,
+	}
+
+
+static func _macro_of(fine: int) -> int:
+	## The macro coordinate a fine x or z belongs to. FLOOR division, not the
+	## truncating kind: `_fine_square` maps macro -3 onto fine -6 and -5, and
+	## `-5 / 2` is -2 in GDScript, which would file half the town's western
+	## columns one column too far east.
+	return (fine - posmod(fine, 2)) / 2
+
+
+static func _plot_bands_at(maze_source: WarrenMazeSourcePlan,
+		column: Vector2i) -> Dictionary:
+	## {band: true} for every band some plot claims on this column. Retained
+	## stone standing in one of them is a building the composition did not
+	## build, not the mountain.
+	var out: Dictionary = {}
+	for plot: Dictionary in maze_source.plots:
+		if not (plot["cells"] as Array).has(column):
+			continue
+		for band in range(int(plot["floor"]), int(plot["top"])):
+			out[band] = true
+	return out
 
 
 static func _plinth_closes_band(plinths: Dictionary, face: Vector4i) -> bool:

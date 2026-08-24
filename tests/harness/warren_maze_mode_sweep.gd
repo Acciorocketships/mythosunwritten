@@ -108,6 +108,15 @@ func _init() -> void:
 	var attempted := 0
 	var total_ms := 0
 	var rows: Array[Dictionary] = []
+	# TASK E4 ruling 1. The corpus half of the stone-band profile: this path
+	# runs the REAL compile, so every sealed town carries the assembler's own
+	# shell measured against its local street datum, and the corpus mean is
+	# the number Phase E exits on.
+	var stone_faces := 0
+	var stone_high_faces := 0
+	var stone_plot_mass_high := 0
+	var stone_raised_high := 0
+	var stone_towns := 0
 	for city_seed: int in seeds:
 		for scale_id: StringName in scale_ids:
 			attempted += 1
@@ -127,6 +136,35 @@ func _init() -> void:
 				print("SWEEP seed=%d scale=%s ms=%d SEALED rooms=%s" % [
 					city_seed, String(profile.scale_id), elapsed,
 					str(plan.audit.get("room_storey_kind_counts", {}))])
+				var fabric := plan.compiled_fabric_cache()
+				if fabric != null:
+					stone_towns += 1
+					stone_faces += int(fabric.audit.get(
+						"maze_stone_profiled_face_count", 0))
+					stone_high_faces += int(fabric.audit.get(
+						"maze_stone_high_face_count", 0))
+					stone_plot_mass_high += int(fabric.audit.get(
+						"maze_stone_plot_mass_high_face_count", 0))
+					stone_raised_high += int(fabric.audit.get(
+						"maze_stone_raised_shoulder_high_face_count", 0))
+					print(("SWEEP seed=%d scale=%s STONE faces=%d high=%d " \
+						+ "ratio=%.4f plot_mass_high=%d raised_high=%d " \
+						+ "max=%d bands=%s") % [city_seed,
+						String(profile.scale_id),
+						int(fabric.audit.get(
+							"maze_stone_profiled_face_count", 0)),
+						int(fabric.audit.get(
+							"maze_stone_high_face_count", 0)),
+						float(fabric.audit.get(
+							"maze_stone_high_face_ratio", 0.0)),
+						int(fabric.audit.get(
+							"maze_stone_plot_mass_high_face_count", 0)),
+						int(fabric.audit.get(
+							"maze_stone_raised_shoulder_high_face_count", 0)),
+						int(fabric.audit.get(
+							"maze_stone_max_band_offset", 0)),
+						str(fabric.audit.get(
+							"maze_stone_band_histogram", {}))])
 				continue
 			var failure := WarrenVolumetricSolver.last_failure
 			rows.append({"seed": city_seed, "scale": String(profile.scale_id),
@@ -137,6 +175,14 @@ func _init() -> void:
 				_gate_of(failure), failure.left(160)])
 	print("SWEEP RESULT mode=%s sealed=%d/%d total_ms=%d" % [String(mode),
 		sealed_count, attempted, total_ms])
+	# The corpus mean ruling 1 asks for: one ratio over every stone face in
+	# every town that compiled, not the mean of the per-town ratios, so a big
+	# town cannot be averaged away by a small one.
+	print(("SWEEP RESULT stone towns=%d faces=%d above_2_storeys=%d " \
+		+ "corpus_ratio=%.4f of which plot_mass=%d raised_shoulder=%d") % [
+		stone_towns, stone_faces, stone_high_faces,
+		float(stone_high_faces) / float(maxi(1, stone_faces)),
+		stone_plot_mass_high, stone_raised_high])
 	_write_summary(mode, seeds, scale_ids, rows, sealed_count, attempted,
 		total_ms)
 	quit()
@@ -183,22 +229,49 @@ func _gate_of(failure: String) -> String:
 
 
 func _run_constructive(seeds: Array[int]) -> void:
+	# TASK E4 FOUND THIS. `_init` sets the generation mode only on the path
+	# BELOW the `--constructive` branch, so every constructive row since task
+	# E1 was measured against the ROUTE-FIRST massif: `WarrenMassifBuilder
+	# .is_maze_mode` keys E1's terraced massif to MODE_MAZE until Phase F
+	# deletes route-first, and this path never set it. Measured on seed
+	# 12/compact, that is a different town -- 28 plots and 144 exterior stone
+	# faces route-first against 32 and 180 in maze mode -- so the matrix was
+	# describing a generator nobody ships. This path only ever runs
+	# `WarrenMazeSitePlanner`, so the mode is unconditional here; `--mode` is
+	# documented as irrelevant to it and stays so.
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
 	print("SWEEP constructive seeds=%d scales=%d total=%d" % [seeds.size(),
 		CONSTRUCTIVE_SCALES.size(), seeds.size() * CONSTRUCTIVE_SCALES.size()])
 	var sealed_count := 0
 	var translated_count := 0
 	var attempted := 0
+	var stone_faces := 0
+	var stone_high_faces := 0
+	var stone_raised_high := 0
+	var raised_shoulders := 0
 	for city_seed: int in seeds:
 		for scale_id: StringName in CONSTRUCTIVE_SCALES:
 			attempted += 1
 			var outcome := _constructive_outcome(city_seed, scale_id)
 			if outcome.sealed:
 				sealed_count += 1
+				stone_faces += int(outcome.get("faces", 0))
+				stone_high_faces += int(outcome.get("high_faces", 0))
+				stone_raised_high += int(outcome.get("raised_high_faces", 0))
+				raised_shoulders += int(outcome.get("raised_shoulders", 0))
 			if outcome.translated:
 				translated_count += 1
 			print(String(outcome.line))
 	print("SWEEP RESULT constructive sealed=%d/%d translated=%d/%d" % [
 		sealed_count, attempted, translated_count, sealed_count])
+	# TASK E4 ruling 1's corpus mean on the source side: one ratio over every
+	# derived-stone face in every sealed town, not the mean of the per-town
+	# ratios. Ruling 2's instrumentation rides beside it.
+	print(("SWEEP RESULT constructive stone faces=%d above_2_storeys=%d " \
+		+ "corpus_ratio=%.4f raised_shoulder_high=%d raised_shoulders=%d") % [
+		stone_faces, stone_high_faces,
+		float(stone_high_faces) / float(maxi(1, stone_faces)),
+		stone_raised_high, raised_shoulders])
 
 
 func _constructive_outcome(city_seed: int, scale_id: StringName) -> Dictionary:
@@ -219,27 +292,38 @@ func _constructive_outcome(city_seed: int, scale_id: StringName) -> Dictionary:
 			"line": "SWEEP seed=%d scale=%s sealed=false stage=%s reason=%s" % [
 				city_seed, String(scale_id), stage, reason.left(160)]}
 
+	# The source's own stone-band counts ride out on every sealed row, whatever
+	# happens downstream, so the corpus mean is measured over every town that
+	# SEALED rather than only over the ones that also translated.
 	var source := _source_metrics(plan)
 	var volume := WarrenMazeVolumeAdapter.to_volume_plan(plan)
 	if volume == null:
-		return {"sealed": true, "translated": false,
+		var adapter_row := source.duplicate()
+		adapter_row.merge({"sealed": true, "translated": false,
 			"line": "%s translated=false stage=adapter reason=%s" % [
-				String(source.line), WarrenMazeVolumeAdapter.last_failure.left(120)]}
+				String(source.line),
+				WarrenMazeVolumeAdapter.last_failure.left(120)]}, true)
+		return adapter_row
 
 	var parcels := WarrenMazeBlockPartitioner.partition(plan, volume)
 	if parcels == null:
-		return {"sealed": true, "translated": false,
+		var partition_row := source.duplicate()
+		partition_row.merge({"sealed": true, "translated": false,
 			"line": "%s translated=false stage=partition reason=%s" % [
 				String(source.line),
-				WarrenMazeBlockPartitioner.last_failure.left(120)]}
+				WarrenMazeBlockPartitioner.last_failure.left(120)]}, true)
+		return partition_row
 
 	var signature := plan.deterministic_signature().sha256_text().left(12)
-	return {"sealed": true, "translated": true,
+	var row := source.duplicate()
+	row.merge({"sealed": true, "translated": true,
 		"line": ("%s translated=true parcels=%d back_room_cells=%d "
 			+ "ownership=%.4f signature=%s") % [
 			String(source.line), parcels.parcels.size(),
 			int(parcels.audit.get("maze_back_room_cells", 0)),
-			float(parcels.audit.get("maze_ownership_ratio", 0.0)), signature]}
+			float(parcels.audit.get("maze_ownership_ratio", 0.0)), signature]},
+		true)
+	return row
 
 
 func _source_metrics(plan: WarrenMazeSourcePlan) -> Dictionary:
@@ -260,13 +344,26 @@ func _source_metrics(plan: WarrenMazeSourcePlan) -> Dictionary:
 			house_columns += (plot["cells"] as Array).size()
 	var houses := int(counts[WarrenMazeSourcePlan.PLOT_HOUSE])
 	var exterior := plan.audit.get("exterior_rock_ratio", {}) as Dictionary
+	# TASK E4 ruling 1's source half: where the town's DERIVED stone stands,
+	# relative to the street beside it rather than to the town's own foot.
+	# `stone_high` is the share of its exterior stone faces standing more than
+	# two storeys over their local public floor. The other half of the same
+	# metric -- retained PLOT mass, which the source cannot see -- rides on the
+	# compiled fabric and is printed by the plain (non-constructive) sweep.
+	var stone := plan.audit.get("exterior_stone_band_profile", {}) as Dictionary
 	# `raised_shoulders`: no-plot columns whose sealed rock shoulder stands
 	# ABOVE their own massif envelope (review finding 2026-08-23, minor 5).
 	# `rock_shoulder` has no upper clamp; this is the measurement that says
 	# whether it needs one, and no rule is pinned on it yet.
-	return {"line": ("SWEEP seed=%d scale=%s sealed=true plots=%d houses=%d "
+	return {"faces": int(stone.get("faces", 0)),
+		"high_faces": int(stone.get("high_faces", 0)),
+		"raised_high_faces": int(stone.get("raised_shoulder_high_faces", 0)),
+		"raised_shoulders": plan.raised_shoulder_columns().size(),
+		"line": ("SWEEP seed=%d scale=%s sealed=true plots=%d houses=%d "
 		+ "assets=%d decks=%d bridges=%d tiered=%d mean_footprint=%.2f "
-		+ "exterior_rock=%.4f raised_shoulders=%d") % [
+		+ "exterior_rock=%.4f raised_shoulders=%d stone_faces=%d "
+		+ "stone_high=%d stone_high_ratio=%.4f raised_high=%d "
+		+ "stone_bands=%s") % [
 		plan.world_seed, String(plan.scale_profile.scale_id),
 		plan.plots.size(), houses,
 		int(counts[WarrenMazeSourcePlan.PLOT_ASSET]),
@@ -274,4 +371,8 @@ func _source_metrics(plan: WarrenMazeSourcePlan) -> Dictionary:
 		int(counts[WarrenMazeSourcePlan.PLOT_BRIDGE]), tiered,
 		float(house_columns) / float(maxi(1, houses)),
 		float(exterior.get("ratio", 0.0)),
-		plan.raised_shoulder_columns().size()]}
+		plan.raised_shoulder_columns().size(),
+		int(stone.get("faces", 0)), int(stone.get("high_faces", 0)),
+		float(stone.get("high_face_ratio", 0.0)),
+		int(stone.get("raised_shoulder_high_faces", 0)),
+		str(stone.get("band_histogram", {}))]}
