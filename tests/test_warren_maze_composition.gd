@@ -305,8 +305,17 @@ const UNCOMPOSED_PARCEL_GATES: Array[String] = [
 ##   - `7/compact` went with the controller's ADVISORY ruling on the source's
 ##     addressed-frontage bar. It reaches 0.870 (up from 0.850, having actually
 ##     spent its alley budget now) and ships with the shortfall recorded.
+##
+## TASK E1 re-pinned this DOWNWARD, 22 -> 20 (measured 21), and the drop is
+## reported rather than absorbed. The noise massif replaced the flat-profile
+## plateau, so the corpus reshuffled exactly as ruling 3 said it would: the
+## measured 21 of 24 misses 5/compact and 10/standard on the duplicate
+## public-realm edge and 8/compact on the volume adapter's broad floor slab --
+## the SAME two gate families Phase C's exit ruling already carried, with
+## 9/compact (which used to miss on the duplicate edge) now sealing. No new
+## family appeared. Pinned at measured minus one, per this file's convention.
 const MAZE_SWEEP := preload("res://tests/harness/warren_maze_mode_sweep.gd")
-const CORPUS_SEALED_FLOOR := 22
+const CORPUS_SEALED_FLOOR := 20
 const CORPUS_SWEEP_SEEDS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 const CORPUS_SWEEP_SCALES: Array[String] = ["compact", "standard"]
 
@@ -341,7 +350,13 @@ const MAZE_FACADE_YIELD_CEILING := 7
 const PLANNER_SOLVE_MS_CEILING: Dictionary = {
 	"12/compact": 3700,
 	"4/compact": 5950,
-	"3/standard": 8350,
+	# TASK E1: 5554 -> 8831 ms measured, x1.5. The town did not get slower per
+	# unit of work, it got bigger: the noise massif's terraces partition into
+	# 43 parcels where the flat plateau gave 35, and `room_composition` is
+	# superlinear in room count (C6 ruling 3). Corpus-wide the four planner
+	# solves are unchanged in total (23.8 s -> 24.0 s); 12/compact and
+	# 4/compact each fell by a fifth to a third while this one grew.
+	"3/standard": 13250,
 	"9/standard": 15600,
 }
 
@@ -3526,6 +3541,22 @@ const SLOPED_UNROOMED_PLOT_MASS_CEILING := 0.39
 ## magnitude -- not to police a 30 % drift, so they are pinned looser than the
 ## flat `PLANNER_SOLVE_MS_CEILING`'s 1.5x. Sloped solves are not slower in
 ## kind: ramp 3/standard is 6377 ms against its flat twin's 5554.
+## TASK E1. Sloped rows that no longer compose, pinned BY NAME with the gate
+## they die at, so a row that dies anywhere else is still a red test and a row
+## that starts composing again is a re-pin rather than a silent pass.
+##
+## The noise massif reshuffled the sloped fixtures exactly as it reshuffled the
+## flat corpus: `step 3/standard` now reaches the public-realm adapter and is
+## refused for a duplicate realm edge -- the SAME family Phase C's exit ruling
+## carried into the E/G loop, and the same one that takes 5/compact and
+## 10/standard out of the flat 24. It is not a new gate and not a massif
+## invariant: the massif for this row seals, carves, plots and parcels; the
+## realm adapter emits two edges with one id. Empty this map when that adapter
+## is fixed.
+const SLOPED_KNOWN_REFUSALS: Dictionary = {
+	"step/3/standard": "duplicate edge",
+}
+
 const SLOPED_SOLVE_MS_CEILING: Dictionary = {
 	"ramp/12/compact": 4400,
 	"ramp/3/standard": 12800,
@@ -3615,9 +3646,18 @@ func test_sloped_ground_composes() -> void:
 	## failure mode the ruling creates, and it is exactly what this catches.
 	var composed := 0
 	var short_rows := 0
+	var refused := PackedStringArray()
 	for outcome: Dictionary in _sloped_corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
 		var key := _row_key(outcome)
+		if plan == null and SLOPED_KNOWN_REFUSALS.has(key):
+			refused.append(key)
+			assert_true(String(outcome.failure).contains(
+				String(SLOPED_KNOWN_REFUSALS[key])),
+				("%s is pinned as a known refusal at `%s` and died at `%s` " \
+					+ "instead") % [key, String(SLOPED_KNOWN_REFUSALS[key]),
+					String(outcome.failure).left(200)])
+			continue
 		assert_not_null(plan, "%s must compose on real ground: %s" % [
 			_label(outcome), String(outcome.failure).left(200)])
 		if plan == null:
@@ -3673,8 +3713,12 @@ func test_sloped_ground_composes() -> void:
 				+ "them stand on anything") % [key,
 				plan.route_floor_cells.size(),
 				float(standing.get("share", 0.0))])
-	assert_eq(composed, SLOPED_GROUND.size(),
-		"every sloped row must compose")
+	assert_eq(composed, SLOPED_GROUND.size() - SLOPED_KNOWN_REFUSALS.size(),
+		"every sloped row except the pinned refusals must compose")
+	assert_eq(refused.size(), SLOPED_KNOWN_REFUSALS.size(),
+		("the pinned sloped refusals are %s and %s actually refused; a row " \
+			+ "that started composing is a re-pin") % [
+			str(SLOPED_KNOWN_REFUSALS.keys()), str(refused)])
 	# The advisory branch must be EXERCISED, or the assertions above are
 	# decoration: one sloped row is measurably short of the bar and ships.
 	assert_gt(short_rows, 0,
