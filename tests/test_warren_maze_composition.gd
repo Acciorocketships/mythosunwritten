@@ -231,6 +231,23 @@ const ROUTE_ON_STONE_FLOOR := 0.95
 ## authored envelope does not fit (2 / 7 / 7 / 8 refusals), storeys that are
 ## not whole allocatable mass (3 / 5 / 7 / 12), and the one or two parcels per
 ## town that still compose no lineage.
+## TASK E1: **0.238 / 0.278 / 0.157 / 0.193** under the noise massif, and the
+## ceiling STAYS at 0.28. 4/compact rises to 0.278, two thousandths under it,
+## which reads as one flake from red -- and it is not, because there is no
+## flake to be had. The share is an exact integer ratio of a deterministic
+## pipeline: 446 unroomed of 1604 plot bands on 4/compact, bit-identical across
+## two full runs of this file (and 346/1456, 295/1884, 408/2116 on the other
+## three). Nothing but a code change can move it, and a code change that moves
+## it is exactly what this pin exists to catch. Raising the ceiling to restore
+## headroom would mean re-pinning UPWARD -- undoing Task C6's 0.33 -> 0.28 --
+## to buy slack against a number that cannot drift.
+##
+## Two of the four towns improved (3/standard 0.224 -> 0.157, its best ever)
+## and two lost ground, which is the terraced field redistributing back-room
+## refusals rather than a new failure: the refusal families are unchanged
+## ("storey is not whole allocatable mass", "authored envelope does not fit").
+## The next wave that touches parcel heights should expect to trip this and
+## should fix the cause rather than the number.
 const UNROOMED_PLOT_MASS_CEILING := 0.28
 
 ## Houses the plot model says stand on ANOTHER PLOT that the composition still
@@ -469,11 +486,27 @@ func _canonical_shortfall_key(key: String) -> String:
 	return out
 
 
+func _planned_maze_source(world_seed: int,
+		scale_id: StringName) -> WarrenMazeSourcePlan:
+	## One maze source plan, built UNDER THE MAZE KEY. Task E1: the terraced
+	## massif is keyed to MODE_MAZE (`WarrenMassifBuilder.is_maze_mode`) until
+	## Phase F deletes route-first, so every call in this file that reaches the
+	## planner outside `_solve` has to set it too. Without this the town being
+	## measured is a route-first massif compared against a maze one -- which is
+	## exactly how `test_assets_land` came to count two asset plots against one
+	## landmark.
+	var profile := WarrenVillageScaleProfile.for_id(scale_id)
+	var restored := WarrenTownSolver.GENERATION_MODE
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
+	var maze := WarrenMazeSitePlanner.plan(world_seed, {}, profile)
+	WarrenTownSolver.GENERATION_MODE = restored
+	return maze
+
+
 func _asset_plot_count(world_seed: int, scale_id: StringName) -> int:
 	## Ask the source planner directly how many asset plots it placed. The
 	## composition audit must account for every one of them.
-	var profile := WarrenVillageScaleProfile.for_id(scale_id)
-	var maze := WarrenMazeSitePlanner.plan(world_seed, {}, profile)
+	var maze := _planned_maze_source(world_seed, scale_id)
 	if maze == null:
 		return -1
 	var count := 0
@@ -2731,9 +2764,8 @@ func test_retained_rock_skips_a_cell_another_feature_reserved() -> void:
 	##
 	## Unit-style on purpose: one real maze source, two identical grids, one
 	## pre-reserved cell between them. No solve, no fabric, ~1 s.
-	var profile := WarrenVillageScaleProfile.for_id(
+	var source := _planned_maze_source(12,
 		WarrenVillageScaleProfile.COMPACT)
-	var source := WarrenMazeSitePlanner.plan(12, {}, profile)
 	assert_not_null(source, "the pinned planner seed must still plan a town")
 	if source == null:
 		return
@@ -3096,8 +3128,7 @@ func test_retained_stone_is_skinned() -> void:
 
 func _asset_plot_records(world_seed: int, scale_id: StringName) -> Array:
 	## The planner's own asset outcomes, straight off a fresh source plan.
-	var profile := WarrenVillageScaleProfile.for_id(scale_id)
-	var maze := WarrenMazeSitePlanner.plan(world_seed, {}, profile)
+	var maze := _planned_maze_source(world_seed, scale_id)
 	if maze == null:
 		return []
 	var outcomes: Dictionary = maze.audit.get("plot_outcomes", {})

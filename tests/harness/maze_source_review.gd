@@ -72,6 +72,11 @@ var _bounds_max := Vector3(-INF, -INF, -INF)
 
 
 func _ready() -> void:
+	# The terraced massif is keyed to MODE_MAZE until Phase F deletes
+	# route-first (WarrenMassifBuilder.is_maze_mode). This harness drives
+	# WarrenMazeSitePlanner directly, so without this it would render the
+	# route-first massif under a maze caption.
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
 	_read_args()
 	DisplayServer.window_set_size(Vector2i(1920, 1080))
 	_build_environment()

@@ -480,8 +480,30 @@ const TERRACE_CLUSTER_MEAN_TARGET := 4.0
 
 
 func _planner_massif(town: Dictionary) -> WarrenMassif:
+	## The terraced field is keyed to MODE_MAZE until Phase F deletes
+	## route-first (`WarrenMassifBuilder.is_maze_mode`), so the three Phase E
+	## metrics below have to ask for it. Everything ABOVE this line deliberately
+	## does not: those tests pin the route-first flood fill, and running them
+	## under the maze key would silently re-point every one of their measured
+	## floors at a different builder.
 	var profile := WarrenVillageScaleProfile.for_id(StringName(town["scale"]))
-	return WarrenMassifBuilder.build(int(town["seed"]), {}, profile)
+	var restored := WarrenTownSolver.GENERATION_MODE
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
+	var massif := WarrenMassifBuilder.build(int(town["seed"]), {}, profile)
+	WarrenTownSolver.GENERATION_MODE = restored
+	return massif
+
+
+func _maze_plateau_cap(column_count: int) -> int:
+	## `WarrenMassifBuilder.plateau_cap` is keyed to the generation mode exactly
+	## as the field is, so a town built under the maze key has to be judged
+	## under it too -- asking at the route-first default returns the flood
+	## fill's own MAX_PLATEAU_CELLS and scores every terrace as a platform.
+	var restored := WarrenTownSolver.GENERATION_MODE
+	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
+	var cap := WarrenMassifBuilder.plateau_cap(column_count)
+	WarrenTownSolver.GENERATION_MODE = restored
+	return cap
 
 
 func _planner_label(town: Dictionary) -> String:
@@ -603,7 +625,7 @@ func test_the_terraces_are_clusters_and_not_per_column_noise() -> void:
 		# plateau gate is the builder's own ceiling; asserting it here is what
 		# stops a future field from buying its cluster mean with a platform.
 		assert_lte(massif.widest_plateau_cells(),
-			WarrenMassifBuilder.plateau_cap(massif.columns.size()),
+			_maze_plateau_cap(massif.columns.size()),
 			"%s carries a %d-column terrace: that is a platform" % [
 				_planner_label(town), massif.widest_plateau_cells()])
 
