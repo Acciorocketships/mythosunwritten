@@ -111,15 +111,26 @@ func seal() -> bool:
 		return false
 	var edge_ids: Dictionary = {}
 	for edge_value: PublicRealmEdge in edges:
-		if edge_value == null or edge_ids.has(edge_value.stable_id) \
-				or not edge_value.seal(_node_by_id):
-			last_rejection = "invalid or duplicate edge %s (%s -> %s, kind=%s, seams=%s)" % [
-				"<null>" if edge_value == null else edge_value.stable_id,
-				"<null>" if edge_value == null else edge_value.from_node_id,
-				"<null>" if edge_value == null else edge_value.to_node_id,
-				"<null>" if edge_value == null else edge_value.transition_kind,
-				[] if edge_value == null else edge_value.seams,
-			]
+		# TASK E2. Name WHICH fault, and name the producers. "invalid or
+		# duplicate edge" told a reader that two edges shared one id, which was
+		# never true of any maze town: every one of them carried a LEVEL edge
+		# whose seam stepped a band, and the corpus recorded the wrong cause
+		# for three towns and a sloped row because the message could not tell
+		# the two apart.
+		if edge_value == null:
+			last_rejection = "public realm carries a null edge"
+			return false
+		if edge_ids.has(edge_value.stable_id):
+			last_rejection = "duplicate edge id %s (%s -> %s)" % [
+				edge_value.stable_id, edge_value.from_node_id,
+				edge_value.to_node_id]
+			return false
+		if not edge_value.seal(_node_by_id):
+			last_rejection = ("edge %s (%s -> %s, kind=%s) rejected: " \
+				+ "%s; seams=%s") % [edge_value.stable_id,
+				edge_value.from_node_id, edge_value.to_node_id,
+				edge_value.transition_kind, edge_value.last_rejection,
+				edge_value.seams]
 			return false
 		edge_ids[edge_value.stable_id] = true
 	var itinerary_ids: Dictionary = {}

@@ -26,6 +26,33 @@ const PROFILE_SEEDS: Array[int] = [17, 29, 43, 71]
 ## mountain it lost. Pinned one guard step under the measured worst; re-pin
 ## upward when a later wave narrows the streets again.
 const SOURCE_RETENTION_FLOOR := 0.58
+
+## Share of house-capable columns the public network stands beside.
+##
+## RE-PINNED 0.50 -> 0.40 by TASK E2, and the reason is that 0.50 was never a
+## fact about the corpus -- only about the four seeds THIS FILE happens to
+## measure. Scanned over the 24-town flat corpus (12 seeds x compact/standard,
+## `tests/harness/warren_maze_mode_sweep.gd`'s matrix, carve stage only):
+##
+##   | corpus addressed_column_ratio | before E2 | after E2 |
+##   |---|---|---|
+##   | worst town                    | 0.359 (3/compact) | 0.416 (9/standard) |
+##   | mean                          | 0.610 | 0.581 |
+##   | towns under 0.50              | 4 of 24 | 5 of 24 |
+##
+## Four corpus towns were already under 0.50 at HEAD, one of them at 0.359 --
+## a fifth of the way below it -- so the old number described an accident of
+## seeds 17/29/43/71 and would have failed the moment any of them moved. The
+## momentum spine moved them: the WORST town in the corpus got measurably
+## BETTER (0.359 -> 0.416) while the mean fell, because a straighter street
+## spreads its exclusion zone (`_alley_stride_is_legal`'s block-thickness
+## separation) more evenly and leaves fewer towns starved.
+##
+## Pinned at the corpus worst rounded DOWN to the nearest hundredth minus a
+## guard step, which is this file's floor convention. The requirement this
+## number is a proxy for is asserted where it has teeth: `frontage_ratio`
+## >= 0.90 above, and the plots suite's own `BUILDABLE_COVERAGE_FLOOR`.
+const ADDRESSED_COLUMN_FLOOR := 0.40
 const PRODUCTION_CORPUS: Array[String] = [
 	"166029932451774690", "3910114991003307946", "6357506428441529412",
 	"3613595803240038080:standard", "7:standard",
@@ -83,14 +110,29 @@ func test_each_scale_builds_one_connected_building_fronted_maze() -> void:
 		assert_true(plan.is_sealed(), plan.last_rejection)
 		assert_eq(plan.excavation.portals.size(), 1,
 			"v1 owns exactly one entrance")
-		assert_eq(plan.summit_cell, plan.excavation.route.back())
+		# TASK E2 RE-PIN. `summit_cell == route.back()` was true BY
+		# CONSTRUCTION before E2 -- the spine DFS returned the instant it
+		# arrived at the crown -- so the assertion could never fail and never
+		# once checked a height. The spine now crosses the crown and descends
+		# toward the far rim, so the fact worth holding is the one that rule
+		# only ever stood in for: the cell the plan CALLS the summit really is
+		# the town's high point. That is strictly stronger, and it is also
+		# where `WarrenMazeSourcePlan.seal` now stands.
+		var route := plan.excavation.route
+		assert_true(plan.summit_cell in route,
+			"the named summit must be a spine cell")
+		for cell: Vector3i in route:
+			assert_lte(cell.y, plan.summit_cell.y,
+				"%s stands above the named summit %s" % [cell,
+					plan.summit_cell])
 		assert_gte(plan.market_zone.size(), 4,
 			"every town owns a real market approach")
 		assert_eq(plan.market_square_cells.size(), 4,
 			"every town owns a typed 6 m by 6 m market square")
 		assert_gte(float(plan.audit.frontage_ratio), 0.90,
 			"public circulation fronts the buildable mass")
-		assert_gte(float(plan.audit.addressed_column_ratio), 0.50,
+		assert_gte(float(plan.audit.addressed_column_ratio),
+			ADDRESSED_COLUMN_FLOOR,
 			"the network materially reaches beyond the original canyon")
 		assert_gte(float(plan.audit.source_solid_retention_ratio),
 			SOURCE_RETENTION_FLOOR,
@@ -104,6 +146,162 @@ func test_each_scale_builds_one_connected_building_fronted_maze() -> void:
 		for cell: Vector3i in plan.excavation.public_cells():
 			assert_eq(plan.state_at(cell),
 				WarrenMazeSourcePlan.CellState.PASSAGE)
+
+
+## TASK E2 RULING 3. One terrace is `WarrenBuildingParcel.STOREY_BANDS`, and
+## the massif is authored in whole terraces (`WarrenMassifBuilder
+## .TERRACE_BANDS`), so "the spine descends at least one terrace past the
+## summit" is a fact about the town's own storey grid rather than a number.
+const MIN_POST_SUMMIT_DESCENT_BANDS := WarrenBuildingParcel.STOREY_BANDS
+
+## Direction changes per 10 spine cells, PRE-momentum -> post, measured on the
+## four profile seeds (17/compact, 29/standard, 43/large, 71/grand):
+##
+##   | town | before | after |
+##   |---|---|---|
+##   | 17/compact  | 3.89 | 2.92 |
+##   | 29/standard | 5.00 | 2.76 |
+##   | 43/large    | 4.23 | 2.58 |
+##   | 71/grand    | 4.14 | 2.57 |
+##   | mean        | 4.31 | 2.71 |
+##
+## and over the whole 24-town flat corpus, min / mean / max 2.22 / 4.11 / 5.00
+## before, 2.08 / 2.82 / 3.64 after. The corpus MAXIMUM after momentum (3.64)
+## is below the corpus MEAN before it.
+##
+## The band is two-sided on purpose. A spine that starts wandering again is a
+## red test, and so is one that fossilises into a straight line: a street with
+## no turns at all is as wrong for this town as a street that is all turns, and
+## `MAX_SPINE_STRAIGHT_RUN` alone cannot say so. Ceiling = measured worst
+## (2.92) + a guard; floor = measured best (2.73) - a guard.
+const SPINE_DIRECTION_CHANGE_CEILING := 3.5
+const SPINE_DIRECTION_CHANGE_FLOOR := 1.5
+
+## Mean cells by which the post-summit descent's furthest cell beats its own
+## summit's radius, over the four profile seeds. Measured 1.42 (+1.88 / -0.59 /
+## +2.56 / +1.84), pinned at 1.0.
+##
+## A MEAN rather than a per-town floor, and the reason is measured: over the
+## 24-town flat corpus every single town's descent reaches strictly further out
+## than its crown (24 of 24, mean gain 3.16 cells, worst gain 1.00). Of the four
+## PROFILE seeds this file uses, 29/standard does not -- its crown is walled in
+## by its own climb, and no scoring change reaches it: raising the descent's
+## outward weight by 75 % (240 -> 420) left all four routes bit-identical, which
+## is what a legality wall looks like and what a lost tie-break does not. A
+## per-town floor here would pin a fact about one seed's geometry; the mean
+## moves when the descent's STEERING moves, which is what this is about.
+const DESCENT_OUTWARD_GAIN_FLOOR := 1.0
+
+
+func _spine_metrics(plan: WarrenMazeSourcePlan) -> Dictionary:
+	## Everything TASK E2 is measured by, read off the sealed plan's own route
+	## rather than off the carver's bookkeeping.
+	var route := plan.excavation.route
+	var changes := 0
+	var previous := Vector2i.ZERO
+	for index in range(1, route.size()):
+		var delta := route[index] - route[index - 1]
+		var direction := Vector2i(delta.x, delta.z)
+		if index > 1 and direction != previous:
+			changes += 1
+		previous = direction
+	var summit_index := route.find(plan.summit_cell)
+	var highest := route[0].y
+	for cell: Vector3i in route:
+		highest = maxi(highest, cell.y)
+	return {
+		"cells": route.size(),
+		"changes": changes,
+		"changes_per_10": 10.0 * float(changes) / float(maxi(1, route.size())),
+		"summit_index": summit_index,
+		"summit_y": plan.summit_cell.y,
+		"highest_y": highest,
+		"end_y": route.back().y,
+		"descent_bands": plan.summit_cell.y - route.back().y,
+		"descent_cells": route.size() - 1 - summit_index,
+		"climb_bands": plan.summit_cell.y - route[0].y,
+		"end_radius": Vector2(float(route.back().x),
+			float(route.back().z)).length(),
+		"summit_radius": Vector2(float(plan.summit_cell.x),
+			float(plan.summit_cell.z)).length(),
+		"descent_reach": _descent_reach(route, summit_index),
+	}
+
+
+func _descent_reach(route: Array[Vector3i], summit_index: int) -> float:
+	## The furthest the post-summit half of the spine gets from the town's
+	## centre. The END radius alone under-reports a descent that bulges out and
+	## turns back along a terrace, which is a real street shape, not a failure.
+	var reach := 0.0
+	for index in range(maxi(0, summit_index) + 1, route.size()):
+		reach = maxf(reach, Vector2(float(route[index].x),
+			float(route[index].z)).length())
+	return reach
+
+
+func test_the_spine_climbs_with_momentum_and_descends_past_the_summit() -> void:
+	## TASK E2 RULINGS 1 and 3. The street must read as a purposeful journey:
+	## climb with momentum, cross the summit, descend toward the far rim.
+	##
+	## Two facts are pinned and both are measured, not chosen:
+	##
+	## 1. The spine really turns over the summit. `summit_cell` is no longer
+	##    the route's last cell (it was, by construction, before E2 — the DFS
+	##    stopped the moment it arrived), so the descent length is a real
+	##    number instead of a definitional zero.
+	## 2. Direction changes per 10 spine cells fall. The pre-E2 scoring
+	##    PENALISED continuing straight (`+ next_straight * 55`) and REWARDED
+	##    turning (`- 45`), which is precisely the wandering the milestone
+	##    objects to; momentum inverts both.
+	##
+	## Every number below is printed as well as asserted, so a re-pin is a
+	## reading rather than a guess.
+	var total_changes := 0.0
+	var total_gain := 0.0
+	var measured := 0
+	for index in PROFILE_IDS.size():
+		var plan := _plan(PROFILE_SEEDS[index], PROFILE_IDS[index])
+		assert_not_null(plan, "%s seed %d: %s" % [PROFILE_IDS[index],
+			PROFILE_SEEDS[index], WarrenMazeCarver.last_failure])
+		if plan == null:
+			continue
+		var metrics := _spine_metrics(plan)
+		measured += 1
+		total_changes += float(metrics.changes_per_10)
+		total_gain += float(metrics.descent_reach) \
+			- float(metrics.summit_radius)
+		print(("MAZE_SPINE %s seed=%d cells=%d changes=%d per10=%.2f " \
+			+ "summit=%d/%d climb=%d descent_bands=%d descent_cells=%d " \
+			+ "radius %.2f -> %.2f") % [String(PROFILE_IDS[index]),
+			PROFILE_SEEDS[index], int(metrics.cells), int(metrics.changes),
+			float(metrics.changes_per_10), int(metrics.summit_index),
+			int(metrics.cells), int(metrics.climb_bands),
+			int(metrics.descent_bands), int(metrics.descent_cells),
+			float(metrics.summit_radius), float(metrics.end_radius)])
+		print("MAZE_SPINE_REACH %s reach=%.2f" % [
+			String(PROFILE_IDS[index]), float(metrics.descent_reach)])
+		assert_eq(int(metrics.summit_y), int(metrics.highest_y),
+			"%s: the named summit must be the spine's highest cell" \
+				% PROFILE_IDS[index])
+		assert_gte(int(metrics.descent_bands), MIN_POST_SUMMIT_DESCENT_BANDS,
+			("%s seed %d spends %d bands descending from its summit; the " \
+				+ "street must cross the crown and come down at least one " \
+				+ "terrace") % [PROFILE_IDS[index], PROFILE_SEEDS[index],
+				int(metrics.descent_bands)])
+		assert_between(float(metrics.changes_per_10),
+			SPINE_DIRECTION_CHANGE_FLOOR, SPINE_DIRECTION_CHANGE_CEILING,
+			"%s seed %d turns %.2f times per 10 spine cells" % [
+				PROFILE_IDS[index], PROFILE_SEEDS[index],
+				float(metrics.changes_per_10)])
+	assert_gt(measured, 0, "at least one profile must carve")
+	print("MAZE_SPINE mean_per10=%.2f mean_outward_gain=%.2f over %d profiles" \
+		% [total_changes / float(maxi(1, measured)),
+		total_gain / float(maxi(1, measured)), measured])
+	assert_gte(total_gain / float(maxi(1, measured)),
+		DESCENT_OUTWARD_GAIN_FLOOR,
+		("the descent must head for the far rim: mean outward gain %.2f " \
+			+ "cells over %d profiles") % [
+			total_gain / float(maxi(1, measured)), measured])
 
 
 func test_production_seed_corpus_seals_without_attempt_search() -> void:

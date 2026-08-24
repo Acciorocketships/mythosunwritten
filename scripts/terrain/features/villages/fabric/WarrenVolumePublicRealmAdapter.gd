@@ -169,9 +169,22 @@ static func from_volume(source: WarrenVolumePlan,
 			var seams := _adjacent_lane_seams(existing.surface_cells, surfaces)
 			if seams.size() >= 2:
 				connection_candidates.append({"node_id": existing.stable_id,
-					"seam_count": seams.size()})
+					"seam_count": seams.size(),
+					"level_seam_count": _adjacent_lane_seams(
+						existing.surface_cells, surfaces, true).size()})
+		# TASK E2. Rank by LEVEL lanes first. Raw contact count alone aims this
+		# connector straight at a STAIR_CANYON — the one node kind whose
+		# surface cells are guaranteed to sit at more than one y, so it wins
+		# the count precisely because it is sloped — and the edge below is
+		# declared LEVEL. A partner offering two flat lanes is the better
+		# connection on its own merits, and `_add_edge` still names the edge a
+		# half stair when no partner offers any. This reorders nothing on a
+		# town that already sealed: there the winner's every seam was already
+		# level, so its level count equals the raw count that won.
 		connection_candidates.sort_custom(func(a: Dictionary,
 				b: Dictionary) -> bool:
+			if int(a.level_seam_count) != int(b.level_seam_count):
+				return int(a.level_seam_count) > int(b.level_seam_count)
 			if int(a.seam_count) != int(b.seam_count):
 				return int(a.seam_count) > int(b.seam_count)
 			return String(a.node_id) < String(b.node_id))
@@ -394,17 +407,46 @@ static func _add_edge(realm: SectionalPublicRealmPlan, edge_index: int,
 		from_id: StringName, to_id: StringName,
 		kind: PublicRealmEdge.TransitionKind,
 		is_primary: bool) -> bool:
+	## TASK E2. An edge's transition kind is a FACT about the lanes that prove
+	## it, not a wish the caller may state independently of them.
+	##
+	## `_adjacent_lane_seams` accepts any contact within one band because that
+	## is right for a stair or a ramp — the 1.5 m riser between the two lanes
+	## is the point of those edges. `PublicRealmEdge.seal` then holds a LEVEL
+	## edge to a stricter rule (no seam may step at all), and nothing used to
+	## reconcile the two: a LEVEL edge built over a node with surface cells at
+	## more than one y — a STAIR_CANYON, a walk node carrying an infill
+	## extension or a roof court — could be handed a stepped lane and was
+	## refused by the seal a stage later, as `realm seal failed: invalid or
+	## duplicate edge`. That was the largest maze blocker family (5/compact,
+	## 10/standard, step/3/standard and the solve_selected quarters).
+	##
+	## So: prove a LEVEL edge with LEVEL lanes, and if none are on offer, name
+	## the edge for what its lanes actually are. Restricting the LEVEL search
+	## is a NO-OP wherever a town already sealed — a stepped candidate that
+	## reached the selected set made the seal fail, and one that did not reach
+	## it marks nothing in the greedy pass, so removing it cannot change the
+	## outcome — which is why this returns towns without moving any that
+	## already stand.
 	var from_node := realm.node(from_id)
 	var to_node := realm.node(to_id)
 	if from_node == null or to_node == null:
 		return false
+	var edge_kind := kind
 	var seams := _adjacent_lane_seams(from_node.surface_cells,
-		to_node.surface_cells)
+		to_node.surface_cells, kind == PublicRealmEdge.TransitionKind.LEVEL)
+	if seams.size() < 2 and kind == PublicRealmEdge.TransitionKind.LEVEL:
+		# One 1.5 m riser is half a 3 m storey, and the vocabulary already has
+		# the word for it. Refusing here instead would trade one gate for
+		# another; claiming LEVEL is the defect this whole rule exists to stop.
+		seams = _adjacent_lane_seams(from_node.surface_cells,
+			to_node.surface_cells, false)
+		edge_kind = PublicRealmEdge.TransitionKind.HALF_STAIR
 	if seams.size() < 2:
 		return false
 	var edge_value := PublicRealmEdge.new(
 		StringName("volume.edge.%02d" % edge_index), from_id, to_id,
-		kind, is_primary)
+		edge_kind, is_primary)
 	for seam: Dictionary in seams:
 		edge_value.add_seam(seam.from_cell as Vector3i,
 			seam.to_cell as Vector3i)
@@ -454,12 +496,18 @@ static func _transition_end_y(surfaces: Array[Vector3i],
 
 
 static func _adjacent_lane_seams(from_cells: Array[Vector3i],
-		to_cells: Array[Vector3i]) -> Array[Dictionary]:
+		to_cells: Array[Vector3i],
+		require_level: bool = false) -> Array[Dictionary]:
+	## `require_level` restricts the search to lanes that do not step, which is
+	## what `PublicRealmEdge.TransitionKind.LEVEL` means and what its own seal
+	## enforces (TASK E2). The default stays permissive because a stair or ramp
+	## edge is proved by exactly the lanes it excludes.
 	var candidates: Array[Dictionary] = []
 	for from_cell: Vector3i in from_cells:
 		for to_cell: Vector3i in to_cells:
+			var rise := absi(from_cell.y - to_cell.y)
 			if absi(from_cell.x - to_cell.x) + absi(from_cell.z - to_cell.z) == 1 \
-					and absi(from_cell.y - to_cell.y) <= 1:
+					and rise <= 1 and (rise == 0 or not require_level):
 				candidates.append({"from_cell": from_cell, "to_cell": to_cell})
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return _cell_key(a.from_cell as Vector3i) \

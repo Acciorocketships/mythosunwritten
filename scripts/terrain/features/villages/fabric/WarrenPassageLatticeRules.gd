@@ -24,6 +24,11 @@ const RAMP_DOWN := {
 	"kind": WarrenVolumeTransition.Kind.RAMP, "rise": -1, "run": 3,
 }
 const CLIMB_ACTIONS: Array[Dictionary] = [LEVEL, STAIR_UP, RAMP_UP]
+## TASK E2. The mirror of CLIMB_ACTIONS, for the half of the spine that runs
+## past the summit toward the far rim. It carries no rising stride at all, so
+## "the street never climbs again after the crown" is structural rather than a
+## weight that a lucky score could outvote.
+const DESCEND_ACTIONS: Array[Dictionary] = [LEVEL, STAIR_DOWN, RAMP_DOWN]
 const CONTOUR_ACTIONS: Array[Dictionary] = [
 	LEVEL, STAIR_UP, STAIR_DOWN, RAMP_UP, RAMP_DOWN,
 ]

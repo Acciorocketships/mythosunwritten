@@ -146,8 +146,18 @@ func seal() -> bool:
 		market_touches_approach = market_touches_approach or cell in market_zone
 	if not market_touches_approach:
 		return _reject("market square is detached from its spine approach")
-	if summit_cell != excavation.route.back():
-		return _reject("summit arrival is not the spine terminus")
+	# TASK E2. The spine no longer STOPS at the crown — it crosses it and
+	# descends toward the far rim — so "the summit is the last route cell" is
+	# no longer the fact to hold. What matters is the fact that rule was
+	# standing in for: the cell the plan CALLS the summit really is the town's
+	# high point on its own spine. That is strictly stronger than the old
+	# check, which never once looked at a height.
+	if excavation.route.find(summit_cell) < 0:
+		return _reject("summit %s is not a spine cell" % summit_cell)
+	for cell: Vector3i in excavation.route:
+		if cell.y > summit_cell.y:
+			return _reject("spine cell %s stands above the named summit %s" % [
+				cell, summit_cell])
 	if excavation.loop_edges.is_empty():
 		return _reject("public passage graph is a branch tree without a loop join")
 	for column: Vector2i in massif.columns:
@@ -971,6 +981,13 @@ func _build_audit() -> Dictionary:
 		"route_span_bands": excavation.route_span_bands(),
 		"max_spine_straight_run": _max_straight_run(excavation.route),
 		"max_alley_straight_run": _max_alley_straight_run(),
+		# TASK E2. The spine's two halves, as facts the sweep and the suites
+		# can read without re-deriving the carver's own bookkeeping.
+		"spine_summit_index": excavation.route.find(summit_cell),
+		"spine_descent_cells": maxi(0, excavation.route.size() - 1
+			- excavation.route.find(summit_cell)),
+		"spine_descent_bands": summit_cell.y - excavation.route.back().y,
+		"spine_direction_changes": _direction_changes(excavation.route),
 	}
 
 
@@ -990,6 +1007,21 @@ func _max_alley_straight_run() -> int:
 		walk.append_array(lane.cells as Array[Vector3i])
 		out = maxi(out, _max_straight_run(walk))
 	return out
+
+
+static func _direction_changes(walk: Array[Vector3i]) -> int:
+	## TASK E2's momentum metric: how often the street turns. Counted over the
+	## same cell-to-cell deltas `_max_straight_run` reads, so the two numbers
+	## always describe the same walk.
+	var changes := 0
+	var previous := Vector2i.ZERO
+	for index in range(1, walk.size()):
+		var delta := walk[index] - walk[index - 1]
+		var direction := Vector2i(delta.x, delta.z)
+		if index > 1 and direction != previous:
+			changes += 1
+		previous = direction
+	return changes
 
 
 static func _max_straight_run(walk: Array[Vector3i]) -> int:

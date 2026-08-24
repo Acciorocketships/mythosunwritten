@@ -26,6 +26,57 @@ const MAX_LOOP_JOINS := 2
 const MAX_LOOP_CONNECTOR_CELLS := 8
 const MAX_LOOP_SEARCH_VISITS_PER_ANCHOR := 500
 
+## TASK E2 -- MOMENTUM (controller ruling 1). A preference inside the existing
+## candidate score, not a new search: one pass, no lookahead, deterministic.
+##
+## Before E2 the spine's two orientation terms were `score += next_straight *
+## 55` (continuing straight COST 55 per cell already run) and `score -= 45`
+## (turning was REWARDED). That is an explicitly ANTI-momentum rule, and it is
+## what made the street wander over the terraced massif E1 built: measured
+## 3.89 / 5.00 / 4.23 / 4.14 direction changes per 10 spine cells on the four
+## profile seeds. Momentum inverts both: continuing the current heading, and
+## continuing the current VERTICAL tendency, are each worth a bonus, and
+## reversing the vertical tendency costs.
+##
+## The weights sit deliberately between the two tiers the score already had.
+## They are larger than the per-stride frontage terms (105 a side, 160 a
+## two-sided cell) so a street that is going somewhere is not deflected by one
+## extra addressed wall, and smaller than the radius (240 a cell) and
+## span-deficit (520 a band) terms that decide WHERE the street is going -- so
+## momentum steers the route, it never overrules the destination. Nothing here
+## can make an illegal stride legal: the terrace, the straight-run cap, and
+## `WarrenPassageLatticeRules.stride_cells` still decide what may be carved,
+## which is what "unless the terrace forces a turn" means in code.
+const MOMENTUM_DIRECTION_WEIGHT := 180.0
+const MOMENTUM_RISE_WEIGHT := 150.0
+const MOMENTUM_REVERSAL_WEIGHT := 220.0
+
+## TASK E2 -- POST-SUMMIT DESCENT (controller ruling 1). One terrace, in the
+## massif's own units (`WarrenMassifBuilder.TERRACE_BANDS` is the same
+## constant), is what the descent aims to spend before it stops caring about
+## height and only cares about reaching the rim.
+const DESCENT_TARGET_BANDS := WarrenBuildingParcel.STOREY_BANDS
+
+## The descent's cell budget, as a share of the profile's authored spine.
+##
+## It is a budget of its own rather than a slice of `route_cell_range`, and
+## that is a measurement, not a preference: on all four profile seeds the
+## CLIMB alone already ends at exactly `route_cell_range.y` (18/22/26/29 of
+## 18/22/26/30). A compact town spends six cells of at-grade market approach
+## and then needs five risers to clear `route_span_range.x`, which is the
+## whole authored range. The profile's number describes a climb because until
+## E2 the spine was only ever a climb; the descent is new public street and
+## says so here instead of quietly shortening the ascent and risking the towns
+## that only just satisfy their span.
+##
+## `/ 3` clamped to 4..10 gives 6 / 7 / 8 / 10 cells -- two to five descending
+## strides, so a town can always spend DESCENT_TARGET_BANDS (two STAIR_DOWNs,
+## four cells) and still have somewhere to put the run that carries it out to
+## the rim.
+const DESCENT_CELL_BUDGET_DIVISOR := 3
+const MIN_DESCENT_CELL_BUDGET := 4
+const MAX_DESCENT_CELL_BUDGET := 10
+
 static var last_failure := ""
 static var last_diagnostic: Dictionary = {}
 
@@ -68,14 +119,23 @@ static func carve(world_seed: int, massif: WarrenMassif,
 		"inner_radius": maxf(2.5, float(profile.radius_cells) * 0.42),
 		"visits": 0,
 	}
-	if not _search_spine(context, portal, -1, 0):
+	if not _search_spine(context, portal, -1, 0, 0):
 		last_failure = "single spine DFS exhausted %d visits" \
 			% int(context.visits)
 		last_diagnostic = {"stage": &"spine", "visits": context.visits,
 			"portal": portal, "route_cells": excavation.route.size()}
 		return null
-	var thickness := _block_thickness_field(massif,
-		excavation.route.back(), profile.radius_cells)
+	# TASK E2. The climb DFS has produced a legal town; the descent may only
+	# ADD to it. It runs here, before anything else touches the excavation, so
+	# the market stamp, the alleys and the loop joins all see one complete
+	# spine rather than a spine that grows a tail behind their backs.
+	var summit := context.summit_cell as Vector3i
+	var descent := _extend_spine_descent(context)
+	# The block-thickness field is a distance ramp away from the town's HIGH
+	# POINT, and stays anchored there now that the spine's last cell is out on
+	# the rim instead.
+	var thickness := _block_thickness_field(massif, summit,
+		profile.radius_cells)
 	# Reserve the universal square before alley growth can spend either of its
 	# two flanking cells. Alley coverage then grows around this immutable public
 	# feature and restores any frontage margin the wider floor consumes.
@@ -89,7 +149,7 @@ static func carve(world_seed: int, massif: WarrenMassif,
 		return null
 	var before_frontage := _frontage_audit(massif, excavation)
 	_carve_alleys(world_seed, massif, excavation, thickness,
-		market_cells, profile)
+		market_cells, profile, int(descent.cells))
 	var loop_target := MAX_LOOP_JOINS if profile.scale_id in [
 		WarrenVillageScaleProfile.LARGE,
 		WarrenVillageScaleProfile.GRAND] else MIN_LOOP_JOINS
@@ -135,7 +195,10 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	plan.market_square_cells.assign(market_square)
 	plan.feature_stamps.append({"kind": &"market_square",
 		"cells": market_square.duplicate(), "adaptation": &"fit"})
-	plan.summit_cell = excavation.route.back()
+	# TASK E2. The summit is where the CLIMB arrived, which is no longer the
+	# spine's last cell. It stays the town's crown for every reader that means
+	# the crown — the landmark and deck quotas key their rolls off it.
+	plan.summit_cell = summit
 	plan.block_thickness = thickness
 	if seal_plan:
 		if not plan.seal():
@@ -147,6 +210,8 @@ static func carve(world_seed: int, massif: WarrenMassif,
 		last_diagnostic["spine_visits"] = context.visits
 		last_diagnostic["lane_count"] = excavation.lanes.size()
 		last_diagnostic["loop_join_count"] = excavation.loop_edges.size()
+		last_diagnostic["descent_cells"] = int(descent.cells)
+		last_diagnostic["descent_bands"] = int(descent.bands)
 	return plan
 
 
@@ -362,7 +427,8 @@ static func _square_stands_alone(nodes: Dictionary, square: Array[Vector3i],
 
 
 static func _search_spine(context: Dictionary, current: Vector3i,
-		previous_direction_index: int, straight_run: int) -> bool:
+		previous_direction_index: int, straight_run: int,
+		previous_rise: int) -> bool:
 	context.visits = int(context.visits) + 1
 	if int(context.visits) > SPINE_VISIT_BUDGET:
 		return false
@@ -374,11 +440,18 @@ static func _search_spine(context: Dictionary, current: Vector3i,
 			and excavation.route.size() >= int(context.market_cells) \
 			and current.y - portal.y >= profile.route_span_range.x \
 			and radius <= float(context.inner_radius):
+		# TASK E2. The climb's arrival is the SUMMIT, and the descent starts
+		# here with the heading and the vertical tendency the climb finished
+		# on — momentum carries over the crown rather than restarting at it.
+		context.summit_cell = current
+		context.summit_direction_index = previous_direction_index
+		context.summit_straight_run = straight_run
+		context.summit_rise = previous_rise
 		return true
 	if excavation.route.size() >= profile.route_cell_range.y:
 		return false
 	var candidates := _spine_candidates(context, current,
-		previous_direction_index, straight_run)
+		previous_direction_index, straight_run, previous_rise)
 	for candidate: Dictionary in candidates:
 		var cells := candidate.cells as Array[Vector3i]
 		var run := int(candidate.run)
@@ -390,7 +463,8 @@ static func _search_spine(context: Dictionary, current: Vector3i,
 		var next_straight := straight_run + run \
 			if int(candidate.direction_index) == previous_direction_index else run
 		if _search_spine(context, cells.back(),
-				int(candidate.direction_index), next_straight):
+				int(candidate.direction_index), next_straight,
+				int(candidate.rise)):
 			return true
 		excavation.transitions.pop_back()
 		WarrenPassageLatticeRules.rollback(excavation,
@@ -399,8 +473,25 @@ static func _search_spine(context: Dictionary, current: Vector3i,
 	return false
 
 
+static func _momentum_bonus(direction_index: int,
+		previous_direction_index: int, rise: int, previous_rise: int) -> float:
+	## TASK E2. The whole of momentum, in one place, shared by the climb and
+	## the descent so the street's character does not change at the crown.
+	## Negative is better: the candidate lists are sorted ascending.
+	var bonus := 0.0
+	if direction_index == previous_direction_index:
+		bonus -= MOMENTUM_DIRECTION_WEIGHT
+	var tendency := signi(rise) * signi(previous_rise)
+	if tendency > 0 or (rise == 0 and previous_rise == 0):
+		bonus -= MOMENTUM_RISE_WEIGHT
+	elif tendency < 0:
+		bonus += MOMENTUM_REVERSAL_WEIGHT
+	return bonus
+
+
 static func _spine_candidates(context: Dictionary, current: Vector3i,
-		previous_direction_index: int, straight_run: int) -> Array[Dictionary]:
+		previous_direction_index: int, straight_run: int,
+		previous_rise: int) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var massif := context.massif as WarrenMassif
 	var excavation := context.excavation as WarrenExcavation
@@ -453,10 +544,10 @@ static func _spine_candidates(context: Dictionary, current: Vector3i,
 				+ float(run) * 35.0
 			if not market_incomplete and int(action.rise) > 0:
 				score -= 310.0
-			if direction_index == previous_direction_index:
-				score += float(next_straight) * 55.0
-			else:
-				score -= 45.0
+			# TASK E2. Momentum replaces the two lines that used to cost a
+			# straight run 55 a cell and pay 45 for a turn.
+			score += _momentum_bonus(direction_index,
+				previous_direction_index, int(action.rise), previous_rise)
 			var tie := WarrenPassageLatticeRules.hash_key(
 				int(context.world_seed), 0x51A7, endpoint,
 				int(context.visits) * 17 + action_index)
@@ -471,9 +562,149 @@ static func _spine_candidates(context: Dictionary, current: Vector3i,
 	return out
 
 
+static func _extend_spine_descent(context: Dictionary) -> Dictionary:
+	## TASK E2, controller ruling 1: after the summit cell the spine DESCENDS
+	## toward the far rim.
+	##
+	## GREEDY, not a second search. The climb DFS has already produced a town
+	## that satisfies every gate; a backtracking descent could fail and take
+	## that town down with it, so this walk takes its best legal stride each
+	## step and simply STOPS when there is none. Its worst case is the spine
+	## the carver produced before E2, which is why no town can regress at this
+	## stage. "No lookahead beyond the existing candidate scoring" is therefore
+	## literal here: the scoring IS the whole decision.
+	##
+	## It also inherits the climb's heading, straight run and vertical
+	## tendency, so `MAX_SPINE_STRAIGHT_RUN` still counts across the crown and
+	## momentum does not silently reset at the one cell where a street would
+	## most obviously keep going.
+	var excavation := context.excavation as WarrenExcavation
+	var profile := context.profile as WarrenVillageScaleProfile
+	var occupied := context.occupied as Dictionary
+	var summit := context.summit_cell as Vector3i
+	var budget := clampi(
+		profile.route_cell_range.y / DESCENT_CELL_BUDGET_DIVISOR,
+		MIN_DESCENT_CELL_BUDGET, MAX_DESCENT_CELL_BUDGET)
+	var current := summit
+	var direction_index := int(context.summit_direction_index)
+	var straight_run := int(context.summit_straight_run)
+	var previous_rise := int(context.summit_rise)
+	var summit_radius := Vector2(float(summit.x), float(summit.z)).length()
+	var spent := 0
+	while spent < budget:
+		# The budget is a CAP, not a length. A descent that has already spent
+		# its terrace and stands further out than the crown has done what it
+		# is for, and every further cell only crowds the crown -- which is the
+		# thickest, most house-capable mass in the town and where the alley
+		# ratchet most needs room. Measured over the 24-town corpus: spending
+		# the whole budget unconditionally cost 0.029 of mean addressed-column
+		# ratio (0.610 -> 0.581) and 0.032 of mean plot ownership; stopping on
+		# arrival keeps the descent and gives that back.
+		if summit.y - current.y >= DESCENT_TARGET_BANDS \
+				and Vector2(float(current.x),
+					float(current.z)).length() > summit_radius:
+			break
+		var candidates := _descent_candidates(context, current,
+			direction_index, straight_run, previous_rise, budget - spent)
+		if candidates.is_empty():
+			break
+		var chosen := candidates[0]
+		var cells := chosen.cells as Array[Vector3i]
+		var run := int(chosen.run)
+		excavation.transitions.append({"from": current, "to": cells.back(),
+			"kind": int(chosen.kind)})
+		WarrenPassageLatticeRules.carve_stride(excavation, occupied, cells,
+			int(chosen.rise), run)
+		straight_run = straight_run + run \
+			if int(chosen.direction_index) == direction_index else run
+		direction_index = int(chosen.direction_index)
+		previous_rise = int(chosen.rise)
+		current = cells.back()
+		spent += run
+	return {"cells": spent, "bands": summit.y - current.y, "end": current}
+
+
+static func _descent_candidates(context: Dictionary, current: Vector3i,
+		previous_direction_index: int, straight_run: int, previous_rise: int,
+		budget: int) -> Array[Dictionary]:
+	## The climb's scoring, read the other way round. Three terms flip and
+	## nothing else moves, which is the point: the street that comes down the
+	## far side is the same street.
+	##
+	##   * radius is REWARDED instead of penalised -- the climb pulls toward
+	##     the crown, the descent pushes out to the rim;
+	##   * the span deficit becomes a DESCENT deficit, so the fall is spent
+	##     first and the run to the rim afterwards; and
+	##   * the climb bonus becomes a descent bonus.
+	##
+	## The frontage terms are untouched: a descending street must still front
+	## the mass it passes, and `_addressable_sides < 1` still refuses a stride
+	## outright, exactly as on the way up.
+	var out: Array[Dictionary] = []
+	var massif := context.massif as WarrenMassif
+	var excavation := context.excavation as WarrenExcavation
+	var occupied := context.occupied as Dictionary
+	var summit := context.summit_cell as Vector3i
+	for direction_index in WarrenPassageLatticeRules.DIRECTIONS.size():
+		var direction := WarrenPassageLatticeRules.DIRECTIONS[direction_index]
+		if previous_direction_index >= 0 \
+				and direction_index == (previous_direction_index + 2) % 4:
+			continue
+		for action_index in WarrenPassageLatticeRules.DESCEND_ACTIONS.size():
+			var action := WarrenPassageLatticeRules \
+				.DESCEND_ACTIONS[action_index]
+			var run := int(action.run)
+			if run > budget:
+				continue
+			var next_straight := straight_run + run \
+				if direction_index == previous_direction_index else run
+			if next_straight > MAX_SPINE_STRAIGHT_RUN:
+				continue
+			var stride := WarrenPassageLatticeRules.stride_cells(massif,
+				excavation, occupied, current, direction,
+				int(action.rise), run)
+			if stride.is_empty():
+				continue
+			var address_sides := 0
+			var two_sided := 0
+			for cell: Vector3i in stride:
+				var sides := _addressable_sides(massif, excavation, cell)
+				if sides < 1:
+					address_sides = -1000
+					break
+				address_sides += sides
+				two_sided += int(sides >= 2)
+			if address_sides < 0:
+				continue
+			var endpoint: Vector3i = stride.back()
+			var radius := Vector2(float(endpoint.x), float(endpoint.z)).length()
+			var descent_deficit := maxi(0,
+				DESCENT_TARGET_BANDS - (summit.y - endpoint.y))
+			var score := -radius * 240.0 + float(descent_deficit) * 520.0 \
+				- float(address_sides) * 105.0 - float(two_sided) * 160.0 \
+				+ float(run) * 35.0
+			if int(action.rise) < 0:
+				score -= 310.0
+			score += _momentum_bonus(direction_index,
+				previous_direction_index, int(action.rise), previous_rise)
+			var tie := WarrenPassageLatticeRules.hash_key(
+				int(context.world_seed), 0xDE5C, endpoint,
+				excavation.route.size() * 17 + action_index)
+			out.append({"cells": stride, "run": run,
+				"rise": int(action.rise), "kind": int(action.kind),
+				"direction_index": direction_index, "score": score,
+				"tie": tie})
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if not is_equal_approx(float(a.score), float(b.score)):
+			return float(a.score) < float(b.score)
+		return int(a.tie) < int(b.tie))
+	return out
+
+
 static func _carve_alleys(world_seed: int, massif: WarrenMassif,
 		excavation: WarrenExcavation, thickness: Dictionary,
-		market_cell_count: int, profile: WarrenVillageScaleProfile) -> void:
+		market_cell_count: int, profile: WarrenVillageScaleProfile,
+		descent_cells: int = 0) -> void:
 	var public_set: Dictionary = {}
 	for cell: Vector3i in excavation.route:
 		public_set[cell] = true
@@ -495,8 +726,21 @@ static func _carve_alleys(world_seed: int, massif: WarrenMassif,
 	# the profile's addressed-column target; the independent source seal still
 	# requires 0.90 of passage cells to retain an inhabitable facade.
 	var target_public_cells := int(ceil(float(capable) * 1.10))
+	# TASK E2. The spine's supply is its CLIMB, not its whole length. The 1.10
+	# estimate above says how many public cells it takes to front the mass, and
+	# it was calibrated against a spine that ran once from the mouth to the
+	# crown. The post-summit descent comes back down beside ground the climb
+	# already addressed, so charging its cells against the alley allowance buys
+	# almost no new frontage and costs a great deal: measured on large/43,
+	# 8 descent cells took the alley supply from 65 cells to 37 and the
+	# addressed-column ratio from 0.676 to 0.440. The allowance is therefore
+	# what it always was, and the descent is street the town gains on top.
+	# This is a cap, not a quota -- the ratchet below stops the moment the
+	# column target is met -- so a town that was never budget-bound does not
+	# grow one cell because of this line.
+	var spine_supply := maxi(0, excavation.route.size() - descent_cells)
 	var cell_budget := clampi(maxi(profile.lane_cell_budget,
-		target_public_cells - excavation.route.size()),
+		target_public_cells - spine_supply),
 		profile.lane_cell_budget, MAX_DERIVED_ALLEY_CELLS)
 	var lane_budget := maxi(profile.lane_budget,
 		int(ceil(float(cell_budget) / 4.0)))
