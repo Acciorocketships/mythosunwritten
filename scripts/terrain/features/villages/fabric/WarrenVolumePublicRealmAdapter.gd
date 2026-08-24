@@ -161,36 +161,9 @@ static func from_volume(source: WarrenVolumePlan,
 			last_failure = "supplemental covered route node %s rejected: %s" % [
 				node_id, realm.last_rejection]
 			return null
-		var connection_candidates: Array[Dictionary] = []
-		for existing: PublicRealmNode in realm.nodes:
-			if existing.stable_id == node_id \
-					or String(existing.stable_id).begins_with("volume.supplemental."):
-				continue
-			var seams := _adjacent_lane_seams(existing.surface_cells, surfaces)
-			if seams.size() >= 2:
-				connection_candidates.append({"node_id": existing.stable_id,
-					"seam_count": seams.size(),
-					"level_seam_count": _adjacent_lane_seams(
-						existing.surface_cells, surfaces, true).size()})
-		# TASK E2. Rank by LEVEL lanes first. Raw contact count alone aims this
-		# connector straight at a STAIR_CANYON — the one node kind whose
-		# surface cells are guaranteed to sit at more than one y, so it wins
-		# the count precisely because it is sloped — and the edge below is
-		# declared LEVEL. A partner offering two flat lanes is the better
-		# connection on its own merits, and `_add_edge` still names the edge a
-		# half stair when no partner offers any. This reorders nothing on a
-		# town that already sealed: there the winner's every seam was already
-		# level, so its level count equals the raw count that won.
-		connection_candidates.sort_custom(func(a: Dictionary,
-				b: Dictionary) -> bool:
-			if int(a.level_seam_count) != int(b.level_seam_count):
-				return int(a.level_seam_count) > int(b.level_seam_count)
-			if int(a.seam_count) != int(b.seam_count):
-				return int(a.seam_count) > int(b.seam_count)
-			return String(a.node_id) < String(b.node_id))
-		if connection_candidates.is_empty() or not _add_edge(realm, edge_index,
-				StringName(connection_candidates[0].node_id), node_id,
-				PublicRealmEdge.TransitionKind.LEVEL, false):
+		var partner := supplemental_partner(realm, node_id, surfaces)
+		if partner.is_empty() or not _add_edge(realm, edge_index, partner,
+				node_id, PublicRealmEdge.TransitionKind.LEVEL, false):
 			last_failure = "supplemental covered route %s has no two-lane seam" % \
 				node_id
 			return null
@@ -245,6 +218,65 @@ static func from_volume(source: WarrenVolumePlan,
 		_composed_walk_enclosure_ratio(source, pruning, extensions) \
 		if pruning != null else 0.0
 	return realm
+
+
+static func supplemental_partner(realm: SectionalPublicRealmPlan,
+		node_id: StringName,
+		surfaces: Array[Vector3i]) -> StringName:
+	## Which already-placed node a supplemental component hangs its LEVEL edge
+	## off. Ranked by LEVEL lanes first (TASK E2).
+	##
+	## Raw contact count alone aims this connector straight at a
+	## STAIR_CANYON — the one node kind whose surface cells are guaranteed to
+	## sit at more than one y, so it wins the count precisely BECAUSE it is
+	## sloped — and the edge the caller builds is declared LEVEL. A flat
+	## lanes is the better connection on its own merits, and `_add_edge` still
+	## names the edge a half stair when no partner offers any.
+	##
+	## This reorders nothing on a town that already sealed. The old winner's
+	## every seam was level (an edge with a stepped seam is why a town did NOT
+	## seal), so its level count equals the raw count that won it, and it
+	## suffices that no loser's level count can exceed its own raw count.
+	##
+	## That last step is NOT general — greedy maximal matching on a subset of
+	## the candidates can be LARGER than on the whole set, because a bad early
+	## pairing that blocked two later ones may itself have been removed. It
+	## holds here on a lemma about this caller's inputs:
+	##
+	##   SINGLE-BAND LEMMA. A supplemental component occupies exactly one band.
+	##   `_supplemental_surface_components` grows it over
+	##   CARDINAL_MACRO_DIRECTIONS, which are horizontal-only, so no two cells
+	##   of one component differ in y. Every candidate seam from a given
+	##   `from_cell` therefore steps by the same amount — |from_cell.y - y_c|
+	##   for the component's single band y_c — so restricting to level lanes
+	##   removes WHOLE from-groups and never part of one.
+	##
+	## Given the lemma the level run is the raw run with k matched from-groups
+	## deleted. Deleting them frees exactly k to-cells, and in a greedy pass
+	## each freed to-cell can promote at most one previously blocked
+	## from-group, so the level matching gains at most k while losing exactly
+	## k: level <= raw. `test_a_supplemental_court_prefers_a_level_partner`
+	## covers the ranking itself.
+	var candidates: Array[Dictionary] = []
+	for existing: PublicRealmNode in realm.nodes:
+		var existing_id := String(existing.stable_id)
+		if existing.stable_id == node_id \
+				or existing_id.begins_with("volume.supplemental."):
+			continue
+		var seams := _adjacent_lane_seams(existing.surface_cells, surfaces)
+		if seams.size() >= 2:
+			candidates.append({"node_id": existing.stable_id,
+				"seam_count": seams.size(),
+				"level_seam_count": _adjacent_lane_seams(
+					existing.surface_cells, surfaces, true).size()})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.level_seam_count) != int(b.level_seam_count):
+			return int(a.level_seam_count) > int(b.level_seam_count)
+		if int(a.seam_count) != int(b.seam_count):
+			return int(a.seam_count) > int(b.seam_count)
+		return String(a.node_id) < String(b.node_id))
+	return &"" if candidates.is_empty() \
+		else StringName(candidates[0].node_id)
 
 
 static func _supplemental_surface_components(cells: Array[Vector3i],

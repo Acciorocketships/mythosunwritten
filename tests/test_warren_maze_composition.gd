@@ -355,7 +355,8 @@ const UNCOMPOSED_PARCEL_GATES: Array[String] = [
 ## time on the maze path. Two changes did it. The realm adapter no longer
 ## declares a LEVEL public-realm edge over a lane that steps a band, which
 ## returned 5/compact and 10/standard (and step/3/standard on real ground --
-## see SLOPED_KNOWN_REFUSALS, now empty); and the momentum spine re-bored
+## see SLOPED_KNOWN_REFUSALS, which trades that row for another); and the
+## momentum spine re-bored
 ## 8/compact, whose old wandering route expanded into the broad floor slab its
 ## volume adapter has always refused.
 ##
@@ -3171,6 +3172,17 @@ func _asset_plot_records(world_seed: int, scale_id: StringName) -> Array:
 	return outcomes.get("assets", []) as Array
 
 
+## TASK E2 FIX 1. What `test_assets_land` measured on the 24-town corpus:
+## the realisation mirror accepts **0** sites of 78 tested, and the production
+## pass really stands **2** prefab landmarks (12/compact and 3/standard). Both
+## halves are pinned — the first two-sidedly, because a mirror that starts
+## accepting sites has changed and someone should look; the second as a
+## RATCHET, because a landmark the corpus once built and stopped building is a
+## regression. Before E2 both numbers were zero and the pair read `0 == 0`.
+const MIRROR_ACCEPTED_SITES := 0
+const REALISED_LANDMARK_FLOOR := 1
+
+
 func test_assets_land() -> void:
 	## TASK C5b RULING 3. C2 measured three asset plots and ZERO landmarks:
 	## the planner sited assets by a footprint that never had to hold the
@@ -3262,22 +3274,28 @@ func test_assets_land() -> void:
 		realisable_total, realised_total, tested_total])
 	assert_gt(tested_total, 0,
 		"no seed enumerated an asset site for the realisation mirror to judge")
+	# TASK E2 FIX 1, IMPORTANT 1. The `pending()` escape that used to stand
+	# here returned BEFORE the ratchet below, so a corpus that regressed to
+	# zero landmarks reported green-with-a-pending and the ratchet could never
+	# fire. It was written when nothing realised; the momentum spine changed
+	# that, so it is deleted and the ratchet is now reachable.
+	assert_gte(realised_total, REALISED_LANDMARK_FLOOR,
+		("ruling 3 wants a landmark the production pass really builds; the " \
+			+ "corpus realises %d") % realised_total)
+	# SOUNDNESS, corpus-wide: `realised >= realisable` is the same property the
+	# per-town assertion states. On its own it is satisfied by 0 <= 2 and
+	# says little, so the measured PAIR is pinned beside it. The mirror is a
+	# source-stage prediction and is currently CONSERVATIVE — it accepts
+	# nothing while the production pass really builds two landmarks — and that
+	# is a fact worth a red test in either direction: a mirror that starts
+	# accepting sites is a re-pin someone has to look at, and a builder that
+	# stops realising trips the ratchet above.
 	assert_gte(realised_total, realisable_total,
 		"the corpus must realise at least the sites the mirror accepted")
-	# FIX 1, IMPORTANT 3. Soundness is a real property and the assertions above
-	# state it, but on a corpus that realises nothing they read
-	# `assert_eq(0, 0)` and report a PASS for an outcome nobody delivered.
-	# Ruling 3 wanted a landmark, so while there is none this test says so out
-	# loud instead of going green on a vacuous identity.
-	if realised_total == 0:
-		pending(("no asset realises on the corpus: the ROOF-face and " \
-			+ "bearing-off-natural-ground gates are both open since Task " \
-			+ "C5c ruling 5, and every remaining site is refused because " \
-			+ "its measured envelope plus the one-cell eave halo meets a " \
-			+ "neighbouring plot -- see task-c5c-report"))
-		return
-	assert_gte(realised_total, 1,
-		"ruling 3 wants a landmark the production pass really builds")
+	assert_eq(realisable_total, MIRROR_ACCEPTED_SITES,
+		("the realisation mirror accepts %d of %d sites it tested; it " \
+			+ "accepted %d when this was measured") % [realisable_total,
+			tested_total, MIRROR_ACCEPTED_SITES])
 
 
 func test_optional_facade_projections_yield_to_mandatory_shells() -> void:
@@ -3497,6 +3515,72 @@ func test_a_level_realm_edge_is_proved_only_by_level_lanes() -> void:
 	assert_true(edge.seal(nodes),
 		("the adapter built a LEVEL edge its own contract refuses: %s") % [
 			str(edge.seams)])
+
+
+func test_a_supplemental_court_prefers_a_level_partner() -> void:
+	## TASK E2 FIX 1, IMPORTANT 3. The other producer of the duplicate-edge
+	## family is the RANKING, and the two tests above only cover the seam
+	## selection. `supplemental_partner` used to rank by raw contact count,
+	## which aims straight at a STAIR_CANYON: a sloped node touches a
+	## single-band court along every one of its treads and therefore wins the
+	## raw count precisely BECAUSE it is sloped, while the edge that gets built
+	## is declared LEVEL.
+	##
+	## The fixture makes that the deciding fact and nothing else. The stair
+	## offers FOUR raw contacts to the court and only two of them are level;
+	## the terrace offers three, all level. Raw ranking picks the stair (4 > 3);
+	## level ranking picks the terrace (3 > 2). Both counts are asserted, so a
+	## fixture that stopped exercising the disagreement is a red test rather
+	## than a silent pass.
+	var court_cells: Array[Vector3i] = [
+		Vector3i(0, 1, 1), Vector3i(1, 1, 1),
+		Vector3i(2, 1, 1), Vector3i(3, 1, 1),
+	]
+	var stair_cells: Array[Vector3i] = [
+		Vector3i(0, 1, 0), Vector3i(1, 1, 0),
+		Vector3i(2, 2, 0), Vector3i(3, 2, 0),
+	]
+	var terrace_cells: Array[Vector3i] = [
+		Vector3i(0, 1, 2), Vector3i(1, 1, 2), Vector3i(2, 1, 2),
+	]
+	var stair := PublicRealmNode.new(&"volume.transition.00",
+		PublicRealmNode.EpisodeKind.STAIR_CANYON,
+		PublicRealmSurfacePlan.SurfaceKind.STAIR,
+		PublicRealmNode.AirRealm.EXTERIOR,
+		PublicRealmNode.CoverPolicy.COVERED, stair_cells,
+		WarrenVolumePublicRealmAdapter._air_for_surfaces(stair_cells), 1, 2)
+	var terrace := PublicRealmNode.new(&"volume.walk.00",
+		PublicRealmNode.EpisodeKind.TERRACE,
+		PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+		PublicRealmNode.AirRealm.EXTERIOR,
+		PublicRealmNode.CoverPolicy.OPEN, terrace_cells,
+		WarrenVolumePublicRealmAdapter._air_for_surfaces(terrace_cells), 1, 1)
+	assert_true(stair.seal(), "the stair fixture must be a legal node")
+	assert_true(terrace.seal(), "the terrace fixture must be a legal node")
+	var realm := SectionalPublicRealmPlan.new(&"e2.partner")
+	assert_true(realm.add_node(stair), realm.last_rejection)
+	assert_true(realm.add_node(terrace), realm.last_rejection)
+	# The fixture's premise, asserted rather than assumed.
+	var stair_raw := WarrenVolumePublicRealmAdapter._adjacent_lane_seams(
+		stair_cells, court_cells)
+	var stair_level := WarrenVolumePublicRealmAdapter._adjacent_lane_seams(
+		stair_cells, court_cells, true)
+	var terrace_raw := WarrenVolumePublicRealmAdapter._adjacent_lane_seams(
+		terrace_cells, court_cells)
+	var terrace_level := WarrenVolumePublicRealmAdapter._adjacent_lane_seams(
+		terrace_cells, court_cells, true)
+	assert_eq(stair_raw.size(), 4, "the stair must win the RAW contact count")
+	assert_eq(terrace_raw.size(), 3, "the terrace must lose the raw count")
+	assert_eq(stair_level.size(), 2, "only two of the stair's lanes are level")
+	assert_eq(terrace_level.size(), 3, "every terrace lane is level")
+	# The single-band lemma `supplemental_partner` rests on, on this fixture:
+	# no candidate's level count exceeds its own raw count.
+	assert_lte(stair_level.size(), stair_raw.size())
+	assert_lte(terrace_level.size(), terrace_raw.size())
+	assert_eq(WarrenVolumePublicRealmAdapter.supplemental_partner(realm,
+		&"volume.supplemental.00", court_cells), terrace.stable_id,
+		("the court must hang its LEVEL edge off the partner that offers " \
+			+ "LEVEL lanes, not off the one with the most contacts"))
 
 
 func test_a_realm_edge_with_only_stepped_lanes_says_it_is_a_stair() -> void:
@@ -3755,26 +3839,29 @@ const SLOPED_UNROOMED_PLOT_MASS_CEILING := 0.39
 ## 24. It was not a new gate and not a massif invariant: the massif for this row
 ## sealed, carved, plotted and parcelled, and died in the realm adapter.
 ##
-## TASK E2 EMPTIED THIS MAP. The E1 note recorded the wrong cause -- it said the
-## adapter "emits two edges with one id", because `SectionalPublicRealmPlan
-## .seal`'s only word for seven distinct seam faults was "invalid or duplicate
-## edge". No maze town ever had a duplicate id. Every one of them had a LEVEL
-## edge whose seam stepped a band, which `PublicRealmEdge.seal` refuses and is
-## right to refuse. The adapter now proves a LEVEL edge with level lanes and
-## names a stepped one a half stair, and all four sloped rows compose. The
-## rejection message names the fault and the seam now, so the next map like this
-## one starts from the truth.
+## TASK E2 CLEARED THAT ROW AND ADDED A DIFFERENT ONE. The map is the same
+## size and holds a different town, which is a trade and is reported as one:
+## three of four sloped rows composed before this task and three compose after
+## it, and they are not the same three.
 ##
-## It is NOT empty, and the row in it is not the row that was in it. TASK E2's
-## momentum spine re-bored every town, and `step/12/compact` -- which composed
-## before -- now dies in the composition at a bridge gate: its one bridge room
-## has no BUILT FLANK, because the parcel the span was authored against no
-## longer composes a room at that band. Pinned by name with the gate it dies
-## at, exactly as E1 pinned the row it replaces, so a row that dies anywhere
-## else is still a red test and a row that starts composing again is a re-pin.
-## It is a real trade and it is reported as one: three of four sloped rows
-## composed before this task and three compose after it, and they are not the
-## same three.
+## OUT -- `step/3/standard`, and the E1 note above it recorded the wrong cause.
+## It said the adapter "emits two edges with one id", because
+## `SectionalPublicRealmPlan.seal`'s only word for seven distinct seam faults
+## was "invalid or duplicate edge". No maze town ever had a duplicate id. Every
+## one of them had a LEVEL edge whose seam stepped a band, which
+## `PublicRealmEdge.seal` refuses and is right to refuse. The adapter now proves
+## a LEVEL edge with level lanes and names a stepped one a half stair, and the
+## rejection message names the fault and the seam, so the next map like this one
+## starts from the truth.
+##
+## IN -- `step/12/compact`, which composed before. The momentum spine re-bored
+## every town, and this one now dies in the composition at a bridge gate: its
+## one bridge room has no BUILT FLANK, because the parcel the span was authored
+## against no longer composes a room at that band. Pinned by name with the gate
+## it dies at, exactly as E1 pinned the row it replaces, so a row that dies
+## anywhere else is still a red test and a row that starts composing again is a
+## re-pin. The seed-time flank check that would stop every re-bore buying a pin
+## here is E3's.
 const SLOPED_KNOWN_REFUSALS: Dictionary = {
 	"step/12/compact": "has no built flank",
 }

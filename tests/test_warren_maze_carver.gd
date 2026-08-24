@@ -34,19 +34,33 @@ const SOURCE_RETENTION_FLOOR := 0.58
 ## measure. Scanned over the 24-town flat corpus (12 seeds x compact/standard,
 ## `tests/harness/warren_maze_mode_sweep.gd`'s matrix, carve stage only):
 ##
-##   | corpus addressed_column_ratio | before E2 | after E2 |
+##   | corpus addressed_column_ratio | before E2 | after E2 (shipped) |
 ##   |---|---|---|
-##   | worst town                    | 0.359 (3/compact) | 0.416 (9/standard) |
-##   | mean                          | 0.610 | 0.581 |
-##   | towns under 0.50              | 4 of 24 | 5 of 24 |
+##   | worst town                    | 0.359 (3/compact) | 0.443 (9/standard) |
+##   | mean                          | 0.610 | 0.607 |
+##   | best town                     | 0.757 | 0.699 |
+##   | towns under 0.50              | 4 of 24 | 2 of 24 |
+##
+## and on the four seeds this file actually asserts, before -> after:
+##
+##   | 17/compact | 29/standard | 43/large | 71/grand |
+##   |---|---|---|---|
+##   | 0.627 -> 0.600 | 0.693 -> 0.728 | 0.676 -> 0.575 | 0.866 -> 0.866 |
 ##
 ## Four corpus towns were already under 0.50 at HEAD, one of them at 0.359 --
 ## a fifth of the way below it -- so the old number described an accident of
 ## seeds 17/29/43/71 and would have failed the moment any of them moved. The
-## momentum spine moved them: the WORST town in the corpus got measurably
-## BETTER (0.359 -> 0.416) while the mean fell, because a straighter street
-## spreads its exclusion zone (`_alley_stride_is_legal`'s block-thickness
-## separation) more evenly and leaves fewer towns starved.
+## momentum spine moved them, and moved the corpus the RIGHT way at both ends
+## that matter: the worst town improved 0.359 -> 0.443, the count under 0.50
+## halved, and the mean is flat (0.610 -> 0.607). A straighter street spreads
+## its exclusion zone (`_alley_stride_is_legal`'s block-thickness separation)
+## more evenly and leaves fewer towns starved; what it costs is the top of the
+## distribution (0.757 -> 0.699), which no floor is measuring.
+##
+## The numbers above are the SHIPPED build's. An earlier draft of this comment
+## carried 0.416 / 0.581 / 5-of-24, which belong to the rejected
+## unconditional-budget descent that `WarrenMazeCarver._extend_spine_descent`
+## documents and refuses; they are recorded there and nowhere else.
 ##
 ## Pinned at the corpus worst rounded DOWN to the nearest hundredth minus a
 ## guard step, which is this file's floor convention. The requirement this
@@ -152,6 +166,14 @@ func test_each_scale_builds_one_connected_building_fronted_maze() -> void:
 ## the massif is authored in whole terraces (`WarrenMassifBuilder
 ## .TERRACE_BANDS`), so "the spine descends at least one terrace past the
 ## summit" is a fact about the town's own storey grid rather than a number.
+##
+## Note what this test therefore CANNOT catch: `WarrenMazeCarver
+## .DESCENT_TARGET_BANDS` is the same constant, so the bar tracks the carver's
+## own target by construction and both move together if anyone re-points
+## `STOREY_BANDS`. What it does catch -- and what it was RED on before E2 -- is
+## a descent that falls short of the target the carver is aiming at, which is
+## the failure mode that actually happens: the rejected `/4` descent budget
+## measured a corpus minimum of one band against this bar's two.
 const MIN_POST_SUMMIT_DESCENT_BANDS := WarrenBuildingParcel.STOREY_BANDS
 
 ## Direction changes per 10 spine cells, PRE-momentum -> post, measured on the
@@ -172,8 +194,20 @@ const MIN_POST_SUMMIT_DESCENT_BANDS := WarrenBuildingParcel.STOREY_BANDS
 ## The band is two-sided on purpose. A spine that starts wandering again is a
 ## red test, and so is one that fossilises into a straight line: a street with
 ## no turns at all is as wrong for this town as a street that is all turns, and
-## `MAX_SPINE_STRAIGHT_RUN` alone cannot say so. Ceiling = measured worst
-## (2.92) + a guard; floor = measured best (2.73) - a guard.
+## `MAX_SPINE_STRAIGHT_RUN` alone cannot say so.
+##
+## Ceiling = measured worst (2.92) + a guard, which is tight because a rising
+## turn count is a gradual drift back toward the pre-E2 spine and worth
+## catching early.
+##
+## Floor = 1.5 against a measured best of 2.57, which is a WIDE guard and
+## deliberately so: it is not a drift detector, it is the other failure mode,
+## and that failure mode is not gradual. A spine with no turns is a straight
+## canyon from the portal to the crown, which on a footprint 8-11 columns
+## across means roughly one turn in its whole length -- per-10 well under 1.0.
+## Anything between that and 2.57 is a legitimately straighter seed, not a
+## defect, and a floor pinned at measured-minus-a-hair would go red on one.
+## The corpus minimum (2.08) is the number to watch, and it is printed.
 const SPINE_DIRECTION_CHANGE_CEILING := 3.5
 const SPINE_DIRECTION_CHANGE_FLOOR := 1.5
 
@@ -280,6 +314,23 @@ func test_the_spine_climbs_with_momentum_and_descends_past_the_summit() -> void:
 			float(metrics.summit_radius), float(metrics.end_radius)])
 		print("MAZE_SPINE_REACH %s reach=%.2f" % [
 			String(PROFILE_IDS[index]), float(metrics.descent_reach)])
+		# TASK E2 FIX 1, minor 7. The descent spends cells BEYOND the profile's
+		# `route_cell_range.y`, so the bypass needs a bound a test holds the
+		# carver to. This is the exact structural ceiling, not a measured one
+		# plus slack: measured 24 / 29 / 31 / 35 against 24 / 29 / 34 / 40, so
+		# compact sits ON it and the assertion has teeth today.
+		var profile := WarrenVillageScaleProfile.for_id(PROFILE_IDS[index])
+		var cell_ceiling := profile.route_cell_range.y \
+			+ WarrenMazeCarver.descent_cell_budget(profile)
+		assert_lte(int(metrics.cells), cell_ceiling,
+			("%s bores %d spine cells; the climb budget is %d and the " \
+				+ "descent may add at most %d") % [PROFILE_IDS[index],
+				int(metrics.cells), profile.route_cell_range.y,
+				WarrenMazeCarver.descent_cell_budget(profile)])
+		assert_lte(int(metrics.descent_cells),
+			WarrenMazeCarver.descent_cell_budget(profile),
+			"%s spends %d descent cells past its budget" % [
+				PROFILE_IDS[index], int(metrics.descent_cells)])
 		assert_eq(int(metrics.summit_y), int(metrics.highest_y),
 			"%s: the named summit must be the spine's highest cell" \
 				% PROFILE_IDS[index])

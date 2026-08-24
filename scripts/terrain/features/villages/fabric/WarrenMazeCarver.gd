@@ -562,6 +562,19 @@ static func _spine_candidates(context: Dictionary, current: Vector3i,
 	return out
 
 
+static func descent_cell_budget(
+		profile: WarrenVillageScaleProfile) -> int:
+	## TASK E2 FIX 1, minor 7. The descent spends cells BEYOND
+	## `route_cell_range.y` (see DESCENT_CELL_BUDGET_DIVISOR for why), so the
+	## bypass needs a bound a test can hold the carver to rather than a number
+	## buried in a loop header. `route_cell_range.y + descent_cell_budget()` is
+	## the exact ceiling on a spine's total length, and
+	## `test_the_spine_climbs_with_momentum_and_descends_past_the_summit`
+	## asserts every profile against it.
+	return clampi(profile.route_cell_range.y / DESCENT_CELL_BUDGET_DIVISOR,
+		MIN_DESCENT_CELL_BUDGET, MAX_DESCENT_CELL_BUDGET)
+
+
 static func _extend_spine_descent(context: Dictionary) -> Dictionary:
 	## TASK E2, controller ruling 1: after the summit cell the spine DESCENDS
 	## toward the far rim.
@@ -582,9 +595,7 @@ static func _extend_spine_descent(context: Dictionary) -> Dictionary:
 	var profile := context.profile as WarrenVillageScaleProfile
 	var occupied := context.occupied as Dictionary
 	var summit := context.summit_cell as Vector3i
-	var budget := clampi(
-		profile.route_cell_range.y / DESCENT_CELL_BUDGET_DIVISOR,
-		MIN_DESCENT_CELL_BUDGET, MAX_DESCENT_CELL_BUDGET)
+	var budget := descent_cell_budget(profile)
 	var current := summit
 	var direction_index := int(context.summit_direction_index)
 	var straight_run := int(context.summit_straight_run)
@@ -598,8 +609,9 @@ static func _extend_spine_descent(context: Dictionary) -> Dictionary:
 		# thickest, most house-capable mass in the town and where the alley
 		# ratchet most needs room. Measured over the 24-town corpus: spending
 		# the whole budget unconditionally cost 0.029 of mean addressed-column
-		# ratio (0.610 -> 0.581) and 0.032 of mean plot ownership; stopping on
-		# arrival keeps the descent and gives that back.
+		# ratio (0.610 at HEAD -> 0.581) and 0.032 of mean plot ownership;
+		# stopping on arrival keeps the descent and gives that back (the
+		# SHIPPED build measures 0.607 mean, worst town 0.443).
 		if summit.y - current.y >= DESCENT_TARGET_BANDS \
 				and Vector2(float(current.x),
 					float(current.z)).length() > summit_radius:
@@ -704,7 +716,7 @@ static func _descent_candidates(context: Dictionary, current: Vector3i,
 static func _carve_alleys(world_seed: int, massif: WarrenMassif,
 		excavation: WarrenExcavation, thickness: Dictionary,
 		market_cell_count: int, profile: WarrenVillageScaleProfile,
-		descent_cells: int = 0) -> void:
+		descent_cells: int) -> void:
 	var public_set: Dictionary = {}
 	for cell: Vector3i in excavation.route:
 		public_set[cell] = true
@@ -732,8 +744,10 @@ static func _carve_alleys(world_seed: int, massif: WarrenMassif,
 	# crown. The post-summit descent comes back down beside ground the climb
 	# already addressed, so charging its cells against the alley allowance buys
 	# almost no new frontage and costs a great deal: measured on large/43,
-	# 8 descent cells took the alley supply from 65 cells to 37 and the
-	# addressed-column ratio from 0.676 to 0.440. The allowance is therefore
+	# the descent took the alley supply from 65 cells to 52 and the
+	# addressed-column ratio from 0.676 to 0.575 even WITH this line, and to
+	# 0.440 without it under the rejected unconditional-budget descent that
+	# `_extend_spine_descent` documents. The allowance is therefore
 	# what it always was, and the descent is street the town gains on top.
 	# This is a cap, not a quota -- the ratchet below stops the moment the
 	# column target is met -- so a town that was never budget-bound does not
