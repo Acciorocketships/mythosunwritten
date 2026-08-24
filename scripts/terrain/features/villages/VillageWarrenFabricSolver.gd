@@ -28,24 +28,28 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	if program.settlement_fabric_program == null:
 		return _rejected(&"fabric_program")
 	var scale_profile := WarrenVillageScaleProfile.select(city_seed)
-	# The staged search is deterministic per (seed, scale) but expensive, and
-	# it runs on the single terrain worker. Consult the persistent pin first:
-	# a success pin re-seals only the winning candidate through the identical
-	# gates; a failure pin skips a search already proven exhausted under the
-	# current generation salt. Either way the search remains the authority —
-	# pin misses and stale pins simply fall through to it.
-	var pin := WarrenSolutionPinCache.pin_for(city_seed,
-		scale_profile.scale_id)
 	# One-pass maze generation carves exactly one town per seed: there is no
-	# attempt rotation to memo, resume, or prove exhausted. The pin is inert
-	# here — `solve_pinned` re-runs the same carve whatever it holds — and a
-	# FAILURE entry left by a searched run is evidence about a search this mode
-	# never performs, so it must not suppress the town. Nothing is written back
-	# for the mirror-image reason: the entry is keyed on (seed, scale) alone,
-	# so a maze outcome recorded here would lie to the searched mode too.
+	# attempt rotation to memo, resume, or prove exhausted, so the persistent
+	# pin is not consulted at all. Reading it could only cost work — a stale
+	# success pin sends the adapter through `solve_pinned` into the very same
+	# carve, and a town that then failed would carve a SECOND time on the
+	# fallback — while a FAILURE entry left by a searched run is evidence about
+	# a search this mode never performs and must never suppress the town.
+	# Nothing is written back for the mirror-image reason: the entry is keyed
+	# on (seed, scale) with no mode in it, so a maze outcome recorded there
+	# would lie to the searched mode too.
 	var searched := WarrenTownSolver.GENERATION_MODE \
 		!= WarrenTownSolver.MODE_MAZE
-	if searched and bool(pin.get("failed", false)):
+	# In the SEARCHED modes the staged search is deterministic per (seed,
+	# scale) but expensive, and it runs on the single terrain worker. Consult
+	# the persistent pin first: a success pin re-seals only the winning
+	# candidate through the identical gates; a failure pin skips a search
+	# already proven exhausted under the current generation salt. Either way
+	# the search remains the authority — pin misses and stale pins simply fall
+	# through to it.
+	var pin: Dictionary = WarrenSolutionPinCache.pin_for(city_seed,
+		scale_profile.scale_id) if searched else {}
+	if bool(pin.get("failed", false)):
 		return _rejected(&"volume_pinned_failure")
 	var preview: WarrenSpatialPlan = null
 	if pin.has("attempt"):
@@ -54,7 +58,9 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	if preview == null:
 		# Budget each visit's search slice so one settlement can never stall
 		# the single terrain worker for minutes; the deterministic rotation
-		# resumes from the recorded prefix on the next visit.
+		# resumes from the recorded prefix on the next visit. Maze mode
+		# ignores both of those arguments: one carve, no rotation to resume
+		# and no proven-failed prefix to skip.
 		preview = WarrenVolumetricSolver.solve(city_seed, {},
 			program.settlement_fabric_program, scale_profile,
 			PRODUCTION_SEARCH_BUDGET_MS,

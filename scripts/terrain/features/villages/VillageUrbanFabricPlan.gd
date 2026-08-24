@@ -162,21 +162,31 @@ static func _scale_feature_contract_matches(audit: Dictionary,
 	if profile == null or String(audit.get("scale_profile_signature", "")) \
 			!= profile.deterministic_signature():
 		return false
+	# TASK D2 REVIEW, IMPORTANT 1. The elevated courtyard count and its two
+	# daylight and underbuilt column floors stay HARD in every mode, unlike
+	# the five floors below them. A relaxation is only honest where the
+	# shortfall is PUBLISHED: `covered_market`, `landmarks`, `skywalks` and
+	# `balconies` are keys the maze path really writes into
+	# `advisory_shortfalls`, and the room-outcropping floor is
+	# `cantilever_range.x`, which is `Vector2i.ZERO` on every profile today,
+	# so relaxing it changes nothing until a profile asks for a cantilever.
+	# The courtyard has no such key, so relaxing it would drop a town's
+	# missing courtyard on the floor instead of reporting it. Inert on compact
+	# and standard, which require no courtyard; LIVE on large and grand, which
+	# do. Phase E owns the large/grand maze courtyard story — give those towns
+	# a courtyard, or publish `courtyard_columns` shortfalls from the maze
+	# path — and only then may these three join the advisory set.
 	var advisory := generation_mode == WarrenTownSolver.MODE_MAZE
-	return _meets_quota_floor(int(audit.get("elevated_courtyard_count", -1)),
-			int(profile.requires_elevated_courtyard), advisory) \
-		and int(audit.get("elevated_courtyard_count", -1)) \
-			<= int(profile.requires_elevated_courtyard) \
+	return int(audit.get("elevated_courtyard_count", -1)) \
+			== int(profile.requires_elevated_courtyard) \
 		and (not profile.requires_elevated_courtyard \
-			or _meets_quota_floor(int(audit.get(
-				"courtyard_daylight_macro_column_count", 0)),
-				WarrenElevatedFrontageSolver \
-					.MIN_COURTYARD_DAYLIGHT_COLUMNS, advisory)) \
+			or int(audit.get("courtyard_daylight_macro_column_count", 0)) \
+				>= WarrenElevatedFrontageSolver \
+					.MIN_COURTYARD_DAYLIGHT_COLUMNS) \
 		and (not profile.requires_elevated_courtyard \
-			or _meets_quota_floor(int(audit.get(
-				"courtyard_underbuilt_macro_column_count", 0)),
-				WarrenElevatedFrontageSolver \
-					.MIN_COURTYARD_UNDERBUILT_COLUMNS, advisory)) \
+			or int(audit.get("courtyard_underbuilt_macro_column_count", 0)) \
+				>= WarrenElevatedFrontageSolver \
+					.MIN_COURTYARD_UNDERBUILT_COLUMNS) \
 		and _meets_quota_floor(int(audit.get("covered_market_count", -1)),
 			int(profile.requires_covered_market), advisory) \
 		and int(audit.get("covered_market_count", -1)) <= 1 \
@@ -209,7 +219,9 @@ static func _meets_quota_floor(measured: int, floor_value: int,
 	## the searched mode's quotas against a one-pass town.
 	##
 	## Ceilings stay hard in every mode: an excess is not a shortfall, and
-	## nothing here relaxes a STRUCTURAL rule.
+	## nothing here relaxes a STRUCTURAL rule. Only floors whose shortfall the
+	## maze path really PUBLISHES may call this with `advisory` true -- see the
+	## note above the courtyard terms in `_scale_feature_contract_matches`.
 	if measured < 0:
 		return false
 	return measured >= floor_value or advisory

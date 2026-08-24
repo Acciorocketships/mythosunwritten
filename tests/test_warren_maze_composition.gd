@@ -3945,9 +3945,13 @@ func test_a_maze_town_round_trips_the_solution_pin_cache() -> void:
 	## Three properties, all on the real production entry:
 	##   1. a maze solve writes NO pin (there is nothing to memo, and a pin
 	##      keyed on (seed, scale) alone would lie to the searched mode);
-	##   2. a stale legacy SUCCESS pin is consumed and ignored -- `pin_for`
-	##      hands it to `solve_pinned`, whose maze branch re-runs `_solve_maze`
-	##      and never touches the attempt frontier -- and the town is identical;
+	##   2. a stale legacy SUCCESS pin cannot change what is built: maze mode
+	##      does not consult the cache at all, so the attempt, source and
+	##      variant it names are never looked up, the legacy attempt machinery
+	##      never runs, and the town is byte-identical to the unpinned one.
+	##      (Task D2 review, minor 2: reading the pin could only cost work --
+	##      `solve_pinned` would re-enter the same carve, and a town that then
+	##      failed would carve a second time on the fallback.);
 	##   3. a stale FAILURE pin does not suppress the town. It is evidence
 	##      about a search that does not exist here, and before this task it
 	##      returned `volume_pinned_failure` without ever running the carve.
@@ -3989,7 +3993,8 @@ func test_a_maze_town_round_trips_the_solution_pin_cache() -> void:
 		assert_false(pinned_urban.volumetric_spatial.audit.has(
 			"production_pin_hit"),
 			("the maze path ran the legacy attempt machinery: only " \
-				+ "`solve_pinned`'s searched branch stamps a pin hit"))
+				+ "`solve_pinned`'s SEARCHED branch stamps a pin hit, and " \
+				+ "maze mode never reaches it"))
 	assert_eq(int(WarrenSolutionPinCache.pin_for(city_seed,
 		scale_id).get("attempt", -1)), LEGACY_PIN_ATTEMPT,
 		"the maze solve overwrote a searched mode's own memo")

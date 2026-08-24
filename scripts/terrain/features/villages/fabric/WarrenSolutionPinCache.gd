@@ -9,6 +9,14 @@ extends RefCounted
 ## and production gate, and any failure falls back to the full search — so a
 ## stale entry can cost only time, never change what a settlement builds.
 ##
+## SEARCHED MODES ONLY. The key is (salt, city seed, scale) and carries no
+## generation mode, so an entry one pipeline wrote would be read by another as
+## if it were about the same search. One-pass maze generation has a single
+## deterministic carve per town, nothing to memo and no search to prove
+## exhausted, so `VillageWarrenFabricSolver.solve` neither reads nor writes
+## this cache in that mode; a third mode that does want a memo must put the
+## mode in the key rather than repeat that hazard (task D2 report, 7.5).
+##
 ## GENERATION_SALT must be bumped whenever generation logic changes meaningfully
 ## (new gates, carver changes, recipe changes). Success pins self-heal without
 ## it (the pinned re-solve fails and the search reruns), but FAILURE entries
