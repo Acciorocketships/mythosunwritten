@@ -134,6 +134,93 @@ func test_the_fragmented_base_detector_can_actually_fire() -> void:
 			bool(run.fragmented), String(run.why))
 
 
+func test_the_fragment_detector_reads_a_planted_break_off_a_real_plan() -> void:
+	## TASK H1 FIX 1. The test above drives the PREDICATE on hand-built arrays.
+	## Nothing drove the ENUMERATION that feeds it -- and the enumeration is
+	## where the bug the H1 report discloses actually lived: the run key put the
+	## wall PLANE coordinate and the ALONG-RUN coordinate the wrong way round,
+	## which cut every face run into runs of length 1 and left
+	## `fragmented_base_run_count` structurally unable to fire while every suite
+	## in the tree stayed green. So this drives
+	## `exterior_wall_material_profile` end to end, on a synthetic plan with a
+	## stone-timber-stone base planted along one lineage's own face.
+	##
+	## Three 2x2x2 tower stamps of ONE lineage stand shoulder to shoulder along
+	## X, masonry-timber-masonry. Real towns cannot reach this state -- the
+	## material is a property of the lineage -- which is exactly why the
+	## detector has to be shown a town that can.
+	var world_seed := 7007
+	var lineage := &"h1.fragment.lineage"
+	var building_id := &"h1.fragment.building"
+	var grid := WarrenSpatialGrid.new(Vector3i(-8, 0, -8), Vector3i(24, 6, 24))
+	var origins: Array[Vector3i] = [Vector3i(0, 0, 0), Vector3i(2, 0, 0),
+		Vector3i(4, 0, 0)]
+	var recipes: Array[StringName] = [&"room.tower.base.rock.closed",
+		&"room.tower.base.blue.closed", &"room.tower.base.rock.closed"]
+	var all_cells: Array[Vector3i] = []
+	for origin: Vector3i in origins:
+		all_cells.append_array(WarrenRoomStamp.expected_private_cells(
+			&"tower", origin, 0))
+	var transaction := grid.begin_transaction(&"h1.fragment.volume")
+	assert_true(transaction.assign_use(all_cells,
+		WarrenSpatialGrid.Use.PRIVATE_VOLUME, building_id))
+	assert_true(transaction.commit(), grid.last_rejection)
+	var building := WarrenBuildingVolume.new(building_id, 0)
+	assert_true(building.add_private_cells(all_cells))
+	assert_true(building.add_private_parent(&"h1.fragment.parent"))
+	var units: Array[FabricUnit] = []
+	for index in origins.size():
+		var room := WarrenRoomStamp.new(
+			StringName("h1.fragment.room.%d" % index), lineage, &"tower",
+			origins[index], 0, 0, true, false)
+		assert_true(room.add_private_cells(
+			WarrenRoomStamp.expected_private_cells(&"tower", origins[index], 0)))
+		assert_true(room.seal(grid, building_id), room.last_rejection)
+		assert_true(building.add_room(room))
+		units.append(FabricUnit.new(
+			StringName("spatial.fabric.%s" % room.stable_id), recipes[index],
+			origins[index], 0))
+	assert_true(building.seal(grid), building.last_rejection)
+	var plan := WarrenSpatialPlan.new(&"h1.fragment.plan", world_seed, grid)
+	assert_true(plan.add_building(building))
+	# A flat synthetic massif under the whole probe, so every wall face is
+	# measured against a datum instead of falling out as off-massif.
+	var columns: Dictionary = {}
+	for column_z in range(-4, 5):
+		for column_x in range(-4, 5):
+			columns[Vector2i(column_x, column_z)] = {"base": 0, "top": 6}
+	var massif := WarrenMassif.with_columns(world_seed, columns, 6)
+	assert_true(massif.seal(), massif.last_rejection)
+	var maze_source := WarrenMazeSourcePlan.new(world_seed, null, massif, null)
+
+	var profile := WarrenSpatialFabricCompiler.exterior_wall_material_profile(
+		plan, units, maze_source)
+	assert_eq(int(profile.exterior_wall_unprofiled_unit_count), 0,
+		"the walk never reached one of the probe's room units")
+	assert_eq(int(profile.exterior_wall_off_datum_face_count), 0,
+		"the probe left the synthetic massif, so no run was ever keyed")
+	# A 6x2 cell slab has 16 perimeter faces per band, and it is two bands tall.
+	assert_eq(int(profile.exterior_wall_face_count), 32)
+	assert_eq(int(profile.exterior_wall_stone_face_count), 24)
+	assert_eq(int(profile.exterior_wall_min_band_offset), 0)
+	assert_eq(int(profile.exterior_wall_max_band_offset), 1)
+	assert_eq(int(profile.exterior_wall_high_stone_face_count), 0)
+	# Eight runs, not thirty-two: the long face at each band assembles along X
+	# for both facings, plus the four one-cell end returns. A run count equal to
+	# the FACE count is the keying defect -- every run length 1, nothing to
+	# interrupt -- and it is what this number is here to catch.
+	assert_eq(int(profile.base_face_run_count), 8,
+		"base faces are not being assembled along the wall plane")
+	# Both long facings, at both bands.
+	assert_eq(int(profile.fragmented_base_run_count), 4,
+		"the planted stone-timber-stone base went unseen")
+	var details := profile.fragmented_base_run_details as Array
+	assert_eq(details.size(), 4)
+	for detail: Dictionary in details:
+		assert_eq(String(detail.materials), "SSttSS",
+			"the run was assembled in the wrong order")
+
+
 func test_no_storey_the_town_wears_is_clad_in_stone_above_its_base() -> void:
 	## TASK H1, the other half. Ashlar survives on a chosen shell only as a
 	## GROUND storey; every upper storey is plank and plaster. Swept over a wide

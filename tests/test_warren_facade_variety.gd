@@ -277,6 +277,119 @@ func test_the_stone_shells_that_moved_stay_inside_the_overlap_tolerance() -> voi
 				% recipe_id + "corner-overlap tolerance")
 
 
+func test_every_reserved_shell_contains_the_shell_the_town_wears() -> void:
+	## TASK H1 FIX 1. `WarrenSpatialFabricCompiler._room_recipe_id` carries a
+	## `chosen_material` flag: a room RESERVES the masonry shell everywhere
+	## upstream -- the volumetric solver's composition preflight and residual
+	## packing, the feature solver's balcony and skywalk siting, the compiler's
+	## own `_required_room_clearance` -- and WEARS the timber one only where
+	## `compile_room_units` asks. Over-reserving is safe; under-reserving is not.
+	##
+	## The split is therefore sound for exactly one reason -- the RESERVED
+	## clearance box contains the CHOSEN one -- and nothing said so. It held by
+	## the coincidence of two separately-motivated pins: every timber module is
+	## exactly one 3 m bay (`test_every_timber_facade_module_is_exactly_one_bay_
+	## wide`) and the masonry modules oversail it, so a masonry -> timber swap
+	## could only shrink a box. The next wall vocabulary would not be so kind:
+	## timber posts and brackets under a rim base -- the reference frame's, named
+	## in H1's own concern 6 -- would grow a CHOSEN envelope past the reserved
+	## masonry box with nothing red, and the compiler would build a shell no
+	## reservation covers and clip a neighbour silently. Here it is as a
+	## contract instead, once per shape x district.
+	assert_not_null(_program)
+	if _program == null:
+		return
+	var world_seed := 7007
+	var pairs := 0
+	for kind: StringName in WarrenRoomStamp.KINDS:
+		for family: StringName in [&"blue", &"orange", &"amber"]:
+			var ground := _district_probe_room(kind, family, world_seed, true)
+			assert_not_null(ground,
+				"no lattice origin renders a %s %s ground room" % [family, kind])
+			if ground != null:
+				# The ground storey. `base.rock` is reserved; the district's
+				# timber `base.*` is worn. A false `low_base_lineages` entry is
+				# the "this house does not stand at street level" answer, which
+				# forces the divergence without hunting for a lineage hash.
+				var low := {ground.source_parcel_id: false}
+				for address: Array in [[false, 0], [true, 0], [true, 1]]:
+					ground.addressed = bool(address[0])
+					ground.address_door_phase = int(address[1])
+					var reserved := WarrenSpatialFabricCompiler._room_recipe_id(
+						ground, world_seed, true, 0, false, false)
+					var chosen := WarrenSpatialFabricCompiler._room_recipe_id(
+						ground, world_seed, true, 0, false, true, low)
+					assert_true(String(reserved).contains(".base.rock"),
+						"%s no longer reserves the masonry base" % reserved)
+					assert_true(String(chosen).contains(".base.%s" % family),
+						"%s is not the %s district's timber base" % [chosen,
+							family])
+					_assert_reservation_contains_choice(reserved, chosen,
+						"%s ground/%s" % [kind, family])
+					pairs += 1
+			# The upper storey. The deleted 1-in-6 masonry accent survives as the
+			# RESERVED shell only, which is the same contract one storey up.
+			var upper := _district_probe_room(kind, family, world_seed, false)
+			assert_not_null(upper,
+				"no %s district origin reserves the masonry accent" % family)
+			if upper == null:
+				continue
+			_assert_reservation_contains_choice(
+				WarrenSpatialFabricCompiler._room_recipe_id(upper, world_seed,
+					true, 0, false, false),
+				WarrenSpatialFabricCompiler._room_recipe_id(upper, world_seed,
+					true, 0, false, true),
+				"%s upper/%s" % [kind, family])
+			pairs += 1
+	assert_eq(pairs, WarrenRoomStamp.KINDS.size() * 12,
+		"a shape x district pair went unchecked")
+
+
+func _assert_reservation_contains_choice(reserved_id: StringName,
+		chosen_id: StringName, what: String) -> void:
+	var reserved := _program.recipe(reserved_id)
+	var chosen := _program.recipe(chosen_id)
+	assert_not_null(reserved, "missing reserved recipe %s" % reserved_id)
+	assert_not_null(chosen, "missing chosen recipe %s" % chosen_id)
+	if reserved == null or chosen == null:
+		return
+	assert_ne(chosen_id, reserved_id,
+		"%s never diverged, so its containment proves nothing" % what)
+	var outer := reserved.local_clearance_bounds
+	var inner := chosen.local_clearance_bounds
+	for axis in 3:
+		assert_lte(outer.position[axis] - WIDTH_EPSILON, inner.position[axis],
+			"%s: %s starts outside the %s reservation on axis %d" % [what,
+				chosen_id, reserved_id, axis])
+		assert_gte(outer.end[axis] + WIDTH_EPSILON, inner.end[axis],
+			"%s: %s ends outside the %s reservation on axis %d" % [what,
+				chosen_id, reserved_id, axis])
+
+
+static func _district_probe_room(kind: StringName, family: StringName,
+		world_seed: int, terrain_bearing: bool) -> WarrenRoomStamp:
+	## The first probe stamp of `kind` whose jittered Voronoi quarter is
+	## `family`. An UPPER probe must also be one the reserved vocabulary gives
+	## the masonry accent to, and that is asked of `_room_recipe_id` itself
+	## rather than re-derived from the accent hash here.
+	for z in range(-96, 97, 2):
+		for x in range(-96, 97, 2):
+			var origin := Vector3i(x, 0, z)
+			if WarrenSpatialFabricCompiler._architectural_district_theme(
+					origin, world_seed) != family:
+				continue
+			var room := WarrenRoomStamp.new(
+				StringName("h1.split.%s.%s" % [kind, family]),
+				StringName("h1.split.lineage.%s.%s" % [kind, family]),
+				kind, origin, 0, 0 if terrain_bearing else 1, terrain_bearing,
+				false)
+			if terrain_bearing or String(WarrenSpatialFabricCompiler \
+					._room_recipe_id(room, world_seed, true, 0, false,
+						false)).contains(".stone"):
+				return room
+	return null
+
+
 func test_the_amber_family_compiles_a_complete_recipe_set() -> void:
 	## StaggeredFabricCompiler builds recipe ids by string, so a missing amber
 	## variant would surface as a null recipe deep inside a town solve.
