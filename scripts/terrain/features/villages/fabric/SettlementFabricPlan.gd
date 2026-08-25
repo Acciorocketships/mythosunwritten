@@ -27,6 +27,19 @@ var retained_terrace_cells: Dictionary = {}
 var audit: Dictionary = {}
 var _recipes: Dictionary = {}
 var _by_id: Dictionary = {}
+## Each accepted unit's clearance box, parallel to `units` and read by index.
+##
+## FIX ROUND 1, MINOR 1. Two invariants hold it up. The first is asserted where
+## it grows in `add_unit`: `_clearance_bounds.size() == units.size()` before
+## either append, so a unit can never be recorded twice or without its box.
+## The second cannot be asserted cheaply and is stated instead: a unit's
+## `recipe_id`, `lattice_origin` and `yaw_quarters` are FIXED once it has been
+## accepted, so the box stays the one its transform implies. Nothing in this
+## repository writes those three fields after construction (one test sets
+## `lattice_origin` on a unit it never adds to a plan), and `validate()` is the
+## backstop: it re-derives every unit's bounds from scratch at seal time and
+## refuses a plan whose stored `bounds` no longer match, which is exactly the
+## mutation that would make a stale clearance box possible.
 var _clearance_bounds: Array[AABB] = []
 var _solid_owner: Dictionary = {}
 var _walk_owner: Dictionary = {}
@@ -162,6 +175,12 @@ func add_unit(unit: FabricUnit) -> bool:
 					existing.yaw_quarters, existing_clearance]
 			_rollback_claims(journal)
 			return false
+	# FIX ROUND 1, MINOR 1. `_clearance_bounds` is parallel to `units` and is
+	# read by index, so the two must grow together exactly once per accepted
+	# unit. Every early return above this point leaves both untouched; this is
+	# the only place either grows.
+	assert(_clearance_bounds.size() == units.size(),
+		"clearance bounds fell out of step with units")
 	units.append(unit)
 	_clearance_bounds.append(clearance_bounds)
 	_by_id[unit.stable_id] = unit

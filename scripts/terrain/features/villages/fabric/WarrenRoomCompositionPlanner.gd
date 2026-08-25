@@ -2429,11 +2429,9 @@ static func _coupled_variants(grid: WarrenSpatialGrid,
 	var current_is_filled := current_rect.size.x > 0
 	var previous_maximum := previous_bounds.position + previous_bounds.size \
 		- Vector2i.ONE
-	var constraints_are_free := not bool(current.get("address_expandable",
-			false)) \
-		and (current.get("feature_endpoint_constraints", []) as Array) \
-			.is_empty() \
-		and (current.get("court_contact_columns", {}) as Dictionary).is_empty()
+	# FIX ROUND 1, MINOR 3. The De Morgan negation of
+	# `_block_has_interface_constraint`, as in `_volumetric_variant_stamp`.
+	var constraints_are_free := not _block_has_interface_constraint(current)
 	var origin_y := (current.origin as Vector3i).y
 	if previous_bounds.size.x <= 0:
 		return out
@@ -4240,11 +4238,14 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 	# per search to say so.
 	var records_diagnostic := _block_has_interface_constraint(current)
 	var own_lineage_only: Dictionary = {StringName(lineage_id): true}
-	var constraints_are_free := not bool(current.get("address_expandable",
-			false)) \
-		and (current.get("feature_endpoint_constraints", []) as Array) \
-			.is_empty() \
-		and (current.get("court_contact_columns", {}) as Dictionary).is_empty()
+	# FIX ROUND 1, MINOR 3. These are the same predicate, by De Morgan:
+	# `_block_has_interface_constraint` is `expandable OR endpoints OR court`,
+	# so its negation is `not expandable AND no endpoints AND no court`, which
+	# is precisely what `_candidate_matches_constraints` needs to be free of to
+	# return true for every candidate. Stating it once also makes the coupling
+	# visible: the blocks that keep the full enumeration below are exactly the
+	# blocks whose constraints are worth asking about.
+	var constraints_are_free := not records_diagnostic
 	var previous_maximum := previous_bounds.position + previous_bounds.size \
 		- Vector2i.ONE
 	for kind: StringName in ROOM_KINDS:
