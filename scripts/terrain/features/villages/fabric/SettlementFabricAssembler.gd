@@ -67,7 +67,111 @@ const STONE_CAP_HALF_DEPTH := 0.332
 ## stripe of rock and timber, once per course (seed 12,
 ## `foundation-retained-04-ne`, c5b-view pass 1). A hillside is not a stack of
 ## building bases.
+##
+## TASK H2b NARROWS WHAT THIS MODULE CLADS. It was every exposed face of the
+## mountain, and the user's verdict on that was "i'm still seeing a lot of
+## boxy stone rectangles": a hillside is not a stack of masonry courses
+## either. It now clads the RETAINING faces (banks no taller than
+## STONE_BUDGET_BANDS), the caps the public realm walks, and the floor-facing
+## roofs of bored passages. TERRAIN_GREEN_CAP and NATURAL_ROCK_FACE below
+## carry the rest.
 const MAZE_STONE_MODULE := LOW_RETAINING_WALL
+## TASK H2b. The mountain wears masonry ONLY where a mason would have built
+## it. Two authored terrain modules carry the rest, and both come from the
+## catalog the terrain's own cliff dressing already draws hillsides with
+## (`CliffDressing.ASSETS`), so a maze town's substrate and the world's
+## hillsides are made of the same thing.
+##
+## * `TERRAIN_GREEN_CAP` -- the flat grass quad KayKit's hill tops are surfaced
+##   with. It caps every sky-facing rock face the public realm does NOT walk,
+##   so a terrace bench reads as a garden shoulder rather than a stone lid.
+## * `NATURAL_ROCK_FACE` -- KayKit's cliff wall. It clads every side face
+##   standing in a bank taller than STONE_BUDGET_BANDS: a bank that tall is
+##   the HILLSIDE the town is cut into, and coursed ashlar there is the
+##   "boxy stone rectangles" the user rejected. At or below the budget the
+##   masonry stays, because a two-band coursed face holding up a terrace is a
+##   retaining wall, which is correct medieval vocabulary and quaint.
+const TERRAIN_GREEN_CAP := &"kaykit.terrain.top_center"
+const NATURAL_ROCK_FACE := &"kaykit.cliff.wall"
+## Measured envelopes, read off the descriptors rather than assumed:
+## `kaykit_terrain_top_center.tres` is AABB(-1.5, 0, -1.5, 3.0, 1e-05, 3.0) --
+## a single-swatch grass quad CENTRED on its origin, and
+## `kaykit_cliff_wall.tres` is AABB(-1.5, -0.3, 0.25, 3.0, 4.0, 0.75) -- a rock
+## face whose bulge stands in front of its origin and whose top is 3.7 above
+## it.
+const NATURAL_ROCK_TOP := 3.7
+const NATURAL_ROCK_BASE := 0.3
+const NATURAL_ROCK_FACE_DEPTH_CENTRE := 0.625
+## Both modules are 3.0 m across their long axis, because both are authored on
+## the terrain's own 3 m tile. Named once so the cross-axis scales below and
+## the coverage arithmetic they have to satisfy read against the same number.
+const TERRAIN_MODULE_SPAN := 3.0
+## Both terrain modules are authored on the terrain's 3 m tile, and the fabric
+## lattice is 1.5 m. Along the module's long axis that is exactly the pair a
+## cap already spans and exactly the two bands a side course already covers,
+## so only the CROSS axis is ever rescaled -- to the one cell the panel really
+## closes. The green quad is a flat single-colour swatch (`CliffDressing`
+## takes the ground palette's grass UV off this same mesh family), so scaling
+## it inside its own plane changes no proportion an eye can read, and it drops
+## to exactly the 1.5 m cell so a bench top can never overhang its own rim.
+## The rock face keeps 2.16 m rather than dropping to 1.5, because the 1.77 m
+## masonry module it replaces OVERSAILED its cell too: panels that merely abut
+## draw a seam every cell, which is the coursing this task is retiring.
+const GREEN_CAP_CROSS_SCALE := 0.5
+const NATURAL_ROCK_CROSS_SCALE := 0.72
+## ONE cliff mesh clads every tall bank, and the first pass laid it on the
+## lattice unaltered: identical shard every 1.5 m across and every 3 m up. The
+## capture of that (`h2b/renders/r1-12-compact/seed-012-overview-se.png`) reads
+## as a quilt of blue scallops -- a decorative repeat, not a hillside, and by
+## the same fault the ashlar had: a motif on a grid. The kit ships three more
+## `Hill_Cliff_Tall_*_Side` variants and importing them is a new-asset
+## decision this task may not take, so the repeat is broken by PLACEMENT
+## instead, seeded off the panel's own coordinates so the payload stays a pure
+## function of the cell set:
+##
+## * the shard is mirrored and turned upside down on about half the panels
+##   (a rotation about the outward axis, so winding and volume are untouched
+##   and one mesh reads as two);
+## * its width, its height, how far it slides along the face and how far it
+##   stands proud of it all vary, so no two neighbours share a lobe line.
+##
+## THE BOUNDS ARE A COVERAGE PROOF, NOT A TASTE. A slit between two shards
+## does not show rock behind it -- the skin is a SHELL, so it shows the sky
+## through the mountain. Two conditions, both on the WORST roll:
+##
+## * a lone shard must close its own cell by itself, because the neighbouring
+##   cell may own no panel at all:
+##       1.5 x (CROSS_SCALE - CROSS_JITTER) >= 0.75 + SLIDE
+##       1.5 x 0.62 = 0.930 >= 0.870, margin 0.060 m;
+## * two neighbours sliding APART must still overlap, since their slides can
+##   differ by twice SLIDE:
+##       3.0 x (CROSS_SCALE - CROSS_JITTER) >= 1.5 + 2 x SLIDE
+##       3.0 x 0.62 = 1.860 >= 1.740, margin 0.120 m.
+##
+## The first pass failed both (0.16 jitter with a 0.24 slide leaves 0.30 m of
+## a cell open on the worst pair) and the comment here claimed otherwise; the
+## numbers are now written out so the claim is checkable. The rise is bounded
+## the same way -- 4.0 x (1 - RISE_JITTER) = 3.36 m still covers the 3 m
+## course -- and the TOP is pinned whatever the roll, because a bank's rim is
+## where the green cap begins and may not move.
+const NATURAL_ROCK_CROSS_JITTER := 0.10
+const NATURAL_ROCK_RISE_JITTER := 0.16
+const NATURAL_ROCK_SLIDE := 0.12
+const NATURAL_ROCK_RELIEF := 0.22
+## The grass quad has no thickness, so it is offset off the boundary it closes
+## rather than left coplanar with the course below it -- DOWN by a hair rather
+## than up, which is the opposite of `CliffDressing.LIP_LIFT` and for the
+## opposite reason. The terrain lifts its lip to overlay a field it would
+## otherwise fight; here there is nothing to fight, and a quad standing proud
+## catches light on all four of its edges and reads as a sheet of paper laid
+## on the rock. Two centimetres under the rim, the rock's own top edge
+## oversails it and the bench reads as turf behind a kerb.
+const GREEN_CAP_LIFT := -0.02
+## What one panel of the skin WEARS. The shell, its coursing and its cap
+## pairing are unchanged by this: a treatment picks the module, never the
+## panel, so the retained rock's volume and the audited face identity are the
+## same facts they were.
+enum SkinTreatment {MASONRY, NATURAL, GREEN}
 ## A side panel is 3 m tall -- TWO bands -- so a run of exposed stone is
 ## coursed at the module's own height instead of hung once per band. Hanging
 ## one per band put each module's lower band inside the one below it, which is
@@ -357,7 +461,8 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan) \
 	var out := house_plinth_walls(retained, solids, bearing_footprint)
 	out.append_from(maze_stone_walls(retained, solids,
 		public_floor_cells(plan.surface_plan),
-		plinth_faces(retained, solids, bearing_footprint)))
+		plinth_faces(retained, solids, bearing_footprint),
+		walked_floor_cells(plan.surface_plan)))
 	# TASK C5e RULING 3. The other half of what a maze town's crown wears.
 	# The parapet course that used to cap every flat roof is released to air
 	# by `WarrenVolumetricSolver._maze_released_parapet_cells`, so the slab is
@@ -586,36 +691,232 @@ static func exposed_maze_stone_faces(retained: Dictionary,
 	return out
 
 
-static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
-		paved: Dictionary = {}, plinths: Dictionary = {}) \
-		-> EnvironmentInstancePayload:
-	## One MAZE_STONE_MODULE per panel of `maze_stone_faces`, through the same
-	## transform idiom `house_plinth_walls` uses for a building's own plinth: a
-	## side panel hangs from the top of its cell and buries its lower half in
-	## the course beneath, so a run of stone reads as one coursed masonry mass.
+static func maze_bank_height(exposed: Dictionary, face: Vector4i) -> int:
+	## TASK H2b -- how tall the BANK this side face stands in really is, in
+	## bands: the contiguous run of exposed faces in the same fine column and
+	## the same direction, counted through this one whether it is the top of a
+	## course or not.
 	##
-	## TOP AND BOTTOM CAPS ARE THE SAME MODULE LAID FLAT. The catalog ships no
-	## horizontal rock slab (every `sfv.*.rock.*` piece is a 3 m upright), and
-	## ruling 1 allows the plinth panel laid flat rather than a new asset. The
-	## rotation puts the module's own rock face -- its former front -- toward
-	## the sky (or, for a passage roof, toward the floor), and sinks it by
-	## STONE_CAP_HALF_DEPTH so that face is flush with the boundary it closes.
-	## Each slab covers its own cell and the neighbour `maze_stone_faces`
-	## paired it with, and no cell is covered twice.
+	## The run, not the panel, is what an eye reads. A 3 m panel is two bands
+	## whatever it clads, so counting panels would call every bank two bands
+	## tall; and the coursing walks DOWN from the top of the run, so the run is
+	## already the unit `maze_stone_faces` thinks in.
+	##
+	## Zero for a cap: a sky- or floor-facing face stands in no bank.
+	if face.w >= FACE_DIRECTIONS.size():
+		return 0
+	var top := face.y
+	while exposed.has(Vector4i(face.x, top + 1, face.z, face.w)):
+		top += 1
+	var bottom := face.y
+	while exposed.has(Vector4i(face.x, bottom - 1, face.z, face.w)):
+		bottom -= 1
+	return top - bottom + 1
+
+
+static func maze_skin_treatments(exposed: Dictionary, faces: Dictionary,
+		walked: Dictionary = {}) -> Dictionary:
+	## TASK H2b -- which module each panel of the skin wears, as
+	## `panel key -> SkinTreatment`. One entry per panel of `maze_stone_faces`
+	## and never a panel of its own, so the shell this decides the cladding of
+	## is exactly the shell that rule derived.
+	##
+	## THE THREE ANSWERS, and the reason each is the right one:
+	##
+	## * GREEN -- a SKY-FACING cap the public realm does not walk. After task
+	##   H2 retired the crown lids these are terrace bench tops, the massif's
+	##   own shoulders, and the flat plateaus task E4's trim left on top of a
+	##   plot it cut down. Nobody stands on them and nothing is built on them:
+	##   they are ground, and ground is green. A cap covers its own cell AND
+	##   the neighbour it was paired with, so BOTH have to be unwalked -- one
+	##   green plate under a street would be lawn where the pavement is.
+	## * NATURAL -- a side face in a bank taller than STONE_BUDGET_BANDS. Two
+	##   bands is the budget a mason's retaining wall was given; above it the
+	##   face is hillside, and hillside is rock.
+	## * MASONRY -- everything else: the <= 2-band retaining faces, the caps
+	##   the realm walks (task C5b's "the street stands on stone"), and every
+	##   floor-facing cap, which is the roof of a bored passage and is read
+	##   from inside a tunnel rather than as part of the town's silhouette.
+	var out: Dictionary = {}
+	for key_value: Variant in faces.keys():
+		var key := key_value as Vector4i
+		if key.w >= FACE_DIRECTIONS.size():
+			out[key] = SkinTreatment.GREEN \
+				if STONE_FACE_DIRECTIONS[key.w] == Vector3i.UP \
+					and _maze_cap_is_free(key, faces[key] as Vector3i, exposed,
+						walked) \
+				else SkinTreatment.MASONRY
+			continue
+		out[key] = SkinTreatment.NATURAL \
+			if maze_bank_height(exposed, key) > STONE_BUDGET_BANDS \
+			else SkinTreatment.MASONRY
+	return out
+
+
+static func _maze_cap_is_free(key: Vector4i, partner: Vector3i,
+		exposed: Dictionary, walked: Dictionary) -> bool:
+	## Does anybody WALK on either cell this sky-facing slab closes? The mate
+	## is only asked when it is a capped cell in its own right: a partner that
+	## is closed mass owns no cap, carries no surface, and cannot be walked.
+	if walked.has(Vector3i(key.x, key.y + 1, key.z)):
+		return false
+	if partner == Vector3i.ZERO:
+		return true
+	var mate := Vector4i(key.x + partner.x, key.y + partner.y,
+		key.z + partner.z, key.w)
+	if not exposed.has(mate):
+		return true
+	return not walked.has(Vector3i(mate.x, mate.y + 1, mate.z))
+
+
+static func walked_floor_cells(surface_plan: PublicRealmSurfacePlan) \
+		-> Dictionary:
+	## Every cell the public realm WALKS, over all five surface kinds.
+	##
+	## Deliberately a different question from `public_floor_cells`, which asks
+	## "does something else already DRAW this boundary" and therefore names
+	## only the three kinds that plank themselves. A terrain street and a stair
+	## draw nothing at the top of the stone cell they run over -- which is
+	## exactly why that cell keeps its stone cap -- but they are walked, and a
+	## walked cap may not become lawn.
+	##
+	## The enum itself rather than a hand-kept list of five, because the
+	## question is "is this cell part of the public realm at all" and every
+	## SurfaceKind that exists answers yes by definition. A list here would be
+	## a thing that goes stale silently the day a sixth kind is added, and the
+	## failure would be lawn under a new kind of street.
+	var out: Dictionary = {}
+	if surface_plan == null:
+		return out
+	for kind in PublicRealmSurfacePlan.SurfaceKind.values():
+		for cell: Vector3i in surface_plan.cells_for_kind(int(kind)):
+			out[cell] = true
+	return out
+
+
+static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
+		paved: Dictionary = {}, plinths: Dictionary = {},
+		walked: Dictionary = {}) -> EnvironmentInstancePayload:
+	## ONE module per panel of `maze_stone_faces`, and `maze_skin_treatments`
+	## says which module. The panel set, its coursing and its cap pairing are
+	## untouched by task H2b: this function chose one asset before and chooses
+	## one of three now, so `maze_stone_expected_face_count` and
+	## `maze_stone_rendered_face_count` mean exactly what they meant, and every
+	## instance still carries the `maze-stone/x/y/z/w` id of the face it closes.
+	##
+	## MASONRY rides the same transform idiom `house_plinth_walls` uses for a
+	## building's own plinth: a side panel hangs from the top of its cell and
+	## buries its lower half in the course beneath, so a run of stone reads as
+	## one coursed masonry mass. Top and bottom caps are that same module laid
+	## flat -- the catalog ships no horizontal rock slab (every `sfv.*.rock.*`
+	## piece is a 3 m upright), and C5b ruling 1 allows the plinth panel laid
+	## flat rather than a new asset. The rotation puts the module's own rock
+	## face toward the sky (or, for a passage roof, toward the floor) and sinks
+	## it by STONE_CAP_HALF_DEPTH so that face is flush with the boundary it
+	## closes.
+	##
+	## `walked` is `walked_floor_cells()` for the same plan and defaults to
+	## empty, which makes every cap MASONRY -- the pre-H2b answer. A caller
+	## that does not hold the surface plan therefore gets the old skin rather
+	## than lawn under a street it could not see.
 	var out := EnvironmentInstancePayload.new()
 	var faces := maze_stone_faces(retained, solids, paved, plinths)
+	var treatments := maze_skin_treatments(exposed_maze_stone_faces(retained,
+		solids, paved), faces, walked)
 	var keys: Array[Vector4i] = []
 	keys.assign(faces.keys())
 	keys.sort_custom(_face_before)
 	for key: Vector4i in keys:
 		var cell := Vector3i(key.x, key.y, key.z)
-		out.add(MAZE_STONE_MODULE, _maze_stone_transform(cell,
-			STONE_FACE_DIRECTIONS[key.w], faces[key] as Vector3i),
-			Color.WHITE,
-			StringName("maze-stone/%d/%d/%d/%d" % [key.x, key.y, key.z,
-				key.w]))
+		var direction := STONE_FACE_DIRECTIONS[key.w]
+		var partner := faces[key] as Vector3i
+		var stable_id := StringName("maze-stone/%d/%d/%d/%d" % [key.x, key.y,
+			key.z, key.w])
+		match int(treatments[key]):
+			SkinTreatment.GREEN:
+				out.add(TERRAIN_GREEN_CAP,
+					_maze_green_cap_transform(cell, partner), Color.WHITE,
+					stable_id)
+			SkinTreatment.NATURAL:
+				out.add(NATURAL_ROCK_FACE,
+					_maze_natural_face_transform(key, direction), Color.WHITE,
+					stable_id)
+			_:
+				out.add(MAZE_STONE_MODULE,
+					_maze_stone_transform(cell, direction, partner),
+					Color.WHITE, stable_id)
 	assert(out.validate())
 	return out
+
+
+static func _maze_green_cap_transform(cell: Vector3i,
+		partner: Vector3i) -> Transform3D:
+	## The grass quad laid over the pair its stone slab covered. Its long axis
+	## is its own local +Z and it is centred on its origin, so the origin is
+	## the CENTRE of the covered run -- the module's own geometry then reaches
+	## half the run each way -- while the masonry slab it replaces is anchored
+	## at one end and sweeps 3 m along its local +Y. Two modules, two honest
+	## idioms; the covered cells are the same two.
+	##
+	## An unpaired cap keeps the stone's own answer: the slab is centred on its
+	## single cell and overhangs the neighbours it does not own, because there
+	## was nothing beside it to pair with.
+	var axis := Vector3(partner) if partner != Vector3i.ZERO else Vector3.BACK
+	var origin := Vector3(cell) * FabricRecipe.CELL_SIZE \
+		+ Vector3(partner) * FabricRecipe.CELL_SIZE * 0.5
+	origin.y = float(cell.y + 1) * FabricRecipe.CELL_SIZE + GREEN_CAP_LIFT
+	var basis := Basis(Vector3.UP, atan2(axis.x, axis.z))
+	basis.x = basis.x * GREEN_CAP_CROSS_SCALE
+	return Transform3D(basis, origin)
+
+
+static func _maze_natural_face_transform(face: Vector4i,
+		direction: Vector3i) -> Transform3D:
+	## The cliff face hung from the top of its own course, exactly as the
+	## masonry panel is: its top edge lands on the course boundary and its
+	## extra height buries itself in the mass below, so a bank's rim is where
+	## the rock stops and the green cap begins.
+	##
+	## The module is handed -- its bulge stands in front of its origin -- so
+	## unlike the symmetric masonry slab it takes a FOUR-way yaw that turns
+	## its rock face outward, and its origin is pulled back by the bulge's own
+	## half-depth so the rock straddles the boundary rather than standing a
+	## metre out in the street.
+	##
+	## Everything else here is the seeded relief the constants above argue
+	## for. The turn is a half turn about the OUTWARD axis, which mirrors the
+	## shard and stands it on its head in one rotation; the module then hangs
+	## from the 0.3 m that used to be its underside, which is why the pinned
+	## top is written twice rather than once.
+	var outward := Vector3(direction)
+	var tangent := Vector3.BACK if direction.x != 0 else Vector3.RIGHT
+	var turned := _face_noise(face, 0) < 0.5
+	var rise := 1.0 + (_face_noise(face, 1) * 2.0 - 1.0) \
+		* NATURAL_ROCK_RISE_JITTER
+	var cross := NATURAL_ROCK_CROSS_SCALE \
+		+ (_face_noise(face, 2) * 2.0 - 1.0) * NATURAL_ROCK_CROSS_JITTER
+	var origin := Vector3(face.x, 0.0, face.z) * FabricRecipe.CELL_SIZE \
+		+ outward * (FabricRecipe.CELL_SIZE * 0.5 \
+			- NATURAL_ROCK_FACE_DEPTH_CENTRE \
+			+ (_face_noise(face, 3) * 2.0 - 1.0) * NATURAL_ROCK_RELIEF) \
+		+ tangent * (_face_noise(face, 4) * 2.0 - 1.0) * NATURAL_ROCK_SLIDE
+	origin.y = float(face.y + 1) * FabricRecipe.CELL_SIZE \
+		- (NATURAL_ROCK_BASE if turned else NATURAL_ROCK_TOP) * rise
+	var basis := Basis(Vector3.UP, atan2(outward.x, outward.z))
+	if turned:
+		basis = basis * Basis(Vector3.BACK, PI)
+	basis.x = basis.x * cross
+	basis.y = basis.y * rise
+	return Transform3D(basis, origin)
+
+
+static func _face_noise(face: Vector4i, salt: int) -> float:
+	## A deterministic value in [0, 1) per panel per dial, through the same
+	## splitmix64 avalanche every other seeded placement in this project uses.
+	## A function of the PANEL and nothing else: the skin stays byte-identical
+	## for identical input, and a town cannot roll different rock on a re-solve.
+	return Helper._hash01(Helper._mix64(face.x ^ Helper._mix64(face.y \
+		^ Helper._mix64(face.z ^ Helper._mix64(face.w ^ Helper._mix64(salt))))))
 
 
 static func maze_terrace_crown_units(plan: SettlementFabricPlan) -> Dictionary:

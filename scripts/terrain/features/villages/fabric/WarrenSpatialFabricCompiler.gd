@@ -852,7 +852,17 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			"maze_stone_top_slab_count": 0,
 			"maze_stone_bottom_slab_count": 0,
 			"maze_stone_faces_suppressed_by_paving": 0,
-			"maze_stone_faces_deferred_to_plinth": 0}
+			"maze_stone_faces_deferred_to_plinth": 0,
+			"maze_skin_masonry_panel_count": 0,
+			"maze_skin_natural_panel_count": 0,
+			"maze_skin_green_cap_count": 0,
+			"maze_tall_bank_masonry_panel_count": 0,
+			"maze_free_bench_stone_cap_count": 0,
+			"maze_shared_street_cap_count": 0,
+			"maze_low_bank_face_count": 0,
+			"maze_tall_bank_face_count": 0,
+			"maze_tallest_bank_bands": 0,
+			"maze_bank_height_histogram": {}}
 		empty.merge(maze_stone_band_profile({}, null), true)
 		return empty
 	var retained := plan.retained_terrace_cells
@@ -921,9 +931,92 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			deferred_to_plinth += 1
 			continue
 		missing_face_count += 1
+	# TASK H2 PART 1. Every cell the public realm's own walk surfaces occupy,
+	# over ALL FIVE surface kinds rather than the three `PAVED_FLOOR_KINDS`
+	# that DRAW themselves. The two questions are different: `paved` above asks
+	# "does something else already close this boundary", and this asks "does
+	# anybody WALK here", which is what tells a street's own pavement from a
+	# parapet lid on a house nobody stands on. TASK H2b moved the set into the
+	# assembler, which now needs the same answer to decide a cap's treatment,
+	# and reads it here rather than deriving a second one.
+	var walked := SettlementFabricAssembler.walked_floor_cells(
+		plan.surface_plan)
 	var rendered := SettlementFabricAssembler.maze_stone_walls(retained,
-		solids, paved, plinths)
+		solids, paved, plinths, walked)
+	# TASK H2b. What the shell WEARS, counted over the same panel set the
+	# coverage identity above is measured on, and split by the bank each side
+	# panel stands in so the two pins have a denominator: masonry above the
+	# retaining budget is the defect, and a stone slab on a bench nobody walks
+	# is the other one.
+	var treatments := SettlementFabricAssembler.maze_skin_treatments(exposed,
+		faces, walked)
+	var masonry_panels := 0
+	var natural_panels := 0
+	var green_panels := 0
+	var tall_bank_masonry := 0
+	var free_bench_stone_caps := 0
+	var shared_street_caps := 0
+	var low_bank_faces := 0
+	var tall_bank_faces := 0
+	var tallest_bank := 0
+	var bank_counts: Dictionary = {}
+	for key_value: Variant in treatments.keys():
+		var key := key_value as Vector4i
+		var treatment := int(treatments[key])
+		masonry_panels += int(treatment \
+			== SettlementFabricAssembler.SkinTreatment.MASONRY)
+		natural_panels += int(treatment \
+			== SettlementFabricAssembler.SkinTreatment.NATURAL)
+		green_panels += int(treatment \
+			== SettlementFabricAssembler.SkinTreatment.GREEN)
+		if key.w >= sides:
+			if treatment != SettlementFabricAssembler.SkinTreatment.MASONRY \
+					or SettlementFabricAssembler.STONE_FACE_DIRECTIONS[key.w] \
+						!= Vector3i.UP \
+					or walked.has(Vector3i(key.x, key.y + 1, key.z)):
+				continue
+			# A masonry cap whose OWN cell nobody walks. It survives only by
+			# sharing its 3 m slab with a cell the realm does walk -- a bench
+			# that happens to lie beside a street -- and greening it would put
+			# lawn under that pavement. Published and watched; the strict pin
+			# below is the one that must be zero.
+			shared_street_caps += 1
+			var partner := faces[key] as Vector3i
+			if partner == Vector3i.ZERO:
+				free_bench_stone_caps += 1
+				continue
+			var mate := Vector4i(key.x + partner.x, key.y + partner.y,
+				key.z + partner.z, key.w)
+			free_bench_stone_caps += int(not exposed.has(mate) \
+				or not walked.has(Vector3i(mate.x, mate.y + 1, mate.z)))
+			continue
+		tall_bank_masonry += int(treatment \
+			== SettlementFabricAssembler.SkinTreatment.MASONRY \
+			and SettlementFabricAssembler.maze_bank_height(exposed, key) \
+				> SettlementFabricAssembler.STONE_BUDGET_BANDS)
+	for key_value: Variant in exposed.keys():
+		var key := key_value as Vector4i
+		if key.w >= sides:
+			continue
+		var height := SettlementFabricAssembler.maze_bank_height(exposed, key)
+		tallest_bank = maxi(tallest_bank, height)
+		bank_counts[height] = int(bank_counts.get(height, 0)) + 1
+		if height > SettlementFabricAssembler.STONE_BUDGET_BANDS:
+			tall_bank_faces += 1
+		else:
+			low_bank_faces += 1
 	var out := {
+		"maze_skin_masonry_panel_count": masonry_panels,
+		"maze_skin_natural_panel_count": natural_panels,
+		"maze_skin_green_cap_count": green_panels,
+		"maze_tall_bank_masonry_panel_count": tall_bank_masonry,
+		"maze_free_bench_stone_cap_count": free_bench_stone_caps,
+		"maze_shared_street_cap_count": shared_street_caps,
+		"maze_low_bank_face_count": low_bank_faces,
+		"maze_tall_bank_face_count": tall_bank_faces,
+		"maze_tallest_bank_bands": tallest_bank,
+		"maze_bank_height_histogram": WarrenMazeSourcePlan.ascending_histogram(
+			bank_counts),
 		"maze_stone_cell_count": stone.size(),
 		"maze_stone_exposed_face_count": exposed.size(),
 		"maze_stone_expected_face_count": faces.size(),
@@ -937,23 +1030,6 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		"maze_stone_faces_suppressed_by_paving": suppressed_by_paving,
 		"maze_stone_faces_deferred_to_plinth": deferred_to_plinth,
 	}
-	# TASK H2 PART 1. Every cell the public realm's own walk surfaces occupy,
-	# over ALL FIVE surface kinds rather than the three `PAVED_FLOOR_KINDS`
-	# that DRAW themselves. The two questions are different: `paved` above asks
-	# "does something else already close this boundary", and this asks "does
-	# anybody WALK here", which is what tells a street's own pavement from a
-	# parapet lid on a house nobody stands on.
-	var walked: Dictionary = {}
-	if plan.surface_plan != null:
-		for surface_kind in [
-				PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET,
-				PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
-				PublicRealmSurfacePlan.SurfaceKind.INTERIOR_PASSAGE,
-				PublicRealmSurfacePlan.SurfaceKind.STAIR,
-				PublicRealmSurfacePlan.SurfaceKind.BRIDGE]:
-			for walk_cell: Vector3i in plan.surface_plan.cells_for_kind(
-					surface_kind):
-				walked[walk_cell] = true
 	out.merge(maze_stone_band_profile(exposed, maze_source, grid, walked),
 		true)
 	return out

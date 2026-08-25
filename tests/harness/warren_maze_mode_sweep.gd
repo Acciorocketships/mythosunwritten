@@ -149,6 +149,13 @@ func _init() -> void:
 		CORPUS_STONE_GROUP: _new_roof_tally(),
 		ADDED_STONE_GROUP: _new_roof_tally(),
 	}
+	# TASK H2b. The SKIN tally -- what the massif WEARS, in the same two groups.
+	# STONE says how much mountain shows, and this says what material it shows
+	# it in.
+	var skin_by_group: Dictionary = {
+		CORPUS_STONE_GROUP: _new_skin_tally(),
+		ADDED_STONE_GROUP: _new_skin_tally(),
+	}
 	for city_seed: int in seeds:
 		for scale_id: StringName in scale_ids:
 			attempted += 1
@@ -302,6 +309,38 @@ func _init() -> void:
 							"bracketless_overhang_feature_count", 0)),
 						str(fabric.audit.get(
 							"pitched_roof_family_counts", {}))])
+					# TASK H2b. The SKIN row: what the retained massif WEARS,
+					# beside how tall its banks are. `tall_masonry` is coursed
+					# ashlar above the retaining budget and `free_bench_stone`
+					# is a stone slab on a bench nobody walks -- the two pins,
+					# both zero. `low/tall` is the bank split the treatment
+					# turns on, and it is a property of the SHELL, so it is
+					# also the before-picture: task H2b did not move it.
+					_accumulate_skin(skin_by_group[group] as Dictionary,
+						fabric)
+					print(("SWEEP seed=%d scale=%s SKIN panels=%d masonry=%d " \
+						+ "natural=%d green=%d tall_masonry=%d " \
+						+ "free_bench_stone=%d shared_street=%d low=%d " \
+						+ "tall=%d tallest=%d banks=%s") % [city_seed,
+						String(profile.scale_id),
+						int(fabric.audit.get(
+							"maze_stone_expected_face_count", 0)),
+						int(fabric.audit.get(
+							"maze_skin_masonry_panel_count", 0)),
+						int(fabric.audit.get(
+							"maze_skin_natural_panel_count", 0)),
+						int(fabric.audit.get("maze_skin_green_cap_count", 0)),
+						int(fabric.audit.get(
+							"maze_tall_bank_masonry_panel_count", 0)),
+						int(fabric.audit.get(
+							"maze_free_bench_stone_cap_count", 0)),
+						int(fabric.audit.get(
+							"maze_shared_street_cap_count", 0)),
+						int(fabric.audit.get("maze_low_bank_face_count", 0)),
+						int(fabric.audit.get("maze_tall_bank_face_count", 0)),
+						int(fabric.audit.get("maze_tallest_bank_bands", 0)),
+						str(fabric.audit.get(
+							"maze_bank_height_histogram", {}))])
 				continue
 			var failure := WarrenVolumetricSolver.last_failure
 			rows.append({"seed": city_seed, "scale": String(profile.scale_id),
@@ -339,6 +378,10 @@ func _init() -> void:
 		roofs_by_group[CORPUS_STONE_GROUP] as Dictionary)
 	_print_roof_result(ADDED_STONE_GROUP,
 		roofs_by_group[ADDED_STONE_GROUP] as Dictionary)
+	_print_skin_result(CORPUS_STONE_GROUP,
+		skin_by_group[CORPUS_STONE_GROUP] as Dictionary)
+	_print_skin_result(ADDED_STONE_GROUP,
+		skin_by_group[ADDED_STONE_GROUP] as Dictionary)
 	_write_summary(seeds, scale_ids, rows, sealed_count, attempted, total_ms)
 	quit()
 
@@ -434,6 +477,54 @@ func _print_roof_result(group: String, tally: Dictionary) -> void:
 		int(tally.rubble), int(tally.worst_rubble), int(tally.paved),
 		int(tally.borne), int(tally.bearing), int(tally.brackets),
 		int(tally.bare_overhangs)])
+
+
+static func _new_skin_tally() -> Dictionary:
+	## TASK H2b. The corpus skin tally.
+	return {"towns": 0, "panels": 0, "masonry": 0, "natural": 0, "green": 0,
+		"tall_masonry": 0, "free_bench_stone": 0, "shared_street": 0,
+		"low": 0, "tall": 0, "tallest": 0}
+
+
+static func _accumulate_skin(tally: Dictionary,
+		fabric: SettlementFabricPlan) -> void:
+	tally.towns += 1
+	tally.panels += int(fabric.audit.get("maze_stone_expected_face_count", 0))
+	tally.masonry += int(fabric.audit.get("maze_skin_masonry_panel_count", 0))
+	tally.natural += int(fabric.audit.get("maze_skin_natural_panel_count", 0))
+	tally.green += int(fabric.audit.get("maze_skin_green_cap_count", 0))
+	tally.tall_masonry += int(fabric.audit.get(
+		"maze_tall_bank_masonry_panel_count", 0))
+	tally.free_bench_stone += int(fabric.audit.get(
+		"maze_free_bench_stone_cap_count", 0))
+	tally.shared_street += int(fabric.audit.get(
+		"maze_shared_street_cap_count", 0))
+	tally.low += int(fabric.audit.get("maze_low_bank_face_count", 0))
+	tally.tall += int(fabric.audit.get("maze_tall_bank_face_count", 0))
+	tally.tallest = maxi(int(tally.tallest),
+		int(fabric.audit.get("maze_tallest_bank_bands", 0)))
+
+
+func _print_skin_result(group: String, tally: Dictionary) -> void:
+	## TASK H2b. The corpus answer to "what is the mountain made of". Both
+	## pins are sums rather than worsts because both are zero: one masonry
+	## panel above the retaining budget anywhere in the corpus shows up here.
+	if int(tally.towns) == 0:
+		return
+	print(("SWEEP RESULT skin%s towns=%d panels=%d masonry=%d natural=%d " \
+		+ "green=%d reclad_share=%.4f tall_masonry=%d free_bench_stone=%d " \
+		+ "shared_street=%d low_faces=%d tall_faces=%d tall_share=%.4f " \
+		+ "tallest_bank=%d") % [
+		"" if group == CORPUS_STONE_GROUP else "/%s" % group,
+		int(tally.towns), int(tally.panels), int(tally.masonry),
+		int(tally.natural), int(tally.green),
+		float(int(tally.natural) + int(tally.green)) \
+			/ float(maxi(1, int(tally.panels))),
+		int(tally.tall_masonry), int(tally.free_bench_stone),
+		int(tally.shared_street), int(tally.low), int(tally.tall),
+		float(int(tally.tall)) / float(maxi(1, int(tally.low) \
+			+ int(tally.tall))),
+		int(tally.tallest)])
 
 
 static func _stone_group_of(scale_id: StringName) -> String:

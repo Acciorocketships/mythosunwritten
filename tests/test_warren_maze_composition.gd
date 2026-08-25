@@ -3737,8 +3737,30 @@ func _stone_instances(fabric: SettlementFabricPlan) -> Array[Dictionary]:
 			out.append({
 				"face": Vector4i(int(parts[0]), int(parts[1]), int(parts[2]),
 					int(parts[3])),
+				# TASK H2b. One panel still means one instance, but a panel
+				# now wears one of three modules and they are not laid the
+				# same way, so the ASSET rides with the transform and
+				# `_cap_coverage` decodes each module by its own authored
+				# footprint rather than by one assumed idiom.
+				"asset": StringName(asset_value),
 				"transform": transforms[index] as Transform3D})
 	return out
+
+
+## TASK H2b -- the authored extent of each module that can close a horizontal
+## boundary, as `asset -> [local axis, from, to]` along the axis it spans,
+## read off the module's own descriptor and declared HERE so this file decodes
+## the payload without borrowing the assembler's arithmetic.
+##
+## `sfv_fabric_wall_rock_plain_001.tres` is AABB(-0.881, 0, -0.332, 1.770,
+## 3.000, 0.664): 3 m of it runs along local +Y from the origin, which is why
+## the masonry slab is anchored at one end of its sweep.
+## `kaykit_terrain_top_center.tres` is AABB(-1.5, 0, -1.5, 3.0, 1e-05, 3.0):
+## the grass quad is CENTRED on its origin and its long axis is local +Z.
+const CAP_MODULE_SPANS: Dictionary = {
+	&"sfv.fabric.wall.rock.plain.001": [Vector3(0.0, 1.0, 0.0), 0.0, 3.0],
+	&"kaykit.terrain.top_center": [Vector3(0.0, 0.0, 1.0), -1.5, 1.5],
+}
 
 
 func _maze_stone_instance_count(fabric: SettlementFabricPlan) -> int:
@@ -3748,19 +3770,34 @@ func _maze_stone_instance_count(fabric: SettlementFabricPlan) -> int:
 func _cap_coverage(instances: Array[Dictionary]) -> Dictionary:
 	## How many horizontal slabs really lie over each capped cell, measured off
 	## the TRANSFORMS the renderer is handed rather than off the rule that
-	## chose them. A cap is the 3 m module laid flat, so its own former height
-	## axis -- local +Y, 3 m of it -- sweeps the cells it covers: a cell is
-	## covered when its centre falls strictly inside that sweep and within half
-	## a cell of its centreline. Two slabs over one cell are the coplanar
-	## doubled caps of fix 1, CRITICAL 1.
+	## chose them. A cell is covered when its centre falls strictly inside the
+	## module's own authored span and within half a cell of its centreline; two
+	## slabs over one cell are the coplanar doubled caps of fix 1, CRITICAL 1.
+	##
+	## TASK H2b. The span is CAP_MODULE_SPANS' rather than one hard-coded
+	## idiom, because a cap may now be the masonry module laid flat (3 m along
+	## its own former height axis, anchored at one end) or the terrain grass
+	## quad (3 m along its long axis, centred on its origin). An undeclared
+	## module fails here rather than being silently counted as covering
+	## nothing.
 	var out: Dictionary = {}
 	for instance: Dictionary in instances:
 		var face := instance["face"] as Vector4i
 		if face.w < SettlementFabricAssembler.FACE_DIRECTIONS.size():
 			continue
+		var asset := instance["asset"] as StringName
+		assert_true(CAP_MODULE_SPANS.has(asset),
+			"a horizontal cap wears an undeclared module: %s" % String(asset))
+		if not CAP_MODULE_SPANS.has(asset):
+			continue
+		var span := CAP_MODULE_SPANS[asset] as Array
 		var xform := instance["transform"] as Transform3D
-		var sweep := xform.basis * Vector3(0.0, 3.0, 0.0)
-		var axis := sweep.normalized()
+		# The declared span is already in metres and both cap modules are
+		# placed on an unscaled basis along their own long axis, so the axis
+		# is normalised and the bounds are used as authored.
+		var axis := (xform.basis * (span[0] as Vector3)).normalized()
+		var from := float(span[1])
+		var to := float(span[2])
 		for offset: Vector3i in [Vector3i.ZERO, Vector3i.RIGHT, Vector3i.LEFT,
 				Vector3i.BACK, Vector3i.FORWARD]:
 			var cell := Vector3i(face.x, face.y, face.z) + offset
@@ -3768,7 +3805,7 @@ func _cap_coverage(instances: Array[Dictionary]) -> Dictionary:
 			delta.y = 0.0
 			var along := delta.dot(axis)
 			var perpendicular := (delta - axis * along).length()
-			if along <= 0.05 or along >= sweep.length() - 0.05 \
+			if along <= from + 0.05 or along >= to - 0.05 \
 					or perpendicular >= FabricRecipe.CELL_SIZE * 0.5:
 				continue
 			var key := Vector4i(cell.x, cell.y, cell.z, face.w)
@@ -3987,6 +4024,267 @@ func test_retained_stone_is_skinned() -> void:
 		assert_eq(doubled, 0,
 			"%s may never put a plinth panel and a stone panel on one seam" \
 				% _label(outcome))
+
+
+func _walked_cells(fabric: SettlementFabricPlan) -> Dictionary:
+	## Every cell the public realm walks, derived from the sealed surface plan
+	## by naming the five kinds here rather than by asking the assembler.
+	var out: Dictionary = {}
+	if fabric == null or fabric.surface_plan == null:
+		return out
+	for kind in [PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET,
+			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+			PublicRealmSurfacePlan.SurfaceKind.INTERIOR_PASSAGE,
+			PublicRealmSurfacePlan.SurfaceKind.STAIR,
+			PublicRealmSurfacePlan.SurfaceKind.BRIDGE]:
+		for cell: Vector3i in fabric.surface_plan.cells_for_kind(kind):
+			out[cell] = true
+	return out
+
+
+func _derived_bank_height(exposed: Dictionary, face: Vector4i) -> int:
+	## The contiguous run of exposed faces this one stands in, counted here
+	## from this file's own shell so the pins below never rest on the
+	## assembler's arithmetic.
+	var top := face.y
+	while exposed.has(Vector4i(face.x, top + 1, face.z, face.w)):
+		top += 1
+	var bottom := face.y
+	while exposed.has(Vector4i(face.x, bottom - 1, face.z, face.w)):
+		bottom -= 1
+	return top - bottom + 1
+
+
+func test_the_rock_reads_as_hillside_not_masonry() -> void:
+	## TASK H2b. The user, after H1: "i'm still seeing a lot of boxy stone
+	## rectangles, can you fix that?" -- the retained massif was clad in flat
+	## rectangular ashlar on EVERY exposed face, so the hill the town is cut
+	## into read as a fortress bank rather than as ground.
+	##
+	## The contract, measured off the payload the renderer is really handed and
+	## against a shell and a bank height this file derives for itself:
+	##
+	## 1. no coursed masonry on a side face standing in a bank taller than
+	##    STONE_BUDGET_BANDS -- above the retaining budget the face is
+	##    hillside, and hillside is rock;
+	## 2. no stone slab on a bench top nobody walks -- an unwalked sky-facing
+	##    face is ground, and ground is green;
+	## 3. the retaining stone SURVIVES. A town with no masonry left has
+	##    overshot the direction as badly as one with nothing else, so the
+	##    <= 2-band masonry count is asserted positive rather than merely
+	##    reported;
+	## 4. every natural face and every green cap is where it claims to be --
+	##    the treatment is asserted in BOTH directions, so a rule that greened
+	##    the whole town would fail here too;
+	## 5. the audit equals this re-derivation in every class.
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var exposed := _exposed_stone_faces(fabric)
+		var walked := _walked_cells(fabric)
+		var partners := _cap_partner_offsets(fabric)
+		var sides := SettlementFabricAssembler.FACE_DIRECTIONS.size()
+		var tall_bank_masonry := 0
+		var free_bench_stone := 0
+		var misplaced_natural := 0
+		var misplaced_green := 0
+		var low_bank_masonry := 0
+		var natural := 0
+		var green := 0
+		var masonry := 0
+		for instance: Dictionary in _stone_instances(fabric):
+			var face := instance["face"] as Vector4i
+			var asset := instance["asset"] as StringName
+			var is_side := face.w < sides
+			var height := _derived_bank_height(exposed, face) if is_side else 0
+			var tall := height > SettlementFabricAssembler.STONE_BUDGET_BANDS
+			var up := not is_side and SettlementFabricAssembler \
+				.STONE_FACE_DIRECTIONS[face.w] == Vector3i.UP
+			var free := up and not walked.has(Vector3i(face.x, face.y + 1,
+				face.z))
+			match asset:
+				SettlementFabricAssembler.NATURAL_ROCK_FACE:
+					natural += 1
+					misplaced_natural += int(not is_side or not tall)
+				SettlementFabricAssembler.TERRAIN_GREEN_CAP:
+					green += 1
+					misplaced_green += int(not free)
+				_:
+					masonry += 1
+					tall_bank_masonry += int(is_side and tall)
+					low_bank_masonry += int(is_side and not tall)
+					# A masonry cap over a bench nobody walks is the defect --
+					# unless its 3 m slab also covers a cell the realm DOES
+					# walk, in which case greening it would put lawn under a
+					# pavement and the stone is the honest answer.
+					if free:
+						var partner := partners.get(face,
+							Vector3i.ZERO) as Vector3i
+						var mate := Vector4i(face.x + partner.x,
+							face.y + partner.y, face.z + partner.z, face.w)
+						free_bench_stone += int(partner == Vector3i.ZERO \
+							or not exposed.has(mate) \
+							or not walked.has(Vector3i(mate.x, mate.y + 1,
+								mate.z)))
+		var audit := fabric.audit
+		print(("MAZE_SKIN %s masonry=%d natural=%d green=%d " \
+			+ "tall_bank_masonry=%d free_bench_stone=%d low_bank_masonry=%d " \
+			+ "misplaced=%d/%d banks=%s tallest=%d") % [_label(outcome),
+			masonry, natural, green, tall_bank_masonry, free_bench_stone,
+			low_bank_masonry, misplaced_natural, misplaced_green,
+			str(audit.get("maze_bank_height_histogram", {})),
+			int(audit.get("maze_tallest_bank_bands", -1))])
+		assert_eq(tall_bank_masonry, 0,
+			("%s may not clad a bank taller than %d bands in coursed " \
+				+ "masonry -- that face is hillside") % [_label(outcome),
+				SettlementFabricAssembler.STONE_BUDGET_BANDS])
+		assert_eq(free_bench_stone, 0,
+			"%s may not lay a stone slab on a bench nobody walks" \
+				% _label(outcome))
+		assert_eq(misplaced_natural, 0,
+			("%s may only use the natural rock face on a tall bank's side") \
+				% _label(outcome))
+		assert_eq(misplaced_green, 0,
+			"%s may only green a sky-facing face nobody walks" \
+				% _label(outcome))
+		assert_gt(low_bank_masonry, 0,
+			("%s must keep its retaining walls in coursed masonry -- a town " \
+				+ "with no stone at all overshoots the direction") \
+				% _label(outcome))
+		assert_gt(green, 0, "%s must green its bench tops" % _label(outcome))
+		assert_gt(natural, 0,
+			"%s must render its tall banks as rock" % _label(outcome))
+		assert_eq(int(audit.get("maze_skin_masonry_panel_count", -1)), masonry,
+			"%s audited masonry panel count must equal the payload's" \
+				% _label(outcome))
+		assert_eq(int(audit.get("maze_skin_natural_panel_count", -1)), natural,
+			"%s audited natural panel count must equal the payload's" \
+				% _label(outcome))
+		assert_eq(int(audit.get("maze_skin_green_cap_count", -1)), green,
+			"%s audited green cap count must equal the payload's" \
+				% _label(outcome))
+		assert_eq(int(audit.get("maze_tall_bank_masonry_panel_count", -1)), 0,
+			"%s audited tall-bank masonry must be zero" % _label(outcome))
+		assert_eq(int(audit.get("maze_free_bench_stone_cap_count", -1)), 0,
+			"%s audited free-bench stone caps must be zero" % _label(outcome))
+		assert_eq(masonry + natural + green,
+			int(audit.get("maze_stone_expected_face_count", -1)),
+			("%s every panel of the shell wears exactly one module") \
+				% _label(outcome))
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func _cap_partner_offsets(fabric: SettlementFabricPlan) -> Dictionary:
+	## Which neighbour each panel reaches over. The pairing is the assembler's
+	## own -- this test is measuring the TREATMENT, not re-litigating the
+	## pairing, which `test_retained_stone_is_skinned` already checks against
+	## the transforms.
+	var plinths := SettlementFabricAssembler.plinth_faces(
+		fabric.retained_terrace_cells,
+		fabric.transformed_cells(&"solid"),
+		fabric.transformed_cells(&"terrain_bearing"))
+	return SettlementFabricAssembler.maze_stone_faces(
+		fabric.retained_terrace_cells,
+		fabric.transformed_cells(&"solid"),
+		SettlementFabricAssembler.public_floor_cells(fabric.surface_plan),
+		plinths)
+
+
+func test_the_hillside_treatment_fires_on_a_planted_bank() -> void:
+	## The detector's own teeth, on a shell this test builds by hand: a
+	## three-band bank, a two-band bank beside it, a walked cap and a free cap.
+	## Without this, "tall-bank masonry is zero" would read the same whether
+	## the rule works or never fires.
+	var exposed: Dictionary = {}
+	# A three-band bank at column (0, 0) facing LEFT, and a two-band bank at
+	# column (4, 0) facing the same way.
+	for band in [0, 1, 2]:
+		exposed[Vector4i(0, band, 0, 0)] = true
+	for band in [0, 1]:
+		exposed[Vector4i(4, band, 0, 0)] = true
+	# Two sky-facing caps: one under a street, one under open sky.
+	exposed[Vector4i(0, 2, 0, 4)] = true
+	exposed[Vector4i(4, 1, 0, 4)] = true
+	var faces: Dictionary = {
+		Vector4i(0, 2, 0, 0): Vector3i.ZERO,
+		Vector4i(0, 0, 0, 0): Vector3i.ZERO,
+		Vector4i(4, 1, 0, 0): Vector3i.ZERO,
+		Vector4i(0, 2, 0, 4): Vector3i.ZERO,
+		Vector4i(4, 1, 0, 4): Vector3i.ZERO,
+	}
+	var walked: Dictionary = {Vector3i(0, 3, 0): true}
+	var treatments := SettlementFabricAssembler.maze_skin_treatments(exposed,
+		faces, walked)
+	assert_eq(SettlementFabricAssembler.maze_bank_height(exposed,
+		Vector4i(0, 0, 0, 0)), 3, "the planted tall bank is three bands")
+	assert_eq(SettlementFabricAssembler.maze_bank_height(exposed,
+		Vector4i(4, 1, 0, 0)), 2, "the planted retaining bank is two bands")
+	assert_eq(int(treatments[Vector4i(0, 2, 0, 0)]),
+		SettlementFabricAssembler.SkinTreatment.NATURAL,
+		"a three-band bank takes the natural rock face")
+	assert_eq(int(treatments[Vector4i(0, 0, 0, 0)]),
+		SettlementFabricAssembler.SkinTreatment.NATURAL,
+		"every course of a tall bank takes it, not only the top one")
+	assert_eq(int(treatments[Vector4i(4, 1, 0, 0)]),
+		SettlementFabricAssembler.SkinTreatment.MASONRY,
+		"a two-band retaining face keeps its coursed masonry")
+	assert_eq(int(treatments[Vector4i(0, 2, 0, 4)]),
+		SettlementFabricAssembler.SkinTreatment.MASONRY,
+		"a cap the realm walks keeps its stone")
+	assert_eq(int(treatments[Vector4i(4, 1, 0, 4)]),
+		SettlementFabricAssembler.SkinTreatment.GREEN,
+		"a cap nobody walks goes green")
+	# The pairing matters: a free cap sharing its slab with a walked cell must
+	# stay stone, or the green plate lands under a pavement.
+	var shared: Dictionary = {Vector4i(4, 1, 0, 4): Vector3i.BACK}
+	exposed[Vector4i(4, 1, 1, 4)] = true
+	walked[Vector3i(4, 2, 1)] = true
+	assert_eq(int((SettlementFabricAssembler.maze_skin_treatments(exposed,
+		shared, walked))[Vector4i(4, 1, 0, 4)]),
+		SettlementFabricAssembler.SkinTreatment.MASONRY,
+		"a slab that also covers a walked cell may not become lawn")
+
+
+func test_the_seeded_rock_relief_can_never_open_the_shell() -> void:
+	## TASK H2b. The natural face is jittered in width, height, slide and
+	## stand-off to break a one-mesh repeat, and every one of those dials can
+	## UNCOVER the cell the panel closes. A slit in the skin does not show rock
+	## behind it -- the skin is a shell -- it shows the sky through the
+	## mountain. The first pass shipped bounds that failed this by 0.30 m on
+	## the worst pair, so the arithmetic is asserted here rather than left in a
+	## comment where it had already gone wrong once.
+	var cell := FabricRecipe.CELL_SIZE
+	var narrowest := SettlementFabricAssembler.NATURAL_ROCK_CROSS_SCALE \
+		- SettlementFabricAssembler.NATURAL_ROCK_CROSS_JITTER
+	var half_width := SettlementFabricAssembler.TERRAIN_MODULE_SPAN \
+		* 0.5 * narrowest
+	var slide := SettlementFabricAssembler.NATURAL_ROCK_SLIDE
+	assert_gt(narrowest, 0.0, "the narrowest shard must have width at all")
+	# A lone shard closes its own cell: the neighbouring cell may own no panel.
+	assert_true(half_width >= cell * 0.5 + slide,
+		("the narrowest shard slid furthest must still close its own cell: " \
+			+ "%.3f < %.3f") % [half_width, cell * 0.5 + slide])
+	# Two neighbours sliding APART must still overlap.
+	assert_true(half_width * 2.0 >= cell + slide * 2.0,
+		("two narrowest shards slid apart must still overlap: %.3f < %.3f") \
+			% [half_width * 2.0, cell + slide * 2.0])
+	# The shortest shard still covers the two-band course it is hung on.
+	var shortest := SettlementFabricAssembler.NATURAL_ROCK_TOP \
+		+ SettlementFabricAssembler.NATURAL_ROCK_BASE
+	shortest *= 1.0 - SettlementFabricAssembler.NATURAL_ROCK_RISE_JITTER
+	assert_true(shortest >= cell \
+		* float(SettlementFabricAssembler.STONE_COURSE_BANDS),
+		"the shortest shard must still cover its own course: %.3f" % shortest)
+	# And the green cap never oversails the rim it caps.
+	assert_true(SettlementFabricAssembler.TERRAIN_MODULE_SPAN \
+		* SettlementFabricAssembler.GREEN_CAP_CROSS_SCALE <= cell + 0.001,
+		"the grass quad may not overhang the cell it caps")
 
 
 ## TASK E4 ruling 1 -- the user's FIRST binding direction (2026-08-24) on the

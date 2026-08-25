@@ -874,6 +874,23 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	# Public-realm guard coalescing is an adapter over the sealed surface plan,
 	# not a FabricRecipe placement, so demand its authored 3 m repeat explicitly.
 	unique_assets[RAILING_MEDIUM] = true
+	# TASK H2b. The retained massif's skin is the same kind of adapter: the two
+	# terrain modules `SettlementFabricAssembler` clads a hillside bank and a
+	# bench top with belong to no recipe, so nothing else would declare them.
+	# `VillageUrbanFabricPlan._validate_compiled_fabric` refuses a production
+	# plan carrying an entry whose asset this program never declared -- and it
+	# did, which is how the omission surfaced -- and the streamer prepares its
+	# render cache from the same list. They are checked against the catalog
+	# here rather than trusted, so a renamed or unbaked module fails at program
+	# compile with a name instead of at the first render with a blank town.
+	for skin_asset: StringName in [
+			SettlementFabricAssembler.TERRAIN_GREEN_CAP,
+			SettlementFabricAssembler.NATURAL_ROCK_FACE]:
+		if catalog.descriptor(skin_asset) == null:
+			push_error("Retained-massif skin asset is not in the catalog: %s" \
+				% skin_asset)
+			return null
+		unique_assets[skin_asset] = true
 	program.referenced_asset_ids.assign(unique_assets.keys())
 	program.referenced_asset_ids.sort_custom(func(a: StringName,
 			b: StringName) -> bool: return String(a) < String(b))
