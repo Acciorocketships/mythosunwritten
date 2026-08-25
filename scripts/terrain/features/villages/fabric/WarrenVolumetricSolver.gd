@@ -1971,20 +1971,40 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	#
 	# Court/landmark/skywalk counts are richness — a shortfall is recorded and
 	# the town ships plainer rather than not at all.
-	var short_hero_features := courtyard_bridge_reservation.is_empty() \
+	#
+	# TASK F4 FIX 1. `courtyard_bridge_reservation.is_empty()` was the wrong test
+	# and always had been. `_maze_dressed_court_candidate` stamps the courtyard
+	# feature id onto EVERY court reservation, the absent sentinel included, so
+	# the absent record is never empty and every sealed town in the corpus
+	# published `hero_courtyard_bridges = 1` next to its own
+	# `courtyard_bridges = 0` — the two keys are the same fact from two emitters
+	# and they disagreed. The predicate below is the one the feature solver's
+	# bridge-house reservation uses: a court the beam really selected has exactly
+	# one owner parcel, the sentinel has none.
+	#
+	# This changes ONE advisory integer, 1 -> 0, in the audit of every town that
+	# has no court, which today is all of them. It also makes the first term of
+	# `short_hero_features` live for the first time — with no consequence, and
+	# that is measured rather than argued: `skywalks` is 0 against a profile
+	# minimum of 1..3 on all 24 corpus towns, so the disjunction was already true
+	# everywhere by its third term and stays true. The identity probe over all 24
+	# records is what proves the diff is that one integer and nothing else.
+	var has_courtyard_bridge := not (courtyard_bridge_reservation.get(
+		"owner_parcel_ids", []) as Array).is_empty()
+	var short_hero_features := not has_courtyard_bridge \
 		or landmark_reservations.size() < target_landmarks \
 		or skywalk_reservations.size() < scale_profile.skywalk_range.x
 	if market_reservation.is_empty():
 		last_failure = ("one-pass feature selection produced no market " \
 			+ "(court=%d, %d landmarks, %d skywalks; %s; %s)") \
-			% [int(not courtyard_bridge_reservation.is_empty()),
+			% [int(has_courtyard_bridge),
 				landmark_reservations.size(), skywalk_reservations.size(),
 				last_preplan_landmark_diagnostic,
 				last_preplan_skywalk_diagnostic]
 		return {}
 	if short_hero_features:
 		last_advisory_shortfalls["hero_courtyard_bridges"] = int(
-			not courtyard_bridge_reservation.is_empty())
+			has_courtyard_bridge)
 		last_advisory_shortfalls["hero_landmarks"] = \
 			landmark_reservations.size()
 		last_advisory_shortfalls["hero_landmarks_target"] = target_landmarks
