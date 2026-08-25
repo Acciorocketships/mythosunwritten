@@ -336,7 +336,7 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan) \
 	## the heightfield, so the terrain mesh renders it, CliffDressing dresses its
 	## faces and the chunk collider carries it -- re-drawing it here would put a
 	## masonry collider inside the terrain's own volume and rebuild the monument
-	## rounds 2 and 3 rejected. WarrenFabricCompiler no longer declares the
+	## rounds 2 and 3 rejected. The retired asset compiler no longer declares the
 	## remainder either, so this function's input is already only plinths.
 	##
 	## TASK C5b RULING 1 ADDS THE SECOND ROLE, and only for a maze town: the

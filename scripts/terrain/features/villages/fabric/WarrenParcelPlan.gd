@@ -195,7 +195,7 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 		# set, so this is has_walk() exactly for every route-first plan.
 		if not source.has_frontage(parcel.address_walk_cell):
 			detached_count += 1
-		# APPARENT FACE, the same restatement WarrenParcelizer._is_visually_short
+		# APPARENT FACE, the same restatement the retired packing search's own
 		# uses and the same verdict the storey form gave -- see
 		# WarrenParcelConstruction.MIN_APPARENT_FACE_BANDS. The two must agree:
 		# one is what the packer refuses, the other is what the audit reports.

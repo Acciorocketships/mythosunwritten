@@ -30,7 +30,7 @@ const MIN_ADDRESS_BUILDING_BANDS := 6
 # two. It therefore scales with how convoluted and how LARGE the public realm
 # is, which is the quality this feature exists to produce.
 #
-# Measured over both pipelines (tests/harness/warren_mass_first_report.gd
+# Measured over both pipelines (by the retired searched-pipeline report
 # --stage breadth): route-first plans run 26-36 interior cells over 32-37 walk
 # cells -- 0.76 to 1.09 per walk cell -- with components of 1-5. Mass-first with
 # a lane network runs 29-36 over 35-45 walk cells, 0.69 to 0.88 per walk cell,

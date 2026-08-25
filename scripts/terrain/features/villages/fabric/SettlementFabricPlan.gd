@@ -21,7 +21,7 @@ var embedding_plan: StaggeredFabricEmbeddingPlan
 ## from occupancy either way, so it claims no socket and enters no
 ## visual-envelope or solid/void test.
 ##
-## Empty for a route-first town: WarrenFabricCompiler declares the wider hill
+## Empty for a legacy town: the retired asset compiler declared the wider hill
 ## only where the massif provenance is present.
 var retained_terrace_cells: Dictionary = {}
 var audit: Dictionary = {}

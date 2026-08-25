@@ -5,8 +5,8 @@ extends SceneTree
 ## materialization, collision-bearing surface tiling, record validation, and
 ## feature asset demand exactly as the streamed game does.
 const DEFAULT_SEEDS: Array[int] = [4242, 991177, 3046246887, 2697992464]
-## TASK F1. Was `WarrenBuiltTownSolver.TARGET_MAX_UNCOVERED_ROUTE_COMPONENT_SIZE`
-## before that solver died with the searched pipeline; the value is unchanged.
+## TASK F1. Lived on the searched town solver until that solver died with the
+## searched pipeline; the value is unchanged.
 const MAX_UNCOVERED_ROUTE_COMPONENT_SIZE := 16
 const ZERO_METRICS: Array[StringName] = [
 	&"stair_endpoint_gap_count",

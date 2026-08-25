@@ -21,13 +21,13 @@ const TARGET_MARKETS := 6
 ## pass -- NOT how wide the pool is.
 ##
 ## Every candidate this function emits costs
-## WarrenBuiltTownSolver._admit_markets a complete WarrenFabricCompiler.solve,
+## the retired searched town's market admission a complete fabric compile,
 ## whether that candidate is admitted or refused, so the candidate count
 ## multiplies the whole market pass. Emitting one candidate per family per
 ## placement made the pool's WIDTH a multiplier on SEARCH: the
 ## bake wave's 7 -> 20 widening tripled the list (931 -> 2660 on seed 7) and
 ## added 408 s to a 575 s mass-first detail solve, measured with
-## `warren_mass_first_report.gd --stage timing`.
+## the retired searched-pipeline timing report.
 ##
 ## The pool's width does not need to be a multiplier, because it is already a
 ## CHOICE: `_family` picks each placement's first family from the whole pool as

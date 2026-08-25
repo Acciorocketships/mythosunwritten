@@ -28,7 +28,7 @@ static func feature_quotas_are_advisory() -> bool:
 
 
 static func partition_parcels(volume: WarrenVolumePlan) -> WarrenParcelPlan:
-	## The maze parcel stage. `WarrenParcelHeightSolver` is deliberately NOT run
+	## The maze parcel stage. The retired height solver is deliberately NOT run
 	## over these houses — reassigning heights would flatten exactly the
 	## terracing that makes this skyline vary by construction.
 	last_partition_failure = ""

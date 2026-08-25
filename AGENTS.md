@@ -394,8 +394,18 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   only large and grand require the elevated third-storey court. Stable source signatures and
   terrain-relative rebuilds carry the exact selected profile; a small town is never a cropped or
   mesh-scaled large one.
-  A new maze front end is under staged development behind the production boundary; it is not yet a
-  selectable generation mode. `WarrenMazeCarver` builds one deterministic entrance-to-summit spine,
+  **STALE BELOW (task F1, 2026-08-25).** The searched village pipeline was deleted:
+  `WarrenTownSolver.GENERATION_MODE`, `WarrenPublicRealmCarver`, `WarrenGroundArcadeSolver`,
+  `WarrenExcavationCarver`, `WarrenParcelizer`, `WarrenParcelHeightSolver`,
+  `WarrenSolidPartitioner`, `WarrenBuiltTownSolver`/`WarrenBuiltTownPlan`, `WarrenTownPlan`,
+  `WarrenAssetPlan`, `WarrenFabricCompiler`, `WarrenMassPruner`, `WarrenVolumeSurfaceCompiler`
+  and `WarrenSolutionPinCache` no longer exist, and the hero-feature beam inside
+  `WarrenVolumetricSolver` went with them. Production is one pass:
+  `VillagePlan` -> `VillageWarrenFabricSolver` -> `WarrenVolumetricSolver.solve` ->
+  `WarrenMazeSitePlanner` -> `WarrenMazeVolumeAdapter` -> `from_volume`. Any paragraph below
+  that describes route-first, mass-first, attempt rotation, ranked candidates or a solution pin
+  is a record of what the code USED to do; this section still needs a rewrite.
+  `WarrenMazeCarver` builds one deterministic entrance-to-summit spine,
   coverage-driven alley network, a universal typed 6 m by 6 m market square, and open-air/tunnel
   classification from the same `WarrenMassif`,
   using the shared resource-free stride geometry in `WarrenPassageLatticeRules`. Its sealed

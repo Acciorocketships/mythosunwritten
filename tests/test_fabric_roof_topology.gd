@@ -57,7 +57,7 @@ func test_perpendicular_valley_rejects_roofs_without_an_atomic_vocabulary() -> v
 		"perpendicular valley")
 
 
-func test_flat_caps_resolve_a_mass_first_crossing_gable_without_fake_seams() \
+func test_flat_caps_resolve_a_crossing_gable_without_fake_seams() \
 		-> void:
 	var proposals: Array[Dictionary] = [
 		_tower(&"left", Vector3i.ZERO, 0, 2),

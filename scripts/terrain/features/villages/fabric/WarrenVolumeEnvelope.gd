@@ -19,7 +19,7 @@ const MIN_ENTRY_HEIGHT_BANDS := 2
 ## envelope is the one object both the audit and the carvers already hold.
 const DEFAULT_ADDRESS_BANDS := 6
 ## Ground-arcade cells that must pass BENEATH the climbing itinerary before
-## WarrenGroundArcadeSolver accepts a town. Two for every envelope this class
+## the retired ground-arcade solver accepted a town. Two for every envelope this class
 ## grows itself, byte-identically to the constant that solver has always
 ## published; a synthesised envelope may lower it. See
 ## WarrenMassif.UPPER_ROUTE_CROSSOVERS for the derivation.

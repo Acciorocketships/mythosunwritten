@@ -104,7 +104,7 @@ func test_the_vertical_development_floor_is_the_profile_contract() -> void:
 
 
 func _ground_frame(kind: String) -> Dictionary:
-	## The input frames warren_mass_first_report --stage terrain uses, so the
+	## The input frames the retired searched-pipeline terrain report used, so the
 	## suite and the measuring instrument describe the same ground.
 	##
 	## Every variation is laid ON the stamped hill rather than on band zero,

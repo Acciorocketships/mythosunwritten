@@ -444,7 +444,7 @@ func test_the_chimney_pool_offers_more_than_one_stack() -> void:
 func test_a_placement_offers_no_more_stall_families_than_the_pre_wave_pool()\
 		-> void:
 	## Each candidate WarrenMarketSolver emits costs _admit_markets one complete
-	## WarrenFabricCompiler.solve whether it is admitted or refused, so the
+	## the retired asset compile whether it is admitted or refused, so the
 	## per-placement family walk multiplies the whole market pass. Seven is the
 	## width the pool itself had before the bake wave, so this is the count the
 	## reviewed code already paid -- and it may not grow again with the pool.

@@ -43,7 +43,7 @@ static func envelope_from_massif(massif: WarrenMassif) -> WarrenVolumeEnvelope:
 		# level down to zero or below (_new_district_level's `lvl = clampi(
 		# lvl, lo, hi)`), leaving a column present in `massif.columns` with no
 		# actual mass. Such a column can never host a borable slot --
-		# WarrenExcavationCarver._slot_is_borable rejects any cell there since
+		# the bore's own slot admission rejects any cell there since
 		# cell.y + bands > top_at(column) for every bands >= 1 -- so it is
 		# dropped here rather than copied in as a nonsensical zero-height
 		# envelope column that WarrenVolumeEnvelope._seal() would reject
@@ -135,7 +135,7 @@ static func to_volume_plan(massif: WarrenMassif,
 			last_failure = "invalid loop edge %d (%s -> %s)" % [
 				index, from_cell, to_cell]
 			return null
-	# Every excavated cell is real street ground WarrenSolidPartitioner may
+	# Every excavated cell is real street ground a partitioner may
 	# legitimately root a house at (it already does: street_wall_faces()
 	# iterates excavation.public_cells() directly, unaware of which cells are
 	# also walk_cells graph nodes), even though only move endpoints can BE graph
@@ -162,7 +162,7 @@ static func excavation_for_volume(excavation: WarrenExcavation,
 	## restated as a sealed WarrenExcavation.
 	##
 	## to_volume_plan() produces a plan whose mass is exactly the massif minus
-	## `excavation.carved`, which is the solid predicate WarrenSolidPartitioner
+	## `excavation.carved`, which is the solid predicate the retired partitioner
 	## re-derives from (massif, excavation). Later stages -- the ground arcade
 	## and the elevated galleries -- clone that plan and remove more mass, and
 	## the bore alone then understates the void by exactly their branches. A
@@ -208,7 +208,7 @@ static func _close_landing_turns(plan: WarrenVolumePlan) -> bool:
 	## cell at right angles with either of them vertical.
 	##
 	## The route's own turns are already declared as they are laid, mirroring
-	## WarrenPublicRealmCarver's growth-time bookkeeping. This closes the case
+	## the retired route carver's growth-time bookkeeping. This closes the case
 	## that bookkeeping cannot see -- a lane branching off a route cell whose
 	## incident transitions were fixed long before the lane existed. Stated as
 	## the audit's own rule rather than as a second guess at it, and add_landing
@@ -246,10 +246,10 @@ static func _add_transitions(plan: WarrenVolumePlan,
 	## excavation.transitions records one macro edge per bored move (its
 	## `from`/`to` span the whole 1-3 cell stride the carver's ACTIONS table
 	## allows), exactly matching the WarrenVolumeTransition Kind contract --
-	## see WarrenExcavationCarver's own docs.
+	## see the bore carver's own docs.
 	##
 	## WALK CELLS ARE TRANSITION ENDPOINTS ONLY -- exactly
-	## WarrenPublicRealmCarver's own route-first convention
+	## the retired route carver's own convention
 	## (`route.append(destination)` once per move, never per stride cell).
 	## An earlier revision instead made every carved cell (including a
 	## STAIR/RAMP's intermediate stride cell) a walk cell, and wired the
@@ -280,7 +280,7 @@ static func _add_transitions(plan: WarrenVolumePlan,
 		var run := absi(delta.x) + absi(delta.z)
 		var direction := Vector2i(signi(delta.x), signi(delta.z))
 		var vertical := delta.y != 0
-		# Mirrors WarrenPublicRealmCarver._grow_candidate's landing bookkeeping:
+		# Mirrors the retired route carver's landing bookkeeping:
 		# the pivot between two moves owns a square landing whenever the
 		# directions are perpendicular and either side of the turn is
 		# vertical. WarrenVolumePlan._build_audit() gates on this exactly
@@ -314,7 +314,7 @@ static func _swept_span(excavation: WarrenExcavation, walk: Array[Vector3i],
 	## back off `carved` per cell (via slot_bands()) rather than assumed to be
 	## a fixed headroom -- a STAIR's intermediate cell carries both treads and
 	## so is one band taller than its neighbours (see
-	## WarrenExcavationCarver._surface_band_span). Spanning cursor..cursor+run
+	## the bore's surface-band span). Spanning cursor..cursor+run
 	## inclusive means consecutive transitions' swept cells overlap exactly at
 	## their shared endpoint, so the union across every transition in a route
 	## equals excavation.carved exactly: the plan's mass never disagrees with

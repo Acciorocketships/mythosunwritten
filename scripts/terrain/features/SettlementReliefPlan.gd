@@ -265,7 +265,7 @@ func _profile(dx: float, dz: float, site: Dictionary) -> float:
 	## The rings are the point, and they were measured rather than assumed. Wave
 	## 1 proved that an at-grade street is contour-bound -- every action's first
 	## stride cell sits on the move's starting band -- so
-	## WarrenExcavationCarver.MIN_GRADE_CELLS is unsatisfiable the moment the
+	## the retired bore carver's grade-cell floor was unsatisfiable the moment the
 	## ground under the town slopes continuously. On a synthetic flat field the
 	## 4 m storey quantizer terraces ANY profile, smooth or stepped, so the
 	## difference is invisible; on the real noisy field it is decisive. A/B with

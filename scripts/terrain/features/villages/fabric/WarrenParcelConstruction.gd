@@ -569,7 +569,7 @@ static func has_perimeter_load_path(parcel: WarrenBuildingParcel) -> bool:
 static func resolve_support_band(highest_ground: int, lowest_ground: int,
 		base_band: int, plinth_budget: int) -> int:
 	## The one place the support datum's storey parity is resolved. Shared
-	## rather than restated because WarrenSolidPartitioner has to predict this
+	## rather than restated because the partition stage has to predict this
 	## answer twice -- once to size an envelope (`_minimum_bands`) and once to
 	## bucket an unowned street wall (`_wall_verdict`) -- and three copies of a
 	## `result -= 1` are how a buried house becomes invisible to the audit that

@@ -18,7 +18,7 @@ const FLEXIBLE_ORANGE_ROOF_CAP_RATIO := 0.65
 ## colours left the streetscape graph-colouring with no move on a degree-2
 ## neighbourhood -- every third house had to repeat one of its neighbours -- and
 ## pushed the largest-family share hard against
-## WarrenBuiltTownSolver.TARGET_MAX_LARGEST_FACADE_FAMILY_RATIO. Its modules are
+## the retired searched town's largest-facade-family target. Its modules are
 ## disjoint from the other two pools (see SettlementFabricProgram), so it is a
 ## different authored wall rather than a re-phased one.
 const UPPER_FACADE_FAMILIES: Array[StringName] = [&"blue", &"orange", &"amber"]
@@ -26,77 +26,6 @@ const UPPER_FACADE_FAMILIES: Array[StringName] = [&"blue", &"orange", &"amber"]
 ## Situational recipe selection for already-sealed roofed parcels. It never
 ## scales a prefab or changes parcel geometry to make an asset fit.
 static var last_failure := ""
-
-
-static func solve(town: WarrenTownPlan,
-		program: SettlementFabricProgram) -> WarrenAssetPlan:
-	last_failure = ""
-	if town == null or not town.is_sealed() or program == null:
-		last_failure = "missing sealed town or compiled vocabulary"
-		return null
-	var proposals: Array[Dictionary] = []
-	for parcel: WarrenBuildingParcel in town.parcels.parcels:
-		var proposal := WarrenParcelConstruction.proposal(parcel)
-		if proposal.is_empty():
-			last_failure = "no construction profile for parcel %s" % parcel.stable_id
-			return null
-		proposals.append(proposal)
-	var roof_topology := FabricRoofTopologyPlan.build(proposals)
-	if roof_topology == null:
-		last_failure = "could not classify the parcel roof neighborhood"
-		return null
-	var inhabited_massif := town.volume.mass_context.has(&"massif")
-	if not _assign_neighborhood_styles(proposals, roof_topology,
-			int(town.volume.world_seed), inhabited_massif):
-		last_failure = FabricRoofJunctionModuleTable.last_failure
-		return null
-	var tower_seams := _party_wall_seams(proposals)
-	var units: Array[FabricUnit] = []
-	for proposal: Dictionary in proposals:
-		var components := StaggeredFabricCompiler.proposal_components(proposal)
-		if components.is_empty():
-			last_failure = "proposal %s has no recipe expansion" % proposal.stable_id
-			return null
-		var parent_id := &""
-		var roof_id := &""
-		var proposal_prefix := StringName("volume.%s" % proposal.stable_id)
-		for component: Dictionary in components:
-			var role := StringName(component.role)
-			var stable_id := StringName("%s.%s" % [proposal_prefix, role])
-			var parents: Array[StringName] = []
-			var bonds: Array[Dictionary] = []
-			if role == &"roof":
-				roof_id = stable_id
-			if String(role).begins_with("roof.trim."):
-				if roof_id.is_empty():
-					last_failure = "roof seam precedes its bearing roof"
-					return null
-				parents.append(roof_id)
-				var side_name := "negative" \
-					if int(component.roof_junction_side) \
-						== FabricRoofTopologyPlan.Side.EAVE_NEGATIVE \
-					else "positive"
-				bonds.append(FabricUnit.bond(&"bearing.bottom", roof_id,
-					StringName("bearing.junction.eave.%s" % side_name)))
-			elif not parent_id.is_empty():
-				parents.append(parent_id)
-				bonds.append(FabricUnit.bond(&"bearing.bottom", parent_id,
-					&"bearing.top"))
-			var seams: Array[StringName] = []
-			seams.assign(tower_seams.get(StringName(proposal.stable_id), []) \
-				as Array)
-			var unit_value := FabricUnit.new(stable_id,
-				StringName(component.recipe_id), component.origin as Vector3i,
-				int(component.yaw_quarters), parents, bonds, &"", seams)
-			units.append(unit_value)
-			if not String(role).begins_with("roof.trim."):
-				parent_id = stable_id
-	var result := WarrenAssetPlan.new(
-		StringName("%s.assets" % town.stable_id), town, program)
-	if not result.seal(proposals, units):
-		last_failure = result.last_rejection
-		return null
-	return result
 
 
 static func parcels_are_visually_compatible(left: WarrenBuildingParcel,
@@ -732,7 +661,7 @@ static func massif_partition_asset_cache(
 		parcels: Array[WarrenBuildingParcel], world_seed: int,
 		program: SettlementFabricProgram) -> Dictionary:
 	## Skywalk reservation happens after mass-first's fixed partition but before
-	## solve() creates its WarrenAssetPlan. Precompute the exact same neighborhood
+	## the retired asset compile built its plan. Precompute the exact same neighborhood
 	## styles here so corridor clearance sees the flush corner caps and timber
 	## shells the final town will actually build, rather than a conservative
 	## unrelated pitched-roof default which falsely blocks nearby bridges.

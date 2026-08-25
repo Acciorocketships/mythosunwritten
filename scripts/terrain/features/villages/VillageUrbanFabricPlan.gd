@@ -111,10 +111,10 @@ func _validate_volumetric_warren(program: VillageProgram) -> bool:
 				or not _scale_feature_contract_matches(fabric_audit):
 			return false
 		return _validate_compiled_fabric(program)
-	# TASK F1. The legacy `WarrenBuiltTownPlan` route is gone with the
-	# searched pipeline that produced it: `volumetric_town` was never set by
-	# any production path, so a VOLUMETRIC_WARREN plan without a spatial town
-	# is simply invalid.
+	# TASK F1. The legacy built-town lineage is gone with the searched
+	# pipeline that produced it: `volumetric_town` was never set by any
+	# production path, so a VOLUMETRIC_WARREN plan without a spatial town is
+	# simply invalid.
 	return false
 
 

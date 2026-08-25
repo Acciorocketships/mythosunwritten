@@ -611,7 +611,7 @@ static func _parcel_for_plot(source: WarrenMazeSourcePlan,
 				# choice this loop was already free to make differently.
 				#
 				# `has_exact_route_surface` exists for exactly this question
-				# and says so in its own docstring; `WarrenSolidPartitioner`
+				# and says so in its own docstring; the retired solid partitioner
 				# :1020 already asks it. The maze translator simply never
 				# adopted it. Asking here lets the OTHER door phase, or a
 				# smaller rectangle, win instead, and a plot where no lane is
