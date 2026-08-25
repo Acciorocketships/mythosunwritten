@@ -1249,6 +1249,18 @@ static func from_volume(volume: WarrenVolumePlan,
 			retained_rock.roof_cells)
 		plan.audit["maze_retained_unroomed_plot_stone_cells"] = int(
 			retained_rock.unroomed_plot_cells)
+		# TASK E4 FIX 1. The plot mass this town would have retained as stone
+		# and cut off instead, two storeys above the plot's own public floor,
+		# and the plots that refused the cut because something would have been
+		# left standing over the released air. The THIRD term of the retention
+		# identity: `unroomed - retained_unroomed` is now `trimmed` plus, at
+		# most, the cells another feature had reserved.
+		plan.audit["maze_trimmed_unroomed_plot_stone_cells"] = int(
+			retained_rock.trimmed_unroomed_plot_cells)
+		plan.audit["maze_trimmed_roof_band_stone_cells"] = int(
+			retained_rock.trimmed_roof_band_cells)
+		plan.audit["maze_refused_unroomed_plot_trims"] = int(
+			retained_rock.refused_plot_trims)
 		# TASK C5e RULING 2. The parapet course above a flat crown's slab,
 		# left as AIR instead of retained as stone, so the crown is an open
 		# terrace rather than a masonry block with a timber sill. Counted here
@@ -1661,11 +1673,29 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 	## - `unroomed_plot_cells` -- the rest: plot mass the composition made
 	##   neither room nor roof. The quarry block, and the number Task C5c
 	##   exists to move.
+	##
+	## TASK E4 FIX 1 ADDS TWO MORE, and one rule with them: a plot's retained
+	## mass is cut off two storeys above the public floor the plot itself
+	## stands on. See `_maze_trimmed_plot_stone`. A trimmed cell is released
+	## rather than claimed and is counted in NEITHER `unroomed_plot_cells` nor
+	## `roof_cells`, so `cells == rock_cells + roof_cells +
+	## unroomed_plot_cells` still holds and the trim shows up as a term of its
+	## own instead of as an unexplained fall in the residue.
+	##
+	## The two are `trimmed_unroomed_plot_cells` and `trimmed_roof_band_cells`,
+	## split by the same rule that tells `unroomed_plot_cells` from
+	## `roof_cells` (fix 1, IMPORTANT 1). They cannot be one number: only the
+	## unroomed half comes out of the residue `_maze_plot_mass_audit` calls
+	## `unroomed`, so only that half belongs in the retention identity. Seed
+	## 4/compact trims 80 cells of which every one is a roof band, and its
+	## unroomed total does not move at all.
 	var source := volume.mass_context.get(&"maze_source_plan") \
 		as WarrenMazeSourcePlan
 	if source == null or source.massif == null:
 		return {"failed": false, "cells": 0, "skipped": 0, "rock_cells": 0,
-			"unroomed_plot_cells": 0, "roof_cells": 0}
+			"unroomed_plot_cells": 0, "roof_cells": 0,
+			"trimmed_unroomed_plot_cells": 0, "trimmed_roof_band_cells": 0,
+			"refused_plot_trims": 0}
 	# TASK C5c RULING 1 -- the TAG. Retained stone is one material and one
 	# owner, but it is two different facts about the town: `rock` is derived
 	# stone the plot planner never gave to anybody, and `unroomed_plot_mass`
@@ -1675,12 +1705,16 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 	var plot_mass := _maze_plot_mass_cells(volume)
 	var plot_roof := _maze_plot_roof_cells(volume)
 	var released := _maze_released_parapet_cells(volume, route_floors)
+	var trim := _maze_trimmed_plot_stone(source, route_floors)
+	var trim_cells := trim.cells as Dictionary
 	var cells: Array[Vector3i] = []
 	var skipped := 0
 	var rock_cells := 0
 	var unroomed_plot_cells := 0
 	var roof_cells := 0
 	var released_cells := 0
+	var trimmed_cells := 0
+	var trimmed_roof_cells := 0
 	var lowest := grid.minimum.y
 	var highest := grid.minimum.y + grid.size.y
 	for column_value: Variant in source.massif.columns.keys():
@@ -1700,6 +1734,21 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 				if _feature_bit_is_taken(grid, fine):
 					skipped += 1
 					continue
+				# TASK E4 FIX 1. AFTER the reservation skip, so a cell can
+				# never be counted as both trimmed and skipped and the two
+				# terms of the retention identity stay disjoint. Split by the
+				# same rule the classification below uses, because a trimmed
+				# ROOF band never was part of `unroomed_plot_cells` and
+				# subtracting it from that total would be an identity that
+				# does not hold (measured: seed 4/compact trims 80 cells of
+				# which 80 are roof, so its unroomed total does not move at
+				# all).
+				if trim_cells.has(fine):
+					if plot_roof.has(fine):
+						trimmed_roof_cells += 1
+					else:
+						trimmed_cells += 1
+					continue
 				if not plot_mass.has(fine):
 					rock_cells += 1
 				elif plot_roof.has(fine):
@@ -1710,16 +1759,118 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 	if cells.is_empty():
 		return {"failed": false, "cells": 0, "skipped": skipped,
 			"rock_cells": 0, "unroomed_plot_cells": 0, "roof_cells": 0,
-			"released_parapet_cells": released_cells}
+			"released_parapet_cells": released_cells,
+			"trimmed_unroomed_plot_cells": trimmed_cells,
+			"trimmed_roof_band_cells": trimmed_roof_cells,
+			"refused_plot_trims": int(trim.refused)}
 	cells.sort_custom(_cell_less)
 	if not _claim_maze_stone(grid, cells):
 		return {"failed": true, "cells": 0, "skipped": skipped,
 			"rock_cells": 0, "unroomed_plot_cells": 0, "roof_cells": 0,
-			"released_parapet_cells": released_cells}
+			"released_parapet_cells": released_cells,
+			"trimmed_unroomed_plot_cells": trimmed_cells,
+			"trimmed_roof_band_cells": trimmed_roof_cells,
+			"refused_plot_trims": int(trim.refused)}
 	return {"failed": false, "cells": cells.size(), "skipped": skipped,
 		"rock_cells": rock_cells,
 		"unroomed_plot_cells": unroomed_plot_cells, "roof_cells": roof_cells,
-		"released_parapet_cells": released_cells}
+		"released_parapet_cells": released_cells,
+		"trimmed_unroomed_plot_cells": trimmed_cells,
+		"trimmed_roof_band_cells": trimmed_roof_cells,
+		"refused_plot_trims": int(trim.refused)}
+
+
+## TASK E4 FIX 1 -- THE TRIM. The user's first binding direction, applied
+## rather than only measured: a plot's retained stone is cut off two storeys
+## above the public floor the plot itself stands on, so the quarry block a
+## composition failure leaves behind stops being a masonry cliff and becomes a
+## low stump. Maze-only: every reader below is empty for a searched volume.
+##
+## ONE HEIGHT PER PLOT, never per cell. `trim_top = datum +
+## LOW_STONE_BANDS + 1`, where `datum` is the HIGHEST
+## `WarrenMazeSourcePlan.local_public_datum` any of the plot's own footprint
+## columns answers at that column's `lowest_plot_floor` -- the ground the town
+## really starts from there, and the street it belongs to. Highest rather than
+## lowest, deliberately: a plot fronting an upper terrace may not be trimmed
+## down to the street at the bottom of the hill, and the conservative reduction
+## is the one that trims LESS. The `+ 1` is the ruling's own: two storeys of
+## stone plus the band that caps them.
+##
+## TWO REFUSALS, one principle -- NOTHING MAY BE LEFT STANDING OVER RELEASED
+## AIR. A plot refuses to trim, and is counted in `refused`, when either:
+##
+##   1. another plot stands at or above its own `top` on any footprint column
+##      (releasing its head would strand that plot's mass, whether the
+##      composition roomed it or retained it), or
+##   2. a route floor walks on a band the release would take -- inside the
+##      released span, or directly on top of it. The ruling asks for
+##      `route_on_stone` and `holes[OUTSIDE]` to be RE-MEASURED, and the C5e
+##      precedent is exactly this failure: releasing a flat crown's parapet
+##      took away the band a tiered house's street floor stood on and left
+##      walk cells over `Use.OUTSIDE`. Refusing by construction is cheaper
+##      than measuring the same defect a second time, and it is the same
+##      sentence as refusal 1 with "a street" in place of "a plot".
+##
+## `{cells: {fine cell: true}, refused: int, trimmed_plots: int}`.
+static func _maze_trimmed_plot_stone(source: WarrenMazeSourcePlan,
+		route_floors: Array[Vector3i]) -> Dictionary:
+	var out: Dictionary = {}
+	var refused := 0
+	var trimmed_plots := 0
+	if source == null or source.massif == null:
+		return {"cells": out, "refused": refused,
+			"trimmed_plots": trimmed_plots}
+	var walked: Dictionary = {}
+	for cell: Vector3i in route_floors:
+		var lane: Dictionary = walked.get(Vector2i(cell.x, cell.z), {})
+		lane[cell.y] = true
+		walked[Vector2i(cell.x, cell.z)] = lane
+	for plot: Dictionary in source.plots:
+		var top_band := int(plot["top"])
+		var floor_band := int(plot["floor"])
+		var footprint: Array = plot["cells"]
+		var datum := -1
+		for cell_value: Variant in footprint:
+			var column := cell_value as Vector2i
+			datum = maxi(datum, source.local_public_datum(column,
+				source.lowest_plot_floor(column)))
+		var release_low := maxi(floor_band,
+			datum + WarrenMazeSourcePlan.LOW_STONE_BANDS + 2)
+		if datum < 0 or release_low >= top_band:
+			continue
+		if _plot_trim_is_refused(source, plot, walked, release_low):
+			refused += 1
+			continue
+		trimmed_plots += 1
+		for band in range(release_low, top_band):
+			for cell_value: Variant in footprint:
+				var column := cell_value as Vector2i
+				for fine: Vector3i in _fine_square(Vector3i(column.x, band,
+						column.y)):
+					out[fine] = true
+	return {"cells": out, "refused": refused, "trimmed_plots": trimmed_plots}
+
+
+static func _plot_trim_is_refused(source: WarrenMazeSourcePlan,
+		plot: Dictionary, walked: Dictionary, release_low: int) -> bool:
+	## The two refusals of `_maze_trimmed_plot_stone`, in that order. `walked`
+	## is `{fine column: {band: true}}` over the town's route floors.
+	var id := StringName(plot["id"])
+	var top_band := int(plot["top"])
+	for cell_value: Variant in plot["cells"] as Array:
+		var column := cell_value as Vector2i
+		for other: Dictionary in source.plots:
+			if StringName(other["id"]) == id \
+					or int(other["floor"]) < top_band \
+					or not (other["cells"] as Array).has(column):
+				continue
+			return true
+		for fine: Vector3i in _fine_square(Vector3i(column.x, 0, column.y)):
+			var lane: Dictionary = walked.get(Vector2i(fine.x, fine.z), {})
+			for band in range(release_low, top_band + 1):
+				if lane.has(band):
+					return true
+	return false
 
 
 static func _maze_released_parapet_cells(volume: WarrenVolumePlan,
@@ -1823,16 +1974,16 @@ static func _maze_plot_roof_cells(volume: WarrenVolumePlan) -> Dictionary:
 		as WarrenMazeSourcePlan
 	if source == null:
 		return out
+	## TASK E4 FIX 1, IMPORTANT 1: the SPAN itself moved to
+	## `WarrenMazeBlockPartitioner.plot_roof_band_span`, unchanged, because the
+	## stone trim below and the fabric layer's own band profile both have to
+	## agree with this pass about which bands are roof by the height contract.
+	## The span is empty for every non-house plot, so the kind filter that used
+	## to stand here now lives inside it.
 	for plot: Dictionary in source.plots:
-		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE:
-			continue
-		var floor_band := int(plot["floor"])
-		var top_band := int(plot["top"])
-		var roof_base := WarrenBuildingParcel.flat_roof_base_band(floor_band,
-			top_band) \
-			if WarrenMazeBlockPartitioner.plot_is_flat_roofed(source, plot) \
-			else top_band - WarrenBuildingParcel.ROOF_RESERVATION_BANDS
-		for band in range(maxi(floor_band, roof_base), top_band):
+		var span := WarrenMazeBlockPartitioner.plot_roof_band_span(source,
+			plot)
+		for band in range(span.x, span.y):
 			for cell_value: Variant in plot["cells"] as Array:
 				var column := cell_value as Vector2i
 				for fine: Vector3i in _fine_square(Vector3i(column.x, band,
@@ -1908,9 +2059,18 @@ static func _maze_plot_mass_audit(grid: WarrenSpatialGrid,
 		else:
 			unroomed += 1
 			# Which USE the residue wears. Every cell here should be the
-			# retained stone `_retain_maze_rock` claimed; a different use is a
-			# cell the retention pass never saw, and naming it is cheaper than
-			# guessing at it later.
+			# retained stone `_retain_maze_rock` claimed OR one of the two
+			# things that pass releases instead: a cell whose FEATURE bit
+			# another owner already held
+			# (`maze_retained_rock_skipped_reserved`), and -- since task E4
+			# fix 1 -- a cell the stone TRIM cut off two storeys above the
+			# plot's own public floor
+			# (`maze_trimmed_unroomed_plot_stone_cells`). Both wear
+			# `Use.OUTSIDE` here, so this histogram no longer reads as
+			# "STRUCTURAL_VOLUME or a bug"; naming the use is still cheaper
+			# than guessing at it later, and the retention identity in
+			# `test_warren_maze_composition` is what holds the three terms to
+			# their sum.
 			unroomed_uses[use] = int(unroomed_uses.get(use, 0)) + 1
 	out["plot_cells"] = plot_cells
 	out["roomed"] = roomed

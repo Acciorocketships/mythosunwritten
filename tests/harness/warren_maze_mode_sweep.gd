@@ -115,7 +115,10 @@ func _init() -> void:
 	var stone_faces := 0
 	var stone_high_faces := 0
 	var stone_plot_mass_high := 0
+	var stone_roof_high := 0
+	var stone_unroomed_high := 0
 	var stone_raised_high := 0
+	var stone_max_offset := 0
 	var stone_towns := 0
 	for city_seed: int in seeds:
 		for scale_id: StringName in scale_ids:
@@ -147,9 +150,16 @@ func _init() -> void:
 						"maze_stone_plot_mass_high_face_count", 0))
 					stone_raised_high += int(fabric.audit.get(
 						"maze_stone_raised_shoulder_high_face_count", 0))
+					stone_roof_high += int(fabric.audit.get(
+						"maze_stone_roof_band_high_face_count", 0))
+					stone_unroomed_high += int(fabric.audit.get(
+						"maze_stone_unroomed_high_face_count", 0))
+					stone_max_offset = maxi(stone_max_offset, int(
+						fabric.audit.get("maze_stone_max_band_offset", 0)))
 					print(("SWEEP seed=%d scale=%s STONE faces=%d high=%d " \
-						+ "ratio=%.4f plot_mass_high=%d raised_high=%d " \
-						+ "max=%d bands=%s") % [city_seed,
+						+ "ratio=%.4f roof_high=%d unroomed_high=%d " \
+						+ "raised_high=%d grounded=%d max=%d trimmed=%d " \
+						+ "refused_trims=%d bands=%s") % [city_seed,
 						String(profile.scale_id),
 						int(fabric.audit.get(
 							"maze_stone_profiled_face_count", 0)),
@@ -158,11 +168,19 @@ func _init() -> void:
 						float(fabric.audit.get(
 							"maze_stone_high_face_ratio", 0.0)),
 						int(fabric.audit.get(
-							"maze_stone_plot_mass_high_face_count", 0)),
+							"maze_stone_roof_band_high_face_count", 0)),
+						int(fabric.audit.get(
+							"maze_stone_unroomed_high_face_count", 0)),
 						int(fabric.audit.get(
 							"maze_stone_raised_shoulder_high_face_count", 0)),
 						int(fabric.audit.get(
+							"maze_stone_grounded_face_count", 0)),
+						int(fabric.audit.get(
 							"maze_stone_max_band_offset", 0)),
+						int(plan.audit.get(
+							"maze_trimmed_unroomed_plot_stone_cells", 0)),
+						int(plan.audit.get(
+							"maze_refused_unroomed_plot_trims", 0)),
 						str(fabric.audit.get(
 							"maze_stone_band_histogram", {}))])
 				continue
@@ -179,10 +197,12 @@ func _init() -> void:
 	# every town that compiled, not the mean of the per-town ratios, so a big
 	# town cannot be averaged away by a small one.
 	print(("SWEEP RESULT stone towns=%d faces=%d above_2_storeys=%d " \
-		+ "corpus_ratio=%.4f of which plot_mass=%d raised_shoulder=%d") % [
+		+ "corpus_ratio=%.4f of which plot_mass=%d (roof_band=%d " \
+		+ "unroomed=%d) raised_shoulder=%d worst_max_offset=%d") % [
 		stone_towns, stone_faces, stone_high_faces,
 		float(stone_high_faces) / float(maxi(1, stone_faces)),
-		stone_plot_mass_high, stone_raised_high])
+		stone_plot_mass_high, stone_roof_high, stone_unroomed_high,
+		stone_raised_high, stone_max_offset])
 	_write_summary(mode, seeds, scale_ids, rows, sealed_count, attempted,
 		total_ms)
 	quit()

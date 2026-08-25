@@ -832,15 +832,41 @@ func test_unroomed_plot_mass_is_bounded() -> void:
 				+ "feature, unbuildable and unroomed are the whole") \
 				% _label(outcome))
 		# The stone the retention pass tagged and the residue this audit
-		# derives are two readings of one fact. The ONE legal way they part is
-		# a cell whose non-shareable FEATURE bit another owner already held --
-		# `_retain_maze_rock` skips and counts exactly those.
+		# derives are two readings of one fact. TASK E4 FIX 1 makes the gap
+		# between them THREE terms rather than one: a cell whose non-shareable
+		# FEATURE bit another owner already held (`_retain_maze_rock` skips
+		# and counts exactly those), and -- new -- a cell the stone TRIM cut
+		# off two storeys above the plot's own public floor. The trim is
+		# counted, so it is admitted as a floor on the gap rather than as
+		# slack: at LEAST every trimmed cell is missing from the retained
+		# total, and at most those plus the reserved skips.
 		var retained_unroomed := int(plan.audit.get(
 			"maze_retained_unroomed_plot_stone_cells", -1))
-		assert_between(unroomed - retained_unroomed, 0,
-			int(plan.audit.get("maze_retained_rock_skipped_reserved", -1)),
-			("%s retains %d of the %d plot cells it left unroomed") % [
-				_label(outcome), retained_unroomed, unroomed])
+		var trimmed := int(plan.audit.get(
+			"maze_trimmed_unroomed_plot_stone_cells", -1))
+		var trimmed_roof := int(plan.audit.get(
+			"maze_trimmed_roof_band_stone_cells", -1))
+		var refused_trims := int(plan.audit.get(
+			"maze_refused_unroomed_plot_trims", -1))
+		print(("MAZE_STONE_TRIM %s trimmed=%d (unroomed=%d roof_band=%d) " \
+			+ "refused_plots=%d retained_unroomed=%d unroomed=%d") % [
+			_label(outcome), trimmed + trimmed_roof, trimmed, trimmed_roof,
+			refused_trims, retained_unroomed, unroomed])
+		assert_gte(trimmed_roof, 0,
+			"%s must publish the roof-band stone its trim released" \
+				% _label(outcome))
+		assert_gte(trimmed, 0,
+			"%s must publish the plot stone its trim released" \
+				% _label(outcome))
+		assert_gte(refused_trims, 0,
+			"%s must publish the plots that refused to trim" \
+				% _label(outcome))
+		assert_between(unroomed - retained_unroomed, trimmed,
+			trimmed + int(plan.audit.get(
+				"maze_retained_rock_skipped_reserved", -1)),
+			("%s retains %d of the %d plot cells it left unroomed, having " \
+				+ "trimmed %d") % [_label(outcome), retained_unroomed,
+				unroomed, trimmed])
 		assert_almost_eq(share, float(unroomed) / float(plot_cells), 0.0005,
 			"%s must publish the share it measured" % _label(outcome))
 		assert_lte(share, UNROOMED_PLOT_MASS_CEILING,
@@ -3614,20 +3640,41 @@ func test_retained_stone_is_skinned() -> void:
 ## The share of `exposed_maze_stone_faces` standing more than two storeys over
 ## their own LOCAL public floor (`WarrenMazeSourcePlan.local_public_datum`).
 ##
-## Measured 2026-08-24 on task E3b's tree: seed 12/compact 54/1463 = 0.0369,
-## seed 4/compact 83/1151 = 0.0721, seed 3/standard 415/1653 = 0.2511,
-## seed 9/standard 240/1646 = 0.1458. The ceiling is the worst plus a 0.05
-## guard, rounded up to two places.
+## History, both measurements on the four planner towns:
 ##
-## THE COMPANION FACT, and the one worth acting on: on all four towns EVERY
-## high face stands on retained PLOT mass -- a building the composition never
-## roomed -- and not one on the source's own derived rock. The mountain is
-## already low; the stone that is not is a quarry block where a house was
-## planned, whose own ceiling is UNROOMED_PLOT_MASS_CEILING above.
+## | | 12/compact | 4/compact | 3/standard | 9/standard | ceiling |
+## |---|---|---|---|---|---|
+## | E4, before the trim | 0.0369 | 0.0721 | 0.2511 | 0.1458 | 0.31 |
+## | E4 fix 1, trimmed | see the test's print | | | | **below** |
+##
+## THE TRIM is fix 1's own: `WarrenVolumetricSolver._maze_trimmed_plot_stone`
+## cuts a plot's retained stone off two storeys above the public floor the
+## plot itself stands on, so a composition failure leaves a low stump instead
+## of a masonry cliff. The fall in this ceiling is that change and nothing
+## else; the metric's definition did not move.
+##
+## THE COMPANION FACT: every high face on every corpus town stands on retained
+## PLOT mass, never on the source's own derived rock -- the mountain is
+## already low. Fix 1's IMPORTANT 1 splits that bucket in two, because a plot's
+## `[floor, top)` also holds its ROOF BAND SPAN, where stone is the parapet
+## course doing its job rather than a shortfall. Only the
+## `maze_stone_unroomed_high_face_count` half is a building the composition
+## never roomed, and only that half is what the trim can reach.
 ##
 ## A CEILING, re-pinned DOWNWARD only: a rise past it is a regression to
 ## report, never to accommodate.
-const MAZE_STONE_HIGH_FACE_CEILING := 0.31
+const MAZE_STONE_HIGH_FACE_CEILING := 0.16
+
+## THE SECOND TOOTH (fix 1, prerequisite 5). A ratio alone can be driven to
+## zero by a trim without the town getting any better to look at -- release
+## enough and there is nothing left to count. This pins the SHAPE instead:
+## the highest band offset any exterior stone face reaches over its own local
+## public floor, in bands (a storey is two). Measured-first, worst of the four
+## planner towns plus a two-band guard.
+##
+## A CEILING like the ratio, and the two must be read together: the ratio says
+## how much of the skin stands high, this says how high the worst of it gets.
+const MAZE_STONE_MAX_BAND_OFFSET_CEILING := 9
 
 
 func test_retained_stone_concentrates_in_the_bottom_storeys() -> void:
@@ -3644,15 +3691,24 @@ func test_retained_stone_concentrates_in_the_bottom_storeys() -> void:
 			"%s must carry its compiled fabric" % _label(outcome))
 		if fabric == null:
 			continue
+		# FIX 1, MINOR 6. `source_volume` is optional on a spatial plan, so the
+		# test guards it exactly as the compiler's own call site does rather
+		# than dereferencing it and trusting the corpus never hands it a plan
+		# without one.
+		assert_not_null(plan.source_volume,
+			"%s must carry its source volume" % _label(outcome))
+		if plan.source_volume == null:
+			continue
 		var maze_source := plan.source_volume.mass_context.get(
 			&"maze_source_plan") as WarrenMazeSourcePlan
 		assert_not_null(maze_source,
 			"%s must carry its maze source plan" % _label(outcome))
-		if maze_source == null:
+		if maze_source == null or maze_source.massif == null:
 			continue
 		var faces := 0
 		var high := 0
 		var on_plot_mass := 0
+		var on_roof_band := 0
 		var on_raised_shoulder := 0
 		var histogram: Dictionary = {}
 		var raised: Dictionary = {}
@@ -3667,15 +3723,25 @@ func test_retained_stone_concentrates_in_the_bottom_storeys() -> void:
 			var offset := key.y - maze_source.local_public_datum(column, key.y)
 			var is_high := int(offset > WarrenMazeSourcePlan.LOW_STONE_BANDS)
 			var claimed := false
+			var roofed := false
 			for plot: Dictionary in maze_source.plots:
 				if not (plot["cells"] as Array).has(column):
 					continue
 				if key.y >= int(plot["floor"]) and key.y < int(plot["top"]):
 					claimed = true
+					# FIX 1, IMPORTANT 1. A band inside the plot's own roof
+					# span is roof by the height contract, so stone there is
+					# the parapet course and NOT "a building the composition
+					# never roomed". Re-derived from the partitioner's own
+					# span rather than read back out of the audit.
+					var roof := WarrenMazeBlockPartitioner \
+						.plot_roof_band_span(maze_source, plot)
+					roofed = key.y >= roof.x and key.y < roof.y
 					break
 			faces += 1
 			high += is_high
 			on_plot_mass += is_high * int(claimed)
+			on_roof_band += is_high * int(roofed)
 			on_raised_shoulder += is_high * int(raised.has(column))
 			histogram[offset] = int(histogram.get(offset, 0)) + 1
 		var audited_faces := int(fabric.audit.get(
@@ -3683,16 +3749,21 @@ func test_retained_stone_concentrates_in_the_bottom_storeys() -> void:
 		var audited_high := int(fabric.audit.get(
 			"maze_stone_high_face_count", -1))
 		var ratio := float(fabric.audit.get("maze_stone_high_face_ratio", 1.0))
+		var max_offset := int(fabric.audit.get("maze_stone_max_band_offset", 0))
 		print(("MAZE_STONE_BANDS %s faces=%d high=%d ratio=%.4f " \
-			+ "(ceiling %.2f) plot_mass_high=%d raised_shoulder_high=%d " \
-			+ "min=%d max=%d") % [_label(outcome), audited_faces,
+			+ "(ceiling %.2f) roof_band_high=%d unroomed_high=%d " \
+			+ "raised_shoulder_high=%d grounded=%d min=%d max=%d " \
+			+ "(ceiling %d)") % [_label(outcome), audited_faces,
 				audited_high, ratio, MAZE_STONE_HIGH_FACE_CEILING,
-				int(fabric.audit.get("maze_stone_plot_mass_high_face_count",
+				int(fabric.audit.get("maze_stone_roof_band_high_face_count",
+					-1)),
+				int(fabric.audit.get("maze_stone_unroomed_high_face_count",
 					-1)),
 				int(fabric.audit.get(
 					"maze_stone_raised_shoulder_high_face_count", -1)),
+				int(fabric.audit.get("maze_stone_grounded_face_count", -1)),
 				int(fabric.audit.get("maze_stone_min_band_offset", 0)),
-				int(fabric.audit.get("maze_stone_max_band_offset", 0))])
+				max_offset, MAZE_STONE_MAX_BAND_OFFSET_CEILING])
 		print("MAZE_STONE_BANDS %s per-band %s" % [_label(outcome),
 			str(fabric.audit.get("maze_stone_band_histogram", {}))])
 		print("MAZE_STONE_BANDS %s per-storey %s" % [_label(outcome),
@@ -3706,6 +3777,17 @@ func test_retained_stone_concentrates_in_the_bottom_storeys() -> void:
 		assert_eq(int(fabric.audit.get("maze_stone_plot_mass_high_face_count",
 			-1)), on_plot_mass,
 			"%s high faces standing on plot mass" % _label(outcome))
+		# FIX 1, IMPORTANT 1. The two halves are named and they are the whole:
+		# a by-design roof band and a building the composition never roomed.
+		var roof_high := int(fabric.audit.get(
+			"maze_stone_roof_band_high_face_count", -1))
+		var unroomed_high := int(fabric.audit.get(
+			"maze_stone_unroomed_high_face_count", -1))
+		assert_eq(roof_high, on_roof_band,
+			"%s high faces standing on a plot's roof band" % _label(outcome))
+		assert_eq(roof_high + unroomed_high, on_plot_mass,
+			("%s must split every plot-mass high face into a roof band or " \
+				+ "an unroomed one, with nothing left over") % _label(outcome))
 		assert_eq(int(fabric.audit.get(
 			"maze_stone_raised_shoulder_high_face_count", -1)),
 			on_raised_shoulder,
@@ -3717,6 +3799,146 @@ func test_retained_stone_concentrates_in_the_bottom_storeys() -> void:
 			("%s: %.4f of the rendered stone shell stands more than two " \
 				+ "storeys over its local street, past the pinned ceiling") \
 				% [_label(outcome), ratio])
+		# THE SECOND TOOTH. A trim that collapsed the ratio by releasing
+		# everything would leave this free to climb; pinning both is what
+		# keeps the metric describing a SHAPE and not just a quantity.
+		assert_lte(max_offset, MAZE_STONE_MAX_BAND_OFFSET_CEILING,
+			("%s stands stone %d bands over its local street, past the " \
+				+ "pinned reach of %d") % [_label(outcome), max_offset,
+				MAZE_STONE_MAX_BAND_OFFSET_CEILING])
+
+
+## TASK E4 FIX 1, prerequisite 2. Measured 2026-08-24 on the four planner
+## towns: **0 / 4 / 8 / 0**, and the trim is NOT what puts them there. The
+## A/B is the evidence: the same test run against commit `927f6ee`'s
+## `WarrenVolumetricSolver` -- the tree before the trim existed -- reports the
+## identical 0 / 4 / 8 / 0 and names the identical first offender in each town
+## (`(-8, 5, -2) over (-8, 4, -2)` on 4/compact, `(2, 5, 8) over (2, 4, 8)` on
+## 3/standard). The trim adds exactly ZERO hanging cells, which is what its two
+## refusals are for.
+##
+## So this is pinned at the measured worst rather than at zero, honestly: the
+## twelve cells are an OLDER release path's residue (`_feature_bit_is_taken`'s
+## reservation skips and `_maze_released_parapet_cells`), they are outside this
+## task, and pinning at 0 would have blamed the trim for them. Re-pin DOWNWARD
+## only; a rise means a release pass has started leaving masonry over holes,
+## which is the C5e defect returning.
+const RETAINED_STONE_OVER_AIR_CEILING := 8
+
+
+func test_the_stone_trim_refuses_to_strand_a_plot_or_a_street() -> void:
+	## TASK E4 FIX 1, prerequisite 2. The trim's two refusals never fire on the
+	## 24-town corpus (`refused_trims=0`, every row), which makes them a path
+	## nothing exercises -- and an unexercised refusal is a refusal that has
+	## already stopped working. Both are driven here on a real sealed source,
+	## the second through a synthesised route floor, so each is proved to bite
+	## for its own reason and the negative case is proved too.
+	var source := _planned_maze_source(12, WarrenVillageScaleProfile.COMPACT)
+	assert_not_null(source, "the fixture town must plan")
+	if source == null:
+		return
+	var stacked: Dictionary = {}
+	var lone: Dictionary = {}
+	for plot: Dictionary in source.plots:
+		var carries_another := false
+		for other: Dictionary in source.plots:
+			if StringName(other["id"]) == StringName(plot["id"]) \
+					or int(other["floor"]) < int(plot["top"]):
+				continue
+			for cell_value: Variant in plot["cells"] as Array:
+				if (other["cells"] as Array).has(cell_value as Vector2i):
+					carries_another = true
+					break
+			if carries_another:
+				break
+		if carries_another and stacked.is_empty():
+			stacked = plot
+		elif not carries_another and lone.is_empty():
+			lone = plot
+	assert_false(stacked.is_empty(),
+		"seed 12/compact must stand at least one plot on another")
+	assert_false(lone.is_empty(),
+		"seed 12/compact must stand at least one plot with a free head")
+	if stacked.is_empty() or lone.is_empty():
+		return
+	# REFUSAL 1 -- another plot stands at or above this plot's own top.
+	assert_true(WarrenVolumetricSolver._plot_trim_is_refused(source, stacked,
+		{}, int(stacked["floor"])),
+		("a plot carrying another plot must refuse to trim, whatever the " \
+			+ "streets around it do"))
+	# The negative: the same call on a plot with nothing above it, and no
+	# street in the way, must NOT refuse.
+	assert_false(WarrenVolumetricSolver._plot_trim_is_refused(source, lone,
+		{}, int(lone["floor"])),
+		"a plot with a free head and no street over it must trim")
+	# REFUSAL 2 -- a route floor walks on a band the release would take. One
+	# synthesised walk cell on one of the plot's own fine columns is enough,
+	# which is exactly the C5e defect stated as an input.
+	var column: Vector2i = (lone["cells"] as Array)[0]
+	var release_low := int(lone["floor"])
+	var walked: Dictionary = {}
+	walked[Vector2i(column.x * 2, column.y * 2)] = {release_low: true}
+	assert_true(WarrenVolumetricSolver._plot_trim_is_refused(source, lone,
+		walked, release_low),
+		"a plot must refuse to trim a band a street is standing on")
+	# ...and a walk cell BELOW the release range is none of the trim's
+	# business, so it must not refuse.
+	var below: Dictionary = {}
+	below[Vector2i(column.x * 2, column.y * 2)] = {release_low - 1: true}
+	assert_false(WarrenVolumetricSolver._plot_trim_is_refused(source, lone,
+		below, release_low),
+		"a street below the release range may not block the trim")
+
+
+func test_retained_stone_never_stands_over_released_air() -> void:
+	## THE TRIM'S OWN IDENTITY. `_maze_trimmed_plot_stone` releases a plot's
+	## retained head, and the one thing that must never follow is a retained
+	## cell left hanging over what it released. Stated WITHOUT re-deriving the
+	## trim rule, so it holds against any future release pass too: for every
+	## cell of the retained-terrace channel, the cell directly beneath it in
+	## the same fine column may not be mass the SOURCE still calls solid that
+	## the pipeline gave to nobody -- `Use.OUTSIDE` at or above the column's
+	## own terrain datum. Terrain below `base_at` is the heightfield's and is
+	## not a hole; a carved street, a room, a public volume and another
+	## retained cell are all real support.
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		var maze_source := _maze_source(plan)
+		assert_not_null(fabric,
+			"%s must carry its compiled fabric" % _label(outcome))
+		if fabric == null or maze_source == null \
+				or maze_source.massif == null:
+			continue
+		var retained := fabric.retained_terrace_cells
+		var hanging := 0
+		var first := ""
+		for cell_value: Variant in retained.keys():
+			var cell := cell_value as Vector3i
+			var below := cell + Vector3i.DOWN
+			if retained.has(below):
+				continue
+			var column := Vector2i(_macro_coordinate(below.x),
+				_macro_coordinate(below.z))
+			if not maze_source.massif.has_column(column) \
+					or below.y < maze_source.massif.base_at(column):
+				continue
+			if not maze_source.solid_at(Vector3i(column.x, below.y,
+					column.y)):
+				continue
+			if plan.grid.use_at(below) != WarrenSpatialGrid.Use.OUTSIDE:
+				continue
+			hanging += 1
+			if first.is_empty():
+				first = "%s over %s" % [cell, below]
+		print("MAZE_STONE_HANGING %s retained=%d hanging=%d first=%s" % [
+			_label(outcome), retained.size(), hanging, first])
+		assert_lte(hanging, RETAINED_STONE_OVER_AIR_CEILING,
+			("%s leaves %d retained stone cells standing over mass the " \
+				+ "pipeline released (first %s)") % [_label(outcome), hanging,
+				first])
 
 
 func _macro_coordinate(fine: int) -> int:

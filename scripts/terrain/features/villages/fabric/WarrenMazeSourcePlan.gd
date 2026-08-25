@@ -476,6 +476,15 @@ func plot_facts(plot: Dictionary) -> Dictionary:
 		"tiered": tiered}
 
 
+## The floor of the LOWEST plot standing on `column`, and 0 where the column
+## carries none -- the band the town's own construction starts at there. The
+## public form of the answer `rock_shoulder` gives on a column carrying plots;
+## exposed for task E4's stone trim, which needs a plot's own ground before it
+## can ask `local_public_datum` which street that ground belongs to.
+func lowest_plot_floor(column: Vector2i) -> int:
+	return _lowest_plot_floor(column)
+
+
 func _lowest_plot_floor(column: Vector2i) -> int:
 	var out := 0
 	var found := false

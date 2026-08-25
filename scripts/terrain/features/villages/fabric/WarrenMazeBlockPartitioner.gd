@@ -219,6 +219,35 @@ static func partition(source: WarrenMazeSourcePlan,
 ## drift apart. What it is NOT is a claim that anybody can stand up there:
 ## `plot_crown_carries_public_realm` answers that, and the two parted company
 ## the moment every house became slab-crowned.
+## TASK E4 FIX 1, IMPORTANT 1. The ROOF BAND SPAN of one plot as `[x, y)`, and
+## an EMPTY span (`x == y`) for a plot that has none. A flat-roofed plot keeps
+## `[flat_roof_base_band, top)` -- the authored one-band `roof.flat.*` slab
+## plus, on an even height, its stone parapet course; every other house plot
+## keeps the authored pitched reservation `[top - ROOF_RESERVATION_BANDS,
+## top)`. House plots only: an asset carries its own crown, a bridge is one
+## storey of deck, and a deck has no height at all.
+##
+## Stated here, where `plot_is_flat_roofed` already lives, because THREE
+## readers now need the same answer and two of them used to infer it:
+## `WarrenVolumetricSolver._maze_plot_roof_cells` (which owned this
+## derivation), the same file's stone TRIM, and
+## `WarrenSpatialFabricCompiler.maze_stone_band_profile`, which must tell a
+## by-design roof band apart from a building the composition never roomed
+## before it may call a stone face either.
+static func plot_roof_band_span(source: WarrenMazeSourcePlan,
+		plot: Dictionary) -> Vector2i:
+	if source == null or plot.is_empty() \
+			or StringName(plot.get("kind", &"")) \
+				!= WarrenMazeSourcePlan.PLOT_HOUSE:
+		return Vector2i.ZERO
+	var floor_band := int(plot["floor"])
+	var top_band := int(plot["top"])
+	var roof_base := WarrenBuildingParcel.flat_roof_base_band(floor_band,
+		top_band) if plot_is_flat_roofed(source, plot) \
+		else top_band - WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+	return Vector2i(maxi(floor_band, roof_base), top_band)
+
+
 static func plot_is_flat_roofed(source: WarrenMazeSourcePlan,
 		plot: Dictionary) -> bool:
 	if source == null or plot.is_empty():

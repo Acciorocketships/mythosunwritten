@@ -799,12 +799,23 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 ##
 ## `maze_stone_plot_mass_*` splits out the faces standing on mass some plot
 ## claims -- the difference between the two measurements, stated as a number
-## instead of left to be inferred -- and
+## instead of left to be inferred. FIX 1, IMPORTANT 1 SPLITS IT AGAIN, because
+## "plot mass" is not a synonym for "a building the composition never roomed":
+## a plot's `[floor, top)` also contains its ROOF BAND SPAN, which is roof by
+## the height contract and where no room may ever stand
+## (`WarrenMazeBlockPartitioner.plot_roof_band_span`). Stone there is the
+## parapet course doing its job, not a shortfall, and calling it a quarry block
+## was wrong. So `maze_stone_roof_band_high_face_count` and
+## `maze_stone_unroomed_high_face_count` name the two halves and sum to
+## `maze_stone_plot_mass_high_face_count`.
+##
 ## `maze_stone_raised_shoulder_high_face_count` is task E4 ruling 2's
 ## measurement on this side: how much of the high stone stands on a no-plot
-## column whose sealed shoulder grew above its own massif envelope. The two
-## splits are disjoint by definition, since a raised-shoulder column carries
-## no plot.
+## column whose sealed shoulder grew above its own massif envelope. It is
+## disjoint from both plot-mass halves by definition, since a raised-shoulder
+## column carries no plot. `maze_stone_grounded_face_count` (fix 1, minor 4)
+## is the source profile's own `grounded_faces` on this side: faces with no
+## public floor inside the datum radius at all, read against bare terrain.
 ##
 ## Every key is zero on a legacy plan, which retains no maze stone and has no
 ## maze source to read a datum from.
@@ -814,7 +825,10 @@ static func maze_stone_band_profile(exposed: Dictionary,
 	var high_faces := 0
 	var plot_mass_faces := 0
 	var plot_mass_high_faces := 0
+	var roof_band_high_faces := 0
+	var unroomed_high_faces := 0
 	var raised_shoulder_high_faces := 0
+	var grounded_faces := 0
 	var min_offset := 0
 	var max_offset := 0
 	var band_counts: Dictionary = {}
@@ -845,15 +859,20 @@ static func maze_stone_band_profile(exposed: Dictionary,
 				else (offset + WarrenBuildingParcel.STOREY_BANDS - 1) \
 					/ WarrenBuildingParcel.STOREY_BANDS
 			var high := int(offset > WarrenMazeSourcePlan.LOW_STONE_BANDS)
-			var on_plot := int((plot_bands_by_column[column] as Dictionary) \
-				.has(key.y))
+			var bands := plot_bands_by_column[column] as Dictionary
+			var on_plot := int(bands.has(key.y))
+			var on_roof := on_plot * int(bool(bands.get(key.y, false)))
 			min_offset = offset if faces == 0 else mini(min_offset, offset)
 			max_offset = offset if faces == 0 else maxi(max_offset, offset)
 			faces += 1
 			high_faces += high
 			plot_mass_faces += on_plot
 			plot_mass_high_faces += high * on_plot
+			roof_band_high_faces += high * on_roof
+			unroomed_high_faces += high * (on_plot - on_roof)
 			raised_shoulder_high_faces += high * int(raised.has(column))
+			grounded_faces += int((candidates_by_column[column] \
+				as Dictionary).is_empty())
 			band_counts[offset] = int(band_counts.get(offset, 0)) + 1
 			storey_counts[storey] = int(storey_counts.get(storey, 0)) + 1
 	return {
@@ -863,8 +882,11 @@ static func maze_stone_band_profile(exposed: Dictionary,
 			/ float(maxi(1, faces)),
 		"maze_stone_plot_mass_face_count": plot_mass_faces,
 		"maze_stone_plot_mass_high_face_count": plot_mass_high_faces,
+		"maze_stone_roof_band_high_face_count": roof_band_high_faces,
+		"maze_stone_unroomed_high_face_count": unroomed_high_faces,
 		"maze_stone_raised_shoulder_high_face_count": \
 			raised_shoulder_high_faces,
+		"maze_stone_grounded_face_count": grounded_faces,
 		"maze_stone_band_histogram": WarrenMazeSourcePlan.ascending_histogram(
 			band_counts),
 		"maze_stone_storey_histogram": \
@@ -884,15 +906,21 @@ static func _macro_of(fine: int) -> int:
 
 static func _plot_bands_at(maze_source: WarrenMazeSourcePlan,
 		column: Vector2i) -> Dictionary:
-	## {band: true} for every band some plot claims on this column. Retained
-	## stone standing in one of them is a building the composition did not
-	## build, not the mountain.
+	## `{band: is_roof_band}` for every band some plot claims on this column.
+	## Retained stone standing in one of them is a plot's own mass rather than
+	## the mountain -- and the VALUE says which kind (fix 1, IMPORTANT 1): a
+	## band inside `WarrenMazeBlockPartitioner.plot_roof_band_span` is roof by
+	## the height contract, where no room may ever stand, so stone there is the
+	## parapet course rather than a building the composition never roomed.
+	## Plots are pairwise disjoint on a column, so no band is written twice.
 	var out: Dictionary = {}
 	for plot: Dictionary in maze_source.plots:
 		if not (plot["cells"] as Array).has(column):
 			continue
+		var roof := WarrenMazeBlockPartitioner.plot_roof_band_span(maze_source,
+			plot)
 		for band in range(int(plot["floor"]), int(plot["top"])):
-			out[band] = true
+			out[band] = band >= roof.x and band < roof.y
 	return out
 
 

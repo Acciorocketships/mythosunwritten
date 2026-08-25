@@ -2457,6 +2457,28 @@ func test_exterior_rock_ratio_is_pinned() -> void:
 				% [seed_value, scale, ratio])
 
 
+func test_stone_face_offsets_match_the_assembler_that_skins_them() -> void:
+	## TASK E4 FIX 1, MINOR 3. `WarrenMazeSourcePlan.STONE_FACE_OFFSETS` states
+	## the assembler's six face directions a second time, because the source
+	## layer is upstream of the fabric layer and may not reach into it. A
+	## restated constant is a constant that can drift, and a drift here would
+	## be silent: the source and fabric profiles would keep producing numbers,
+	## against different shells, and nothing would say so. The two lists must
+	## be identical AND in the same order, so a face index means one thing in
+	## both files.
+	assert_eq(WarrenMazeSourcePlan.STONE_FACE_OFFSETS,
+		SettlementFabricAssembler.STONE_FACE_DIRECTIONS,
+		("the source's stone faces must be the assembler's own six, in the " \
+			+ "assembler's own order"))
+	assert_eq(WarrenMazeSourcePlan.STONE_FACE_OFFSETS.size(), 6,
+		"four sides and two caps")
+	for index in SettlementFabricAssembler.FACE_DIRECTIONS.size():
+		assert_eq(WarrenMazeSourcePlan.STONE_FACE_OFFSETS[index],
+			SettlementFabricAssembler.FACE_DIRECTIONS[index],
+			("index %d must mean the same side here as it does in the " \
+				+ "assembler's four-face rule") % index)
+
+
 func test_nearest_datum_band_breaks_its_ties_deterministically() -> void:
 	## TASK E4 ruling 1's tie-break, stated on the pure function that owns it,
 	## so the rule is falsifiable without a town standing around it.
