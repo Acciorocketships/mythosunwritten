@@ -7,22 +7,6 @@ extends GutTest
 
 
 
-func before_each() -> void:
-	## TASK E1. The terraced massif is keyed to MODE_MAZE (see
-	## `WarrenMassifBuilder.is_maze_mode`) until Phase F deletes route-first, so
-	## a maze suite that left the global at its route-first default would
-	## quietly measure the flat-profile massif instead of the one this file is
-	## about. Set per test, restored after each, exactly as
-	## `test_warren_maze_composition` does around its own solves.
-	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
-
-
-func after_each() -> void:
-	## A leaked flag silently converts every later suite in the same process to
-	## maze mode, so restore it even when an assertion failed.
-	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
-
-
 func _unsealed_fixture() -> WarrenMazeSourcePlan:
 	var profile := WarrenVillageScaleProfile.for_id(&"compact")
 	var massif := WarrenMassifBuilder.build(12, {}, profile)

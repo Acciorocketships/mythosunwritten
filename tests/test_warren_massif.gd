@@ -8,15 +8,6 @@ extends GutTest
 const StampedGround = preload("res://tests/fixtures/warren_stamped_ground.gd")
 
 
-func after_each() -> void:
-	## NET. Only the Phase E tests below build under MODE_MAZE, and each of them
-	## restores the flag inline -- but an assertion that fails between the set
-	## and the restore would leak maze mode into every later suite in the
-	## process, which is the failure `test_warren_maze_composition` guards the
-	## same way.
-	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_ROUTE_FIRST
-
-
 func _hill(world_seed: int = 0) -> Dictionary:
 	return StampedGround.hill(WarrenMassifBuilder.RADIUS_CELLS + 1, world_seed)
 
@@ -27,7 +18,7 @@ func test_massif_builds_a_terraced_layer_and_is_deterministic() -> void:
 	assert_not_null(a, WarrenMassifBuilder.last_failure)
 	assert_true(a.is_sealed())
 	assert_gte(a.vertical_development_bands(),
-		WarrenMassifBuilder.MIN_CORE_BANDS,
+		WarrenVillageScaleProfile.review_fixture().minimum_core_bands,
 		"the inhabited bell must reach its vertical-development floor")
 	assert_lte(a.core_top_bands, WarrenMassif.BUILDABLE_LAYER_BANDS,
 		"the compiler supports a finite eight-storey-plus-roof envelope")
@@ -85,21 +76,31 @@ func test_a_flat_site_still_builds_an_inhabited_town_mountain() \
 			WarrenMassifBuilder.last_failure])
 		if flat == null:
 			continue
-		assert_gte(flat.core_top_bands, WarrenMassifBuilder.MIN_CORE_BANDS)
+		# TASK F1 RULING 4. The floor is the size profile's own
+		# `minimum_core_bands`, which is what `_shape_gate_failure` enforces on
+		# every built massif; the retired `MIN_CORE_BANDS := 16` described the
+		# searched bore's requirement and nothing read it.
+		assert_gte(flat.core_top_bands,
+			WarrenVillageScaleProfile.review_fixture().minimum_core_bands)
 		assert_eq(flat.bearing_at(Vector2i.ZERO), flat.base_at(Vector2i.ZERO),
 			"the mountain is inhabited down to terrain")
 
 
-func test_the_vertical_development_floor_is_derived_from_the_bore() -> void:
-	## The crown must contain eight complete inhabited storeys before its roof;
-	## the bore's smaller span is a circulation minimum, not the town's height.
-	assert_eq(WarrenMassifBuilder.MIN_CORE_BANDS,
-		WarrenMassif.MAX_TERRACE_STOREYS \
-			* WarrenBuildingParcel.STOREY_BANDS,
-		"the crown floor is the complete inhabited storey budget")
-	assert_gte(WarrenMassifBuilder.MIN_CORE_BANDS,
-		WarrenExcavationCarver.MIN_SPAN_BANDS + WarrenExcavation.HEADROOM_BANDS,
-		"the inhabited crown must still contain the required bore")
+func test_the_vertical_development_floor_is_the_profile_contract() -> void:
+	## TASK F1 RULING 4. This test used to pin `MIN_CORE_BANDS := 16` against
+	## the storey budget and against the searched bore's `MIN_SPAN_BANDS`.
+	## Both are gone: the floor a massif is really held to is its size
+	## profile's `minimum_core_bands`, and the ceiling is the buildable layer.
+	## Every profile's floor must sit inside that envelope, which is the
+	## property the retired constant was standing in for.
+	for scale_id: StringName in WarrenVillageScaleProfile.IDS:
+		var profile := WarrenVillageScaleProfile.for_id(scale_id)
+		assert_gt(profile.minimum_core_bands, 0,
+			"%s must state a vertical-development floor" % scale_id)
+		assert_lte(profile.maximum_core_bands, WarrenMassif.BUILDABLE_LAYER_BANDS,
+			"%s may not ask for more mass than the compiler builds" % scale_id)
+		assert_lte(profile.minimum_core_bands, profile.maximum_core_bands,
+			"%s has an inverted core-band range" % scale_id)
 
 
 func _ground_frame(kind: String) -> Dictionary:
@@ -236,7 +237,7 @@ func test_a_real_layer_plateau_still_fails_the_plateau_gate() -> void:
 	## constant-thickness layer laid on a STAIRCASE of ground is not a plateau
 	## even though its absolute tops rise in lockstep, while a genuine
 	## constant-LAYER slab is one however the ground beneath it moves.
-	var wide := WarrenMassifBuilder.MAX_PLATEAU_CELLS + 3
+	var wide := WarrenMassifBuilder.MAZE_MAX_PLATEAU_CELLS + 3
 	var slab := WarrenMassif.new(8)
 	for x in range(wide):
 		slab.columns[Vector2i(x, 0)] = {"base": x, "top": x + 5, "terrace": 5}
@@ -244,7 +245,7 @@ func test_a_real_layer_plateau_still_fails_the_plateau_gate() -> void:
 		"%d columns of identical layer thickness are one plateau however " \
 		% wide + "much the ground under them climbs")
 	assert_gt(slab.widest_plateau_cells(),
-		WarrenMassifBuilder.MAX_PLATEAU_CELLS,
+		WarrenMassifBuilder.MAZE_MAX_PLATEAU_CELLS,
 		"the plateau gate must still have teeth")
 
 	var terraced := WarrenMassif.new(9)
@@ -516,31 +517,12 @@ const CORPUS_CLUSTER_MEAN_FLOOR := 3.5
 
 func _planner_massif(town: Dictionary,
 		ground_bands: Dictionary = {}) -> WarrenMassif:
-	## The terraced field is keyed to MODE_MAZE until Phase F deletes
-	## route-first (`WarrenMassifBuilder.is_maze_mode`), so the three Phase E
-	## metrics below have to ask for it. Everything ABOVE this line deliberately
-	## does not: those tests pin the route-first flood fill, and running them
-	## under the maze key would silently re-point every one of their measured
-	## floors at a different builder.
 	var profile := WarrenVillageScaleProfile.for_id(StringName(town["scale"]))
-	var restored := WarrenTownSolver.GENERATION_MODE
-	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
-	var massif := WarrenMassifBuilder.build(int(town["seed"]), ground_bands,
-		profile)
-	WarrenTownSolver.GENERATION_MODE = restored
-	return massif
+	return WarrenMassifBuilder.build(int(town["seed"]), ground_bands, profile)
 
 
 func _maze_plateau_cap(column_count: int) -> int:
-	## `WarrenMassifBuilder.plateau_cap` is keyed to the generation mode exactly
-	## as the field is, so a town built under the maze key has to be judged
-	## under it too -- asking at the route-first default returns the flood
-	## fill's own MAX_PLATEAU_CELLS and scores every terrace as a platform.
-	var restored := WarrenTownSolver.GENERATION_MODE
-	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
-	var cap := WarrenMassifBuilder.plateau_cap(column_count)
-	WarrenTownSolver.GENERATION_MODE = restored
-	return cap
+	return WarrenMassifBuilder.plateau_cap(column_count)
 
 
 func _planner_label(town: Dictionary) -> String:

@@ -112,9 +112,7 @@ func _validate_volumetric_warren(program: VillageProgram) -> bool:
 				or String(fabric_audit.get("spatial_signature", "")) \
 					!= volumetric_spatial.deterministic_signature().sha256_text() \
 				or int(fabric_audit.get("rejected_unfloored_address_count", -1)) != 0 \
-				or not _scale_feature_contract_matches(fabric_audit,
-					StringName(volumetric_spatial.audit.get(
-						"production_generation_mode", ""))):
+				or not _scale_feature_contract_matches(fabric_audit):
 			return false
 		return _validate_compiled_fabric(program)
 	if volumetric_town == null or not volumetric_town.is_sealed() \
@@ -145,38 +143,30 @@ static func _required_market_count(audit: Dictionary) -> int:
 		else WarrenMarketSolver.REQUIRED_MARKETS
 
 
-static func _scale_feature_contract_matches(audit: Dictionary,
-		generation_mode: StringName = &"") -> bool:
+static func _scale_feature_contract_matches(audit: Dictionary) -> bool:
 	## Production selects the size profile before authoring the massif. The final
 	## transaction must validate against that same profile; the former hard-coded
 	## large-showcase counts rejected legitimate compact and standard villages
 	## after every topology, construction, and support proof had already passed.
-	##
-	## `generation_mode` is the pipeline the town was BUILT by, read from its own
-	## sealed audit rather than from `WarrenTownSolver.GENERATION_MODE`: a plan
-	## must validate the same whenever it is re-validated, and the streamed
-	## payload outlives the solve that produced it. An unnamed mode is a searched
-	## one, which keeps every legacy caller's contract exactly as it was.
 	var scale_id := StringName(audit.get("scale_profile_id", ""))
 	var profile := WarrenVillageScaleProfile.for_id(scale_id)
 	if profile == null or String(audit.get("scale_profile_signature", "")) \
 			!= profile.deterministic_signature():
 		return false
 	# TASK D2 REVIEW, IMPORTANT 1. The elevated courtyard count and its two
-	# daylight and underbuilt column floors stay HARD in every mode, unlike
+	# daylight and underbuilt column floors stay HARD, unlike
 	# the five floors below them. A relaxation is only honest where the
 	# shortfall is PUBLISHED: `covered_market`, `landmarks`, `skywalks` and
-	# `balconies` are keys the maze path really writes into
+	# `balconies` are keys the one-pass path really writes into
 	# `advisory_shortfalls`, and the room-outcropping floor is
 	# `cantilever_range.x`, which is `Vector2i.ZERO` on every profile today,
 	# so relaxing it changes nothing until a profile asks for a cantilever.
 	# The courtyard has no such key, so relaxing it would drop a town's
 	# missing courtyard on the floor instead of reporting it. Inert on compact
 	# and standard, which require no courtyard; LIVE on large and grand, which
-	# do. Phase E owns the large/grand maze courtyard story — give those towns
-	# a courtyard, or publish `courtyard_columns` shortfalls from the maze
-	# path — and only then may these three join the advisory set.
-	var advisory := generation_mode == WarrenTownSolver.MODE_MAZE
+	# do. Give those towns a courtyard, or publish `courtyard_columns`
+	# shortfalls, and only then may these three join the advisory set.
+	var advisory := true
 	return int(audit.get("elevated_courtyard_count", -1)) \
 			== int(profile.requires_elevated_courtyard) \
 		and (not profile.requires_elevated_courtyard \

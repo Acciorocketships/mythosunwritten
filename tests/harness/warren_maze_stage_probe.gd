@@ -1,6 +1,6 @@
 extends SceneTree
 
-## How far does MODE_MAZE actually get before a gate discards the town, and
+## How far does a town actually get before a gate discards it, and
 ## WHERE does the wall clock go? Walks the solid-first pipeline stage by stage
 ## and reports what EXISTS at each step, so "the carver makes nothing" can be
 ## told apart from "the carver makes a town that a downstream feature
@@ -40,11 +40,6 @@ func _init() -> void:
 
 	var program := SettlementFabricProgram.compile(
 		EnvironmentCatalog.load_default())
-	# The composition reads this: without it the hero-feature quotas are hard
-	# gates and every town dies at the beam, which is a fact about the harness
-	# rather than about the town.
-	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
-
 	for city_seed: int in seeds:
 		for scale_id: StringName in scale_ids:
 			_probe(city_seed, scale_id, program)

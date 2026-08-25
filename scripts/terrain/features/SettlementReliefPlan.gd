@@ -145,15 +145,15 @@ func _init(world_seed: int, settlements, p_amplitude: float,
 		- CEILING_MARGIN_METRES
 
 
-## Whether a shipping world stamps at all. The hill belongs to MASS-FIRST
-## towns; a route-first village is laid on natural terrain by the existing
-## conform-only machinery and must keep seeing a world byte-identical to
-## today's. Mass-first is opt-in (WarrenTownSolver.GENERATION_MODE defaults to
-## route-first), so this is false in every shipping world until that default
-## changes -- which is the production-safety guarantee for this wave, and the
-## reason the streamer can attach the stamp unconditionally.
+## Whether a shipping world stamps at all. The hill belonged to the MASS-FIRST
+## town, which no longer exists: the one-pass maze village is laid on natural
+## terrain by the existing conform-only machinery and must keep seeing a world
+## byte-identical to today's. This is therefore false in every shipping world,
+## which is what lets the streamer attach the stamp unconditionally. The plan
+## itself is still built and tested directly, so the geometry stays available
+## to whatever asks for it next.
 static func is_active() -> bool:
-	return WarrenTownSolver.GENERATION_MODE == WarrenTownSolver.MODE_MASS_FIRST
+	return false
 
 
 ## Number of flat terrace tiers the profile carries, one per storey of budget.

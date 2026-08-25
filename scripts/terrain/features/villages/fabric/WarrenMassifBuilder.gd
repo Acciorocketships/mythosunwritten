@@ -104,23 +104,21 @@ const FOOTPRINT_CORE_MAX_BANDS := 18
 const MIN_LAYER_BANDS := 2
 const MAX_LAYER_BANDS := WarrenMassif.BUILDABLE_LAYER_BANDS
 
-## The core must carry eight complete inhabited storeys. This is the minimum
-## depth that lets the carver cut a four-storey public journey while preserving
-## full headroom and occupied construction above it. Terrain relief may add
-## composition, but flat valid terrain still produces a town mountain.
-const MIN_CORE_BANDS := 16
+## TASK F1 RULING 4. `MIN_CORE_BANDS := 16` used to sit here: eight complete
+## inhabited storeys, the depth the SEARCHED bore needed to cut a four-storey
+## public journey with headroom and construction above it. No production code
+## ever read it -- the floor `_shape_gate_failure` enforces, and therefore the
+## floor every sealed massif satisfies by construction, is the size profile's
+## own `minimum_core_bands` (compact 12, standard 13, large 14, grand 15).
+## Measured on the terraced field the constant is also unreachable: the peak
+## layer is the rolled core quantized down under the rim ceiling, and every
+## planner town and every flat review-fixture seed measures 14. The pin moved
+## to the profile floor rather than the field moving to the pin, because the
+## field is what 24 of 24 corpus towns are built from.
 
 ## A town must expose at least five inhabited height terraces. Fewer terraces
 ## read as a single block; the reviewed corpus normally produces far more.
 const MIN_TERRACE_LEVELS := 5
-## Largest 4-connected run of one relative height. A deep inhabited massif can
-## tolerate a three-by-three same-datum cluster: parcelization breaks it into
-## roofs and party walls rather than rendering one bare terrace slab. Larger
-## equal-height districts flatten the skyline and remain a hard failure.
-##
-## ROUTE-FIRST'S VALUE, unchanged. What the terraced field needs instead, and
-## why, is MAZE_MAX_PLATEAU_CELLS.
-const MAX_PLATEAU_CELLS := 9
 const MIN_COLUMN_BANDS := 2
 ## A neighbouring pair of columns may step by at most this many bands OF
 ## AUTHORED LAYER (see WarrenMassif.layer_at -- pre-existing terrain relief
@@ -205,8 +203,8 @@ const CLUSTER_MERGE_PASSES := 6
 const FIELD_PHASE_ATTEMPTS := 8
 const FIELD_PHASE_STRIDE := 1000003
 
-## MAZE FIELD ONLY. What MAX_PLATEAU_CELLS becomes under the terraced field,
-## and why it has to. A boundary column may stand one storey or two and nothing
+## Largest 4-connected run of one relative height, and why it is what it is.
+## A boundary column may stand one storey or two and nothing
 ## else -- MIN_LAYER_BANDS and RIM_TERRACES are the whole alphabet the rim is
 ## allowed -- and a compact town has 29-48 boundary columns. Two heights over
 ## 36 columns means runs of about eighteen unless the field dithers the rim on
@@ -220,26 +218,11 @@ const FIELD_PHASE_STRIDE := 1000003
 ## 89-column village and a 281-column grand town alike. Measured natural runs
 ## with the cap removed -- compact 9-40, standard 9-40, large 14-31, grand
 ## 20-44 -- are each roughly a sixth of their own town.
-##
-## The route-first field keeps the original 9: this loosening is maze-side
-## only, and dies with the key.
 const MAZE_MAX_PLATEAU_CELLS := 16
 const MAZE_PLATEAU_COLUMN_SHARE := 6
 
 const DIRECTIONS: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.LEFT,
 	Vector2i.UP, Vector2i.DOWN]
-
-## Route-first terrace flood fill. The assignment grows districts smaller than
-## the final plateau gate: two independently grown districts may settle on one
-## height and merge in the audit, but changing this growth cap also changes the
-## whole deterministic silhouette. Keep the reviewed six-cell rhythm.
-const MAX_TERRACE_DISTRICT_CELLS := 6
-## District growth is deterministic but a single tie-break order can make two
-## individually valid six-cell terraces meet at the same level and form an
-## oversized plateau. Try a small fixed family of order/riser phases before
-## rejecting the whole settlement.
-const TERRACE_ASSIGNMENT_ATTEMPTS := 8
-const TERRACE_ASSIGNMENT_STRIDE := 1000003
 
 static var last_failure := ""
 
@@ -278,11 +261,9 @@ static func build(world_seed: int, ground_bands: Dictionary = {},
 				continue
 			raw_at[Vector2i(x, z)] = raw
 
-	# Pass 2: heights. WHICH LAW WRITES THEM IS KEYED TO THE GENERATION MODE --
-	# see is_maze_mode() for why, and for when the key dies.
+	# Pass 2: heights, from the seeded terraced field. See the class comment.
 	var massif := _terraced_massif(world_seed, raw_at, ground_bands, profile,
-		footprint_core) if is_maze_mode() \
-		else _flat_profile_massif(world_seed, raw_at, ground_bands, profile)
+		footprint_core)
 	if massif == null:
 		return null
 	# Already relief-relative before this wave, and stated through the shared
@@ -296,26 +277,6 @@ static func build(world_seed: int, ground_bands: Dictionary = {},
 		last_failure = massif.last_rejection
 		return null
 	return massif
-
-
-static func is_maze_mode() -> bool:
-	## TRANSITIONAL GUARD (Phase E, controller ruling 2026-08-23).
-	##
-	## The terraced field answers a visual direction about the MAZE town and
-	## costs the route-first pipeline dearly: quantizing to whole storeys halves
-	## the terrace alphabet (5-9 distinct layer thicknesses where the flood fill
-	## gave 9-15) and a gentle descent confines the tall columns to the core, so
-	## the two-level ground arcade WarrenExcavationCarver needs has far fewer
-	## places to sit. Measured unkeyed, that took the spatial fabric compiler to
-	## 10/11, the solid partitioner to 21/25 and the search pregates to 2/6, all
-	## on "insufficient upper crossover".
-	##
-	## So route-first keeps the flat-profile flood fill, byte for byte, and the
-	## terraced field is maze-side only. THIS IS NOT A PERMANENT SEAM: when
-	## Phase F deletes route-first, this function, `_flat_profile_massif`, the
-	## flood-fill helpers below it and MAX_PLATEAU_CELLS's route-first value all
-	## go with it, and `build` calls `_terraced_massif` unconditionally.
-	return WarrenTownSolver.GENERATION_MODE == WarrenTownSolver.MODE_MAZE
 
 
 static func _terraced_massif(world_seed: int, raw_at: Dictionary,
@@ -352,49 +313,9 @@ static func _terraced_massif(world_seed: int, raw_at: Dictionary,
 	return massif
 
 
-static func _flat_profile_massif(world_seed: int, raw_at: Dictionary,
-		ground_bands: Dictionary,
-		profile: WarrenVillageScaleProfile) -> WarrenMassif:
-	## THE ROUTE-FIRST FIELD, unchanged from 03115cd and byte-identical to it:
-	## a capacity-limited flood fill outward from the peak, each terrace
-	## district grown one column at a time up to MAX_TERRACE_DISTRICT_CELLS,
-	## every new district's level chosen within MAX_NEIGHBOR_STEP_BANDS of every
-	## already-assigned neighbour. Kept alive only until Phase F deletes
-	## route-first -- see is_maze_mode().
-	var ceilings := _step_ceilings(raw_at)
-	var massif: WarrenMassif = null
-	var closest_failure := ""
-	for assignment_attempt in TERRACE_ASSIGNMENT_ATTEMPTS:
-		var assignment_seed := world_seed + assignment_attempt \
-			* TERRACE_ASSIGNMENT_STRIDE
-		var terrace_at := _assign_terraces(raw_at, assignment_seed, ceilings)
-		var candidate := WarrenMassif.new(world_seed)
-		for column: Vector2i in raw_at:
-			var base := int(ground_bands.get(column, 0))
-			var terrace: int = terrace_at[column]
-			candidate.columns[column] = {
-				"base": base,
-				"top": base + terrace,
-				"terrace": terrace,
-			}
-		var failure := _shape_gate_failure(candidate, profile)
-		if failure.is_empty():
-			massif = candidate
-			break
-		closest_failure = failure
-	if massif == null:
-		last_failure = "no terrace assignment sealed after %d phases: %s" % [
-			TERRACE_ASSIGNMENT_ATTEMPTS, closest_failure]
-		return null
-	return massif
-
-
 static func plateau_cap(column_count: int) -> int:
-	## The widest 4-connected run of one authored layer this town may carry.
-	## Route-first keeps MAX_PLATEAU_CELLS exactly; the terraced field needs the
-	## looser, footprint-proportional cap -- see MAZE_MAX_PLATEAU_CELLS.
-	if not is_maze_mode():
-		return MAX_PLATEAU_CELLS
+	## The widest 4-connected run of one authored layer this town may carry --
+	## see MAZE_MAX_PLATEAU_CELLS.
 	return maxi(MAZE_MAX_PLATEAU_CELLS,
 		column_count / MAZE_PLATEAU_COLUMN_SHARE)
 
@@ -748,231 +669,6 @@ static func _worst_neighbor_step(massif: WarrenMassif) -> int:
 			worst = maxi(worst, absi(massif.layer_at(column)
 				- massif.layer_at(neighbor)))
 	return worst
-
-
-static func _step_ceilings(raw_at: Dictionary) -> Dictionary:
-	## MAX_NEIGHBOR_STEP_BANDS per step of 4-connected distance from the empty
-	## ground outside the footprint. A column one cell from the edge may stand
-	## four bands, two cells from the edge eight, and so on -- the tightest
-	## height assignment that can still descend to zero in legal steps.
-	##
-	## Necessary: a column d cells from open ground has a chain of d-1 columns
-	## between it and the outside, and each link may drop at most
-	## MAX_NEIGHBOR_STEP_BANDS. Sufficient in practice because adjacent
-	## distances differ by at most one, so a neighbour's ceiling never forces a
-	## level above this one's -- see _new_district_level's clamp.
-	var distance: Dictionary = {}
-	var frontier: Array[Vector2i] = []
-	for column: Vector2i in raw_at:
-		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
-				Vector2i.UP, Vector2i.DOWN]:
-			if raw_at.has(column + direction):
-				continue
-			distance[column] = 1
-			frontier.append(column)
-			break
-	var index := 0
-	while index < frontier.size():
-		var column: Vector2i = frontier[index]
-		index += 1
-		var next_distance: int = int(distance[column]) + 1
-		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
-				Vector2i.UP, Vector2i.DOWN]:
-			var neighbor := column + direction
-			if not raw_at.has(neighbor) or distance.has(neighbor):
-				continue
-			distance[neighbor] = next_distance
-			frontier.append(neighbor)
-	var ceilings: Dictionary = {}
-	for column: Vector2i in raw_at:
-		ceilings[column] = int(distance.get(column, 1)) \
-			* MAX_NEIGHBOR_STEP_BANDS
-	return ceilings
-
-
-static func _assign_terraces(raw_at: Dictionary, world_seed: int,
-		ceilings: Dictionary) -> Dictionary:
-	## Processes columns from the peak outward (highest raw first, hash
-	## tie-broken for determinism). Each column either joins an adjacent
-	## district whose resulting size stays within MAX_PLATEAU_CELLS and
-	## whose level is within MAX_NEIGHBOR_STEP_BANDS of every other
-	## neighbouring district, or starts a new district one riser away from
-	## its neighbours. Districts are tracked with a union-find so that two
-	## districts discovered to share a level (e.g. a later column bridges
-	## them) are merged immediately -- capping each union-find set, not each
-	## column group in isolation, is what actually keeps same-level
-	## connected regions small; capping in isolation lets two same-level
-	## districts merge past the cap the moment a column touches both.
-	##
-	## Every choice is additionally bounded by `ceilings`, the rim step limit,
-	## which is tracked per district as the minimum over its members so that a
-	## merge can never lift a near-edge column above what it may carry.
-	var order: Array = raw_at.keys()
-	order.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		var ra: float = raw_at[a]
-		var rb: float = raw_at[b]
-		if not is_equal_approx(ra, rb):
-			return ra > rb
-		return _hash(world_seed, 301, a.x, a.y) < _hash(world_seed, 301, b.x, b.y))
-
-	var dsu_parent: Dictionary = {}
-	var dsu_size: Dictionary = {}
-	var dsu_level: Dictionary = {}
-	var next_id := 0
-	var region_of: Dictionary = {}
-
-	for cell: Vector2i in order:
-		var roots_by_level: Dictionary = {}
-		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
-				Vector2i.UP, Vector2i.DOWN]:
-			var n: Vector2i = cell + direction
-			if not region_of.has(n):
-				continue
-			var root := _dsu_find(dsu_parent, int(region_of[n]))
-			var lvl := int(dsu_level[root])
-			if not roots_by_level.has(lvl):
-				roots_by_level[lvl] = []
-			var arr: Array = roots_by_level[lvl]
-			if not arr.has(root):
-				arr.append(root)
-		var neighbor_levels: Array = roots_by_level.keys()
-
-		var ceiling: int = int(ceilings.get(cell, MAX_NEIGHBOR_STEP_BANDS))
-		var chosen_level: Variant = null
-		for lvl_key: Variant in roots_by_level.keys():
-			var lvl: int = lvl_key
-			if lvl > ceiling:
-				continue
-			var roots: Array = roots_by_level[lvl]
-			var total_size := 1
-			for r: int in roots:
-				total_size += int(dsu_size[r])
-			if total_size > MAX_TERRACE_DISTRICT_CELLS:
-				continue
-			var ok := true
-			for other_key: Variant in neighbor_levels:
-				var other: int = other_key
-				if other == lvl:
-					continue
-				if absi(lvl - other) > MAX_NEIGHBOR_STEP_BANDS:
-					ok = false
-					break
-			if ok:
-				chosen_level = lvl
-				break
-
-		if chosen_level == null:
-			chosen_level = _new_district_level(cell, raw_at, world_seed,
-				neighbor_levels, ceiling)
-
-		var cl: int = chosen_level
-		var cur_root: int
-		if roots_by_level.has(cl):
-			var roots: Array = roots_by_level[cl]
-			cur_root = roots[0]
-			for i in range(1, roots.size()):
-				cur_root = _dsu_union(dsu_parent, dsu_size, cur_root, roots[i])
-			cur_root = _dsu_find(dsu_parent, cur_root)
-			dsu_size[cur_root] = int(dsu_size[cur_root]) + 1
-		else:
-			var rid := next_id
-			next_id += 1
-			dsu_parent[rid] = rid
-			dsu_size[rid] = 1
-			dsu_level[rid] = cl
-			cur_root = rid
-
-		region_of[cell] = cur_root
-
-	var level_of: Dictionary = {}
-	for cell: Vector2i in region_of:
-		level_of[cell] = int(dsu_level[_dsu_find(dsu_parent, int(region_of[cell]))])
-	return level_of
-
-
-static func _new_district_level(cell: Vector2i, raw_at: Dictionary,
-		world_seed: int, neighbor_levels: Array, ceiling: int) -> int:
-	## Starts a fresh district a riser away from its neighbours. The riser
-	## rhythm (1 or 2 bands) is seed-and-cell-varied so terraces do not
-	## repeat one global step size.
-	##
-	## `ceiling` is the rim step limit and outranks every other consideration:
-	## a column that cannot descend to open ground in legal steps is the cliff
-	## this builder exists to forbid, whereas a district one band off its
-	## preferred riser is only a slightly different terrace.
-	var riser := 1 + posmod(_hash(world_seed, 17, cell.x, cell.y), 2)
-	var raw_here: float = raw_at[cell]
-	var lvl := mini(int(floor(raw_here / float(riser))) * riser, ceiling)
-	if neighbor_levels.is_empty():
-		return lvl
-	var lo := -2147483648
-	var hi := 2147483647
-	for other_key: Variant in neighbor_levels:
-		var other: int = other_key
-		lo = maxi(lo, other - MAX_NEIGHBOR_STEP_BANDS)
-		hi = mini(hi, other + MAX_NEIGHBOR_STEP_BANDS)
-	if lo > hi:
-		# Two already-assigned neighbours are themselves more than
-		# 2*MAX_NEIGHBOR_STEP_BANDS apart (rare: two flood-fill fronts
-		# meeting on opposite sides of a warped lobe with different
-		# accumulated step counts). No single level satisfies both; centre
-		# on whichever is closest to minimise the unavoidable violation
-		# rather than leaving the raw value unclamped against neither.
-		var closest: int = int(neighbor_levels[0])
-		for other_key2: Variant in neighbor_levels:
-			var other2: int = other_key2
-			if absi(lvl - other2) < absi(lvl - closest):
-				closest = other2
-		lo = closest - MAX_NEIGHBOR_STEP_BANDS
-		hi = closest + MAX_NEIGHBOR_STEP_BANDS
-	# The ceiling is applied last and wins outright: a neighbour pulling this
-	# column up is exactly how the rim used to become a cliff.
-	hi = mini(hi, ceiling)
-	lo = mini(lo, hi)
-	lvl = clampi(lvl, lo, hi)
-	# Nudge away from exactly matching a neighbour's level: an exact match
-	# here would silently bridge two districts before the union-find has a
-	# chance to size-check the merge.
-	var attempts := 0
-	while neighbor_levels.has(lvl) and attempts < 8:
-		if lvl + riser <= hi and not neighbor_levels.has(lvl + riser):
-			lvl += riser
-		elif lvl - riser >= lo and not neighbor_levels.has(lvl - riser):
-			lvl -= riser
-		elif lvl + riser <= hi:
-			lvl += riser
-		elif lvl - riser >= lo:
-			lvl -= riser
-		else:
-			break
-		attempts += 1
-	return lvl
-
-
-static func _dsu_find(parent: Dictionary, rid: int) -> int:
-	var root := rid
-	while int(parent[root]) != root:
-		root = int(parent[root])
-	var cur := rid
-	while int(parent[cur]) != root:
-		var next_cur: int = int(parent[cur])
-		parent[cur] = root
-		cur = next_cur
-	return root
-
-
-static func _dsu_union(parent: Dictionary, size: Dictionary, a: int, b: int) -> int:
-	var ra := _dsu_find(parent, a)
-	var rb := _dsu_find(parent, b)
-	if ra == rb:
-		return ra
-	if int(size[ra]) < int(size[rb]):
-		var tmp := ra
-		ra = rb
-		rb = tmp
-	parent[rb] = ra
-	size[ra] = int(size[ra]) + int(size[rb])
-	return ra
 
 
 static func _hash(world_seed: int, salt: int, x: int, z: int) -> int:

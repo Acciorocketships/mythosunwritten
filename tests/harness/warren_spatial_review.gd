@@ -7,8 +7,7 @@ extends Node3D
 ## harness, never evidence that the wider candidate selector accepted the seed.
 ##
 ##   Godot --path . res://tests/harness/warren_spatial_review.tscn -- \
-##     --seed 7 --candidate-id warren.volume.mass.8000031.arcade0.arcade1.gallery2 \
-##     --variant 0 --output /tmp/warren-spatial-review
+##     --seed 12 --scale compact --output /tmp/warren-spatial-review
 const DEFAULT_PRODUCTION_WORLD_SEED := 2697992464
 const DEFAULT_PRODUCTION_SUPER_CELL := Vector2i(0, -1)
 const PRODUCTION_REGION_RADIUS := 5
@@ -16,11 +15,7 @@ const PRODUCTION_REGION_RADIUS := 5
 var _output_dir := "/tmp/mythos-warren-spatial-review"
 var _world_seed := 7
 var _super_cell := DEFAULT_PRODUCTION_SUPER_CELL
-var _candidate_token := "8000031"
-var _candidate_id := ""
-var _partition_variant := 1
 var _scale_id := WarrenVillageScaleProfile.LARGE
-var _attempt := -1
 var _solve_production := false
 var _production_terrain_site := false
 var _solve_only := false
@@ -28,12 +23,6 @@ var _audit_only := false
 var _quality_dump := false
 var _capture_filter := ""
 var _trace_room_gate := false
-var _raw_frontier := false
-var _maze_source := false
-## `--mode <id>` for the `--maze-source` and `--production-terrain-site`
-## routes; empty leaves WarrenTownSolver.GENERATION_MODE alone.
-var _generation_mode := StringName()
-var _probe_ranked_limit := 0
 var _camera := Camera3D.new()
 var _spatial: WarrenSpatialPlan
 var _fabric: SettlementFabricPlan
@@ -61,20 +50,8 @@ func _ready() -> void:
 	if program == null:
 		_fail_and_quit("could not compile the settlement fabric program")
 		return
-	if _probe_ranked_limit > 0:
-		_probe_ranked_candidates(program)
-		get_tree().quit(0)
-		return
 	if _production_terrain_site:
-		# `--mode maze` must be in force for the production ADAPTER too:
-		# `VillageWarrenFabricSolver` and the solver beneath it both dispatch on
-		# GENERATION_MODE, so leaving it route-first here would render a
-		# SEARCHED town on the production site and label it a maze one.
-		var restored_production_mode := WarrenTownSolver.GENERATION_MODE
-		if _generation_mode != &"":
-			WarrenTownSolver.GENERATION_MODE = _generation_mode
 		var urban := _solve_production_site(catalog)
-		WarrenTownSolver.GENERATION_MODE = restored_production_mode
 		if urban == null or not urban.accepted \
 				or urban.volumetric_spatial == null \
 				or urban.fabric_plan == null:
@@ -87,21 +64,11 @@ func _ready() -> void:
 	elif _solve_production:
 		_spatial = WarrenVolumetricSolver.solve(_world_seed, {}, program,
 			WarrenVillageScaleProfile.for_id(_scale_id))
-	elif _maze_source:
-		var profile := WarrenVillageScaleProfile.for_id(_scale_id)
-		# TASK E1. The mode has to be set BEFORE the plan, not just around the
-		# solve: `WarrenMassifBuilder.is_maze_mode` keys the terraced massif to
-		# MODE_MAZE until Phase F deletes route-first, so planning first and
-		# switching after rendered a ROUTE-FIRST massif under a maze caption.
-		# `--maze-source` always plans a maze town, so this half of the bracket
-		# is unconditional -- `_generation_mode` still decides what the SOLVE
-		# runs under, which is what its own note below is about.
-		var restored_plan_mode := WarrenTownSolver.GENERATION_MODE
-		WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
+	else:
 		# The whole one-pass site plan, not the bare bore: a plan without plots
 		# carries no town, and the block partitioner refuses to translate one.
+		var profile := WarrenVillageScaleProfile.for_id(_scale_id)
 		var maze := WarrenMazeSitePlanner.plan(_world_seed, {}, profile)
-		WarrenTownSolver.GENERATION_MODE = restored_plan_mode
 		var source := WarrenMazeVolumeAdapter.to_volume_plan(maze) \
 			if maze != null else null
 		if source == null:
@@ -112,25 +79,8 @@ func _ready() -> void:
 		print("[warren_spatial_review] selected maze source=",
 			"maze.%d" % maze.world_seed, " signature=",
 			maze.deterministic_signature().sha256_text())
-		# `--maze-source` renders the composition production runs, so it should
-		# be able to run under production's own mode: MODE_MAZE is what turns
-		# richness quotas advisory (WarrenTownSolver.feature_quotas_are_advisory).
-		# Without `--mode maze` this harness stays STRICTER than production.
-		var restored_mode := WarrenTownSolver.GENERATION_MODE
-		if _generation_mode != &"":
-			WarrenTownSolver.GENERATION_MODE = _generation_mode
 		_spatial = WarrenVolumetricSolver.from_volume(source, -1, program,
 			profile != null and profile.requires_elevated_courtyard)
-		WarrenTownSolver.GENERATION_MODE = restored_mode
-	else:
-		var source := _select_source(program)
-		if source == null:
-			_fail_and_quit("no requested volumetric source candidate")
-			return
-		var direct_profile := WarrenVillageScaleProfile.for_id(_scale_id)
-		_spatial = WarrenVolumetricSolver.from_volume(source,
-			_partition_variant, program, direct_profile != null \
-				and direct_profile.requires_elevated_courtyard)
 	if _spatial == null:
 		_fail_and_quit("volumetric solve rejected: %s" \
 			% WarrenVolumetricSolver.last_failure)
@@ -276,14 +226,6 @@ func _read_args() -> void:
 			_output_dir = args[index + 1]
 		elif args[index] == "--seed" and index + 1 < args.size():
 			_world_seed = int(args[index + 1])
-		elif args[index] == "--candidate-token" and index + 1 < args.size():
-			_candidate_token = args[index + 1]
-		elif args[index] == "--candidate-id" and index + 1 < args.size():
-			_candidate_id = args[index + 1]
-		elif args[index] == "--variant" and index + 1 < args.size():
-			_partition_variant = int(args[index + 1])
-		elif args[index] == "--attempt" and index + 1 < args.size():
-			_attempt = int(args[index + 1])
 		elif args[index] == "--scale" and index + 1 < args.size():
 			_scale_id = StringName(args[index + 1])
 		elif args[index] == "--solve-production":
@@ -298,14 +240,6 @@ func _read_args() -> void:
 			_capture_filter = args[index + 1]
 		elif args[index] == "--trace-room-gate":
 			_trace_room_gate = true
-		elif args[index] == "--raw-frontier":
-			_raw_frontier = true
-		elif args[index] == "--maze-source":
-			_maze_source = true
-		elif args[index] == "--mode" and index + 1 < args.size():
-			_generation_mode = StringName(args[index + 1])
-		elif args[index] == "--probe-ranked" and index + 1 < args.size():
-			_probe_ranked_limit = maxi(1, int(args[index + 1]))
 		elif args[index] == "--production-terrain-site":
 			_production_terrain_site = true
 			_world_seed = DEFAULT_PRODUCTION_WORLD_SEED
@@ -313,53 +247,6 @@ func _read_args() -> void:
 			_super_cell.x = int(args[index + 1])
 		elif args[index] == "--super-z" and index + 1 < args.size():
 			_super_cell.y = int(args[index + 1])
-
-
-func _probe_ranked_candidates(program: SettlementFabricProgram) -> void:
-	## Quality-pass utility: report the exact room/court result of the ranked
-	## source/partition pairs without rendering each rejected town. This makes a
-	## candidate-selection change reviewable instead of choosing a prettier source
-	## from a debug proxy that never reached the sealed spatial transaction.
-	var profile := WarrenVillageScaleProfile.for_id(_scale_id)
-	var frontier := WarrenTownSolver.mass_first_attempt_frontier(_world_seed,
-		_attempt, {}, profile) if _attempt >= 0 \
-		else WarrenTownSolver.mass_first_frontier(_world_seed, {}, profile)
-	var ranked := WarrenVolumetricSolver._ranked_precomposition_variants(
-		frontier, program)
-	for rank_index in mini(_probe_ranked_limit, ranked.size()):
-		var ranked_value := ranked[rank_index] as Dictionary
-		var source := ranked_value.volume as WarrenVolumePlan
-		var variant := int(ranked_value.variant)
-		var exact_proxy := WarrenVolumetricSolver \
-			._precomposition_enclosure_audit(source, variant, program)
-		var spatial := WarrenVolumetricSolver.from_volume(source, variant,
-			program, false)
-		if spatial == null:
-			print("[warren_spatial_review] rank_probe rank=", rank_index,
-				" source=", source.stable_id, " variant=", variant,
-				" score=", ranked_value.score, " proxy_court=",
-				int(exact_proxy.get("broad_rooftop_court_cell_count", 0)),
-				" proxy_occupied=", int(exact_proxy.get("occupied_cell_count", 0)),
-				" proxy_bounded=", float(exact_proxy.get("bounded_route_ratio", 0.0)),
-				" accepted=false failure=",
-				WarrenVolumetricSolver.last_failure.left(400))
-			continue
-		var court := spatial.audit.get(
-			"route_connected_rooftop_court_audit", {}) as Dictionary
-		print("[warren_spatial_review] rank_probe rank=", rank_index,
-			" source=", source.stable_id, " variant=", variant,
-			" score=", ranked_value.score, " proxy_court=",
-			int(exact_proxy.get("broad_rooftop_court_cell_count", 0)),
-			" proxy_occupied=", int(exact_proxy.get("occupied_cell_count", 0)),
-			" proxy_bounded=", float(exact_proxy.get("bounded_route_ratio", 0.0)),
-			" accepted=true buildings=",
-			int(spatial.audit.get("building_count", 0)), " retained=",
-			int(spatial.audit.get("retained_private_mass_cell_count", 0)),
-			" discarded=", int(spatial.audit.get(
-				"unassigned_mass_cell_count", 0)), " court=",
-			int(court.get("floor_cell_count", 0)), "/",
-			int(court.get("combined_floor_cell_count", 0)), " court_audit=",
-			JSON.stringify(court))
 
 
 func _print_quality_dump(program: SettlementFabricProgram) -> void:
@@ -654,53 +541,6 @@ static func _empty_water(region: HeightfieldRegion,
 		Vector2.ONE * radius * 2.0)
 	context._shore_limit = 0.0
 	return context
-
-
-func _select_source(program: SettlementFabricProgram) -> WarrenVolumePlan:
-	var profile := WarrenVillageScaleProfile.for_id(_scale_id)
-	if profile == null or program == null:
-		return null
-	var frontier := WarrenTownSolver.mass_first_attempt_frontier(_world_seed,
-		_attempt, {}, profile) if _attempt >= 0 \
-		else WarrenTownSolver.mass_first_frontier(_world_seed, {}, profile)
-	if _raw_frontier:
-		for candidate: WarrenVolumePlan in frontier:
-			var id_matches := not _candidate_id.is_empty() \
-				and String(candidate.stable_id) == _candidate_id
-			var token_matches := _candidate_id.is_empty() \
-				and (_candidate_token.is_empty() \
-					or String(candidate.stable_id).contains(_candidate_token))
-			if id_matches or token_matches:
-				print("[warren_spatial_review] selected raw source=",
-					candidate.stable_id, " variant=", _partition_variant,
-					" signature=",
-					candidate.deterministic_signature().sha256_text())
-				return candidate
-		return null
-	# The production solver ranks fully threaded precomposition variants, not the
-	# raw frontier object that happens to share their stable source id. Render the
-	# exact same `(source, partition_variant)` pair as the text proof; otherwise a
-	# capture can silently review a different skywalk/court transaction.
-	var ranked := WarrenVolumetricSolver._ranked_precomposition_variants(
-		frontier, program)
-	for ranked_index in ranked.size():
-		var candidate_value := ranked[ranked_index]
-		if int(candidate_value.variant) != _partition_variant:
-			continue
-		var candidate := candidate_value.volume as WarrenVolumePlan
-		var id_matches := not _candidate_id.is_empty() \
-			and String(candidate.stable_id) == _candidate_id
-		var token_matches := _candidate_id.is_empty() \
-			and (_candidate_token.is_empty() \
-				or String(candidate.stable_id).contains(_candidate_token))
-		if id_matches or token_matches:
-			print("[warren_spatial_review] selected rank=", ranked_index,
-				" source=", candidate.stable_id, " variant=",
-				candidate_value.variant, " score=", candidate_value.score,
-				" signature=",
-				candidate.deterministic_signature().sha256_text())
-			return candidate
-	return null
 
 
 func _capture_all() -> void:

@@ -85,37 +85,20 @@ const MAX_URBAN_CORE_OPEN_RATIO := 0.125
 # enclosure, lightwell, platform, and screenshot audits still decide whether a
 # survivor reads as an enclosed town; this ratio is only an early search bound.
 const ASSET_AWARE_MAX_CORE_OPEN_RATIO := 0.25
-## Migration boundary (mass-first design spec). route_first is the pipeline
-## this project ships: its branch in ranked_candidates() is the original code,
-## unreachable from and unaffected by anything below. mass_first replaces only
-## the topology frontier -- with excavated massifs instead of routes carved out
-## of a Gaussian envelope -- and then hands that frontier to exactly the same
-## arcade, frontage, parcel, ranking, and composition stages. A static var
-## rather than a const so tests and corpus probes can flip it per call.
-const MODE_ROUTE_FIRST := &"route_first"
-const MODE_MASS_FIRST := &"mass_first"
-## Solid-first single-pass generation: one deterministic WarrenMazeCarver bore
-## per town, no attempt rotation and no ranked candidate corpus. Wired end to
-## end and selectable, but NOT production-ready: measured 2026-08-20 it seals
-## 0 of 9 corpus seeds because the M3 courtyard/landmark/occupied-link stamps
-## and M4 partition ownership are unfinished. Flip GENERATION_MODE to this and
-## run tests/harness/warren_maze_mode_sweep.gd to re-measure.
-const MODE_MAZE := &"maze"
-static var GENERATION_MODE: StringName = MODE_ROUTE_FIRST
-
-
 static func feature_quotas_are_advisory() -> bool:
-	## In a searched mode a quota shortfall is useful: it discards one candidate
-	## and the rotation supplies another. In one-pass solid-first mode there is
-	## no other candidate, so rejecting a fully partitioned 18-54 parcel town for
-	## owning no courtyard does not yield a better village — it yields NO
-	## village. Richness quotas therefore become audit facts at runtime and stay
+	## In a searched pipeline a quota shortfall was useful: it discarded one
+	## candidate and the rotation supplied another. One-pass generation has no
+	## other candidate, so rejecting a fully partitioned 18-54 parcel town for
+	## owning no courtyard does not yield a better village -- it yields NO
+	## village. Richness quotas are therefore audit facts at runtime and stay
 	## hard assertions in the test corpus, where a regression must still fail.
 	##
 	## This never relaxes STRUCTURAL correctness (unsupported rooms, floating
-	## geometry, doors onto air). Those remain fatal in every mode: shipping
-	## visibly broken construction is worse than shipping none.
-	return GENERATION_MODE == MODE_MAZE
+	## geometry, doors onto air). Those remain fatal: shipping visibly broken
+	## construction is worse than shipping none.
+	return true
+
+
 ## One attempt is a full 256-bore WarrenExcavationCarver search over an
 ## already-built massif, measured at ~0.9 s (the massif itself is 6 ms and is
 ## built once, since WarrenMassifBuilder.build is deterministic per seed).
@@ -237,26 +220,21 @@ static func ranked_candidates(world_seed: int,
 		last_failure = "candidate frontier limit must be positive"
 		return out
 	var topology_frontier: Array[WarrenVolumePlan] = []
-	if GENERATION_MODE == MODE_MASS_FIRST:
-		topology_frontier = mass_first_frontier(world_seed, ground_bands)
-		if topology_frontier.is_empty():
-			return out
-	else:
-		var envelope := WarrenVolumeEnvelope.build(world_seed, ground_bands)
-		if envelope == null:
-			last_failure = "Gaussian envelope rejected"
-			return out
-		for attempt in TOPOLOGY_ATTEMPTS:
-			var volume := WarrenPublicRealmCarver.sealed_candidate(world_seed,
-				attempt, envelope)
-			if volume == null:
-				continue
-			volume = WarrenGroundArcadeSolver.extend(volume)
-			if volume == null:
-				continue
-			for gallery_variant: WarrenVolumePlan in \
-					WarrenElevatedFrontageSolver.variants(volume):
-				topology_frontier.append(gallery_variant)
+	var envelope := WarrenVolumeEnvelope.build(world_seed, ground_bands)
+	if envelope == null:
+		last_failure = "Gaussian envelope rejected"
+		return out
+	for attempt in TOPOLOGY_ATTEMPTS:
+		var volume := WarrenPublicRealmCarver.sealed_candidate(world_seed,
+			attempt, envelope)
+		if volume == null:
+			continue
+		volume = WarrenGroundArcadeSolver.extend(volume)
+		if volume == null:
+			continue
+		for gallery_variant: WarrenVolumePlan in \
+				WarrenElevatedFrontageSolver.variants(volume):
+			topology_frontier.append(gallery_variant)
 	var topology_finished := Time.get_ticks_msec()
 	topology_frontier.sort_custom(func(a: WarrenVolumePlan,
 			b: WarrenVolumePlan) -> bool:
@@ -773,12 +751,6 @@ static func _parcelize(volume: WarrenVolumePlan,
 		construction_program: SettlementFabricProgram) -> WarrenParcelPlan:
 	if volume == null:
 		return null
-	if GENERATION_MODE == MODE_MASS_FIRST:
-		# Everything below this line is the route-first packing search, reached
-		# only under the shipped default. In mass-first the search is the wrong
-		# question: the leftover solid already IS the buildings, so nothing has
-		# to be fitted around the route.
-		return partition_parcels(volume)
 	var compatibility := Callable()
 	var connection_pair := Callable()
 	var reservation_compatibility := Callable()
@@ -822,21 +794,9 @@ static func _parcel_variants(volume: WarrenVolumePlan,
 	## which arrangement will survive stages it cannot see. Duplicates are
 	## dropped because different orders often converge on the same partition.
 	var out: Array[WarrenParcelPlan] = []
-	if GENERATION_MODE != MODE_MASS_FIRST:
-		var single := _parcelize(volume, construction_program)
-		if single != null:
-			out.append(single)
-		return out
-	var seen: Dictionary = {}
-	for variant in WarrenSolidPartitioner.PARTITION_VARIANTS:
-		var plan := partition_parcels(volume, variant, construction_program)
-		if plan == null:
-			continue
-		var signature := plan.deterministic_signature()
-		if seen.has(signature):
-			continue
-		seen[signature] = true
-		out.append(plan)
+	var single := _parcelize(volume, construction_program)
+	if single != null:
+		out.append(single)
 	return out
 
 
@@ -930,11 +890,7 @@ static func partition_parcels(volume: WarrenVolumePlan,
 
 
 static func last_parcelize_failure() -> String:
-	## Whichever parcel stage the current mode actually ran. Reading
-	## WarrenParcelizer.last_failure unconditionally would report a stale
-	## packing-search message -- or none at all -- for a mass-first rejection.
-	return last_partition_failure if GENERATION_MODE == MODE_MASS_FIRST \
-		else WarrenParcelizer.last_failure
+	return WarrenParcelizer.last_failure
 
 
 static func _compose_plan(world_seed: int, volume: WarrenVolumePlan,

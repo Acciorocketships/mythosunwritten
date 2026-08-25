@@ -6,11 +6,6 @@ extends RefCounted
 ## 1.5 m vertical lattice, then rebuilds the selected topology attempt against
 ## those bands before materializing any geometry.
 const DATUM_GUARD := 0.08
-## The staged volumetric search runs on the single terrain worker; one slice
-## per record build keeps a hard-to-seal settlement from freezing chunk
-## streaming for minutes (measured 250 s exhausted searches). The
-## deterministic attempt rotation resumes across visits via the pin cache.
-const PRODUCTION_SEARCH_BUDGET_MS := 20000
 const MAX_TERRAIN_RELIEF := VillageUrbanFabricPlan.MAX_FABRIC_TERRAIN_RELIEF
 const SUPPORT_STEP := 3.0
 const CLEARANCE_MARGIN := 1.5
@@ -28,59 +23,15 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	if program.settlement_fabric_program == null:
 		return _rejected(&"fabric_program")
 	var scale_profile := WarrenVillageScaleProfile.select(city_seed)
-	# One-pass maze generation carves exactly one town per seed: there is no
-	# attempt rotation to memo, resume, or prove exhausted, so the persistent
-	# pin is not consulted at all. Reading it could only cost work — a stale
-	# success pin sends the adapter through `solve_pinned` into the very same
-	# carve, and a town that then failed would carve a SECOND time on the
-	# fallback — while a FAILURE entry left by a searched run is evidence about
-	# a search this mode never performs and must never suppress the town.
-	# Nothing is written back for the mirror-image reason: the entry is keyed
-	# on (seed, scale) with no mode in it, so a maze outcome recorded there
-	# would lie to the searched mode too.
-	var searched := WarrenTownSolver.GENERATION_MODE \
-		!= WarrenTownSolver.MODE_MAZE
-	# In the SEARCHED modes the staged search is deterministic per (seed,
-	# scale) but expensive, and it runs on the single terrain worker. Consult
-	# the persistent pin first: a success pin re-seals only the winning
-	# candidate through the identical gates; a failure pin skips a search
-	# already proven exhausted under the current generation salt. Either way
-	# the search remains the authority — pin misses and stale pins simply fall
-	# through to it.
-	var pin: Dictionary = WarrenSolutionPinCache.pin_for(city_seed,
-		scale_profile.scale_id) if searched else {}
-	if bool(pin.get("failed", false)):
-		return _rejected(&"volume_pinned_failure")
-	var preview: WarrenSpatialPlan = null
-	if pin.has("attempt"):
-		preview = WarrenVolumetricSolver.solve_pinned(city_seed, {},
-			program.settlement_fabric_program, pin, scale_profile)
+	# One-pass generation carves exactly one town per seed: there is no attempt
+	# rotation to memo, resume, prove exhausted, or budget a slice of, so the
+	# solve is simply run. The persistent solution-pin cache this adapter used
+	# to consult died with the search it memoized.
+	var preview := WarrenVolumetricSolver.solve(city_seed, {},
+		program.settlement_fabric_program, scale_profile)
 	if preview == null:
-		# Budget each visit's search slice so one settlement can never stall
-		# the single terrain worker for minutes; the deterministic rotation
-		# resumes from the recorded prefix on the next visit. Maze mode
-		# ignores both of those arguments: one carve, no rotation to resume
-		# and no proven-failed prefix to skip.
-		preview = WarrenVolumetricSolver.solve(city_seed, {},
-			program.settlement_fabric_program, scale_profile,
-			PRODUCTION_SEARCH_BUDGET_MS,
-			int(pin.get("attempts_tried", 0)))
-		if preview == null:
-			if searched and WarrenVolumetricSolver.last_search_exhausted:
-				WarrenSolutionPinCache.store_failure(city_seed,
-					scale_profile.scale_id)
-			elif searched:
-				WarrenSolutionPinCache.store_progress(city_seed,
-					scale_profile.scale_id,
-					WarrenVolumetricSolver.last_search_attempts_tried)
-			return _rejected(StringName("volume_%s" %
-				WarrenVolumetricSolver.last_failure))
-		if searched:
-			WarrenSolutionPinCache.store_success(city_seed,
-				scale_profile.scale_id,
-				int(preview.audit.get("production_selected_attempt", -1)),
-				String(preview.audit.get("production_selected_source_id", "")),
-				int(preview.audit.get("production_selected_variant", -1)))
+		return _rejected(StringName("volume_%s" %
+			WarrenVolumetricSolver.last_failure))
 	# The selector has already compiled and quality-gated its winning preview.
 	# Reuse that output-pure derivative instead of repeating the complete measured
 	# facade/roof/public-realm transaction at the production adapter boundary.

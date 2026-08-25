@@ -7,10 +7,12 @@ extends RefCounted
 ## offset 3D room volumes, exact interfaces, and an explicit support DAG.
 ## Village-scale floor: a rescaled compact hamlet legitimately forms six to
 ## eight buildings; anything below this still reads as a farmstead, not a town.
+## The value the sealed audit's `production_generation_mode` carries. One
+## pipeline builds every town, so this is a label rather than a selector.
+const PRODUCTION_PIPELINE_ID := "maze"
 const MIN_BUILDINGS := 6
 const GRID_PADDING_CELLS := 2
 const ROOF_CLEARANCE_CELLS := 2
-const MAX_PARTITION_VARIANTS := WarrenSolidPartitioner.PARTITION_VARIANTS
 const MAX_LANDMARK_SET_ATTEMPTS := 12
 ## Complete-building selection used to enumerate only pairs/triples. A bounded
 ## deterministic beam admits richer four-to-eight building sets without the
@@ -98,35 +100,19 @@ const MAZE_BACK_ROOM_KINDS: Array[Dictionary] = [
 ]
 
 static var last_failure := ""
-## Facts about the most recent staged production search: whether it visited
-## every attempt in the rotation (false when a time budget stopped it early)
-## and how many attempts have been tried including skipped prefixes, so a
-## budgeted caller can resume the deterministic rotation without repetition.
-static var last_search_exhausted := true
-static var last_search_attempts_tried := 0
-## Deadline for the current budgeted search in Time.get_ticks_msec() terms,
-## or -1 for unbudgeted solves. _solve_frontier honors it between ranked
-## candidates and reports crossing it through _frontier_budget_hit.
-static var _search_deadline_ms := -1
-static var _frontier_budget_hit := false
 static var last_diagnostic: Dictionary = {}
 static var last_preplan_skywalk_diagnostic: Dictionary = {}
 static var last_preplan_market_diagnostic: Dictionary = {}
 static var last_preplan_landmark_diagnostic: Dictionary = {}
 static var _last_skywalk_selection_failure := ""
-## Harness-only performance seam. Production never sets this; it lets a probe
-## stop after geometric/fixed-block skywalk filtering instead of paying for the
-## endpoint-composition beam while diagnosing candidate growth.
-## Richness quotas a one-pass solve fell short of but shipped anyway. Empty in
-## every searched mode. Merged into the sealed plan's audit so a plain town is
-## a visible, reviewable fact rather than a silent one.
+## Richness quotas a one-pass solve fell short of but shipped anyway. Merged
+## into the sealed plan's audit so a plain town is a visible, reviewable fact
+## rather than a silent one.
 static var last_advisory_shortfalls: Dictionary = {}
 ## TASK C6 RULING 4. Wall clock per composition sub-stage, in ms, for the ONE
 ## maze town currently being solved. Reset by `_solve_maze` and merged into the
 ## sealed plan's audit, so the stage probe can print a table per planner seed
-## without a second solve and without parsing trace lines. Never written on a
-## route-first or mass-first solve: every stamp is keyed on the volume's own
-## maze source, so a legacy audit gains no key.
+## without a second solve and without parsing trace lines.
 static var last_maze_stage_ms: Dictionary = {}
 static var diagnostic_stop_after_skywalk_candidates := false
 static var diagnostic_stop_after_skywalk_individual := false
@@ -134,15 +120,6 @@ static var diagnostic_skywalk_candidate_limit := -1
 static var diagnostic_trace_skywalk_timing := false
 static var diagnostic_trace_room_gate := false
 static var diagnostic_feature_market_limit := -1
-static var diagnostic_partition_limit := -1
-static var diagnostic_partition_first := 0
-## Compact/standard towns may form a broad route-connected roof court only
-## after the exact room fixed point. The cheap parcel proxy cannot predict it,
-## so inspect a small deterministic prefix of otherwise valid variants before
-## accepting the first courtless fallback. Three reaches the complete alternate
-## serving phase without turning the eight-variant family into an exhaustive
-## in-game search.
-const ROUTE_COURT_VARIANT_PROBE_COUNT := 3
 ## Bridge-room admission telemetry for the residual backfill pass; reset per
 ## backfill run and surfaced through the residual audit keys.
 static var _residual_bridge_counts: Dictionary = {}
@@ -151,93 +128,20 @@ static var _residual_bridge_counts: Dictionary = {}
 static func solve(world_seed: int,
 		ground_bands: Dictionary = {},
 		construction_program: SettlementFabricProgram = null,
-		scale_profile: WarrenVillageScaleProfile = null,
-		max_solve_ms: int = -1, skip_attempts: int = 0) -> WarrenSpatialPlan:
+		scale_profile: WarrenVillageScaleProfile = null) -> WarrenSpatialPlan:
+	## The production entry. Solid-first: one deterministic carve, no attempt
+	## rotation and no ranked candidate corpus.
 	last_failure = ""
 	last_diagnostic = {}
 	last_preplan_skywalk_diagnostic = {}
 	last_preplan_market_diagnostic = {}
 	last_preplan_landmark_diagnostic = {}
 	if construction_program == null:
-		last_failure = "volumetric feature search requires measured construction vocabulary"
+		last_failure = "volumetric composition requires measured construction vocabulary"
 		return null
 	var profile := scale_profile if scale_profile != null \
 		else WarrenVillageScaleProfile.review_fixture()
-	if WarrenTownSolver.GENERATION_MODE == WarrenTownSolver.MODE_MAZE:
-		# Solid-first: one deterministic carve, no attempt rotation, no ranked
-		# candidate corpus. There is nothing to resume, so a budgeted caller's
-		# slice bookkeeping collapses to a single completed attempt.
-		last_search_exhausted = true
-		last_search_attempts_tried = 1
-		return _solve_maze(world_seed, ground_bands, construction_program,
-			profile)
-	# A bore is itself an expensive bounded search. Visit every attempt exactly
-	# once in a seed-rotated coprime cycle and exact-solve each surviving family
-	# immediately. This preserves the complete fallback corpus, prevents every
-	# town from sharing attempt-zero's street grammar, and avoids paying for three
-	# full bores before construction has had a chance to accept the first one.
-	var batch_count := 0
-	var attempted_count := 0
-	var batch_failures := PackedStringArray()
-	var search_started_ms := Time.get_ticks_msec()
-	last_search_exhausted = true
-	last_search_attempts_tried = skip_attempts
-	var attempt_order := _production_attempt_order(world_seed)
-	for attempt_index in attempt_order.size():
-		# A budgeted caller (the in-game terrain worker) resumes a sliced
-		# search exactly where the previous slice stopped: the rotation is
-		# deterministic, so skipping the already-tried prefix repeats no work.
-		if attempt_index < skip_attempts:
-			continue
-		if max_solve_ms >= 0 and attempt_index > skip_attempts \
-				and Time.get_ticks_msec() - search_started_ms > max_solve_ms:
-			last_search_exhausted = false
-			last_failure = ("production search budget %d ms exhausted after " \
-				+ "%d of %d attempts") % [max_solve_ms,
-				last_search_attempts_tried, attempt_order.size()]
-			return null
-		var attempt: int = attempt_order[attempt_index]
-		attempted_count += 1
-		last_search_attempts_tried = attempt_index + 1
-		# The first attempt of a budgeted slice always runs to completion so
-		# every visit makes real progress and no candidate is ever skipped;
-		# later attempts honor the deadline mid-frontier and are re-run whole
-		# on the next visit.
-		var first_of_slice := attempt_index == skip_attempts
-		_search_deadline_ms = -1 if max_solve_ms < 0 or first_of_slice \
-			else search_started_ms + max_solve_ms
-		_frontier_budget_hit = false
-		var frontier_started_ms := Time.get_ticks_msec()
-		var frontier := WarrenTownSolver.mass_first_attempt_frontier(world_seed,
-			attempt, ground_bands, profile)
-		if diagnostic_trace_skywalk_timing:
-			print("SKYWALK_TIMING frontier_attempt index=", attempt,
-				" ms=", Time.get_ticks_msec() - frontier_started_ms,
-				" candidates=", frontier.size())
-		if frontier.is_empty():
-			batch_failures.append("attempt %d: %s" % [attempt,
-				WarrenTownSolver.last_failure])
-			continue
-		batch_count += 1
-		var result := _solve_frontier(frontier, construction_program)
-		_search_deadline_ms = -1
-		if result != null:
-			result.audit["production_excavation_attempt_count"] = attempted_count
-			result.audit["production_frontier_batch_count"] = batch_count
-			result.audit["production_staged_frontier_count"] = frontier.size()
-			result.audit["production_selected_attempt"] = attempt
-			return result
-		if _frontier_budget_hit:
-			last_search_exhausted = false
-			last_search_attempts_tried = attempt_index
-			last_failure = ("production search budget %d ms reached inside " \
-				+ "attempt %d; it reruns whole next visit") % [max_solve_ms,
-				attempt]
-			return null
-		batch_failures.append("attempt %d: %s" % [attempt, last_failure])
-	last_failure = "no staged volumetric frontier sealed: %s" % \
-		" | ".join(batch_failures)
-	return null
+	return _solve_maze(world_seed, ground_bands, construction_program, profile)
 
 
 static func _stamp_maze_stage(volume: WarrenVolumePlan, stage: StringName,
@@ -254,7 +158,7 @@ static func _stamp_maze_stage(volume: WarrenVolumePlan, stage: StringName,
 static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 		construction_program: SettlementFabricProgram,
 		profile: WarrenVillageScaleProfile) -> WarrenSpatialPlan:
-	## MODE_MAZE production entry. The whole point of the solid-first front end
+	## The production entry. The whole point of the solid-first front end
 	## is that the source is correct by construction, so there is exactly one
 	## source, one partition, and one composition. A rejection here is a real
 	## defect in the site plan or a gate it has not yet learned to satisfy — it
@@ -316,8 +220,10 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	if finalized == null:
 		last_failure = "maze finalization rejected: %s" % last_failure
 		return null
-	finalized.audit["production_generation_mode"] = String(
-		WarrenTownSolver.MODE_MAZE)
+	# The pipeline label, and the four counters the searched pipeline used to
+	# vary, kept at the constants a one-pass solve makes them so a sealed audit
+	# keeps the same shape for every reader that already knows it.
+	finalized.audit["production_generation_mode"] = PRODUCTION_PIPELINE_ID
 	finalized.audit["production_excavation_attempt_count"] = 1
 	finalized.audit["production_frontier_batch_count"] = 1
 	finalized.audit["production_staged_frontier_count"] = 1
@@ -331,217 +237,6 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	finalized.audit["advisory_shortfalls"] = last_advisory_shortfalls.duplicate()
 	finalized.audit["advisory_shortfall_count"] = last_advisory_shortfalls.size()
 	return finalized
-
-
-static func solve_pinned(world_seed: int, ground_bands: Dictionary,
-		construction_program: SettlementFabricProgram, pin: Dictionary,
-		scale_profile: WarrenVillageScaleProfile = null) -> WarrenSpatialPlan:
-	## Deterministic fast path: re-seal a previously selected candidate without
-	## repeating the staged search. The pin is a hint, never trusted state:
-	## the complete pipeline — composition, fabric compile, production quality
-	## gates, finalization — reruns from scratch, and any mismatch or failure
-	## returns null so the caller falls back to the full search. A stale pin
-	## can therefore cost only time, never correctness.
-	last_failure = ""
-	if construction_program == null:
-		last_failure = "pinned volumetric solve requires measured vocabulary"
-		return null
-	if WarrenTownSolver.GENERATION_MODE == WarrenTownSolver.MODE_MAZE:
-		# Solid-first generation has one source per town, so a pin carries no
-		# information the carve does not already reproduce. Re-solve directly
-		# rather than failing and driving the caller into a search that does
-		# not exist in this mode.
-		return _solve_maze(world_seed, ground_bands, construction_program,
-			scale_profile if scale_profile != null \
-				else WarrenVillageScaleProfile.review_fixture())
-	if pin.is_empty() or not pin.has("attempt") or not pin.has("source_id") \
-			or not pin.has("variant"):
-		last_failure = "pinned volumetric solve requires attempt/source/variant"
-		return null
-	var profile := scale_profile if scale_profile != null \
-		else WarrenVillageScaleProfile.review_fixture()
-	var frontier := WarrenTownSolver.mass_first_attempt_frontier(world_seed,
-		int(pin.attempt), ground_bands, profile)
-	for volume: WarrenVolumePlan in frontier:
-		if String(volume.stable_id) != String(pin.source_id):
-			continue
-		var variant := int(pin.variant)
-		var proxy := _precomposition_enclosure_audit(volume, variant,
-			construction_program)
-		var plan := from_volume(volume, variant, construction_program, false)
-		if plan == null:
-			return null
-		for key: Variant in proxy.keys():
-			plan.audit["precomposition_%s" % String(key)] = proxy[key]
-		var fabric := WarrenSpatialFabricCompiler.solve(plan,
-			construction_program)
-		if fabric == null:
-			last_failure = "pinned fabric gate failed: %s" \
-				% WarrenSpatialFabricCompiler.last_failure
-			return null
-		var finalized := _finalize_selected_candidate(volume, variant,
-			construction_program, proxy, plan, fabric)
-		if finalized != null:
-			finalized.audit["production_selected_attempt"] = int(pin.attempt)
-			finalized.audit["production_selected_source_id"] = \
-				String(pin.source_id)
-			finalized.audit["production_selected_variant"] = variant
-			finalized.audit["production_pin_hit"] = true
-		return finalized
-	last_failure = "pinned source %s absent from attempt %d frontier" % [
-		String(pin.get("source_id", "")), int(pin.get("attempt", -1))]
-	return null
-
-
-static func _production_attempt_order(world_seed: int) -> Array[int]:
-	var out: Array[int] = []
-	var count := WarrenTownSolver.MASS_FIRST_EXCAVATION_ATTEMPTS
-	var start := posmod(Helper._mix64(world_seed ^ 2), count)
-	# Five is coprime with the twelve-attempt production corpus, so the cycle
-	# cannot repeat or omit an attempt before exhausting the bounded fallback.
-	for offset in count:
-		out.append(posmod(start + offset * 5, count))
-	return out
-
-
-static func _solve_frontier(frontier: Array[WarrenVolumePlan],
-		construction_program: SettlementFabricProgram) -> WarrenSpatialPlan:
-	# Rank complete (topology, parcel-variant) pairs by the mass that will survive
-	# as actual rooms. The macro massif's overhang score includes allocation later
-	# discarded by _discard_unassigned_mass(), which is why a nominally 78%-covered
-	# source produced the visually open 34% town caught by screenshot review.
-	# This proxy uses exact fine route floors and proposed private cells, but no
-	# market/landmark/skywalk search or authored resource construction, so weak
-	# street canyons are rejected cheaply before the expensive 3D composition.
-	var ranked_variants := _ranked_precomposition_variants(frontier,
-		construction_program)
-	if ranked_variants.is_empty():
-		last_failure = "no volumetric parcel variant retained inhabited mass"
-		return null
-	var failures := PackedStringArray()
-	var partition_attempt_count := 0
-	var courtless_fallback_plan: WarrenSpatialPlan
-	var courtless_fallback_fabric: SettlementFabricPlan
-	var courtless_fallback_volume: WarrenVolumePlan
-	var courtless_fallback_audit: Dictionary = {}
-	var courtless_fallback_variant := -1
-	var courtless_fallback_rank := -1
-	for ranked_index in ranked_variants.size():
-		if ranked_index < diagnostic_partition_first:
-			continue
-		if _search_deadline_ms >= 0 and partition_attempt_count > 0 \
-				and Time.get_ticks_msec() > _search_deadline_ms:
-			if courtless_fallback_plan != null:
-				var timed_fallback := _finalize_ranked_candidate(
-					courtless_fallback_volume, courtless_fallback_variant,
-					construction_program, courtless_fallback_audit,
-					courtless_fallback_plan, courtless_fallback_fabric)
-				if timed_fallback != null:
-					timed_fallback.audit["route_court_variant_probe_count"] = \
-						partition_attempt_count
-					timed_fallback.audit[
-						"route_court_variant_fallback_used"] = true
-					return timed_fallback
-			_frontier_budget_hit = true
-			last_failure = "search budget reached after %d ranked candidates" \
-				% partition_attempt_count
-			return null
-		var ranked := ranked_variants[ranked_index] as Dictionary
-		if diagnostic_partition_limit >= 0 \
-				and partition_attempt_count >= diagnostic_partition_limit:
-			break
-		var volume := ranked.volume as WarrenVolumePlan
-		var variant := int(ranked.variant)
-		if courtless_fallback_plan != null and (volume \
-				!= courtless_fallback_volume or ranked_index \
-				>= courtless_fallback_rank + ROUTE_COURT_VARIANT_PROBE_COUNT):
-			var fallback := _finalize_ranked_candidate(
-				courtless_fallback_volume, courtless_fallback_variant,
-				construction_program, courtless_fallback_audit,
-				courtless_fallback_plan, courtless_fallback_fabric)
-			if fallback != null:
-				fallback.audit["route_court_variant_probe_count"] = \
-					partition_attempt_count
-				fallback.audit["route_court_variant_fallback_used"] = true
-				return fallback
-		partition_attempt_count += 1
-		if diagnostic_trace_room_gate:
-			print("SKYWALK_TIMING partition_begin source=", volume.stable_id,
-				" variant=", variant, " proxy=", ranked.audit)
-		# Candidate search uses the cheaper serial fixed point. The paired
-		# silhouette cleanup changes no hero-feature topology, so paying for it in
-		# every rejected topology/partition trial only multiplies exact room work.
-		var spatial_started_ms := Time.get_ticks_msec()
-		var plan := from_volume(volume, variant, construction_program, false)
-		if diagnostic_trace_skywalk_timing:
-			print("SKYWALK_TIMING partition_spatial source=", volume.stable_id,
-				" variant=", variant, " ms=",
-				Time.get_ticks_msec() - spatial_started_ms,
-				" accepted=", plan != null)
-		if plan != null:
-			for key: Variant in (ranked.audit as Dictionary).keys():
-				plan.audit["precomposition_%s" % String(key)] = ranked.audit[key]
-			var fabric_started_ms := Time.get_ticks_msec()
-			var fabric := WarrenSpatialFabricCompiler.solve(plan,
-				construction_program)
-			if diagnostic_trace_skywalk_timing:
-				print("SKYWALK_TIMING partition_fabric source=", volume.stable_id,
-					" variant=", variant, " ms=",
-					Time.get_ticks_msec() - fabric_started_ms,
-					" accepted=", fabric != null)
-			if fabric == null:
-				last_failure = "production fabric gate failed: %s" \
-					% WarrenSpatialFabricCompiler.last_failure
-			else:
-				# Enclosure and size metrics (sightlines, overhead, alley ratio,
-				# room count) are guidance carried in the audit and the ranking,
-				# never a reason to discard a compiled town here.
-				var profile := _scale_profile_for_volume(volume)
-				var prefer_route_court := profile != null \
-					and not profile.requires_elevated_courtyard
-				var has_route_court := int(plan.audit.get(
-					"route_connected_rooftop_court_count", 0)) > 0
-				if prefer_route_court and not has_route_court:
-					if courtless_fallback_plan == null:
-						courtless_fallback_plan = plan
-						courtless_fallback_fabric = fabric
-						courtless_fallback_volume = volume
-						courtless_fallback_audit = (ranked.audit \
-							as Dictionary).duplicate(true)
-						courtless_fallback_variant = variant
-						courtless_fallback_rank = ranked_index
-					continue
-				var finalize_started_ms := Time.get_ticks_msec()
-				var finalized := _finalize_ranked_candidate(volume,
-					variant, construction_program, ranked.audit as Dictionary,
-					plan, fabric)
-				if diagnostic_trace_skywalk_timing:
-					print("SKYWALK_TIMING partition_finalize source=",
-						volume.stable_id, " variant=", variant, " ms=",
-						Time.get_ticks_msec() - finalize_started_ms,
-						" accepted=", finalized != null)
-				if finalized != null:
-					finalized.audit["route_court_variant_probe_count"] = \
-						partition_attempt_count
-					finalized.audit["route_court_variant_fallback_used"] = false
-					return finalized
-		if diagnostic_trace_room_gate:
-			print("SKYWALK_TIMING partition_rejected source=", volume.stable_id,
-				" variant=", variant, " failure=", last_failure.left(1200))
-		failures.append("%s/v%d: %s" % [String(volume.stable_id),
-			variant, last_failure])
-	if courtless_fallback_plan != null:
-		var fallback := _finalize_ranked_candidate(courtless_fallback_volume,
-			courtless_fallback_variant, construction_program,
-			courtless_fallback_audit, courtless_fallback_plan,
-			courtless_fallback_fabric)
-		if fallback != null:
-			fallback.audit["route_court_variant_probe_count"] = \
-				partition_attempt_count
-			fallback.audit["route_court_variant_fallback_used"] = true
-			return fallback
-	last_failure = "no volumetric partition sealed: %s" % " | ".join(failures)
-	return null
 
 
 static func _finalize_ranked_candidate(volume: WarrenVolumePlan, variant: int,
@@ -662,14 +357,21 @@ static func minimum_production_overhead_ratio(audit: Dictionary) -> float:
 static func solve_selected(world_seed: int, selected: WarrenSpatialPlan,
 		ground_bands: Dictionary = {},
 		construction_program: SettlementFabricProgram = null) -> WarrenSpatialPlan:
-	## Rebuild exactly one flat-preview topology against local terrain.  Production
-	## placement must not pay for the complete twelve-bore and eight-partition
-	## search again for every yaw, nor silently switch to a different maze after
-	## the road has already been aligned to the preview entrance.
+	## Rebuild the flat preview's town against local terrain.
 	##
-	## The public signature is unchanged for the legacy caller; MODE_MAZE takes
-	## the branch below and everything after it is the mass-first path exactly
-	## as it was.
+	## TASK D1, controller ruling 1. Solid-first generation has ONE source per
+	## (seed, bands): no bore attempt to look up, no ranked frontier to search
+	## the preview's topology inside, and no partition variant to carry across.
+	## The terrain rebuild is therefore the identical one-pass solve the preview
+	## itself came from, with the placement's real bands instead of the flat
+	## frame.
+	##
+	## The rebuilt entrance is deliberately NOT compared to the preview's here.
+	## On real ground the entry cell's BAND is the terrain the portal stands on,
+	## so an exact Vector3i comparison would refuse every sloped placement by
+	## construction. The road was aligned to where the mouth LANDS, and
+	## `VillageWarrenFabricSolver.solve` compares exactly that -- the entry's
+	## (x, z) -- immediately after this call.
 	last_failure = ""
 	if selected == null or not selected.is_sealed() \
 			or selected.source_volume == null or construction_program == null:
@@ -681,337 +383,7 @@ static func solve_selected(world_seed: int, selected: WarrenSpatialPlan,
 	if profile == null:
 		last_failure = "selected preview has an invalid scale profile"
 		return null
-	if WarrenTownSolver.GENERATION_MODE == WarrenTownSolver.MODE_MAZE:
-		# TASK D1, controller ruling 1. Solid-first generation has ONE
-		# source per (seed, bands): no bore attempt to look up, no ranked
-		# frontier to search for the preview's topology inside, and no
-		# partition variant to carry across. The terrain rebuild is
-		# therefore the identical one-pass solve the preview itself came
-		# from, with the placement's real bands instead of the flat frame.
-		# Dispatched on GENERATION_MODE, the same key `solve` uses at the
-		# head of this file, rather than on the preview volume's own maze
-		# source: they agree on every production path, and reading the mode
-		# keeps one answer to "which pipeline is this process building".
-		#
-		# The rebuilt entrance is deliberately NOT compared to the
-		# preview's here. On real ground the entry cell's BAND is the
-		# terrain the portal stands on, so an exact Vector3i comparison
-		# would refuse every sloped placement by construction. The road was
-		# aligned to where the mouth LANDS, and
-		# `VillageWarrenFabricSolver.solve` compares exactly that -- the
-		# entry's (x, z) -- immediately after this call.
-		return _solve_maze(world_seed, ground_bands, construction_program,
-			profile)
-	var attempt := WarrenTownSolver.mass_first_attempt_index(world_seed,
-		selected.source_volume)
-	if attempt < 0:
-		last_failure = "selected preview has no mass-first excavation identity"
-		return null
-	var candidates := WarrenTownSolver.mass_first_attempt_frontier(world_seed,
-		attempt, ground_bands, profile)
-	if candidates.is_empty():
-		last_failure = WarrenTownSolver.last_failure
-		return null
-	var source: WarrenVolumePlan
-	for candidate: WarrenVolumePlan in candidates:
-		if candidate.stable_id == selected.source_volume.stable_id:
-			source = candidate
-			break
-	if source == null:
-		last_failure = "selected gallery topology no longer fits local terrain"
-		return null
-	var partition_variant := int(selected.audit.get("partition_variant", -1))
-	if partition_variant < 0 or partition_variant >= MAX_PARTITION_VARIANTS:
-		last_failure = "selected preview has no partition identity"
-		return null
-	var rebuilt := from_volume(source, partition_variant, construction_program)
-	if rebuilt == null:
-		return null
-	if rebuilt.source_volume.entry_cell != selected.source_volume.entry_cell:
-		last_failure = "selected terrain rebuild changed its route entrance"
-		return null
-	return rebuilt
-
-
-static func _spatial_topology_less(a: WarrenVolumePlan,
-		b: WarrenVolumePlan) -> bool:
-	var a_walk := int(a.audit.get("walk_cell_count", 2147483647))
-	var b_walk := int(b.audit.get("walk_cell_count", 2147483647))
-	if a_walk != b_walk:
-		return a_walk < b_walk
-	var a_interior := int(a.audit.get("exact_route_interior_cell_count",
-		2147483647))
-	var b_interior := int(b.audit.get("exact_route_interior_cell_count",
-		2147483647))
-	if a_interior != b_interior:
-		return a_interior < b_interior
-	return WarrenPublicRealmCarver.topology_score(a) \
-		< WarrenPublicRealmCarver.topology_score(b)
-
-
-static func _ranked_precomposition_variants(
-		frontier: Array[WarrenVolumePlan],
-		construction_program: SettlementFabricProgram) -> Array[Dictionary]:
-	var ranked: Array[Dictionary] = []
-	for volume: WarrenVolumePlan in frontier:
-		# Partition rotations alter local room choices but not the street network;
-		# one canonical VALID projection is sufficient to rank source volumes.
-		# Measuring all eight routinely cost almost a minute, but assuming variant
-		# zero existed became incorrect once the tapered buildable frontier gained a
-		# hard grounding audit: a serving order can strand a raised edge parcel even
-		# when another order grounds the identical street topology. Probe later
-		# variants only as a bounded fallback, then reuse the first survivor's cheap
-		# enclosure metric for the complete variant family.
-		var audit: Dictionary = {}
-		var first_valid_variant := -1
-		for audit_variant in MAX_PARTITION_VARIANTS:
-			audit = _precomposition_enclosure_audit(volume, audit_variant,
-				construction_program)
-			if not audit.is_empty():
-				first_valid_variant = audit_variant
-				break
-		if audit.is_empty():
-			continue
-		# Partition variants are genuinely different macroscopic decompositions,
-		# not progressively better retries. A fixed zero-first order made every seed
-		# pay for (and, when valid, select) the same serving phase. Rotate the complete
-		# coprime cycle from the town seed: all eight remain reachable exactly once,
-		# while production gains deterministic facade/roof cadence variety.
-		var massif := volume.mass_context.get(&"massif") as WarrenMassif
-		var variant_seed := massif.world_seed if massif != null \
-			else volume.world_seed
-		var variant_start := posmod(Helper._mix64(variant_seed ^ 31),
-			MAX_PARTITION_VARIANTS)
-		for variant_offset in MAX_PARTITION_VARIANTS:
-			var variant := posmod(variant_start + variant_offset * 3,
-				MAX_PARTITION_VARIANTS)
-			ranked.append({"volume": volume, "variant": variant,
-				"audit": audit,
-				"variant_rank": variant_offset,
-				"score": _precomposition_quality_score(volume, audit)})
-	ranked.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		var a_score := float(a.score)
-		var b_score := float(b.score)
-		if not is_equal_approx(a_score, b_score):
-			return a_score > b_score
-		var a_volume := a.volume as WarrenVolumePlan
-		var b_volume := b.volume as WarrenVolumePlan
-		if a_volume.stable_id != b_volume.stable_id:
-			return _spatial_topology_less(a_volume, b_volume)
-		return int(a.variant_rank) < int(b.variant_rank))
-	return ranked
-
-
-static func _precomposition_enclosure_audit(volume: WarrenVolumePlan,
-		partition_variant: int,
-		construction_program: SettlementFabricProgram) -> Dictionary:
-	var massif := volume.mass_context.get(&"massif") as WarrenMassif
-	if massif == null or not massif.is_sealed():
-		return {}
-	var grid := WarrenSpatialGrid.new(_grid_bounds(massif).minimum,
-		_grid_bounds(massif).size)
-	if not grid.is_valid() or not _project_massif(grid, massif):
-		return {}
-	var projected_mass_cell_count := grid.cells_with_use(
-		WarrenSpatialGrid.Use.ALLOCATABLE).size()
-	var route_floors := _carve_public_volume(grid, volume)
-	if route_floors.is_empty():
-		return {}
-	var parcels := WarrenTownSolver.partition_parcels(volume,
-		partition_variant, construction_program)
-	if parcels == null:
-		return {}
-	var occupied: Dictionary = {}
-	var proposal_count := 0
-	for parcel: WarrenBuildingParcel in parcels.parcels:
-		if not _parcel_address_has_public_floor(grid, parcel):
-			continue
-		var proposal := WarrenParcelConstruction.proposal(parcel)
-		if proposal.is_empty():
-			continue
-		proposal_count += 1
-		for cell: Vector3i in StaggeredFabricCompiler \
-				.proposal_occupied_cells(proposal):
-			occupied[cell] = parcel.stable_id
-	if proposal_count < MIN_BUILDINGS or occupied.is_empty():
-		return {}
-	# Cohesion is a first-class selection objective: a parcel none of whose
-	# occupied cells touch another parcel's mass reads as a building standing
-	# awkwardly alone, however legal its address is.
-	var parcel_owners: Dictionary = {}
-	var contact_parcels: Dictionary = {}
-	for cell_value: Variant in occupied:
-		var cell := cell_value as Vector3i
-		var owner := StringName(occupied[cell])
-		parcel_owners[owner] = true
-		if contact_parcels.has(owner):
-			continue
-		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-				Vector3i.FORWARD, Vector3i.BACK]:
-			var neighbor_owner: Variant = occupied.get(cell + direction)
-			if neighbor_owner != null and StringName(neighbor_owner) != owner:
-				contact_parcels[owner] = true
-				break
-	var detached_parcel_count := parcel_owners.size() - contact_parcels.size()
-	var route: Dictionary = {}
-	var ground_route: Dictionary = {}
-	for cell: Vector3i in route_floors:
-		route[cell] = true
-		var macro_column := Vector2i(floori(float(cell.x) / 2.0),
-			floori(float(cell.z) / 2.0))
-		if cell.y == volume.envelope.ground_at(macro_column):
-			ground_route[cell] = true
-	var eligible_sides := 0
-	var enclosed_sides := 0
-	var overhead_count := 0
-	var bounded_count := 0
-	var route_bands: Dictionary = {}
-	for cell: Vector3i in route_floors:
-		route_bands[cell.y] = true
-		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-				Vector3i.FORWARD, Vector3i.BACK]:
-			if route.has(cell + direction):
-				continue
-			eligible_sides += 1
-			enclosed_sides += int(occupied.has(cell + direction) \
-				or occupied.has(cell + direction + Vector3i.UP))
-		# A street reads as negative space between buildings when it runs at
-		# most an alley's width and BOTH far edges of one axis are held by
-		# proposed mass (or the proposed mass one band up on a half-storey
-		# flank). This mirrors the sealed alley_bounded_walk_ratio corridor
-		# march; per-flank 1-cell strictness measured 0.0 corpus-wide because
-		# carved streets are two cells wide.
-		var alley := false
-		for axis: Array in [[Vector3i.LEFT, Vector3i.RIGHT],
-				[Vector3i.FORWARD, Vector3i.BACK]]:
-			var crossed := 0
-			var held := true
-			for direction: Vector3i in axis:
-				var edge := cell
-				while crossed <= FabricSolidVoidPlan.MAX_ALLEY_SPAN_CELLS \
-						and route.has(edge + direction):
-					edge += direction
-					crossed += 1
-				if crossed > FabricSolidVoidPlan.MAX_ALLEY_SPAN_CELLS \
-						or not (occupied.has(edge + direction) \
-							or occupied.has(edge + direction + Vector3i.UP)):
-					held = false
-					break
-			if held:
-				alley = true
-				break
-		bounded_count += int(alley)
-		for rise in range(2, 7):
-			if occupied.has(cell + Vector3i.UP * rise):
-				overhead_count += 1
-				break
-	var sightline := SettlementFabricSolver._audit_sightlines(route, occupied)
-	var ground_sightline := SettlementFabricSolver._audit_sightlines(
-		ground_route, occupied)
-	var court_supply := _precomposition_rooftop_court_supply(occupied, route,
-		volume)
-	return {
-		"proposal_count": proposal_count,
-		"projected_mass_cell_count": projected_mass_cell_count,
-		"occupied_cell_count": occupied.size(),
-		"proposed_mass_ratio": float(occupied.size()) \
-			/ float(maxi(1, projected_mass_cell_count)),
-		"frontage_ratio": float(enclosed_sides) / float(maxi(1, eligible_sides)),
-		"overhead_route_ratio": float(overhead_count) \
-			/ float(maxi(1, route.size())),
-		"through_sightline_count": int(sightline.through_count),
-		"ground_through_sightline_count": int(ground_sightline.through_count),
-		"detached_parcel_count": detached_parcel_count,
-		"bounded_route_ratio": float(bounded_count) \
-			/ float(maxi(1, route.size())),
-		"route_band_span": route_bands.size(),
-		"broad_rooftop_court_cell_count": int(court_supply.get(
-			"broad_cell_count", 0)),
-		"broad_rooftop_court_short_span_cells": int(court_supply.get(
-			"short_span_cells", 0)),
-		"broad_rooftop_court_route_seam_count": int(court_supply.get(
-			"route_seam_count", 0)),
-	}
-
-
-static func _precomposition_rooftop_court_supply(occupied: Dictionary,
-		route: Dictionary, volume: WarrenVolumePlan) -> Dictionary:
-	## Cheap selection proxy for the later exact roof-court carve. Count only
-	## supported room crowns that are at least three cells broad on BOTH axes and
-	## meet the already carved route. A long two-cell strip is a gallery and earns
-	## no court credit, even when it has more cells than a small square.
-	var crowns: Dictionary = {}
-	for cell_value: Variant in occupied.keys():
-		var cell := cell_value as Vector3i
-		if occupied.has(cell + Vector3i.UP):
-			continue
-		var surface := cell + Vector3i.UP
-		var macro_column := Vector2i(floori(float(surface.x) / 2.0),
-			floori(float(surface.z) / 2.0))
-		if surface.y - volume.envelope.ground_at(macro_column) \
-				< MIN_ROOFTOP_COURT_LIFT_CELLS:
-			continue
-		crowns[surface] = true
-	var remaining := crowns.duplicate()
-	var best := {"broad_cell_count": 0, "short_span_cells": 0,
-		"route_seam_count": 0}
-	while not remaining.is_empty():
-		var start := remaining.keys()[0] as Vector3i
-		var frontier: Array[Vector3i] = [start]
-		var component: Array[Vector3i] = []
-		remaining.erase(start)
-		while not frontier.is_empty():
-			var current: Vector3i = frontier.pop_back()
-			component.append(current)
-			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-					Vector3i.FORWARD, Vector3i.BACK]:
-				var neighbor := current + direction
-				if remaining.erase(neighbor):
-					frontier.append(neighbor)
-		if component.size() < 12:
-			continue
-		var minimum := Vector2i(2147483647, 2147483647)
-		var maximum := Vector2i(-2147483648, -2147483648)
-		var seam_count := 0
-		for cell: Vector3i in component:
-			minimum = minimum.min(Vector2i(cell.x, cell.z))
-			maximum = maximum.max(Vector2i(cell.x, cell.z))
-			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-					Vector3i.FORWARD, Vector3i.BACK]:
-				seam_count += int(route.has(cell + direction))
-		var spans := maximum - minimum + Vector2i.ONE
-		var short_span := mini(spans.x, spans.y)
-		if short_span < 3 or seam_count == 0:
-			continue
-		if component.size() > int(best.broad_cell_count) \
-				or (component.size() == int(best.broad_cell_count) \
-					and short_span > int(best.short_span_cells)):
-			best = {"broad_cell_count": component.size(),
-				"short_span_cells": short_span,
-				"route_seam_count": seam_count}
-	return best
-
-
-static func _precomposition_quality_score(volume: WarrenVolumePlan,
-		audit: Dictionary) -> float:
-	# Actual proposed street walls dominate; macro metrics only break ties between
-	# similarly dense fine-grid projections. Detached parcels cost real score:
-	# a village reads cohesive when its houses lean on one another. Streets held
-	# on both flanks and routes that climb across bands are the reviewed alley
-	# character, so they earn score directly.
-	return float(audit.overhead_route_ratio) * 1000.0 \
-		+ float(audit.frontage_ratio) * 450.0 \
-		+ float(audit.get("bounded_route_ratio", 0.0)) * 500.0 \
-		+ float(maxi(0, int(audit.get("route_band_span", 1)) - 1)) * 60.0 \
-		- float(audit.through_sightline_count) * 3.0 \
-		- float(audit.ground_through_sightline_count) * 7.0 \
-		- float(audit.get("detached_parcel_count", 0)) * 55.0 \
-		+ minf(24.0, float(audit.get(
-			"broad_rooftop_court_cell_count", 0))) * 4.0 \
-		+ (180.0 if int(audit.get("broad_rooftop_court_cell_count", 0)) \
-			>= 12 else 0.0) \
-		+ float(volume.audit.get("all_overhang_walk_ratio", 0.0)) * 80.0 \
-		+ float(volume.audit.get("route_crossover_count", 0)) * 60.0
+	return _solve_maze(world_seed, ground_bands, construction_program, profile)
 
 
 static func from_volume(volume: WarrenVolumePlan,
@@ -11288,11 +10660,9 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 	# rather than by a room budget: a room owns at least one cell, so this can
 	# never bind, and it can never diverge either.
 	#
-	# Keyed on the plot mass rather than on `feature_quotas_are_advisory()`,
-	# which is a global the review harness does not set: `--maze-source`
-	# composes a maze volume with GENERATION_MODE still route-first, and a
-	# review render that backfilled differently from production would be a
-	# picture of a town nobody ships.
+	# Keyed on the plot mass rather than on `feature_quotas_are_advisory()`:
+	# the bound is a fact about this town's own source, so a review render
+	# backfills exactly as production does.
 	if not plot_mass_cells.is_empty():
 		maximum_buildings = plot_mass_cells.size()
 		maximum_per_kind = plot_mass_cells.size()

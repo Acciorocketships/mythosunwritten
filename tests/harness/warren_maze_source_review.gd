@@ -26,10 +26,6 @@ var _captures: Array[Dictionary] = []
 
 
 func _ready() -> void:
-	# The terraced massif is keyed to MODE_MAZE until Phase F deletes
-	# route-first (WarrenMassifBuilder.is_maze_mode); this harness bores a maze
-	# source, so it has to ask for the maze massif.
-	WarrenTownSolver.GENERATION_MODE = WarrenTownSolver.MODE_MAZE
 	_read_args()
 	get_window().size = Vector2i(1920, 1080)
 	DirAccess.make_dir_recursive_absolute(_output_dir)

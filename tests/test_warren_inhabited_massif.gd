@@ -14,7 +14,11 @@ func test_flat_ground_still_builds_a_bell_of_inhabited_mass() -> void:
 	assert_not_null(massif, WarrenMassifBuilder.last_failure)
 	if massif == null:
 		return
-	assert_gte(massif.core_top_bands, 16,
+	# TASK F1 RULING 4. The floor is the size profile's own
+	# `minimum_core_bands` -- what `WarrenMassifBuilder._shape_gate_failure`
+	# enforces -- not the retired `MIN_CORE_BANDS := 16` this restated.
+	assert_gte(massif.core_top_bands,
+		WarrenVillageScaleProfile.review_fixture().minimum_core_bands,
 		"the centre must carry several inhabited storeys")
 	var rim_max := 0
 	for column: Vector2i in massif.columns:
