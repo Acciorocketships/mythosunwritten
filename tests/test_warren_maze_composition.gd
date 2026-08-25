@@ -518,6 +518,7 @@ const PLANNER_SOLVE_MS_CEILING: Dictionary = {
 
 
 static var _program_cache: SettlementFabricProgram
+static var _village_program_cache: VillageProgram
 ## One production solve per (seed, scale) shared by every test in the file.
 ## Four maze towns is the corpus; solving them once each is what keeps this
 ## file inside its budget while letting each test assert on the same run.
@@ -531,6 +532,22 @@ func _program() -> SettlementFabricProgram:
 		_program_cache = SettlementFabricProgram.compile(
 			EnvironmentCatalog.load_default())
 	return _program_cache
+
+
+func _village_program() -> VillageProgram:
+	## The WHOLE village vocabulary -- the fabric program plus the prop and
+	## adapter assets a settlement's other planners contribute. This is the list
+	## `VillageUrbanFabricPlan._validate_compiled_fabric` measures a
+	## materialized town against, so it is the list an undeclared-asset check
+	## has to use; the fabric program's own is a subset of it (the house plinth,
+	## for one, reaches production down the prop path).
+	##
+	## Cached for the file the way the fabric program is: compiling it costs
+	## seconds and it is a fact about the catalogue, not about a town.
+	if _village_program_cache == null:
+		_village_program_cache = VillageProgram.compile({},
+			EnvironmentCatalog.load_default())
+	return _village_program_cache
 
 
 func _solve(world_seed: int, scale_id: StringName,
@@ -3757,10 +3774,113 @@ func _stone_instances(fabric: SettlementFabricPlan) -> Array[Dictionary]:
 ## the masonry slab is anchored at one end of its sweep.
 ## `kaykit_terrain_top_center.tres` is AABB(-1.5, 0, -1.5, 3.0, 1e-05, 3.0):
 ## the grass quad is CENTRED on its origin and its long axis is local +Z.
+##
+## FIX 1, IMPORTANT 1: both rows are asserted against those descriptors by
+## `test_the_skin_constants_mirror_the_module_descriptors` below, so this table
+## cannot outlive the bake it was read off.
 const CAP_MODULE_SPANS: Dictionary = {
 	&"sfv.fabric.wall.rock.plain.001": [Vector3(0.0, 1.0, 0.0), 0.0, 3.0],
 	&"kaykit.terrain.top_center": [Vector3(0.0, 0.0, 1.0), -1.5, 1.5],
 }
+
+## How far a transcribed envelope may sit from the descriptor it was read off.
+## Five millimetres: the bake writes 3.0000005 and 0.74999213 where the artist
+## drew 3.0 and 0.75, so an exact comparison would fail on float noise, and
+## anything a re-bake really MOVED moves by more than this.
+const SKIN_ENVELOPE_TOLERANCE := 0.005
+
+
+func test_the_skin_constants_mirror_the_module_descriptors() -> void:
+	## TASK H2b FIX 1, IMPORTANT 1 -- the tripwire under task H2c.
+	##
+	## Four constants in `SettlementFabricAssembler` and the two rows of
+	## `CAP_MODULE_SPANS` above are TRANSCRIPTIONS of measured module envelopes:
+	## how tall the cliff shard is, how far its bulge stands in front of its
+	## origin, how long a terrain tile is, how deep the masonry slab is. Nothing
+	## read them off the descriptors -- they were copied into a comment and
+	## trusted -- so a re-bake that shifted an AABB by a few centimetres would
+	## leave every one of them silently wrong, and the coverage proofs that rest
+	## on them ("a shard can never uncover its own cell", "a cap covers exactly
+	## the cells it owns") would still pass while the skin opened up.
+	##
+	## Task H2c re-runs all 29 KayKit assets through a tool-version drift, which
+	## is exactly that hazard. This makes each constant a CHECKED mirror: the
+	## descriptor is the fact, the constant is a copy of it, and a bake that
+	## moves the fact fails here with the name of the module and both numbers.
+	var catalog := EnvironmentCatalog.load_default()
+	assert_not_null(catalog, "the shipped environment catalogue must load")
+	if catalog == null:
+		return
+	var rock := catalog.descriptor(SettlementFabricAssembler.NATURAL_ROCK_FACE)
+	var grass := catalog.descriptor(SettlementFabricAssembler.TERRAIN_GREEN_CAP)
+	var masonry := catalog.descriptor(
+		SettlementFabricAssembler.MAZE_STONE_MODULE)
+	for named: Array in [["natural rock face", rock],
+			["terrain green cap", grass], ["maze stone module", masonry]]:
+		assert_not_null(named[1], "the %s must be in the catalogue" % named[0])
+	if rock == null or grass == null or masonry == null:
+		return
+	var rock_aabb: AABB = rock.measured_aabb
+	var grass_aabb: AABB = grass.measured_aabb
+	var masonry_aabb: AABB = masonry.measured_aabb
+	print("SKIN_ENVELOPE rock=%s grass=%s masonry=%s" % [str(rock_aabb),
+		str(grass_aabb), str(masonry_aabb)])
+	# The cliff shard hangs from the top of its own course, so the assembler
+	# needs the height ABOVE its origin and the depth BELOW it; the mirrored
+	# placement hangs from the second.
+	_assert_mirrors(SettlementFabricAssembler.NATURAL_ROCK_TOP,
+		rock_aabb.end.y, "NATURAL_ROCK_TOP is the cliff shard's height above " \
+			+ "its own origin")
+	_assert_mirrors(SettlementFabricAssembler.NATURAL_ROCK_BASE,
+		-rock_aabb.position.y, "NATURAL_ROCK_BASE is how far the cliff " \
+			+ "shard hangs below its own origin")
+	# The bulge stands in FRONT of the origin; the assembler pulls the module
+	# back by the bulge's own half-depth so the rock straddles the boundary.
+	_assert_mirrors(SettlementFabricAssembler.NATURAL_ROCK_FACE_DEPTH_CENTRE,
+		rock_aabb.position.z + rock_aabb.size.z * 0.5,
+		"NATURAL_ROCK_FACE_DEPTH_CENTRE is the middle of the shard's bulge")
+	# Both terrain modules are authored on the terrain's own 3 m tile, and the
+	# cross-axis scales and the coverage inequalities are all fractions of it.
+	_assert_mirrors(SettlementFabricAssembler.TERRAIN_MODULE_SPAN,
+		rock_aabb.size.x, "TERRAIN_MODULE_SPAN is the cliff shard's width")
+	_assert_mirrors(SettlementFabricAssembler.TERRAIN_MODULE_SPAN,
+		grass_aabb.size.x, "TERRAIN_MODULE_SPAN is the grass quad's width")
+	_assert_mirrors(SettlementFabricAssembler.TERRAIN_MODULE_SPAN,
+		grass_aabb.size.z, "TERRAIN_MODULE_SPAN is the grass quad's length")
+	# The masonry cap is that module laid flat and sunk by half its own depth,
+	# so its rock face is flush with the boundary it closes.
+	_assert_mirrors(SettlementFabricAssembler.STONE_CAP_HALF_DEPTH,
+		masonry_aabb.size.z * 0.5,
+		"STONE_CAP_HALF_DEPTH is half the masonry module's depth")
+	# ...and the two rows this file decodes the payload's horizontal caps with.
+	assert_eq(CAP_MODULE_SPANS.size(), 2,
+		"the cap vocabulary is the masonry module laid flat and the grass quad")
+	for asset_value: Variant in CAP_MODULE_SPANS.keys():
+		var asset := asset_value as StringName
+		var descriptor := catalog.descriptor(asset)
+		assert_not_null(descriptor,
+			"cap module %s must be in the catalogue" % String(asset))
+		if descriptor == null:
+			continue
+		var span := CAP_MODULE_SPANS[asset] as Array
+		var axis := span[0] as Vector3
+		var aabb: AABB = descriptor.measured_aabb
+		_assert_mirrors(float(span[1]), aabb.position.dot(axis),
+			"%s's declared span starts where its envelope does" % String(asset))
+		_assert_mirrors(float(span[2]), aabb.end.dot(axis),
+			"%s's declared span ends where its envelope does" % String(asset))
+		# The long axis is 3 m for both, which is why one slab covers the pair.
+		_assert_mirrors(float(span[2]) - float(span[1]),
+			SettlementFabricAssembler.TERRAIN_MODULE_SPAN,
+			"%s spans the authored 3 m a cap pair needs" % String(asset))
+
+
+func _assert_mirrors(constant: float, measured: float, what: String) -> void:
+	assert_almost_eq(constant, measured, SKIN_ENVELOPE_TOLERANCE,
+		("%s: the constant says %.6f and the module's own descriptor measures " \
+			+ "%.6f. The DESCRIPTOR is the fact -- correct the constant, and " \
+			+ "re-read every coverage bound that rests on it") % [what,
+			constant, measured])
 
 
 func _maze_stone_instance_count(fabric: SettlementFabricPlan) -> int:
@@ -5675,6 +5795,81 @@ func test_large_and_grand_towns_exist() -> void:
 				% _label(outcome))
 
 
+func test_every_asset_the_assembler_places_is_declared() -> void:
+	## TASK H2b FIX 1, IMPORTANT 2 -- the completeness check the gate lacks.
+	##
+	## `VillageUrbanFabricPlan._validate_compiled_fabric` REFUSES a production
+	## plan carrying an entry whose asset the village program never declared,
+	## and the streamer prepares its render cache from that same list, so an
+	## undeclared asset is a blank town in the real game. That gate is the only
+	## thing that caught task H2b's two terrain modules -- but it fires on ONE
+	## pinned compact settlement, so it only sees an asset that town happens to
+	## place. An adapter that emits its module only on a large or a grand town
+	## -- a scale nothing else materializes here -- would ship undetected.
+	##
+	## This is the same question asked over EVERY scale, off the four payloads
+	## the production materializer really concatenates
+	## (`VillageWarrenFabricSolver._materialize`) and against the same allowed
+	## list the gate uses. It costs nothing but the walk: every one of these
+	## towns is already solved and cached by the tests above.
+	var program := _village_program()
+	assert_not_null(program, "the village program must compile")
+	if program == null:
+		return
+	var declared: Dictionary = {}
+	for asset_id: StringName in program.referenced_asset_ids:
+		declared[asset_id] = true
+	var scales: Dictionary = {}
+	var outcomes := _corpus()
+	for lane: Array in BIG_TOWN_LANES:
+		outcomes.append(_solved(int(lane[0]), StringName(lane[1])))
+	for outcome: Dictionary in outcomes:
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		assert_not_null(fabric,
+			"%s sealed but cached no compiled fabric" % _label(outcome))
+		if fabric == null:
+			continue
+		scales[StringName(outcome.scale)] = true
+		var payload := SettlementFabricAssembler.payload(fabric)
+		payload.append_from(SettlementFabricAssembler.production_surface_bundle(
+			fabric.surface_plan))
+		payload.append_from(
+			SettlementFabricAssembler.low_retaining_payload(fabric))
+		payload.append_from(
+			SettlementFabricAssembler.terrace_retaining_payload(fabric))
+		var undeclared: Array[String] = []
+		var instances := 0
+		for asset_id: StringName in payload.asset_ids():
+			instances += int((payload.batches[asset_id] as Dictionary) \
+				.transforms.size())
+			if not declared.has(asset_id):
+				undeclared.append(String(asset_id))
+		# `_append_ground_supports` is the one step of the materialization this
+		# test cannot run -- it reads the real terrain view -- so the single
+		# asset it can add is named here rather than left unchecked.
+		if not declared.has(SettlementFabricAssembler.TIMBER_SUPPORT):
+			undeclared.append(String(SettlementFabricAssembler.TIMBER_SUPPORT))
+		undeclared.sort()
+		print("MAZE_PAYLOAD_ASSETS %s assets=%d instances=%d undeclared=%s" % [
+			_label(outcome), payload.asset_ids().size(), instances,
+			str(undeclared)])
+		assert_true(undeclared.is_empty(),
+			("%s places %d asset(s) the village program never declared: %s. " \
+				+ "The production gate would refuse this town and the streamer " \
+				+ "would render nothing -- declare them in " \
+				+ "SettlementFabricProgram.compile") % [_label(outcome),
+				undeclared.size(), str(undeclared)])
+	# The whole point is scale COVERAGE, so a run that quietly measured only the
+	# compact towns must fail rather than pass on two of four.
+	for scale_id: StringName in WarrenVillageScaleProfile.IDS:
+		assert_true(scales.has(scale_id),
+			("no %s town sealed far enough to check its payload; this test is " \
+				+ "worth nothing unless every scale reaches it") % scale_id)
+
+
 func _assert_stage_stamps_are_whole() -> void:
 	## TASK C6 RULING 4's machinery, guarded. The stage table in the report and
 	## the plan is only worth reading if the stamps are really taken, so assert
@@ -6217,8 +6412,7 @@ func _production_site() -> Dictionary:
 	var cell := site.cell as Vector2i
 	var region := TerrainWorldTuning.make_heightfield(PRODUCTION_WORLD_SEED,
 		water).compute_region(cell.x, cell.y, PRODUCTION_REGION_RADIUS)
-	var village_program := VillageProgram.compile({},
-		EnvironmentCatalog.load_default())
+	var village_program := _village_program()
 	if village_program == null:
 		return {}
 	var frame := VillageFrame.from_mask(site, 1, region,

@@ -99,6 +99,13 @@ const NATURAL_ROCK_FACE := &"kaykit.cliff.wall"
 ## `kaykit_cliff_wall.tres` is AABB(-1.5, -0.3, 0.25, 3.0, 4.0, 0.75) -- a rock
 ## face whose bulge stands in front of its origin and whose top is 3.7 above
 ## it.
+##
+## FIX 1, IMPORTANT 1: THESE FOUR ARE CHECKED MIRRORS, NOT TRUSTED COPIES.
+## `test_the_skin_constants_mirror_the_module_descriptors` asserts each one
+## against the descriptor it was transcribed from, because a re-bake that
+## shifted an AABB would otherwise leave the coverage proofs below arguing
+## about a module that no longer exists. A red there means the DESCRIPTOR
+## moved: correct the constant and re-read every bound that rests on it.
 const NATURAL_ROCK_TOP := 3.7
 const NATURAL_ROCK_BASE := 0.3
 const NATURAL_ROCK_FACE_DEPTH_CENTRE := 0.625
