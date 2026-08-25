@@ -2409,31 +2409,74 @@ static func _coupled_variants(grid: WarrenSpatialGrid,
 		minimum = minimum.min(column)
 		maximum = maximum.max(column)
 	var out: Array[Dictionary] = []
+	# TASK F2. The same rewrite `_volumetric_variant_stamp` carries, and here
+	# with nothing to qualify it: this search publishes no diagnostic counters
+	# at all, so an origin that cannot bear is simply not visited. See
+	# `_stamp_rect`, `_columns_as_rect` and `_rect_intersection_size` for why
+	# each replacement is exact.
+	var previous_columns := previous.columns as Dictionary
+	var next_columns := (next.columns as Dictionary) if not next.is_empty() \
+		else {}
+	var current_rect := _columns_as_rect(current_columns)
+	var previous_rect := _columns_as_rect(previous_columns)
+	var next_rect := _columns_as_rect(next_columns)
+	var previous_bounds := _column_bounds(previous_columns)
+	var next_bounds := _column_bounds(next_columns)
+	var previous_maximum := previous_bounds.position + previous_bounds.size \
+		- Vector2i.ONE
+	var constraints_are_free := not bool(current.get("address_expandable",
+			false)) \
+		and (current.get("feature_endpoint_constraints", []) as Array) \
+			.is_empty() \
+		and (current.get("court_contact_columns", {}) as Dictionary).is_empty()
+	var origin_y := (current.origin as Vector3i).y
+	if previous_bounds.size.x <= 0:
+		return out
 	for kind: StringName in ROOM_KINDS:
 		for yaw in 4:
-			for x in range(minimum.x - 4, maximum.x + 5):
-				for z in range(minimum.y - 4, maximum.y + 5):
-					var origin := Vector3i(x, (current.origin as Vector3i).y, z)
-					var columns := _stamp_columns(kind, origin, yaw)
-					if columns.is_empty() or _same_set(columns, current_columns) \
-							or _same_set(columns,
-								(previous.columns as Dictionary)) \
-							or not next.is_empty() and _same_set(columns,
-								(next.columns as Dictionary)):
+			var base_rect := _stamp_rect(kind, Vector3i(0, origin_y, 0), yaw)
+			if base_rect.size.x <= 0:
+				continue
+			var stamp_size := base_rect.size
+			var required_overlap := maxi(MIN_BEARING_OVERLAP_COLUMNS,
+				ceili(float(stamp_size.x * stamp_size.y) * 0.25))
+			var x_low := maxi(minimum.x - 4, previous_bounds.position.x \
+				- base_rect.position.x - stamp_size.x + 1)
+			var x_high := mini(maximum.x + 4,
+				previous_maximum.x - base_rect.position.x)
+			var z_low := maxi(minimum.y - 4, previous_bounds.position.y \
+				- base_rect.position.y - stamp_size.y + 1)
+			var z_high := mini(maximum.y + 4,
+				previous_maximum.y - base_rect.position.y)
+			for x in range(x_low, x_high + 1):
+				for z in range(z_low, z_high + 1):
+					var stamp_position := base_rect.position + Vector2i(x, z)
+					if current_rect.size.x > 0 \
+							and current_rect.position == stamp_position \
+							and current_rect.size == stamp_size \
+							or previous_rect.size.x > 0 \
+							and previous_rect.position == stamp_position \
+							and previous_rect.size == stamp_size \
+							or next_rect.size.x > 0 \
+							and next_rect.position == stamp_position \
+							and next_rect.size == stamp_size:
 						continue
-					if not _candidate_matches_constraints(kind, origin, yaw,
-							current):
+					var origin := Vector3i(x, origin_y, z)
+					if not constraints_are_free \
+							and not _candidate_matches_constraints(kind,
+								origin, yaw, current):
 						continue
-					var lower_overlap := _intersection_size(columns,
-						(previous.columns as Dictionary))
-					if lower_overlap < _required_bearing_overlap(columns):
+					var lower_overlap := _rect_intersection_size(stamp_position,
+						stamp_size, previous_columns, previous_bounds)
+					if lower_overlap < required_overlap:
 						continue
 					var upper_overlap := 0
 					if not next.is_empty():
-						upper_overlap = _intersection_size(columns,
-							next.columns as Dictionary)
+						upper_overlap = _rect_intersection_size(stamp_position,
+							stamp_size, next_columns, next_bounds)
 						if upper_overlap <= 0:
 							continue
+					var columns := _stamp_columns(kind, origin, yaw)
 					var trial := _record(kind, origin, yaw,
 						int(current.start_storey), int(current.end_storey))
 					if trial.is_empty() or _record_overlaps_claimed(trial,
