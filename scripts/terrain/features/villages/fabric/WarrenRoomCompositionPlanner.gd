@@ -3013,7 +3013,10 @@ static func _support_repair_variant(lineages: Dictionary,
 					var columns := _stamp_columns(kind, origin, yaw)
 					if columns.is_empty() or _same_set(columns,
 							current_columns) or not _candidate_matches_constraints(
-							kind, origin, yaw, current):
+							kind, origin, yaw, current) \
+							or not _base_band_is_clear_for_lineage(grid,
+								protected_owners, free_claims, columns,
+								origin.y, lineage_id):
 						continue
 					var trial := _record(kind, origin, yaw,
 						int(current.start_storey), int(current.end_storey))
@@ -3028,23 +3031,35 @@ static func _support_repair_variant(lineages: Dictionary,
 							break
 					if overlaps_existing:
 						continue
-					var trial_claims := free_claims.duplicate()
+					# TASK F2. `free_claims` is the whole town's claimed cells;
+					# duplicating it per surviving candidate was an O(town) copy
+					# to add a dozen keys. Nothing above admitted a trial cell
+					# that is already in `free_claims` -- that is exactly what
+					# `overlaps_existing` just refused -- so adding the trial's
+					# cells and removing them again restores the dictionary,
+					# contents and insertion order alike.
 					for cell: Vector3i in trial.cells:
-						trial_claims[cell] = lineage_id
-					if not _floorplate_transition_is_structurally_legible(
-							columns, {}, origin.y, trial_claims, grid):
-						continue
-					var unsupported := _unsupported_transition_count(lineages,
-						grid, trial_claims, lineage_id,
-						int(current.source_block_index), trial)
+						free_claims[cell] = lineage_id
 					# Direct room repair must strictly remove an obligation. Equal-count
 					# handoffs are reserved for `_support_repair_parent_variant`, which
 					# moves them monotonically downward toward terrain; allowing both
 					# directions would let two adjacent storeys trade the same defect.
-					if unsupported >= baseline_unsupported_count:
+					var admitted := _floorplate_transition_is_structurally_legible(
+						columns, {}, origin.y, free_claims, grid)
+					var unsupported := 0
+					var direct_bearing := 0
+					if admitted:
+						unsupported = _unsupported_transition_count(lineages,
+							grid, free_claims, lineage_id,
+							int(current.source_block_index), trial)
+						admitted = unsupported < baseline_unsupported_count
+					if admitted:
+						direct_bearing = _direct_bearing_column_count(columns,
+							origin.y, free_claims, grid)
+					for cell: Vector3i in trial.cells:
+						free_claims.erase(cell)
+					if not admitted:
 						continue
-					var direct_bearing := _direct_bearing_column_count(columns,
-						origin.y, trial_claims, grid)
 					var registration := _candidate_vertical_registration(columns,
 						previous, next)
 					var difference := _symmetric_difference_size(columns,
@@ -3135,7 +3150,10 @@ static func _support_repair_parent_variant(lineages: Dictionary,
 					var columns := _stamp_columns(kind, origin, yaw)
 					if columns.is_empty() or _same_set(columns, parent_columns) \
 							or not _candidate_matches_constraints(kind, origin,
-								yaw, parent):
+								yaw, parent) \
+							or not _base_band_is_clear_for_lineage(grid,
+								protected_owners, free_claims, columns,
+								origin.y, parent_lineage_id):
 						continue
 					var trial := _record(kind, origin, yaw,
 						int(parent.start_storey), int(parent.end_storey))
@@ -3150,28 +3168,38 @@ static func _support_repair_parent_variant(lineages: Dictionary,
 							break
 					if overlaps_existing:
 						continue
-					var trial_claims := free_claims.duplicate()
+					# TASK F2, as in `_support_repair_variant`: the trial's cells
+					# go into `free_claims` itself and come out again, instead of
+					# copying the whole town's claims to add a dozen keys.
+					# `overlaps_existing` has just proved none of them is there.
 					for cell: Vector3i in trial.cells:
-						trial_claims[cell] = parent_lineage_id
+						free_claims[cell] = parent_lineage_id
 					# The parent may temporarily inherit the one unsupported
 					# obligation from its child. A later, lower sweep then moves the
 					# grandparent beneath it. This monotone downward handoff is the
 					# only way to realign a locked elevated doorway whose whole stack
 					# has drifted; it never increases the town-wide defect count.
-					if not _floorplate_transition_is_structurally_legible(
-								child.columns as Dictionary, {},
-								(child.origin as Vector3i).y, trial_claims, grid):
+					var admitted := _floorplate_transition_is_structurally_legible(
+						child.columns as Dictionary, {},
+						(child.origin as Vector3i).y, free_claims, grid)
+					var unsupported := 0
+					var child_bearing := 0
+					var parent_bearing := 0
+					if admitted:
+						unsupported = _unsupported_transition_count(lineages,
+							grid, free_claims, parent_lineage_id,
+							int(parent.source_block_index), trial)
+						admitted = unsupported <= baseline_unsupported_count
+					if admitted:
+						child_bearing = _direct_bearing_column_count(
+							child.columns as Dictionary,
+							(child.origin as Vector3i).y, free_claims, grid)
+						parent_bearing = _direct_bearing_column_count(columns,
+							origin.y, free_claims, grid)
+					for cell: Vector3i in trial.cells:
+						free_claims.erase(cell)
+					if not admitted:
 						continue
-					var unsupported := _unsupported_transition_count(lineages,
-						grid, trial_claims, parent_lineage_id,
-						int(parent.source_block_index), trial)
-					if unsupported > baseline_unsupported_count:
-						continue
-					var child_bearing := _direct_bearing_column_count(
-						child.columns as Dictionary,
-						(child.origin as Vector3i).y, trial_claims, grid)
-					var parent_bearing := _direct_bearing_column_count(columns,
-						origin.y, trial_claims, grid)
 					var registration := _candidate_vertical_registration(columns,
 						previous, next)
 					var displacement := absi(origin.x \
@@ -4425,29 +4453,59 @@ static func _candidate_has_facade_endpoint(kind: StringName,
 	return FabricRecipe.transform_cell(local_cell, cell_origin, yaw) == endpoint
 
 
+static func _cell_is_clear_for_lineage(grid: WarrenSpatialGrid,
+		protected_owners: Dictionary, claimed_cells: Dictionary,
+		cell: Vector3i, lineage_id: StringName) -> bool:
+	# TASK F2. `not in [A, B]` builds and discards a two-element Array on
+	# every cell of every trial record; the composition tests millions of
+	# them. Two comparisons, same predicate.
+	var use := grid.use_at(cell)
+	if not grid.contains(cell) \
+			or use != WarrenSpatialGrid.Use.ALLOCATABLE \
+			and use != WarrenSpatialGrid.Use.OUTSIDE:
+		return false
+	if claimed_cells.has(cell) and claimed_cells[cell] != lineage_id:
+		return false
+	var owners := protected_owners.get(cell, {}) as Dictionary
+	for owner_value: Variant in owners.keys():
+		var owner_id := StringName(owner_value)
+		if owner_id == lineage_id:
+			continue
+		var allowance: Variant = owners[owner_value]
+		if allowance is Dictionary \
+				and (allowance as Dictionary).has(lineage_id):
+			continue
+		return false
+	return true
+
+
+static func _base_band_is_clear_for_lineage(grid: WarrenSpatialGrid,
+		protected_owners: Dictionary, claimed_cells: Dictionary,
+		columns: Dictionary, band_y: int, lineage_id: StringName) -> bool:
+	## The same test as `_record_is_clear_for_lineage`, applied to the record's
+	## lowest band alone.
+	##
+	## TASK F2. It is a strictly NECESSARY condition -- every cell it looks at
+	## is one of the record's own cells -- so a candidate it refuses is one the
+	## full test would refuse too, and a candidate it admits is still put
+	## through the full test unchanged. The point is that it can be asked
+	## BEFORE `_record` allocates a whole cells array, which the two support
+	## repairs otherwise do for every one of the ~3400 stamps they enumerate.
+	for value: Variant in columns.keys():
+		var column := value as Vector2i
+		if not _cell_is_clear_for_lineage(grid, protected_owners,
+				claimed_cells, Vector3i(column.x, band_y, column.y),
+				lineage_id):
+			return false
+	return true
+
+
 static func _record_is_clear_for_lineage(grid: WarrenSpatialGrid,
 		protected_owners: Dictionary, claimed_cells: Dictionary,
 		record: Dictionary, lineage_id: StringName) -> bool:
 	for cell: Vector3i in record.cells:
-		# TASK F2. `not in [A, B]` builds and discards a two-element Array on
-		# every cell of every trial record; the composition tests millions of
-		# them. Two comparisons, same predicate.
-		var use := grid.use_at(cell)
-		if not grid.contains(cell) \
-				or use != WarrenSpatialGrid.Use.ALLOCATABLE \
-				and use != WarrenSpatialGrid.Use.OUTSIDE:
-			return false
-		if claimed_cells.has(cell) and claimed_cells[cell] != lineage_id:
-			return false
-		var owners := protected_owners.get(cell, {}) as Dictionary
-		for owner_value: Variant in owners.keys():
-			var owner_id := StringName(owner_value)
-			if owner_id == lineage_id:
-				continue
-			var allowance: Variant = owners[owner_value]
-			if allowance is Dictionary \
-					and (allowance as Dictionary).has(lineage_id):
-				continue
+		if not _cell_is_clear_for_lineage(grid, protected_owners,
+				claimed_cells, cell, lineage_id):
 			return false
 	return true
 
