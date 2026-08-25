@@ -416,11 +416,17 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   `user://warren_maze_mode_sweep.json` with a fingerprint of the fabric script directory, and
   `tests/test_warren_maze_composition.gd::test_corpus_composes` scores itself against that file
   and refuses a matrix measured against a different tree. `--mode` and `--constructive` are
-  retired and now exit 2 rather than silently no-opping. **Corpus state 2026-08-25: 24 of 24
-  compact/standard towns seal; task F4 added the two big scales, which seal 3 of 12 at large
-  (seeds 4, 6, 7) and 1 of 12 at grand (seed 9) — the rest die at the covered-market preplan
-  (7), the volume adapter's broad floor slab (5), the source's straight-run cap (3), the court
-  cantilever (2) and three one-off grand gates.** Per-stage wall clock for one town is on the
+  retired and now exit 2 rather than silently no-opping. The full four-scale run is MANDATORY:
+  `--seeds` is global, so a per-scale reduction cannot be expressed and a short matrix
+  hard-fails the corpus gate. **Corpus state 2026-08-25: 32 of 48. 24 of 24 compact/standard
+  towns seal; task F4 added the two big scales, which seal 7 of 12 at large (seeds 4, 6, 7, 8,
+  9, 10, 12) and 1 of 12 at grand (seed 9) — the rest die at the volume adapter's broad floor
+  slab (5), the source's straight-run cap (3), the court cantilever (2), the fabric compiler's
+  modular-box contract (2), the bridge-flank room-envelope gate (2), and one each of
+  room-overhang-vs-market conflict and disconnected route graph. Four of the seven sealing
+  large towns build no bazaar and publish the `covered_market` shortfall: at every scale, a
+  missing court, market, landmark or skywalk is now an audit fact, never a refusal.**
+  Per-stage wall clock for one town is on the
   sealed plan's `maze_stage_ms` audit
   key; `tests/harness/warren_maze_stage_probe.gd` and `warren_solve_profile.gd` print it.
   `WarrenMazeCarver` builds one deterministic entrance-to-summit spine,
