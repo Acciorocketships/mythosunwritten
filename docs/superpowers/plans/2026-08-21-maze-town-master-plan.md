@@ -507,6 +507,14 @@ Milestone: upper-storey walls read timber-frame/plaster; stone appears only wher
 - Discipline as H1/H2: attribution (skin-channel changes only — zero wall/roof/geometry drift), seals BY SET, F2 ceilings, fingerprint refresh, GUI renders.
 - [ ] Commit — `feat(villages): the rock reads as hillside, not masonry`.
 
+### Task H2c: The hillside pushes back
+
+H2b's re-clad removed ~47 % of the massif skin's colliders: the two KayKit modules ship no collision pieces (the terrain heightfield normally does their physics; a maze massif has none), so ~66 body-height panels per compact town beside walked cells — and ~22 steppable green benches — are walk-through. The review scoped the fix: a collision profile in `tools/environment_bake/manifests/kaykit.json` + re-bake. MUST land before H3's in-game battery.
+
+**Facts from the review (binding constraints):** the re-bake does NOT add colliders to world hillsides (`CliffDressing` bypasses the payload path — `TerrainChunkMesher` owns terrain cliff physics); it DOES re-run all 29 KayKit assets through tool-version drift 10 → 20 — the pack must be diffed asset-by-asset after the bake (meshes, materials, measured AABBs; the terrain renders six of these modules). Profile: `convex` for `kaykit.cliff.wall` (a 60-vertex strip); the green cap CANNOT use `flat_box` (its `bounds.size.y` is 1e-05 — a paper-thin box stops no fall) — it needs an explicit height or a `collision_source` scene. `EnvironmentCollisionBuilder` applies the assembler's non-uniform scale to collision transforms (Godot cautions on non-uniformly scaled `CollisionShape3D`) — verify in-game near a natural bank and on a green bench. The bake is editor-side main-thread (no worker/RenderingServer concerns); KayKit is small glTF (no OOM path needed). H2b's fix-round I1 (AABB pins against descriptors) is the tripwire that makes the re-bake safe — it lands first.
+- Exit: the walk-through census (the review's probe) reads 0 body-height uncollided panels beside walked cells and 0 steppable uncollided benches on the four battery towns; the KayKit re-bake diff reviewed asset-by-asset with terrain visuals confirmed unchanged in-game (one terrain render compare); an in-game collision walk at the production settlement (stand on a bench, walk into a bank).
+- [ ] Commit — `fix(environment): the hillside pushes back — collision for the cliff kit`.
+
 ### Task H3: The re-battery and the verdict
 
 - Re-render the battery seeds (12/compact, 3/standard, 10/standard, 7/large, 9/grand + the production settlement in-game), same vantages; the controller reads them against "quaint medieval village"; the review page updates with before/after pairs; the user judges.
