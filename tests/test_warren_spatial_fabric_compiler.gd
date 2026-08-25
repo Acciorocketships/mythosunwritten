@@ -356,7 +356,22 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	# MEASURED: `_preplan_spatial_market` forms exactly one canopy candidate
 	# and its own viability filter drops it (open horizon 10 cells against a
 	# compact limit of 4), so no reservation is ever made -- market-ness stops
-	# at preplan, not at construction. TASK F3 owns the repair.
+	# at preplan, not at construction.
+	#
+	# TASK F3 MEMBER 3, CLASSIFIED HONEST AND PINNED BELOW. There is no repair
+	# to make. That 10 is `MARKET_SHELTER_HORIZON_LIMIT_CELLS` itself -- the
+	# sight ray walked its whole reach without meeting mass -- so this
+	# candidate is not a near miss at a cap tuned for searched towns; it is a
+	# bazaar mouth looking straight out of the hill, which is the one thing
+	# `_market_shelter_audit` exists to catch. Corpus-wide, only eleven
+	# candidates exist across 25 towns, at horizons 2, 4 (x4), 8 and 10 (x5);
+	# the lone 8 belongs to a town that already builds its bazaar from a
+	# better-ranked 4, so no cap between 5 and 9 gives any town a market it
+	# does not already have. `compact` also has
+	# `requires_covered_market = false`: this settlement is one of nineteen
+	# that ship without a bazaar, and the published shortfall is what makes
+	# that honest. The reason so few candidates form at all is
+	# `_market_public_aisle`, not the horizon -- a Phase G design question.
 	var market_units := 0
 	for feature_unit: FabricUnit in features:
 		market_units += int(program.recipe(feature_unit.recipe_id)
@@ -379,6 +394,34 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	gut.p("one-pass town: markets=%d market_units=%d shortfall=%s" % [
 		constructed_markets, market_units,
 		str(shortfalls.get("covered_market", "<none>"))])
+	# TASK F3 MEMBER 3. The pin that makes the classification above falsifiable
+	# rather than a paragraph: WHY this town has no bazaar, read off the
+	# solver's own preplan diagnostic. A future change that gives it one, or
+	# that moves the funnel, has to come through here and say so.
+	var market_preplan := WarrenVolumetricSolver.last_preplan_market_diagnostic
+	assert_eq(int(market_preplan.get("candidate_count", -1)),
+		int(market_preplan.get("clearance_fit_count", -2)),
+		"every candidate that clears its visual envelope becomes a candidate")
+	assert_gt(int(market_preplan.get("candidate_count", -1)), 0,
+		("this seed must still FORM a canopy candidate; a town that forms " \
+			+ "none has a different disease and F3's diagnosis does not cover it"))
+	var market_previews := market_preplan.get("shelter_preview", []) as Array
+	assert_eq(market_previews.size(),
+		int(market_preplan.get("candidate_count", -1)),
+		"the shelter preview must describe every candidate this town formed")
+	for preview: Dictionary in market_previews:
+		assert_eq(int(preview.get("open_max", -1)),
+			WarrenVolumetricSolver.MARKET_SHELTER_HORIZON_LIMIT_CELLS,
+			("this town's bazaar candidate is refused by a SATURATED sight " \
+				+ "ray, not by a cap it nearly met; retuning the cap inside " \
+				+ "the ray's range cannot admit it"))
+	assert_eq(int(market_preplan.get("backing_fit_count", -1)), 0,
+		"no candidate reached the backing check, so it explains nothing here")
+	gut.p("one-pass town: market candidates=%d open_max=%s limit=%d ray=%d" % [
+		int(market_preplan.get("candidate_count", -1)),
+		str((market_previews[0] as Dictionary).get("open_max", -1)),
+		int(market_preplan.get("open_horizon_limit_cells", -1)),
+		WarrenVolumetricSolver.MARKET_SHELTER_HORIZON_LIMIT_CELLS])
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.balcony_feature_count), constructed_balconies)
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \

@@ -48,9 +48,41 @@ const MAX_PRODUCTION_GROUND_THROUGH_SIGHTLINES := 20
 ## A bazaar must read as a chamber in the inhabited maze, not a canopy beside
 ## the town. Every aisle sight ray must meet market body or future building mass
 ## within this many 1.5 m cells.
+##
+## TASK F3 MEMBER 3 -- MEASURED, AND DELIBERATELY NOT RETUNED. The brief asked
+## whether 4 is a searched-town number that misjudges every maze plaza now that
+## E2's momentum work made streets longer and straighter. Measured over the
+## 24-town corpus plus the production settlement, it is not.
+##
+## Those 25 towns form ELEVEN complete canopy candidates between them, and
+## their open horizons are 2 (once), 4 (four times), 8 (once) and 10 (five
+## times). Ten IS `MARKET_SHELTER_HORIZON_LIMIT_CELLS`, the sight ray's own
+## bound: those five are not near misses at the cap, they are mouths with no
+## termination anywhere in the ray's reach, which is the single failure mode
+## `_market_shelter_audit` exists to catch. The one candidate at 8 belongs to
+## 2/standard, which already builds its bazaar from a 4-cell candidate that
+## outranks it. So raising this constant anywhere from 5 to 9 gives NO town a
+## market it does not already have, and raising it to 10 buys four marketless
+## towns a bazaar looking straight out of the hill.
+##
+## The cap is also not what makes 19 of the 24 corpus towns marketless.
+## `_market_public_aisle` is: the funnel runs 84-200 sockets to 16-56 ground
+## fits to 1-22 body fits and then to 0-2 aisle fits, and SIXTEEN of the 24
+## corpus towns arrive at the aisle test with bodies that fit and leave it with
+## nothing (3/standard loses 22 of them there). Widening the aisle rule is a
+## real design question and belongs to Phase G, not to a constant here.
 const MAX_MARKET_OPEN_HORIZON_CELLS := 4
 const LARGE_MARKET_OPEN_HORIZON_CELLS := 8
 const GRAND_MARKET_OPEN_HORIZON_CELLS := 10
+## How far one aisle sight ray walks before it gives up. A candidate measuring
+## exactly this is not a near miss at the cap above: it is a mouth with no
+## termination inside the ray's whole reach. Named rather than inlined so a
+## test can say "the ray saturated" instead of comparing against a 10 whose
+## provenance it would have to guess (task F3 member 3). Note that
+## `GRAND_MARKET_OPEN_HORIZON_CELLS` equals it, so a grand town's bazaar is
+## under no horizon constraint at all -- unexercised today, since no grand town
+## seals.
+const MARKET_SHELTER_HORIZON_LIMIT_CELLS := 10
 ## Landmark halls are allowed to replace ordinary parcels, but they must still
 ## read as part of the inhabited mountain. Measure surviving private mass just
 ## beyond the landmark's authored visual envelope; the exact gap remains a
@@ -1899,7 +1931,34 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# market-ness stops at preplan, not at construction, and the town's
 	# `advisory_shortfalls.covered_market = 0` is an honest record of that.
 	# The gate is kept as a cheap invariant guard on a state nothing produces
-	# today. TASK F3 owns the repair.
+	# today.
+	#
+	# TASK F3 MEMBER 3 -- CLASSIFIED HONEST, no repair made, and here is why
+	# the three candidate repairs were each declined on a measurement.
+	#
+	# (a) The horizon cap is not miscalibrated. That 10 is exactly
+	# `MARKET_SHELTER_HORIZON_LIMIT_CELLS`: the sight ray walked its whole
+	# reach without meeting mass, so this candidate's aisle mouth looks
+	# straight out of the hill. Over the 24-town corpus plus this settlement
+	# only eleven candidates exist at all, at horizons 2, 4 (x4), 8 and 10
+	# (x5); every cap from 5 to 9 leaves every town exactly as it is. The
+	# constant carries the numbers.
+	#
+	# (b) Candidate generation is narrow, but not at the market's own filter.
+	# The funnel loses towns at `_market_public_aisle`: sixteen of the 24
+	# corpus towns arrive there with bodies that fit and leave with nothing,
+	# and every candidate that survives it also survives
+	# `_market_backing_composition_survives` -- the backing check has never
+	# rejected one. Widening the aisle rule would change towns and is a design
+	# question, not a defect: Phase G.
+	#
+	# (c) A marketless compact town is honest. `WarrenVillageScaleProfile`
+	# gives compact and standard `requires_covered_market = false`; only large
+	# and grand require a bazaar, and neither scale seals a single town of the
+	# 12-seed corpus. Five of the 24 corpus towns do build one (2/standard,
+	# 6/compact, 6/standard, 7/standard, 8/compact), so market-ness is
+	# reachable rather than dead -- this settlement is one of the nineteen that
+	# ship without, and it says so.
 	#
 	# Court/landmark/skywalk counts are richness — a shortfall is recorded and
 	# the town ships plainer rather than not at all.
@@ -3700,6 +3759,20 @@ static func _market_open_horizon_limit(volume: WarrenVolumePlan) -> int:
 	## tucked into the tightest alleys. A large courtyard town may admit one
 	## longer approach sightline, but it still has to terminate inside its own
 	## inhabited mass; grand towns get only the review ray's finite upper bound.
+	##
+	## TASK F3 MEMBER 3 -- ALL FOUR SCALES, CHECKED. The compact and standard
+	## branches are the measured ones; see `MAX_MARKET_OPEN_HORIZON_CELLS` for
+	## why 4 stays. The other two arms are UNEXERCISED and cannot be tuned
+	## against anything: no large or grand town seals. Measured 2026-08-25 over
+	## the same 12 seeds the corpus uses, 0 of 12 sealed at large and 0 of 12 at
+	## grand, nearly all of them at the elevated-courtyard gate those two
+	## profiles are the only ones to require (`3D room composition preserves
+	## only 0 courtyard sides`), a few earlier at the route-slab or straight-run
+	## gates. So 8 and 10 have never judged a candidate, and note that
+	## `GRAND_MARKET_OPEN_HORIZON_CELLS` equals the sight ray's own bound, which
+	## makes the grand arm no constraint at all rather than a loose one.
+	## Whether large and grand should seal is Phase G's question, and it comes
+	## before their bazaar's horizon does.
 	var profile := _scale_profile_for_volume(volume)
 	if profile == null:
 		return MAX_MARKET_OPEN_HORIZON_CELLS
@@ -3745,7 +3818,7 @@ static func _market_shelter_audit(grid: WarrenSpatialGrid,
 	## render. PUBLIC_AIR and true empty OUTSIDE cells keep the ray open. The maximum is
 	## the important failure mode visible in review: one market mouth looking
 	## straight out of the town. The total distinguishes equally bounded arcades.
-	const HORIZON_LIMIT_CELLS := 10
+	const HORIZON_LIMIT_CELLS := MARKET_SHELTER_HORIZON_LIMIT_CELLS
 	var maximum_open := 0
 	var total_open := 0
 	var centre := Vector2.ZERO
