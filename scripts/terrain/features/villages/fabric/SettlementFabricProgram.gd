@@ -881,8 +881,9 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	#
 	# * RAILING_MEDIUM -- public-realm guard coalescing over the sealed surface
 	#   plan needs the authored 3 m repeat.
-	# * TERRAIN_GREEN_CAP, NATURAL_ROCK_FACE -- the two terrain modules
-	#   `SettlementFabricAssembler` clads a hillside bank and a bench top with.
+	# * TERRAIN_GREEN_CAP, NATURAL_ROCK_FACE, GREEN_RIM_EDGE -- the three
+	#   terrain modules `SettlementFabricAssembler` clads a hillside bank, a
+	#   bench top and a bench rim with.
 	#
 	# Each is CHECKED against the catalog rather than trusted, so a renamed or
 	# unbaked module fails at program compile with a name instead of at the
@@ -892,7 +893,8 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	for adapter_asset: StringName in [
 			RAILING_MEDIUM,
 			SettlementFabricAssembler.TERRAIN_GREEN_CAP,
-			SettlementFabricAssembler.NATURAL_ROCK_FACE]:
+			SettlementFabricAssembler.NATURAL_ROCK_FACE,
+			SettlementFabricAssembler.GREEN_RIM_EDGE]:
 		if catalog.descriptor(adapter_asset) == null:
 			push_error("Fabric adapter asset is not in the catalog: %s" \
 				% adapter_asset)

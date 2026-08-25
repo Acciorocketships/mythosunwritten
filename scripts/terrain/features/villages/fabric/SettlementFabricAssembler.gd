@@ -93,6 +93,29 @@ const MAZE_STONE_MODULE := LOW_RETAINING_WALL
 ##   retaining wall, which is correct medieval vocabulary and quaint.
 const TERRAIN_GREEN_CAP := &"kaykit.terrain.top_center"
 const NATURAL_ROCK_FACE := &"kaykit.cliff.wall"
+## TASK H2b FIX 1, IMPORTANT 3 -- the bench RIM, and the third module from the
+## same kit. The grass quad has no thickness: from anywhere but straight
+## overhead the only thing between lawn and cliff is a LINE, so a bench reads
+## as paint on the rock rather than as ground with a body. `kaykit.cliff.lip`
+## is the rolled edge the terrain's own `CliffDressing` crowns every real
+## hillside with -- where the lip shares the wall's origin and rotation, which
+## is the idiom copied here.
+##
+## Measured envelope, `kaykit_cliff_lip.tres`:
+## AABB(-1.5, -0.705, -1.5, 3.0, 0.705, 2.75). Flat grass at y = 0 from its
+## back edge out to local +1.0, then a rounded rim bulging to +1.25 and
+## hanging 0.705 below the turf.
+const GREEN_RIM_EDGE := &"kaykit.cliff.lip"
+const GREEN_RIM_DEPTH := 2.75
+const GREEN_RIM_FRONT := 1.25
+## The rim is bounded to the cell it dresses, the way MINOR 2 bounds the quad:
+## its depth scales to exactly one cell and its roll lands ON the boundary, so
+## it reaches over nothing and cannot lay turf on a neighbour's street. It sits
+## a centimetre ABOVE the boundary rather than under it -- the opposite of
+## GREEN_CAP_LIFT and for the same reason the terrain lifts its own lip: two
+## grass surfaces in one plane fight, and this one has to win, because it is
+## the one carrying the edge.
+const GREEN_RIM_LIFT := 0.01
 ## Measured envelopes, read off the descriptors rather than assumed:
 ## `kaykit_terrain_top_center.tres` is AABB(-1.5, 0, -1.5, 3.0, 1e-05, 3.0) --
 ## a single-swatch grass quad CENTRED on its origin, and
@@ -466,10 +489,14 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan) \
 	var solids := plan.transformed_cells(&"solid")
 	var bearing_footprint := plan.transformed_cells(&"terrain_bearing")
 	var out := house_plinth_walls(retained, solids, bearing_footprint)
-	out.append_from(maze_stone_walls(retained, solids,
-		public_floor_cells(plan.surface_plan),
-		plinth_faces(retained, solids, bearing_footprint),
-		walked_floor_cells(plan.surface_plan)))
+	var paved := public_floor_cells(plan.surface_plan)
+	var plinths := plinth_faces(retained, solids, bearing_footprint)
+	var walked := walked_floor_cells(plan.surface_plan)
+	out.append_from(maze_stone_walls(retained, solids, paved, plinths, walked))
+	# TASK H2b FIX 1, IMPORTANT 3. The rolled edge round every green bench,
+	# beside the shell rather than inside it -- see `maze_green_rim_walls`.
+	out.append_from(maze_green_rim_walls(retained, solids, paved, plinths,
+		walked))
 	# TASK C5e RULING 3. The other half of what a maze town's crown wears.
 	# The parapet course that used to cap every flat roof is released to air
 	# by `WarrenVolumetricSolver._maze_released_parapet_cells`, so the slab is
@@ -883,6 +910,83 @@ static func _maze_green_cap_transform(cell: Vector3i,
 	var basis := Basis(Vector3.UP, atan2(axis.x, axis.z))
 	basis.x = basis.x * GREEN_CAP_CROSS_SCALE
 	basis.z = basis.z * maze_green_cap_long_scale(partner)
+	return Transform3D(basis, origin)
+
+
+static func maze_green_rim_walls(retained: Dictionary, solids: Dictionary,
+		paved: Dictionary = {}, plinths: Dictionary = {},
+		walked: Dictionary = {}) -> EnvironmentInstancePayload:
+	## TASK H2b FIX 1, IMPORTANT 3 -- the rolled edge round every green bench.
+	##
+	## A RIM is a green-capped cell's own exposed SIDE: turf on top of it and a
+	## drop beside it. That is exactly the pair of facts the shell already
+	## carries, so nothing new is derived -- the cap's treatment says the top is
+	## lawn, and the exposed side face says there is a fall there.
+	##
+	## Only a cell that is a capped cell IN ITS OWN RIGHT is dressed. A cap
+	## paired with closed mass covers that mass too, but its rim there is buried
+	## inside the thing it leans on and a piece would be geometry nobody sees.
+	##
+	## A SEPARATE PAYLOAD, not a fourth module inside `maze_stone_walls`: task
+	## C5b's identity is one INSTANCE per panel of the shell, and a rim is not a
+	## panel of the shell -- it dresses one. `maze_stone_expected_face_count`
+	## and `_rendered_face_count` therefore still mean exactly what they meant,
+	## and every rim carries a `maze-rim/` id that no reading of the skin
+	## mistakes for a panel.
+	var out := EnvironmentInstancePayload.new()
+	var exposed := exposed_maze_stone_faces(retained, solids, paved)
+	if exposed.is_empty():
+		return out
+	var faces := maze_stone_faces(retained, solids, paved, plinths)
+	var treatments := maze_skin_treatments(exposed, faces, walked)
+	var up_index := STONE_FACE_DIRECTIONS.find(Vector3i.UP)
+	var depth_scale := FabricRecipe.CELL_SIZE / GREEN_RIM_DEPTH
+	var keys: Array[Vector4i] = []
+	keys.assign(faces.keys())
+	keys.sort_custom(_face_before)
+	for key: Vector4i in keys:
+		if int(treatments[key]) != SkinTreatment.GREEN:
+			continue
+		var partner := faces[key] as Vector3i
+		var covered: Array[Vector3i] = [Vector3i(key.x, key.y, key.z)]
+		if partner != Vector3i.ZERO:
+			covered.append(Vector3i(key.x, key.y, key.z) + partner)
+		for cell: Vector3i in covered:
+			if not exposed.has(Vector4i(cell.x, cell.y, cell.z, up_index)):
+				continue
+			for index in FACE_DIRECTIONS.size():
+				if not exposed.has(Vector4i(cell.x, cell.y, cell.z, index)):
+					continue
+				out.add(GREEN_RIM_EDGE,
+					_maze_green_rim_transform(cell, FACE_DIRECTIONS[index],
+						depth_scale), Color.WHITE,
+					StringName("maze-rim/%d/%d/%d/%d" % [cell.x, cell.y,
+						cell.z, index]))
+	assert(out.validate())
+	return out
+
+
+static func _maze_green_rim_transform(cell: Vector3i, direction: Vector3i,
+		depth_scale: float) -> Transform3D:
+	## The rolled edge laid along one cell of one bench rim, turned so its own
+	## roll faces the drop -- the yaw `CliffDressing` gives the lip and the wall
+	## alike, and the same yaw `_maze_natural_face_transform` gives the rock
+	## below it, so turf and cliff face the same way by construction.
+	##
+	## Its depth is scaled to the cell and its origin pulled back by its own
+	## scaled overhang, so the roll lands ON the boundary and the piece occupies
+	## exactly the cell it dresses. Its length takes the quad's cross scale,
+	## because both are the same authored 3 m terrain tile meeting the same
+	## 1.5 m fabric cell. The DROP is never scaled: a rim that hangs a metre in
+	## one place and half of one in the next is not a rim.
+	var outward := Vector3(direction)
+	var origin := Vector3(cell) * FabricRecipe.CELL_SIZE \
+		+ outward * (FabricRecipe.CELL_SIZE * 0.5 - GREEN_RIM_FRONT \
+			* depth_scale)
+	origin.y = float(cell.y + 1) * FabricRecipe.CELL_SIZE + GREEN_RIM_LIFT
+	var basis := Basis(Vector3.UP, atan2(outward.x, outward.z))
+	basis.x = basis.x * GREEN_CAP_CROSS_SCALE
+	basis.z = basis.z * depth_scale
 	return Transform3D(basis, origin)
 
 
