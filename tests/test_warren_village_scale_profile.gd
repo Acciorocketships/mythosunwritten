@@ -228,14 +228,41 @@ func test_quota_floors_relax_only_downward() -> void:
 			audit),
 			"an excess over the %s ceiling was never a shortfall" \
 				% String(ceiling[0]))
-	# The courtyard terms are NOT relaxed: they are the counts whose shortfall
-	# nothing publishes, which is the whole reason the relaxation stops there.
+	# TASK F4. The courtyard terms USED to be the exception here -- "the counts
+	# whose shortfall nothing publishes, which is the whole reason the relaxation
+	# stops there". Something publishes them now (`elevated_courtyards`,
+	# `courtyard_bridge_houses`, `composed_courtyard_sides`), so the count joins
+	# the relaxed set on the condition the old comment itself named, and this
+	# test walks the whole family rather than the one representative.
 	var large := WarrenVillageScaleProfile.for_id(
 		WarrenVillageScaleProfile.LARGE)
 	var courtyard_audit := _contract_audit(large)
 	assert_true(VillageUrbanFabricPlan._scale_feature_contract_matches(
 		courtyard_audit), "a large town meeting every floor must be accepted")
-	courtyard_audit["elevated_courtyard_count"] = 0
+	var courtless := _contract_audit(large)
+	courtless["elevated_courtyard_count"] = 0
+	courtless["courtyard_daylight_macro_column_count"] = 0
+	courtless["courtyard_underbuilt_macro_column_count"] = 0
+	assert_true(VillageUrbanFabricPlan._scale_feature_contract_matches(
+		courtless),
+		"a courtless large town's shortfall is an audit fact, not a refusal")
+	courtless.erase("elevated_courtyard_count")
 	assert_false(VillageUrbanFabricPlan._scale_feature_contract_matches(
-		courtyard_audit),
-		"a missing courtyard has no published shortfall and stays hard")
+		courtless),
+		"an absent courtyard count is a broken transaction, not a shortfall")
+	# The ceiling beside that floor is untouched: a compact town carrying a court
+	# is a town promoted past its own size contract, which was never a shortfall.
+	var promoted := _contract_audit(compact)
+	promoted["elevated_courtyard_count"] = 1
+	assert_false(VillageUrbanFabricPlan._scale_feature_contract_matches(
+		promoted),
+		"an excess over the elevated_courtyard_count ceiling is not a shortfall")
+	# A town that DOES have a court still meets both column floors: there the
+	# numbers measure a real thing rather than an absence, so they stay hard.
+	for column_key: String in ["courtyard_daylight_macro_column_count",
+			"courtyard_underbuilt_macro_column_count"]:
+		var short_columns := _contract_audit(large)
+		short_columns[column_key] = 1
+		assert_false(VillageUrbanFabricPlan._scale_feature_contract_matches(
+			short_columns),
+			"a town WITH a court still owes %s" % column_key)

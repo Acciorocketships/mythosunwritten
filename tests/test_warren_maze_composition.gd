@@ -59,6 +59,13 @@ const ADVISORY_SHORTFALL_KEYS: Array[String] = [
 	# is advisory in maze mode. A town short of it ships and records the ratio
 	# it reached (plus `frontage_target`, the policy it was measured against).
 	"frontage",
+	# TASK F4. The three halves of the elevated-courtyard floor, which was the
+	# last HARD richness quota. Only a large or grand town can publish them:
+	# compact and standard require no court, so `requires_elevated_courtyard`
+	# never reaches any of the three sites. `courtyard_bridges` above is the
+	# beam's own record of the same absence one stage earlier.
+	"elevated_courtyards", "courtyard_bridge_houses",
+	"composed_courtyard_sides",
 ]
 
 ## Hero-quota gate texts. None of them may appear on a maze-mode failure: in
@@ -324,7 +331,7 @@ const UNCOMPOSED_PARCEL_GATES: Array[String] = [
 ##
 ##   Godot --headless --path . -s res://tests/harness/warren_maze_mode_sweep.gd \
 ##     -- --seeds 1,2,3,4,5,6,7,8,9,10,11,12 \
-##     --scale compact,standard
+##     --scale compact,standard,large,grand
 ##
 ## The path and the staleness fingerprint are the HARNESS's constants, read
 ## through this preload, so the two halves of the contract cannot drift apart.
@@ -379,10 +386,28 @@ const UNCOMPOSED_PARCEL_GATES: Array[String] = [
 ## would let either family E2 just closed reopen on one town in silence, which
 ## is precisely what this constant exists to prevent. If a town is lost, the
 ## honest response is to name it, not to have had room for it.
+## TASK F4 added `large` and `grand` to that invocation. Until this task they
+## sealed 0 of 12 each -- the elevated-courtyard floor refused 14 of the 24 and
+## the sweep never ran them at all, so the matrix measured half the size
+## profiles production rolls. They are scored SEPARATELY from the twelve
+## compact and twelve standard towns below, because their honest floors are 3
+## and 1, not 12: `test_large_and_grand_towns_exist` carries what a sealed one
+## of each measures, and the remaining blockers are named in the F4 report.
 const MAZE_SWEEP := preload("res://tests/harness/warren_maze_mode_sweep.gd")
 const CORPUS_SEALED_FLOOR := 24
 const CORPUS_SWEEP_SEEDS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-const CORPUS_SWEEP_SCALES: Array[String] = ["compact", "standard"]
+const CORPUS_SWEEP_SCALES: Array[String] = ["compact", "standard", "large",
+	"grand"]
+
+## The two halves of that matrix. `CORPUS_SEALED_FLOOR` above is an EQUALITY on
+## the first group -- a compact or standard town lost is a named regression --
+## while the second is pinned at what task F4 measured, seeds named. Measured
+## 3/12 at large (4, 6, 7) and 1/12 at grand (9). Both are floors: a seed that
+## starts sealing is a re-pin UPWARD with the reason, and one that stops is the
+## regression this exists to catch.
+const CORPUS_EQUALITY_SCALES: Array[String] = ["compact", "standard"]
+const LARGE_SEALED_FLOOR := 3
+const GRAND_SEALED_FLOOR := 1
 
 ## The composition family this task closed. A sweep row that dies here again is
 ## a regression of Task C6 ruling 1, not a new gate, so it is pinned by name.
@@ -4580,10 +4605,11 @@ func test_corpus_composes() -> void:
 	_assert_stage_stamps_are_whole()
 	var summary := _corpus_sweep_summary()
 	if summary.is_empty():
-		pending(("the 24-seed corpus matrix has not been measured on this " \
+		pending(("the 48-town corpus matrix has not been measured on this " \
 			+ "machine: run tests/harness/warren_maze_mode_sweep.gd -- " \
 			+ "--seeds 1,2,3,4,5,6,7,8,9,10,11,12 --scale " \
-			+ "compact,standard, which writes %s") % MAZE_SWEEP.SUMMARY_PATH)
+			+ "compact,standard,large,grand, which writes %s") \
+			% MAZE_SWEEP.SUMMARY_PATH)
 		return
 	# A summary is evidence about the code that produced it and nothing else.
 	# Without this the file survives every later edit and reports a green
@@ -4592,54 +4618,191 @@ func test_corpus_composes() -> void:
 	assert_ne(fingerprint, "",
 		"the fabric script directory could not be fingerprinted")
 	if String(summary.get("fingerprint", "")) != fingerprint:
-		pending(("the recorded 24-seed corpus matrix is STALE -- it was " \
+		pending(("the recorded 48-town corpus matrix is STALE -- it was " \
 			+ "measured against a different %s. Re-run " \
 			+ "tests/harness/warren_maze_mode_sweep.gd -- --seeds " \
 			+ "1,2,3,4,5,6,7,8,9,10,11,12 --scale " \
-			+ "compact,standard") % MAZE_SWEEP.PRODUCTION_SCRIPT_DIR)
+			+ "compact,standard,large,grand") \
+			% MAZE_SWEEP.PRODUCTION_SCRIPT_DIR)
 		return
 	# A three-seed spot check is not the corpus. Refuse to score against one.
 	assert_eq(_int_array(summary.get("seeds", [])), CORPUS_SWEEP_SEEDS,
 		"the recorded sweep does not cover the corpus seeds")
 	assert_eq(_string_array(summary.get("scales", [])), CORPUS_SWEEP_SCALES,
-		"the recorded sweep does not cover both corpus scales")
+		"the recorded sweep does not cover all four corpus scales")
 	var rows: Array = summary.get("rows", []) as Array
 	assert_eq(rows.size(), CORPUS_SWEEP_SEEDS.size() \
 		* CORPUS_SWEEP_SCALES.size(),
 		"the recorded sweep has %d rows, not one per corpus town" % rows.size())
+	# TASK F4. Scored per scale, because the four profiles do not owe the same
+	# thing: compact and standard owe every town, large and grand owe what they
+	# measure. A single number over 48 rows would let a lost compact town be
+	# repaid by a newly sealing grand one.
 	var sealed_count := 0
-	var failures := PackedStringArray()
+	var sealed_by_scale: Dictionary = {}
+	var attempted_by_scale: Dictionary = {}
+	var failures_by_scale: Dictionary = {}
 	var retired := PackedStringArray()
 	for row_value: Variant in rows:
 		var row := row_value as Dictionary
-		var label := "%d/%s" % [int(row.get("seed", -1)),
-			String(row.get("scale", ""))]
+		var scale := String(row.get("scale", ""))
+		var label := "%d/%s" % [int(row.get("seed", -1)), scale]
+		attempted_by_scale[scale] = 1 + int(attempted_by_scale.get(scale, 0))
+		if not failures_by_scale.has(scale):
+			failures_by_scale[scale] = PackedStringArray()
 		if bool(row.get("sealed", false)):
 			sealed_count += 1
+			sealed_by_scale[scale] = 1 + int(sealed_by_scale.get(scale, 0))
 			continue
-		failures.append("%s [%s]" % [label,
-			String(row.get("gate", "")).left(90)])
+		(failures_by_scale[scale] as PackedStringArray).append("%s [%s]" % [
+			label, String(row.get("gate", "")).left(90)])
 		if String(row.get("failure", "")).contains(RETIRED_CORPUS_GATE):
 			retired.append(label)
-	print("MAZE_CORPUS sealed=%d/%d failures=%s" % [sealed_count, rows.size(),
-		", ".join(failures)])
+	for scale: String in CORPUS_SWEEP_SCALES:
+		print("MAZE_CORPUS %s sealed=%d/%d failures=%s" % [scale,
+			int(sealed_by_scale.get(scale, 0)),
+			int(attempted_by_scale.get(scale, 0)),
+			", ".join(failures_by_scale.get(scale, PackedStringArray()))])
 	assert_eq(sealed_count, int(summary.get("sealed", -1)),
 		"the recorded sweep's own seal count disagrees with its rows")
+	var equality_sealed := 0
+	var equality_attempted := 0
+	var equality_failures := PackedStringArray()
+	for scale: String in CORPUS_EQUALITY_SCALES:
+		equality_sealed += int(sealed_by_scale.get(scale, 0))
+		equality_attempted += int(attempted_by_scale.get(scale, 0))
+		equality_failures.append_array(failures_by_scale.get(scale,
+			PackedStringArray()))
 	# Two-sided, like every pin in this file: below the floor is a regression
 	# to report, and comfortably above it is a pin that has gone stale.
-	assert_gte(sealed_count, CORPUS_SEALED_FLOOR,
-		"the maze corpus seals %d of %d towns: %s" % [sealed_count,
-			rows.size(), ", ".join(failures)])
+	assert_gte(equality_sealed, CORPUS_SEALED_FLOOR,
+		"the maze corpus seals %d of %d towns: %s" % [equality_sealed,
+			equality_attempted, ", ".join(equality_failures)])
 	# TASK E2: it does. The staleness guard that used to stand here said "the
 	# whole corpus seals; delete the shortfall note above CORPUS_SEALED_FLOOR
 	# and re-pin", and this is that edit. It is now an equality, which is the
 	# same guard pointing the other way: a town lost is a named regression.
-	assert_eq(sealed_count, rows.size(),
-		"the maze corpus seals %d of %d towns: %s" % [sealed_count,
-			rows.size(), ", ".join(failures)])
+	assert_eq(equality_sealed, equality_attempted,
+		"the maze corpus seals %d of %d towns: %s" % [equality_sealed,
+			equality_attempted, ", ".join(equality_failures)])
+	# TASK F4's honest floors. Not an equality: most large and grand seeds still
+	# refuse, at gates this task named rather than chased.
+	for floor_pin: Array in [["large", LARGE_SEALED_FLOOR],
+			["grand", GRAND_SEALED_FLOOR]]:
+		var scale := String(floor_pin[0])
+		assert_gte(int(sealed_by_scale.get(scale, 0)), int(floor_pin[1]),
+			"%s seals %d of %d towns, below its measured floor of %d: %s" % [
+				scale, int(sealed_by_scale.get(scale, 0)),
+				int(attempted_by_scale.get(scale, 0)), int(floor_pin[1]),
+				", ".join(failures_by_scale.get(scale, PackedStringArray()))])
 	assert_eq(retired.size(), 0,
 		("Task C6 ruling 1 closed the measured-phase-selection family; these " \
 			+ "towns died there again: %s") % ", ".join(retired))
+
+
+## TASK F4. One sealed town of each big scale, solved here rather than read off
+## the sweep, because the pins below are the CORPUS-DRIFT TRIPWIRE and a
+## tripwire wants the audit itself. The seeds are the cheapest sealing large
+## town and the only sealing grand one.
+##
+## Both ceilings are the measured solve x 1.5 on the task machine: 13300 and
+## 49376 ms. They are far above the four planner seeds' 3.2-6.5 s and they are
+## reported, not endorsed -- nothing in task F4 optimised these scales, which
+## have never been through a performance pass at all.
+const LARGE_LANE_SEED := 7
+const GRAND_LANE_SEED := 9
+const LARGE_LANE_SOLVE_MS_CEILING := 20000
+const GRAND_LANE_SOLVE_MS_CEILING := 74000
+
+## Measured 116 / 118 / 142 buildings at large (seeds 7, 6, 4) and 236 at grand,
+## against 40-70 for a compact planner town. Floored well below the measurement:
+## the claim is "these towns really are the big ones", not a re-pin surface.
+const LARGE_LANE_BUILDING_FLOOR := 90
+const GRAND_LANE_BUILDING_FLOOR := 180
+
+
+func test_large_and_grand_towns_exist() -> void:
+	## The task F4 exit, in one test. Before the flip these two scales sealed 0
+	## of 12 each and ~15 % of production city seeds produced NO TOWN AT ALL;
+	## the elevated-courtyard floors are advisory now and these two seeds come
+	## out the far side. What they ship is deliberately pinned as the plain
+	## thing it is: no court, no landmark, no skywalk, every absence published.
+	for lane: Array in [[LARGE_LANE_SEED, WarrenVillageScaleProfile.LARGE,
+				LARGE_LANE_SOLVE_MS_CEILING, LARGE_LANE_BUILDING_FLOOR],
+			[GRAND_LANE_SEED, WarrenVillageScaleProfile.GRAND,
+				GRAND_LANE_SOLVE_MS_CEILING, GRAND_LANE_BUILDING_FLOOR]]:
+		var outcome := _solved(int(lane[0]), StringName(lane[1]))
+		var plan := outcome.plan as WarrenSpatialPlan
+		assert_not_null(plan, "%s must seal its town: %s" % [_label(outcome),
+			String(outcome.failure).left(200)])
+		if plan == null:
+			continue
+		var shortfalls := plan.audit.get("advisory_shortfalls", {}) \
+			as Dictionary
+		print("MAZE_BIG %s ms=%d buildings=%d rooms=%s markets=%d %s" % [
+			_label(outcome), int(outcome.ms), plan.buildings.size(),
+			str(plan.audit.get("room_storey_kind_counts", {})),
+			int(plan.audit.get("covered_market_count", -1)), str(shortfalls)])
+		assert_lte(int(outcome.ms), int(lane[2]),
+			("%s solved in %d ms against a %d ms ceiling; name the stage with " \
+				+ "tests/harness/warren_maze_stage_probe.gd before re-pinning") \
+				% [_label(outcome), int(outcome.ms), int(lane[2])])
+		assert_gte(plan.buildings.size(), int(lane[3]),
+			"%s built %d buildings; a big town is big" % [_label(outcome),
+				plan.buildings.size()])
+		# The same vocabulary guard `test_hero_shortfalls_are_audit_facts` puts
+		# on the four planner towns. These two publish keys no compact town can,
+		# so the guard has to see them here or it never sees them at all.
+		for key_value: Variant in shortfalls.keys():
+			assert_has(ADVISORY_SHORTFALL_KEYS,
+				_canonical_shortfall_key(String(key_value)),
+				"%s reports an unvocabularised shortfall %s" % [
+					_label(outcome), key_value])
+		# The three courtyard shortfalls, two-sided. A value that MOVES means the
+		# corpus drifted under the flip -- either these towns started forming a
+		# court (delete the pin and say so) or they lost something else.
+		for pinned: Array in [["elevated_courtyards", 0],
+				["courtyard_bridge_houses", 0], ["courtyard_bridges", 0],
+				["courtyard_parcel_sides", 0], ["composed_courtyard_sides", 0],
+				["composed_courtyard_sides_target",
+					WarrenSpatialFeatureSolver.MIN_COURT_SIDE_COUNT]]:
+			assert_eq(int(shortfalls.get(String(pinned[0]), -1)),
+				int(pinned[1]), "%s must publish %s = %d" % [_label(outcome),
+					String(pinned[0]), int(pinned[1])])
+		# ...and the audit agrees with them. A town that publishes "no court" and
+		# also claims one in its own contract is the one thing this flip could
+		# have broken.
+		for pinned: Array in [["elevated_courtyard_count", 0],
+				["courtyard_bridge_house_count", 0],
+				["composed_courtyard_side_count", 0],
+				["composed_courtyard_side_mask", 0]]:
+			assert_eq(int(plan.audit.get(String(pinned[0]), -1)),
+				int(pinned[1]), "%s must audit %s = %d" % [_label(outcome),
+					String(pinned[0]), int(pinned[1])])
+		# The market arm, exercised for the first time by these two scales.
+		# `requires_covered_market` is TRUE on both profiles and every sealed
+		# large/grand town builds its bazaar -- because a town whose market never
+		# preplans is rejected by `WarrenSpatialFeatureSolver` instead of
+		# publishing the `covered_market` shortfall the solver already wrote for
+		# it. That contradiction is task F4's headline handoff; this pins the
+		# half that is true today, so closing it shows up here.
+		assert_true(WarrenVillageScaleProfile.for_id(
+			StringName(lane[1])).requires_covered_market,
+			"%s's profile must still require a bazaar" % _label(outcome))
+		assert_eq(int(plan.audit.get("covered_market_count", -1)), 1,
+			"%s must build the bazaar its profile requires" % _label(outcome))
+		assert_eq(_feature_count(plan, &"covered_market"), 1,
+			"%s must carry exactly one market feature" % _label(outcome))
+		assert_false(shortfalls.has("covered_market"),
+			"%s built its bazaar, so it may not publish the shortfall" \
+				% _label(outcome))
+		# The production materialization contract is the other end of the flip:
+		# a courtless large town has to survive it, or the town seals and then
+		# dies at the record builder.
+		assert_true(VillageUrbanFabricPlan._scale_feature_contract_matches(
+			plan.audit),
+			"%s must survive the production size contract courtless" \
+				% _label(outcome))
 
 
 func _assert_stage_stamps_are_whole() -> void:
