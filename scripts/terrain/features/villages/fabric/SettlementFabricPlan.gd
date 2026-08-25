@@ -27,6 +27,7 @@ var retained_terrace_cells: Dictionary = {}
 var audit: Dictionary = {}
 var _recipes: Dictionary = {}
 var _by_id: Dictionary = {}
+var _clearance_bounds: Array[AABB] = []
 var _solid_owner: Dictionary = {}
 var _walk_owner: Dictionary = {}
 var _headroom_owner: Dictionary = {}
@@ -105,26 +106,38 @@ func add_unit(unit: FabricUnit) -> bool:
 	last_rejection = ""
 	if _sealed:
 		return false
-	# _accept_unit claims semantic cells as it validates them. Stage those
-	# mutations so a later visual-envelope rejection cannot leave ghost claims
-	# that poison a measured fallback attempted in the same plan.
-	var trial_solid := _solid_owner.duplicate()
-	var trial_walk := _walk_owner.duplicate()
-	var trial_headroom := _headroom_owner.duplicate()
-	if not _accept_unit(unit, _by_id, trial_solid,
-			trial_walk, trial_headroom):
+	# _accept_unit claims semantic cells as it validates them, and a later
+	# visual-envelope rejection must not leave ghost claims that poison a
+	# measured fallback attempted in the same plan.
+	#
+	# TASK F2. That used to be staged by DUPLICATING all three owner maps for
+	# every unit — an O(town) copy per unit, three maps deep, in each of the
+	# three plans a compile builds (the room-phase probe, the roof-selection
+	# probe, and the result). It is now a journal: the claims go into the real
+	# maps and a rejection erases exactly the keys they added. Contents AND
+	# insertion order are restored, because `_claim_cells` refuses any key its
+	# own map already holds — so every journalled key is one this call created.
+	var journal: Array[Array] = []
+	if not _accept_unit(unit, _by_id, _solid_owner, _walk_owner,
+			_headroom_owner, journal):
+		_rollback_claims(journal)
 		return false
 	var recipe := _recipes[unit.recipe_id] as FabricRecipe
 	var transform := unit.transform()
 	unit.bounds = transform * recipe.local_bounds
 	var clearance_bounds := transform * recipe.local_clearance_bounds
-	for existing: FabricUnit in units:
+	for index in units.size():
+		var existing := units[index]
 		var existing_recipe := _recipes[existing.recipe_id] as FabricRecipe
 		if recipe.placements.is_empty() or existing_recipe.placements.is_empty() \
 				or _units_declare_connection(unit, existing):
 			continue
-		var existing_clearance := existing.transform() * \
-			existing_recipe.local_clearance_bounds
+		# The accepted unit's clearance box, recorded when it was accepted. A
+		# unit's origin, yaw and recipe are fixed at construction, so this is
+		# the same product the loop used to recompute for every pair; `validate`
+		# still derives both sides from scratch at seal time, which is where
+		# the authoritative proof lives.
+		var existing_clearance := _clearance_bounds[index]
 		if _aabb_overlaps_volume(clearance_bounds, existing_clearance):
 			if DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP \
 					and _is_corner_nick(clearance_bounds, existing_clearance):
@@ -139,13 +152,21 @@ func add_unit(unit: FabricUnit) -> bool:
 					unit.yaw_quarters, clearance_bounds, existing.stable_id,
 					existing.recipe_id, existing.lattice_origin,
 					existing.yaw_quarters, existing_clearance]
+			_rollback_claims(journal)
 			return false
-	_solid_owner = trial_solid
-	_walk_owner = trial_walk
-	_headroom_owner = trial_headroom
 	units.append(unit)
+	_clearance_bounds.append(clearance_bounds)
 	_by_id[unit.stable_id] = unit
 	return true
+
+
+func _rollback_claims(journal: Array[Array]) -> void:
+	## Undo exactly the claims this call made, newest first.
+	for index in range(journal.size() - 1, -1, -1):
+		var entry := journal[index]
+		var owner := entry[0] as Dictionary
+		for key: String in entry[1] as Array[String]:
+			owner.erase(key)
 
 
 func seal(p_audit: Dictionary = {}) -> bool:
@@ -685,7 +706,8 @@ func _validate_surface_coverage() -> bool:
 
 
 func _accept_unit(unit_value: FabricUnit, seen: Dictionary,
-		solid: Dictionary, walk: Dictionary, headroom: Dictionary) -> bool:
+		solid: Dictionary, walk: Dictionary, headroom: Dictionary,
+		journal: Array[Array] = []) -> bool:
 	if unit_value == null or not unit_value.is_valid():
 		last_rejection = "null or invalid fabric unit"
 		return false
@@ -759,13 +781,13 @@ func _accept_unit(unit_value: FabricUnit, seen: Dictionary,
 				unit_value.stable_id, parent_id]
 			return false
 	if not _claim_cells(unit_recipe.solid_cells, unit_value, solid,
-			[solid, headroom, walk], &"solid"):
+			[solid, headroom, walk], &"solid", journal):
 		return false
 	if not _claim_cells(unit_recipe.headroom_cells, unit_value, headroom,
-			[solid, headroom], &"headroom"):
+			[solid, headroom], &"headroom", journal):
 		return false
 	if not _claim_cells(unit_recipe.walk_cells, unit_value, walk,
-			[solid, walk], &"walk"):
+			[solid, walk], &"walk", journal):
 		return false
 	return true
 
@@ -815,7 +837,8 @@ func _all_public_walk_reaches_landing(by_id: Dictionary) -> bool:
 
 
 func _claim_cells(local_cells: Array[Vector3i], unit_value: FabricUnit,
-		owner: Dictionary, conflicts: Array[Dictionary], layer: StringName) -> bool:
+		owner: Dictionary, conflicts: Array[Dictionary], layer: StringName,
+		journal: Array[Array] = []) -> bool:
 	var world_cells: Array[String] = []
 	for local_cell: Vector3i in local_cells:
 		var world_cell := FabricRecipe.transform_cell(local_cell,
@@ -829,6 +852,11 @@ func _claim_cells(local_cells: Array[Vector3i], unit_value: FabricUnit,
 		world_cells.append(key)
 	for key: String in world_cells:
 		owner[key] = unit_value.stable_id
+	# TASK F2. `owner` is always one of its own `conflicts`, so a key that
+	# reached this loop was NOT already in `owner`: the journal therefore holds
+	# only keys this call created, and erasing them is an exact undo.
+	if not world_cells.is_empty():
+		journal.append([owner, world_cells])
 	return true
 
 
