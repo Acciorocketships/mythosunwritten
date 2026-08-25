@@ -554,13 +554,23 @@ func _capture_all() -> void:
 			span * 0.8, span), "target": centre, "fov": 52.0},
 		{"id": "overview-sw", "position": centre + Vector3(-span,
 			span * 0.65, -span), "target": centre, "fov": 54.0},
+		# TASK G1. The battery asks for a four-compass orbit, not the opposed
+		# pair two views give. The missing quadrants are what show whether the
+		# town's mass falls off toward its edges or is cut flat against them,
+		# and a single diagonal axis cannot tell those apart.
+		{"id": "overview-nw", "position": centre + Vector3(-span,
+			span * 0.8, span), "target": centre, "fov": 52.0},
+		{"id": "overview-se", "position": centre + Vector3(span,
+			span * 0.65, -span), "target": centre, "fov": 54.0},
 	]
+	views.append_array(_gate_approach_views())
 	views.append_array(_street_views())
 	views.append_array(_transition_views())
 	views.append_array(_market_views())
 	views.append_array(_courtyard_views())
 	views.append_array(_route_connected_rooftop_court_views())
 	views.append_array(_roof_terrace_views())
+	views.append_array(_roofline_views())
 	views.append_array(_dormer_views())
 	views.append_array(_roof_campaign_views())
 	views.append_array(_interstitial_gap_views())
@@ -571,6 +581,7 @@ func _capture_all() -> void:
 	views.append_array(_arcade_overhang_views())
 	views.append_array(_room_overhang_support_views())
 	views.append_array(_skywalk_views())
+	views.append_array(_bridge_room_views())
 	views.append_array(_room_outcropping_views())
 	views.append_array(_tower_annex_views())
 	views.append_array(_landmark_views())
@@ -608,6 +619,45 @@ func _capture_matches_filter(view_id: String) -> bool:
 		if view_id.contains(token.strip_edges()):
 			return true
 	return false
+
+
+func _gate_approach_views() -> Array[Dictionary]:
+	## TASK G1. Stand outside the town at eye level and walk in through its one
+	## authored entry. Every other camera in this harness is already inside the
+	## fabric, so nothing here photographed the silhouette a player actually
+	## meets first -- the approach that decides whether the town reads as one
+	## clustered mass or as a wall of equal blocks. The entry cell is the sealed
+	## plan's own `entry_cell` (`primary_itinerary[0]`), not a guess.
+	var out: Array[Dictionary] = []
+	if _spatial == null or _spatial.source_volume == null:
+		return out
+	var entry := _spatial.source_volume.entry_cell
+	var gate := Vector3(
+		float(entry.x) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
+			+ FabricRecipe.CELL_SIZE * 0.5,
+		float(entry.y) * WarrenVolumePlan.VERTICAL_BAND_SIZE_M,
+		float(entry.z) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
+			+ FabricRecipe.CELL_SIZE * 0.5)
+	var bounds := _fabric_bounds()
+	var outward := gate - bounds.get_center()
+	outward.y = 0.0
+	if outward.length_squared() <= 0.01:
+		outward = Vector3.BACK
+	outward = outward.normalized()
+	var span := maxf(bounds.size.x, bounds.size.z)
+	# Two ranges: the far one carries the whole approaching silhouette, the near
+	# one is the threshold itself at walking distance.
+	for entry_range: Dictionary in [
+			{"token": "far", "distance": maxf(26.0, span * 0.55),
+				"height": 3.4, "fov": 62.0},
+			{"token": "near", "distance": 11.0, "height": 1.7, "fov": 70.0}]:
+		out.append({
+			"id": "gate-approach-%s" % String(entry_range.token),
+			"position": gate + outward * float(entry_range.distance) \
+				+ Vector3.UP * float(entry_range.height),
+			"target": gate - outward * 6.0 + Vector3.UP * 2.2,
+			"fov": float(entry_range.fov)})
+	return out
 
 
 func _street_views() -> Array[Dictionary]:
@@ -729,6 +779,13 @@ func _transition_views() -> Array[Dictionary]:
 		out.append({"id": "transition-%02d" % ordinal,
 			"position": low - direction * 0.6 + Vector3.UP * 1.25,
 			"target": high + Vector3.UP * 0.45, "fov": 70.0})
+		# TASK G1. The same span walked the other way. An uphill alley and a
+		# downhill alley are different pictures of the same street: one shows
+		# the climb and what stands over it, the other shows the fall-off and
+		# the roofs below it, and the battery asks for both.
+		out.append({"id": "transition-%02d-downhill" % ordinal,
+			"position": high + direction * 0.6 + Vector3.UP * 1.6,
+			"target": low + Vector3.UP * 0.9, "fov": 70.0})
 		ordinal += 1
 		if ordinal >= 3:
 			break
@@ -767,6 +824,46 @@ func _roof_terrace_views() -> Array[Dictionary]:
 			"position": eye, "target": target, "fov": 55.0})
 		if out.size() >= 4:
 			break
+	return out
+
+
+func _roofline_views() -> Array[Dictionary]:
+	## TASK G1. Stand ON the town's highest flat roof and look across the whole
+	## roofscape to its far corners. `_roof_terrace_views` needs a FURNISHED
+	## terrace recipe (the corpus compiles none) and `_roof_campaign_views`
+	## frames two adjacent roofs at close range, so neither answers "the roofline
+	## from a neighbouring roof terrace" -- the one view that shows whether the
+	## mass falls off toward the edges or stops flat against them.
+	var best: FabricUnit = null
+	var best_bounds := AABB()
+	for unit: FabricUnit in _fabric.units:
+		if not String(unit.recipe_id).begins_with("roof.flat."):
+			continue
+		var recipe := _fabric.recipe(unit.recipe_id)
+		if recipe == null or recipe.placements.is_empty():
+			continue
+		var unit_bounds := unit.transform() * recipe.local_clearance_bounds
+		if best == null or unit_bounds.end.y > best_bounds.end.y:
+			best = unit
+			best_bounds = unit_bounds
+	if best == null:
+		return []
+	var bounds := _fabric_bounds()
+	var eye := best_bounds.get_center()
+	eye.y = best_bounds.end.y + 1.7
+	var out: Array[Dictionary] = []
+	# Aim at the far corners' MID-HEIGHT, not at the eye's own level: the eye
+	# stands on the town's highest roof, so a level aim photographs the horizon
+	# and the roofscape falls out of frame entirely.
+	var aim_y := bounds.position.y + bounds.size.y * 0.45
+	var corners: Array[Vector3] = [
+		Vector3(bounds.position.x, aim_y, bounds.position.z),
+		Vector3(bounds.end.x, aim_y, bounds.end.z),
+		Vector3(bounds.position.x, aim_y, bounds.end.z),
+		Vector3(bounds.end.x, aim_y, bounds.position.z)]
+	for index in corners.size():
+		out.append({"id": "roofline-%02d" % index, "position": eye,
+			"target": corners[index], "fov": 78.0})
 	return out
 
 
@@ -1125,6 +1222,49 @@ func _route_connected_rooftop_court_views() -> Array[Dictionary]:
 		out.append({"id": "rooftop-court-entry", "position": entry_eye,
 			"target": entry_eye + inward * 7.5 + Vector3.UP * 0.25,
 			"fov": 72.0})
+	return out
+
+
+func _bridge_room_views() -> Array[Dictionary]:
+	## TASK G1. The constructive maze town builds its crossings as BRIDGE ROOMS
+	## (`spatial.maze_bridge.NN`), not as the `enclosed_skywalk` features
+	## `_skywalk_views` photographs, so a town with a bridge produced no bridge
+	## capture at all. Two cameras per span: one across it at deck height, one
+	## from the street it passes over looking up at its underside.
+	var out: Array[Dictionary] = []
+	var ordinal := 0
+	for building: WarrenBuildingVolume in _spatial.buildings:
+		if not String(building.stable_id).begins_with("spatial.maze_bridge."):
+			continue
+		var cells: Array[Vector3i] = []
+		for room: WarrenRoomStamp in building.room_records:
+			cells.append_array(room.private_cells)
+		if cells.is_empty():
+			cells.append_array(building.private_cells)
+		if cells.is_empty():
+			continue
+		var bounds := AABB(Vector3(cells[0]) * FabricRecipe.CELL_SIZE,
+			Vector3.ZERO)
+		for cell: Vector3i in cells:
+			bounds = bounds.expand(Vector3(cell) * FabricRecipe.CELL_SIZE)
+		bounds = bounds.grow(FabricRecipe.CELL_SIZE * 0.5)
+		var centre := bounds.get_center()
+		# Above deck, not level with it: a bridge stands among roofs, and a
+		# level camera is reliably blocked by the nearest one.
+		var span_eye := _best_orbit_position(centre,
+			maxf(16.0, maxf(bounds.size.x, bounds.size.z) + 11.0), 7.5,
+			[building.stable_id] as Array[StringName], bounds)
+		out.append({"id": "bridge-room-%02d-span" % ordinal,
+			"position": span_eye, "target": centre, "fov": 60.0})
+		var under_target := Vector3(centre.x,
+			bounds.position.y - 0.15, centre.z)
+		var under_eye := _best_orbit_position(under_target, 7.0, -2.6,
+			[building.stable_id] as Array[StringName], bounds)
+		out.append({"id": "bridge-room-%02d-under" % ordinal,
+			"position": under_eye, "target": under_target, "fov": 70.0})
+		ordinal += 1
+		if ordinal >= 3:
+			break
 	return out
 
 
