@@ -461,4 +461,38 @@ The M8-style battery (entrance, market, alleys both ways, courtyard, tunnel, sky
 Controller work, not a subagent dispatch: assemble the battery into one review deliverable for the user — organized by his three directions (each with its best supporting and worst offending captures + the measured numbers), then the open questions (each framed as a decision with the render that motivates it: plateau railings; outcropping/notch design; compact grade-2 steps; any surviving composition gates), then the branch state (phases done, corpus/suite state, solve times, line-count delta). End with the full Rulings list per the SDD skill and the finishing-a-development-branch flow — the merge decision is the user's; STOP and wait.
 
 ### Phase G exit
-- The user has seen the battery and rendered judgment; his verdicts are ledgered; follow-up work (if any) is scoped into a new plan rather than grafted onto this one.
+- The user has seen the battery and rendered judgment; his verdicts are ledgered; follow-up work (if any) is scoped into a new plan rather than grafted onto this one. **Outcome (2026-08-25):** judgment rendered — see Phase H; the merge decision is deferred until H delivers.
+
+# Phase H — The quaint village
+
+**Binding direction (user, 2026-08-25, at the G2 review gate):** "we need way less stone in the city, it currently looks too blocky/rectangular, like a fortress. i want it to look like a quaint medieval village. please fix this."
+
+What the battery proved about this: the E4 stone metric measures massif ROCK against local datums and is green (0.0163–0.1145); the fortress read comes from (a) ashlar WALL CLADDING on nearly every storey of the stacked mass, (b) the pale stone-slab look of the `roof.flat.*` plate fields (31 pitched vs 260 flat corpus-wide), and (c) rectangular massing those two materials leave nothing to soften. This phase changes (a) and (b) — material and roofline, the two levers that change every frame. Massing stays: the terraced clustered fall-off is delivered and ruled kept; if the fortress read survives H, non-rectangular massing is a new conversation with new renders.
+
+Milestone: upper-storey walls read timber-frame/plaster; stone appears only where a mason would put it (retaining walls, plinth/foundation courses, ground storeys that bear on rock); the roofscape is pitched-dominant with flat reserved for crowns something actually stands on, and those remaining terraces read as plank decks, not stone slabs; a WALL-MATERIAL metric (what the eye sees) joins the rock metric (what the massif is) as the pinned truth. Exit: the re-rendered battery reads as a quaint medieval village to the user.
+
+**Phase discipline:** output changes are the point — the corpus re-fingerprints and every moved number re-pins measured-first; but seals may not regress (32/48 holds or improves; the four sloped rows compose; identity-probe ATTRIBUTION per task: the diff is the intended material/roof change and nothing else). The F2 solve ceilings hold. No massing/plot-model changes.
+
+### Task H1: Walls — plaster above, stone where it bears
+
+**Files:** the wall-family selection point in `WarrenSpatialFabricCompiler.gd`/`SettlementFabricAssembler.gd` (the Explore map names the exact lever), `WarrenMazeSourcePlan.gd` if the plinth line wants the datum machinery (it already computes `nearest_datum_band` per column — reuse, do not duplicate), tests.
+- Default wall family above the plinth course: the plaster/timber-frame family the pitched houses already render. Stone family kept for: the maze stone skin (retained rock — untouched), retaining/plinth courses, and the ground storey ONLY where the building bears on rock or a retaining face (measured, not everywhere).
+- The metric that sees what the user sees: `exterior_wall_material_profile` — share of exterior wall faces per material per band-offset-over-local-datum, published in the audit, printed by the sweep per town, pinned: stone wall-face share ≤ ceiling at measured (expect it to CRASH from ~most to ~low), and ≈ 0 above offset +2.
+- Renders judged before review: 12/compact + 9/grand elevations at eye level — the grand flank (the battery's worst offender) must read timbered.
+- [ ] Commit — `feat(villages): plaster above, stone where it bears`.
+
+### Task H2: Roofscape — pitched by default, planks where walked
+
+**Files:** the C5d flat-first policy in the compiler (its ruling is SUPERSEDED by this phase's direction), the `roof.flat.*` tiling's plate material, tests.
+- Pitched becomes the default crown wherever nothing stands on the plate (no stacked room, no deck/route floor, not a terrace the realm uses); flat survives only under load or walkable use, and every surviving flat crown tiles as PLANK deck with railings (the pale rubble plates retire from crowns; the C5e parapet-release architecture stays).
+- Dormers ride the new pitched population (the F3-fixed whole-town counter is the measure); the E3b lineage gates are already lineage-agnostic — pitched growth must not resurrect the partial-plate families (corpus watch).
+- Measured targets, pinned after measurement: pitched share of eligible crowns (expect a multiple of today's 31/291); flat crowns carrying neither room nor walkable use = 0.
+- [ ] Commit — `feat(villages): pitched by default; planks where walked`.
+
+### Task H3: The re-battery and the verdict
+
+- Re-render the battery seeds (12/compact, 3/standard, 10/standard, 7/large, 9/grand + the production settlement in-game), same vantages; the controller reads them against "quaint medieval village"; the review page updates with before/after pairs; the user judges.
+- [ ] Deliverable — updated artifact + the stop.
+
+### Phase H exit
+- The user looks at the re-battery and calls it a quaint medieval village (or names what still reads wrong); corpus ≥ 32/48; all pins honest; the merge menu returns.
