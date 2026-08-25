@@ -3765,10 +3765,11 @@ static func _market_open_horizon_limit(volume: WarrenVolumePlan) -> int:
 	## why 4 stays. The other two arms are UNEXERCISED and cannot be tuned
 	## against anything: no large or grand town seals. Measured 2026-08-25 over
 	## the same 12 seeds the corpus uses, 0 of 12 sealed at large and 0 of 12 at
-	## grand, nearly all of them at the elevated-courtyard gate those two
+	## grand: 14 of the 24 died at the elevated-courtyard gate those two
 	## profiles are the only ones to require (`3D room composition preserves
-	## only 0 courtyard sides`), a few earlier at the route-slab or straight-run
-	## gates. So 8 and 10 have never judged a candidate, and note that
+	## only 0 courtyard sides`), 5 at the route-slab gate, 3 at the
+	## straight-run cap and 2 at the court cantilever. So 8 and 10 have never
+	## judged a candidate, and note that
 	## `GRAND_MARKET_OPEN_HORIZON_CELLS` equals the sight ray's own bound, which
 	## makes the grand arm no constraint at all rather than a loose one.
 	## Whether large and grand should seal is Phase G's question, and it comes
