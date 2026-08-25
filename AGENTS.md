@@ -362,8 +362,8 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   custom-program fixtures; a solve selects exactly one generation kind and the two algorithms
   must never be mixed. Sectional production records also suppress the legacy outskirts/prop pass.
   The replacement volumetric source-plan pipeline is now the default production transaction when
-  the common fabric vocabulary is available. It has two deliberately separate topology producers.
-  Before either source is built, `WarrenVillageScaleProfile.select()` deterministically chooses one
+  the common fabric vocabulary is available. It has ONE topology producer: the plot-model maze
+  source described below. Before the town is built, `WarrenVillageScaleProfile.select()` deterministically chooses one
   of four size contracts: compact 55%, standard 30%, large 12%, grand 3%. Their planning diameters
   are 63/69/75/87 m; total inhabited-room budgets are 18--110/30--190/50--220/80--300; residual
   infill is capped separately at 12/16/24/32 rooms. Those totals include the late residual pass,
@@ -394,17 +394,31 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   only large and grand require the elevated third-storey court. Stable source signatures and
   terrain-relative rebuilds carry the exact selected profile; a small town is never a cropped or
   mesh-scaled large one.
-  **STALE BELOW (task F1, 2026-08-25).** The searched village pipeline was deleted:
-  `WarrenTownSolver.GENERATION_MODE`, `WarrenPublicRealmCarver`, `WarrenGroundArcadeSolver`,
+  **THE PRODUCTION PIPELINE IS ONE PASS.** There is no generation mode, no attempt rotation, no
+  ranked candidate frontier and no solution pin: task F1 deleted the searched pipeline outright
+  (`WarrenTownSolver.GENERATION_MODE`, `WarrenPublicRealmCarver`, `WarrenGroundArcadeSolver`,
   `WarrenExcavationCarver`, `WarrenParcelizer`, `WarrenParcelHeightSolver`,
   `WarrenSolidPartitioner`, `WarrenBuiltTownSolver`/`WarrenBuiltTownPlan`, `WarrenTownPlan`,
-  `WarrenAssetPlan`, `WarrenFabricCompiler`, `WarrenMassPruner`, `WarrenVolumeSurfaceCompiler`
-  and `WarrenSolutionPinCache` no longer exist, and the hero-feature beam inside
-  `WarrenVolumetricSolver` went with them. Production is one pass:
-  `VillagePlan` -> `VillageWarrenFabricSolver` -> `WarrenVolumetricSolver.solve` ->
-  `WarrenMazeSitePlanner` -> `WarrenMazeVolumeAdapter` -> `from_volume`. Any paragraph below
-  that describes route-first, mass-first, attempt rotation, ranked candidates or a solution pin
-  is a record of what the code USED to do; this section still needs a rewrite.
+  `WarrenAssetPlan`, `WarrenFabricCompiler`, `WarrenMassPruner`, `WarrenVolumeSurfaceCompiler`,
+  `WarrenSolutionPinCache`, and the hero-feature beam inside `WarrenVolumetricSolver`). A settlement
+  is built exactly once per (city seed, scale profile), and if it is rejected there is no second
+  candidate -- which is why every richness quota below is an audit fact rather than a refusal.
+  The call graph is: `VillagePlan` -> `VillageWarrenFabricSolver.solve` (terrain sampling, yaw
+  placement, materialization) -> `WarrenVolumetricSolver.solve` -> `WarrenMazeSitePlanner.plan`
+  (massif -> carve -> reserve -> partition -> seal) -> `WarrenMazeVolumeAdapter.to_volume_plan` ->
+  `WarrenVolumetricSolver.from_volume` (public volume, parcels, rooms, one-pass feature selection,
+  residual backfill) -> `WarrenSpatialFabricCompiler.solve` -> `SettlementFabricAssembler`. The
+  terrain rebuild after placement (`solve_selected`) is the identical one-pass solve with the
+  placement's real ground bands.
+  The corpus sweep is `tests/harness/warren_maze_mode_sweep.gd`, run as
+  `Godot --headless --path . -s res://tests/harness/warren_maze_mode_sweep.gd -- --seeds
+  1,2,3,4,5,6,7,8,9,10,11,12 --scale compact,standard`. It writes its matrix to
+  `user://warren_maze_mode_sweep.json` with a fingerprint of the fabric script directory, and
+  `tests/test_warren_maze_composition.gd::test_corpus_composes` scores itself against that file
+  and refuses a matrix measured against a different tree. `--mode` and `--constructive` are
+  retired and now exit 2 rather than silently no-opping. **Corpus state 2026-08-25: 24 of 24
+  towns seal.** Per-stage wall clock for one town is on the sealed plan's `maze_stage_ms` audit
+  key; `tests/harness/warren_maze_stage_probe.gd` and `warren_solve_profile.gd` print it.
   `WarrenMazeCarver` builds one deterministic entrance-to-summit spine,
   coverage-driven alley network, a universal typed 6 m by 6 m market square, and open-air/tunnel
   classification from the same `WarrenMassif`,
@@ -422,35 +436,21 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   stair is recorded separately rather than misclassified as an invented path.
   market widens a straight approach by two cells when possible and otherwise fills the missing
   diagonal of a tight approach turn; alley growth treats that square as immutable topology and
-  restores the source frontage margin around it. `WarrenMazeBlockPartitioner` is an experimental
-  one-pass adapter to the existing authored tower/slim/row/building/long parcel contracts. It never
-  generates partition variants, but it does not yet own the deep block interior: the current corpus
-  seals 7/9 common volumes and assigns only 0.394 mean post-carve solid, so it is a compatibility
-  probe rather than permission to enable maze production. Do not
-  route production through this source until the remaining stamps, complete back/upper block ownership, direct downstream
-  reservations, the record/timing corpus, and visual review gates in
-  `docs/superpowers/plans/2026-08-16-maze-town-carver-refactor.md` are complete.
-  Route-first uses `WarrenVolumeEnvelope` and the public-realm carver described below. Mass-first
-  uses `WarrenMassifBuilder` to author one bounded 2--18-band **inhabited** Gaussian mountain directly
-  above immutable terrain; `WarrenMassif.bearing_at()` is the terrain base, never a hidden stone
-  substrate. `WarrenExcavationCarver` removes the connected narrow street, headroom, stairs, and
-  passages from that mass, so paths remain negative space and accepted routes climb at least eight
-  1.5 m bands with strong two-sided enclosure and intermittent occupied cover. Its terrain-level
-  throat is rewarded for true radial inward progress rather than distance from the portal, and at
-  least 30% of its primary grade endpoints must retain complete inhabited address mass on both
-  route-relative sides: opposing flanks on a straight, the two remaining adjacent facades around
-  a right-angle bend, and perpendicular flanks at an endpoint. This raw gate remains terrain-tolerant; final occupied frontage, overhead, and sightline
-  proofs are deliberately stronger. That inward throat may be heavily tunnelled (raw cover is capped at 90%); the
-  later spatial compiler must still realize the cover as owned rooms before it receives any credit.
-  The common topology gate repeats the route-relative two-sided-address proof after market arcades and galleries,
-  so auxiliary carving cannot silently reopen the selected canyon. Mass-first ground-arcade
-  extension searches a fixed family of primary/secondary lengths and at most eight ranked roots
-  per episode, keeping only a complete two-arcade transaction which still passes that common gate;
-  it does not relax the thresholds when the greedy roots consume an opposing facade. The solid partition
-  becomes the buildings rather than feeding the route-first packer. Production explores excavation
-  attempts in sealed survivor batches and stops as soon as one complete town passes the unchanged
-  construction/quality gates; review calls without a limit still enumerate the full twelve-bore
-  corpus. The first partition order admitted by the cheap inhabited-mass audit is tried first.
+  restores the source frontage margin around it. `WarrenMazeBlockPartitioner` is the town's only
+  parcel stage, reached through `WarrenTownSolver.partition_parcels`. It translates the sealed
+  source's plots into the existing authored tower/slim/row/building/long parcel contracts in one
+  deterministic pass and generates no partition variants: the leftover solid already IS the
+  buildings, so nothing has to be fitted around the route.
+  `WarrenMassifBuilder` authors the one bounded 2--18-band **inhabited** mountain directly above
+  immutable terrain; `WarrenMassif.bearing_at()` is the terrain base, never a hidden stone
+  substrate. Its height law is the seeded TERRACED field (phase E): a depth-driven descent ramp,
+  two octaves of this repository's own integer-hash lattice noise, quantization to whole storeys,
+  a downward-only step repair, and a small-cluster merge -- so the town gets lower towards its own
+  edges in legible terraces rather than per-column dither. The footprint is a separate warped
+  Gaussian threshold, which is what keeps `WarrenMassif.seal()`'s connectedness and no-hole
+  invariants a property of the shape law rather than of whatever height law is current. The
+  vertical floor a built massif is held to is its size profile's own `minimum_core_bands`
+  (compact 12, standard 13, large 14, grand 15), enforced in `_shape_gate_failure`.
   Within a partition, macro room bearing is repaired and hard-rejected before the more expensive
   registration/silhouette relief; a source macro preflight performs that proof before the hero
   feature beam, and the final transaction repeats it afterward. A merged room may carry a source
@@ -469,7 +469,7 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   `one_cell_interstitial_gap_cell_count == 0` on every sealed plan.
   A successful exact hero-feature room composition is carried into final partitioning instead of
   recomputing the same deterministic result, unless feature-envelope displacement changed its
-  input parcel set. Exact mass-first construction
+  input parcel set. Exact construction
   assigns blue/orange/amber timber families through deterministic jittered-Voronoi architectural
   districts about 18 m across, so neighbouring houses and vertical lineages read as related quarters
   instead of per-room colour confetti. Blue and amber quarters take cool slate roofs; orange quarters
@@ -484,7 +484,7 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   flat roofs only where crossing gables would collide. Touching equal-height room roofs are solved as
   one neighborhood transaction: continuous ridges and measured stepped wall joins are legal.
   Although the generic module table can classify experimental parallel/perpendicular valleys,
-  mass-first production deliberately flattens both crossing roofs until a truly watertight authored
+  production deliberately flattens both crossing roofs until a truly watertight authored
   valley mesh exists. A complete
   flat fallback first tries a guarded
   lived-in roof terrace with measured planters, small fabric-scale plants, laundry, and either a
@@ -551,7 +551,7 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   circulation, preventing unsupported one-cell tails around the edge. The gateway's
   one bay is terrain-borne while the other crosses an already-authored lower route and its exact
   headroom, with a measured bracket/diagonal support reserved in the same transaction. An
-  unsupported frontier parcel invalidates the whole parcel plan. Large and grand mass-first
+  unsupported frontier parcel invalidates the whole parcel plan. Large and grand
   topologies must also contain one typed 6 x 6 m third-storey courtyard: its floor is four bands
   above the local terrain, supported by complete mass or a lower route, and addressed by buildings
   on at least three sides. The court additionally reserves explicit open-sky columns and proves
@@ -612,8 +612,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   retain explicit owner identities through public-realm projection; the visual adapter tiles only
   their exact 6 x 6 m union with alternating reviewed 1.5 m boards. Collision still comes from the
   common sealed surface union, and no court is inferred from the shape of an arbitrary platform.
-  The same bounded hero-feature beam stamps the scale-selected zero, one, two, or three reviewed
-  prefab landmarks before generic rooms. Compact towns keep identity inside the connected room
+  The one-pass feature selection (`WarrenVolumetricSolver._maze_feature_pass`) stamps the
+  scale-selected zero, one, two, or three reviewed prefab landmarks before generic rooms, from the
+  asset plots the source placed -- it does not search for them. Compact towns keep identity inside the connected room
   mountain instead of appending a detached manor. Each anchor is a complete measured terrain-rooted recipe with its real baked
   entrance aligned to a canonical ground-street landing, conservative shell/private volume,
   visual envelope, exact contact-point bearing cells, doorway face, and construction transform.
@@ -621,7 +622,7 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   deterministic `PARTY_WALL` (horizontal) or `CONSTRUCTION_JOINT` (vertical) claim. Both landmark
   transactions reuse that one canonical joint owner, so measured anchors can form coherent dense
   fabric without double-claiming exterior facades or accepting a mesh overlap. Candidate
-  pairs must preserve a viable three-skywalk frontier, then rank by their measured contact
+  pairs rank by their measured contact
   with surviving ordinary room mass on multiple sides before parcel displacement, surplus corridors,
   separation, and visual variety. Blocked parcels and other hero features never count as that contact,
   and the exact terrain-rooted transition houses which do count become required members of the final
@@ -761,28 +762,24 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   decorative scores: a feature-complete town with an open plaza or horizon-length street is not a
   production result. Diagnostic review disables no visual-overlap rule; every captured candidate
   must pass the same strict measured-envelope transaction as production.
-  Route-first retains its independent-stall grammar. Skywalk reservations are solved against
-  the fixed exact parcel partition and preserved through asset compilation; do not fake extra links
-  when no independent measured corridor exists. Mass-first-only thresholds and styling are guarded
-  by `mass_context.has(&"massif")`; route-first must not inherit them accidentally.
-  `WarrenVolumeEnvelope` fills a warped anisotropic Gaussian height envelope
-  upward from immutable local terrain bands; `WarrenPublicRealmCarver` then removes one connected
-  orthogonal exterior realm from a perimeter ground entrance. Its sealed `WarrenVolumePlan`
-  distinguishes remaining building `MASS`, abstract `WALK` floor planes, swept `PUBLIC_AIR`, and
-  deliberate `DAYLIGHT_VOID`. `WarrenVolumeTransition` owns both endpoints and complete swept air;
+  Skywalk reservations are solved against the fixed exact parcel partition and preserved through
+  asset compilation; do not fake extra links when no independent measured corridor exists. Rules
+  that read a plot-model fact are guarded by `mass_context.has(&"maze_source_plan")` so a
+  hand-built fixture volume cannot trip them.
+  `WarrenVolumeEnvelope` is the shared height/address envelope the sealed `WarrenVolumePlan`
+  carries; `WarrenMazeVolumeAdapter` builds one for every town through
+  `WarrenExcavationVolumeAdapter.envelope_from_massif`, and `VillageWarrenFabricSolver` samples
+  real terrain against it. That plan distinguishes remaining building `MASS`, abstract `WALK`
+  floor planes, swept `PUBLIC_AIR`, and deliberate `DAYLIGHT_VOID`. `WarrenVolumeTransition` owns both endpoints and complete swept air;
   every edge changes by at most one 1.5 m circulation band. Vertical edges always reserve a physical
   span between two square landings: a two-macro-cell edge owns a complete 3 m stair, while a
   three-or-more-cell edge owns at least 6 m and becomes a sloped walkway. Perpendicular vertical
   turns require square landings; adjacent full platform squares are never accepted as a zero-length
-  stair. A bounded candidate corpus gates distinct raw envelope/maze signatures, connectedness,
-  frontage, higher-mass cover, vertical shafts, and straight runs before any asset is chosen.
-  `WarrenParcelizer` reserves scarce neighboring half-level pairs and one exact occupied-link
-  corridor before generic density. It permits only roofable 1x1, narrow/deep 1x2, and 2x2 macro
-  footprints, never a frontage wider than its depth, and emits only complete 3 m inhabited storeys
-  on arbitrary 1.5 m base phases. The parcel's real transformed authored door must land inside its
-  addressed public square; a facade-wide proxy address is invalid. Asset-aware packing measures
-  final wall/roof clearance and preserves the selected straight or right-angle skywalk's SOLID,
-  WALK, HEADROOM, public-air, visual-clearance, and internal component-conflict facts.
+  stair. The parcel contract itself is unchanged by who produces it: only roofable 1x1,
+  narrow/deep 1x2, and 2x2 macro footprints, never a frontage wider than its depth, and only
+  complete 3 m inhabited storeys on arbitrary 1.5 m base phases. The parcel's real transformed
+  authored door must land inside its addressed public square; a facade-wide proxy address is
+  invalid.
   `WarrenVolumePublicRealmAdapter` expands the route losslessly into the common two-lane lattice.
   Its only added surfaces are small one/two-ring courts owned by existing elevated route nodes;
   optional one-cell galleries preferentially cross a lower public route or terminate in a pocket
