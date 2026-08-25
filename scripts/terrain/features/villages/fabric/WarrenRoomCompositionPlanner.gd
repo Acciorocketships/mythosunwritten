@@ -38,6 +38,12 @@ const SAME_ADJACENT_RIDGE_AXIS_COST := 300
 const ROOM_KINDS: Array[StringName] = [
 	&"long", &"building", &"slim", &"row", &"tower",
 ]
+## TASK F2. The authored room kinds as small integers, so the two stamp memos
+## can be keyed by a Vector4i instead of a formatted String. Zero is reserved
+## for "not a room kind" and is never a stored key -- see `_stamp_slot`.
+const KIND_SLOTS: Dictionary = {
+	&"tower": 1, &"slim": 2, &"row": 3, &"building": 4, &"long": 5,
+}
 
 static var last_failure := ""
 static var last_audit: Dictionary = {}
@@ -235,6 +241,10 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 				JSON.stringify(support_audit.unsupported_transition_details)]
 		return {}
 	var overlap_audit := _lineage_overlap_audit(lineages)
+	if diagnostic_trace:
+		print("ROOM_COMPOSITION_TIMING overlap_audit ms=",
+			Time.get_ticks_msec() - trace_stage)
+		trace_stage = Time.get_ticks_msec()
 	if int(overlap_audit.overlap_cell_count) > 0:
 		last_failure = "composed room lineages overlap in %d cells: %s" % [
 			int(overlap_audit.overlap_cell_count),
@@ -242,6 +252,10 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		return {}
 	var shoulder_repair := _truncate_unroofable_crowns(lineages)
 	var shoulder_audit := _unroofable_shoulder_audit(lineages)
+	if diagnostic_trace:
+		print("ROOM_COMPOSITION_TIMING shoulder ms=",
+			Time.get_ticks_msec() - trace_stage, " repaired=", shoulder_repair)
+		trace_stage = Time.get_ticks_msec()
 	if int(shoulder_audit.unroofable_shoulder_count) > 0:
 		last_failure = "3D composition retained %d arbitrary exposed shoulders after %d bounded crown repairs: %s" \
 			% [int(shoulder_audit.unroofable_shoulder_count), shoulder_repair,
@@ -262,6 +276,12 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		grid, protected_owners, world_seed, feature_roof_occupancy)
 	var global_roof_audit := _global_exposed_roof_audit(lineages,
 		feature_roof_occupancy)
+	if diagnostic_trace:
+		print("ROOM_COMPOSITION_TIMING global_roof ms=",
+			Time.get_ticks_msec() - trace_stage, " repaired=",
+			global_roof_repair, " remaining=",
+			global_roof_audit.unroofable_global_roof_component_count)
+		trace_stage = Time.get_ticks_msec()
 	if int(global_roof_audit.unroofable_global_roof_component_count) > 0:
 		last_failure = ("3D composition retained %d cross-lineage roof " \
 			+ "slivers after %d optional crown repairs: %s") % [
@@ -299,6 +319,10 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 	audit.merge(global_roof_audit, false)
 	audit["global_roof_crown_repair_count"] = global_roof_repair
 	last_audit = audit.duplicate(true)
+	if diagnostic_trace:
+		print("ROOM_COMPOSITION_TIMING final_audit ms=",
+			Time.get_ticks_msec() - trace_stage, " whole_solve_ms=",
+			Time.get_ticks_msec() - trace_started)
 	var repeated_run := int(audit.get(
 		"max_identical_tower_floorplate_run_storeys", 0))
 	if repeated_run > MAX_IDENTICAL_TOWER_FLOORPLATE_RUN_STOREYS:
@@ -2112,9 +2136,13 @@ static func _record_is_clear_for_participants(grid: WarrenSpatialGrid,
 		protected_owners: Dictionary, record: Dictionary,
 		participant_ids: Dictionary) -> bool:
 	for cell: Vector3i in record.cells:
+		# TASK F2. `not in [A, B]` builds and discards a two-element Array on
+		# every cell of every trial record; the composition tests millions of
+		# them. Two comparisons, same predicate.
+		var use := grid.use_at(cell)
 		if not grid.contains(cell) \
-				or grid.use_at(cell) not in [WarrenSpatialGrid.Use.ALLOCATABLE,
-					WarrenSpatialGrid.Use.OUTSIDE]:
+				or use != WarrenSpatialGrid.Use.ALLOCATABLE \
+				and use != WarrenSpatialGrid.Use.OUTSIDE:
 			return false
 		for owner_value: Variant in (protected_owners.get(cell, {}) \
 				as Dictionary).keys():
@@ -2177,9 +2205,13 @@ static func _pair_record_is_clear(grid: WarrenSpatialGrid,
 		protected_owners: Dictionary, record: Dictionary,
 		left_id: StringName, right_id: StringName) -> bool:
 	for cell: Vector3i in record.cells:
+		# TASK F2. `not in [A, B]` builds and discards a two-element Array on
+		# every cell of every trial record; the composition tests millions of
+		# them. Two comparisons, same predicate.
+		var use := grid.use_at(cell)
 		if not grid.contains(cell) \
-				or grid.use_at(cell) not in [WarrenSpatialGrid.Use.ALLOCATABLE,
-					WarrenSpatialGrid.Use.OUTSIDE]:
+				or use != WarrenSpatialGrid.Use.ALLOCATABLE \
+				and use != WarrenSpatialGrid.Use.OUTSIDE:
 			return false
 		for owner_value: Variant in (protected_owners.get(cell, {}) \
 				as Dictionary).keys():
@@ -4294,9 +4326,16 @@ static func _candidate_matches_constraints(kind: StringName,
 				constraint.cell as Vector3i,
 				constraint.facing as Vector3i):
 			return false
+	# TASK F2. `_stamp_columns` is only needed to answer the court-contact
+	# question, and almost no block has court contact columns. Deriving the
+	# stamp for every one of the ~3400 candidates a variant search enumerates,
+	# to then iterate an empty dictionary, was the single most repeated wasted
+	# call in the composition.
+	var court_columns := current.get("court_contact_columns", {}) as Dictionary
+	if court_columns.is_empty():
+		return true
 	var candidate_columns := _stamp_columns(kind, origin, yaw)
-	for column_value: Variant in (current.get("court_contact_columns", {}) \
-			as Dictionary).keys():
+	for column_value: Variant in court_columns.keys():
 		if not candidate_columns.has(column_value):
 			return false
 	return true
@@ -4350,9 +4389,13 @@ static func _record_is_clear_for_lineage(grid: WarrenSpatialGrid,
 		protected_owners: Dictionary, claimed_cells: Dictionary,
 		record: Dictionary, lineage_id: StringName) -> bool:
 	for cell: Vector3i in record.cells:
+		# TASK F2. `not in [A, B]` builds and discards a two-element Array on
+		# every cell of every trial record; the composition tests millions of
+		# them. Two comparisons, same predicate.
+		var use := grid.use_at(cell)
 		if not grid.contains(cell) \
-				or grid.use_at(cell) not in [WarrenSpatialGrid.Use.ALLOCATABLE,
-					WarrenSpatialGrid.Use.OUTSIDE]:
+				or use != WarrenSpatialGrid.Use.ALLOCATABLE \
+				and use != WarrenSpatialGrid.Use.OUTSIDE:
 			return false
 		if claimed_cells.has(cell) and claimed_cells[cell] != lineage_id:
 			return false
@@ -4617,8 +4660,8 @@ static func _record(kind: StringName, origin: Vector3i, yaw: int,
 		var room_origin := Vector3i(origin.x,
 			origin.y + (storey - start_storey) \
 				* WarrenSpatialGrid.STOREY_CELLS, origin.z)
-		var cells_key := "%s/%d/%d/%d/%d" % [kind, room_origin.x,
-			room_origin.y, room_origin.z, yaw]
+		var cells_key := Vector4i(_stamp_slot(kind, yaw), room_origin.x,
+			room_origin.y, room_origin.z)
 		if not _stamp_cells_cache.has(cells_key):
 			_stamp_cells_cache[cells_key] = WarrenRoomStamp \
 				.expected_private_cells(kind, room_origin, yaw)
@@ -4628,9 +4671,29 @@ static func _record(kind: StringName, origin: Vector3i, yaw: int,
 		"columns": columns, "cells": cells}
 
 
+static func _stamp_slot(kind: StringName, yaw: int) -> int:
+	## The (kind, yaw) half of a memo key as ONE small integer, so the memo can
+	## be keyed by a Vector4i instead of a formatted String.
+	##
+	## TASK F2. `_stamp_columns` is the innermost call of the variant
+	## enumeration -- `_volumetric_variant_stamp` walks five kinds x four yaws x
+	## a 13 x 13 origin window, some four hundred times per town -- and the old
+	## key built and hashed a String on every one of those million-odd probes.
+	## The slot is `kind index * 4 + yaw`. Slot 0 means "not a stampable
+	## (kind, yaw)" and is never a STORED key: `_stamp_columns` writes its memo
+	## only after its own `match kind` and `0 <= yaw <= 3` guards have passed,
+	## and `_record` writes its memo only after `_stamp_columns` came back
+	## non-empty. A slot-0 probe therefore always misses and falls through to
+	## the same empty result the String key produced.
+	var index := KIND_SLOTS.get(kind, 0) as int
+	if index == 0 or yaw < 0 or yaw > 3:
+		return 0
+	return index * 4 + yaw
+
+
 static func _stamp_columns(kind: StringName, origin: Vector3i,
 		yaw: int) -> Dictionary:
-	var cache_key := "%s/%d/%d/%d" % [kind, origin.x, origin.z, yaw]
+	var cache_key := Vector4i(_stamp_slot(kind, yaw), origin.x, origin.z, 0)
 	if _stamp_columns_cache.has(cache_key):
 		return _stamp_columns_cache[cache_key] as Dictionary
 	var out: Dictionary = {}

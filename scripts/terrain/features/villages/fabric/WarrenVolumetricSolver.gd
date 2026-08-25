@@ -5629,8 +5629,11 @@ static func _plate_fits(grid: WarrenSpatialGrid, base_plate: Dictionary,
 				var cell := Vector3i(column.x + offset.x,
 					origin_y + storey * WarrenSpatialGrid.STOREY_CELLS + y_offset,
 					column.y + offset.y)
-				if not grid.contains(cell) \
-						or grid.use_at(cell) != WarrenSpatialGrid.Use.ALLOCATABLE:
+				# TASK F2. The `contains` probe was redundant: `use_at` returns
+				# OUTSIDE for a cell the grid does not hold, and OUTSIDE is not
+				# ALLOCATABLE, so the second term already rejected exactly the
+				# cells the first one did.
+				if grid.use_at(cell) != WarrenSpatialGrid.Use.ALLOCATABLE:
 					return false
 				var owners := protected_owners.get(cell, {}) as Dictionary
 				for protected_id_value: Variant in owners.keys():

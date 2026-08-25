@@ -31,6 +31,13 @@ func _init() -> void:
 		elif args[index] == "--scale" and index + 1 < args.size():
 			for token: String in args[index + 1].split(",", false):
 				scale_ids.append(StringName(token.strip_edges()))
+		elif args[index] == "--trace-composition":
+			# TASK F2 RULING 1. `room_composition` is one stamp over two very
+			# different things -- the per-parcel exact block preflight and the
+			# whole room-grammar solve -- and the planner already knows how to
+			# break the second one down. This turns that on, which is how the
+			# composition's inner loops are named rather than guessed at.
+			WarrenRoomCompositionPlanner.diagnostic_trace = true
 	if seeds.is_empty():
 		seeds = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 	if scale_ids.is_empty():

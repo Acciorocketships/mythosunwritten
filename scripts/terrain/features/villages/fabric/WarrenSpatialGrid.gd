@@ -100,9 +100,15 @@ func contains(cell: Vector3i) -> bool:
 
 
 func index_for(cell: Vector3i) -> int:
-	if not contains(cell):
-		return -1
+	# TASK F2. The bounds test is spelled out rather than delegated to
+	# `contains`, because this is the innermost probe of the whole composition:
+	# every `_plate_fits`, `_record_is_clear_*` and floorplate-bearing test runs
+	# through it a few million times per town, and a GDScript call is not free.
+	# The predicate is `contains`'s, term for term.
 	var local := cell - minimum
+	if local.x < 0 or local.y < 0 or local.z < 0 \
+			or local.x >= size.x or local.y >= size.y or local.z >= size.z:
+		return -1
 	return local.x + size.x * (local.z + size.z * local.y)
 
 
@@ -117,8 +123,14 @@ func cell_for_index(index: int) -> Vector3i:
 
 
 func use_at(cell: Vector3i) -> int:
-	var index := index_for(cell)
-	return Use.OUTSIDE if index < 0 else int(_use_by_cell[index])
+	# TASK F2. Same inlining, one level further: `use_at` is called more than
+	# anything else in this file and used to cost three GDScript calls
+	# (`use_at` -> `index_for` -> `contains`) for one byte read.
+	var local := cell - minimum
+	if local.x < 0 or local.y < 0 or local.z < 0 \
+			or local.x >= size.x or local.y >= size.y or local.z >= size.z:
+		return Use.OUTSIDE
+	return int(_use_by_cell[local.x + size.x * (local.z + size.z * local.y)])
 
 
 func owner_name_at(cell: Vector3i) -> StringName:
