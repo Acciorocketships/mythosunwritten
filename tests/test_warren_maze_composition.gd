@@ -4336,7 +4336,36 @@ func test_exterior_walls_are_plank_and_plaster_over_coherent_bases() -> void:
 ## task, and pinning at 0 would have blamed the trim for them. Re-pin DOWNWARD
 ## only; a rise means a release pass has started leaving masonry over holes,
 ## which is the C5e defect returning.
-const RETAINED_STONE_OVER_AIR_CEILING := 8
+##
+## TASK H2 FIX ROUND 1, IMPORTANT 2a: 8 -> 0, taking the ruling's own
+## invitation. Task H2's `_repair_stranded_release` retired the residue this
+## constant was pinned above -- it walks every released column downward and
+## takes back the cells another plot's unroomed mass turned out to stand on --
+## and the towns have measured 0 / 0 / 0 / 0 ever since, better than the
+## 0 / 4 / 8 / 0 the constant was written for. A ceiling nothing can reach is
+## a test that has stopped testing, so it comes down to the measurement. This
+## is the pin that watches the repair's WORK; `STRANDED_RELEASE_REPAIRS`
+## below watches that the repair still RUNS.
+const RETAINED_STONE_OVER_AIR_CEILING := 0
+
+## TASK H2 FIX ROUND 1, IMPORTANT 2c -- THE REPAIR IS WATCHED BY SOMETHING.
+## `_repair_stranded_release` is the newest and least-guarded pass in the
+## release: a ceiling of 0 on the hanging count above stays green whether the
+## repair takes back 24 cells or none, because a repair that never runs and a
+## repair that has nothing to do look identical from there. So the count is
+## pinned TWO-SIDED, per town, at what each town measures.
+##
+## Measured 2026-08-25 on the four planner towns, after fix round 1 taught the
+## take-back to re-ask its own predicate of the cell it takes (important 2b).
+## A move in either direction is a finding: down means the release stopped
+## reaching mass it used to carry, up means the composition is leaving more
+## quarry blocks on other houses' crowns.
+const STRANDED_RELEASE_REPAIRS: Dictionary = {
+	"seed 12/compact": 12,
+	"seed 4/compact": 16,
+	"seed 3/standard": 32,
+	"seed 9/standard": 4,
+}
 
 
 func test_the_stone_trim_refuses_to_strand_a_plot_or_a_street() -> void:
@@ -4539,12 +4568,26 @@ func test_retained_stone_never_stands_over_released_air() -> void:
 			hanging += 1
 			if first.is_empty():
 				first = "%s over %s" % [cell, below]
-		print("MAZE_STONE_HANGING %s retained=%d hanging=%d first=%s" % [
-			_label(outcome), retained.size(), hanging, first])
+		var repairs := int(plan.audit.get(
+			"maze_stranded_release_repair_count", -1))
+		print("MAZE_STONE_HANGING %s retained=%d hanging=%d repairs=%d first=%s" \
+			% [_label(outcome), retained.size(), hanging, repairs, first])
 		assert_lte(hanging, RETAINED_STONE_OVER_AIR_CEILING,
 			("%s leaves %d retained stone cells standing over mass the " \
 				+ "pipeline released (first %s)") % [_label(outcome), hanging,
 				first])
+		# FIX ROUND 1, IMPORTANT 2c. The hanging count above is what the repair
+		# ACHIEVES and reads zero whether the repair worked or never ran; this
+		# is what it DOES, pinned two-sided at each town's own measurement.
+		assert_true(STRANDED_RELEASE_REPAIRS.has(_label(outcome)),
+			("%s has no pinned stranded-release repair count: measure it and " \
+				+ "add it, never leave the newest release pass unwatched") \
+				% _label(outcome))
+		assert_eq(repairs, int(STRANDED_RELEASE_REPAIRS.get(_label(outcome),
+			-1)),
+			("%s took %d cells back out of the crown release where it has " \
+				+ "always taken %d") % [_label(outcome), repairs,
+				int(STRANDED_RELEASE_REPAIRS.get(_label(outcome), -1))])
 
 
 func _macro_coordinate(fine: int) -> int:
@@ -5758,7 +5801,42 @@ const PRODUCTION_REGION_RADIUS := 5
 ## through a doubling of the number the game actually pays for every settlement
 ## it streams. This file's usual 1.5x is the right instrument now: the order of
 ## magnitude is still caught, and so is a regression that merely undoes F2.
-const PRODUCTION_SOLVE_MS_CEILING := 4600
+##
+## TASK H2 FIX ROUND 1, IMPORTANT 1c: 4600 -> 7000, re-measured because the
+## 4600 had started going red. THE GROWTH WAS NOT IN THE CODE, and that was
+## measured three ways before this number was allowed to move:
+##
+## 1. PER-PASS. Temporary timers over one whole production solve put every
+##    audit pass the H phase added at ~19.7 ms TOTAL -- the five-surface-kind
+##    `walked` dictionary 0.4, `maze_stone_band_profile` with its crown-cap
+##    classification 7.7, H1's `exterior_wall_material_profile` 8.6,
+##    `_maze_terrace_audit` 2.4, `_maze_isolated_flat_crowns` 0.5. The whole
+##    fabric compile is ~730 ms of a ~3500 ms solve, so these are 0.6 % of the
+##    solve and cannot move it by a second.
+## 2. INTERLEAVED A/B. Alternating the pre-fix and post-fix solver, six runs:
+##    3406 / 3454 / 3400 / 4313 / 5209 / 4093. Pairwise differences +48, +913,
+##    -1116 ms, mean -52. The change is inside the noise, and the noise is
+##    +-1 s on ONE unchanged tree.
+## 3. COLLATERAL. In the same three suite runs, `PLANNER_SOLVE_MS_CEILING`
+##    rows this round never touched went red twice as well (12/compact 3316 vs
+##    3300, 9/standard 6740 vs 6500) on a machine whose recorded readings for
+##    those towns are 2681 and ~5600.
+##
+## So this is a LOAD-SENSITIVE INSTRUMENT and 4600 was pinned off a quiet
+## machine. Re-pinned the way F2 pins, but from a median-of-3 taken IN THE
+## CONTEXT THE ASSERTION ACTUALLY RUNS IN -- the whole composition suite, not
+## an isolated single-test run, because the isolated number is systematically
+## several hundred ms lower and that gap is exactly what let 4600 pass its own
+## measurement and fail review: 3637 / 5318 / 4634 -> median 4634, x1.5 = 6951,
+## to the nearest hundred.
+##
+## READ A RED HERE AS "MEASURE AGAIN ON A QUIET MACHINE" BEFORE READING IT AS A
+## REGRESSION. What it still catches is what D2 and F2 said it was for: the
+## order-of-magnitude fall back into the 154-210 s searched pipeline. The
+## instruments for a real per-town regression are the ones taken deliberately
+## -- `warren_maze_identity_probe`'s `--runs N` medians and the sweep's
+## `total_ms` -- and not this one wall clock inside a 200-second suite.
+const PRODUCTION_SOLVE_MS_CEILING := 7000
 
 static var _production_site_cache: Dictionary = {}
 
