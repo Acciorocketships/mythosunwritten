@@ -31,6 +31,10 @@ func _init() -> void:
 		elif args[index] == "--scale" and index + 1 < args.size():
 			for token: String in args[index + 1].split(",", false):
 				scale_ids.append(StringName(token.strip_edges()))
+		elif args[index] == "--trace-fabric":
+			# TASK F2 RULING 1. The compile is the second cost and `solve` is a
+			# fifteen-step pipeline; this names the step.
+			WarrenSpatialFabricCompiler.diagnostic_trace_timing = true
 		elif args[index] == "--trace-composition":
 			# TASK F2 RULING 1. `room_composition` is one stamp over two very
 			# different things -- the per-parcel exact block preflight and the

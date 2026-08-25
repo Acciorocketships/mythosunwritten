@@ -8,6 +8,12 @@ extends RefCounted
 ## envelopes. No method here may move, resize, or restamp the spatial topology.
 static var last_failure := ""
 static var last_audit: Dictionary = {}
+## TASK F2. Per-stage wall clock for ONE compile, printed rather than stamped:
+## the fabric compile is the second cost of a maze solve and `solve` is a
+## fifteen-step pipeline, so "the compile is 1.9 s" needed a breakdown before
+## anything could be done about it. Diagnostic only -- no sealed audit sees
+## these numbers -- and off by default.
+static var diagnostic_trace_timing := false
 ## Every campaign-flatten decision this compile, preserved across the atomic
 ## retry recursion so the sealed audit names the actual colliding unit.
 static var _collision_flatten_triggers: Array[Dictionary] = []
@@ -76,6 +82,12 @@ const FOUNDATION_MODULE_HEIGHT_BANDS := 2
 const MAZE_RETAINED_STONE_ID := &"spatial.feature.maze_stone.00"
 
 
+static func _trace_stage(stage: String, started_ms: int) -> int:
+	if diagnostic_trace_timing:
+		print("FABRIC_TIMING ", stage, " ms=", Time.get_ticks_msec() - started_ms)
+	return Time.get_ticks_msec()
+
+
 static func solve(source: WarrenSpatialPlan,
 		program: SettlementFabricProgram) -> SettlementFabricPlan:
 	## Compile the authoritative spatial town through the same sealed fabric,
@@ -86,11 +98,13 @@ static func solve(source: WarrenSpatialPlan,
 	if source == null or not source.is_sealed() or program == null:
 		last_failure = "missing sealed spatial town or measured vocabulary"
 		return null
+	var solve_started_ms := Time.get_ticks_msec()
 	var realm := WarrenSpatialPublicRealmAdapter.from_spatial(source)
 	if realm == null:
 		last_failure = "public realm adaptation failed: %s" % \
 			WarrenSpatialPublicRealmAdapter.last_failure
 		return null
+	var stage_ms := _trace_stage("realm", solve_started_ms)
 	var rooms := source.compiled_room_units_cache()
 	var room_audit := source.compiled_room_audit_cache()
 	if rooms.is_empty():
@@ -99,14 +113,17 @@ static func solve(source: WarrenSpatialPlan,
 			return null
 		room_audit = last_audit.duplicate(true)
 		source.cache_compiled_room_units(rooms, room_audit)
+	stage_ms = _trace_stage("rooms", stage_ms)
 	var features := compile_feature_units(source, program, rooms)
 	if features.is_empty() and _constructed_feature_count(source) > 0:
 		return null
 	var feature_audit := last_audit.duplicate(true)
+	stage_ms = _trace_stage("features", stage_ms)
 	var roofs := compile_roof_units(source, program, rooms, features)
 	if roofs.is_empty():
 		return null
 	var roof_audit := last_audit.duplicate(true)
+	stage_ms = _trace_stage("roofs", stage_ms)
 	var modular_box_audit := _modular_box_use_audit(source, program, rooms,
 		roofs)
 	if int(modular_box_audit.get("modular_box_unclassified_count", 0)) > 0 \
@@ -118,6 +135,7 @@ static func solve(source: WarrenSpatialPlan,
 			JSON.stringify(modular_box_audit.get(
 				"modular_box_invalid_details", []))
 		return null
+	stage_ms = _trace_stage("modular_box", stage_ms)
 	var result := SettlementFabricPlan.new(StringName("%s.fabric" % \
 		source.stable_id))
 	if not result.set_public_realm(realm):
@@ -142,6 +160,7 @@ static func solve(source: WarrenSpatialPlan,
 			last_failure = "roof %s rejected by common fabric: %s" % [
 				unit.stable_id, result.last_rejection]
 			return null
+	stage_ms = _trace_stage("add_units", stage_ms)
 	var foundation_result := _retained_foundation_cells(source, result)
 	if not bool(foundation_result.get("valid", false)) \
 			or not result.set_retained_terrace(
@@ -156,12 +175,14 @@ static func solve(source: WarrenSpatialPlan,
 		last_failure = "spatial terrain foundation shell is incomplete: %s" % \
 			str(foundation_audit)
 		return null
+	stage_ms = _trace_stage("foundation", stage_ms)
 	var surfaces := PublicRealmSurfaceSolver.solve(
 		StringName("%s.surfaces" % result.stable_id), realm, result,
 		source.source_volume)
 	if surfaces == null or not result.set_surface_plan(surfaces):
 		last_failure = "spatial public-surface closure failed"
 		return null
+	stage_ms = _trace_stage("surfaces", stage_ms)
 	var volumes := FabricVolumeClassifier.solve(
 		StringName("%s.volumes" % result.stable_id), realm, result)
 	if volumes == null or not result.set_volume_plan(volumes):
@@ -176,18 +197,21 @@ static func solve(source: WarrenSpatialPlan,
 		if source.source_volume == null \
 		else source.source_volume.mass_context.get(&"maze_source_plan") \
 			as WarrenMazeSourcePlan
+	stage_ms = _trace_stage("volumes", stage_ms)
 	var stone_audit := _maze_stone_skin_audit(result, maze_source)
 	if int(stone_audit.get("maze_stone_missing_face_count", 0)) > 0 \
 			or int(stone_audit.get("maze_stone_doubled_cap_count", 0)) > 0:
 		last_failure = "retained maze stone is not fully skinned: %s" % \
 			str(stone_audit)
 		return null
+	stage_ms = _trace_stage("stone_skin", stage_ms)
 	var solid_void := FabricSolidVoidClassifier.solve(
 		StringName("%s.solid-void" % result.stable_id), realm, result)
 	if solid_void == null or not result.set_solid_void_plan(solid_void):
 		last_failure = "spatial solid/void proof failed: %s" % \
 			FabricSolidVoidClassifier.last_failure
 		return null
+	stage_ms = _trace_stage("solid_void", stage_ms)
 	var lineage := source.audit.duplicate(true)
 	lineage.merge(source.construction_plan.audit, true)
 	lineage.merge(room_audit, true)
@@ -209,6 +233,7 @@ static func solve(source: WarrenSpatialPlan,
 	lineage["spatial_signature"] = source.deterministic_signature().sha256_text()
 	lineage["construction_signature"] = result.construction_signature()
 	lineage["generation_source"] = &"spatial_volumetric_warren"
+	stage_ms = _trace_stage("lineage", stage_ms)
 	var audit := SettlementFabricSolver.audit_plan(result, lineage)
 	if int(audit.get("orphan_exterior_door_module_count", 0)) > 0 \
 			or int(audit.get("entrance_surface_gap_count", 0)) > 0:
@@ -224,10 +249,12 @@ static func solve(source: WarrenSpatialPlan,
 			&"connected_building_stack_count", &"detached_building_stack_count"]:
 		audit[StringName("legacy_unit_group_%s" % key)] = audit.get(key, -1)
 		audit[key] = source.audit.get(key, -1)
+	stage_ms = _trace_stage("audit_plan", stage_ms)
 	if not result.seal(audit):
 		last_failure = "spatial common-fabric seal failed: %s" % \
 			result.last_rejection
 		return null
+	stage_ms = _trace_stage("seal", stage_ms)
 	last_audit = audit
 	return result
 
