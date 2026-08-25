@@ -560,14 +560,15 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   final exact selector also recognizes broad irregular roof courts assembled by the ordinary room
   transaction. A court must contain at least twenty connected 1.5 m floor cells, meet the canonical
   upper route through a player-width seam, remain irregular rather than a narrow strip, and bear on
-  multiple occupied buildings. For compact/standard towns, selection may retain the first fully
-  valid courtless candidate as a fallback while compiling only the next three ranked partition
-  variants; a genuine route-connected court within that bounded prefix wins. The fallback is
-  returned unchanged if no court seals or the time budget expires, so visual preference cannot turn
-  a valid real-time solve into a generation failure.
+  multiple occupied buildings. The courtless-fallback rule that used to sit here -- retain the
+  first valid courtless candidate while compiling the next three ranked partition variants -- was
+  a property of the searched frontier and died with it in task F1. There is one partition and one
+  composition, so a compact or standard town either forms its route-connected roof court or ships
+  without one, and the shortfall is published.
   The
-  fine-grid volumetric front end jointly selects exactly one covered market and its measured
-  skywalk set before room composition. Straight and corner skywalk recipes share an explicit blue
+  fine-grid volumetric front end selects exactly one covered market and its measured
+  skywalk set before room composition, in one pass and without a search
+  (`WarrenVolumetricSolver._maze_feature_pass`). Straight and corner skywalk recipes share an explicit blue
   or orange roof campaign; an L-link chooses the corner matching its arms (mixed arms resolve to
   slate), so the turn cannot expose a one-piece warm patch inside an otherwise cool roof. The market attaches the atomic 6 x 3 m reviewed canopy plus
   authored stocked-table recipe to one exact terrain-rooted room `MARKET` socket. Four central
@@ -797,7 +798,7 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   before admitting any gallery.
   Lightwells are subtracted after the full union is known only when every cardinal side is public
   surface or inhabited wall and a flood proves every surviving extension cell still reaches its
-  owning route square; `WarrenVolumeSurfaceCompiler` rejects any explicit unbounded hole. Raw
+  owning route square; an explicit unbounded hole is rejected. Raw
   parcel-stage openings are audited before infill and no cardinal component may exceed
   four macro columns; post-infill permits no unclassified 3 m core aperture at all. Only
   isolated, bounded, guarded 1.5 m lightwells may then be subtracted, with at least three
@@ -820,51 +821,35 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   terrain adapter likewise derives posts from exposed public-surface boundary corners and repeats
   them at the authored 3 m structural rhythm; fully enclosed interior cells are omitted so a broad
   deck gains a legible perimeter load path without becoming a forest of posts.
-  `WarrenAssetCompiler`, `WarrenFabricCompiler`, and `WarrenBuiltTownSolver` compile the
-  measured terrain-rooted stacks, complete roofs, occupied skywalks, and roofed outcroppings through
-  one common fabric/air/solid-void transaction. Visually one-storey proposals and every
+  `WarrenSpatialFabricCompiler` compiles the measured terrain-rooted stacks, complete roofs,
+  occupied skywalks, and roofed outcroppings through one common fabric/air/solid-void transaction;
+  `WarrenAssetCompiler` survives as its vocabulary helper (facade-family selection, room and parcel
+  socket endpoints, skywalk compatibility, the partition asset cache) after task F1 deleted its own
+  `solve` entry along with the searched town it compiled. Visually one-storey proposals and every
   frontage-wider-than-depth orientation are ineligible. Equal-height, equal-family neighbours may
   meet only through an exact collinear-eave party-wall seam; unequal, gable, corner, and overlapping
   contacts remain conflicts. Occupied straight skywalks use a measured pitched repeat-and-gable
-  roof run; a floor module is never reused as their ceiling. `WarrenGroundArcadeSolver` carves a
-  seven-or-eight-cell primary and a spatially separated four- or five-cell secondary terrain-level
-  market branch before parcel packing. The world seed selects the secondary length as a grammar
-  family before parcelization; it is not a repair for a particular seed. Both branches require at
-  least two turns and attach through square
-  landings on the same public graph, so both lower approaches participate in the original building
-  composition instead of leaving a grass-floored undercroft tunnel. Complete stocked-market
-  candidates prefer residual open-core columns before their stable hashed tie-break. Parcel-only
-  enclosure is a ranking signal. `WarrenTownPlan` uses 50% composed
-  enclosure as a pre-detail viability floor; plans at or above 55% always precede 50--55% rescue
-  plans in the bounded exact frontier. An asset-aware solve carries eight ranked town plans through
-  exact exterior-air, markets, occupied links, optional details, and hostile-ray compilation, so a
-  late rejection cannot erase a viable seed and a rescue plan cannot crowd out a stronger
-  preliminary composition. Exact frontage, overhead, occupied-link, and sightline audits own the
-  final no-through-street decision.
-  The four-seed measured gate currently has distinct maze/construction geometry,
-  10--15 connected roofed buildings, zero visually short parcels, no stair endpoint gap,
-  six isolated guarded lightwells, no unclassified 3 m core aperture,
-  no uncovered lower-route component larger than twelve fine cells, and zero public-air/occupied
-  or unrelated visual-envelope overlap. Stocked markets are part of
-  the same transaction. Broader capsule traversal, production-world screenshots, performance work,
-  and a larger seed corpus remain open.
-  The current 44-image/four-seed cleanup review adds two hostile ground-corridor views and a
-  top-down network view to opposite overviews, entry, upper route, east section, roofline, and
-  skywalk side/underside. Clearance and required-target visibility are recorded per image. Review
-  cameras require a player-sized visual-clearance bubble as well as a collision-clear point so
-  near posts and eaves cannot dominate a nominally valid frame. The final exact four-seed corpus
-  contains 10--15 connected roofed buildings, 15--24 route-fused infill patches, six bounded
-  separated lightwells, exact largest uncovered lower-route components of 6--8 fine cells, distinct
-  maze/construction signatures, and zero visually short parcels, stair endpoint gaps,
-  visual-envelope conflicts, or public-air/occupied overlaps. The falsification pass found that
-  four wells could leave one broad opaque upper court; six bounded fine-cell wells broke up that
-  surface without reopening a top-to-ground shaft. A later poor seed proved that cardinally
-  bounded subtraction could still sever a one-cell route neck; route-connectivity validation now
-  prevents that fallback, while a twenty-four-patch ceiling fills additional supported lower-route
-  overlap without creating a detached suspended platform. A separate four-world production corpus
-  also has four distinct raw, rotation-normalized, and construction signatures with no hard
-  structural failure; the captured player world seals its largest exact uncovered route component
-  at the twelve-cell hard limit.
+  roof run; a floor module is never reused as their ceiling. Complete stocked-market candidates
+  prefer residual open-core columns before their stable hashed tie-break. Exact frontage, overhead,
+  occupied-link, and sightline audits own the final no-through-street decision -- as GUIDANCE
+  carried in the audit, not as gates: there is one candidate, so a metric a town misses is a
+  recorded fact rather than a rejection. The composed-enclosure viability floor, the ranked
+  eight-plan frontier and its rescue-plan tier were properties of the searched frontier and died
+  with it in task F1, together with the terrain-level arcade branch grammar
+  (`WarrenGroundArcadeSolver`) that ran before parcel packing.
+  HISTORICAL, and kept only because the invariants it names are still enforced: the four-seed
+  measured gate and the 44-image cleanup review above were measured on the SEARCHED pipeline that
+  task F1 deleted, so their per-seed counts describe towns nothing builds any more. The structural
+  facts they pinned do survive as gates in the compiler and the plan seals -- distinct
+  maze/construction signatures, connected roofed buildings, zero visually short parcels, no stair
+  endpoint gap, isolated guarded lightwells, no unclassified 3 m core aperture, a bounded largest
+  uncovered lower-route component, and zero public-air/occupied or visual-envelope overlap -- and
+  the falsification findings behind them still hold: four lightwells could leave one broad opaque
+  upper court where six bounded fine-cell wells break that surface without reopening a
+  top-to-ground shaft, and cardinally bounded subtraction could still sever a one-cell route neck
+  until route-connectivity validation was added. The CURRENT corpus measurement is the sweep's:
+  24 of 24 towns seal, and the four planner seeds (12/4 compact, 3/9 standard) are solved
+  end to end by `tests/test_warren_maze_composition.gd`. Visual review is Phase G's battery.
   `VillageWarrenFabricSolver` aligns the selected volumetric landing to the production road,
   resamples immutable terrain bands, and materializes that sealed fabric through `VillagePlan`.
   The volumetric and legacy terrain-led algorithms may never be combined inside one record or used
