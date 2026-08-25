@@ -249,7 +249,7 @@ C5d left two things: 8 of the 13 non-sealing corpus seeds (and 9/standard, and t
 
 ### Phase C measured results
 
-`Godot --headless --path . -s res://tests/harness/warren_maze_mode_sweep.gd -- --seeds 1,2,3,4,5,6,7,8,9,10,11,12 --mode maze --scale compact,standard`, at Task C6. The run writes its matrix to `user://warren_maze_mode_sweep.json`, which is what `tests/test_warren_maze_composition.gd::test_corpus_composes` asserts against (pinned at measured − 1 = **19**).
+`Godot --headless --path . -s res://tests/harness/warren_maze_mode_sweep.gd -- --seeds 1,2,3,4,5,6,7,8,9,10,11,12 --mode maze --scale compact,standard`, at Task C6. The run writes its matrix to `user://warren_maze_mode_sweep.json`, which is what `tests/test_warren_maze_composition.gd::test_corpus_composes` asserts against (pinned at measured − 1 = **19**). *(Historical: the `--mode` flag was retired in Task F1 — the modern invocation drops it and, since F4, spans all four scales; the pin has since risen with the corpus. The numbers below are the C6-era record.)*
 
 **sealed 20/24 · exit bar 22+/24 — MISSED by two**
 
