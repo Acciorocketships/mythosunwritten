@@ -871,26 +871,33 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	for recipe_value: FabricRecipe in program._recipes.values():
 		for asset_id: StringName in recipe_value.asset_ids():
 			unique_assets[asset_id] = true
-	# Public-realm guard coalescing is an adapter over the sealed surface plan,
-	# not a FabricRecipe placement, so demand its authored 3 m repeat explicitly.
-	unique_assets[RAILING_MEDIUM] = true
-	# TASK H2b. The retained massif's skin is the same kind of adapter: the two
-	# terrain modules `SettlementFabricAssembler` clads a hillside bank and a
-	# bench top with belong to no recipe, so nothing else would declare them.
-	# `VillageUrbanFabricPlan._validate_compiled_fabric` refuses a production
-	# plan carrying an entry whose asset this program never declared -- and it
-	# did, which is how the omission surfaced -- and the streamer prepares its
-	# render cache from the same list. They are checked against the catalog
-	# here rather than trusted, so a renamed or unbaked module fails at program
-	# compile with a name instead of at the first render with a blank town.
-	for skin_asset: StringName in [
+	# EVERY ASSET AN ADAPTER PLACES, declared here because no `FabricRecipe`
+	# mentions it and nothing else would. `VillageUrbanFabricPlan._validate_
+	# compiled_fabric` refuses a production plan carrying an entry whose asset
+	# this program never declared -- and it did, at task H2b, which is how the
+	# omission surfaced -- and the streamer prepares its render cache from the
+	# same list, so an undeclared adapter asset is a BLANK TOWN in the real
+	# game and not only a failed assert.
+	#
+	# * RAILING_MEDIUM -- public-realm guard coalescing over the sealed surface
+	#   plan needs the authored 3 m repeat.
+	# * TERRAIN_GREEN_CAP, NATURAL_ROCK_FACE -- the two terrain modules
+	#   `SettlementFabricAssembler` clads a hillside bank and a bench top with.
+	#
+	# Each is CHECKED against the catalog rather than trusted, so a renamed or
+	# unbaked module fails at program compile with a name instead of at the
+	# first render with a blank town. FIX 1, MINOR 8 gives RAILING_MEDIUM the
+	# same check the two skin modules got: it was declared bare, and a guard
+	# rail that vanished from the bake would have been the same silent failure.
+	for adapter_asset: StringName in [
+			RAILING_MEDIUM,
 			SettlementFabricAssembler.TERRAIN_GREEN_CAP,
 			SettlementFabricAssembler.NATURAL_ROCK_FACE]:
-		if catalog.descriptor(skin_asset) == null:
-			push_error("Retained-massif skin asset is not in the catalog: %s" \
-				% skin_asset)
+		if catalog.descriptor(adapter_asset) == null:
+			push_error("Fabric adapter asset is not in the catalog: %s" \
+				% adapter_asset)
 			return null
-		unique_assets[skin_asset] = true
+		unique_assets[adapter_asset] = true
 	program.referenced_asset_ids.assign(unique_assets.keys())
 	program.referenced_asset_ids.sort_custom(func(a: StringName,
 			b: StringName) -> bool: return String(a) < String(b))
