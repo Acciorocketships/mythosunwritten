@@ -7,6 +7,23 @@ func _assign(grid: WarrenSpatialGrid, owner: StringName, cells: Array[Vector3i],
 	return tx.assign_use(cells, use, owner) and tx.commit()
 
 
+func _assign_public_route(grid: WarrenSpatialGrid, owner: StringName,
+		cells: Array[Vector3i], landing: Vector3i) -> bool:
+	## TASK F3. A room's public threshold is not satisfied by PUBLIC_AIR alone:
+	## `WarrenRoomStamp.seal` requires the landing cell to carry a claimed
+	## PUBLIC_FLOOR face on its DOWN side -- a street somebody can stand on,
+	## rather than a column of air the room happens to face. This fixture
+	## assigned the use and never claimed the face, so its addressed room could
+	## not seal and the whole four-storey building failed to partition its
+	## private volume. Carving air and claiming its floor in ONE transaction is
+	## how every producer of a public route does it.
+	var tx := grid.begin_transaction(owner)
+	return tx.assign_use(cells, WarrenSpatialGrid.Use.PUBLIC_AIR, owner) \
+		and tx.claim_face(landing, Vector3i.DOWN,
+			WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR, owner) \
+		and tx.commit()
+
+
 func _offset_four_storey_cells() -> Array[Vector3i]:
 	var out: Array[Vector3i] = []
 	for y in range(8):
@@ -68,9 +85,8 @@ func test_building_volume_accepts_a_room_scale_upper_offset() -> void:
 	var cells := _offset_four_storey_cells()
 	assert_true(_assign(grid, &"building.chaotic", cells,
 		WarrenSpatialGrid.Use.PRIVATE_VOLUME))
-	assert_true(_assign(grid, &"route", [Vector3i(0, 0, -1),
-		Vector3i(0, 1, -1)] as Array[Vector3i],
-		WarrenSpatialGrid.Use.PUBLIC_AIR))
+	assert_true(_assign_public_route(grid, &"route", [Vector3i(0, 0, -1),
+		Vector3i(0, 1, -1)] as Array[Vector3i], Vector3i(0, 0, -1)))
 	var building := WarrenBuildingVolume.new(&"building.chaotic", 0)
 	assert_true(building.add_private_cells(cells))
 	assert_true(_add_tower_rooms(building, grid, [Vector3i(1, 0, 1),

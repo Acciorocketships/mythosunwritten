@@ -126,6 +126,28 @@ func test_compact_blue_roofs_use_real_slate_palette_variants() -> void:
 
 
 func test_compact_and_slim_roofs_have_measured_dormer_variants() -> void:
+	## TASK F3 MEMBER 4. This test was RED, and it was the test that was wrong.
+	## It asserted the GABLED family's registration (`DORMER_EMBED_Y` = 0.10,
+	## `position.y < 0.2`, tag `authored_gabled_dormer`) on all three recipes,
+	## and `roof.slim.orange.dormer.right` is a SHED-family dormer on purpose:
+	## the blue compact roofs take the gabled attic-window shells 001/002 and
+	## the orange ones take the shed shells 003/004, which have their own
+	## reviewed 50% scale and 0.22 m registration
+	## (`DORMER_SHED_EMBED_Y`). No recipe changed; the test now reads the
+	## family each recipe DECLARES and holds it to that family's registration.
+	## The split itself is not re-asserted here; it is owned by
+	## `test_settlement_fabric::test_dormer_styles_keep_steep_gables_and
+	## _replace_the_weak_shell_with_sheds`, which has been GREEN the whole time
+	## this one was red -- two suites disagreed about the same recipe and only
+	## one of them was measuring it.
+	##
+	## The `< 0.2` bound was a proxy for one authored rule -- the dormer stays
+	## buried under the host pitch -- expressed as a constant that only the
+	## gabled family could meet. It is replaced by the rule itself, measured
+	## against the host roof's own silhouette in the same recipe. MEASURED
+	## 2026-08-25: gabled dormers register at 0.100 and crown at 1.838, shed
+	## dormers at 0.220 and 1.776, both inside the compact host's 2.173 m
+	## ridge.
 	assert_not_null(_program)
 	for recipe_id: StringName in [
 			&"roof.tower.blue.dormer.left",
@@ -138,6 +160,30 @@ func test_compact_and_slim_roofs_have_measured_dormer_variants() -> void:
 			continue
 		assert_true(recipe_value.has_tag(&"dormer"),
 			"%s lost its finite dormer construction" % recipe_id)
+		var gabled := recipe_value.has_tag(&"authored_gabled_dormer")
+		var shed := recipe_value.has_tag(&"authored_shed_dormer")
+		assert_true(gabled != shed,
+			("%s must declare exactly one authored dormer family; the " \
+				+ "registration it is held to depends on which") % recipe_id)
+		var embed_y := SettlementFabricProgram.DORMER_EMBED_Y if gabled \
+			else SettlementFabricProgram.DORMER_SHED_EMBED_Y
+		# The host crown this dormer has to stay under: every placement in the
+		# recipe that is NOT the dormer, which is the roof shell itself.
+		var host := AABB()
+		var host_started := false
+		for placement: Dictionary in recipe_value.placements:
+			if String(placement.id).contains("dormer"):
+				continue
+			var host_descriptor := _catalog.descriptor(
+				StringName(placement.asset_id))
+			if host_descriptor == null:
+				continue
+			var host_bounds := (placement.transform as Transform3D) \
+				* host_descriptor.measured_aabb
+			host = host_bounds if not host_started else host.merge(host_bounds)
+			host_started = true
+		assert_true(host_started,
+			"%s carries no host roof shell for its dormer to sit in" % recipe_id)
 		var dormer_count := 0
 		for placement: Dictionary in recipe_value.placements:
 			if not String(placement.id).contains("dormer"):
@@ -146,13 +192,13 @@ func test_compact_and_slim_roofs_have_measured_dormer_variants() -> void:
 			var descriptor := _catalog.descriptor(StringName(placement.asset_id))
 			var bounds := (placement.transform as Transform3D) * \
 				descriptor.measured_aabb
-			assert_almost_eq(bounds.position.y,
-				SettlementFabricProgram.DORMER_EMBED_Y, 0.001,
+			assert_almost_eq(bounds.position.y, embed_y, 0.001,
 				"%s exposes the dormer face's construction back" % recipe_id)
 			assert_gte(bounds.position.y, 0.0,
 				"%s must not hang its construction feet below the building eave" % recipe_id)
-			assert_lt(bounds.position.y, 0.2,
-				"%s must remain embedded below the host roof slope" % recipe_id)
+			assert_lt(bounds.position.y + bounds.size.y,
+				host.position.y + host.size.y,
+				"%s must remain embedded below the host roof ridge" % recipe_id)
 			assert_lt(minf(bounds.size.x, bounds.size.z), 2.1,
 				"%s dormer facade grew into a room-width second gable" % recipe_id)
 			assert_lt(bounds.size.y, 2.1,
@@ -161,8 +207,6 @@ func test_compact_and_slim_roofs_have_measured_dormer_variants() -> void:
 			"%s must carry one integrated attic window" % recipe_id)
 		assert_true(recipe_value.has_tag(&"complete_authored_dormer"),
 			"%s lost its complete authored dormer shell" % recipe_id)
-		assert_true(recipe_value.has_tag(&"authored_gabled_dormer"),
-			"%s should use the compact gabled family" % recipe_id)
 		var authored_shell_count := 0
 		for stock_asset: StringName in [
 			SettlementFabricProgram.ROOF_WINDOW_01,
