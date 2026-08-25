@@ -6638,11 +6638,36 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 	var massif_edge_room_count := 0
 	var massif_edge_contact_count := 0
 	var terrain_rooted_established_access_count := 0
+	# TASK F2. Two facts about this scan, both PER SOLVE and both dropped when
+	# this call returns.
+	#
+	# `allocatable` is `grid.cells_with_use(ALLOCATABLE)` maintained instead of
+	# re-derived. The scan used to walk the whole fine grid and allocate a fresh
+	# cell array on every pass, and there is one pass per residual room. Inside
+	# this loop a cell only ever LEAVES the allocatable set -- the commit below
+	# is the only grid write, and it assigns PRIVATE_VOLUME -- so filtering the
+	# list keeps exactly the cells a fresh scan would return, in the same index
+	# order, which is what decides ties between equal-scoring candidates.
+	#
+	# `stamp_offsets` is `WarrenRoomStamp.expected_private_cells` for origin
+	# zero. `FabricRecipe.transform_cell` builds a `Basis` and rotates a vector
+	# per cell, and the stamp is a pure translation of the origin-zero set --
+	# `transform_cell(c, origin, yaw)` is `origin + round(Basis(yaw) * c)` --
+	# so the rotation is done once per (kind, yaw) rather than ~48 times for
+	# every one of the hundreds of thousands of candidates this scan tries.
+	var allocatable := grid.cells_with_use(WarrenSpatialGrid.Use.ALLOCATABLE)
+	var stamp_offsets: Array[Array] = []
+	for kind_index in WarrenRoomStamp.KINDS.size():
+		var per_yaw: Array = []
+		for yaw in 4:
+			per_yaw.append(WarrenRoomStamp.expected_private_cells(
+				WarrenRoomStamp.KINDS[kind_index], Vector3i.ZERO, yaw))
+		stamp_offsets.append(per_yaw)
 	while added_count < maximum_buildings:
 		var best: Dictionary = {}
-		for origin: Vector3i in grid.cells_with_use(
-				WarrenSpatialGrid.Use.ALLOCATABLE):
-			for kind: StringName in WarrenRoomStamp.KINDS:
+		for origin: Vector3i in allocatable:
+			for kind_index in WarrenRoomStamp.KINDS.size():
+				var kind := WarrenRoomStamp.KINDS[kind_index]
 				if int(kind_counts.get(kind, 0)) >= maximum_per_kind:
 					continue
 				var yaw_count := 1 if kind in [&"tower", &"building"] else 2
@@ -6655,7 +6680,8 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 						uncovered_frontage_sides,
 						volume.world_seed,
 						int(kind_counts.get(kind, 0)), construction_program,
-						plot_mass_cells)
+						plot_mass_cells,
+						stamp_offsets[kind_index][yaw] as Array[Vector3i])
 					if candidate.is_empty():
 						continue
 					if best.is_empty() or float(candidate.score) \
@@ -6766,6 +6792,16 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 		kind_counts[kind] = int(kind_counts.get(kind, 0)) + 1
 		added_count += 1
 		added_cells += cells.size()
+		# The committed cells are the only ones this pass took out of the
+		# allocatable set, so drop exactly those and keep the rest in order.
+		var consumed: Dictionary = {}
+		for cell: Vector3i in cells:
+			consumed[cell] = true
+		var remaining: Array[Vector3i] = []
+		for cell: Vector3i in allocatable:
+			if not consumed.has(cell):
+				remaining.append(cell)
+		allocatable = remaining
 	return {"failed": false, "building_count": added_count,
 		"private_cell_count": added_cells, "kind_counts": kind_counts,
 		"terrain_root_count": terrain_root_count,
@@ -6813,8 +6849,19 @@ static func _residual_room_candidate(grid: WarrenSpatialGrid,
 		uncovered_frontage_sides: Dictionary,
 		world_seed: int, existing_kind_count: int,
 		construction_program: SettlementFabricProgram,
-		plot_mass_cells: Dictionary = {}) -> Dictionary:
-	var cells := WarrenRoomStamp.expected_private_cells(kind, origin, yaw)
+		plot_mass_cells: Dictionary = {},
+		stamp_offsets: Array[Vector3i] = []) -> Dictionary:
+	# TASK F2. `stamp_offsets` is this (kind, yaw)'s stamp at origin zero, and
+	# the stamp at any origin is that set translated -- see the derivation at
+	# the head of `_backfill_residual_rooms`. A caller that passes none gets
+	# the original derivation, so nothing outside that scan changes.
+	var cells: Array[Vector3i] = []
+	if stamp_offsets.is_empty():
+		cells = WarrenRoomStamp.expected_private_cells(kind, origin, yaw)
+	else:
+		cells.resize(stamp_offsets.size())
+		for index in stamp_offsets.size():
+			cells[index] = stamp_offsets[index] + origin
 	if cells.is_empty():
 		return {}
 	# `plot_mass_cells` is empty in every searched mode and the short-circuit
