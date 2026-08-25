@@ -1108,6 +1108,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	if source == null or not source.is_sealed() or program == null:
 		last_failure = "missing sealed spatial plan or measured vocabulary"
 		return [] as Array[FabricUnit]
+	var room_started_ms := Time.get_ticks_msec()
 	var rooms: Array[WarrenRoomStamp] = []
 	var building_by_room: Dictionary = {}
 	var room_by_id: Dictionary = {}
@@ -1148,8 +1149,10 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	# plain setback cap) before choosing optional phase-B facade projections.
 	# Without this ordering a bay/laundry/sign detail can be legal against every
 	# room, then make an unrelated roof impossible several compiler phases later.
+	var room_stage_ms := _trace_stage("room.index", room_started_ms)
 	var required_roof_clearance := _required_roof_clearance(source, program,
 		rooms, room_id_by_private_cell)
+	room_stage_ms = _trace_stage("room.roof_clearance", room_stage_ms)
 	var feature_portal_masks := _feature_portal_masks(source, room_by_id)
 	if not last_failure.is_empty():
 		return [] as Array[FabricUnit]
@@ -1168,6 +1171,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	# wrong room: a ground room's `*.base.*` shell is mandatory and has no
 	# phase-B mate at all, so `fallback_id == recipe_id` and the town died.
 	# Measured: it is the whole `failed measured phase selection` family.
+	room_stage_ms = _trace_stage("room.portals", room_stage_ms)
 	var required_room_clearance := _required_room_clearance(source, program,
 		rooms, room_id_by_private_cell, feature_portal_masks)
 	var units: Array[FabricUnit] = []
@@ -1187,6 +1191,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	var facade_style_counts: Dictionary = {}
 	var building_variant_counts: Dictionary = {}
 	var lineage_style_by_id: Dictionary = {}
+	room_stage_ms = _trace_stage("room.room_clearance", room_stage_ms)
 	var room_probe := SettlementFabricPlan.new(&"spatial.room-phase-selection")
 	for recipe_value: FabricRecipe in program.recipes():
 		if not room_probe.register_recipe(recipe_value):
@@ -2855,6 +2860,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			or room_units.is_empty():
 		last_failure = "missing spatial plan, vocabulary, or compiled rooms"
 		return [] as Array[FabricUnit]
+	var roof_started_ms := Time.get_ticks_msec()
 	var room_by_id: Dictionary = {}
 	var room_id_by_cell: Dictionary = {}
 	for building: WarrenBuildingVolume in source.buildings:
@@ -2896,6 +2902,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	# Empty on every route-first and mass-first plan.
 	var maze_plot_model := source.source_volume != null \
 		and source.source_volume.mass_context.has(&"maze_source_plan")
+	var roof_stage_ms := _trace_stage("roof.probe_seed", roof_started_ms)
 	var roof_faces_by_room := _roof_faces_by_room(source, room_id_by_cell)
 	var roof_room_id_by_face: Dictionary = {}
 	for roof_room_id_value: Variant in roof_faces_by_room.keys():
@@ -2903,6 +2910,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		for roof_face: Vector3i in roof_faces_by_room[roof_room_id] \
 				as Array[Vector3i]:
 			roof_room_id_by_face[roof_face] = roof_room_id
+	roof_stage_ms = _trace_stage("roof.faces", roof_stage_ms)
 	var roof_neighborhood := _spatial_roof_neighborhood(source,
 		room_by_id, roof_faces_by_room)
 	if roof_neighborhood.is_empty() and not last_failure.is_empty():
@@ -3073,6 +3081,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	# this: it holds the fabric plan, not the plot model's room stamps, and a
 	# recipe tag alone would also select a pitched house's weather shoulder.
 	var maze_terrace_crown_units: Array[StringName] = []
+	roof_stage_ms = _trace_stage("roof.neighborhood", roof_stage_ms)
 	for room_id: StringName in room_ids:
 		var room := room_by_id[room_id] as WarrenRoomStamp
 		exposed_roof_room_kind_counts[room.kind] = int(
@@ -3832,6 +3841,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	var roof_trim_count := 0
 	var rejected_roof_trim_count := 0
 	var rejected_roof_trim_details: Array[Dictionary] = []
+	roof_stage_ms = _trace_stage("roof.selection", roof_stage_ms)
 	for pending: Dictionary in pending_roof_trims:
 		var room_id := StringName(pending.room_id)
 		var parent_roof := roof_unit_by_room.get(room_id) as FabricUnit

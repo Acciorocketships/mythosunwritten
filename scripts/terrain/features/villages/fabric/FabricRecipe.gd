@@ -319,17 +319,45 @@ static func lattice_transform(origin: Vector3i, yaw_quarters: int) -> Transform3
 
 static func transform_cell(cell: Vector3i, origin: Vector3i,
 		yaw_quarters: int) -> Vector3i:
-	var rotated := Basis(Vector3.UP, float(posmod(yaw_quarters, 4)) * PI * 0.5) \
-		* Vector3(cell)
-	return origin + Vector3i(roundi(rotated.x), roundi(rotated.y),
-		roundi(rotated.z))
+	## TASK F2. The quarter turn about UP, in integers, spelled out here rather
+	## than delegated: this is called for every lattice cell of every stamp,
+	## recipe and cap the composition and the compiler touch — millions of times
+	## per town — and at that rate a second GDScript call costs more than the
+	## arithmetic. See `transform_direction` for why the four cases are exact.
+	var quarter := yaw_quarters & 3
+	if quarter == 0:
+		return origin + cell
+	if quarter == 1:
+		return Vector3i(origin.x + cell.z, origin.y + cell.y,
+			origin.z - cell.x)
+	if quarter == 2:
+		return Vector3i(origin.x - cell.x, origin.y + cell.y,
+			origin.z - cell.z)
+	return Vector3i(origin.x - cell.z, origin.y + cell.y, origin.z + cell.x)
 
 
 static func transform_direction(direction: Vector3i,
 		yaw_quarters: int) -> Vector3i:
-	var rotated := Basis(Vector3.UP, float(posmod(yaw_quarters, 4)) * PI * 0.5) \
-		* Vector3(direction)
-	return Vector3i(roundi(rotated.x), roundi(rotated.y), roundi(rotated.z))
+	## TASK F2. The same quarter turn, without an origin.
+	##
+	## Both used to build `Basis(Vector3.UP, yaw * PI/2)` — trig, a 3x3 matrix,
+	## a float vector product and three roundings — per call. `Basis(UP, t)`
+	## maps (x, y, z) to (cos t * x + sin t * z, y, -sin t * x + cos t * z), and
+	## at the four quarter turns the sines and cosines are 0 and +-1 to within a
+	## float epsilon that `roundi` was already discarding, so these cases are
+	## what it always computed. Checked exhaustively over yaw -8..11 and every
+	## cell in [-9, 9]^3 against the Basis form: zero mismatches.
+	##
+	## `& 3` is `posmod(x, 4)` for every int in two's complement, and avoids a
+	## built-in call in the same hot path.
+	var quarter := yaw_quarters & 3
+	if quarter == 0:
+		return direction
+	if quarter == 1:
+		return Vector3i(direction.z, direction.y, -direction.x)
+	if quarter == 2:
+		return Vector3i(-direction.x, direction.y, -direction.z)
+	return Vector3i(-direction.z, direction.y, direction.x)
 
 
 static func box_cells(minimum: Vector3i, size: Vector3i) -> Array[Vector3i]:
