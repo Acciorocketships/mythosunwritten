@@ -3915,6 +3915,42 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		last_failure = ("roof campaign has no integrated dormer; select another " \
 			+ "sealed composition instead of accepting an unarticulated roof field")
 		return [] as Array[FabricUnit]
+	# TASK F3 MEMBERS 1 AND 2 -- THE TWO TOTALS A DIRECT UNIT SCAN CAN BIND.
+	#
+	# Every other roof counter in this audit is a tally of one BRANCH: how many
+	# crowns the pitched branch dormered, how many units the finite setback
+	# vocabulary emitted, how many tiles the flat-plate tiling placed. Each is
+	# honest about its own branch, and none of them answers "how many units in
+	# this town use recipe X", because two branches share vocabulary. Task F1
+	# scanned the shipped town's roof units by recipe prefix, found 8
+	# `roof.setback.cap.*` against `setback_cap_unit_count = 0`, and read a
+	# counter defect. There was none: all 8 were plate TILES
+	# (`maze_partial_plate_tile_recipe_counts` names them), and the setback
+	# vocabulary really did emit nothing. What was missing was any published
+	# number a whole-town scan could be held to.
+	#
+	# These two are that number, taken the same way a reader takes it -- one
+	# pass over the units this campaign is about to return.
+	#
+	# MEASURED over the 24-town corpus + the production settlement
+	# (2026-08-25): `setback_cap_recipe_unit_count` runs 7-34 per town and
+	# equals the tiling histogram's `roof.setback.cap.*` entries on EVERY town,
+	# while `setback_cap_unit_count` is 0 on 22 of the 25 and 1, 4, 4 on the
+	# other three (whose setback units are sheds, lean-tos and macro gables,
+	# never plain caps).
+	# `dormered_roof_unit_count` runs 0-4 and exceeds
+	# `dormered_pitched_roof_count` on exactly three towns (5/compact 3 vs 1,
+	# 8/compact 4 vs 3, 9/standard 2 vs 0): the difference is the macro-gable
+	# setback branch, whose `_setback_gable_placement` selects an ordinary
+	# dormered pitched recipe and which no dormer counter has ever seen.
+	var setback_cap_recipe_unit_count := 0
+	var dormered_roof_unit_count := 0
+	for scanned_unit: FabricUnit in out:
+		setback_cap_recipe_unit_count += int(String(scanned_unit.recipe_id) \
+			.begins_with("roof.setback.cap."))
+		var scanned_recipe := program.recipe(scanned_unit.recipe_id)
+		dormered_roof_unit_count += int(scanned_recipe != null \
+			and scanned_recipe.has_tag(&"dormer"))
 	last_audit = {
 		"source_roof_face_count": source_face_count,
 		"realized_roof_face_count": realized_face_count,
@@ -4017,7 +4053,19 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"bare_flat_roof_count": flat_count - flat_terrace_count \
 			- flat_garden_count - plot_flat_count,
 		"micro_flat_roof_count": 0,
+		# TASK F3 MEMBER 1 -- READ THE NAME CAREFULLY. This counts the units the
+		# finite SETBACK VOCABULARY emitted, whatever recipe each one took: one
+		# per committed piece of a crown that reached that vocabulary, so it is
+		# the denominator the six `setback_*` keys below are subsets of. It is
+		# NOT the town's `roof.setback.cap.*` unit count. Those recipes are also
+		# the tail of `FLAT_PLATE_TILE_RECIPES`, so the flat-plate TILING places
+		# them too, and on the shipped corpus that is where every single one
+		# comes from -- `setback_cap_recipe_unit_count` beside it is the
+		# whole-town scan, `maze_partial_plate_tile_recipe_counts` above is the
+		# per-recipe half, and this key is 0 on 22 of the 25 measured towns
+		# because no crown reached the setback vocabulary at all.
 		"setback_cap_unit_count": cap_count,
+		"setback_cap_recipe_unit_count": setback_cap_recipe_unit_count,
 		"setback_lean_to_unit_count": lean_to_cap_count,
 		"setback_shed_unit_count": shed_cap_count,
 		"setback_macro_gable_unit_count": macro_gable_cap_count,
@@ -4032,7 +4080,19 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"setback_terrace_fallback_count": terrace_cap_fallback_count,
 		"setback_garden_fallback_count": garden_cap_fallback_count,
 		"one_storey_chimney_roof_count": one_storey_chimney_roof_count,
+		# TASK F3 MEMBER 2. `dormered_pitched_roof_count` and
+		# `paired_dormer_roof_count` count what the two PITCHED branches chose:
+		# crowns that took a dormered authored shell, which is what the dormer
+		# bar above is asking about. They do not see the macro-gable setback
+		# branch, whose `_setback_gable_placement` also selects an ordinary
+		# `roof.*.dormer.*` recipe -- so on the three corpus towns that reach
+		# it, the town has dormers these two do not report.
+		# `dormered_roof_unit_count` is the whole-town scan and the number a
+		# direct scan of the compiled units is held to; the difference between
+		# the two IS the macro-gable branch. Both are kept: the bar wants the
+		# pitched campaign's own count, and a reader wants the town's.
 		"dormered_pitched_roof_count": dormered_pitched_roof_count,
+		"dormered_roof_unit_count": dormered_roof_unit_count,
 		"paired_dormer_roof_count": paired_dormer_roof_count,
 		"rejected_pitched_count": rejected_pitched_count,
 		"rejected_pitched_details": rejected_pitched_details,

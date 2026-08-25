@@ -6,6 +6,21 @@ extends GutTest
 const COVERED_MARKET_UNIT_CEILING := 64
 
 
+static func _tiled_setback_caps(audit: Dictionary) -> int:
+	## How many `roof.setback.cap.*` units the flat-plate TILING placed, read
+	## out of the per-recipe histogram it publishes. Task F3 member 1: those
+	## recipes are the tail of `FLAT_PLATE_TILE_RECIPES` as well as the setback
+	## vocabulary's own plain lid, so a whole-town scan only reconciles when
+	## both producers are counted.
+	var out := 0
+	var recipe_counts := audit.get("maze_partial_plate_tile_recipe_counts",
+		{}) as Dictionary
+	for recipe_value: Variant in recipe_counts.keys():
+		if String(recipe_value).begins_with("roof.setback.cap."):
+			out += int(recipe_counts[recipe_value])
+	return out
+
+
 func test_arcade_overhang_adapter_binds_foundation_to_both_room_plates() -> void:
 	var program := SettlementFabricProgram.compile(
 		EnvironmentCatalog.load_default())
@@ -410,8 +425,34 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	# enforced: F1 only deletes, and giving the shipped town its dormers and
 	# sheds back is a quality task, not a deletion. The counters must still
 	# EXIST -- an absent key is a broken transaction.
+	#
+	# TASK F3 MEMBER 2, DIAGNOSED. The zero is HONEST -- no eligible dormer is
+	# dropped on the way to a unit; the town simply has none to drop. A
+	# dormered crown needs three independent facts to coincide: the plot model
+	# must have asked this crown for a pitched shell
+	# (`plot_prefers_pitched_roof`, an unstacked plot strictly above every
+	# neighbour, then one seeded bit), the room must be above the ground storey
+	# (`_full_roof_recipe_id` gives storey 0 a `.short.` roof), and its
+	# `roof_feature` must be 1 or 2. MEASURED on this town: 40 roofed crowns, 8
+	# asked for a pitched shell, 7 got one, and the 2 crowns whose recipe would
+	# have been dormered are ordinary flat crowns that never asked -- the two
+	# sets are disjoint by seed, not by rule. Where they DO meet, the dormer
+	# lands: the same seed at STANDARD scale builds
+	# `roof.tower.orange.dormer.left`, and over the 24-town corpus
+	# `dormered_roof_unit_count` runs 0 to 4 with 16 towns above zero. The
+	# machinery is proved by `assert_gte` below rather than by a floor this
+	# seed cannot meet; giving the carved form MORE dormers is a Phase G
+	# conversation about `plot_prefers_pitched_roof`, not a defect.
+	#
+	# The 0 setback sheds are the same shape: a shed only exists inside the
+	# finite setback vocabulary, and a maze flat crown reaches that vocabulary
+	# only when its slab AND its tiling both fail. Corpus-wide
+	# `maze_partial_plate_refused_count` is 0 on all 24 towns, 3 towns reach
+	# the vocabulary at all (through residual rooms), and 2 of those 3 build
+	# sheds when they do.
 	for roof_key: String in ["dormered_pitched_roof_count",
-			"rejected_pitched_count", "setback_cap_unit_count"]:
+			"rejected_pitched_count", "setback_cap_unit_count",
+			"setback_cap_recipe_unit_count", "dormered_roof_unit_count"]:
 		assert_true(WarrenSpatialFabricCompiler.last_audit.has(roof_key),
 			"the roof campaign never measured %s" % roof_key)
 	gut.p("one-pass town: dormered=%d rejected_pitched=%d setback_cap=%d pitched=%d" % [
@@ -445,10 +486,17 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.broken_atomic_roof_neighborhood_count), 0)
 	var setback_cap_roofs := 0
+	var setback_vocabulary_roofs := 0
+	var dormered_roofs := 0
 	for roof: FabricUnit in roofs:
 		setback_cap_roofs += int(
 			String(roof.recipe_id).begins_with("roof.setback.cap."))
+		# `_cap_unit` is the only producer of a `.capNN` unit id and every
+		# setback piece goes through it, so this is the setback vocabulary's
+		# own output counted from the outside.
+		setback_vocabulary_roofs += int(String(roof.stable_id).contains(".cap"))
 		var roof_recipe := program.recipe(roof.recipe_id)
+		dormered_roofs += int(roof_recipe.has_tag(&"dormer"))
 		for local_cell: Vector3i in roof_recipe.solid_cells:
 			var world_cell := FabricRecipe.transform_cell(local_cell,
 				roof.lattice_origin, roof.yaw_quarters)
@@ -458,13 +506,50 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		assert_true(fabric.add_unit(roof), fabric.last_rejection)
 	# TASK F1, MEASURED. `roof.setback.cap.*` was forbidden outright here, and
 	# the searched town honoured that. The one-pass town emits 8 of them over
-	# 49 roof units -- a real, newly VISIBLE quality gap (this fixture was
-	# measuring the wrong pipeline, so nothing was watching). Pinned at the
-	# measured count so it can only shrink; closing it is a quality task.
+	# 49 roof units, and F1 read that as a newly visible quality gap.
+	#
+	# TASK F3 MEMBER 1, MEASURED AND RECLASSIFIED. It is not one. All 8 are
+	# flat-plate TILES: `roof.setback.cap.{1,2,4,6}` is the tail of
+	# `FLAT_PLATE_TILE_RECIPES`, and the tiling covers a maze crown the flat
+	# vocabulary cannot slab in one piece -- a plank lid, not an exposed
+	# shoulder. The finite setback vocabulary emitted NOTHING on this town, and
+	# `setback_cap_unit_count = 0` was telling the truth about it. The
+	# exposed-shoulder rule that "forbade setback caps outright" is
+	# `setback_plain_cap_unit_count`, asserted at zero above and still zero.
+	#
+	# Both counters are now bound to a direct scan, which is what was missing:
+	# a whole-town recipe scan had no published number to be held to, so a
+	# reader crossed the two vocabularies and neither counter could contradict
+	# him.
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.setback_cap_recipe_unit_count), setback_cap_roofs,
+		"the town's roof.setback.cap.* units must equal a direct scan")
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.setback_cap_unit_count), setback_vocabulary_roofs,
+		"the setback vocabulary's unit count must equal a direct scan of the " \
+			+ "units it produced")
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.dormered_roof_unit_count), dormered_roofs,
+		"the town's dormered roof units must equal a direct scan")
+	assert_gte(int(WarrenSpatialFabricCompiler.last_audit \
+		.dormered_roof_unit_count),
+		int(WarrenSpatialFabricCompiler.last_audit \
+			.dormered_pitched_roof_count),
+		"the whole-town dormer scan must contain the pitched campaign's own")
+	assert_eq(setback_cap_roofs, int(WarrenSpatialFabricCompiler.last_audit \
+		.setback_cap_unit_count) + _tiled_setback_caps(
+			WarrenSpatialFabricCompiler.last_audit),
+		("every roof.setback.cap.* unit belongs to the setback vocabulary or " \
+			+ "the flat-plate tiling; a third producer would hide here"))
+	# Pinned at the measured count so it can only shrink. What shrinking it
+	# would mean is now stated: fewer crowns needing a tiled plank lid, not a
+	# roofscape with fewer exposed shoulders -- there are none.
 	assert_lte(setback_cap_roofs, 8,
-		"small exposed flat roof pieces must not spread further")
-	gut.p("one-pass town: setback_cap_roof_units=%d of %d roofs" % [
-		setback_cap_roofs, roofs.size()])
+		"small flat roof plate tiles must not spread further")
+	gut.p("one-pass town: setback_cap_roof_units=%d of %d roofs (vocabulary=%d tiles=%d) dormered_units=%d" % [
+		setback_cap_roofs, roofs.size(), setback_vocabulary_roofs,
+		_tiled_setback_caps(WarrenSpatialFabricCompiler.last_audit),
+		dormered_roofs])
 	var sealed := WarrenSpatialFabricCompiler.solve(spatial, program)
 	assert_not_null(sealed, WarrenSpatialFabricCompiler.last_failure)
 	if sealed != null:
