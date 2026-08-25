@@ -2261,6 +2261,19 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 		# fact a plainer town ships with, exactly as every other richness quota
 		# already does, and the two counts below stay in the audit for a reader
 		# who wants the shape as well as the shortfall.
+		#
+		# STATED PLAINLY (task F4 fix 1): this is not only the absent-court case.
+		# It is also the FINAL RE-VERIFICATION of a court the beam really did
+		# select, on the path where the composition had to be rebuilt after
+		# selection — a real cantilever whose court the recomposition then
+		# narrowed below three sides now ships with the narrowed count published
+		# instead of losing the town. The SELECTION-time check is untouched and
+		# still hard (`_court_candidate_preserves_exact_room_envelopes`, :4232):
+		# no candidate is ever CHOSEN on fewer than three sides. Zero corpus
+		# towns take this path today — all 14 refusals were `mask=0` — so the
+		# relaxation is unexercised rather than merely unmeasured, and it is
+		# written down here because an unexercised relaxation is exactly the kind
+		# that surprises someone later.
 		last_advisory_shortfalls["composed_courtyard_sides"] = \
 			composed_court_side_count
 		last_advisory_shortfalls["composed_courtyard_sides_target"] = \

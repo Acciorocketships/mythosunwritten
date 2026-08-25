@@ -13,9 +13,17 @@ extends SceneTree
 ## measured half the size profiles production actually rolls (~15 % of city
 ## seeds roll large or grand). The full 48-town matrix costs the wall clock
 ## printed in `SWEEP RESULT` and is what `test_corpus_composes` scores itself
-## against; a REDUCED large/grand seed list is legitimate when the full one is
-## unaffordable, and the summary line prints the reduction so a matrix measured
-## on nine towns cannot be read as one measured on twelve.
+## against.
+##
+## THE FULL MATRIX IS MANDATORY. An earlier version of this comment offered a
+## "reduced large/grand seed list ... when the full one is unaffordable", which
+## this harness cannot express and the corpus gate would not accept: `--seeds`
+## is global to every scale, so there is no way to give large fewer seeds than
+## compact, and `test_corpus_composes` asserts `rows.size() == seeds x scales`,
+## which HARD-FAILS a short matrix rather than pending it. The capability was
+## not built; the promise is withdrawn. `SWEEP RESULT per_scale` below states
+## the shape that was actually measured — as evidence, not as a licence to
+## measure less.
 ##
 ## Each row names the GATE the town died at -- the head of the solver's own
 ## failure -- so a corpus-wide run reads as a disposition of gates rather than a
@@ -200,9 +208,10 @@ func _init() -> void:
 	print("SWEEP RESULT sealed=%d/%d total_ms=%d" % [sealed_count, attempted,
 		total_ms])
 	# TASK F4. The matrix's own shape, printed beside its result: which scales
-	# ran, how many seeds each got, and what each sealed. A reduced large/grand
-	# seed list is a legitimate matrix and an illegitimate thing to leave
-	# unstated, so the reduction is a row of this line rather than a footnote.
+	# ran, how many seeds each got, and what each sealed. It exists so a reader
+	# can tell a full corpus run from a spot check at a glance, and so the
+	# per-scale seal counts the corpus gate pins are legible in the log that
+	# produced them.
 	var per_scale := PackedStringArray()
 	for scale_name: String in attempted_by_scale.keys():
 		per_scale.append("%s=%d/%d" % [scale_name,

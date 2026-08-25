@@ -21,6 +21,14 @@ const STANDARD_SEEDS: Array[int] = [3, 9]
 ## Wall-clock ceiling for one production solve. The composition file has a
 ## ~4 min budget and the landmark stage used to run away for five minutes on
 ## its own; a seed that needs more than this has regressed into a search.
+##
+## TASK F4 FIX 1, MINOR 1: scoped to the COMPACT/STANDARD planner seeds, which
+## are the only towns it is applied to (`_corpus()`). The big scales are not
+## exempt from scrutiny, they are exempt from THIS number: 9/grand solves in
+## ~49.5 s and is production-reachable, so a 30 s bar would read as "regressed
+## into a search" on a town that is simply four times the size. They carry
+## their own measured ceilings in `test_large_and_grand_towns_exist`, and
+## bringing them near this one is a performance task nobody has run yet.
 const MAXIMUM_SOLVE_MS := 30000
 
 ## Every failure `_solve_maze` can write once the source and its translation
@@ -390,7 +398,7 @@ const UNCOMPOSED_PARCEL_GATES: Array[String] = [
 ## sealed 0 of 12 each -- the elevated-courtyard floor refused 14 of the 24 and
 ## the sweep never ran them at all, so the matrix measured half the size
 ## profiles production rolls. They are scored SEPARATELY from the twelve
-## compact and twelve standard towns below, because their honest floors are 3
+## compact and twelve standard towns below, because their honest floors are 7
 ## and 1, not 12: `test_large_and_grand_towns_exist` carries what a sealed one
 ## of each measures, and the remaining blockers are named in the F4 report.
 const MAZE_SWEEP := preload("res://tests/harness/warren_maze_mode_sweep.gd")
@@ -401,12 +409,18 @@ const CORPUS_SWEEP_SCALES: Array[String] = ["compact", "standard", "large",
 
 ## The two halves of that matrix. `CORPUS_SEALED_FLOOR` above is an EQUALITY on
 ## the first group -- a compact or standard town lost is a named regression --
-## while the second is pinned at what task F4 measured, seeds named. Measured
-## 3/12 at large (4, 6, 7) and 1/12 at grand (9). Both are floors: a seed that
-## starts sealing is a re-pin UPWARD with the reason, and one that stops is the
-## regression this exists to catch.
+## while the second is pinned at what task F4 measured, seeds named. Both are
+## floors: a seed that starts sealing is a re-pin UPWARD with the reason, and
+## one that stops is the regression this exists to catch.
+##
+## MEASURED 7/12 at large (4, 6, 7, 8, 9, 10, 12) and 1/12 at grand (9). Task
+## F4's flip took large from 0 to 3; fix round 1's market resolution took it
+## from 3 to 7, which is 4 of the 7 seeds that had been dying at
+## `required covered market was never preplanned` -- the other three met a
+## bridge-flank envelope gate (1) and the modular-box contract (3, 11). Grand
+## did not move: none of its refusals was the market.
 const CORPUS_EQUALITY_SCALES: Array[String] = ["compact", "standard"]
-const LARGE_SEALED_FLOOR := 3
+const LARGE_SEALED_FLOOR := 7
 const GRAND_SEALED_FLOOR := 1
 
 ## The composition family this task closed. A sweep row that dies here again is
@@ -4700,37 +4714,42 @@ func test_corpus_composes() -> void:
 			+ "towns died there again: %s") % ", ".join(retired))
 
 
-## TASK F4. One sealed town of each big scale, solved here rather than read off
-## the sweep, because the pins below are the CORPUS-DRIFT TRIPWIRE and a
-## tripwire wants the audit itself. The seeds are the cheapest sealing large
-## town and the only sealing grand one.
+## TASK F4. Sealed big towns, solved here rather than read off the sweep,
+## because the pins below are the CORPUS-DRIFT TRIPWIRE and a tripwire wants the
+## audit itself.
 ##
-## Both ceilings are the measured solve x 1.5 on the task machine: 13300 and
-## 49376 ms. They are far above the four planner seeds' 3.2-6.5 s and they are
-## reported, not endorsed -- nothing in task F4 optimised these scales, which
-## have never been through a performance pass at all.
-const LARGE_LANE_SEED := 7
-const GRAND_LANE_SEED := 9
-const LARGE_LANE_SOLVE_MS_CEILING := 20000
-const GRAND_LANE_SOLVE_MS_CEILING := 74000
-
-## Measured 116 / 118 / 142 buildings at large (seeds 7, 6, 4) and 236 at grand,
-## against 40-70 for a compact planner town. Floored well below the measurement:
-## the claim is "these towns really are the big ones", not a re-pin surface.
-const LARGE_LANE_BUILDING_FLOOR := 90
-const GRAND_LANE_BUILDING_FLOOR := 180
+## THREE towns, because there are now two kinds of sealing large town and the
+## difference between them is the thing fix round 1 changed: 7/large builds the
+## bazaar its profile requires, 9/large does NOT and publishes the
+## `covered_market` shortfall instead of being rejected for it, and 9/grand is
+## the only sealing grand town there is. The market expectation is per seed and
+## two-sided, so the resolution cannot silently revert in either direction.
+##
+## Every ceiling is the measured in-suite solve x 1.5 on the task machine
+## (13502, ~22700 and 49582 ms), rounded up. They are far above the four planner
+## seeds' 3.2-6.5 s and they are reported, not endorsed -- nothing in task F4
+## optimised these scales, which have never been through a performance pass at
+## all. Measured 116 / 144 / 236 buildings against 40-70 for a compact planner
+## town; the floors sit well below the measurement, because the claim is "these
+## towns really are the big ones", not a re-pin surface.
+##
+## Fields: seed, scale, solve ceiling ms, building floor, expected market count.
+const BIG_TOWN_LANES: Array[Array] = [
+	[7, &"large", 20500, 90, 1],
+	[9, &"large", 35000, 90, 0],
+	[9, &"grand", 74500, 180, 1],
+]
 
 
 func test_large_and_grand_towns_exist() -> void:
 	## The task F4 exit, in one test. Before the flip these two scales sealed 0
 	## of 12 each and ~15 % of production city seeds produced NO TOWN AT ALL;
-	## the elevated-courtyard floors are advisory now and these two seeds come
-	## out the far side. What they ship is deliberately pinned as the plain
-	## thing it is: no court, no landmark, no skywalk, every absence published.
-	for lane: Array in [[LARGE_LANE_SEED, WarrenVillageScaleProfile.LARGE,
-				LARGE_LANE_SOLVE_MS_CEILING, LARGE_LANE_BUILDING_FLOOR],
-			[GRAND_LANE_SEED, WarrenVillageScaleProfile.GRAND,
-				GRAND_LANE_SOLVE_MS_CEILING, GRAND_LANE_BUILDING_FLOOR]]:
+	## with the elevated-courtyard floors and the covered-market floor advisory
+	## they seal 7 of 12 and 1 of 12, and these three come out the far side.
+	## What they ship is deliberately pinned as the plain thing it is: no court,
+	## no landmark, no skywalk, and on 9/large no bazaar either -- every absence
+	## published rather than fatal.
+	for lane: Array in BIG_TOWN_LANES:
 		var outcome := _solved(int(lane[0]), StringName(lane[1]))
 		var plan := outcome.plan as WarrenSpatialPlan
 		assert_not_null(plan, "%s must seal its town: %s" % [_label(outcome),
@@ -4750,14 +4769,25 @@ func test_large_and_grand_towns_exist() -> void:
 		assert_gte(plan.buildings.size(), int(lane[3]),
 			"%s built %d buildings; a big town is big" % [_label(outcome),
 				plan.buildings.size()])
-		# The same vocabulary guard `test_hero_shortfalls_are_audit_facts` puts
-		# on the four planner towns. These two publish keys no compact town can,
-		# so the guard has to see them here or it never sees them at all.
+		# TASK F4 FIX 1, MINOR 5: the whole of
+		# `test_hero_shortfalls_are_audit_facts`, applied to these two towns.
+		# That test walks `_corpus()`, which is compact and standard only, so
+		# without this the big scales are the ones NOT checked -- and they are
+		# the only towns that can publish half the vocabulary or die naming a
+		# hero quota.
+		for fragment: String in HERO_QUOTA_GATE_FRAGMENTS:
+			assert_false(String(outcome.failure).contains(fragment),
+				"%s was rejected on a hero quota: %s" % [_label(outcome),
+					String(outcome.failure).left(200)])
 		for key_value: Variant in shortfalls.keys():
 			assert_has(ADVISORY_SHORTFALL_KEYS,
 				_canonical_shortfall_key(String(key_value)),
 				"%s reports an unvocabularised shortfall %s" % [
 					_label(outcome), key_value])
+		assert_eq(int(plan.audit.get("advisory_shortfall_count", -1)),
+			shortfalls.size(),
+			"%s's shortfall count must match the shortfalls it published" \
+				% _label(outcome))
 		# The three courtyard shortfalls, two-sided. A value that MOVES means the
 		# corpus drifted under the flip -- either these towns started forming a
 		# court (delete the pin and say so) or they lost something else.
@@ -4779,23 +4809,32 @@ func test_large_and_grand_towns_exist() -> void:
 			assert_eq(int(plan.audit.get(String(pinned[0]), -1)),
 				int(pinned[1]), "%s must audit %s = %d" % [_label(outcome),
 					String(pinned[0]), int(pinned[1])])
-		# The market arm, exercised for the first time by these two scales.
-		# `requires_covered_market` is TRUE on both profiles and every sealed
-		# large/grand town builds its bazaar -- because a town whose market never
-		# preplans is rejected by `WarrenSpatialFeatureSolver` instead of
-		# publishing the `covered_market` shortfall the solver already wrote for
-		# it. That contradiction is task F4's headline handoff; this pins the
-		# half that is true today, so closing it shows up here.
+		# TASK F4 FIX 1: the market arm, resolved and pinned BOTH ways.
+		# `requires_covered_market` is true on both big profiles, and it used to
+		# be the last hard richness floor: a large town whose ground street held
+		# no measured canopy was REJECTED by `WarrenSpatialFeatureSolver`, while
+		# the solver one stage earlier had already published its
+		# `covered_market` shortfall and moved on. It now ships. 7/large and
+		# 9/grand build their bazaar; 9/large does not and says so, and it is in
+		# this lane precisely so that the marketless half is a pinned town rather
+		# than a claim in a report.
+		var expected_markets := int(lane[4])
 		assert_true(WarrenVillageScaleProfile.for_id(
 			StringName(lane[1])).requires_covered_market,
 			"%s's profile must still require a bazaar" % _label(outcome))
-		assert_eq(int(plan.audit.get("covered_market_count", -1)), 1,
-			"%s must build the bazaar its profile requires" % _label(outcome))
-		assert_eq(_feature_count(plan, &"covered_market"), 1,
-			"%s must carry exactly one market feature" % _label(outcome))
-		assert_false(shortfalls.has("covered_market"),
-			"%s built its bazaar, so it may not publish the shortfall" \
-				% _label(outcome))
+		assert_eq(int(plan.audit.get("covered_market_count", -1)),
+			expected_markets, "%s must audit %d covered markets" % [
+				_label(outcome), expected_markets])
+		assert_eq(_feature_count(plan, &"covered_market"), expected_markets,
+			"%s must carry %d market features" % [_label(outcome),
+				expected_markets])
+		assert_eq(shortfalls.has("covered_market"), expected_markets == 0,
+			("%s publishes the covered_market shortfall exactly when it has no " \
+				+ "bazaar") % _label(outcome))
+		if expected_markets == 0:
+			assert_eq(int(shortfalls.get("covered_market", -1)), 0,
+				"%s's published market shortfall must be the measured 0" \
+					% _label(outcome))
 		# The production materialization contract is the other end of the flip:
 		# a courtless large town has to survive it, or the town seals and then
 		# dies at the record builder.

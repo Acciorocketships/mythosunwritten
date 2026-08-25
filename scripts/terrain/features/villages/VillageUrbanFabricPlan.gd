@@ -118,16 +118,14 @@ func _validate_volumetric_warren(program: VillageProgram) -> bool:
 	return false
 
 
-static func _required_market_count(audit: Dictionary) -> int:
-	## The covered bazaar is a city obligation; villages take one only when it
-	## fits. The legacy constant remains the fallback for audits that carry no
-	## size contract.
-	var profile := WarrenVillageScaleProfile.for_id(StringName(
-		audit.get("scale_profile_id", "")))
-	return int(profile.requires_covered_market) if profile != null \
-		else WarrenMarketSolver.REQUIRED_MARKETS
-
-
+## TASK F4 FIX 1 deleted `_required_market_count` from here. It had no caller
+## and had not had one since the searched pipeline was removed, and it encoded
+## exactly the doctrine this fix resolves against: "a profile that requires a
+## bazaar must have one", with `WarrenMarketSolver.REQUIRED_MARKETS` (2, from a
+## pipeline that no longer exists) as the fallback for an audit with no size
+## contract. Left in place it is the obvious thing for a future reader to wire
+## back into the contract below, which would re-open the floor by hand.
+## `covered_market_count` is measured, ceilinged at 1, and never floored.
 static func _scale_feature_contract_matches(audit: Dictionary) -> bool:
 	## Production selects the size profile before authoring the massif. The final
 	## transaction must validate against that same profile; the former hard-coded

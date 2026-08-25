@@ -127,9 +127,31 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	# feature the compiler will refuse and expect another composition to save
 	# the town.
 	var plot_model_source := source.mass_context.has(&"maze_source_plan")
-	# A village whose ground street holds no measured bazaar runs without one;
-	# a profile that requires the market never reaches this stage marketless
-	# because the hero-feature beam already rejected the town.
+	# A village whose ground street holds no measured bazaar runs without one.
+	#
+	# TASK F4 FIX 1. The `elif requires_covered_market` REJECTION that used to
+	# stand here is gone, and with it the last hard richness floor in the
+	# pipeline. `WarrenVolumetricSolver._partition_rooms` deleted the matching
+	# rejection at its own market stage and wrote in its place: "A required
+	# market that never preplans now ships as a published `covered_market`
+	# shortfall." This line was that promise unkept -- the solver published the
+	# shortfall and continued, and the town died here instead, one stage later.
+	# Nobody could see it until F4 made the elevated-courtyard floors advisory,
+	# because no large or grand town had ever reached this function; it then
+	# cost 7 of the 12 large corpus seeds.
+	#
+	# It is a RICHNESS quota by the same test every other one passed: it reads
+	# only whether a record was PREPLANNED, never whether a preplanned one could
+	# be built (that failure is two lines up and stays fatal). A marketless town
+	# is a supported shape here, not an untested one -- 19 of the 24
+	# compact/standard corpus towns ship through this exact code with `market`
+	# null, the reservation is normalized to `{}` before this function sees it,
+	# and every downstream consumer is emptiness- or match-guarded.
+	#
+	# The publish is repeated rather than assumed. The beam already writes this
+	# key when its own candidate list comes back empty, so this is idempotent on
+	# every path that reaches it today; writing it here too means the fact
+	# cannot go missing if that path ever changes.
 	var market: WarrenFeatureReservation = null
 	if not preplanned_market.is_empty():
 		market = _reserve_preplanned_market(grid, buildings, supports,
@@ -138,20 +160,7 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 			return [] as Array[WarrenFeatureReservation]
 		out.append(market)
 	elif scale_profile.requires_covered_market:
-		# TASK F4, REPORTED NOT FIXED (the task's no-cascade-chasing fence).
-		# `WarrenVolumetricSolver._partition_rooms` deleted the matching
-		# rejection at its own market stage and wrote in its place: "A required
-		# market that never preplans now ships as a published `covered_market`
-		# shortfall." This line is that promise unkept -- the solver publishes
-		# the shortfall and continues, and the town dies here instead, one stage
-		# later. Nobody could see it until F4 made the elevated-courtyard floors
-		# advisory, because no large or grand town had ever reached this
-		# function. It costs 7 of the 12 large corpus seeds and is the single
-		# largest remaining blocker at that scale. Closing it is a decision about
-		# whether a required bazaar is a floor or a quota, which is the
-		# controller's to make, not a fix to slip in behind a courtyard task.
-		last_failure = "required covered market was never preplanned"
-		return [] as Array[WarrenFeatureReservation]
+		WarrenVolumetricSolver.last_advisory_shortfalls["covered_market"] = 0
 	var gateway_records := composition_audit.get(
 		"perimeter_gateway_support_records", []) as Array
 	var gateway_resolution: Dictionary = {}
@@ -240,10 +249,19 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	# start outside its room, the lower public street, the grid transaction — is
 	# unchanged and still fatal, as is a malformed record with more than one
 	# owner.
+	#
+	# TASK F4 FIX 1, MINOR 2. The sentinel test is "a DRESSED record with no
+	# owner", not "no owner": an omitted or lost argument arrives as a literally
+	# empty dictionary, and that has to keep failing loudly the way it did before
+	# this task rather than being read as a town that simply has no court. One
+	# caller passes this today and it always passes the dressed record, so the
+	# distinction is latent — which is the reason to write it down rather than
+	# rely on it.
 	var courtyard_bridge: WarrenFeatureReservation
 	if scale_profile.requires_elevated_courtyard:
-		if (preplanned_courtyard_bridge.get("owner_parcel_ids", []) \
-				as Array).is_empty():
+		if not preplanned_courtyard_bridge.is_empty() \
+				and (preplanned_courtyard_bridge.get("owner_parcel_ids", []) \
+					as Array).is_empty():
 			WarrenVolumetricSolver.last_advisory_shortfalls[
 				"courtyard_bridge_houses"] = 0
 		else:
