@@ -3912,12 +3912,17 @@ func _cap_coverage(instances: Array[Dictionary]) -> Dictionary:
 			continue
 		var span := CAP_MODULE_SPANS[asset] as Array
 		var xform := instance["transform"] as Transform3D
-		# The declared span is already in metres and both cap modules are
-		# placed on an unscaled basis along their own long axis, so the axis
-		# is normalised and the bounds are used as authored.
-		var axis := (xform.basis * (span[0] as Vector3)).normalized()
-		var from := float(span[1])
-		var to := float(span[2])
+		# The declared span is in metres in the module's OWN frame, so the
+		# transform's scale along that axis is what turns it into metres of
+		# ground. FIX 1, MINOR 2 makes that scale matter: an unpaired grass
+		# quad is trimmed to the one cell it closes, and reading its span as
+		# authored would credit it with covering two neighbours it no longer
+		# reaches.
+		var placed := xform.basis * (span[0] as Vector3)
+		var scale := placed.length()
+		var axis := placed.normalized()
+		var from := float(span[1]) * scale
+		var to := float(span[2]) * scale
 		for offset: Vector3i in [Vector3i.ZERO, Vector3i.RIGHT, Vector3i.LEFT,
 				Vector3i.BACK, Vector3i.FORWARD]:
 			var cell := Vector3i(face.x, face.y, face.z) + offset
@@ -4295,6 +4300,108 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 		assert_eq(masonry + natural + green,
 			int(audit.get("maze_stone_expected_face_count", -1)),
 			("%s every panel of the shell wears exactly one module") \
+				% _label(outcome))
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func test_a_green_cap_never_juts_past_the_bench_it_caps() -> void:
+	## TASK H2b FIX 1, MINOR 2 -- the floating lime sheet.
+	##
+	## A cap with nothing beside it to pair with used to keep the masonry
+	## slab's own answer: a 3 m module centred on one 1.5 m cell, overhanging
+	## the two neighbours it does not own by 0.75 m each. In stone that is a
+	## ledge, and rock is a thing the eye accepts corbelling; in the grass quad
+	## it is a sheet of lawn hanging in the air, and two of the jut cells in a
+	## town were open air with nothing beneath them at all.
+	##
+	## Measured off the TRANSFORMS the renderer is handed and against the
+	## module's own measured envelope, not against the rule that placed it: the
+	## quad's footprint is its authored half-extents scaled by its own basis,
+	## and every lattice cell that footprint overlaps but the panel does not own
+	## is a jut. The pin is on the ones over air; the zero on the total is the
+	## stronger statement the trim actually buys, and is asserted as such.
+	var catalog := EnvironmentCatalog.load_default()
+	assert_not_null(catalog, "the shipped environment catalogue must load")
+	if catalog == null:
+		return
+	var quad := catalog.descriptor(SettlementFabricAssembler.TERRAIN_GREEN_CAP)
+	assert_not_null(quad, "the green cap module must be in the catalogue")
+	if quad == null:
+		return
+	var local: AABB = quad.measured_aabb
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var retained := fabric.retained_terrace_cells
+		var solids := fabric.transformed_cells(&"solid")
+		var partners := _cap_partner_offsets(fabric)
+		var jut_cells := 0
+		var jut_over_air := 0
+		var caps := 0
+		var unpaired := 0
+		for instance: Dictionary in _stone_instances(fabric):
+			if StringName(instance["asset"]) \
+					!= SettlementFabricAssembler.TERRAIN_GREEN_CAP:
+				continue
+			caps += 1
+			var face := instance["face"] as Vector4i
+			var cell := Vector3i(face.x, face.y, face.z)
+			var partner := partners.get(face, Vector3i.ZERO) as Vector3i
+			unpaired += int(partner == Vector3i.ZERO)
+			var owned: Dictionary = {cell: true}
+			if partner != Vector3i.ZERO:
+				owned[cell + partner] = true
+			var xform := instance["transform"] as Transform3D
+			# The quad's world footprint: its authored half-extents carried
+			# through its own basis. Both basis axes stay grid-aligned, so the
+			# overlap with a cell's square is two interval tests.
+			var along_axis := xform.basis * Vector3(0.0, 0.0, 1.0)
+			var across_axis := xform.basis * Vector3(1.0, 0.0, 0.0)
+			var half_along := local.size.z * 0.5 * along_axis.length()
+			var half_across := local.size.x * 0.5 * across_axis.length()
+			for step in range(-2, 3):
+				for side in range(-2, 3):
+					var probe := cell \
+						+ Vector3i(along_axis.normalized().round()) * step \
+						+ Vector3i(across_axis.normalized().round()) * side
+					if owned.has(probe):
+						continue
+					var delta := Vector3(probe) * FabricRecipe.CELL_SIZE \
+						- xform.origin
+					delta.y = 0.0
+					if absf(delta.dot(along_axis.normalized())) \
+							>= half_along + FabricRecipe.CELL_SIZE * 0.5 - 0.01 \
+							or absf(delta.dot(across_axis.normalized())) \
+								>= half_across + FabricRecipe.CELL_SIZE * 0.5 \
+									- 0.01:
+						continue
+					jut_cells += 1
+					jut_over_air += int(not retained.has(probe) \
+						and not solids.has(probe))
+		var audit := fabric.audit
+		print("MAZE_GREEN_JUT %s caps=%d unpaired=%d jut=%d over_air=%d" % [
+			_label(outcome), caps, unpaired, jut_cells, jut_over_air])
+		assert_gt(caps, 0, "%s must lay some green caps to measure" \
+			% _label(outcome))
+		assert_eq(jut_over_air, 0,
+			("%s hangs %d cell(s) of lawn over open air; a grass quad may not " \
+				+ "reach past what is under it") % [_label(outcome),
+				jut_over_air])
+		assert_eq(jut_cells, 0,
+			("%s reaches %d cell(s) past the bench its cap closes; the trim " \
+				+ "bounds the long axis exactly as the cross axis is bounded") \
+				% [_label(outcome), jut_cells])
+		assert_eq(int(audit.get("maze_green_cap_jut_over_air_count", -1)),
+			jut_over_air, "%s audited jut-over-air must equal the payload's" \
+				% _label(outcome))
+		assert_eq(int(audit.get("maze_green_cap_jut_cell_count", -1)),
+			jut_cells, "%s audited jut cells must equal the payload's" \
 				% _label(outcome))
 		checked += 1
 	assert_gt(checked, 0, "the corpus must seal a town to measure")

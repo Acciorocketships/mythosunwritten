@@ -858,6 +858,8 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			"maze_skin_green_cap_count": 0,
 			"maze_tall_bank_masonry_panel_count": 0,
 			"maze_free_bench_stone_cap_count": 0,
+			"maze_green_cap_jut_cell_count": 0,
+			"maze_green_cap_jut_over_air_count": 0,
 			"maze_shared_street_cap_count": 0,
 			"maze_low_bank_face_count": 0,
 			"maze_tall_bank_face_count": 0,
@@ -953,6 +955,11 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	var masonry_panels := 0
 	var natural_panels := 0
 	var green_panels := 0
+	# FIX 1, MINOR 2. A grass quad that reaches past the cells its own panel
+	# closes, and -- the pin -- one that reaches over open AIR. A stone ledge
+	# corbels; a lawn sheet over nothing does not.
+	var green_jut_cells := 0
+	var green_jut_over_air := 0
 	var tall_bank_masonry := 0
 	var free_bench_stone_caps := 0
 	var shared_street_caps := 0
@@ -969,6 +976,12 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			== SettlementFabricAssembler.SkinTreatment.NATURAL)
 		green_panels += int(treatment \
 			== SettlementFabricAssembler.SkinTreatment.GREEN)
+		if treatment == SettlementFabricAssembler.SkinTreatment.GREEN:
+			for jut: Vector3i in SettlementFabricAssembler.maze_green_cap_jut_cells(
+					Vector3i(key.x, key.y, key.z), faces[key] as Vector3i):
+				green_jut_cells += 1
+				green_jut_over_air += int(not retained.has(jut) \
+					and not solids.has(jut))
 		if key.w >= sides:
 			if treatment != SettlementFabricAssembler.SkinTreatment.MASONRY \
 					or SettlementFabricAssembler.STONE_FACE_DIRECTIONS[key.w] \
@@ -1009,6 +1022,8 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		"maze_skin_masonry_panel_count": masonry_panels,
 		"maze_skin_natural_panel_count": natural_panels,
 		"maze_skin_green_cap_count": green_panels,
+		"maze_green_cap_jut_cell_count": green_jut_cells,
+		"maze_green_cap_jut_over_air_count": green_jut_over_air,
 		"maze_tall_bank_masonry_panel_count": tall_bank_masonry,
 		"maze_free_bench_stone_cap_count": free_bench_stone_caps,
 		"maze_shared_street_cap_count": shared_street_caps,

@@ -865,16 +865,72 @@ static func _maze_green_cap_transform(cell: Vector3i,
 	## at one end and sweeps 3 m along its local +Y. Two modules, two honest
 	## idioms; the covered cells are the same two.
 	##
-	## An unpaired cap keeps the stone's own answer: the slab is centred on its
-	## single cell and overhangs the neighbours it does not own, because there
-	## was nothing beside it to pair with.
+	## FIX 1, MINOR 2 -- AN UNPAIRED CAP IS TRIMMED TO ITS OWN CELL. It used to
+	## keep the stone's own answer, a 3 m module centred on one 1.5 m cell,
+	## overhanging the two neighbours it does not own by 0.75 m each way. What
+	## that overhang is made of is the whole difference: a masonry slab reaching
+	## over the void is a stone ledge, and the eye reads rock as a thing that
+	## can corbel, but a grass quad reaching over the void is a sheet of lawn
+	## with nothing under it -- two such caps a town, and two of their jut cells
+	## open AIR. The long axis is now bounded exactly the way the cross axis
+	## already is, so the quad covers the one cell it closes and no other.
+	## `maze_green_cap_jut_cells` states the same fact as arithmetic and the
+	## audit counts it.
 	var axis := Vector3(partner) if partner != Vector3i.ZERO else Vector3.BACK
 	var origin := Vector3(cell) * FabricRecipe.CELL_SIZE \
 		+ Vector3(partner) * FabricRecipe.CELL_SIZE * 0.5
 	origin.y = float(cell.y + 1) * FabricRecipe.CELL_SIZE + GREEN_CAP_LIFT
 	var basis := Basis(Vector3.UP, atan2(axis.x, axis.z))
 	basis.x = basis.x * GREEN_CAP_CROSS_SCALE
+	basis.z = basis.z * maze_green_cap_long_scale(partner)
 	return Transform3D(basis, origin)
+
+
+static func maze_green_cap_long_scale(partner: Vector3i) -> float:
+	## How much of the grass quad's authored 3 m long axis a cap really lays:
+	## the whole of it over a PAIR, and one cell's worth over a cap that had
+	## nothing beside it to pair with.
+	return 1.0 if partner != Vector3i.ZERO else GREEN_CAP_CROSS_SCALE
+
+
+static func maze_green_cap_jut_cells(cell: Vector3i,
+		partner: Vector3i) -> Array[Vector3i]:
+	## FIX 1, MINOR 2 -- the lattice cells a green quad reaches over that its
+	## own panel does not own, derived from the two dials the transform is built
+	## from rather than from the transform, so the audit and the payload cannot
+	## drift apart silently.
+	##
+	## Zero for every cap since the trim above, and that is the point: the audit
+	## publishes it, `test_a_green_cap_never_juts_past_the_bench_it_caps`
+	## measures the same thing off the payload the renderer is handed, and the
+	## pin is on the cells that jut over AIR -- a lawn sheet with nothing under
+	## it, which is worse than the stone ledge it replaced.
+	var out: Array[Vector3i] = []
+	var axis := partner if partner != Vector3i.ZERO else Vector3i.BACK
+	var cross := Vector3i(axis.z, 0, axis.x)
+	var half_long := TERRAIN_MODULE_SPAN * 0.5 \
+		* maze_green_cap_long_scale(partner)
+	var half_cross := TERRAIN_MODULE_SPAN * 0.5 * GREEN_CAP_CROSS_SCALE
+	var centre := (Vector3(cell) + Vector3(partner) * 0.5) \
+		* FabricRecipe.CELL_SIZE
+	var owned: Dictionary = {cell: true}
+	if partner != Vector3i.ZERO:
+		owned[cell + partner] = true
+	# Both the quad and the cells are grid-aligned, so the overlap is two
+	# interval tests. A cell that merely TOUCHES the quad's edge is not covered
+	# by it -- that is exactly the paired cap's fit -- hence the tolerance.
+	for along in range(-2, 3):
+		for across in range(-2, 3):
+			var probe := cell + axis * along + cross * across
+			if owned.has(probe):
+				continue
+			var delta := Vector3(probe) * FabricRecipe.CELL_SIZE - centre
+			if absf(delta.dot(Vector3(axis))) \
+					< half_long + FabricRecipe.CELL_SIZE * 0.5 - 0.01 \
+					and absf(delta.dot(Vector3(cross))) \
+						< half_cross + FabricRecipe.CELL_SIZE * 0.5 - 0.01:
+				out.append(probe)
+	return out
 
 
 static func _maze_natural_face_transform(face: Vector4i,
