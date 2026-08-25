@@ -2423,6 +2423,10 @@ static func _coupled_variants(grid: WarrenSpatialGrid,
 	var previous_bounds := _column_bounds(previous_columns)
 	var next_bounds := _column_bounds(next_columns)
 	var current_bounds := _column_bounds(current_columns)
+	# FIX ROUND 1, IMPORTANT 2, as above.
+	var previous_is_filled := previous_rect.size.x > 0
+	var next_is_filled := next_rect.size.x > 0
+	var current_is_filled := current_rect.size.x > 0
 	var previous_maximum := previous_bounds.position + previous_bounds.size \
 		- Vector2i.ONE
 	var constraints_are_free := not bool(current.get("address_expandable",
@@ -2469,13 +2473,15 @@ static func _coupled_variants(grid: WarrenSpatialGrid,
 								origin, yaw, current):
 						continue
 					var lower_overlap := _rect_intersection_size(stamp_position,
-						stamp_size, previous_columns, previous_bounds)
+						stamp_size, previous_columns, previous_bounds,
+						previous_is_filled)
 					if lower_overlap < required_overlap:
 						continue
 					var upper_overlap := 0
 					if not next.is_empty():
 						upper_overlap = _rect_intersection_size(stamp_position,
-							stamp_size, next_columns, next_bounds)
+							stamp_size, next_columns, next_bounds,
+							next_is_filled)
 						if upper_overlap <= 0:
 							continue
 					var columns := _stamp_columns(kind, origin, yaw)
@@ -2493,7 +2499,7 @@ static func _coupled_variants(grid: WarrenSpatialGrid,
 					# filled rectangle of known area.
 					var inside_current := _rect_intersection_size(
 						stamp_position, stamp_size, current_columns,
-						current_bounds)
+						current_bounds, current_is_filled)
 					var difference := stamp_area + current_columns.size() \
 						- 2 * inside_current
 					var tower_relief := int(StringName(current.kind) == &"tower" \
@@ -4212,6 +4218,12 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 	var previous_bounds := _column_bounds(previous_columns)
 	var next_bounds := _column_bounds(next_columns)
 	var current_bounds := _column_bounds(current_columns)
+	# FIX ROUND 1, IMPORTANT 2. A non-degenerate `_columns_as_rect` IS the
+	# proof that the set fills its bounding box, which is what lets
+	# `_rect_intersection_size` answer in closed form.
+	var previous_is_filled := previous_rect.size.x > 0
+	var next_is_filled := next_rect.size.x > 0
+	var current_is_filled := current_rect.size.x > 0
 	var origin_y := (current.origin as Vector3i).y
 	# TASK F2, two hoists that depend only on the BLOCK.
 	#
@@ -4294,14 +4306,16 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 						continue
 					constraint_match_count += 1
 					var lower_overlap := _rect_intersection_size(stamp_position,
-						stamp_size, previous_columns, previous_bounds)
+						stamp_size, previous_columns, previous_bounds,
+						previous_is_filled)
 					if lower_overlap < required_overlap:
 						continue
 					bearing_match_count += 1
 					var upper_overlap := 0
 					if not next.is_empty():
 						upper_overlap = _rect_intersection_size(stamp_position,
-							stamp_size, next_columns, next_bounds)
+							stamp_size, next_columns, next_bounds,
+							next_is_filled)
 						if upper_overlap <= 0:
 							continue
 					upper_match_count += 1
@@ -4329,7 +4343,8 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 					# them, and the symmetric difference is the two sizes less
 					# twice the intersection.
 					var old_inside_new := _rect_intersection_size(stamp_position,
-						stamp_size, current_columns, current_bounds)
+						stamp_size, current_columns, current_bounds,
+						current_is_filled)
 					var expanded := old_inside_new < stamp_area
 					var tower_relief := int(StringName(current.kind) == &"tower" \
 						and kind != &"tower")
@@ -4975,19 +4990,33 @@ static func _column_bounds(columns: Dictionary) -> Rect2i:
 
 
 static func _rect_intersection_size(position: Vector2i, size: Vector2i,
-		columns: Dictionary, bounds: Rect2i) -> int:
+		columns: Dictionary, bounds: Rect2i,
+		bounds_is_filled: bool = false) -> int:
 	## How many members of `columns` fall inside the rectangle. Identical to
 	## `_intersection_size(stamp_columns, columns)` -- the same intersection
 	## counted from the other side -- without building the stamp's dictionary
 	## or hashing a Vector2i per cell. `bounds` is the set's own bounding box,
 	## and a rectangle that misses it intersects nothing.
+	##
+	## FIX ROUND 1, IMPORTANT 2. `bounds_is_filled` says the caller has already
+	## proved with `_columns_as_rect` that the set IS its bounding rectangle,
+	## with no hole in it. Two filled rectangles meet in a rectangle, so the
+	## count is that overlap's AREA and the walk is not needed at all. This is
+	## the same proof `b23c701` and `da264dc` rest on, applied to the other
+	## side of the intersection: the walk stays as the fallback for a set that
+	## really does have a hole, where the area would over-count.
 	if bounds.size.x <= 0:
 		return 0
 	var maximum := position + size - Vector2i.ONE
 	var bounds_maximum := bounds.position + bounds.size - Vector2i.ONE
-	if position.x > bounds_maximum.x or maximum.x < bounds.position.x \
-			or position.y > bounds_maximum.y or maximum.y < bounds.position.y:
+	var overlap_x := mini(maximum.x, bounds_maximum.x) \
+		- maxi(position.x, bounds.position.x) + 1
+	var overlap_y := mini(maximum.y, bounds_maximum.y) \
+		- maxi(position.y, bounds.position.y) + 1
+	if overlap_x <= 0 or overlap_y <= 0:
 		return 0
+	if bounds_is_filled:
+		return overlap_x * overlap_y
 	var count := 0
 	for value: Variant in columns.keys():
 		var column := value as Vector2i
