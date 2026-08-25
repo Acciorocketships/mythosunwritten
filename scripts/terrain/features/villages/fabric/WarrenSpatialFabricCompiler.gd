@@ -593,9 +593,17 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 	# They enter `cells` -- the set `set_retained_terrace` receives -- but NOT
 	# `room_records`, so the building-shell checks below still audit exactly
 	# the building plinths they always audited. A cell the fabric already
-	# built in is skipped rather than refused: `set_retained_terrace` rejects
-	# an overlap with solid outright, and the one-band `roof.flat.*` unit
-	# standing on a flat parcel's slab is exactly such an overlap.
+	# built in is skipped by the `built` subtraction below rather than left for
+	# the plan to refuse, and the one-band `roof.flat.*` unit standing on a
+	# flat parcel's slab is exactly such a cell.
+	#
+	# TASK F3 MEMBER 6. This paragraph used to justify the subtraction by
+	# saying `set_retained_terrace` "rejects an overlap with solid outright".
+	# It did not: its guard compared Vector3i keys against a String-keyed map
+	# and could never fire, so the subtraction here was the ONLY thing keeping
+	# retained stone out of built mass. The guard is fixed and really is the
+	# backstop now -- and measured over the corpus it rejects nothing, because
+	# this subtraction gets there first.
 	#
 	# TASK C5b RULING 1: they enter it TAGGED. The assembler skins a retained
 	# mountain and a building's plinth course by two different rules, and the

@@ -96,11 +96,29 @@ func set_retained_terrace(cells: Dictionary) -> bool:
 	## Declared once, before sealing, and never after: the hill is a fact about
 	## the parcels this plan was compiled from, not something a later stage may
 	## grow. A cell already claimed as solid is refused outright -- retained
-	## stone must be mass nobody built in.
+	## stone must be mass nobody built in. `cells` is keyed by Vector3i lattice
+	## cell, exactly as `WarrenSpatialFabricCompiler._retained_foundation_cells`
+	## builds it; the value is the render tag.
+	##
+	## TASK F3 MEMBER 6. The solid check compared the WRONG KEY TYPE and could
+	## never fire: `_solid_owner` is keyed by `_cell_key`'s `"x:y:z"` String,
+	## `cells` by Vector3i, and `Dictionary.has` is exact. So from the day the
+	## guard was written until this task it accepted every overlap it exists to
+	## refuse, and the sentence above was a description of code that did
+	## nothing. It is a real check now.
+	##
+	## MEASURED before the fix, so that turning it on is not a gamble: over the
+	## 24-town corpus plus the production settlement, the retained channel and
+	## the built solid set are DISJOINT on every town (worst intersection 0 of
+	## 641-1390 retained cells against 344-734 solid cells). The compiler
+	## already subtracts `transformed_cells(&"solid")` from the maze-stone half
+	## and never proposes a plinth course inside a room, so the fixed guard
+	## rejects nothing that ships today; it is the backstop for the case those
+	## two rules stop covering.
 	if _sealed or _terrace_declared:
 		return false
 	for cell_value: Variant in cells.keys():
-		if _solid_owner.has(cell_value):
+		if _solid_owner.has(_cell_key(cell_value as Vector3i)):
 			return false
 	retained_terrace_cells = cells.duplicate()
 	_terrace_declared = true

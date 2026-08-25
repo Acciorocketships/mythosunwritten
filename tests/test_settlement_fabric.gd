@@ -1247,6 +1247,41 @@ func test_visual_rejection_rolls_back_staged_semantic_claims() -> void:
 	assert_eq(plan.units.size(), 2)
 
 
+func test_retained_terrace_refuses_a_cell_the_fabric_already_built_in() -> void:
+	## TASK F3 MEMBER 6. Retained stone is mass NOBODY built in -- the hill a
+	## house stands on, drawn as substrate. `set_retained_terrace` says it
+	## refuses an overlap with solid outright, and until this task it could
+	## not: it asked a String-keyed owner map about a Vector3i, so the answer
+	## was always "no such key" and every overlap was accepted. This is the
+	## test that would have caught that, and the reason it never existed is
+	## that the guard had never been exercised from either side.
+	var plan := SettlementFabricPlan.new(&"warren.test.retained-terrace")
+	var catalog := EnvironmentCatalog.load_default()
+	var recipe_value := FabricRecipe.new(&"test.retained-terrace",
+		[&"generated_building"], 0)
+	recipe_value.add_placement(&"floor", SettlementFabricProgram.FLOOR)
+	recipe_value.solid_cells.append(Vector3i.ZERO)
+	assert_true(recipe_value.set_local_clearance_bounds(catalog.descriptor(
+		SettlementFabricProgram.FLOOR).measured_aabb.grow(0.5)))
+	assert_true(recipe_value.seal(catalog), recipe_value.last_rejection)
+	assert_true(plan.register_recipe(recipe_value))
+	var built := Vector3i(4, 0, 4)
+	assert_true(plan.add_unit(FabricUnit.new(&"room.built",
+		recipe_value.recipe_id, built, 0)), plan.last_rejection)
+	assert_false(plan.set_retained_terrace({built:
+		SettlementFabricAssembler.MAZE_STONE_TAG}),
+		"retained stone may not be declared inside a cell a unit built in")
+	assert_true(plan.retained_terrace_cells.is_empty(),
+		"a refused declaration may not leave half a hill behind")
+	var untouched := built + Vector3i.RIGHT
+	assert_true(plan.set_retained_terrace({untouched:
+		SettlementFabricAssembler.MAZE_STONE_TAG}),
+		"a cell nobody built in is exactly what this channel carries")
+	assert_eq(plan.retained_terrace_cells.size(), 1)
+	assert_false(plan.set_retained_terrace({untouched + Vector3i.RIGHT: true}),
+		"the hill is declared once, before sealing, and never grown after")
+
+
 func test_stacked_room_requires_the_declared_bearing_parent_socket() -> void:
 	var specs := _route_specs()
 	specs.append(SettlementFabricSolver.unit_spec(&"room.base",
