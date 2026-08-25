@@ -161,14 +161,61 @@ func _record(plan: WarrenSpatialPlan) -> PackedStringArray:
 		out.append("fabric.stable_id = %s" % String(fabric.stable_id))
 		out.append("fabric.unit_count = %d" % fabric.units.size())
 		for unit: FabricUnit in fabric.units:
-			out.append("fabric.unit.%s = %s@%s/yaw%d/parents=%s/node=%s" % [
+			# TASK F2 FIX 1, IMPORTANT 1. A unit is not just where it stands.
+			# `socket_bonds`, `visual_seam_ids` and `suppressed_placement_ids`
+			# decide what it is BONDED to, what seam it declares, and which
+			# authored placements it leaves out -- move a suppression or a seam
+			# from one unit to another and every count, origin and recipe id
+			# stays equal while the rendered town differs. Each is digested in
+			# ELEMENT ORDER, because the order is itself a fact the fabric
+			# reads back.
+			out.append(("fabric.unit.%s = %s@%s/yaw%d/parents=%s/node=%s" \
+				+ "/bonds=%s/seams=%s/suppressed=%s/bounds=%s") % [
 				String(unit.stable_id), String(unit.recipe_id),
 				str(unit.lattice_origin), unit.yaw_quarters,
 				",".join(_names(unit.parent_ids)),
-				String(unit.public_node_id)])
+				String(unit.public_node_id),
+				_ordered_text(unit.socket_bonds).sha256_text(),
+				_ordered_text(unit.visual_seam_ids).sha256_text(),
+				_ordered_text(unit.suppressed_placement_ids).sha256_text(),
+				_aabb_text(unit.bounds)])
+		# TASK F2 FIX 1, IMPORTANT 1. The retained hill was captured only as
+		# `retained_foundation_cell_count` inside the audit, so the same number
+		# of cells assigned to different owners read as identical. The set is
+		# digested whole, in insertion order.
+		out.append("fabric.retained_terrace_cell_count = %d" \
+			% fabric.retained_terrace_cells.size())
+		out.append("fabric.retained_terrace_sha256 = %s" \
+			% _ordered_text(fabric.retained_terrace_cells).sha256_text())
+		out.append("fabric.public_realm_sha256 = %s" % ("<none>" \
+			if fabric.public_realm == null \
+			else fabric.public_realm.deterministic_signature().sha256_text()))
 		_flatten("fabric.audit", fabric.audit, out)
 	out.sort()
 	return out
+
+
+static func _ordered_text(value: Variant) -> String:
+	## A Variant rendered so that ORDER survives: arrays in index order,
+	## dictionaries in insertion order, leaves through `var_to_str` so they
+	## round-trip. `_flatten` sorts its lines and so cannot be used for the
+	## things whose order is the fact being checked.
+	if value is Dictionary:
+		var pairs := PackedStringArray()
+		var dict := value as Dictionary
+		for key: Variant in dict.keys():
+			pairs.append(var_to_str(key) + ":" + _ordered_text(dict[key]))
+		return "{" + ",".join(pairs) + "}"
+	if value is Array:
+		var items := PackedStringArray()
+		for item: Variant in value as Array:
+			items.append(_ordered_text(item))
+		return "[" + ",".join(items) + "]"
+	return var_to_str(value)
+
+
+static func _aabb_text(bounds: AABB) -> String:
+	return "%s|%s" % [var_to_str(bounds.position), var_to_str(bounds.size)]
 
 
 static func _names(values: Array[StringName]) -> PackedStringArray:
