@@ -126,12 +126,16 @@ func add_unit(unit: FabricUnit) -> bool:
 	var transform := unit.transform()
 	unit.bounds = transform * recipe.local_bounds
 	var clearance_bounds := transform * recipe.local_clearance_bounds
-	for index in units.size():
+	# TASK F2. `recipe.placements.is_empty()` does not depend on `existing`, so
+	# it decides the whole loop rather than every iteration of it; and the
+	# BOXES are tested before the relationship. `_units_declare_connection`
+	# walks two bearing DAGs with a `visited` dictionary each, and it used to
+	# run on every one of the ~125 000 pairs a compile makes, when only the few
+	# hundred whose boxes actually meet can change the outcome. Both terms are
+	# pure, so the pair this loop rejects — and the message it rejects it with
+	# — are the same as before, at the same index.
+	for index in units.size() if not recipe.placements.is_empty() else 0:
 		var existing := units[index]
-		var existing_recipe := _recipes[existing.recipe_id] as FabricRecipe
-		if recipe.placements.is_empty() or existing_recipe.placements.is_empty() \
-				or _units_declare_connection(unit, existing):
-			continue
 		# The accepted unit's clearance box, recorded when it was accepted. A
 		# unit's origin, yaw and recipe are fixed at construction, so this is
 		# the same product the loop used to recompute for every pair; `validate`
@@ -139,6 +143,10 @@ func add_unit(unit: FabricUnit) -> bool:
 		# the authoritative proof lives.
 		var existing_clearance := _clearance_bounds[index]
 		if _aabb_overlaps_volume(clearance_bounds, existing_clearance):
+			var existing_recipe := _recipes[existing.recipe_id] as FabricRecipe
+			if existing_recipe.placements.is_empty() \
+					or _units_declare_connection(unit, existing):
+				continue
 			if DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP \
 					and _is_corner_nick(clearance_bounds, existing_clearance):
 				continue
@@ -200,30 +208,40 @@ func validate() -> bool:
 			last_rejection = "unit %s has stale bounds" % unit_value.stable_id
 			return false
 		seen[unit_value.stable_id] = unit_value
+	# TASK F2. Every unit's clearance box, derived once from scratch — this
+	# remains the authoritative seal-time proof, and it is what `add_unit`'s
+	# recorded boxes are checked against by being derived the same way. The
+	# pairwise loop below then tests the BOXES before the relationship, for the
+	# reason `add_unit` gives.
+	var clearance_by_index: Array[AABB] = []
+	for unit_value: FabricUnit in units:
+		var unit_recipe := _recipes[unit_value.recipe_id] as FabricRecipe
+		clearance_by_index.append(unit_value.transform() \
+			* unit_recipe.local_clearance_bounds)
 	for left_index in units.size():
 		var left := units[left_index]
 		var left_recipe := _recipes[left.recipe_id] as FabricRecipe
 		if left_recipe.placements.is_empty():
 			continue
-		var left_clearance := left.transform() * left_recipe.local_clearance_bounds
+		var left_clearance := clearance_by_index[left_index]
 		for right_index in range(left_index + 1, units.size()):
 			var right := units[right_index]
+			var right_clearance := clearance_by_index[right_index]
+			if not _aabb_overlaps_volume(left_clearance, right_clearance):
+				continue
 			var right_recipe := _recipes[right.recipe_id] as FabricRecipe
 			if right_recipe.placements.is_empty() \
 					or _units_declare_connection(left, right):
 				continue
-			var right_clearance := right.transform() * \
-				right_recipe.local_clearance_bounds
-			if _aabb_overlaps_volume(left_clearance, right_clearance):
-				if DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP \
-						and _is_corner_nick(left_clearance, right_clearance):
-					continue
-				if DIAGNOSTIC_ALLOW_EDGE_ENVELOPE_OVERLAP \
-						and _is_edge_nick(left_clearance, right_clearance):
-					continue
-				last_rejection = "unrelated visual envelopes intersect: %s and %s" % [
-					left.stable_id, right.stable_id]
-				return false
+			if DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP \
+					and _is_corner_nick(left_clearance, right_clearance):
+				continue
+			if DIAGNOSTIC_ALLOW_EDGE_ENVELOPE_OVERLAP \
+					and _is_edge_nick(left_clearance, right_clearance):
+				continue
+			last_rejection = "unrelated visual envelopes intersect: %s and %s" % [
+				left.stable_id, right.stable_id]
+			return false
 	if surface_plan == null or not surface_plan.validate():
 		last_rejection = "public surface plan is missing or invalid"
 		return false
