@@ -398,38 +398,39 @@ const RETIRED_CORPUS_GATE := "failed measured phase selection"
 ## with a measurement and a reason.
 const MAZE_FACADE_YIELD_CEILING := 7
 
-## TASK F2 RULING 6. Per planner seed, the MEDIAN OF 3 solves on the task
-## machine x 1.5: 2235 / 2205 / 3657 / 4438 ms, with the vocabulary compiled
+## TASK F2 RULING 6, re-measured after fix round 1. Per planner seed, the
+## MEDIAN OF 3 solves on the task machine x 1.5: 2184 / 2152 / 3574 / 4332 ms
+## (round 1 measured 2235 / 2205 / 3657 / 4438), with the vocabulary compiled
 ## before the clock starts. The whole series is output-identical -- every
 ## optimisation was diffed against a golden record of the four towns' sealed
 ## audits, plan signatures and compiled units, and the 24-town sweep's per-town
 ## lines are byte-identical to the pre-F2 run.
 ##
 ## The <= 3 s target is met by the two COMPACT seeds and missed by the two
-## standard ones (3657 and 4438). Task F2 stopped there rather than trade
+## standard ones (3574 and 4332). Task F2 stopped there rather than trade
 ## output for speed; its report carries the analysis of what the remaining
 ## seconds are and what removing them would cost.
 ##
 ## Where the time goes now, per stage, is `warren_maze_stage_probe.gd --seeds
 ## 12,4 --scale compact --trace-composition --trace-fabric` (and 3,9 at
-## standard). It is still `room_composition` (924 / 848 / 1775 / 2446), but
+## standard). It is still `room_composition` (874 / 796 / 1692 / 2313), but
 ## NOT the exact per-parcel block solve C6 named: `_composition_offsets` is
 ## 4-30 ms and all of the rest is `WarrenRoomCompositionPlanner`, whose serial
-## registration relief is the single largest pass (223 / 259 / 459 / 911). The
-## fabric compile is second (655 / 685 / 986 / 697), nearly all of it the roof
+## registration relief is the single largest pass (234 / 192 / 412 / 821). The
+## fabric compile is second (646 / 686 / 992 / 699), nearly all of it the roof
 ## selection loop; the authored room envelope gate that used to be third is now
-## 77-104 ms.
+## 72-101 ms.
 const PLANNER_SOLVE_MS_CEILING: Dictionary = {
-	# TASK F2: 5900 -> 3400 and 5950 -> 3300. Measured 2235 and 2205 ms
+	# TASK F2: 5900 -> 3300 and 5950 -> 3200. Measured 2184 and 2152 ms
 	# (median of 3), x1.5. Both compact planner towns now solve inside the
 	# plan's 3 s target with room to spare.
-	"12/compact": 3400,
-	"4/compact": 3300,
-	# TASK F2: 13250 -> 5500 and 15600 -> 6700. Measured 3657 and 4438 ms
+	"12/compact": 3300,
+	"4/compact": 3200,
+	# TASK F2: 13250 -> 5400 and 15600 -> 6500. Measured 3574 and 4332 ms
 	# (median of 3), x1.5. These two are the seeds that still miss 3 s; the
 	# ceiling is a regression guard, not an endorsement of the number.
-	"3/standard": 5500,
-	"9/standard": 6700,
+	"3/standard": 5400,
+	"9/standard": 6500,
 }
 
 
@@ -5048,12 +5049,18 @@ const PRODUCTION_REGION_RADIUS := 5
 
 ## Wall-clock ceiling for one WHOLE production solve on the terrain-worker
 ## path: the preview, the four placement quarters' terrain sampling and
-## re-solves, the fabric compile and the materialization. Measured 4104 ms on
-## the pinned site; pinned at ~3x rather than this file's usual 1.5x because
-## the number that matters is the ORDER OF MAGNITUDE -- the searched pipeline
-## this replaces cost 154-210 s of startup, and the failure this guards
-## against is a fall back into a search, not a 30 % drift.
-const PRODUCTION_SOLVE_MS_CEILING := 12000
+## re-solves, the fabric compile and the materialization.
+##
+## TASK F2 FIX 1, IMPORTANT 3: 12000 -> 4600. Measured 3069 ms on the pinned
+## site (median of 3), x1.5 rounded to the nearest hundred. Task D2 pinned this
+## at ~3x its own 4104 ms measurement on the argument that the failure worth
+## catching is an order of magnitude -- a fall back into the 154-210 s searched
+## pipeline -- rather than a drift. That argument bought 12000 when the solve
+## was 4104; after F2 halved it, 12000 was ~3.9x and would have sat still
+## through a doubling of the number the game actually pays for every settlement
+## it streams. This file's usual 1.5x is the right instrument now: the order of
+## magnitude is still caught, and so is a regression that merely undoes F2.
+const PRODUCTION_SOLVE_MS_CEILING := 4600
 
 static var _production_site_cache: Dictionary = {}
 
