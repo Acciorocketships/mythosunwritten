@@ -412,12 +412,16 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   placement's real ground bands.
   The corpus sweep is `tests/harness/warren_maze_mode_sweep.gd`, run as
   `Godot --headless --path . -s res://tests/harness/warren_maze_mode_sweep.gd -- --seeds
-  1,2,3,4,5,6,7,8,9,10,11,12 --scale compact,standard`. It writes its matrix to
+  1,2,3,4,5,6,7,8,9,10,11,12 --scale compact,standard,large,grand`. It writes its matrix to
   `user://warren_maze_mode_sweep.json` with a fingerprint of the fabric script directory, and
   `tests/test_warren_maze_composition.gd::test_corpus_composes` scores itself against that file
   and refuses a matrix measured against a different tree. `--mode` and `--constructive` are
   retired and now exit 2 rather than silently no-opping. **Corpus state 2026-08-25: 24 of 24
-  towns seal.** Per-stage wall clock for one town is on the sealed plan's `maze_stage_ms` audit
+  compact/standard towns seal; task F4 added the two big scales, which seal 3 of 12 at large
+  (seeds 4, 6, 7) and 1 of 12 at grand (seed 9) — the rest die at the covered-market preplan
+  (7), the volume adapter's broad floor slab (5), the source's straight-run cap (3), the court
+  cantilever (2) and three one-off grand gates.** Per-stage wall clock for one town is on the
+  sealed plan's `maze_stage_ms` audit
   key; `tests/harness/warren_maze_stage_probe.gd` and `warren_solve_profile.gd` print it.
   `WarrenMazeCarver` builds one deterministic entrance-to-summit spine,
   coverage-driven alley network, a universal typed 6 m by 6 m market square, and open-air/tunnel
