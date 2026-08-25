@@ -161,11 +161,11 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	# one-pass mode may ship without.
 	var landmark_record_failure := last_failure
 	if landmarks.size() < target_landmarks:
-		# A landmark quota is town richness, not structure. In one-pass mode
-		# the source itself decides how many complete authored buildings this
-		# town gets, so a shortfall ships a plainer town instead of no town.
-		if not WarrenTownSolver.feature_quotas_are_advisory() \
-				or not landmark_record_failure.is_empty():
+		# A landmark quota is town richness, not structure. The source itself
+		# decides how many complete authored buildings this town gets, so a
+		# shortfall ships a plainer town instead of no town. Only a LOST
+		# preplanned record -- which wrote its own failure above -- is fatal.
+		if not landmark_record_failure.is_empty():
 			last_failure = ("only %d of %d topology-first prefab " \
 				+ "landmarks survived") % [landmarks.size(),
 					target_landmarks]
@@ -186,27 +186,23 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(arcade_overhang_supports)
 	var room_overhang_supports: Array[WarrenFeatureReservation] = []
-	# One-pass mode plans its own links. An empty preplanned set there means
-	# this town HAS no links, not that the legacy scanner should go looking
-	# for some after room composition has already spent the mass -- which is
-	# the very rediscovery `_reserve_preplanned_skywalks` exists to replace.
-	# Keyed on the same switch that turns the floor below into a shortfall, so
-	# no configuration can refuse the search and then reject for its absence.
+	# The source plans its own links. An empty preplanned set means this town
+	# HAS no links, not that a scanner should go looking for some after room
+	# composition has already spent the mass -- which is the very rediscovery
+	# `_reserve_preplanned_skywalks` exists to replace. TASK F1 FIX 1: the
+	# legacy `_reserve_skywalks` scanner that used to run in the searched
+	# modes is deleted, so there is no second source of links at all.
 	var skywalks: Array[WarrenFeatureReservation] = []
 	if not preplanned_skywalks.is_empty():
 		skywalks = _reserve_preplanned_skywalks(grid, buildings, supports,
 			preplanned_skywalks, landmarks)
-	elif not WarrenTownSolver.feature_quotas_are_advisory():
-		skywalks = _reserve_skywalks(grid, buildings, supports,
-			source.world_seed, target_skywalks)
 	if skywalks.size() < target_skywalks:
-		# Occupied links are richness too: the one-pass source owns its own
-		# bridge plan, so a town it gave no link ships without one. A link
-		# that was PREPLANNED and then lost is a different fact — that writes
-		# its own failure, and it stays fatal in every mode.
+		# Occupied links are richness too: the source owns its own bridge
+		# plan, so a town it gave no link ships without one. A link that was
+		# PREPLANNED and then lost is a different fact — that writes its own
+		# failure, and it stays fatal.
 		var detail := last_failure
-		if not WarrenTownSolver.feature_quotas_are_advisory() \
-				or not detail.is_empty():
+		if not detail.is_empty():
 			last_failure = ("only %d of %d topology-first skywalks fit: " \
 				+ "%s (%s)") % [skywalks.size(), target_skywalks, detail,
 					last_skywalk_diagnostic]
@@ -334,15 +330,8 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		minimum_balconies)
 	if balconies.size() < minimum_balconies \
 			or balcony_buildings.size() < minimum_balcony_buildings:
-		# A balcony quota is facade richness, not structure. In one-pass mode a
-		# shortfall ships a plainer town instead of no town.
-		if not WarrenTownSolver.feature_quotas_are_advisory():
-			last_failure = ("only %d balconies across %d buildings fit; " \
-				+ "need %d across %d; candidate audit=%s") \
-				% [balconies.size(), balcony_buildings.size(),
-					minimum_balconies, minimum_balcony_buildings,
-					last_skywalk_diagnostic]
-			return [] as Array[WarrenFeatureReservation]
+		# A balcony quota is facade richness, not structure: a shortfall ships
+		# a plainer town instead of no town, and is published.
 		WarrenVolumetricSolver.last_advisory_shortfalls["balconies"] = \
 			balconies.size()
 		WarrenVolumetricSolver.last_advisory_shortfalls["balconies_target"] = \
@@ -3736,184 +3725,6 @@ static func _courtyard_side_endpoints(grid: WarrenSpatialGrid,
 	return out
 
 
-static func _reserve_skywalks(grid: WarrenSpatialGrid,
-		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
-		world_seed: int, target_count: int = TARGET_SKYWALKS) \
-		-> Array[WarrenFeatureReservation]:
-	var endpoints := _room_endpoints(buildings)
-	var by_key: Dictionary = {}
-	for endpoint: Dictionary in endpoints:
-		by_key[_endpoint_key(endpoint.cell as Vector3i,
-			endpoint.facing as Vector3i)] = endpoint
-	var candidates: Array[Dictionary] = []
-	var endpoint_pair_count := 0
-	var offset_endpoint_pair_count := 0
-	for left: Dictionary in endpoints:
-		var facing := left.facing as Vector3i
-		for distance: int in [3, 5, 7]:
-			var right_cell := (left.cell as Vector3i) + facing * distance
-			var right := by_key.get(_endpoint_key(right_cell, -facing), {}) \
-				as Dictionary
-			if right.is_empty() or left.building_id == right.building_id \
-					or String(left.room_id) > String(right.room_id):
-				continue
-			endpoint_pair_count += 1
-			offset_endpoint_pair_count += int(bool(left.offset_floorplate) \
-				or bool(right.offset_floorplate))
-			var candidate := _skywalk_candidate(grid, left, right, distance)
-			if not candidate.is_empty():
-				candidate["tie"] = posmod(Helper._mix64(world_seed \
-					^ String(left.room_id).hash() ^ String(right.room_id).hash()),
-					1000003)
-				candidates.append(candidate)
-	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		if int(a.lower_public_column_count) != int(b.lower_public_column_count):
-			return int(a.lower_public_column_count) \
-				> int(b.lower_public_column_count)
-		if int(a.distance) != int(b.distance):
-			return int(a.distance) > int(b.distance)
-		return int(a.tie) < int(b.tie))
-	var out: Array[WarrenFeatureReservation] = []
-	var endpoint_pairs: Dictionary = {}
-	var candidate_summaries: Array[Dictionary] = []
-	for candidate: Dictionary in candidates:
-		candidate_summaries.append({
-			"left": StringName(candidate.left.building_id),
-			"right": StringName(candidate.right.building_id),
-			"distance": int(candidate.distance),
-			"origin": candidate.origin,
-		})
-		if out.size() >= target_count:
-			break
-		var pair_key := _pair_key(StringName(candidate.left.building_id),
-			StringName(candidate.right.building_id))
-		if endpoint_pairs.has(pair_key):
-			continue
-		var feature := _commit_skywalk(grid, candidate, supports, out.size())
-		if feature == null:
-			continue
-		endpoint_pairs[pair_key] = true
-		out.append(feature)
-	last_skywalk_diagnostic = {
-		"room_endpoint_count": endpoints.size(),
-		"endpoint_pair_count": endpoint_pair_count,
-		"offset_endpoint_pair_count": offset_endpoint_pair_count,
-		"clear_candidate_count": candidates.size(),
-		"accepted_count": out.size(),
-		"candidates": candidate_summaries,
-	}
-	return out
-
-
-static func _skywalk_candidate(grid: WarrenSpatialGrid, left: Dictionary,
-		right: Dictionary, distance: int) -> Dictionary:
-	if not bool(left.offset_floorplate) and not bool(right.offset_floorplate):
-		return {}
-	var direction := left.facing as Vector3i
-	var length_cells := distance - 1
-	var yaw := _yaw_from_right(direction)
-	if yaw < 0 or length_cells not in [2, 4, 6]:
-		return {}
-	var minimum_x := -length_cells / 2
-	var first_gap := (left.cell as Vector3i) + direction
-	var origin := first_gap - FabricRecipe.transform_cell(
-		Vector3i(minimum_x, 0, 0), Vector3i.ZERO, yaw)
-	var body: Dictionary = {}
-	for y in 4:
-		for z in range(-1, 1):
-			for x in range(minimum_x, minimum_x + length_cells):
-				var cell := FabricRecipe.transform_cell(Vector3i(x, y, z),
-					origin, yaw)
-				if not grid.contains(cell) or grid.use_at(cell) not in [
-						WarrenSpatialGrid.Use.OUTSIDE,
-						WarrenSpatialGrid.Use.ALLOCATABLE] \
-						or (grid.reservation_bits_at(cell) \
-							& WarrenSpatialGrid.Reservation.FEATURE) != 0:
-					return {}
-				body[cell] = true
-	var lower_public_columns: Dictionary = {}
-	for body_value: Variant in body.keys():
-		var body_cell := body_value as Vector3i
-		if body_cell.y != origin.y:
-			continue
-		for down in range(1, 9):
-			var lower := body_cell + Vector3i.DOWN * down
-			if grid.use_at(lower) == WarrenSpatialGrid.Use.PUBLIC_AIR:
-				lower_public_columns[Vector2i(body_cell.x, body_cell.z)] = true
-				break
-	if lower_public_columns.size() < 2:
-		return {}
-	var body_cells: Array[Vector3i] = []
-	body_cells.assign(body.keys())
-	body_cells.sort_custom(_cell_less)
-	return {"left": left, "right": right, "distance": distance,
-		"origin": origin, "yaw_quarters": yaw, "body_cells": body_cells,
-		"lower_public_column_count": lower_public_columns.size()}
-
-
-static func _commit_skywalk(grid: WarrenSpatialGrid, candidate: Dictionary,
-		supports: WarrenSupportGraph, ordinal: int) -> WarrenFeatureReservation:
-	var feature_id := StringName("spatial.feature.skywalk.%02d" % ordinal)
-	var body := candidate.body_cells as Array[Vector3i]
-	var body_set: Dictionary = {}
-	for cell: Vector3i in body:
-		body_set[cell] = true
-	var left := candidate.left as Dictionary
-	var right := candidate.right as Dictionary
-	var endpoints: Dictionary = {
-		left.cell as Vector3i: true,
-		right.cell as Vector3i: true,
-	}
-	var tx := grid.begin_transaction(feature_id)
-	if not tx.require_use(body, [WarrenSpatialGrid.Use.OUTSIDE,
-			WarrenSpatialGrid.Use.ALLOCATABLE] as Array[int]) \
-			or not tx.reserve(body, WarrenSpatialGrid.Reservation.FEATURE \
-				| WarrenSpatialGrid.Reservation.PRIVATE_CONNECTION \
-				| WarrenSpatialGrid.Reservation.VISUAL_CLEARANCE, feature_id) \
-			or not tx.assign_use(body, WarrenSpatialGrid.Use.PRIVATE_VOLUME,
-				feature_id):
-		return null
-	for cell: Vector3i in body:
-		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-				Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD, Vector3i.BACK]:
-			var neighbor := cell + direction
-			if body_set.has(neighbor):
-				continue
-			var kind := WarrenSpatialGrid.FaceKind.FACADE
-			if endpoints.has(neighbor):
-				kind = WarrenSpatialGrid.FaceKind.OPEN_SEAM
-			elif direction == Vector3i.UP:
-				kind = WarrenSpatialGrid.FaceKind.ROOF
-			elif direction == Vector3i.DOWN:
-				kind = WarrenSpatialGrid.FaceKind.PRIVATE_FLOOR
-			if not tx.claim_face(cell, direction, kind, feature_id):
-				return null
-	if not tx.commit():
-		return null
-	var distance := int(candidate.distance)
-	var recipe_id := &"skywalk.3.blue" if distance == 3 \
-		else &"skywalk.6.orange" if distance == 5 else &"skywalk.9.blue"
-	var feature := WarrenFeatureReservation.new(feature_id,
-		&"enclosed_skywalk")
-	if not feature.add_reserved_cells(body) \
-			or not feature.add_endpoint(left.cell as Vector3i,
-				StringName(left.building_id)) \
-			or not feature.add_endpoint(right.cell as Vector3i,
-				StringName(right.building_id)) \
-			or not feature.set_support_node(StringName(left.building_id)) \
-			or not feature.add_construction_record(recipe_id,
-				candidate.origin as Vector3i, int(candidate.yaw_quarters)) \
-			or not feature.set_audit_facts({
-				"skywalk_distance_cells": distance,
-				"skywalk_lower_public_column_count": int(
-					candidate.lower_public_column_count),
-				"skywalk_left_room_id": StringName(left.room_id),
-				"skywalk_right_room_id": StringName(right.room_id),
-			}) or not feature.seal(grid, supports):
-		return null
-	return feature
-
-
 static func _reserve_room_outcroppings(grid: WarrenSpatialGrid,
 		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
 		world_seed: int, program: SettlementFabricProgram,
@@ -4815,45 +4626,6 @@ static func _sorted_columns(columns: Dictionary) -> Array[Vector2i]:
 	out.assign(columns.keys())
 	out.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 		return a.x < b.x if a.x != b.x else a.y < b.y)
-	return out
-
-
-static func _room_endpoints(buildings: Array[WarrenBuildingVolume]) \
-		-> Array[Dictionary]:
-	var offset_rooms := _offset_room_ids(buildings)
-	var out: Array[Dictionary] = []
-	var seen: Dictionary = {}
-	for building: WarrenBuildingVolume in buildings:
-		for room: WarrenRoomStamp in building.room_records:
-			var footprint := _room_footprint(room.kind)
-			if footprint.is_empty():
-				continue
-			var minimum := footprint.minimum as Vector2i
-			var maximum := minimum + footprint.size as Vector2i - Vector2i.ONE
-			var locals: Array[Dictionary] = []
-			for z in [minimum.y, 0, maximum.y]:
-				locals.append({"cell": Vector3i(maximum.x, 0, z),
-					"facing": Vector3i.RIGHT})
-				locals.append({"cell": Vector3i(minimum.x, 0, z),
-					"facing": Vector3i.LEFT})
-			for x in [minimum.x, 0, maximum.x]:
-				locals.append({"cell": Vector3i(x, 0, maximum.y),
-					"facing": Vector3i.BACK})
-				locals.append({"cell": Vector3i(x, 0, minimum.y),
-					"facing": Vector3i.FORWARD})
-			for local: Dictionary in locals:
-				var cell := FabricRecipe.transform_cell(local.cell as Vector3i,
-					room.lattice_origin, room.yaw_quarters)
-				var facing := FabricRecipe.transform_direction(
-					local.facing as Vector3i, room.yaw_quarters)
-				var key := "%s/%s/%s" % [room.stable_id, cell, facing]
-				if seen.has(key):
-					continue
-				seen[key] = true
-				out.append({"cell": cell, "facing": facing,
-					"building_id": building.stable_id,
-					"room_id": room.stable_id,
-					"offset_floorplate": offset_rooms.has(room.stable_id)})
 	return out
 
 

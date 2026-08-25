@@ -86,13 +86,16 @@ func test_a_flat_site_still_builds_an_inhabited_town_mountain() \
 			"the mountain is inhabited down to terrain")
 
 
-func test_the_vertical_development_floor_is_the_profile_contract() -> void:
-	## TASK F1 RULING 4. This test used to pin `MIN_CORE_BANDS := 16` against
-	## the storey budget and against the searched bore's `MIN_SPAN_BANDS`.
-	## Both are gone: the floor a massif is really held to is its size
-	## profile's `minimum_core_bands`, and the ceiling is the buildable layer.
-	## Every profile's floor must sit inside that envelope, which is the
-	## property the retired constant was standing in for.
+func test_every_profile_asks_for_a_buildable_core_band_range() -> void:
+	## TASK F1 RULING 4, renamed in fix 1: this is a check on the PROFILE
+	## TABLE, not on a built massif. It used to pin `MIN_CORE_BANDS := 16`
+	## against the storey budget and against the searched bore's
+	## `MIN_SPAN_BANDS`; both are gone, and the floor a massif is really held
+	## to is its size profile's `minimum_core_bands`. Every profile's range
+	## must sit inside the buildable envelope, which is the property the
+	## retired constant was standing in for. The floor is exercised against a
+	## real field measurement in `test_massif_builds_a_terraced_layer_and_is_deterministic`
+	## and `test_a_flat_site_still_builds_an_inhabited_town_mountain`.
 	for scale_id: StringName in WarrenVillageScaleProfile.IDS:
 		var profile := WarrenVillageScaleProfile.for_id(scale_id)
 		assert_gt(profile.minimum_core_bands, 0,

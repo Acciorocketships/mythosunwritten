@@ -1,5 +1,10 @@
 extends GutTest
 
+## A committed covered market compiles to a canopy plus its posts; the exact
+## module count is a recipe detail, so the scan above bounds it rather than
+## pinning it.
+const COVERED_MARKET_UNIT_CEILING := 64
+
 
 func test_arcade_overhang_adapter_binds_foundation_to_both_room_plates() -> void:
 	var program := SettlementFabricProgram.compile(
@@ -321,7 +326,44 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	# landmarks) are shortfalls the one-pass path publishes rather than
 	# refuses. What stays hard is that the compiler REALIZES exactly what the
 	# spatial plan reserved, which the equalities above assert.
-	gut.p("one-pass town: markets=%d" % constructed_markets)
+	#
+	# TASK F1 FIX 1, finding I2. The market floor is ASSERTED here, not
+	# printed. Three facts, none of which forbids a future task from building
+	# the bazaar back:
+	#   1. a direct scan of the compiled units must agree with the audit
+	#      counter, so a counter that silently reads zero while units exist
+	#      (the `setback_cap_unit_count` defect below) cannot hide here;
+	#   2. every market unit the compiler emitted must be a market feature
+	#      the plan reserved -- the compiler may not invent one;
+	#   3. a marketless town must DECLARE it. Measured on this seed the town
+	#      ships with no bazaar at all, and the only thing that makes that
+	#      honest rather than silent is the published shortfall.
+	# MEASURED: `_preplan_spatial_market` forms exactly one canopy candidate
+	# and its own viability filter drops it (open horizon 10 cells against a
+	# compact limit of 4), so no reservation is ever made -- market-ness stops
+	# at preplan, not at construction. TASK F3 owns the repair.
+	var market_units := 0
+	for feature_unit: FabricUnit in features:
+		market_units += int(program.recipe(feature_unit.recipe_id)
+			.has_tag(&"covered_market"))
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.covered_market_feature_count), constructed_markets,
+		"the covered-market counter must agree with the reserved features")
+	assert_lte(market_units, constructed_markets * COVERED_MARKET_UNIT_CEILING,
+		"the compiler emitted market units for a market nobody reserved")
+	assert_eq(market_units == 0, constructed_markets == 0,
+		"a reserved market must compile to units, and units imply a reservation")
+	var shortfalls := spatial.audit.get("advisory_shortfalls",
+		{}) as Dictionary
+	if constructed_markets == 0:
+		assert_true(shortfalls.has("covered_market"),
+			("the town ships with no bazaar and does not say so; an " \
+				+ "undeclared absence is the thing task F3 has to trace"))
+		assert_eq(int(shortfalls.get("covered_market", -1)), 0,
+			"the published market shortfall must report the real count")
+	gut.p("one-pass town: markets=%d market_units=%d shortfall=%s" % [
+		constructed_markets, market_units,
+		str(shortfalls.get("covered_market", "<none>"))])
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.balcony_feature_count), constructed_balconies)
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \

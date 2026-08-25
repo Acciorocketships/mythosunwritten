@@ -195,7 +195,7 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 			" variant=-1 ms=", spatial_ms, " accepted=", true)
 		print("SKYWALK_TIMING partition_fabric source=", volume.stable_id,
 			" variant=-1 ms=", fabric_ms, " accepted=", true)
-	var finalized := _finalize_ranked_candidate(volume, -1,
+	var finalized := _finalize_candidate(volume, -1,
 		construction_program, {}, plan, fabric)
 	if finalized == null:
 		last_failure = "maze finalization rejected: %s" % last_failure
@@ -219,31 +219,23 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	return finalized
 
 
-static func _finalize_ranked_candidate(volume: WarrenVolumePlan, variant: int,
-		construction_program: SettlementFabricProgram,
-		precomposition_audit: Dictionary, plan: WarrenSpatialPlan,
-		fabric: SettlementFabricPlan) -> WarrenSpatialPlan:
-	var finalized := _finalize_selected_candidate(volume, variant,
-		construction_program, precomposition_audit, plan, fabric)
-	if finalized != null:
-		last_failure = ""
-		finalized.audit["production_selected_source_id"] = \
-			String(volume.stable_id)
-		finalized.audit["production_selected_variant"] = variant
-	return finalized
-
-
-static func _finalize_selected_candidate(volume: WarrenVolumePlan,
+static func _finalize_candidate(volume: WarrenVolumePlan,
 		variant: int, construction_program: SettlementFabricProgram,
 		precomposition_audit: Dictionary, proven_serial: WarrenSpatialPlan,
 		proven_serial_fabric: SettlementFabricPlan) -> WarrenSpatialPlan:
-	## Search proves hero topology and production sightline quality with the
-	## serial room fixed point. Prefer one bounded paired silhouette cleanup, then
-	## rerun every authored-envelope and compiled quality gate. A paired exchange
-	## is optional construction refinement, however: if it makes a previously
-	## borne exact interface unrepairable, retain the already-proven serial
-	## composition instead of throwing away the entire town. Both alternatives
-	## pass the same support, overlap, feature, and production-quality gates.
+	## The last step of a solve: the composition has already been proved with
+	## the serial room fixed point and compiled through the exact fabric gate.
+	## Compact and standard stop there. Large and grand additionally try one
+	## bounded paired silhouette cleanup and rerun every authored-envelope and
+	## compiled quality gate; that exchange is optional construction refinement,
+	## so if it makes a previously borne exact interface unrepairable the
+	## already-proven serial composition is retained rather than the whole town
+	## thrown away. Both alternatives pass the same support, overlap, feature,
+	## and production-quality gates.
+	##
+	## TASK F1 FIX 1 folded `_finalize_ranked_candidate` in here: it was the
+	## searched pipeline's per-rank wrapper and, with one candidate per town,
+	## its three lines are simply part of finalizing.
 	var profile := _scale_profile_for_volume(volume)
 	if profile != null and not profile.requires_elevated_courtyard:
 		# Compact/standard composition already ran merge, coupling, volumetric
@@ -259,7 +251,7 @@ static func _finalize_selected_candidate(volume: WarrenVolumePlan,
 			"paired_registration_scale_skip_count"] = 1
 		proven_serial.audit["serial_finalization_reuse_count"] = 1
 		proven_serial.cache_compiled_fabric(proven_serial_fabric)
-		return proven_serial
+		return _stamp_selection(proven_serial, volume, variant)
 	var failures := PackedStringArray()
 	var finalized := from_volume(volume, variant, construction_program, true)
 	if finalized == null:
@@ -283,7 +275,7 @@ static func _finalize_selected_candidate(volume: WarrenVolumePlan,
 			finalized.audit["serial_finalization_fallback_count"] = 0
 			finalized.audit["paired_registration_scale_skip_count"] = 0
 			finalized.cache_compiled_fabric(fabric)
-			return finalized
+			return _stamp_selection(finalized, volume, variant)
 	# The serial candidate passed the exact fabric gate
 	# immediately before this call. Rebuilding it after an optional paired pass
 	# fails is output-identical but was one of the largest first-load costs.
@@ -296,9 +288,19 @@ static func _finalize_selected_candidate(volume: WarrenVolumePlan,
 		proven_serial.audit["paired_registration_scale_skip_count"] = 0
 		proven_serial.audit["serial_finalization_reuse_count"] = 1
 		proven_serial.cache_compiled_fabric(proven_serial_fabric)
-		return proven_serial
+		return _stamp_selection(proven_serial, volume, variant)
 	last_failure = "final room cleanup rejected: %s" % " | ".join(failures)
 	return null
+
+
+static func _stamp_selection(finalized: WarrenSpatialPlan,
+		volume: WarrenVolumePlan, variant: int) -> WarrenSpatialPlan:
+	## The two identity keys a sealed plan carries about the source it came
+	## from, and the cleared failure that says the solve succeeded.
+	last_failure = ""
+	finalized.audit["production_selected_source_id"] = String(volume.stable_id)
+	finalized.audit["production_selected_variant"] = variant
+	return finalized
 
 
 ## Guidance values (never gates — see the note above
@@ -415,13 +417,10 @@ static func from_volume(volume: WarrenVolumePlan,
 	if scale_profile == null:
 		last_failure = "macro volume carries an invalid scale profile"
 		return null
-	var quotas_advisory := WarrenTownSolver.feature_quotas_are_advisory()
 	if scale_profile.requires_elevated_courtyard \
 			and courtyard_parcel_sides < MIN_COURT_PARCEL_SIDE_COUNT:
-		if not quotas_advisory:
-			last_failure = "courtyard partition forms only %d exact room sides" \
-				% courtyard_parcel_sides
-			return null
+		# A court the partition cannot form is richness, not structure: the
+		# shortfall is published and the town ships plainer.
 		last_advisory_shortfalls["courtyard_parcel_sides"] = \
 			courtyard_parcel_sides
 	var partition_started_ms := Time.get_ticks_msec()
@@ -1714,16 +1713,15 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# occluder ranking may keep a reduced plan only when it proves the extra
 	# link adds no distinct inhabited route coverage, and the profile minimum
 	# (skywalk_range.x) still gates every accepted plan.
-	var target_skywalks := scale_profile.skywalk_range.y
-	var target_landmarks := scale_profile.landmark_range.x
-	if WarrenTownSolver.feature_quotas_are_advisory():
-		# One-pass mode: a quota the carver cannot yet supply must not become a
-		# constraint the beam then fails to satisfy. Ask for zero so the beam
-		# commits through its ORDINARY success branch — every downstream stage
-		# then sees a properly committed (if empty) feature set instead of a
-		# bypassed one. What the town lacks is recorded, not enforced.
-		target_skywalks = 0
-		target_landmarks = 0
+	# A quota the carver cannot yet supply must not become a constraint the
+	# feature selection then fails to satisfy. Ask for zero so it commits
+	# through its ORDINARY success branch — every downstream stage then sees a
+	# properly committed (if empty) feature set instead of a bypassed one.
+	# What the town lacks is recorded, not enforced. The profile's own
+	# `skywalk_range`/`landmark_range` still ride into the shortfall record
+	# below, so what the town OWED is never lost.
+	var target_skywalks := 0
+	var target_landmarks := 0
 	var proposals: Array[Dictionary] = []
 	var rejected_unfloored_addresses := 0
 	# Coupling (a) of `_pave_maze_decks`: a paved deck is a legal address
@@ -1814,18 +1812,23 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	var market_candidates: Array[Dictionary] = []
 	market_candidates.assign(market_plan.get("candidates", []) as Array)
 	if market_candidates.is_empty():
-		if scale_profile.requires_covered_market \
-				and not WarrenTownSolver.feature_quotas_are_advisory():
-			last_failure = "no topology-first covered market fits the connected ground street"
-			return {}
+		# TASK F1 FIX 1, finding I2. The covered bazaar is a city feature. A
+		# village takes one whenever its ground street can actually hold the
+		# measured canopy, aisle, and backing; when none fits, feature
+		# selection runs with the market deliberately absent instead of
+		# rejecting the whole town. The sentinel is non-empty so a committed
+		# selection still reads as one; it is normalized back to a truly
+		# absent market below.
+		#
+		# THIS NOW APPLIES TO EVERY PROFILE, INCLUDING ONE THAT REQUIRES THE
+		# MARKET. The `requires_covered_market` rejection that used to stand
+		# here was guarded on the quotas being non-advisory, which they no
+		# longer are, so it could not fire; it is deleted rather than left as
+		# a promise the pipeline does not keep. A required market that never
+		# preplans now ships as a published `covered_market` shortfall.
+		# TASK F3 owns getting the market built.
 		if scale_profile.requires_covered_market:
 			last_advisory_shortfalls["covered_market"] = 0
-		# The covered bazaar is a city feature. A village takes one whenever
-		# its ground street can actually hold the measured canopy, aisle, and
-		# backing; when none fits, the hero-feature beam runs once with the
-		# market deliberately absent instead of rejecting the whole town. The
-		# sentinel is non-empty so a committed selection still reads as one;
-		# it is normalized back to a truly absent market after the beam.
 		market_candidates = [{"optional_absent": true}]
 	# Select three measured straight links *before* upper composition blocks are
 	# frozen. Each candidate shifts both endpoint blocks together by one fine
@@ -1877,13 +1880,27 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	_stamp_maze_stage(volume, &"hero_beam", partition_rooms_started_ms)
 	var skywalk_reservations: Array[Dictionary] = []
 	skywalk_reservations.assign(skywalk_plan.get("reservations", []) as Array)
-	# The retired beam's own bookkeeping: one pass, so exactly one feature set
-	# was ever considered and its counts are the selection's counts.
-	last_preplan_landmark_diagnostic["joint_attempt_count"] = 1
-	last_preplan_landmark_diagnostic["maximum_joint_skywalk_count"] = \
-		skywalk_reservations.size()
-	# The market is structural, not a richness quota: downstream composition and
-	# the public realm both consume it, so its absence stays fatal.
+	# TASK F1 FIX 1, finding I2 -- READ THIS BEFORE TRUSTING THE GATE BELOW.
+	# It used to say "the market is structural, so its absence stays fatal".
+	# That is NOT what this code does. `_maze_feature_pass` returns
+	# `market_candidates[0]`, and that array is either real candidates or the
+	# one-element absent SENTINEL, so `market_reservation` is never the empty
+	# dictionary here and the rejection below is unreachable. What really
+	# happens to a marketless town is the sentinel normalization twenty lines
+	# down: it becomes a genuinely absent market for every downstream
+	# consumer, and the town ships.
+	#
+	# MEASURED on the production seed (166029932451774690, compact,
+	# 2026-08-25): `_preplan_spatial_market` finds 132 sockets, 40 ground
+	# fits, 2 body fits, 1 aisle fit, 1 clearance fit and forms exactly ONE
+	# complete canopy candidate -- which its own viability filter then drops
+	# because the candidate's open horizon is 10 cells against a compact limit
+	# of MAX_MARKET_OPEN_HORIZON_CELLS = 4. So no reservation is ever made:
+	# market-ness stops at preplan, not at construction, and the town's
+	# `advisory_shortfalls.covered_market = 0` is an honest record of that.
+	# The gate is kept as a cheap invariant guard on a state nothing produces
+	# today. TASK F3 owns the repair.
+	#
 	# Court/landmark/skywalk counts are richness — a shortfall is recorded and
 	# the town ships plainer rather than not at all.
 	var short_hero_features := courtyard_bridge_reservation.is_empty() \
@@ -6546,9 +6563,9 @@ static func _backfill_residual_rooms(grid: WarrenSpatialGrid,
 	# rather than by a room budget: a room owns at least one cell, so this can
 	# never bind, and it can never diverge either.
 	#
-	# Keyed on the plot mass rather than on `feature_quotas_are_advisory()`:
-	# the bound is a fact about this town's own source, so a review render
-	# backfills exactly as production does.
+	# Keyed on the plot mass rather than on a global: the bound is a fact
+	# about this town's own source, so a review render backfills exactly as
+	# production does.
 	if not plot_mass_cells.is_empty():
 		maximum_buildings = plot_mass_cells.size()
 		maximum_per_kind = plot_mass_cells.size()

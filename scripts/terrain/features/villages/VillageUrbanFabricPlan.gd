@@ -188,10 +188,10 @@ static func _meets_quota_floor(measured: int, floor_value: int,
 	## candidate. One-pass maze generation has no other candidate, so refusing
 	## a fully partitioned town here yields no village at all; the shortfall
 	## becomes the audit fact the town ships with. This is exactly the policy
-	## `WarrenTownSolver.feature_quotas_are_advisory()` states and the
-	## composition, feature and spatial solvers already honour -- the
-	## production materialization contract was the last place still enforcing
-	## the searched mode's quotas against a one-pass town.
+	## `WarrenTownSolver`'s class comment states and the composition, feature
+	## and spatial solvers already honour -- the production materialization
+	## contract was the last place still enforcing the searched mode's quotas
+	## against a one-pass town.
 	##
 	## Ceilings stay hard in every mode: an excess is not a shortfall, and
 	## nothing here relaxes a STRUCTURAL rule. Only floors whose shortfall the

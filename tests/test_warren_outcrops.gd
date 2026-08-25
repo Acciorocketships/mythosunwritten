@@ -7,11 +7,19 @@ extends GutTest
 ## own roofline. Both variants wear their parent's wood.
 
 ## The pinned production village of world seed 2697992464 at super cell
-## (0,-1). TASK F1: the fixture used to name a bore attempt, a ranked source
-## id and a partition variant -- three searched identities that no longer
-## exist. One-pass generation builds exactly one town per (seed, scale), so
-## the town below is simply that solve.
+## (0,-1). TASK F1 SWAPPED THIS FIXTURE'S SUBJECT: it used to name a bore
+## attempt, a ranked source id and a partition variant, drive
+## `WarrenTownSolver.mass_first_attempt_frontier` +
+## `WarrenVolumetricSolver._ranked_precomposition_variants`, and compile the
+## selected pair by hand -- three searched identities that no longer exist.
+## One-pass generation builds exactly one town per (seed, scale), so the town
+## below is simply that solve. Every assertion in this file therefore now
+## describes the town production really ships, not the searched one.
 const REVIEW_SEED := 166029932451774690
+## MEASURED 2026-08-25 on that town: two `outcrop.embedded.*` bays, no capped
+## jetty, and `room_outcropping_count == 0`. Pinned as a floor so the
+## vocabulary can only grow.
+const MEASURED_OUTCROP_BAYS := 2
 
 static var _built: SettlementFabricPlan
 static var _solved := false
@@ -31,15 +39,52 @@ func _town_with_outcrops() -> SettlementFabricPlan:
 		profile)
 	if spatial == null:
 		return null
+	# The solve already compiled and quality-gated this fabric; reusing it
+	# saves a second full compile per suite run. VERIFIED 2026-08-25 that the
+	# reuse cannot change what this file measures: cached and fresh compiles of
+	# this town agree on unit count (139), on every outcrop unit and recipe,
+	# and on every audit key they share. The only difference is that a fresh
+	# compile additionally inherits the solve bookkeeping (`maze_stage_ms`,
+	# `advisory_shortfalls`, the `production_*` identity keys) that
+	# `_solve_maze` stamps onto the plan AFTER the cached compile ran, and
+	# nothing here reads those.
 	_built = spatial.compiled_fabric_cache()
 	if _built == null:
 		_built = WarrenSpatialFabricCompiler.solve(spatial, program)
 	return _built
 
 
-func test_probe_seed_produces_an_outcropping_town() -> void:
-	assert_not_null(_town_with_outcrops(),
-		"the review seed no longer builds a town containing an outcropping")
+func test_the_probe_seed_builds_its_measured_embedded_oriel_bays() -> void:
+	## TASK F1 FIX 1, finding I4. This used to be
+	## `test_probe_seed_produces_an_outcropping_town` and asserted only that
+	## the plan was non-null, while its name claimed an outcropping existed.
+	## MEASURED: the town builds two `outcrop.embedded.*` oriel bays, no
+	## capped jetty, and no full room outcropping. The floor is pinned so the
+	## bays cannot silently disappear; the family split is reported rather
+	## than pinned, so adding capped jetties back is an improvement this test
+	## welcomes instead of an assertion it breaks.
+	var plan := _town_with_outcrops()
+	assert_not_null(plan, "the review seed no longer builds its town")
+	if plan == null:
+		return
+	var units := _outcrop_units(plan)
+	var embedded := 0
+	var capped := 0
+	for unit_value: FabricUnit in units:
+		embedded += int(String(unit_value.recipe_id).begins_with(
+			"outcrop.embedded."))
+		capped += int(plan.recipe(unit_value.recipe_id).has_tag(
+			&"capped_outcropping"))
+	gut.p("one-pass town: outcrop units=%d embedded_oriels=%d capped_jetties=%d"
+		% [units.size(), embedded, capped])
+	assert_gte(units.size(), MEASURED_OUTCROP_BAYS,
+		"the review seed lost outcroppings it used to build")
+	assert_gte(embedded, MEASURED_OUTCROP_BAYS,
+		"the two measured embedded oriel bays must survive")
+	assert_eq(embedded + capped, units.size(),
+		("every outcropping must be one of the two authored families -- an " \
+			+ "embedded oriel bay or a capped jetty"))
+
 
 func test_facade_bays_cannot_fragment_a_partial_roof_campaign() -> void:
 	var room := WarrenRoomStamp.new(&"room.roof.probe", &"source.roof.probe",
