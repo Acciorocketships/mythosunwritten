@@ -495,6 +495,18 @@ Milestone: upper-storey walls read timber-frame/plaster; stone appears only wher
 - **Every overhang shows its supports** ("we can't have floating buildings"): jetties/oriels/bridge rooms render their timber or stone brackets — the E3b jetty support records exist; verify the brackets actually render on every overhang in the battery seeds and count them in the audit.
 - [ ] Commit — `feat(villages): pitched by default; dressed planks where walked`.
 
+### Task H2b: The rock reads as hillside, not masonry
+
+**Direction (user, 2026-08-25, after H1):** "i'm still seeing a lot of boxy stone rectangles, can you fix that?" — with walls timbered and crown caps retiring in H2, the remaining stone read is the retained-massif skin: every exposed rock face is clad in flat rectangular ashlar modules (`LOW_RETAINING_WALL` coursing), so the terraced substrate reads as fortress masonry banks. The reference towns sit on NATURAL ground — green benches and rock — with built stone only as low retaining walls; ours wrap the whole massif in masonry. The E4-trimmed stubs read as low stone boxes for the same reason.
+
+**Files:** `SettlementFabricAssembler.gd` (the maze-stone skin channel: `maze_stone_faces/walls`, cap partners, coursing), the volumetric solver's audit only if new counts are needed, tests.
+- **Bench tops green:** exposed retained-rock UP faces that are not walked/paved (after H2's crown retirement these are terrace-bench tops and trimmed-stub tops) render as terrain-style green caps, not stone slabs — the town's terraces read as garden benches on a hillside.
+- **Tall banks go natural:** exposed rock WALL faces above the retaining-wall height (the existing `STONE_BUDGET_BANDS = 2` is the line) render with the natural rock-face treatment rather than coursed ashlar — the cliff/rock module family the terrain system already uses is the first candidate; if it cannot be reused cheaply, an uncoursed/irregular variant of the rock modules is acceptable. Masonry coursing survives ONLY at ≤ 2-band retaining faces (a mason's wall holding a terrace — correct and quaint).
+- Measure first: the exposed-rock face histogram by bank height per town (how much is ≤2-band retaining vs taller); after: tall-bank masonry faces = 0, stone-slab bench tops = 0, both pinned.
+- Renders before review: 12/compact + 9/grand downhill approaches (the "grey rubble canyon" and "majority-grey" frames are the acceptance tests) + one orbit each.
+- Discipline as H1/H2: attribution (skin-channel changes only — zero wall/roof/geometry drift), seals BY SET, F2 ceilings, fingerprint refresh, GUI renders.
+- [ ] Commit — `feat(villages): the rock reads as hillside, not masonry`.
+
 ### Task H3: The re-battery and the verdict
 
 - Re-render the battery seeds (12/compact, 3/standard, 10/standard, 7/large, 9/grand + the production settlement in-game), same vantages; the controller reads them against "quaint medieval village"; the review page updates with before/after pairs; the user judges.
