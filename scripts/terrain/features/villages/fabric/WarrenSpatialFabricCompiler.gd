@@ -5384,31 +5384,54 @@ static func _cap_pieces(face_cells: Array[Vector3i]) -> Array[Dictionary]:
 	# terminal rows, so the planner's admitted compound grammar holds.
 	var crown_cells: Dictionary = {}
 	var crown_count := 0
+	# TASK F2. The crown search below asks "does this authored stamp fit the
+	# remaining plate" for 3 x 5 kinds x every remaining cell x 4 yaws x a 7 x 7
+	# origin halo, and it used to derive the whole stamp -- an array of up to 48
+	# transformed cells -- for every one of those probes. Only the cells in the
+	# plate's own band can ever be in `top`, and the stamp at any origin is the
+	# stamp at origin zero TRANSLATED (see `FabricRecipe.transform_cell`), so
+	# each (kind, yaw) needs its band-zero offsets exactly once. Same offsets,
+	# same order, so `top` and the first refusing cell are unchanged.
+	var kinds: Array[StringName] = [&"long", &"building", &"slim", &"row",
+		&"tower"]
+	var band_offsets: Array[Array] = []
+	for kind_index in kinds.size():
+		var per_yaw: Array = []
+		for yaw in 4:
+			var band: Array[Vector3i] = []
+			for offset: Vector3i in WarrenRoomStamp.expected_private_cells(
+					kinds[kind_index], Vector3i.ZERO, yaw):
+				if offset.y == 0:
+					band.append(offset)
+			per_yaw.append(band)
+		band_offsets.append(per_yaw)
 	while crown_count < 3:
 		var found_macro := false
-		for kind: StringName in [&"long", &"building", &"slim", &"row",
-				&"tower"]:
+		# `remaining` cannot change while the kind loop runs -- the only write
+		# to it sets `found_macro`, which breaks straight out -- so the ordered
+		# anchor list is derived once per sweep instead of once per kind.
+		var ordered: Array[Vector3i] = []
+		ordered.assign(remaining.keys())
+		ordered.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+			return a.z < b.z if a.z != b.z else a.x < b.x)
+		for kind_index in kinds.size():
+			var kind := kinds[kind_index]
 			if found_macro:
 				break
-			var ordered: Array[Vector3i] = []
-			ordered.assign(remaining.keys())
-			ordered.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
-				return a.z < b.z if a.z != b.z else a.x < b.x)
 			for anchor: Vector3i in ordered:
 				for yaw in 4:
+					var offsets := band_offsets[kind_index][yaw] \
+						as Array[Vector3i]
 					# Search a small origin halo around the first occupied cell;
 					# exact set containment is the authority, not this anchor
 					# phase.
 					for x in range(anchor.x - 3, anchor.x + 4):
 						for z in range(anchor.z - 3, anchor.z + 4):
 							var origin := Vector3i(x, y, z)
-							var stamp := WarrenRoomStamp.expected_private_cells(
-								kind, origin, yaw)
 							var top: Array[Vector3i] = []
 							var fits := true
-							for cell: Vector3i in stamp:
-								if cell.y != y:
-									continue
+							for offset: Vector3i in offsets:
+								var cell := offset + origin
 								top.append(cell)
 								if not remaining.has(cell):
 									fits = false
