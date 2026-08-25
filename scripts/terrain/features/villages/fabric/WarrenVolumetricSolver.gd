@@ -643,14 +643,23 @@ static func from_volume(volume: WarrenVolumePlan,
 			retained_rock.trimmed_roof_band_cells)
 		plan.audit["maze_refused_unroomed_plot_trims"] = int(
 			retained_rock.refused_plot_trims)
-		# TASK C5e RULING 2. The parapet course above a flat crown's slab,
-		# left as AIR instead of retained as stone, so the crown is an open
-		# terrace rather than a masonry block with a timber sill. Counted here
-		# rather than inferred from the drop in the stone total, because a
-		# stack parent deliberately KEEPS its parapet -- see
+		# TASK C5e RULING 2, widened by TASK H2. The crown bands left as AIR
+		# instead of retained as stone, so a crown is an open plank terrace
+		# rather than a masonry block with a timber sill. Counted here rather
+		# than inferred from the drop in the stone total, because a crown
+		# something stands on deliberately KEEPS its course -- see
 		# `_maze_released_parapet_cells`.
+		#
+		# `maze_stranded_release_repair_count` is what the release TOOK BACK
+		# (`_repair_stranded_release`): crown cells another plot's unroomed mass
+		# turned out to be standing on. Published rather than folded into the
+		# release total, because a rising number there means the composition is
+		# leaving more quarry blocks on other houses' roofs, which is a
+		# composition fact worth watching on its own.
 		plan.audit["maze_released_parapet_cell_count"] = int(
 			retained_rock.released_parapet_cells)
+		plan.audit["maze_stranded_release_repair_count"] = int(
+			retained_rock.stranded_release_repairs)
 		plan.audit["maze_plot_mass_cell_count"] = int(
 			plot_mass_audit.plot_cells)
 		plan.audit["maze_plot_roomed_cell_count"] = int(plot_mass_audit.roomed)
@@ -933,25 +942,30 @@ const CARDINAL_COLUMNS: Array[Vector2i] = [
 
 
 static func _maze_flat_slab_cells(volume: WarrenVolumePlan) -> Dictionary:
-	## Every FINE cell of a STACK PARENT's flat-roof SLAB: the bands between
-	## the storeys its rooms fill and its own `top_band`.
+	## Every FINE cell of a flat-roofed STACK PARENT's crown span
+	## `[flat_roof_base_band, top_band)`: the bands between the storeys its
+	## rooms fill and its own `top_band`.
 	##
 	## A flat parcel's `storey_count()` is `(height - 1) / STOREY_BANDS`, so
 	## its rooms stop at `roof_base_band()` and one or two bands are left over.
 	## The FIRST of them carries the authored one-band `roof.flat.*` unit the
-	## roof compiler now places (ruling 1); a second, where the plot's height
-	## is even, is a stone parapet course. Both are claimed here, because what
-	## a child at `top_band` stands on is the whole slab and
+	## roof compiler places (ruling 1); a second, where the plot's height is
+	## even, is a stone parapet course. Both are claimed, because what a child
+	## at `top_band` stands on is the whole slab and
 	## `WarrenRoomCompositionPlanner` proves that bearing by asking the grid
 	## whether the band below the child is STRUCTURAL_VOLUME.
+	##
+	## THE WHOLE PLATE, NOT THE CHILD'S FOOTPRINT, and Task H2 measured why --
+	## see `_retain_maze_slab_courses`, which carries the evidence and the
+	## cost.
 	##
 	## ONLY A PARENT'S SLAB, and the restriction is deliberate. Claiming mass
 	## before composition takes it away from the greedy residual scan, and a
 	## flat plot nobody stands on has no bearing to prove: its slab is retained
-	## by `_retain_maze_rock` AFTER composition instead, with every other cell
-	## the town did not build in. Retaining early where nothing needs it cost
-	## seed 4/compact its whole town (measured: the scan lost the rooms whose
-	## crowns closed a neighbouring roof remainder).
+	## by `_retain_maze_rock` AFTER composition instead, or -- since Task H2 --
+	## RELEASED there with the rest of its crown. Retaining early where nothing
+	## needs it cost seed 4/compact its whole town (measured: the scan lost the
+	## rooms whose crowns closed a neighbouring roof remainder).
 	##
 	## The stacking rule itself is asked of `WarrenMazeBlockPartitioner`, which
 	## owns it; restating it here is how a translator and a solver come to
@@ -996,6 +1010,30 @@ static func _retain_maze_slab_courses(grid: WarrenSpatialGrid,
 	## composition asks. The mass it takes is mass a flat parcel's own rooms
 	## can never reach (they stop at `roof_base_band()`), so claiming it early
 	## costs the composition nothing it could otherwise have built.
+	##
+	## TASK H2 TRIED TO NARROW THIS TO THE CHILD'S FOOTPRINT AND PUT IT BACK.
+	## Part 1 wanted the parent's UNCOVERED plate released like every other
+	## free crown, so a stack parent would stop wearing a masonry lid beside
+	## its child. Both admissible narrowings were built and measured, and both
+	## cost 12/large its town at
+	## `composition support parent parcel.maze.house.029/0 missing for
+	## spatial.parcel.maze.house.075.part00` -- leaving the remainder
+	## ALLOCATABLE (the composition takes the extra mass and moves the lineage
+	## a declared child was standing on) and discarding it to `OUTSIDE` (same
+	## gate, same seed). The reason is the one C5 wrote this restriction for:
+	## a child's COMPOSED room is not its plot. The composition merges,
+	## couples and expands lineages, so a one-column child plot can end up
+	## with a `row` or `slim` room reaching across the parent's other columns,
+	## and the bearing it proves against the grid is under cells the plot
+	## model cannot name in advance. THE WHOLE PLATE IS THE ONLY CONSERVATIVE
+	## ANSWER before composition, and narrowing it is a composition-side
+	## change this task's scope fence forbids.
+	##
+	## What that costs is measured and published rather than hidden:
+	## `maze_bearing_crown_cap_count` is the masonry lid that survives on a
+	## stack parent's own plate, and `WarrenSpatialFabricCompiler
+	## .maze_stone_band_profile` counts it apart from the rubble caps H2 did
+	## retire.
 	##
 	## Returns `{failed, cells, skipped}`; `skipped` counts cells another
 	## feature already holds the non-shareable FEATURE bit on -- see
@@ -1077,7 +1115,7 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 		return {"failed": false, "cells": 0, "skipped": 0, "rock_cells": 0,
 			"unroomed_plot_cells": 0, "roof_cells": 0,
 			"trimmed_unroomed_plot_cells": 0, "trimmed_roof_band_cells": 0,
-			"refused_plot_trims": 0}
+			"refused_plot_trims": 0, "stranded_release_repairs": 0}
 	# TASK C5c RULING 1 -- the TAG. Retained stone is one material and one
 	# owner, but it is two different facts about the town: `rock` is derived
 	# stone the plot planner never gave to anybody, and `unroomed_plot_mass`
@@ -1086,9 +1124,11 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 	# them apart is what makes the difference measurable.
 	var plot_mass := _maze_plot_mass_cells(volume)
 	var plot_roof := _maze_plot_roof_cells(volume)
-	var released := _maze_released_parapet_cells(volume, route_floors)
+	var released := _maze_released_parapet_cells(grid, volume, route_floors)
 	var trim := _maze_trimmed_plot_stone(source, route_floors)
 	var trim_cells := trim.cells as Dictionary
+	var stranded := _repair_stranded_release(grid, source, released,
+		trim_cells)
 	var cells: Array[Vector3i] = []
 	var skipped := 0
 	var rock_cells := 0
@@ -1144,7 +1184,8 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 			"released_parapet_cells": released_cells,
 			"trimmed_unroomed_plot_cells": trimmed_cells,
 			"trimmed_roof_band_cells": trimmed_roof_cells,
-			"refused_plot_trims": int(trim.refused)}
+			"refused_plot_trims": int(trim.refused),
+			"stranded_release_repairs": stranded}
 	cells.sort_custom(_cell_less)
 	if not _claim_maze_stone(grid, cells):
 		return {"failed": true, "cells": 0, "skipped": skipped,
@@ -1152,14 +1193,16 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 			"released_parapet_cells": released_cells,
 			"trimmed_unroomed_plot_cells": trimmed_cells,
 			"trimmed_roof_band_cells": trimmed_roof_cells,
-			"refused_plot_trims": int(trim.refused)}
+			"refused_plot_trims": int(trim.refused),
+			"stranded_release_repairs": stranded}
 	return {"failed": false, "cells": cells.size(), "skipped": skipped,
 		"rock_cells": rock_cells,
 		"unroomed_plot_cells": unroomed_plot_cells, "roof_cells": roof_cells,
 		"released_parapet_cells": released_cells,
 		"trimmed_unroomed_plot_cells": trimmed_cells,
 		"trimmed_roof_band_cells": trimmed_roof_cells,
-		"refused_plot_trims": int(trim.refused)}
+		"refused_plot_trims": int(trim.refused),
+		"stranded_release_repairs": stranded}
 
 
 ## TASK E4 FIX 2 -- THE TRIM'S "NO FOOTPRINT COLUMN ANSWERED" SENTINEL, and it
@@ -1281,86 +1324,211 @@ static func _plot_trim_is_refused(source: WarrenMazeSourcePlan,
 	return false
 
 
-static func _maze_released_parapet_cells(volume: WarrenVolumePlan,
+static func _maze_released_parapet_cells(grid: WarrenSpatialGrid,
+		volume: WarrenVolumePlan,
 		route_floors: Array[Vector3i] = [] as Array[Vector3i]) -> Dictionary:
-	## TASK C5e RULING 2 -- THE PARAPET IS RELEASED TO AIR.
+	## TASK C5e RULING 2, WIDENED BY TASK H2 -- THE WHOLE CROWN IS RELEASED TO
+	## AIR WHEREVER NOTHING STANDS ON IT.
 	##
 	## A flat-roofed plot's crown is `[flat_roof_base_band, top)`: the first
 	## band carries the authored one-band `roof.flat.*` slab the roof compiler
 	## builds, and on the EVEN heights the planner produces one more band is
-	## left over. That leftover band used to be retained STONE, and it is why
-	## every crown in the C5d captures reads from above as a stone block with
-	## a timber sill: the slab is BENEATH a solid course of masonry that
-	## covers the whole footprint, not a terrace.
+	## left over. Both used to end up retained STONE, and that is why every
+	## crown in the C5d captures reads from above as a stone block with a
+	## timber sill: the slab is INSIDE a solid course of masonry, and
+	## `SettlementFabricAssembler.maze_stone_walls` caps its sky-facing
+	## boundary with a rock panel laid flat.
 	##
-	## It is released here -- claimed by nobody, left as air -- so the built
-	## crown is slab plus open sky and `SettlementFabricAssembler
-	## .maze_terrace_railings` can guard its edges.
+	## C5e released `[roof_base + 1, top)` on non-parents only, which left two
+	## rubble populations the H2 renders are about: the slab band itself
+	## (retained on every column the composition did not put a room under, and
+	## even under the plank slab, because `_retain_maze_rock` claims any solid
+	## `OUTSIDE` cell), and the WHOLE plate of every stack parent
+	## (`_maze_flat_slab_cells` claimed it before composition, so this function
+	## could not reach it at all). Measured on the six-town identity corpus,
+	## 9 to 58 stone caps per town stood inside a plot's own roof band span.
 	##
-	## THE DESIGN DECISION RULING 2 LEAVES OPEN, and which way it went.
-	## A child of a stacked house stands at `parent.top_band`, which is one
-	## band ABOVE the slab: what it really rests on is that parapet course.
-	## The two admissible answers were to release the band anyway and teach
-	## the seam to accept a floor one band clear of the slab, or to keep the
-	## parcel's built top AT the slab wherever nothing stands on it. This is
-	## the second: a plot that is a STACK PARENT keeps its parapet, because
-	## something really does stand on it and `WarrenRoomCompositionPlanner
-	## ._floorplate_transition_is_structurally_legible` proves that bearing by
-	## asking the grid whether the band below the child is STRUCTURAL_VOLUME.
-	## Every other flat plot -- 34 of 36, 39 of 39 and 37 of 40 house plots on
-	## the three sealing seeds -- ends at its slab.
+	## THE RULE IS NOW ONE SENTENCE, AND THE GRID ANSWERS IT. Walking each fine
+	## column of the span from the top down, a band is KEPT as soon as
+	## something the town built stands on it -- a room (`PRIVATE_VOLUME`, which
+	## is how a stacked child announces itself), structure another pass already
+	## claimed (`STRUCTURAL_VOLUME`: the child's own bearing course, a feature's
+	## reservation), or a public floor that walks there (`route_floors`, the
+	## same set the composition test measures `ROUTE_ON_STONE_FLOOR` against).
+	## Everything ABOVE the highest kept band is released; everything at or
+	## below it stays, so no retained cell of a crown is ever left standing
+	## over released air, and the C5e CRITICAL -- a tiered house's street floor
+	## losing the band it stands on -- cannot come back through the wider rule.
 	##
-	## The choice costs nothing and changes no seam: `WarrenParcelPlan
+	## Asking the GRID rather than the plot model is what makes the widening
+	## safe. The plot layer knows a stack parent by name but not which of its
+	## columns the child's composed rooms really occupy, nor which crowns a
+	## rooftop court, a bridge deck or a market floor ended up walking; every
+	## one of those is a `PRIVATE_VOLUME`, `STRUCTURAL_VOLUME` or route-floor
+	## fact by the time this runs, which is after `_discard_unassigned_mass`
+	## and `_derive_shell`. The plot model still owns the one question the grid
+	## cannot answer yet -- see `_maze_flat_slab_cells`, which reserves the
+	## child's bearing BEFORE composition so the composition can prove it.
+	##
+	## A STACK PARENT'S CROWN APPEARS IN THIS SET AND IS NEVER ACTUALLY
+	## RELEASED, and that is worth saying rather than filtering. Its whole
+	## plate is already `STRUCTURAL_VOLUME` by the time this runs
+	## (`_retain_maze_slab_courses` claims it before composition), and
+	## `_retain_maze_rock` only ever claims or releases cells that are still
+	## `OUTSIDE` -- so a parent crown listed here is inert. Filtering it out
+	## would not be free: `_repair_stranded_release` reads membership of this
+	## set as "will not be stone", so removing those entries would make the
+	## repair take MORE cells back. The set is left as the plain statement of
+	## which crowns are free, and the grid decides what that costs.
+	##
+	## Nothing about the massing moves: `WarrenParcelPlan
 	## .building_support_is_valid`, `WarrenBuildingParcel.top_band` and every
-	## deterministic signature are untouched, so the plot's `top` remains the
-	## massing envelope it always was while the BUILT crown stops one band
-	## lower. Releasing it under a child instead would have put a band of air
-	## between a house and the house it stands on.
-	##
-	## Precisely the complement of `_maze_flat_slab_cells`, which claims the
-	## same bands for the stack parents this function skips, LESS the cells a
-	## public floor stands on (see the loop below).
+	## deterministic signature are untouched, so a plot's `top` remains the
+	## envelope it always was while the BUILT crown stops at its plank plate.
 	##
 	## Empty for a searched volume, which is what keeps every reader maze-only.
 	var out: Dictionary = {}
 	var source := volume.mass_context.get(&"maze_source_plan") \
 		as WarrenMazeSourcePlan
-	if source == null:
+	if source == null or grid == null:
 		return out
-	var parents: Dictionary = {}
-	for parent_value: Variant in (WarrenMazeBlockPartitioner.stack_parents(
-			source)["parents"] as Dictionary).values():
-		parents[StringName(parent_value)] = true
-	# NOTHING IS RELEASED UNDER A PUBLIC FLOOR (review fix 1, CRITICAL).
-	# A tiered house's crown may BE a street, and the walk surface of that
-	# street stands on the very band this function would otherwise release.
-	# The first pass checked only that the released band was not itself a
-	# passage cell, which is a different question, and the cost was measured:
-	# route floor standing on something fell from 1.000 on every town to
-	# 0.969 / 0.950 / 0.980 with 6 / 8 / 4 walk cells over `Use.OUTSIDE`, and
-	# 4/compact landed exactly on `ROUTE_ON_STONE_FLOOR`. This is the same
-	# `route_floors` set the composition test measures that share against.
 	var floors: Dictionary = {}
 	for cell: Vector3i in route_floors:
 		floors[cell] = true
 	for plot: Dictionary in source.plots:
 		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE \
-				or parents.has(StringName(plot["id"])) \
 				or not WarrenMazeBlockPartitioner.plot_is_flat_roofed(source,
 					plot):
 			continue
 		var top_band := int(plot["top"])
 		var roof_base := WarrenBuildingParcel.flat_roof_base_band(
 			int(plot["floor"]), top_band)
-		for band in range(roof_base + 1, top_band):
-			for cell_value: Variant in plot["cells"] as Array:
-				var column := cell_value as Vector2i
-				for fine: Vector3i in _fine_square(Vector3i(column.x, band,
-						column.y)):
-					if floors.has(fine + Vector3i.UP):
-						continue
+		if roof_base >= top_band:
+			continue
+		for cell_value: Variant in plot["cells"] as Array:
+			var column := cell_value as Vector2i
+			for fine_column: Vector3i in _fine_square(Vector3i(column.x,
+					top_band - 1, column.y)):
+				for band in range(top_band - 1, roof_base - 1, -1):
+					var fine := Vector3i(fine_column.x, band, fine_column.z)
+					if _maze_crown_band_bears(grid, floors, fine):
+						break
 					out[fine] = true
 	return out
+
+
+static func _repair_stranded_release(grid: WarrenSpatialGrid,
+		source: WarrenMazeSourcePlan, released: Dictionary,
+		trim_cells: Dictionary) -> int:
+	## TASK H2 -- NOTHING RETAINED MAY BE LEFT STANDING ON WHAT THIS PASS
+	## RELEASED. Mutates `released`, returns how many cells it took back.
+	##
+	## `_maze_released_parapet_cells` walks each crown TOP DOWN and stops at
+	## the first band something built stands on, so within one plot's own span
+	## the release can never strand its own mass. What it cannot see is the
+	## band ABOVE the span: another plot's mass sitting on this crown that the
+	## composition never roomed, which `_retain_maze_rock` is about to retain
+	## as stone in the very same pass. Releasing the crown under it leaves a
+	## quarry block hanging in the air -- measured on the first pass of this
+	## task as 12 cells on 4/compact and 24 on 3/standard, red against
+	## `test_retained_stone_never_stands_over_released_air`.
+	##
+	## The repair is one descending walk per fine column, and descending is
+	## what makes it a single pass: taking a cell back makes it stone, so the
+	## cell beneath it is re-asked with that answer already in place and the
+	## take-back propagates down the column by itself.
+	##
+	## The predicate is `_retain_maze_rock`'s own retention test, restated in
+	## one place rather than inferred: solid to the source, at or above its
+	## column's terrain datum, still `OUTSIDE`, not trimmed by
+	## `_maze_trimmed_plot_stone`, not held by another feature. Any answer but
+	## "this will be stone" leaves the release alone -- a room, a street, the
+	## sky and the heightfield's own ground are all either real support or no
+	## support to strand.
+	if released.is_empty() or source == null or source.massif == null:
+		return 0
+	var bands_by_column: Dictionary = {}
+	for cell_value: Variant in released.keys():
+		var cell := cell_value as Vector3i
+		var column := Vector2i(cell.x, cell.z)
+		if not bands_by_column.has(column):
+			bands_by_column[column] = [] as Array[int]
+		(bands_by_column[column] as Array[int]).append(cell.y)
+	var repaired := 0
+	var columns: Array[Vector2i] = []
+	columns.assign(bands_by_column.keys())
+	columns.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.y < b.y if a.y != b.y else a.x < b.x)
+	for column: Vector2i in columns:
+		var bands := bands_by_column[column] as Array[int]
+		bands.sort()
+		bands.reverse()
+		for band: int in bands:
+			var cell := Vector3i(column.x, band, column.y)
+			if not _maze_cell_becomes_stone(grid, source, released, trim_cells,
+					cell + Vector3i.UP):
+				continue
+			released.erase(cell)
+			repaired += 1
+	return repaired
+
+
+static func _maze_cell_becomes_stone(grid: WarrenSpatialGrid,
+		source: WarrenMazeSourcePlan, released: Dictionary,
+		trim_cells: Dictionary, cell: Vector3i) -> bool:
+	## Will this fine cell be retained maze stone once this pass commits?
+	## `_retain_maze_rock`'s loop condition, asked one cell at a time.
+	if not grid.contains(cell) or released.has(cell) or trim_cells.has(cell):
+		return false
+	var use := grid.use_at(cell)
+	# Stone another pass already claimed -- `_retain_maze_slab_courses`' bearing
+	# course under a stacked child. It is in the retained channel too, so it
+	# strands just as surely as this pass's own.
+	if use == WarrenSpatialGrid.Use.STRUCTURAL_VOLUME:
+		return grid.owner_name_at(cell) == MAZE_STONE_FEATURE_ID
+	if use != WarrenSpatialGrid.Use.OUTSIDE \
+			or _feature_bit_is_taken(grid, cell):
+		return false
+	var column := Vector2i(_macro_of_fine(cell.x), _macro_of_fine(cell.z))
+	if not source.massif.has_column(column) \
+			or cell.y < source.massif.base_at(column):
+		return false
+	return source.solid_at(Vector3i(column.x, cell.y, column.y))
+
+
+static func _macro_of_fine(fine: int) -> int:
+	## The macro coordinate a fine x or z belongs to. FLOOR division, because
+	## `_fine_square` maps macro -3 onto fine -6 and -5 while GDScript's
+	## `-5 / 2` truncates to -2.
+	return (fine - posmod(fine, 2)) / 2
+
+
+static func _maze_crown_band_bears(grid: WarrenSpatialGrid,
+		floors: Dictionary, fine: Vector3i) -> bool:
+	## Does anything the town BUILT stand on this crown cell?  The three
+	## answers, and each is a fact rather than an inference:
+	##
+	## - a public floor walks the band above it (`floors`, which by then holds
+	##   the bore's streets, a deck plot's paving, an open bridge deck, the
+	##   market floor and the rooftop court);
+	## - a room stands there (`PRIVATE_VOLUME` -- a stacked child, or any
+	##   lineage the composition put on this plate);
+	## - structure another pass already claimed stands there
+	##   (`STRUCTURAL_VOLUME`: `_retain_maze_slab_courses`' bearing course
+	##   under a stacked child, or a sealed feature's own mass).
+	##
+	## `OUTSIDE`, `ALLOCATABLE`, `PUBLIC_AIR` and `DAYLIGHT_AIR` above a crown
+	## are all sky as far as this question goes: a street's HEADROOM is not
+	## something that stands on a roof, only its floor is, and the floor is the
+	## first clause.
+	var above := fine + Vector3i.UP
+	if floors.has(above):
+		return true
+	if not grid.contains(above):
+		return false
+	var use := grid.use_at(above)
+	return use == WarrenSpatialGrid.Use.PRIVATE_VOLUME \
+		or use == WarrenSpatialGrid.Use.STRUCTURAL_VOLUME
 
 
 static func _maze_plot_roof_cells(volume: WarrenVolumePlan) -> Dictionary:

@@ -475,19 +475,20 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	# dropped on the way to a unit; the town simply has none to drop. A
 	# dormered crown needs three independent facts to coincide: the plot model
 	# must have asked this crown for a pitched shell
-	# (`plot_prefers_pitched_roof`, an unstacked plot strictly above every
-	# neighbour, then one seeded bit), the room must be above the ground storey
+	# (`plot_prefers_pitched_roof`), the room must be above the ground storey
 	# (`_full_roof_recipe_id` gives storey 0 a `.short.` roof), and its
-	# `roof_feature` must be 1 or 2. MEASURED on this town: 40 roofed crowns, 8
-	# asked for a pitched shell, 7 got one, and the 2 crowns whose recipe would
-	# have been dormered are ordinary flat crowns that never asked -- the two
-	# sets are disjoint by seed, not by rule. Where they DO meet, the dormer
-	# lands: the same seed at STANDARD scale builds
-	# `roof.tower.orange.dormer.left`, and over the 24-town corpus
-	# `dormered_roof_unit_count` runs 0 to 4 with 16 towns above zero. The
-	# machinery is proved by `assert_gte` below rather than by a floor this
-	# seed cannot meet; giving the carved form MORE dormers is a Phase G
-	# conversation about `plot_prefers_pitched_roof`, not a defect.
+	# `roof_feature` must be 1 or 2. MEASURED on this town under C5d: 40 roofed
+	# crowns, 8 asked for a pitched shell, 7 got one, and the 2 crowns whose
+	# recipe would have been dormered were ordinary flat crowns that never
+	# asked -- the two sets were disjoint by seed, not by rule.
+	#
+	# TASK H2 IS THE "PHASE G CONVERSATION" THIS NOTE ANTICIPATED, and it
+	# happened: `plot_prefers_pitched_roof` no longer asks for a plot strictly
+	# above every neighbour and then a coin, it asks for a crown nothing stands
+	# on. The pitched population multiplied and the dormers came with it --
+	# 4 dormer units across the six-town identity corpus before, 22 after -- so
+	# the assertions below are `assert_gte` on the counters EXISTING rather
+	# than a pinned zero, and the number they read is now the roofscape's.
 	#
 	# The 0 setback sheds are the same shape: a shed only exists inside the
 	# finite setback vocabulary, and a maze flat crown reaches that vocabulary

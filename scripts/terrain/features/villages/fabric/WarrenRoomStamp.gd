@@ -43,12 +43,14 @@ var roof_feature: int
 ## Defaulted false and never set by a legacy caller, so every route-first and
 ## mass-first stamp keeps the exact contract it always had.
 var flat_roof := false
-## Additive (Task C5d, controller ruling 2): the source parcel's roof
-## PREFERENCE, carried beside its roof contract. `&"pitched"` names a crown
-## the plot model found geometrically free -- strictly above every neighbour
-## plot and street -- so `WarrenSpatialFabricCompiler.compile_roof_units` may
-## try the authored pitched shell there before the slab. Empty everywhere
-## else, legacy included.
+## Additive (Task C5d, controller ruling 2; WIDENED BY TASK H2): the source
+## parcel's roof PREFERENCE, carried beside its roof contract. `&"pitched"`
+## names a crown the plot model found FREE -- no stacked child, no upper
+## street, no other plot in its own columns at its top band -- so
+## `WarrenSpatialFabricCompiler.compile_roof_units` tries the authored pitched
+## shell there before the slab. Since H2 that is the ordinary maze house
+## rather than the freestanding exception C5d selected; empty everywhere else,
+## legacy included.
 var roof_preference: StringName = &""
 var private_cells: Array[Vector3i] = []
 var audit: Dictionary = {}

@@ -140,6 +140,15 @@ func _init() -> void:
 		CORPUS_STONE_GROUP: _new_wall_tally(),
 		ADDED_STONE_GROUP: _new_wall_tally(),
 	}
+	# TASK H2. The ROOFSCAPE tally, in the same two groups and for the same
+	# reason. STONE is what the massif shows, WALLS is what the town wears,
+	# ROOFS is what it is covered by -- three questions about one frame, and a
+	# reader who wants "did the village get its pitched roofs back" should not
+	# have to infer it from the other two.
+	var roofs_by_group: Dictionary = {
+		CORPUS_STONE_GROUP: _new_roof_tally(),
+		ADDED_STONE_GROUP: _new_roof_tally(),
+	}
 	for city_seed: int in seeds:
 		for scale_id: StringName in scale_ids:
 			attempted += 1
@@ -237,6 +246,62 @@ func _init() -> void:
 						int(fabric.audit.get("base_face_run_count", 0)),
 						str(fabric.audit.get(
 							"exterior_wall_stone_band_histogram", {}))])
+					# TASK H2. The roofscape row. `pitched` over `crowns` is
+					# the share the phase exists to move; `rubble` is the
+					# masonry lid pinned at zero; `dressed` is the terrace
+					# furnishing the battery measured at zero before this task;
+					# `boxes` is the isolated flat lineage the second reference
+					# batch names; `brackets` is "we can't have floating
+					# buildings" counted on the rendered side, with
+					# `bare_overhangs` the ones that compiled without one.
+					_accumulate_roofs(roofs_by_group[group] as Dictionary,
+						fabric)
+					print(("SWEEP seed=%d scale=%s ROOFS crowns=%d " \
+						+ "pitched=%d share=%.4f flat=%d tiled=%d " \
+						+ "refused=%d partial=%d dormers=%d dressed=%d/%d " \
+						+ "chimneys=%d awnings=%d boxes=%d rails=%d " \
+						+ "rubble=%d (paved=%d borne=%d bearing=%d) " \
+						+ "brackets=%d " \
+						+ "bare_overhangs=%d families=%s") % [city_seed,
+						String(profile.scale_id),
+						int(fabric.audit.get("plot_flat_roof_room_count", 0)),
+						int(fabric.audit.get("maze_pitched_roof_count", 0)),
+						float(int(fabric.audit.get(
+							"maze_pitched_roof_count", 0))) / float(maxi(1,
+							int(fabric.audit.get(
+								"plot_flat_roof_room_count", 0)))),
+						int(fabric.audit.get("plot_flat_roof_count", 0)),
+						int(fabric.audit.get(
+							"maze_partial_plate_tiled_count", 0)),
+						int(fabric.audit.get(
+							"maze_pitched_refused_count", 0)),
+						int(fabric.audit.get(
+							"maze_pitched_partial_plate_count", 0)),
+						int(fabric.audit.get("dormered_roof_unit_count", 0)),
+						int(fabric.audit.get("maze_dressed_crown_count", 0)),
+						int(fabric.audit.get("maze_dressed_crown_count", 0)) \
+							+ int(fabric.audit.get(
+								"maze_bare_crown_count", 0)),
+						int(fabric.audit.get("maze_crown_chimney_count", 0)),
+						int(fabric.audit.get("maze_crown_awning_count", 0)),
+						int(fabric.audit.get(
+							"maze_isolated_flat_crown_count", 0)),
+						int(fabric.audit.get(
+							"maze_terrace_railing_count", 0)),
+						int(fabric.audit.get(
+							"maze_rubble_crown_cap_count", 0)),
+						int(fabric.audit.get(
+							"maze_paved_crown_cap_count", 0)),
+						int(fabric.audit.get(
+							"maze_borne_crown_cap_count", 0)),
+						int(fabric.audit.get(
+							"maze_bearing_crown_cap_count", 0)),
+						int(fabric.audit.get(
+							"overhang_bracket_unit_count", 0)),
+						int(fabric.audit.get(
+							"bracketless_overhang_feature_count", 0)),
+						str(fabric.audit.get(
+							"pitched_roof_family_counts", {}))])
 				continue
 			var failure := WarrenVolumetricSolver.last_failure
 			rows.append({"seed": city_seed, "scale": String(profile.scale_id),
@@ -270,6 +335,10 @@ func _init() -> void:
 		walls_by_group[CORPUS_STONE_GROUP] as Dictionary)
 	_print_wall_result(ADDED_STONE_GROUP,
 		walls_by_group[ADDED_STONE_GROUP] as Dictionary)
+	_print_roof_result(CORPUS_STONE_GROUP,
+		roofs_by_group[CORPUS_STONE_GROUP] as Dictionary)
+	_print_roof_result(ADDED_STONE_GROUP,
+		roofs_by_group[ADDED_STONE_GROUP] as Dictionary)
 	_write_summary(seeds, scale_ids, rows, sealed_count, attempted, total_ms)
 	quit()
 
@@ -300,6 +369,71 @@ static func _accumulate_walls(tally: Dictionary,
 		"exterior_wall_stone_face_ratio", 0.0)))
 	tally.max_offset = maxi(int(tally.max_offset), int(fabric.audit.get(
 		"exterior_wall_max_band_offset", 0)))
+
+
+static func _new_roof_tally() -> Dictionary:
+	## TASK H2. The corpus roofscape tally.
+	return {"towns": 0, "crowns": 0, "pitched": 0, "flat": 0, "tiled": 0,
+		"refused": 0, "partial": 0, "dormers": 0, "dressed": 0, "bare": 0,
+		"chimneys": 0, "awnings": 0, "boxes": 0, "rubble": 0, "paved": 0,
+		"borne": 0, "bearing": 0, "brackets": 0, "bare_overhangs": 0,
+		"worst_rubble": 0,
+		"worst_share": 1.0}
+
+
+static func _accumulate_roofs(tally: Dictionary,
+		fabric: SettlementFabricPlan) -> void:
+	var crowns := int(fabric.audit.get("plot_flat_roof_room_count", 0))
+	var pitched := int(fabric.audit.get("maze_pitched_roof_count", 0))
+	tally.towns += 1
+	tally.crowns += crowns
+	tally.pitched += pitched
+	tally.flat += int(fabric.audit.get("plot_flat_roof_count", 0))
+	tally.tiled += int(fabric.audit.get("maze_partial_plate_tiled_count", 0))
+	tally.refused += int(fabric.audit.get("maze_pitched_refused_count", 0))
+	tally.partial += int(fabric.audit.get(
+		"maze_pitched_partial_plate_count", 0))
+	tally.dormers += int(fabric.audit.get("dormered_roof_unit_count", 0))
+	tally.dressed += int(fabric.audit.get("maze_dressed_crown_count", 0))
+	tally.bare += int(fabric.audit.get("maze_bare_crown_count", 0))
+	tally.chimneys += int(fabric.audit.get("maze_crown_chimney_count", 0))
+	tally.awnings += int(fabric.audit.get("maze_crown_awning_count", 0))
+	tally.boxes += int(fabric.audit.get("maze_isolated_flat_crown_count", 0))
+	tally.rubble += int(fabric.audit.get("maze_rubble_crown_cap_count", 0))
+	tally.paved += int(fabric.audit.get("maze_paved_crown_cap_count", 0))
+	tally.borne += int(fabric.audit.get("maze_borne_crown_cap_count", 0))
+	tally.bearing += int(fabric.audit.get("maze_bearing_crown_cap_count", 0))
+	tally.brackets += int(fabric.audit.get("overhang_bracket_unit_count", 0))
+	tally.bare_overhangs += int(fabric.audit.get(
+		"bracketless_overhang_feature_count", 0))
+	tally.worst_rubble = maxi(int(tally.worst_rubble), int(fabric.audit.get(
+		"maze_rubble_crown_cap_count", 0)))
+	tally.worst_share = minf(float(tally.worst_share),
+		float(pitched) / float(maxi(1, crowns)))
+
+
+func _print_roof_result(group: String, tally: Dictionary) -> void:
+	## TASK H2. One share over every crown in every town that compiled, beside
+	## the WORST town's share -- a corpus mean can look like a village while one
+	## town is still a field of boxes. `rubble` is pinned at zero corpus-wide
+	## and `worst_rubble` says whether any single town carries one.
+	if int(tally.towns) == 0:
+		return
+	print(("SWEEP RESULT roofs%s towns=%d crowns=%d pitched=%d " \
+		+ "corpus_share=%.4f worst_town_share=%.4f flat=%d tiled=%d " \
+		+ "refused=%d partial=%d dormers=%d dressed=%d/%d chimneys=%d " \
+		+ "awnings=%d boxes=%d rubble=%d worst_rubble=%d (paved=%d " \
+		+ "borne=%d bearing=%d) brackets=%d bare_overhangs=%d") % [
+		"" if group == CORPUS_STONE_GROUP else "/%s" % group,
+		int(tally.towns), int(tally.crowns), int(tally.pitched),
+		float(int(tally.pitched)) / float(maxi(1, int(tally.crowns))),
+		float(tally.worst_share), int(tally.flat), int(tally.tiled),
+		int(tally.refused), int(tally.partial), int(tally.dormers),
+		int(tally.dressed), int(tally.dressed) + int(tally.bare),
+		int(tally.chimneys), int(tally.awnings), int(tally.boxes),
+		int(tally.rubble), int(tally.worst_rubble), int(tally.paved),
+		int(tally.borne), int(tally.bearing), int(tally.brackets),
+		int(tally.bare_overhangs)])
 
 
 static func _stone_group_of(scale_id: StringName) -> String:

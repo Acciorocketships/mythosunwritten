@@ -1824,14 +1824,23 @@ func _house_parcel_ids(plan: WarrenSpatialPlan) -> Dictionary:
 
 
 func _pitched_eligible_parcels(plan: WarrenSpatialPlan) -> Dictionary:
-	## Parcel id -> true for every house plot a PITCHED roof is geometrically
-	## admissible on, re-derived here from the sealed source rather than read
-	## back off the translator: nothing standing on its own crown, its plot top
-	## strictly above every 4-neighbour plot's top and every adjacent street
-	## band, and not a stack parent. The translator narrows this set further
-	## with a seeded roll, so the compiled pitched roofs must be a SUBSET of it
-	## -- which is the assertion, and it holds without this file reproducing
-	## the roll.
+	## Parcel id -> true for every house plot whose CROWN IS FREE, re-derived
+	## here from the sealed source rather than read back off the translator: no
+	## stacked child (`stack_parents`), and nothing the plot model put on its
+	## own top band -- no upper street (`tiered`) and no other plot in its
+	## columns there (`not roofed`).
+	##
+	## TASK H2 SUPERSEDED THE OTHER HALF OF THIS DERIVATION. It used to also
+	## require the plot top strictly above every 4-neighbour plot top and every
+	## adjacent street band, which is what made pitched crowns rare (31 of 291
+	## corpus-wide) and the town read as a fortress. The eave clearance that
+	## test was estimating is MEASURED downstream by the compiler
+	## (`_unit_touches_public_air` plus the fabric probe), which is why the set
+	## could widen without the roof gates coming back.
+	##
+	## The translator no longer narrows this set at all -- the C5d coin is
+	## gone -- so the relationship asserted below is EQUALITY, not subset,
+	## which is a stronger tooth than the one it replaces.
 	var out: Dictionary = {}
 	var source := _maze_source(plan)
 	if source == null:
@@ -1840,18 +1849,6 @@ func _pitched_eligible_parcels(plan: WarrenSpatialPlan) -> Dictionary:
 	for parent_value: Variant in (WarrenMazeBlockPartitioner.stack_parents(
 			source)["parents"] as Dictionary).values():
 		stack_parents[StringName(parent_value)] = true
-	var plot_top: Dictionary = {}
-	for plot: Dictionary in source.plots:
-		for cell_value: Variant in plot["cells"] as Array:
-			var column := cell_value as Vector2i
-			plot_top[column] = maxi(int(plot_top.get(column, -2147483648)),
-				int(plot["top"]))
-	var street_top: Dictionary = {}
-	for cell_value: Variant in source.passage_kinds.keys():
-		var cell := cell_value as Vector3i
-		var column := Vector2i(cell.x, cell.z)
-		street_top[column] = maxi(int(street_top.get(column, -2147483648)),
-			cell.y)
 	for plot: Dictionary in source.plots:
 		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE \
 				or stack_parents.has(StringName(plot["id"])):
@@ -1860,45 +1857,36 @@ func _pitched_eligible_parcels(plan: WarrenSpatialPlan) -> Dictionary:
 		if bool(facts.get("tiered", false)) \
 				or not bool(facts.get("roofed", true)):
 			continue
-		var top_band := int(plot["top"])
-		var own: Dictionary = {}
-		for cell_value: Variant in plot["cells"] as Array:
-			own[cell_value as Vector2i] = true
-		var free := true
-		for column_value: Variant in own.keys():
-			for direction: Vector2i in WarrenMazeBlockPartitioner.CARDINALS:
-				var neighbor := (column_value as Vector2i) + direction
-				if own.has(neighbor):
-					continue
-				free = free \
-					and int(plot_top.get(neighbor, -2147483648)) < top_band \
-					and int(street_top.get(neighbor, -2147483648)) < top_band
-		if free:
-			out[StringName("parcel.maze.%s" % String(plot["id"]))] = true
+		out[StringName("parcel.maze.%s" % String(plot["id"]))] = true
 	return out
 
 
-func test_maze_roofs_are_flat_first() -> void:
-	## TASK C5d RULINGS 1 AND 2. A maze house is FLAT-roofed by DEFAULT -- the
-	## tiered hill town's own vernacular, a one-band authored `roof.flat.*`
-	## slab and its retained parapet course -- and a PITCHED roof is a seeded
-	## PREFERENCE the compiler composes only where the authored unit fits with
-	## no displacement and no halo conflict. Four teeth:
+func test_maze_crowns_are_pitched_unless_something_stands_on_them() -> void:
+	## TASK H2 PART 2, superseding TASK C5d RULING 2 (this test was
+	## `test_maze_roofs_are_flat_first`, and the policy it was named after is
+	## the one the user rejected at the G2 gate). A maze house keeps the FLAT
+	## HEIGHT CONTRACT -- one storey per two bands, a one-band authored crown,
+	## no two-band pitched reservation -- and on that contract a PITCHED shell
+	## is now the DEFAULT crown, tried wherever nothing stands on the plate and
+	## measured against the real neighbourhood before it is kept. Five teeth:
 	##
-	## 1. every room stamp of every HOUSE parcel carries `flat_roof`, whatever
-	##    the plot facts say about what stands on its crown. Before this task
-	##    only a tiered or built-on plot was flat, and the pitched crowns of
-	##    the rest were what cost thirteen of the corpus's nineteen sweep
-	##    failures their towns at a roof gate;
+	## 1. every room stamp of every HOUSE parcel still carries `flat_roof`,
+	##    whatever the plot facts say about its crown. This is the height
+	##    contract, not the roofscape, and H2 did not touch it: it is why
+	##    thirteen of the corpus's nineteen C5c sweep failures cannot come
+	##    back through a bigger pitched population;
 	## 2. every roofable crown really receives a roof unit -- the compiler's
 	##    own face identity, restated here so an unroofed crown cannot hide
 	##    behind a sealed town;
 	## 3. every PITCHED crown stands on a stamp THIS FILE independently finds
-	##    eligible, so a pitched eave can never reach over a neighbour's plot
-	##    or a street it was never measured against;
-	## 4. the seeded preference is a MEASURED fact corpus-wide -- some crown
-	##    somewhere really is pitched -- and never asks for more crowns than
-	##    the geometry admits.
+	##    eligible, so a pitched shell can never land on a crown something
+	##    stands on;
+	## 4. the preference is now EQUAL to the eligible set rather than a seeded
+	##    half of it -- the C5d coin is gone, so a town that quietly stopped
+	##    asking for pitched crowns is a red test rather than a dull render;
+	## 5. the preference CLOSES: every preferred crown either won its shell,
+	##    had it measured and refused, or never reached the branch because its
+	##    plate is partial or street-borne. No preferred crown is unaccounted.
 	##
 	## `maze_flat_roof_count` is deliberately NOT asserted against
 	## `plot_flat_roof_count`: it is the same variable published under the
@@ -1965,12 +1953,28 @@ func test_maze_roofs_are_flat_first() -> void:
 		assert_eq(int(fabric.audit.get("realized_roof_face_count", -1)),
 			int(fabric.audit.get("source_roof_face_count", -2)),
 			"%s left a roofable crown without a roof unit" % _label(outcome))
-		assert_lte(preferred, eligible.size(),
-			("%s asked for %d pitched crowns where only %d plots are " \
-				+ "eligible") % [_label(outcome), preferred, eligible.size()])
+		# TASK H2 PART 2. EQUALITY, not `<=`: every free crown asks.
+		assert_eq(preferred, eligible.size(),
+			("%s asked for %d pitched crowns where %d plots have a free " \
+				+ "crown") % [_label(outcome), preferred, eligible.size()])
 		assert_lte(pitched, preferred,
 			("%s composed %d pitched crowns from %d preferences") % [
 				_label(outcome), pitched, preferred])
+		# TASK H2 PART 2. The preference closes over the three outcomes, in
+		# ROOMS (a parcel carries its preference down every storey it composed,
+		# so the parcel count above is not this denominator).
+		var preferred_rooms := int(fabric.audit.get(
+			"maze_pitched_preferred_room_count", -1))
+		var partial := int(fabric.audit.get(
+			"maze_pitched_partial_plate_count", -1))
+		assert_gte(partial, 0,
+			"%s must publish maze_pitched_partial_plate_count" \
+				% _label(outcome))
+		assert_eq(pitched + refused + partial, preferred_rooms,
+			("%s preferred %d crowns but accounts for %d (pitched %d + " \
+				+ "refused %d + partial %d)") % [_label(outcome),
+				preferred_rooms, pitched + refused + partial, pitched,
+				refused, partial])
 		total_pitched += pitched
 		total_eligible += eligible.size()
 		total_preferred += preferred
@@ -2003,6 +2007,274 @@ func test_maze_roofs_are_flat_first() -> void:
 			total_eligible])
 	assert_gt(total_preferred, 0,
 		"no planner seed asked for a pitched crown at all")
+	# TASK H2 PART 2, the whole point of the phase in one number. The C5d
+	# policy landed 15 of 34 eligible crowns pitched on these four towns and
+	# 31 of 291 crowns corpus-wide, because ELIGIBLE was the freestanding house
+	# at the top of its block. Eligible is now every free crown, and the share
+	# that composes is pinned as a FLOOR at measured minus a guard: a town that
+	# quietly went back to a field of plates is red here.
+	var default_share := float(total_pitched) / float(maxi(1, total_eligible))
+	assert_gte(default_share, PITCHED_DEFAULT_CROWN_SHARE_FLOOR,
+		("%d of %d free crowns compose pitched (%.3f), under the measured " \
+			+ "floor") % [total_pitched, total_eligible, default_share])
+
+
+## TASK H2 PART 1. Sky-facing retained-stone caps standing inside a house
+## plot's own roof band span with nothing above them. ZERO, and the pin is
+## two-sided in spirit: it may only ever be re-pinned DOWN.
+const RUBBLE_CROWN_CAP_COUNT := 0
+## TASK H2 PART 3. The share of surviving plot-flat crowns carrying an
+## authored accent, over the four planner towns. `CROWN_DRESSING_TIERS` offers
+## six eighths of them something and the measured envelope refuses a few, so
+## this is a floor at measured minus a guard rather than the tier rate.
+const DRESSED_CROWN_SHARE_FLOOR := 0.60
+## TASK H2 PART 4. Flat-crowned lineages whose every crown neighbour is
+## pitched, per town. Not zero -- a house under a stacked storey or a street
+## has to be flat wherever it stands -- but pinned as a CEILING at measured
+## plus a guard, because a town full of them is the sprinkle defect the second
+## reference batch names.
+const ISOLATED_FLAT_CROWN_CEILING := 4
+
+
+func test_the_roofscape_is_a_village_not_a_fortress() -> void:
+	## TASK H2 PARTS 1, 3 AND 4, measured on the four planner towns.
+	##
+	## 1. NO CROWN WEARS A RUBBLE LID. The count is re-derived here off the
+	##    sealed fabric and the sealed source -- the assembler's own exposed
+	##    shell, the partitioner's own roof band span -- and the audit is
+	##    asserted equal to it, so this is not the compiler marking its own
+	##    homework. The two populations that are NOT the defect are counted
+	##    apart and asserted apart: a cap the public realm walks is the
+	##    street's pavement (Task C5b measured that suppressing it opens the
+	##    mountain to the sky), a cap under a building's own private volume is
+	##    that building's bearing showing through a room the composition
+	##    reserved and never stamped, and a cap inside a STACK PARENT's own
+	##    reserved plate is the bearing course a stacked child proves itself
+	##    against -- the one lid H2 could not retire, because narrowing that
+	##    plate to the child's footprint costs 12/large its seal.
+	## 2. THE DETECTOR CAN FIRE. A counter pinned at zero that cannot go up is
+	##    worse than no counter, so the same profile is re-run over a face
+	##    planted inside a real plot's real roof band and must return 1.
+	## 3. THE SURVIVING TERRACES ARE DRESSED. Zero furnished terraces was a
+	##    named battery gap; the share is pinned as a floor.
+	## 4. EVERY OVERHANG SHOWS ITS BRACKETS. `bracketless_overhang_feature_count`
+	##    is pinned at zero and the rendered bracket count is re-derived from
+	##    the sealed units rather than read back.
+	## 5. BOXES CLUSTER. The isolated flat lineage count is pinned as a ceiling.
+	var measured := 0
+	var total_dressed := 0
+	var total_crowns := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		var maze_source := _maze_source(plan)
+		assert_not_null(fabric,
+			"%s must carry its compiled fabric" % _label(outcome))
+		if fabric == null or maze_source == null:
+			continue
+		var caps := _crown_cap_census(plan, fabric, maze_source)
+		var rubble := int(fabric.audit.get("maze_rubble_crown_cap_count", -1))
+		var paved := int(fabric.audit.get("maze_paved_crown_cap_count", -1))
+		var borne := int(fabric.audit.get("maze_borne_crown_cap_count", -1))
+		var bearing := int(fabric.audit.get("maze_bearing_crown_cap_count",
+			-1))
+		var dressed := int(fabric.audit.get("maze_dressed_crown_count", -1))
+		var bare := int(fabric.audit.get("maze_bare_crown_count", -1))
+		var flats := int(fabric.audit.get("plot_flat_roof_count", -1))
+		var boxes := int(fabric.audit.get(
+			"maze_isolated_flat_crown_count", -1))
+		var brackets := int(fabric.audit.get("overhang_bracket_unit_count",
+			-1))
+		var bare_overhangs := int(fabric.audit.get(
+			"bracketless_overhang_feature_count", -1))
+		print(("MAZE_ROOFSCAPE %s rubble=%d/%d paved=%d/%d borne=%d/%d " \
+			+ "bearing=%d/%d dressed=%d bare=%d flat=%d boxes=%d " \
+			+ "brackets=%d/%d bare_overhangs=%d") % [_label(outcome), rubble,
+			int(caps.rubble), paved, int(caps.paved), borne, int(caps.borne),
+			bearing, int(caps.bearing), dressed, bare, flats, boxes, brackets,
+			_rendered_bracket_units(fabric), bare_overhangs])
+		# 1 -- the audit equals an independent derivation, all three kinds.
+		assert_eq(rubble, int(caps.rubble),
+			("%s publishes %d rubble crown caps where this file derives %d " \
+				+ "(first %s)") % [_label(outcome), rubble, int(caps.rubble),
+				String(caps.first)])
+		assert_eq(paved, int(caps.paved),
+			"%s publishes %d paved crown caps, derived %d" % [_label(outcome),
+				paved, int(caps.paved)])
+		assert_eq(borne, int(caps.borne),
+			"%s publishes %d borne crown caps, derived %d" % [_label(outcome),
+				borne, int(caps.borne)])
+		assert_eq(bearing, int(caps.bearing),
+			"%s publishes %d bearing crown caps, derived %d" % [
+				_label(outcome), bearing, int(caps.bearing)])
+		assert_eq(rubble, RUBBLE_CROWN_CAP_COUNT,
+			("%s leaves %d masonry lids on crowns nothing stands on " \
+				+ "(first %s)") % [_label(outcome), rubble,
+				String(caps.first)])
+		# 3 -- the terraces are dressed, and the two halves close over the
+		# crowns that took their own slab.
+		assert_gte(dressed, 0,
+			"%s must publish maze_dressed_crown_count" % _label(outcome))
+		assert_eq(dressed + bare, flats,
+			("%s dressed %d and left %d bare of %d plot-flat crowns") % [
+				_label(outcome), dressed, bare, flats])
+		total_dressed += dressed
+		total_crowns += flats
+		# 4 -- every overhang shows its brackets, and the count is real.
+		assert_eq(bare_overhangs, 0,
+			"%s compiled %d overhangs with no bracket unit at all" % [
+				_label(outcome), bare_overhangs])
+		assert_eq(brackets, _rendered_bracket_units(fabric),
+			("%s publishes %d overhang brackets where the sealed units carry " \
+				+ "%d") % [_label(outcome), brackets,
+				_rendered_bracket_units(fabric)])
+		assert_gt(brackets, 0,
+			"%s renders no overhang bracket at all" % _label(outcome))
+		# 5 -- boxes cluster.
+		assert_gte(boxes, 0,
+			"%s must publish maze_isolated_flat_crown_count" % _label(outcome))
+		assert_lte(boxes, ISOLATED_FLAT_CROWN_CEILING,
+			("%s leaves %d flat lineages sprinkled among pitched neighbours") \
+				% [_label(outcome), boxes])
+		# 2 -- and the detector can fire, on this very town's own plot model.
+		if not caps.plant.is_empty():
+			var planted := WarrenSpatialFabricCompiler.maze_stone_band_profile(
+				caps.plant as Dictionary, maze_source, plan.grid, {})
+			assert_eq(int(planted.get("maze_rubble_crown_cap_count", -1)), 1,
+				("%s: a face planted in a real roof band with open sky above " \
+					+ "it does not register as a rubble crown cap") \
+					% _label(outcome))
+		measured += 1
+	assert_gt(measured, 0, "at least one seed sealed a town to measure")
+	var dressed_share := float(total_dressed) / float(maxi(1, total_crowns))
+	print("MAZE_ROOFSCAPE corpus towns=%d dressed=%d/%d share=%.3f" % [
+		measured, total_dressed, total_crowns, dressed_share])
+	assert_gte(dressed_share, DRESSED_CROWN_SHARE_FLOOR,
+		("%d of %d surviving terraces carry an accent (%.3f), under the " \
+			+ "measured floor") % [total_dressed, total_crowns,
+			dressed_share])
+
+
+func _rendered_bracket_units(fabric: SettlementFabricPlan) -> int:
+	## Sealed units whose recipe carries `cantilever_support` -- the timber and
+	## stone braces under every jetty, oriel, gateway and arcade overhang. Read
+	## off the units the renderer is handed, never off the audit this checks.
+	var out := 0
+	for unit: FabricUnit in fabric.units:
+		var recipe := fabric.recipe(unit.recipe_id)
+		out += int(recipe != null and recipe.has_tag(&"cantilever_support"))
+	return out
+
+
+func _crown_cap_census(plan: WarrenSpatialPlan, fabric: SettlementFabricPlan,
+		maze_source: WarrenMazeSourcePlan) -> Dictionary:
+	## TASK H2 PART 1, re-derived. Every sky-facing face of the assembler's own
+	## exposed maze-stone shell that stands inside a house plot's roof band
+	## span (`WarrenMazeBlockPartitioner.plot_roof_band_span`), split by what
+	## stands on it: the public realm walks there (`paved`), a building's own
+	## private volume is there (`borne`), or open sky (`rubble`).
+	##
+	## `plant` is one synthetic UP face at a roof-band cell of a real plot with
+	## open sky above it, for the can-it-fire probe. Empty when the town offers
+	## no such cell.
+	var retained := fabric.retained_terrace_cells
+	var solids := fabric.transformed_cells(&"solid")
+	var paved_cells := SettlementFabricAssembler.public_floor_cells(
+		fabric.surface_plan)
+	var exposed := SettlementFabricAssembler.exposed_maze_stone_faces(retained,
+		solids, paved_cells)
+	var walked: Dictionary = {}
+	if fabric.surface_plan != null:
+		for surface_kind in [
+				PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET,
+				PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+				PublicRealmSurfacePlan.SurfaceKind.INTERIOR_PASSAGE,
+				PublicRealmSurfacePlan.SurfaceKind.STAIR,
+				PublicRealmSurfacePlan.SurfaceKind.BRIDGE]:
+			for walk_cell: Vector3i in fabric.surface_plan.cells_for_kind(
+					surface_kind):
+				walked[walk_cell] = true
+	var stack_parents: Dictionary = {}
+	for parent_value: Variant in (WarrenMazeBlockPartitioner.stack_parents(
+			maze_source)["parents"] as Dictionary).values():
+		stack_parents[StringName(parent_value)] = true
+	var roof_bands_by_column: Dictionary = {}
+	var bearing_bands_by_column: Dictionary = {}
+	for plot: Dictionary in maze_source.plots:
+		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE:
+			continue
+		var span := WarrenMazeBlockPartitioner.plot_roof_band_span(maze_source,
+			plot)
+		var is_parent := stack_parents.has(StringName(plot["id"]))
+		for cell_value: Variant in plot["cells"] as Array:
+			var column := cell_value as Vector2i
+			if not roof_bands_by_column.has(column):
+				roof_bands_by_column[column] = {}
+				bearing_bands_by_column[column] = {}
+			for band in range(span.x, span.y):
+				(roof_bands_by_column[column] as Dictionary)[band] = true
+				if is_parent:
+					(bearing_bands_by_column[column] \
+						as Dictionary)[band] = true
+	var sides := SettlementFabricAssembler.FACE_DIRECTIONS.size()
+	var out := {"rubble": 0, "paved": 0, "borne": 0, "bearing": 0,
+		"first": "", "plant": {} as Dictionary}
+	var up_index := -1
+	for index in SettlementFabricAssembler.STONE_FACE_DIRECTIONS.size():
+		if SettlementFabricAssembler.STONE_FACE_DIRECTIONS[index] \
+				== Vector3i.UP:
+			up_index = index
+	for key_value: Variant in exposed.keys():
+		var key := key_value as Vector4i
+		if key.w < sides or key.w != up_index:
+			continue
+		var column := Vector2i(_macro_coordinate(key.x),
+			_macro_coordinate(key.z))
+		if not (roof_bands_by_column.get(column, {}) as Dictionary).has(key.y):
+			continue
+		var above := Vector3i(key.x, key.y + 1, key.z)
+		if walked.has(above):
+			out["paved"] = int(out.paved) + 1
+		elif plan.grid.contains(above) and plan.grid.use_at(above) \
+				== WarrenSpatialGrid.Use.PRIVATE_VOLUME:
+			out["borne"] = int(out.borne) + 1
+		elif (bearing_bands_by_column.get(column, {}) as Dictionary).has(key.y):
+			out["bearing"] = int(out.bearing) + 1
+		else:
+			out["rubble"] = int(out.rubble) + 1
+			if String(out.first).is_empty():
+				out["first"] = "%d:%d:%d" % [key.x, key.y, key.z]
+	# The plant: a roof-band cell of a real plot whose band above is empty sky,
+	# handed to the profile as a lone UP face. It needs no retained cell of its
+	# own -- the profile reads the FACE dictionary, which is exactly what makes
+	# it drivable.
+	var columns: Array[Vector2i] = []
+	columns.assign(roof_bands_by_column.keys())
+	columns.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.y < b.y if a.y != b.y else a.x < b.x)
+	for column: Vector2i in columns:
+		var bands: Array = (roof_bands_by_column[column] as Dictionary).keys()
+		bands.sort()
+		for band_value: Variant in bands:
+			var band := int(band_value)
+			var fine := Vector3i(column.x * 2, band, column.y * 2)
+			var above := fine + Vector3i.UP
+			if walked.has(above):
+				continue
+			if plan.grid.contains(above) and plan.grid.use_at(above) \
+					== WarrenSpatialGrid.Use.PRIVATE_VOLUME:
+				continue
+			if (bearing_bands_by_column.get(column,
+					{}) as Dictionary).has(band):
+				continue
+			if up_index < 0:
+				continue
+			(out.plant as Dictionary)[Vector4i(fine.x, fine.y, fine.z,
+				up_index)] = true
+			return out
+	return out
 
 
 ## TASK E3 RULING 1, measured on the four planner towns and pinned as floors at
@@ -2019,14 +2291,31 @@ func test_maze_roofs_are_flat_first() -> void:
 ##   | 9/standard | 5 | 11 | 3 | 3 | 0 |
 ##   | corpus | 15 | 34 | 8 | 8 | 0 |
 ##
-## The pitched share of ELIGIBLE crowns is 15/34 = 0.441. Ruling 1 asked the
-## seeded preference to be tuned so 20-40 % of eligible crowns compose pitched;
-## the roll is a coin flip (`WarrenMazeBlockPartitioner.PITCHED_ROOF_SALT`) and
-## the terraced massif already lands the band's top edge without touching it,
-## so nothing was tuned and the measurement is pinned instead. It is a FLOOR
-## because more roof variety is the direction; a ceiling would be a rule
-## against the milestone.
+## The pitched share of ELIGIBLE crowns was 15/34 = 0.441 under Task C5d.
+## Ruling 1 asked the seeded preference to be tuned so 20-40 % of eligible
+## crowns compose pitched; the roll was a coin flip and the terraced massif
+## already landed the band's top edge without touching it, so nothing was
+## tuned and the measurement was pinned instead. It is a FLOOR because more
+## roof variety is the direction; a ceiling would be a rule against the
+## milestone.
+##
+## TASK H2 CHANGED THE DENOMINATOR UNDER IT, and the pin is deliberately left
+## where it was rather than raised. `_pitched_eligible_parcels` now means
+## "every plot whose crown is free" instead of "a freestanding plot at the top
+## of its block", so the same ratio is measured over 90 plots instead of 34
+## and reads 56/90 = 0.622. The floor stays 0.35 because that is what it is
+## for -- a two-and-a-half-times guard against the roofscape quietly
+## flattening again -- and `PITCHED_DEFAULT_CROWN_SHARE_FLOOR` below is the
+## tight pin H2 adds at measured minus a guard. A reader comparing the two
+## numbers has to see both denominators, which is why neither line was
+## rewritten to hide the change.
 const PITCHED_CROWN_SHARE_FLOOR := 0.35
+## TASK H2 PART 2. The pitched share of FREE crowns over the four planner
+## towns, pinned as a floor at measured (0.622) minus a guard. This is the
+## phase's headline number: 15/34 under C5d over a set of 34, 56/90 now over
+## a set of 90, and 40/529 -> 130/529 of ALL crowns across the eight-town
+## measurement corpus in the task report.
+const PITCHED_DEFAULT_CROWN_SHARE_FLOOR := 0.55
 ## Balconies across the four planner towns. 4/compact stands none, so this is a
 ## corpus total rather than a per-town floor. It rose 2 -> 8 in this task: the
 ## walk-out and bracketed vocabulary was gated on `target_count <= 2`, which

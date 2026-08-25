@@ -47,13 +47,14 @@ var address_door_phase: int
 ## proposal key on the legacy path; the name is deliberate and stays, because
 ## they mean the same thing about a building.
 var flat_roof := false
-## Additive (Task C5d, controller ruling 2): what the plot model would RATHER
-## see on this building's crown. Empty on every parcel the route-first and
-## mass-first partitioners build, and empty on most maze houses too; a maze
-## house whose plot top stands strictly above every 4-neighbour plot and every
-## adjacent street band -- the only place an authored pitched unit can sit
-## without its eave meeting somebody -- carries `&"pitched"` when the seeded
-## roll selects it.
+## Additive (Task C5d, controller ruling 2; WIDENED BY TASK H2): what the plot
+## model would RATHER see on this building's crown. Empty on every parcel the
+## route-first and mass-first partitioners build. On a maze house it is
+## `&"pitched"` whenever the crown is FREE -- no stacked child, no upper street
+## and no other plot in its own columns at its top band -- which since H2 is
+## the ORDINARY house rather than the exception (`WarrenMazeBlockPartitioner
+## .plot_prefers_pitched_roof`, which supersedes C5d's "strictly above every
+## neighbour, then a coin" and says why).
 ##
 ## A PREFERENCE, never a contract. `flat_roof` still decides the height rule,
 ## the storey count and the roof base band; this only asks

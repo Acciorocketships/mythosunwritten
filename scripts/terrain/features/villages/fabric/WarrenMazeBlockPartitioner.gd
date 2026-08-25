@@ -24,11 +24,12 @@ extends RefCounted
 const CARDINALS: Array[Vector2i] = [
 	Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP,
 ]
-## Salt for the seeded pitched-roof preference (Task C5d ruling 2). Distinct
-## from every carver and planner salt so two seeded decisions can never
-## correlate by accident, and taken through
-## `WarrenPassageLatticeRules.hash_key` like every other roll in this layer.
-const PITCHED_ROOF_SALT := 0x917CED
+## TASK H2 retired `PITCHED_ROOF_SALT`. It salted the C5d coin that decided
+## which half of the eligible crowns asked for a pitched roof; the crown
+## question has one answer now (`plot_prefers_pitched_roof`) and there is no
+## roll left to salt. Named here rather than deleted silently, because a
+## re-added salt with the same value would correlate with nothing and the next
+## reader should know the number was free again on purpose.
 
 static var last_failure := ""
 static var last_diagnostic: Dictionary = {}
@@ -197,9 +198,15 @@ static func partition(source: WarrenMazeSourcePlan,
 ## fallbacks were rejected`, `roof remainder ... 1-cell exposed sliver`, `roof
 ## campaign has no integrated dormer`), and both composition relaxations that
 ## would have filled the plot mass cost a sealing seed its town at one of
-## them. A pitched roof
-## is a seeded PREFERENCE now (`plot_prefers_pitched_roof`), composed only
-## where the authored unit has nothing beside it to meet.
+## them.
+##
+## THE HEIGHT CONTRACT IS STILL FLAT EVERYWHERE, AND TASK H2 DID NOT CHANGE
+## IT. What H2 changed is which authored unit the compiler TRIES on that
+## contract: `plot_prefers_pitched_roof` now says yes for every crown nothing
+## stands on, so the ordinary town is pitched and the flat plate survives
+## under load and walkable use. The massing, the storey count and the roof
+## base band are the flat ones either way -- that is exactly why the pitched
+## population could grow without reopening a single composition gate.
 ##
 ## The height contract is only ever RELAXED by this: a flat parcel wants one
 ## storey and one band of slab where a pitched one wants whole storeys plus
@@ -278,79 +285,48 @@ static func plot_crown_carries_public_realm(source: WarrenMazeSourcePlan,
 		or not bool(facts.get("roofed", true))
 
 
-## TASK C5d RULING 2 -- may this house have a pitched roof, and did the seed
-## pick it?
+## TASK H2 -- PITCHED IS THE DEFAULT CROWN. May this house have a pitched
+## roof?  YES, unless something stands on its plate.
 ##
-## Two halves, and both must hold. The GEOMETRIC half is what makes an
-## authored pitched unit placeable at all: its eave overhangs the footprint by
-## a cell at the roof band, so nothing may stand on the plot's own crown
-## (`roofed` and not `tiered`), its top must stand strictly above every
-## 4-neighbour plot's top and every adjacent street's own band, and it may not
-## be the parent of a stacked house. That is exactly the freestanding house at
-## the top of its block -- the only place C5c's roof gates never fired. The
-## SEEDED half is one bit of the lattice's own hash on the plot's door cell,
-## so about half of the eligible houses ask for a pitched roof and two towns
-## differ without any of this becoming a search.
+## One question now, and it is the plot model's own: is this crown FREE. A
+## crown is free when nothing the town builds occupies or walks it -- no
+## stacked child (`stack_parent_ids`), no upper street and no other plot in
+## its own columns at its top band (`plot_crown_carries_public_realm`, which
+## is `tiered or not roofed` and is the single owner of that reading). A house
+## whose crown is free gets the authored pitched shell; a house carrying load
+## or walkable use keeps the plank plate C5e gave it and Task H2 dresses.
 ##
-## Still only a PREFERENCE: `WarrenSpatialFabricCompiler.compile_roof_units`
-## measures the authored unit against its real neighbours and falls back to
-## the slab, counting the refusal, whenever it would displace or halo-conflict.
+## SUPERSEDES TASK C5d RULING 2, on the user's binding direction at the G2
+## review gate ("a quaint medieval village", not a fortress). C5d asked two
+## more things and both are withdrawn:
 ##
-## `plot_top_by_column` and `street_top_by_column` are the town-wide readings
-## `_plot_top_by_column` / `_street_top_by_column` build ONCE per translation.
-## Taking them as parameters is what keeps this constant work per plot instead
-## of a walk over every other plot.
+##  - the GEOMETRIC half -- the plot's top strictly above every 4-neighbour
+##    plot top and every adjacent street band. It existed because an authored
+##    eave overhangs the footprint by a cell, and it selected exactly the
+##    freestanding house at the top of its block: 31 pitched crowns in 291
+##    across the review corpus, which is the roof sea the user rejected. What
+##    it was really protecting against is measured downstream anyway --
+##    `compile_roof_units` proves every preferred shell with
+##    `_unit_touches_public_air` against the real grid and `probe.add_unit`
+##    against the real neighbours, and counts the refusal
+##    (`maze_pitched_refused_count`) before falling back to the slab. An
+##    estimate in front of a measurement is only a way of refusing crowns the
+##    measurement would have allowed.
+##  - the SEEDED half -- one bit of the lattice hash, so half the eligible
+##    crowns asked. A coin belongs on a decision with two good answers; after
+##    the direction above there is one, and the flat crowns that remain are
+##    the loaded and walked ones rather than a random half.
+##
+## Still only a PREFERENCE, and that is unchanged: the compiler measures the
+## authored unit against its real neighbours and falls back to the slab,
+## counting the refusal, whenever it would displace or halo-conflict.
 static func plot_prefers_pitched_roof(source: WarrenMazeSourcePlan,
-		plot: Dictionary, plot_top_by_column: Dictionary,
-		street_top_by_column: Dictionary,
-		stack_parent_ids: Dictionary) -> bool:
+		plot: Dictionary, stack_parent_ids: Dictionary) -> bool:
 	if source == null or plot.is_empty() \
 			or StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE \
 			or stack_parent_ids.has(StringName(plot["id"])):
 		return false
-	var facts := source.plot_facts(plot)
-	if bool(facts.get("tiered", false)) \
-			or not bool(facts.get("roofed", true)):
-		return false
-	var top_band := int(plot["top"])
-	var own: Dictionary = {}
-	for cell_value: Variant in plot["cells"] as Array:
-		own[cell_value as Vector2i] = true
-	for column_value: Variant in own.keys():
-		for direction: Vector2i in CARDINALS:
-			var neighbor := (column_value as Vector2i) + direction
-			if own.has(neighbor):
-				continue
-			if int(plot_top_by_column.get(neighbor, -2147483648)) >= top_band \
-					or int(street_top_by_column.get(neighbor,
-						-2147483648)) >= top_band:
-				return false
-	return posmod(WarrenPassageLatticeRules.hash_key(source.world_seed,
-		PITCHED_ROOF_SALT, plot["door_walk"] as Vector3i), 2) == 0
-
-
-static func _plot_top_by_column(source: WarrenMazeSourcePlan) -> Dictionary:
-	## Column -> the highest `top` any plot claims there.
-	var out: Dictionary = {}
-	for plot: Dictionary in source.plots:
-		var top_band := int(plot["top"])
-		for cell_value: Variant in plot["cells"] as Array:
-			var column := cell_value as Vector2i
-			out[column] = maxi(int(out.get(column, -2147483648)), top_band)
-	return out
-
-
-static func _street_top_by_column(source: WarrenMazeSourcePlan) -> Dictionary:
-	## Column -> the highest band a passage WALKS at there. The swept headroom
-	## above that band is deliberately NOT folded in: a pitched unit reaching
-	## into it is refused by the compiler's own `_unit_touches_public_air`,
-	## which is a measured answer rather than this one's estimate.
-	var out: Dictionary = {}
-	for cell_value: Variant in source.passage_kinds.keys():
-		var cell := cell_value as Vector3i
-		var column := Vector2i(cell.x, cell.z)
-		out[column] = maxi(int(out.get(column, -2147483648)), cell.y)
-	return out
+	return not plot_crown_carries_public_realm(source, plot)
 
 
 static func _bears_on_rock_by_parcel(
@@ -432,13 +408,12 @@ static func _translate_houses(source: WarrenMazeSourcePlan,
 		if StringName(plot["kind"]) == WarrenMazeSourcePlan.PLOT_HOUSE:
 			order.append(plot)
 	order.sort_custom(Callable(WarrenMazeBlockPartitioner, "_floor_less"))
-	# The three town-wide readings the pitched-roof preference needs, built
-	# once here rather than per plot (Task C5d ruling 2).
+	# The one town-wide reading the pitched-roof preference needs, built once
+	# here rather than per plot. Task H2 retired the other two with the
+	# geometric half of the C5d gate they served.
 	var stack_parent_ids: Dictionary = {}
 	for parent_value: Variant in parents.values():
 		stack_parent_ids[StringName(parent_value)] = true
-	var plot_top_by_column := _plot_top_by_column(source)
-	var street_top_by_column := _street_top_by_column(source)
 	var parcel_by_id: Dictionary = {}
 	var out: Dictionary = {}
 	for plot: Dictionary in order:
@@ -480,7 +455,7 @@ static func _translate_houses(source: WarrenMazeSourcePlan,
 				% parent.stable_id
 			parent = null
 		var prefers_pitched := plot_prefers_pitched_roof(source, plot,
-			plot_top_by_column, street_top_by_column, stack_parent_ids)
+			stack_parent_ids)
 		var outcome := _parcel_for_plot(source, volume, plot, parent,
 			prefers_pitched)
 		if parent != null and outcome["parcel"] == null:

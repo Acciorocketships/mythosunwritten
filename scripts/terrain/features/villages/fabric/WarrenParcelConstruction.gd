@@ -47,9 +47,14 @@ static func proposal(parcel: WarrenBuildingParcel) -> Dictionary:
 		# legacy proposal.
 		"flat_roof": parcel.flat_roof,
 		# The parcel's roof PREFERENCE beside its roof contract (Task C5d
-		# ruling 2). Empty on every legacy proposal and on most maze houses;
+		# ruling 2, widened by Task H2). Empty on every legacy proposal;
 		# `&"pitched"` names a crown the roof compiler should try the authored
-		# pitched shell on before falling back to the slab.
+		# pitched shell on before falling back to the slab, which since H2 is
+		# every maze house whose crown nothing stands on. It is carried down
+		# EVERY storey of the lineage, so a house with an exposed lower
+		# shoulder offers the compiler more than one crown -- which is why
+		# `maze_pitched_preferred_room_count` and the parcel-level
+		# `maze_pitched_preference_count` are different numbers.
 		"roof_preference": parcel.roof_preference,
 	}
 	result["occupied_cells"] = \
