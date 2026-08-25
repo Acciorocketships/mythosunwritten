@@ -224,6 +224,11 @@ static func solve(source: WarrenSpatialPlan,
 		foundation_result.get("column_count", 0))
 	lineage["retained_foundation_max_depth_bands"] = int(
 		foundation_result.get("max_depth_bands", 0))
+	# TASK F3 MEMBER 6. Plinth-course cells the fabric had already built in and
+	# which therefore never entered the retained channel; see
+	# `_retained_foundation_cells`. Zero on every flat corpus town.
+	lineage["retained_foundation_built_course_cell_count"] = int(
+		foundation_result.get("built_course_cell_count", 0))
 	lineage.merge(foundation_audit, true)
 	lineage.merge(stone_audit, true)
 	lineage.merge(_maze_terrace_audit(result, roof_audit.get(
@@ -427,6 +432,17 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 		as WarrenMazeSourcePlan
 	var maze_mode := maze_source != null
 	var maze_stone_borne_room_count := 0
+	# TASK F3 MEMBER 6. What the fabric has ALREADY BUILT IN, read once for the
+	# whole function. The retained channel carries mass nobody built in -- that
+	# is what `SettlementFabricPlan.set_retained_terrace` refuses, and until
+	# this task its guard compared the wrong key type and refused nothing. The
+	# maze-stone half below has always subtracted this set; the plinth-course
+	# half did not, and on `step/3/standard` it laid six course cells straight
+	# through two houses' `roof.flat.*` slabs. One reading rather than two: the
+	# maze half used to compute the same projection lazily further down.
+	var built_solid: Dictionary = {} if plan == null \
+		else plan.transformed_cells(&"solid")
+	var built_course_cells: Dictionary = {}
 	for building: WarrenBuildingVolume in source.buildings:
 		for room: WarrenRoomStamp in building.room_records:
 			if not room.terrain_bearing:
@@ -516,7 +532,16 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 							+ "%s") % [room.stable_id, fine_column]}
 				maze_stone_borne_room_count += 1
 				continue
-			cells.merge(room_plinth_cells, true)
+			# TASK F3 MEMBER 6. The foundation span, minus whatever the FABRIC
+			# has already built in. See `built_solid` above: the retained
+			# channel carries mass nobody built in, and this half of it never
+			# subtracted the fabric the way the maze-stone half always has.
+			for plinth_value: Variant in room_plinth_cells.keys():
+				var plinth_cell := plinth_value as Vector3i
+				if built_solid.has(plinth_cell):
+					built_course_cells[plinth_cell] = true
+					continue
+				cells[plinth_cell] = true
 			if not room_needs_plinth:
 				flush_room_count += 1
 				continue
@@ -568,6 +593,25 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 					return {"valid": false, "rejection":
 						("terrain-bearing room %s cannot close its plinth " \
 						+ "course at %s") % [room.stable_id, course_cell]}
+				# TASK F3 MEMBER 6. A course cell the FABRIC already built in is
+				# skipped, exactly as the maze-stone half below skips one. The
+				# column really does carry mass here -- the check above proved
+				# it -- but a house's own `roof.flat.*` slab is standing in that
+				# mass, and laying a masonry course through it is the stone band
+				# between two houses that task C5c's `stone_borne` rule exists to
+				# prevent. `stone_borne` reads the SOURCE's rock shoulder and so
+				# cannot see it: on a terraced fixture the shoulder is high
+				# enough that the room looks terrain-borne while a neighbour's
+				# crown occupies the same band. MEASURED: 0 such cells on all 24
+				# corpus towns, on the production settlement and on three of the
+				# four D1 sloped rows; 6 on `step/3/standard`, through
+				# `roof.flat.row` and `roof.flat.slim`. Dropping them from the
+				# course as well as from the channel is what keeps the shell
+				# audit exact -- a neighbour that is built solid closes the seam
+				# the dropped cell used to close.
+				if built_solid.has(course_cell):
+					built_course_cells[course_cell] = true
+					continue
 				cells[course_cell] = true
 				columns[fine_column] = true
 				course_cells.append(course_cell)
@@ -593,17 +637,18 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 	# They enter `cells` -- the set `set_retained_terrace` receives -- but NOT
 	# `room_records`, so the building-shell checks below still audit exactly
 	# the building plinths they always audited. A cell the fabric already
-	# built in is skipped by the `built` subtraction below rather than left for
+	# built in is skipped by the `built_solid` subtraction rather than left for
 	# the plan to refuse, and the one-band `roof.flat.*` unit standing on a
 	# flat parcel's slab is exactly such a cell.
 	#
 	# TASK F3 MEMBER 6. This paragraph used to justify the subtraction by
 	# saying `set_retained_terrace` "rejects an overlap with solid outright".
 	# It did not: its guard compared Vector3i keys against a String-keyed map
-	# and could never fire, so the subtraction here was the ONLY thing keeping
-	# retained stone out of built mass. The guard is fixed and really is the
-	# backstop now -- and measured over the corpus it rejects nothing, because
-	# this subtraction gets there first.
+	# and could never fire, so this subtraction was the ONLY rule keeping
+	# retained stone out of built mass -- and it covered the maze-stone half
+	# alone, which is how six plinth-course cells reached two houses' roof
+	# slabs on `step/3/standard`. The plinth half subtracts the same set now
+	# (see the course loop above) and the fixed guard is the backstop.
 	#
 	# TASK C5b RULING 1: they enter it TAGGED. The assembler skins a retained
 	# mountain and a building's plinth course by two different rules, and the
@@ -618,18 +663,26 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 			if source.grid.owner_name_at(cell) == MAZE_RETAINED_STONE_ID \
 					and not cells.has(cell):
 				maze_owned.append(cell)
-		# The solid projection is only needed when there is retained stone to
-		# subtract it from, and it is not free: skip it on every legacy plan.
-		var built: Dictionary = {} if plan == null or maze_owned.is_empty() \
-			else plan.transformed_cells(&"solid")
+		# TASK F3 MEMBER 6. The solid projection used to be taken here, lazily,
+		# because only this half needed it. The plinth-course half needs it
+		# too, so it is read once at the top of the function and both halves
+		# subtract the same set -- one reading of the fabric per compile
+		# instead of one, and the same answer for both.
 		for cell: Vector3i in maze_owned:
-			if built.has(cell):
+			if built_solid.has(cell):
 				continue
 			cells[cell] = SettlementFabricAssembler.MAZE_STONE_TAG
 			maze_stone[cell] = true
 	return {"valid": true, "cells": cells, "cell_count": cells.size(),
 		"column_count": columns.size(), "max_depth_bands": max_depth,
 		"terrain_bearing_room_count": terrain_bearing_room_count,
+		# TASK F3 MEMBER 6. Plinth-course cells dropped because the fabric had
+		# already built in them -- the masonry band that would have been drawn
+		# through a neighbouring house's crown. Published rather than silent:
+		# it is 0 on every flat corpus town and 6 on `step/3/standard`, and a
+		# number that starts climbing means the plot model is stacking rooms on
+		# roofs the source still calls terrain.
+		"built_course_cell_count": built_course_cells.size(),
 		# The WHOLE retained maze channel, every tag together. Named
 		# `..._stone_cells` since Task C5c fix 1 so that
 		# `maze_retained_rock_cells` means DERIVED ROCK everywhere it appears,

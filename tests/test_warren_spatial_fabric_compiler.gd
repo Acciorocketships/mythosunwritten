@@ -609,6 +609,24 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 					% feature.stable_id)
 		assert_true(sealed.is_sealed())
 		assert_eq(sealed.audit.generation_source, &"spatial_volumetric_warren")
+		# TASK F3 MEMBER 6. Retained stone is mass NOBODY built in. The plan's
+		# own `set_retained_terrace` guard says so and, with its key type
+		# fixed, enforces it -- but a guard that rejects the whole town is a
+		# last resort, so the compiler must not offer it an overlap in the
+		# first place. Asserted as the disjointness it is, over the whole
+		# channel: the D1 `step/3/standard` row used to lay six plinth-span
+		# cells straight through two houses' `roof.flat.*` crowns, and nothing
+		# anywhere would have said so.
+		var built_solid := sealed.transformed_cells(&"solid")
+		var terrace_overlap := 0
+		for terrace_value: Variant in sealed.retained_terrace_cells.keys():
+			terrace_overlap += int(built_solid.has(terrace_value))
+		assert_eq(terrace_overlap, 0,
+			"the retained hill may not claim a cell the fabric built in")
+		assert_eq(int(sealed.audit.retained_foundation_built_course_cell_count),
+			0, "no plinth cell on this town is inside built mass")
+		assert_gt(sealed.retained_terrace_cells.size(), 0,
+			"this seed must still retain a hill for the check above to mean something")
 		assert_gt(int(sealed.audit.foundation_building_count), 0,
 			"the reviewed terrain relief must exercise retained stone courses")
 		assert_eq(int(sealed.audit.foundation_closed_shell_count),
