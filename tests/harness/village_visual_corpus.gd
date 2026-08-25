@@ -381,8 +381,11 @@ static func _sectional_entry(super_cell: Vector2i, frame: VillageFrame,
 			"visual_quality_target_met": bool(audit.get(
 				"visual_quality_target_met", false)),
 		},
-		"sectional_daylight_voids": _sectional_daylight_voids(record),
-		"sectional_infill_diagnostic": _sectional_infill_diagnostic(record),
+		# TASK F1. The legacy `volumetric_town` lineage died with the searched
+		# pipeline and nothing production builds carries one, so these two
+		# diagnostics have no source left to read.
+		"sectional_daylight_voids": [],
+		"sectional_infill_diagnostic": {},
 		"incident_directions": frame.incident_directions.map(
 			func(value: Vector2i) -> Array: return [value.x, value.y]),
 		"block_local": [block_local.x, block_local.y],
@@ -427,60 +430,6 @@ static func _sectional_entry(super_cell: Vector2i, frame: VillageFrame,
 		"urban_placements": urban_placements,
 		"views": views,
 	}
-
-
-static func _sectional_daylight_voids(record: VillageRecord) \
-		-> Array[Dictionary]:
-	var out: Array[Dictionary] = []
-	if record == null or record.urban_fabric == null \
-			or record.urban_fabric.volumetric_town == null:
-		return out
-	var town := record.urban_fabric.volumetric_town.assets.town
-	if town == null or town.public_realm == null:
-		return out
-	var world_frame := record.urban_fabric.world_transform
-	for cell: Vector3i in town.public_realm.daylight_void_cells:
-		var local_centre := Vector3(
-			(float(cell.x) + 0.5) * FabricRecipe.CELL_SIZE,
-			float(cell.y) * WarrenVolumePlan.VERTICAL_BAND_SIZE_M,
-			(float(cell.z) + 0.5) * FabricRecipe.CELL_SIZE)
-		out.append({
-			"cell": [cell.x, cell.y, cell.z],
-			"world_centre": _v3(world_frame * local_centre),
-			"size_m": FabricRecipe.CELL_SIZE,
-		})
-	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		var a_cell := a.cell as Array
-		var b_cell := b.cell as Array
-		if int(a_cell[1]) != int(b_cell[1]):
-			return int(a_cell[1]) < int(b_cell[1])
-		if int(a_cell[2]) != int(b_cell[2]):
-			return int(a_cell[2]) < int(b_cell[2])
-		return int(a_cell[0]) < int(b_cell[0]))
-	return out
-
-
-static func _sectional_infill_diagnostic(record: VillageRecord) -> Dictionary:
-	if record == null or record.urban_fabric == null \
-			or record.urban_fabric.volumetric_town == null:
-		return {}
-	var town := record.urban_fabric.volumetric_town.assets.town
-	if town == null:
-		return {}
-	var result := WarrenPlatformInfillSolver.solve(
-		town.volume, town.parcels, town.pruning)
-	var out := WarrenPlatformInfillSolver.last_diagnostic.duplicate(true)
-	out["default_patch_count"] = int(result.patch_count)
-	out["default_optional_patch_count"] = int(result.optional_patch_count)
-	out["default_over_route_patch_count"] = int(result.over_route_patch_count)
-	out["selected_patch_count"] = int(town.audit.get(
-		"infill_platform_patch_count", -1))
-	out["selected_optional_patch_count"] = int(town.audit.get(
-		"optional_infill_platform_patch_count", -1))
-	out["selected_over_route_patch_count"] = int(town.audit.get(
-		"over_route_platform_patch_count", -1))
-	return out
-
 
 static func _string_dictionary(source: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
@@ -710,7 +659,8 @@ static func _sectional_views(frame: VillageFrame, record: VillageRecord,
 			centre, 54.0, span * 0.7)
 	var main := _main_approach(frame)
 	var cross := Vector2(-main.y, main.x)
-	var route_points := _volumetric_route_points(record)
+	# TASK F1: the legacy volumetric route lineage is gone; see above.
+	var route_points: Array[Vector3] = []
 	if route_points.size() >= 2:
 		var entry := route_points[0]
 		var entry_next := route_points[mini(2, route_points.size() - 1)]
@@ -777,29 +727,6 @@ static func _sectional_views(frame: VillageFrame, record: VillageRecord,
 			xz_centre.y + cross.y * span * 0.35),
 		centre, 58.0, span)
 	return out
-
-
-static func _volumetric_route_points(record: VillageRecord) -> Array[Vector3]:
-	var out: Array[Vector3] = []
-	if record == null or record.urban_fabric == null \
-			or record.urban_fabric.volumetric_town == null:
-		return out
-	var volume := record.urban_fabric.volumetric_town.assets.town.volume
-	if volume == null:
-		return out
-	var world_frame := record.urban_fabric.world_transform
-	for cell: Vector3i in volume.primary_itinerary:
-		# A 3 m macro square expands to two 1.5 m surface cells centred at
-		# offsets 0 and 1, so its exact public-floor centre is +0.75 m.
-		var local := Vector3(
-			float(cell.x) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M
-				+ FabricRecipe.CELL_SIZE * 0.5,
-			float(cell.y) * WarrenVolumePlan.VERTICAL_BAND_SIZE_M,
-			float(cell.z) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M
-				+ FabricRecipe.CELL_SIZE * 0.5)
-		out.append(world_frame * local)
-	return out
-
 
 static func _highest_route_point_index(points: Array[Vector3]) -> int:
 	var result := 0

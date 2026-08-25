@@ -301,11 +301,11 @@ func test_the_buildable_layer_is_derived_from_the_parcel_contract() -> void:
 		"the rim must taper within one ordinary terrace riser")
 	assert_eq(WarrenMassif.ADDRESS_BANDS,
 		WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS,
-		"mass-first and the common public-realm contract must agree on "
+		"the massif and the common public-realm contract must agree on "
 		+ "what constitutes an inhabited street wall")
 	assert_eq(WarrenVolumeEnvelope.DEFAULT_ADDRESS_BANDS,
 		WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS,
-		"route-first envelopes must keep the published frontage bar exactly")
+		"envelopes must keep the published frontage bar exactly")
 	var massif := WarrenMassifBuilder.build(1, _hill())
 	assert_not_null(massif, WarrenMassifBuilder.last_failure)
 	if massif == null:
@@ -353,47 +353,6 @@ func test_the_rim_steps_down_to_the_ground_like_every_other_terrace() -> void:
 			% [world_seed, tallest_rim])
 		assert_lte(tallest_face, WarrenMassifBuilder.MAX_NEIGHBOR_STEP_BANDS,
 			"seed %d has a %d-band continuous face" % [world_seed, tallest_face])
-
-
-func _tallest_addressed_flank_storeys(massif: WarrenMassif,
-		from_terrace: bool) -> int:
-	## Over the bore family WarrenTownSolver.mass_first_frontier tries: the most
-	## storeys any column addressing a route's HIGHEST walk cell builds, counted
-	## the way WarrenParcelConstruction.proposal() counts them -- from the
-	## bearing datum when `from_terrace`, from natural ground otherwise. -1 when
-	## nothing carved.
-	var tallest := -1
-	for attempt in WarrenTownSolver.MASS_FIRST_EXCAVATION_ATTEMPTS:
-		var excavation := WarrenExcavationCarver.carve(massif.world_seed
-			+ attempt * WarrenTownSolver.MASS_FIRST_ATTEMPT_STRIDE, massif)
-		if excavation == null:
-			continue
-		var plan := WarrenExcavationVolumeAdapter.to_volume_plan(massif,
-			excavation)
-		if plan == null:
-			continue
-		var summit := excavation.route[0]
-		for cell: Vector3i in excavation.route:
-			if cell.y > summit.y:
-				summit = cell
-		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT,
-				Vector2i.UP, Vector2i.DOWN]:
-			var column := Vector2i(summit.x + direction.x,
-				summit.z + direction.y)
-			var addressed := true
-			for band in range(summit.y,
-					summit.y + WarrenVolumePlan.MIN_ADDRESS_BUILDING_BANDS):
-				if not plan.has_mass(Vector3i(column.x, band, column.y)):
-					addressed = false
-					break
-			if not addressed:
-				continue
-			var datum := massif.bearing_at(column) if from_terrace \
-				else massif.base_at(column)
-			tallest = maxi(tallest, (massif.top_at(column) - datum
-				- WarrenBuildingParcel.ROOF_RESERVATION_BANDS)
-				/ WarrenBuildingParcel.STOREY_BANDS)
-	return tallest
 
 
 func test_seal_requires_single_connected_component_and_no_holes() -> void:

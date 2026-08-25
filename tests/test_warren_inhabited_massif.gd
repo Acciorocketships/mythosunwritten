@@ -85,52 +85,6 @@ func test_staggered_neighbors_declare_an_inhabited_party_wall() -> void:
 		"diagonal eaves must select the flush roof vocabulary")
 
 
-func test_a_house_footprint_cannot_become_a_stone_terrace() -> void:
-	var massif := WarrenMassif.new(7)
-	massif.columns = {
-		Vector2i.ZERO: {"base": 0, "top": 10},
-		Vector2i.RIGHT: {"base": 2, "top": 12},
-		Vector2i(2, 0): {"base": 5, "top": 15},
-	}
-	assert_true(WarrenSolidPartitioner.footprint_fits_plinth_budget(massif,
-		[Vector2i.ZERO, Vector2i.RIGHT]),
-		"one explicit foundation course may bridge a small terrain step")
-	assert_false(WarrenSolidPartitioner.footprint_fits_plinth_budget(massif,
-		[Vector2i.ZERO, Vector2i.RIGHT, Vector2i(2, 0)]),
-		"a five-band step must be split into narrower terrain-rooted houses")
-
-
-func test_mass_first_frontier_owns_one_supported_third_storey_courtyard() \
-		-> void:
-	var frontier := WarrenTownSolver.mass_first_frontier(7)
-	assert_gt(frontier.size(), 0, WarrenTownSolver.last_failure)
-	for volume: WarrenVolumePlan in frontier:
-		assert_eq(volume.courtyard_cells.size(), 4,
-			"every production mass-first topology carries the authored court")
-		assert_eq(int(volume.audit.elevated_courtyard_walk_cell_count), 4)
-		assert_gte(int(volume.audit.courtyard_daylight_macro_column_count),
-			WarrenElevatedFrontageSolver.MIN_COURTYARD_DAYLIGHT_COLUMNS,
-			"the court must own explicit open-sky shafts, not only headroom")
-		assert_eq(int(volume.audit.same_datum_public_square_count), 0,
-			"only the typed court may consume the plaza exception")
-		var underbuilt := 0
-		for cell: Vector3i in volume.courtyard_cells:
-			var ground := volume.envelope.ground_at(Vector2i(cell.x, cell.z))
-			assert_gte(cell.y - ground,
-				WarrenBuildingParcel.STOREY_BANDS * 2,
-				"the court floor begins on the third storey")
-			var supported := true
-			for offset in range(1, WarrenBuildingParcel.STOREY_BANDS + 1):
-				supported = supported and volume.has_mass(
-					cell + Vector3i.DOWN * offset)
-			underbuilt += int(supported)
-		assert_gte(underbuilt,
-			WarrenElevatedFrontageSolver.MIN_COURTYARD_UNDERBUILT_COLUMNS,
-			"at least half the court stands on complete inhabited storeys")
-		assert_gte(_courtyard_addressed_perimeter_sides(volume), 3,
-			"three building walls and one route seam enclose the court")
-
-
 func _courtyard_addressed_perimeter_sides(volume: WarrenVolumePlan) -> int:
 	var court: Dictionary = {}
 	for cell: Vector3i in volume.courtyard_cells:

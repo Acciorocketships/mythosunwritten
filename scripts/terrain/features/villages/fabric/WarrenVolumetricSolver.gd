@@ -424,8 +424,7 @@ static func from_volume(volume: WarrenVolumePlan,
 	if bool(slab_courses.failed):
 		return null
 	var parcels_started_ms := Time.get_ticks_msec()
-	var parcel_plan := WarrenTownSolver.partition_parcels(volume,
-		partition_variant, construction_program)
+	var parcel_plan := WarrenTownSolver.partition_parcels(volume)
 	_stamp_maze_stage(volume, &"parcels", parcels_started_ms)
 	if parcel_plan == null:
 		last_failure = WarrenTownSolver.last_partition_failure

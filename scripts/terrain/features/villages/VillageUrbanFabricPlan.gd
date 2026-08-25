@@ -20,11 +20,8 @@ var reason: StringName
 var fabric_plan: SettlementFabricPlan
 var fabric_audit: Dictionary = {}
 ## Volumetric generation retains its complete source stages as lineage; the
-## common fabric above remains the sole render/collision transaction.
-var volumetric_town: WarrenBuiltTownPlan
-## New production lineage for the authoritative fine-grid town. Exactly one of
-## this and volumetric_town may be present: the latter remains only for explicit
-## legacy volumetric fixtures while default villages use true 3D reservations.
+## common fabric above remains the sole render/collision transaction. The
+## production lineage for the authoritative fine-grid town.
 var volumetric_spatial: WarrenSpatialPlan
 ## Canonical local-fabric to world transform chosen by the terrain adapter.
 ## Review, navigation, and future gameplay consumers use this same authored
@@ -100,13 +97,12 @@ func requires_outskirts() -> bool:
 
 
 func _validate_sectional_warren(program: VillageProgram) -> bool:
-	return volumetric_town == null and volumetric_spatial == null \
-		and _validate_compiled_fabric(program)
+	return volumetric_spatial == null and _validate_compiled_fabric(program)
 
 
 func _validate_volumetric_warren(program: VillageProgram) -> bool:
 	if volumetric_spatial != null:
-		if volumetric_town != null or not volumetric_spatial.is_sealed() \
+		if not volumetric_spatial.is_sealed() \
 				or StringName(fabric_audit.get("generation_source", "")) \
 					!= &"spatial_volumetric_warren" \
 				or String(fabric_audit.get("spatial_signature", "")) \
@@ -115,22 +111,11 @@ func _validate_volumetric_warren(program: VillageProgram) -> bool:
 				or not _scale_feature_contract_matches(fabric_audit):
 			return false
 		return _validate_compiled_fabric(program)
-	if volumetric_town == null or not volumetric_town.is_sealed() \
-			or volumetric_town.fabric != fabric_plan \
-			or StringName(fabric_audit.get("generation_source", "")) \
-				!= &"volumetric_warren" \
-			or int(fabric_audit.get("market_count", 0)) \
-				< _required_market_count(fabric_audit) \
-			or int(fabric_audit.get("skywalk_link_count", 0)) < 1 \
-			or int(fabric_audit.get("transverse_parcel_count", -1)) != 0 \
-			or int(fabric_audit.get(
-				"max_uncovered_core_component_size", -1)) != 0 \
-			or int(fabric_audit.get(
-				"max_uncovered_route_component_size", 1 << 30)) \
-				> WarrenBuiltTownSolver \
-					.TARGET_MAX_UNCOVERED_ROUTE_COMPONENT_SIZE:
-		return false
-	return _validate_compiled_fabric(program)
+	# TASK F1. The legacy `WarrenBuiltTownPlan` route is gone with the
+	# searched pipeline that produced it: `volumetric_town` was never set by
+	# any production path, so a VOLUMETRIC_WARREN plan without a spatial town
+	# is simply invalid.
+	return false
 
 
 static func _required_market_count(audit: Dictionary) -> int:

@@ -75,35 +75,6 @@ func test_production_surface_bundle_carries_stair_transition_meshes() -> void:
 			PublicRealmSurfacePlan.SurfaceKind.STAIR):
 		assert_true(covered.has(cell),
 			"STAIR claim %s has no production surface mesh" % cell)
-
-
-func test_generic_surface_compiler_materializes_supplied_volume_transitions() \
-		-> void:
-	## Spatial towns use the common compiler after their exact route has been
-	## adapted. Supplying its immutable volume lineage must retain the same
-	## collision-bearing climbs as the older volume-specific compiler.
-	var volume := WarrenPublicRealmCarver.solve(0)
-	assert_not_null(volume, "route-first volume fixture must seal")
-	if volume == null:
-		return
-	var realm := WarrenVolumePublicRealmAdapter.from_volume(volume)
-	assert_not_null(realm, WarrenVolumePublicRealmAdapter.last_failure)
-	if realm == null:
-		return
-	var empty_fabric := SettlementFabricPlan.new(&"test.transition.lineage")
-	var surfaces := PublicRealmSurfaceSolver.solve(
-		&"test.transition.lineage.surfaces", realm, empty_fabric, volume)
-	assert_not_null(surfaces)
-	if surfaces == null:
-		return
-	var vertical_count := 0
-	for transition: WarrenVolumeTransition in volume.transitions:
-		vertical_count += int(transition.is_vertical())
-	assert_gt(vertical_count, 0)
-	assert_eq(int(surfaces.audit().transition_mesh_count), vertical_count)
-	assert_gt(int(surfaces.audit().transition_triangle_count), 0)
-
-
 func test_payload_surface_meshes_validate_and_respect_block_ownership() -> void:
 	var payload := EnvironmentInstancePayload.new()
 	var mesh := _stair_transition_payload(&"test.transition.own",

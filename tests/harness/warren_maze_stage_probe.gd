@@ -99,7 +99,7 @@ func _probe(city_seed: int, scale_id: StringName,
 
 	# The parcels ARE the buildings: this is the "substitute groups of grid
 	# cells for houses" step. If this succeeds, a town physically exists.
-	var parcels := WarrenTownSolver.partition_parcels(volume, -1, program)
+	var parcels := WarrenTownSolver.partition_parcels(volume)
 	if parcels == null:
 		print(line + " parcels=REJECTED:" \
 			+ WarrenTownSolver.last_partition_failure.left(70))

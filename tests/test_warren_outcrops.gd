@@ -6,53 +6,40 @@ extends GutTest
 ## the flat-capped jetty carries the same inhabited overhead cover without its
 ## own roofline. Both variants wear their parent's wood.
 
+## The pinned production village of world seed 2697992464 at super cell
+## (0,-1). TASK F1: the fixture used to name a bore attempt, a ranked source
+## id and a partition variant -- three searched identities that no longer
+## exist. One-pass generation builds exactly one town per (seed, scale), so
+## the town below is simply that solve.
 const REVIEW_SEED := 166029932451774690
-const REVIEW_ATTEMPT := 11
-const REVIEW_SOURCE_ID := \
-	&"warren.volume.mass.166029932462774723.arcade0.arcade1"
-## Variant five is the sealed production composition for the review corpus.
-## Keeping this fixture on the former variant zero made every downstream
-## outcropping assertion silently risky once the stricter construction gates
-## correctly rejected that obsolete composition.
-const REVIEW_PARTITION_VARIANT := 5
 
 static var _built: SettlementFabricPlan
-static var _searched := false
+static var _solved := false
 
 
 func _town_with_outcrops() -> SettlementFabricPlan:
-	if _searched:
+	if _solved:
 		return _built
-	_searched = true
+	_solved = true
 	var program := SettlementFabricProgram.compile(
 		EnvironmentCatalog.load_default())
 	if program == null:
 		return null
 	var profile := WarrenVillageScaleProfile.for_id(
 		WarrenVillageScaleProfile.COMPACT)
-	var frontier := WarrenTownSolver.mass_first_attempt_frontier(REVIEW_SEED,
-		REVIEW_ATTEMPT, {}, profile)
-	var ranked := WarrenVolumetricSolver._ranked_precomposition_variants(
-		frontier, program)
-	for candidate_value: Dictionary in ranked:
-		if int(candidate_value.variant) != REVIEW_PARTITION_VARIANT:
-			continue
-		var source := candidate_value.volume as WarrenVolumePlan
-		if source == null or source.stable_id != REVIEW_SOURCE_ID:
-			continue
-		var spatial := WarrenVolumetricSolver.from_volume(source,
-			REVIEW_PARTITION_VARIANT, program, false)
-		if spatial == null:
-			return null
+	var spatial := WarrenVolumetricSolver.solve(REVIEW_SEED, {}, program,
+		profile)
+	if spatial == null:
+		return null
+	_built = spatial.compiled_fabric_cache()
+	if _built == null:
 		_built = WarrenSpatialFabricCompiler.solve(spatial, program)
-		break
 	return _built
 
 
 func test_probe_seed_produces_an_outcropping_town() -> void:
 	assert_not_null(_town_with_outcrops(),
-		"no probe seed accepted a town containing an outcropping")
-
+		"the review seed no longer builds a town containing an outcropping")
 
 func test_facade_bays_cannot_fragment_a_partial_roof_campaign() -> void:
 	var room := WarrenRoomStamp.new(&"room.roof.probe", &"source.roof.probe",

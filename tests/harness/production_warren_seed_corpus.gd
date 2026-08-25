@@ -5,6 +5,9 @@ extends SceneTree
 ## materialization, collision-bearing surface tiling, record validation, and
 ## feature asset demand exactly as the streamed game does.
 const DEFAULT_SEEDS: Array[int] = [4242, 991177, 3046246887, 2697992464]
+## TASK F1. Was `WarrenBuiltTownSolver.TARGET_MAX_UNCOVERED_ROUTE_COMPONENT_SIZE`
+## before that solver died with the searched pipeline; the value is unchanged.
+const MAX_UNCOVERED_ROUTE_COMPONENT_SIZE := 16
 const ZERO_METRICS: Array[StringName] = [
 	&"stair_endpoint_gap_count",
 	&"stair_endpoint_missing_landing_count",
@@ -157,7 +160,7 @@ static func _audit_record(record: VillageRecord, catalog: EnvironmentCatalog,
 		if int(audit.get(metric, -1)) != 0:
 			failures.append("%s=%s" % [metric, audit.get(metric)])
 	if int(audit.get("max_uncovered_route_component_size", 2147483647)) \
-			> WarrenBuiltTownSolver.TARGET_MAX_UNCOVERED_ROUTE_COMPONENT_SIZE:
+			> MAX_UNCOVERED_ROUTE_COMPONENT_SIZE:
 		failures.append("max_uncovered_route_component_size=%s" % audit.get(
 			"max_uncovered_route_component_size"))
 	for metric: StringName in [
