@@ -398,35 +398,38 @@ const RETIRED_CORPUS_GATE := "failed measured phase selection"
 ## with a measurement and a reason.
 const MAZE_FACADE_YIELD_CEILING := 7
 
-## TASK C6 RULING 3. Per planner seed, the measured production solve x 1.5:
-## 2442 / 3935 / 5554 / 10383 ms measured in this file, with the vocabulary
-## compiled before the clock starts. The plan's <= 3 s target is met by ONE of
-## the four and does not move here -- these are regression ceilings for the
-## towns this file already solves, and the target itself moves to the Phase F
-## exit on the controller's note. Where the time goes, per stage, is
-## `tests/harness/warren_maze_stage_probe.gd --seeds 12,4 --scale compact`
-## (and 3,9 at standard). It is NOT the hero beam -- advisory quotas collapse
-## that to 24-36 ms -- it is `room_composition`, the per-parcel exact block
-## solve plus `WarrenRoomCompositionPlanner`: 632 / 723 / 2370 / 5659 ms, which
-## is 43-76 % of the composition and rises with room count. The fabric compile
-## is second (784 / 1163 / 1509 / 2795) and the authored room envelope gate
-## third (244 / 229 / 645 / 801). 4/compact is the one town where the residual
-## backfill spikes (1219 ms).
+## TASK F2 RULING 6. Per planner seed, the MEDIAN OF 3 solves on the task
+## machine x 1.5: 2235 / 2205 / 3657 / 4438 ms, with the vocabulary compiled
+## before the clock starts. The whole series is output-identical -- every
+## optimisation was diffed against a golden record of the four towns' sealed
+## audits, plan signatures and compiled units, and the 24-town sweep's per-town
+## lines are byte-identical to the pre-F2 run.
+##
+## The <= 3 s target is met by the two COMPACT seeds and missed by the two
+## standard ones (3657 and 4438). Task F2 stopped there rather than trade
+## output for speed; its report carries the analysis of what the remaining
+## seconds are and what removing them would cost.
+##
+## Where the time goes now, per stage, is `warren_maze_stage_probe.gd --seeds
+## 12,4 --scale compact --trace-composition --trace-fabric` (and 3,9 at
+## standard). It is still `room_composition` (924 / 848 / 1775 / 2446), but
+## NOT the exact per-parcel block solve C6 named: `_composition_offsets` is
+## 4-30 ms and all of the rest is `WarrenRoomCompositionPlanner`, whose serial
+## registration relief is the single largest pass (223 / 259 / 459 / 911). The
+## fabric compile is second (655 / 685 / 986 / 697), nearly all of it the roof
+## selection loop; the authored room envelope gate that used to be third is now
+## 77-104 ms.
 const PLANNER_SOLVE_MS_CEILING: Dictionary = {
-	# TASK E3b: 3700 -> 5900. The +1-storey widening measured 4725 ms here, up
-	# from ~3000; a taller house is more rooms and `room_composition` is
-	# superlinear in room count (C6 ruling 3). Pinned at the measurement plus
-	# this file's usual quarter, which is the same headroom 4/compact carries.
-	"12/compact": 5900,
-	"4/compact": 5950,
-	# TASK E1: 5554 -> 8831 ms measured, x1.5. The town did not get slower per
-	# unit of work, it got bigger: the noise massif's terraces partition into
-	# 43 parcels where the flat plateau gave 35, and `room_composition` is
-	# superlinear in room count (C6 ruling 3). Corpus-wide the four planner
-	# solves are unchanged in total (23.8 s -> 24.0 s); 12/compact and
-	# 4/compact each fell by a fifth to a third while this one grew.
-	"3/standard": 13250,
-	"9/standard": 15600,
+	# TASK F2: 5900 -> 3400 and 5950 -> 3300. Measured 2235 and 2205 ms
+	# (median of 3), x1.5. Both compact planner towns now solve inside the
+	# plan's 3 s target with room to spare.
+	"12/compact": 3400,
+	"4/compact": 3300,
+	# TASK F2: 13250 -> 5500 and 15600 -> 6700. Measured 3657 and 4438 ms
+	# (median of 3), x1.5. These two are the seeds that still miss 3 s; the
+	# ceiling is a regression guard, not an endorsement of the number.
+	"3/standard": 5500,
+	"9/standard": 6700,
 }
 
 
