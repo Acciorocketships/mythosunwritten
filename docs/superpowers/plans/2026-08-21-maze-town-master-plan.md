@@ -473,21 +473,24 @@ Milestone: upper-storey walls read timber-frame/plaster; stone appears only wher
 
 **Phase discipline:** output changes are the point — the corpus re-fingerprints and every moved number re-pins measured-first; but seals may not regress (32/48 holds or improves; the four sloped rows compose; identity-probe ATTRIBUTION per task: the diff is the intended material/roof change and nothing else). The F2 solve ceilings hold. No massing/plot-model changes.
 
-### Task H1: Walls — plaster above, stone where it bears
+**The reference (user, 2026-08-25):** a screenshot of an OLD-pipeline town, supplied as the look target ("i'm looking for something closer to this"; its inline annotations are explicitly to be ignored — they critiqued the old version). What the reference shows, read off the frame: walls are warm timber plank and cream plaster with dark half-timber framing — ashlar is nearly ABSENT (a plinth course at most); the downhill ring of houses stands on timber stilts/posts over the massif edge; the roofscape is pitched-dominant in two families (orange terracotta and blue-teal) mixed with plank terrace decks; the terraces carry CLUTTER — white chimneys everywhere, planters, pergolas, railings; timber skywalk frames thread the summit cluster; the silhouette is irregular — jetties and overhangs break the rectangles. The town still clusters and falls off toward the rim exactly like ours.
 
-**Files:** the wall-family selection point in `WarrenSpatialFabricCompiler.gd`/`SettlementFabricAssembler.gd` (the Explore map names the exact lever), `WarrenMazeSourcePlan.gd` if the plinth line wants the datum machinery (it already computes `nearest_datum_band` per column — reuse, do not duplicate), tests.
-- Default wall family above the plinth course: the plaster/timber-frame family the pitched houses already render. Stone family kept for: the maze stone skin (retained rock — untouched), retaining/plinth courses, and the ground storey ONLY where the building bears on rock or a retaining face (measured, not everywhere).
-- The metric that sees what the user sees: `exterior_wall_material_profile` — share of exterior wall faces per material per band-offset-over-local-datum, published in the audit, printed by the sweep per town, pinned: stone wall-face share ≤ ceiling at measured (expect it to CRASH from ~most to ~low), and ≈ 0 above offset +2.
-- Renders judged before review: 12/compact + 9/grand elevations at eye level — the grand flank (the battery's worst offender) must read timbered.
-- [ ] Commit — `feat(villages): plaster above, stone where it bears`.
+### Task H1: Walls — plank and plaster; stone only at the plinth
 
-### Task H2: Roofscape — pitched by default, planks where walked
+**Files:** the wall-family selection point in `WarrenSpatialFabricCompiler.gd`/`SettlementFabricAssembler.gd` (the Explore map names the exact lever), `WarrenMazeSourcePlan.gd` only if the plinth line wants the datum machinery (it already computes `nearest_datum_band` per column — reuse, do not duplicate), tests.
+- Default wall families everywhere: the timber-plank and plaster/half-timber families the pitched houses already render (both appear in the reference; vary per building, seeded). Ashlar survives ONLY as: the maze stone skin (retained massif rock — untouched), retaining faces, and a plinth/foundation course. The reference does not even give ground storeys to stone by default — a ground-storey stone wall is the exception (bearing INTO the hill), never the rule.
+- The metric that sees what the user sees: `exterior_wall_material_profile` — share of exterior wall faces per material per band-offset-over-local-datum, published in the audit, printed by the sweep per town, pinned: stone wall-face share ≤ ceiling at measured (expect it to CRASH from ~most to ~few-percent), and ≈ 0 above offset +1.
+- Renders judged before review: 12/compact + 9/grand elevations at eye level — the grand flank (the battery's worst offender) must read as a timbered village face.
+- [ ] Commit — `feat(villages): plank and plaster; stone only at the plinth`.
 
-**Files:** the C5d flat-first policy in the compiler (its ruling is SUPERSEDED by this phase's direction), the `roof.flat.*` tiling's plate material, tests.
-- Pitched becomes the default crown wherever nothing stands on the plate (no stacked room, no deck/route floor, not a terrace the realm uses); flat survives only under load or walkable use, and every surviving flat crown tiles as PLANK deck with railings (the pale rubble plates retire from crowns; the C5e parapet-release architecture stays).
+### Task H2: Roofscape — pitched by default, dressed planks where walked
+
+**Files:** the C5d flat-first policy in the compiler (its ruling is SUPERSEDED by this phase's direction), the `roof.flat.*` tiling's plate material, the terrace-dressing vocabulary (pergolas/planters exist — find the placement point; chimneys ride pitched roofs in the recipe families), tests.
+- Pitched becomes the default crown wherever nothing stands on the plate (no stacked room, no deck/route floor, not a terrace the realm uses); BOTH pitched families (terracotta and blue-teal) in seeded mix, as the reference shows. Flat survives only under load or walkable use, and every surviving flat crown tiles as PLANK deck with railings (the pale rubble plates retire from crowns; the C5e parapet-release architecture stays).
+- The surviving terraces get DRESSED the way the reference dresses them: chimneys, planters, pergola frames at measured seeded rates (the vocabulary exists in the asset program — enable and measure; zero furnished terraces today is a named battery gap).
 - Dormers ride the new pitched population (the F3-fixed whole-town counter is the measure); the E3b lineage gates are already lineage-agnostic — pitched growth must not resurrect the partial-plate families (corpus watch).
-- Measured targets, pinned after measurement: pitched share of eligible crowns (expect a multiple of today's 31/291); flat crowns carrying neither room nor walkable use = 0.
-- [ ] Commit — `feat(villages): pitched by default; planks where walked`.
+- Measured targets, pinned after measurement: pitched share of eligible crowns (expect a multiple of today's 31/291); flat crowns carrying neither room nor walkable use = 0; furnished-terrace share > 0 and pinned at measured.
+- [ ] Commit — `feat(villages): pitched by default; dressed planks where walked`.
 
 ### Task H3: The re-battery and the verdict
 
