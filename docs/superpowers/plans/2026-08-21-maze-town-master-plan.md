@@ -416,8 +416,20 @@ The ≤ 3 s target, attacked at the measured hotspot. C6's stage table (four pla
 - In-game cold load: the production settlement 29bc5c240c52f84a at super (0,-1) — measure end-to-end from the game (D2 baseline 4.1 s pre-E; use the HOME-isolated launch harness from the profiling work, GUI, not --headless), report before/after.
 - [ ] Commit — `perf(villages): room composition off the superlinear path`.
 
+### Task F3: The reserved-but-unbuilt family
+
+F1's re-pointed suites exposed a family of gaps on the shipped one-pass town that the searched-pipeline suites had been hiding. This task diagnoses and reconciles them AFTER F2 (F2's byte-identity discipline wants the stable corpus; F3 may legitimately change audits and, on proven defects, geometry).
+
+**The family, as measured at F1:**
+- `setback_cap_unit_count` reads 0 while 8 of the production town's 49 roof units are `roof.setback.cap.*` — a bookkeeping defect. Find the counter's write site, fix it, and assert counter == direct unit scan.
+- The production town has 0 dormered pitched roofs and 0 setback sheds where the searched town for the same seed had both (and the compiler suite forbade setback caps outright). Diagnose WHY: a selection/bookkeeping defect (eligible dormer/shed placements dropped on the way to units) or the honest state of the carved form. A proven defect gets a root-cause fix and an honest corpus re-measure (24/24 must hold); an honest structural gap gets its evidence written and the pins stay shrink-only for Phase G's judgment.
+- The market: a reservation is mandatory (absence fatal at the solver) yet `constructed_markets == 0` on the shipped town — trace the reservation from `_preplan_spatial_market` through composition to construction records and find where it stops being a market. Same decision tree as the dormers.
+- The surviving pre-existing red `test_warren_architectural_districts::test_compact_and_slim_roofs_have_measured_dormer_variants` (`roof.slim.orange.dormer.right` face depth 0.22 vs 0.1, recipe outside the compact gabled family) is plausibly this same dormer family seen from the recipe side — resolve it here (fix the recipe or re-pin measured-first with evidence); after F3 no tolerated red remains anywhere.
+- Exit: every counter asserted against a direct scan; every diagnosis written with evidence; corpus 24/24; changed numbers re-pinned measured-first; the fingerprint refreshed.
+- [ ] Commit — `fix(villages): the reserved-but-unbuilt family — counters, dormers, the market`.
+
 ### Phase F exit
-- No `GENERATION_MODE` anywhere; full suite green with zero tolerated reds; corpus 24/24 with towns byte-identical through F1 and byte-identical through F2; all four planner seeds ≤ 3 s; cold load measured in-game; line-count delta reported.
+- No `GENERATION_MODE` anywhere; full suite green with zero tolerated reds; corpus 24/24 with towns byte-identical through F1 and byte-identical through F2 (F3 changes only what its diagnoses prove defective, re-measured honestly); all four planner seeds ≤ 3 s; cold load measured in-game; line-count delta reported.
 
 # Phase G — Visual gate
 
