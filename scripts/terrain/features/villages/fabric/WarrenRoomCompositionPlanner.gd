@@ -2422,6 +2422,7 @@ static func _coupled_variants(grid: WarrenSpatialGrid,
 	var next_rect := _columns_as_rect(next_columns)
 	var previous_bounds := _column_bounds(previous_columns)
 	var next_bounds := _column_bounds(next_columns)
+	var current_bounds := _column_bounds(current_columns)
 	var previous_maximum := previous_bounds.position + previous_bounds.size \
 		- Vector2i.ONE
 	var constraints_are_free := not bool(current.get("address_expandable",
@@ -2438,8 +2439,9 @@ static func _coupled_variants(grid: WarrenSpatialGrid,
 			if base_rect.size.x <= 0:
 				continue
 			var stamp_size := base_rect.size
+			var stamp_area := stamp_size.x * stamp_size.y
 			var required_overlap := maxi(MIN_BEARING_OVERLAP_COLUMNS,
-				ceili(float(stamp_size.x * stamp_size.y) * 0.25))
+				ceili(float(stamp_area) * 0.25))
 			var x_low := maxi(minimum.x - 4, previous_bounds.position.x \
 				- base_rect.position.x - stamp_size.x + 1)
 			var x_high := mini(maximum.x + 4,
@@ -2486,12 +2488,18 @@ static func _coupled_variants(grid: WarrenSpatialGrid,
 								current_columns, protected_owners, claimed_cells,
 								participant_ids):
 						continue
-					var difference := _symmetric_difference_size(columns,
-						current_columns)
+					# TASK F2, as in `_volumetric_variant_stamp`: one
+					# rectangle count answers both, because the stamp is a
+					# filled rectangle of known area.
+					var inside_current := _rect_intersection_size(
+						stamp_position, stamp_size, current_columns,
+						current_bounds)
+					var difference := stamp_area + current_columns.size() \
+						- 2 * inside_current
 					var tower_relief := int(StringName(current.kind) == &"tower" \
 						and kind != &"tower")
 					var kind_change := int(kind != StringName(current.kind))
-					var expanded := not _is_subset(columns, current_columns)
+					var expanded := inside_current < stamp_area
 					var scale_bonus := 260 if kind == &"slim" \
 						else 190 if kind == &"building" \
 						else 80 if kind == &"long" else 0
@@ -4203,6 +4211,7 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 	var next_rect := _columns_as_rect(next_columns)
 	var previous_bounds := _column_bounds(previous_columns)
 	var next_bounds := _column_bounds(next_columns)
+	var current_bounds := _column_bounds(current_columns)
 	var origin_y := (current.origin as Vector3i).y
 	# TASK F2, two hoists that depend only on the BLOCK.
 	#
@@ -4218,6 +4227,7 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 	# it returns true for every candidate, and it was being called ~3400 times
 	# per search to say so.
 	var records_diagnostic := _block_has_interface_constraint(current)
+	var own_lineage_only: Dictionary = {StringName(lineage_id): true}
 	var constraints_are_free := not bool(current.get("address_expandable",
 			false)) \
 		and (current.get("feature_endpoint_constraints", []) as Array) \
@@ -4237,8 +4247,9 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 			if base_rect.size.x <= 0:
 				continue
 			var stamp_size := base_rect.size
+			var stamp_area := stamp_size.x * stamp_size.y
 			var required_overlap := maxi(MIN_BEARING_OVERLAP_COLUMNS,
-				ceili(float(stamp_size.x * stamp_size.y) * 0.25))
+				ceili(float(stamp_area) * 0.25))
 			var x_low := minimum.x - 4
 			var x_high := maximum.x + 4
 			var z_low := minimum.y - 4
@@ -4301,7 +4312,7 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 							protected_owners, claimed_cells, trial, lineage_id) \
 							or not _new_projection_has_clearance(trial,
 								current_columns, protected_owners, claimed_cells,
-								{StringName(lineage_id): true}):
+								own_lineage_only):
 						if records_diagnostic \
 								and clearance_failures.size() < 6:
 							clearance_failures.append({"kind": kind,
@@ -4311,14 +4322,20 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 									lineage_id)})
 						continue
 					clear_count += 1
-					var old_inside_new := _intersection_size(columns,
-						current_columns)
-					var expanded := not _is_subset(columns, current_columns)
+					# TASK F2. Three set walks over the stamp become one
+					# rectangle count and two identities, because the stamp is a
+					# filled rectangle of known area: it is a subset of the
+					# current columns exactly when every one of its cells is in
+					# them, and the symmetric difference is the two sizes less
+					# twice the intersection.
+					var old_inside_new := _rect_intersection_size(stamp_position,
+						stamp_size, current_columns, current_bounds)
+					var expanded := old_inside_new < stamp_area
 					var tower_relief := int(StringName(current.kind) == &"tower" \
 						and kind != &"tower")
 					var kind_change := int(kind != StringName(current.kind))
-					var difference := _symmetric_difference_size(columns,
-						current_columns)
+					var difference := stamp_area + current_columns.size() \
+						- 2 * old_inside_new
 					# A slim or building room is a more plausible tower cap than a
 					# full long hall. Long rooms remain available where the residual
 					# massif genuinely supports them.
