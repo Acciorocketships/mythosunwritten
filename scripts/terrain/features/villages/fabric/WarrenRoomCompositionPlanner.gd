@@ -4108,42 +4108,82 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 	var upper_match_count := 0
 	var clear_count := 0
 	var clearance_failures: Array[Dictionary] = []
+	# TASK F2. This enumeration is the composition's hot core: five kinds x
+	# four yaws x a 13 x 13 origin window is ~3400 candidates, and the four
+	# passes that call it (merge, couple, vary, serial relief) run it some four
+	# hundred times per town. Every gate up to the bearing test is now decided
+	# in integer rectangle arithmetic, and the candidate's column DICTIONARY is
+	# built only for the few that reach the exact record.
+	#
+	# The rewrite is exact, not approximate, and rests on one fact: a stamp's
+	# columns are always a FILLED rectangle. So (a) `_same_set(stamp, S)` holds
+	# exactly when S is that same filled rectangle, which `_columns_as_rect`
+	# decides once per set instead of once per candidate; (b) the stamp's
+	# rectangle is `origin.xz` plus a constant that depends only on
+	# (kind, yaw), so it is hoisted out of the two inner loops; (c)
+	# `_intersection_size(stamp, S)` counts the members of S inside the stamp's
+	# rectangle, which is the same cardinality read from the other side. Every
+	# counter below therefore increments on exactly the candidates it did
+	# before, in the same order.
+	var current_rect := _columns_as_rect(current_columns)
+	var previous_rect := _columns_as_rect(previous_columns)
+	var next_columns := (next.columns as Dictionary) if not next.is_empty() \
+		else {}
+	var next_rect := _columns_as_rect(next_columns)
+	var previous_bounds := _column_bounds(previous_columns)
+	var next_bounds := _column_bounds(next_columns)
+	var origin_y := (current.origin as Vector3i).y
 	for kind: StringName in ROOM_KINDS:
 		if not allow_tower_promotion and kind == &"tower" \
 				and StringName(current.kind) != &"tower":
 			continue
 		for yaw in 4:
+			# The stamp rectangle for origin (0, y, 0); every other origin in
+			# this window translates it, because all four yaw cases add
+			# `origin.x` and `origin.z` with coefficient one.
+			var base_rect := _stamp_rect(kind, Vector3i(0, origin_y, 0), yaw)
+			if base_rect.size.x <= 0:
+				continue
+			var stamp_size := base_rect.size
+			var required_overlap := maxi(MIN_BEARING_OVERLAP_COLUMNS,
+				ceili(float(stamp_size.x * stamp_size.y) * 0.25))
 			for x in range(minimum.x - 4, maximum.x + 5):
 				for z in range(minimum.y - 4, maximum.y + 5):
-					var origin := Vector3i(x, (current.origin as Vector3i).y, z)
-					var columns := _stamp_columns(kind, origin, yaw)
-					if columns.is_empty() or _same_set(columns, current_columns):
+					var stamp_position := base_rect.position + Vector2i(x, z)
+					if current_rect.size.x > 0 \
+							and current_rect.position == stamp_position \
+							and current_rect.size == stamp_size:
 						continue
 					# Origin/yaw pairs can differ while an even-cell stamp occupies
 					# exactly the same world columns. Reject in world space: accepting
 					# that coordinate illusion recreated the vertical tower this pass
 					# exists to remove.
-					if _same_set(columns, previous_columns) \
-							or not next.is_empty() and _same_set(columns,
-								next.columns as Dictionary):
+					if previous_rect.size.x > 0 \
+							and previous_rect.position == stamp_position \
+							and previous_rect.size == stamp_size \
+							or next_rect.size.x > 0 \
+							and next_rect.position == stamp_position \
+							and next_rect.size == stamp_size:
 						continue
 					shape_count += 1
+					var origin := Vector3i(x, origin_y, z)
 					if not _candidate_matches_constraints(kind, origin, yaw,
 							current):
 						continue
 					constraint_match_count += 1
-					var lower_overlap := _intersection_size(columns,
-						previous_columns)
-					if lower_overlap < _required_bearing_overlap(columns):
+					var lower_overlap := _rect_intersection_size(stamp_position,
+						stamp_size, previous_columns, previous_bounds)
+					if lower_overlap < required_overlap:
 						continue
 					bearing_match_count += 1
 					var upper_overlap := 0
 					if not next.is_empty():
-						upper_overlap = _intersection_size(columns,
-							next.columns as Dictionary)
+						upper_overlap = _rect_intersection_size(stamp_position,
+							stamp_size, next_columns, next_bounds)
 						if upper_overlap <= 0:
 							continue
 					upper_match_count += 1
+					var columns := _stamp_columns(kind, origin, yaw)
 					var trial := _record(kind, origin, yaw,
 						int(current.start_storey), int(current.end_storey))
 					if trial.is_empty() or not _record_is_clear_for_lineage(grid,
@@ -4691,12 +4731,17 @@ static func _stamp_slot(kind: StringName, yaw: int) -> int:
 	return index * 4 + yaw
 
 
-static func _stamp_columns(kind: StringName, origin: Vector3i,
-		yaw: int) -> Dictionary:
-	var cache_key := Vector4i(_stamp_slot(kind, yaw), origin.x, origin.z, 0)
-	if _stamp_columns_cache.has(cache_key):
-		return _stamp_columns_cache[cache_key] as Dictionary
-	var out: Dictionary = {}
+static func _stamp_rect(kind: StringName, origin: Vector3i,
+		yaw: int) -> Rect2i:
+	## The world rectangle an authored room stamp fills, or a zero-size rect
+	## when (kind, yaw) is not stampable.
+	##
+	## TASK F2. This is the arithmetic `_stamp_columns` always did; it is a
+	## function of its own now so the variant enumeration can reason about a
+	## candidate's footprint WITHOUT building its column dictionary, and so
+	## that the two can never disagree about where a stamp lands. Note every
+	## yaw case adds `origin.x` and `origin.z` with coefficient one, which is
+	## what lets the enumeration hoist the rect out of its two inner loops.
 	var minimum := Vector2i.ZERO
 	var size := Vector2i.ZERO
 	match kind:
@@ -4716,9 +4761,9 @@ static func _stamp_columns(kind: StringName, origin: Vector3i,
 			minimum = Vector2i(-2, -3)
 			size = Vector2i(4, 6)
 		_:
-			return out
+			return Rect2i()
 	if yaw < 0 or yaw > 3:
-		return out
+		return Rect2i()
 	var maximum := minimum + size - Vector2i.ONE
 	var world_minimum := Vector2i.ZERO
 	match yaw:
@@ -4734,8 +4779,76 @@ static func _stamp_columns(kind: StringName, origin: Vector3i,
 		3:
 			world_minimum = Vector2i(origin.x - maximum.y,
 				origin.z + minimum.x)
-	var world_size := size if posmod(yaw, 2) == 0 \
-		else Vector2i(size.y, size.x)
+	return Rect2i(world_minimum, size if posmod(yaw, 2) == 0 \
+		else Vector2i(size.y, size.x))
+
+
+static func _columns_as_rect(columns: Dictionary) -> Rect2i:
+	## The rectangle a column set fills EXACTLY, or a zero-size rect when the
+	## set is empty or leaves a hole. A set whose bounding box has exactly as
+	## many cells as the set has members, and every member inside that box,
+	## fills it -- so the count test is the whole proof.
+	if columns.is_empty():
+		return Rect2i()
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for value: Variant in columns.keys():
+		var column := value as Vector2i
+		minimum = minimum.min(column)
+		maximum = maximum.max(column)
+	var size := maximum - minimum + Vector2i.ONE
+	if columns.size() != size.x * size.y:
+		return Rect2i()
+	return Rect2i(minimum, size)
+
+
+static func _column_bounds(columns: Dictionary) -> Rect2i:
+	## The bounding rectangle of a column set -- no claim that the set fills
+	## it. Zero size means empty, which no stamp rectangle can meet.
+	if columns.is_empty():
+		return Rect2i()
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	for value: Variant in columns.keys():
+		var column := value as Vector2i
+		minimum = minimum.min(column)
+		maximum = maximum.max(column)
+	return Rect2i(minimum, maximum - minimum + Vector2i.ONE)
+
+
+static func _rect_intersection_size(position: Vector2i, size: Vector2i,
+		columns: Dictionary, bounds: Rect2i) -> int:
+	## How many members of `columns` fall inside the rectangle. Identical to
+	## `_intersection_size(stamp_columns, columns)` -- the same intersection
+	## counted from the other side -- without building the stamp's dictionary
+	## or hashing a Vector2i per cell. `bounds` is the set's own bounding box,
+	## and a rectangle that misses it intersects nothing.
+	if bounds.size.x <= 0:
+		return 0
+	var maximum := position + size - Vector2i.ONE
+	var bounds_maximum := bounds.position + bounds.size - Vector2i.ONE
+	if position.x > bounds_maximum.x or maximum.x < bounds.position.x \
+			or position.y > bounds_maximum.y or maximum.y < bounds.position.y:
+		return 0
+	var count := 0
+	for value: Variant in columns.keys():
+		var column := value as Vector2i
+		count += int(column.x >= position.x and column.x <= maximum.x \
+			and column.y >= position.y and column.y <= maximum.y)
+	return count
+
+
+static func _stamp_columns(kind: StringName, origin: Vector3i,
+		yaw: int) -> Dictionary:
+	var cache_key := Vector4i(_stamp_slot(kind, yaw), origin.x, origin.z, 0)
+	if _stamp_columns_cache.has(cache_key):
+		return _stamp_columns_cache[cache_key] as Dictionary
+	var out: Dictionary = {}
+	var rect := _stamp_rect(kind, origin, yaw)
+	if rect.size.x <= 0:
+		return out
+	var world_minimum := rect.position
+	var world_size := rect.size
 	for x in range(world_minimum.x, world_minimum.x + world_size.x):
 		for z in range(world_minimum.y, world_minimum.y + world_size.y):
 			out[Vector2i(x, z)] = true
