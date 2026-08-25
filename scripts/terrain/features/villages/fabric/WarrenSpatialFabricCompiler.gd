@@ -224,11 +224,12 @@ static func solve(source: WarrenSpatialPlan,
 		foundation_result.get("column_count", 0))
 	lineage["retained_foundation_max_depth_bands"] = int(
 		foundation_result.get("max_depth_bands", 0))
-	# TASK F3 MEMBER 6. Plinth-course cells the fabric had already built in and
-	# which therefore never entered the retained channel; see
-	# `_retained_foundation_cells`. Zero on every flat corpus town.
-	lineage["retained_foundation_built_course_cell_count"] = int(
-		foundation_result.get("built_course_cell_count", 0))
+	# TASK F3 MEMBER 6. Retained plinth cells -- foundation span or masonry
+	# course -- the fabric had already built in, and which therefore never
+	# entered the retained channel; see `_retained_foundation_cells`. Zero on
+	# every flat corpus town, 6 on the D1 `step/3/standard` row.
+	lineage["retained_foundation_built_in_cell_count"] = int(
+		foundation_result.get("built_in_cell_count", 0))
 	lineage.merge(foundation_audit, true)
 	lineage.merge(stone_audit, true)
 	lineage.merge(_maze_terrace_audit(result, roof_audit.get(
@@ -436,13 +437,27 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 	# whole function. The retained channel carries mass nobody built in -- that
 	# is what `SettlementFabricPlan.set_retained_terrace` refuses, and until
 	# this task its guard compared the wrong key type and refused nothing. The
-	# maze-stone half below has always subtracted this set; the plinth-course
-	# half did not, and on `step/3/standard` it laid six course cells straight
-	# through two houses' `roof.flat.*` slabs. One reading rather than two: the
-	# maze half used to compute the same projection lazily further down.
+	# maze-stone half below has always subtracted this set; the PLINTH half did
+	# not, in either of its two write sites -- the foundation SPAN under a room
+	# and the masonry COURSE at its datum -- and on `step/3/standard` it put
+	# six such cells straight through two houses' `roof.flat.*` slabs.
+	#
+	# `built_in_cells` collects every cell either write site drops, which is
+	# why it is a SET: the top band of a span is also that room's course cell,
+	# so the two sites can offer the same cell twice and a running counter
+	# would double it.
+	#
+	# COST, stated (fix round 1, MINOR 2). This projection used to be taken
+	# lazily by the maze half alone, and skipped entirely on a plan with no
+	# retained maze stone. It is unconditional now, so a plan with no maze
+	# stone pays one `transformed_cells(&"solid")` it used to skip. Measured
+	# nil on everything that exists -- every town this repository produces is a
+	# maze town that took the projection anyway, and the four planner solves
+	# moved 2158->2166, 2149->2159, 3557->3531, 4327->4314 ms across the whole
+	# task -- but it is an addition on that path, not a saving.
 	var built_solid: Dictionary = {} if plan == null \
 		else plan.transformed_cells(&"solid")
-	var built_course_cells: Dictionary = {}
+	var built_in_cells: Dictionary = {}
 	for building: WarrenBuildingVolume in source.buildings:
 		for room: WarrenRoomStamp in building.room_records:
 			if not room.terrain_bearing:
@@ -532,14 +547,17 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 							+ "%s") % [room.stable_id, fine_column]}
 				maze_stone_borne_room_count += 1
 				continue
-			# TASK F3 MEMBER 6. The foundation span, minus whatever the FABRIC
-			# has already built in. See `built_solid` above: the retained
-			# channel carries mass nobody built in, and this half of it never
-			# subtracted the fabric the way the maze-stone half always has.
+			# TASK F3 MEMBER 6, WRITE SITE 1 OF 2 -- the foundation SPAN under
+			# this room, minus whatever the FABRIC has already built in. See
+			# `built_solid` above: the retained channel carries mass nobody
+			# built in, and neither plinth write site subtracted the fabric the
+			# way the maze-stone half always has. On `step/3/standard` this is
+			# the site that offered all six cells, because a span's top band is
+			# the same cell the course below would have written.
 			for plinth_value: Variant in room_plinth_cells.keys():
 				var plinth_cell := plinth_value as Vector3i
 				if built_solid.has(plinth_cell):
-					built_course_cells[plinth_cell] = true
+					built_in_cells[plinth_cell] = true
 					continue
 				cells[plinth_cell] = true
 			if not room_needs_plinth:
@@ -593,24 +611,26 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 					return {"valid": false, "rejection":
 						("terrain-bearing room %s cannot close its plinth " \
 						+ "course at %s") % [room.stable_id, course_cell]}
-				# TASK F3 MEMBER 6. A course cell the FABRIC already built in is
-				# skipped, exactly as the maze-stone half below skips one. The
-				# column really does carry mass here -- the check above proved
-				# it -- but a house's own `roof.flat.*` slab is standing in that
-				# mass, and laying a masonry course through it is the stone band
-				# between two houses that task C5c's `stone_borne` rule exists to
-				# prevent. `stone_borne` reads the SOURCE's rock shoulder and so
-				# cannot see it: on a terraced fixture the shoulder is high
-				# enough that the room looks terrain-borne while a neighbour's
-				# crown occupies the same band. MEASURED: 0 such cells on all 24
-				# corpus towns, on the production settlement and on three of the
-				# four D1 sloped rows; 6 on `step/3/standard`, through
+				# TASK F3 MEMBER 6, WRITE SITE 2 OF 2 -- the masonry COURSE at
+				# this room's datum. A cell the FABRIC already built in is
+				# skipped, exactly as the span above and the maze-stone half
+				# below skip one. The column really does carry mass here -- the
+				# check above proved it -- but a house's own `roof.flat.*` slab
+				# is standing in that mass, and laying a masonry course through
+				# it is the stone band between two houses that task C5c's
+				# `stone_borne` rule exists to prevent. `stone_borne` reads the
+				# SOURCE's rock shoulder and so cannot see it: on a terraced
+				# fixture the shoulder is high enough that the room looks
+				# terrain-borne while a neighbour's crown occupies the same
+				# band. MEASURED over 29 towns: 0 such cells on all 24 corpus
+				# towns, on the production settlement and on three of the four
+				# D1 sloped rows; 6 on `step/3/standard`, through
 				# `roof.flat.row` and `roof.flat.slim`. Dropping them from the
 				# course as well as from the channel is what keeps the shell
 				# audit exact -- a neighbour that is built solid closes the seam
 				# the dropped cell used to close.
 				if built_solid.has(course_cell):
-					built_course_cells[course_cell] = true
+					built_in_cells[course_cell] = true
 					continue
 				cells[course_cell] = true
 				columns[fine_column] = true
@@ -676,13 +696,16 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 	return {"valid": true, "cells": cells, "cell_count": cells.size(),
 		"column_count": columns.size(), "max_depth_bands": max_depth,
 		"terrain_bearing_room_count": terrain_bearing_room_count,
-		# TASK F3 MEMBER 6. Plinth-course cells dropped because the fabric had
-		# already built in them -- the masonry band that would have been drawn
-		# through a neighbouring house's crown. Published rather than silent:
-		# it is 0 on every flat corpus town and 6 on `step/3/standard`, and a
-		# number that starts climbing means the plot model is stacking rooms on
-		# roofs the source still calls terrain.
-		"built_course_cell_count": built_course_cells.size(),
+		# TASK F3 MEMBER 6. Retained PLINTH cells dropped because the fabric had
+		# already built in them -- foundation span and masonry course alike
+		# (fix round 1, MINOR 1: the counter was called `built_course_...` and
+		# both write sites feed it, so the name said half of what it counts).
+		# It is the stone that would have been drawn through a neighbouring
+		# house's crown. Published rather than silent: 0 on every flat corpus
+		# town and on three of the four D1 sloped rows, 6 on
+		# `step/3/standard`, and a number that starts climbing means the plot
+		# model is stacking rooms on roofs the source still calls terrain.
+		"built_in_cell_count": built_in_cells.size(),
 		# The WHOLE retained maze channel, every tag together. Named
 		# `..._stone_cells` since Task C5c fix 1 so that
 		# `maze_retained_rock_cells` means DERIVED ROCK everywhere it appears,
@@ -3955,6 +3978,45 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		last_failure = "roof campaign retained %d forbidden exposed modular caps" \
 			% plain_cap_count
 		return [] as Array[FabricUnit]
+	# TASK F3 MEMBERS 1 AND 2 -- THE TWO TOTALS A DIRECT UNIT SCAN CAN BIND.
+	#
+	# Every other roof counter in this audit is a tally of one BRANCH: how many
+	# crowns the pitched branch dormered, how many units the finite setback
+	# vocabulary emitted, how many tiles the flat-plate tiling placed. Each is
+	# honest about its own branch, and none of them answers "how many units in
+	# this town use recipe X", because two branches share vocabulary. Task F1
+	# scanned the shipped town's roof units by recipe prefix, found 8
+	# `roof.setback.cap.*` against a setback counter reading 0, and read a
+	# counter defect. There was none: all 8 were plate TILES
+	# (`maze_partial_plate_tile_recipe_counts` names them), and the setback
+	# vocabulary really did emit nothing. What was missing was any published
+	# number a whole-town scan could be held to.
+	#
+	# These two are that number, taken the same way a reader takes it -- one
+	# pass over the units this campaign is about to return.
+	#
+	# MEASURED over the 24-town corpus, the production settlement and the four
+	# D1 sloped rows (2026-08-25, 29 towns): `setback_cap_recipe_unit_count`
+	# runs 7-34 per town and equals the tiling histogram's
+	# `roof.setback.cap.*` entries on EVERY town, because the setback
+	# vocabulary has never emitted one -- its own units are sheds, lean-tos and
+	# macro gables, and the forbidden-plain-cap gate above is what keeps it
+	# that way. `dormered_roof_unit_count` runs 0-4 and exceeds
+	# `dormered_pitched_roof_count` on exactly three towns (5/compact 3 vs 1,
+	# 8/compact 4 vs 3, 9/standard 2 vs 0): the difference is the macro-gable
+	# setback branch, whose `_setback_gable_placement` selects an ordinary
+	# dormered pitched recipe and which no dormer counter had ever seen.
+	#
+	# Read BEFORE the dormer bar below, because the bar is about the roofscape
+	# and this is the roofscape's own count.
+	var setback_cap_recipe_unit_count := 0
+	var dormered_roof_unit_count := 0
+	for scanned_unit: FabricUnit in out:
+		setback_cap_recipe_unit_count += int(String(scanned_unit.recipe_id) \
+			.begins_with("roof.setback.cap."))
+		var scanned_recipe := program.recipe(scanned_unit.recipe_id)
+		dormered_roof_unit_count += int(scanned_recipe != null \
+			and scanned_recipe.has_tag(&"dormer"))
 	# TASK C5d RULING 1. The dormer bar is a SEARCHED town's quality rule: it
 	# exists so a route-first roofscape cannot come out as an unarticulated
 	# field of plain gables, and there the selector can go and choose another
@@ -3964,46 +4026,30 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	# and there is no other composition to select: this gate simply threw the
 	# town away (measured: seed 1/standard, `roof campaign has no integrated
 	# dormer`).
-	if dormered_pitched_roof_count == 0 and not maze_plot_model:
+	#
+	# TASK F3 FIX 1, IMPORTANT 2. It used to read
+	# `dormered_pitched_roof_count`, which sees only the two PITCHED branches.
+	# `_setback_gable_placement` -- the macro-gable arm of the setback
+	# vocabulary -- also selects an ordinary `roof.*.dormer.*` recipe, and that
+	# arm is not maze-gated, so a town whose only dormers came from it read as
+	# dormerless to this bar and would have been discarded for lacking exactly
+	# the quality it has. That is not hypothetical: corpus town 9/standard has
+	# `dormered_pitched_roof_count = 0` and TWO macro-gable dormers. It ships
+	# today only because `maze_plot_model` skips the bar entirely.
+	#
+	# The bar now reads the roofscape's whole-town dormer count, which is what
+	# its own failure message claims to be about. Behaviour-preserving on
+	# everything that exists: the sum is >= the old term, so it can only refuse
+	# FEWER towns, and every town this repository produces is a maze town that
+	# never reaches the condition (`WarrenMazeVolumeAdapter` stamps
+	# `maze_source_plan` on every volume `WarrenVolumetricSolver` composes, and
+	# `compile_roof_units` has no other caller than `solve` and the compiler
+	# fixture, which drives the same solver). Identity probe: empty diff on all
+	# four planner towns.
+	if dormered_roof_unit_count == 0 and not maze_plot_model:
 		last_failure = ("roof campaign has no integrated dormer; select another " \
 			+ "sealed composition instead of accepting an unarticulated roof field")
 		return [] as Array[FabricUnit]
-	# TASK F3 MEMBERS 1 AND 2 -- THE TWO TOTALS A DIRECT UNIT SCAN CAN BIND.
-	#
-	# Every other roof counter in this audit is a tally of one BRANCH: how many
-	# crowns the pitched branch dormered, how many units the finite setback
-	# vocabulary emitted, how many tiles the flat-plate tiling placed. Each is
-	# honest about its own branch, and none of them answers "how many units in
-	# this town use recipe X", because two branches share vocabulary. Task F1
-	# scanned the shipped town's roof units by recipe prefix, found 8
-	# `roof.setback.cap.*` against `setback_cap_unit_count = 0`, and read a
-	# counter defect. There was none: all 8 were plate TILES
-	# (`maze_partial_plate_tile_recipe_counts` names them), and the setback
-	# vocabulary really did emit nothing. What was missing was any published
-	# number a whole-town scan could be held to.
-	#
-	# These two are that number, taken the same way a reader takes it -- one
-	# pass over the units this campaign is about to return.
-	#
-	# MEASURED over the 24-town corpus + the production settlement
-	# (2026-08-25): `setback_cap_recipe_unit_count` runs 7-34 per town and
-	# equals the tiling histogram's `roof.setback.cap.*` entries on EVERY town,
-	# while `setback_cap_unit_count` is 0 on 22 of the 25 and 1, 4, 4 on the
-	# other three (whose setback units are sheds, lean-tos and macro gables,
-	# never plain caps).
-	# `dormered_roof_unit_count` runs 0-4 and exceeds
-	# `dormered_pitched_roof_count` on exactly three towns (5/compact 3 vs 1,
-	# 8/compact 4 vs 3, 9/standard 2 vs 0): the difference is the macro-gable
-	# setback branch, whose `_setback_gable_placement` selects an ordinary
-	# dormered pitched recipe and which no dormer counter has ever seen.
-	var setback_cap_recipe_unit_count := 0
-	var dormered_roof_unit_count := 0
-	for scanned_unit: FabricUnit in out:
-		setback_cap_recipe_unit_count += int(String(scanned_unit.recipe_id) \
-			.begins_with("roof.setback.cap."))
-		var scanned_recipe := program.recipe(scanned_unit.recipe_id)
-		dormered_roof_unit_count += int(scanned_recipe != null \
-			and scanned_recipe.has_tag(&"dormer"))
 	last_audit = {
 		"source_roof_face_count": source_face_count,
 		"realized_roof_face_count": realized_face_count,
@@ -4106,18 +4152,33 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"bare_flat_roof_count": flat_count - flat_terrace_count \
 			- flat_garden_count - plot_flat_count,
 		"micro_flat_roof_count": 0,
-		# TASK F3 MEMBER 1 -- READ THE NAME CAREFULLY. This counts the units the
-		# finite SETBACK VOCABULARY emitted, whatever recipe each one took: one
-		# per committed piece of a crown that reached that vocabulary, so it is
-		# the denominator the six `setback_*` keys below are subsets of. It is
-		# NOT the town's `roof.setback.cap.*` unit count. Those recipes are also
-		# the tail of `FLAT_PLATE_TILE_RECIPES`, so the flat-plate TILING places
-		# them too, and on the shipped corpus that is where every single one
-		# comes from -- `setback_cap_recipe_unit_count` beside it is the
-		# whole-town scan, `maze_partial_plate_tile_recipe_counts` above is the
-		# per-recipe half, and this key is 0 on 22 of the 25 measured towns
-		# because no crown reached the setback vocabulary at all.
-		"setback_cap_unit_count": cap_count,
+		# THE UNITS THE FINITE SETBACK VOCABULARY EMITTED, whatever recipe each
+		# one took: one per committed piece of a crown that reached that
+		# vocabulary, so it is the denominator the six `setback_*` keys below
+		# are subsets of.
+		#
+		# TASK F3 FIX 1, IMPORTANT 1 -- IT WAS CALLED `setback_cap_unit_count`,
+		# AND THE NAME WAS THE DEFECT. It reads as "the count of setback cap
+		# units", which is what F1 took it for -- F1 scanned the shipped town
+		# for `roof.setback.cap.*`, found 8 against this counter's 0, and filed
+		# a counter defect. F3 diagnosed that misreading correctly and then
+		# made it again one file away, adding this key wholesale to a tiled-cap
+		# total in a reconciliation that is arithmetically false on three
+		# corpus towns and passed only because the production seed's
+		# vocabulary emits nothing. A name that has caused two independent
+		# misreadings is not a documentation problem, so it is renamed to what
+		# it counts.
+		#
+		# For the town's `roof.setback.cap.*` unit count, use
+		# `setback_cap_recipe_unit_count` beside it (the whole-town recipe
+		# scan) or `maze_partial_plate_tile_recipe_counts` above (its
+		# per-recipe half). MEASURED over 29 towns: those two are EQUAL on
+		# every one, because the setback vocabulary has never emitted a plain
+		# cap -- `setback_plain_cap_unit_count` below is the gate that keeps it
+		# so. This key is 0 on 26 of the 29 and 1, 4, 4 on 8/compact,
+		# 5/compact and 9/standard, whose units are sheds, lean-tos and macro
+		# gables.
+		"setback_vocabulary_unit_count": cap_count,
 		"setback_cap_recipe_unit_count": setback_cap_recipe_unit_count,
 		"setback_lean_to_unit_count": lean_to_cap_count,
 		"setback_shed_unit_count": shed_cap_count,
@@ -4128,6 +4189,12 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"setback_terrace_unit_count": terrace_cap_count,
 		"setback_garden_unit_count": garden_cap_count,
 		"setback_dressed_unit_count": terrace_cap_count + garden_cap_count,
+		# The vocabulary's OWN `roof.setback.cap.*` units -- the exposed
+		# modular lids the gate above refuses outright, so it is 0 on every
+		# town that seals. It is the only term that belongs on the vocabulary
+		# side of a `roof.setback.cap.*` reconciliation; the lid-repaired
+		# strips (`maze_lid_repair_cap_count`) are the same recipe deliberately
+		# excluded from it, and are also 0 corpus-wide.
 		"setback_plain_cap_unit_count": plain_cap_count,
 		"micro_setback_cap_unit_count": 0,
 		"setback_terrace_fallback_count": terrace_cap_fallback_count,
@@ -4135,15 +4202,18 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		"one_storey_chimney_roof_count": one_storey_chimney_roof_count,
 		# TASK F3 MEMBER 2. `dormered_pitched_roof_count` and
 		# `paired_dormer_roof_count` count what the two PITCHED branches chose:
-		# crowns that took a dormered authored shell, which is what the dormer
-		# bar above is asking about. They do not see the macro-gable setback
-		# branch, whose `_setback_gable_placement` also selects an ordinary
-		# `roof.*.dormer.*` recipe -- so on the three corpus towns that reach
-		# it, the town has dormers these two do not report.
-		# `dormered_roof_unit_count` is the whole-town scan and the number a
-		# direct scan of the compiled units is held to; the difference between
-		# the two IS the macro-gable branch. Both are kept: the bar wants the
-		# pitched campaign's own count, and a reader wants the town's.
+		# crowns that took a dormered authored shell. They do not see the
+		# macro-gable setback branch, whose `_setback_gable_placement` also
+		# selects an ordinary `roof.*.dormer.*` recipe -- so on the three
+		# corpus towns that reach it, the town has dormers these two do not
+		# report, and on 9/standard they are ALL of them.
+		# `dormered_roof_unit_count` is the whole-town scan: the number a
+		# direct scan of the compiled units is held to, and, since task F3's
+		# fix round, the number the dormer bar above reads. The difference
+		# between the two IS the macro-gable branch, which is why both are
+		# kept -- a reader asking "did the pitched campaign articulate its
+		# roofs" and a reader asking "does this town have dormers" are asking
+		# different questions.
 		"dormered_pitched_roof_count": dormered_pitched_roof_count,
 		"dormered_roof_unit_count": dormered_roof_unit_count,
 		"paired_dormer_roof_count": paired_dormer_roof_count,

@@ -180,7 +180,7 @@ func _ready() -> void:
 		])
 	print(("[warren_spatial_review] composition pairs=%d strong_registration=%d " \
 		+ "facade_planes=%d same_kind=%d same_axis=%d roofs=%d pitched=%d " \
-		+ "flat=%d roof_terraces=%d bare_flat=%d caps=%d lean_tos=%d " \
+		+ "flat=%d roof_terraces=%d bare_flat=%d setback_units=%d lean_tos=%d " \
 		+ "macro_gables=%d macro_fallbacks=%d setback_terraces=%d") % [
 			int(_spatial.audit.get("consecutive_floorplate_pair_count", 0)),
 			int(_spatial.audit.get(
@@ -193,7 +193,7 @@ func _ready() -> void:
 			int(_fabric.audit.get("flat_roof_count", 0)),
 			int(_fabric.audit.get("flat_roof_terrace_count", 0)),
 			int(_fabric.audit.get("bare_flat_roof_count", 0)),
-			int(_fabric.audit.get("setback_cap_unit_count", 0)),
+			int(_fabric.audit.get("setback_vocabulary_unit_count", 0)),
 			int(_fabric.audit.get("setback_lean_to_unit_count", 0)),
 			int(_fabric.audit.get("setback_macro_gable_unit_count", 0)),
 			int(_fabric.audit.get("setback_macro_gable_fallback_count", 0)),

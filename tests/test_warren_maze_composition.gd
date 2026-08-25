@@ -4559,6 +4559,24 @@ func test_corpus_composes() -> void:
 			("%s solved in %d ms against a %d ms ceiling; name the stage " \
 				+ "with tests/harness/warren_maze_stage_probe.gd before " \
 				+ "re-pinning") % [_label(outcome), int(outcome.ms), ceiling])
+		# TASK F3 FIX 1, IMPORTANT 3 -- the flat half of the retained-plinth
+		# pin. On FLAT ground no room stands on a neighbour's crown, so the
+		# subtraction task F3 added to `_retained_foundation_cells` must find
+		# nothing to drop; the one town where it does is the sloped
+		# `step/3/standard` row, pinned at exactly 6 in
+		# `test_sloped_ground_composes`. A non-zero here would mean the plot
+		# model started stacking rooms on roofs the source still calls
+		# terrain on flat input too, which is a design question and not a
+		# number to re-pin. The 24-town matrix cannot carry this: the sweep's
+		# per-town lines are held byte-identical against F2's record.
+		var corpus_fabric := (outcome.plan as WarrenSpatialPlan) \
+			.compiled_fabric_cache() if outcome.plan != null else null
+		if corpus_fabric != null:
+			assert_eq(int(corpus_fabric.audit.get(
+				"retained_foundation_built_in_cell_count", -1)), 0,
+				("%s dropped retained plinth cells for standing in built " \
+					+ "mass; on flat ground there is nothing to stand in") \
+					% _label(outcome))
 	_assert_stage_stamps_are_whole()
 	var summary := _corpus_sweep_summary()
 	if summary.is_empty():
@@ -4920,12 +4938,43 @@ func test_sloped_ground_composes() -> void:
 				{}) as Dictionary
 			skipped += int(counts.get("unproved_flank_column", 0))
 		unproved_flank_neighbours += skipped
+		# TASK F3 FIX 1, IMPORTANT 3. The retained channel may never claim a
+		# cell the fabric built in -- `SettlementFabricPlan
+		# .set_retained_terrace` refuses one, and since F3 that guard actually
+		# fires. The compiler keeps it from ever having to, by subtracting the
+		# built solid set from both plinth write sites, and
+		# `retained_foundation_built_in_cell_count` is how many cells that
+		# subtraction dropped.
+		#
+		# THIS ROW IS WHERE THE FACT LIVES. `step/3/standard` is the only town
+		# in any measured corpus where the number is not zero: six cells at
+		# band 4, inside `roof.flat.row` and `roof.flat.slim` -- houses 034 and
+		# 005's own crowns, under a terrain-bearing room at datum 5. It is
+		# deterministic, so it is pinned exactly rather than bounded: a
+		# different number here means the plot model changed which rooms stand
+		# on which neighbours' roofs, and that is a thing to look at rather
+		# than to re-pin quietly. The flat corpus rows are pinned at 0 in
+		# `test_corpus_composes`.
+		var built_in_cells := -1 if fabric == null \
+			else int(fabric.audit.get(
+				"retained_foundation_built_in_cell_count", -1))
+		assert_eq(built_in_cells, 6 if key == "step/3/standard" else 0,
+			("%s dropped %d retained plinth cells for standing in built " \
+				+ "mass; only step/3/standard does that, and it does it six " \
+				+ "times") % [key, built_in_cells])
+		var terrace_overlap := 0
+		if fabric != null:
+			var built_solid := fabric.transformed_cells(&"solid")
+			for terrace_value: Variant in fabric.retained_terrace_cells.keys():
+				terrace_overlap += int(built_solid.has(terrace_value))
+		assert_eq(terrace_overlap, 0,
+			"%s retains stone inside mass the fabric built" % key)
 		print(("MAZE_SLOPED_COMPOSE %s SEALED ms=%d relief=%d plots=%d " \
 			+ "frontage=%.3f unroomed=%.3f route_on_stone=%.3f " \
-			+ "unproved_flanks=%d holes=%s") % [
+			+ "unproved_flanks=%d built_in=%d holes=%s") % [
 			_label(outcome), int(outcome.ms), relief,
 			0 if source == null else source.plots.size(), frontage, share,
-			float(standing.get("share", -1.0)), skipped,
+			float(standing.get("share", -1.0)), skipped, built_in_cells,
 			str(standing.get("holes", {}))])
 		assert_gte(relief, 3,
 			("%s must stand on real relief; the fixture handed the massif " \
