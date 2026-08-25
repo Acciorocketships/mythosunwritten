@@ -4668,24 +4668,6 @@ static func _room_footprint(kind: StringName) -> Dictionary:
 			return {}
 
 
-static func _yaw_from_right(direction: Vector3i) -> int:
-	for yaw in 4:
-		if FabricRecipe.transform_direction(Vector3i.RIGHT, yaw) == direction:
-			return yaw
-	return -1
-
-
-static func _endpoint_key(cell: Vector3i, facing: Vector3i) -> String:
-	return "%d:%d:%d/%d:%d:%d" % [cell.x, cell.y, cell.z, facing.x,
-		facing.y, facing.z]
-
-
-static func _pair_key(left: StringName, right: StringName) -> String:
-	return "%s|%s" % [String(left), String(right)] \
-		if String(left) < String(right) else "%s|%s" % [String(right),
-			String(left)]
-
-
 static func _cell_less(a: Vector3i, b: Vector3i) -> bool:
 	if a.y != b.y:
 		return a.y < b.y
