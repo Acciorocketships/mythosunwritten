@@ -187,19 +187,55 @@ static func _contract_audit(profile: WarrenVillageScaleProfile) -> Dictionary:
 
 func test_quota_floors_relax_only_downward() -> void:
 	## TASK D2 REVIEW, IMPORTANT 2, restated for the one-pass pipeline (task
-	## F1). `_meets_quota_floor`'s three properties used to live only in a
+	## F1). The richness contract's three properties used to live only in a
 	## comment. A FLOOR a one-pass town falls short of is an audit fact rather
 	## than a refusal; a CEILING it exceeds is not a shortfall and stays hard;
 	## an ABSENT count is a broken transaction, not a shortfall, and fails.
+	##
+	## TASK F3. `_meets_quota_floor(measured, floor_value, advisory)` was
+	## called with a literal `true` at its only call site, which reduced it to
+	## `_quota_count_is_measured` -- "the count must be present". It is
+	## collapsed to that, and this test now walks EVERY relaxed floor rather
+	## than the landmark one alone, so the collapse is pinned by the whole set
+	## it applies to instead of by one representative.
 	var compact := WarrenVillageScaleProfile.for_id(
 		WarrenVillageScaleProfile.COMPACT)
-	var audit := _contract_audit(compact)
-	audit["prefab_landmark_count"] = 0
-	assert_true(VillageUrbanFabricPlan._scale_feature_contract_matches(audit),
-		"a one-pass town's landmark shortfall is an audit fact, not a refusal")
-	audit["prefab_landmark_count"] = compact.landmark_range.y + 1
-	assert_false(VillageUrbanFabricPlan._scale_feature_contract_matches(audit),
-		"an excess over the landmark ceiling was never a shortfall")
-	audit.erase("prefab_landmark_count")
-	assert_false(VillageUrbanFabricPlan._scale_feature_contract_matches(audit),
-		"an absent count is a broken transaction, not a shortfall")
+	assert_true(VillageUrbanFabricPlan._scale_feature_contract_matches(
+		_contract_audit(compact)),
+		"a town that meets every floor exactly must be accepted")
+	for relaxed_key: String in ["covered_market_count",
+			"prefab_landmark_count", "enclosed_skywalk_count",
+			"usable_balcony_count", "room_outcropping_count"]:
+		var audit := _contract_audit(compact)
+		audit[relaxed_key] = 0
+		assert_true(VillageUrbanFabricPlan._scale_feature_contract_matches(
+			audit),
+			"a one-pass town's %s shortfall is an audit fact, not a refusal" \
+				% relaxed_key)
+		audit.erase(relaxed_key)
+		assert_false(VillageUrbanFabricPlan._scale_feature_contract_matches(
+			audit),
+			"an absent %s is a broken transaction, not a shortfall" \
+				% relaxed_key)
+	# The ceilings beside those floors are untouched by the collapse.
+	for ceiling: Array in [["prefab_landmark_count",
+				compact.landmark_range.y + 1],
+			["enclosed_skywalk_count", compact.skywalk_range.y + 1],
+			["covered_market_count", 2]]:
+		var audit := _contract_audit(compact)
+		audit[String(ceiling[0])] = int(ceiling[1])
+		assert_false(VillageUrbanFabricPlan._scale_feature_contract_matches(
+			audit),
+			"an excess over the %s ceiling was never a shortfall" \
+				% String(ceiling[0]))
+	# The courtyard terms are NOT relaxed: they are the counts whose shortfall
+	# nothing publishes, which is the whole reason the relaxation stops there.
+	var large := WarrenVillageScaleProfile.for_id(
+		WarrenVillageScaleProfile.LARGE)
+	var courtyard_audit := _contract_audit(large)
+	assert_true(VillageUrbanFabricPlan._scale_feature_contract_matches(
+		courtyard_audit), "a large town meeting every floor must be accepted")
+	courtyard_audit["elevated_courtyard_count"] = 0
+	assert_false(VillageUrbanFabricPlan._scale_feature_contract_matches(
+		courtyard_audit),
+		"a missing courtyard has no published shortfall and stays hard")

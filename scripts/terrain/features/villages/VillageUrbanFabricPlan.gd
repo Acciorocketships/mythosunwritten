@@ -140,8 +140,8 @@ static func _scale_feature_contract_matches(audit: Dictionary) -> bool:
 		return false
 	# TASK D2 REVIEW, IMPORTANT 1. The elevated courtyard count and its two
 	# daylight and underbuilt column floors stay HARD, unlike
-	# the five floors below them. A relaxation is only honest where the
-	# shortfall is PUBLISHED: `covered_market`, `landmarks`, `skywalks` and
+	# the five richness floors below them. A relaxation is only honest where
+	# the shortfall is PUBLISHED: `covered_market`, `landmarks`, `skywalks` and
 	# `balconies` are keys the one-pass path really writes into
 	# `advisory_shortfalls`, and the room-outcropping floor is
 	# `cantilever_range.x`, which is `Vector2i.ZERO` on every profile today,
@@ -151,7 +151,17 @@ static func _scale_feature_contract_matches(audit: Dictionary) -> bool:
 	# and standard, which require no courtyard; LIVE on large and grand, which
 	# do. Give those towns a courtyard, or publish `courtyard_columns`
 	# shortfalls, and only then may these three join the advisory set.
-	var advisory := true
+	#
+	# TASK F3. The five relaxed floors are therefore not compared against
+	# anything, and this states them in prose rather than passing them to a
+	# predicate that discards them: `requires_covered_market` (one bazaar where
+	# the profile asks for one), `landmark_range.x`, `skywalk_range.x`,
+	# `balcony_range.x` and `cantilever_range.x`. `_meets_quota_floor` used to
+	# take each of them plus a literal `true`, which reduced it to "the count
+	# must be present" -- the same constant-argument shape task F1 deleted
+	# elsewhere, surviving only because it was directly tested. Collapsed to
+	# `_quota_count_is_measured`; the CEILINGS beside it are unchanged and stay
+	# hard.
 	return int(audit.get("elevated_courtyard_count", -1)) \
 			== int(profile.requires_elevated_courtyard) \
 		and (not profile.requires_elevated_courtyard \
@@ -162,44 +172,41 @@ static func _scale_feature_contract_matches(audit: Dictionary) -> bool:
 			or int(audit.get("courtyard_underbuilt_macro_column_count", 0)) \
 				>= WarrenElevatedFrontageSolver \
 					.MIN_COURTYARD_UNDERBUILT_COLUMNS) \
-		and _meets_quota_floor(int(audit.get("covered_market_count", -1)),
-			int(profile.requires_covered_market), advisory) \
+		and _quota_count_is_measured(
+			int(audit.get("covered_market_count", -1))) \
 		and int(audit.get("covered_market_count", -1)) <= 1 \
-		and _meets_quota_floor(int(audit.get("prefab_landmark_count", -1)),
-			profile.landmark_range.x, advisory) \
+		and _quota_count_is_measured(
+			int(audit.get("prefab_landmark_count", -1))) \
 		and int(audit.get("prefab_landmark_count", -1)) \
 			<= profile.landmark_range.y \
-		and _meets_quota_floor(int(audit.get("enclosed_skywalk_count", -1)),
-			profile.skywalk_range.x, advisory) \
+		and _quota_count_is_measured(
+			int(audit.get("enclosed_skywalk_count", -1))) \
 		and int(audit.get("enclosed_skywalk_count", -1)) \
 			<= profile.skywalk_range.y \
-		and _meets_quota_floor(int(audit.get("usable_balcony_count", -1)),
-			profile.balcony_range.x, advisory) \
-		and _meets_quota_floor(int(audit.get("room_outcropping_count", -1)),
-			profile.cantilever_range.x, advisory)
+		and _quota_count_is_measured(
+			int(audit.get("usable_balcony_count", -1))) \
+		and _quota_count_is_measured(
+			int(audit.get("room_outcropping_count", -1)))
 
 
-static func _meets_quota_floor(measured: int, floor_value: int,
-		advisory: bool) -> bool:
-	## A richness FLOOR on the sealed transaction. The count must always be
-	## present -- a negative reads as an ABSENT audit key, which is a broken
-	## transaction rather than a shortfall -- but falling short of the size
-	## profile's floor is a rejection only where a rejection buys another
-	## candidate. One-pass maze generation has no other candidate, so refusing
-	## a fully partitioned town here yields no village at all; the shortfall
-	## becomes the audit fact the town ships with. This is exactly the policy
-	## `WarrenTownSolver`'s class comment states and the composition, feature
-	## and spatial solvers already honour -- the production materialization
-	## contract was the last place still enforcing the searched mode's quotas
-	## against a one-pass town.
+static func _quota_count_is_measured(measured: int) -> bool:
+	## The surviving half of the richness FLOOR on the sealed transaction: the
+	## count must be PRESENT. A negative reads as an ABSENT audit key, which is
+	## a broken transaction rather than a shortfall, and fails here.
+	##
+	## Falling short of the size profile's floor is a rejection only where a
+	## rejection buys another candidate. One-pass maze generation has no other
+	## candidate, so refusing a fully partitioned town here yields no village
+	## at all; the shortfall becomes the audit fact the town ships with. This
+	## is exactly the policy `WarrenTownSolver`'s class comment states and the
+	## composition, feature and spatial solvers already honour -- the
+	## production materialization contract was the last place still enforcing
+	## the searched mode's quotas against a one-pass town.
 	##
 	## Ceilings stay hard in every mode: an excess is not a shortfall, and
-	## nothing here relaxes a STRUCTURAL rule. Only floors whose shortfall the
-	## maze path really PUBLISHES may call this with `advisory` true -- see the
-	## note above the courtyard terms in `_scale_feature_contract_matches`.
-	if measured < 0:
-		return false
-	return measured >= floor_value or advisory
+	## nothing here relaxes a STRUCTURAL rule. Which floors are relaxed, and
+	## why only those, is stated at the caller.
+	return measured >= 0
 
 
 func _validate_compiled_fabric(program: VillageProgram) -> bool:

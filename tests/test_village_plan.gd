@@ -75,7 +75,7 @@ func test_record_is_deterministic_sealed_and_reserves_each_accepted_lot() -> voi
 	assert_gt(int(audit.stair_count), 0)
 	# TASK F1. Richness quotas are audit FACTS on the one-pass path, not
 	# refusals -- the policy `WarrenTownSolver`'s class comment states and
-	# `VillageUrbanFabricPlan._meets_quota_floor` already honours.
+	# `VillageUrbanFabricPlan._quota_count_is_measured` already honours.
 	# The searched pipeline's floors (>= 1 link, >= 2 stalls) were the last
 	# place still enforcing them against a town that ships without either.
 	# The count must still be MEASURED; what it is, is reported.
