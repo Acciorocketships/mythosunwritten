@@ -4161,6 +4161,27 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 	var previous_bounds := _column_bounds(previous_columns)
 	var next_bounds := _column_bounds(next_columns)
 	var origin_y := (current.origin as Vector3i).y
+	# TASK F2, two hoists that depend only on the BLOCK.
+	#
+	# `records_diagnostic` is the one reason the counters below are observable
+	# at all: `last_variant_diagnostic` is written only for a block with an
+	# interface constraint, and so is `clearance_failures`. For every other
+	# block the counters are computed and thrown away, which is what makes it
+	# safe to skip origins that provably cannot bear (see the window below).
+	# A constrained block keeps the full enumeration and the full diagnostic.
+	#
+	# `constraints_are_free` is `_candidate_matches_constraints` answered once:
+	# with no expandable address, no endpoint constraint and no court contact,
+	# it returns true for every candidate, and it was being called ~3400 times
+	# per search to say so.
+	var records_diagnostic := _block_has_interface_constraint(current)
+	var constraints_are_free := not bool(current.get("address_expandable",
+			false)) \
+		and (current.get("feature_endpoint_constraints", []) as Array) \
+			.is_empty() \
+		and (current.get("court_contact_columns", {}) as Dictionary).is_empty()
+	var previous_maximum := previous_bounds.position + previous_bounds.size \
+		- Vector2i.ONE
 	for kind: StringName in ROOM_KINDS:
 		if not allow_tower_promotion and kind == &"tower" \
 				and StringName(current.kind) != &"tower":
@@ -4175,8 +4196,26 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 			var stamp_size := base_rect.size
 			var required_overlap := maxi(MIN_BEARING_OVERLAP_COLUMNS,
 				ceili(float(stamp_size.x * stamp_size.y) * 0.25))
-			for x in range(minimum.x - 4, maximum.x + 5):
-				for z in range(minimum.y - 4, maximum.y + 5):
+			var x_low := minimum.x - 4
+			var x_high := maximum.x + 4
+			var z_low := minimum.y - 4
+			var z_high := maximum.y + 4
+			if not records_diagnostic:
+				# A candidate is admitted only with `required_overlap` >= 2
+				# columns of bearing on the block below, so its rectangle must
+				# at least MEET the lower block's bounding box. Solving that
+				# for the origin gives this window; every origin outside it
+				# fails `lower_overlap < required_overlap` and appends nothing.
+				if previous_bounds.size.x <= 0:
+					continue
+				x_low = maxi(x_low, previous_bounds.position.x \
+					- base_rect.position.x - stamp_size.x + 1)
+				x_high = mini(x_high, previous_maximum.x - base_rect.position.x)
+				z_low = maxi(z_low, previous_bounds.position.y \
+					- base_rect.position.y - stamp_size.y + 1)
+				z_high = mini(z_high, previous_maximum.y - base_rect.position.y)
+			for x in range(x_low, x_high + 1):
+				for z in range(z_low, z_high + 1):
 					var stamp_position := base_rect.position + Vector2i(x, z)
 					if current_rect.size.x > 0 \
 							and current_rect.position == stamp_position \
@@ -4195,8 +4234,9 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 						continue
 					shape_count += 1
 					var origin := Vector3i(x, origin_y, z)
-					if not _candidate_matches_constraints(kind, origin, yaw,
-							current):
+					if not constraints_are_free \
+							and not _candidate_matches_constraints(kind,
+								origin, yaw, current):
 						continue
 					constraint_match_count += 1
 					var lower_overlap := _rect_intersection_size(stamp_position,
@@ -4219,7 +4259,7 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 							or not _new_projection_has_clearance(trial,
 								current_columns, protected_owners, claimed_cells,
 								{StringName(lineage_id): true}):
-						if _block_has_interface_constraint(current) \
+						if records_diagnostic \
 								and clearance_failures.size() < 6:
 							clearance_failures.append({"kind": kind,
 								"origin": origin, "yaw": yaw,
@@ -4266,7 +4306,7 @@ static func _volumetric_variant_stamp(grid: WarrenSpatialGrid,
 						"registered_facade_plane_count": int(
 							registration.registered_facade_plane_count),
 						"tie": tie})
-	if _block_has_interface_constraint(current):
+	if records_diagnostic:
 		last_variant_diagnostic["%s/%d" % [lineage_id, block_index]] = {
 			"shape_count": shape_count,
 			"constraint_match_count": constraint_match_count,
