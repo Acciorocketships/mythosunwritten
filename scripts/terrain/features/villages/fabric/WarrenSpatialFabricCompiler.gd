@@ -80,6 +80,31 @@ const FOUNDATION_MODULE_HEIGHT_BANDS := 2
 ## flat roof, and as retained terrace the assembler renders in stone -- so the
 ## name lives here and the dependency runs one way.
 const MAZE_RETAINED_STONE_ID := &"spatial.feature.maze_stone.00"
+## TASK H1. One building lineage in this many wears a masonry GROUND STOREY;
+## every other house is plank and plaster to its plinth course. See
+## `_takes_stone_base`. Raising it removes stone from the streetscape and
+## lowering it adds it back, and `exterior_wall_material_profile` is the
+## measurement that says which the town needs.
+const STONE_BASE_LINEAGE_MODULUS := 4
+## The two material families `exterior_wall_material_profile` sorts every
+## exterior wall face into. `_room_recipe_facade_family` answers with the
+## recipe's own vocabulary name -- `rock` for a terrain-bearing masonry base and
+## `stone` for the (now unselected) masonry upper storeys -- and both of those
+## are ashlar to a viewer, so the metric folds them together and calls
+## everything else timber.
+const STONE_WALL_FAMILIES: Array[StringName] = [&"rock", &"stone"]
+## Grid uses that make a room's lateral face an EXTERIOR wall face. A face onto
+## another room's private volume is a party wall the viewer never sees, and a
+## face onto structural volume is buried in retained rock or a neighbour's
+## construction; neither is a wall this metric may count.
+const EXTERIOR_WALL_NEIGHBOUR_USES: Array[int] = [
+	WarrenSpatialGrid.Use.OUTSIDE, WarrenSpatialGrid.Use.ALLOCATABLE,
+	WarrenSpatialGrid.Use.PUBLIC_AIR, WarrenSpatialGrid.Use.DAYLIGHT_AIR,
+]
+## The offset above a room's own local street datum at which a wall is no
+## longer any kind of base. Stone above it is the fortress the user rejected,
+## so the audit counts it separately and the suites pin it.
+const WALL_BASE_BAND_OFFSET := 1
 
 
 static func _trace_stage(stage: String, started_ms: int) -> int:
@@ -232,6 +257,11 @@ static func solve(source: WarrenSpatialPlan,
 		foundation_result.get("built_in_cell_count", 0))
 	lineage.merge(foundation_audit, true)
 	lineage.merge(stone_audit, true)
+	# TASK H1. The wall metric rides beside the rock metric, never instead of
+	# it: `stone_audit` above says how much MOUNTAIN shows, this says what the
+	# TOWN WEARS, and the two are read together.
+	lineage.merge(exterior_wall_material_profile(source, rooms, maze_source),
+		true)
 	lineage.merge(_maze_terrace_audit(result, roof_audit.get(
 		"maze_terrace_crown_unit_ids", []) as Array), true)
 	lineage.merge(volumes.audit(), true)
@@ -1035,6 +1065,200 @@ static func _plot_bands_at(maze_source: WarrenMazeSourcePlan,
 	return out
 
 
+## TASK H1. THE WALL METRIC. `maze_stone_band_profile` above measures what the
+## MASSIF is -- how much retained mountain shows and how high it stands. This
+## measures what the TOWN WEARS: every exterior wall face of every room unit,
+## sorted into the two material families a viewer can tell apart and bucketed by
+## the same band-offset-over-local-street-datum the rock metric uses, through the
+## same `WarrenMazeSourcePlan.nearest_datum_band` (reused, never re-derived, so
+## "how much stone" and "how high the stone stands" cannot disagree about where
+## the ground is).
+##
+## A wall FACE, not a wall MODULE: one lateral face of one room cell whose
+## neighbour is exterior air (`EXTERIOR_WALL_NEIGHBOUR_USES`). Party walls and
+## rock-buried faces are excluded because nobody sees them, which is the whole
+## point of a metric named after the eye. The count is therefore directly
+## comparable with the rock metric's face count rather than with a module tally
+## whose denominator depends on how a recipe happens to be cut up.
+##
+## SCOPE, stated so nothing hides. ROOM units only, because rooms are the mass a
+## viewer reads as the town. Two things are deliberately outside it and neither
+## is silently absorbed: the retained massif skin, which is not a wall anybody
+## chose and is measured by the `maze_stone_*` keys merged beside these ones and
+## printed on the same sweep row; and FEATURE units -- arcade overhang
+## foundations, the rising ring's `room.pier.base.rock` -- which are structural
+## supports, read as masonry legitimately, and are named here rather than
+## counted. `exterior_wall_unprofiled_unit_count` is the guard on the scope
+## itself: a room unit whose stamp this walk never reached. It is 0 by
+## construction and a non-zero is a defect, not a category.
+##
+## Also the base-coherence audit, because it needs the same enumeration.
+## `fragmented_base_run_count` is the user's named defect: along ONE building's
+## exterior face at one band, a stone run interrupted by a non-stone segment and
+## resumed. A neighbouring building in a different material is a SEAM, not a
+## fragment, so runs are cut at the lineage boundary. Openings cannot break a run
+## by construction -- a doorway cell wears its own family's authored door leaf --
+## so no opening exemption is needed and none is granted.
+static func exterior_wall_material_profile(source: WarrenSpatialPlan,
+		room_units: Array[FabricUnit],
+		maze_source: WarrenMazeSourcePlan) -> Dictionary:
+	var family_by_room_id: Dictionary = {}
+	var base_by_room_id: Dictionary = {}
+	for unit: FabricUnit in room_units:
+		var room_id := StringName(String(unit.stable_id).trim_prefix(
+			"spatial.fabric."))
+		family_by_room_id[room_id] = &"stone" \
+			if STONE_WALL_FAMILIES.has(_room_recipe_facade_family(
+				unit.recipe_id)) else &"timber"
+		base_by_room_id[room_id] = String(unit.recipe_id).contains(".base.")
+	var profiled_rooms: Dictionary = {}
+	var candidates_by_column: Dictionary = {}
+	var faces := 0
+	var stone_faces := 0
+	var off_datum_faces := 0
+	var high_stone_faces := 0
+	var stone_band_counts: Dictionary = {}
+	var timber_band_counts: Dictionary = {}
+	var min_offset := 0
+	var max_offset := 0
+	# {run key: {position along the run: is_stone}}. The key names the plane a
+	# run lies in AND the lineage that owns it, so a run never crosses a
+	# building seam.
+	var base_runs: Dictionary = {}
+	var grid := source.grid
+	for building: WarrenBuildingVolume in source.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if not family_by_room_id.has(room.stable_id):
+				continue
+			profiled_rooms[room.stable_id] = true
+			var stone := StringName(
+				family_by_room_id[room.stable_id]) == &"stone"
+			var is_base := bool(base_by_room_id[room.stable_id])
+			for cell: Vector3i in room.private_cells:
+				var column := Vector2i(_macro_of(cell.x), _macro_of(cell.z))
+				var on_massif := maze_source != null \
+					and maze_source.massif != null \
+					and maze_source.massif.has_column(column)
+				var offset := 0
+				if on_massif:
+					if not candidates_by_column.has(column):
+						candidates_by_column[column] = \
+							maze_source.public_datum_candidates(column)
+					offset = cell.y - WarrenMazeSourcePlan.nearest_datum_band(
+						candidates_by_column[column] as Dictionary, cell.y,
+						maze_source.massif.base_at(column))
+				for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+						Vector3i.FORWARD, Vector3i.BACK]:
+					if not EXTERIOR_WALL_NEIGHBOUR_USES.has(int(
+							grid.use_at(cell + direction))):
+						continue
+					if not on_massif:
+						faces += 1
+						stone_faces += int(stone)
+						off_datum_faces += 1
+						continue
+					min_offset = offset if faces == off_datum_faces \
+						else mini(min_offset, offset)
+					max_offset = offset if faces == off_datum_faces \
+						else maxi(max_offset, offset)
+					faces += 1
+					stone_faces += int(stone)
+					high_stone_faces += int(stone \
+						and offset > WALL_BASE_BAND_OFFSET)
+					var counts := stone_band_counts if stone \
+						else timber_band_counts
+					counts[offset] = int(counts.get(offset, 0)) + 1
+					if not is_base:
+						continue
+					# A face on +-X lies in a plane of constant X and its run
+					# extends along Z; a face on +-Z is the other way round. The
+					# key is the plane (lineage, facing, band, fixed axis) and
+					# the entry is the position ALONG the run.
+					var run_key := "%s|%d|%d|%d|%d" % [
+						String(room.source_parcel_id), direction.x, direction.z,
+						cell.y, cell.x if direction.x != 0 else cell.z]
+					var run := base_runs.get(run_key, {}) as Dictionary
+					run[cell.z if direction.x != 0 else cell.x] = stone
+					base_runs[run_key] = run
+	var fragmented := 0
+	var fragment_details: Array[Dictionary] = []
+	var run_keys: Array = base_runs.keys()
+	run_keys.sort()
+	for run_key_value: Variant in run_keys:
+		var run := base_runs[run_key_value] as Dictionary
+		var positions: Array = run.keys()
+		positions.sort()
+		# Split into MAXIMAL CONTIGUOUS stretches first: two stone segments with
+		# a gap of unbuilt columns between them are two faces of one building,
+		# not one interrupted face.
+		var stretches: Array[Array] = []
+		var stretch: Array[bool] = []
+		var previous := 0
+		for index in positions.size():
+			var position := int(positions[index])
+			if index > 0 and position != previous + 1:
+				stretches.append(stretch)
+				stretch = []
+			stretch.append(bool(run[position]))
+			previous = position
+		stretches.append(stretch)
+		for candidate: Array in stretches:
+			var materials: Array[bool] = []
+			materials.assign(candidate)
+			if not _run_is_fragmented(materials):
+				continue
+			fragmented += 1
+			if fragment_details.size() < 8:
+				fragment_details.append({"run": String(run_key_value),
+					"materials": _run_text(materials)})
+	var profiled := faces - off_datum_faces
+	return {
+		"exterior_wall_face_count": faces,
+		"exterior_wall_stone_face_count": stone_faces,
+		"exterior_wall_timber_face_count": faces - stone_faces,
+		"exterior_wall_stone_face_ratio": float(stone_faces) \
+			/ float(maxi(1, faces)),
+		"exterior_wall_profiled_face_count": profiled,
+		"exterior_wall_off_datum_face_count": off_datum_faces,
+		"exterior_wall_high_stone_face_count": high_stone_faces,
+		"exterior_wall_high_stone_face_ratio": float(high_stone_faces) \
+			/ float(maxi(1, profiled)),
+		"exterior_wall_stone_band_histogram": \
+			WarrenMazeSourcePlan.ascending_histogram(stone_band_counts),
+		"exterior_wall_timber_band_histogram": \
+			WarrenMazeSourcePlan.ascending_histogram(timber_band_counts),
+		"exterior_wall_min_band_offset": min_offset,
+		"exterior_wall_max_band_offset": max_offset,
+		"exterior_wall_unprofiled_unit_count": room_units.size() \
+			- profiled_rooms.size(),
+		"base_face_run_count": base_runs.size(),
+		"fragmented_base_run_count": fragmented,
+		"fragmented_base_run_details": fragment_details,
+	}
+
+
+static func _run_is_fragmented(run: Array[bool]) -> bool:
+	## Stone, then something else, then stone again, along one contiguous face
+	## of one building. The user's words: "the base is quite fragmented".
+	var seen_stone := false
+	var seen_gap := false
+	for stone: bool in run:
+		if stone:
+			if seen_gap:
+				return true
+			seen_stone = true
+		elif seen_stone:
+			seen_gap = true
+	return false
+
+
+static func _run_text(run: Array[bool]) -> String:
+	var out := ""
+	for stone: bool in run:
+		out += "S" if stone else "t"
+	return out
+
+
 static func _plinth_closes_band(plinths: Dictionary, face: Vector4i) -> bool:
 	## Does a building's plinth panel already close the band this stone face
 	## stands in? The panel hangs from the top of its own cell and is 3 m tall,
@@ -1201,6 +1425,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			rooms.append(room)
 			building_by_room[room.stable_id] = building.stable_id
 			room_by_id[room.stable_id] = room
+	var low_base_lineages := _low_base_lineages(source, rooms)
 	rooms.sort_custom(func(a: WarrenRoomStamp, b: WarrenRoomStamp) -> bool:
 		# A street-bridge room may meet a half-storey-staggered flank whose
 		# base sits one band above its own; ordering bridges one band late
@@ -1287,8 +1512,12 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		var on_retained_stone := _room_bears_on_retained_stone(source, program,
 			room, feature_portal_mask)
 		retained_stone_bearing_count += int(on_retained_stone)
+		# TASK H1. `chosen_material` -- this is the pass that decides what the
+		# town is built of, and the only one that does. Every reservation the
+		# pipeline made for this room, here and upstream, was measured against
+		# the wider masonry shell.
 		var recipe_id := _room_recipe_id(room, source.world_seed, true,
-			feature_portal_mask, on_retained_stone)
+			feature_portal_mask, on_retained_stone, true, low_base_lineages)
 		var desired_phase_b := _is_phase_b_recipe(recipe_id)
 		desired_phase_b_count += int(desired_phase_b)
 		var recipe := program.recipe(recipe_id)
@@ -1378,8 +1607,11 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		if not unit.is_valid():
 			last_failure = "room %s produced an invalid fabric unit" % room.stable_id
 			return [] as Array[FabricUnit]
+		# The flush fallback is the same wall in the same material, one phase
+		# plainer, so it takes `chosen_material` too: a demotion may not also be
+		# a change of material.
 		var fallback_id := _room_recipe_id(room, source.world_seed, false,
-			feature_portal_mask, on_retained_stone)
+			feature_portal_mask, on_retained_stone, true, low_base_lineages)
 		var fallback_recipe := program.recipe(fallback_id)
 		var feature_conflict := _room_feature_envelope_conflict(source,
 			program, room, recipe)
@@ -4827,7 +5059,31 @@ static func _room_bears_on_retained_stone(source: WarrenSpatialPlan,
 
 static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 		allow_phase_b: bool = true, feature_portal_mask: int = 0,
-		on_retained_stone: bool = false) -> StringName:
+		on_retained_stone: bool = false, chosen_material: bool = false,
+		low_base_lineages: Dictionary = {}) -> StringName:
+	## TASK H1. `chosen_material` separates the shell a room RESERVES from the
+	## shell it WEARS, and only `compile_room_units` -- the one pass that decides
+	## what the town is built of -- passes `true`.
+	##
+	## Every other caller (the volumetric solver's composition preflight and
+	## residual packing, the feature solver's balcony and skywalk siting, this
+	## file's own `_required_room_clearance`) asks this question to reserve
+	## SPACE, and a material choice may not reshuffle a bounded town search --
+	## the reason `_preserve_lpfv_prefab_clearance` exists. The authored masonry
+	## modules measure up to 3.085 m across and the authored timber modules
+	## exactly 3.000 m, so a ground storey that changes family shrinks its
+	## clearance box by up to 0.085 m. Left honest, that shrink admitted a
+	## balcony the sealed plan had refused and moved the grid signature of a town
+	## whose massing this task must not touch. With `chosen_material` false every
+	## such caller keeps reserving the WIDEST shell the room could take, which is
+	## the masonry one; the compiler then builds inside that reservation. Over-
+	## reserving is always safe. Under-reserving is what is not.
+	##
+	## `low_base_lineages` is the datum half of the same decision and is read
+	## only when `chosen_material` is true, which is why it can be a plain
+	## default: no reservation caller needs it, and passing it nowhere else
+	## keeps this a pure function of the stamp for all of them. See
+	## `_low_base_lineages`.
 	if not (room.audit.get("bridge_support_room_ids", []) as Array).is_empty():
 		# A street-bridge room keeps its ordinary unaddressed shell but swaps
 		# the bearing contract: normally two flank parents through span sockets;
@@ -4852,7 +5108,27 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 		# palette, because what carries it is that house, not the mountain.
 		# `on_retained_stone` is false on every legacy stamp, so the rock
 		# branch is byte-identical.
+		#
+		# TASK H1. Standing on rock is what LETS a ground storey be masonry; it
+		# is no longer what MAKES it. Every terrain-bearing room used to take
+		# `base.rock`, and since terrain bearing is "storey 0 with no stack
+		# parent" that was two thirds of every town's room units in ashlar --
+		# the fortress the user rejected. The choice is now two facts about the
+		# BUILDING, never about the wall: `_takes_stone_base` (a seeded
+		# minority) and `_low_base_lineages` (its ground storey really stands at
+		# street level). Both answer once per lineage, so a house that does wear
+		# a masonry ground storey wears it on every one of its ground rooms and
+		# the rest are plank and plaster to the pavement. What a mason would
+		# still build in stone regardless is untouched by this lever and reaches
+		# the frame through its own channels: the retained massif skin
+		# (`SettlementFabricAssembler.maze_stone_walls`), the retaining courses,
+		# and the authored foundation plinth every house stands on
+		# (`SettlementFabricAssembler.house_plinth_walls`).
 		var base_theme := "rock" if room.terrain_bearing \
+				and (not chosen_material \
+					or _takes_stone_base(room, world_seed) \
+						and bool(low_base_lineages.get(room.source_parcel_id,
+							true))) \
 			else String(_architectural_district_theme(room.lattice_origin,
 				world_seed))
 		var terrain_recipe := StringName("%s.base.%s%s" % [prefix, base_theme,
@@ -4864,12 +5140,19 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 			feature_portal_mask) if feature_portal_mask > 0 else terrain_recipe
 	var theme := String(_architectural_district_theme(room.lattice_origin,
 		world_seed))
-	# Some lineages carry a real two-storey masonry plinth above their terrain
-	# bearing room. This is a coherent building-level accent, not a random stone
-	# module sprinkled through otherwise timber storeys.
-	if room.source_storey_index <= 1 and posmod(Helper._mix64(world_seed \
-			^ room.lattice_origin.x * 73856093 \
-			^ room.lattice_origin.z * 19349663 ^ 0x4d41534f4e5259), 6) == 0:
+	# TASK H1. No upper storey the town WEARS is ever stone. What stood here was
+	# a 1-in-6 "masonry plinth accent" on storeys 0-1 hashed on the room's own
+	# LATTICE COLUMN rather than on its building -- so it landed on part of a
+	# facade and not on the rest of it, which is exactly the fragmented base the
+	# user named. Upper walls are plank and plaster; the ground storey decides
+	# its own material once per lineage above. The accent survives as the
+	# RESERVED shell only, for the reason `chosen_material` documents: the
+	# masonry module is the wider of the two and every space reservation in the
+	# pipeline was measured against it.
+	if not chosen_material and room.source_storey_index <= 1 \
+			and posmod(Helper._mix64(world_seed \
+				^ room.lattice_origin.x * 73856093 \
+				^ room.lattice_origin.z * 19349663 ^ 0x4d41534f4e5259), 6) == 0:
 		theme = "stone"
 	var addressed := ".address" if room.addressed else ""
 	# Alternate complete facade recipes by storey. The phase-B vocabulary uses a
@@ -4895,6 +5178,80 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 			base_recipe_id, room.address_door_phase)
 	return SettlementFabricProgram.feature_portal_recipe_id(base_recipe_id,
 		feature_portal_mask) if feature_portal_mask > 0 else base_recipe_id
+
+
+static func _low_base_lineages(source: WarrenSpatialPlan,
+		rooms: Array[WarrenRoomStamp]) -> Dictionary:
+	## TASK H1. STONE LOW. `{lineage id: its ground storey really stands at
+	## street level}`, over every terrain-bearing room the town has.
+	##
+	## The seeded minority in `_takes_stone_base` decides WHICH houses may wear
+	## masonry; this decides which houses are entitled to be asked. On a terraced
+	## massif a house can be terrain-bearing -- rooted in the mountain, storey 0,
+	## no stack parent -- and still stand many bands above the nearest public
+	## floor its datum radius can find. Clad that in ashlar and it reads as a
+	## keep on a crag, which is the fortress the user rejected however small its
+	## share of the town. A lineage qualifies only when EVERY one of its ground
+	## rooms sits within `WALL_BASE_BAND_OFFSET` of its own local street datum:
+	## one decision per house, as coherent as the material choice it gates.
+	##
+	## The datum is `WarrenMazeSourcePlan.nearest_datum_band` -- the same
+	## machinery `maze_stone_band_profile` and `exterior_wall_material_profile`
+	## read, never a second derivation -- so "how much stone" and "how high the
+	## stone stands" cannot disagree about where the ground is.
+	##
+	## Empty, meaning EVERY lineage qualifies, on a plan with no maze source: a
+	## legacy town has no massif to be terraced against and its behaviour must
+	## not depend on a datum that does not exist.
+	var out: Dictionary = {}
+	if source == null or source.source_volume == null:
+		return out
+	var maze_source := source.source_volume.mass_context.get(
+		&"maze_source_plan") as WarrenMazeSourcePlan
+	if maze_source == null or maze_source.massif == null:
+		return out
+	var candidates_by_column: Dictionary = {}
+	for room: WarrenRoomStamp in rooms:
+		if not room.terrain_bearing:
+			continue
+		var column := Vector2i(_macro_of(room.lattice_origin.x),
+			_macro_of(room.lattice_origin.z))
+		var low := true
+		if maze_source.massif.has_column(column):
+			if not candidates_by_column.has(column):
+				candidates_by_column[column] = \
+					maze_source.public_datum_candidates(column)
+			low = room.lattice_origin.y \
+				- WarrenMazeSourcePlan.nearest_datum_band(
+					candidates_by_column[column] as Dictionary,
+					room.lattice_origin.y,
+					maze_source.massif.base_at(column)) \
+				<= WALL_BASE_BAND_OFFSET
+		out[room.source_parcel_id] = low \
+			and bool(out.get(room.source_parcel_id, true))
+	return out
+
+
+static func _takes_stone_base(room: WarrenRoomStamp,
+		world_seed: int) -> bool:
+	## TASK H1. Does this building's GROUND STOREY wear masonry?
+	##
+	## Keyed on the building lineage exactly as `_building_style_index` is, and
+	## for the same reason: a material is a property of a house, not of a wall.
+	## Every terrain-bearing room of one lineage answers the same way whatever
+	## band, footprint kind or district it sits in, so a stone base runs the
+	## whole length of that building's face and stops at its neighbour's seam --
+	## coherent by construction rather than by a downstream repair pass. Two
+	## neighbouring buildings may differ; that is a seam, not a fragment, and
+	## `exterior_wall_material_profile` scores the difference accordingly.
+	##
+	## One lineage in `STONE_BASE_LINEAGE_MODULUS` takes it. The rest are plank
+	## and plaster down to their plinth course, which is the reference frame's
+	## reading: most houses timber to the pavement, some with a full masonry
+	## ground storey.
+	return posmod(Helper._mix64(world_seed \
+		^ String(room.source_parcel_id).hash() ^ 0x53544f4e45424153),
+		STONE_BASE_LINEAGE_MODULUS) == 0
 
 
 static func _building_style_index(room: WarrenRoomStamp,

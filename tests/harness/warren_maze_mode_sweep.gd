@@ -132,6 +132,14 @@ func _init() -> void:
 		CORPUS_STONE_GROUP: _new_stone_tally(),
 		ADDED_STONE_GROUP: _new_stone_tally(),
 	}
+	# TASK H1. The wall tally, accumulated in the same two groups and for the
+	# same reason: the corpus line is a number somebody will write down, so the
+	# scales that joined the matrix at F4 get their own tagged line rather than
+	# being folded into it.
+	var walls_by_group: Dictionary = {
+		CORPUS_STONE_GROUP: _new_wall_tally(),
+		ADDED_STONE_GROUP: _new_wall_tally(),
+	}
 	for city_seed: int in seeds:
 		for scale_id: StringName in scale_ids:
 			attempted += 1
@@ -197,6 +205,38 @@ func _init() -> void:
 							"maze_refused_unroomed_plot_trims", 0)),
 						str(fabric.audit.get(
 							"maze_stone_band_histogram", {}))])
+					# TASK H1. The WALL metric on its own row directly under the
+					# rock one, because they answer two different questions
+					# about the same frame and neither is the other: STONE is
+					# how much retained MOUNTAIN shows, WALLS is what the town
+					# WEARS. `frag` is the user's named base defect, pinned at
+					# zero.
+					_accumulate_walls(walls_by_group[group] as Dictionary,
+						fabric)
+					print(("SWEEP seed=%d scale=%s WALLS faces=%d stone=%d " \
+						+ "ratio=%.4f high_stone=%d high_ratio=%.4f " \
+						+ "off_datum=%d min=%d max=%d frag=%d/%d " \
+						+ "stone_bands=%s") % [city_seed,
+						String(profile.scale_id),
+						int(fabric.audit.get("exterior_wall_face_count", 0)),
+						int(fabric.audit.get(
+							"exterior_wall_stone_face_count", 0)),
+						float(fabric.audit.get(
+							"exterior_wall_stone_face_ratio", 0.0)),
+						int(fabric.audit.get(
+							"exterior_wall_high_stone_face_count", 0)),
+						float(fabric.audit.get(
+							"exterior_wall_high_stone_face_ratio", 0.0)),
+						int(fabric.audit.get(
+							"exterior_wall_off_datum_face_count", 0)),
+						int(fabric.audit.get(
+							"exterior_wall_min_band_offset", 0)),
+						int(fabric.audit.get(
+							"exterior_wall_max_band_offset", 0)),
+						int(fabric.audit.get("fragmented_base_run_count", 0)),
+						int(fabric.audit.get("base_face_run_count", 0)),
+						str(fabric.audit.get(
+							"exterior_wall_stone_band_histogram", {}))])
 				continue
 			var failure := WarrenVolumetricSolver.last_failure
 			rows.append({"seed": city_seed, "scale": String(profile.scale_id),
@@ -226,6 +266,10 @@ func _init() -> void:
 		stone_by_group[CORPUS_STONE_GROUP] as Dictionary)
 	_print_stone_result(ADDED_STONE_GROUP,
 		stone_by_group[ADDED_STONE_GROUP] as Dictionary)
+	_print_wall_result(CORPUS_STONE_GROUP,
+		walls_by_group[CORPUS_STONE_GROUP] as Dictionary)
+	_print_wall_result(ADDED_STONE_GROUP,
+		walls_by_group[ADDED_STONE_GROUP] as Dictionary)
 	_write_summary(seeds, scale_ids, rows, sealed_count, attempted, total_ms)
 	quit()
 
@@ -233,6 +277,29 @@ func _init() -> void:
 static func _new_stone_tally() -> Dictionary:
 	return {"towns": 0, "faces": 0, "high": 0, "plot_mass_high": 0,
 		"roof_high": 0, "unroomed_high": 0, "raised_high": 0, "max_offset": 0}
+
+
+static func _new_wall_tally() -> Dictionary:
+	return {"towns": 0, "faces": 0, "stone": 0, "high_stone": 0,
+		"off_datum": 0, "runs": 0, "fragmented": 0, "worst_ratio": 0.0,
+		"max_offset": 0}
+
+
+static func _accumulate_walls(tally: Dictionary,
+		fabric: SettlementFabricPlan) -> void:
+	tally.towns += 1
+	tally.faces += int(fabric.audit.get("exterior_wall_face_count", 0))
+	tally.stone += int(fabric.audit.get("exterior_wall_stone_face_count", 0))
+	tally.high_stone += int(fabric.audit.get(
+		"exterior_wall_high_stone_face_count", 0))
+	tally.off_datum += int(fabric.audit.get(
+		"exterior_wall_off_datum_face_count", 0))
+	tally.runs += int(fabric.audit.get("base_face_run_count", 0))
+	tally.fragmented += int(fabric.audit.get("fragmented_base_run_count", 0))
+	tally.worst_ratio = maxf(float(tally.worst_ratio), float(fabric.audit.get(
+		"exterior_wall_stone_face_ratio", 0.0)))
+	tally.max_offset = maxi(int(tally.max_offset), int(fabric.audit.get(
+		"exterior_wall_max_band_offset", 0)))
 
 
 static func _stone_group_of(scale_id: StringName) -> String:
@@ -274,6 +341,25 @@ func _print_stone_result(group: String, tally: Dictionary) -> void:
 		float(int(tally.high)) / float(maxi(1, int(tally.faces))),
 		int(tally.plot_mass_high), int(tally.roof_high),
 		int(tally.unroomed_high), int(tally.raised_high),
+		int(tally.max_offset)])
+
+
+func _print_wall_result(group: String, tally: Dictionary) -> void:
+	## TASK H1. One ratio over every exterior wall face in every town that
+	## compiled, not the mean of the per-town ratios, so a big town cannot be
+	## averaged away by a small one -- the same reading `_print_stone_result`
+	## takes of the rock skin. `worst_town_ratio` is beside it because a corpus
+	## mean can sit inside a ceiling while one town wears a fortress.
+	if int(tally.towns) == 0:
+		return
+	print(("SWEEP RESULT walls%s towns=%d faces=%d stone=%d " \
+		+ "corpus_ratio=%.4f worst_town_ratio=%.4f high_stone=%d " \
+		+ "off_datum=%d base_runs=%d fragmented=%d worst_max_offset=%d") % [
+		"" if group == CORPUS_STONE_GROUP else "/%s" % group,
+		int(tally.towns), int(tally.faces), int(tally.stone),
+		float(int(tally.stone)) / float(maxi(1, int(tally.faces))),
+		float(tally.worst_ratio), int(tally.high_stone),
+		int(tally.off_datum), int(tally.runs), int(tally.fragmented),
 		int(tally.max_offset)])
 
 

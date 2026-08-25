@@ -75,6 +75,103 @@ func test_building_lineages_deterministically_reach_all_segment_styles() -> void
 		"the segmentation assignment cannot reach every building style")
 
 
+func test_a_stone_base_is_one_decision_per_building_not_per_wall() -> void:
+	## TASK H1. The user's words were "the base is quite fragmented -- can we
+	## fix this in a systematic way?". The systematic fix is that the question
+	## is asked ONCE PER LINEAGE, so every ground room of one house answers the
+	## same way whatever band, footprint kind, yaw or district it sits in and a
+	## base course cannot break in the middle of a facade. Pinned here on the
+	## lever itself rather than only on the towns it produces.
+	var stone_lineages := 0
+	for index in 240:
+		var source_id := StringName("base.lineage.%d" % index)
+		var answers: Dictionary = {}
+		for variant in 6:
+			var room := WarrenRoomStamp.new(
+				StringName("ground.%d.%d" % [index, variant]), source_id,
+				[&"building", &"slim", &"tower", &"row", &"long",
+					&"building"][variant],
+				Vector3i(index * 2 + variant, variant * 2, -index + variant),
+				variant % 4, 0, true, variant % 2 == 0)
+			answers[WarrenSpatialFabricCompiler._takes_stone_base(room,
+				7007)] = true
+		assert_eq(answers.size(), 1,
+			("lineage %d disagreed with itself about its own base material " \
+				+ "-- that disagreement IS a fragmented base") % index)
+		stone_lineages += int(answers.has(true))
+	# Both answers must actually occur, or the lever is a constant wearing a
+	# hash: an all-timber town has no masonry where a mason would put it and an
+	# all-stone town is the fortress this task removed.
+	assert_gt(stone_lineages, 0, "no lineage ever takes a masonry ground storey")
+	assert_lt(stone_lineages, 240, "every lineage takes a masonry ground storey")
+	assert_almost_eq(float(stone_lineages) / 240.0,
+		1.0 / float(WarrenSpatialFabricCompiler.STONE_BASE_LINEAGE_MODULUS),
+		0.08, "the masonry minority drifted away from its declared rate")
+
+
+func test_the_fragmented_base_detector_can_actually_fire() -> void:
+	## `fragmented_base_run_count` is pinned at zero on every town, and a
+	## detector that reads zero because it cannot fire is worse than no detector
+	## at all. Driven here on the shapes it exists to tell apart.
+	for run: Dictionary in [
+		{"materials": [true, false, true], "fragmented": true,
+			"why": "stone, timber, stone -- the named defect"},
+		{"materials": [true, true, false, false, true], "fragmented": true,
+			"why": "a longer masonry run resumed after a timber gap"},
+		{"materials": [true, true, true], "fragmented": false,
+			"why": "a coherent masonry base"},
+		{"materials": [false, false, false], "fragmented": false,
+			"why": "an absent masonry base -- the other legal state"},
+		{"materials": [true, true, false, false], "fragmented": false,
+			"why": "masonry that stops once is a corner, not a fragment"},
+		{"materials": [false, true, true], "fragmented": false,
+			"why": "masonry that starts once is a corner, not a fragment"},
+		{"materials": [], "fragmented": false, "why": "an empty face"},
+	]:
+		var materials: Array[bool] = []
+		materials.assign(run.materials as Array)
+		assert_eq(WarrenSpatialFabricCompiler._run_is_fragmented(materials),
+			bool(run.fragmented), String(run.why))
+
+
+func test_no_storey_the_town_wears_is_clad_in_stone_above_its_base() -> void:
+	## TASK H1, the other half. Ashlar survives on a chosen shell only as a
+	## GROUND storey; every upper storey is plank and plaster. Swept over a wide
+	## lattice and every storey index the old masonry accent could reach.
+	var upper_stone := 0
+	var upper_rooms := 0
+	var ground_stone := 0
+	for world_seed: int in [0, 7, 91, 7007, 2697992464]:
+		for index in 64:
+			for storey in 4:
+				var source_id := StringName("upper.lineage.%d" % index)
+				var terrain_bearing := storey == 0
+				var room := WarrenRoomStamp.new(
+					StringName("room.%d.%d" % [index, storey]), source_id,
+					&"building", Vector3i(index * 3 - 96, storey * 2,
+						index - 32), 0, storey, terrain_bearing, false)
+				var chosen := WarrenSpatialFabricCompiler._room_recipe_id(room,
+					world_seed, true, 0, false, true)
+				var stone := WarrenSpatialFabricCompiler \
+					._room_recipe_facade_family(chosen) in [&"rock", &"stone"]
+				if terrain_bearing:
+					ground_stone += int(stone)
+					continue
+				upper_rooms += 1
+				upper_stone += int(stone)
+				# The RESERVED shell may still be masonry -- it is the wider of
+				# the two authored modules and every space reservation in the
+				# pipeline was measured against it (see `_room_recipe_id`).
+				# What may never be masonry is what the town wears.
+				assert_false(stone,
+					"%s clads an upper storey in ashlar" % chosen)
+	assert_eq(upper_stone, 0,
+		"%d of %d upper storeys still choose ashlar" % [upper_stone,
+			upper_rooms])
+	assert_gt(ground_stone, 0,
+		"removing the upper accent must not also delete the masonry plinth")
+
+
 func test_broad_roofs_keep_the_town_palette_cool_weighted() \
 		-> void:
 	var cool := 0

@@ -305,11 +305,12 @@ const UNROOMED_PLOT_MASS_CEILING := 0.33
 ## map and costing 9, 12 and 6 parcels per town), and the disagreement it was
 ## hiding is now visible and bounded: 3 / 4 / 1 on the three sealing seeds.
 ##
-## What such a house loses is its base PALETTE -- `_room_recipe_id` gives a
-## terrain-bearing room `base.rock` -- not its structure: the compiler's
-## `stone_borne` branch already refuses to lay a masonry course on another
-## house's roof. Closing it is the partial-stack seam, which is a planner-side
-## contract Phase E/F owns. Re-pin DOWNWARD only.
+## What such a house loses is its base PALETTE -- a terrain-bearing room may
+## take `base.rock` where `_room_recipe_id` gives one, and since task H1 only a
+## seeded minority of building lineages does, so the loss is smaller than it was
+## and never structural: the compiler's `stone_borne` branch already refuses to
+## lay a masonry course on another house's roof. Closing it is the partial-stack
+## seam, which is a planner-side contract Phase E/F owns. Re-pin DOWNWARD only.
 const UNROOTED_TERRAIN_BEARING_CEILING := 4
 
 ## Houses whose plot facts say they bear on rock AND that declare a validated
@@ -3872,6 +3873,163 @@ func test_retained_stone_concentrates_in_the_bottom_storeys() -> void:
 			("%s stands stone %d bands over its local street, past the " \
 				+ "pinned reach of %d") % [_label(outcome), derived_max_offset,
 				MAZE_STONE_MAX_BAND_OFFSET_CEILING])
+
+
+## TASK H1. THE WALL METRIC's two ceilings, beside E4's two teeth above. That
+## pair measures what the MASSIF is -- how much retained mountain shows and how
+## high it stands. This pair measures what the TOWN WEARS, which is the thing
+## the user was actually looking at when he called the town a fortress.
+##
+## Before H1 every terrain-bearing room -- "storey 0 with no stack parent",
+## which is most of a packed maze town -- took a `*.base.rock` ashlar shell, and
+## a 1-in-6 accent put masonry on upper storeys as well. Measured on the six
+## review towns 2026-08-25, ashlar was **59.3 %-71.0 %** of every exterior wall
+## face in the town. After H1 the ten towns measured on the same day read
+## **0.6 %-21.8 %**, worst 4/compact.
+##
+## A CEILING, re-pinned DOWNWARD only. Pinned above the worst of the four towns
+## THIS suite runs rather than at the corpus worst, because this suite only ever
+## sees these four; the sweep prints the other twenty and that print is the only
+## thing watching them.
+const EXTERIOR_WALL_STONE_CEILING := 0.24
+
+## THE SECOND TOOTH, the same shape argument E4's makes: a share alone says how
+## MUCH masonry there is and nothing about WHERE it stands, and masonry standing
+## high is the fortress read whatever its share. This is the fraction of profiled
+## wall faces that are ashlar more than `WALL_BASE_BAND_OFFSET` bands above their
+## own local street datum -- masonry that is no longer any kind of base.
+##
+## NOT ZERO, and honestly so. A masonry ground storey is two bands tall, so a
+## house whose floor sits one band over its street already has its top course
+## at offset 2 and counts here. What this ceiling forbids is the other thing:
+## a house standing several bands up a terrace and clad in ashlar, which reads
+## as a keep on a crag however small its share of the town. `_low_base_lineages`
+## refuses those outright, which is why the number is small rather than merely
+## bounded: measured 0.0000 / 0.0058 / 0.0088 / 0.0000 on the four towns here
+## and never above 0.0099 across the ten measured 2026-08-25, against
+## 0.0503-0.2029 on the six review towns before H1. Pinned with headroom over
+## the measured worst; a rise means masonry has started climbing again.
+const EXTERIOR_WALL_HIGH_STONE_CEILING := 0.02
+
+
+func test_exterior_walls_are_plank_and_plaster_over_coherent_bases() -> void:
+	## Falsified, not trusted: every face the audit claims is re-counted here off
+	## the sealed plan's own room stamps and grid, and the two must agree before
+	## either ceiling is asserted against them.
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		assert_not_null(fabric,
+			"%s must carry its compiled fabric" % _label(outcome))
+		if fabric == null:
+			continue
+		var family_by_room: Dictionary = {}
+		var upper_stone_recipes: Array[String] = []
+		var family_by_lineage: Dictionary = {}
+		for unit: FabricUnit in fabric.units:
+			var room_id := StringName(String(unit.stable_id).trim_prefix(
+				"spatial.fabric."))
+			if room_id == unit.stable_id:
+				continue
+			var family := WarrenSpatialFabricCompiler \
+				._room_recipe_facade_family(unit.recipe_id)
+			if family.is_empty():
+				continue
+			family_by_room[room_id] = family in [&"rock", &"stone"]
+			if String(unit.recipe_id).contains(".upper") \
+					and bool(family_by_room[room_id]) \
+					and upper_stone_recipes.size() < 8:
+				upper_stone_recipes.append(String(unit.recipe_id))
+		# TASK H1's coherence rule, re-derived from the sealed plan: one house,
+		# one ground material. This is what makes `fragmented_base_run_count`
+		# zero by construction rather than by luck, so it is asserted separately
+		# from the audit that counts the runs.
+		var faces := 0
+		var stone_faces := 0
+		for building: WarrenBuildingVolume in plan.buildings:
+			for room: WarrenRoomStamp in building.room_records:
+				if not family_by_room.has(room.stable_id):
+					continue
+				var stone := bool(family_by_room[room.stable_id])
+				if room.terrain_bearing:
+					var prior: Variant = family_by_lineage.get(
+						room.source_parcel_id)
+					assert_true(prior == null or bool(prior) == stone,
+						("%s: lineage %s built one ground storey in masonry " \
+							+ "and another in timber -- that is the " \
+							+ "fragmented base") % [_label(outcome),
+							String(room.source_parcel_id)])
+					family_by_lineage[room.source_parcel_id] = stone
+				for cell: Vector3i in room.private_cells:
+					for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+							Vector3i.FORWARD, Vector3i.BACK]:
+						if not WarrenSpatialFabricCompiler \
+								.EXTERIOR_WALL_NEIGHBOUR_USES.has(int(
+									plan.grid.use_at(cell + direction))):
+							continue
+						faces += 1
+						stone_faces += int(stone)
+		var audited_faces := int(fabric.audit.get(
+			"exterior_wall_face_count", -1))
+		var audited_stone := int(fabric.audit.get(
+			"exterior_wall_stone_face_count", -1))
+		var ratio := float(fabric.audit.get(
+			"exterior_wall_stone_face_ratio", 1.0))
+		var high_ratio := float(fabric.audit.get(
+			"exterior_wall_high_stone_face_ratio", 1.0))
+		var fragmented := int(fabric.audit.get(
+			"fragmented_base_run_count", -1))
+		print(("EXTERIOR_WALLS %s faces=%d stone=%d ratio=%.4f " \
+			+ "(ceiling %.2f) high=%d high_ratio=%.4f (ceiling %.2f) " \
+			+ "off_datum=%d base_runs=%d fragmented=%d") % [_label(outcome),
+			audited_faces, audited_stone, ratio, EXTERIOR_WALL_STONE_CEILING,
+			int(fabric.audit.get("exterior_wall_high_stone_face_count", -1)),
+			high_ratio, EXTERIOR_WALL_HIGH_STONE_CEILING,
+			int(fabric.audit.get("exterior_wall_off_datum_face_count", -1)),
+			int(fabric.audit.get("base_face_run_count", -1)), fragmented])
+		print("EXTERIOR_WALLS %s stone-per-band %s" % [_label(outcome),
+			str(fabric.audit.get("exterior_wall_stone_band_histogram", {}))])
+		print("EXTERIOR_WALLS %s timber-per-band %s" % [_label(outcome),
+			str(fabric.audit.get("exterior_wall_timber_band_histogram", {}))])
+		assert_gt(faces, 0,
+			"%s must expose exterior walls to profile" % _label(outcome))
+		assert_eq(audited_faces, faces,
+			"%s audited exterior wall face count" % _label(outcome))
+		assert_eq(audited_stone, stone_faces,
+			"%s audited ashlar wall face count" % _label(outcome))
+		assert_eq(int(fabric.audit.get("exterior_wall_unprofiled_unit_count",
+			-1)), 0,
+			"%s left a room unit outside the wall profile" % _label(outcome))
+		# The two histograms plus the off-datum tally must close over every face,
+		# or a bucket is quietly dropping walls the ceilings then never see.
+		var bucketed := int(fabric.audit.get(
+			"exterior_wall_off_datum_face_count", -1))
+		for histogram_key: StringName in [
+				&"exterior_wall_stone_band_histogram",
+				&"exterior_wall_timber_band_histogram"]:
+			for count_value: Variant in (fabric.audit.get(histogram_key,
+					{}) as Dictionary).values():
+				bucketed += int(count_value)
+		assert_eq(bucketed, faces,
+			"%s per-band histograms do not close over every wall face" \
+				% _label(outcome))
+		assert_eq(upper_stone_recipes, [] as Array[String],
+			"%s clads upper storeys in ashlar: %s" % [_label(outcome),
+				str(upper_stone_recipes)])
+		assert_eq(fragmented, 0,
+			("%s has %d stone base runs broken by a timber segment inside " \
+				+ "one building's own face: %s") % [_label(outcome), fragmented,
+				str(fabric.audit.get("fragmented_base_run_details", []))])
+		assert_lte(ratio, EXTERIOR_WALL_STONE_CEILING,
+			("%s: %.4f of every exterior wall face is ashlar, past the " \
+				+ "pinned ceiling -- the town is reading as a fortress again") \
+				% [_label(outcome), ratio])
+		assert_lte(high_ratio, EXTERIOR_WALL_HIGH_STONE_CEILING,
+			("%s: %.4f of the profiled wall faces are ashlar standing more " \
+				+ "than one band over their own local street, past the " \
+				+ "pinned ceiling") % [_label(outcome), high_ratio])
 
 
 ## TASK E4 FIX 1, prerequisite 2. Measured 2026-08-24 on the four planner
