@@ -430,8 +430,19 @@ F1's re-pointed suites exposed a family of gaps on the shipped one-pass town tha
 - Exit: every counter asserted against a direct scan; every diagnosis written with evidence; corpus 24/24; changed numbers re-pinned measured-first; the fingerprint refreshed.
 - [ ] Commit — `fix(villages): the reserved-but-unbuilt family — counters, dormers, the market`.
 
+### Task F4: Large and grand towns exist
+
+F3 measured the bill for a Phase D ruling whose precondition never arrived: the elevated-courtyard richness floors stayed HARD for large/grand "until Phase E gives large/grand maze towns a courtyard story" — Phase E closed without that story being tasked (controller omission), and the measured consequence is **0 of 12 seeds seal at large and 0 of 12 at grand** (14 of the 24 dying at the elevated-courtyard gate only those profiles require). ~15 % of production city seeds roll a size profile that has never produced a one-pass town; the searched pipeline used to seal them, so this is a real regression vs main living on this branch.
+
+**The flip:** the elevated-courtyard floors (elevated count, daylight/underbuilt columns) become ADVISORY for large/grand exactly as every other richness quota already is in one-pass mode — published `advisory_shortfalls`, hard in the test corpus at measured values, never a runtime rejection. A rejected town is strictly worse than a plain town: the same argument, from the same doc comment, that made the rest advisory. Structure stays fatal everywhere.
+
+**Then measure, and stop honestly:** re-run the 12 seeds at large and at grand. Tally per-seed outcomes: sealed, or the NEXT blocker by gate name. Pin sealed floors measured-first (they may be low — pin the truth). Extend the sweep matrix so large/grand stop being unexercised: add them to the sweep invocation (measure the wall-time cost first; if the full 4-scale matrix is unaffordable per-run, a reduced large/grand seed list is acceptable WITH the reduction printed in the summary). The compact/standard 24 must stay byte-identical (identity-probe attribution: the flip may not touch a sealing town). If large/grand still mostly refuse after the flip, DO NOT chase the cascade — report the tally and stop for controller triage.
+
+**G handoff:** the first sealed large/grand town joins G1's battery; "should big towns require elevated courtyards, and does the courtyard story get built" becomes a headline G2 question with the renders and the shortfall numbers beside it.
+- [ ] Commit — `fix(villages): large and grand towns exist — the courtyard floors go advisory`.
+
 ### Phase F exit
-- No `GENERATION_MODE` anywhere; full suite green with zero tolerated reds; corpus 24/24 with towns byte-identical through F1 and byte-identical through F2 (F3 changes only what its diagnoses prove defective, re-measured honestly); all four planner seeds ≤ 3 s; cold load measured in-game; line-count delta reported.
+- No `GENERATION_MODE` anywhere; full suite green with zero tolerated reds; corpus 24/24 with towns byte-identical through F1 and byte-identical through F2 (F3/F4 change only what their diagnoses prove defective or refused, re-measured honestly); compact planner seeds ≤ 3 s with production at 3.07 s and the residual routes documented (ruled: delivered in intent); every scale profile exercised by the sweep; line-count delta reported.
 
 # Phase G — Visual gate
 
