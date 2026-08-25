@@ -3721,24 +3721,36 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				collision_flattened_component_count + 1)
 		if pitched_preferred and full \
 				and not _touches_public_air(source.grid, face_cells):
-			# TASK C5d RULING 2 -- the seeded pitched preference, MEASURED.
+			# TASK C5d RULING 2, REWRITTEN BY TASK H2 FIX ROUND 1 (minor 6) --
+			# the pitched preference, MEASURED HERE AND NOWHERE ELSE.
 			#
-			# The plot model found this crown geometrically free: its plot top
-			# stands strictly above every 4-neighbour plot's top and every
-			# adjacent street band, so an authored eave has nothing to reach
-			# over. A pitched recipe is exactly the plot's own two-band roof
-			# reservation tall and sits at the same lattice datum the slab
-			# would, so a shell that lands here displaces no room and no
-			# neighbour.
+			# The old text said this crown had been found GEOMETRICALLY free --
+			# its plot top strictly above every 4-neighbour plot and street
+			# band, so an authored eave has nothing to reach over. That test no
+			# longer exists. Task H2 withdrew it (`WarrenMazeBlockPartitioner
+			# .plot_prefers_pitched_roof` asks one question now: is this crown
+			# FREE, meaning nothing stands on it and it carries no public
+			# realm), on the argument that an ESTIMATE in front of a
+			# MEASUREMENT can only refuse crowns the measurement would have
+			# allowed. So a preferred crown here may sit shoulder to shoulder
+			# with taller neighbours, and whether its shell really fits is
+			# decided below by `_unit_touches_public_air` against the real grid
+			# and by `probe.add_unit` against the real neighbours -- never
+			# assumed by this branch.
 			#
 			# The candidates are the ordinary finite full-roof set taken with
-			# an EMPTY neighbourhood proposal, because this stamp's own
-			# proposal says `flat_roof` and would return none. That is the
-			# right reading twice over: an eligible crown is by construction
-			# alone at the top of its block, so there is no joined campaign to
-			# belong to, and a refusal here can therefore never reach the
-			# atomic-neighbourhood retry. A refusal is an audit count and the
-			# slab below is the fallback -- never a rejection of the town.
+			# an EMPTY neighbourhood proposal, and a refusal here can never
+			# reach the atomic-neighbourhood retry. Both hold for one reason,
+			# and it is a mechanism rather than a geometry claim: every
+			# plot-flat crown had its own proposal FORCED to `flat_roof` with
+			# its `roof_junction_rules` emptied, and every neighbour's rule
+			# naming it dropped, at the top of this function. So this stamp's
+			# proposal would return no candidates at all, no neighbour has
+			# planned a join into it, and `requires_atomic_neighborhood` is
+			# false here by construction -- the retry above returned long
+			# before this branch could be reached. A refusal is an audit count
+			# (`maze_pitched_refused_count`) and the slab below is the
+			# fallback -- never a rejection of the town.
 			var preferred_candidates := _full_roof_candidates(room,
 				source.world_seed)
 			for preferred_index in preferred_candidates.size():
@@ -5994,6 +6006,19 @@ static func _maze_isolated_flat_crowns(room_by_id: Dictionary,
 	## the eye reads across a roofscape. A flat lineage with no crown neighbour
 	## at all is a house standing on its own and is not the sprinkle defect, so
 	## it does not count.
+	##
+	## FIX ROUND 1, MINOR 7 -- THE NEIGHBOUR READING IS APPROXIMATE WHERE
+	## CROWNS STACK, and saying so is cheaper than a caveat nobody can find
+	## later. `lineage_by_column` holds ONE lineage per column, so where two
+	## lineages crown the same column -- a house stacked on another house's
+	## shoulder, which this town does build -- the last one written wins and
+	## the other is invisible to its neighbours' lookups. The count is
+	## therefore a lower-ish estimate on stacked columns rather than an
+	## identity, which is why it is published as a watched CEILING
+	## (`ISOLATED_FLAT_CROWN_CEILING`) and not asserted against a
+	## re-derivation. `columns_by_lineage` is exact -- every lineage keeps all
+	## of its own columns -- so a lineage's own flat/pitched/mixed kind is
+	## never affected.
 	var out := {"count": 0, "flat_lineages": 0, "pitched_lineages": 0,
 		"details": [] as Array[Dictionary]}
 	var kinds: Dictionary = {}

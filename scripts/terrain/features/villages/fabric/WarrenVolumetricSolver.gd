@@ -1445,6 +1445,30 @@ static func _repair_stranded_release(grid: WarrenSpatialGrid,
 	## "this will be stone" leaves the release alone -- a room, a street, the
 	## sky and the heightfield's own ground are all either real support or no
 	## support to strand.
+	##
+	## FIX ROUND 1, IMPORTANT 2 -- THE TAKE-BACK IS ASKED THE SAME QUESTION IT
+	## ASKS OF THE CELL ABOVE. Round 1 tested only the cell ABOVE and then
+	## erased this one, which quietly assumed that un-releasing a cell makes it
+	## stone. It does not: `_retain_maze_rock` claims a cell only when the SAME
+	## predicate holds of the cell itself, so a take-back on a cell the trim
+	## already took, on one another feature reserved, on a carved street or on
+	## a band the source calls empty restored no support at all -- it only
+	## moved the cell out of `released_parapet_cells` and inflated the repair
+	## count with a repair that never happened. So the cell is taken back, the
+	## predicate is asked of it, and it is PUT BACK when the answer is no.
+	##
+	## The take-back is geometry-neutral by construction either way -- a cell
+	## that fails the predicate is one `_retain_maze_rock` would skip whether
+	## or not it sits in `released` -- so what this fix corrects is the
+	## HONESTY of the count and of the release total, and the descent below
+	## still stops for the right reason: the cell stays released, the cell
+	## under it therefore reads "not stone" above itself, and nothing further
+	## down is taken back for a support that will not be there.
+	##
+	## A stone cell left over a futile take-back is a strand this pass CANNOT
+	## repair, and it is measured rather than assumed away:
+	## `test_retained_stone_never_stands_over_released_air` reads 0 on all four
+	## planner towns and its ceiling is pinned at 0.
 	if released.is_empty() or source == null or source.massif == null:
 		return 0
 	var bands_by_column: Dictionary = {}
@@ -1469,6 +1493,10 @@ static func _repair_stranded_release(grid: WarrenSpatialGrid,
 					cell + Vector3i.UP):
 				continue
 			released.erase(cell)
+			if not _maze_cell_becomes_stone(grid, source, released, trim_cells,
+					cell):
+				released[cell] = true
+				continue
 			repaired += 1
 	return repaired
 
