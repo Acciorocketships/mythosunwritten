@@ -1780,6 +1780,27 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 		"refused_plot_trims": int(trim.refused)}
 
 
+## TASK E4 FIX 2 -- THE TRIM'S "NO FOOTPRINT COLUMN ANSWERED" SENTINEL, and it
+## is INT_MIN rather than -1 because a datum is legally NEGATIVE.
+##
+## Round 1 started `_maze_trimmed_plot_stone`'s per-plot datum at -1, took the
+## highest with `maxi`, and skipped the plot while the answer was still below
+## zero. Both halves were wrong on real ground, and wrong in the same place:
+## `VillageWarrenFabricSolver._sample_ground_bands` writes each column's band as
+## `ceili((surface_y - world_frame.origin.y) / VERTICAL_BAND_SIZE_M)`, so every
+## column whose terrain falls below the placement's own origin hands
+## `WarrenMassifBuilder` a negative base -- and `local_public_datum`'s terrain
+## fallback, plus any street standing on that terrain, is negative with it.
+## `maxi(-1, d)` clamped the real ground away and the `datum < 0` guard then
+## disabled the trim on the whole town, exactly where the terrain is real.
+##
+## Nothing in the flat corpus or the sloped fixtures can reach that town (every
+## `StampedGround` frame is non-negative by construction), which is why 24 towns
+## and four sloped rows never saw it; `test_the_stone_trim_reads_a_datum_below
+## _the_frame_origin` builds it directly.
+const UNANSWERED_PLOT_DATUM := -2147483648
+
+
 ## TASK E4 FIX 1 -- THE TRIM. The user's first binding direction, applied
 ## rather than only measured: a plot's retained stone is cut off two storeys
 ## above the public floor the plot itself stands on, so the quarry block a
@@ -1812,6 +1833,9 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 ##      sentence as refusal 1 with "a street" in place of "a plot".
 ##
 ## `{cells: {fine cell: true}, refused: int, trimmed_plots: int}`.
+##
+## The datum a plot cannot answer is `UNANSWERED_PLOT_DATUM` above, never -1 --
+## see there for why a real one is negative.
 static func _maze_trimmed_plot_stone(source: WarrenMazeSourcePlan,
 		route_floors: Array[Vector3i]) -> Dictionary:
 	var out: Dictionary = {}
@@ -1829,14 +1853,16 @@ static func _maze_trimmed_plot_stone(source: WarrenMazeSourcePlan,
 		var top_band := int(plot["top"])
 		var floor_band := int(plot["floor"])
 		var footprint: Array = plot["cells"]
-		var datum := -1
+		var datum := UNANSWERED_PLOT_DATUM
 		for cell_value: Variant in footprint:
 			var column := cell_value as Vector2i
 			datum = maxi(datum, source.local_public_datum(column,
 				source.lowest_plot_floor(column)))
+		if datum == UNANSWERED_PLOT_DATUM:
+			continue
 		var release_low := maxi(floor_band,
 			datum + WarrenMazeSourcePlan.LOW_STONE_BANDS + 2)
-		if datum < 0 or release_low >= top_band:
+		if release_low >= top_band:
 			continue
 		if _plot_trim_is_refused(source, plot, walked, release_low):
 			refused += 1

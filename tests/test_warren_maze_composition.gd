@@ -3670,10 +3670,20 @@ const MAZE_STONE_HIGH_FACE_CEILING := 0.16
 ## enough and there is nothing left to count. This pins the SHAPE instead:
 ## the highest band offset any exterior stone face reaches over its own local
 ## public floor, in bands (a storey is two). Measured-first, worst of the four
-## planner towns plus a two-band guard.
+## planner towns (7) plus a two-band guard.
 ##
 ## A CEILING like the ratio, and the two must be read together: the ratio says
 ## how much of the skin stands high, this says how high the worst of it gets.
+##
+## FIX 2 -- THE HEADROOM IS ZERO ON THE CORPUS, and this comment says so rather
+## than letting the two-band guard read as slack. This suite runs the FOUR
+## planner towns; the 24-town sweep reaches **9** bands (7/standard and
+## 10/standard, measured 2026-08-24), which is exactly this ceiling. So the
+## guard is headroom against the four towns here and none at all against the
+## corpus: the next town that stands stone one band higher sails past the
+## sweep's worst without this assertion firing, because this assertion never
+## sees it. The sweep prints `max=` per town and `worst_max_offset=` for the
+## corpus, and that print is the only thing watching the other twenty.
 const MAZE_STONE_MAX_BAND_OFFSET_CEILING := 9
 
 
@@ -3710,6 +3720,14 @@ func test_retained_stone_concentrates_in_the_bottom_storeys() -> void:
 		var on_plot_mass := 0
 		var on_roof_band := 0
 		var on_raised_shoulder := 0
+		# FIX 2. The reach and the grounded count are re-derived here too. The
+		# reach because the SECOND TOOTH below used to assert on the audit's own
+		# number with a `0` default, so a renamed or dropped key would have made
+		# it pass vacuously; the grounded count because it was print-only, and a
+		# counter nothing asserts on is a counter nothing protects.
+		var derived_max_offset := 0
+		var grounded := 0
+		var candidates_by_column: Dictionary = {}
 		var histogram: Dictionary = {}
 		var raised: Dictionary = {}
 		for column: Vector2i in maze_source.raised_shoulder_columns():
@@ -3722,6 +3740,13 @@ func test_retained_stone_concentrates_in_the_bottom_storeys() -> void:
 				continue
 			var offset := key.y - maze_source.local_public_datum(column, key.y)
 			var is_high := int(offset > WarrenMazeSourcePlan.LOW_STONE_BANDS)
+			if not candidates_by_column.has(column):
+				candidates_by_column[column] = \
+					maze_source.public_datum_candidates(column)
+			grounded += int((candidates_by_column[column] \
+				as Dictionary).is_empty())
+			derived_max_offset = offset if faces == 0 \
+				else maxi(derived_max_offset, offset)
 			var claimed := false
 			var roofed := false
 			for plot: Dictionary in maze_source.plots:
@@ -3749,7 +3774,11 @@ func test_retained_stone_concentrates_in_the_bottom_storeys() -> void:
 		var audited_high := int(fabric.audit.get(
 			"maze_stone_high_face_count", -1))
 		var ratio := float(fabric.audit.get("maze_stone_high_face_ratio", 1.0))
-		var max_offset := int(fabric.audit.get("maze_stone_max_band_offset", 0))
+		# FIX 2. `-1` and not `0`: the second tooth asserts on THIS number, and a
+		# default that is already inside the ceiling turns a missing key into a
+		# green test. The audit's reach is proved equal to the in-test one below,
+		# and the ceiling is asserted against the derivation.
+		var max_offset := int(fabric.audit.get("maze_stone_max_band_offset", -1))
 		print(("MAZE_STONE_BANDS %s faces=%d high=%d ratio=%.4f " \
 			+ "(ceiling %.2f) roof_band_high=%d unroomed_high=%d " \
 			+ "raised_shoulder_high=%d grounded=%d min=%d max=%d " \
@@ -3795,6 +3824,15 @@ func test_retained_stone_concentrates_in_the_bottom_storeys() -> void:
 		assert_eq(str(fabric.audit.get("maze_stone_band_histogram", {})),
 			str(WarrenMazeSourcePlan.ascending_histogram(histogram)),
 			"%s per-band histogram" % _label(outcome))
+		# FIX 2. The grounded counter is a fact about the datum RADIUS -- faces
+		# with no public floor inside it at all, read against bare terrain -- and
+		# concern 3 of the base report rests on it being watched. It was printed
+		# and nothing more; here it is derived from the source's own per-column
+		# candidate map and proved equal.
+		assert_eq(int(fabric.audit.get("maze_stone_grounded_face_count", -1)),
+			grounded,
+			("%s faces read against bare terrain rather than a public floor " \
+				+ "inside the datum radius") % _label(outcome))
 		assert_lte(ratio, MAZE_STONE_HIGH_FACE_CEILING,
 			("%s: %.4f of the rendered stone shell stands more than two " \
 				+ "storeys over its local street, past the pinned ceiling") \
@@ -3802,9 +3840,15 @@ func test_retained_stone_concentrates_in_the_bottom_storeys() -> void:
 		# THE SECOND TOOTH. A trim that collapsed the ratio by releasing
 		# everything would leave this free to climb; pinning both is what
 		# keeps the metric describing a SHAPE and not just a quantity.
-		assert_lte(max_offset, MAZE_STONE_MAX_BAND_OFFSET_CEILING,
+		#
+		# FIX 2. Asserted on the IN-TEST derivation, with the audit proved equal
+		# to it first, so the tooth cannot go vacuous on a key this file spells
+		# wrong or the compiler stops publishing.
+		assert_eq(max_offset, derived_max_offset,
+			"%s audited stone reach" % _label(outcome))
+		assert_lte(derived_max_offset, MAZE_STONE_MAX_BAND_OFFSET_CEILING,
 			("%s stands stone %d bands over its local street, past the " \
-				+ "pinned reach of %d") % [_label(outcome), max_offset,
+				+ "pinned reach of %d") % [_label(outcome), derived_max_offset,
 				MAZE_STONE_MAX_BAND_OFFSET_CEILING])
 
 
@@ -3890,6 +3934,91 @@ func test_the_stone_trim_refuses_to_strand_a_plot_or_a_street() -> void:
 		"a street below the release range may not block the trim")
 
 
+## TASK E4 FIX 2 -- THE DATUM SENTINEL, on the one town shape neither the flat
+## corpus nor the sloped fixtures can produce: ground BELOW the frame origin.
+##
+## `VillageWarrenFabricSolver._sample_ground_bands` writes each column's band as
+## `ceili((surface_y - world_frame.origin.y) / VERTICAL_BAND_SIZE_M)`, so a
+## column whose terrain falls below the placement's own origin hands
+## `WarrenMassifBuilder` a NEGATIVE base -- and `local_public_datum`'s terrain
+## fallback, plus any street standing on that terrain, is negative with it.
+## `StampedGround`'s frames are all non-negative by construction, so no fixture
+## in this file reaches that town and only a helper-level test can.
+##
+## Round 1 started the per-plot datum at -1 and took the highest with `maxi`,
+## then refused to trim while the answer was still negative. Both halves were
+## wrong for exactly this town: the clamp threw the real ground away, and the
+## guard -- meant to say "no footprint column answered" -- instead disabled the
+## trim wherever the ground is low, which is where the terrain is real.
+##
+## The assertion is the released BAND SET and not merely "something was
+## released", because that is what proves the negative datum was used as a
+## NUMBER: clamped to -1 the release is [5, 6), clamped to 0 it is empty, and
+## read honestly it is [datum + LOW_STONE_BANDS + 2, top).
+const SUNKEN_GROUND_BAND := -4
+const SUNKEN_PLOT_TOP := 6
+
+
+func test_the_stone_trim_reads_a_datum_below_the_frame_origin() -> void:
+	var profile := WarrenVillageScaleProfile.for_id(
+		WarrenVillageScaleProfile.COMPACT)
+	var columns: Dictionary = {}
+	for z in range(-2, 3):
+		for x in range(-2, 3):
+			columns[Vector2i(x, z)] = {
+				"base": SUNKEN_GROUND_BAND,
+				"top": SUNKEN_PLOT_TOP,
+				"terrace": SUNKEN_PLOT_TOP - SUNKEN_GROUND_BAND,
+			}
+	var massif := WarrenMassif.with_columns(4242, columns, SUNKEN_PLOT_TOP)
+	var source := WarrenMazeSourcePlan.new(4242, profile, massif,
+		WarrenExcavation.new(4242))
+	# A street standing on that sunken terrain, so the datum the trim reads is a
+	# real public floor and not only the terrain fallback.
+	source.passage_kinds[Vector3i(1, SUNKEN_GROUND_BAND, 0)] = \
+		WarrenMazeSourcePlan.PASSAGE_ALLEY
+	var planted := source.add_plot({
+		"id": &"sunken", "kind": WarrenMazeSourcePlan.PLOT_HOUSE,
+		"cells": [Vector2i.ZERO], "floor": SUNKEN_GROUND_BAND,
+		"top": SUNKEN_PLOT_TOP,
+		"door_walk": Vector3i(1, SUNKEN_GROUND_BAND, 0),
+		"building_id": &"building.sunken",
+	})
+	assert_true(planted, "the sunken plot must be legal: %s" \
+		% source.last_rejection)
+	if not planted:
+		return
+	var datum := source.local_public_datum(Vector2i.ZERO,
+		source.lowest_plot_floor(Vector2i.ZERO))
+	assert_eq(datum, SUNKEN_GROUND_BAND,
+		"the plot's own public floor stands below the frame origin")
+	assert_lt(datum, 0,
+		"the fixture must stand on ground below the frame origin to bite")
+	var trim := WarrenVolumetricSolver._maze_trimmed_plot_stone(source,
+		[] as Array[Vector3i])
+	assert_eq(int(trim["refused"]), 0,
+		"nothing stands over the sunken plot, so nothing may refuse")
+	assert_eq(int(trim["trimmed_plots"]), 1,
+		("a plot whose local street is below the frame origin must still be " \
+			+ "trimmed; a datum sentinel of -1 disables it silently"))
+	var released: Dictionary = {}
+	for cell_value: Variant in (trim["cells"] as Dictionary).keys():
+		released[(cell_value as Vector3i).y] = true
+	var bands: Array = released.keys()
+	bands.sort()
+	var expected: Array = []
+	for band in range(datum + WarrenMazeSourcePlan.LOW_STONE_BANDS + 2,
+			SUNKEN_PLOT_TOP):
+		expected.append(band)
+	assert_eq(str(bands), str(expected),
+		("the released head must start two storeys and a cap above the " \
+			+ "NEGATIVE datum, not above zero"))
+	# Four fine cells per macro column per band: the release is the plot's whole
+	# head, not a sample of it.
+	assert_eq((trim["cells"] as Dictionary).size(), expected.size() * 4,
+		"the release must take the plot's whole footprint at every band")
+
+
 func test_retained_stone_never_stands_over_released_air() -> void:
 	## THE TRIM'S OWN IDENTITY. `_maze_trimmed_plot_stone` releases a plot's
 	## retained head, and the one thing that must never follow is a retained
@@ -3906,9 +4035,17 @@ func test_retained_stone_never_stands_over_released_air() -> void:
 		if plan == null:
 			continue
 		var fabric := plan.compiled_fabric_cache()
-		var maze_source := _maze_source(plan)
 		assert_not_null(fabric,
 			"%s must carry its compiled fabric" % _label(outcome))
+		# FIX 2, the minor-6 pattern again: `_maze_source` dereferences
+		# `plan.source_volume`, which is OPTIONAL on a spatial plan (the
+		# compiler's own call site guards it), so this guards it here rather
+		# than crashing the suite on a plan that carries none.
+		assert_not_null(plan.source_volume,
+			"%s must carry its source volume" % _label(outcome))
+		if plan.source_volume == null:
+			continue
+		var maze_source := _maze_source(plan)
 		if fabric == null or maze_source == null \
 				or maze_source.massif == null:
 			continue

@@ -156,9 +156,19 @@ func _init() -> void:
 						"maze_stone_unroomed_high_face_count", 0))
 					stone_max_offset = maxi(stone_max_offset, int(
 						fabric.audit.get("maze_stone_max_band_offset", 0)))
+					# TASK E4 FIX 2. `trimmed=` carries BOTH halves of what the
+					# trim released. It used to print the unroomed half alone
+					# and so read `trimmed=0` on 4/compact, the town whose whole
+					# 80-cell release was roof band -- a row that said the trim
+					# had done nothing on a town where it did the most.
+					var trimmed_unroomed := int(plan.audit.get(
+						"maze_trimmed_unroomed_plot_stone_cells", 0))
+					var trimmed_roof := int(plan.audit.get(
+						"maze_trimmed_roof_band_stone_cells", 0))
 					print(("SWEEP seed=%d scale=%s STONE faces=%d high=%d " \
 						+ "ratio=%.4f roof_high=%d unroomed_high=%d " \
-						+ "raised_high=%d grounded=%d max=%d trimmed=%d " \
+						+ "raised_high=%d grounded=%d max=%d " \
+						+ "trimmed=%d (unroomed=%d roof=%d) " \
 						+ "refused_trims=%d bands=%s") % [city_seed,
 						String(profile.scale_id),
 						int(fabric.audit.get(
@@ -177,8 +187,8 @@ func _init() -> void:
 							"maze_stone_grounded_face_count", 0)),
 						int(fabric.audit.get(
 							"maze_stone_max_band_offset", 0)),
-						int(plan.audit.get(
-							"maze_trimmed_unroomed_plot_stone_cells", 0)),
+						trimmed_unroomed + trimmed_roof, trimmed_unroomed,
+						trimmed_roof,
 						int(plan.audit.get(
 							"maze_refused_unroomed_plot_trims", 0)),
 						str(fabric.audit.get(
