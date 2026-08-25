@@ -422,3 +422,18 @@ The ≤ 3 s target, attacked at the measured hotspot. C6's stage table (four pla
 # Phase G — Visual gate
 
 The M8-style battery (entrance, market, alleys both ways, courtyard, tunnel, skywalk/bridge, roofline, orbit) over the corpus, presented for the user's judgment against his three directions (stone low, clustered fall-off, variation/outcroppings). Originally scoped to run before F; the user's explicit ordering ("continue to C, D, E F, G") puts it after, and the branch stays unmerged until he reviews, so nothing F deletes is unrecoverable. G also carries the open questions ledgered for him: rail the trimmed stone plateaus or leave them as terraces; the outcropping/notch design conversation (carved-solid towns have no voids — oriel bays, street jetties and bridge rooms are the current equivalents); compact grade-2 terrace steps; the two flat-scaffold composition gates carried from Phase C if they still reproduce on the final corpus.
+
+### Task G1: The battery capture run
+
+**Seeds:** the production settlement (seed 2697992464, super (0,-1), settlement 29bc5c240c52f84a) captured IN-GAME; the two planner seeds 12/compact and 3/standard; and two noise-corpus seeds chosen from the sweep record for contrast (the highest-relief town and the flattest sealing town). Five towns total — the corpus is judged by its range, not by 24 near-duplicate albums.
+**Vantages per town (the M8 families):** entrance approach (eye level, outside → gate), market/deck plaza, one alley uphill + one downhill, a courtyard or the densest interior street, a tunnel/underpass if the town has one, a skywalk/bridge if present, the roofline from a neighbouring roof terrace, and a slow orbit set (4 compass overviews). GUI capture harnesses ONLY (never --headless for renders); `warren_spatial_review.tscn` with the post-F1 invocation for the fixture towns, the godot MCP run/teleport/screenshot loop for the in-game settlement.
+- Each capture named `<town>/<vantage>.png`; a contact sheet or index per town; captures the controller has actually READ (bad camera placements re-shot, not shipped — the E4 roof-campaign camera-inside-geometry miss is the cautionary example).
+- Alongside the captures, the numbers the images claim: the per-band stone histogram, terrace step histogram, variation counts (heights/pitched/balconies/oriels/jetties) for each captured town, pulled from the audits — the presentation pairs every judgment with its measurement.
+- [ ] Deliverable — capture tree + index under the SDD directory (gitignored), report listing every capture with a one-line read.
+
+### Task G2: The presentation and the stop
+
+Controller work, not a subagent dispatch: assemble the battery into one review deliverable for the user — organized by his three directions (each with its best supporting and worst offending captures + the measured numbers), then the open questions (each framed as a decision with the render that motivates it: plateau railings; outcropping/notch design; compact grade-2 steps; any surviving composition gates), then the branch state (phases done, corpus/suite state, solve times, line-count delta). End with the full Rulings list per the SDD skill and the finishing-a-development-branch flow — the merge decision is the user's; STOP and wait.
+
+### Phase G exit
+- The user has seen the battery and rendered judgment; his verdicts are ledgered; follow-up work (if any) is scoped into a new plan rather than grafted onto this one.
