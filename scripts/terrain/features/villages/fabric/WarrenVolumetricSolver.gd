@@ -1954,11 +1954,20 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	#
 	# (c) A marketless compact town is honest. `WarrenVillageScaleProfile`
 	# gives compact and standard `requires_covered_market = false`; only large
-	# and grand require a bazaar, and neither scale seals a single town of the
-	# 12-seed corpus. Five of the 24 corpus towns do build one (2/standard,
-	# 6/compact, 6/standard, 7/standard, 8/compact), so market-ness is
-	# reachable rather than dead -- this settlement is one of the nineteen that
-	# ship without, and it says so.
+	# and grand require a bazaar. Five of the 24 corpus towns do build one
+	# (2/standard, 6/compact, 6/standard, 7/standard, 8/compact), so
+	# market-ness is reachable rather than dead -- this settlement is one of the
+	# nineteen that ship without, and it says so.
+	#
+	# TASK F4 corrected "and neither scale seals a single town of the 12-seed
+	# corpus", which was true when it was written and is not now: large seals 3
+	# of 12 and grand 1 of 12, and ALL FOUR build the bazaar their profile
+	# requires. The `covered_market = 0` shortfall published at :1863 is
+	# consequently still unreachable in practice at those scales -- not because
+	# the market always fits, but because a large or grand town whose market
+	# never preplans is rejected by `WarrenSpatialFeatureSolver.solve`'s
+	# `requires_covered_market` arm before it can ship the shortfall. That
+	# contradiction costs 7 of the 12 large seeds and is task F4's handoff.
 	#
 	# Court/landmark/skywalk counts are richness — a shortfall is recorded and
 	# the town ships plainer rather than not at all.
@@ -2242,10 +2251,20 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	var composed_court_side_count := _side_mask_count(composed_court_side_mask)
 	if requires_courtyard and composed_court_side_count \
 			< WarrenSpatialFeatureSolver.MIN_COURT_SIDE_COUNT:
-		last_failure = ("3D room composition preserves only %d courtyard " \
-			+ "sides (mask=%d)") % [composed_court_side_count,
-				composed_court_side_mask]
-		return {}
+		# TASK F4. The last HARD richness floor in the pipeline, and the one that
+		# refused 14 of the 24 large/grand corpus solves — every one of them at
+		# `mask=0`, which is not a court that composed too small but a town the
+		# hero beam gave no court at all (that case already publishes
+		# `courtyard_bridges`). A rejection here buys no other candidate:
+		# one-pass generation has nothing else to try, so refusing yields no town
+		# rather than a better one. The composed side count becomes the audit
+		# fact a plainer town ships with, exactly as every other richness quota
+		# already does, and the two counts below stay in the audit for a reader
+		# who wants the shape as well as the shortfall.
+		last_advisory_shortfalls["composed_courtyard_sides"] = \
+			composed_court_side_count
+		last_advisory_shortfalls["composed_courtyard_sides_target"] = \
+			WarrenSpatialFeatureSolver.MIN_COURT_SIDE_COUNT
 	var composition_audit := composition.audit as Dictionary
 	# What became of every asset plot the one-pass source placed: a prefab
 	# landmark, or a named reason it could not be one. Maze mode only; a
@@ -3762,18 +3781,21 @@ static func _market_open_horizon_limit(volume: WarrenVolumePlan) -> int:
 	##
 	## TASK F3 MEMBER 3 -- ALL FOUR SCALES, CHECKED. The compact and standard
 	## branches are the measured ones; see `MAX_MARKET_OPEN_HORIZON_CELLS` for
-	## why 4 stays. The other two arms are UNEXERCISED and cannot be tuned
-	## against anything: no large or grand town seals. Measured 2026-08-25 over
-	## the same 12 seeds the corpus uses, 0 of 12 sealed at large and 0 of 12 at
-	## grand: 14 of the 24 died at the elevated-courtyard gate those two
-	## profiles are the only ones to require (`3D room composition preserves
-	## only 0 courtyard sides`), 5 at the route-slab gate, 3 at the
-	## straight-run cap and 2 at the court cantilever. So 8 and 10 have never
-	## judged a candidate, and note that
-	## `GRAND_MARKET_OPEN_HORIZON_CELLS` equals the sight ray's own bound, which
-	## makes the grand arm no constraint at all rather than a loose one.
-	## Whether large and grand should seal is Phase G's question, and it comes
-	## before their bazaar's horizon does.
+	## why 4 stays. The other two arms were UNEXERCISED when F3 measured them,
+	## because 0 of 12 seeds sealed at large and 0 of 12 at grand -- 14 of the 24
+	## died at the elevated-courtyard gate those two profiles are the only ones
+	## to require, 5 at the route-slab gate, 3 at the straight-run cap and 2 at
+	## the court cantilever.
+	##
+	## TASK F4 made that gate advisory and re-measured on the same 12 seeds:
+	## large seals 3 of 12 (4, 6, 7) and grand 1 of 12 (9), and all four build a
+	## bazaar. So these two arms have now judged candidates -- four towns' worth,
+	## which is a measurement but not yet a corpus, and still not enough to TUNE
+	## either constant against. Note that `GRAND_MARKET_OPEN_HORIZON_CELLS`
+	## equals the sight ray's own bound, which makes the grand arm no constraint
+	## at all rather than a loose one. The 7 large seeds that now die at
+	## `requires_covered_market` are the reason to look here again, and they die
+	## in `WarrenSpatialFeatureSolver`, not at this horizon.
 	var profile := _scale_profile_for_volume(volume)
 	if profile == null:
 		return MAX_MARKET_OPEN_HORIZON_CELLS
@@ -3958,10 +3980,15 @@ static func _protected_owners_with_courtyard_bridge(
 
 
 static func _absent_courtyard_bridge_candidate() -> Dictionary:
-	## Sentinel used only by profiles where the 6 x 6 m threaded upper court is
-	## not a size invariant. It lets the market/landmark/skywalk joint beam retain
-	## one code path while reserving no cells, moving no rooms, and compiling no
-	## feature. Large and grand profiles never receive this candidate.
+	## Sentinel for a town with no upper court. It lets the market/landmark/
+	## skywalk joint beam retain one code path while reserving no cells, moving
+	## no rooms, and compiling no feature.
+	##
+	## TASK F4 corrected the last sentence, which read "Large and grand profiles
+	## never receive this candidate": `_maze_court_selection` falls back to
+	## exactly this candidate for a large or grand town whose cantilever search
+	## comes back empty, publishing `courtyard_bridges` as it does. That is the
+	## normal outcome on the whole 12-seed corpus, not an impossible one.
 	return {
 		"optional_absent": true,
 		"reservation": {

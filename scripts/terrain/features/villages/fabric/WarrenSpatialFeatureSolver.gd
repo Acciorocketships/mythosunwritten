@@ -138,6 +138,18 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 			return [] as Array[WarrenFeatureReservation]
 		out.append(market)
 	elif scale_profile.requires_covered_market:
+		# TASK F4, REPORTED NOT FIXED (the task's no-cascade-chasing fence).
+		# `WarrenVolumetricSolver._partition_rooms` deleted the matching
+		# rejection at its own market stage and wrote in its place: "A required
+		# market that never preplans now ships as a published `covered_market`
+		# shortfall." This line is that promise unkept -- the solver publishes
+		# the shortfall and continues, and the town dies here instead, one stage
+		# later. Nobody could see it until F4 made the elevated-courtyard floors
+		# advisory, because no large or grand town had ever reached this
+		# function. It costs 7 of the 12 large corpus seeds and is the single
+		# largest remaining blocker at that scale. Closing it is a decision about
+		# whether a required bazaar is a floor or a quota, which is the
+		# controller's to make, not a fix to slip in behind a courtyard task.
 		last_failure = "required covered market was never preplanned"
 		return [] as Array[WarrenFeatureReservation]
 	var gateway_records := composition_audit.get(
@@ -212,23 +224,57 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		WarrenVolumetricSolver.last_advisory_shortfalls["skywalks_target"] = \
 			target_skywalks
 	out.append_array(skywalks)
+	# TASK F4. A court the town never got is richness; a court it DID get and
+	# then cannot commit is a broken transaction. The split is the ABSENT
+	# SENTINEL, which reaches here as a reservation with no owner parcel:
+	# `WarrenVolumetricSolver._absent_courtyard_bridge_candidate` is its only
+	# producer, and the beam publishes `courtyard_bridges` at the same moment it
+	# falls back to it. This used to reject that same town a second time with
+	# "courtyard bridge house lacks one source endpoint". The sentinel is not
+	# simply `{}` because `_maze_dressed_court_candidate` stamps the courtyard
+	# feature id onto every court reservation including this one; normalizing it
+	# to an empty dictionary in the beam would change the audit of every compact
+	# and standard town, which is not this task's to change.
+	#
+	# Every gate INSIDE the reservation — the exact room endpoint, the body's
+	# start outside its room, the lower public street, the grid transaction — is
+	# unchanged and still fatal, as is a malformed record with more than one
+	# owner.
 	var courtyard_bridge: WarrenFeatureReservation
 	if scale_profile.requires_elevated_courtyard:
-		courtyard_bridge = _reserve_preplanned_courtyard_bridge_house(grid,
-			buildings, supports, preplanned_courtyard_bridge)
-		if courtyard_bridge == null:
-			return [] as Array[WarrenFeatureReservation]
-		out.append(courtyard_bridge)
+		if (preplanned_courtyard_bridge.get("owner_parcel_ids", []) \
+				as Array).is_empty():
+			WarrenVolumetricSolver.last_advisory_shortfalls[
+				"courtyard_bridge_houses"] = 0
+		else:
+			courtyard_bridge = _reserve_preplanned_courtyard_bridge_house(grid,
+				buildings, supports, preplanned_courtyard_bridge)
+			if courtyard_bridge == null:
+				return [] as Array[WarrenFeatureReservation]
+			out.append(courtyard_bridge)
 	# The court transaction sees the cantilever's actual committed
 	# PRIVATE_VOLUME. It never counts its endpoint, clearance envelope, or visual
 	# mesh as an enclosing facade, and the three ordinary skywalks remain fully
 	# independent circulation features elsewhere in the mountain.
+	# TASK F4, same split as the bridge house above. The maze source authors no
+	# `courtyard_cells` at all — that vocabulary belongs to
+	# `WarrenElevatedFrontageSolver`, which the one-pass pipeline does not run —
+	# so on every large/grand maze town this reservation could only ever fail its
+	# first check with "elevated court is smaller than the required 6 x 6 m". A
+	# town whose source authored NO court publishes the shortfall and ships
+	# courtless; an AUTHORED court that fails any of the coplanarity, headroom,
+	# datum, daylight, underbuilt-support, side-address or reservation gates
+	# inside `_reserve_courtyard` is still fatal, and those gates are untouched.
 	var court: WarrenFeatureReservation
 	if scale_profile.requires_elevated_courtyard:
-		court = _reserve_courtyard(grid, source, buildings, supports)
-		if court == null:
-			return [] as Array[WarrenFeatureReservation]
-		out.append(court)
+		if source.courtyard_cells.is_empty():
+			WarrenVolumetricSolver.last_advisory_shortfalls[
+				"elevated_courtyards"] = 0
+		else:
+			court = _reserve_courtyard(grid, source, buildings, supports)
+			if court == null:
+				return [] as Array[WarrenFeatureReservation]
+			out.append(court)
 	room_overhang_supports = _reserve_room_overhang_supports(grid,
 		buildings, supports, construction_program, out, source.world_seed)
 	if not last_failure.is_empty():
@@ -367,8 +413,12 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	var facade_bay_diagnostic := last_annex_diagnostic.duplicate(true)
 	out.append_array(facade_bays)
 	last_audit = {
-		"elevated_courtyard_count": int(
-			scale_profile.requires_elevated_courtyard),
+		# TASK F4: what the town HAS, not what its profile asked for. These two
+		# read `int(scale_profile.requires_elevated_courtyard)` while the two
+		# reservations above were fatal, so the equality held by construction;
+		# now that a courtless large town ships with a published shortfall, an
+		# audit that still claimed one would be the only place the town lies.
+		"elevated_courtyard_count": int(court != null),
 		"covered_market_count": int(market != null),
 		"frontier_gateway_support_count": gateway_supports.size(),
 		"arcade_overhang_support_count": arcade_overhang_supports.size(),
@@ -377,8 +427,7 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 			gateway_resolution.get("direct_bearing_count", 0)),
 		"prefab_landmark_count": landmarks.size(),
 		"enclosed_skywalk_count": skywalks.size(),
-		"courtyard_bridge_house_count": int(
-			scale_profile.requires_elevated_courtyard),
+		"courtyard_bridge_house_count": int(courtyard_bridge != null),
 		"tower_annex_count": tower_annexes.size(),
 		"tower_annex_source_count": tower_annex_targets.size(),
 		"tower_annex_relief_unit_count": tower_annex_relief_units,

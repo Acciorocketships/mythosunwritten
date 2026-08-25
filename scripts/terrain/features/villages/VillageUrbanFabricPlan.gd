@@ -138,19 +138,24 @@ static func _scale_feature_contract_matches(audit: Dictionary) -> bool:
 	if profile == null or String(audit.get("scale_profile_signature", "")) \
 			!= profile.deterministic_signature():
 		return false
-	# TASK D2 REVIEW, IMPORTANT 1. The elevated courtyard count and its two
-	# daylight and underbuilt column floors stay HARD, unlike
-	# the five richness floors below them. A relaxation is only honest where
-	# the shortfall is PUBLISHED: `covered_market`, `landmarks`, `skywalks` and
-	# `balconies` are keys the one-pass path really writes into
-	# `advisory_shortfalls`, and the room-outcropping floor is
-	# `cantilever_range.x`, which is `Vector2i.ZERO` on every profile today,
-	# so relaxing it changes nothing until a profile asks for a cantilever.
-	# The courtyard has no such key, so relaxing it would drop a town's
-	# missing courtyard on the floor instead of reporting it. Inert on compact
-	# and standard, which require no courtyard; LIVE on large and grand, which
-	# do. Give those towns a courtyard, or publish `courtyard_columns`
-	# shortfalls, and only then may these three join the advisory set.
+	# TASK D2 REVIEW, IMPORTANT 1, SUPERSEDED BY TASK F4. The courtyard count and
+	# its two column floors stayed HARD on the condition that the shortfall was
+	# not PUBLISHED anywhere — "give those towns a courtyard, or publish the
+	# shortfalls, and only then may these three join the advisory set" — under a
+	# Phase E courtyard story that was never tasked. Task F3 measured the bill:
+	# 0 of 12 seeds sealed at large and 0 of 12 at grand, 14 of the 24 refused by
+	# the courtyard family alone, which is ~15 % of production city seeds
+	# producing no town at all. Task F4 met the stated condition instead of
+	# waiting: `composed_courtyard_sides`, `courtyard_bridge_houses` and
+	# `elevated_courtyards` are now real `advisory_shortfalls` keys, so the three
+	# terms join the advisory set on their own original terms. Re-measured after
+	# the flip: large seals 3 of 12 and grand 1 of 12, and every sealed one of
+	# them arrives here courtless.
+	#
+	# What stays hard here is the CEILING — a compact town that somehow carried a
+	# court would still be a town promoted past its own size contract — and both
+	# column floors on a town that actually HAS a court, where they are
+	# measurements of a real thing rather than of an absence.
 	#
 	# TASK F3. The five relaxed floors are therefore not compared against
 	# anything, and this states them in prose rather than passing them to a
@@ -162,13 +167,15 @@ static func _scale_feature_contract_matches(audit: Dictionary) -> bool:
 	# elsewhere, surviving only because it was directly tested. Collapsed to
 	# `_quota_count_is_measured`; the CEILINGS beside it are unchanged and stay
 	# hard.
-	return int(audit.get("elevated_courtyard_count", -1)) \
-			== int(profile.requires_elevated_courtyard) \
-		and (not profile.requires_elevated_courtyard \
+	return _quota_count_is_measured(
+			int(audit.get("elevated_courtyard_count", -1))) \
+		and int(audit.get("elevated_courtyard_count", -1)) \
+			<= int(profile.requires_elevated_courtyard) \
+		and (int(audit.get("elevated_courtyard_count", 0)) == 0 \
 			or int(audit.get("courtyard_daylight_macro_column_count", 0)) \
 				>= WarrenElevatedFrontageSolver \
 					.MIN_COURTYARD_DAYLIGHT_COLUMNS) \
-		and (not profile.requires_elevated_courtyard \
+		and (int(audit.get("elevated_courtyard_count", 0)) == 0 \
 			or int(audit.get("courtyard_underbuilt_macro_column_count", 0)) \
 				>= WarrenElevatedFrontageSolver \
 					.MIN_COURTYARD_UNDERBUILT_COLUMNS) \
