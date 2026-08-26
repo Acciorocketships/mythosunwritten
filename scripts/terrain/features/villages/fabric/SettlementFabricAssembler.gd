@@ -184,6 +184,17 @@ const NATURAL_ROCK_CROSS_SCALE := 0.72
 ## the same way -- 4.0 x (1 - RISE_JITTER) = 3.36 m still covers the 3 m
 ## course -- and the TOP is pinned whatever the roll, because a bank's rim is
 ## where the green cap begins and may not move.
+##
+## TASK H2c FIX 2, IMPORTANT 1 -- WHICH PANELS THAT 3.36 m COVERS. The bound
+## above is a bound on the JITTER, so it holds for every panel whose rise is
+## the roll: the worst roll is 0.84, the module hangs 4.0 x 0.84 = 3.36 m from
+## its pinned top, and the two-band course under that top is 2 x CELL_SIZE =
+## 3.0 m. It does NOT hold for a panel the tail clamp shortens -- a clamped
+## rise is not drawn from [0.84, 1.16] at all and can be as little as
+## NATURAL_ROCK_CUT_MIN_RISE = 0.375, which covers one band and not two. Those
+## panels are covered by a different argument, written out in full at
+## `NATURAL_ROCK_CUT_MIN_RISE` below, and it is the only thing standing
+## between a clamped panel and a slit.
 const NATURAL_ROCK_CROSS_JITTER := 0.10
 const NATURAL_ROCK_RISE_JITTER := 0.16
 const NATURAL_ROCK_SLIDE := 0.12
@@ -283,7 +294,7 @@ const NATURAL_ROCK_CUT_BAND_REACH := 3
 ##
 ##     (g + 1) x CELL_SIZE - (TOP + BASE) x rise >= HEADROOM
 ##
-## and the rise may not fall below what covers the panel's own band, or the
+## and the rise may not fall below what covers the panel's own BAND, or the
 ## skin opens a slit and shows sky through the mountain:
 ##
 ##     (TOP + BASE) x rise >= CELL_SIZE      ->  rise >= 0.375
@@ -293,6 +304,44 @@ const NATURAL_ROCK_CUT_BAND_REACH := 3
 ## coverage floor, so at g = 1 there is NO rise that both clads the band and
 ## clears the street. Those crossings pass a mass corner at head height and no
 ## cladding of any material can open them; they are counted, not silenced.
+##
+## TASK H2c FIX 2, IMPORTANT 1 -- THE FLOOR IS A BAND AND A PANEL CLADS A
+## COURSE, SO HERE IS THE REST OF THE PROOF. `maze_stone_faces` keeps one panel
+## per STONE_COURSE_BANDS = 2 exposed bands, so the panel at band y clads the
+## COURSE {y, y - 1} whenever band y - 1's face is exposed too. A floor of one
+## CELL_SIZE therefore proves less than it looks: 0.375 covers band y and
+## nothing under it. The three cases the clamp can be in, and what closes each:
+##
+## * g = 3 -- ARITHMETIC ALONE. The ceiling is 0.9165, the module hangs
+##   4.0 x 0.9165 = 3.666 m, and the course is 3.0 m. Fully clad, no
+##   dependency.
+## * g = 2 -- THE ONE THAT LEANS ON `blocked = 0`. The ceiling is 0.5415 and
+##   the module hangs 2.166 m, which is 0.834 m short of the course. That is a
+##   slit IF band y - 1 carries an exposed face. It cannot, while the corpus
+##   measures `blocked = 0`: for that face to exist, cell (x, y-1, z) must be
+##   maze stone, and it sits directly on the walked cell (x, y-2, z) that fired
+##   the clamp. Stone directly over a walked cell has an exposed DOWN face --
+##   the neighbour below is neither retained nor solid -- so `maze_stone_faces`
+##   emits a floor-facing cap there, `maze_skin_treatments` makes it MASONRY
+##   (only an UP cap can be green), and `_maze_stone_transform` lays that 3 m
+##   slab flat and sinks it by STONE_CAP_HALF_DEPTH so its rock face is FLUSH
+##   with the boundary. The slab spans the cell's whole footprint and the cell
+##   is 1.5 m tall against a body that needs NATURAL_ROCK_CUT_HEADROOM =
+##   2.334 m, so the capsule meets it at every offset and that walked cell
+##   would count `blocked`. The 48-town matrix measures `blocked = 0`, so the
+##   configuration is not in the corpus and the clamped panel's course is one
+##   band.
+## * g = 1 -- band y - 1 IS the street, so the course is one band and 0.375
+##   clads it exactly. This case is also `maze_natural_face_tail_is_clearable`
+##   false and is published as `maze_skin_cut_tail_unclearable_count`, measured
+##   0 corpus-wide, so it does not arise either.
+##
+## THE DEPENDENCY IS LOAD-BEARING AND IT IS ON A MEASURED NUMBER, not on a
+## construction. If `blocked` ever leaves zero, this floor stops being sound at
+## g = 2 and has to be re-derived -- the honest fix then is 2 x CELL_SIZE /
+## (TOP + BASE) = 0.75, which is why that number is NOT the floor today: it
+## would make g = 2 unclearable and course the crossing over to masonry, which
+## is a heavier answer than the geometry needs.
 const NATURAL_ROCK_CUT_MIN_RISE := FabricRecipe.CELL_SIZE \
 	/ (NATURAL_ROCK_TOP + NATURAL_ROCK_BASE)
 ## The grass quad has no thickness, so it is offset off the boundary it closes
@@ -316,6 +365,29 @@ enum SkinTreatment {MASONRY, NATURAL, GREEN}
 ## bottom course of an odd run buries its lower half in the mass beneath,
 ## exactly as a building plinth buries its own.
 const STONE_COURSE_BANDS := 2
+## TASK H2c FIX 2, MINOR 3 -- THE MASONRY REACH, NAMED. The coursed module's
+## own height was a bare `3.0` at three sites (the trim's full height, the trim
+## scale it divides by, and the flat cap's sweep) and the band reach it implies
+## was a bare `-3` in a range. Both are now derived and both are MIRRORED
+## against the descriptor by `test_the_skin_constants_mirror_the_module_
+## descriptors`, exactly as `NATURAL_ROCK_CUT_BAND_REACH` is, so a re-bake that
+## moved `sfv.fabric.wall.rock.plain.001`'s 3.000 m envelope fails there rather
+## than shifting every masonry panel in silence.
+##
+## The height IS the course: two bands of cladding, which is the whole reason
+## `STONE_COURSE_BANDS` is 2 and not 1.
+const STONE_MODULE_HEIGHT := STONE_COURSE_BANDS * FabricRecipe.CELL_SIZE
+## How many bands BELOW its own a coursed panel can hang into. The module drops
+## `STONE_MODULE_HEIGHT` from `(band + 1) x CELL_SIZE` and a body standing `g`
+## bands under it occupies `NATURAL_ROCK_CUT_HEADROOM` of that column, so the
+## two meet while
+##
+##     (g + 1) x CELL_SIZE < STONE_MODULE_HEIGHT + HEADROOM
+##       ->  g < (3.0 + 2.334) / 1.5 - 1 = 2.556
+##
+## which is two bands. The rock's reach is three because its module is taller
+## and its rise jitters; this one neither hangs further nor rolls.
+const STONE_FACE_OVERHANG_BAND_REACH := 2
 ## The 3 m module laid flat spans two cells along its former height axis, so a
 ## cap always covers this cell and ONE neighbour, chosen in this fixed order.
 ## FIX 1, CRITICAL 1: the neighbour is preferentially another exposed cap cell
@@ -943,11 +1015,8 @@ static func maze_stone_face_overhangs_walk(key: Vector4i,
 	## TASK H2c FIX 1 SUB-ROUND. Does this coursed panel hang into a street?
 	##
 	## The reach is TWO bands, not one, and the arithmetic is the same shape as
-	## the rock's. The module drops 3.0 m from `(band + 1) x CELL_SIZE`, and a
-	## body standing `g` bands under it occupies `NATURAL_ROCK_CUT_HEADROOM` of
-	## that column, so they meet while
-	##
-	##     (g + 1) x CELL_SIZE < 3.0 + HEADROOM   ->   g < 2.56
+	## the rock's; it is derived and named at `STONE_FACE_OVERHANG_BAND_REACH`
+	## rather than spelled `-3` in the range below (fix 2, minor 3).
 	##
 	## The test is on the panel's OWN MASS COLUMN, exactly as the rock's is and
 	## for exactly the same reason: an ordinary retaining wall has mass beneath
@@ -955,7 +1024,7 @@ static func maze_stone_face_overhangs_walk(key: Vector4i,
 	## walked and it is never trimmed. Only mass overhanging a street is.
 	if key.w >= FACE_DIRECTIONS.size():
 		return false
-	for band in range(key.y - 1, key.y - 3, -1):
+	for band in range(key.y - 1, key.y - STONE_FACE_OVERHANG_BAND_REACH - 1, -1):
 		if walked.has(Vector3i(key.x, band, key.z)):
 			return true
 	return false
@@ -1281,8 +1350,13 @@ static func maze_green_cap_jut_cells(cell: Vector3i,
 
 
 static func _maze_natural_face_transform(face: Vector4i,
-		direction: Vector3i, cut: bool = false,
-		rise_ceiling: float = INF) -> Transform3D:
+		direction: Vector3i, cut: bool, rise_ceiling: float) -> Transform3D:
+	## FIX 2, MINOR 7: `cut` and `rise_ceiling` take no defaults. Their safe
+	## values are the LOOSE ones -- no stand-off clamp, no tail clamp -- so a
+	## caller that forgot them would get the pre-cut skin back and shut streets
+	## quietly. `maze_stone_walls` is the one caller and passes both from
+	## `maze_natural_face_is_cut` and `maze_natural_face_rise_ceiling`.
+	##
 	## The cliff face hung from the top of its own course, exactly as the
 	## masonry panel is: its top edge lands on the course boundary and its
 	## extra height buries itself in the mass below, so a bank's rim is where
@@ -1498,43 +1572,89 @@ static func maze_terrace_railings(plan: SettlementFabricPlan,
 
 
 static func _maze_stone_transform(cell: Vector3i, direction: Vector3i,
-		partner: Vector3i, trimmed: bool = false) -> Transform3D:
+		partner: Vector3i, trimmed: bool) -> Transform3D:
 	## `partner` is the neighbour a horizontal cap reaches over -- the module
 	## laid flat spans two cells -- and is Vector3i.ZERO for a side panel and
 	## for a cap centred on its own cell.
 	##
+	## `trimmed` takes no default (fix 2, minor 7): it decides how much wall
+	## there is, and a caller that forgets it should not silently get the full
+	## module back. `maze_stone_walls` is the one caller and passes
+	## `maze_stone_face_overhangs_walk`.
+	##
 	## TASK H2c FIX 1 SUB-ROUND. `trimmed` is the coursed twin of the rock's
 	## tail clamp, and it exists for the same defect in the same words: the
-	## module is 3 m tall cladding a 1.5 m band and "buries its lower half in
-	## the course beneath", and where that course is an open street it buries
-	## itself in the street instead. A panel two courses over a walked cell
-	## hangs to `(band + 1) x CELL - 3.0`, which is 0.8 m inside the headroom of
-	## a body standing down there -- so the coursing reads on, and the street is
-	## shut by a wall nobody can see the bottom of.
+	## module is STONE_MODULE_HEIGHT tall cladding a 1.5 m band and "buries its
+	## lower half in the course beneath", and where that course is an open
+	## street it buries itself in the street instead. A panel two courses over a
+	## walked cell hangs to `(band + 1) x CELL - 3.0`, which is 0.8 m inside the
+	## headroom of a body standing down there -- so the coursing reads on, and
+	## the street is shut by a wall nobody can see the bottom of.
 	##
 	## Trimmed, the module covers its own band EXACTLY: half height, re-anchored
-	## so its top still lands on the course boundary. That cannot open a slit --
-	## 1.5 m of module over a 1.5 m band -- and it cannot leave a gap under
-	## itself either, because the only thing it stops overlapping is a course
-	## that is open air.
+	## so its top still lands on the course boundary.
+	##
+	## NOTHING OPENS ABOVE IT, and the reason is the anchor rather than any
+	## neighbour (fix 2, minor 2 -- the first telling of this said a panel one
+	## band up covered our band twice, which coursing makes impossible: panels
+	## sit STONE_COURSE_BANDS apart, so a column with a panel at y has none at
+	## y + 1). The trim moves the module's BOTTOM edge only; its top stays
+	## anchored at `(y + 1) x CELL_SIZE`, which is the course boundary the panel
+	## above it, if any, hangs from. The seam is where it always was.
+	##
+	## BELOW IT, THE CLAIM IS TRUE AT g = 1 AND CONTINGENT AT g = 2 (fix 2,
+	## important 1). `maze_stone_face_overhangs_walk` fires on a walked cell one
+	## or two bands down, and the panel clads the course {y, y - 1}:
+	##
+	## * g = 1 -- band y - 1 IS the walked street, so it carries no exposed face
+	##   and the course is one band. The only overlap the trim gives up is with
+	##   open air. Unconditionally sound.
+	## * g = 2 -- band y - 1 could be stone whose face is exposed and paired
+	##   into this course, and the trim would leave the whole of it bare. It
+	##   cannot be, while `blocked = 0`: stone directly over the walked cell at
+	##   band y - 2 wears a floor-facing masonry cap flush with that cell's
+	##   ceiling, and the cell is 1.5 m against a 2.334 m body, so the capsule
+	##   is stopped at every offset and the cell counts `blocked`. THE CASE THAT
+	##   FIRED IS THIS ONE -- both 6/standard blockers are band-2 panels over a
+	##   street at band 0 -- so the dependency is not hypothetical. The same
+	##   argument, in full, is at `NATURAL_ROCK_CUT_MIN_RISE`.
 	var lattice := Vector3(cell) * FabricRecipe.CELL_SIZE
 	if direction.y == 0:
-		var height := FabricRecipe.CELL_SIZE if trimmed else 3.0
+		var height := FabricRecipe.CELL_SIZE if trimmed else STONE_MODULE_HEIGHT
 		var midpoint := Vector3(lattice.x, 0.0, lattice.z) \
 			+ Vector3(direction) * FabricRecipe.CELL_SIZE * 0.5
 		midpoint.y = float(cell.y + 1) * FabricRecipe.CELL_SIZE - height
 		var basis := Basis(Vector3.UP,
 			PI * 0.5 if direction.x != 0 else 0.0)
 		if trimmed:
-			# basis.y.y lands on exactly 0.5, and `tallest_bare_stone_stack_
-			# bands` skips a module whose `basis.y.y < 0.5` as "laid flat". A
-			# trimmed panel is UPRIGHT, only shorter, and must keep counting
-			# toward the stone budget -- it does, because the test is strict.
-			# Anything that shortens this further has to revisit that reader.
-			basis.y = basis.y * (height / 3.0)
+			# FIX 2, MINOR 1 -- WHAT THIS 0.5 IS AND IS NOT. A trimmed panel's
+			# `basis.y.y` lands on exactly 0.5, and two readers in this repo
+			# threshold on that number in OPPOSITE directions:
+			#
+			# * `tallest_bare_stone_stack_bands` skips `basis.y.y < 0.5` as
+			#   "laid flat", so 0.5 survives the filter -- but it then requires
+			#   `_is_assembler_stone`, which accepts only `house-plinth/` and
+			#   `retaining-wall/` ids. A maze skin panel is `maze-stone/`, so it
+			#   was NEVER counted by that reader, trimmed or not. The earlier
+			#   note here claimed the trim kept it in the stone budget; it was
+			#   never in it. The maze skin's own budget is `maze_bank_height`
+			#   against STONE_BUDGET_BANDS, published as the tall/low face
+			#   counts and `maze_tall_bank_masonry_panel_count`, and the trim
+			#   moves a transform rather than a treatment so none of them move.
+			# * `test_warren_production_surfaces.gd` asserts `basis.y.y > 0.5`
+			#   STRICTLY -- 0.5 would fail it -- but it reads
+			#   `house_plinth_walls`, which this function does not emit into.
+			#
+			# So the landmine is real but neither reader is armed today. What
+			# would arm the first is a trimmed panel appearing under a
+			# `retaining-wall/` id; what would arm the second is the plinth
+			# channel gaining a trim of its own. Anything that shortens this
+			# further, or lends the trim to another channel, has to revisit both.
+			basis.y = basis.y * (height / STONE_MODULE_HEIGHT)
 		return Transform3D(basis, midpoint)
 	var half := Vector3(partner) * FabricRecipe.CELL_SIZE * 0.5
-	var span := 3.0 if direction == Vector3i.UP else -3.0
+	var span := STONE_MODULE_HEIGHT if direction == Vector3i.UP \
+		else -STONE_MODULE_HEIGHT
 	var basis := Basis(Vector3.RIGHT, -PI * 0.5 * signf(span))
 	if partner.x != 0:
 		basis = Basis(Vector3.UP, PI * 0.5) * basis
@@ -1632,6 +1752,12 @@ static func _column_is_covered(origin: Vector3,
 static func _is_assembler_stone(stable_id: String) -> bool:
 	## Rock this file placed, as opposed to a rock module inside a house recipe.
 	## The asset ids overlap, so provenance lives in the stable id.
+	##
+	## `maze-stone/` is deliberately absent: the maze skin is measured by its own
+	## budget (`maze_bank_height` against STONE_BUDGET_BANDS, published as the
+	## tall/low bank face counts), not by this round-3b stack reader. See the
+	## trim note in `_maze_stone_transform` for what that means for the 0.5
+	## upright threshold below.
 	return stable_id.begins_with("house-plinth/") \
 		or stable_id.begins_with("retaining-wall/")
 

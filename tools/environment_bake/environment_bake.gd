@@ -894,7 +894,12 @@ func _bake_collisions(pack: String, asset_id: String, entry: Dictionary,
 	return out
 
 func _validate_collision_policy(asset_id: String, entry: Dictionary,
-		default_scale: Variant = [1.0, 1.0, 1.0]) -> void:
+		default_scale: Variant) -> void:
+	## TASK H2c FIX 2, MINOR 7: `default_scale` takes no default. Its old one --
+	## unit scale -- was the value that makes the plate gate below pass, so a
+	## caller that forgot the manifest's own default would have been waved
+	## through on the exact case the gate exists for. `_bake_asset` is the one
+	## caller and hands it the manifest's, resolved in `_bake_manifest`.
 	var tags: Array = entry.get("tags", [])
 	var is_rigid := false
 	for tag: String in RIGID_NATURE_TAGS:
@@ -1116,6 +1121,13 @@ func _bake_plate_box_collisions(pack: String, asset_id: String,
 		var plate_mesh := _extract_largest_component_mesh(visual_piece.mesh,
 			asset_id)
 		if plate_mesh == null:
+			# FIX 2, MINOR 8. Returning an empty array on its own bakes a plate
+			# with NO collision and leaves the run green -- a walkable surface
+			# that is not there, which is the failure this whole profile exists
+			# to prevent. `_fail` instead, so the bake stops and says which
+			# asset lost its component.
+			_fail(("Plate box collision could not isolate a component to bound: " \
+				+ "%s") % asset_id)
 			return []
 		var bounds := plate_mesh.get_aabb()
 		var shape := BoxShape3D.new()

@@ -859,7 +859,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			"maze_tall_bank_masonry_panel_count": 0,
 			"maze_skin_cut_panel_count": 0,
 			"maze_skin_cut_fallback_masonry_count": 0,
-			"maze_skin_cut_tail_clamped_count": 0,
+			"maze_skin_cut_tail_candidate_count": 0,
 			"maze_skin_cut_tail_unclearable_count": 0,
 			"maze_skin_coursed_trim_count": 0,
 			"maze_free_bench_stone_cap_count": 0,
@@ -972,11 +972,20 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	# a surprise.
 	var cut_panels := 0
 	var cut_fallback_masonry := 0
-	# TASK H2c FIX 1. The tail half of the cut: panels shortened so they stop
-	# hanging into a street that crosses under them, and the ones where no rise
-	# both clads the band and clears the body -- a crossing that passes a corner
-	# of mass at head height, which is a ROUTING fact no cladding can answer.
-	var tail_clamped := 0
+	# TASK H2c FIX 1. The tail half of the cut: panels a street crosses under,
+	# and the ones where no rise both clads the band and clears the body -- a
+	# crossing that passes a corner of mass at head height, which is a ROUTING
+	# fact no cladding can answer.
+	#
+	# FIX 2, MINOR 4 -- CANDIDATES, NOT SHORTENINGS. This counts the panels the
+	# tail clamp is OFFERED: a walked cell in the panel's own mass column within
+	# `NATURAL_ROCK_CUT_BAND_REACH`. The emitter shortens only when the ceiling
+	# is under the roll it already made (`rise_ceiling < rise` in
+	# `_maze_natural_face_transform`), so a panel that rolled short enough on
+	# its own is counted here and never moved. The name says candidate now
+	# rather than clamped; the number is the same number it always was, and the
+	# renaming is the whole of the fix.
+	var tail_candidates := 0
 	var tail_unclearable := 0
 	# The coursed twin of the tail clamp: masonry panels trimmed to their own
 	# band because the course they would have buried into is an open street.
@@ -1038,7 +1047,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		if treatment == SettlementFabricAssembler.SkinTreatment.NATURAL \
 				and SettlementFabricAssembler.maze_natural_face_overhung_band(
 					key, walked) < key.y:
-			tail_clamped += 1
+			tail_candidates += 1
 			tail_unclearable += int(not SettlementFabricAssembler \
 				.maze_natural_face_tail_is_clearable(key, walked))
 		tall_bank_masonry += int(treatment \
@@ -1063,7 +1072,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		"maze_tall_bank_masonry_panel_count": tall_bank_masonry,
 		"maze_skin_cut_panel_count": cut_panels,
 		"maze_skin_cut_fallback_masonry_count": cut_fallback_masonry,
-		"maze_skin_cut_tail_clamped_count": tail_clamped,
+		"maze_skin_cut_tail_candidate_count": tail_candidates,
 		"maze_skin_cut_tail_unclearable_count": tail_unclearable,
 		"maze_skin_coursed_trim_count": coursed_trim,
 		"maze_free_bench_stone_cap_count": free_bench_stone_caps,

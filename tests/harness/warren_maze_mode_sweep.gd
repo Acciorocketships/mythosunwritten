@@ -126,6 +126,26 @@ const CLEARANCE_ROUTE_STEPS: Array[Vector3i] = [
 ## A red here is therefore a REGRESSION, not a known debt. The matrix summary is
 ## written before any exit, so the corpus gate reads its matrix either way.
 const CLEARANCE_TOWN_GATE_CEILING := 0
+## TASK H2c FIX 2, MINOR 5. THE TWO COSTS, PINNED -- because a collapse has to
+## be visible in reverse. The rock cut took `offset_free` from 1096 walked cells
+## (12.57 %) to 69 (0.79 %) and `gates_offset` from 877 crossings (7.10 %) to
+## 147 (1.19 %), and until now those were REPORTED and nothing more: revert the
+## cut and both numbers walk back up in silence while every pin stays green,
+## because the pins below them only count what is fully shut.
+##
+## Per TOWN and not per corpus, for the same reason the gate ceiling above is:
+## a corpus total means one thing on the 48-town matrix and something else on
+## any other seed set, and a pin that fires on a spot check is a pin people
+## learn to ignore. The two numbers are the WORST TOWN of that matrix -- 9/grand
+## both times, 9 cells and 15 crossings -- and the corpus they roll up to is 69
+## and 147, printed on the result line beside them.
+##
+## These are COSTS, not damage. A cell counted here still admits a body and a
+## crossing counted here can still be walked; what they say is that the shard's
+## lobe is in the way of the exact centreline. A rise means the skin leans into
+## more streets than it did, which is worth a look and is not by itself a bug.
+const CLEARANCE_TOWN_OFFSET_FREE_CEILING := 9
+const CLEARANCE_TOWN_GATES_OFFSET_CEILING := 15
 
 
 static func production_fingerprint() -> String:
@@ -403,8 +423,9 @@ func _run() -> void:
 					print(("SWEEP seed=%d scale=%s SKIN panels=%d masonry=%d " \
 						+ "natural=%d green=%d tall_masonry=%d " \
 						+ "free_bench_stone=%d shared_street=%d low=%d " \
-						+ "tall=%d tallest=%d cut=%d cut_coursed=%d tail=%d " \
-						+ "tail_unclearable=%d coursed_trim=%d " \
+						+ "tall=%d tallest=%d cut=%d cut_coursed=%d " \
+						+ "tail_candidates=%d tail_unclearable=%d " \
+						+ "coursed_trim=%d " \
 						+ "banks=%s") % [city_seed,
 						String(profile.scale_id),
 						int(fabric.audit.get(
@@ -427,7 +448,7 @@ func _run() -> void:
 						int(fabric.audit.get(
 							"maze_skin_cut_fallback_masonry_count", 0)),
 						int(fabric.audit.get(
-							"maze_skin_cut_tail_clamped_count", 0)),
+							"maze_skin_cut_tail_candidate_count", 0)),
 						int(fabric.audit.get(
 							"maze_skin_cut_tail_unclearable_count", 0)),
 						int(fabric.audit.get(
@@ -493,7 +514,11 @@ func _run() -> void:
 	_write_summary(seeds, scale_ids, rows, sealed_count, attempted, total_ms)
 	if int(clearance.blocked) > 0 or int(clearance.splits) > 0 \
 			or int(clearance.unreachable) > 0 \
-			or int(clearance.worst_gates_blocked) > CLEARANCE_TOWN_GATE_CEILING:
+			or int(clearance.worst_gates_blocked) > CLEARANCE_TOWN_GATE_CEILING \
+			or int(clearance.worst_offset_free) \
+				> CLEARANCE_TOWN_OFFSET_FREE_CEILING \
+			or int(clearance.worst_gates_offset) \
+				> CLEARANCE_TOWN_GATES_OFFSET_CEILING:
 		# WHAT THIS PIN DOES AND DOES NOT SAY. The scene measured is
 		# `SettlementFabricAssembler.terrace_retaining_payload` and NOTHING
 		# else: the retained massif's own skin, with no buildings, no railings,
@@ -506,21 +531,32 @@ func _run() -> void:
 		print(("SWEEP ERROR clearance %d walked cell(s) admit no player " \
 			+ "capsule anywhere inside them; %d route component(s) split and " \
 			+ "%d cell(s) were cut off [%s]; the worst town shuts %d cell " \
-			+ "boundary(ies) against a ceiling of %d. Scope: the scene is " \
+			+ "boundary(ies) against a ceiling of %d, and costs %d off-centre " \
+			+ "cell(s) against %d and %d off-centre crossing(s) against %d. " \
+			+ "Scope: the scene is " \
 			+ "terrace_retaining_payload ALONE (no buildings, railings or " \
 			+ "props), which isolates the skin's own colliders and is NOT a " \
 			+ "town walkability guarantee. A SPLIT is the serious one -- it " \
 			+ "means a shut crossing had no way round and the street is " \
-			+ "genuinely broken, not merely narrowed. %s") % [
+			+ "genuinely broken, not merely narrowed; the two off-centre " \
+			+ "ceilings are COSTS, and a rise in them means the skin leans " \
+			+ "into more streets than the rock cut left it leaning into. %s") % [
 			int(clearance.blocked), int(clearance.splits),
 			int(clearance.unreachable),
 			", ".join(PackedStringArray(clearance.split_towns)),
 			int(clearance.worst_gates_blocked), CLEARANCE_TOWN_GATE_CEILING,
+			int(clearance.worst_offset_free),
+			CLEARANCE_TOWN_OFFSET_FREE_CEILING,
+			int(clearance.worst_gates_offset),
+			CLEARANCE_TOWN_GATES_OFFSET_CEILING,
 			_clearance_worst_text(clearance)])
 		push_error(("clearance pin violated: blocked=%d splits=%d " \
-			+ "cells_unreachable=%d worst_gates_blocked=%d") % [
+			+ "cells_unreachable=%d worst_gates_blocked=%d " \
+			+ "worst_offset_free=%d worst_gates_offset=%d") % [
 			int(clearance.blocked), int(clearance.splits),
-			int(clearance.unreachable), int(clearance.worst_gates_blocked)])
+			int(clearance.unreachable), int(clearance.worst_gates_blocked),
+			int(clearance.worst_offset_free),
+			int(clearance.worst_gates_offset)])
 		quit(3)
 		return
 	quit()
@@ -623,8 +659,8 @@ static func _new_skin_tally() -> Dictionary:
 	## TASK H2b. The corpus skin tally.
 	return {"towns": 0, "panels": 0, "masonry": 0, "natural": 0, "green": 0,
 		"tall_masonry": 0, "free_bench_stone": 0, "shared_street": 0,
-		"low": 0, "tall": 0, "tallest": 0, "cut": 0, "cut_coursed": 0, "tail": 0,
-		"tail_unclearable": 0, "coursed_trim": 0}
+		"low": 0, "tall": 0, "tallest": 0, "cut": 0, "cut_coursed": 0,
+		"tail_candidates": 0, "tail_unclearable": 0, "coursed_trim": 0}
 
 
 static func _accumulate_skin(tally: Dictionary,
@@ -647,7 +683,8 @@ static func _accumulate_skin(tally: Dictionary,
 	tally.cut += int(fabric.audit.get("maze_skin_cut_panel_count", 0))
 	tally.cut_coursed += int(fabric.audit.get(
 		"maze_skin_cut_fallback_masonry_count", 0))
-	tally.tail += int(fabric.audit.get("maze_skin_cut_tail_clamped_count", 0))
+	tally.tail_candidates += int(fabric.audit.get(
+		"maze_skin_cut_tail_candidate_count", 0))
 	tally.tail_unclearable += int(fabric.audit.get(
 		"maze_skin_cut_tail_unclearable_count", 0))
 	tally.coursed_trim += int(fabric.audit.get(
@@ -664,7 +701,7 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 		+ "green=%d reclad_share=%.4f tall_masonry=%d free_bench_stone=%d " \
 		+ "shared_street=%d low_faces=%d tall_faces=%d tall_share=%.4f " \
 		+ "tallest_bank=%d cut=%d cut_share=%.4f cut_coursed=%d " \
-		+ "tail_clamped=%d tail_unclearable=%d coursed_trim=%d") % [
+		+ "tail_candidates=%d tail_unclearable=%d coursed_trim=%d") % [
 		"" if group == CORPUS_STONE_GROUP else "/%s" % group,
 		int(tally.towns), int(tally.panels), int(tally.masonry),
 		int(tally.natural), int(tally.green),
@@ -676,7 +713,7 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 			+ int(tally.tall))),
 		int(tally.tallest), int(tally.cut),
 		float(int(tally.cut)) / float(maxi(1, int(tally.natural))),
-		int(tally.cut_coursed), int(tally.tail),
+		int(tally.cut_coursed), int(tally.tail_candidates),
 		int(tally.tail_unclearable), int(tally.coursed_trim)])
 
 
@@ -684,7 +721,8 @@ static func _new_clearance_tally() -> Dictionary:
 	## TASK H2c FIX 1. The corpus clearance tally.
 	return {"towns": 0, "cells": 0, "centre_free": 0, "offset_free": 0,
 		"blocked": 0, "gates": 0, "gates_offset": 0, "gates_blocked": 0,
-		"worst_gates_blocked": 0, "gates_blocked_required": 0, "splits": 0,
+		"worst_gates_blocked": 0, "worst_offset_free": 0,
+		"worst_gates_offset": 0, "gates_blocked_required": 0, "splits": 0,
 		"unreachable": 0, "split_towns": [], "worst": []}
 
 
@@ -838,6 +876,10 @@ func _measure_clearance(tally: Dictionary, city_seed: int,
 	tally.gates_blocked += gates_blocked
 	tally.worst_gates_blocked = maxi(int(tally.worst_gates_blocked),
 		gates_blocked)
+	# FIX 2, MINOR 5. The two costs, per town, so the corpus pin on them means
+	# the same thing whatever seed set this sweep is given.
+	tally.worst_offset_free = maxi(int(tally.worst_offset_free), offset_free)
+	tally.worst_gates_offset = maxi(int(tally.worst_gates_offset), gates_offset)
 	root.queue_free()
 	await process_frame
 
@@ -923,6 +965,17 @@ static func _clearance_components(walked: Dictionary,
 	## Called TWICE per town: with an empty `shut` for the town's design
 	## connectivity, and with the measured set for what a body can actually
 	## reach. The difference is the only honest reading of the damage.
+	##
+	## FIX 2, MINOR 9 -- WHAT THE ONE-BAND STEP ASSUMES, said out loud. A step
+	## with `step.y != 0` is treated as OPEN whatever the shape query measured,
+	## because the two cells are not x/z-adjacent and the boundary sweep has no
+	## plane to stand on: a riser is not a doorway. That is a real simplification
+	## and it UNDER-REPORTS splits -- a stair shut by a collider would still join
+	## its two components here. It is symmetric across the design graph and the
+	## open one, so it never invents damage, only misses some; and it is moot on
+	## a corpus measuring `gates_blocked = 0`, where the open graph and the
+	## design graph are the same graph. The day `gates_blocked` leaves zero on a
+	## stair, this is the line to revisit.
 	var component_of: Dictionary = {}
 	var cells: Array = walked.keys()
 	cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
@@ -1023,6 +1076,12 @@ func _print_clearance_result(tally: Dictionary) -> void:
 	## on the exact centreline because the shard's lobe is in the way. That is
 	## correct behaviour (before H2c a player walked through visible rock) and a
 	## real change in how a street feels, so it is stated rather than hidden.
+	##
+	## FIX 2, MINOR 5: those two costs now carry per-town ceilings of their own
+	## (`worst_town_offset_free` and `worst_town_gates_offset` against
+	## CLEARANCE_TOWN_OFFSET_FREE_CEILING / _GATES_OFFSET_CEILING), so a revert
+	## of the rock cut cannot walk 69 back up to 1096 with every other pin still
+	## green.
 	if int(tally.towns) == 0:
 		return
 	print(("SWEEP RESULT clearance towns=%d payload=skin_only " \
@@ -1030,6 +1089,8 @@ func _print_clearance_result(tally: Dictionary) -> void:
 		+ "offset_free=%d offset_share=%.4f blocked=%d gates=%d " \
 		+ "gates_offset=%d gates_offset_share=%.4f gates_blocked=%d " \
 		+ "worst_town_gates_blocked=%d ceiling=%d " \
+		+ "worst_town_offset_free=%d offset_ceiling=%d " \
+		+ "worst_town_gates_offset=%d gates_offset_ceiling=%d " \
 		+ "gates_blocked_required=%d splits=%d cells_unreachable=%d " \
 		+ "split_towns=[%s] %s") % [
 		int(tally.towns), PLAYER_CAPSULE_RADIUS,
@@ -1039,7 +1100,10 @@ func _print_clearance_result(tally: Dictionary) -> void:
 		int(tally.blocked), int(tally.gates), int(tally.gates_offset),
 		float(int(tally.gates_offset)) / float(maxi(1, int(tally.gates))),
 		int(tally.gates_blocked), int(tally.worst_gates_blocked),
-		CLEARANCE_TOWN_GATE_CEILING, int(tally.gates_blocked_required),
+		CLEARANCE_TOWN_GATE_CEILING, int(tally.worst_offset_free),
+		CLEARANCE_TOWN_OFFSET_FREE_CEILING, int(tally.worst_gates_offset),
+		CLEARANCE_TOWN_GATES_OFFSET_CEILING,
+		int(tally.gates_blocked_required),
 		int(tally.splits), int(tally.unreachable),
 		", ".join(PackedStringArray(tally.split_towns)),
 		_clearance_worst_text(tally)])

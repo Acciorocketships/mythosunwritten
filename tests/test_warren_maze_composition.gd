@@ -3884,6 +3884,31 @@ func test_the_skin_constants_mirror_the_module_descriptors() -> void:
 	_assert_mirrors(SettlementFabricAssembler.STONE_CAP_HALF_DEPTH,
 		masonry_aabb.size.z * 0.5,
 		"STONE_CAP_HALF_DEPTH is half the masonry module's depth")
+	# TASK H2c FIX 2, MINOR 3. The coursed module's own HEIGHT, which the skin
+	# used to spell `3.0` at three sites: the trimmed panel's full height, the
+	# scale that trim divides by, and the flat cap's sweep. It is derived from
+	# STONE_COURSE_BANDS -- the module is the course, which is the whole reason
+	# a run is coursed two bands at a time -- and mirrored here, so a re-bake
+	# that moved the envelope fails with both numbers instead of shifting every
+	# masonry panel in the town by the difference.
+	_assert_mirrors(SettlementFabricAssembler.STONE_MODULE_HEIGHT,
+		masonry_aabb.size.y, "STONE_MODULE_HEIGHT is the masonry module's own " \
+			+ "height, and it is STONE_COURSE_BANDS of them")
+	# ...and the band reach re-derived from it, exactly as the rock's is above.
+	# The module drops its whole height from the top of its course and a body
+	# `g` bands below occupies NATURAL_ROCK_CUT_HEADROOM of that column, so the
+	# two meet while (g + 1) x CELL_SIZE < HEIGHT + HEADROOM.
+	var masonry_reach := floori((SettlementFabricAssembler.STONE_MODULE_HEIGHT
+		+ SettlementFabricAssembler.NATURAL_ROCK_CUT_HEADROOM)
+		/ FabricRecipe.CELL_SIZE - 1.0)
+	assert_eq(SettlementFabricAssembler.STONE_FACE_OVERHANG_BAND_REACH,
+		masonry_reach,
+		("STONE_FACE_OVERHANG_BAND_REACH says %d bands but a %.4f m module " \
+			+ "over a %.3f m body on %.1f m bands needs %d") % [
+			SettlementFabricAssembler.STONE_FACE_OVERHANG_BAND_REACH,
+			SettlementFabricAssembler.STONE_MODULE_HEIGHT,
+			SettlementFabricAssembler.NATURAL_ROCK_CUT_HEADROOM,
+			FabricRecipe.CELL_SIZE, masonry_reach])
 	# ...and the two rows this file decodes the payload's horizontal caps with.
 	assert_eq(CAP_MODULE_SPANS.size(), 2,
 		"the cap vocabulary is the masonry module laid flat and the grass quad")
