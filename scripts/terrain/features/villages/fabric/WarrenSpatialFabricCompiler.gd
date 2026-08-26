@@ -857,6 +857,10 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			"maze_skin_natural_panel_count": 0,
 			"maze_skin_green_cap_count": 0,
 			"maze_tall_bank_masonry_panel_count": 0,
+			"maze_skin_cut_panel_count": 0,
+			"maze_skin_cut_fallback_masonry_count": 0,
+			"maze_skin_cut_tail_clamped_count": 0,
+			"maze_skin_cut_tail_unclearable_count": 0,
 			"maze_free_bench_stone_cap_count": 0,
 			"maze_green_cap_jut_cell_count": 0,
 			"maze_green_cap_jut_over_air_count": 0,
@@ -961,6 +965,18 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	var green_jut_cells := 0
 	var green_jut_over_air := 0
 	var tall_bank_masonry := 0
+	# TASK H2c FIX 1. How much rock the street cuts, and how much of it the cut
+	# could not be expressed on and had to be coursed instead. The second is
+	# zero by construction today; it is published so a day it is not cannot be
+	# a surprise.
+	var cut_panels := 0
+	var cut_fallback_masonry := 0
+	# TASK H2c FIX 1. The tail half of the cut: panels shortened so they stop
+	# hanging into a street that crosses under them, and the ones where no rise
+	# both clads the band and clears the body -- a crossing that passes a corner
+	# of mass at head height, which is a ROUTING fact no cladding can answer.
+	var tail_clamped := 0
+	var tail_unclearable := 0
 	var free_bench_stone_caps := 0
 	var shared_street_caps := 0
 	var low_bank_faces := 0
@@ -1003,10 +1019,22 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			free_bench_stone_caps += int(not exposed.has(mate) \
 				or not walked.has(Vector3i(mate.x, mate.y + 1, mate.z)))
 			continue
+		var over_budget := SettlementFabricAssembler.maze_bank_height(exposed,
+			key) > SettlementFabricAssembler.STONE_BUDGET_BANDS
+		var crossed := SettlementFabricAssembler.maze_natural_face_is_cut(key,
+			walked)
+		cut_panels += int(crossed \
+			and treatment == SettlementFabricAssembler.SkinTreatment.NATURAL)
+		cut_fallback_masonry += int(crossed and over_budget \
+			and treatment == SettlementFabricAssembler.SkinTreatment.MASONRY)
+		if treatment == SettlementFabricAssembler.SkinTreatment.NATURAL \
+				and SettlementFabricAssembler.maze_natural_face_overhung_band(
+					key, walked) < key.y:
+			tail_clamped += 1
+			tail_unclearable += int(not SettlementFabricAssembler \
+				.maze_natural_face_tail_is_clearable(key, walked))
 		tall_bank_masonry += int(treatment \
-			== SettlementFabricAssembler.SkinTreatment.MASONRY \
-			and SettlementFabricAssembler.maze_bank_height(exposed, key) \
-				> SettlementFabricAssembler.STONE_BUDGET_BANDS)
+			== SettlementFabricAssembler.SkinTreatment.MASONRY and over_budget)
 	for key_value: Variant in exposed.keys():
 		var key := key_value as Vector4i
 		if key.w >= sides:
@@ -1025,6 +1053,10 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		"maze_green_cap_jut_cell_count": green_jut_cells,
 		"maze_green_cap_jut_over_air_count": green_jut_over_air,
 		"maze_tall_bank_masonry_panel_count": tall_bank_masonry,
+		"maze_skin_cut_panel_count": cut_panels,
+		"maze_skin_cut_fallback_masonry_count": cut_fallback_masonry,
+		"maze_skin_cut_tail_clamped_count": tail_clamped,
+		"maze_skin_cut_tail_unclearable_count": tail_unclearable,
 		"maze_free_bench_stone_cap_count": free_bench_stone_caps,
 		"maze_shared_street_cap_count": shared_street_caps,
 		"maze_low_bank_face_count": low_bank_faces,

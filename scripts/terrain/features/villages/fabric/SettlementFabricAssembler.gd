@@ -188,6 +188,113 @@ const NATURAL_ROCK_CROSS_JITTER := 0.10
 const NATURAL_ROCK_RISE_JITTER := 0.16
 const NATURAL_ROCK_SLIDE := 0.12
 const NATURAL_ROCK_RELIEF := 0.22
+## TASK H2c FIX 1 -- THE STREET CUTS THE ROCK.
+##
+## Giving the shard a collider turned a bulge the eye could see into one a body
+## cannot pass, and the 48-town matrix then measured what that costs: a majority
+## of towns had a route component CUT APART -- a crossing between two walked
+## cells with no way round it. The remedy the controller ruled for is the one a
+## hill town's masons would have used: where the path passes, the rock is cut
+## back. Not the collider (visible rock a body walks through is a lie), and not
+## a global relief shave (the strata read is right everywhere it is not in the
+## way).
+##
+## THE ARITHMETIC, because the clamp is derived and not chosen. The shard's nose
+## plane is at local z = 1.0 (`kaykit_cliff_wall` is AABB z 0.25 -> 1.0) and its
+## origin sits `NATURAL_ROCK_FACE_DEPTH_CENTRE` behind the boundary, so the nose
+## stands `1.0 - 0.625 + relief` proud of it. Two panels facing each other across
+## a one-cell street therefore leave
+##
+##     CELL_SIZE - 2 x (NOSE_LOCAL_Z - FACE_DEPTH_CENTRE + relief)
+##       = 1.5 - 0.75 - 2 x relief
+##
+## and a body needs its own width plus the clearance query's margin on both
+## sides plus a working allowance. At relief 0 that leaves 0.750 m for a
+## 0.795 m body: a street flanked by rock on both sides was ALWAYS too narrow,
+## whatever the jitter rolled -- which is why the pinch is common rather than
+## freak. Solving for the relief that clears the budget gives the cut plane.
+const NATURAL_ROCK_NOSE_LOCAL_Z := 1.0
+## The player capsule's own width, `characters/character.tscn` radius
+## 0.39746094 doubled, plus the 0.02 the clearance sweep pads its query with on
+## each side, plus 0.03 of working allowance so the pass is not a scrape.
+const NATURAL_ROCK_CUT_BODY_WIDTH := 0.79492188
+const NATURAL_ROCK_CUT_QUERY_MARGIN := 0.02
+const NATURAL_ROCK_CUT_ALLOWANCE := 0.03
+const NATURAL_ROCK_CUT_BUDGET := NATURAL_ROCK_CUT_BODY_WIDTH \
+	+ 2.0 * NATURAL_ROCK_CUT_QUERY_MARGIN + NATURAL_ROCK_CUT_ALLOWANCE
+## -0.05746094: the rock is cut back a further 5.7 cm behind the plane its
+## unjittered stand-off would have put it on. A panel that already jitters
+## BEHIND this plane is not touched -- the cut is a ceiling on how far rock may
+## stand into a crossing, not a new plane every cut panel is flattened to, so
+## the face keeps its relief above and below the cut.
+const NATURAL_ROCK_CUT_RELIEF := (FabricRecipe.CELL_SIZE \
+	- 2.0 * (NATURAL_ROCK_NOSE_LOCAL_Z - NATURAL_ROCK_FACE_DEPTH_CENTRE) \
+	- NATURAL_ROCK_CUT_BUDGET) * 0.5
+## HOW FAR DOWN A PANEL REACHES, in bands, and therefore how far below its own
+## course a crossing must be looked for. The shard HANGS from the top of its
+## course and buries the rest below, so a panel is in the way of streets well
+## under it: it spans `(TOP + BASE) x (1 + RISE_JITTER)` = 4.0 x 1.16 = 4.64 m
+## downward from `(band + 1) x CELL_SIZE`, and a body on a floor further down
+## still occupies `NATURAL_ROCK_CUT_BODY_HEIGHT` of that column. Overlap needs
+##
+##     (band + 1 - crossing) x CELL_SIZE - 4.64 < BODY_HEIGHT
+##       -> band - crossing < (4.64 + 2.244 - 1.5) / 1.5 = 3.589
+##
+## so three bands. THIS WAS THE MISS IN THE FIRST CUT: reaching one band down
+## caught the panel a body walks into and the one at its head, and left the
+## panels two and three courses up still leaning over the same street. The
+## eight-town check still split 9/standard until the reach was solved rather
+## than assumed. `test_the_skin_constants_mirror_the_module_descriptors` re-does
+## this arithmetic against the descriptor so it cannot rot.
+const NATURAL_ROCK_CUT_BODY_HEIGHT := 2.244
+## HEADROOM is NOT the body's height. The clearance sweep stands its capsule a
+## floor-lift above the ground and then asks the physics server with a query
+## margin, and that margin grows the shape in EVERY direction -- up as well as
+## sideways. So the column a body really needs is
+##
+##     FLOOR_LIFT + MARGIN + BODY_HEIGHT + MARGIN + ALLOWANCE
+##
+## and a clamp solved against the bare 2.244 m comes out 0.03 m short, which is
+## exactly the amount that left crossings shut after the tail clamp first
+## landed and sent this back for another pass. The lift mirrors the sweep's
+## `CLEARANCE_FLOOR_LIFT`; the two must move together.
+const NATURAL_ROCK_CUT_FLOOR_LIFT := 0.02
+const NATURAL_ROCK_CUT_HEADROOM := NATURAL_ROCK_CUT_FLOOR_LIFT \
+	+ 2.0 * NATURAL_ROCK_CUT_QUERY_MARGIN + NATURAL_ROCK_CUT_BODY_HEIGHT \
+	+ NATURAL_ROCK_CUT_ALLOWANCE
+const NATURAL_ROCK_CUT_BAND_REACH := 3
+## THE SECOND HALF OF THE CUT: THE TAIL, not the nose.
+##
+## Stand-off alone did not clear the corpus, and the probe that found out why
+## (`h2c-evidence/pinch_probe.gd`) is worth reading before touching any of this.
+## The panels still shutting streets after the first cut were not the facing
+## lobes the pinch arithmetic models. They were panels whose OWN FACE PLANE the
+## street crosses, one to three courses above it: the shard clads a 1.5 m band
+## but is 4 m tall, the design buries the excess "in the mass below", and where
+## the mass below is an open street the excess hangs into it instead. Such a
+## panel does not LEAN into the corridor, it crosses the whole of it -- the
+## probe reads 1.500 m of a 1.500 m boundary covered -- so no stand-off reaches
+## it, and pulling it back only moves the wall.
+##
+## What reaches it is the module's own RISE, which is the one dial that moves
+## its bottom edge: the top is pinned (a bank's rim is where the green cap
+## begins) and the module hangs `(TOP + BASE) x rise` below it. Clearing a body
+## walking `g` bands underneath needs
+##
+##     (g + 1) x CELL_SIZE - (TOP + BASE) x rise >= HEADROOM
+##
+## and the rise may not fall below what covers the panel's own band, or the
+## skin opens a slit and shows sky through the mountain:
+##
+##     (TOP + BASE) x rise >= CELL_SIZE      ->  rise >= 0.375
+##
+## At g = 3 that allows rise <= 0.917 and the tail lifts clear. At g = 2 it
+## demands 0.542 and at g = 1 it demands 0.167 -- and 0.167 is below the
+## coverage floor, so at g = 1 there is NO rise that both clads the band and
+## clears the street. Those crossings pass a mass corner at head height and no
+## cladding of any material can open them; they are counted, not silenced.
+const NATURAL_ROCK_CUT_MIN_RISE := FabricRecipe.CELL_SIZE \
+	/ (NATURAL_ROCK_TOP + NATURAL_ROCK_BASE)
 ## The grass quad has no thickness, so it is offset off the boundary it closes
 ## rather than left coplanar with the course below it -- DOWN by a hair rather
 ## than up, which is the opposite of `CliffDressing.LIP_LIFT` and for the
@@ -781,10 +888,120 @@ static func maze_skin_treatments(exposed: Dictionary, faces: Dictionary,
 						walked) \
 				else SkinTreatment.MASONRY
 			continue
-		out[key] = SkinTreatment.NATURAL \
-			if maze_bank_height(exposed, key) > STONE_BUDGET_BANDS \
-			else SkinTreatment.MASONRY
+		var natural := maze_bank_height(exposed, key) > STONE_BUDGET_BANDS
+		# TASK H2c FIX 1. The cut's fallback: a tall bank the street crosses,
+		# on a day the cut can no longer be expressed as stand-off, is coursed
+		# rather than left as rock a body cannot pass. Dead today by
+		# construction and live the moment the arithmetic above stops holding.
+		if natural and not maze_natural_cut_is_expressible() \
+				and maze_natural_face_is_cut(key, walked):
+			natural = false
+		out[key] = SkinTreatment.NATURAL if natural else SkinTreatment.MASONRY
 	return out
+
+
+static func maze_natural_face_is_cut(key: Vector4i,
+		walked: Dictionary) -> bool:
+	## TASK H2c FIX 1. Does this rock panel stand where the public realm
+	## CROSSES? A side panel faces exactly one open cell -- the neighbour its
+	## face is exposed toward -- so the question is whether that cell is walked
+	## and has a walked lateral neighbour to reach. If it has, a body has to get
+	## between the two, and this panel is one of the things in the way.
+	##
+	## Derived HERE from the walked-cell set the assembler already holds, not
+	## imported from the clearance harness: the harness measures the same
+	## predicate with a physics query, and a skin that read the harness's answer
+	## would be a skin that cannot be built without running the harness.
+	##
+	## The bands BELOW are asked as well, `NATURAL_ROCK_CUT_BAND_REACH` of them,
+	## because the shard hangs from the top of its course rather than standing
+	## on the bottom of it: a panel three courses up still leans over the street
+	## a body walks. The first band down alone is the census's `head` panels --
+	## the capsule is 2.244 m against a 1.5 m band, so three quarters of a metre
+	## of a body stands in the course above the floor it walks -- and the two
+	## after that are the module's own overhang.
+	if key.w >= FACE_DIRECTIONS.size():
+		return false
+	# BOTH columns. The module STRADDLES its boundary -- it is pulled back so
+	# the rock stands half in the mass and half in the open -- so a street under
+	# the mass side is as much in its way as one under the side it faces. The
+	# probe found the panel that proved it: a face three courses up whose faced
+	# cell is solid all the way down, over a street running through its own
+	# column, which a faced-cell-only test never named.
+	var own := Vector3i(key.x, key.y, key.z)
+	var faced := own + STONE_FACE_DIRECTIONS[key.w]
+	for band in NATURAL_ROCK_CUT_BAND_REACH + 1:
+		var drop := Vector3i.DOWN * band
+		if _maze_cell_is_crossed(faced + drop, walked) \
+				or _maze_cell_is_crossed(own + drop, walked):
+			return true
+	return false
+
+
+static func maze_natural_face_overhung_band(key: Vector4i,
+		walked: Dictionary) -> int:
+	## The HIGHEST band below this panel's own course at which the public realm
+	## walks THROUGH THE PANEL'S OWN MASS COLUMN -- the case the tail clamp
+	## exists for, and the exact line between the two kinds of overhang.
+	##
+	## The test is on the MASS side, not the open side, and that is what makes
+	## it surgical. A panel cladding an ordinary bank has mass under it all the
+	## way down -- the bank continues, and each lower course wears its own
+	## panel -- so its own column is never walked and its tail is never clamped:
+	## a wall beside a path stays full height. A panel whose own column turns
+	## into STREET a few courses down is mass that overhangs a street, and its
+	## 4 m tail hangs into the space a body walks through.
+	##
+	## `key.y` itself is excluded: a panel level with the street is that
+	## street's own wall. Returns the band, or `key.y` when nothing walks under
+	## it, so callers read "overhung band < key.y" as the condition.
+	if key.w >= FACE_DIRECTIONS.size():
+		return key.y
+	for band in range(key.y - 1, key.y - NATURAL_ROCK_CUT_BAND_REACH - 1, -1):
+		if walked.has(Vector3i(key.x, band, key.z)):
+			return band
+	return key.y
+
+
+static func maze_natural_face_rise_ceiling(key: Vector4i,
+		walked: Dictionary) -> float:
+	## How tall this panel's module may be before its tail hangs into a street
+	## crossing its own boundary. `INF` when nothing crosses under it.
+	var band := maze_natural_face_overhung_band(key, walked)
+	if band >= key.y:
+		return INF
+	return (float(key.y + 1 - band) * FabricRecipe.CELL_SIZE \
+		- NATURAL_ROCK_CUT_HEADROOM) / (NATURAL_ROCK_TOP + NATURAL_ROCK_BASE)
+
+
+static func maze_natural_face_tail_is_clearable(key: Vector4i,
+		walked: Dictionary) -> bool:
+	## Can the tail be lifted clear at all, or does the crossing pass a corner
+	## of mass at head height? The second is a ROUTING fact -- the plot model
+	## put a street through a boundary whose upper course is solid -- and no
+	## choice of cladding opens it, so it is published rather than papered over.
+	return maze_natural_face_rise_ceiling(key, walked) \
+		>= NATURAL_ROCK_CUT_MIN_RISE
+
+
+static func _maze_cell_is_crossed(cell: Vector3i, walked: Dictionary) -> bool:
+	if not walked.has(cell):
+		return false
+	for step: Vector3i in FACE_DIRECTIONS:
+		if walked.has(cell + step):
+			return true
+	return false
+
+
+static func maze_natural_cut_is_expressible() -> bool:
+	## Can the cut be made by pulling the shard back, or does it need more
+	## stand-off than the module's own relief range can express? Today it can:
+	## the cut plane is 0.057 m behind nominal and relief reaches 0.22 m. This
+	## is the guard for the day it cannot -- a wider body, a narrower cell, a
+	## deeper module -- and the answer THEN is a mason's wall where the street
+	## squeezes through the rock, which is also true vernacular, rather than a
+	## rock face quietly left standing in a street a body cannot use.
+	return NATURAL_ROCK_CUT_RELIEF >= -NATURAL_ROCK_RELIEF
 
 
 static func _maze_cap_is_free(key: Vector4i, partner: Vector3i,
@@ -873,8 +1090,10 @@ static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 					stable_id)
 			SkinTreatment.NATURAL:
 				out.add(NATURAL_ROCK_FACE,
-					_maze_natural_face_transform(key, direction), Color.WHITE,
-					stable_id)
+					_maze_natural_face_transform(key, direction,
+						maze_natural_face_is_cut(key, walked),
+						maze_natural_face_rise_ceiling(key, walked)),
+					Color.WHITE, stable_id)
 			_:
 				out.add(MAZE_STONE_MODULE,
 					_maze_stone_transform(cell, direction, partner),
@@ -1038,7 +1257,8 @@ static func maze_green_cap_jut_cells(cell: Vector3i,
 
 
 static func _maze_natural_face_transform(face: Vector4i,
-		direction: Vector3i) -> Transform3D:
+		direction: Vector3i, cut: bool = false,
+		rise_ceiling: float = INF) -> Transform3D:
 	## The cliff face hung from the top of its own course, exactly as the
 	## masonry panel is: its top edge lands on the course boundary and its
 	## extra height buries itself in the mass below, so a bank's rim is where
@@ -1060,12 +1280,25 @@ static func _maze_natural_face_transform(face: Vector4i,
 	var turned := _face_noise(face, 0) < 0.5
 	var rise := 1.0 + (_face_noise(face, 1) * 2.0 - 1.0) \
 		* NATURAL_ROCK_RISE_JITTER
+	# The tail clamp. Bounded below by the panel's own band coverage, so a
+	# module can never be shortened into a slit that shows sky through the
+	# mountain -- if the ceiling is under that floor the crossing is unclearable
+	# and `maze_natural_face_tail_is_clearable` says so out loud.
+	if rise_ceiling < rise:
+		rise = maxf(rise_ceiling, NATURAL_ROCK_CUT_MIN_RISE)
 	var cross := NATURAL_ROCK_CROSS_SCALE \
 		+ (_face_noise(face, 2) * 2.0 - 1.0) * NATURAL_ROCK_CROSS_JITTER
+	# TASK H2c FIX 1. `cut` is the panel standing where the street crosses, and
+	# the clamp is a CEILING on how far its nose may lean into that crossing --
+	# a panel already jittered behind the cut plane keeps its own roll, so the
+	# face reads as rock cut back where the path passes and undisturbed rock
+	# elsewhere, rather than as one flat dent.
+	var relief := (_face_noise(face, 3) * 2.0 - 1.0) * NATURAL_ROCK_RELIEF
+	if cut:
+		relief = minf(relief, NATURAL_ROCK_CUT_RELIEF)
 	var origin := Vector3(face.x, 0.0, face.z) * FabricRecipe.CELL_SIZE \
 		+ outward * (FabricRecipe.CELL_SIZE * 0.5 \
-			- NATURAL_ROCK_FACE_DEPTH_CENTRE \
-			+ (_face_noise(face, 3) * 2.0 - 1.0) * NATURAL_ROCK_RELIEF) \
+			- NATURAL_ROCK_FACE_DEPTH_CENTRE + relief) \
 		+ tangent * (_face_noise(face, 4) * 2.0 - 1.0) * NATURAL_ROCK_SLIDE
 	origin.y = float(face.y + 1) * FabricRecipe.CELL_SIZE \
 		- (NATURAL_ROCK_BASE if turned else NATURAL_ROCK_TOP) * rise
