@@ -126,33 +126,27 @@ const CLEARANCE_ROUTE_STEPS: Array[Vector3i] = [
 ## A red here is therefore a REGRESSION, not a known debt. The matrix summary is
 ## written before any exit, so the corpus gate reads its matrix either way.
 ##
-## TASK I1: 0 -> 2, AND IT IS A REGRESSION, REPORTED AS ONE. The halved
-## footprints put the shard lobes closer together, and THREE towns of the 45
-## that seal now shut a cell — `3/compact` at cell (-5,3,-2), `6/grand` at
-## (-1,4,6) and `10/grand` at (3,2,8), each by a single `wall_rock_plain` panel,
-## each named on the result line; 10/grand's panel shuts the crossings on BOTH
-## sides of its cell, which is where the 2 comes from. The mechanism is H2c's
-## own: a module taller than the band it clads, leaning into a street that runs
-## under it, and the smaller the town the more of its streets run under
-## something.
+## TASK I1: 0 -> 2 AND BACK TO 0, AND THE ROUND TRIP IS THE RECORD WORTH
+## KEEPING. The halved footprints put three walked cells of the 45 sealed towns
+## under a skin module that stands in them — `3/compact` (-5,3,-2), `6/grand`
+## (-1,4,6) and `10/grand` (3,2,8), four shut crossings between them — and task
+## I1's first landing PINNED that at 2 instead of fixing it.
 ##
-## WHAT DID NOT MOVE IS THE PART THAT MATTERS. `splits` and `cells_unreachable`
-## are still pinned at ZERO and still MEASURE zero, so neither shut crossing
-## breaks a street: both have a way round, and no route component came apart and
-## no walked cell was cut off anywhere in the 48-town matrix. That is the
-## difference this file's own note draws between a street NARROWED and a street
-## SHUT, and this is the first kind.
+## Fix round 1 named the mechanism and closed it. It is not the shard's lobe
+## this file's note above suspected: it is an UNPAIRED CAP, the same 3 m masonry
+## module laid FLAT over a 1.5 m cell, reaching 0.75 m past the run it closes
+## and into the street beside it — 0.750 m left of a 1.5 m cell against a
+## 0.795 m body, so the capsule fits nowhere. The skin's own trim machinery now
+## covers that third axis (`SettlementFabricAssembler
+## .maze_stone_cap_juts_over_walk`), and the 48-town matrix measures ZERO
+## blocked cells, ZERO shut crossings, ZERO splits and ZERO unreachable cells.
+## `CLEARANCE_BLOCKED_CELL_CEILING`, which existed for exactly one matrix run,
+## is gone with the defect it recorded.
 ##
 ## Pinned at the measured worst town rather than at the corpus total, for the
 ## reason the offset ceilings below are: a per-corpus number means one thing on
-## this matrix and another on a spot check. A SECOND crossing in one town is red.
-const CLEARANCE_TOWN_GATE_CEILING := 2
-## TASK I1. Walked cells that admit no player capsule ANYWHERE inside them,
-## corpus-wide. Measured 3 over the 45 sealed towns — the three cells named
-## above, one per town — where the H2c corpus measured 0. Same finding, same
-## reading: a body cannot stand in those three cells, and it can walk around
-## every one of them.
-const CLEARANCE_BLOCKED_CELL_CEILING := 3
+## this matrix and another on a spot check. ONE shut crossing anywhere is red.
+const CLEARANCE_TOWN_GATE_CEILING := 0
 ## TASK H2c FIX 2, MINOR 5. THE TWO COSTS, PINNED -- because a collapse has to
 ## be visible in reverse. The rock cut took `offset_free` from 1096 walked cells
 ## (12.57 %) to 69 (0.79 %) and `gates_offset` from 877 crossings (7.10 %) to
@@ -452,7 +446,7 @@ func _run() -> void:
 						+ "free_bench_stone=%d shared_street=%d low=%d " \
 						+ "tall=%d tallest=%d cut=%d cut_coursed=%d " \
 						+ "tail_candidates=%d tail_unclearable=%d " \
-						+ "coursed_trim=%d " \
+						+ "coursed_trim=%d cap_juts=%d cap_trim=%d " \
 						+ "banks=%s") % [city_seed,
 						String(profile.scale_id),
 						int(fabric.audit.get(
@@ -480,6 +474,10 @@ func _run() -> void:
 							"maze_skin_cut_tail_unclearable_count", 0)),
 						int(fabric.audit.get(
 							"maze_skin_coursed_trim_count", 0)),
+						int(fabric.audit.get(
+							"maze_stone_cap_jut_cell_count", 0)),
+						int(fabric.audit.get(
+							"maze_skin_cap_trim_count", 0)),
 						str(fabric.audit.get(
 							"maze_bank_height_histogram", {}))])
 					# TASK H2c FIX 1. The CLEARANCE row. Every other row above is
@@ -539,7 +537,7 @@ func _run() -> void:
 	# evidence about composition and the corpus gate reads it; a shut street is
 	# a separate question and must not cost the gate its matrix.
 	_write_summary(seeds, scale_ids, rows, sealed_count, attempted, total_ms)
-	if int(clearance.blocked) > CLEARANCE_BLOCKED_CELL_CEILING \
+	if int(clearance.blocked) > 0 \
 			or int(clearance.splits) > 0 \
 			or int(clearance.unreachable) > 0 \
 			or int(clearance.worst_gates_blocked) > CLEARANCE_TOWN_GATE_CEILING \
@@ -688,7 +686,8 @@ static func _new_skin_tally() -> Dictionary:
 	return {"towns": 0, "panels": 0, "masonry": 0, "natural": 0, "green": 0,
 		"tall_masonry": 0, "free_bench_stone": 0, "shared_street": 0,
 		"low": 0, "tall": 0, "tallest": 0, "cut": 0, "cut_coursed": 0,
-		"tail_candidates": 0, "tail_unclearable": 0, "coursed_trim": 0}
+		"tail_candidates": 0, "tail_unclearable": 0, "coursed_trim": 0,
+		"cap_juts": 0, "cap_trim": 0}
 
 
 static func _accumulate_skin(tally: Dictionary,
@@ -717,6 +716,9 @@ static func _accumulate_skin(tally: Dictionary,
 		"maze_skin_cut_tail_unclearable_count", 0))
 	tally.coursed_trim += int(fabric.audit.get(
 		"maze_skin_coursed_trim_count", 0))
+	tally.cap_juts += int(fabric.audit.get(
+		"maze_stone_cap_jut_cell_count", 0))
+	tally.cap_trim += int(fabric.audit.get("maze_skin_cap_trim_count", 0))
 
 
 func _print_skin_result(group: String, tally: Dictionary) -> void:
@@ -729,7 +731,8 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 		+ "green=%d reclad_share=%.4f tall_masonry=%d free_bench_stone=%d " \
 		+ "shared_street=%d low_faces=%d tall_faces=%d tall_share=%.4f " \
 		+ "tallest_bank=%d cut=%d cut_share=%.4f cut_coursed=%d " \
-		+ "tail_candidates=%d tail_unclearable=%d coursed_trim=%d") % [
+		+ "tail_candidates=%d tail_unclearable=%d coursed_trim=%d " \
+		+ "cap_juts=%d cap_trim=%d") % [
 		"" if group == CORPUS_STONE_GROUP else "/%s" % group,
 		int(tally.towns), int(tally.panels), int(tally.masonry),
 		int(tally.natural), int(tally.green),
@@ -742,7 +745,8 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 		int(tally.tallest), int(tally.cut),
 		float(int(tally.cut)) / float(maxi(1, int(tally.natural))),
 		int(tally.cut_coursed), int(tally.tail_candidates),
-		int(tally.tail_unclearable), int(tally.coursed_trim)])
+		int(tally.tail_unclearable), int(tally.coursed_trim),
+		int(tally.cap_juts), int(tally.cap_trim)])
 
 
 static func _new_clearance_tally() -> Dictionary:

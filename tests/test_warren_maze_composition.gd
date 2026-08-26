@@ -64,6 +64,34 @@ const STANDARD_SEEDS: Array[int] = [3, 9]
 ## every failure message and printed once per run as `MACHINE_FACTOR`, so a
 ## ceiling that only passes at 1.9x is visibly a ceiling that only passes on a
 ## broken machine.
+##
+## TASK I1 FIX ROUND 1 -- THE SECOND HALF OF THE SAME REPAIR: THE SPREAD.
+## Normalization corrects for how slow the MACHINE is. It does not correct for
+## how variable ONE TOWN'S SOLVE is, and that is a separate coin flip. Three
+## rows re-pinned at task I1's first landing carry measured spreads (max/min
+## over the same three or four in-suite runs) of 1.85x, 1.86x and 2.26x, and a
+## fourth carries 2.82x. A ceiling at "median x the row's multiplier" over a 2x
+## spread passes the median run of a tree and goes red on the slow run of the
+## SAME tree -- which is the exact failure this whole block exists to end.
+##
+## THE AMENDMENT, and it applies to every ms ceiling in this file: for a row
+## whose measured spread exceeds 1.6, the pin is
+##
+##     max(median x the row's own multiplier, worst sample x 1.15)
+##
+## rounded up to the granularity that row already uses. Rows inside 1.6 keep the
+## median rule exactly as it was. Three properties are deliberate:
+##
+## * THE ROW'S OWN MULTIPLIER, not a flat 1.5 -- the sloped rows have been x2.0
+##   since task E1 and this amendment is not the place to re-argue that.
+## * A REAL SAMPLE, not a statistic. 1.15 is headroom over something that was
+##   actually observed on a machine somebody ran.
+## * MAX OVER MACHINES, never min. When a row has samples from more than one
+##   machine, each machine's arithmetic is worked separately and the pin is the
+##   HIGHEST -- so a fast machine can never tighten a ceiling a slower one
+##   measured a need for, and re-measuring on new hardware can only widen.
+##   Where a sample was taken at a known machine factor, it is divided by that
+##   factor first, because the assertion multiplies by it at assert time.
 const REFERENCE_PASSES := 48
 const REFERENCE_CELLS := 1200
 const REFERENCE_RUNS := 3
@@ -697,7 +725,7 @@ const MAZE_FACADE_YIELD_CEILING := 7
 ## Three fell hard and one rose, and the one that rose is named rather than
 ## averaged away. In-suite medians before -> after:
 ##
-##   12/compact  3316 -> **1380**  (runs 1920 / 1380 / 1037)
+##   12/compact  3316 -> **1380**  (runs 1920 / 1380 / 1037)  -- see below
 ##   4/compact   2972 -> **3981**  (runs 5540 / 3981 / 3713)
 ##   3/standard  4444 -> **2622**  (runs 3017 / 2622 / 2535)
 ##   9/standard  6628 -> **3221**  (runs 3144 / 3362 / 3221)
@@ -713,8 +741,22 @@ const MAZE_FACADE_YIELD_CEILING := 7
 ## is still under four seconds, and the same probe shows the massif's raised
 ## phase family costing 73 ms at its worst (12/compact, the one town that needs
 ## it) against 3 ms where it does not.
+##
+## FIX ROUND 1 RE-PINNED `12/compact` UNDER THE SPREAD AMENDMENT (the
+## normalization block at the top of this file states it once). Its three runs
+## span 1920 / 1037 = 1.85x, so median x1.5 = 2070 sat 8 % over a sample the
+## same tree had already produced -- a row that passes on the median run and
+## goes red on the slow one. `max(1380 x 1.5, 1920 x 1.15) = 2208`, to the
+## nearest hundred **2300**. The other three rows span 1.49x, 1.19x and 1.07x
+## and keep the median rule untouched.
+##
+## Re-measured on the fix-round machine, three full in-suite runs: 12/compact
+## 1029 / 1090 / 999, 4/compact 3031 / 2726 / 2793, 3/standard
+## 1989 / 2267 / 1822, 9/standard 2544 / 2589 / 2678 -- every row
+## inside its ceiling with room, and every row's own arithmetic on this machine
+## lower than the numbers pinned below, which is why none of them moved down.
 const PLANNER_SOLVE_MS_CEILING: Dictionary = {
-	"12/compact": 2100,
+	"12/compact": 2300,
 	"4/compact": 6000,
 	"3/standard": 4000,
 	"9/standard": 4900,
@@ -4711,6 +4753,236 @@ func test_a_green_cap_never_juts_past_the_bench_it_caps() -> void:
 	assert_gt(checked, 0, "the corpus must seal a town to measure")
 
 
+## TASK I1 FIX 1 -- THE THIRD LEG OF THE STREET-CUTS-THE-ROCK MACHINERY, AND
+## IT FIRES NOWHERE. `maze_skin_coursed_trim_count` counts coursed masonry side
+## panels shortened because the course they would have buried into is an open
+## street (`SettlementFabricAssembler.maze_stone_face_overhangs_walk`), and it
+## measures ZERO on every town of the 48-town matrix and both scale groups of
+## the sweep's own skin row.
+##
+## Pinned rather than left unwatched, in the same named-capability pattern as
+## `STREET_BORNE_CROWNS` above and the four other measured zeroes this task
+## records: the capability still exists in the emitter, it has no town left to
+## exercise it, and the day one comes back this constant is the re-pin somebody
+## has to look at. It went to zero for a reason that is geometry and not a lost
+## rule -- the trim needs a MASONRY panel with a street in its own mass column
+## within two bands, and the shrunk corpus clads those banks in natural rock,
+## which takes the tail clamp instead.
+##
+## Its horizontal twin `maze_skin_cap_trim_count` is NOT zero and is asserted
+## against the payload above rather than pinned: that is the leg fix round 1
+## added, and it is the one carrying live towns.
+const COURSED_TRIM_PANELS := 0
+
+
+func test_a_stone_cap_never_reaches_over_a_street() -> void:
+	## TASK I1 FIX 1 -- the masonry twin of the test above, and the pin the
+	## three shut cells of task I1's first landing wanted.
+	##
+	## A cap is the 3 m module laid FLAT over a 1.5 m cell. Paired, it lays its
+	## two cells exactly; UNPAIRED, it reaches 0.75 m past each end of the run it
+	## closes, and where that end is a street the slab stands in the walking
+	## space -- 0.750 m left of a 1.5 m cell against a 0.795 m capsule, which is
+	## a cell nobody can stand in. The green quad's overhang was trimmed for
+	## being lawn over air; this one is trimmed for being masonry over a street,
+	## and only where it is: a stone ledge corbelling over closed mass is
+	## correct vocabulary and stays.
+	##
+	## Measured off the TRANSFORMS the renderer is handed, decoded through the
+	## module's own authored envelope, never off the rule that placed them -- so
+	## a predicate that says the right thing while the emitter lays the wrong
+	## slab cannot pass. The audit is then asserted against the same reading.
+	var catalog := EnvironmentCatalog.load_default()
+	assert_not_null(catalog, "the shipped environment catalogue must load")
+	if catalog == null:
+		return
+	var module := catalog.descriptor(
+		SettlementFabricAssembler.MAZE_STONE_MODULE)
+	assert_not_null(module, "the maze stone module must be in the catalogue")
+	if module == null:
+		return
+	var local: AABB = module.measured_aabb
+	var sides := SettlementFabricAssembler.FACE_DIRECTIONS.size()
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var partners := _cap_partner_offsets(fabric)
+		var caps := 0
+		var unpaired := 0
+		var trimmed := 0
+		var jut_cells := 0
+		var over_street := 0
+		var worst: Array[String] = []
+		for instance: Dictionary in _stone_instances(fabric):
+			if StringName(instance["asset"]) \
+					!= SettlementFabricAssembler.MAZE_STONE_MODULE:
+				continue
+			var face := instance["face"] as Vector4i
+			if face.w < sides:
+				continue
+			caps += 1
+			var cell := Vector3i(face.x, face.y, face.z)
+			var partner := partners.get(face, Vector3i.ZERO) as Vector3i
+			unpaired += int(partner == Vector3i.ZERO)
+			var xform := instance["transform"] as Transform3D
+			# The slab is anchored at one end and sweeps its authored 3 m along
+			# local +Y, so its world run is the origin plus that column.
+			var along := xform.basis * Vector3(0.0, 1.0, 0.0)
+			var length := along.length() * local.size.y
+			trimmed += int(length \
+				< SettlementFabricAssembler.STONE_MODULE_HEIGHT - 0.01)
+			var axis := along.normalized()
+			var near := xform.origin.dot(axis)
+			var far := (xform.origin + axis * length).dot(axis)
+			var owned: Dictionary = {cell: true}
+			if partner != Vector3i.ZERO:
+				owned[cell + partner] = true
+			# A floor-facing slab lies in the bottom of its own band, so it is
+			# in the head space of the band BELOW and on the floor of its own;
+			# a sky-facing one fills the top of its own band alone.
+			var reach := 1 if SettlementFabricAssembler \
+				.STONE_FACE_DIRECTIONS[face.w] == Vector3i.UP else 2
+			for step in range(-2, 3):
+				var probe := cell + Vector3i(axis.round()) * step
+				if owned.has(probe):
+					continue
+				var at := (Vector3(probe) * FabricRecipe.CELL_SIZE).dot(axis)
+				if at + FabricRecipe.CELL_SIZE * 0.5 <= minf(near, far) + 0.01 \
+						or at - FabricRecipe.CELL_SIZE * 0.5 \
+							>= maxf(near, far) - 0.01:
+					continue
+				jut_cells += 1
+				for band in reach:
+					if not walked.has(Vector3i(probe.x, face.y - band,
+							probe.z)):
+						continue
+					over_street += 1
+					if worst.size() < 8:
+						worst.append("cap(%d,%d,%d,%d)->(%d,%d,%d)" % [face.x,
+							face.y, face.z, face.w, probe.x, face.y - band,
+							probe.z])
+					break
+		var audit := fabric.audit
+		print("MAZE_CAP_JUT %s caps=%d unpaired=%d trimmed=%d jut=%d %s" % [
+			_label(outcome), caps, unpaired, trimmed, jut_cells,
+			"over_street=%d [%s]" % [over_street, " ".join(worst)]])
+		assert_gt(caps, 0, "%s must lay some stone caps to measure" \
+			% _label(outcome))
+		assert_eq(over_street, 0,
+			("%s lays %d cap slab(s) over a cell the public realm walks; a " \
+				+ "3 m module on a 1.5 m run leaves 0.750 m against a 0.795 m " \
+				+ "body %s") % [_label(outcome), over_street, " ".join(worst)])
+		assert_eq(int(audit.get("maze_skin_cap_trim_count", -1)), trimmed,
+			"%s audited cap trims must equal the payload's" % _label(outcome))
+		assert_eq(int(audit.get("maze_skin_coursed_trim_count", -1)),
+			COURSED_TRIM_PANELS,
+			("%s trims %d coursed side panel(s) where the corpus measures %d; " \
+				+ "the third leg of the cut has found a town again") % [
+				_label(outcome),
+				int(audit.get("maze_skin_coursed_trim_count", -1)),
+				COURSED_TRIM_PANELS])
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+	# THIS CORPUS PAIRS EVERY MASONRY CAP IT LAYS (unpaired=0 on all four towns,
+	# printed above), so the assertion is a REGRESSION pin here and not a
+	# demonstration: it turns red the day a town lays an unpaired cap over a
+	# street, which is what the 48-town matrix found and these four seeds do not
+	# contain. The rule's own teeth are in the test below, on a shell built by
+	# hand -- the same division `test_the_hillside_treatment_fires_on_a_planted_
+	# bank` makes for the same reason.
+
+
+func test_a_cap_over_a_street_is_trimmed_to_the_run_it_closes() -> void:
+	## TASK I1 FIX 1 -- the trim's own teeth, on a shell this test builds by
+	## hand. Three unpaired masonry caps: one SKY-FACING over a street in the
+	## column beside it, one FLOOR-FACING over a street one band under the
+	## column beside it, and one over nothing at all. The first two must be cut
+	## back to the run they close and the third must keep its corbel.
+	var size := FabricRecipe.CELL_SIZE
+	var sky := Vector4i(0, 0, 0, 4)
+	var floor_cap := Vector4i(0, 4, 0, 5)
+	var free := Vector4i(0, 8, 0, 4)
+	var faces: Dictionary = {sky: Vector3i.ZERO, floor_cap: Vector3i.ZERO,
+		free: Vector3i.ZERO}
+	var exposed: Dictionary = {sky: true, floor_cap: true, free: true}
+	# The street that stands ON each cap is what keeps it masonry rather than
+	# lawn, which is task C5b's "the street stands on stone" and is the
+	# configuration the three cells of the matrix were in.
+	var walked: Dictionary = {
+		Vector3i(0, 1, 0): true, Vector3i(0, 9, 0): true,
+		# The streets BESIDE them: same band for the sky-facing cap (its slab
+		# fills the top of that band), one band down for the floor-facing one
+		# (its slab fills the bottom of its own).
+		Vector3i(0, 0, 1): true, Vector3i(0, 3, 1): true,
+	}
+	var treatments := SettlementFabricAssembler.maze_skin_treatments(exposed,
+		faces, walked)
+	for key: Vector4i in [sky, floor_cap, free]:
+		assert_eq(int(treatments[key]),
+			SettlementFabricAssembler.SkinTreatment.MASONRY,
+			"the planted cap %s must stay masonry to be a cap at all" % str(key))
+	assert_true(SettlementFabricAssembler.maze_stone_cap_juts_over_walk(sky,
+		Vector3i.ZERO, walked), "a sky-facing cap reaching over a street at " \
+			+ "its own band must be named")
+	assert_true(SettlementFabricAssembler.maze_stone_cap_juts_over_walk(
+		floor_cap, Vector3i.ZERO, walked),
+		"a floor-facing cap reaching over the street it roofs must be named")
+	assert_false(SettlementFabricAssembler.maze_stone_cap_juts_over_walk(free,
+		Vector3i.ZERO, walked), "a cap corbelling over closed mass is left " \
+			+ "alone; a stone ledge is correct vocabulary")
+	assert_eq(SettlementFabricAssembler.maze_stone_cap_jut_cells(sky,
+		Vector3i.BACK).size(), 0,
+		"a PAIRED cap lays 3 m over a 3 m run and juts nothing")
+	var payload := SettlementFabricAssembler.maze_stone_walls({}, {}, {}, {},
+		walked, {"exposed": exposed, "faces": faces,
+			"treatments": treatments})
+	var catalog := EnvironmentCatalog.load_default()
+	assert_not_null(catalog, "the shipped environment catalogue must load")
+	if catalog == null:
+		return
+	var module := catalog.descriptor(
+		SettlementFabricAssembler.MAZE_STONE_MODULE)
+	assert_not_null(module, "the maze stone module must be in the catalogue")
+	if module == null:
+		return
+	var local: AABB = module.measured_aabb
+	var batch := payload.batches[
+		SettlementFabricAssembler.MAZE_STONE_MODULE] as Dictionary
+	var runs: Dictionary = {}
+	var ids: Array = batch.ids
+	for index in ids.size():
+		var xform := batch.transforms[index] as Transform3D
+		var along := xform.basis * Vector3(0.0, 1.0, 0.0)
+		var axis := along.normalized()
+		var near := xform.origin.dot(axis)
+		var far := near + along.length() * local.size.y
+		runs[String(ids[index])] = [minf(near, far), maxf(near, far), axis]
+	for row: Array in [["maze-stone/0/0/0/4", sky], ["maze-stone/0/4/0/5",
+			floor_cap]]:
+		var run: Array = runs[row[0]]
+		assert_almost_eq(float(run[1]) - float(run[0]), size, 0.001,
+			"%s must lay exactly the one cell it closes" % row[0])
+		# AND IT MUST STILL CLOSE IT. The trim may not become a hole: the run
+		# has to contain the whole of its own cell's boundary.
+		var centre := (Vector3(row[1].x, row[1].y, row[1].z) * size).dot(
+			run[2] as Vector3)
+		assert_lt(float(run[0]), centre - size * 0.5 + 0.001,
+			"%s must still reach its cell's near edge" % row[0])
+		assert_gt(float(run[1]), centre + size * 0.5 - 0.001,
+			"%s must still reach its cell's far edge" % row[0])
+	var kept: Array = runs["maze-stone/0/8/0/4"]
+	assert_almost_eq(float(kept[1]) - float(kept[0]),
+		SettlementFabricAssembler.STONE_MODULE_HEIGHT, 0.001,
+		"a cap over nobody keeps the module's whole 3 m")
+
+
 func _cap_partner_offsets(fabric: SettlementFabricPlan) -> Dictionary:
 	## Which neighbour each panel reaches over. The pairing is the assembler's
 	## own -- this test is measuring the TREATMENT, not re-litigating the
@@ -5727,8 +5999,26 @@ func _asset_plot_records(world_seed: int, scale_id: StringName) -> Array:
 ## thing in the repository that watches it. `MIRROR_LOOSE_TOWNS` is the
 ## exception list, and it is two-sided — a town that leaves it is a re-pin, and
 ## a second town joining it is a red test.
+##
+## FIX ROUND 1 MOVED THE RATCHET'S FIXTURE, because a floor of 0 is not a
+## ratchet. `REALISED_LANDMARK_FLOOR` was written by task C5b ruling 3 to hold
+## the line at "the production pass really builds one of these", and task I1
+## re-pinned it to the compact/standard corpus's new measurement of zero —
+## which turned the assertion into `assert_gte(x, 0)` and quietly retired the
+## ruling it was enforcing. The floor is a floor again, on a town that really
+## stands one: 7/large realises a prefab landmark on this tree (measured
+## `landmarks=1`, `hero_landmarks=1`, in this file's own MAZE_BIG row and in the
+## review harness's audit), so the ratchet is fixtured THERE and reads `1 >= 1`.
+## The compact/standard corpus keeps its own measured zero beside it, published
+## rather than asserted, because that zero is a supply fact about small towns
+## and not a statement about the builder.
 const MIRROR_ACCEPTED_SITES := 1
-const REALISED_LANDMARK_FLOOR := 0
+const REALISED_LANDMARK_FLOOR := 1
+## The town the ratchet stands on. It is not in `_corpus()` — that is compact
+## and standard, and neither scale supplies a site big enough to hold a prefab
+## since the footprints halved — so the ratchet names its own fixture and
+## solving it here is what makes the floor red-capable at all.
+const REALISED_LANDMARK_TOWN: Array = [7, &"large"]
 const MIRROR_LOOSE_TOWNS: Array[String] = ["seed 3/standard"]
 
 
@@ -5838,16 +6128,34 @@ func test_assets_land() -> void:
 	# zero landmarks reported green-with-a-pending and the ratchet could never
 	# fire. It was written when nothing realised; the momentum spine changed
 	# that, so it is deleted and the ratchet is now reachable.
-	assert_gte(realised_total, REALISED_LANDMARK_FLOOR,
-		("ruling 3 wants a landmark the production pass really builds; the " \
-			+ "corpus realises %d") % realised_total)
+	# THE RATCHET, on its own fixture. C5b ruling 3 wants a landmark the
+	# production pass really BUILDS, and the compact/standard corpus stopped
+	# supplying one when the footprints halved -- so the claim is measured where
+	# it can still be false rather than lowered until it cannot be.
+	var ratchet := _solved(int(REALISED_LANDMARK_TOWN[0]),
+		StringName(REALISED_LANDMARK_TOWN[1]))
+	var ratchet_plan := ratchet.plan as WarrenSpatialPlan
+	assert_not_null(ratchet_plan, "%s must seal to carry the landmark ratchet: %s" \
+		% [_label(ratchet), String(ratchet.failure).left(200)])
+	var ratchet_landmarks := 0 if ratchet_plan == null \
+		else _feature_count(ratchet_plan, &"prefab_landmark")
+	print("MAZE_ASSET_LAND ratchet %s landmarks=%d floor=%d" % [_label(ratchet),
+		ratchet_landmarks, REALISED_LANDMARK_FLOOR])
+	assert_gte(ratchet_landmarks, REALISED_LANDMARK_FLOOR,
+		("ruling 3 wants a landmark the production pass really builds; %s " \
+			+ "realises %d (the compact/standard corpus realises %d, which is " \
+			+ "a supply fact about small towns and not this assertion)") % [
+			_label(ratchet), ratchet_landmarks, realised_total])
 	# SOUNDNESS, corpus-wide: `realised >= realisable` is the same property the
 	# per-town assertion states. Until Task E3 it was satisfied by `0 <= 2` and
-	# said almost nothing; it now reads `2 <= 2` and is exactly tight, so the
-	# measured PAIR pinned beside it is what says WHICH 2. Both directions are
-	# red tests: a mirror that starts accepting more sites is a re-pin someone
-	# has to look at, and a builder that stops realising trips the ratchet
-	# above.
+	# said almost nothing; E3 made it read `2 <= 2`, exactly tight, with the
+	# measured PAIR pinned beside it to say WHICH 2.
+	#
+	# ON THE SHRUNK CORPUS IT READS `0 + 1 >= 1` and the slack is the ONE named
+	# town, so it is still tight -- it fails on a second over-predicting town and
+	# on nothing else. What it no longer does is carry the builder's ratchet:
+	# that moved to its own fixture above, because a corpus that realises zero
+	# can satisfy this line forever.
 	# TASK I1: short by exactly the towns on MIRROR_LOOSE_TOWNS and by no others.
 	# The corpus-wide half of the same soundness claim the per-town assertion
 	# above makes, and it is allowed the same named exceptions rather than being
@@ -6359,14 +6667,22 @@ func test_corpus_composes() -> void:
 ##
 ## TASK I1 RE-CHOSE ALL THREE ROWS, because the seal set moved and the lane is
 ## defined by what it demonstrates rather than by which seeds it happens to
-## name. Large went 7 of 12 to **11 of 12** and grand 1 of 12 to **7 of 12**, so
-## the marketless-large and grand rows both had to be re-sourced:
+## name. Large went 7 of 12 to **11 of 12** and grand 1 of 12 to **10 of 12**,
+## so the marketless-large and grand rows both had to be re-sourced:
 ##
-##   * `9/large` and `9/grand` were the old rows and NEITHER seals now — 9/large
-##     at `public route graph is disconnected`, 9/grand at a missing composition
-##     support parent. Seed 9 is the one seed the shrink cost at both big
-##     scales; every other large and grand seed either kept its seal or gained
-##     one.
+##   * `9/large` was the old marketless-large row and does NOT seal now: it dies
+##     at `public route graph is disconnected`, and it is the ONE seed the
+##     shrink cost anywhere in the 48-town matrix.
+##   * `9/grand` was the old grand row and it DOES still seal. It left the lane
+##     because the row wants the lowest-numbered sealing grand town, which is
+##     now 1/grand — not because it was lost.
+##
+##     FIX ROUND 1 CORRECTED THAT SECOND BULLET. It read "neither seals now",
+##     which was measured on the REJECTED core-maximum candidate (15,19) rather
+##     than on the shipped (15,18): the candidate sealed seven grand towns and
+##     the shipped profile seals ten, 9/grand among them. The lane rows
+##     themselves were chosen correctly; only the reason written beside one of
+##     them was a ghost of a profile that never landed.
 ##   * The bazaar row moved 7/large -> **2/large**, which is now the ONLY town in
 ##     the eleven sealing large towns that builds one (`covered_market_count=1`;
 ##     the other ten publish the shortfall). A smaller ground street holds a
@@ -6377,7 +6693,8 @@ func test_corpus_composes() -> void:
 ##     two-sidedly as its `1` was.
 ##   * The grand row is **1/grand**, the lowest-numbered sealing grand town.
 ##
-## Buildings measured 83 / 81 / 99 against 116 / 144 / 236 before. The floors sit
+## Buildings measured 83 / 81 / 115 on the three rows above, against the OLD
+## lane's own 116 / 144 / 236 on three different towns. The floors sit
 ## well below the measurement, as before, because the claim is "these really are
 ## the big ones", not a re-pin surface.
 ##
@@ -6398,14 +6715,26 @@ func test_corpus_composes() -> void:
 ## normalization does not cover, against three readings inside 23.7-27.0 s and
 ## two sweep readings at 29.7 and 36.4 s. A ceiling at the median would make this
 ## row a coin flip, and this is the ONLY large town in the corpus that builds a
-## bazaar, so a flaky row here costs the market arm its test entirely. 55000
-## covers every reading but the outlier at x1.00 and covers the outlier itself at
-## the x1.31 the machine measured. It is a "has this fallen back into a search"
-## guard at that width and nothing finer, which is what this file says these are
-## for; a task that wants a tight number here should first find out why this one
-## town's solve has a 2.6x tail.
+## bazaar, so a flaky row here costs the market arm its test entirely. It is a
+## "has this fallen back into a search" guard at that width and nothing finer,
+## which is what this file says these are for; a task that wants a tight number
+## here should first find out why this one town's solve has a 2.6x tail.
+##
+## FIX ROUND 1 TURNED THAT ARGUMENT INTO THE FILE'S RULE and then applied the
+## rule back to this row. The amendment is stated once in the normalization
+## block at the top of this file; this row is where it was first reasoned out,
+## and under it the pin is `max(median x1.5, worst x1.15)` with the outlier
+## divided by the factor it was measured at: 66890 / 1.31 = 51061, x1.15 =
+## 58720, against median x1.5 = 38100. So **55000 -> 58800** -- the hand-argued
+## 55000 was itself a few per cent under its own arithmetic, which is the same
+## defect in miniature that this round found on the production row.
+##
+## Re-measured on the fix-round machine, in-suite: 2/large 20153 / 21669 /
+## 19466, 7/large 18111 / 17169 / 16509, 1/grand 28125 / 29149 /
+## 28701. 7/large's combined spread is 25932 / 17169 = 1.51x, inside the
+## 1.6 the amendment triggers on, so it keeps its median rule and its 30800.
 const BIG_TOWN_LANES: Array[Array] = [
-	[2, &"large", 55000, 70, 1],
+	[2, &"large", 58800, 70, 1],
 	[7, &"large", 30800, 70, 0],
 	[1, &"grand", 53100, 85, 0],
 ]
@@ -6789,9 +7118,21 @@ const SLOPED_UNPROVED_FLANK_SKIPS := 0
 ## TASK I1 RE-PINNED THE THREE COMPOSING ROWS DOWN, at the same x2.0 and the
 ## same three-run in-suite median. Measured runs -> median -> ceiling:
 ##
-##   ramp/12/compact  3601 / 2015 / 1590 -> 2015 -> **4100** (was 10600)
+##   ramp/12/compact  3601 / 2015 / 1590 -> 2015 -> **4200** (was 10600)
 ##   ramp/3/standard  6069 / 5084 / 5291 -> 5291 -> **10600** (was 12800)
 ##   step/12/compact  3869 / 3757 / 3502 -> 3757 -> **7600** (was 5600)
+##
+## FIX ROUND 1 MOVED `ramp/12/compact` 4100 -> 4200 UNDER THE SPREAD AMENDMENT
+## (stated once in the normalization block at the top of this file). It is the
+## spreadiest row in the file's flat-or-sloped population: 3601 / 1590 = 2.26x,
+## so `median x2.0 = 4030` sat BELOW a sample the same tree had already
+## produced x1.15. `max(2015 x 2.0, 3601 x 1.15) = 4141`, to the nearest hundred
+## 4200. Its two neighbours span 1.19x and 1.10x and keep the median rule.
+## Re-measured on the fix-round machine, in-suite: ramp/12/compact
+## 1309 / 1263 / 1550, ramp/3/standard 4465 / 4690 / 4286,
+## step/12/compact 2790 / 2688 / 2875 -- all far inside, and all of this
+## machine's own arithmetic below the pins, which is why only the spread term
+## moved anything.
 ##
 ## `step/12/compact` rose for the reason `PLANNER_SOLVE_MS_CEILING` names on
 ## 4/compact -- the carve, on a footprint with fewer legal spines -- and it rose
@@ -6800,7 +7141,7 @@ const SLOPED_UNPROVED_FLANK_SKIPS := 0
 ## `SLOPED_KNOWN_REFUSALS` and never reaches a wall clock. The row stays so that
 ## restoring the town is a re-measurement rather than a re-invention.
 const SLOPED_SOLVE_MS_CEILING: Dictionary = {
-	"ramp/12/compact": 4100,
+	"ramp/12/compact": 4200,
 	"ramp/3/standard": 10600,
 	"step/12/compact": 7600,
 	"step/3/standard": 16500,
@@ -7170,7 +7511,21 @@ const PRODUCTION_REGION_RADIUS := 5
 ## 6260 / 6386 / 6719 / 7564 leaves a coin flip. The third answer is that the
 ## INSTRUMENT was wrong: the ceiling is what it was measured at and the
 ## assertion scales it by the machine.
-const PRODUCTION_SOLVE_MS_CEILING := 7000
+##
+## TASK I1 MEASURED 3205 / 5966 / 5287 on the shrunk production town and LEFT
+## 7000 STANDING, on the reasoning that re-pinning would be upward and the row
+## was passing. FIX ROUND 1 RE-PINS IT, because "the arithmetic says 7930 and
+## the constant says 7000" is a ceiling standing below its own measurement --
+## the coin flip this doc twice refused, arrived at by not acting. The row's
+## spread is 5966 / 3205 = 1.86x, so the amendment applies:
+## `max(5287 x 1.5, 5966 x 1.15) = max(7930, 6861) = 7930`, to the nearest
+## hundred **8000**. It is a WIDENING and it widens nothing that matters -- the
+## order-of-magnitude fall this row exists to catch is 154-210 s.
+##
+## The fix-round machine reads 2672 / 3066 / 2667 in-suite on the same town,
+## whose own arithmetic is 4600-ish; the pin takes the HIGHER machine's number,
+## per the amendment's third property.
+const PRODUCTION_SOLVE_MS_CEILING := 8000
 
 static var _production_site_cache: Dictionary = {}
 
