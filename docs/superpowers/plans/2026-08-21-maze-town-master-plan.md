@@ -521,4 +521,22 @@ H2b's re-clad removed ~47 % of the massif skin's colliders: the two KayKit modul
 - [ ] Deliverable — updated artifact + the stop.
 
 ### Phase H exit
-- The user looks at the re-battery and calls it a quaint medieval village (or names what still reads wrong); corpus ≥ 32/48; all pins honest; the merge menu returns.
+- The user looks at the re-battery and calls it a quaint medieval village (or names what still reads wrong); corpus ≥ 32/48; all pins honest; the merge menu returns. **Outcome (2026-08-26):** the user's verdict arrived as a /goal — the H result still reads as massive stone walls; Phase I supersedes the menu.
+
+# Phase I — The town wears buildings
+
+**Binding direction (user, 2026-08-26, /goal with one reference frame):** "even after changing to cliff tiles instead of the stone fortress tiles, it still shows as massive walls of stone. i want you to remove all stone from everywhere but the ground floor of select buildings. everything else should use actual building assets. i also want the city to be smaller, it's too big now. also it's missing skywalks, outcroppings, plazas/gardens, etc … please iterate by changing the code and visually (and through tests) evaluating to improve the town, following the vibe i want." The reference frame shows: a timber skywalk bridge with railings spanning between buildings at height; a bay-window outcropping cantilevered off a tower face; buildings whose walls are plaster/half-timber at every storey with stone only as a low base; blue-slate and terracotta pitched roofs; open courtyards with grass between the houses.
+
+What this means against the H result: the retained-massif skin (natural rock + benches) is itself the offender — CLADDING IS NOT ENOUGH; the exposed mass must read as BUILDINGS (facade storeys with windows and timber — the searched pipeline's old "house rock" idea, done right on the one-pass path), stone surviving only as select coursed ground storeys. The city shrinks. The life the old towns had — skywalks, oriels/dormers/bump-outs, plazas and gardens — returns as first-class vocabulary. And the phase runs as an ITERATE loop: change → render → judge against the reference vibe → change again, with the corpus/suite discipline held at every step.
+
+### Task I1: Smaller towns
+The scale profiles shrink (footprint radius, plot counts, storey budgets — measured against the reference's town scale: a village core of dozens of houses, not 88-236 buildings); the corpus re-baselines honestly (seals re-measured by set; every count pin re-derived); solve times fall with the size (report). The production settlement re-measured.
+
+### Task I2: The mass wears facades
+Exposed retained-mass faces above the ground storey render as BUILDING facade storeys (window/plaster/timber modules from the building vocabulary, seeded per lineage like real walls; alignment with real storeys so the fake and true floors read as one building); stone survives ONLY as the coherent coursed ground-storey bases (the H1 1-in-4 seeded choice, kept) and genuine ≤2-band retaining walls; the green bench tops become gardens/plazas where unwalked (planters/grass dressing) and stay paved where walked. The natural-rock treatment retires from town faces (it may survive on the outermost rim faces that touch open terrain, judged by render). Pins: above-ground stone faces ≈ 0 outside bases/retaining; facade-clad mass faces counted; the wall-material metric extended to cover clad mass.
+
+### Task I3: The life — skywalks, outcroppings, plazas
+Timber skywalk bridges (the walkway/bridge assets exist in the catalog) spanning streets between upper terraces/roof decks at seeded sites where spans are short and both ends walkable — visible open bridges with railings like the reference, not enclosed rooms; counted and pinned at measured. Outcropping variety at seeded rates on upper storeys over streets/open air: bay windows (the oriel machinery widened), dormers (already in the pitched vocabulary — rate up), bump-outs (a half-cell cantilevered room face); every overhang shows brackets. Plazas/gardens: deck plots and bench tops dress as plazas (paving + planters + pergolas) and gardens (grass + planting), counted.
+
+### Task I4: The iterate loop
+Render the battery seeds after each I-task; the controller reads them against the reference frame; divergences become the next round's changes; repeat until the vibe holds (the user's Stop-hook condition). Suites and the matrix stay green throughout; every changed number re-pins measured-first.
