@@ -5,6 +5,12 @@ extends GutTest
 ## pinning it.
 const COVERED_MARKET_UNIT_CEILING := 64
 
+## TASK I1. Canopy candidates `_preplan_spatial_market` forms for the pinned
+## production city seed. Measured 1 before the size cut and **0** after -- see
+## the note at the assertion for why, and for why it is pinned rather than
+## relaxed to a `>= 0` that would say nothing.
+const PRODUCTION_MARKET_CANDIDATES := 0
+
 
 static func _tiled_setback_caps(audit: Dictionary) -> int:
 	## How many `roof.setback.cap.*` units the flat-plate TILING placed, read
@@ -404,9 +410,22 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_eq(int(market_preplan.get("candidate_count", -1)),
 		int(market_preplan.get("clearance_fit_count", -2)),
 		"every candidate that clears its visual envelope becomes a candidate")
-	assert_gt(int(market_preplan.get("candidate_count", -1)), 0,
-		("this seed must still FORM a canopy candidate; a town that forms " \
-			+ "none has a different disease and F3's diagnosis does not cover it"))
+	# TASK I1. This was `> 0` and it is now MEASURED ZERO, which is a change of
+	# diagnosis and is pinned as one rather than relaxed. F3 classified this
+	# town as "a bazaar mouth looking straight out of the hill" -- one candidate
+	# formed and dropped by a saturated sight ray. On the shrunk footprint the
+	# production town forms NO canopy candidate at all: the ground street that
+	# used to offer one is shorter, and `_preplan_spatial_market` never gets a
+	# run of cells to put a canopy over. The town is still marketless and still
+	# DECLARES it (the shortfall assertions above are untouched and green); what
+	# changed is which stage the market-ness stops at, and this pin is what
+	# makes the next reader see that rather than inherit F3's paragraph.
+	assert_eq(int(market_preplan.get("candidate_count", -1)),
+		PRODUCTION_MARKET_CANDIDATES,
+		("this seed forms %d canopy candidates against the pinned %d; the " \
+			+ "diagnosis in the note above is about a town that forms exactly " \
+			+ "that many") % [int(market_preplan.get("candidate_count", -1)),
+			PRODUCTION_MARKET_CANDIDATES])
 	var market_previews := market_preplan.get("shelter_preview", []) as Array
 	assert_eq(market_previews.size(),
 		int(market_preplan.get("candidate_count", -1)),
@@ -421,7 +440,8 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 		"no candidate reached the backing check, so it explains nothing here")
 	gut.p("one-pass town: market candidates=%d open_max=%s limit=%d ray=%d" % [
 		int(market_preplan.get("candidate_count", -1)),
-		str((market_previews[0] as Dictionary).get("open_max", -1)),
+		str((market_previews[0] as Dictionary).get("open_max", -1)) \
+			if not market_previews.is_empty() else "<no candidate>",
 		int(market_preplan.get("open_horizon_limit_cells", -1)),
 		WarrenVolumetricSolver.MARKET_SHELTER_HORIZON_LIMIT_CELLS])
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \

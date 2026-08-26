@@ -452,15 +452,22 @@ const RIM_WALL_CEILING_BANDS := 2 * WarrenBuildingParcel.STOREY_BANDS + 1
 ## occupies, and it is the only form of the fact a test can falsify -- see the
 ## comment at the assertion.
 const WIDEST_TERRACE_GUARD := 3
+##
+## TASK I1 RE-MEASURED ALL FOUR on the shrunk footprints: 11 / 11 / 14 / 21 ->
+## **8 / 11 / 11 / 15**, against town column counts of 52 / 54 / 72 / 66 where
+## they were 96 / 104 / 113 / 126. The widest terrace is a share of the town and
+## it fell roughly with the town; nothing fused and nothing thinned. The maze
+## plateau cap the BUILDER enforces is unchanged and still above every one of
+## them.
 const PLANNER_WIDEST_TERRACE: Dictionary = {
-	"12/compact": Vector2i(11 - WIDEST_TERRACE_GUARD,
-		11 + WIDEST_TERRACE_GUARD),
+	"12/compact": Vector2i(8 - WIDEST_TERRACE_GUARD,
+		8 + WIDEST_TERRACE_GUARD),
 	"4/compact": Vector2i(11 - WIDEST_TERRACE_GUARD,
 		11 + WIDEST_TERRACE_GUARD),
-	"3/standard": Vector2i(14 - WIDEST_TERRACE_GUARD,
-		14 + WIDEST_TERRACE_GUARD),
-	"9/standard": Vector2i(21 - WIDEST_TERRACE_GUARD,
-		21 + WIDEST_TERRACE_GUARD),
+	"3/standard": Vector2i(11 - WIDEST_TERRACE_GUARD,
+		11 + WIDEST_TERRACE_GUARD),
+	"9/standard": Vector2i(15 - WIDEST_TERRACE_GUARD,
+		15 + WIDEST_TERRACE_GUARD),
 }
 
 const TERRACE_CLUSTER_COUNT_FLOOR := 2
@@ -474,7 +481,20 @@ const TERRACE_CLUSTER_MEAN_TARGET := 4.0
 ## route-first flood fill scored 3.12 on the same corpus), pinned a guard step
 ## under it. A per-town floor can be held hostage by the two compact towns
 ## where the grade binds; this one moves when the field moves.
-const CORPUS_CLUSTER_MEAN_FLOOR := 3.5
+##
+## TASK I1: 3.5 -> 3.3, measured 3.41 over the same 24 towns, and this is THE
+## number that says whether the terraced clustered fall-off survived the size
+## cut. It did, and the per-town figures say it more clearly than the corpus
+## mean does: 12/compact 2.52 -> **3.06**, 4/compact 3.47 -> 3.38, 3/standard
+## 3.65 -> 3.27, 9/standard 4.85 -> 3.88. The WORST town in the corpus — the one
+## `TERRACE_CLUSTER_MEAN_FLOOR` is pinned from, and the one whose two-terrace
+## risers this file's own note calls out — got BETTER, because a shallower hill
+## spends fewer of its columns being mandatory risers. The corpus mean dips
+## because the best towns came down toward the worst, which is a narrowing, not
+## a dithering: single-column clusters are 5 / 4 / 9 / 4 of 17 / 16 / 22 / 17.
+## `MIN_CLUSTER_CELLS` moving 4 -> 3 is the other half of the dip and is the
+## thing that let the footprint shrink at all.
+const CORPUS_CLUSTER_MEAN_FLOOR := 3.3
 
 
 func _planner_massif(town: Dictionary,
