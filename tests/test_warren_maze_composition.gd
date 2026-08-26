@@ -4423,6 +4423,173 @@ func _cap_partner_offsets(fabric: SettlementFabricPlan) -> Dictionary:
 		plinths)
 
 
+func _rim_instances(fabric: SettlementFabricPlan) -> Array[Dictionary]:
+	## Every rolled-rim instance the renderer is handed, as {cell, asset}. Read
+	## out of the same payload the commit path takes, for the same reason
+	## `_stone_instances` is: a rim that exists only in the rule is not a rim.
+	var out: Array[Dictionary] = []
+	var payload := SettlementFabricAssembler.terrace_retaining_payload(fabric)
+	for asset_value: Variant in payload.batches.keys():
+		var batch := payload.batches[asset_value] as Dictionary
+		var ids := batch.get("ids", []) as Array
+		for index in ids.size():
+			var id := String(ids[index])
+			if not id.begins_with("maze-rim/"):
+				continue
+			var parts := id.trim_prefix("maze-rim/").split("/")
+			out.append({
+				"cell": Vector3i(int(parts[0]), int(parts[1]), int(parts[2])),
+				"asset": StringName(asset_value)})
+	return out
+
+
+func test_the_hillside_pushes_back() -> void:
+	## TASK H2c -- THE CENSUS. H2b re-clad the massif skin in two KayKit terrain
+	## modules, and neither ships a collider: the terrain that normally places
+	## them has a heightfield underneath and does not need one. A maze massif
+	## has no heightfield -- it stands ABOVE its own terrain datum and the skin's
+	## own modules are its only physics -- so the re-clad took the colliders off
+	## roughly half the shell, and the two places that costs a body are exactly
+	## these:
+	##
+	## 1. a rock face at BODY HEIGHT beside a cell the public realm walks. The
+	##    player walks into the mountain there. Counted at the foot (the panel
+	##    stands in the walked cell's own band) and at the HEAD (the band above
+	##    it -- the capsule in `characters/character.tscn` is 2.244 m tall and
+	##    a cell is 1.5, so three quarters of a metre of a body is up there);
+	## 2. a green bench top. Every one of them is a horizontal surface with open
+	##    air above it, and a body that arrives on one -- off a higher bench, off
+	##    a stair, out of a fall -- goes through the mountain if it has no floor.
+	##    The pin is therefore on ALL of them rather than on the reachable
+	##    subset; the reachable subset is printed beside it, because that is the
+	##    number the review quoted and the one a player meets first.
+	##
+	## THE RIM IS DELIBERATELY UNCOLLIDED, and the ruling is checked here rather
+	## than asserted in a report. `kaykit.cliff.lip` is dressing laid ON a
+	## green-capped cell: its turf sits 0.01 m above the cell boundary and the
+	## cap's own floor sits 0.02 m below it, so a body standing on a rim stands
+	## on the CAP, three centimetres down and inside the same cell. The only
+	## part of a rim that is not within three centimetres of the cap's plane is
+	## the roll itself, which hangs over the drop the cliff shard already fills.
+	## A collider there would add 200-odd shapes a town and change nothing a
+	## body can feel -- so the rim ships bare, and what makes that safe is that
+	## every rim cell is floored by a cap. THAT is asserted below; if a rim ever
+	## appears on a cell with no cap under it, this ruling is void and the piece
+	## needs its own floor.
+	var catalog := EnvironmentCatalog.load_default()
+	assert_not_null(catalog, "the shipped environment catalogue must load")
+	if catalog == null:
+		return
+	var cache := EnvironmentRenderCache.new(catalog)
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var walked := _walked_cells(fabric)
+		var partners := _cap_partner_offsets(fabric)
+		var side_count := SettlementFabricAssembler.FACE_DIRECTIONS.size()
+		# Which cells a green cap really floors, so the rim ruling above is
+		# measured against the payload rather than against the pairing rule.
+		var capped: Dictionary = {}
+		var foot_panels := 0
+		var head_panels := 0
+		var uncollided_foot := 0
+		var uncollided_head := 0
+		var benches := 0
+		var steppable_benches := 0
+		var uncollided_benches := 0
+		var uncollided_steppable := 0
+		var instances := _stone_instances(fabric)
+		for instance: Dictionary in instances:
+			if StringName(instance["asset"]) \
+					!= SettlementFabricAssembler.TERRAIN_GREEN_CAP:
+				continue
+			var face := instance["face"] as Vector4i
+			var cell := Vector3i(face.x, face.y, face.z)
+			capped[cell] = true
+			var partner := partners.get(face, Vector3i.ZERO) as Vector3i
+			if partner != Vector3i.ZERO:
+				capped[cell + partner] = true
+		for instance: Dictionary in instances:
+			var asset := StringName(instance["asset"])
+			var visual := cache.visual(asset)
+			assert_not_null(visual, "%s must load its visual" % String(asset))
+			if visual == null:
+				continue
+			var bare := visual.collisions.is_empty()
+			var face := instance["face"] as Vector4i
+			if face.w < side_count:
+				var direction: Vector3i = \
+					SettlementFabricAssembler.FACE_DIRECTIONS[face.w]
+				var beside := Vector3i(face.x, face.y, face.z) + direction
+				if walked.has(beside):
+					foot_panels += 1
+					uncollided_foot += int(bare)
+				elif walked.has(beside + Vector3i.DOWN):
+					head_panels += 1
+					uncollided_head += int(bare)
+				continue
+			if SettlementFabricAssembler.STONE_FACE_DIRECTIONS[face.w] \
+					!= Vector3i.UP \
+					or asset != SettlementFabricAssembler.TERRAIN_GREEN_CAP:
+				continue
+			benches += 1
+			uncollided_benches += int(bare)
+			# A bench a body can walk ONTO: its turf is level with the floor of
+			# a walked cell one band up and beside it.
+			var top := Vector3i(face.x, face.y + 1, face.z)
+			var reachable := false
+			for step: Vector3i in SettlementFabricAssembler.FACE_DIRECTIONS:
+				reachable = reachable or walked.has(top + step)
+			if reachable:
+				steppable_benches += 1
+				uncollided_steppable += int(bare)
+		var rims := 0
+		var unfloored_rims := 0
+		var bare_rims := 0
+		for rim: Dictionary in _rim_instances(fabric):
+			rims += 1
+			var rim_visual := cache.visual(StringName(rim["asset"]))
+			bare_rims += int(rim_visual != null \
+				and rim_visual.collisions.is_empty())
+			unfloored_rims += int(not capped.has(rim["cell"] as Vector3i))
+		print(("MAZE_COLLISION_CENSUS %s foot=%d/%d head=%d/%d benches=%d/%d " \
+			+ "steppable=%d/%d rims=%d bare=%d unfloored=%d") % [
+			_label(outcome), uncollided_foot, foot_panels, uncollided_head,
+			head_panels, uncollided_benches, benches, uncollided_steppable,
+			steppable_benches, rims, bare_rims, unfloored_rims])
+		assert_gt(foot_panels, 0,
+			"%s must line some walked cell with rock to measure" \
+				% _label(outcome))
+		assert_gt(benches, 0, "%s must lay some green bench to measure" \
+			% _label(outcome))
+		assert_eq(uncollided_foot, 0,
+			("%s leaves %d of %d rock panels beside a walked cell without a " \
+				+ "collider -- a player walks into the mountain there") % [
+				_label(outcome), uncollided_foot, foot_panels])
+		assert_eq(uncollided_head, 0,
+			("%s leaves %d of %d rock panels at head height over a walked " \
+				+ "cell without a collider") % [_label(outcome),
+				uncollided_head, head_panels])
+		assert_eq(uncollided_benches, 0,
+			("%s leaves %d of %d green benches without a floor -- a body that " \
+				+ "reaches one falls through the mountain") % [_label(outcome),
+				uncollided_benches, benches])
+		assert_eq(unfloored_rims, 0,
+			("%s dresses %d rim cell(s) that no green cap floors; the rim " \
+				+ "ships without collision ONLY because the cap under it is " \
+				+ "the floor") % [_label(outcome), unfloored_rims])
+		assert_eq(bare_rims, rims,
+			"%s must keep the rolled rim cosmetic: it dresses a floor the " \
+				% _label(outcome) + "cap already carries")
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
 func test_the_hillside_treatment_fires_on_a_planted_bank() -> void:
 	## The detector's own teeth, on a shell this test builds by hand: a
 	## three-band bank, a two-band bank beside it, a walked cap and a free cap.

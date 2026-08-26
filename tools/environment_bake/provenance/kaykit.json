@@ -4,6 +4,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_bush_01.tres",
       "id": "kaykit.bush.01",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -2.40824699401855,
+            -0.045428991317749,
+            -2.40824770927429
+          ],
+          "size": [
+            4.81649494171143,
+            3.22969222068787,
+            4.81649541854858
+          ]
+        },
+        "mesh_bytes": 9176,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 168
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.bush.01",
@@ -28,6 +48,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_bush_02.tres",
       "id": "kaykit.bush.02",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -6.52503776550293,
+            -0.0610059946775436,
+            -3.46249675750732
+          ],
+          "size": [
+            12.4162874221802,
+            3.97494578361511,
+            6.99224662780762
+          ]
+        },
+        "mesh_bytes": 47576,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 984
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.bush.02",
@@ -52,6 +92,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_bush_03.tres",
       "id": "kaykit.bush.03",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -2.6399998664856,
+            -0.000000314712565341324,
+            -2.64000010490417
+          ],
+          "size": [
+            5.27999973297119,
+            5.28000020980835,
+            5.28000020980835
+          ]
+        },
+        "mesh_bytes": 5928,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 108
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.bush.03",
@@ -77,6 +137,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_bush_04.tres",
       "id": "kaykit.bush.04",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -3.36667227745056,
+            -0.104457259178162,
+            -3.36667203903198
+          ],
+          "size": [
+            6.73334407806396,
+            3.21413803100586,
+            6.73334407806396
+          ]
+        },
+        "mesh_bytes": 10192,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 240
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.bush.04",
@@ -102,6 +182,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_bush_05.tres",
       "id": "kaykit.bush.05",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.98167359828949,
+            -0.0126457214355469,
+            -1.9816734790802
+          ],
+          "size": [
+            3.96334648132324,
+            2.97343182563782,
+            3.9633469581604
+          ]
+        },
+        "mesh_bytes": 3544,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 44
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.bush.05",
@@ -127,6 +227,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_bush_06.tres",
       "id": "kaykit.bush.06",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -4.25572490692139,
+            -0.0610059946775436,
+            -4.28418302536011
+          ],
+          "size": [
+            9.13098049163818,
+            3.97494578361511,
+            7.51615762710571
+          ]
+        },
+        "mesh_bytes": 28376,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 576
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.bush.06",
@@ -152,6 +272,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_cliff_inner_lip.tres",
       "id": "kaykit.cliff.inner_lip",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.50000214576721,
+            -0.5,
+            -1.50000047683716
+          ],
+          "size": [
+            3.00000262260437,
+            0.5,
+            3.00000095367432
+          ]
+        },
+        "mesh_bytes": 3028,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 28
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.cliff.inner_lip",
@@ -171,6 +311,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_cliff_inner_wall.tres",
       "id": "kaykit.cliff.inner_wall",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            0.131944015622139,
+            -0.299999952316284,
+            0.131948962807655
+          ],
+          "size": [
+            1.36805665493011,
+            3.99999976158142,
+            1.36804950237274
+          ]
+        },
+        "mesh_bytes": 3851,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 56
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.cliff.inner_wall",
@@ -190,6 +350,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_cliff_lip.tres",
       "id": "kaykit.cliff.lip",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.50000011920929,
+            -0.705185890197754,
+            -1.49999988079071
+          ],
+          "size": [
+            3.00000023841858,
+            0.705185890197754,
+            2.75
+          ]
+        },
+        "mesh_bytes": 5512,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 102
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.cliff.lip",
@@ -209,6 +389,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_cliff_outer_lip.tres",
       "id": "kaykit.cliff.outer_lip",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.50000011920929,
+            -0.705185890197754,
+            -1.50000035762787
+          ],
+          "size": [
+            2.75,
+            0.705185890197754,
+            2.75000047683716
+          ]
+        },
+        "mesh_bytes": 10432,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 168
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.cliff.outer_lip",
@@ -228,6 +428,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_cliff_outer_wall.tres",
       "id": "kaykit.cliff.outer_wall",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.5,
+            -0.299999952316284,
+            -1.5
+          ],
+          "size": [
+            2.5,
+            3.99999976158142,
+            2.5
+          ]
+        },
+        "mesh_bytes": 4419,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 70
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.cliff.outer_wall",
@@ -247,8 +467,29 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_cliff_wall.tres",
       "id": "kaykit.cliff.wall",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.5,
+            -0.299999952316284,
+            0.250005960464478
+          ],
+          "size": [
+            3.0,
+            3.99999976158142,
+            0.74999213218689
+          ]
+        },
+        "mesh_bytes": 3591,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 56
+      },
       "pack": "kaykit",
       "parameters": {
+        "collision_profile": "convex",
         "id": "kaykit.cliff.wall",
         "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_H_Side_Color1.gltf",
         "supports_instance_color": true,
@@ -266,6 +507,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_grass_01.tres",
       "id": "kaykit.grass.01",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.393966883420944,
+            -0.037076361477375,
+            -0.384286850690842
+          ],
+          "size": [
+            0.75176590681076,
+            0.583421587944031,
+            0.717112362384796
+          ]
+        },
+        "mesh_bytes": 22123,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 396
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.grass.01",
@@ -285,6 +546,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_grass_02.tres",
       "id": "kaykit.grass.02",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.21360145509243,
+            -0.0312668196856976,
+            -0.274050772190094
+          ],
+          "size": [
+            0.403470575809479,
+            0.918756604194641,
+            0.397367417812347
+          ]
+        },
+        "mesh_bytes": 10627,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 132
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.grass.02",
@@ -304,6 +585,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_grass_03.tres",
       "id": "kaykit.grass.03",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.169623926281929,
+            -0.0199999995529652,
+            -0.078384056687355
+          ],
+          "size": [
+            0.339255154132843,
+            0.559341430664062,
+            0.151770055294037
+          ]
+        },
+        "mesh_bytes": 3691,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 44
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.grass.03",
@@ -323,6 +624,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_grass_04.tres",
       "id": "kaykit.grass.04",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.57277113199234,
+            -0.0477361269295216,
+            -0.712061583995819
+          ],
+          "size": [
+            1.10449838638306,
+            0.93522584438324,
+            1.36642038822174
+          ]
+        },
+        "mesh_bytes": 38347,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 528
+      },
       "pack": "kaykit",
       "parameters": {
         "id": "kaykit.grass.04",
@@ -343,6 +664,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_rock_01.tres",
       "id": "kaykit.rock.01",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 3,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.5,
+            0.0,
+            -1.95705914497375
+          ],
+          "size": [
+            3.0,
+            3.38991975784302,
+            3.25609731674194
+          ]
+        },
+        "mesh_bytes": 4782,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 84
+      },
       "pack": "kaykit",
       "parameters": {
         "collision_source": "res://terrain/gltf/rock/rock_1_e_color_12.tscn",
@@ -368,6 +709,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_rock_02.tres",
       "id": "kaykit.rock.02",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -2.99815607070923,
+            -2.92845487594604,
+            -2.72763967514038
+          ],
+          "size": [
+            5.86404895782471,
+            6.17502498626709,
+            5.27554845809937
+          ]
+        },
+        "mesh_bytes": 7640,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 168
+      },
       "pack": "kaykit",
       "parameters": {
         "collision_profile": "flat_rock",
@@ -393,6 +754,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_rock_03.tres",
       "id": "kaykit.rock.03",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 5,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.88408923149109,
+            0.0,
+            -3.11064219474792
+          ],
+          "size": [
+            5.21551036834717,
+            10.2288770675659,
+            6.2771372795105
+          ]
+        },
+        "mesh_bytes": 17800,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 316
+      },
       "pack": "kaykit",
       "parameters": {
         "collision_source": "res://terrain/gltf/rock/rock_4_g_color_12.tscn",
@@ -419,6 +800,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_rock_04.tres",
       "id": "kaykit.rock.04",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.345043420791626,
+            -0.072990745306015,
+            -0.345028698444366
+          ],
+          "size": [
+            0.690057277679443,
+            0.734599590301514,
+            0.690057396888733
+          ]
+        },
+        "mesh_bytes": 3824,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 80
+      },
       "pack": "kaykit",
       "parameters": {
         "collision_source": "res://terrain/gltf/rock/rock_6_a_color_12.tscn",
@@ -445,6 +846,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_rock_05.tres",
       "id": "kaykit.rock.05",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 8,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -4.74414157867432,
+            0.000024669057893334,
+            -4.14301156997681
+          ],
+          "size": [
+            9.50339412689209,
+            8.58582305908203,
+            9.92038917541504
+          ]
+        },
+        "mesh_bytes": 23888,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 438
+      },
       "pack": "kaykit",
       "parameters": {
         "collision_source": "res://terrain/gltf/rock/rock_2_e_color_12.tscn",
@@ -471,6 +892,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_rock_06.tres",
       "id": "kaykit.rock.06",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.38232982158661,
+            0.00000286510976366117,
+            -1.38232851028442
+          ],
+          "size": [
+            2.7646598815918,
+            1.8513388633728,
+            2.76465749740601
+          ]
+        },
+        "mesh_bytes": 7768,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 144
+      },
       "pack": "kaykit",
       "parameters": {
         "collision_source": "res://terrain/gltf/rock/rock_5_c_color_12.tscn",
@@ -497,8 +938,31 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrain_top_center.tres",
       "id": "kaykit.terrain.top_center",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.50000071525574,
+            0.0,
+            -1.5
+          ],
+          "size": [
+            3.00000047683716,
+            0.00000999999974737875,
+            3.00000095367432
+          ]
+        },
+        "mesh_bytes": 2069,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 18
+      },
       "pack": "kaykit",
       "parameters": {
+        "collision_footprint": 1.0,
+        "collision_plate_thickness": 0.25,
+        "collision_profile": "plate_box",
         "id": "kaykit.terrain.top_center",
         "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Top_E_Center_Color1.gltf",
         "supports_instance_color": true,
@@ -515,6 +979,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_tree_01.tres",
       "id": "kaykit.tree.01",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -6.86451196670532,
+            -0.980799317359924,
+            -7.19168853759766
+          ],
+          "size": [
+            16.7282390594482,
+            19.5356254577637,
+            14.3833808898926
+          ]
+        },
+        "mesh_bytes": 69272,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1364
+      },
       "pack": "kaykit",
       "parameters": {
         "collision_source": "res://terrain/gltf/tree/tree_1_c_color_12.tscn",
@@ -540,6 +1024,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_tree_03.tres",
       "id": "kaykit.tree.03",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -8.09737014770508,
+            -0.980799317359924,
+            -4.69403409957886
+          ],
+          "size": [
+            14.0806007385254,
+            14.4799356460571,
+            11.5618438720703
+          ]
+        },
+        "mesh_bytes": 116228,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 2228
+      },
       "pack": "kaykit",
       "parameters": {
         "collision_source": "res://terrain/gltf/tree/tree_3_c_color_12.tscn",
@@ -566,6 +1070,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_tree_05.tres",
       "id": "kaykit.tree.05",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -4.35859203338623,
+            -1.01731896400452,
+            -4.93104267120361
+          ],
+          "size": [
+            9.23008155822754,
+            18.4709358215332,
+            10.3573598861694
+          ]
+        },
+        "mesh_bytes": 32224,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 652
+      },
       "pack": "kaykit",
       "parameters": {
         "collision_source": "res://terrain/gltf/tree/tree_5_c_color_12.tscn",
@@ -592,6 +1116,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_tree_06.tres",
       "id": "kaykit.tree.06",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -3.81020402908325,
+            -1.11693036556244,
+            -3.03916263580322
+          ],
+          "size": [
+            7.56198644638062,
+            21.0577869415283,
+            5.75000047683716
+          ]
+        },
+        "mesh_bytes": 67224,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1256
+      },
       "pack": "kaykit",
       "parameters": {
         "collision_source": "res://terrain/gltf/tree/tree_6_c_color_12.tscn",
@@ -618,6 +1162,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_tree_07.tres",
       "id": "kaykit.tree.07",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -4.58440017700195,
+            -1.36002194881439,
+            -4.99625492095947
+          ],
+          "size": [
+            9.75309562683105,
+            24.3956394195557,
+            10.0109624862671
+          ]
+        },
+        "mesh_bytes": 64064,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1252
+      },
       "pack": "kaykit",
       "parameters": {
         "collision_source": "res://terrain/gltf/tree/tree_7_c_color_12.tscn",
@@ -644,6 +1208,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_tree_bare_01.tres",
       "id": "kaykit.tree_bare.01",
       "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.11063969135284,
+            -0.852591991424561,
+            -2.48107695579529
+          ],
+          "size": [
+            4.91176891326904,
+            8.12703800201416,
+            3.62819576263428
+          ]
+        },
+        "mesh_bytes": 18043,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 332
+      },
       "pack": "kaykit",
       "parameters": {
         "collision_source": "res://terrain/gltf/tree/tree_bare_1_b_color_12.tscn",
@@ -669,5 +1253,5 @@
   ],
   "license": "KayKit CC0",
   "pack": "kaykit",
-  "tool_version": 10
+  "tool_version": 21
 }

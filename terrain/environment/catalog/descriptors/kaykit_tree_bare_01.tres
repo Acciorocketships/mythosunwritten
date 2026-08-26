@@ -8,6 +8,7 @@ id = &"kaykit.tree_bare.01"
 visual_path = "res://terrain/environment/visuals/kaykit/kaykit_tree_bare_01.tres"
 tags = Array[StringName]([&"catalog_only", &"nature", &"tree"])
 measured_aabb = AABB(-1.1106397, -0.852592, -2.481077, 4.911769, 8.127038, 3.6281958)
+ground_contact_points = PackedVector2Array()
 collision_piece_count = 1
 tint_group = &"tree"
 supports_instance_color = true

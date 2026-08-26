@@ -8,6 +8,7 @@ id = &"kaykit.rock.06"
 visual_path = "res://terrain/environment/visuals/kaykit/kaykit_rock_06.tres"
 tags = Array[StringName]([&"catalog_only", &"nature", &"rock"])
 measured_aabb = AABB(-1.3823298, 2.8651098e-06, -1.3823285, 2.76466, 1.8513389, 2.7646575)
+ground_contact_points = PackedVector2Array()
 collision_piece_count = 1
 tint_group = &"rock"
 supports_instance_color = true

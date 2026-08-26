@@ -8,6 +8,7 @@ id = &"kaykit.bush.05"
 visual_path = "res://terrain/environment/visuals/kaykit/kaykit_bush_05.tres"
 tags = Array[StringName]([&"bush", &"catalog_only", &"nature"])
 measured_aabb = AABB(-1.9816736, -0.012645721, -1.9816735, 3.9633465, 2.9734318, 3.963347)
+ground_contact_points = PackedVector2Array()
 tint_group = &"bush"
 supports_instance_color = true
 provenance_id = &"kaykit:kaykit.bush.05"

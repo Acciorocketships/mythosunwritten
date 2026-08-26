@@ -8,6 +8,7 @@ id = &"kaykit.cliff.inner_wall"
 visual_path = "res://terrain/environment/visuals/kaykit/kaykit_cliff_inner_wall.tres"
 tags = Array[StringName]([&"cliff", &"terrain"])
 measured_aabb = AABB(0.13194402, -0.29999995, 0.13194896, 1.3680567, 3.9999998, 1.3680495)
+ground_contact_points = PackedVector2Array()
 tint_group = &"ground"
 supports_instance_color = true
 provenance_id = &"kaykit:kaykit.cliff.inner_wall"

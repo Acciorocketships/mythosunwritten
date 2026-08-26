@@ -3,7 +3,7 @@ extends SceneTree
 
 ## Deterministic editor-side importer for source-pack visuals. Runtime code is
 ## intentionally unaware of every source path named by the manifests.
-const TOOL_VERSION := 20
+const TOOL_VERSION := 21
 const DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
 const INDEX_PATH := "res://terrain/environment/catalog/index.tres"
 const MANIFEST_DIR := "res://tools/environment_bake/manifests"
@@ -866,6 +866,8 @@ func _bake_collisions(pack: String, asset_id: String, entry: Dictionary,
 			out = _bake_flat_rock_collisions(pack, asset_id, entry, visual_pieces)
 		"flat_box":
 			out = _bake_flat_box_collisions(pack, asset_id, entry, visual_pieces)
+		"plate_box":
+			out = _bake_plate_box_collisions(pack, asset_id, entry, visual_pieces)
 		"building_trimesh":
 			out = _bake_building_trimesh(pack, asset_id, visual_pieces,
 				collision_mesh_override)
@@ -917,6 +919,16 @@ func _validate_collision_policy(asset_id: String, entry: Dictionary) -> void:
 			and not tags.has("slab"):
 		_fail("Village flat-box collision is restricted to true slab modules: %s" \
 			% asset_id)
+	if profile == "plate_box":
+		# A DECLARED thickness is the whole reason this profile exists beside
+		# `flat_box`, and the tag gate keeps it a terrain-plate answer: any
+		# other module thick enough to stand on can be measured instead of
+		# asserted, and should be.
+		if float(entry.get("collision_plate_thickness", 0.0)) <= 0.0:
+			_fail("plate_box requires a positive collision_plate_thickness: %s" \
+				% asset_id)
+		if not tags.has("terrain"):
+			_fail("plate_box is restricted to terrain plates: %s" % asset_id)
 	if profile in ["building_trimesh", "ramp_box"] \
 			and not bool(entry.get("merge_pieces", false)):
 		_fail("Structural collision profile %s requires merge_pieces: %s" % [
@@ -1030,6 +1042,55 @@ func _bake_flat_box_collisions(pack: String, asset_id: String, entry: Dictionary
 			bounds.size.z * footprint_scale)
 		var centre := Vector3(bounds.get_center().x,
 			bounds.position.y + height * 0.5, bounds.get_center().z)
+		var collision := EnvironmentCollisionPiece.new()
+		collision.shape = _save_collision_shape(shape, pack, asset_id, out.size())
+		collision.local_transform = visual_piece.local_transform \
+			* Transform3D(Basis.IDENTITY, centre)
+		out.append(collision)
+	return out
+
+func _bake_plate_box_collisions(pack: String, asset_id: String,
+		entry: Dictionary,
+		visual_pieces: Array[EnvironmentVisualPiece]) -> Array[EnvironmentCollisionPiece]:
+	## A FLOOR for a module that has no thickness to make one out of.
+	##
+	## `flat_box` derives its height from the geometry, which is right for a
+	## flagstone and useless for a single-swatch terrain plate: the KayKit
+	## grass tile measures 1e-05 m tall, and a box that thin stops no fall. The
+	## thickness is therefore DECLARED rather than measured, and the reviewer's
+	## objection to `flat_box` here is exactly the reason this profile exists.
+	##
+	## Two deliberate differences from `flat_box`, both because this shape is a
+	## walkable surface and not an obstacle:
+	##
+	## * the slab hangs BELOW the plate's top face instead of rising from its
+	##   underside, so the plane a body stands on is the plane the eye sees;
+	## * the footprint defaults to the WHOLE tile rather than to 0.9 of it,
+	##   because two neighbouring plates that each shrink by a tenth leave a
+	##   gap between them that a player falls through.
+	##
+	## The thickness is in the piece's own local space, which is where the
+	## manifest scale has not been applied yet -- the same space `flat_box`
+	## measures its bounds in -- so a scaled asset would need it pre-divided.
+	## Every plate that uses this profile today is authored at scale 1.
+	var thickness := float(entry.get("collision_plate_thickness", 0.0))
+	if not is_finite(thickness) or thickness <= 0.0:
+		_fail("plate_box requires a positive collision_plate_thickness: %s" \
+			% asset_id)
+		return []
+	var footprint_scale := clampf(float(entry.get("collision_footprint", 1.0)),
+		0.5, 1.0)
+	var out: Array[EnvironmentCollisionPiece] = []
+	for visual_piece: EnvironmentVisualPiece in visual_pieces:
+		if visual_piece.mesh == null:
+			_fail("Plate box collision needs a mesh: %s" % asset_id)
+			return []
+		var bounds := visual_piece.mesh.get_aabb()
+		var shape := BoxShape3D.new()
+		shape.size = Vector3(bounds.size.x * footprint_scale, thickness,
+			bounds.size.z * footprint_scale)
+		var centre := Vector3(bounds.get_center().x,
+			bounds.end.y - thickness * 0.5, bounds.get_center().z)
 		var collision := EnvironmentCollisionPiece.new()
 		collision.shape = _save_collision_shape(shape, pack, asset_id, out.size())
 		collision.local_transform = visual_piece.local_transform \

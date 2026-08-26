@@ -8,6 +8,7 @@ id = &"kaykit.grass.02"
 visual_path = "res://terrain/environment/visuals/kaykit/kaykit_grass_02.tres"
 tags = Array[StringName]([&"grass", &"nature"])
 measured_aabb = AABB(-0.21360146, -0.03126682, -0.27405077, 0.40347058, 0.9187566, 0.39736742)
+ground_contact_points = PackedVector2Array()
 tint_group = &"grass"
 supports_instance_color = true
 provenance_id = &"kaykit:kaykit.grass.02"

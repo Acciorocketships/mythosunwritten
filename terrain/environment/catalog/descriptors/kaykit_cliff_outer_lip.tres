@@ -8,6 +8,7 @@ id = &"kaykit.cliff.outer_lip"
 visual_path = "res://terrain/environment/visuals/kaykit/kaykit_cliff_outer_lip.tres"
 tags = Array[StringName]([&"cliff", &"terrain"])
 measured_aabb = AABB(-1.5000001, -0.7051859, -1.5000004, 2.75, 0.7051859, 2.7500005)
+ground_contact_points = PackedVector2Array()
 tint_group = &"ground"
 supports_instance_color = true
 provenance_id = &"kaykit:kaykit.cliff.outer_lip"
