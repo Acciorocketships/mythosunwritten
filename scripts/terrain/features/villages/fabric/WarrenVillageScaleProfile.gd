@@ -159,8 +159,12 @@ static func for_id(id: StringName) -> WarrenVillageScaleProfile:
 	# MEASURED over seeds 1-12 at each scale, buildings per sealed town,
 	# before → after: compact 59.5 → 29.4 mean (44-82 → 14-46), standard
 	# 89.4 → 49.2 (63-109 → 23-63), large 134.0 → 85.4 (116-153 → 55-112),
-	# grand 236 → ~108 (one town → 99-120). Column counts fall 96 → 52,
-	# 129 → 78, 172 → ~105, 252 → 132 at the medians. See
+	# grand 236 → 115.1 (one town → 95-143). Column counts fall 96 → 52,
+	# 129 → 78, 172 → ~105, 252 → 136 at the medians. THE GRAND ROW IS THE
+	# SHIPPED PROFILE'S OWN measurement over the 48-town matrix; an earlier
+	# draft of this note carried the numbers of a rejected core-maximum
+	# candidate ((15,19), which sealed seven grand towns rather than ten and
+	# therefore averaged a different set of them). See
 	# `WarrenMassifBuilder.MIN_CLUSTER_CELLS` and `FIELD_PHASE_ATTEMPTS` for the
 	# two builder constants that had to follow the footprint down for the
 	# smaller field to seal at all, and STANDARD's own note below for the one

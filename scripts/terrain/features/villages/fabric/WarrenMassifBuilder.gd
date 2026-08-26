@@ -218,7 +218,7 @@ const CLUSTER_MERGE_PASSES := 6
 ## before rejecting the settlement, exactly as the terrace flood fill this
 ## replaced did. All 24 corpus towns seal inside this family.
 ##
-## TASK I1 RAISED IT 8 -> 32, and the raise is OUTPUT-NEUTRAL BY CONSTRUCTION:
+## TASK I1 RAISED IT 8 -> 128, and the raise is OUTPUT-NEUTRAL BY CONSTRUCTION:
 ## the loop breaks at the first phase that seals, and the added phases come
 ## AFTER the eight that were tried before, so a town that sealed inside the old
 ## family builds the identical massif. Only towns that were rejected can move.

@@ -366,12 +366,13 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   source described below. Before the town is built, `WarrenVillageScaleProfile.select()` deterministically chooses one
   of four size contracts: compact 55%, standard 30%, large 12%, grand 3%. **Task I1 (2026-08-26)
   halved every footprint on the user's direction that the city was too big: `radius_cells` goes
-  7/8/9/11 -> 5/6/7/8, so the planning diameters are now 45/51/57/63 m, and a town measures a
-  mean of 29/49/85/115 buildings where it measured 60/89/134/236. The core MINIMA are untouched
+  7/8/9/11 -> 5/6/7/8, so the planning diameters are now 51/57/63/69 m where they were
+  63/69/75/87 m, and a town measures a mean of 29/49/85/115 buildings where it measured
+  60/89/134/236. The core MINIMA are untouched
   and every sealed compact town still stands a 12-band crown — the hill kept its height and lost
   its skirt. Two `WarrenMassifBuilder` constants had to follow the footprint down for the smaller
   field to seal at all (`MIN_CLUSTER_CELLS` 4 -> 3, `FIELD_PHASE_ATTEMPTS` 8 -> 128); both carry
-  their measurement.** Their older stated planning diameters were 63/69/75/87 m; total
+  their measurement.** Total
   inhabited-room budgets are 18--110/30--190/50--220/80--300; residual
   infill is capped separately at 12/16/24/32 rooms. Those totals include the late residual pass,
   which may never disappear from size accounting. Complete authored-building ranges are
