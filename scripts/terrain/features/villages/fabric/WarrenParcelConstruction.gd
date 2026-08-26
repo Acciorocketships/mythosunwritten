@@ -72,33 +72,51 @@ static func _roof_feature(parcel: WarrenBuildingParcel,
 	var seed := int(parcel.source.world_seed) if parcel.source != null else 0
 	var value := seed ^ parcel.threshold_column.x * 73856093 \
 		^ parcel.threshold_column.y * 19349663 ^ parcel.base_band * 83492791
-	if kind == &"tower":
-		var tower_phase := posmod(value, 8)
-		return 1 if tower_phase == 0 else 2 if tower_phase == 1 \
-			else 3 if tower_phase == 2 else 0
-	if kind == &"slim":
-		var slim_phase := posmod(value, 8)
-		return 1 if slim_phase in [0, 1] else 2 if slim_phase in [2, 3] \
-			else 3 if slim_phase == 4 else 0
+	return roof_feature_for_phase(kind, posmod(value, ROOF_FEATURE_PHASES))
+
+
+## TASK I3. ONE roofscape table, and this is its modulus. Both passes that
+## build a room -- the parcel proposal here and `WarrenVolumetricSolver
+## ._residual_roof_feature` -- used to carry their own copy of it, and the two
+## copies DISAGREED: the residual table ran mod 6 and this one ran mod 7 or 8
+## per kind, and worst of all this one had no `row` branch at all, so a ROW
+## house built from a parcel proposal could never take the `roof.row.*.dormer.*`
+## recipes the vocabulary ships while the identical house built as a residual
+## always could. Measured over the four planner towns before the change:
+## 1-6 dormered roof units against 6-10 pitched roofs, i.e. barely half the
+## pitches carried one, which is what the direction ("dormers ... rate up")
+## names. One table, one modulus, and the seed material each pass draws its
+## phase from is deliberately left alone -- a parcel keys on its threshold
+## column and a residual on its origin, and unifying THAT would re-roll every
+## roof in the corpus for no gain.
+const ROOF_FEATURE_PHASES := 6
+
+
+static func roof_feature_for_phase(kind: StringName, phase: int) -> int:
+	## The roofscape cadence, by footprint kind, over `ROOF_FEATURE_PHASES`:
+	## 1/2 are the handed integrated dormers, 4/5 the two-dormer long recipes,
+	## 3 the chimney and 0 the quiet roof.
+	##
+	## Every longhouse receives a dormer: plain long runs already exist in the
+	## square/slim/tower vocabulary, and the long facade is the only reviewed
+	## slope large enough for a pair of integrated attic projections. Side and
+	## count stay seed-dependent so the feature cannot become a repeated stamp.
+	## Most complete square roofs receive one, split across both eaves, with one
+	## phase kept for a chimney and one quiet, so a roofscape gains readable
+	## cadence instead of either uniform repetition or confetti. The compact
+	## tower is the sparsest, because its authored slope is the shortest.
+	if kind == &"long":
+		return [1, 2, 4, 5, 1, 2][posmod(phase, ROOF_FEATURE_PHASES)]
 	if kind == &"building":
-		# Complete square roofs can now carry either handed dormer as well as a
-		# chimney.  Selection is a parcel fact before measured-clearance packing;
-		# these are different construction envelopes, not post-hoc decorations.
-		var phase := posmod(value, 7)
-		# Most complete square roofs receive an integrated dormer, split across
-		# both eaves. One phase keeps a chimney and one stays quiet, so a roofscape
-		# gains readable cadence instead of either uniform repetition or confetti.
 		return 1 if phase in [0, 1, 2] else 2 if phase in [3, 4] \
 			else 3 if phase == 5 else 0
-	if kind != &"long":
-		return 0
-	# Every longhouse receives a dormer. Plain long runs already exist in the
-	# square/slim/tower vocabulary, while the long facade is the only reviewed
-	# slope large enough for a pair of integrated attic projections. Values four
-	# and five select the two-dormer finite recipes; side and count both remain
-	# seed-dependent so the feature cannot become a repeated stamp.
-	var phase := posmod(value, 6)
-	return 1 if phase in [0, 1] else 2 if phase in [2, 3] else phase
+	if kind == &"tower":
+		return 1 if phase == 0 else 2 if phase == 1 \
+			else 3 if phase == 2 else 0
+	if kind == &"slim" or kind == &"row":
+		return 1 if phase in [0, 1] else 2 if phase in [2, 3] \
+			else 3 if phase == 4 else 0
+	return 0
 
 
 static func retained_terrace_cells(parcel: WarrenBuildingParcel) \

@@ -711,7 +711,10 @@ static func _new_skin_tally() -> Dictionary:
 		"tall_masonry": 0, "free_bench_stone": 0, "shared_street": 0,
 		"low": 0, "tall": 0, "tallest": 0, "cut": 0, "cut_coursed": 0,
 		"tail_candidates": 0, "tail_unclearable": 0, "coursed_trim": 0,
-		"cap_juts": 0, "cap_trim": 0}
+		"cap_juts": 0, "cap_trim": 0,
+		"spans": 0, "span_cells": 0, "span_instances": 0, "bays": 0,
+		"bumps": 0, "outcrop_brackets": 0, "dormers": 0, "plaza_entries": 0,
+		"plaza_features": 0, "plaza_towns": 0}
 
 
 static func _accumulate_skin(tally: Dictionary,
@@ -763,6 +766,24 @@ static func _accumulate_skin(tally: Dictionary,
 	tally.cap_juts += int(fabric.audit.get(
 		"maze_stone_cap_jut_cell_count", 0))
 	tally.cap_trim += int(fabric.audit.get("maze_skin_cap_trim_count", 0))
+	# TASK I3. THE LIFE, on the same tally and for the same reason the facade
+	# split rides here: a reader asking "did the town get its skywalks, its bays
+	# and its square" should get a corpus number off one row rather than infer it
+	# from the panel counts above.
+	tally.spans += int(fabric.audit.get("maze_skywalk_span_count", 0))
+	tally.span_cells += int(fabric.audit.get("maze_skywalk_deck_cell_count", 0))
+	tally.span_instances += int(fabric.audit.get(
+		"maze_skywalk_instance_count", 0))
+	tally.bays += int(fabric.audit.get("maze_facade_bay_count", 0))
+	tally.bumps += int(fabric.audit.get("maze_facade_bump_out_count", 0))
+	tally.outcrop_brackets += int(fabric.audit.get(
+		"maze_facade_outcrop_bracket_count", 0))
+	tally.dormers += int(fabric.audit.get("dormered_roof_unit_count", 0))
+	tally.plaza_entries += int(fabric.audit.get("maze_plaza_entry_count", 0))
+	tally.plaza_features += int(fabric.audit.get(
+		"maze_plaza_centre_feature_count", 0))
+	tally.plaza_towns += int(int(fabric.audit.get(
+		"maze_village_green_cell_count", 0)) > 0)
 
 
 func _print_skin_result(group: String, tally: Dictionary) -> void:
@@ -800,6 +821,26 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 		int(tally.cap_juts), int(tally.cap_trim), int(tally.garden),
 		int(tally.village_green), int(tally.planting),
 		int(tally.paved_bench)])
+	# TASK I3. THE LIFE, on its own row rather than folded into the one above:
+	# SKIN says what the mass wears, and this says what the town DOES with it --
+	# the bridges over its streets, the projections on its faces and whether its
+	# green is a square somebody can walk into.
+	#
+	# `bare_outcrops` is ZERO by construction (two bearers per projection, no
+	# branch that can skip them) and printed anyway, beside the roofscape row's
+	# own `bare_overhangs`, because "every overhang shows its bracket" is the
+	# promise both rows exist to make checkable.
+	print(("SWEEP RESULT life%s towns=%d spans=%d span_cells=%d " \
+		+ "span_instances=%d bays=%d bumps=%d outcrops=%d brackets=%d " \
+		+ "bare_outcrops=%d dormers=%d plaza_towns=%d plaza_entries=%d " \
+		+ "plaza_features=%d") % [
+		"" if group == CORPUS_STONE_GROUP else "/%s" % group,
+		int(tally.towns), int(tally.spans), int(tally.span_cells),
+		int(tally.span_instances), int(tally.bays), int(tally.bumps),
+		int(tally.bays) + int(tally.bumps), int(tally.outcrop_brackets),
+		int(tally.outcrop_brackets) - 2 * (int(tally.bays) + int(tally.bumps)),
+		int(tally.dormers), int(tally.plaza_towns), int(tally.plaza_entries),
+		int(tally.plaza_features)])
 
 
 static func _new_clearance_tally() -> Dictionary:

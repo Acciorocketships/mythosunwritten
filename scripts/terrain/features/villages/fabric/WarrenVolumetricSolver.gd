@@ -7873,23 +7873,15 @@ static func _residual_feature_protected(grid: WarrenSpatialGrid,
 
 static func _residual_roof_feature(kind: StringName, origin: Vector3i,
 		world_seed: int) -> int:
-	var phase := posmod(world_seed ^ origin.x * 73856093 \
-		^ origin.y * 83492791 ^ origin.z * 19349663, 6)
-	if kind == &"long":
-		return [1, 2, 4, 5, 1, 2][phase]
-	if kind == &"building":
-		return 1 if phase in [0, 1, 2] else 2 if phase in [3, 4] \
-			else 3 if phase == 5 else 0
-	if kind == &"tower":
-		return 1 if phase == 0 else 2 if phase == 1 \
-			else 3 if phase == 2 else 0
-	if kind == &"slim":
-		return 1 if phase in [0, 1] else 2 if phase in [2, 3] \
-			else 3 if phase == 4 else 0
-	if kind == &"row":
-		return 1 if phase in [0, 1] else 2 if phase in [2, 3] \
-			else 3 if phase == 4 else 0
-	return 0
+	## TASK I3. The table moved to `WarrenParcelConstruction`, which owns the
+	## OTHER pass that builds a room, because two copies of one roofscape rule
+	## had already drifted apart -- see `ROOF_FEATURE_PHASES` there. The seed
+	## material stays this pass's own: a residual room has no threshold column
+	## to key on, only its origin.
+	return WarrenParcelConstruction.roof_feature_for_phase(kind,
+		posmod(world_seed ^ origin.x * 73856093 \
+			^ origin.y * 83492791 ^ origin.z * 19349663,
+			WarrenParcelConstruction.ROOF_FEATURE_PHASES))
 
 
 static func _discard_unassigned_mass(grid: WarrenSpatialGrid) -> bool:

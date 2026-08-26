@@ -964,15 +964,28 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	#   use the 3 m pools -- so without this line a clad mass face is a hole in
 	#   the streamed town. The garden props are the dressing that turns a bench
 	#   top from a lime plate into a yard.
+	# * TASK I3 adds the LIFE the same way, and for exactly the same failure
+	#   mode. The skywalk deck, its two rails and its bearer are all modules the
+	#   room recipes already name, so they would survive this list by accident --
+	#   the corner post the bump-outs fill their body with and the three plaza
+	#   centre features would not, and a village green whose well never streamed
+	#   is the blank-town failure this list exists to stop.
 	var adapter_assets: Array[StringName] = [
 		RAILING_MEDIUM,
 		SettlementFabricAssembler.TERRAIN_GREEN_CAP,
 		SettlementFabricAssembler.NATURAL_ROCK_FACE,
 		SettlementFabricAssembler.GREEN_RIM_EDGE,
+		SettlementFabricAssembler.SKYWALK_DECK,
+		SettlementFabricAssembler.SKYWALK_DECK_SHORT,
+		SettlementFabricAssembler.SKYWALK_RAIL,
+		SettlementFabricAssembler.SKYWALK_BEARER,
+		SettlementFabricAssembler.FACADE_OUTCROP_POST,
+		SettlementFabricAssembler.FACADE_OUTCROP_CAP,
 	]
 	for pool: Array[StringName] in [WOOD_CELL_FACADE_BLUE,
 			WOOD_CELL_FACADE_ORANGE, WOOD_CELL_FACADE_AMBER,
 			SettlementFabricAssembler.GARDEN_PLANTING,
+			SettlementFabricAssembler.PLAZA_WIDE_FEATURES,
 			[SettlementFabricAssembler.GARDEN_PLANTER] as Array[StringName]]:
 		for asset_id: StringName in pool:
 			if not adapter_assets.has(asset_id):

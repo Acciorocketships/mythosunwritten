@@ -248,8 +248,13 @@ static func solve(source: WarrenSpatialPlan,
 		else source.source_volume.mass_context.get(&"maze_source_plan") \
 			as WarrenMazeSourcePlan
 	stage_ms = _trace_stage("volumes", stage_ms)
+	# TASK I3. The crown list rides in because the skywalk rule needs the town's
+	# open flat crowns and the plan does not carry them until `seal`; the skin
+	# audit is the one pass that already holds the shell those spans and the
+	# outcroppings are measured against, so deriving them here costs one units
+	# scan rather than a second shell.
 	var stone_audit := _maze_stone_skin_audit(result, maze_source,
-		source.grid)
+		source.grid, roof_audit.get("maze_terrace_crown_unit_ids", []) as Array)
 	if int(stone_audit.get("maze_stone_missing_face_count", 0)) > 0 \
 			or int(stone_audit.get("maze_stone_doubled_cap_count", 0)) > 0:
 		last_failure = "retained maze stone is not fully skinned: %s" % \
@@ -826,7 +831,8 @@ static func _maze_terrace_audit(plan: SettlementFabricPlan,
 
 static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		maze_source: WarrenMazeSourcePlan = null,
-		grid: WarrenSpatialGrid = null) -> Dictionary:
+		grid: WarrenSpatialGrid = null,
+		crown_unit_ids: Array = []) -> Dictionary:
 	## TASK C5b RULING 2 -- the skin is an IDENTITY, not a hope. The face rule
 	## and the payload are both the assembler's, so this audit states that the
 	## panels it emitted really COVER the shell it derived: every exposed face
@@ -869,7 +875,18 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			"maze_skin_above_ground_stone_face_count": 0,
 			"maze_garden_cell_count": 0,
 			"maze_village_green_cell_count": 0,
+			"maze_plaza_entry_count": 0,
+			"maze_plaza_centre_feature_count": 0,
+			"maze_plaza_centre_feature_asset": &"",
 			"maze_garden_planting_count": 0,
+			"maze_garden_dressing_instance_count": 0,
+			"maze_skywalk_span_count": 0,
+			"maze_skywalk_deck_cell_count": 0,
+			"maze_skywalk_instance_count": 0,
+			"maze_facade_bay_count": 0,
+			"maze_facade_bump_out_count": 0,
+			"maze_facade_outcrop_bracket_count": 0,
+			"maze_facade_outcrop_instance_count": 0,
 			"maze_paved_bench_cap_count": 0,
 			"maze_tall_bank_masonry_panel_count": 0,
 			"maze_skin_cut_panel_count": 0,
@@ -1139,6 +1156,25 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		paved, plinths, walked, shell)
 	var planting := SettlementFabricAssembler.maze_garden_dressing(retained,
 		solids, paved, plinths, walked, shell)
+	# TASK I3. The square's own three facts, derived exactly as the dressing
+	# derives them: the run a street can actually reach, the mouths it reaches it
+	# by, and what stands in the clearing.
+	var plaza := SettlementFabricAssembler.maze_village_green_cells(garden,
+		walked)
+	var plaza_entries := SettlementFabricAssembler.maze_plaza_entries(plaza,
+		walked)
+	var plaza_feature := SettlementFabricAssembler.maze_plaza_centre_feature(
+		plaza, plaza_entries)
+	# TASK I3. `maze_garden_planting_count` stays what it has always meant --
+	# what GROWS on the yards -- so it is counted off the `maze-garden/` ids
+	# rather than off the dressing payload's whole instance count, which now
+	# also carries the square's paved thresholds and its centre feature.
+	var planting_instances := 0
+	for asset_value: Variant in planting.batches.keys():
+		var batch := planting.batches[asset_value] as Dictionary
+		for id_value: Variant in batch.get("ids", []) as Array:
+			planting_instances += int(String(id_value).begins_with(
+				"maze-garden/"))
 	var paved_bench_caps := 0
 	for key_value: Variant in treatments.keys():
 		var key := key_value as Vector4i
@@ -1147,7 +1183,44 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 				== Vector3i.UP \
 			and int(treatments[key]) \
 				== SettlementFabricAssembler.SkinTreatment.MASONRY)
+	# TASK I3. THE LIFE, counted where the shell it hangs on is derived.
+	# `spans` is the town's open timber bridges; the cells they claim are what
+	# the outcropping rule must keep clear, and both the payload and this audit
+	# derive them the same way from the same shell, so the two cannot drift.
+	var crowns: Dictionary = {}
+	for crown_value: Variant in crown_unit_ids:
+		crowns[StringName(crown_value)] = true
+	var spans := SettlementFabricAssembler.maze_skywalk_spans(plan, crowns)
+	var skywalk_deck_cells := 0
+	for span: Dictionary in spans:
+		skywalk_deck_cells += int(span.gap)
+	var outcrop_kinds := SettlementFabricAssembler.maze_facade_outcrop_kinds(
+		retained, solids, paved, plinths, walked, shell, plan.world_seed,
+		SettlementFabricAssembler.maze_skywalk_cells(spans))
+	var facade_bays := 0
+	var facade_bumps := 0
+	for kind_value: Variant in outcrop_kinds.values():
+		facade_bays += int(int(kind_value) \
+			== SettlementFabricAssembler.FacadeOutcrop.BAY)
+		facade_bumps += int(int(kind_value) \
+			== SettlementFabricAssembler.FacadeOutcrop.BUMP)
 	var out := {
+		"maze_skywalk_span_count": spans.size(),
+		"maze_skywalk_deck_cell_count": skywalk_deck_cells,
+		"maze_skywalk_instance_count": SettlementFabricAssembler \
+			.maze_skywalks_from(spans).instance_count,
+		"maze_facade_bay_count": facade_bays,
+		"maze_facade_bump_out_count": facade_bumps,
+		# Two bearers per projection and no branch that can skip them, so this is
+		# `2 x (bays + bump-outs)` by construction -- published anyway, because
+		# "every overhang shows its bracket" is a promise a reader should be able
+		# to CHECK rather than take on the word of a comment.
+		"maze_facade_outcrop_bracket_count": 2 * outcrop_kinds.size(),
+		"maze_facade_outcrop_instance_count": SettlementFabricAssembler \
+			.maze_facade_outcroppings(retained, solids, paved, plinths, walked,
+				shell, plan.world_seed,
+				SettlementFabricAssembler.maze_skywalk_cells(spans)) \
+			.instance_count,
 		"maze_skin_masonry_panel_count": masonry_panels,
 		"maze_skin_natural_panel_count": natural_panels,
 		"maze_skin_green_cap_count": green_panels,
@@ -1161,9 +1234,13 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		"maze_skin_facade_window_panel_count": facade_windows,
 		"maze_skin_above_ground_stone_face_count": above_ground_stone,
 		"maze_garden_cell_count": garden.size(),
-		"maze_village_green_cell_count": SettlementFabricAssembler \
-			.maze_village_green_cells(garden).size(),
-		"maze_garden_planting_count": planting.instance_count,
+		"maze_village_green_cell_count": plaza.size(),
+		"maze_plaza_entry_count": plaza_entries.size(),
+		"maze_plaza_centre_feature_count": int(not plaza_feature.is_empty()),
+		"maze_plaza_centre_feature_asset": StringName(
+			plaza_feature.get("asset", &"")),
+		"maze_garden_planting_count": planting_instances,
+		"maze_garden_dressing_instance_count": planting.instance_count,
 		"maze_paved_bench_cap_count": paved_bench_caps,
 		"maze_green_cap_jut_cell_count": green_jut_cells,
 		"maze_green_cap_jut_over_air_count": green_jut_over_air,

@@ -4855,7 +4855,13 @@ func test_the_bench_tops_read_as_gardens_with_one_village_green() -> void:
 			fabric.surface_plan)
 		var garden := SettlementFabricAssembler.maze_garden_cells(retained,
 			solids, paved, plinths, walked)
-		var plaza := SettlementFabricAssembler.maze_village_green_cells(garden)
+		# TASK I3. The designation now prefers the largest run a STREET reaches;
+		# `walked` is what tells it which those are, and a caller that omits it
+		# gets the old size-only answer.
+		var plaza := SettlementFabricAssembler.maze_village_green_cells(garden,
+			walked)
+		var plaza_entries := SettlementFabricAssembler.maze_plaza_entries(plaza,
+			walked)
 		var payload := SettlementFabricAssembler.terrace_retaining_payload(
 			fabric)
 		# 1. the turf tint, read off the instances themselves.
@@ -4893,6 +4899,10 @@ func test_the_bench_tops_read_as_gardens_with_one_village_green() -> void:
 				var edge := false
 				for step: Vector3i in SettlementFabricAssembler.FACE_DIRECTIONS:
 					edge = edge or not plaza.has(cell + step)
+				# TASK I3. A threshold cell is a doorway into the square and
+				# grows nothing, so it is not counted as an unplanted edge.
+				if plaza_entries.has(cell):
+					continue
 				if edge:
 					plaza_edge_planted += 1
 					plaza_edge_built += int(StringName(asset_value) \
@@ -4958,6 +4968,320 @@ func test_the_bench_tops_read_as_gardens_with_one_village_green() -> void:
 				% _label(outcome))
 		checked += 1
 	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func test_the_life_constants_mirror_the_module_descriptors() -> void:
+	## TASK I3 -- the same tripwire task H2b's mirror test is, over the modules
+	## the LIFE is made of. Four numbers in `SettlementFabricAssembler` are
+	## transcriptions of measured envelopes (a deck's thickness, a corbel's drop
+	## and reach, a corner post's half width) and three headroom rules are
+	## written in arithmetic that rests on them. A re-bake that moved any of
+	## them would leave a bridge hanging in a street's headroom with every
+	## coverage argument still reading correct.
+	##
+	## It also checks the two facts the placements assume but could not state:
+	## every module the three channels place ships a collider (ruling 3), and
+	## each plaza centre feature fits the block it is offered with quarter turns.
+	var catalog := EnvironmentCatalog.load_default()
+	assert_not_null(catalog, "the shipped environment catalogue must load")
+	if catalog == null:
+		return
+	var deck := catalog.descriptor(SettlementFabricAssembler.SKYWALK_DECK)
+	var short_deck := catalog.descriptor(
+		SettlementFabricAssembler.SKYWALK_DECK_SHORT)
+	var bearer := catalog.descriptor(SettlementFabricAssembler.SKYWALK_BEARER)
+	var post := catalog.descriptor(
+		SettlementFabricAssembler.FACADE_OUTCROP_POST)
+	for named: Array in [["skywalk deck", deck], ["short deck", short_deck],
+			["bearer corbel", bearer], ["outcrop corner post", post]]:
+		assert_not_null(named[1], "the %s must be in the catalogue" % named[0])
+	if deck == null or short_deck == null or bearer == null or post == null:
+		return
+	_assert_mirrors(SettlementFabricAssembler.SKYWALK_DECK_THICKNESS,
+		(deck.measured_aabb as AABB).size.y,
+		"SKYWALK_DECK_THICKNESS is the authored gallery deck's own thickness")
+	_assert_mirrors(SettlementFabricAssembler.SKYWALK_DECK_THICKNESS,
+		(short_deck.measured_aabb as AABB).size.y,
+		"SKYWALK_DECK_THICKNESS also covers the 1.5 m deck")
+	_assert_mirrors(SettlementFabricAssembler.SKYWALK_BEARER_DROP,
+		(bearer.measured_aabb as AABB).size.y,
+		"SKYWALK_BEARER_DROP is how far the corbel hangs below the plate")
+	_assert_mirrors(SettlementFabricAssembler.SKYWALK_BEARER_REACH,
+		(bearer.measured_aabb as AABB).size.x,
+		"SKYWALK_BEARER_REACH is the corbel's own length")
+	_assert_mirrors(SettlementFabricAssembler.FACADE_OUTCROP_POST_HALF,
+		(post.measured_aabb as AABB).size.x * 0.5,
+		"FACADE_OUTCROP_POST_HALF is half the corner post's width")
+	# The post must fill a half cell in BOTH horizontal axes, or two of them
+	# leave a slot down the middle of every bump-out.
+	assert_almost_eq((post.measured_aabb as AABB).size.z * 0.5,
+		SettlementFabricAssembler.FACADE_OUTCROP_POST_HALF,
+		SKIN_ENVELOPE_TOLERANCE,
+		"the corner post must be square, or a bump-out has a seam in it")
+	assert_almost_eq((post.measured_aabb as AABB).size.y,
+		SettlementFabricAssembler.STONE_MODULE_HEIGHT,
+		SKIN_ENVELOPE_TOLERANCE,
+		"the corner post must be exactly one storey, like the course it fills")
+	# THE HEADROOM ARITHMETIC, in the real named constants. A body needs its
+	# capsule plus the sweep's own two margins; the lowest timber either channel
+	# hangs is its bearer's underside.
+	var body := TraversalEnvelope.CAPSULE_HEIGHT + 0.04
+	var span_free := float(SettlementFabricAssembler
+		.SKYWALK_MIN_HEADROOM_BANDS) * FabricRecipe.CELL_SIZE \
+		- SettlementFabricAssembler.SKYWALK_DECK_THICKNESS \
+		- SettlementFabricAssembler.SKYWALK_BEARER_DROP
+	assert_gt(span_free, body,
+		("a skywalk %d bands up leaves %.3f m under its bearers against a " \
+			+ "%.3f m body -- raise SKYWALK_MIN_HEADROOM_BANDS") % [
+			SettlementFabricAssembler.SKYWALK_MIN_HEADROOM_BANDS, span_free,
+			body])
+	# An outcropping's floor is a COURSE lower than a bridge's deck.
+	var outcrop_free := float(
+		SettlementFabricAssembler.FACADE_OUTCROP_MIN_HEADROOM_BANDS - 1) \
+		* FabricRecipe.CELL_SIZE \
+		- SettlementFabricAssembler.SKYWALK_BEARER_DROP
+	assert_gt(outcrop_free, body,
+		("a bay %d bands up leaves %.3f m under its bearers against a %.3f m " \
+			+ "body -- raise FACADE_OUTCROP_MIN_HEADROOM_BANDS") % [
+			SettlementFabricAssembler.FACADE_OUTCROP_MIN_HEADROOM_BANDS,
+			outcrop_free, body])
+	# A body must also fit BETWEEN the rails of a bridge it is standing on.
+	var rail := catalog.descriptor(SettlementFabricAssembler.SKYWALK_RAIL)
+	assert_not_null(rail, "the skywalk rail must be in the catalogue")
+	if rail != null:
+		var between := FabricRecipe.CELL_SIZE \
+			- (rail.measured_aabb as AABB).size.z
+		assert_gt(between, 2.0 * TraversalEnvelope.CAPSULE_RADIUS,
+			("a %.3f m walk between rails cannot pass a %.3f m body") % [
+				between, 2.0 * TraversalEnvelope.CAPSULE_RADIUS])
+	# RULING 3. Every module the three channels place carries its own collision.
+	var placed: Array[StringName] = [
+		SettlementFabricAssembler.SKYWALK_DECK,
+		SettlementFabricAssembler.SKYWALK_DECK_SHORT,
+		SettlementFabricAssembler.SKYWALK_RAIL,
+		SettlementFabricAssembler.SKYWALK_RAIL_MEDIUM,
+		SettlementFabricAssembler.SKYWALK_BEARER,
+		SettlementFabricAssembler.FACADE_OUTCROP_POST,
+		SettlementFabricAssembler.FACADE_OUTCROP_CAP,
+	]
+	placed.append_array(SettlementFabricAssembler.PLAZA_WIDE_FEATURES)
+	for asset_id: StringName in placed:
+		var descriptor := catalog.descriptor(asset_id)
+		assert_not_null(descriptor, "%s must be in the catalogue" % asset_id)
+		if descriptor == null:
+			continue
+		assert_gt(int(descriptor.collision_piece_count), 0,
+			("%s ships no collider; a walkway, a jetty or a well a body " \
+				+ "passes through is the H2c defect in a new material") \
+				% asset_id)
+	# The plaza centre features fit the blocks they are offered, at quarter
+	# turns, measured off their own descriptors rather than trusted.
+	for entry: Array in [[SettlementFabricAssembler.PLAZA_WELL,
+				SettlementFabricAssembler.PLAZA_WIDE_BLOCK],
+			[SettlementFabricAssembler.PLAZA_MARKET_STALL,
+				SettlementFabricAssembler.PLAZA_WIDE_BLOCK],
+			[SettlementFabricAssembler.PLAZA_TREE,
+				SettlementFabricAssembler.PLAZA_NARROW_BLOCK]]:
+		var descriptor := catalog.descriptor(StringName(entry[0]))
+		if descriptor == null:
+			continue
+		var bounds := descriptor.measured_aabb as AABB
+		var half := float(int(entry[1])) * FabricRecipe.CELL_SIZE * 0.5
+		for reach: float in [-bounds.position.x, bounds.end.x,
+				-bounds.position.z, bounds.end.z]:
+			assert_lte(reach, half,
+				("%s reaches %.3f m from its own origin against a %.3f m " \
+					+ "half block -- it cannot stand in a %d-cell clearing") \
+					% [entry[0], reach, half, int(entry[1])])
+	# The bay window's two modules come out of the family pool by INDEX, so the
+	# pool's own order is load-bearing: entry 0 is the family's window and entry
+	# 1 is a boarded panel.
+	for family: StringName in [&"blue", &"orange", &"amber"]:
+		var pool := SettlementFabricProgram.cell_facade_pool(family)
+		assert_gte(pool.size(), 2, "%s pool needs a window and a panel" % family)
+		if pool.size() < 2:
+			continue
+		assert_true(String(pool[0]).contains(".window."),
+			("the %s cell pool's first entry must be its window -- the bay " \
+				+ "window's face is taken by index") % family)
+		assert_false(String(pool[1]).contains(".window."),
+			("the %s cell pool's second entry must be a boarded panel -- the " \
+				+ "bay's cheeks are taken by index") % family)
+
+
+func test_the_town_gets_its_life() -> void:
+	## TASK I3 -- SKYWALKS, OUTCROPPINGS AND THE SQUARE, measured off the payload
+	## the renderer is really handed rather than off the rules that built it.
+	##
+	## 1. every skywalk bears on two walked surfaces at ONE band, its gap is
+	##    air, and no walked cell sits closer than SKYWALK_MIN_HEADROOM_BANDS
+	##    beneath it. A bridge that shuts the street under it is the defect this
+	##    whole channel is bounded by.
+	## 2. no two spans share a cell, and each carries exactly one deck, two
+	##    rails and two bearers.
+	## 3. every facade outcropping carries TWO bearers -- "every overhang shows
+	##    its bracket", counted rather than asserted in prose -- and every one
+	##    stands on a clad panel that has another panel below it.
+	## 4. the village green is a square you can WALK INTO: it has at least one
+	##    threshold, every threshold cell carries its paved slab and nothing
+	##    else, and the centre feature (where one fits) stands inside the plaza.
+	var checked := 0
+	var corpus_spans := 0
+	var corpus_outcrops := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var deck_cells := SettlementFabricAssembler.maze_terrace_deck_cells(
+			fabric)
+		var spans := SettlementFabricAssembler.maze_skywalk_spans(fabric)
+		var payload := SettlementFabricAssembler.terrace_retaining_payload(
+			fabric)
+		var audit := fabric.audit
+		# 1 and 2, over the spans themselves.
+		var claimed: Dictionary = {}
+		var overlaps := 0
+		var unborne := 0
+		var shut := 0
+		for span: Dictionary in spans:
+			var cell := span.cell as Vector3i
+			var step := span.step as Vector3i
+			var gap := int(span.gap)
+			var far := cell + step * (gap + 1)
+			unborne += int(not (deck_cells.has(cell) or walked.has(cell)))
+			unborne += int(not (deck_cells.has(far) or walked.has(far)))
+			for index in range(0, gap + 2):
+				var occupied := cell + step * index
+				overlaps += int(claimed.has(occupied))
+				claimed[occupied] = true
+			for index in range(1, gap + 1):
+				var mid := cell + step * index
+				for drop in range(1,
+						SettlementFabricAssembler.SKYWALK_MIN_HEADROOM_BANDS):
+					shut += int(walked.has(mid - Vector3i.UP * drop))
+		# The pieces, decoded off the payload's own ids.
+		var by_span: Dictionary = {}
+		var outcrop_pieces: Dictionary = {}
+		var threshold_cells: Dictionary = {}
+		var centre_cells: Array[Vector3i] = []
+		for asset_value: Variant in payload.batches.keys():
+			var batch := payload.batches[asset_value] as Dictionary
+			for id_value: Variant in batch.get("ids", []) as Array:
+				var id := String(id_value)
+				if id.begins_with("maze-skywalk/"):
+					var parts := id.trim_prefix("maze-skywalk/").split("/")
+					var key := "%s/%s/%s/%s" % [parts[0], parts[1], parts[2],
+						parts[3]]
+					var kinds: Dictionary = by_span.get(key, {})
+					kinds[parts[4]] = int(kinds.get(parts[4], 0)) + 1
+					by_span[key] = kinds
+				elif id.begins_with("maze-outcrop/"):
+					var parts := id.trim_prefix("maze-outcrop/").split("/")
+					var key := "%s/%s/%s/%s" % [parts[0], parts[1], parts[2],
+						parts[3]]
+					var kinds: Dictionary = outcrop_pieces.get(key, {})
+					kinds[parts[4]] = int(kinds.get(parts[4], 0)) + 1
+					outcrop_pieces[key] = kinds
+				elif id.begins_with("maze-plaza-threshold/"):
+					var parts := id.trim_prefix(
+						"maze-plaza-threshold/").split("/")
+					threshold_cells[Vector3i(int(parts[0]), int(parts[1]),
+						int(parts[2]))] = true
+				elif id.begins_with("maze-plaza-centre/"):
+					var parts := id.trim_prefix("maze-plaza-centre/").split("/")
+					centre_cells.append(Vector3i(int(parts[0]), int(parts[1]),
+						int(parts[2])))
+		var malformed_spans := 0
+		for key_value: Variant in by_span.keys():
+			var kinds := by_span[key_value] as Dictionary
+			malformed_spans += int(int(kinds.get("deck", 0)) != 1 \
+				or int(kinds.get("rail", 0)) != 2 \
+				or int(kinds.get("bearer", 0)) != 2)
+		var bare_outcrops := 0
+		for key_value: Variant in outcrop_pieces.keys():
+			bare_outcrops += int(int((outcrop_pieces[key_value] \
+				as Dictionary).get("bearer", 0)) != 2)
+		# 4. the square.
+		var retained := fabric.retained_terrace_cells
+		var solids := fabric.transformed_cells(&"solid")
+		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+			fabric.transformed_cells(&"terrain_bearing"))
+		var paved := SettlementFabricAssembler.public_floor_cells(
+			fabric.surface_plan)
+		var garden := SettlementFabricAssembler.maze_garden_cells(retained,
+			solids, paved, plinths, walked)
+		var plaza := SettlementFabricAssembler.maze_village_green_cells(garden,
+			walked)
+		var entries := SettlementFabricAssembler.maze_plaza_entries(plaza,
+			walked)
+		var centre_off_plaza := 0
+		for cell: Vector3i in centre_cells:
+			centre_off_plaza += int(not plaza.has(cell))
+		print(("MAZE_LIFE %s spans=%d overlaps=%d unborne=%d shut=%d " \
+			+ "malformed=%d bays=%d bumps=%d bare=%d green=%d entries=%d " \
+			+ "thresholds=%d centre=%d") % [_label(outcome), spans.size(),
+			overlaps, unborne, shut, malformed_spans,
+			int(audit.get("maze_facade_bay_count", -1)),
+			int(audit.get("maze_facade_bump_out_count", -1)), bare_outcrops,
+			plaza.size(), entries.size(), threshold_cells.size(),
+			centre_cells.size()])
+		assert_eq(overlaps, 0,
+			"%s builds two skywalks through one cell" % _label(outcome))
+		assert_eq(unborne, 0,
+			("%s hangs a skywalk end on something nobody walks") \
+				% _label(outcome))
+		assert_eq(shut, 0,
+			("%s hangs a skywalk within %d band(s) of a street; the bearers " \
+				+ "come down into a body's headroom") % [_label(outcome),
+				SettlementFabricAssembler.SKYWALK_MIN_HEADROOM_BANDS])
+		assert_eq(malformed_spans, 0,
+			("%s ships a skywalk that is not one deck, two rails and two " \
+				+ "bearers") % _label(outcome))
+		assert_eq(by_span.size(), spans.size(),
+			"%s audited span count must equal the payload's" % _label(outcome))
+		assert_eq(int(audit.get("maze_skywalk_span_count", -1)), spans.size(),
+			"%s audited skywalk count must equal the rule's" % _label(outcome))
+		assert_eq(bare_outcrops, 0,
+			("%s projects %d outcropping(s) with no bracket course under " \
+				+ "them") % [_label(outcome), bare_outcrops])
+		assert_eq(outcrop_pieces.size(),
+			int(audit.get("maze_facade_bay_count", -1)) \
+				+ int(audit.get("maze_facade_bump_out_count", -1)),
+			"%s audited outcropping count must equal the payload's" \
+				% _label(outcome))
+		assert_eq(int(audit.get("maze_facade_outcrop_bracket_count", -1)),
+			2 * outcrop_pieces.size(),
+			"%s must bracket every outcropping twice" % _label(outcome))
+		assert_gt(entries.size(), 0,
+			("%s designates a village green no street can reach; a square is " \
+				+ "a place you arrive at") % _label(outcome))
+		assert_eq(threshold_cells.size(), entries.size(),
+			("%s paves %d threshold(s) for %d street mouth(s)") % [
+				_label(outcome), threshold_cells.size(), entries.size()])
+		assert_eq(int(audit.get("maze_plaza_entry_count", -1)), entries.size(),
+			"%s audited plaza entries must equal the payload's" \
+				% _label(outcome))
+		assert_lte(centre_cells.size(), 1,
+			"%s stands more than one feature in its square" % _label(outcome))
+		assert_eq(centre_off_plaza, 0,
+			"%s stands its centre feature off the green" % _label(outcome))
+		assert_eq(int(audit.get("maze_plaza_centre_feature_count", -1)),
+			centre_cells.size(),
+			"%s audited centre feature must equal the payload's" \
+				% _label(outcome))
+		corpus_spans += spans.size()
+		corpus_outcrops += outcrop_pieces.size()
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+	print("MAZE_LIFE corpus towns=%d spans=%d outcroppings=%d" % [checked,
+		corpus_spans, corpus_outcrops])
+	assert_gt(corpus_outcrops, 0,
+		"the corpus must project some bays and bump-outs")
 
 
 func test_a_green_cap_never_juts_past_the_bench_it_caps() -> void:

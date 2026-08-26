@@ -585,6 +585,8 @@ func _capture_all() -> void:
 	views.append_array(_arcade_overhang_views())
 	views.append_array(_room_overhang_support_views())
 	views.append_array(_skywalk_views())
+	views.append_array(_maze_skywalk_views())
+	views.append_array(_maze_plaza_views())
 	views.append_array(_bridge_room_views())
 	views.append_array(_room_outcropping_views())
 	views.append_array(_tower_annex_views())
@@ -1266,6 +1268,98 @@ func _bridge_room_views() -> Array[Dictionary]:
 			[building.stable_id] as Array[StringName], bounds)
 		out.append({"id": "bridge-room-%02d-under" % ordinal,
 			"position": under_eye, "target": under_target, "fov": 70.0})
+		ordinal += 1
+		if ordinal >= 3:
+			break
+	return out
+
+
+func _maze_plaza_views() -> Array[Dictionary]:
+	## TASK I3. The village green as a SQUARE: one camera above it that shows
+	## the clearing, its planted boundary and whatever stands in the middle, and
+	## one standing in a street mouth looking in, which is the only view that
+	## decides whether the threshold reads as a way in.
+	var retained := _fabric.retained_terrace_cells
+	var solids := _fabric.transformed_cells(&"solid")
+	var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+		_fabric.transformed_cells(&"terrain_bearing"))
+	var paved := SettlementFabricAssembler.public_floor_cells(
+		_fabric.surface_plan)
+	var walked := SettlementFabricAssembler.walked_floor_cells(
+		_fabric.surface_plan)
+	var garden := SettlementFabricAssembler.maze_garden_cells(retained, solids,
+		paved, plinths, walked)
+	var plaza := SettlementFabricAssembler.maze_village_green_cells(garden,
+		walked)
+	if plaza.is_empty():
+		return [] as Array[Dictionary]
+	var cells: Array[Vector3i] = []
+	cells.assign(plaza.keys())
+	var centre := _cell_centroid(cells)
+	# The green's ground is the TOP of its own cells.
+	centre.y = float((cells[0] as Vector3i).y + 1) * FabricRecipe.CELL_SIZE
+	var reach := 0.0
+	for cell: Vector3i in cells:
+		var offset := Vector3(cell) * FabricRecipe.CELL_SIZE - centre
+		offset.y = 0.0
+		reach = maxf(reach, offset.length())
+	var out: Array[Dictionary] = [{
+		"id": "maze-plaza-overview",
+		"position": centre + Vector3(reach + 7.0, reach + 8.0, reach + 7.0),
+		"target": centre, "fov": 56.0,
+	}]
+	var entries := SettlementFabricAssembler.maze_plaza_entries(plaza, walked)
+	if not entries.is_empty():
+		var entry_cells: Array[Vector3i] = []
+		entry_cells.assign(entries.keys())
+		entry_cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+			return "%04d/%04d" % [a.x, a.z] < "%04d/%04d" % [b.x, b.z])
+		var mouth := entry_cells[0]
+		# Stand in the STREET the threshold serves, not on the grass: the eye
+		# goes on the walked cell itself, which is one band up and one cell out.
+		var street := mouth
+		for step: Vector3i in SettlementFabricAssembler.FACE_DIRECTIONS:
+			if walked.has(mouth + step + Vector3i.UP):
+				street = mouth + step + Vector3i.UP
+				break
+		var eye := Vector3(street) * FabricRecipe.CELL_SIZE
+		eye.y = float(street.y) * FabricRecipe.CELL_SIZE + 1.45
+		out.append({"id": "maze-plaza-threshold", "position": eye,
+			"target": centre + Vector3.UP * 0.6, "fov": 76.0})
+	return out
+
+
+func _maze_skywalk_views() -> Array[Dictionary]:
+	## TASK I3. The OPEN timber skywalks are fabric rather than features or
+	## rooms, so neither `_skywalk_views` (which photographs `enclosed_skywalk`
+	## reservations) nor `_bridge_room_views` (which photographs
+	## `spatial.maze_bridge.*` buildings) can find one. Read them off the
+	## assembler's own rule, and take the two cameras that decide whether a span
+	## works: one across it at deck height, one on the street underneath looking
+	## up at its underside and its bearers.
+	var out: Array[Dictionary] = []
+	var ordinal := 0
+	for span: Dictionary in SettlementFabricAssembler.maze_skywalk_spans(
+			_fabric):
+		var cell := span.cell as Vector3i
+		var step := span.step as Vector3i
+		var gap := int(span.gap)
+		var centre := (Vector3(cell + step) \
+			+ Vector3(step) * (float(gap) - 1.0) * 0.5) * FabricRecipe.CELL_SIZE
+		var deck_target := centre + Vector3.UP * 0.9
+		var span_eye := _best_orbit_position(deck_target,
+			maxf(13.0, float(gap + 2) * FabricRecipe.CELL_SIZE + 9.0), 2.4)
+		out.append({"id": "maze-skywalk-%02d-span" % ordinal,
+			"position": span_eye, "target": deck_target, "fov": 58.0})
+		# Under it: stand on the street the span crosses and look up. The eye
+		# goes at body height in the gap's own column, two bands down.
+		var under := centre
+		under.y -= float(SettlementFabricAssembler.SKYWALK_MIN_HEADROOM_BANDS) \
+			* FabricRecipe.CELL_SIZE
+		var back := Vector3(step.z, 0.0, step.x) * FabricRecipe.CELL_SIZE * 3.0
+		out.append({"id": "maze-skywalk-%02d-under" % ordinal,
+			"position": under + back + Vector3.UP * 1.45,
+			"target": centre, "fov": 74.0})
 		ordinal += 1
 		if ordinal >= 3:
 			break
