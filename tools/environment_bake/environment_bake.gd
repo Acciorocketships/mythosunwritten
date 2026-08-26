@@ -163,7 +163,7 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 	if asset_id.is_empty() or not source_path.begins_with("res://"):
 		_fail("Bake entry requires a stable id and res:// source path")
 		return {}
-	_validate_collision_policy(asset_id, entry)
+	_validate_collision_policy(asset_id, entry, default_scale)
 	if _failed:
 		return {}
 	var packed := load(source_path) as PackedScene
@@ -893,7 +893,8 @@ func _bake_collisions(pack: String, asset_id: String, entry: Dictionary,
 			correction, out.size()))
 	return out
 
-func _validate_collision_policy(asset_id: String, entry: Dictionary) -> void:
+func _validate_collision_policy(asset_id: String, entry: Dictionary,
+		default_scale: Variant = [1.0, 1.0, 1.0]) -> void:
 	var tags: Array = entry.get("tags", [])
 	var is_rigid := false
 	for tag: String in RIGID_NATURE_TAGS:
@@ -929,6 +930,23 @@ func _validate_collision_policy(asset_id: String, entry: Dictionary) -> void:
 				% asset_id)
 		if not tags.has("terrain"):
 			_fail("plate_box is restricted to terrain plates: %s" % asset_id)
+		# The declared thickness is the ONE number in this profile that does not
+		# scale honestly. It is authored in the piece's unscaled mesh space, and
+		# the piece's `local_transform` then carries the manifest scale (see
+		# `correction` in `_bake_asset`) -- so a plate at "scale":[4,4,4] would
+		# ship a 1 m slab from a 0.25 m declaration without anything
+		# complaining, which is the sibling of the paper-thin `flat_box` this
+		# profile exists to replace. The footprint has no such problem: it is
+		# measured off the same bounds the visual is drawn from, so it scales
+		# with the module. Refuse the entry rather than pre-divide the
+		# thickness: a plate that needs a scale needs its author to say what the
+		# slab is in metres, out loud.
+		var plate_scale := _vector3(entry.get("scale", default_scale), Vector3.ONE)
+		if not plate_scale.is_equal_approx(Vector3.ONE):
+			_fail(("plate_box requires unit scale so the declared %.3f m " \
+				+ "thickness survives the bake; %s is scaled %s") % [
+				float(entry.get("collision_plate_thickness", 0.0)), asset_id,
+				plate_scale])
 	if profile in ["building_trimesh", "ramp_box"] \
 			and not bool(entry.get("merge_pieces", false)):
 		_fail("Structural collision profile %s requires merge_pieces: %s" % [
@@ -1071,8 +1089,9 @@ func _bake_plate_box_collisions(pack: String, asset_id: String,
 	##
 	## The thickness is in the piece's own local space, which is where the
 	## manifest scale has not been applied yet -- the same space `flat_box`
-	## measures its bounds in -- so a scaled asset would need it pre-divided.
-	## Every plate that uses this profile today is authored at scale 1.
+	## measures its bounds in -- so a scaled asset would carry it into the world
+	## multiplied. `_validate_collision_policy` refuses a scaled plate outright
+	## rather than let that happen quietly.
 	var thickness := float(entry.get("collision_plate_thickness", 0.0))
 	if not is_finite(thickness) or thickness <= 0.0:
 		_fail("plate_box requires a positive collision_plate_thickness: %s" \
@@ -1085,7 +1104,20 @@ func _bake_plate_box_collisions(pack: String, asset_id: String,
 		if visual_piece.mesh == null:
 			_fail("Plate box collision needs a mesh: %s" % asset_id)
 			return []
-		var bounds := visual_piece.mesh.get_aabb()
+		# Both numbers this profile reads off the geometry -- the top face the
+		# slab hangs from and the footprint it spans -- must come from the PLATE
+		# and not from anything sitting on it. `flat_box` guards the same risk
+		# with `_extract_primary_rigid_mesh`; the largest connected component is
+		# that helper's half that applies here. The other half, the foliage
+		# filter, cannot: a terrain plate is a grass swatch, and the filter
+		# classifies every one of the KayKit tile's 18 triangles as foliage and
+		# leaves nothing to bound. So a decorative tuft is excluded because it
+		# is a SEPARATE, SMALLER component, not because it is green.
+		var plate_mesh := _extract_largest_component_mesh(visual_piece.mesh,
+			asset_id)
+		if plate_mesh == null:
+			return []
+		var bounds := plate_mesh.get_aabb()
 		var shape := BoxShape3D.new()
 		shape.size = Vector3(bounds.size.x * footprint_scale, thickness,
 			bounds.size.z * footprint_scale)
