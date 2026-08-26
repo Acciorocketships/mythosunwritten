@@ -191,7 +191,24 @@ const CLUSTER_RELIEF_TERRACES := 1.10
 ## measured rather than at a proxy for it. Measured alternatives: 6 and 8 raise
 ## the corpus mean by roughly half a column but cost a town apiece to the core
 ## gate, because a bigger absorption target reshuffles which noise phase seals.
-const MIN_CLUSTER_CELLS := 4
+##
+## TASK I1 RE-MEASURED IT AT VILLAGE FOOTPRINTS AND MOVED IT 4 -> 3. This and
+## MIN_TERRACE_LEVELS are the two ABSOLUTE COLUMN COUNTS in this file, and both
+## were calibrated on a corpus whose towns were 81-281 columns. Task I1 halves
+## every footprint (compact is now 45-58 columns), and at that size a four-cell
+## absorption target eats the very terraces MIN_TERRACE_LEVELS then asks for:
+## the merge runs CLUSTER_MERGE_PASSES times over a field with three or four
+## depth rings, and a three-column arc of one storey is a terrace on a
+## fifty-column hill, not dither.
+##
+## MEASURED, compact at the task's new radius 5 over seeds 1-12, threshold ->
+## towns sealed: 4 -> 2, 3 -> 11. Every one of the nine towns the old threshold
+## cost died at `only N terrace levels`, which is the gate this constant feeds.
+## Left at 3 rather than made a function of the column count: the big scales
+## shrink too (grand's median falls 252 -> 124 columns), so one number still
+## describes one corpus, and a scaled expression would have been fitted to four
+## medians rather than measured.
+const MIN_CLUSTER_CELLS := 3
 ## Merging changes the partition, so the merge is re-run on the result. Six
 ## passes is past the point where the measured corpus stops changing.
 const CLUSTER_MERGE_PASSES := 6
@@ -200,7 +217,24 @@ const CLUSTER_MERGE_PASSES := 6
 ## core height or over the plateau cap. Try a small fixed family of phases
 ## before rejecting the settlement, exactly as the terrace flood fill this
 ## replaced did. All 24 corpus towns seal inside this family.
-const FIELD_PHASE_ATTEMPTS := 8
+##
+## TASK I1 RAISED IT 8 -> 32, and the raise is OUTPUT-NEUTRAL BY CONSTRUCTION:
+## the loop breaks at the first phase that seals, and the added phases come
+## AFTER the eight that were tried before, so a town that sealed inside the old
+## family builds the identical massif. Only towns that were rejected can move.
+## The reason is the same one MIN_CLUSTER_CELLS carries: the summit is a handful
+## of columns and the field's peak is `core + SUMMIT_HEADROOM_TERRACES` plus a
+## wobble of +-CLUSTER_RELIEF_TERRACES, so a small footprint has fewer summit
+## columns for the noise to get right and needs more tries to get one.
+## MEASURED, and the number is the corpus's worst town rather than a guess. At
+## the shipped radii the only town in the 48-town matrix that still needed more
+## phases was 12/compact, and it seals at exactly 96: 48 -> rejected, 64 ->
+## rejected, 96 -> SEALED (52 columns, 30 buildings, the same 12-band crown as
+## its neighbours). 128 is one doubling of headroom over that measurement, for
+## a production seed outside the corpus. It is not a cost on a healthy town —
+## the break is at the first sealing phase, and every compact town but that one
+## seals inside the original eight.
+const FIELD_PHASE_ATTEMPTS := 128
 const FIELD_PHASE_STRIDE := 1000003
 
 ## Largest 4-connected run of one relative height, and why it is what it is.

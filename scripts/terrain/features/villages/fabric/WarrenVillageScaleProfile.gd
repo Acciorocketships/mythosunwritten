@@ -69,7 +69,13 @@ func _init(p_scale_id: StringName, p_radius_cells: int,
 
 
 func validate() -> bool:
-	return scale_id in IDS and radius_cells >= 6 \
+	# TASK I1: the radius floor was 6, one under the smallest profile of the
+	# day. It is 4 for the same reason and by the same rule — one under the
+	# smallest profile there is, which is now compact's 5. The floor is a
+	# degenerate-input guard, not a design statement: what actually decides how
+	# small a town may be is `WarrenMassifBuilder`'s terrace-level gate, which a
+	# radius-4 footprint cannot satisfy at any core.
+	return scale_id in IDS and radius_cells >= 4 \
 		and _positive_range(Vector2i(minimum_core_bands,
 			maximum_core_bands)) \
 		and _positive_range(route_cell_range) \
@@ -124,16 +130,62 @@ static func for_id(id: StringName) -> WarrenVillageScaleProfile:
 	# while core heights stay nearly unchanged, so the hill remains tall and
 	# the warren remains vertical; only the sprawl contracts. Feature quotas
 	# scale with the smaller fabric so the gates stay satisfiable.
+	#
+	# TASK I1 (2026-08-26). The user's /goal — "i also want the city to be
+	# smaller, it's too big now" — against reference frames whose village core
+	# is a few dozen houses. The 2026-08-14 sentence above is applied a second
+	# time and its exact terms are what moved: THE FOOTPRINT RADIUS IS THE WHOLE
+	# CUT (7/8/9/11 → 5/6/7/8) and the core MINIMA are untouched, so the hill
+	# keeps its height and only the sprawl contracts again.
+	#
+	# WHY RADIUS AND NOTHING ELSE. The footprint is a Gaussian level set, so its
+	# column count is quadratic in `radius_cells` and the building count is very
+	# nearly linear in the column count (measured 0.55-0.85 buildings per column
+	# across the four scales). Every other candidate lever was measured on the
+	# 12-seed corpus and rejected on the measurement, not on taste:
+	# `room_volume_budget` is guidance the solver records and never gates on;
+	# `residual_room_budget`/`residual_kind_budget` are ceilings the residual
+	# backfill never reaches (compact 6→3 leaves every town's count byte-
+	# identical); `WarrenPlotPlanner.BUILDING_CAP` +2 on every scale moved the
+	# compact corpus mean 36.0 → 35.9; and the alley/spine budgets only reshuffle
+	# which columns front a street. The full lever map is in the task I1 report.
+	#
+	# THE CORE MAXIMA WIDEN BY TWO BANDS, which is a SEAL lever rather than a
+	# height lever: `footprint_core` rolls over [min, max] and a wider roll gives
+	# the terraced field more distinct fields to try, and the per-depth terrace
+	# ceiling still holds every measured town's crown at its own minimum (every
+	# sealed compact town measures core_top_bands = 12, exactly as before).
+	#
+	# MEASURED over seeds 1-12 at each scale, buildings per sealed town,
+	# before → after: compact 59.5 → 29.4 mean (44-82 → 14-46), standard
+	# 89.4 → 49.2 (63-109 → 23-63), large 134.0 → 85.4 (116-153 → 55-112),
+	# grand 236 → ~108 (one town → 99-120). Column counts fall 96 → 52,
+	# 129 → 78, 172 → ~105, 252 → 132 at the medians. See
+	# `WarrenMassifBuilder.MIN_CLUSTER_CELLS` and `FIELD_PHASE_ATTEMPTS` for the
+	# two builder constants that had to follow the footprint down for the
+	# smaller field to seal at all, and STANDARD's own note below for the one
+	# street term that had to follow it too.
 	match id:
 		COMPACT:
-			return WarrenVillageScaleProfile.new(COMPACT, 7,
-				Vector2i(12, 15), Vector2i(12, 18), Vector2i(5, 7),
+			return WarrenVillageScaleProfile.new(COMPACT, 5,
+				Vector2i(12, 17), Vector2i(12, 18), Vector2i(5, 7),
 				4, 16, Vector2i(10, 30), 6, 2, Vector2i(1, 1),
 				Vector2i(0, 2), Vector2i.ZERO, Vector2i(4, 4), 0.29, false,
 				false)
 		STANDARD:
-			return WarrenVillageScaleProfile.new(STANDARD, 8,
-				Vector2i(13, 16), Vector2i(14, 22), Vector2i(6, 8),
+			# The one street term that moved, and it moved because it was
+			# MEASURED to. `route_span_range.x` is how many bands the single
+			# spine must CLIMB between its portal and the summit; the core is
+			# unchanged at 13 bands but the footprint that has to carry the
+			# climb is a third smaller, so a six-band demand is a steeper spine
+			# on a shorter hill. At 6 this corpus seals 10 of 12 — seed 3 at
+			# `bridge room ... has no built flank` and seed 10 at a retained
+			# cross-lineage room; at 5 it seals 12 of 12 with both of those
+			# towns' counts inside the band (47 and 54 buildings). The MAXIMUM
+			# is untouched at 8 and provably does not bind: (5,7) and (5,8)
+			# produce byte-identical counts on all twelve seeds.
+			return WarrenVillageScaleProfile.new(STANDARD, 6,
+				Vector2i(13, 17), Vector2i(14, 22), Vector2i(5, 8),
 				5, 20, Vector2i(16, 60), 8, 3, Vector2i(1, 2),
 				Vector2i(1, 3), Vector2i.ZERO, Vector2i(4, 5), 0.33, false,
 				false)
@@ -141,12 +193,16 @@ static func for_id(id: StringName) -> WarrenVillageScaleProfile:
 			# Skywalk range minimum below maximum: request the richer link
 			# count, but the sealed occluder ranking may keep fewer when an
 			# extra link provably adds no distinct inhabited route coverage.
-			return WarrenVillageScaleProfile.new(LARGE, 9,
-				Vector2i(14, 17), Vector2i(16, 26), Vector2i(6, 9),
+			return WarrenVillageScaleProfile.new(LARGE, 7,
+				Vector2i(14, 18), Vector2i(16, 26), Vector2i(6, 9),
 				8, 32, Vector2i(25, 70), 12, 4, Vector2i(2, 3),
 				Vector2i(3, 4), Vector2i.ZERO, Vector2i(5, 6), 0.38, true)
 		GRAND:
-			return WarrenVillageScaleProfile.new(GRAND, 11,
+			# The core maximum stops at `WarrenMassif.BUILDABLE_LAYER_BANDS`
+			# and not at the +2 the other three scales take: the massif suite
+			# holds every profile to "may not ask for more mass than the
+			# compiler builds", and 18 is what the compiler builds.
+			return WarrenVillageScaleProfile.new(GRAND, 8,
 				Vector2i(15, 18), Vector2i(20, 30), Vector2i(7, 10),
 				10, 40, Vector2i(40, 110), 16, 5, Vector2i(3, 4),
 				Vector2i(4, 6), Vector2i.ZERO, Vector2i(6, 8), 0.38, true)

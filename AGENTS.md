@@ -364,8 +364,15 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   The replacement volumetric source-plan pipeline is now the default production transaction when
   the common fabric vocabulary is available. It has ONE topology producer: the plot-model maze
   source described below. Before the town is built, `WarrenVillageScaleProfile.select()` deterministically chooses one
-  of four size contracts: compact 55%, standard 30%, large 12%, grand 3%. Their planning diameters
-  are 63/69/75/87 m; total inhabited-room budgets are 18--110/30--190/50--220/80--300; residual
+  of four size contracts: compact 55%, standard 30%, large 12%, grand 3%. **Task I1 (2026-08-26)
+  halved every footprint on the user's direction that the city was too big: `radius_cells` goes
+  7/8/9/11 -> 5/6/7/8, so the planning diameters are now 45/51/57/63 m, and a town measures a
+  mean of 29/49/85/115 buildings where it measured 60/89/134/236. The core MINIMA are untouched
+  and every sealed compact town still stands a 12-band crown — the hill kept its height and lost
+  its skirt. Two `WarrenMassifBuilder` constants had to follow the footprint down for the smaller
+  field to seal at all (`MIN_CLUSTER_CELLS` 4 -> 3, `FIELD_PHASE_ATTEMPTS` 8 -> 128); both carry
+  their measurement.** Their older stated planning diameters were 63/69/75/87 m; total
+  inhabited-room budgets are 18--110/30--190/50--220/80--300; residual
   infill is capped separately at 12/16/24/32 rooms. Those totals include the late residual pass,
   which may never disappear from size accounting. Complete authored-building ranges are
   4/4--5/5--6/6--8 for compact/standard/large/grand. A bounded deterministic compatible-set beam
@@ -418,14 +425,14 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   and refuses a matrix measured against a different tree. `--mode` and `--constructive` are
   retired and now exit 2 rather than silently no-opping. The full four-scale run is MANDATORY:
   `--seeds` is global, so a per-scale reduction cannot be expressed and a short matrix
-  hard-fails the corpus gate. **Corpus state 2026-08-25: 32 of 48. 24 of 24 compact/standard
-  towns seal; task F4 added the two big scales, which seal 7 of 12 at large (seeds 4, 6, 7, 8,
-  9, 10, 12) and 1 of 12 at grand (seed 9) — the rest die at the volume adapter's broad floor
-  slab (5), the source's straight-run cap (3), the court cantilever (2), the fabric compiler's
-  modular-box contract (2), the bridge-flank room-envelope gate (2), and one each of
-  room-overhang-vs-market conflict and disconnected route graph. Four of the seven sealing
-  large towns build no bazaar and publish the `covered_market` shortfall: at every scale, a
-  missing court, market, landmark or skywalk is now an audit fact, never a refusal.**
+  hard-fails the corpus gate. **Corpus state 2026-08-26 (task I1, the size cut): 45 of 48.
+  24 of 24 compact/standard towns seal; large seals 11 of 12 and grand 10 of 12, where task F4
+  measured 7 and 1. Halving every footprint is what bought the two big scales their corpus — a
+  smaller mass has fewer ways to fail the composition and the fabric compiler — and the seeds
+  that still refuse do so at the source's straight-run cap and at one-off composition gates.
+  A missing court, market, landmark or skywalk is an audit fact at every scale, never a
+  refusal, and on the shrunk towns a bazaar is rare: exactly one of the eleven sealing large
+  towns builds one.**
   Per-stage wall clock for one town is on the
   sealed plan's `maze_stage_ms` audit
   key; `tests/harness/warren_maze_stage_probe.gd` and `warren_solve_profile.gd` print it.
