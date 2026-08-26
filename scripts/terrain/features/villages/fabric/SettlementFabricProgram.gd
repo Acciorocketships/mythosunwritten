@@ -232,6 +232,14 @@ const WOOD_CELL_FACADE_AMBER: Array[StringName] = [
 ## pieces sit at most 0.042 m behind it, which no eye reads and which can only
 ## make a street wider. `test_the_skin_constants_mirror_the_module_descriptors`
 ## checks it against the descriptors so a re-bake cannot move it in silence.
+## TASK I2 FIX 1, M5 -- this value is transcribed from that module's own
+## `|position.z|` (its back half), and the mirror test checks it against
+## `end.z` (its front half) instead, because `end.z` is the number the skin's
+## own coverage argument is written in. The two differ by 1.1 µm on the
+## authored mesh (0.27658215 vs the descriptor's 0.276581), which the 5 mm
+## `SKIN_ENVELOPE_TOLERANCE` swallows without comment. Noted rather than
+## re-sourced: moving it would not change any coverage bound, only which of
+## two numbers a float-noise gap is measured from.
 const WOOD_CELL_FACADE_FRONT_DEPTH := 0.27658215
 const ROCK_FACADE: Array[StringName] = [
 	&"sfv.fabric.wall.rock.window.010",

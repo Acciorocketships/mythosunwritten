@@ -4173,6 +4173,32 @@ func test_the_skin_constants_mirror_the_module_descriptors() -> void:
 	_assert_mirrors(SettlementFabricAssembler.STONE_CAP_HALF_DEPTH,
 		masonry_aabb.size.z * 0.5,
 		"STONE_CAP_HALF_DEPTH is half the masonry module's depth")
+	# TASK I2 FIX 1, R3. The mirror above is checked under
+	# SKIN_ENVELOPE_TOLERANCE (5 mm), and that tolerance sits on the HALF
+	# depth -- a re-bake could grow the masonry module by a full centimetre
+	# (5 mm of half-depth) and still pass it, while the STREET it closes
+	# narrows by the full centimetre. Two coursed panels facing each other
+	# across a one-cell street is exactly that street, and nothing before this
+	# checked it directly: it was corpus evidence at best (`i2/matrix2.log`,
+	# 575 s) and silent at worst. Assert the clearance itself, with the real
+	# constants named, so a re-bake that closes it fails here in the ~111 s
+	# composition suite instead of only in the full sweep.
+	assert_true(FabricRecipe.CELL_SIZE
+			- 2.0 * SettlementFabricAssembler.STONE_CAP_HALF_DEPTH \
+			>= 2.0 * TraversalEnvelope.CAPSULE_RADIUS
+			+ 2.0 * SettlementFabricAssembler.NATURAL_ROCK_CUT_QUERY_MARGIN,
+		("two coursed masonry panels facing each other across a one-cell " \
+			+ "street must still admit a body: CELL_SIZE %.5f - 2 x " \
+			+ "STONE_CAP_HALF_DEPTH %.5f = %.5f must be >= 2 x " \
+			+ "TraversalEnvelope.CAPSULE_RADIUS %.5f + 2 x " \
+			+ "NATURAL_ROCK_CUT_QUERY_MARGIN %.5f = %.5f") % [
+			FabricRecipe.CELL_SIZE, SettlementFabricAssembler.STONE_CAP_HALF_DEPTH,
+			FabricRecipe.CELL_SIZE \
+				- 2.0 * SettlementFabricAssembler.STONE_CAP_HALF_DEPTH,
+			TraversalEnvelope.CAPSULE_RADIUS,
+			SettlementFabricAssembler.NATURAL_ROCK_CUT_QUERY_MARGIN,
+			2.0 * TraversalEnvelope.CAPSULE_RADIUS
+				+ 2.0 * SettlementFabricAssembler.NATURAL_ROCK_CUT_QUERY_MARGIN])
 	# TASK H2c FIX 2, MINOR 3. The coursed module's own HEIGHT, which the skin
 	# used to spell `3.0` at three sites: the trimmed panel's full height, the
 	# scale that trim divides by, and the flat cap's sweep. It is derived from
@@ -4260,6 +4286,25 @@ func test_the_skin_constants_mirror_the_module_descriptors() -> void:
 				("%s ships no collider; the H2c census pins body-height panels " \
 					+ "beside a walked cell at zero uncollided") % String(
 					asset_id))
+			# TASK I2 FIX 1, R2. `position.z`/`size.z` were the two AABB fields
+			# nothing here mirrored, and the report's own depth figures for this
+			# module were wrong for it (0.277 m -- FACADE_FRONT_DEPTH, the FRONT
+			# HALF -- stood in for the module's real 0.553 m). `end.z` above
+			# bounds the STREET side; this bounds the BACK extent the report
+			# describes -- how much of the panel's own 1.5 m column it actually
+			# occupies -- so a re-bake that grew a window box backward without
+			# moving its front face at all still fails here, and the "leaves
+			# 0.947 m against a 0.795 m body" claim stays a checked fact rather
+			# than a transcription.
+			assert_true(FabricRecipe.CELL_SIZE - aabb.size.z \
+					>= SettlementFabricAssembler.NATURAL_ROCK_CUT_BODY_WIDTH,
+				("%s occupies %.5f m of its own %.1f m column (position.z=" \
+					+ "%.5f, size.z=%.5f), leaving %.5f m -- must still clear " \
+					+ "the %.5f m body or a passage bored behind this panel " \
+					+ "could not pass") % [String(asset_id), aabb.size.z,
+					FabricRecipe.CELL_SIZE, aabb.position.z, aabb.size.z,
+					FabricRecipe.CELL_SIZE - aabb.size.z,
+					SettlementFabricAssembler.NATURAL_ROCK_CUT_BODY_WIDTH])
 			facade_checked += 1
 	assert_gt(facade_checked, 0, "the facade pools must have modules to check")
 	var deepest := 0.0
@@ -4854,8 +4899,13 @@ func test_the_bench_tops_read_as_gardens_with_one_village_green() -> void:
 						== SettlementFabricAssembler.GARDEN_PLANTER)
 				else:
 					planted_in_clearing += 1
-		# 2. the green is one connected surface at one band, re-derived here
-		# rather than trusted from the designation.
+		# 2. the green is one connected surface at one band. TASK I2 FIX 1, M3
+		# -- this is STRUCTURAL, not a re-derived finding: `maze_village_
+		# green_cells` floods only through `FACE_DIRECTIONS`, which carries no
+		# y, so `plaza` can never span two bands and the assert below cannot
+		# fail while `plaza` is non-empty. Kept because it documents that
+		# guarantee where a reader would otherwise wonder about it, not
+		# because it can catch a regression.
 		var plaza_bands: Dictionary = {}
 		for cell_value: Variant in plaza.keys():
 			plaza_bands[(cell_value as Vector3i).y] = true

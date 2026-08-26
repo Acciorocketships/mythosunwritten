@@ -169,12 +169,28 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 			# instance colour was dropped between the assembler and the renderer,
 			# and every tint the fabric asks for reached the game as white.
 			#
-			# It cost nothing until now because every fabric instance really was
-			# white. The garden turf is the first that is not: rendered raw, the
+			# The garden turf is the casualty that FOUND this: rendered raw, the
 			# KayKit grass swatch is the pale "lime plate" the direction retired,
-			# and the tint that fixes it is the payload's. Defaulted to WHITE on
-			# read, so the timber, stair and outskirts channels that set no colour
-			# are byte-identical.
+			# and the tint that fixes it is the payload's. But it is not the
+			# only casualty and not the oldest one -- `_append_courtyard_paving`
+			# (SettlementFabricAssembler.gd:2617, colours at :2631) has always
+			# passed real colours, the weathered-board checker
+			# (`Color("b9c1b8")` against `Color("c8b79d")`), on both adapters,
+			# and `test_settlement_fabric.gd`'s "courtyard paving must differ
+			# visibly" has pinned the two-tone the whole time. This crossing
+			# flattened THAT to white in-game too, for the pipeline's entire
+			# life, so the fix below RESTORES a designed, tested feature; it
+			# does not only switch one on for the first time. Defaulted to
+			# WHITE on read, so the timber, stair and outskirts channels that
+			# set no colour are byte-identical.
+			#
+			# Nothing in today's corpus exercises that restoration: every
+			# planner town's `source_courtyard_macro_cell_count` is 0 and both
+			# big scale groups audit `elevated_courtyards: 0`, so no sealed
+			# town builds an elevated court and the checker has not rendered in
+			# a single reviewed frame. The first seed that grows one ships a
+			# two-tone deck nobody has looked at -- I4's watch list, not closed
+			# here.
 			result.entries.append({
 				"asset_id": asset_id,
 				"transform": world_frame * local_transform,

@@ -1599,9 +1599,11 @@ static func _maze_facade_transform(key: Vector4i,
 	##
 	## HORIZONTALLY it is the ROOM RECIPE's idiom rather than the skin's: the
 	## module is pinned by its OUTER FACE to the boundary plane, exactly as
-	## `FabricModuleProgram.facade_aligned_transform` pins a house's wall, so the
-	## whole 0.277 m of it stands INSIDE the mass and nothing at all reaches into
-	## the street. Two consequences worth stating out loud:
+	## `FabricModuleProgram.facade_aligned_transform` pins a house's wall, so its
+	## full 0.553 m depth stands INSIDE the mass and nothing at all reaches into
+	## the street. (FACADE_FRONT_DEPTH itself is 0.277 m -- the FRONT HALF of
+	## the deepest module, |position.z| off its own origin, not the module's
+	## whole depth; see below.) Two consequences worth stating out loud:
 	##
 	## * IT CANNOT OPEN THE SHELL. The module measures 1.500 m across against a
 	##   1.5 m cell and 3.000 m tall against a 3.0 m course, so it closes its own
@@ -1613,9 +1615,10 @@ static func _maze_facade_transform(key: Vector4i,
 	##   0.375 m plus its relief; this stands 0.000 m. Every trim in this file
 	##   exists because a module reached into somewhere a body walks, and a
 	##   facade panel reaches into the faced cell not at all. Down its OWN column
-	##   it occupies the outer 0.277 m, which leaves 1.223 m of a 1.5 m cell
-	##   against a 0.795 m body -- so no trim is applied and the clearance row is
-	##   the measurement that says so.
+	##   it occupies the outer 0.553 m (its own measured `size.z`, not
+	##   FACADE_FRONT_DEPTH), which leaves 0.947 m of a 1.5 m cell against a
+	##   0.795 m body -- so no trim is applied and the clearance row is the
+	##   measurement that says so.
 	##
 	## The yaw is `atan2(outward.x, outward.z)`, the same four-way turn the rock
 	## face and the bench rim take, which puts the module's authored front (its
