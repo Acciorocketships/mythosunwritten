@@ -5009,6 +5009,12 @@ func test_the_life_constants_mirror_the_module_descriptors() -> void:
 	_assert_mirrors(SettlementFabricAssembler.SKYWALK_BEARER_REACH,
 		(bearer.measured_aabb as AABB).size.x,
 		"SKYWALK_BEARER_REACH is the corbel's own length")
+	# TASK I3 FIX 1, MINOR 4. The third dimension, and the one the outcropping
+	# channel stations its pair by: a re-bake that deepened this piece would put
+	# a bump-out's bearers back through the face they bear.
+	_assert_mirrors(SettlementFabricAssembler.SKYWALK_BEARER_DEPTH,
+		(bearer.measured_aabb as AABB).size.z,
+		"SKYWALK_BEARER_DEPTH is how much of a projection the corbel eats")
 	_assert_mirrors(SettlementFabricAssembler.FACADE_OUTCROP_POST_HALF,
 		(post.measured_aabb as AABB).size.x * 0.5,
 		"FACADE_OUTCROP_POST_HALF is half the corner post's width")
@@ -5222,14 +5228,28 @@ func test_the_town_gets_its_life() -> void:
 		var centre_off_plaza := 0
 		for cell: Vector3i in centre_cells:
 			centre_off_plaza += int(not plaza.has(cell))
+		# TASK I3 FIX 1 -- IS THE GREEN A SQUARE OR A RIBBON, as a number rather
+		# than as an impression off a render. A cell whose four lateral
+		# neighbours are all green is INTERIOR: a clearing has interior cells and
+		# a one-cell-wide strip threading between two blocks has none, however
+		# many cells it runs to. Reported, not pinned -- what a good shape is, is
+		# the taste question the I4 loop owns; what this line does is stop the
+		# question being argued from screenshots.
+		var plaza_interior := 0
+		for cell_value: Variant in plaza.keys():
+			var cell := cell_value as Vector3i
+			var enclosed := true
+			for step: Vector3i in SettlementFabricAssembler.FACE_DIRECTIONS:
+				enclosed = enclosed and plaza.has(cell + step)
+			plaza_interior += int(enclosed)
 		print(("MAZE_LIFE %s spans=%d overlaps=%d unborne=%d shut=%d " \
-			+ "malformed=%d bays=%d bumps=%d bare=%d green=%d entries=%d " \
-			+ "thresholds=%d centre=%d") % [_label(outcome), spans.size(),
-			overlaps, unborne, shut, malformed_spans,
+			+ "malformed=%d bays=%d bumps=%d bare=%d green=%d interior=%d " \
+			+ "entries=%d thresholds=%d centre=%d") % [_label(outcome),
+			spans.size(), overlaps, unborne, shut, malformed_spans,
 			int(audit.get("maze_facade_bay_count", -1)),
 			int(audit.get("maze_facade_bump_out_count", -1)), bare_outcrops,
-			plaza.size(), entries.size(), threshold_cells.size(),
-			centre_cells.size()])
+			plaza.size(), plaza_interior, entries.size(),
+			threshold_cells.size(), centre_cells.size()])
 		assert_eq(overlaps, 0,
 			"%s builds two skywalks through one cell" % _label(outcome))
 		assert_eq(unborne, 0,
@@ -5282,6 +5302,19 @@ func test_the_town_gets_its_life() -> void:
 		corpus_spans, corpus_outcrops])
 	assert_gt(corpus_outcrops, 0,
 		"the corpus must project some bays and bump-outs")
+	# TASK I3 FIX 1, IMPORTANT 1 -- THE SKYWALK CHANNEL RATCHETED, beside the
+	# outcrop floor and for the reason the review gave: the span rule is six
+	# structural facts and a seeded tie-break, so a change that made ANY of them
+	# unsatisfiable would take every bridge in the corpus and leave this test
+	# green, exactly as the outcrop floor exists to stop for the other channel.
+	# The floor is ZERO-PLUS rather than a landed count on purpose -- this corpus
+	# is four planner towns and one of them (12/compact) honestly builds no
+	# bridge at all, which §9's first concern names. The LANDED counts are pinned
+	# where they are measured over a corpus big enough to mean something: the
+	# sweep's own `SWEEP RESULT life` row, per scale group.
+	assert_gt(corpus_spans, 0,
+		("the corpus must fly some skywalks; %d town(s) built none, so either " \
+			+ "the siting rule or the geometry it reads has gone") % checked)
 
 
 func test_a_green_cap_never_juts_past_the_bench_it_caps() -> void:

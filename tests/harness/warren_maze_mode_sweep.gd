@@ -189,6 +189,40 @@ const CLEARANCE_TOWN_GATE_CEILING := 0
 const CLEARANCE_TOWN_OFFSET_FREE_CEILING := 0
 const CLEARANCE_TOWN_GATES_OFFSET_CEILING := 0
 
+## TASK I3 FIX 1, IMPORTANT 1. THE SKYWALK CHANNEL'S FLOOR, per scale group, and
+## it is a RATCHET rather than a safety pin: the two above say a street is
+## passable, and these say the town still flies bridges over it.
+##
+## Why the channel needs one at all. A span is six structural facts and a seeded
+## tie-break, so nothing in the corpus PROMISES a bridge -- and the composition
+## suite's own corpus honestly contains a town (12/compact) that builds none.
+## Without a floor, a change that made any one of the six facts unsatisfiable --
+## a walked set that stopped including crown decks, a headroom rule off by a
+## band, an occluder map that grew -- would take every bridge in all 45 sealed
+## towns and leave every other pin in this file green, because every other pin
+## counts what is THERE. The outcropping channel and the plaza already have
+## their equivalents in the composition suite; this is the skywalk's.
+##
+## MEASURED, not designed, and pinned AT the measurement rather than under it:
+## the 48-town matrix flies 42 spans over its 24 sealed compact/standard towns
+## and 192 over its 21 sealed large/grand ones. The towns are a pure function of
+## their seeds -- `warren_maze_identity_probe` repeats the same fabric on every
+## run of the same seed, and the corpus matrix has reproduced these two numbers
+## across machines -- so there is no per-machine variation to guard against and
+## no honest reason to leave slack under the number. A fall is a report to
+## write, not a tolerance to have budgeted for.
+const LIFE_SPAN_FLOOR_BY_GROUP: Dictionary = {
+	CORPUS_STONE_GROUP: 42,
+	ADDED_STONE_GROUP: 192,
+}
+## The matrix those floors were measured on. A corpus TOTAL means nothing on a
+## three-seed spot check, so unlike the clearance ceilings (which are per-town
+## and therefore mean the same thing on any seed set) these are judged only when
+## the run actually covered the seeds and the scales they were measured over.
+## A bigger run than this one still gets judged: more towns cannot fly fewer
+## bridges than the corpus this floor came from.
+const LIFE_FLOOR_SEEDS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
 
 static func production_fingerprint() -> String:
 	## One hex digest over the sorted (path, content hash) pairs of every
@@ -568,21 +602,25 @@ func _run() -> void:
 				> CLEARANCE_TOWN_GATES_OFFSET_CEILING:
 		# WHAT THIS PIN DOES AND DOES NOT SAY. The scene measured is
 		# `SettlementFabricAssembler.terrace_retaining_payload` and NOTHING
-		# else: the retained massif's own skin, with no buildings, no railings,
-		# no walkway guards and no props in it. That isolation is the point --
-		# it is the only way to ask "did the shard's collider shut anything"
-		# and get an answer about the shard rather than about the town. It is
-		# NOT a walkability guarantee for a finished settlement, and a green
-		# row here does not mean every street is passable once the rest of the
-		# town is committed.
+		# else: the retained massif's skin plus everything the crown wears --
+		# green rims, garden and plaza dressing, terrace railings, skywalks and
+		# facade outcroppings -- with no BUILDINGS in it (fix 1, minor 5; this
+		# used to say "no railings", which stopped being true at task C5e). That
+		# isolation is the point: it is the only way to ask "did the fabric's
+		# own colliders shut anything" and get an answer about the fabric rather
+		# than about the town. It is NOT a walkability guarantee for a finished
+		# settlement, and a green row here does not mean every street is
+		# passable once the buildings are committed.
 		print(("SWEEP ERROR clearance %d walked cell(s) admit no player " \
 			+ "capsule anywhere inside them; %d route component(s) split and " \
 			+ "%d cell(s) were cut off [%s]; the worst town shuts %d cell " \
 			+ "boundary(ies) against a ceiling of %d, and costs %d off-centre " \
 			+ "cell(s) against %d and %d off-centre crossing(s) against %d. " \
 			+ "Scope: the scene is " \
-			+ "terrace_retaining_payload ALONE (no buildings, railings or " \
-			+ "props), which isolates the skin's own colliders and is NOT a " \
+			+ "terrace_retaining_payload ALONE (the massif's skin and what " \
+			+ "the crown wears -- rims, garden and plaza dressing, railings, " \
+			+ "skywalks, outcroppings -- but NO buildings or props), which " \
+			+ "isolates the fabric's own colliders and is NOT a " \
 			+ "town walkability guarantee. A SPLIT is the serious one -- it " \
 			+ "means a shut crossing had no way round and the street is " \
 			+ "genuinely broken, not merely narrowed; the two off-centre " \
@@ -606,7 +644,49 @@ func _run() -> void:
 			int(clearance.worst_gates_offset)])
 		quit(3)
 		return
+	# TASK I3 FIX 1, IMPORTANT 1. The skywalk ratchet, judged after the physics
+	# pin and never instead of it: a shut street is a bug in a town that shipped,
+	# and a lost bridge is a channel that stopped working. Both are red, and if
+	# a run manages both the shut street is the one to read first.
+	var life_shortfalls := PackedStringArray()
+	for group: String in [CORPUS_STONE_GROUP, ADDED_STONE_GROUP]:
+		if not _life_floor_group_ran(seeds, scale_ids, group):
+			continue
+		var life_tally := skin_by_group[group] as Dictionary
+		var floor_value := int(LIFE_SPAN_FLOOR_BY_GROUP[group])
+		if int(life_tally.spans) >= floor_value:
+			continue
+		life_shortfalls.append("%s flies %d span(s) over %d town(s), floor %d" % [
+			group, int(life_tally.spans), int(life_tally.towns), floor_value])
+	if not life_shortfalls.is_empty():
+		print(("SWEEP ERROR life the skywalk channel fell below its measured " \
+			+ "floor: %s. The floor is a RATCHET on the corpus totals of " \
+			+ "`SWEEP RESULT life`, and it exists because every other pin in " \
+			+ "this file counts what is THERE: a siting rule that stopped " \
+			+ "finding sites would take every bridge in the corpus and turn " \
+			+ "nothing else red. Read the per-town `SWEEP seed=... SEALED` " \
+			+ "rows against the last matrix to see which towns lost theirs, " \
+			+ "and if the loss is intended, re-pin at the new measurement " \
+			+ "with the reason written down.") % ", ".join(life_shortfalls))
+		push_error("life span floor violated: %s" % ", ".join(life_shortfalls))
+		quit(4)
+		return
 	quit()
+
+
+static func _life_floor_group_ran(seeds: Array[int],
+		scale_ids: Array[StringName], group: String) -> bool:
+	## Whether this run covered the matrix `LIFE_SPAN_FLOOR_BY_GROUP` was
+	## measured on for one scale group. A corpus total is only comparable
+	## against the corpus it came from, so a spot check is not judged at all
+	## rather than judged and failed.
+	for seed_value: int in LIFE_FLOOR_SEEDS:
+		if not seeds.has(seed_value):
+			return false
+	for scale_name: String in group.split(",", false):
+		if not scale_ids.has(StringName(scale_name)):
+			return false
+	return true
 
 
 static func _new_stone_tally() -> Dictionary:
@@ -860,11 +940,19 @@ func _measure_clearance(tally: Dictionary, city_seed: int,
 	## dominant cost of a corpus run and re-solving here would double it, so the
 	## row rides the sweep's own `fabric` rather than owning a probe.
 	##
-	## SCOPE. The committed scene is `terrace_retaining_payload` and nothing
-	## else -- the retained massif's skin, without buildings, railings, walkway
-	## guards or props. That is the isolation the question needs ("did the
-	## shard's collider shut anything") and it is NOT a walkability guarantee
-	## for a finished town.
+	## SCOPE, AND THE ROW'S OWN LABEL SAYS IT (fix 1, minor 5). The committed
+	## scene is `terrace_retaining_payload` and nothing else, and what that
+	## payload holds has GROWN since this row was written: the plinths and the
+	## massif's skin, the green rim walls, the garden dressing with the plaza's
+	## thresholds and centre feature in it, the terrace railings (since task
+	## C5e), and task I3's skywalks and facade outcroppings. It is therefore the
+	## town's whole FABRIC DRESSING -- which is what the row now prints -- and
+	## not the `skin_only` it claimed for three tasks after that stopped being
+	## true. What it still excludes is the BUILDINGS: no room shells, no doors,
+	## no props. So it remains an isolation rather than a walkability guarantee
+	## for a finished town, and it is now an honest one: every collider it
+	## commits is one the retained crown really carries, including the bearers a
+	## bridge or a bay hangs over a street.
 	##
 	## THREE MEASUREMENTS, because a per-cell fit is not walkability:
 	##
@@ -978,7 +1066,7 @@ func _measure_clearance(tally: Dictionary, city_seed: int,
 	for pair: Array in shut.values():
 		if int(open.get(pair[0], -1)) != int(open.get(pair[1], -2)):
 			required += 1
-	print(("SWEEP seed=%d scale=%s CLEARANCE payload=skin_only shapes=%d " \
+	print(("SWEEP seed=%d scale=%s CLEARANCE payload=fabric_dressing shapes=%d " \
 		+ "walked=%d centre_free=%d offset_free=%d blocked=%d gates=%d " \
 		+ "gates_offset=%d gates_blocked=%d gates_blocked_required=%d " \
 		+ "route_components=%d splits=%d cells_unreachable=%d") % [city_seed,
@@ -1210,7 +1298,7 @@ func _print_clearance_result(tally: Dictionary) -> void:
 	## green.
 	if int(tally.towns) == 0:
 		return
-	print(("SWEEP RESULT clearance towns=%d payload=skin_only " \
+	print(("SWEEP RESULT clearance towns=%d payload=fabric_dressing " \
 		+ "capsule=r%.5f/h%.3f margin=%.2f walked=%d centre_free=%d " \
 		+ "offset_free=%d offset_share=%.4f blocked=%d gates=%d " \
 		+ "gates_offset=%d gates_offset_share=%.4f gates_blocked=%d " \

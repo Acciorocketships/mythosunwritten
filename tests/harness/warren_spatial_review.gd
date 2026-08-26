@@ -586,6 +586,7 @@ func _capture_all() -> void:
 	views.append_array(_room_overhang_support_views())
 	views.append_array(_skywalk_views())
 	views.append_array(_maze_skywalk_views())
+	views.append_array(_maze_outcrop_views())
 	views.append_array(_maze_plaza_views())
 	views.append_array(_bridge_room_views())
 	views.append_array(_room_outcropping_views())
@@ -1274,11 +1275,50 @@ func _bridge_room_views() -> Array[Dictionary]:
 	return out
 
 
+## TASK I3 FIX 1, IMPORTANT 3. The plaza overview's lens and stance, as
+## constants because they are the terms the frame is derived from rather than
+## numbers to nudge: a 56 degree lens at 42 degrees above the turf, and a
+## stand-off that is COMPUTED from the green's own run (see `_maze_plaza_views`)
+## with this as its floor so a four-cell square does not put the camera in the
+## grass.
+const PLAZA_OVERVIEW_FOV := 56.0
+const PLAZA_OVERVIEW_PITCH_DEGREES := 42.0
+const PLAZA_OVERVIEW_MIN_DISTANCE := 9.0
+## How far back along its street the threshold camera may stand, in cells. Three
+## is the depth at which a mouth reads as an arrival -- pavement, threshold,
+## green -- and it doubles as the test for whether a mouth HAS a street: one
+## with no walked cell behind it is a gap between two houses.
+const PLAZA_THRESHOLD_APPROACH_CELLS := 3
+
+
 func _maze_plaza_views() -> Array[Dictionary]:
 	## TASK I3. The village green as a SQUARE: one camera above it that shows
 	## the clearing, its planted boundary and whatever stands in the middle, and
 	## one standing in a street mouth looking in, which is the only view that
 	## decides whether the threshold reads as a way in.
+	##
+	## FIX 1, IMPORTANT 3 RE-AIMED BOTH, because the review's read was that the
+	## square's failure to photograph was substantially the CAMERA rather than
+	## the square:
+	##
+	## * THE OVERVIEW stood at `reach + 7/8` -- a stand-off ADDED to the green's
+	##   radius, so the bigger the square the further away it was framed from,
+	##   which is backwards. A 41-cell green went to film from 23 m and its
+	##   paving, its thresholds and its centre feature came back as texture. The
+	##   distance is now DERIVED from the run: the eye stands where a disc of the
+	##   green's own radius fills this lens, so a small square and a large one
+	##   are photographed at the same size on the frame.
+	## * THE THRESHOLD stood in the first mouth in sort order, which on the
+	##   production town was a mouth inside the block -- the eye woke up in a
+	##   room. It now prefers an EXTERIOR mouth (one whose street cell has open
+	##   sky over it) and, failing that, the WIDEST -- the mouth with the most
+	##   entrance cells beside it, which is the one a street really arrives
+	##   through -- and it looks ALONG that street into the green rather than at
+	##   the green's centroid, which on an L-shaped run is a wall.
+	##
+	## Both cameras are derived from the same rule the payload uses, and neither
+	## touches the plaza's geometry or its dressing: this is the harness getting
+	## its own aim right.
 	var retained := _fabric.retained_terrace_cells
 	var solids := _fabric.transformed_cells(&"solid")
 	var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
@@ -1295,7 +1335,28 @@ func _maze_plaza_views() -> Array[Dictionary]:
 		return [] as Array[Dictionary]
 	var cells: Array[Vector3i] = []
 	cells.assign(plaza.keys())
-	var centre := _cell_centroid(cells)
+	# FIX 1, MINOR 6. SORTED BEFORE ANYTHING READS `[0]`. The green's ground
+	# datum is taken off one cell's band, and an unsorted `keys()[0]` makes that
+	# datum a fact about dictionary iteration -- on a plaza whose run is level
+	# it happens not to matter, and the day a run is not level the camera would
+	# aim at a band nobody chose.
+	cells.sort_custom(_plaza_cell_before)
+	# THE AIM POINT IS A CELL OF THE GREEN, not the run's centroid. A village
+	# green is rarely a disc: 12/compact's is an L, and the centroid of an L is
+	# in the block between its arms -- which is what the first re-aimed frame
+	# came back as, a house filling the picture with grass at both edges. The
+	# MEDOID (the plaza cell nearest the centroid) is on the turf by
+	# construction, so both cameras are looking at the square rather than at
+	# whatever stands in the crook of it.
+	var centroid := _cell_centroid(cells)
+	var centre := Vector3(cells[0]) * FabricRecipe.CELL_SIZE
+	var best_offset := INF
+	for cell: Vector3i in cells:
+		var offset := (Vector3(cell) * FabricRecipe.CELL_SIZE \
+			- centroid).length_squared()
+		if offset < best_offset:
+			best_offset = offset
+			centre = Vector3(cell) * FabricRecipe.CELL_SIZE
 	# The green's ground is the TOP of its own cells.
 	centre.y = float((cells[0] as Vector3i).y + 1) * FabricRecipe.CELL_SIZE
 	var reach := 0.0
@@ -1303,30 +1364,154 @@ func _maze_plaza_views() -> Array[Dictionary]:
 		var offset := Vector3(cell) * FabricRecipe.CELL_SIZE - centre
 		offset.y = 0.0
 		reach = maxf(reach, offset.length())
+	# THE FRAME IS THE GREEN'S OWN RUN. `reach` is the radius of the plaza about
+	# its centroid; a camera at `radius / tan(half the lens)` puts exactly that
+	# radius on the edge of the picture, so the square fills the frame whatever
+	# size it is. The floor keeps a four-cell green from being filmed from
+	# inside its own turf.
+	var distance := maxf(
+		(reach + FabricRecipe.CELL_SIZE) \
+			/ tan(deg_to_rad(PLAZA_OVERVIEW_FOV * 0.5)),
+		PLAZA_OVERVIEW_MIN_DISTANCE)
+	var pitch := deg_to_rad(PLAZA_OVERVIEW_PITCH_DEGREES)
+	# AND THE ORBIT IS PICKED AGAINST THE MASS, not against the buildings.
+	# `_best_orbit_position` scores its eight azimuths on `_fabric.units`, and
+	# since task I2 the wall between a camera and a green is usually NOT a unit:
+	# it is a clad panel on RETAINED mass, which is payload. Scored that way
+	# every azimuth ties at zero and the first one wins, which is how the
+	# re-aimed frame still came back with a house in the middle of it. These
+	# cells are the mass itself.
 	var out: Array[Dictionary] = [{
 		"id": "maze-plaza-overview",
-		"position": centre + Vector3(reach + 7.0, reach + 8.0, reach + 7.0),
-		"target": centre, "fov": 56.0,
+		"position": _plaza_orbit_eye(centre, distance, pitch, retained, solids),
+		"target": centre, "fov": PLAZA_OVERVIEW_FOV,
 	}]
 	var entries := SettlementFabricAssembler.maze_plaza_entries(plaza, walked)
-	if not entries.is_empty():
-		var entry_cells: Array[Vector3i] = []
-		entry_cells.assign(entries.keys())
-		entry_cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
-			return "%04d/%04d" % [a.x, a.z] < "%04d/%04d" % [b.x, b.z])
-		var mouth := entry_cells[0]
-		# Stand in the STREET the threshold serves, not on the grass: the eye
-		# goes on the walked cell itself, which is one band up and one cell out.
-		var street := mouth
+	if entries.is_empty():
+		return out
+	var entry_cells: Array[Vector3i] = []
+	entry_cells.assign(entries.keys())
+	entry_cells.sort_custom(_plaza_cell_before)
+	# The street each mouth is entered from: one band up and one cell across,
+	# which is `maze_plaza_entries`' own definition of an entrance.
+	var streets: Dictionary = {}
+	for mouth: Vector3i in entry_cells:
 		for step: Vector3i in SettlementFabricAssembler.FACE_DIRECTIONS:
 			if walked.has(mouth + step + Vector3i.UP):
-				street = mouth + step + Vector3i.UP
+				streets[mouth] = mouth + step + Vector3i.UP
 				break
-		var eye := Vector3(street) * FabricRecipe.CELL_SIZE
-		eye.y = float(street.y) * FabricRecipe.CELL_SIZE + 1.45
-		out.append({"id": "maze-plaza-threshold", "position": eye,
-			"target": centre + Vector3.UP * 0.6, "fov": 76.0})
+	# OPEN SKY, CHEAPLY: the highest band of built or retained mass in each
+	# column. A street cell with nothing above it in its own column is outdoors,
+	# and a mouth entered from one is a mouth a body arrives at through the town
+	# rather than through a room.
+	var ceiling: Dictionary = {}
+	for source: Dictionary in [solids, retained]:
+		for cell_value: Variant in source.keys():
+			var cell := cell_value as Vector3i
+			var column := Vector2i(cell.x, cell.z)
+			ceiling[column] = maxi(int(ceiling.get(column, cell.y)), cell.y)
+	var chosen := Vector3i.ZERO
+	var chosen_rank := -1
+	for mouth: Vector3i in entry_cells:
+		if not streets.has(mouth):
+			continue
+		var street := streets[mouth] as Vector3i
+		# A column with no mass in it at all defaults to the street's own band,
+		# which reads as open -- there is nothing overhead to be under.
+		var open_sky := int(ceiling.get(Vector2i(street.x, street.z),
+			street.y)) <= street.y
+		# HOW FAR THE STREET RUNS BACK from the mouth, up to the three cells a
+		# camera needs to stand in. This is what makes a mouth an ARRIVAL rather
+		# than a gap: a threshold with no approach can only be photographed from
+		# on top of itself.
+		var approach := 0
+		var back := Vector3i(street.x - mouth.x, 0, street.z - mouth.z)
+		while approach < PLAZA_THRESHOLD_APPROACH_CELLS \
+				and walked.has(street + back * (approach + 1)):
+			approach += 1
+		# The mouth's own width: how many entrance cells stand beside it in the
+		# green. One cell is a gap between two houses; three is a street.
+		var width := 0
+		for step: Vector3i in SettlementFabricAssembler.FACE_DIRECTIONS:
+			width += int(entries.has(mouth + step))
+		var rank := (1000 if open_sky else 0) + 100 * approach + width
+		if rank > chosen_rank:
+			chosen_rank = rank
+			chosen = mouth
+	if chosen_rank < 0:
+		return out
+	var street_cell := streets[chosen] as Vector3i
+	# STAND BACK ALONG THE STREET. The eye used to go ON the mouth's own street
+	# cell, half a cell from whatever wall the mouth is cut through -- which is
+	# why the frame came back as a door. Walked cells behind it are the approach
+	# the threshold is meant to be seen from.
+	var away := Vector3i(street_cell.x - chosen.x, 0, street_cell.z - chosen.z)
+	var stand := street_cell
+	for unused in PLAZA_THRESHOLD_APPROACH_CELLS:
+		if not walked.has(stand + away):
+			break
+		stand += away
+	var eye := Vector3(stand) * FabricRecipe.CELL_SIZE
+	eye.y = float(stand.y) * FabricRecipe.CELL_SIZE + 1.45
+	# ALONG THE STREET INTO THE GREEN, and only as far as the green goes. The
+	# look direction is the entrance's own axis and the target is the LAST
+	# plaza cell along it, so the frame holds the paved mouth in the near field
+	# and the square behind it. Carrying the axis a fixed distance instead --
+	# which the first re-aimed frame did -- aims through the far edge and into
+	# the houses beyond it on any green shallower than its own radius.
+	var step_in := Vector3i(chosen.x - street_cell.x, 0,
+		chosen.z - street_cell.z)
+	var far := chosen
+	while plaza.has(far + step_in):
+		far += step_in
+	var target := Vector3(far) * FabricRecipe.CELL_SIZE
+	target.y = centre.y + 0.6
+	out.append({"id": "maze-plaza-threshold", "position": eye,
+		"target": target, "fov": 76.0})
 	return out
+
+
+static func _plaza_cell_before(a: Vector3i, b: Vector3i) -> bool:
+	## One sort order for every list this file takes a `[0]` off, so a camera
+	## aims at a cell the lattice chose rather than at one a Dictionary yielded.
+	return "%04d/%04d/%04d" % [a.y, a.x, a.z] \
+		< "%04d/%04d/%04d" % [b.y, b.x, b.z]
+
+
+static func _plaza_orbit_eye(target: Vector3, distance: float, pitch: float,
+		retained: Dictionary, solids: Dictionary) -> Vector3:
+	## The least-obstructed of eight deterministic azimuths at one pitch and one
+	## distance, scored against the town's own MASS -- retained cells and built
+	## solids -- by sampling the ray the camera would look down. Ties keep the
+	## first azimuth, so the choice is a fact about the town rather than about
+	## iteration order.
+	var directions: Array[Vector3] = [
+		Vector3.RIGHT, Vector3.BACK, Vector3.LEFT, Vector3.FORWARD,
+		(Vector3.RIGHT + Vector3.BACK).normalized(),
+		(Vector3.LEFT + Vector3.BACK).normalized(),
+		(Vector3.LEFT + Vector3.FORWARD).normalized(),
+		(Vector3.RIGHT + Vector3.FORWARD).normalized(),
+	]
+	var best := target + directions[0] * distance * cos(pitch) \
+		+ Vector3.UP * distance * sin(pitch)
+	var best_score := 1 << 30
+	for direction: Vector3 in directions:
+		var candidate := target + direction * distance * cos(pitch) \
+			+ Vector3.UP * distance * sin(pitch)
+		var score := 0
+		for index in range(1, 25):
+			var point := candidate.lerp(target, float(index) / 26.0)
+			# A cell is centred on `cell x CELL_SIZE` in x/z and spans its own
+			# band upward in y, which is the datum every rule in the assembler
+			# is written against.
+			var cell := Vector3i(roundi(point.x / FabricRecipe.CELL_SIZE),
+				floori(point.y / FabricRecipe.CELL_SIZE),
+				roundi(point.z / FabricRecipe.CELL_SIZE))
+			score += int(retained.has(cell) or solids.has(cell))
+		if score < best_score:
+			best_score = score
+			best = candidate
+	return best
 
 
 func _maze_skywalk_views() -> Array[Dictionary]:
@@ -1363,6 +1548,72 @@ func _maze_skywalk_views() -> Array[Dictionary]:
 		ordinal += 1
 		if ordinal >= 3:
 			break
+	return out
+
+
+func _maze_outcrop_views() -> Array[Dictionary]:
+	## TASK I3 FIX 1, MINOR 4. The bays and bump-outs had NO camera: the battery
+	## photographed them only by luck, when one happened to stand in a street
+	## frame, and the one thing a projection has to show -- its brackets, from
+	## underneath -- was never framed at all. Two cameras for the first of each
+	## kind: one from the street below looking up at the bearers, one oblique
+	## from outside at the projection's own height.
+	##
+	## The kinds dictionary is built by sweeping SORTED panel keys, and Godot
+	## dictionaries keep insertion order, so "the first bump-out" is the same
+	## panel on every run of a seed.
+	var retained := _fabric.retained_terrace_cells
+	var solids := _fabric.transformed_cells(&"solid")
+	var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+		_fabric.transformed_cells(&"terrain_bearing"))
+	var paved := SettlementFabricAssembler.public_floor_cells(
+		_fabric.surface_plan)
+	var walked := SettlementFabricAssembler.walked_floor_cells(
+		_fabric.surface_plan)
+	var kinds := SettlementFabricAssembler.maze_facade_outcrop_kinds(retained,
+		solids, paved, plinths, walked, {},
+		SettlementFabricAssembler.maze_skywalk_cells(
+			SettlementFabricAssembler.maze_skywalk_spans(_fabric)))
+	var chosen: Dictionary = {}
+	for key_value: Variant in kinds.keys():
+		var kind := int(kinds[key_value])
+		var name := "bay" if kind \
+			== SettlementFabricAssembler.FacadeOutcrop.BAY else "bump"
+		if not chosen.has(name):
+			chosen[name] = key_value as Vector4i
+	var out: Array[Dictionary] = []
+	for name: String in ["bump", "bay"]:
+		if not chosen.has(name):
+			continue
+		var key := chosen[name] as Vector4i
+		var outward := Vector3(
+			SettlementFabricAssembler.STONE_FACE_DIRECTIONS[key.w])
+		var cross := Vector3(-outward.z, 0.0, outward.x)
+		var reach := FabricRecipe.CELL_SIZE if name == "bay" \
+			else SettlementFabricAssembler.FACADE_BUMP_REACH
+		var boundary := Vector3(key.x, 0.0, key.z) * FabricRecipe.CELL_SIZE \
+			+ outward * (FabricRecipe.CELL_SIZE * 0.5)
+		# The projection's own floor line, which is where its bearers hang from.
+		var floor_y := float(key.y + 1) * FabricRecipe.CELL_SIZE \
+			- SettlementFabricAssembler.STONE_MODULE_HEIGHT
+		var body := boundary + outward * (reach * 0.5)
+		# UNDER IT. The street is at least FACADE_OUTCROP_MIN_HEADROOM_BANDS
+		# below the panel's band by the rule that placed it, so that is where a
+		# body stands; the eye backs off two cells so the whole soffit is in
+		# frame rather than the plank directly overhead.
+		var under_eye := boundary + outward * (FabricRecipe.CELL_SIZE * 2.0)
+		under_eye.y = float(key.y - SettlementFabricAssembler
+			.FACADE_OUTCROP_MIN_HEADROOM_BANDS) * FabricRecipe.CELL_SIZE + 1.45
+		var under_target := body
+		under_target.y = floor_y - 0.25
+		out.append({"id": "maze-outcrop-%s-under" % name,
+			"position": under_eye, "target": under_target, "fov": 74.0})
+		var face_eye := boundary + outward * 6.5 + cross * 3.5
+		face_eye.y = floor_y + 2.0
+		var face_target := body
+		face_target.y = floor_y + 0.75
+		out.append({"id": "maze-outcrop-%s-face" % name,
+			"position": face_eye, "target": face_target, "fov": 52.0})
 	return out
 
 
