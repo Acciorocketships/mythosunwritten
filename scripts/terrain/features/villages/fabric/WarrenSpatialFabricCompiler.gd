@@ -861,6 +861,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			"maze_skin_cut_fallback_masonry_count": 0,
 			"maze_skin_cut_tail_clamped_count": 0,
 			"maze_skin_cut_tail_unclearable_count": 0,
+			"maze_skin_coursed_trim_count": 0,
 			"maze_free_bench_stone_cap_count": 0,
 			"maze_green_cap_jut_cell_count": 0,
 			"maze_green_cap_jut_over_air_count": 0,
@@ -977,6 +978,9 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	# of mass at head height, which is a ROUTING fact no cladding can answer.
 	var tail_clamped := 0
 	var tail_unclearable := 0
+	# The coursed twin of the tail clamp: masonry panels trimmed to their own
+	# band because the course they would have buried into is an open street.
+	var coursed_trim := 0
 	var free_bench_stone_caps := 0
 	var shared_street_caps := 0
 	var low_bank_faces := 0
@@ -1027,6 +1031,10 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			and treatment == SettlementFabricAssembler.SkinTreatment.NATURAL)
 		cut_fallback_masonry += int(crossed and over_budget \
 			and treatment == SettlementFabricAssembler.SkinTreatment.MASONRY)
+		coursed_trim += int(treatment \
+			== SettlementFabricAssembler.SkinTreatment.MASONRY \
+			and SettlementFabricAssembler.maze_stone_face_overhangs_walk(key,
+				walked))
 		if treatment == SettlementFabricAssembler.SkinTreatment.NATURAL \
 				and SettlementFabricAssembler.maze_natural_face_overhung_band(
 					key, walked) < key.y:
@@ -1057,6 +1065,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		"maze_skin_cut_fallback_masonry_count": cut_fallback_masonry,
 		"maze_skin_cut_tail_clamped_count": tail_clamped,
 		"maze_skin_cut_tail_unclearable_count": tail_unclearable,
+		"maze_skin_coursed_trim_count": coursed_trim,
 		"maze_free_bench_stone_cap_count": free_bench_stone_caps,
 		"maze_shared_street_cap_count": shared_street_caps,
 		"maze_low_bank_face_count": low_bank_faces,

@@ -938,6 +938,29 @@ static func maze_natural_face_is_cut(key: Vector4i,
 	return false
 
 
+static func maze_stone_face_overhangs_walk(key: Vector4i,
+		walked: Dictionary) -> bool:
+	## TASK H2c FIX 1 SUB-ROUND. Does this coursed panel hang into a street?
+	##
+	## The reach is TWO bands, not one, and the arithmetic is the same shape as
+	## the rock's. The module drops 3.0 m from `(band + 1) x CELL_SIZE`, and a
+	## body standing `g` bands under it occupies `NATURAL_ROCK_CUT_HEADROOM` of
+	## that column, so they meet while
+	##
+	##     (g + 1) x CELL_SIZE < 3.0 + HEADROOM   ->   g < 2.56
+	##
+	## The test is on the panel's OWN MASS COLUMN, exactly as the rock's is and
+	## for exactly the same reason: an ordinary retaining wall has mass beneath
+	## it -- the course below wears its own panel -- so its column is never
+	## walked and it is never trimmed. Only mass overhanging a street is.
+	if key.w >= FACE_DIRECTIONS.size():
+		return false
+	for band in range(key.y - 1, key.y - 3, -1):
+		if walked.has(Vector3i(key.x, band, key.z)):
+			return true
+	return false
+
+
 static func maze_natural_face_overhung_band(key: Vector4i,
 		walked: Dictionary) -> int:
 	## The HIGHEST band below this panel's own course at which the public realm
@@ -1096,7 +1119,8 @@ static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 					Color.WHITE, stable_id)
 			_:
 				out.add(MAZE_STONE_MODULE,
-					_maze_stone_transform(cell, direction, partner),
+					_maze_stone_transform(cell, direction, partner,
+						maze_stone_face_overhangs_walk(key, walked)),
 					Color.WHITE, stable_id)
 	assert(out.validate())
 	return out
@@ -1474,17 +1498,41 @@ static func maze_terrace_railings(plan: SettlementFabricPlan,
 
 
 static func _maze_stone_transform(cell: Vector3i, direction: Vector3i,
-		partner: Vector3i) -> Transform3D:
+		partner: Vector3i, trimmed: bool = false) -> Transform3D:
 	## `partner` is the neighbour a horizontal cap reaches over -- the module
 	## laid flat spans two cells -- and is Vector3i.ZERO for a side panel and
 	## for a cap centred on its own cell.
+	##
+	## TASK H2c FIX 1 SUB-ROUND. `trimmed` is the coursed twin of the rock's
+	## tail clamp, and it exists for the same defect in the same words: the
+	## module is 3 m tall cladding a 1.5 m band and "buries its lower half in
+	## the course beneath", and where that course is an open street it buries
+	## itself in the street instead. A panel two courses over a walked cell
+	## hangs to `(band + 1) x CELL - 3.0`, which is 0.8 m inside the headroom of
+	## a body standing down there -- so the coursing reads on, and the street is
+	## shut by a wall nobody can see the bottom of.
+	##
+	## Trimmed, the module covers its own band EXACTLY: half height, re-anchored
+	## so its top still lands on the course boundary. That cannot open a slit --
+	## 1.5 m of module over a 1.5 m band -- and it cannot leave a gap under
+	## itself either, because the only thing it stops overlapping is a course
+	## that is open air.
 	var lattice := Vector3(cell) * FabricRecipe.CELL_SIZE
 	if direction.y == 0:
+		var height := FabricRecipe.CELL_SIZE if trimmed else 3.0
 		var midpoint := Vector3(lattice.x, 0.0, lattice.z) \
 			+ Vector3(direction) * FabricRecipe.CELL_SIZE * 0.5
-		midpoint.y = float(cell.y + 1) * FabricRecipe.CELL_SIZE - 3.0
-		return Transform3D(Basis(Vector3.UP,
-			PI * 0.5 if direction.x != 0 else 0.0), midpoint)
+		midpoint.y = float(cell.y + 1) * FabricRecipe.CELL_SIZE - height
+		var basis := Basis(Vector3.UP,
+			PI * 0.5 if direction.x != 0 else 0.0)
+		if trimmed:
+			# basis.y.y lands on exactly 0.5, and `tallest_bare_stone_stack_
+			# bands` skips a module whose `basis.y.y < 0.5` as "laid flat". A
+			# trimmed panel is UPRIGHT, only shorter, and must keep counting
+			# toward the stone budget -- it does, because the test is strict.
+			# Anything that shortens this further has to revisit that reader.
+			basis.y = basis.y * (height / 3.0)
+		return Transform3D(basis, midpoint)
 	var half := Vector3(partner) * FabricRecipe.CELL_SIZE * 0.5
 	var span := 3.0 if direction == Vector3i.UP else -3.0
 	var basis := Basis(Vector3.RIGHT, -PI * 0.5 * signf(span))

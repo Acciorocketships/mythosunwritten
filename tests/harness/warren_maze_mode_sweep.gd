@@ -104,34 +104,28 @@ const CLEARANCE_ROUTE_STEPS: Array[Vector3i] = [
 ## its first concern and could only measure on four towns by hand. Per TOWN
 ## rather than per corpus so the number means the same thing whatever seed set
 ## a sweep is given. A RISE means the skin has pinched more streets than it did
-## and wants looking at -- not that the build is broken. The number is the worst
-## town of the 48-town matrix (12 seeds x compact,standard,large,grand): 2,
-## against 4 shut crossings of 12350 corpus-wide, AFTER task H2c fix round 1's
-## rock cut. Before the cut it was 18 on 9/grand against 139 shut crossings.
+## and wants looking at. The number is the worst town of the 48-town matrix
+## (12 seeds x compact,standard,large,grand) and it is now ZERO: after task H2c
+## fix round 1 not one crossing in the corpus is shut. It was 18 on 9/grand
+## against 139 shut crossings before the rock cut, and 2 against 4 before the
+## coursed trim that followed it.
 ##
 ## `splits` and `cells_unreachable` are pinned at ZERO beside it, and those two
 ## ARE the serious pins: a shut crossing with a way round narrows a street, a
 ## shut crossing without one breaks it.
 ##
-## READ THIS BEFORE "FIXING" A RED SWEEP. As of task H2c fix round 1 the splits
-## pin is still VIOLATED and the sweep exits 3 on purpose -- but by far less
-## than it was, and by a different cause than the one that was fixed.
+## ALL FOUR PINS ARE GREEN AND MEASURED, which is the state task H2c fix round 1
+## left. Getting here took two passes over the same defect in two materials:
+## `SettlementFabricAssembler`'s ROCK CUT took the corpus from 43 split route
+## components and 988 stranded walked cells to 2 and 16, and the COURSED TRIM
+## that followed took the last two towns to zero. Both are the same mechanism --
+## a module taller than the band it clads, hanging into a street that runs under
+## it -- so if a future skin module is introduced with the same habit, look here
+## first.
 ##
-## The cliff kit's own pinches ARE fixed. `SettlementFabricAssembler`'s rock cut
-## took the corpus from 43 split route components and 988 stranded walked cells
-## to 2 and 16. What is left is FOUR shut crossings across two towns
-## (4/large, 6/standard), and three of the four are blocked by
-## `sfv.fabric.wall.rock.plain.001` -- the COURSED MASONRY module, not the
-## cliff shard. Masonry has carried collision since long before this phase (it
-## is why task H2c's before-census read 24 of 55 foot panels already collided),
-## so those crossings were shut before the cliff kit ever gained a collider and
-## no dial in the rock cut reaches them. They are a masonry-skin question and
-## want their own task.
-##
-## So: do not chase this red through the rock cut, and do not silence it. The
-## matrix summary is still written before the exit, so the corpus gate is
-## unaffected either way.
-const CLEARANCE_TOWN_GATE_CEILING := 2
+## A red here is therefore a REGRESSION, not a known debt. The matrix summary is
+## written before any exit, so the corpus gate reads its matrix either way.
+const CLEARANCE_TOWN_GATE_CEILING := 0
 
 
 static func production_fingerprint() -> String:
@@ -410,7 +404,7 @@ func _run() -> void:
 						+ "natural=%d green=%d tall_masonry=%d " \
 						+ "free_bench_stone=%d shared_street=%d low=%d " \
 						+ "tall=%d tallest=%d cut=%d cut_coursed=%d tail=%d " \
-						+ "tail_unclearable=%d " \
+						+ "tail_unclearable=%d coursed_trim=%d " \
 						+ "banks=%s") % [city_seed,
 						String(profile.scale_id),
 						int(fabric.audit.get(
@@ -436,6 +430,8 @@ func _run() -> void:
 							"maze_skin_cut_tail_clamped_count", 0)),
 						int(fabric.audit.get(
 							"maze_skin_cut_tail_unclearable_count", 0)),
+						int(fabric.audit.get(
+							"maze_skin_coursed_trim_count", 0)),
 						str(fabric.audit.get(
 							"maze_bank_height_histogram", {}))])
 					# TASK H2c FIX 1. The CLEARANCE row. Every other row above is
@@ -628,7 +624,7 @@ static func _new_skin_tally() -> Dictionary:
 	return {"towns": 0, "panels": 0, "masonry": 0, "natural": 0, "green": 0,
 		"tall_masonry": 0, "free_bench_stone": 0, "shared_street": 0,
 		"low": 0, "tall": 0, "tallest": 0, "cut": 0, "cut_coursed": 0, "tail": 0,
-		"tail_unclearable": 0}
+		"tail_unclearable": 0, "coursed_trim": 0}
 
 
 static func _accumulate_skin(tally: Dictionary,
@@ -654,6 +650,8 @@ static func _accumulate_skin(tally: Dictionary,
 	tally.tail += int(fabric.audit.get("maze_skin_cut_tail_clamped_count", 0))
 	tally.tail_unclearable += int(fabric.audit.get(
 		"maze_skin_cut_tail_unclearable_count", 0))
+	tally.coursed_trim += int(fabric.audit.get(
+		"maze_skin_coursed_trim_count", 0))
 
 
 func _print_skin_result(group: String, tally: Dictionary) -> void:
@@ -666,7 +664,7 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 		+ "green=%d reclad_share=%.4f tall_masonry=%d free_bench_stone=%d " \
 		+ "shared_street=%d low_faces=%d tall_faces=%d tall_share=%.4f " \
 		+ "tallest_bank=%d cut=%d cut_share=%.4f cut_coursed=%d " \
-		+ "tail_clamped=%d tail_unclearable=%d") % [
+		+ "tail_clamped=%d tail_unclearable=%d coursed_trim=%d") % [
 		"" if group == CORPUS_STONE_GROUP else "/%s" % group,
 		int(tally.towns), int(tally.panels), int(tally.masonry),
 		int(tally.natural), int(tally.green),
@@ -679,7 +677,7 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 		int(tally.tallest), int(tally.cut),
 		float(int(tally.cut)) / float(maxi(1, int(tally.natural))),
 		int(tally.cut_coursed), int(tally.tail),
-		int(tally.tail_unclearable)])
+		int(tally.tail_unclearable), int(tally.coursed_trim)])
 
 
 static func _new_clearance_tally() -> Dictionary:
