@@ -3839,6 +3839,38 @@ func test_the_skin_constants_mirror_the_module_descriptors() -> void:
 	_assert_mirrors(SettlementFabricAssembler.NATURAL_ROCK_FACE_DEPTH_CENTRE,
 		rock_aabb.position.z + rock_aabb.size.z * 0.5,
 		"NATURAL_ROCK_FACE_DEPTH_CENTRE is the middle of the shard's bulge")
+	# TASK H2c FIX 1. The nose plane is the FRONT of that bulge, and the whole
+	# cut arithmetic is solved off it: how far rock leans into a street is
+	# `NOSE_LOCAL_Z - FACE_DEPTH_CENTRE + relief`. A re-bake that moved the
+	# bulge forward would widen every pinch by the same amount in silence, so
+	# this constant is mirrored beside the one it is measured against.
+	_assert_mirrors(SettlementFabricAssembler.NATURAL_ROCK_NOSE_LOCAL_Z,
+		rock_aabb.end.z, "NATURAL_ROCK_NOSE_LOCAL_Z is the front of the " \
+			+ "shard's bulge, which the street's cut is solved off")
+	# ...and the band reach re-derived from that same envelope. The shard hangs
+	# from the top of its course and reaches its own full height DOWN, so the
+	# cut has to look that many bands below a panel for a street to protect. A
+	# taller module would reach further and the constant would be wrong by
+	# exactly the amount nobody would notice.
+	var rock_drop: float = rock_aabb.size.y \
+		* (1.0 + SettlementFabricAssembler.NATURAL_ROCK_RISE_JITTER)
+	var reach := floori((rock_drop
+		+ SettlementFabricAssembler.NATURAL_ROCK_CUT_BODY_HEIGHT
+		- FabricRecipe.CELL_SIZE) / FabricRecipe.CELL_SIZE)
+	assert_eq(SettlementFabricAssembler.NATURAL_ROCK_CUT_BAND_REACH, reach,
+		("NATURAL_ROCK_CUT_BAND_REACH says %d bands but the shard's own %.4f m " \
+			+ "drop plus a %.3f m body over a %.1f m band needs %d") % [
+			SettlementFabricAssembler.NATURAL_ROCK_CUT_BAND_REACH, rock_drop,
+			SettlementFabricAssembler.NATURAL_ROCK_CUT_BODY_HEIGHT,
+			FabricRecipe.CELL_SIZE, reach])
+	# The cut plane itself must be reachable as stand-off, or the treatment
+	# falls back to coursed masonry -- which is a controller-granted exception
+	# and should be a deliberate state, never one the corpus drifted into.
+	assert_true(SettlementFabricAssembler.maze_natural_cut_is_expressible(),
+		("the street's cut needs %.5f m of stand-off and relief reaches " \
+			+ "%.5f m; below that the crossing panels course over to masonry") \
+			% [-SettlementFabricAssembler.NATURAL_ROCK_CUT_RELIEF,
+			SettlementFabricAssembler.NATURAL_ROCK_RELIEF])
 	# Both terrain modules are authored on the terrain's own 3 m tile, and the
 	# cross-axis scales and the coverage inequalities are all fractions of it.
 	_assert_mirrors(SettlementFabricAssembler.TERRAIN_MODULE_SPAN,
@@ -4562,11 +4594,22 @@ func test_the_hillside_pushes_back() -> void:
 			_label(outcome), uncollided_foot, foot_panels, uncollided_head,
 			head_panels, uncollided_benches, benches, uncollided_steppable,
 			steppable_benches, rims, bare_rims, unfloored_rims])
+		# Every "uncollided == 0" below is vacuous at a zero denominator, so each
+		# class states its own population first. The rim pin needs it most:
+		# `bare_rims == rims` is the one assertion here that reads 0 == 0 as
+		# SUCCESS, and this test is the repo's only rim counter -- a vocabulary
+		# regression that dropped the rolled rim entirely would leave the
+		# cosmetic ruling with nothing left to rule on, while green.
 		assert_gt(foot_panels, 0,
 			"%s must line some walked cell with rock to measure" \
 				% _label(outcome))
+		assert_gt(head_panels, 0,
+			"%s must raise some rock panel to head height over a walked cell " \
+				% _label(outcome) + "to measure")
 		assert_gt(benches, 0, "%s must lay some green bench to measure" \
 			% _label(outcome))
+		assert_gt(rims, 0, "%s must dress some bench edge with a rolled rim, " \
+			% _label(outcome) + "or the cosmetic ruling below is vacuous")
 		assert_eq(uncollided_foot, 0,
 			("%s leaves %d of %d rock panels beside a walked cell without a " \
 				+ "collider -- a player walks into the mountain there") % [

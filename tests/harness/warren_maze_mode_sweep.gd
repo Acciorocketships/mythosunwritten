@@ -60,6 +60,79 @@ const PRODUCTION_SCRIPT_DIR := "res://scripts/terrain/features/villages/fabric"
 const CORPUS_STONE_GROUP := "compact,standard"
 const ADDED_STONE_GROUP := "large,grand"
 
+## TASK H2c FIX 1. THE CLEARANCE ROW's dimensions.
+##
+## The player's own capsule, copied from `characters/character.tscn`'s
+## `Character/CollisionShape3D` (the body shape; the 0.390 x 2.092 capsule in
+## that scene is the `Spine/SpineHitbox` area, not the body). Copied rather than
+## loaded because loading the scene here would drag four character models into
+## a headless sweep to learn two floats -- but it is a COPY, so a body that
+## grows needs these two lines changed with it.
+const PLAYER_CAPSULE_RADIUS := 0.39746094
+const PLAYER_CAPSULE_HEIGHT := 2.244
+## Godot's `PhysicsShapeQueryParameters3D.margin` defaults to 0.0, which counts
+## a cell free when a body clears it by a micron. Two centimetres is the
+## smallest gap worth calling a gap.
+const CLEARANCE_MARGIN := 0.02
+## How far the capsule's underside sits above the cell floor, ON TOP of the
+## margin: the margin grows the query shape in every direction, so without this
+## the green cap's own floor plate would be the thing reporting a blockage.
+const CLEARANCE_FLOOR_LIFT := 0.02
+## The lattice tried inside a cell once its centreline is blocked, so a street
+## that is merely NARROWED reads differently from one that is shut.
+const CLEARANCE_OFFSET_STEPS := 7
+## How many offending cells or boundaries the corpus line names before it stops
+## listing. A pin that fires wants a place to look, not a full inventory.
+const CLEARANCE_WORST_LIMIT := 8
+## The town's own route graph, as steps between walked cells: the four lateral
+## neighbours at the same band, and the same four one band up or down -- which is
+## how this fabric climbs. A component analysis that omitted the vertical steps
+## would report a town in pieces because of its STAIRS and call it a broken
+## street; including them is what makes "did a collider split this town" a
+## question about the collider.
+const CLEARANCE_ROUTE_STEPS: Array[Vector3i] = [
+	Vector3i(1, 0, 0), Vector3i(-1, 0, 0), Vector3i(0, 0, 1), Vector3i(0, 0, -1),
+	Vector3i(1, 1, 0), Vector3i(-1, 1, 0), Vector3i(0, 1, 1), Vector3i(0, 1, -1),
+	Vector3i(1, -1, 0), Vector3i(-1, -1, 0), Vector3i(0, -1, 1),
+	Vector3i(0, -1, -1),
+]
+## The most cell boundaries any ONE town may shut. MEASURED, not designed: the
+## corpus shuts some, and pretending otherwise would mean pinning a zero that
+## has never been true. The shard's lobe stands 0.155-0.595 m proud of its
+## boundary and where two of them meet across a crossing, or one wide one lies
+## along it, a body cannot pass -- exactly the risk task H2c's report raised as
+## its first concern and could only measure on four towns by hand. Per TOWN
+## rather than per corpus so the number means the same thing whatever seed set
+## a sweep is given. A RISE means the skin has pinched more streets than it did
+## and wants looking at -- not that the build is broken. The number is the worst
+## town of the 48-town matrix (12 seeds x compact,standard,large,grand): 2,
+## against 4 shut crossings of 12350 corpus-wide, AFTER task H2c fix round 1's
+## rock cut. Before the cut it was 18 on 9/grand against 139 shut crossings.
+##
+## `splits` and `cells_unreachable` are pinned at ZERO beside it, and those two
+## ARE the serious pins: a shut crossing with a way round narrows a street, a
+## shut crossing without one breaks it.
+##
+## READ THIS BEFORE "FIXING" A RED SWEEP. As of task H2c fix round 1 the splits
+## pin is still VIOLATED and the sweep exits 3 on purpose -- but by far less
+## than it was, and by a different cause than the one that was fixed.
+##
+## The cliff kit's own pinches ARE fixed. `SettlementFabricAssembler`'s rock cut
+## took the corpus from 43 split route components and 988 stranded walked cells
+## to 2 and 16. What is left is FOUR shut crossings across two towns
+## (4/large, 6/standard), and three of the four are blocked by
+## `sfv.fabric.wall.rock.plain.001` -- the COURSED MASONRY module, not the
+## cliff shard. Masonry has carried collision since long before this phase (it
+## is why task H2c's before-census read 24 of 55 foot panels already collided),
+## so those crossings were shut before the cliff kit ever gained a collider and
+## no dial in the rock cut reaches them. They are a masonry-skin question and
+## want their own task.
+##
+## So: do not chase this red through the rock cut, and do not silence it. The
+## matrix summary is still written before the exit, so the corpus gate is
+## unaffected either way.
+const CLEARANCE_TOWN_GATE_CEILING := 2
+
 
 static func production_fingerprint() -> String:
 	## One hex digest over the sorted (path, content hash) pairs of every
@@ -82,6 +155,15 @@ static func production_fingerprint() -> String:
 
 
 func _init() -> void:
+	## TASK H2c FIX 1. The body moved to `_run` so the sweep can `await`. The
+	## clearance row asks the REAL physics server, and a shape query only sees
+	## bodies that a physics frame has registered -- which cannot happen while
+	## `_init` still holds the main loop. Nothing else about the run changed:
+	## every line below prints in the order it always did.
+	call_deferred("_run")
+
+
+func _run() -> void:
 	var seeds: Array[int] = []
 	var scale_ids: Array[StringName] = []
 	var args := OS.get_cmdline_user_args()
@@ -156,6 +238,12 @@ func _init() -> void:
 		CORPUS_STONE_GROUP: _new_skin_tally(),
 		ADDED_STONE_GROUP: _new_skin_tally(),
 	}
+	# TASK H2c FIX 1. The clearance tally, corpus-wide rather than split by scale
+	# group: the two groups exist because somebody wrote a per-group number down
+	# for a phase exit, and nobody ever read one off this row. It is a physics
+	# safety pin, and one violated cell anywhere in the matrix is the answer.
+	var cache := EnvironmentRenderCache.new(catalog)
+	var clearance := _new_clearance_tally()
 	for city_seed: int in seeds:
 		for scale_id: StringName in scale_ids:
 			attempted += 1
@@ -321,7 +409,9 @@ func _init() -> void:
 					print(("SWEEP seed=%d scale=%s SKIN panels=%d masonry=%d " \
 						+ "natural=%d green=%d tall_masonry=%d " \
 						+ "free_bench_stone=%d shared_street=%d low=%d " \
-						+ "tall=%d tallest=%d banks=%s") % [city_seed,
+						+ "tall=%d tallest=%d cut=%d cut_coursed=%d tail=%d " \
+						+ "tail_unclearable=%d " \
+						+ "banks=%s") % [city_seed,
 						String(profile.scale_id),
 						int(fabric.audit.get(
 							"maze_stone_expected_face_count", 0)),
@@ -339,8 +429,26 @@ func _init() -> void:
 						int(fabric.audit.get("maze_low_bank_face_count", 0)),
 						int(fabric.audit.get("maze_tall_bank_face_count", 0)),
 						int(fabric.audit.get("maze_tallest_bank_bands", 0)),
+						int(fabric.audit.get("maze_skin_cut_panel_count", 0)),
+						int(fabric.audit.get(
+							"maze_skin_cut_fallback_masonry_count", 0)),
+						int(fabric.audit.get(
+							"maze_skin_cut_tail_clamped_count", 0)),
+						int(fabric.audit.get(
+							"maze_skin_cut_tail_unclearable_count", 0)),
 						str(fabric.audit.get(
 							"maze_bank_height_histogram", {}))])
+					# TASK H2c FIX 1. The CLEARANCE row. Every other row above is
+					# read off the audit; this one is the only measurement in the
+					# sweep that asks the physics server, because the question it
+					# answers cannot be read off a count: giving the cliff shard a
+					# convex collider turned a bulge a body could see into one it
+					# cannot pass, and the shard stands 0.155-0.595 m proud of its
+					# boundary depending on seeded relief. Two facing shards in a
+					# one-cell street could pinch it shut, and H2c measured only
+					# four towns by hand.
+					await _measure_clearance(clearance, city_seed,
+						profile.scale_id, fabric, cache)
 				continue
 			var failure := WarrenVolumetricSolver.last_failure
 			rows.append({"seed": city_seed, "scale": String(profile.scale_id),
@@ -382,7 +490,43 @@ func _init() -> void:
 		skin_by_group[CORPUS_STONE_GROUP] as Dictionary)
 	_print_skin_result(ADDED_STONE_GROUP,
 		skin_by_group[ADDED_STONE_GROUP] as Dictionary)
+	_print_clearance_result(clearance)
+	# The matrix is written BEFORE the clearance pin is judged. The summary is
+	# evidence about composition and the corpus gate reads it; a shut street is
+	# a separate question and must not cost the gate its matrix.
 	_write_summary(seeds, scale_ids, rows, sealed_count, attempted, total_ms)
+	if int(clearance.blocked) > 0 or int(clearance.splits) > 0 \
+			or int(clearance.unreachable) > 0 \
+			or int(clearance.worst_gates_blocked) > CLEARANCE_TOWN_GATE_CEILING:
+		# WHAT THIS PIN DOES AND DOES NOT SAY. The scene measured is
+		# `SettlementFabricAssembler.terrace_retaining_payload` and NOTHING
+		# else: the retained massif's own skin, with no buildings, no railings,
+		# no walkway guards and no props in it. That isolation is the point --
+		# it is the only way to ask "did the shard's collider shut anything"
+		# and get an answer about the shard rather than about the town. It is
+		# NOT a walkability guarantee for a finished settlement, and a green
+		# row here does not mean every street is passable once the rest of the
+		# town is committed.
+		print(("SWEEP ERROR clearance %d walked cell(s) admit no player " \
+			+ "capsule anywhere inside them; %d route component(s) split and " \
+			+ "%d cell(s) were cut off [%s]; the worst town shuts %d cell " \
+			+ "boundary(ies) against a ceiling of %d. Scope: the scene is " \
+			+ "terrace_retaining_payload ALONE (no buildings, railings or " \
+			+ "props), which isolates the skin's own colliders and is NOT a " \
+			+ "town walkability guarantee. A SPLIT is the serious one -- it " \
+			+ "means a shut crossing had no way round and the street is " \
+			+ "genuinely broken, not merely narrowed. %s") % [
+			int(clearance.blocked), int(clearance.splits),
+			int(clearance.unreachable),
+			", ".join(PackedStringArray(clearance.split_towns)),
+			int(clearance.worst_gates_blocked), CLEARANCE_TOWN_GATE_CEILING,
+			_clearance_worst_text(clearance)])
+		push_error(("clearance pin violated: blocked=%d splits=%d " \
+			+ "cells_unreachable=%d worst_gates_blocked=%d") % [
+			int(clearance.blocked), int(clearance.splits),
+			int(clearance.unreachable), int(clearance.worst_gates_blocked)])
+		quit(3)
+		return
 	quit()
 
 
@@ -483,7 +627,8 @@ static func _new_skin_tally() -> Dictionary:
 	## TASK H2b. The corpus skin tally.
 	return {"towns": 0, "panels": 0, "masonry": 0, "natural": 0, "green": 0,
 		"tall_masonry": 0, "free_bench_stone": 0, "shared_street": 0,
-		"low": 0, "tall": 0, "tallest": 0}
+		"low": 0, "tall": 0, "tallest": 0, "cut": 0, "cut_coursed": 0, "tail": 0,
+		"tail_unclearable": 0}
 
 
 static func _accumulate_skin(tally: Dictionary,
@@ -503,6 +648,12 @@ static func _accumulate_skin(tally: Dictionary,
 	tally.tall += int(fabric.audit.get("maze_tall_bank_face_count", 0))
 	tally.tallest = maxi(int(tally.tallest),
 		int(fabric.audit.get("maze_tallest_bank_bands", 0)))
+	tally.cut += int(fabric.audit.get("maze_skin_cut_panel_count", 0))
+	tally.cut_coursed += int(fabric.audit.get(
+		"maze_skin_cut_fallback_masonry_count", 0))
+	tally.tail += int(fabric.audit.get("maze_skin_cut_tail_clamped_count", 0))
+	tally.tail_unclearable += int(fabric.audit.get(
+		"maze_skin_cut_tail_unclearable_count", 0))
 
 
 func _print_skin_result(group: String, tally: Dictionary) -> void:
@@ -514,7 +665,8 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 	print(("SWEEP RESULT skin%s towns=%d panels=%d masonry=%d natural=%d " \
 		+ "green=%d reclad_share=%.4f tall_masonry=%d free_bench_stone=%d " \
 		+ "shared_street=%d low_faces=%d tall_faces=%d tall_share=%.4f " \
-		+ "tallest_bank=%d") % [
+		+ "tallest_bank=%d cut=%d cut_share=%.4f cut_coursed=%d " \
+		+ "tail_clamped=%d tail_unclearable=%d") % [
 		"" if group == CORPUS_STONE_GROUP else "/%s" % group,
 		int(tally.towns), int(tally.panels), int(tally.masonry),
 		int(tally.natural), int(tally.green),
@@ -524,7 +676,375 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 		int(tally.shared_street), int(tally.low), int(tally.tall),
 		float(int(tally.tall)) / float(maxi(1, int(tally.low) \
 			+ int(tally.tall))),
-		int(tally.tallest)])
+		int(tally.tallest), int(tally.cut),
+		float(int(tally.cut)) / float(maxi(1, int(tally.natural))),
+		int(tally.cut_coursed), int(tally.tail),
+		int(tally.tail_unclearable)])
+
+
+static func _new_clearance_tally() -> Dictionary:
+	## TASK H2c FIX 1. The corpus clearance tally.
+	return {"towns": 0, "cells": 0, "centre_free": 0, "offset_free": 0,
+		"blocked": 0, "gates": 0, "gates_offset": 0, "gates_blocked": 0,
+		"worst_gates_blocked": 0, "gates_blocked_required": 0, "splits": 0,
+		"unreachable": 0, "split_towns": [], "worst": []}
+
+
+func _measure_clearance(tally: Dictionary, city_seed: int,
+		scale_id: StringName, fabric: SettlementFabricPlan,
+		cache: EnvironmentRenderCache) -> void:
+	## Sweeps the player's own capsule through the massif skin with the REAL
+	## physics server, on the plan this sweep already solved. The solve is the
+	## dominant cost of a corpus run and re-solving here would double it, so the
+	## row rides the sweep's own `fabric` rather than owning a probe.
+	##
+	## SCOPE. The committed scene is `terrace_retaining_payload` and nothing
+	## else -- the retained massif's skin, without buildings, railings, walkway
+	## guards or props. That is the isolation the question needs ("did the
+	## shard's collider shut anything") and it is NOT a walkability guarantee
+	## for a finished town.
+	##
+	## THREE MEASUREMENTS, because a per-cell fit is not walkability:
+	##
+	## * `centre_free` -- a body stands on the cell's own centreline;
+	## * `offset_free` -- it fits somewhere inside the cell but not there, which
+	##   is the honest cost of giving the shard a collider (the body walks round
+	##   the lobe) and is REPORTED rather than pinned;
+	## * `gates_blocked` -- NO point along the boundary between two adjacent
+	##   walked cells admits a body. This is the one that turns per-cell fit
+	##   into passage: two cells can each be free at some offset while the
+	##   doorway between them is shut, and that street is still shut.
+	##
+	## The gate is swept along its own width rather than probed at its midpoint
+	## alone, because the midpoint alone repeats exactly the mistake the cell
+	## centreline makes. The shard's lobe covers 0.53-0.70 m of a 1.5 m boundary,
+	## so a midpoint-only test called 194 of 2439 gates shut over the eight-town
+	## run this was validated on, when a body walks through 187 of those 194 a
+	## handspan to one side; `gates_offset` is that population, reported, and
+	## `gates_blocked` is what is genuinely left.
+	##
+	## AND THEN THE ROUTE GRAPH, because a shut crossing is not yet a broken
+	## street. Two cells with another way round are NARROWED; two cells without
+	## one are CUT APART, and only the second is a bug a player would ever meet.
+	## `gates_blocked_required` counts the shut crossings that turned out to be
+	## load-bearing, `splits` counts the route components that fell apart, and
+	## `cells_unreachable` counts the cells left stranded. The last two are the
+	## pins that matter.
+	var payload := SettlementFabricAssembler.terrace_retaining_payload(fabric)
+	cache.prepare(payload.asset_ids())
+	var root := Node3D.new()
+	get_root().add_child(root)
+	var shapes := EnvironmentCollisionBuilder.commit(root, payload, cache,
+		&"SweepClearance")
+	# The commit creates the bodies; a physics frame is what registers them with
+	# the space. Querying before one runs reads an EMPTY world and calls every
+	# street clear -- the row would be green and meaningless.
+	await physics_frame
+	await physics_frame
+	var space := get_root().world_3d.direct_space_state
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = PLAYER_CAPSULE_RADIUS
+	capsule.height = PLAYER_CAPSULE_HEIGHT
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = capsule
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	query.margin = CLEARANCE_MARGIN
+	var walked := SettlementFabricAssembler.walked_floor_cells(
+		fabric.surface_plan)
+	var cells: Array[Vector3i] = []
+	cells.assign(walked.keys())
+	cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		return "%d/%d/%d" % [a.x, a.y, a.z] < "%d/%d/%d" % [b.x, b.y, b.z])
+	var centre_free := 0
+	var offset_free := 0
+	var blocked := 0
+	var gates := 0
+	var gates_offset := 0
+	var gates_blocked := 0
+	# Edge key -> the pair it joins, for the route-graph pass below.
+	var shut: Dictionary = {}
+	# Untyped on purpose: this is the tally's OWN array by reference, and a typed
+	# local would silently take a copy that nothing ever reads.
+	var worst: Array = tally.worst
+	var label := "%d/%s" % [city_seed, String(scale_id)]
+	for cell: Vector3i in cells:
+		var fit := _clearance_of_cell(space, query, cell)
+		if fit == 0:
+			centre_free += 1
+		elif fit > 0:
+			offset_free += 1
+		else:
+			blocked += 1
+			if worst.size() < CLEARANCE_WORST_LIMIT:
+				worst.append("%s cell(%d,%d,%d)" % [label, cell.x, cell.y,
+					cell.z])
+		# Each lateral pair once, from its lower-x / lower-z side. Only same-band
+		# neighbours: a stair's cells are not x/z-adjacent at one y, so the row
+		# says nothing about vertical passage and does not pretend to.
+		for direction: Vector3i in [Vector3i(1, 0, 0), Vector3i(0, 0, 1)]:
+			if not walked.has(cell + direction):
+				continue
+			gates += 1
+			var crossing := _clearance_of_gate(space, query, cell, direction)
+			if crossing > 0:
+				gates_offset += 1
+			elif crossing < 0:
+				gates_blocked += 1
+				shut[_clearance_edge_key(cell, cell + direction)] = [cell,
+					cell + direction]
+				if worst.size() < CLEARANCE_WORST_LIMIT:
+					worst.append("%s gate(%d,%d,%d)->(%d,%d,%d) by[%s]" % [
+						label, cell.x, cell.y, cell.z, cell.x + direction.x,
+						cell.y + direction.y, cell.z + direction.z,
+						_clearance_blockers(space, query,
+							_clearance_stance(cell) + Vector3(direction) \
+								* (FabricRecipe.CELL_SIZE * 0.5))])
+	# THE ROUTE GRAPH. A shut crossing only matters if the town NEEDED it: two
+	# cells with another way round are narrowed, two cells without one are cut
+	# apart, and those are different bugs. Read as DAMAGE against the town's own
+	# design connectivity rather than against an assumption of one piece -- so a
+	# town that is already several pieces for reasons of its own (a plaza the
+	# public realm reaches only by a route this graph does not model) cannot be
+	# mistaken for a town a collider broke.
+	var design := _clearance_components(walked, {})
+	var open := _clearance_components(walked, shut)
+	var splits := _clearance_component_count(open) \
+		- _clearance_component_count(design)
+	var unreachable := _clearance_cells_cut_off(walked, design, open)
+	var required := 0
+	for pair: Array in shut.values():
+		if int(open.get(pair[0], -1)) != int(open.get(pair[1], -2)):
+			required += 1
+	print(("SWEEP seed=%d scale=%s CLEARANCE payload=skin_only shapes=%d " \
+		+ "walked=%d centre_free=%d offset_free=%d blocked=%d gates=%d " \
+		+ "gates_offset=%d gates_blocked=%d gates_blocked_required=%d " \
+		+ "route_components=%d splits=%d cells_unreachable=%d") % [city_seed,
+		String(scale_id), shapes, cells.size(), centre_free, offset_free,
+		blocked, gates, gates_offset, gates_blocked, required,
+		_clearance_component_count(design), splits, unreachable])
+	if splits > 0 or unreachable > 0:
+		# Named on its own line so a split is greppable without reading the row.
+		tally.split_towns.append("%s (splits=%d cells_unreachable=%d)" % [label,
+			splits, unreachable])
+	tally.splits += splits
+	tally.unreachable += unreachable
+	tally.gates_blocked_required += required
+	tally.towns += 1
+	tally.cells += cells.size()
+	tally.centre_free += centre_free
+	tally.offset_free += offset_free
+	tally.blocked += blocked
+	tally.gates += gates
+	tally.gates_offset += gates_offset
+	tally.gates_blocked += gates_blocked
+	tally.worst_gates_blocked = maxi(int(tally.worst_gates_blocked),
+		gates_blocked)
+	root.queue_free()
+	await process_frame
+
+
+func _clearance_stance(cell: Vector3i) -> Vector3:
+	## Where the capsule's own CENTRE goes to stand in a cell.
+	return Vector3(float(cell.x) * FabricRecipe.CELL_SIZE,
+		float(cell.y) * FabricRecipe.CELL_SIZE + PLAYER_CAPSULE_HEIGHT * 0.5 \
+			+ CLEARANCE_MARGIN + CLEARANCE_FLOOR_LIFT,
+		float(cell.z) * FabricRecipe.CELL_SIZE)
+
+
+func _clearance_of_cell(space: PhysicsDirectSpaceState3D,
+		query: PhysicsShapeQueryParameters3D, cell: Vector3i) -> int:
+	## 0 when a body fits standing on the cell's centreline, 1 when it fits
+	## somewhere else inside the cell, -1 when nowhere in the cell is clear.
+	var base := _clearance_stance(cell)
+	query.transform = Transform3D(Basis.IDENTITY, base)
+	if space.intersect_shape(query, 1).is_empty():
+		return 0
+	var reach := FabricRecipe.CELL_SIZE * 0.5 - PLAYER_CAPSULE_RADIUS
+	if reach <= 0.0:
+		return -1
+	for ix in CLEARANCE_OFFSET_STEPS:
+		for iz in CLEARANCE_OFFSET_STEPS:
+			var offset := Vector3(
+				lerpf(-reach, reach,
+					float(ix) / float(CLEARANCE_OFFSET_STEPS - 1)), 0.0,
+				lerpf(-reach, reach,
+					float(iz) / float(CLEARANCE_OFFSET_STEPS - 1)))
+			query.transform = Transform3D(Basis.IDENTITY, base + offset)
+			if space.intersect_shape(query, 1).is_empty():
+				return 1
+	return -1
+
+
+func _clearance_of_gate(space: PhysicsDirectSpaceState3D,
+		query: PhysicsShapeQueryParameters3D, cell: Vector3i,
+		direction: Vector3i) -> int:
+	## Can a body stand ON the boundary plane the two cells share? 0 at the
+	## boundary's midpoint, 1 somewhere else along its width, -1 nowhere -- in
+	## which case the passage between the two cells is shut whatever either cell
+	## measures on its own.
+	var base := _clearance_stance(cell) \
+		+ Vector3(direction) * (FabricRecipe.CELL_SIZE * 0.5)
+	query.transform = Transform3D(Basis.IDENTITY, base)
+	if space.intersect_shape(query, 1).is_empty():
+		return 0
+	# The boundary's own width: the axis perpendicular to the crossing, in the
+	# horizontal plane. The capsule may slide along it and no further -- sliding
+	# ACROSS would be standing in one of the cells rather than in the doorway.
+	var along := Vector3(float(direction.z), 0.0, float(direction.x))
+	var reach := FabricRecipe.CELL_SIZE * 0.5 - PLAYER_CAPSULE_RADIUS
+	if reach <= 0.0:
+		return -1
+	for step in CLEARANCE_OFFSET_STEPS:
+		var slide := lerpf(-reach, reach,
+			float(step) / float(CLEARANCE_OFFSET_STEPS - 1))
+		query.transform = Transform3D(Basis.IDENTITY, base + along * slide)
+		if space.intersect_shape(query, 1).is_empty():
+			return 1
+	return -1
+
+
+static func _clearance_edge_key(a: Vector3i, b: Vector3i) -> String:
+	## One key per unordered pair, so the route pass can ask "is this crossing
+	## shut" without caring which side it walked in from.
+	var lo := a
+	var hi := b
+	if [b.x, b.y, b.z] < [a.x, a.y, a.z]:
+		lo = b
+		hi = a
+	return "%d,%d,%d|%d,%d,%d" % [lo.x, lo.y, lo.z, hi.x, hi.y, hi.z]
+
+
+static func _clearance_components(walked: Dictionary,
+		shut: Dictionary) -> Dictionary:
+	## Component id per walked cell, by BFS over `CLEARANCE_ROUTE_STEPS`. A
+	## same-band crossing named in `shut` is not an edge; a one-band step always
+	## is, because the shard is a wall on a bank face and a step's riser is not
+	## something this payload can be asked about meaningfully.
+	##
+	## Called TWICE per town: with an empty `shut` for the town's design
+	## connectivity, and with the measured set for what a body can actually
+	## reach. The difference is the only honest reading of the damage.
+	var component_of: Dictionary = {}
+	var cells: Array = walked.keys()
+	cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		return "%d/%d/%d" % [a.x, a.y, a.z] < "%d/%d/%d" % [b.x, b.y, b.z])
+	var next_id := 0
+	for start: Vector3i in cells:
+		if component_of.has(start):
+			continue
+		var id := next_id
+		next_id += 1
+		component_of[start] = id
+		var queue: Array[Vector3i] = [start]
+		while not queue.is_empty():
+			var cell: Vector3i = queue.pop_back()
+			for step: Vector3i in CLEARANCE_ROUTE_STEPS:
+				var neighbour: Vector3i = cell + step
+				if not walked.has(neighbour) or component_of.has(neighbour):
+					continue
+				if step.y == 0 and shut.has(_clearance_edge_key(cell, neighbour)):
+					continue
+				component_of[neighbour] = id
+				queue.append(neighbour)
+	return component_of
+
+
+static func _clearance_component_count(component_of: Dictionary) -> int:
+	var seen: Dictionary = {}
+	for id: int in component_of.values():
+		seen[id] = true
+	return seen.size()
+
+
+static func _clearance_cells_cut_off(walked: Dictionary, design: Dictionary,
+		open: Dictionary) -> int:
+	## How many cells the shut crossings put out of reach. Within each DESIGN
+	## component, the largest surviving open piece is "where the town still is"
+	## and everything else in that component has been cut off from it. Counted
+	## per design component so a town that was already several pieces is judged
+	## on what this change did to each of them, not on being several pieces.
+	var open_size: Dictionary = {}
+	var design_size: Dictionary = {}
+	for cell: Vector3i in walked:
+		var open_id := int(open[cell])
+		var design_id := int(design[cell])
+		open_size[open_id] = 1 + int(open_size.get(open_id, 0))
+		design_size[design_id] = 1 + int(design_size.get(design_id, 0))
+	var largest_in_design: Dictionary = {}
+	for cell: Vector3i in walked:
+		var design_id := int(design[cell])
+		largest_in_design[design_id] = maxi(
+			int(largest_in_design.get(design_id, 0)),
+			int(open_size[int(open[cell])]))
+	var cut_off := 0
+	for design_id: int in design_size:
+		cut_off += int(design_size[design_id]) \
+			- int(largest_in_design.get(design_id, 0))
+	return cut_off
+
+
+func _clearance_blockers(space: PhysicsDirectSpaceState3D,
+		query: PhysicsShapeQueryParameters3D, at: Vector3) -> String:
+	## WHAT is standing there, named by the asset its shape was baked from. A
+	## fired pin should say what to look at and not only where: "two facing
+	## cliff shards" and "a green cap in the wrong place" are different bugs and
+	## the coordinates alone do not tell them apart.
+	query.transform = Transform3D(Basis.IDENTITY, at)
+	var names: Dictionary = {}
+	for hit: Dictionary in space.intersect_shape(query, 8):
+		var body := hit.get("collider") as CollisionObject3D
+		if body == null:
+			continue
+		var owner_id := body.shape_find_owner(int(hit.get("shape", 0)))
+		var owner := body.shape_owner_get_owner(owner_id) as Node
+		if owner != null:
+			names[String(owner.name)] = true
+	var listed: Array = names.keys()
+	listed.sort()
+	return ",".join(PackedStringArray(listed))
+
+
+func _clearance_worst_text(tally: Dictionary) -> String:
+	var worst: Array = tally.worst
+	if worst.is_empty():
+		return ""
+	return "first offenders: " + "; ".join(PackedStringArray(worst))
+
+
+func _print_clearance_result(tally: Dictionary) -> void:
+	## TASK H2c FIX 1. One corpus answer to "can a body still walk the streets
+	## the massif skin lines". Three pins at ZERO -- `blocked` (no walked cell
+	## may refuse a body everywhere inside it), `splits` and `cells_unreachable`
+	## (no shut crossing may be the only way between two parts of a town) --
+	## and `gates_blocked` against a MEASURED per-town ceiling instead, because
+	## the corpus shuts crossings that have a way round and a zero there would
+	## be a pin that has never been true. The two `*_share` numbers are the
+	## reported COST -- the share of
+	## walked cells, and of crossings between them, that no longer admit a body
+	## on the exact centreline because the shard's lobe is in the way. That is
+	## correct behaviour (before H2c a player walked through visible rock) and a
+	## real change in how a street feels, so it is stated rather than hidden.
+	if int(tally.towns) == 0:
+		return
+	print(("SWEEP RESULT clearance towns=%d payload=skin_only " \
+		+ "capsule=r%.5f/h%.3f margin=%.2f walked=%d centre_free=%d " \
+		+ "offset_free=%d offset_share=%.4f blocked=%d gates=%d " \
+		+ "gates_offset=%d gates_offset_share=%.4f gates_blocked=%d " \
+		+ "worst_town_gates_blocked=%d ceiling=%d " \
+		+ "gates_blocked_required=%d splits=%d cells_unreachable=%d " \
+		+ "split_towns=[%s] %s") % [
+		int(tally.towns), PLAYER_CAPSULE_RADIUS,
+		PLAYER_CAPSULE_HEIGHT, CLEARANCE_MARGIN, int(tally.cells),
+		int(tally.centre_free), int(tally.offset_free),
+		float(int(tally.offset_free)) / float(maxi(1, int(tally.cells))),
+		int(tally.blocked), int(tally.gates), int(tally.gates_offset),
+		float(int(tally.gates_offset)) / float(maxi(1, int(tally.gates))),
+		int(tally.gates_blocked), int(tally.worst_gates_blocked),
+		CLEARANCE_TOWN_GATE_CEILING, int(tally.gates_blocked_required),
+		int(tally.splits), int(tally.unreachable),
+		", ".join(PackedStringArray(tally.split_towns)),
+		_clearance_worst_text(tally)])
 
 
 static func _stone_group_of(scale_id: StringName) -> String:
