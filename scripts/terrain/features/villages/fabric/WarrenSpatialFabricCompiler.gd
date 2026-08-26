@@ -879,10 +879,26 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
 		bearing_footprint)
 	var paved := SettlementFabricAssembler.public_floor_cells(plan.surface_plan)
-	var exposed := SettlementFabricAssembler.exposed_maze_stone_faces(retained,
-		solids, paved)
-	var faces := SettlementFabricAssembler.maze_stone_faces(retained, solids,
-		paved, plinths)
+	# TASK H2 PART 1. Every cell the public realm's own walk surfaces occupy,
+	# over ALL FIVE surface kinds rather than the three `PAVED_FLOOR_KINDS`
+	# that DRAW themselves. The two questions are different: `paved` above asks
+	# "does something else already close this boundary", and this asks "does
+	# anybody WALK here", which is what tells a street's own pavement from a
+	# parapet lid on a house nobody stands on. TASK H2b moved the set into the
+	# assembler, which now needs the same answer to decide a cap's treatment,
+	# and reads it here rather than deriving a second one.
+	var walked := SettlementFabricAssembler.walked_floor_cells(
+		plan.surface_plan)
+	# ONE derivation of the shell for the whole audit AND for the payload it
+	# measures. `exposed`, `faces` and `treatments` are pure functions of the
+	# cell sets above; this pass used to derive `exposed` four times over
+	# (its own, one inside `maze_stone_faces`, and both again inside the
+	# `maze_stone_walls` call below), `faces` twice and `treatments` twice, for
+	# identical dictionaries every time.
+	var shell := SettlementFabricAssembler.maze_skin_shell(retained, solids,
+		paved, plinths, walked)
+	var exposed := shell.exposed as Dictionary
+	var faces := shell.faces as Dictionary
 	var sides := SettlementFabricAssembler.FACE_DIRECTIONS.size()
 	# TASK C5b FIX 1, IMPORTANT 4. What the planked-floor exception really
 	# costs the shell, now that it is three surface kinds and not five.
@@ -938,25 +954,14 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			deferred_to_plinth += 1
 			continue
 		missing_face_count += 1
-	# TASK H2 PART 1. Every cell the public realm's own walk surfaces occupy,
-	# over ALL FIVE surface kinds rather than the three `PAVED_FLOOR_KINDS`
-	# that DRAW themselves. The two questions are different: `paved` above asks
-	# "does something else already close this boundary", and this asks "does
-	# anybody WALK here", which is what tells a street's own pavement from a
-	# parapet lid on a house nobody stands on. TASK H2b moved the set into the
-	# assembler, which now needs the same answer to decide a cap's treatment,
-	# and reads it here rather than deriving a second one.
-	var walked := SettlementFabricAssembler.walked_floor_cells(
-		plan.surface_plan)
 	var rendered := SettlementFabricAssembler.maze_stone_walls(retained,
-		solids, paved, plinths, walked)
+		solids, paved, plinths, walked, shell)
 	# TASK H2b. What the shell WEARS, counted over the same panel set the
 	# coverage identity above is measured on, and split by the bank each side
 	# panel stands in so the two pins have a denominator: masonry above the
 	# retaining budget is the defect, and a stone slab on a bench nobody walks
 	# is the other one.
-	var treatments := SettlementFabricAssembler.maze_skin_treatments(exposed,
-		faces, walked)
+	var treatments := shell.treatments as Dictionary
 	var masonry_panels := 0
 	var natural_panels := 0
 	var green_panels := 0

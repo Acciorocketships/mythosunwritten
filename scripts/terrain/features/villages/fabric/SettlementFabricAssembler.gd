@@ -667,15 +667,25 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan) \
 	var retained := plan.retained_terrace_cells
 	var solids := plan.transformed_cells(&"solid")
 	var bearing_footprint := plan.transformed_cells(&"terrain_bearing")
-	var out := house_plinth_walls(retained, solids, bearing_footprint)
 	var paved := public_floor_cells(plan.surface_plan)
 	var plinths := plinth_faces(retained, solids, bearing_footprint)
 	var walked := walked_floor_cells(plan.surface_plan)
-	out.append_from(maze_stone_walls(retained, solids, paved, plinths, walked))
+	# ONE derivation of the shell for the whole payload. Each of the three
+	# emitters below used to re-derive what it needed from the cell sets --
+	# `exposed_maze_stone_faces` ran FOUR times per payload, `maze_stone_faces`
+	# twice, `maze_skin_treatments` twice and `plinth_faces` twice -- and each
+	# derivation is a pure function of arguments that do not change between
+	# them, so every repeat was the same answer computed again. `maze_skin_shell`
+	# states that fact once and the emitters read it; the shell is a PER-CALL
+	# local handed down the stack, never a static that outlives a solve.
+	var shell := maze_skin_shell(retained, solids, paved, plinths, walked)
+	var out := _plinth_payload(plinths)
+	out.append_from(maze_stone_walls(retained, solids, paved, plinths, walked,
+		shell))
 	# TASK H2b FIX 1, IMPORTANT 3. The rolled edge round every green bench,
 	# beside the shell rather than inside it -- see `maze_green_rim_walls`.
 	out.append_from(maze_green_rim_walls(retained, solids, paved, plinths,
-		walked))
+		walked, shell))
 	# TASK C5e RULING 3. The other half of what a maze town's crown wears.
 	# The parapet course that used to cap every flat roof is released to air
 	# by `WarrenVolumetricSolver._maze_released_parapet_cells`, so the slab is
@@ -714,9 +724,18 @@ static func house_plinth_walls(retained: Dictionary,
 	##
 	## Pure function of integer cell sets whose every loop runs over a sorted
 	## key list, so the payload is byte-identical for identical input.
+	return _plinth_payload(plinth_faces(retained, solids, bearing_footprint))
+
+
+static func _plinth_payload(faces: Dictionary) -> EnvironmentInstancePayload:
+	## The emission half of `house_plinth_walls`, split off so a caller that has
+	## ALREADY derived `plinth_faces` -- `terrace_retaining_payload` derives it
+	## for the stone skin's deferral rule -- does not derive it a second time to
+	## get the same panels back. The public entry above is unchanged and stays
+	## the one every other caller uses.
 	var out := EnvironmentInstancePayload.new()
 	var keys: Array[Vector4i] = []
-	keys.assign(plinth_faces(retained, solids, bearing_footprint).keys())
+	keys.assign(faces.keys())
 	keys.sort_custom(_face_before)
 	for key: Vector4i in keys:
 		var direction := FACE_DIRECTIONS[key.w]
@@ -837,7 +856,45 @@ static func maze_stone_faces(retained: Dictionary, solids: Dictionary,
 	##
 	## Pure function of integer cell sets whose loops run over a sorted key
 	## list, so the payload is byte-identical for identical input.
+	return _maze_stone_faces_from(exposed_maze_stone_faces(retained, solids,
+		paved), retained, solids, plinths)
+
+
+static func maze_skin_shell(retained: Dictionary, solids: Dictionary,
+		paved: Dictionary = {}, plinths: Dictionary = {},
+		walked: Dictionary = {}) -> Dictionary:
+	## The WHOLE skin derivation, once: the raw shell (`exposed`), the panels
+	## the coursing and pairing rules choose out of it (`faces`), and the module
+	## each of those panels wears (`treatments`).
+	##
+	## Nothing here is a new rule. It is the same three functions in the same
+	## order, hoisted to the one place that can hand the answer to every reader
+	## of it -- `maze_stone_walls`, `maze_green_rim_walls` and the compiler's
+	## skin audit each need two or three of these and each used to derive its
+	## own copy, so `exposed_maze_stone_faces` alone ran four times per payload
+	## and four more times per audit for four identical dictionaries.
+	##
+	## Byte-identity is by construction rather than by hope: each of the three
+	## is a pure function of arguments that do not change between the callers,
+	## so one derivation shared is the same dictionary each caller built for
+	## itself. Nothing downstream mutates them -- the emitters read `faces[key]`
+	## and `treatments[key]` and probe `exposed` -- and the bundle is a local
+	## passed down one call stack, so it cannot survive the solve that made it.
 	var exposed := exposed_maze_stone_faces(retained, solids, paved)
+	var faces := _maze_stone_faces_from(exposed, retained, solids, plinths)
+	return {
+		"exposed": exposed,
+		"faces": faces,
+		"treatments": maze_skin_treatments(exposed, faces, walked),
+	}
+
+
+static func _maze_stone_faces_from(exposed: Dictionary, retained: Dictionary,
+		solids: Dictionary, plinths: Dictionary) -> Dictionary:
+	## The coursing and cap-pairing half of `maze_stone_faces`, over a shell
+	## already derived. `retained` and `solids` are still needed here: an odd
+	## cap with no exposed mate leans over closed mass, and only those two sets
+	## say what is closed.
 	var out: Dictionary = {}
 	var caps: Array[Vector4i] = []
 	for key_value: Variant in exposed.keys():
@@ -1139,7 +1196,8 @@ static func walked_floor_cells(surface_plan: PublicRealmSurfacePlan) \
 
 static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 		paved: Dictionary = {}, plinths: Dictionary = {},
-		walked: Dictionary = {}) -> EnvironmentInstancePayload:
+		walked: Dictionary = {},
+		shell: Dictionary = {}) -> EnvironmentInstancePayload:
 	## ONE module per panel of `maze_stone_faces`, and `maze_skin_treatments`
 	## says which module. The panel set, its coursing and its cap pairing are
 	## untouched by task H2b: this function chose one asset before and chooses
@@ -1162,10 +1220,18 @@ static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 	## empty, which makes every cap MASONRY -- the pre-H2b answer. A caller
 	## that does not hold the surface plan therefore gets the old skin rather
 	## than lawn under a street it could not see.
+	##
+	## `shell` is `maze_skin_shell()` for the same five arguments, and an empty
+	## one means "derive it here". A caller that already holds the shell -- the
+	## payload, and the compiler's audit, both of which need it for their own
+	## reasons anyway -- hands it down instead of paying for a second identical
+	## copy. It is never legitimately empty when passed: the bundle always
+	## carries its three keys, empty town or not.
 	var out := EnvironmentInstancePayload.new()
-	var faces := maze_stone_faces(retained, solids, paved, plinths)
-	var treatments := maze_skin_treatments(exposed_maze_stone_faces(retained,
-		solids, paved), faces, walked)
+	var derived := shell if not shell.is_empty() \
+		else maze_skin_shell(retained, solids, paved, plinths, walked)
+	var faces := derived.faces as Dictionary
+	var treatments := derived.treatments as Dictionary
 	var keys: Array[Vector4i] = []
 	keys.assign(faces.keys())
 	keys.sort_custom(_face_before)
@@ -1227,7 +1293,8 @@ static func _maze_green_cap_transform(cell: Vector3i,
 
 static func maze_green_rim_walls(retained: Dictionary, solids: Dictionary,
 		paved: Dictionary = {}, plinths: Dictionary = {},
-		walked: Dictionary = {}) -> EnvironmentInstancePayload:
+		walked: Dictionary = {},
+		shell: Dictionary = {}) -> EnvironmentInstancePayload:
 	## TASK H2b FIX 1, IMPORTANT 3 -- the rolled edge round every green bench.
 	##
 	## A RIM is a green-capped cell's own exposed SIDE: turf on top of it and a
@@ -1245,12 +1312,19 @@ static func maze_green_rim_walls(retained: Dictionary, solids: Dictionary,
 	## and `_rendered_face_count` therefore still mean exactly what they meant,
 	## and every rim carries a `maze-rim/` id that no reading of the skin
 	## mistakes for a panel.
+	##
+	## `shell` is `maze_skin_shell()` for the same five arguments and follows
+	## the same rule `maze_stone_walls` states: empty means derive it here, and
+	## a caller that already holds it hands it down rather than building an
+	## identical second copy of the same three dictionaries.
 	var out := EnvironmentInstancePayload.new()
-	var exposed := exposed_maze_stone_faces(retained, solids, paved)
+	var derived := shell if not shell.is_empty() \
+		else maze_skin_shell(retained, solids, paved, plinths, walked)
+	var exposed := derived.exposed as Dictionary
 	if exposed.is_empty():
 		return out
-	var faces := maze_stone_faces(retained, solids, paved, plinths)
-	var treatments := maze_skin_treatments(exposed, faces, walked)
+	var faces := derived.faces as Dictionary
+	var treatments := derived.treatments as Dictionary
 	var up_index := STONE_FACE_DIRECTIONS.find(Vector3i.UP)
 	var depth_scale := FabricRecipe.CELL_SIZE / GREEN_RIM_DEPTH
 	var keys: Array[Vector4i] = []
