@@ -575,10 +575,16 @@ const SKYWALK_BEARER := SettlementFabricProgram.BRACE
 ##   both 0.16105 m thick, so one number covers the long deck and the short one.
 ## * `sfv_fabric_brace_wood_002.tres` -- AABB(-1.9427, 0, -0.4331, 1.9427,
 ##   0.4710, 0.8662): a corbel lying on its own local -X, 0.471 m deep below
-##   the plate it carries.
+##   the plate it carries and 0.866 m across the bearing it lies on.
 const SKYWALK_DECK_THICKNESS := 0.16105233
 const SKYWALK_BEARER_DROP := 0.47099975
 const SKYWALK_BEARER_REACH := 1.9426978
+## The corbel's third dimension, and the one an OUTCROPPING has to respect: laid
+## across a face, this is how much of the projection's own depth the piece eats.
+## The bay's 1.5 m box holds two of them clear of each other; the bump-out's
+## half cell is SHALLOWER than one is deep, which is stated where they are
+## placed rather than hidden by a fraction (fix 1, minor 4).
+const SKYWALK_BEARER_DEPTH := 0.8662016
 ## HOW LONG A SPAN MAY BE, and the asset is the answer rather than taste. The
 ## longest deck in the catalog that tiles a 1.5 m lattice is the authored 3.0 m
 ## gallery floor -- TWO cells -- and a three-cell span would need a splice
@@ -647,9 +653,18 @@ const FACADE_BUMP_ODDS := 0.14
 ## outcropping hangs a course LOWER than a bridge does. The panel clads the
 ## course {band - 1, band}; its bearers hang SKYWALK_BEARER_DROP under the box's
 ## own floor at `(band - 1) x CELL_SIZE`, so the lowest timber is
-## `(band - 1) x 1.5 - 0.632`. Against a body's 2.284 m that needs
-## `(band - 1 - b) x 1.5 >= 2.916`, i.e. three bands. Two bands would leave
-## 0.868 m and shut the street.
+## `(band - 1) x 1.5 - 0.471`.
+##
+## FIX 1, MINOR 8 CORRECTS THAT SUBTRACTION and the conclusion survives it. The
+## first telling wrote `- 0.632`, which is the SKYWALK's number: a bridge hangs
+## its corbel under a DECK, so it pays the deck's 0.161 m as well, and an
+## outcropping's bearers hang straight off the box's floor line and do not. The
+## real requirement against a body's 2.284 m is
+## `(band - 1 - b) x 1.5 >= 2.284 + 0.471 = 2.755`, i.e. `band - b >= 2.837`,
+## i.e. three bands -- the same answer the wrong constant gave, reached
+## honestly. THE MARGIN IS 245 MM (`3.0 - 2.755`), not the 84 mm a bridge has;
+## two bands would leave 1.029 m of air under the timber against a 2.284 m body
+## and shut the street.
 const FACADE_OUTCROP_MIN_HEADROOM_BANDS := 3
 ## The corner post is a measured 0.751 x 3.000 x 0.752 m block -- one HALF cell
 ## square and exactly one storey tall -- so two of them fill the whole half-cell
@@ -664,10 +679,11 @@ const FACADE_BUMP_REACH := FabricRecipe.CELL_SIZE * 0.5
 ## for the same reason `_capped_outcrop_recipe` caps its own jetty with the
 ## authored gallery floor: a bay is a small room and a room has a lid.
 const FACADE_OUTCROP_CAP := PLANK_SINGLE
-## Salts for the two seeded rolls, in the `_face_noise` idiom the garden
-## dressing uses.
+## The salt the seeded roll is drawn with, in the `_face_noise` idiom the garden
+## dressing uses. ONE, not two: a `FACADE_OUTCROP_TRIM_SALT` sat here unread
+## from the first landing and went with fix 1, minor 3 -- an unused salt is a
+## seeded decision a reader goes looking for and cannot find.
 const FACADE_OUTCROP_KIND_SALT := 41
-const FACADE_OUTCROP_TRIM_SALT := 43
 
 
 static func payload(plan: SettlementFabricPlan) -> EnvironmentInstancePayload:
@@ -2628,10 +2644,18 @@ static func maze_skywalk_cells(spans: Array[Dictionary]) -> Dictionary:
 	return out
 
 
-static func maze_skywalks(plan: SettlementFabricPlan,
-		crown_unit_ids: Dictionary = {}) -> EnvironmentInstancePayload:
+static func maze_skywalks_from(spans: Array[Dictionary]) \
+		-> EnvironmentInstancePayload:
 	## TASK I3 -- the open timber bridge itself: one deck, two rails, two
 	## bearers per span of `maze_skywalk_spans`.
+	##
+	## Over spans a caller ALREADY DERIVED, and there is no convenience wrapper
+	## that derives them here (fix 1, minor 1: there was one, `maze_skywalks`,
+	## and nothing ever called it). The payload derives the spans once and hands
+	## the same array to this and to `maze_skywalk_cells`, so the bridges the
+	## town renders and the cells the outcropping channel keeps clear can never
+	## be two different answers -- which a second derivation is exactly how to
+	## break.
 	##
 	## THE DECK is the same authored plank floor the public realm's own galleries
 	## are laid with, and it is laid FLUSH: its top face lands exactly on
@@ -2653,15 +2677,6 @@ static func maze_skywalks(plan: SettlementFabricPlan,
 	## reaching out from either end of a 3.0 m gap would pass through each other
 	## in mid-air. It hangs SKYWALK_BEARER_DROP below the deck and that drop is
 	## the number the headroom rule is written against.
-	return maze_skywalks_from(maze_skywalk_spans(plan, crown_unit_ids))
-
-
-static func maze_skywalks_from(spans: Array[Dictionary]) \
-		-> EnvironmentInstancePayload:
-	## The emitter half of `maze_skywalks`, over spans a caller already derived
-	## -- the payload derives them once and hands the same array to this and to
-	## `maze_skywalk_cells`, so the bridges the town renders and the cells the
-	## outcropping channel keeps clear can never be two different answers.
 	var out := EnvironmentInstancePayload.new()
 	for span: Dictionary in spans:
 		var cell := span.cell as Vector3i
@@ -2709,7 +2724,7 @@ static func maze_skywalks_from(spans: Array[Dictionary]) \
 static func maze_facade_outcrop_kinds(retained: Dictionary, solids: Dictionary,
 		paved: Dictionary = {}, plinths: Dictionary = {},
 		walked: Dictionary = {}, shell: Dictionary = {},
-		world_seed: int = 0, blocked: Dictionary = {}) -> Dictionary:
+		blocked: Dictionary = {}) -> Dictionary:
 	## TASK I3 -- WHICH CLAD PANEL PROJECTS, and as what, as
 	## `panel key -> FacadeOutcrop`. Only the panels that project appear; a
 	## reader asking about a panel that is not here is asking about a flat wall.
@@ -2722,10 +2737,11 @@ static func maze_facade_outcrop_kinds(retained: Dictionary, solids: Dictionary,
 	## 2. IT IS AN UPPER STOREY. The same face carries another panel one course
 	##    below it, so there is a house under the projection rather than a
 	##    pavement. This is the direction's own "on upper storeys".
-	## 3. THE AIR IN FRONT IS FREE, over the panel's whole course: no built
-	##    solid, no retained mass, no public floor, nobody's walk surface, and no
-	##    skywalk. A bay occupies exactly the one cell in front of its panel, so
-	##    that is exactly the cell this asks about.
+	## 3. THE AIR IN FRONT IS FREE, over the panel's whole course AND OVER THE
+	##    BAND ITS BEARERS HANG IN: no built solid, no retained mass, no public
+	##    floor, nobody's walk surface, and no skywalk. A bay occupies exactly
+	##    the one cell in front of its panel, so that is exactly the cell this
+	##    asks about.
 	## 4. THE STREET UNDER IT KEEPS ITS HEADROOM --
 	##    FACADE_OUTCROP_MIN_HEADROOM_BANDS, whose arithmetic is written at the
 	##    constant and whose live proof is the corpus sweep's clearance row.
@@ -2734,6 +2750,13 @@ static func maze_facade_outcrop_kinds(retained: Dictionary, solids: Dictionary,
 	## bays climbing one wall like a fire escape. The keys are swept in sorted
 	## order so which storey of a column wins is a fact of the lattice rather
 	## than of dictionary iteration.
+	##
+	## THE ROLL TAKES NO WORLD SEED (fix 1, minor 2). It used to accept one and
+	## never read it, which reads as a seeded rate that a caller can vary and is
+	## not one. `_face_noise` keys on the PANEL'S OWN POSITION, which is this
+	## file's established idiom for every seeded dressing rate it owns (the
+	## garden planting, the skin's own family choice), and it is the right one
+	## here: the town's identity is already in where its faces are.
 	var out: Dictionary = {}
 	var derived := shell if not shell.is_empty() \
 		else maze_skin_shell(retained, solids, paved, plinths, walked)
@@ -2764,7 +2787,16 @@ static func maze_facade_outcrop_kinds(retained: Dictionary, solids: Dictionary,
 		var direction := STONE_FACE_DIRECTIONS[key.w]
 		var front := Vector3i(key.x + direction.x, key.y, key.z + direction.z)
 		var free := true
-		for band in range(0, STONE_COURSE_BANDS):
+		# ONE BAND FURTHER DOWN THAN THE PANEL'S OWN COURSE (fix 1, minor 7).
+		# The course is {key.y - 1, key.y} and the projection's floor sits at
+		# `(key.y - 1) x CELL_SIZE`, so its two bearers hang SKYWALK_BEARER_DROP
+		# into the band BELOW that -- `key.y - 2`, which this loop used to leave
+		# unasked. The walked half of that band was already covered (the headroom
+		# rule below refuses a walked cell within three bands); what was not is
+		# BUILT mass, so a bay could hang its corbels inside the roof of the
+		# house across the street. The skywalk path has carried the matching
+		# guard since it landed (`SKYWALK_UNDERCUT_BANDS`); this is its twin.
+		for band in range(0, STONE_COURSE_BANDS + 1):
 			var probe := front - Vector3i.UP * band
 			free = free and not solids.has(probe) and not retained.has(probe) \
 				and not paved.has(probe) and not walked.has(probe) \
@@ -2816,7 +2848,7 @@ static func maze_facade_outcroppings(retained: Dictionary, solids: Dictionary,
 	## the corpus `bare_overhangs` pin at zero honest for this channel too.
 	var out := EnvironmentInstancePayload.new()
 	var kinds := maze_facade_outcrop_kinds(retained, solids, paved, plinths,
-		walked, shell, world_seed, blocked)
+		walked, shell, blocked)
 	if kinds.is_empty():
 		return out
 	var keys: Array[Vector4i] = []
@@ -2885,10 +2917,28 @@ static func maze_facade_outcroppings(retained: Dictionary, solids: Dictionary,
 		# laid ACROSS the face under the projection's floor. One at the wall and
 		# one at the projection's outer edge, which is where a jetty's two
 		# joists really are.
+		#
+		# STATIONED BY THE CORBEL'S OWN DEPTH (fix 1, minor 4), not by a fraction
+		# of the reach. At 0.3 and 0.7 of the reach the pair overlapped by 65 %
+		# on a bump-out and the OUTER corbel hung 0.208 m PAST the face it was
+		# meant to bear -- a plate floating in front of the wall, which is the
+		# opposite of what a visible bracket is for. Half a depth in from each
+		# end puts the inner corbel's back on the wall and the outer corbel's
+		# front on the projection's own face, which is what the paragraph above
+		# has always claimed.
+		#
+		# AND A BUMP-OUT IS SHALLOWER THAN THIS CORBEL IS DEEP -- 0.750 m of
+		# jetty against 0.866 m of timber -- so on that kind the two stations
+		# CROSS, by 0.116 m, and the pair reads as one plate rather than as two
+		# joists. That is the module's measurement rather than a choice, and it
+		# is the honest state: what the crossing costs is 0.116 m of corbel
+		# tailing past the face where the old fraction cost 0.208 m, and no
+		# timber now passes the face the projection presents to the street.
 		var across := Basis(Vector3.UP, atan2(-cross.z, cross.x))
 		for index in 2:
-			var bearer_origin := boundary \
-				+ outward * (reach * (0.3 if index == 0 else 0.7)) \
+			var station := SKYWALK_BEARER_DEPTH * 0.5 if index == 0 \
+				else reach - SKYWALK_BEARER_DEPTH * 0.5
+			var bearer_origin := boundary + outward * station \
 				+ cross * (SKYWALK_BEARER_REACH * 0.5)
 			bearer_origin.y = floor_y - SKYWALK_BEARER_DROP
 			out.add(SKYWALK_BEARER, Transform3D(across, bearer_origin),

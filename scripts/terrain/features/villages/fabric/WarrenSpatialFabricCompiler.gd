@@ -1195,7 +1195,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	for span: Dictionary in spans:
 		skywalk_deck_cells += int(span.gap)
 	var outcrop_kinds := SettlementFabricAssembler.maze_facade_outcrop_kinds(
-		retained, solids, paved, plinths, walked, shell, plan.world_seed,
+		retained, solids, paved, plinths, walked, shell,
 		SettlementFabricAssembler.maze_skywalk_cells(spans))
 	var facade_bays := 0
 	var facade_bumps := 0
