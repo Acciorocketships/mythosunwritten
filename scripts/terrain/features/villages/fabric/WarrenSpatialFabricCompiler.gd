@@ -183,6 +183,11 @@ static func solve(source: WarrenSpatialPlan,
 	stage_ms = _trace_stage("modular_box", stage_ms)
 	var result := SettlementFabricPlan.new(StringName("%s.fabric" % \
 		source.stable_id))
+	# TASK I2. The mass skin's facade families come out of the same district
+	# field the room recipes above were chosen through, so the plan carries the
+	# seed that field is a function of. Set BEFORE any skin is derived --
+	# `_maze_stone_skin_audit` reads it off an unsealed plan.
+	result.world_seed = source.world_seed
 	if not result.set_public_realm(realm):
 		last_failure = "could not attach authoritative spatial public realm"
 		return null
@@ -856,6 +861,16 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			"maze_skin_masonry_panel_count": 0,
 			"maze_skin_natural_panel_count": 0,
 			"maze_skin_green_cap_count": 0,
+			"maze_skin_facade_panel_count": 0,
+			"maze_skin_facade_blue_panel_count": 0,
+			"maze_skin_facade_orange_panel_count": 0,
+			"maze_skin_facade_amber_panel_count": 0,
+			"maze_skin_facade_window_panel_count": 0,
+			"maze_skin_above_ground_stone_face_count": 0,
+			"maze_garden_cell_count": 0,
+			"maze_village_green_cell_count": 0,
+			"maze_garden_planting_count": 0,
+			"maze_paved_bench_cap_count": 0,
 			"maze_tall_bank_masonry_panel_count": 0,
 			"maze_skin_cut_panel_count": 0,
 			"maze_skin_cut_fallback_masonry_count": 0,
@@ -957,7 +972,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			continue
 		missing_face_count += 1
 	var rendered := SettlementFabricAssembler.maze_stone_walls(retained,
-		solids, paved, plinths, walked, shell)
+		solids, paved, plinths, walked, shell, plan.world_seed)
 	# TASK H2b. What the shell WEARS, counted over the same panel set the
 	# coverage identity above is measured on, and split by the bank each side
 	# panel stands in so the two pins have a denominator: masonry above the
@@ -967,6 +982,27 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	var masonry_panels := 0
 	var natural_panels := 0
 	var green_panels := 0
+	# TASK I2. THE WALL-MATERIAL METRIC, EXTENDED OVER CLAD MASS. Task H1's
+	# `exterior_wall_material_profile` scores what the town's ROOMS wear; the
+	# exposed massif now wears the same authored vocabulary, so the same question
+	# is asked of it here -- how many mass faces are building storeys, in which
+	# timber family, and how many of them carry a window rather than a boarded
+	# panel. The family split is the check that a district's mass and its houses
+	# agree: a town whose facade families are lopsided against
+	# `_architectural_district_theme`'s own 4/2/2 phase split would mean the skin
+	# is colouring itself.
+	var facade_panels := 0
+	var facade_windows := 0
+	var facade_by_family: Dictionary = {&"blue": 0, &"orange": 0, &"amber": 0}
+	# TASK I2. THE PIN THE DIRECTION ASKS FOR: "remove all stone from everywhere
+	# but the ground floor of select buildings". Above-ground stone on the MASS
+	# is a side panel wearing coursed rock in a bank taller than the retaining
+	# budget -- one storey of stone holding a terrace is the allowed low base,
+	# anything above it is the wall the user rejected. It is the same population
+	# `tall_bank_masonry` counts and is published under its own name because the
+	# two now mean different things to a reader: one is H2b's "that face is
+	# hillside", this is I2's "that face is a building".
+	var above_ground_stone := 0
 	# FIX 1, MINOR 2. A grass quad that reaches past the cells its own panel
 	# closes, and -- the pin -- one that reaches over open AIR. A stone ledge
 	# corbels; a lawn sheet over nothing does not.
@@ -1019,6 +1055,13 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			== SettlementFabricAssembler.SkinTreatment.NATURAL)
 		green_panels += int(treatment \
 			== SettlementFabricAssembler.SkinTreatment.GREEN)
+		if treatment == SettlementFabricAssembler.SkinTreatment.FACADE:
+			facade_panels += 1
+			var family := SettlementFabricAssembler.maze_facade_family(key,
+				plan.world_seed)
+			facade_by_family[family] = int(facade_by_family.get(family, 0)) + 1
+			facade_windows += int(String(SettlementFabricAssembler
+				.maze_facade_module(key, plan.world_seed)).contains(".window."))
 		if treatment == SettlementFabricAssembler.SkinTreatment.GREEN:
 			for jut: Vector3i in SettlementFabricAssembler.maze_green_cap_jut_cells(
 					Vector3i(key.x, key.y, key.z), faces[key] as Vector3i):
@@ -1072,6 +1115,8 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 				.maze_natural_face_tail_is_clearable(key, walked))
 		tall_bank_masonry += int(treatment \
 			== SettlementFabricAssembler.SkinTreatment.MASONRY and over_budget)
+		above_ground_stone += int(treatment \
+			== SettlementFabricAssembler.SkinTreatment.MASONRY and over_budget)
 	for key_value: Variant in exposed.keys():
 		var key := key_value as Vector4i
 		if key.w >= sides:
@@ -1083,10 +1128,43 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			tall_bank_faces += 1
 		else:
 			low_bank_faces += 1
+	# TASK I2. THE GARDEN SPLIT. `garden` is every cell a green cap floors -- the
+	# yards, one entry per piece of ground rather than per slab -- `plaza` is the
+	# largest connected run among them, promoted to the village green, and
+	# `planting` is what really stands on them, counted off the payload the
+	# renderer is handed rather than off the rule that placed it. The PAVED half
+	# of the split is beside it: sky-facing caps the realm walks, which keep
+	# their stone because they are a street's own floor.
+	var garden := SettlementFabricAssembler.maze_garden_cells(retained, solids,
+		paved, plinths, walked, shell)
+	var planting := SettlementFabricAssembler.maze_garden_dressing(retained,
+		solids, paved, plinths, walked, shell)
+	var paved_bench_caps := 0
+	for key_value: Variant in treatments.keys():
+		var key := key_value as Vector4i
+		paved_bench_caps += int(key.w >= sides \
+			and SettlementFabricAssembler.STONE_FACE_DIRECTIONS[key.w] \
+				== Vector3i.UP \
+			and int(treatments[key]) \
+				== SettlementFabricAssembler.SkinTreatment.MASONRY)
 	var out := {
 		"maze_skin_masonry_panel_count": masonry_panels,
 		"maze_skin_natural_panel_count": natural_panels,
 		"maze_skin_green_cap_count": green_panels,
+		"maze_skin_facade_panel_count": facade_panels,
+		"maze_skin_facade_blue_panel_count": int(facade_by_family.get(&"blue",
+			0)),
+		"maze_skin_facade_orange_panel_count": int(facade_by_family.get(
+			&"orange", 0)),
+		"maze_skin_facade_amber_panel_count": int(facade_by_family.get(&"amber",
+			0)),
+		"maze_skin_facade_window_panel_count": facade_windows,
+		"maze_skin_above_ground_stone_face_count": above_ground_stone,
+		"maze_garden_cell_count": garden.size(),
+		"maze_village_green_cell_count": SettlementFabricAssembler \
+			.maze_village_green_cells(garden).size(),
+		"maze_garden_planting_count": planting.instance_count,
+		"maze_paved_bench_cap_count": paved_bench_caps,
 		"maze_green_cap_jut_cell_count": green_jut_cells,
 		"maze_green_cap_jut_over_air_count": green_jut_over_air,
 		"maze_tall_bank_masonry_panel_count": tall_bank_masonry,
@@ -5791,6 +5869,17 @@ static func _full_roof_recipe_id(room: WarrenRoomStamp,
 	# non-orange square through the boarded LPFV shell was the main source of the
 	# orange/brown roof sea despite the nominal 50/50 palette hash.
 	return &"roof.square.01" if orange else &"roof.square.blue.plain"
+
+
+static func architectural_district_theme(origin: Vector3i,
+		world_seed: int) -> StringName:
+	## TASK I2. The district palette, in public. `SettlementFabricAssembler`
+	## clads exposed mass faces in the timber family of the district they stand
+	## in, so a fake storey and the real house across the alley are the same
+	## authored wall vocabulary. It is the compiler's own field and not a second
+	## one: this is a one-line delegation to the private function every room
+	## recipe already goes through, so the two can never disagree.
+	return _architectural_district_theme(origin, world_seed)
 
 
 static func _architectural_district_theme(origin: Vector3i,

@@ -162,9 +162,23 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 			var local_transform := batch.transforms[index] as Transform3D
 			var local_instance_id := StringName(batch.ids[index]) \
 				if not batch.ids.is_empty() else StringName("anonymous.%d" % index)
+			# TASK I2. THE COLOUR CHANNEL SURVIVES THE CROSSING. `entries` carried
+			# asset, transform and id and nothing else, and both consumers
+			# (`VillagePlan._materialize_urban_fabric` and the review harness's
+			# production commit) then wrote `Color.WHITE` -- so the payload's own
+			# instance colour was dropped between the assembler and the renderer,
+			# and every tint the fabric asks for reached the game as white.
+			#
+			# It cost nothing until now because every fabric instance really was
+			# white. The garden turf is the first that is not: rendered raw, the
+			# KayKit grass swatch is the pale "lime plate" the direction retired,
+			# and the tint that fixes it is the payload's. Defaulted to WHITE on
+			# read, so the timber, stair and outskirts channels that set no colour
+			# are byte-identical.
 			result.entries.append({
 				"asset_id": asset_id,
 				"transform": world_frame * local_transform,
+				"color": batch.colors[index] as Color,
 				"stable_id": StringName("%s/%s" % [stable_id,
 					String(local_instance_id)]),
 			})

@@ -126,8 +126,11 @@ static func _materialize_urban_fabric(fabric: VillageUrbanFabricPlan,
 		occupancy: VillageOccupancy) -> void:
 	assert(fabric != null and fabric.accepted)
 	for entry: Dictionary in fabric.entries:
-		payload.add(entry.asset_id, entry.transform, Color.WHITE,
-			entry.stable_id)
+		# TASK I2. An entry may carry its own instance colour -- the garden turf
+		# does, so a bench top is the same green as the ground it sits in. Every
+		# channel that names none keeps the white it always had.
+		payload.add(entry.asset_id, entry.transform,
+			entry.get("color", Color.WHITE) as Color, entry.stable_id)
 	for mesh: Dictionary in fabric.surface_meshes:
 		payload.add_surface_mesh(mesh)
 	surfaces.append_array(fabric.surfaces)

@@ -371,11 +371,90 @@ const NATURAL_ROCK_CUT_MIN_RISE := FabricRecipe.CELL_SIZE \
 ## on the rock. Two centimetres under the rim, the rock's own top edge
 ## oversails it and the bench reads as turf behind a kerb.
 const GREEN_CAP_LIFT := -0.02
+## TASK I2 -- THE GARDEN. The green quad is KayKit's grass swatch rendered
+## WHITE, which means the atlas colour raw; every other grass surface in the
+## world goes through `BiomeRegistry.ground_tint_at`, and the terrain's own
+## multiplier is well under 1.0 in value. So a bench top rendered white is
+## brighter and more saturated than the meadow it sits in -- the "lime plate"
+## the H3 battery named, and half of the "grass tops built into the city" the
+## user called cliffs.
+##
+## The fabric payload has no world anchor to evaluate that field at (its
+## transforms are settlement-local and the commit applies the placement), so the
+## tint is MEASURED off the frame it has to match rather than derived. Iteration
+## 1 of this task rendered the production settlement with the palette's own
+## centre (`BiomeProfile.ground_tint` for meadow, Color(0.72, 0.66, 1.0)) and
+## sampled both surfaces in the same frame
+## (`i2/r1-production/seed-2697992464-overview-nw.png`): the terrain read sRGB
+## (93, 178, 60) and the bench tops (124, 200, 82) -- lighter and paler, which is
+## exactly the "grass tops" read the user called part of a cliff. Converting both
+## to linear and taking the ratio gives (0.544, 0.771, 0.534), and multiplying
+## the meadow centre by it gives the constant below. A bench is then the same
+## value and hue as the ground the village stands on.
+##
+## Applied to the RIM as well, for the reason the rim exists: turf and its own
+## rolled edge that do not match are two surfaces, not one bench.
+const GARDEN_TURF_TINT := Color(0.39, 0.51, 0.53)
+## What grows on a bench once it is a garden rather than a plate. All four are
+## authored village dressing under a metre tall, so one sits inside its own
+## 1.5 m cell with room to spare (the broadest measures 0.95 m) and none of them
+## can reach a neighbour's street. They ship without colliders, exactly as the
+## courtyard planter this file already places does, and that is sound here for a
+## reason worth stating: a planted cell is by construction a cell the public
+## realm does NOT walk -- that is what made it green in the first place -- so
+## there is no body to stop.
+const GARDEN_PLANTING: Array[StringName] = [
+	&"lpfv.fabric.prop.plant.broad.03",
+	&"lpfv.fabric.prop.plant.mid.02",
+	&"lpfv.fabric.prop.plant.low.01",
+	&"lpfv.fabric.prop.plant.tall.04",
+]
+## The BUILT piece of the vocabulary, and the village green's own. A self-sown
+## plant says "nobody comes here"; a made planter says somebody laid this square
+## out, which is the difference between a leftover patch of grass and a plaza.
+## It is the same module the elevated courtyards are already edged with, so a
+## plaza and a court are furnished from one kit.
+const GARDEN_PLANTER := COURTYARD_PLANTER
+## How often an ordinary yard grows something: one bench cell in three. Sparse
+## on purpose -- the direction is "gardens/courtyards BEHIND and BETWEEN houses,
+## incidental", not a nursery.
+const GARDEN_PLANTING_ODDS := 0.34
+## THE VILLAGE GREEN (user annotation, 2026-08-26): "this should be more
+## integrated in the city, like a grass plaza in the center". One deliberate
+## plaza beats scattered lawn, so the largest connected run of bench tops in a
+## town is designated as that plaza and dressed as one: its INTERIOR stays open
+## grass (a plaza is a clearing) and its EDGE cells take planting at twice the
+## ordinary rate, which is what turns a shapeless green patch into a bounded
+## square. A run must reach this many cells to be worth calling a plaza; below
+## it a town simply has no green big enough and every bench is dressed as an
+## ordinary yard.
+## Iteration 2 of this task rendered the edge at 0.68 and the capture
+## (`i2/r2-12-compact/seed-012-gate-approach-far.png`) reads as a regular row of
+## boxes along a parapet rather than as a planted boundary -- nearly every edge
+## cell took one. Half is enough to bound the square and leaves gaps to look
+## through.
+const VILLAGE_GREEN_MINIMUM_CELLS := 4
+const VILLAGE_GREEN_EDGE_ODDS := 0.5
+## The one-cell facade module's own front face, mirrored from
+## `SettlementFabricProgram.WOOD_CELL_FACADE_FRONT_DEPTH` so this file's
+## transform arithmetic reads against the same number the pool is measured by.
+const FACADE_FRONT_DEPTH := SettlementFabricProgram.WOOD_CELL_FACADE_FRONT_DEPTH
 ## What one panel of the skin WEARS. The shell, its coursing and its cap
 ## pairing are unchanged by this: a treatment picks the module, never the
 ## panel, so the retained rock's volume and the audited face identity are the
 ## same facts they were.
-enum SkinTreatment {MASONRY, NATURAL, GREEN}
+##
+## TASK I2 ADDS THE FOURTH AND RETIRES THE SECOND. FACADE is a BUILDING storey:
+## the authored one-cell timber wall, window or boarded, in the district's own
+## family. NATURAL -- the KayKit cliff shard H2b clad tall banks with -- is
+## `maze_natural_is_permitted()` false and therefore unreachable; the user's
+## verdict on it was "these are the parts that i think we should remove: the
+## cliffs", rim included. The enum keeps the member because the shard's own
+## arithmetic (its coverage bounds, its street cut, its tail clamp) is still
+## proved by the suite and is the record of why a 4 m module on a 1.5 m lattice
+## needed three clamps -- the next skin module with that habit should be able to
+## read it.
+enum SkinTreatment {MASONRY, NATURAL, GREEN, FACADE}
 ## A side panel is 3 m tall -- TWO bands -- so a run of exposed stone is
 ## coursed at the module's own height instead of hung once per band. Hanging
 ## one per band put each module's lower band inside the one below it, which is
@@ -699,10 +778,14 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan) \
 	var shell := maze_skin_shell(retained, solids, paved, plinths, walked)
 	var out := _plinth_payload(plinths)
 	out.append_from(maze_stone_walls(retained, solids, paved, plinths, walked,
-		shell))
+		shell, plan.world_seed))
 	# TASK H2b FIX 1, IMPORTANT 3. The rolled edge round every green bench,
 	# beside the shell rather than inside it -- see `maze_green_rim_walls`.
 	out.append_from(maze_green_rim_walls(retained, solids, paved, plinths,
+		walked, shell))
+	# TASK I2. What grows on those benches once they are yards rather than lime
+	# plates, and the village green among them.
+	out.append_from(maze_garden_dressing(retained, solids, paved, plinths,
 		walked, shell))
 	# TASK C5e RULING 3. The other half of what a maze town's crown wears.
 	# The parapet course that used to cap every flat roof is released to air
@@ -1025,6 +1108,32 @@ static func maze_skin_treatments(exposed: Dictionary, faces: Dictionary,
 	##   the realm walks (task C5b's "the street stands on stone"), and every
 	##   floor-facing cap, which is the roof of a bored passage and is read
 	##   from inside a tunnel rather than as part of the town's silhouette.
+	##
+	## TASK I2 REPLACES THE SECOND ANSWER WITH A FOURTH, and the direction it
+	## comes from is the user's own: "remove all stone from everywhere but the
+	## ground floor of select buildings ... everything else should use actual
+	## building assets", then, on the H2b result, "these are the parts that i
+	## think we should remove: the cliffs". H2b's reading was that a tall bank is
+	## HILLSIDE. The verdict is that a hillside standing inside a town is a cliff
+	## in the town, whatever it is made of -- so a tall bank is not hillside at
+	## all. It is the side of a BUILDING, and it takes building storeys:
+	##
+	## * FACADE -- every side face in a bank taller than STONE_BUDGET_BANDS,
+	##   every course of it, foot to top. One authored 1.5 m x 3 m timber wall
+	##   per panel, which is exactly one cell wide and exactly one storey tall.
+	## * MASONRY keeps the LOW banks and nothing else. A face at or under the
+	##   budget is at most one storey of coursed stone holding a terrace up,
+	##   which is both the reviewer budget and the thing the user singled out as
+	##   right: "the stone walls serving as one level in a house, and not
+	##   overused in the city". The rate is therefore UNTOUCHED by this task --
+	##   no low face becomes facade and no tall face becomes masonry.
+	##
+	## THE BANK HEIGHT IS THE ONLY DIAL, and that is deliberate. Every other
+	## split the direction suggests -- above/below the street datum, rim against
+	## interior, seeded stone bases on the mass -- would either need a datum this
+	## file does not hold or would put stone back somewhere the verdict took it
+	## out of. One number, measured per face, with the two answers on either side
+	## of it.
 	var out: Dictionary = {}
 	for key_value: Variant in faces.keys():
 		var key := key_value as Vector4i
@@ -1035,16 +1144,46 @@ static func maze_skin_treatments(exposed: Dictionary, faces: Dictionary,
 						walked) \
 				else SkinTreatment.MASONRY
 			continue
-		var natural := maze_bank_height(exposed, key) > STONE_BUDGET_BANDS
+		var tall := maze_bank_height(exposed, key) > STONE_BUDGET_BANDS
+		if not tall:
+			out[key] = SkinTreatment.MASONRY
+			continue
+		if not maze_natural_is_permitted():
+			out[key] = SkinTreatment.FACADE
+			continue
 		# TASK H2c FIX 1. The cut's fallback: a tall bank the street crosses,
 		# on a day the cut can no longer be expressed as stand-off, is coursed
 		# rather than left as rock a body cannot pass. Dead today by
 		# construction and live the moment the arithmetic above stops holding.
-		if natural and not maze_natural_cut_is_expressible() \
-				and maze_natural_face_is_cut(key, walked):
-			natural = false
-		out[key] = SkinTreatment.NATURAL if natural else SkinTreatment.MASONRY
+		out[key] = SkinTreatment.MASONRY \
+			if not maze_natural_cut_is_expressible() \
+				and maze_natural_face_is_cut(key, walked) \
+			else SkinTreatment.NATURAL
 	return out
+
+
+static func maze_natural_is_permitted() -> bool:
+	## TASK I2 -- THE CLIFF SWITCH, and it is off.
+	##
+	## The user annotated an I2-state frame with two marks: one on a coursed
+	## stone storey under a green cap, "i like this part right now"; one on the
+	## KayKit cliff shards, "these are the parts that i think we should remove:
+	## the cliffs" -- and the ruling that followed took the rim allowance back
+	## too. Zero shard faces anywhere in or on a town.
+	##
+	## A NAMED PREDICATE rather than a deleted branch, because what is being
+	## retired is a TREATMENT and not the machinery under it. The shard's
+	## coverage bounds, its street cut, its tail clamp and its three-band reach
+	## are the repo's record of what a 4 m module on a 1.5 m lattice costs, they
+	## are still proved by the suite against the descriptors, and the day some
+	## rim really does want rock this is the one line that has to change. The
+	## corpus reads `maze_skin_natural_panel_count = 0` while it says false, and
+	## that zero is the pin.
+	##
+	## The world's own hillsides are untouched: `CliffDressing` hangs the same
+	## module on real terrain cliffs through a different channel entirely, and a
+	## village standing on a hill still has that hill around it.
+	return false
 
 
 static func maze_natural_face_is_cut(key: Vector4i,
@@ -1327,7 +1466,8 @@ static func walked_floor_cells(surface_plan: PublicRealmSurfacePlan) \
 static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 		paved: Dictionary = {}, plinths: Dictionary = {},
 		walked: Dictionary = {},
-		shell: Dictionary = {}) -> EnvironmentInstancePayload:
+		shell: Dictionary = {},
+		world_seed: int = 0) -> EnvironmentInstancePayload:
 	## ONE module per panel of `maze_stone_faces`, and `maze_skin_treatments`
 	## says which module. The panel set, its coursing and its cap pairing are
 	## untouched by task H2b: this function chose one asset before and chooses
@@ -1373,8 +1513,17 @@ static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 			key.z, key.w])
 		match int(treatments[key]):
 			SkinTreatment.GREEN:
+				# TASK I2. The turf takes the ground palette's own multiplier
+				# rather than the atlas raw -- see GARDEN_TURF_TINT.
 				out.add(TERRAIN_GREEN_CAP,
-					_maze_green_cap_transform(cell, partner), Color.WHITE,
+					_maze_green_cap_transform(cell, partner), GARDEN_TURF_TINT,
+					stable_id)
+			SkinTreatment.FACADE:
+				# TASK I2. A building storey, and nothing is clamped: the module
+				# closes its panel exactly and stands entirely behind the
+				# boundary. `_maze_facade_transform` carries the argument.
+				out.add(maze_facade_module(key, world_seed),
+					_maze_facade_transform(key, direction), Color.WHITE,
 					stable_id)
 			SkinTreatment.NATURAL:
 				out.add(NATURAL_ROCK_FACE,
@@ -1396,6 +1545,86 @@ static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 					Color.WHITE, stable_id)
 	assert(out.validate())
 	return out
+
+
+static func maze_facade_family(key: Vector4i, world_seed: int) -> StringName:
+	## TASK I2 -- WHICH TIMBER FAMILY a clad mass face belongs to.
+	##
+	## The district field, and the same call every real room's recipe is chosen
+	## through (`WarrenSpatialFabricCompiler.architectural_district_theme`), read
+	## at the panel's own lattice column. That is the whole alignment argument
+	## for palette: a fake storey and the house across the alley are in the same
+	## architectural district, so they draw from the same authored family, and a
+	## block does not change colour where the mass ends and the building begins.
+	##
+	## The BAND is deliberately not part of it. A district is a plan fact in x/z
+	## -- the compiler passes `room.lattice_origin` whose y varies storey by
+	## storey and gets the same answer -- so a clad face keeps one family from
+	## its foot to its top.
+	return WarrenSpatialFabricCompiler.architectural_district_theme(
+		Vector3i(key.x, 0, key.z), world_seed)
+
+
+static func maze_facade_module(key: Vector4i, world_seed: int) -> StringName:
+	## Which authored wall this panel wears: the family's one-cell pool, indexed
+	## by the panel's own lattice position.
+	##
+	## A SUM AND NOT A HASH, which is the compiler's own idiom for facade phase
+	## (`_room_recipe_id` hashes the horizontal slot plus the storey the same
+	## way) and which matters here for a reason a hash would spoil. Stepping one
+	## cell along a run steps one entry along the pool, so a face reads as an
+	## alternating rhythm of window and boarded panel -- a wall -- where a hash
+	## would scatter windows at random and give the "window spam" the iterate
+	## ruling names. Stepping one COURSE up steps two entries, because the
+	## coursing is two bands, so the storey above is offset rather than
+	## identical.
+	##
+	## `key.w` joins the sum so the two faces meeting at a mass corner start on
+	## different entries instead of turning the corner with the same module.
+	var pool := SettlementFabricProgram.cell_facade_pool(
+		maze_facade_family(key, world_seed))
+	return pool[posmod(key.x + key.z + key.y + key.w + world_seed, pool.size())]
+
+
+static func _maze_facade_transform(key: Vector4i,
+		direction: Vector3i) -> Transform3D:
+	## The authored timber wall hung on one panel of the shell.
+	##
+	## VERTICALLY it is the masonry module's own idiom and the same span: the
+	## module is STONE_MODULE_HEIGHT tall, its top lands on the course boundary
+	## at `(band + 1) x CELL_SIZE`, and it therefore clads exactly the two bands
+	## the coursing gave it. That is one storey -- `WarrenBuildingParcel
+	## .STOREY_BANDS` bands -- so a fake storey is the same height as a real one
+	## and a run of clad mass reads as floors rather than as panelling.
+	##
+	## HORIZONTALLY it is the ROOM RECIPE's idiom rather than the skin's: the
+	## module is pinned by its OUTER FACE to the boundary plane, exactly as
+	## `FabricModuleProgram.facade_aligned_transform` pins a house's wall, so the
+	## whole 0.277 m of it stands INSIDE the mass and nothing at all reaches into
+	## the street. Two consequences worth stating out loud:
+	##
+	## * IT CANNOT OPEN THE SHELL. The module measures 1.500 m across against a
+	##   1.5 m cell and 3.000 m tall against a 3.0 m course, so it closes its own
+	##   panel exactly, with no jitter, no scale and no coverage argument to
+	##   make. The rock it replaces needed a two-part proof and three clamps for
+	##   the same job.
+	## * IT CANNOT SHUT A STREET. The coursed masonry panel straddles its
+	##   boundary and stands 0.332 m into the cell it faces; the rock shard stood
+	##   0.375 m plus its relief; this stands 0.000 m. Every trim in this file
+	##   exists because a module reached into somewhere a body walks, and a
+	##   facade panel reaches into the faced cell not at all. Down its OWN column
+	##   it occupies the outer 0.277 m, which leaves 1.223 m of a 1.5 m cell
+	##   against a 0.795 m body -- so no trim is applied and the clearance row is
+	##   the measurement that says so.
+	##
+	## The yaw is `atan2(outward.x, outward.z)`, the same four-way turn the rock
+	## face and the bench rim take, which puts the module's authored front (its
+	## local +Z) outward.
+	var outward := Vector3(direction)
+	var origin := Vector3(key.x, 0.0, key.z) * FabricRecipe.CELL_SIZE \
+		+ outward * (FabricRecipe.CELL_SIZE * 0.5 - FACADE_FRONT_DEPTH)
+	origin.y = float(key.y + 1) * FabricRecipe.CELL_SIZE - STONE_MODULE_HEIGHT
+	return Transform3D(Basis(Vector3.UP, atan2(outward.x, outward.z)), origin)
 
 
 static func _maze_green_cap_transform(cell: Vector3i,
@@ -1482,7 +1711,7 @@ static func maze_green_rim_walls(retained: Dictionary, solids: Dictionary,
 					continue
 				out.add(GREEN_RIM_EDGE,
 					_maze_green_rim_transform(cell, FACE_DIRECTIONS[index],
-						depth_scale), Color.WHITE,
+						depth_scale), GARDEN_TURF_TINT,
 					StringName("maze-rim/%d/%d/%d/%d" % [cell.x, cell.y,
 						cell.z, index]))
 	assert(out.validate())
@@ -1511,6 +1740,146 @@ static func _maze_green_rim_transform(cell: Vector3i, direction: Vector3i,
 	basis.x = basis.x * GREEN_CAP_CROSS_SCALE
 	basis.z = basis.z * depth_scale
 	return Transform3D(basis, origin)
+
+
+static func maze_garden_cells(retained: Dictionary, solids: Dictionary,
+		paved: Dictionary = {}, plinths: Dictionary = {},
+		walked: Dictionary = {},
+		shell: Dictionary = {}) -> Dictionary:
+	## TASK I2 -- every lattice cell whose TOP is a garden, as `cell -> true`.
+	##
+	## One entry per cell rather than per panel: a green cap covers its own cell
+	## and the neighbour it was paired with, and a yard is a piece of ground, not
+	## a slab. Read off the shell the payload already derived, so the set of
+	## planted cells and the set of green-capped cells cannot drift apart.
+	var derived := shell if not shell.is_empty() \
+		else maze_skin_shell(retained, solids, paved, plinths, walked)
+	var faces := derived.faces as Dictionary
+	var treatments := derived.treatments as Dictionary
+	var out: Dictionary = {}
+	var keys: Array[Vector4i] = []
+	keys.assign(faces.keys())
+	keys.sort_custom(_face_before)
+	for key: Vector4i in keys:
+		if int(treatments[key]) != SkinTreatment.GREEN:
+			continue
+		var cell := Vector3i(key.x, key.y, key.z)
+		out[cell] = true
+		var partner := faces[key] as Vector3i
+		if partner != Vector3i.ZERO:
+			out[cell + partner] = true
+	return out
+
+
+static func maze_village_green_cells(garden: Dictionary) -> Dictionary:
+	## TASK I2, USER ANNOTATION -- THE VILLAGE GREEN. "this should be more
+	## integrated in the city, like a grass plaza in the center."
+	##
+	## The largest connected run of garden cells in the town, or empty when the
+	## largest reaches fewer than VILLAGE_GREEN_MINIMUM_CELLS. Connected means
+	## laterally adjacent AT THE SAME BAND: two benches a storey apart are two
+	## terraces, and a plaza is one surface you can cross.
+	##
+	## Ties are broken by the run's own sorted first cell rather than by which
+	## key the dictionary happened to yield first, so the designation is a pure
+	## function of the cell set and a re-solve names the same plaza.
+	##
+	## Deliberately a SHAPE question and not a position one. The annotation asks
+	## for a plaza "in the center", and the largest terrace top in a town cut out
+	## of one hill IS its centre in the only sense the plan model has -- the
+	## widest surviving shoulder, which is where the summit flattens. A town
+	## centroid measured over lattice cells would pick the middle of the bounding
+	## box, which on a terraced massif is as likely to be a roof.
+	var seen: Dictionary = {}
+	var cells: Array[Vector3i] = []
+	cells.assign(garden.keys())
+	cells.sort_custom(_cell_before)
+	var best: Dictionary = {}
+	for start: Vector3i in cells:
+		if seen.has(start):
+			continue
+		var run: Dictionary = {start: true}
+		var frontier: Array[Vector3i] = [start]
+		seen[start] = true
+		while not frontier.is_empty():
+			var cell: Vector3i = frontier.pop_back()
+			for step: Vector3i in FACE_DIRECTIONS:
+				var neighbor := cell + step
+				if not garden.has(neighbor) or seen.has(neighbor):
+					continue
+				seen[neighbor] = true
+				run[neighbor] = true
+				frontier.append(neighbor)
+		if run.size() > best.size():
+			best = run
+	return best if best.size() >= VILLAGE_GREEN_MINIMUM_CELLS else {}
+
+
+static func maze_garden_dressing(retained: Dictionary, solids: Dictionary,
+		paved: Dictionary = {}, plinths: Dictionary = {},
+		walked: Dictionary = {},
+		shell: Dictionary = {}) -> EnvironmentInstancePayload:
+	## TASK I2 -- WHAT MAKES A BENCH TOP A YARD. The cap is the ground and the
+	## rim is its edge; this is what stands on it.
+	##
+	## A SEPARATE PAYLOAD for the reason `maze_green_rim_walls` is one: task
+	## C5b's identity is one instance per panel of the shell, and a planter is
+	## not a panel. Every piece carries a `maze-garden/` id that no reading of
+	## the skin mistakes for cladding.
+	##
+	## TWO RATES, and the difference is the whole plaza. An ordinary yard grows
+	## something on a third of its cells -- incidental green behind and between
+	## houses. The VILLAGE GREEN grows nothing in its middle and twice as much on
+	## its EDGE, which is what a plaza is: a clearing with a planted boundary. A
+	## cell on the plaza edge is one with a lateral neighbour that is not plaza.
+	##
+	## Nothing here is placed on a cell the public realm walks: `maze_garden_
+	## cells` is derived from the GREEN treatment, and a cap is only green when
+	## neither cell it covers is walked.
+	var garden := maze_garden_cells(retained, solids, paved, plinths, walked,
+		shell)
+	var out := EnvironmentInstancePayload.new()
+	if garden.is_empty():
+		return out
+	var plaza := maze_village_green_cells(garden)
+	var cells: Array[Vector3i] = []
+	cells.assign(garden.keys())
+	cells.sort_custom(_cell_before)
+	for cell: Vector3i in cells:
+		var on_plaza := plaza.has(cell)
+		var odds := GARDEN_PLANTING_ODDS
+		var built := false
+		if on_plaza:
+			var edge := false
+			for step: Vector3i in FACE_DIRECTIONS:
+				edge = edge or not plaza.has(cell + step)
+			# The clearing itself stays empty; its boundary is planted, and the
+			# boundary takes the BUILT planter rather than a self-sown plant.
+			odds = VILLAGE_GREEN_EDGE_ODDS if edge else 0.0
+			built = edge
+		var seed_key := Vector4i(cell.x, cell.y, cell.z, 0)
+		if _face_noise(seed_key, 11) >= odds:
+			continue
+		var asset := GARDEN_PLANTER if built \
+			else GARDEN_PLANTING[int(_face_noise(seed_key, 12) \
+				* float(GARDEN_PLANTING.size())) % GARDEN_PLANTING.size()]
+		# Centred on its own cell, standing on the cap's own plane, and turned so
+		# it CANNOT reach a neighbour. A self-sown plant takes a free yaw -- the
+		# broadest measures 0.951 m, whose worst rotated half-extent is 0.639 m
+		# against the cell's own 0.750 m -- while the BUILT planter takes quarter
+		# turns only: it measures 1.208 x 0.900 m, which is inside the cell on
+		# both axes but reaches 0.753 m at 45 degrees, three millimetres past its
+		# own cell. Square to the grid is also what a laid-out planter looks like,
+		# so the bound and the look want the same thing.
+		var origin := Vector3(cell) * FabricRecipe.CELL_SIZE
+		origin.y = float(cell.y + 1) * FabricRecipe.CELL_SIZE + GREEN_CAP_LIFT
+		var yaw := _face_noise(seed_key, 13)
+		out.add(asset, Transform3D(Basis(Vector3.UP,
+			floorf(yaw * 4.0) * PI * 0.5 if built else yaw * TAU), origin),
+			Color.WHITE,
+			StringName("maze-garden/%d/%d/%d" % [cell.x, cell.y, cell.z]))
+	assert(out.validate())
+	return out
 
 
 static func maze_green_cap_long_scale(partner: Vector3i) -> float:

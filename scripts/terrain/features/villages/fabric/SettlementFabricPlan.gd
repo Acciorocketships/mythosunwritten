@@ -24,6 +24,22 @@ var embedding_plan: StaggeredFabricEmbeddingPlan
 ## Empty for a legacy town: the retired asset compiler declared the wider hill
 ## only where the massif provenance is present.
 var retained_terrace_cells: Dictionary = {}
+## TASK I2. The town's own world seed, carried here because the retained-mass
+## skin now has to answer a question only the seed can answer: WHICH TIMBER
+## FAMILY a clad mass face belongs to. A fake storey and the real house beside
+## it must share a palette, and the palette is
+## `WarrenSpatialFabricCompiler.architectural_district_theme(origin, seed)` --
+## the same district field every real room's recipe is chosen through. Deriving
+## a second field off the plan's own id would give the mass its own colouring
+## and put a blue wall against an orange neighbour on the same block.
+##
+## A PLAIN FIELD, not an audit key, because the skin is derived TWICE: once for
+## the payload (on a sealed plan) and once for `_maze_stone_skin_audit` (on a
+## plan the compiler has not sealed yet, whose `audit` is still empty). One
+## field answers both. It rides outside `construction_signature()` on purpose --
+## that signature is seed-independent by contract -- and a legacy plan leaves it
+## 0, which is inert because a legacy plan tags no maze stone at all.
+var world_seed: int = 0
 var audit: Dictionary = {}
 var _recipes: Dictionary = {}
 var _by_id: Dictionary = {}

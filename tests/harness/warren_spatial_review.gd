@@ -483,8 +483,12 @@ func _commit_production_entries(parent: Node3D,
 	var payload := EnvironmentInstancePayload.new()
 	var inverse := _production_urban.world_transform.affine_inverse()
 	for entry: Dictionary in _production_urban.entries:
+		# TASK I2. The entry's own instance colour, not white: this harness's
+		# production path is how the shipped settlement is reviewed, and writing
+		# white here would show a frame the game does not render.
 		payload.add(StringName(entry.asset_id),
-			inverse * (entry.transform as Transform3D), Color.WHITE,
+			inverse * (entry.transform as Transform3D),
+			entry.get("color", Color.WHITE) as Color,
 			StringName(entry.stable_id))
 	for world_mesh: Dictionary in _production_urban.surface_meshes:
 		var local_mesh := world_mesh.duplicate(true)

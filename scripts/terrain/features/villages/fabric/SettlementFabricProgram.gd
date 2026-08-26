@@ -172,6 +172,67 @@ const WOOD_FACADE_AMBER: Array[StringName] = [
 	&"sfv.fabric.wall.wood.plain.013",
 	&"sfv.fabric.wall.wood.window.037",
 ]
+## TASK I2 -- THE HALF-WIDTH FACADE VOCABULARY, one module per fabric cell.
+##
+## The pools above are the authored 3.000 m wall, which is TWO fabric cells; a
+## room recipe spans three of them at a time and never meets the lattice
+## boundary. The retained-mass skin does: it clads one 1.5 m cell per panel,
+## because that is the unit the shell's coursing and its whole coverage proof are
+## written in (`SettlementFabricAssembler.maze_stone_faces`). Cladding it with a
+## 3 m module would mean either pairing panels -- which breaks the one-instance-
+## per-panel identity task C5b's audit rests on -- or scaling a window to half
+## its authored width.
+##
+## The source pack ships the half-width wall itself, so neither is necessary.
+## `SFV_Wall_Wooden_Window_S_*` and `SFV_Wall_Wooden_S_*` measure 1.500 x 3.000 m
+## against the 3.000 x 3.000 m of the pools above: exactly one cell wide and
+## exactly one storey (`WarrenBuildingParcel.STOREY_BANDS` x
+## `FabricRecipe.CELL_SIZE`) tall, which is exactly the course the skin already
+## lays. Every entry carries one collision piece, which the H2c census requires
+## of anything standing beside a walked cell.
+##
+## FAMILY MEMBERSHIP IS THE REVIEWED ONE, not a guess. The three window pieces
+## are `WALL_WOOD_WINDOW_S_BLUE/ORANGE/AMBER` -- the same three the embedded
+## oriel bay picks between on the same district theme -- so a clad mass face and
+## the bay on the house beside it are the same authored window. The two plain
+## pieces are `WALL_WOOD_S_A/B`, which the shipped balcony recipe already places
+## under all three themes and are therefore family-neutral by precedent.
+##
+## The pool is read with a per-panel hash, so a run of clad mass alternates
+## window and boarded panel instead of repeating one module: three of six
+## entries carry a window, which is the same rhythm the 3 m pools above carry.
+const WOOD_CELL_FACADE_BLUE: Array[StringName] = [
+	WALL_WOOD_WINDOW_S_BLUE,
+	WALL_WOOD_S_A,
+	WALL_WOOD_WINDOW_S_BLUE,
+	WALL_WOOD_S_B,
+	WALL_WOOD_S_A,
+	WALL_WOOD_WINDOW_S_BLUE,
+]
+const WOOD_CELL_FACADE_ORANGE: Array[StringName] = [
+	WALL_WOOD_WINDOW_S_ORANGE,
+	WALL_WOOD_S_B,
+	WALL_WOOD_WINDOW_S_ORANGE,
+	WALL_WOOD_S_A,
+	WALL_WOOD_S_B,
+	WALL_WOOD_WINDOW_S_ORANGE,
+]
+const WOOD_CELL_FACADE_AMBER: Array[StringName] = [
+	WALL_WOOD_WINDOW_S_AMBER,
+	WALL_WOOD_S_A,
+	WALL_WOOD_WINDOW_S_AMBER,
+	WALL_WOOD_S_B,
+	WALL_WOOD_WINDOW_S_AMBER,
+	WALL_WOOD_S_A,
+]
+## The measured front extent of the deepest module in the three pools above --
+## `sfv.fabric.wall.wood.window.s.002`, AABB z -0.27658..+0.27658. The skin pins
+## its facade panels by this ONE number rather than by a per-asset lookup, so
+## every panel of a clad face stands in the same plane and the shallower boarded
+## pieces sit at most 0.042 m behind it, which no eye reads and which can only
+## make a street wider. `test_the_skin_constants_mirror_the_module_descriptors`
+## checks it against the descriptors so a re-bake cannot move it in silence.
+const WOOD_CELL_FACADE_FRONT_DEPTH := 0.27658215
 const ROCK_FACADE: Array[StringName] = [
 	&"sfv.fabric.wall.rock.window.010",
 	&"sfv.fabric.wall.rock.plain.001",
@@ -890,11 +951,25 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	# first render with a blank town. FIX 1, MINOR 8 gives RAILING_MEDIUM the
 	# same check the two skin modules got: it was declared bare, and a guard
 	# rail that vanished from the bake would have been the same silent failure.
-	for adapter_asset: StringName in [
-			RAILING_MEDIUM,
-			SettlementFabricAssembler.TERRAIN_GREEN_CAP,
-			SettlementFabricAssembler.NATURAL_ROCK_FACE,
-			SettlementFabricAssembler.GREEN_RIM_EDGE]:
+	# * TASK I2 adds two more families to the same list. The one-cell facade
+	#   modules are placed by the skin and by nothing else -- the room recipes
+	#   use the 3 m pools -- so without this line a clad mass face is a hole in
+	#   the streamed town. The garden props are the dressing that turns a bench
+	#   top from a lime plate into a yard.
+	var adapter_assets: Array[StringName] = [
+		RAILING_MEDIUM,
+		SettlementFabricAssembler.TERRAIN_GREEN_CAP,
+		SettlementFabricAssembler.NATURAL_ROCK_FACE,
+		SettlementFabricAssembler.GREEN_RIM_EDGE,
+	]
+	for pool: Array[StringName] in [WOOD_CELL_FACADE_BLUE,
+			WOOD_CELL_FACADE_ORANGE, WOOD_CELL_FACADE_AMBER,
+			SettlementFabricAssembler.GARDEN_PLANTING,
+			[SettlementFabricAssembler.GARDEN_PLANTER] as Array[StringName]]:
+		for asset_id: StringName in pool:
+			if not adapter_assets.has(asset_id):
+				adapter_assets.append(asset_id)
+	for adapter_asset: StringName in adapter_assets:
 		if catalog.descriptor(adapter_asset) == null:
 			push_error("Fabric adapter asset is not in the catalog: %s" \
 				% adapter_asset)
@@ -4746,6 +4821,20 @@ static func facade_pool(family: StringName) -> Array[StringName]:
 	if family == &"amber":
 		return WOOD_FACADE_AMBER
 	return WOOD_FACADE_BLUE
+
+
+static func cell_facade_pool(family: StringName) -> Array[StringName]:
+	## TASK I2. The one-cell facade vocabulary for a district family. Same three
+	## names `facade_pool` answers to and the same default, so a caller that
+	## hands over `architectural_district_theme`'s answer gets the timber family
+	## of that district at either width. There is no `stone` pool: the retained
+	## mass wears coursed rock through its own retaining course, never as a
+	## facade storey.
+	if family == &"orange":
+		return WOOD_CELL_FACADE_ORANGE
+	if family == &"amber":
+		return WOOD_CELL_FACADE_AMBER
+	return WOOD_CELL_FACADE_BLUE
 
 
 static func door_pool(family: StringName) -> Array[StringName]:
