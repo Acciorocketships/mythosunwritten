@@ -862,6 +862,8 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			"maze_skin_cut_tail_candidate_count": 0,
 			"maze_skin_cut_tail_unclearable_count": 0,
 			"maze_skin_coursed_trim_count": 0,
+			"maze_stone_cap_jut_cell_count": 0,
+			"maze_skin_cap_trim_count": 0,
 			"maze_free_bench_stone_cap_count": 0,
 			"maze_green_cap_jut_cell_count": 0,
 			"maze_green_cap_jut_over_air_count": 0,
@@ -995,6 +997,13 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	# The coursed twin of the tail clamp: masonry panels trimmed to their own
 	# band because the course they would have buried into is an open street.
 	var coursed_trim := 0
+	# TASK I1 FIX 1. The HORIZONTAL twin of both: unpaired cap slabs cut back to
+	# the run they close because the 0.75 m they reach past it is a street. The
+	# jut cells are published beside it exactly as the green quad's are, so
+	# "how far do the caps reach" and "how many of them reach over somebody" stay
+	# two separate, checkable statements.
+	var cap_jut_cells := 0
+	var cap_trim := 0
 	var free_bench_stone_caps := 0
 	var shared_street_caps := 0
 	var low_bank_faces := 0
@@ -1017,6 +1026,12 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 				green_jut_over_air += int(not retained.has(jut) \
 					and not solids.has(jut))
 		if key.w >= sides:
+			if treatment == SettlementFabricAssembler.SkinTreatment.MASONRY:
+				cap_jut_cells += SettlementFabricAssembler \
+					.maze_stone_cap_jut_cells(key, faces[key] as Vector3i).size()
+				cap_trim += int(SettlementFabricAssembler \
+					.maze_stone_cap_juts_over_walk(key, faces[key] as Vector3i,
+						walked))
 			if treatment != SettlementFabricAssembler.SkinTreatment.MASONRY \
 					or SettlementFabricAssembler.STONE_FACE_DIRECTIONS[key.w] \
 						!= Vector3i.UP \
@@ -1080,6 +1095,8 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		"maze_skin_cut_tail_candidate_count": tail_candidates,
 		"maze_skin_cut_tail_unclearable_count": tail_unclearable,
 		"maze_skin_coursed_trim_count": coursed_trim,
+		"maze_stone_cap_jut_cell_count": cap_jut_cells,
+		"maze_skin_cap_trim_count": cap_trim,
 		"maze_free_bench_stone_cap_count": free_bench_stone_caps,
 		"maze_shared_street_cap_count": shared_street_caps,
 		"maze_low_bank_face_count": low_bank_faces,

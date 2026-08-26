@@ -342,6 +342,24 @@ const NATURAL_ROCK_CUT_BAND_REACH := 3
 ## (TOP + BASE) = 0.75, which is why that number is NOT the floor today: it
 ## would make g = 2 unclearable and course the crossing over to masonry, which
 ## is a heavier answer than the geometry needs.
+##
+## TASK I1 -- THE PREMISE WENT FALSE, AND WAS PUT BACK RATHER THAN PAID FOR.
+## This is the history, because a proof standing on a measurement should carry
+## the day that measurement moved. Task I1 halved every footprint and its first
+## 48-town matrix measured `blocked = 3`: three walked cells in three towns
+## admitting no capsule, which is exactly the condition written above. The floor
+## was NOT raised to 0.75. The three cells were read one at a time
+## (`i1f1/probe-before.log`) and not one of them was the g = 2 configuration
+## this proof rules out -- in all three the module in the street was a
+## HORIZONTAL cap oversailing its own run, a defect on an axis neither clamp
+## looked at. Extending the trim machinery to that axis
+## (`maze_stone_cap_juts_over_walk`) took all three cells and all four of their
+## shut crossings back to free, and the matrix measures `blocked = 0` again.
+##
+## So the premise is measured-true on the shipped tree, by the same corpus and
+## the same physics query it was true by before -- and it is now true with one
+## more mechanism holding it up rather than one fewer. The contingency above
+## still stands for the next time.
 const NATURAL_ROCK_CUT_MIN_RISE := FabricRecipe.CELL_SIZE \
 	/ (NATURAL_ROCK_TOP + NATURAL_ROCK_BASE)
 ## The grass quad has no thickness, so it is offset off the boundary it closes
@@ -1104,6 +1122,32 @@ static func maze_natural_face_overhung_band(key: Vector4i,
 	## `key.y` itself is excluded: a panel level with the street is that
 	## street's own wall. Returns the band, or `key.y` when nothing walks under
 	## it, so callers read "overhung band < key.y" as the condition.
+	##
+	## TASK I1 FIX 1 -- WHY THIS IS STILL ONE COLUMN WHERE `maze_natural_face_
+	## is_cut` IS TWO, asked again with numbers this time. The straddle argument
+	## that widened the NOSE test to both columns does not carry to the TAIL,
+	## and the difference is what each clamp can reach. The nose clamp moves the
+	## module 0.06 m along its own depth and cannot bare anything; the tail clamp
+	## moves the module's BOTTOM EDGE, and a panel clads the course {y, y - 1}
+	## whenever band y - 1's face is exposed too, so shortening it below
+	## 2 x CELL_SIZE / (TOP + BASE) = 0.75 rise leaves part of that course as
+	## bare rock -- the slit `NATURAL_ROCK_CUT_MIN_RISE` exists to forbid.
+	##
+	## Measured on the three towns fix round 1 was called for
+	## (`i1f1/probe-capfix.log`): widening this test to the faced column would
+	## newly offer the clamp 25 panels on 3/compact, 57 on 6/grand and 64 on
+	## 10/grand, and on 21, 35 and 43 of those respectively the ceiling lands
+	## UNDER that 0.75 floor with a two-band course above it. Widened naively,
+	## every one of those is a hole in the mountain; widened with a course-aware
+	## floor, none of them moves at all and the only thing that changes is that
+	## `maze_skin_cut_tail_unclearable_count` stops meaning "a crossing no
+	## cladding can open" and starts meaning nothing in particular.
+	##
+	## And the street the widening was proposed for is already answered: the
+	## faced side is what the NOSE clamp is for, it fires on every one of these
+	## panels, and a panel reaching 0.318 m into the cell it faces leaves 1.182 m
+	## against a 0.795 m body. What actually shut the three cells was the cap
+	## oversail, and `maze_stone_cap_juts_over_walk` closes it.
 	if key.w >= FACE_DIRECTIONS.size():
 		return key.y
 	for band in range(key.y - 1, key.y - NATURAL_ROCK_CUT_BAND_REACH - 1, -1):
@@ -1167,6 +1211,92 @@ static func _maze_cap_is_free(key: Vector4i, partner: Vector3i,
 	if not exposed.has(mate):
 		return true
 	return not walked.has(Vector3i(mate.x, mate.y + 1, mate.z))
+
+
+static func maze_stone_cap_jut_cells(key: Vector4i,
+		partner: Vector3i) -> Array[Vector3i]:
+	## TASK I1 FIX 1 -- the lattice cells a horizontal masonry slab reaches over
+	## ALONG ITS OWN LENGTH that its panel does not own. Derived from the two
+	## dials `_maze_stone_transform` builds a cap from -- the module's own
+	## STONE_MODULE_HEIGHT laid flat, and the run its partner makes -- rather
+	## than from the transform, so the audit and the payload cannot drift apart
+	## silently. That is `maze_green_cap_jut_cells`'s rule and this is the same
+	## question asked of the slab the grass quad replaced.
+	##
+	## EMPTY FOR EVERY PAIRED CAP, and the arithmetic says why: a pair's run is
+	## 2 x CELL_SIZE = 3.0 m and the module laid flat is 3.0 m, so a paired slab
+	## covers its two cells exactly. Only the UNPAIRED cap -- a 3 m module
+	## centred on one 1.5 m cell -- reaches 0.75 m past each end, which is the
+	## same overhang the green quad carried until H2c fix 1 minor 2 trimmed it.
+	##
+	## THE LONG AXIS ONLY, which is a statement about what the trim can move
+	## rather than an oversight. The module measures 1.77 m across a 1.5 m cell,
+	## so every cap oversails 0.135 m on its CROSS axis too; the cap branch of
+	## the transform scales the long axis and nothing else, so a cross overlap
+	## is not a thing this predicate could act on. It is also not a thing a body
+	## meets -- 0.135 m off a 1.5 m cell leaves 1.365 m against a 0.795 m
+	## capsule, where 0.75 m off it leaves 0.750 m and shuts the cell.
+	var out: Array[Vector3i] = []
+	if key.w < FACE_DIRECTIONS.size():
+		return out
+	var cell := Vector3i(key.x, key.y, key.z)
+	# The axis the flat module sweeps along, read off the same `partner.x != 0`
+	# branch the transform turns on.
+	var axis := Vector3i.RIGHT if partner.x != 0 else Vector3i.BACK
+	var half_long := STONE_MODULE_HEIGHT * 0.5
+	var centre := (Vector3(cell) + Vector3(partner) * 0.5) \
+		* FabricRecipe.CELL_SIZE
+	var owned: Dictionary = {cell: true}
+	if partner != Vector3i.ZERO:
+		owned[cell + partner] = true
+	# Both the slab and the cells are grid-aligned, so the overlap is one
+	# interval test. A cell the slab merely TOUCHES is not covered by it -- that
+	# is exactly the paired cap's own fit -- hence the tolerance.
+	for along in range(-2, 3):
+		var probe := cell + axis * along
+		if owned.has(probe):
+			continue
+		var delta := Vector3(probe) * FabricRecipe.CELL_SIZE - centre
+		if absf(delta.dot(Vector3(axis))) \
+				< half_long + FabricRecipe.CELL_SIZE * 0.5 - 0.01:
+			out.append(probe)
+	return out
+
+
+static func maze_stone_cap_juts_over_walk(key: Vector4i, partner: Vector3i,
+		walked: Dictionary) -> bool:
+	## TASK I1 FIX 1 -- does this slab reach over a cell the public realm WALKS?
+	##
+	## THE THIRD READING OF ONE DEFECT, and the first in the horizontal plane.
+	## `maze_natural_face_rise_ceiling` clamps a rock module hanging into a
+	## street below it and `maze_stone_face_overhangs_walk` trims the coursed
+	## panel that does the same; both are modules taller than the band they clad,
+	## burying the excess in what turns out to be an open street. A CAP is that
+	## same 3 m module laid FLAT over a 1.5 m cell, so where it found no mate to
+	## pair with it buries 0.75 m of itself in each neighbouring column -- and
+	## where that column is a street, the slab stands in the walking space
+	## instead. It leaves 0.750 m of a 1.5 m cell against a 0.795 m body, so the
+	## capsule fits nowhere in the cell: that is exactly the three walked cells
+	## the 48-town matrix reported at task I1's first landing (6/grand (-1,4,6)
+	## and 10/grand (3,2,8) under a sky-facing cap, 3/compact (-5,3,-2) under a
+	## floor-facing one).
+	##
+	## WHICH BANDS EACH KIND STANDS IN, because the two are not symmetric. The
+	## slab is sunk STONE_CAP_HALF_DEPTH so its rock face is FLUSH with the
+	## boundary it closes: a SKY-FACING cap therefore fills the top 0.66 m of its
+	## own band, which is the head space of anybody walking that band, and a
+	## FLOOR-FACING cap fills the bottom 0.66 m of it, which is the head space of
+	## the band BELOW and the floor of the band it is in. Both of the second
+	## kind's bands are asked, because a slab lying on a street's floor stops the
+	## capsule as surely as one hanging over its head.
+	if key.w < FACE_DIRECTIONS.size():
+		return false
+	var reach := 1 if STONE_FACE_DIRECTIONS[key.w] == Vector3i.UP else 2
+	for jut: Vector3i in maze_stone_cap_jut_cells(key, partner):
+		for step in reach:
+			if walked.has(Vector3i(jut.x, key.y - step, jut.z)):
+				return true
+	return false
 
 
 static func walked_floor_cells(surface_plan: PublicRealmSurfacePlan) \
@@ -1253,9 +1383,16 @@ static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 						maze_natural_face_rise_ceiling(key, walked)),
 					Color.WHITE, stable_id)
 			_:
+				# ONE FLAG, TWO AXES (task I1 fix 1): each predicate answers for
+				# the kind of panel it is about and false for the other, so the
+				# module is cut back to the boundary it closes whenever the
+				# public realm is in the space it would otherwise reach into --
+				# downward for a side panel, sideways for a cap.
 				out.add(MAZE_STONE_MODULE,
 					_maze_stone_transform(cell, direction, partner,
-						maze_stone_face_overhangs_walk(key, walked)),
+						maze_stone_face_overhangs_walk(key, walked) \
+							or maze_stone_cap_juts_over_walk(key, partner,
+								walked)),
 					Color.WHITE, stable_id)
 	assert(out.validate())
 	return out
@@ -1654,7 +1791,12 @@ static func _maze_stone_transform(cell: Vector3i, direction: Vector3i,
 	## `trimmed` takes no default (fix 2, minor 7): it decides how much wall
 	## there is, and a caller that forgets it should not silently get the full
 	## module back. `maze_stone_walls` is the one caller and passes
-	## `maze_stone_face_overhangs_walk`.
+	## `maze_stone_face_overhangs_walk or maze_stone_cap_juts_over_walk` -- one
+	## flag, one meaning, and the branch below decides which axis it cuts. A
+	## SIDE panel is cut back to its own band (it hangs into the street under
+	## it); a CAP is cut back to its own run (it reaches into the street beside
+	## it). Each predicate answers for its own kind of panel and false for the
+	## other, so the two can never both be asking.
 	##
 	## TASK H2c FIX 1 SUB-ROUND. `trimmed` is the coursed twin of the rock's
 	## tail clamp, and it exists for the same defect in the same words: the
@@ -1726,12 +1868,29 @@ static func _maze_stone_transform(cell: Vector3i, direction: Vector3i,
 			# further, or lends the trim to another channel, has to revisit both.
 			basis.y = basis.y * (height / STONE_MODULE_HEIGHT)
 		return Transform3D(basis, midpoint)
+	# THE HORIZONTAL TRIM (task I1 fix 1), and it is the same word doing the
+	# same job on the other axis: a cap that reaches over a street lays only the
+	# run it closes -- its own cell alone, or the two cells of a pair -- instead
+	# of the module's whole 3 m. `maze_stone_cap_juts_over_walk` is the caller's
+	# test and carries the measurement.
+	#
+	# IT CANNOT OPEN A HOLE, and unlike the two vertical trims that is true by
+	# arithmetic rather than by a corpus fact. The boundary a cap closes is its
+	# own run and nothing else; the trimmed slab is that run exactly, and the
+	# 0.135 m the module stands proud on its cross axis is untouched. A PAIRED
+	# cap already lays 3.0 m over a 3.0 m run, so the trim is identity there and
+	# the predicate never fires on one anyway.
 	var half := Vector3(partner) * FabricRecipe.CELL_SIZE * 0.5
-	var span := STONE_MODULE_HEIGHT if direction == Vector3i.UP \
-		else -STONE_MODULE_HEIGHT
+	var length := STONE_MODULE_HEIGHT
+	if trimmed:
+		length = FabricRecipe.CELL_SIZE \
+			* (2.0 if partner != Vector3i.ZERO else 1.0)
+	var span := length if direction == Vector3i.UP else -length
 	var basis := Basis(Vector3.RIGHT, -PI * 0.5 * signf(span))
 	if partner.x != 0:
 		basis = Basis(Vector3.UP, PI * 0.5) * basis
+	if trimmed:
+		basis.y = basis.y * (length / STONE_MODULE_HEIGHT)
 	var origin := lattice + half
 	origin.y = float(cell.y + int(direction == Vector3i.UP)) \
 		* FabricRecipe.CELL_SIZE \
