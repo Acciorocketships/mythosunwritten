@@ -4219,6 +4219,58 @@ func test_the_skin_constants_mirror_the_module_descriptors() -> void:
 		_assert_mirrors(float(span[2]) - float(span[1]),
 			SettlementFabricAssembler.TERRAIN_MODULE_SPAN,
 			"%s spans the authored 3 m a cap pair needs" % String(asset))
+	# TASK I2. THE FACADE VOCABULARY IS THE SAME KIND OF TRANSCRIPTION, and it
+	# carries a stronger claim than the terrain modules do: the skin scales the
+	# rock and the grass to fit its lattice, and it scales a facade module by
+	# nothing at all. One panel is ONE CELL wide and ONE COURSE tall, so the
+	# module has to measure exactly `FabricRecipe.CELL_SIZE` x
+	# `STONE_MODULE_HEIGHT` or the shell opens where the coursing seams. Checked
+	# per module in all three families rather than once, because the pools mix
+	# window and boarded pieces from two source folders.
+	#
+	# The FRONT DEPTH is the deepest of them, and the skin pins every panel by
+	# that one number so a clad face stands in one plane; a shallower piece may
+	# sit behind it and may never sit in front of it, which is what the
+	# inequality below states.
+	var facade_checked := 0
+	for family: StringName in [&"blue", &"orange", &"amber"]:
+		for asset_id: StringName in SettlementFabricProgram.cell_facade_pool(
+				family):
+			var descriptor := catalog.descriptor(asset_id)
+			assert_not_null(descriptor,
+				"facade module %s must be in the catalogue" % String(asset_id))
+			if descriptor == null:
+				continue
+			var aabb: AABB = descriptor.measured_aabb
+			_assert_mirrors(FabricRecipe.CELL_SIZE, aabb.size.x,
+				"%s is one lattice cell wide" % String(asset_id))
+			_assert_mirrors(SettlementFabricAssembler.STONE_MODULE_HEIGHT,
+				aabb.size.y, "%s is one course tall" % String(asset_id))
+			_assert_mirrors(0.0, aabb.position.y,
+				"%s stands on its own origin" % String(asset_id))
+			_assert_mirrors(0.0, aabb.get_center().x,
+				"%s is centred across its own origin" % String(asset_id))
+			assert_true(aabb.end.z \
+				<= SettlementFabricAssembler.FACADE_FRONT_DEPTH + 1e-4,
+				("%s reaches %.5f m in front of its origin, past the %.5f m " \
+					+ "plane every facade panel is pinned by -- it would stand " \
+					+ "in the street") % [String(asset_id), aabb.end.z,
+					SettlementFabricAssembler.FACADE_FRONT_DEPTH])
+			assert_gt(descriptor.collision_piece_count, 0,
+				("%s ships no collider; the H2c census pins body-height panels " \
+					+ "beside a walked cell at zero uncollided") % String(
+					asset_id))
+			facade_checked += 1
+	assert_gt(facade_checked, 0, "the facade pools must have modules to check")
+	var deepest := 0.0
+	for family: StringName in [&"blue", &"orange", &"amber"]:
+		for asset_id: StringName in SettlementFabricProgram.cell_facade_pool(
+				family):
+			var descriptor := catalog.descriptor(asset_id)
+			if descriptor != null:
+				deepest = maxf(deepest, (descriptor.measured_aabb as AABB).end.z)
+	_assert_mirrors(SettlementFabricAssembler.FACADE_FRONT_DEPTH, deepest,
+		"FACADE_FRONT_DEPTH is the deepest facade module's own front face")
 
 
 func _assert_mirrors(constant: float, measured: float, what: String) -> void:
@@ -4532,22 +4584,35 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 	## rectangular ashlar on EVERY exposed face, so the hill the town is cut
 	## into read as a fortress bank rather than as ground.
 	##
+	## TASK I2 TURNS THE TALL-BANK HALF OF THIS ROUND. H2b answered "that face is
+	## hillside, and hillside is rock"; the user's verdict on the result was
+	## "looks like we still have the cliffs ... built into the city, can we
+	## remove that so we just have the wooden houses?" and, on the shard faces
+	## themselves, "these are the parts that i think we should remove: the
+	## cliffs". A hillside standing inside a town is a cliff in the town whatever
+	## it is made of. So the tall bank is not hillside: it is the side of a
+	## BUILDING, and it wears building storeys.
+	##
 	## The contract, measured off the payload the renderer is really handed and
 	## against a shell and a bank height this file derives for itself:
 	##
 	## 1. no coursed masonry on a side face standing in a bank taller than
-	##    STONE_BUDGET_BANDS -- above the retaining budget the face is
-	##    hillside, and hillside is rock;
+	##    STONE_BUDGET_BANDS -- above the retaining budget stone is the wall the
+	##    direction removed;
 	## 2. no stone slab on a bench top nobody walks -- an unwalked sky-facing
 	##    face is ground, and ground is green;
-	## 3. the retaining stone SURVIVES. A town with no masonry left has
-	##    overshot the direction as badly as one with nothing else, so the
-	##    <= 2-band masonry count is asserted positive rather than merely
-	##    reported;
-	## 4. every natural face and every green cap is where it claims to be --
-	##    the treatment is asserted in BOTH directions, so a rule that greened
-	##    the whole town would fail here too;
-	## 5. the audit equals this re-derivation in every class.
+	## 3. the retaining stone SURVIVES, and at its own rate. The user singled it
+	##    out as the part that is right -- "the stone walls serving as one level
+	##    in a house, and not overused in the city" -- so the <= 2-band masonry
+	##    count is asserted positive rather than merely reported;
+	## 4. NOT ONE NATURAL ROCK FACE ANYWHERE. Zero is the pin, rim included, and
+	##    the FACADE count is asserted positive beside it so the zero cannot pass
+	##    by the skin having stopped cladding tall banks at all;
+	## 5. every facade panel is on a tall bank's side and every green cap is on a
+	##    sky-facing face nobody walks -- both treatments asserted in BOTH
+	##    directions, so a rule that clad the whole town in windows would fail
+	##    here too;
+	## 6. the audit equals this re-derivation in every class.
 	var checked := 0
 	for outcome: Dictionary in _corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
@@ -4564,10 +4629,19 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 		var free_bench_stone := 0
 		var misplaced_natural := 0
 		var misplaced_green := 0
+		var misplaced_facade := 0
 		var low_bank_masonry := 0
 		var natural := 0
 		var green := 0
 		var masonry := 0
+		var facade := 0
+		# TASK I2. The one-cell timber vocabulary, as a set, so the payload can be
+		# sorted into classes by asset without naming six modules three times.
+		var facade_assets: Dictionary = {}
+		for family: StringName in [&"blue", &"orange", &"amber"]:
+			for asset_id: StringName in SettlementFabricProgram.cell_facade_pool(
+					family):
+				facade_assets[asset_id] = true
 		for instance: Dictionary in _stone_instances(fabric):
 			var face := instance["face"] as Vector4i
 			var asset := instance["asset"] as StringName
@@ -4578,6 +4652,10 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 				.STONE_FACE_DIRECTIONS[face.w] == Vector3i.UP
 			var free := up and not walked.has(Vector3i(face.x, face.y + 1,
 				face.z))
+			if facade_assets.has(asset):
+				facade += 1
+				misplaced_facade += int(not is_side or not tall)
+				continue
 			match asset:
 				SettlementFabricAssembler.NATURAL_ROCK_FACE:
 					natural += 1
@@ -4603,33 +4681,59 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 							or not walked.has(Vector3i(mate.x, mate.y + 1,
 								mate.z)))
 		var audit := fabric.audit
-		print(("MAZE_SKIN %s masonry=%d natural=%d green=%d " \
+		print(("MAZE_SKIN %s masonry=%d natural=%d green=%d facade=%d " \
 			+ "tall_bank_masonry=%d free_bench_stone=%d low_bank_masonry=%d " \
-			+ "misplaced=%d/%d banks=%s tallest=%d") % [_label(outcome),
-			masonry, natural, green, tall_bank_masonry, free_bench_stone,
-			low_bank_masonry, misplaced_natural, misplaced_green,
+			+ "misplaced=%d/%d/%d banks=%s tallest=%d " \
+			+ "families=%d/%d/%d windows=%d garden=%d green_cells=%d " \
+			+ "planting=%d") % [_label(outcome),
+			masonry, natural, green, facade, tall_bank_masonry,
+			free_bench_stone, low_bank_masonry, misplaced_natural,
+			misplaced_green, misplaced_facade,
 			str(audit.get("maze_bank_height_histogram", {})),
-			int(audit.get("maze_tallest_bank_bands", -1))])
+			int(audit.get("maze_tallest_bank_bands", -1)),
+			int(audit.get("maze_skin_facade_blue_panel_count", -1)),
+			int(audit.get("maze_skin_facade_orange_panel_count", -1)),
+			int(audit.get("maze_skin_facade_amber_panel_count", -1)),
+			int(audit.get("maze_skin_facade_window_panel_count", -1)),
+			int(audit.get("maze_garden_cell_count", -1)),
+			int(audit.get("maze_village_green_cell_count", -1)),
+			int(audit.get("maze_garden_planting_count", -1))])
 		assert_eq(tall_bank_masonry, 0,
 			("%s may not clad a bank taller than %d bands in coursed " \
-				+ "masonry -- that face is hillside") % [_label(outcome),
+				+ "masonry -- above the retaining budget stone is the wall the " \
+				+ "direction removed") % [_label(outcome),
 				SettlementFabricAssembler.STONE_BUDGET_BANDS])
 		assert_eq(free_bench_stone, 0,
 			"%s may not lay a stone slab on a bench nobody walks" \
 				% _label(outcome))
-		assert_eq(misplaced_natural, 0,
-			("%s may only use the natural rock face on a tall bank's side") \
-				% _label(outcome))
 		assert_eq(misplaced_green, 0,
 			"%s may only green a sky-facing face nobody walks" \
+				% _label(outcome))
+		assert_eq(misplaced_facade, 0,
+			"%s may only clad a tall bank's SIDE in facade storeys" \
 				% _label(outcome))
 		assert_gt(low_bank_masonry, 0,
 			("%s must keep its retaining walls in coursed masonry -- a town " \
 				+ "with no stone at all overshoots the direction") \
 				% _label(outcome))
 		assert_gt(green, 0, "%s must green its bench tops" % _label(outcome))
-		assert_gt(natural, 0,
-			"%s must render its tall banks as rock" % _label(outcome))
+		# TASK I2. THE CLIFF PIN. Zero shard faces anywhere, rim included, and a
+		# positive facade count beside it so the zero cannot be reached by the
+		# skin having stopped cladding tall banks at all. `misplaced_natural` is
+		# kept and asserted with it: it is vacuous today, and it is the assertion
+		# that would fire FIRST if `maze_natural_is_permitted` were ever turned
+		# back on for a population the rule no longer sorts.
+		assert_eq(natural, 0,
+			("%s still renders %d natural rock face(s); the direction is " \
+				+ "\"these are the parts that i think we should remove: the " \
+				+ "cliffs\", rim included") % [_label(outcome), natural])
+		assert_eq(misplaced_natural, 0,
+			("%s may only use the natural rock face on a tall bank's side") \
+				% _label(outcome))
+		assert_gt(facade, 0,
+			("%s must clad its tall banks in building storeys -- with no " \
+				+ "natural rock left, a zero here means the mass is bare") \
+				% _label(outcome))
 		assert_eq(int(audit.get("maze_skin_masonry_panel_count", -1)), masonry,
 			"%s audited masonry panel count must equal the payload's" \
 				% _label(outcome))
@@ -4639,13 +4743,168 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 		assert_eq(int(audit.get("maze_skin_green_cap_count", -1)), green,
 			"%s audited green cap count must equal the payload's" \
 				% _label(outcome))
+		assert_eq(int(audit.get("maze_skin_facade_panel_count", -1)), facade,
+			"%s audited facade panel count must equal the payload's" \
+				% _label(outcome))
+		assert_eq(int(audit.get("maze_skin_facade_blue_panel_count", -1)) \
+			+ int(audit.get("maze_skin_facade_orange_panel_count", -1)) \
+			+ int(audit.get("maze_skin_facade_amber_panel_count", -1)), facade,
+			("%s every clad mass face belongs to exactly one district family") \
+				% _label(outcome))
 		assert_eq(int(audit.get("maze_tall_bank_masonry_panel_count", -1)), 0,
 			"%s audited tall-bank masonry must be zero" % _label(outcome))
+		assert_eq(int(audit.get("maze_skin_above_ground_stone_face_count", -1)),
+			0, ("%s audited above-ground mass stone must be zero -- stone " \
+				+ "survives as the retaining course and the ground storeys of " \
+				+ "select houses, nowhere else") % _label(outcome))
 		assert_eq(int(audit.get("maze_free_bench_stone_cap_count", -1)), 0,
 			"%s audited free-bench stone caps must be zero" % _label(outcome))
-		assert_eq(masonry + natural + green,
+		assert_eq(masonry + natural + green + facade,
 			int(audit.get("maze_stone_expected_face_count", -1)),
 			("%s every panel of the shell wears exactly one module") \
+				% _label(outcome))
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func test_the_bench_tops_read_as_gardens_with_one_village_green() -> void:
+	## TASK I2 -- THE LIME PLATES RETIRE.
+	##
+	## Two user statements decide this. On the H2b/I1 result: "looks like we
+	## still have the cliffs (stone sides and grass tops) built into the city".
+	## On an I2-state frame: "the grass on top is nice too. one note though is
+	## that this should be more integrated in the city, like a grass plaza in the
+	## center." So the grass STAYS and stops being a plate: it is tinted to the
+	## ground the village stands on, it is planted, and the biggest run of it in
+	## each town is promoted to the village green.
+	##
+	## Every claim below is measured off the payload the renderer is handed:
+	##
+	## 1. no green cap and no bench rim goes out WHITE. White is the KayKit atlas
+	##    raw, which is brighter and paler than the terrain beside it -- the
+	##    measurement is in `GARDEN_TURF_TINT`'s own note -- so an untinted
+	##    instance is the lime plate coming back.
+	## 2. every town designates a village green, and it is a real square: at
+	##    least `VILLAGE_GREEN_MINIMUM_CELLS` cells, all connected, all at one
+	##    band.
+	## 3. the green is a CLEARING. Nothing stands on its interior; its edge is
+	##    planted, and planted with the BUILT planter rather than a self-sown
+	##    plant, which is what says somebody laid this square out.
+	## 4. nothing at all is planted off a garden cell -- a planter in a street
+	##    would be an obstacle nobody declared.
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var retained := fabric.retained_terrace_cells
+		var solids := fabric.transformed_cells(&"solid")
+		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+			fabric.transformed_cells(&"terrain_bearing"))
+		var paved := SettlementFabricAssembler.public_floor_cells(
+			fabric.surface_plan)
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var garden := SettlementFabricAssembler.maze_garden_cells(retained,
+			solids, paved, plinths, walked)
+		var plaza := SettlementFabricAssembler.maze_village_green_cells(garden)
+		var payload := SettlementFabricAssembler.terrace_retaining_payload(
+			fabric)
+		# 1. the turf tint, read off the instances themselves.
+		var white_turf := 0
+		var turf_instances := 0
+		for asset: StringName in [SettlementFabricAssembler.TERRAIN_GREEN_CAP,
+				SettlementFabricAssembler.GREEN_RIM_EDGE]:
+			var batch := payload.batches.get(asset, {}) as Dictionary
+			for color_value: Variant in batch.get("colors", []) as Array:
+				turf_instances += 1
+				white_turf += int((color_value as Color) \
+					!= SettlementFabricAssembler.GARDEN_TURF_TINT)
+		# 3/4. what really stands on the benches, decoded off the payload's own
+		# `maze-garden/` ids.
+		var planted_off_garden := 0
+		var planted_in_clearing := 0
+		var plaza_edge_planted := 0
+		var plaza_edge_built := 0
+		var planting := 0
+		for asset_value: Variant in payload.batches.keys():
+			var batch := payload.batches[asset_value] as Dictionary
+			for id_value: Variant in batch.get("ids", []) as Array:
+				var id := String(id_value)
+				if not id.begins_with("maze-garden/"):
+					continue
+				planting += 1
+				var parts := id.trim_prefix("maze-garden/").split("/")
+				var cell := Vector3i(int(parts[0]), int(parts[1]),
+					int(parts[2]))
+				if not garden.has(cell):
+					planted_off_garden += 1
+					continue
+				if not plaza.has(cell):
+					continue
+				var edge := false
+				for step: Vector3i in SettlementFabricAssembler.FACE_DIRECTIONS:
+					edge = edge or not plaza.has(cell + step)
+				if edge:
+					plaza_edge_planted += 1
+					plaza_edge_built += int(StringName(asset_value) \
+						== SettlementFabricAssembler.GARDEN_PLANTER)
+				else:
+					planted_in_clearing += 1
+		# 2. the green is one connected surface at one band, re-derived here
+		# rather than trusted from the designation.
+		var plaza_bands: Dictionary = {}
+		for cell_value: Variant in plaza.keys():
+			plaza_bands[(cell_value as Vector3i).y] = true
+		var audit := fabric.audit
+		print(("MAZE_GARDEN %s garden=%d plaza=%d bands=%d planting=%d " \
+			+ "edge=%d built=%d clearing=%d off=%d turf=%d white=%d") % [
+			_label(outcome), garden.size(), plaza.size(), plaza_bands.size(),
+			planting, plaza_edge_planted, plaza_edge_built,
+			planted_in_clearing, planted_off_garden, turf_instances,
+			white_turf])
+		assert_gt(turf_instances, 0,
+			"%s must lay some turf to measure its tint" % _label(outcome))
+		assert_eq(white_turf, 0,
+			("%s sends %d of %d turf instances out untinted -- the KayKit " \
+				+ "swatch raw is the lime plate the direction retired") % [
+				_label(outcome), white_turf, turf_instances])
+		assert_gt(garden.size(), 0,
+			"%s must floor some yard with turf" % _label(outcome))
+		assert_gte(plaza.size(),
+			SettlementFabricAssembler.VILLAGE_GREEN_MINIMUM_CELLS,
+			("%s designates no village green; the direction is a grass plaza " \
+				+ "in the centre, not scattered lawn") % _label(outcome))
+		assert_eq(plaza_bands.size(), 1,
+			"%s village green must be one surface at one band" % _label(outcome))
+		assert_gt(planting, 0,
+			"%s must grow something on its yards" % _label(outcome))
+		assert_eq(planted_off_garden, 0,
+			("%s plants %d piece(s) off a garden cell -- a planter outside a " \
+				+ "yard is an obstacle nobody declared") % [_label(outcome),
+				planted_off_garden])
+		assert_eq(planted_in_clearing, 0,
+			("%s stands %d piece(s) in the middle of the village green; a " \
+				+ "plaza is a clearing") % [_label(outcome),
+				planted_in_clearing])
+		assert_gt(plaza_edge_planted, 0,
+			"%s must plant the village green's edge" % _label(outcome))
+		assert_eq(plaza_edge_built, plaza_edge_planted,
+			("%s edges its village green with %d self-sown plant(s); the " \
+				+ "boundary of a laid-out square is built planters") % [
+				_label(outcome), plaza_edge_planted - plaza_edge_built])
+		assert_eq(int(audit.get("maze_garden_cell_count", -1)), garden.size(),
+			"%s audited garden cell count must equal the payload's" \
+				% _label(outcome))
+		assert_eq(int(audit.get("maze_village_green_cell_count", -1)),
+			plaza.size(),
+			"%s audited village green size must equal the payload's" \
+				% _label(outcome))
+		assert_eq(int(audit.get("maze_garden_planting_count", -1)), planting,
+			"%s audited planting count must equal the payload's" \
 				% _label(outcome))
 		checked += 1
 	assert_gt(checked, 0, "the corpus must seal a town to measure")
@@ -5219,11 +5478,14 @@ func test_the_hillside_treatment_fires_on_a_planted_bank() -> void:
 	assert_eq(SettlementFabricAssembler.maze_bank_height(exposed,
 		Vector4i(4, 1, 0, 0)), 2, "the planted retaining bank is two bands")
 	assert_eq(int(treatments[Vector4i(0, 2, 0, 0)]),
-		SettlementFabricAssembler.SkinTreatment.NATURAL,
-		"a three-band bank takes the natural rock face")
+		SettlementFabricAssembler.SkinTreatment.FACADE,
+		"a three-band bank takes a building facade storey")
 	assert_eq(int(treatments[Vector4i(0, 0, 0, 0)]),
-		SettlementFabricAssembler.SkinTreatment.NATURAL,
-		"every course of a tall bank takes it, not only the top one")
+		SettlementFabricAssembler.SkinTreatment.FACADE,
+		"every course of a tall bank takes it, foot to top -- there is no " \
+			+ "stone base course on the mass, only on select houses")
+	assert_false(SettlementFabricAssembler.maze_natural_is_permitted(),
+		"the cliff shard is retired from the town skin, rim included")
 	assert_eq(int(treatments[Vector4i(4, 1, 0, 0)]),
 		SettlementFabricAssembler.SkinTreatment.MASONRY,
 		"a two-band retaining face keeps its coursed masonry")

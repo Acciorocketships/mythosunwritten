@@ -165,8 +165,29 @@ const CLEARANCE_TOWN_GATE_CEILING := 0
 ## crossing counted here can still be walked; what they say is that the shard's
 ## lobe is in the way of the exact centreline. A rise means the skin leans into
 ## more streets than it did, which is worth a look and is not by itself a bug.
-const CLEARANCE_TOWN_OFFSET_FREE_CEILING := 9
-const CLEARANCE_TOWN_GATES_OFFSET_CEILING := 15
+##
+## TASK I2 TAKES BOTH TO ZERO, and it is the shard leaving that does it. The
+## 48-town matrix on the shipped tree measures `offset_free = 0` of 9152 walked
+## cells and `gates_offset = 0` of 13042 crossings, against 69 and 147 at task
+## I1's baseline: every walked cell in the corpus now admits a body on its exact
+## centreline. The mechanism is one line of `_maze_facade_transform` -- a facade
+## panel is pinned by its OUTER face to the boundary and stands 0.000 m into the
+## cell it faces, where the shard stood 0.375 m plus its relief -- and the
+## panels it replaced are 58 % of every exposed vertical face in the corpus.
+##
+## THE MARGIN THAT IS LEFT IS 1.2 MILLIMETRES, and a reader who sees this row go
+## red should look here before anywhere else. What still straddles a boundary is
+## the coursed retaining course: the module is 0.66389 m deep and centred, so two
+## of them facing each other across a one-cell street leave
+## 1.5 - 2 x 0.33194 = 0.83612 m against a capsule that needs
+## 0.79492 + 2 x 0.02 = 0.83492 m. It fits by 0.00120 m. Nothing in the corpus
+## is tighter and nothing in the corpus fails, but a re-bake that deepened
+## `sfv.fabric.wall.rock.plain.001` by a centimetre would put this row red
+## without any code changing -- and that is the tripwire firing correctly, not a
+## false alarm. The fix THEN is the trim machinery this file already documents,
+## applied to the coursed panel's depth rather than its height.
+const CLEARANCE_TOWN_OFFSET_FREE_CEILING := 0
+const CLEARANCE_TOWN_GATES_OFFSET_CEILING := 0
 
 
 static func production_fingerprint() -> String:
@@ -684,6 +705,9 @@ func _print_roof_result(group: String, tally: Dictionary) -> void:
 static func _new_skin_tally() -> Dictionary:
 	## TASK H2b. The corpus skin tally.
 	return {"towns": 0, "panels": 0, "masonry": 0, "natural": 0, "green": 0,
+		"facade": 0, "facade_windows": 0, "facade_blue": 0, "facade_orange": 0,
+		"facade_amber": 0, "above_ground_stone": 0, "garden": 0,
+		"village_green": 0, "planting": 0, "paved_bench": 0,
 		"tall_masonry": 0, "free_bench_stone": 0, "shared_street": 0,
 		"low": 0, "tall": 0, "tallest": 0, "cut": 0, "cut_coursed": 0,
 		"tail_candidates": 0, "tail_unclearable": 0, "coursed_trim": 0,
@@ -697,6 +721,26 @@ static func _accumulate_skin(tally: Dictionary,
 	tally.masonry += int(fabric.audit.get("maze_skin_masonry_panel_count", 0))
 	tally.natural += int(fabric.audit.get("maze_skin_natural_panel_count", 0))
 	tally.green += int(fabric.audit.get("maze_skin_green_cap_count", 0))
+	# TASK I2. The clad mass, its family split and its yards, so the corpus line
+	# states what the town's own walls are made of and not only what is left of
+	# the rock. `natural` above is the pin that goes with them: it is zero, and
+	# `facade` is where those panels went.
+	tally.facade += int(fabric.audit.get("maze_skin_facade_panel_count", 0))
+	tally.facade_windows += int(fabric.audit.get(
+		"maze_skin_facade_window_panel_count", 0))
+	tally.facade_blue += int(fabric.audit.get(
+		"maze_skin_facade_blue_panel_count", 0))
+	tally.facade_orange += int(fabric.audit.get(
+		"maze_skin_facade_orange_panel_count", 0))
+	tally.facade_amber += int(fabric.audit.get(
+		"maze_skin_facade_amber_panel_count", 0))
+	tally.above_ground_stone += int(fabric.audit.get(
+		"maze_skin_above_ground_stone_face_count", 0))
+	tally.garden += int(fabric.audit.get("maze_garden_cell_count", 0))
+	tally.village_green += int(fabric.audit.get(
+		"maze_village_green_cell_count", 0))
+	tally.planting += int(fabric.audit.get("maze_garden_planting_count", 0))
+	tally.paved_bench += int(fabric.audit.get("maze_paved_bench_cap_count", 0))
 	tally.tall_masonry += int(fabric.audit.get(
 		"maze_tall_bank_masonry_panel_count", 0))
 	tally.free_bench_stone += int(fabric.audit.get(
@@ -728,14 +772,21 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 	if int(tally.towns) == 0:
 		return
 	print(("SWEEP RESULT skin%s towns=%d panels=%d masonry=%d natural=%d " \
-		+ "green=%d reclad_share=%.4f tall_masonry=%d free_bench_stone=%d " \
+		+ "green=%d facade=%d facade_share=%.4f windows=%d " \
+		+ "families=%d/%d/%d above_ground_stone=%d reclad_share=%.4f " \
+		+ "tall_masonry=%d free_bench_stone=%d " \
 		+ "shared_street=%d low_faces=%d tall_faces=%d tall_share=%.4f " \
 		+ "tallest_bank=%d cut=%d cut_share=%.4f cut_coursed=%d " \
 		+ "tail_candidates=%d tail_unclearable=%d coursed_trim=%d " \
-		+ "cap_juts=%d cap_trim=%d") % [
+		+ "cap_juts=%d cap_trim=%d garden=%d village_green=%d planting=%d " \
+		+ "paved_bench=%d") % [
 		"" if group == CORPUS_STONE_GROUP else "/%s" % group,
 		int(tally.towns), int(tally.panels), int(tally.masonry),
-		int(tally.natural), int(tally.green),
+		int(tally.natural), int(tally.green), int(tally.facade),
+		float(int(tally.facade)) / float(maxi(1, int(tally.panels))),
+		int(tally.facade_windows), int(tally.facade_blue),
+		int(tally.facade_orange), int(tally.facade_amber),
+		int(tally.above_ground_stone),
 		float(int(tally.natural) + int(tally.green)) \
 			/ float(maxi(1, int(tally.panels))),
 		int(tally.tall_masonry), int(tally.free_bench_stone),
@@ -746,7 +797,9 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 		float(int(tally.cut)) / float(maxi(1, int(tally.natural))),
 		int(tally.cut_coursed), int(tally.tail_candidates),
 		int(tally.tail_unclearable), int(tally.coursed_trim),
-		int(tally.cap_juts), int(tally.cap_trim)])
+		int(tally.cap_juts), int(tally.cap_trim), int(tally.garden),
+		int(tally.village_green), int(tally.planting),
+		int(tally.paved_bench)])
 
 
 static func _new_clearance_tally() -> Dictionary:

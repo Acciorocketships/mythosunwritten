@@ -51,6 +51,50 @@ func test_dense_terrain_led_village_is_one_atomic_structural_transaction() -> vo
 			"the urban fabric never rescales collision-bearing assets")
 
 
+func test_an_entry_carries_its_instance_colour_to_the_payload() -> void:
+	## TASK I2 -- THE CHANNEL THAT SILENTLY DROPPED A COLUMN.
+	##
+	## `VillageUrbanFabricPlan.entries` is the crossing between the fabric
+	## assembler and the streamed village payload, and until this task it carried
+	## asset, transform and stable id only: both consumers wrote `Color.WHITE`,
+	## so any instance colour the fabric asked for was thrown away between the
+	## assembler and the renderer. Nothing noticed, because every fabric instance
+	## really was white.
+	##
+	## The garden turf is the first that is not -- rendered raw, the KayKit grass
+	## swatch is the pale plate the direction retired -- so the crossing is
+	## pinned here in BOTH directions: a colour that is named survives, and a
+	## channel that names none still gets white.
+	var payload := EnvironmentInstancePayload.new()
+	var surfaces: Array[FeatureGroundShape] = []
+	var clearances: Array[FeatureGroundShape] = []
+	var fabric := VillageUrbanFabricPlan.new()
+	fabric.accepted = true
+	var tint := Color(0.39, 0.51, 0.53)
+	fabric.entries.append({
+		"asset_id": &"sfv.deck.floor.s.001",
+		"transform": Transform3D.IDENTITY,
+		"color": tint,
+		"stable_id": &"colour.test/tinted",
+	})
+	fabric.entries.append({
+		"asset_id": &"sfv.deck.floor.s.001",
+		"transform": Transform3D(Basis.IDENTITY, Vector3.RIGHT * 3.0),
+		"stable_id": &"colour.test/plain",
+	})
+	VillagePlan._materialize_urban_fabric(fabric, payload, surfaces, clearances,
+		VillageOccupancy.new())
+	var batch := payload.batches.get(&"sfv.deck.floor.s.001", {}) as Dictionary
+	var colors := batch.get("colors", []) as Array
+	assert_eq(colors.size(), 2, "both entries must reach the payload")
+	if colors.size() != 2:
+		return
+	assert_eq(colors[0] as Color, tint,
+		"an entry that names an instance colour must keep it")
+	assert_eq(colors[1] as Color, Color.WHITE,
+		"an entry that names no colour must still be white")
+
+
 func _assert_ground_stairs_follow_their_frozen_terrain_edges(
 		result: VillageUrbanFabricPlan) -> void:
 	for link: VillageCirculationLink in result.circulation.links:
