@@ -1025,6 +1025,11 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	# corbels; a lawn sheet over nothing does not.
 	var green_jut_cells := 0
 	var green_jut_over_air := 0
+	# TASK I4. The plank terraces annotation 2 demotes the small free tops to,
+	# and the leans annotation 1 refuses -- both counted where the treatment is
+	# read rather than re-derived somewhere else.
+	var deck_panels := 0
+	var green_lean_refusals := 0
 	var tall_bank_masonry := 0
 	# TASK H2c FIX 1. How much rock the street cuts, and how much of it the cut
 	# could not be expressed on and had to be coursed instead. The second is
@@ -1079,9 +1084,17 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			facade_by_family[family] = int(facade_by_family.get(family, 0)) + 1
 			facade_windows += int(String(SettlementFabricAssembler
 				.maze_facade_module(key, plan.world_seed)).contains(".window."))
+		deck_panels += int(treatment \
+			== SettlementFabricAssembler.SkinTreatment.DECK)
 		if treatment == SettlementFabricAssembler.SkinTreatment.GREEN:
+			# TASK I4: the quad's own coverage, which is the PAIR and never the
+			# lean -- the audit and the payload derive it through one function.
+			var cap_partner := SettlementFabricAssembler.maze_green_cap_partner(
+				key, faces[key] as Vector3i, exposed)
+			green_lean_refusals += int(cap_partner \
+				!= (faces[key] as Vector3i))
 			for jut: Vector3i in SettlementFabricAssembler.maze_green_cap_jut_cells(
-					Vector3i(key.x, key.y, key.z), faces[key] as Vector3i):
+					Vector3i(key.x, key.y, key.z), cap_partner):
 				green_jut_cells += 1
 				green_jut_over_air += int(not retained.has(jut) \
 					and not solids.has(jut))
@@ -1204,6 +1217,27 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			== SettlementFabricAssembler.FacadeOutcrop.BAY)
 		facade_bumps += int(int(kind_value) \
 			== SettlementFabricAssembler.FacadeOutcrop.BUMP)
+	# TASK I4, ANNOTATION 1. Derived once and read twice: the edges the lawns
+	# have, and the rim pieces the payload really lays over them.
+	var rim_faces := SettlementFabricAssembler.maze_garden_rim_face_count(shell)
+	var rim_instances := SettlementFabricAssembler.maze_green_rim_walls(retained,
+		solids, paved, plinths, walked, shell).instance_count
+	# TASK I4, ANNOTATIONS 3 and 6. The two new dressing channels, counted off
+	# the same rules the payload places them with.
+	var floor_bearers_borne := 0
+	var floor_bearers_refused := 0
+	for site: Dictionary in SettlementFabricAssembler \
+			.maze_public_floor_bearer_sites(retained, solids, paved, walked):
+		if bool(site.refused):
+			floor_bearers_refused += 1
+		else:
+			floor_bearers_borne += 1
+	var frontages := SettlementFabricAssembler.maze_perimeter_frontage_sites(
+		retained, solids, paved, walked, plan.world_seed)
+	var frontages_wide := 0
+	for site: Dictionary in frontages:
+		frontages_wide += int((site.cells as Array).size() \
+			>= SettlementFabricAssembler.PERIMETER_WINDOW_CELLS)
 	var out := {
 		"maze_skywalk_span_count": spans.size(),
 		"maze_skywalk_deck_cell_count": skywalk_deck_cells,
@@ -1244,6 +1278,28 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		"maze_paved_bench_cap_count": paved_bench_caps,
 		"maze_green_cap_jut_cell_count": green_jut_cells,
 		"maze_green_cap_jut_over_air_count": green_jut_over_air,
+		# TASK I4, ANNOTATION 1. The turf edge, as two numbers that have to
+		# agree: how many edges the town's lawns HAVE, and how many rim pieces
+		# were laid. The DEFICIT is the pin -- one bare cut anywhere makes it
+		# positive -- and the lean refusals are what made it reachable.
+		"maze_garden_rim_face_count": rim_faces,
+		"maze_garden_rim_instance_count": rim_instances,
+		"maze_garden_rim_deficit": rim_faces - rim_instances,
+		"maze_green_cap_lean_refusal_count": green_lean_refusals,
+		# TASK I4, ANNOTATION 2. What the small free tops became, and the bar
+		# they were measured against.
+		"maze_plank_terrace_cap_count": deck_panels,
+		"maze_garden_run_minimum_cells": SettlementFabricAssembler \
+			.GARDEN_RUN_MINIMUM_CELLS,
+		"maze_garden_run_count": SettlementFabricAssembler \
+			.maze_garden_run_count(garden),
+		# TASK I4, ANNOTATION 3. The public floor plates that had nothing under
+		# them, and the ones the headroom gate or a missing wall refused.
+		"maze_public_floor_bearer_count": floor_bearers_borne,
+		"maze_public_floor_bearer_refused_count": floor_bearers_refused,
+		# TASK I4, ANNOTATION 6. The town's dressed foot.
+		"maze_perimeter_frontage_count": frontages.size(),
+		"maze_perimeter_frontage_wide_count": frontages_wide,
 		"maze_tall_bank_masonry_panel_count": tall_bank_masonry,
 		"maze_skin_cut_panel_count": cut_panels,
 		"maze_skin_cut_fallback_masonry_count": cut_fallback_masonry,

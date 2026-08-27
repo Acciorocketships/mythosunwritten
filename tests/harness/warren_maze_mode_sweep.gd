@@ -794,7 +794,12 @@ static func _new_skin_tally() -> Dictionary:
 		"cap_juts": 0, "cap_trim": 0,
 		"spans": 0, "span_cells": 0, "span_instances": 0, "bays": 0,
 		"bumps": 0, "outcrop_brackets": 0, "dormers": 0, "plaza_entries": 0,
-		"plaza_features": 0, "plaza_towns": 0}
+		"plaza_features": 0, "plaza_towns": 0,
+		# TASK I4, the six annotations.
+		"garden_runs": 0, "rim_faces": 0, "rim_instances": 0,
+		"rim_deficit": 0, "lean_refusals": 0, "deck_caps": 0,
+		"floor_bearers": 0, "floor_bearers_refused": 0, "frontages": 0,
+		"frontages_wide": 0}
 
 
 static func _accumulate_skin(tally: Dictionary,
@@ -864,6 +869,26 @@ static func _accumulate_skin(tally: Dictionary,
 		"maze_plaza_centre_feature_count", 0))
 	tally.plaza_towns += int(int(fabric.audit.get(
 		"maze_village_green_cell_count", 0)) > 0)
+	# TASK I4. THE SIX ANNOTATIONS, on the row the life already occupies: the
+	# turf edge (annotation 1), the demoted small tops (annotation 2), the
+	# corbels under the unborne floor plates (annotation 3) and the dressed
+	# perimeter (annotation 6). `rim_deficit` is the pin -- one bare turf edge
+	# anywhere in the matrix makes it positive.
+	tally.garden_runs += int(fabric.audit.get("maze_garden_run_count", 0))
+	tally.rim_faces += int(fabric.audit.get("maze_garden_rim_face_count", 0))
+	tally.rim_instances += int(fabric.audit.get(
+		"maze_garden_rim_instance_count", 0))
+	tally.rim_deficit += int(fabric.audit.get("maze_garden_rim_deficit", 0))
+	tally.lean_refusals += int(fabric.audit.get(
+		"maze_green_cap_lean_refusal_count", 0))
+	tally.deck_caps += int(fabric.audit.get("maze_plank_terrace_cap_count", 0))
+	tally.floor_bearers += int(fabric.audit.get(
+		"maze_public_floor_bearer_count", 0))
+	tally.floor_bearers_refused += int(fabric.audit.get(
+		"maze_public_floor_bearer_refused_count", 0))
+	tally.frontages += int(fabric.audit.get("maze_perimeter_frontage_count", 0))
+	tally.frontages_wide += int(fabric.audit.get(
+		"maze_perimeter_frontage_wide_count", 0))
 
 
 func _print_skin_result(group: String, tally: Dictionary) -> void:
@@ -921,6 +946,17 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 		int(tally.outcrop_brackets) - 2 * (int(tally.bays) + int(tally.bumps)),
 		int(tally.dormers), int(tally.plaza_towns), int(tally.plaza_entries),
 		int(tally.plaza_features)])
+	# TASK I4. The six annotations' own row.
+	print(("SWEEP RESULT annotations%s towns=%d garden_runs=%d rim_faces=%d " \
+		+ "rims=%d rim_deficit=%d lean_refusals=%d deck_caps=%d " \
+		+ "floor_bearers=%d floor_bearers_refused=%d frontages=%d " \
+		+ "frontages_wide=%d") % [
+		"" if group == CORPUS_STONE_GROUP else "/%s" % group,
+		int(tally.towns), int(tally.garden_runs), int(tally.rim_faces),
+		int(tally.rim_instances), int(tally.rim_deficit),
+		int(tally.lean_refusals), int(tally.deck_caps),
+		int(tally.floor_bearers), int(tally.floor_bearers_refused),
+		int(tally.frontages), int(tally.frontages_wide)])
 
 
 static func _new_clearance_tally() -> Dictionary:
