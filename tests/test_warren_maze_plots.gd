@@ -1059,7 +1059,16 @@ func test_decks_are_flat_street_level_regions() -> void:
 		var carved := _carved_town(seed_value, scale)
 		var quota: Vector2i = WarrenPlotReservations.DECK_QUOTA[scale]
 		var cap: int = WarrenPlotReservations.DECK_MAX[scale]
-		var decks := _plots_of_kind(plan, WarrenMazeSourcePlan.PLOT_DECK)
+		# TASK I4 ROUND 3. The PLAZA is a deck plot and is NOT one of the
+		# quota's: it is sited by shape before the quota walks and is asserted
+		# on its own terms in `test_the_plaza_deck_is_a_room_not_a_lane`. Every
+		# assertion below is the ORDINARY deck's, unchanged, over the plots the
+		# ordinary rule really grew.
+		var decks: Array[Dictionary] = []
+		for plot: Dictionary in _plots_of_kind(plan,
+				WarrenMazeSourcePlan.PLOT_DECK):
+			if StringName(plot["id"]) != WarrenPlotReservations.PLAZA_PLOT_ID:
+				decks.append(plot)
 		total += decks.size()
 		assert_lte(decks.size(), quota.y,
 			"seed %d never exceeds its deck quota" % seed_value)
@@ -1077,8 +1086,14 @@ func test_decks_are_flat_street_level_regions() -> void:
 				"a refused deck records the source plan's reason")
 		assert_eq(accepted, decks.size(),
 			"seed %d audits exactly the decks that stand" % seed_value)
+		# TASK I4 ROUND 3. The plaza spent one of the same quota slots, so it
+		# counts toward what the shortfall is measured against.
+		var plaza_decks := int(not (outcomes.get("plaza", {}) as Dictionary) \
+			.is_empty() and String((outcomes.get("plaza", {}) as Dictionary) \
+			.get("reason", "x")) == "")
 		assert_eq(int(outcomes.get("decks_short", -1)), quota_short(plan,
-			accepted), "seed %d audits its deck shortfall" % seed_value)
+			accepted + plaza_decks),
+			"seed %d audits its deck shortfall" % seed_value)
 		for deck: Dictionary in decks:
 			var datum := int(deck["floor"])
 			assert_eq(int(deck["top"]), datum,
@@ -1117,6 +1132,122 @@ func test_decks_are_flat_street_level_regions() -> void:
 	assert_gt(total, 0, "the corpus grows at least one deck")
 	gut.p("decks across the four towns: %d standing, %d refused" % [total,
 		refused])
+
+
+## How many of the four planner towns get a plaza site, pinned TWO-SIDEDLY at
+## the measurement. THREE do -- 12/compact, 4/compact and 9/standard, each a
+## 2 x 2 at datum 4; 3/standard offers no rectangle inside
+## `WarrenPlotReservations.PLAZA_CUT_BUDGET_BANDS` and keeps the corridor
+## fallback, which is the fallback working rather than the rule failing. The
+## lower bound is the one that matters -- a siting rule that quietly stopped
+## finding sites would leave every other assertion in this file green, because
+## they all count what is THERE -- and the upper bound catches a rule that
+## started taking a site on a town whose hill has no room for one.
+const PLAZA_PLANNER_TOWNS := 3
+
+
+func test_the_plaza_deck_is_a_room_not_a_lane() -> void:
+	## TASK I4 ROUND 3 -- THE SHAPE, which is the whole of the plaza policy.
+	##
+	## `test_decks_are_flat_street_level_regions` above proves an ordinary deck
+	## is flat, connected, capped and street-fronted, and every one of those is
+	## satisfied by a 6 x 1 ribbon -- which is what the corpus was really
+	## growing, and what round 2 photographed the village green reading as. So
+	## this asserts the three things a ribbon CANNOT satisfy: both plan extents
+	## at least PLAZA_MIN_SIDE, the long one no more than PLAZA_MAX_ASPECT times
+	## the short one, and the footprint FILLING that box rather than threading
+	## through it.
+	##
+	## The level bound is asserted at PLAZA_LEVEL_BANDS rather than at the
+	## ordinary deck's one band, and it is asserted as a CUT: `plot_support_ok`
+	## needs solid under the floor, so a datum above the massif's own top is
+	## already impossible, and a plaza standing on air would show here as a
+	## positive `datum - top_at`.
+	var towns := 0
+	for spec: Dictionary in PLANNER_SEEDS:
+		var seed_value := int(spec["seed"])
+		var scale := StringName(spec["scale"])
+		var plan := _sealed_town(seed_value, scale)
+		assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+		if plan == null:
+			continue
+		var carved := _carved_town(seed_value, scale)
+		var outcomes: Dictionary = plan.audit.get("plot_outcomes", {})
+		var record: Dictionary = outcomes.get("plaza", {})
+		var plaza: Dictionary = {}
+		for plot: Dictionary in _plots_of_kind(plan,
+				WarrenMazeSourcePlan.PLOT_DECK):
+			if StringName(plot["id"]) == WarrenPlotReservations.PLAZA_PLOT_ID:
+				plaza = plot
+		if plaza.is_empty():
+			# The corridor fallback. It has to be AUDITED rather than silent:
+			# a town that simply stopped calling the siting rule would look
+			# exactly like a town with no site.
+			assert_true(record.is_empty() \
+					or String(record.get("reason", "")) != "",
+				("seed %d/%s carries a claimed plaza record with no plaza " \
+					+ "plot standing") % [seed_value, scale])
+			continue
+		towns += 1
+		var datum := int(plaza["floor"])
+		assert_eq(int(plaza["top"]), datum, "the plaza is a flat deck")
+		var cells: Array = plaza["cells"]
+		var low := Vector2i(1 << 30, 1 << 30)
+		var high := Vector2i(-(1 << 30), -(1 << 30))
+		var members: Dictionary = {}
+		for cell_value: Variant in cells:
+			var column := cell_value as Vector2i
+			members[column] = true
+			low.x = mini(low.x, column.x)
+			low.y = mini(low.y, column.y)
+			high.x = maxi(high.x, column.x)
+			high.y = maxi(high.y, column.y)
+		var box := high - low + Vector2i.ONE
+		var short_side := mini(box.x, box.y)
+		var long_side := maxi(box.x, box.y)
+		var label := "seed %d/%s plaza" % [seed_value, scale]
+		assert_gte(short_side, WarrenPlotReservations.PLAZA_MIN_SIDE,
+			"%s is %s columns -- a square is at least %d wide" % [label, box,
+				WarrenPlotReservations.PLAZA_MIN_SIDE])
+		assert_lte(long_side,
+			short_side * WarrenPlotReservations.PLAZA_MAX_ASPECT,
+			"%s is %s columns -- that is a lane, not a room" % [label, box])
+		assert_eq(cells.size(), box.x * box.y,
+			"%s must FILL its own %s box" % [label, box])
+		assert_lte(cells.size(),
+			int(WarrenPlotReservations.DECK_MAX[scale]),
+			"%s stays inside the scale's own deck area cap" % label)
+		for cell_value: Variant in cells:
+			var column := cell_value as Vector2i
+			var cut := plan.massif.top_at(column) - datum
+			assert_lte(cut, WarrenPlotReservations.PLAZA_LEVEL_BANDS,
+				"%s cell %s cuts %d bands of hill" % [label, column, cut])
+			assert_gte(cut, 0,
+				"%s cell %s stands %d bands above the massif -- a plaza is a " \
+					% [label, column, -cut] + "cut, never a fill")
+			assert_true(carved.plot_support_ok(column, datum),
+				"%s cell %s is supportable at the datum" % [label, column])
+		var door: Vector3i = plaza["door_walk"]
+		assert_true(plan.passage_kinds.has(door),
+			"%s grew off a real street cell" % label)
+		assert_eq(door.y, datum, "%s sits at its street's band" % label)
+		var touches := false
+		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+			touches = touches \
+				or members.has(Vector2i(door.x, door.z) + direction)
+		assert_true(touches, "%s adjoins the street it grew from" % label)
+		assert_eq(int(record.get("size", -1)), cells.size(),
+			"%s audits the footprint it really claimed" % label)
+		assert_eq(int(record.get("datum", 1 << 30)), datum,
+			"%s audits the datum it really took" % label)
+		assert_eq(String(record.get("reason", "unset")), "",
+			"%s stands, so its record carries no refusal" % label)
+		gut.p("%s: %s columns at datum %d, %d cells" % [label, box, datum,
+			cells.size()])
+	assert_eq(towns, PLAZA_PLANNER_TOWNS,
+		("%d of the four planner towns site a plaza; the pin is %d -- a " \
+			+ "siting rule that stops finding sites leaves every other " \
+			+ "assertion in this file green") % [towns, PLAZA_PLANNER_TOWNS])
 
 
 func quota_short(plan: WarrenMazeSourcePlan, accepted: int) -> int:

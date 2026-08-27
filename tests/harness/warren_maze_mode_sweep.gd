@@ -226,9 +226,26 @@ const CLEARANCE_TOWN_GATES_OFFSET_CEILING := 0
 ## across machines -- so there is no per-machine variation to guard against and
 ## no honest reason to leave slack under the number. A fall is a report to
 ## write, not a tolerance to have budgeted for.
+##
+## TASK I4 ROUND 3 RE-PINS THE SECOND ONE, 192 -> 185, AND THE REASON IS A LOST
+## TOWN RATHER THAN A LOST CHANNEL. The plaza deck costs the corpus one grand
+## seal (`test_warren_maze_composition.GRAND_SEALED_FLOOR` names it), so the
+## large+grand total is now measured over 20 towns instead of 21: 185 spans over
+## 20 is 9.25 a town against the floor's own 192 over 21, which is 9.14. The
+## channel did not weaken -- it flies MORE bridges per town than the corpus this
+## floor came from -- and a ratchet on a total has to move when the total's
+## denominator does. compact+standard is unmoved: 42 spans over the same 24
+## towns, exactly its floor, which is the stronger evidence that neither of this
+## round's changes took a bridge anywhere.
+##
+## The round's two changes are separable here and were measured apart: the plaza
+## deck alone flies 186 over the same 20 towns, and the dormer arm takes the last
+## one (one tower crown that used to carry a plain pitch now carries a dormered
+## one, and the roof gate refuses it, which is one fewer flat crown for a span to
+## land on). Both legs are in the round's report.
 const LIFE_SPAN_FLOOR_BY_GROUP: Dictionary = {
 	CORPUS_STONE_GROUP: 42,
-	ADDED_STONE_GROUP: 192,
+	ADDED_STONE_GROUP: 185,
 }
 ## The matrix those floors were measured on. A corpus TOTAL means nothing on a
 ## three-seed spot check, so unlike the clearance ceilings (which are per-town
@@ -492,7 +509,8 @@ func _run() -> void:
 						fabric)
 					print(("SWEEP seed=%d scale=%s ROOFS crowns=%d " \
 						+ "pitched=%d share=%.4f flat=%d tiled=%d " \
-						+ "refused=%d partial=%d dormers=%d dressed=%d/%d " \
+						+ "refused=%d partial=%d dormers=%d " \
+						+ "dormered_roofs=%d dressed=%d/%d " \
 						+ "chimneys=%d awnings=%d boxes=%d rails=%d " \
 						+ "rubble=%d (paved=%d borne=%d bearing=%d) " \
 						+ "brackets=%d " \
@@ -512,6 +530,8 @@ func _run() -> void:
 						int(fabric.audit.get(
 							"maze_pitched_partial_plate_count", 0)),
 						int(fabric.audit.get("dormered_roof_unit_count", 0)),
+						int(fabric.audit.get(
+							"dormered_pitched_roof_count", 0)),
 						int(fabric.audit.get("maze_dressed_crown_count", 0)),
 						int(fabric.audit.get("maze_dressed_crown_count", 0)) \
 							+ int(fabric.audit.get(
@@ -769,7 +789,8 @@ static func _accumulate_walls(tally: Dictionary,
 static func _new_roof_tally() -> Dictionary:
 	## TASK H2. The corpus roofscape tally.
 	return {"towns": 0, "crowns": 0, "pitched": 0, "flat": 0, "tiled": 0,
-		"refused": 0, "partial": 0, "dormers": 0, "dressed": 0, "bare": 0,
+		"refused": 0, "partial": 0, "dormers": 0, "dormered_roofs": 0,
+		"dressed": 0, "bare": 0,
 		"chimneys": 0, "awnings": 0, "boxes": 0, "rubble": 0, "paved": 0,
 		"borne": 0, "bearing": 0, "brackets": 0, "bare_overhangs": 0,
 		"worst_rubble": 0,
@@ -789,6 +810,13 @@ static func _accumulate_roofs(tally: Dictionary,
 	tally.partial += int(fabric.audit.get(
 		"maze_pitched_partial_plate_count", 0))
 	tally.dormers += int(fabric.audit.get("dormered_roof_unit_count", 0))
+	# TASK I4 ROUND 3. THE OTHER DORMER RATE, and the two are different
+	# questions. `dormers` counts UNITS -- a `long` recipe carries two -- so it
+	# flatters the share the direction actually asks about, which is how many
+	# PITCHED ROOFS carry one. Round 2 could only measure that on four planner
+	# towns (10 of 27); this is the corpus column.
+	tally.dormered_roofs += int(fabric.audit.get(
+		"dormered_pitched_roof_count", 0))
 	tally.dressed += int(fabric.audit.get("maze_dressed_crown_count", 0))
 	tally.bare += int(fabric.audit.get("maze_bare_crown_count", 0))
 	tally.chimneys += int(fabric.audit.get("maze_crown_chimney_count", 0))
@@ -816,7 +844,8 @@ func _print_roof_result(group: String, tally: Dictionary) -> void:
 		return
 	print(("SWEEP RESULT roofs%s towns=%d crowns=%d pitched=%d " \
 		+ "corpus_share=%.4f worst_town_share=%.4f flat=%d tiled=%d " \
-		+ "refused=%d partial=%d dormers=%d dressed=%d/%d chimneys=%d " \
+		+ "refused=%d partial=%d dormers=%d dormered_roofs=%d " \
+		+ "dormer_roof_share=%.4f dressed=%d/%d chimneys=%d " \
 		+ "awnings=%d boxes=%d rubble=%d worst_rubble=%d (paved=%d " \
 		+ "borne=%d bearing=%d) brackets=%d bare_overhangs=%d") % [
 		"" if group == CORPUS_STONE_GROUP else "/%s" % group,
@@ -824,6 +853,8 @@ func _print_roof_result(group: String, tally: Dictionary) -> void:
 		float(int(tally.pitched)) / float(maxi(1, int(tally.crowns))),
 		float(tally.worst_share), int(tally.flat), int(tally.tiled),
 		int(tally.refused), int(tally.partial), int(tally.dormers),
+		int(tally.dormered_roofs),
+		float(int(tally.dormered_roofs)) / float(maxi(1, int(tally.pitched))),
 		int(tally.dressed), int(tally.dressed) + int(tally.bare),
 		int(tally.chimneys), int(tally.awnings), int(tally.boxes),
 		int(tally.rubble), int(tally.worst_rubble), int(tally.paved),
@@ -844,6 +875,11 @@ static func _new_skin_tally() -> Dictionary:
 		"spans": 0, "span_cells": 0, "span_instances": 0, "bays": 0,
 		"bumps": 0, "outcrop_brackets": 0, "dormers": 0, "plaza_entries": 0,
 		"plaza_features": 0, "plaza_towns": 0,
+		# TASK I4 ROUND 3. The plaza deck: how many towns got the shaped,
+		# street-fronted site and how many macro columns it claimed. A town with
+		# none kept the corridor fallback, so `towns - plaza_decks` is the
+		# fallback's own corpus count.
+		"plaza_decks": 0, "plaza_deck_columns": 0,
 		# TASK I4, the six annotations.
 		"garden_runs": 0, "rim_faces": 0, "rim_instances": 0,
 		"rim_deficit": 0, "lean_refusals": 0, "deck_caps": 0,
@@ -918,6 +954,10 @@ static func _accumulate_skin(tally: Dictionary,
 		"maze_plaza_centre_feature_count", 0))
 	tally.plaza_towns += int(int(fabric.audit.get(
 		"maze_village_green_cell_count", 0)) > 0)
+	var plaza_columns := int(fabric.audit.get(
+		"maze_plaza_deck_column_count", 0))
+	tally.plaza_decks += int(plaza_columns > 0)
+	tally.plaza_deck_columns += plaza_columns
 	# TASK I4. THE SIX ANNOTATIONS, on the row the life already occupies: the
 	# turf edge (annotation 1), the demoted small tops (annotation 2), the
 	# corbels under the unborne floor plates (annotation 3) and the dressed
@@ -994,14 +1034,15 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 	print(("SWEEP RESULT life%s towns=%d spans=%d span_cells=%d " \
 		+ "span_instances=%d bays=%d bumps=%d outcrops=%d brackets=%d " \
 		+ "bare_outcrops=%d dormers=%d plaza_towns=%d plaza_entries=%d " \
-		+ "plaza_features=%d") % [
+		+ "plaza_features=%d plaza_decks=%d plaza_deck_columns=%d") % [
 		"" if group == CORPUS_STONE_GROUP else "/%s" % group,
 		int(tally.towns), int(tally.spans), int(tally.span_cells),
 		int(tally.span_instances), int(tally.bays), int(tally.bumps),
 		int(tally.bays) + int(tally.bumps), int(tally.outcrop_brackets),
 		int(tally.outcrop_brackets) - 2 * (int(tally.bays) + int(tally.bumps)),
 		int(tally.dormers), int(tally.plaza_towns), int(tally.plaza_entries),
-		int(tally.plaza_features)])
+		int(tally.plaza_features), int(tally.plaza_decks),
+		int(tally.plaza_deck_columns)])
 	# TASK I4. The six annotations' own row.
 	print(("SWEEP RESULT annotations%s towns=%d garden_runs=%d rim_faces=%d " \
 		+ "rims=%d rim_deficit=%d lean_refusals=%d deck_caps=%d " \

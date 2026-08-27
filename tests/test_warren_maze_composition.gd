@@ -491,7 +491,19 @@ const ROUTE_ON_STONE_FLOOR := 0.95
 ## Task C6's original value, so this is a return to it rather than new slack,
 ## and it is the number to attack next: the lever is the room composition's
 ## storey budget per lineage, not the plot planner.
-const UNROOMED_PLOT_MASS_CEILING := 0.33
+##
+## TASK I4 ROUND 3 RE-PINS IT UPWARD AGAIN, 0.33 -> 0.35, AND IT IS ONE TOWN.
+## The plaza deck claims an aspect-bounded rectangle before the ordinary deck
+## quota walks, which re-parcels the towns it lands on. Measured before -> after
+## on the four planner towns: **0.280 -> 0.269**, **0.200 -> 0.345**,
+## **0.309 -> 0.253**, **0.319 -> 0.207**. THREE OF FOUR IMPROVE, two of them
+## substantially, and the corpus's worst town moves from 9/standard to 4/compact.
+## 4/compact's own cause is published beside it (`MAZE_PLOT_MASS_CAUSES`): no
+## uncomposed parcel, no refusal, but five RESIDUAL rooms and six back rooms --
+## the composition rooms it in smaller pieces than before and 243 of its 251
+## unroomed cells are plain structural mass. The pin is the new worst plus the
+## same 0.005 of head-room E3b's was, and the lever named above is unchanged.
+const UNROOMED_PLOT_MASS_CEILING := 0.35
 
 ## Houses the plot model says stand on ANOTHER PLOT that the composition still
 ## roots in the mountain at their own floor band, because
@@ -635,9 +647,27 @@ const CORPUS_SWEEP_SCALES: Array[String] = ["compact", "standard", "large",
 ##
 ## Both are floors, as before: a seed that starts sealing is a re-pin UPWARD
 ## with the reason, and one that stops is the regression this exists to catch.
+##
+## TASK I4 ROUND 3 RE-PINS GRAND DOWNWARD, 10 -> 9, AND IT IS A REGRESSION WITH
+## A NAME. The plaza deck claims an aspect-bounded rectangle of macro columns
+## before the ordinary deck quota walks, which moves the composition of every
+## town it lands on, and **5/grand** is the one town in the corpus that does not
+## survive the move: `no court cantilever clears the final authored room
+## envelopes`. Large is UNCHANGED at 11 (it loses nobody) and compact and
+## standard hold their equality at 12 each; the 48-town matrix goes 45 -> 44.
+##
+##   large seals 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12 (lost 9, as before)
+##   grand seals 1, 2, 3, 6, 7, 9, 10, 11, 12 (lost 4 and 8 at the source's
+##     straight-run cap, as before, and 5 at the court cantilever, which is
+##     this round's)
+##
+## The round's own stop condition was "at most one town per scale"; this is that
+## one town, and the deeper siting policies that were measured first cost three
+## (see `WarrenPlotReservations.PLAZA_CUT_BUDGET_BANDS`, which carries the
+## measurement and is what bought the other two back).
 const CORPUS_EQUALITY_SCALES: Array[String] = ["compact", "standard"]
 const LARGE_SEALED_FLOOR := 11
-const GRAND_SEALED_FLOOR := 10
+const GRAND_SEALED_FLOOR := 9
 
 ## The composition family this task closed. A sweep row that dies here again is
 ## a regression of Task C6 ruling 1, not a new gate, so it is pinned by name.
@@ -3953,9 +3983,41 @@ func test_retained_rock_skips_a_cell_another_feature_reserved() -> void:
 		"the probe must expose the cells it retained")
 	# Take a cell the baseline really retained and give its FEATURE bit to
 	# somebody else, exactly as a composed feature would.
-	var taken := (baseline.cells as Array[Vector3i])[
-		(baseline.cells as Array).size() / 2]
+	#
+	# TASK I4 ROUND 3 CHOOSES THE CELL PROPERLY, and both halves of the change
+	# are real fragilities rather than tidy-ups.
+	#
+	# SORTED, because `_rock_retention_probe` reads its cells out of
+	# `grid.cells_with_use`, which is dictionary order: "the middle one" was a
+	# fact about hash iteration, so the same town could hand this test a
+	# different cell on a different run.
+	#
+	# AND FROM THE LOWEST RETAINED BAND, because not every retained cell
+	# reaches the skip. `_retain_maze_rock` consults `_maze_released_parapet_
+	# cells` BEFORE it asks about the feature bit, and that pass REPAIRS
+	# stranded releases by pulling cells back into the retained set -- a repair
+	# a foreign reservation can block. Reserve one of those and the cell leaves
+	# through `released_parapet_cells` instead of through `skipped`, which is
+	# correct behaviour and the wrong subject for this test. (Measured on
+	# 12/compact: the unsorted middle cell (2, 2, -1) took exactly that route --
+	# released 176 -> 177, stranded repairs 28 -> 27, skipped 0.) A parapet is
+	# by definition at a plot's own top band, so the lowest band the pass
+	# retains anywhere is rock no release rule can reach.
+	var retained: Array[Vector3i] = []
+	retained.assign(baseline.cells as Array)
+	retained.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		if a.y != b.y:
+			return a.y < b.y
+		return a.x < b.x if a.z == b.z else a.z < b.z)
+	var floor_band := retained[0].y
+	var deepest: Array[Vector3i] = []
+	for cell: Vector3i in retained:
+		if cell.y == floor_band:
+			deepest.append(cell)
+	var taken := deepest[deepest.size() / 2]
 	var guarded := _rock_retention_probe(source, volume, taken)
+	gut.p("ROCK_SKIP taken=%s baseline=%s guarded=%s" % [taken,
+		baseline.result, guarded.result])
 	assert_false(bool(guarded.result.failed),
 		"a foreign FEATURE reservation must never reject the retention pass")
 	assert_eq(int(guarded.result.skipped), 1,
@@ -5020,6 +5082,110 @@ func test_the_bench_tops_read_as_gardens_with_one_village_green() -> void:
 				% _label(outcome))
 		checked += 1
 	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+## TASK I4 ROUND 3. How many of this file's four corpus towns the plaza siting
+## policy finds a site on, pinned TWO-SIDEDLY at the measurement: THREE, and the
+## fourth (3/standard) offers no rectangle inside
+## `WarrenPlotReservations.PLAZA_CUT_BUDGET_BANDS` and keeps the corridor
+## fallback. Over the 48-town sweep the same rule sites 15 of 24 compact and
+## standard towns and 16 of 20 large and grand ones (`SWEEP RESULT life
+## plaza_decks`); this file's corpus is the four planner towns, so the number
+## here is out of four.
+##
+## The lower bound is the one that matters: the whole chain below is conditional
+## on a plaza standing, so a siting rule that quietly stopped finding sites would
+## turn this test into a no-op with every assertion in it still green. The upper
+## bound catches the opposite -- a rule that started taking a site on a town
+## whose hill has no room for one.
+const PLAZA_DECK_CORPUS_TOWNS := 3
+
+
+func test_the_plaza_deck_opens_the_square() -> void:
+	## TASK I4 ROUND 3 -- THE CHAIN, END TO END, and it is a chain of four links
+	## that live in four different files:
+	##
+	##   1. `WarrenPlotReservations._place_plaza` claims an aspect-bounded,
+	##      street-fronted rectangle of macro columns before the ordinary deck
+	##      quota walks (its SHAPE is pinned in `test_warren_maze_plots`);
+	##   2. `WarrenVolumetricSolver._pave_maze_decks` paves it as public floor,
+	##      so its fine cells are WALKED;
+	##   3. `SettlementFabricAssembler.maze_plaza_entries` therefore calls the
+	##      garden cells one band below and one cell across ENTERED;
+	##   4. `maze_village_green_cells` prefers an entered run, so the square the
+	##      town designates is a run a street can reach -- and being reachable is
+	##      what round 2's photograph found the green was NOT.
+	##
+	## Round 2's diagnosis was that the green reads as a CORRIDOR, so what is
+	## asserted here is the room-ness of the result rather than the plaza's own
+	## geometry: the designated green is entered, its plan box is at least two
+	## cells on its short side, and the plaza deck really is walked (link 2,
+	## which is the one an unrelated change to the deck carve could break while
+	## leaving links 1, 3 and 4 intact and this whole chain silently dead).
+	var towns := 0
+	var square_towns := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		if int(plan.audit.get("maze_plaza_deck_column_count", 0)) <= 0:
+			continue
+		towns += 1
+		var retained := fabric.retained_terrace_cells
+		var solids := fabric.transformed_cells(&"solid")
+		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+			fabric.transformed_cells(&"terrain_bearing"))
+		var paved := SettlementFabricAssembler.public_floor_cells(
+			fabric.surface_plan)
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var garden := SettlementFabricAssembler.maze_garden_cells(retained,
+			solids, paved, plinths, walked)
+		var plaza := SettlementFabricAssembler.maze_village_green_cells(garden,
+			walked)
+		var entries := SettlementFabricAssembler.maze_plaza_entries(plaza,
+			walked)
+		# Link 2, asked of the payload rather than of the rule: every fine cell
+		# of the plaza deck's own floor band is a cell the public realm walks.
+		var deck_cells := _deck_floor_cells(plan)
+		var unwalked := 0
+		for cell: Vector3i in deck_cells:
+			unwalked += int(not walked.has(cell))
+		assert_eq(unwalked, 0,
+			("%s leaves %d of %d deck floor cells outside the walked set -- " \
+				+ "the square's mouths are entrances only because the deck " \
+				+ "beside them is walked") % [_label(outcome), unwalked,
+				deck_cells.size()])
+		# Links 3 and 4: the green the town designates is one a street reaches.
+		assert_gt(entries.size(), 0,
+			("%s sites a plaza deck and still designates a green no street " \
+				+ "enters") % _label(outcome))
+		var low := Vector2i(1 << 30, 1 << 30)
+		var high := Vector2i(-(1 << 30), -(1 << 30))
+		for cell_value: Variant in plaza.keys():
+			var cell := cell_value as Vector3i
+			low.x = mini(low.x, cell.x)
+			low.y = mini(low.y, cell.z)
+			high.x = maxi(high.x, cell.x)
+			high.y = maxi(high.y, cell.z)
+		var box := high - low + Vector2i.ONE
+		var short_side := mini(box.x, box.y)
+		var long_side := maxi(box.x, box.y)
+		assert_gte(short_side, 2,
+			("%s designates a green whose plan box is %s cells -- a square is " \
+				+ "not one cell wide") % [_label(outcome), box])
+		square_towns += int(long_side <= short_side * 2)
+		print("MAZE_SQUARE %s green=%d box=%dx%d entries=%d deck_cells=%d" % [
+			_label(outcome), plaza.size(), box.x, box.y, entries.size(),
+			deck_cells.size()])
+	assert_eq(towns, PLAZA_DECK_CORPUS_TOWNS,
+		("%d of the four planner towns site a plaza deck; the pin is %d") \
+			% [towns, PLAZA_DECK_CORPUS_TOWNS])
+	gut.p("plaza-deck towns: %d, of which %d designate a green inside 2:1" % [
+		towns, square_towns])
 
 
 func test_the_life_constants_mirror_the_module_descriptors() -> void:
