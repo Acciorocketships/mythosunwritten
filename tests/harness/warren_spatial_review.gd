@@ -567,6 +567,7 @@ func _capture_all() -> void:
 		{"id": "overview-se", "position": centre + Vector3(span,
 			span * 0.65, -span), "target": centre, "fov": 54.0},
 	]
+	views.append_array(_orbit_views(centre, span))
 	views.append_array(_gate_approach_views())
 	views.append_array(_street_views())
 	views.append_array(_transition_views())
@@ -616,6 +617,55 @@ func _capture_all() -> void:
 		print("[warren_spatial_review] captured ", path)
 	_write_manifest()
 	get_tree().quit()
+
+
+## TASK I4 ROUND 5, ITEM 6 -- "i'd like to see screenshots from more angles to
+## see the village better."
+##
+## The four `overview-*` frames above are the corners of one square at one
+## height, which is four readings of a town from the same 45 degrees. A village
+## is a silhouette and a silhouette changes with the compass: a town that reads
+## as clustered from the north-east can read as a wall from the north.
+##
+## EIGHT POINTS AND TWO HEIGHTS. The high ring is the existing pitch, so the
+## four diagonal frames stay comparable with every capture this branch has
+## taken; the low ring drops the eye to a third of the span, which is the height
+## a hillside opposite the village would put it at and the one that shows the
+## roofline against the sky rather than the plan of the roofs. The four
+## diagonals keep their historic `overview-` ids and are not repeated here.
+const ORBIT_COMPASS: Array[Dictionary] = [
+	{"id": "n", "x": 0.0, "z": 1.0},
+	{"id": "ne", "x": 1.0, "z": 1.0},
+	{"id": "e", "x": 1.0, "z": 0.0},
+	{"id": "se", "x": 1.0, "z": -1.0},
+	{"id": "s", "x": 0.0, "z": -1.0},
+	{"id": "sw", "x": -1.0, "z": -1.0},
+	{"id": "w", "x": -1.0, "z": 0.0},
+	{"id": "nw", "x": -1.0, "z": 1.0},
+]
+const ORBIT_HIGH_RISE := 0.78
+const ORBIT_LOW_RISE := 0.32
+const ORBIT_FOV := 53.0
+
+
+func _orbit_views(centre: Vector3, span: float) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for point: Dictionary in ORBIT_COMPASS:
+		var axis := Vector3(float(point.x), 0.0, float(point.z)).normalized()
+		for rise: Array in [[ORBIT_HIGH_RISE, "high"], [ORBIT_LOW_RISE, "low"]]:
+			out.append({
+				"id": "orbit-%s-%s" % [String(point.id), String(rise[1])],
+				"position": centre + axis * span \
+					+ Vector3.UP * span * float(rise[0]),
+				"target": centre, "fov": ORBIT_FOV})
+	# THE ROOFTOP READ. Straight down the town's own long axis from just over its
+	# crown, which is the one frame that shows the roofscape as a roofscape --
+	# pitches, dormers, chimneys and the skywalks between them -- rather than as
+	# a plan.
+	out.append({"id": "orbit-rooftop",
+		"position": centre + Vector3(span * 0.30, span * 1.15, span * 0.30),
+		"target": centre, "fov": 58.0})
+	return out
 
 
 func _capture_matches_filter(view_id: String) -> bool:

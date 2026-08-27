@@ -614,6 +614,15 @@ const UNCOMPOSED_PARCEL_GATES: Array[String] = [
 ## and 1, not 12: `test_large_and_grand_towns_exist` carries what a sealed one
 ## of each measures, and the remaining blockers are named in the F4 report.
 const MAZE_SWEEP := preload("res://tests/harness/warren_maze_mode_sweep.gd")
+## TASK I4 ROUND 5, ITEM 5. The two variety pins, MEASURED and not chosen. The
+## round's own before/after on the five review towns: 2/4/5/5/5 distinct pieces
+## became 5/11/9/5/8, and 22 of 62 adjacent planted pairs wearing the same
+## module became 3 of 30. The four corpus towns this file walks read 5/11/9/5
+## and 1/1/0/0, so the floor sits one under the worst of them and the ceiling
+## one over: a ratchet against a narrowing rather than a target, with a hair of
+## room for a seeded roll to move one cell.
+const DECOR_TYPE_FLOOR := 4
+const DECOR_ADJACENT_REPEAT_CEILING := 2
 const CORPUS_SEALED_FLOOR := 24
 const CORPUS_SWEEP_SEEDS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 const CORPUS_SWEEP_SCALES: Array[String] = ["compact", "standard", "large",
@@ -5019,8 +5028,12 @@ func test_the_bench_tops_read_as_gardens_with_one_village_green() -> void:
 					continue
 				if edge:
 					plaza_edge_planted += 1
-					plaza_edge_built += int(StringName(asset_value) \
-						== SettlementFabricAssembler.GARDEN_PLANTER)
+					# TASK I4 ROUND 5, ITEM 5. The boundary is still BUILT and
+					# never self-sown; what changed is that "built" is a POOL
+					# rather than one planter, so a run of edge cells reads as a
+					# laid-out square rather than as six identical crates.
+					plaza_edge_built += int(SettlementFabricAssembler \
+						.GARDEN_PLANTER_POOL.has(StringName(asset_value)))
 				else:
 					planted_in_clearing += 1
 		# 2. the green is one connected surface at one band. TASK I2 FIX 1, M3
@@ -6002,19 +6015,47 @@ func test_the_rim_stands_off_the_panel_it_caps() -> void:
 		var town_masonry := 0
 		var town_facade := 0
 		var unpanelled := 0
+		var level := 0
 		var natural := 0
 		var misplaced := 0
 		var worst := 0.0
+		# TASK I4 ROUND 5, ITEM 4. The level junction's far side is what tells a
+		# panelless rim from a broken one -- see below.
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
 		for rim: Dictionary in _rim_instances(fabric):
 			var face := rim["face"] as Vector4i
 			var outward := Vector3(
 				SettlementFabricAssembler.FACE_DIRECTIONS[face.w])
 			if not panels.has(face):
-				# The rule's own claim is that a capped cell's side face is
-				# always a panel (`maze_green_rim_standoff`); a rim over no
-				# panel would silently take the boundary and be the same defect
-				# by another route.
-				unpanelled += 1
+				# TASK I4 ROUND 5, ITEM 4 -- AND THIS CLASS IS NOW LEGITIMATE,
+				# which is the whole of what changed here. The rim used to dress
+				# DROPS only, and a drop's face is always a panel of the skin, so
+				# a rim over no panel meant a rule had gone wrong. The rim now
+				# also finishes the LEVEL junction -- where the lawn meets a plank
+				# street at its own height -- and there IS no panel there: the
+				# boundary is not exposed, the mass across it carries the
+				# pavement, and the turf's edge is what the piece exists to
+				# finish. Its stand-off is therefore exactly the boundary, and
+				# that is asserted rather than skipped.
+				var level_cell := (rim["cell"] as Vector3i) + Vector3i( \
+					SettlementFabricAssembler.FACE_DIRECTIONS[face.w]) \
+					+ Vector3i.UP
+				if not walked.has(level_cell):
+					unpanelled += 1
+					continue
+				level += 1
+				var level_roll := (rim["transform"] as Transform3D) \
+					* Vector3(0.0, 0.0,
+						SettlementFabricAssembler.GREEN_RIM_FRONT)
+				var level_boundary := Vector3(rim["cell"] as Vector3i) \
+					* FabricRecipe.CELL_SIZE \
+					+ outward * (FabricRecipe.CELL_SIZE * 0.5)
+				var level_error := absf((level_roll - level_boundary) \
+					.dot(outward) \
+					- SettlementFabricAssembler.GREEN_RIM_FACADE_STANDOFF)
+				worst = maxf(worst, level_error)
+				misplaced += int(level_error > 0.0005)
 				continue
 			var asset := panels[face] as StringName
 			var expected := SettlementFabricAssembler.GREEN_RIM_FACADE_STANDOFF
@@ -6036,13 +6077,19 @@ func test_the_rim_stands_off_the_panel_it_caps() -> void:
 			var error := absf(stand_off - expected)
 			worst = maxf(worst, error)
 			misplaced += int(error > 0.0005)
-		print(("MAZE_RIM_STANDOFF %s masonry=%d facade=%d unpanelled=%d " \
-			+ "natural=%d misplaced=%d worst=%.6f") % [_label(outcome),
-			town_masonry, town_facade, unpanelled, natural, misplaced, worst])
+		print(("MAZE_RIM_STANDOFF %s masonry=%d facade=%d level=%d " \
+			+ "unpanelled=%d natural=%d misplaced=%d worst=%.6f") % [
+			_label(outcome), town_masonry, town_facade, level, unpanelled,
+			natural, misplaced, worst])
 		assert_eq(unpanelled, 0,
-			("%s lays %d rim(s) on a face that carries no panel; the rim would " \
-				+ "take the boundary and the stand-off would mean nothing") % [
-				_label(outcome), unpanelled])
+			("%s lays %d rim(s) on a face that is neither a panel nor a level " \
+				+ "walked junction; the rim would take the boundary and the " \
+				+ "stand-off would mean nothing") % [_label(outcome),
+				unpanelled])
+		assert_gt(level, 0,
+			("%s finishes no level junction; every town in the corpus has a " \
+				+ "lawn meeting a street at its own height and round 5 gave " \
+				+ "that boundary its lip") % _label(outcome))
 		# `maze_natural_is_permitted()` is false, so the shard branch of
 		# `maze_green_rim_standoff` is dead code with a documented number in it.
 		# Said here rather than in a report, so the day the cliffs come back this
@@ -9695,3 +9742,383 @@ func test_the_production_site_builds_a_maze_town_on_real_terrain() -> void:
 			+ "one-pass path is seconds, the searched pipeline it replaced " \
 			+ "cost 154-210 s") + machine_note(PRODUCTION_SOLVE_MS_CEILING))
 
+
+
+func test_the_decor_constants_mirror_the_module_descriptors() -> void:
+	## TASK I4 ROUND 5, ITEM 1 -- "one of the plants is glitched into the wall".
+	##
+	## DECOR_CLEARANCE is the table the free-box rule measures a piece against,
+	## and every number in it was transcribed off a descriptor. This is the
+	## `test_the_frontage_constants_mirror_the_module_descriptors` discipline
+	## applied to the channel that had none: a re-bake that grew a planter fails
+	## HERE rather than putting it back inside the wall it stands beside.
+	##
+	## AND THE COLLIDER HALF IS CHECKED TOO. Round 1's first concern was that a
+	## re-bake could grow a collider without moving the geometry and pass every
+	## pin. Every piece in these two pools bakes ZERO collision pieces today --
+	## which is what makes the visual AABB the whole envelope -- so the assertion
+	## is that the count is still zero, and the day one of them starts baking a
+	## hull this fails and the table has to take the larger of the two.
+	var catalog := EnvironmentCatalog.load_default()
+	assert_not_null(catalog, "the shipped environment catalogue must load")
+	if catalog == null:
+		return
+	var cache := EnvironmentRenderCache.new(catalog)
+	var pools: Array[StringName] = []
+	pools.append_array(SettlementFabricAssembler.GARDEN_PLANTING)
+	pools.append_array(SettlementFabricAssembler.GARDEN_PLANTER_POOL)
+	assert_gt(pools.size(), 10,
+		"the decor vocabulary must be wide enough to be worth a variety pin")
+	for asset_id: StringName in pools:
+		assert_true(SettlementFabricAssembler.DECOR_CLEARANCE.has(asset_id),
+			"%s is placed by a garden pool and has no clearance row" \
+				% String(asset_id))
+	for asset_value: Variant in SettlementFabricAssembler.DECOR_CLEARANCE.keys():
+		var asset_id := asset_value as StringName
+		var descriptor := catalog.descriptor(asset_id)
+		assert_not_null(descriptor, "%s must be in the catalogue" \
+			% String(asset_id))
+		if descriptor == null:
+			continue
+		var box: AABB = descriptor.measured_aabb
+		var clearance: Vector2 = SettlementFabricAssembler \
+			.DECOR_CLEARANCE[asset_id]
+		_assert_mirrors(clearance.x,
+			maxf(absf(box.position.x), absf(box.position.x + box.size.x)),
+			"%s half-width" % String(asset_id))
+		_assert_mirrors(clearance.y,
+			maxf(absf(box.position.z), absf(box.position.z + box.size.z)),
+			"%s half-depth" % String(asset_id))
+		assert_eq(descriptor.collision_piece_count, 0,
+			("%s has started baking colliders; DECOR_CLEARANCE is the VISUAL " \
+				+ "envelope alone and must become the larger of the two") \
+				% String(asset_id))
+		var visual := cache.visual(asset_id)
+		assert_not_null(visual, "%s must load its visual" % String(asset_id))
+		if visual != null:
+			assert_eq(visual.collisions.size(), 0,
+				"%s bakes a collider its clearance row does not carry" \
+					% String(asset_id))
+	# The floor board the lawn is laid against, mirrored because the round-5
+	# note in GREEN_CAP_LIFT rests on its thickness.
+	var board := catalog.descriptor(SettlementFabricAssembler.PLANK_TERRACE_CAP)
+	assert_not_null(board, "the deck board must be in the catalogue")
+	if board != null:
+		_assert_mirrors(SettlementFabricAssembler.PLANK_TERRACE_THICKNESS,
+			(board.measured_aabb as AABB).size.y, "the deck board's thickness")
+
+
+func test_no_decor_stands_inside_the_wall_beside_it() -> void:
+	## TASK I4 ROUND 5, ITEM 1. Every piece the garden channel places stands
+	## inside the FREE GROUND of its own cell -- the lattice cell minus whatever
+	## is really built on its four sides -- measured off the payload the renderer
+	## is handed rather than off the rule that placed it.
+	##
+	## THE FAILURE THIS CATCHES is the annotation's own: a 1.208 m planter
+	## centred on a 1.5 m cell whose neighbour is a coursed panel standing
+	## 0.332 m in, or a building's front door standing 1.071 m in. Before the
+	## round, 61 of 140 placed pieces on the five review towns intersected real
+	## built geometry; the rule below is what the payload now satisfies by
+	## construction, and this is the pin that says so.
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var retained := fabric.retained_terrace_cells
+		var solids := fabric.transformed_cells(&"solid")
+		var occluders := fabric.transformed_cells(&"occluder")
+		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+			fabric.transformed_cells(&"terrain_bearing"))
+		var paved := SettlementFabricAssembler.public_floor_cells(
+			fabric.surface_plan)
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var shell := SettlementFabricAssembler.maze_skin_shell(retained, solids,
+			paved, plinths, walked)
+		var treatments := shell.treatments as Dictionary
+		var garden := SettlementFabricAssembler.maze_garden_cells(retained,
+			solids, paved, plinths, walked, shell)
+		var payload := SettlementFabricAssembler.terrace_retaining_payload(
+			fabric)
+		var placed := 0
+		var over_reach := 0
+		var uncatalogued := 0
+		var worst := 0.0
+		for asset_value: Variant in payload.batches.keys():
+			var asset := StringName(asset_value)
+			var batch := payload.batches[asset] as Dictionary
+			var ids := batch.get("ids", []) as Array
+			var transforms := batch.get("transforms", []) as Array
+			for index in ids.size():
+				var id := String(ids[index])
+				if not id.begins_with("maze-garden/"):
+					continue
+				placed += 1
+				if not SettlementFabricAssembler.DECOR_CLEARANCE.has(asset):
+					uncatalogued += 1
+					continue
+				var parts := id.trim_prefix("maze-garden/").split("/")
+				var cell := Vector3i(int(parts[0]), int(parts[1]),
+					int(parts[2]))
+				var free := SettlementFabricAssembler.maze_decor_free_box(cell,
+					treatments, solids, retained, garden, occluders)
+				var xform := transforms[index] as Transform3D
+				var clearance: Vector2 = SettlementFabricAssembler \
+					.DECOR_CLEARANCE[asset]
+				# The footprint the transform really lays, off its own basis
+				# rather than off the yaw the rule intended.
+				var along := xform.basis * Vector3(1.0, 0.0, 0.0)
+				var across := xform.basis * Vector3(0.0, 0.0, 1.0)
+				var reach_x := absf(along.x) * clearance.x \
+					+ absf(across.x) * clearance.y
+				var reach_z := absf(along.z) * clearance.x \
+					+ absf(across.z) * clearance.y
+				var centre := free.centre as Vector3
+				var half := free.half as Vector2
+				var slip_x := absf(xform.origin.x - centre.x) + reach_x - half.x
+				var slip_z := absf(xform.origin.z - centre.z) + reach_z - half.y
+				var slip := maxf(slip_x, slip_z)
+				if slip > 0.0005:
+					over_reach += 1
+					worst = maxf(worst, slip)
+		print(("MAZE_DECOR_FIT %s placed=%d over_reach=%d uncatalogued=%d " \
+			+ "worst=%.4f") % [_label(outcome), placed, over_reach,
+			uncatalogued, worst])
+		assert_gt(placed, 0,
+			"%s must plant something for this pin to mean anything" \
+				% _label(outcome))
+		assert_eq(uncatalogued, 0,
+			("%s places %d piece(s) with no DECOR_CLEARANCE row; the fit rule " \
+				+ "cannot measure what it does not know") % [_label(outcome),
+				uncatalogued])
+		assert_eq(over_reach, 0,
+			("%s stands %d piece(s) past the free ground of its own cell " \
+				+ "(worst %.3f m); that is the plant in the wall") % [
+				_label(outcome), over_reach, worst])
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func test_every_canopy_the_town_stands_is_stocked() -> void:
+	## TASK I4 ROUND 5, ITEM 2 -- "the market stall is not one of the stocked
+	## ones; it is empty. we should use the stocked ones."
+	##
+	## Every canopy this fabric places -- the square's centre feature and the
+	## perimeter frontage -- carries the reviewed stocked counter, three seeded
+	## goods and the hanging string. The pin is the RATIO, counted off the
+	## payload's own ids: an empty canopy is one with no `maze-stall-goods/`
+	## beside it, and there are none.
+	var expected_per_canopy := SettlementFabricAssembler \
+		.STALL_GOODS_STATIONS.size() + 2
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var payload := SettlementFabricAssembler.terrace_retaining_payload(
+			fabric)
+		var canopies := 0
+		var goods := 0
+		var counters := 0
+		var anchors: Dictionary = {}
+		for asset_value: Variant in payload.batches.keys():
+			var asset := StringName(asset_value)
+			var batch := payload.batches[asset] as Dictionary
+			for id_value: Variant in batch.get("ids", []) as Array:
+				var id := String(id_value)
+				if id.begins_with("maze-stall-goods/"):
+					goods += 1
+					counters += int(asset \
+						== SettlementFabricAssembler.STALL_COUNTER)
+					var parts := id.trim_prefix("maze-stall-goods/").split("/")
+					anchors["%s/%s/%s/%s" % [parts[0], parts[1], parts[2],
+						parts[3]]] = true
+					continue
+				if not SettlementFabricAssembler.STALL_CANOPIES.has(asset):
+					continue
+				if id.begins_with("maze-plaza-centre/") \
+						or id.begins_with("maze-frontage/"):
+					canopies += 1
+		var audit := fabric.audit
+		print(("MAZE_STALL_GOODS %s canopies=%d goods=%d counters=%d " \
+			+ "anchors=%d") % [_label(outcome), canopies, goods, counters,
+			anchors.size()])
+		assert_gt(canopies, 0,
+			"%s must stand a canopy for this pin to mean anything" \
+				% _label(outcome))
+		assert_eq(goods, canopies * expected_per_canopy,
+			("%s stands %d canopy(ies) and %d goods; every canopy carries " \
+				+ "exactly %d, so an empty one shows up here") % [
+				_label(outcome), canopies, goods, expected_per_canopy])
+		assert_eq(counters, canopies,
+			("%s stocks %d of %d canopies with the reviewed counter; a canopy " \
+				+ "without one is the empty stall the user circled") % [
+				_label(outcome), counters, canopies])
+		assert_eq(anchors.size(), canopies,
+			"%s goods do not group one set per canopy" % _label(outcome))
+		assert_eq(int(audit.get("maze_stall_canopy_count", -1)), canopies,
+			"%s audited canopy count must equal the payload's" \
+				% _label(outcome))
+		assert_eq(int(audit.get("maze_stall_goods_count", -1)), goods,
+			"%s audited goods count must equal the payload's" % _label(outcome))
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func test_the_town_s_decor_is_not_one_repeated_piece() -> void:
+	## TASK I4 ROUND 5, ITEM 5 -- "there could be more variation in the types of
+	## assets/decorations used."
+	##
+	## THE MEASUREMENT THE FLOOR IS PICKED FROM, on the five review towns before
+	## the round: 2, 4, 5, 5 and 5 distinct pieces a town, and 22 of 62 adjacent
+	## planted pairs wearing the SAME module -- on 12/compact, FOUR of four. The
+	## user's frame is that number: one crate-planter, six times along one edge.
+	##
+	## TWO PINS, and the second is the one the frame is about. A wide vocabulary
+	## that still puts identical neighbours side by side reads exactly as narrow;
+	## the adjacency rule is what makes the width visible, and it yields only
+	## where nothing else fits the cell's free ground (see `maze_decor_choice`),
+	## so the ceiling is a small number rather than zero.
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var payload := SettlementFabricAssembler.terrace_retaining_payload(
+			fabric)
+		var types: Dictionary = {}
+		var by_cell: Dictionary = {}
+		for asset_value: Variant in payload.batches.keys():
+			var asset := StringName(asset_value)
+			var batch := payload.batches[asset] as Dictionary
+			for id_value: Variant in batch.get("ids", []) as Array:
+				var id := String(id_value)
+				if not id.begins_with("maze-garden/"):
+					continue
+				types[asset] = true
+				var parts := id.trim_prefix("maze-garden/").split("/")
+				by_cell[Vector3i(int(parts[0]), int(parts[1]),
+					int(parts[2]))] = asset
+		var pairs := 0
+		var repeats := 0
+		for cell_value: Variant in by_cell.keys():
+			var cell := cell_value as Vector3i
+			for step: Vector3i in [Vector3i(1, 0, 0), Vector3i(0, 0, 1)]:
+				if not by_cell.has(cell + step):
+					continue
+				pairs += 1
+				repeats += int(StringName(by_cell[cell]) \
+					== StringName(by_cell[cell + step]))
+		var audit := fabric.audit
+		print("MAZE_DECOR_VARIETY %s types=%d placed=%d pairs=%d repeats=%d" % [
+			_label(outcome), types.size(), by_cell.size(), pairs, repeats])
+		assert_gte(types.size(), DECOR_TYPE_FLOOR,
+			("%s dresses its yards with %d distinct piece(s); the two pools " \
+				+ "carry %d between them and the round's own measurement is " \
+				+ "%d-11") % [_label(outcome), types.size(),
+				SettlementFabricAssembler.GARDEN_PLANTING.size() \
+					+ SettlementFabricAssembler.GARDEN_PLANTER_POOL.size(),
+				DECOR_TYPE_FLOOR])
+		assert_lte(repeats, DECOR_ADJACENT_REPEAT_CEILING,
+			("%s puts the same piece on %d adjacent pair(s) of %d; the " \
+				+ "adjacency rule yields only where nothing else fits") % [
+				_label(outcome), repeats, pairs])
+		assert_eq(int(audit.get("maze_garden_decor_type_count", -1)),
+			types.size(),
+			"%s audited decor type count must equal the payload's" \
+				% _label(outcome))
+		assert_eq(int(audit.get("maze_garden_decor_adjacent_repeat_count", -1)),
+			repeats,
+			"%s audited adjacency repeats must equal the payload's" \
+				% _label(outcome))
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func test_no_bearer_hangs_over_a_surface_a_body_stands_on() -> void:
+	## TASK I4 ROUND 5, ITEM 3 -- "it looks like there is not enough headroom for
+	## the character between the two levels of platforms."
+	##
+	## The floor bearer's headroom gate asked ONE question -- is the cell below a
+	## WALKED cell of the public realm -- and a lawn is not one, nor is a plank
+	## terrace: both are caps, whose walking surface is the top of the cell below
+	## them. Measured on the review corpus before the round, four corbels hung
+	## 0.950 m over a lawn, which is the same 0.909 m the rule already refuses
+	## over a street.
+	##
+	## THE PIN IS THE GATE'S OWN CENSUS, read off the sites rather than off the
+	## instances so a refusal counts as loudly as a placement: no bearer is
+	## BORNE over a stance inside body height, and the refusals are printed so
+	## the cost of the gate is visible rather than silent.
+	var body := SettlementFabricAssembler.NATURAL_ROCK_CUT_BODY_HEIGHT
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var retained := fabric.retained_terrace_cells
+		var solids := fabric.transformed_cells(&"solid")
+		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+			fabric.transformed_cells(&"terrain_bearing"))
+		var paved := SettlementFabricAssembler.public_floor_cells(
+			fabric.surface_plan)
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var shell := SettlementFabricAssembler.maze_skin_shell(retained, solids,
+			paved, plinths, walked)
+		var capped := SettlementFabricAssembler.maze_capped_stance_cells(shell)
+		var borne := 0
+		var refused := 0
+		var pinched := 0
+		for site: Dictionary in SettlementFabricAssembler \
+				.maze_public_floor_bearer_sites(retained, solids, paved, walked,
+					capped):
+			var cell := site.cell as Vector3i
+			if bool(site.refused):
+				refused += 1
+				continue
+			borne += 1
+			# The corbel's underside against every surface a body stands on
+			# below it: a walked cell floors at its own bottom, a cap at the top
+			# of the cell under it.
+			var under := cell.y * FabricRecipe.CELL_SIZE \
+				+ SettlementFabricAssembler.PLANK_Y_OFFSET \
+				- SettlementFabricAssembler.SKYWALK_BEARER_DROP
+			for drop in range(1, 3):
+				var probe := cell + Vector3i(0, -drop, 0)
+				var floor_y := INF
+				if walked.has(probe):
+					floor_y = float(probe.y) * FabricRecipe.CELL_SIZE
+				elif capped.has(probe + Vector3i.DOWN):
+					floor_y = float(probe.y) * FabricRecipe.CELL_SIZE
+				if floor_y == INF:
+					continue
+				pinched += int(under - floor_y < body)
+		var audit := fabric.audit
+		print("MAZE_BEARER_HEADROOM %s borne=%d refused=%d pinched=%d" % [
+			_label(outcome), borne, refused, pinched])
+		assert_eq(pinched, 0,
+			("%s hangs %d corbel(s) inside %.3f m of a surface a body stands " \
+				+ "on; the street rule and the lawn rule are the same rule") % [
+				_label(outcome), pinched, body])
+		assert_eq(int(audit.get("maze_public_floor_bearer_count", -1)), borne,
+			"%s audited bearer count must equal the rule's" % _label(outcome))
+		assert_eq(int(audit.get("maze_public_floor_bearer_refused_count", -1)),
+			refused,
+			"%s audited bearer refusals must equal the rule's" \
+				% _label(outcome))
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
