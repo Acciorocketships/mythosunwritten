@@ -5188,6 +5188,262 @@ func test_the_plaza_deck_opens_the_square() -> void:
 		towns, square_towns])
 
 
+func test_no_fence_stands_across_the_square_s_mouth() -> void:
+	## TASK I4 ROUND 4 -- YOU WALK INTO THE SQUARE, pinned across EVERY railing
+	## channel this town has rather than only the one that turned out to be
+	## guilty.
+	##
+	## Round 3's square could be entered on paper and not on foot: each mouth had
+	## a fence across it, in the render AND in the collider. The culprit was
+	## measured, not guessed -- `PublicRealmSurfacePlan._build_guards`, which
+	## fences a structural court boundary whose far side carries no CLAIM, and a
+	## lawn is not a claim. It is a green cap on retained mass one band down,
+	## level with the pavement to the millimetre by `maze_plaza_entries`' own
+	## arithmetic. The crown and plank terrace rails were never involved (0 of
+	## 20 mouths over the five planner towns, before the fix and after it), which
+	## is exactly why this test reads all three: the next channel to learn how to
+	## rail something must not be able to re-fence the doorway quietly.
+	##
+	## MEASURED OFF THE PAYLOADS THE RENDERER IS HANDED, plus the guard SEGMENTS,
+	## which are the collision authority: `guard_mesh_payload` is one merged
+	## mesh, so the segment list is the only place a barrier can be counted
+	## before it is welded to its neighbours.
+	var checked := 0
+	var mouths_seen := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null or fabric.surface_plan == null:
+			continue
+		var retained := fabric.retained_terrace_cells
+		var solids := fabric.transformed_cells(&"solid")
+		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+			fabric.transformed_cells(&"terrain_bearing"))
+		var paved := SettlementFabricAssembler.public_floor_cells(
+			fabric.surface_plan)
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var garden := SettlementFabricAssembler.maze_garden_cells(retained,
+			solids, paved, plinths, walked)
+		var plaza := SettlementFabricAssembler.maze_village_green_cells(garden,
+			walked)
+		checked += 1
+		if plaza.is_empty():
+			continue
+		var entries := SettlementFabricAssembler.maze_plaza_entries(plaza,
+			walked)
+		# The boundary each mouth is entered over: the STREET cell's own face
+		# back toward the green, keyed the way every railing channel keys an
+		# edge -- `Vector4i(cell, index into FACE_DIRECTIONS)`.
+		var mouth_edges: Dictionary = {}
+		for cell_value: Variant in entries.keys():
+			var mouth := cell_value as Vector3i
+			for index in SettlementFabricAssembler.FACE_DIRECTIONS.size():
+				var step := SettlementFabricAssembler.FACE_DIRECTIONS[index]
+				if not walked.has(mouth + step + Vector3i.UP):
+					continue
+				var street := mouth + step + Vector3i.UP
+				var back := SettlementFabricAssembler.FACE_DIRECTIONS.find(-step)
+				mouth_edges[Vector4i(street.x, street.y, street.z, back)] = mouth
+		mouths_seen += mouth_edges.size()
+		# 1. the public-realm guard, as segments (collision) ...
+		var guard_keys: Dictionary = {}
+		for segment: Dictionary in fabric.surface_plan.guard_segments:
+			guard_keys[String(segment.stable_key)] = true
+		# ... and as the rendered fence, decoded off `public-guard/<key>` ids.
+		# A joined pair carries both of its keys in one id.
+		var guard_instances: Dictionary = {}
+		var surface_payload := SettlementFabricAssembler.production_surface_payload(
+			fabric.surface_plan)
+		for asset_value: Variant in surface_payload.batches.keys():
+			var batch := surface_payload.batches[asset_value] as Dictionary
+			for id_value: Variant in batch.get("ids", []) as Array:
+				var id := String(id_value)
+				if not id.begins_with("public-guard/"):
+					continue
+				for key: String in id.trim_prefix("public-guard/").split("+"):
+					guard_instances[key] = true
+		# 2 and 3. the crown terrace rail and the plank deck rail, decoded off
+		# the ids the retaining payload carries.
+		var terrace_rails: Dictionary = {}
+		var deck_rails: Dictionary = {}
+		var retaining := SettlementFabricAssembler.terrace_retaining_payload(
+			fabric)
+		for asset_value: Variant in retaining.batches.keys():
+			var batch := retaining.batches[asset_value] as Dictionary
+			for id_value: Variant in batch.get("ids", []) as Array:
+				var id := String(id_value)
+				var crown := id.begins_with("maze-terrace-rail/")
+				if not crown and not id.begins_with("maze-deck-rail/"):
+					continue
+				var body := id.trim_prefix("maze-terrace-rail/").trim_prefix(
+					"maze-deck-rail/").split("/")
+				if body.size() != 4:
+					continue
+				var edge := Vector4i(int(body[0]), int(body[1]), int(body[2]),
+					int(body[3]))
+				if crown:
+					terrace_rails[edge] = true
+				else:
+					deck_rails[edge] = true
+		var railed_segments := 0
+		var railed_instances := 0
+		var railed_crown := 0
+		var railed_deck := 0
+		var worst := ""
+		for key_value: Variant in mouth_edges.keys():
+			var key := key_value as Vector4i
+			var direction := SettlementFabricAssembler.FACE_DIRECTIONS[key.w]
+			var stable := "%d:%d:%d:%d:%d" % [key.x, key.y, key.z, direction.x,
+				direction.z]
+			var hit := int(guard_keys.has(stable))
+			railed_segments += hit
+			railed_instances += int(guard_instances.has(stable))
+			railed_crown += int(terrace_rails.has(key))
+			# A deck rail stands on the cap it guards, which is the band under
+			# the street floor as well as the street's own band -- check both,
+			# so the pin cannot be passed by an off-by-one in the reading.
+			railed_deck += int(deck_rails.has(key) or deck_rails.has(
+				Vector4i(key.x, key.y - 1, key.z, key.w)))
+			if hit > 0 and worst.is_empty():
+				worst = stable
+		assert_eq(railed_segments + railed_instances + railed_crown \
+			+ railed_deck, 0,
+			("%s fences its own square: %d of %d mouths carry a guard segment " \
+				+ "(first %s), %d a rendered guard, %d a crown rail and %d a " \
+				+ "deck rail -- a paved threshold with a fence across it is a " \
+				+ "lawn beside a lane, not a square you walk into") % [
+				_label(outcome), railed_segments, mouth_edges.size(), worst,
+				railed_instances, railed_crown, railed_deck])
+		# The channel's own reading of the same fact, so a green that opened
+		# nothing cannot pass by naming nothing.
+		assert_eq(int(fabric.audit.get("green_threshold_guard_conflict_count",
+			-1)), 0,
+			"%s reports a guarded green threshold in its own audit" % _label(
+				outcome))
+		assert_eq(int(fabric.audit.get("green_threshold_opening_count", -1)),
+			mouth_edges.size(),
+			("%s names %d green thresholds where the assembler's rule finds " \
+				+ "%d") % [_label(outcome), int(fabric.audit.get(
+					"green_threshold_opening_count", -1)), mouth_edges.size()])
+		print("MAZE_MOUTH %s mouths=%d edges=%d railed=0" % [_label(outcome),
+			entries.size(), mouth_edges.size()])
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+	assert_gt(mouths_seen, 0,
+		("not one town in the corpus offers a plaza mouth -- this pin would " \
+			+ "be green over nothing"))
+
+
+func test_the_square_s_feature_stands_in_its_middle() -> void:
+	## TASK I4 ROUND 4 -- THE CENTRE FEATURE IS IN THE CENTRE.
+	##
+	## Round 3 took the FIRST clear block in sorted lattice order, which is the
+	## lowest-x, lowest-z corner of whatever the green offers: on 12/compact that
+	## stood the feature in the north-west corner of a 6 x 6 square with twelve
+	## clear blocks to choose from. The rule is now the centroid-nearest block,
+	## and this asserts exactly that -- there is no clear block of the chosen
+	## SIZE whose own anchor lies nearer the green's centroid.
+	##
+	## THE SIZE IS PART OF THE CLAIM. A wide block is still preferred over a
+	## narrow one whatever the distances say: a well or a stall wants three cells
+	## and a green that offers one is furnished with it even if a 2 x 2 sits
+	## closer to the middle.
+	var checked := 0
+	var improved := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var retained := fabric.retained_terrace_cells
+		var solids := fabric.transformed_cells(&"solid")
+		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+			fabric.transformed_cells(&"terrain_bearing"))
+		var paved := SettlementFabricAssembler.public_floor_cells(
+			fabric.surface_plan)
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var garden := SettlementFabricAssembler.maze_garden_cells(retained,
+			solids, paved, plinths, walked)
+		var plaza := SettlementFabricAssembler.maze_village_green_cells(garden,
+			walked)
+		if plaza.is_empty():
+			continue
+		var entries := SettlementFabricAssembler.maze_plaza_entries(plaza,
+			walked)
+		var feature := SettlementFabricAssembler.maze_plaza_centre_feature(
+			plaza, entries)
+		if feature.is_empty():
+			continue
+		checked += 1
+		var cells: Array[Vector3i] = []
+		cells.assign(plaza.keys())
+		var centroid := Vector3.ZERO
+		for cell: Vector3i in cells:
+			centroid += Vector3(cell)
+		centroid /= float(cells.size())
+		var block := feature.cells as Dictionary
+		var size := SettlementFabricAssembler.PLAZA_WIDE_BLOCK if block.size() \
+			== SettlementFabricAssembler.PLAZA_WIDE_BLOCK \
+				* SettlementFabricAssembler.PLAZA_WIDE_BLOCK \
+			else SettlementFabricAssembler.PLAZA_NARROW_BLOCK
+		var anchor_offset := Vector3.ZERO if size % 2 == 1 \
+			else Vector3(0.5, 0.0, 0.5)
+		var chosen := feature.cell as Vector3i
+		var chosen_offset := (Vector3(chosen) + anchor_offset \
+			- centroid).length()
+		# Every clear block of the SAME size, scored the same way.
+		var low := -(size / 2) if size % 2 == 1 else 0
+		var high := size / 2 if size % 2 == 1 else size - 1
+		var candidates := 0
+		var nearer := 0
+		var first_in_sort_order := Vector3i.ZERO
+		var have_first := false
+		# The assembler's own lattice order, so `was` below really is the block
+		# round 3's first-in-sort-order rule would have taken.
+		cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+			if a.y != b.y:
+				return a.y < b.y
+			if a.z != b.z:
+				return a.z < b.z
+			return a.x < b.x)
+		for cell: Vector3i in cells:
+			var clear := true
+			for dx in range(low, high + 1):
+				for dz in range(low, high + 1):
+					var probe := cell + Vector3i(dx, 0, dz)
+					clear = clear and plaza.has(probe) \
+						and not entries.has(probe)
+			if not clear:
+				continue
+			candidates += 1
+			if not have_first:
+				have_first = true
+				first_in_sort_order = cell
+			var offset := (Vector3(cell) + anchor_offset - centroid).length()
+			nearer += int(offset < chosen_offset - 0.0001)
+		assert_eq(nearer, 0,
+			("%s stands its %s %.2f cells off the green's centroid while %d of " \
+				+ "%d clear %dx%d blocks stand nearer -- the centre feature is " \
+				+ "the one in the centre") % [_label(outcome),
+				String(feature.asset), chosen_offset, nearer, candidates, size,
+				size])
+		var was := (Vector3(first_in_sort_order) + anchor_offset \
+			- centroid).length()
+		improved += int(chosen_offset < was - 0.0001)
+		print("MAZE_CENTRE %s asset=%s block=%dx%d offset=%.2f was=%.2f " \
+			% [_label(outcome), String(feature.asset), size, size,
+			chosen_offset, was] + "candidates=%d" % candidates)
+	assert_gt(checked, 0, "the corpus must furnish a square to measure")
+	assert_gt(improved, 0,
+		("not one town's feature moved off the sorted-first block -- either " \
+			+ "every green is symmetric or the centroid rule is not running"))
+
+
 func test_the_life_constants_mirror_the_module_descriptors() -> void:
 	## TASK I3 -- the same tripwire task H2b's mirror test is, over the modules
 	## the LIFE is made of. Four numbers in `SettlementFabricAssembler` are

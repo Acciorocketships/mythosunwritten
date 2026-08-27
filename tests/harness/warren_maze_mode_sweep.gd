@@ -880,6 +880,12 @@ static func _new_skin_tally() -> Dictionary:
 		# none kept the corridor fallback, so `towns - plaza_decks` is the
 		# fallback's own corpus count.
 		"plaza_decks": 0, "plaza_deck_columns": 0,
+		# TASK I4 ROUND 4. The square's own MOUTHS as the guard rule sees them:
+		# how many court boundaries the green opened, and how many of those still
+		# carry a fence. The second is the pin and it is a hard zero -- a rail
+		# across a paved threshold is the difference between a lawn beside a lane
+		# and a square you walk into.
+		"plaza_mouths": 0, "railed_mouths": 0,
 		# TASK I4, the six annotations.
 		"garden_runs": 0, "rim_faces": 0, "rim_instances": 0,
 		"rim_deficit": 0, "lean_refusals": 0, "deck_caps": 0,
@@ -958,6 +964,13 @@ static func _accumulate_skin(tally: Dictionary,
 		"maze_plaza_deck_column_count", 0))
 	tally.plaza_decks += int(plaza_columns > 0)
 	tally.plaza_deck_columns += plaza_columns
+	# TASK I4 ROUND 4. Read off the SURFACE plan's own audit, which the fabric
+	# audit merges: the guard rule is the channel that fenced the mouths, so the
+	# count of unrailed thresholds has to come from the channel that opened them.
+	tally.plaza_mouths += int(fabric.audit.get(
+		"green_threshold_opening_count", 0))
+	tally.railed_mouths += int(fabric.audit.get(
+		"green_threshold_guard_conflict_count", 0))
 	# TASK I4. THE SIX ANNOTATIONS, on the row the life already occupies: the
 	# turf edge (annotation 1), the demoted small tops (annotation 2), the
 	# corbels under the unborne floor plates (annotation 3) and the dressed
@@ -1034,7 +1047,8 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 	print(("SWEEP RESULT life%s towns=%d spans=%d span_cells=%d " \
 		+ "span_instances=%d bays=%d bumps=%d outcrops=%d brackets=%d " \
 		+ "bare_outcrops=%d dormers=%d plaza_towns=%d plaza_entries=%d " \
-		+ "plaza_features=%d plaza_decks=%d plaza_deck_columns=%d") % [
+		+ "plaza_features=%d plaza_decks=%d plaza_deck_columns=%d " \
+		+ "plaza_mouths=%d railed_mouths=%d") % [
 		"" if group == CORPUS_STONE_GROUP else "/%s" % group,
 		int(tally.towns), int(tally.spans), int(tally.span_cells),
 		int(tally.span_instances), int(tally.bays), int(tally.bumps),
@@ -1042,7 +1056,8 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 		int(tally.outcrop_brackets) - 2 * (int(tally.bays) + int(tally.bumps)),
 		int(tally.dormers), int(tally.plaza_towns), int(tally.plaza_entries),
 		int(tally.plaza_features), int(tally.plaza_decks),
-		int(tally.plaza_deck_columns)])
+		int(tally.plaza_deck_columns), int(tally.plaza_mouths),
+		int(tally.railed_mouths)])
 	# TASK I4. The six annotations' own row.
 	print(("SWEEP RESULT annotations%s towns=%d garden_runs=%d rim_faces=%d " \
 		+ "rims=%d rim_deficit=%d lean_refusals=%d deck_caps=%d " \
