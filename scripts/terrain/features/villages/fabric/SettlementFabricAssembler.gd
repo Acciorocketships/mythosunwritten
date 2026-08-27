@@ -2949,6 +2949,61 @@ static func maze_plaza_entries(plaza: Dictionary,
 	return out
 
 
+static func maze_plaza_threshold_openings(plan: SettlementFabricPlan,
+		surface_plan: PublicRealmSurfacePlan = null) -> Array[Dictionary]:
+	## TASK I4 ROUND 4 -- THE BOUNDARIES A SQUARE IS ENTERED THROUGH, as
+	## `{cell, direction}` records naming the STREET cell and the face of it that
+	## looks onto the green. The public realm's guard rule opens exactly these,
+	## the way a door's landing already opens its own.
+	##
+	## THE DEFECT THIS EXISTS FOR, measured on the round-3 corpus: every mouth of
+	## every plaza whose street is a STRUCTURAL_COURT had a fence across it (4 of
+	## 4 on 12/compact, 4 of 4 on 4/compact, 4 of 6 on 3/standard, 2 of 6 on
+	## 7/large -- the rest are terrain streets, which are never guarded). Neither
+	## crown nor plank terrace railing was ever involved. `_build_guards` asks
+	## "is there a claimed floor across this boundary", and the lawn is not a
+	## claim: it is a green cap on retained mass, one band down and one cell
+	## across, which the fabric owns and the realm cannot see.
+	##
+	## AND THERE IS NO FALL THERE. `maze_plaza_entries`' own arithmetic is that a
+	## mouth's turf top, `(cell.y + 1) x CELL_SIZE`, is the street's own floor,
+	## `street.y x CELL_SIZE`, to the millimetre -- that levelness is the whole
+	## definition of an entrance. A guard rail across it is a fence across a
+	## doorway, in both the render and the collider, which is the difference
+	## between a lawn beside a lane and a square you walk into.
+	##
+	## SCOPED TO THE VILLAGE GREEN'S OWN MOUTHS and nothing else: an ordinary
+	## yard's edge keeps every rail it has. `plaza` is the designated run, so the
+	## set is empty on a town with no square and on a square no street reaches.
+	var out: Array[Dictionary] = []
+	if plan == null:
+		return out
+	var surfaces := surface_plan if surface_plan != null else plan.surface_plan
+	if surfaces == null:
+		return out
+	var retained := plan.retained_terrace_cells
+	var solids := plan.transformed_cells(&"solid")
+	var plinths := plinth_faces(retained, solids,
+		plan.transformed_cells(&"terrain_bearing"))
+	var paved := public_floor_cells(surfaces)
+	var walked := walked_floor_cells(surfaces)
+	var garden := maze_garden_cells(retained, solids, paved, plinths, walked)
+	var plaza := maze_village_green_cells(garden, walked)
+	if plaza.is_empty():
+		return out
+	var mouths: Array[Vector3i] = []
+	mouths.assign(maze_plaza_entries(plaza, walked).keys())
+	mouths.sort_custom(_cell_before)
+	for mouth: Vector3i in mouths:
+		for step: Vector3i in FACE_DIRECTIONS:
+			if not walked.has(mouth + step + Vector3i.UP):
+				continue
+			# The street's own face back toward the green it stands beside.
+			out.append({"cell": mouth + step + Vector3i.UP,
+				"direction": -step})
+	return out
+
+
 static func maze_village_green_cells(garden: Dictionary,
 		walked: Dictionary = {}) -> Dictionary:
 	## TASK I2, USER ANNOTATION -- THE VILLAGE GREEN. "this should be more
@@ -3046,30 +3101,45 @@ static func maze_plaza_centre_feature(plaza: Dictionary,
 	## The clearing has to be a real clear SQUARE of plaza, not a ragged run:
 	## PLAZA_WIDE_BLOCK cells across for the well, the stall and the tree, and
 	## PLAZA_NARROW_BLOCK for the tree alone. No cell of the block may be an
-	## entrance -- a well in the doorway is worse than no well -- and the block
-	## is chosen by sorted lattice order, so the same green always furnishes
-	## itself the same way.
+	## entrance -- a well in the doorway is worse than no well.
 	##
 	## A wide block is centred ON its middle cell (an odd square), a narrow one
 	## on the corner its four cells share, and the module's own measured
 	## half-extents fit either without a correction -- see PLAZA_WELL above for
 	## the three numbers.
+	##
+	## TASK I4 ROUND 4 -- AND IT STANDS IN THE MIDDLE. The block used to be the
+	## FIRST clear one in sorted lattice order, which is the lowest-x, lowest-z
+	## corner of whatever the green offers: on 12/compact that put the tree in
+	## the north-west corner of a 6x6 square, 2.12 cells off its centroid with
+	## twelve clear blocks to choose from. The block is now the one whose own
+	## anchor is NEAREST THE GREEN'S CENTROID, which is what "the centre feature"
+	## has always meant. Over 12/compact, 4/compact, 3/standard, 9/standard and
+	## 7/large that moves the anchor from 2.12/2.59/2.10/0.67/1.66 cells off
+	## centre to 0.71/0.39/0.83/0.67/0.49 -- 9/standard's green offers exactly
+	## one clear block and keeps it, which is the rule's own no-op case.
+	##
+	## STILL A PURE FUNCTION OF THE CELL SET. The candidates are swept in sorted
+	## lattice order and a later one has to be STRICTLY nearer to win, so a
+	## symmetric green -- where two blocks tie to the last bit -- keeps the
+	## sorted-first of them exactly as before. The centroid is the mean of the
+	## run's own integer coordinates; the same green always furnishes itself the
+	## same way.
 	if plaza.is_empty():
 		return {}
 	var cells: Array[Vector3i] = []
 	cells.assign(plaza.keys())
 	cells.sort_custom(_cell_before)
+	var centroid := Vector3.ZERO
 	for cell: Vector3i in cells:
-		var reach := PLAZA_WIDE_BLOCK / 2
-		var block: Dictionary = {}
-		var clear := true
-		for dx in range(-reach, reach + 1):
-			for dz in range(-reach, reach + 1):
-				var probe := cell + Vector3i(dx, 0, dz)
-				clear = clear and plaza.has(probe) and not entries.has(probe)
-				block[probe] = true
-		if not clear:
-			continue
+		centroid += Vector3(cell)
+	centroid /= float(cells.size())
+	# A wide block's anchor is its own middle cell; a narrow one's is the corner
+	# its four cells share, half a cell along each axis.
+	var wide := _maze_plaza_block_nearest_centroid(plaza, entries, cells,
+		centroid, PLAZA_WIDE_BLOCK, Vector3.ZERO)
+	if not wide.is_empty():
+		var cell := wide.cell as Vector3i
 		var key := Vector4i(cell.x, cell.y, cell.z, 0)
 		var pick := int(_face_noise(key, PLAZA_FEATURE_SALT) \
 			* float(PLAZA_WIDE_FEATURES.size())) % PLAZA_WIDE_FEATURES.size()
@@ -3078,25 +3148,53 @@ static func maze_plaza_centre_feature(plaza: Dictionary,
 		return {"asset": PLAZA_WIDE_FEATURES[pick], "cell": cell,
 			"origin": origin,
 			"quarter": int(_face_noise(key, PLAZA_FEATURE_SALT + 1) * 4.0) % 4,
-			"cells": block}
-	for cell: Vector3i in cells:
-		var block: Dictionary = {}
-		var clear := true
-		for dx in PLAZA_NARROW_BLOCK:
-			for dz in PLAZA_NARROW_BLOCK:
-				var probe := cell + Vector3i(dx, 0, dz)
-				clear = clear and plaza.has(probe) and not entries.has(probe)
-				block[probe] = true
-		if not clear:
-			continue
+			"cells": wide.cells}
+	var narrow := _maze_plaza_block_nearest_centroid(plaza, entries, cells,
+		centroid, PLAZA_NARROW_BLOCK, Vector3(0.5, 0.0, 0.5))
+	if not narrow.is_empty():
+		var cell := narrow.cell as Vector3i
 		var key := Vector4i(cell.x, cell.y, cell.z, 1)
 		var origin := Vector3(cell) * FabricRecipe.CELL_SIZE \
 			+ Vector3(FabricRecipe.CELL_SIZE, 0.0, FabricRecipe.CELL_SIZE) * 0.5
 		origin.y = float(cell.y + 1) * FabricRecipe.CELL_SIZE + GREEN_CAP_LIFT
 		return {"asset": PLAZA_TREE, "cell": cell, "origin": origin,
 			"quarter": int(_face_noise(key, PLAZA_FEATURE_SALT + 1) * 4.0) % 4,
-			"cells": block}
+			"cells": narrow.cells}
 	return {}
+
+
+static func _maze_plaza_block_nearest_centroid(plaza: Dictionary,
+		entries: Dictionary, cells: Array[Vector3i], centroid: Vector3,
+		size: int, anchor_offset: Vector3) -> Dictionary:
+	## TASK I4 ROUND 4. The clear `size x size` block of plaza whose anchor lies
+	## nearest `centroid`, as `{cell, cells}`, or empty when none is clear.
+	##
+	## An ODD block is centred on its own cell and swept from -size/2 to +size/2;
+	## an EVEN one is anchored on its lowest cell and swept forward, which is the
+	## two loops this replaced, written once. `anchor_offset` is where the module
+	## really stands relative to `cell` and so is what the distance is measured
+	## from -- a 2x2's post is on the corner its four cells share, not on one of
+	## them.
+	var low := -(size / 2) if size % 2 == 1 else 0
+	var high := size / 2 if size % 2 == 1 else size - 1
+	var best: Dictionary = {}
+	var best_offset := INF
+	for cell: Vector3i in cells:
+		var block: Dictionary = {}
+		var clear := true
+		for dx in range(low, high + 1):
+			for dz in range(low, high + 1):
+				var probe := cell + Vector3i(dx, 0, dz)
+				clear = clear and plaza.has(probe) and not entries.has(probe)
+				block[probe] = true
+		if not clear:
+			continue
+		var offset := (Vector3(cell) + anchor_offset - centroid).length_squared()
+		if offset >= best_offset:
+			continue
+		best_offset = offset
+		best = {"cell": cell, "cells": block}
+	return best
 
 
 static func maze_garden_dressing(retained: Dictionary, solids: Dictionary,

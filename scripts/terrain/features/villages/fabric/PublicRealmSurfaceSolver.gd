@@ -92,8 +92,18 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 		for edge_value: PublicRealmEdge in realm.edges:
 			for seam: Dictionary in edge_value.seams:
 				transition_seams.append(seam.duplicate())
+	# TASK I4 ROUND 4. THE VILLAGE GREEN'S OWN MOUTHS, which only this call site
+	# can name. The guard rule fences a court boundary whose far side carries no
+	# CLAIM, and a lawn is not a claim -- it is a green cap on retained mass one
+	# band down, level with the pavement by the entrance rule's own arithmetic.
+	# Every claim is in by now, so the assembler can read the surface off
+	# `result` exactly as it reads it off a sealed plan, and the fabric plan
+	# carries the retained mass and the built solids the garden is derived from.
+	# A plan with no square names nothing and every guard stands where it did.
 	if not result.seal(required, other_classified, structural_solids, entrances,
-			daylight_voids, transition_seams):
+			daylight_voids, transition_seams,
+			SettlementFabricAssembler.maze_plaza_threshold_openings(fabric_plan,
+				result)):
 		return null
 	return result
 

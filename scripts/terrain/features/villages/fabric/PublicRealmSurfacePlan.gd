@@ -28,6 +28,9 @@ var _claims: Dictionary = {}
 var _entrance_openings: Dictionary = {}
 var _entrance_forecourt_join_points: Dictionary = {}
 var _public_openings: Dictionary = {}
+## TASK I4 ROUND 4. The boundaries a VILLAGE GREEN is entered through -- see
+## `_classify_green_thresholds`.
+var _green_threshold_openings: Dictionary = {}
 var _structural_solid_cells: Dictionary = {}
 var _daylight_void_cells: Array[Vector3i] = []
 var _transition_mesh_payloads: Array[Dictionary] = []
@@ -121,7 +124,8 @@ func seal(required_cells: Array[Vector3i] = [],
 		structural_solid_cells: Dictionary = {},
 		entrances: Array[Dictionary] = [],
 		daylight_void_cells: Array[Vector3i] = [],
-		transition_seams: Array[Dictionary] = []) -> bool:
+		transition_seams: Array[Dictionary] = [],
+		green_thresholds: Array[Dictionary] = []) -> bool:
 	last_rejection = ""
 	if _sealed or stable_id.is_empty() or _claims.is_empty():
 		last_rejection = "missing surface id or claims"
@@ -156,6 +160,7 @@ func seal(required_cells: Array[Vector3i] = [],
 			unserved_entrances.size()
 		return false
 	_classify_public_openings(transition_seams)
+	_classify_green_thresholds(green_thresholds)
 	_structural_solid_cells = structural_solid_cells.duplicate()
 	_daylight_void_cells.assign(daylight_void_cells)
 	_build_guards(structural_solid_cells, daylight_void_cells)
@@ -258,6 +263,14 @@ func audit() -> Dictionary:
 		"entrance_guard_conflict_count": _entrance_guard_conflict_count(),
 		"entrance_forecourt_join_count": _omitted_guard_post_count,
 		"wide_entrance_guard_opening_count": _wide_entrance_guard_opening_count(),
+		# TASK I4 ROUND 4. Two numbers, because one of them alone could not tell
+		# a green that opened its mouths from a green whose mouths were never
+		# guarded: how many boundaries the topology owner NAMED as thresholds,
+		# and how many of those really carry a guard segment still. The second
+		# is the pin and it is zero by construction of `_build_guards`.
+		"green_threshold_opening_count": _green_threshold_openings.size(),
+		"green_threshold_guard_conflict_count":
+			_green_threshold_guard_conflict_count(),
 		"daylight_void_guard_segment_count": guard_segments.filter(
 			func(value: Dictionary) -> bool:
 				return StringName(value.get("boundary_kind", "")) \
@@ -573,6 +586,24 @@ func _entrance_guard_conflict_count() -> int:
 	return count
 
 
+func _green_threshold_guard_conflict_count() -> int:
+	## TASK I4 ROUND 4. How many named green thresholds still carry a guard --
+	## the same reading `_entrance_guard_conflict_count` takes of a doorway, off
+	## the segments that were really built rather than off the rule that built
+	## them. A guard segment is keyed on its cell and its OUTWARD direction, and
+	## a threshold names exactly that pair, so the two keys are the same string.
+	var guarded_edges: Dictionary = {}
+	for segment: Dictionary in guard_segments:
+		guarded_edges[String(segment.stable_key)] = true
+	var count := 0
+	for key_value: Variant in _green_threshold_openings.keys():
+		var parts := String(key_value).split("/")
+		if parts.size() != 2:
+			continue
+		count += int(guarded_edges.has("%s:%s" % [parts[0], parts[1]]))
+	return count
+
+
 func _wide_entrance_guard_opening_count() -> int:
 	var count := 0
 	for entrance: Dictionary in entrance_records:
@@ -692,6 +723,25 @@ func _classify_public_openings(transition_seams: Array[Dictionary]) -> void:
 		_public_openings[_transition_key(to_cell, -from_direction)] = true
 
 
+func _classify_green_thresholds(green_thresholds: Array[Dictionary]) -> void:
+	## TASK I4 ROUND 4. THE MOUTHS OF A VILLAGE GREEN, which the topology owner
+	## supplies because only it can see them: the lawn across the boundary is a
+	## green cap on retained mass one band down, not a claim, so the guard rule
+	## below would read it as a fall and fence the doorway.
+	##
+	## The same shape as `_entrance_openings` and for the same reason -- a door's
+	## landing already opens its own guard -- and, like that set, a boundary
+	## named here is opened and NOTHING else about it changes: an owner that
+	## names none leaves every guard exactly where it was.
+	_green_threshold_openings.clear()
+	for threshold: Dictionary in green_thresholds:
+		var cell := threshold.get("cell", Vector3i()) as Vector3i
+		var direction := threshold.get("direction", Vector3i()) as Vector3i
+		if direction == Vector3i.ZERO:
+			continue
+		_green_threshold_openings[_transition_key(cell, direction)] = true
+
+
 func _build_guards(structural_solid_cells: Dictionary,
 		daylight_void_cells: Array[Vector3i]) -> void:
 	guard_segments.clear()
@@ -706,8 +756,10 @@ func _build_guards(structural_solid_cells: Dictionary,
 		var cell := claim.cell as Vector3i
 		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
 				Vector3i.FORWARD, Vector3i.BACK]:
+			var transition := _transition_key(cell, direction)
 			if _has_public_transition(cell, direction) \
-					or _entrance_openings.has(_transition_key(cell, direction)):
+					or _entrance_openings.has(transition) \
+					or _green_threshold_openings.has(transition):
 				continue
 			var neighbor := cell + direction
 			if structural_solid_cells.has(_cell_key(neighbor)) \
