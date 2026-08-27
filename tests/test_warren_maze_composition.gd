@@ -4067,10 +4067,28 @@ func _stone_instances(fabric: SettlementFabricPlan) -> Array[Dictionary]:
 ## FIX 1, IMPORTANT 1: both rows are asserted against those descriptors by
 ## `test_the_skin_constants_mirror_the_module_descriptors` below, so this table
 ## cannot outlive the bake it was read off.
+##
+## TASK I4, ANNOTATION 2 ADDS THE TWO DECK BOARDS. A free top too small to be a
+## yard wears the plank terrace instead of turf, and a demoted cap is still a
+## cap: it closes exactly the run its panel closes, so it is decoded here beside
+## the other three rather than excused.
+## `sfv_deck_floor_s_001.tres` is AABB(-1.503, 0, -0.75, 1.5, 0.161, 1.5) -- ONE
+## cell, authored on its own local +X edge rather than centred, which is why the
+## assembler shifts it half a cell and why its span runs -1.503 -> -0.003.
+## `sfv_fabric_gallery_floor_m_001.tres` is AABB(-1.501, 0, -0.75, 3.0, 0.161,
+## 1.5) -- the pair's board, centred, and the only deck row that spans 3 m.
 const CAP_MODULE_SPANS: Dictionary = {
 	&"sfv.fabric.wall.rock.plain.001": [Vector3(0.0, 1.0, 0.0), 0.0, 3.0],
 	&"kaykit.terrain.top_center": [Vector3(0.0, 0.0, 1.0), -1.5, 1.5],
+	&"sfv.deck.floor.s.001": [Vector3(1.0, 0.0, 0.0), -1.5032463, -0.0032463],
+	&"sfv.fabric.gallery.floor.m.001": [Vector3(1.0, 0.0, 0.0), -1.5010226,
+		1.4989784],
 }
+## Which of those rows close a PAIR of cells with one 3 m module, and which close
+## a single cell. The distinction is the whole reason `CAP_MODULE_SPANS` exists
+## as a table: three of the five reach the authored 3 m a cap pair needs and one
+## -- the single deck board -- reaches exactly one cell.
+const CAP_MODULE_SINGLE_CELL: Array[StringName] = [&"sfv.deck.floor.s.001"]
 
 ## How far a transcribed envelope may sit from the descriptor it was read off.
 ## Five millimetres: the bake writes 3.0000005 and 0.74999213 where the artist
@@ -4224,9 +4242,12 @@ func test_the_skin_constants_mirror_the_module_descriptors() -> void:
 			SettlementFabricAssembler.STONE_MODULE_HEIGHT,
 			SettlementFabricAssembler.NATURAL_ROCK_CUT_HEADROOM,
 			FabricRecipe.CELL_SIZE, masonry_reach])
-	# ...and the two rows this file decodes the payload's horizontal caps with.
-	assert_eq(CAP_MODULE_SPANS.size(), 2,
-		"the cap vocabulary is the masonry module laid flat and the grass quad")
+	# ...and the rows this file decodes the payload's horizontal caps with.
+	# TASK I4: FOUR of them now -- the masonry module laid flat, the grass quad,
+	# and the two deck boards a demoted free top wears.
+	assert_eq(CAP_MODULE_SPANS.size(), 4,
+		("the cap vocabulary is the masonry module laid flat, the grass quad " \
+			+ "and the two plank-terrace boards"))
 	for asset_value: Variant in CAP_MODULE_SPANS.keys():
 		var asset := asset_value as StringName
 		var descriptor := catalog.descriptor(asset)
@@ -4241,10 +4262,14 @@ func test_the_skin_constants_mirror_the_module_descriptors() -> void:
 			"%s's declared span starts where its envelope does" % String(asset))
 		_assert_mirrors(float(span[2]), aabb.end.dot(axis),
 			"%s's declared span ends where its envelope does" % String(asset))
-		# The long axis is 3 m for both, which is why one slab covers the pair.
+		# The long axis is 3 m for the pair modules, which is why one slab
+		# covers a pair; the single deck board reaches exactly one cell.
 		_assert_mirrors(float(span[2]) - float(span[1]),
-			SettlementFabricAssembler.TERRAIN_MODULE_SPAN,
-			"%s spans the authored 3 m a cap pair needs" % String(asset))
+			FabricRecipe.CELL_SIZE if CAP_MODULE_SINGLE_CELL.has(asset) \
+				else SettlementFabricAssembler.TERRAIN_MODULE_SPAN,
+			("%s spans one cell" if CAP_MODULE_SINGLE_CELL.has(asset) \
+				else "%s spans the authored 3 m a cap pair needs") \
+				% String(asset))
 	# TASK I2. THE FACADE VOCABULARY IS THE SAME KIND OF TRANSCRIPTION, and it
 	# carries a stronger claim than the terrain modules do: the skin scales the
 	# rock and the grass to fit its lattice, and it scales a facade module by
@@ -4680,6 +4705,13 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 		var green := 0
 		var masonry := 0
 		var facade := 0
+		# TASK I4, ANNOTATION 2. The fifth class, and it has to be a class of its
+		# own: the `_:` arm below counts EVERYTHING it does not recognise as
+		# masonry, so a demoted free top would have been read as "a stone slab on
+		# a bench nobody walks" -- the precise defect this test is here to catch
+		# -- while being the plank terrace the direction asked for.
+		var deck := 0
+		var misplaced_deck := 0
 		# TASK I2. The one-cell timber vocabulary, as a set, so the payload can be
 		# sorted into classes by asset without naming six modules three times.
 		var facade_assets: Dictionary = {}
@@ -4708,6 +4740,10 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 				SettlementFabricAssembler.TERRAIN_GREEN_CAP:
 					green += 1
 					misplaced_green += int(not free)
+				SettlementFabricAssembler.PLANK_TERRACE_CAP, \
+						SettlementFabricAssembler.PLANK_TERRACE_CAP_PAIR:
+					deck += 1
+					misplaced_deck += int(not free)
 				_:
 					masonry += 1
 					tall_bank_masonry += int(is_side and tall)
@@ -4726,14 +4762,14 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 							or not walked.has(Vector3i(mate.x, mate.y + 1,
 								mate.z)))
 		var audit := fabric.audit
-		print(("MAZE_SKIN %s masonry=%d natural=%d green=%d facade=%d " \
+		print(("MAZE_SKIN %s masonry=%d natural=%d green=%d facade=%d deck=%d " \
 			+ "tall_bank_masonry=%d free_bench_stone=%d low_bank_masonry=%d " \
-			+ "misplaced=%d/%d/%d banks=%s tallest=%d " \
+			+ "misplaced=%d/%d/%d/%d banks=%s tallest=%d " \
 			+ "families=%d/%d/%d windows=%d garden=%d green_cells=%d " \
 			+ "planting=%d") % [_label(outcome),
-			masonry, natural, green, facade, tall_bank_masonry,
+			masonry, natural, green, facade, deck, tall_bank_masonry,
 			free_bench_stone, low_bank_masonry, misplaced_natural,
-			misplaced_green, misplaced_facade,
+			misplaced_green, misplaced_facade, misplaced_deck,
 			str(audit.get("maze_bank_height_histogram", {})),
 			int(audit.get("maze_tallest_bank_bands", -1)),
 			int(audit.get("maze_skin_facade_blue_panel_count", -1)),
@@ -4754,6 +4790,18 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 		assert_eq(misplaced_green, 0,
 			"%s may only green a sky-facing face nobody walks" \
 				% _label(outcome))
+		# TASK I4, ANNOTATION 2. The demoted tops obey the same siting rule the
+		# turf they replaced obeyed -- a deck is a free top's treatment, never a
+		# walked bench's -- and the audit publishes the same number the payload
+		# lays, exactly as every other class here does.
+		assert_eq(misplaced_deck, 0,
+			"%s may only deck a sky-facing face nobody walks" % _label(outcome))
+		assert_eq(int(audit.get("maze_plank_terrace_cap_count", -1)), deck,
+			"%s audited plank terrace count must equal the payload's" \
+				% _label(outcome))
+		assert_gt(deck, 0,
+			("%s must demote its small free tops to plank terraces -- grass " \
+				+ "belongs to large areas only") % _label(outcome))
 		assert_eq(misplaced_facade, 0,
 			"%s may only clad a tall bank's SIDE in facade storeys" \
 				% _label(outcome))
@@ -4804,7 +4852,10 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 				+ "select houses, nowhere else") % _label(outcome))
 		assert_eq(int(audit.get("maze_free_bench_stone_cap_count", -1)), 0,
 			"%s audited free-bench stone caps must be zero" % _label(outcome))
-		assert_eq(masonry + natural + green + facade,
+		# TASK I4: FIVE classes now. The plank terrace is a panel's module like
+		# any other, and leaving it out of the identity would let the shell open
+		# up by exactly the number of tops the garden bar demoted.
+		assert_eq(masonry + natural + green + facade + deck,
 			int(audit.get("maze_stone_expected_face_count", -1)),
 			("%s every panel of the shell wears exactly one module") \
 				% _label(outcome))
@@ -5364,7 +5415,16 @@ func test_a_green_cap_never_juts_past_the_bench_it_caps() -> void:
 			caps += 1
 			var face := instance["face"] as Vector4i
 			var cell := Vector3i(face.x, face.y, face.z)
-			var partner := partners.get(face, Vector3i.ZERO) as Vector3i
+			# TASK I4: the quad's real coverage is the PAIR and never the lean,
+			# so the footprint this test measures is asked for through the same
+			# function the payload places it with.
+			var partner := SettlementFabricAssembler.maze_green_cap_partner(
+				face, partners.get(face, Vector3i.ZERO) as Vector3i,
+				SettlementFabricAssembler.exposed_maze_stone_faces(
+					fabric.retained_terrace_cells,
+					fabric.transformed_cells(&"solid"),
+					SettlementFabricAssembler.public_floor_cells(
+						fabric.surface_plan)))
 			unpaired += int(partner == Vector3i.ZERO)
 			var owned: Dictionary = {cell: true}
 			if partner != Vector3i.ZERO:
@@ -5415,6 +5475,598 @@ func test_a_green_cap_never_juts_past_the_bench_it_caps() -> void:
 		assert_eq(int(audit.get("maze_green_cap_jut_cell_count", -1)),
 			jut_cells, "%s audited jut cells must equal the payload's" \
 				% _label(outcome))
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func test_every_garden_edge_turns_the_rim() -> void:
+	## TASK I4, ANNOTATION 1 -- "sometimes the grass overhangs, and sometimes it
+	## disappears". THE CONSISTENCY PIN.
+	##
+	## Two numbers that have to be equal: how many EDGES a town's lawns have --
+	## every lateral boundary of every cell a green cap floors where the
+	## neighbour is not mass, which is exactly where a body on the grass would
+	## fall off -- and how many rim pieces the payload the renderer is handed
+	## really lays. Measured off that payload rather than off the rule, for the
+	## reason `_rim_instances` exists: a rim that lives only in the rule is not a
+	## rim.
+	##
+	## It was NOT equal before this task. Every bare edge in the five review
+	## towns stood on a cell the quad LEANED over -- a cell that owns no cap and
+	## that `maze_green_rim_walls` therefore cannot dress. The lean is refused
+	## now (`maze_green_cap_partner`), which is what makes the equality reachable
+	## rather than aspirational.
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var audit := fabric.audit
+		var edges := int(audit.get("maze_garden_rim_face_count", -1))
+		var rims := int(audit.get("maze_garden_rim_instance_count", -1))
+		var deficit := int(audit.get("maze_garden_rim_deficit", -1))
+		var laid := _rim_instances(fabric).size()
+		print("MAZE_GARDEN_RIM %s edges=%d rims=%d payload=%d deficit=%d" % [
+			_label(outcome), edges, rims, laid, deficit])
+		assert_gt(edges, 0, "%s must have a garden edge to measure" \
+			% _label(outcome))
+		assert_eq(deficit, 0,
+			("%s leaves %d garden edge(s) with no turf lip; the rim fires per " \
+				+ "edge and every edge is an edge") % [_label(outcome),
+				deficit])
+		assert_eq(laid, rims,
+			"%s audited rim count must equal the payload's" % _label(outcome))
+		assert_eq(int(audit.get("maze_green_cap_lean_refusal_count", -1)) >= 0,
+			true, "%s must publish its lean refusals" % _label(outcome))
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func test_a_free_top_smaller_than_a_yard_takes_the_plank_terrace() -> void:
+	## TASK I4, ANNOTATION 2 -- "these grass areas are too small, we should only
+	## have grass in large areas like plazas/gardens".
+	##
+	## The garden is a fact about the RUN. Every surviving run must clear
+	## GARDEN_RUN_MINIMUM_CELLS and hold at least one complete 2 x 2 block of its
+	## own cells, and every cap under the bar must be a plank terrace instead --
+	## measured off the cell set the payload really floors rather than off the
+	## rule that chose it.
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var plinths := SettlementFabricAssembler.plinth_faces(
+			fabric.retained_terrace_cells,
+			fabric.transformed_cells(&"solid"),
+			fabric.transformed_cells(&"terrain_bearing"))
+		var garden := SettlementFabricAssembler.maze_garden_cells(
+			fabric.retained_terrace_cells,
+			fabric.transformed_cells(&"solid"),
+			SettlementFabricAssembler.public_floor_cells(fabric.surface_plan),
+			plinths,
+			SettlementFabricAssembler.walked_floor_cells(fabric.surface_plan))
+		var seen: Dictionary = {}
+		var smallest := 1 << 30
+		var thin_runs := 0
+		var runs := 0
+		for start_value: Variant in garden.keys():
+			var start := start_value as Vector3i
+			if seen.has(start):
+				continue
+			runs += 1
+			seen[start] = true
+			var collected: Array[Vector3i] = []
+			var frontier: Array[Vector3i] = [start]
+			while not frontier.is_empty():
+				var cell: Vector3i = frontier.pop_back()
+				collected.append(cell)
+				for step: Vector3i in SettlementFabricAssembler.FACE_DIRECTIONS:
+					var probe := cell + step
+					if garden.has(probe) and not seen.has(probe):
+						seen[probe] = true
+						frontier.append(probe)
+			smallest = mini(smallest, collected.size())
+			var blocks := 0
+			for cell: Vector3i in collected:
+				blocks += int(garden.has(cell + Vector3i(1, 0, 0)) \
+					and garden.has(cell + Vector3i(0, 0, 1)) \
+					and garden.has(cell + Vector3i(1, 0, 1)))
+			thin_runs += int(blocks < 1)
+		var audit := fabric.audit
+		print("MAZE_GARDEN_RUNS %s cells=%d runs=%d smallest=%d thin=%d decks=%d" \
+			% [_label(outcome), garden.size(), runs, smallest, thin_runs,
+			int(audit.get("maze_plank_terrace_cap_count", -1))])
+		if garden.is_empty():
+			checked += 1
+			continue
+		assert_gte(smallest,
+			SettlementFabricAssembler.GARDEN_RUN_MINIMUM_CELLS,
+			("%s keeps a %d-cell garden run under the %d-cell bar; grass " \
+				+ "belongs to large areas only") % [_label(outcome), smallest,
+				SettlementFabricAssembler.GARDEN_RUN_MINIMUM_CELLS])
+		assert_eq(thin_runs, 0,
+			("%s keeps %d garden run(s) that are nowhere two cells wide; a " \
+				+ "thread along a parapet is the patch the annotation is about") \
+				% [_label(outcome), thin_runs])
+		assert_eq(int(audit.get("maze_garden_run_count", -1)), runs,
+			"%s audited run count must equal the measured one" \
+				% _label(outcome))
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func test_every_public_floor_plate_with_air_under_it_shows_its_bearer() -> void:
+	## TASK I4, ANNOTATION 3 -- "a bunch of random planks on the sides of these
+	## buildings". The producer is the public realm's own floor tiling, and the
+	## plates it hangs with nothing beneath them are the boards the annotation
+	## circled. Every one of them now carries the same measured corbel the
+	## jetties, bays and skywalks carry, so this branch's "every overhang renders
+	## its brackets" holds for the floor channel too.
+	##
+	## Measured off the payload: one `maze-floor-bearer/` instance per site the
+	## rule names, and no site left bare except the ones the rule REFUSES and
+	## counts (a plate with no wall to spring from, or one whose street is a
+	## single band below).
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var paved := SettlementFabricAssembler.public_floor_cells(
+			fabric.surface_plan)
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var sites := SettlementFabricAssembler.maze_public_floor_bearer_sites(
+			fabric.retained_terrace_cells,
+			fabric.transformed_cells(&"solid"), paved, walked)
+		var borne := 0
+		var refused := 0
+		for site: Dictionary in sites:
+			if bool(site.refused):
+				refused += 1
+			else:
+				borne += 1
+		var laid := 0
+		var payload := SettlementFabricAssembler.terrace_retaining_payload(
+			fabric)
+		for asset_value: Variant in payload.batches.keys():
+			var batch := payload.batches[asset_value] as Dictionary
+			for id_value: Variant in batch.get("ids", []) as Array:
+				laid += int(String(id_value).begins_with("maze-floor-bearer/"))
+		print("MAZE_FLOOR_BEARER %s borne=%d refused=%d laid=%d" % [
+			_label(outcome), borne, refused, laid])
+		assert_eq(laid, borne,
+			"%s must lay one corbel per borne public floor site" \
+				% _label(outcome))
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func test_the_frontage_constants_mirror_the_module_descriptors() -> void:
+	## TASK I4, ANNOTATION 6 -- the perimeter vocabulary, checked against the
+	## bake rather than trusted. Each piece has to fit the window it is chosen
+	## for, and each half-depth has to be the module's own, or the frontage
+	## stands in the wall it fronts.
+	var catalog := EnvironmentCatalog.load_default()
+	assert_not_null(catalog, "the shipped environment catalogue must load")
+	if catalog == null:
+		return
+	var window := float(SettlementFabricAssembler.PERIMETER_WINDOW_CELLS) \
+		* FabricRecipe.CELL_SIZE
+	var pools := {
+		window: SettlementFabricAssembler.PERIMETER_WIDE_FRONTAGE,
+		2.0 * FabricRecipe.CELL_SIZE:
+			SettlementFabricAssembler.PERIMETER_NARROW_FRONTAGE,
+		FabricRecipe.CELL_SIZE:
+			SettlementFabricAssembler.PERIMETER_SINGLE_FRONTAGE,
+	}
+	for width_value: Variant in pools.keys():
+		var width := float(width_value)
+		for asset_id: StringName in pools[width_value] as Array:
+			var descriptor := catalog.descriptor(asset_id)
+			assert_not_null(descriptor,
+				"%s must be in the catalogue" % String(asset_id))
+			if descriptor == null:
+				continue
+			var bounds: AABB = descriptor.measured_aabb
+			assert_lte(bounds.size.x, width,
+				("%s measures %.3f m across and is chosen for a %.1f m " \
+					+ "frontage window") % [String(asset_id), bounds.size.x,
+					width])
+			var depth := float(SettlementFabricAssembler
+				.PERIMETER_FRONTAGE_DEPTH[asset_id])
+			assert_almost_eq(depth, bounds.size.z * 0.5, 0.001,
+				("%s half-depth constant must mirror the descriptor" \
+					% String(asset_id)))
+			assert_almost_eq(bounds.position.y, 0.0, 0.05,
+				("%s must be authored standing on its own ground datum" \
+					% String(asset_id)))
+	assert_almost_eq(SettlementFabricAssembler.PLANK_TERRACE_THICKNESS,
+		(catalog.descriptor(SettlementFabricAssembler.PLANK_TERRACE_CAP)
+			.measured_aabb as AABB).size.y, 0.00001,
+		"the plank terrace thickness must mirror the deck descriptor")
+	assert_almost_eq(SettlementFabricAssembler.GREEN_RIM_MASONRY_STANDOFF,
+		(catalog.descriptor(SettlementFabricAssembler.MAZE_STONE_MODULE)
+			.measured_aabb as AABB).size.z * 0.5, 0.001,
+		("the rim's masonry stand-off must be the coursed panel's own " \
+			+ "proud-ness, which is half its measured depth"))
+	# TASK I4 FIX. THE CLEARANCE ENVELOPE IS NOT THE VISUAL ONE, and this is the
+	# half of the mirror that catches a re-bake growing a module past the volume
+	# the siting rule keeps clear for it. The stall's baked collider hull is
+	# larger than its geometry, so the envelope may EXCEED the descriptor -- but
+	# it may never fall short of it, or the piece stands in a street that was
+	# measured as free.
+	for asset_value: Variant in SettlementFabricAssembler \
+			.PERIMETER_FRONTAGE_CLEARANCE.keys():
+		var asset_id := asset_value as StringName
+		var descriptor := catalog.descriptor(asset_id)
+		assert_not_null(descriptor,
+			"%s must be in the catalogue" % String(asset_id))
+		if descriptor == null:
+			continue
+		var bounds: AABB = descriptor.measured_aabb
+		var envelope: Vector3 = SettlementFabricAssembler \
+			.PERIMETER_FRONTAGE_CLEARANCE[asset_id]
+		# The LARGER lateral extent, not half the size: the fishmonger's table is
+		# authored off-centre and half its width understates the end it hangs
+		# past.
+		assert_gte(envelope.x,
+			maxf(absf(bounds.position.x), absf(bounds.end.x)) - 0.001,
+			("%s clearance half-width must cover the module's own" \
+				% String(asset_id)))
+		assert_gte(envelope.y, bounds.end.y - 0.001,
+			("%s clearance rise must cover the module's own height" \
+				% String(asset_id)))
+		assert_gte(envelope.z,
+			float(SettlementFabricAssembler.PERIMETER_FRONTAGE_DEPTH[asset_id]) \
+				+ maxf(absf(bounds.position.z), absf(bounds.end.z)) - 0.001,
+			("%s clearance reach must cover the placement offset plus the " \
+				+ "module's own outward half-extent") % String(asset_id))
+
+
+func test_the_perimeter_stands_its_frontage_on_open_ground() -> void:
+	## TASK I4, ANNOTATION 6 -- "instead of a sheer wall at the edge of the city
+	## it would look better if there were ground story buildings or a market
+	## around the perimeter". THE COUNT AND THE SITING, pinned together.
+	##
+	## Four facts per site, checked against the cell sets rather than against the
+	## rule that produced them:
+	##
+	## 1. the window stands on the town's own footprint at its GROUND band;
+	## 2. the column it faces carries no mass at any band -- open terrain, so the
+	##    wall behind the stall really is the town's edge;
+	## 3. NOBODY WALKS INSIDE THE PIECE. Measured over the volume the piece
+	##    really occupies (`PERIMETER_FRONTAGE_CLEARANCE`), which is the pin that
+	##    would have caught the market stall this rule first shipped into three
+	##    walked cells of a street on 11/standard;
+	## 4. one instance in the payload per site, so the audit and the renderer
+	##    count the same market.
+	var checked := 0
+	var dressed_towns := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var retained := fabric.retained_terrace_cells
+		var solids := fabric.transformed_cells(&"solid")
+		var paved := SettlementFabricAssembler.public_floor_cells(
+			fabric.surface_plan)
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var sites := SettlementFabricAssembler.maze_perimeter_frontage_sites(
+			retained, solids, paved, walked, fabric.world_seed)
+		var columns: Dictionary = {}
+		var ground_band := 1 << 30
+		for cell_value: Variant in retained.keys():
+			var cell := cell_value as Vector3i
+			var column := Vector2i(cell.x, cell.z)
+			columns[column] = mini(int(columns.get(column, cell.y)), cell.y)
+		for cell_value: Variant in solids.keys():
+			var cell := cell_value as Vector3i
+			var column := Vector2i(cell.x, cell.z)
+			columns[column] = mini(int(columns.get(column, cell.y)), cell.y)
+		for band_value: Variant in columns.values():
+			ground_band = mini(ground_band, int(band_value))
+		var laid := 0
+		var payload := SettlementFabricAssembler.terrace_retaining_payload(
+			fabric)
+		for asset_value: Variant in payload.batches.keys():
+			var batch := payload.batches[asset_value] as Dictionary
+			for id_value: Variant in batch.get("ids", []) as Array:
+				laid += int(String(id_value).begins_with("maze-frontage/"))
+		# TASK I4 FIX. NO TWO ADJACENT WIDE FRONTAGES WEAR THE SAME MODULE. The
+		# alternation is what keeps a long front reading as a street of
+		# shopfronts rather than as a fairground, and the first pass rolled its
+		# starting point per WINDOW instead of per run -- which alternates
+		# nothing, and shipped three identical market tents shoulder to shoulder
+		# on 7/large. Measured off the sites' own geometry: two wide windows are
+		# neighbours when the second begins one cell past where the first ends,
+		# along the same face.
+		var wide_by_head: Dictionary = {}
+		for site: Dictionary in sites:
+			var window := site.cells as Array
+			if window.size() < SettlementFabricAssembler.PERIMETER_WINDOW_CELLS:
+				continue
+			wide_by_head[window[0] as Vector3i] = site
+		var shoulders := 0
+		for site: Dictionary in wide_by_head.values():
+			var window := site.cells as Array
+			var direction := site.direction as Vector3i
+			var cross := Vector3i(direction.z, 0, direction.x)
+			var after := (window[window.size() - 1] as Vector3i) + cross
+			if not wide_by_head.has(after):
+				continue
+			var neighbour := wide_by_head[after] as Dictionary
+			shoulders += int(StringName(neighbour.asset) \
+				== StringName(site.asset))
+		print(("MAZE_FRONTAGE %s sites=%d laid=%d ground_band=%d wide=%d " \
+			+ "shoulders=%d") % [_label(outcome), sites.size(), laid,
+			ground_band, wide_by_head.size(), shoulders])
+		assert_eq(laid, sites.size(),
+			"%s must lay one frontage per site" % _label(outcome))
+		assert_eq(shoulders, 0,
+			("%s stands %d pair(s) of identical wide frontages shoulder to " \
+				+ "shoulder; a run alternates its modules") % [_label(outcome),
+				shoulders])
+		for site: Dictionary in sites:
+			var direction := site.direction as Vector3i
+			var envelope: Vector3 = SettlementFabricAssembler \
+				.PERIMETER_FRONTAGE_CLEARANCE[StringName(site.asset)]
+			assert_eq(int(site.band), ground_band,
+				("%s stands a frontage at band %d rather than on the town's " \
+					+ "ground band %d") % [_label(outcome), int(site.band),
+					ground_band])
+			var window := site.cells as Array
+			for slot_value: Variant in window:
+				var slot := slot_value as Vector3i
+				var stood := Vector3i(slot.x, ground_band, slot.z)
+				assert_true(retained.has(stood) or solids.has(stood),
+					("%s fronts a column that is not the town's own footprint " \
+						+ "at %s") % [_label(outcome), stood])
+				assert_false(columns.has(Vector2i(slot.x + direction.x,
+					slot.z + direction.z)),
+					("%s fronts a column that carries mass -- that is the next " \
+						+ "block, not open terrain") % _label(outcome))
+			# Fact 3, over the piece's own measured volume.
+			var depth_cells := int(ceilf(envelope.z / FabricRecipe.CELL_SIZE))
+			var top_lift := int(ceilf(envelope.y / FabricRecipe.CELL_SIZE)) - 1
+			var spread := float(window.size() - 1) * FabricRecipe.CELL_SIZE * 0.5
+			var overhang := 0
+			while envelope.x > spread \
+					+ (float(overhang) + 0.5) * FabricRecipe.CELL_SIZE:
+				overhang += 1
+			var cross := Vector3i(direction.z, 0, direction.x)
+			var first := window[0] as Vector3i
+			for step in range(-overhang, window.size() + overhang):
+				var column := Vector3i(first.x, 0, first.z) + cross * step
+				for out_step in range(1, depth_cells + 1):
+					for lift in range(-1, top_lift + 1):
+						var probe := Vector3i(
+							column.x + direction.x * out_step,
+							ground_band + lift,
+							column.z + direction.z * out_step)
+						assert_false(paved.has(probe) or walked.has(probe),
+							("%s stands a %s inside the public realm at %s") % [
+								_label(outcome), String(site.asset), probe])
+		dressed_towns += int(not sites.is_empty())
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+	assert_gt(dressed_towns, 0,
+		("no town in the corpus dressed its perimeter; the edge is meant to " \
+			+ "read as buildings meeting meadow"))
+
+
+func test_no_lawn_is_laid_over_a_building() -> void:
+	## TASK I4, ANNOTATION 5 -- "the ground stops without side textures and we
+	## can see underneath because a building is in the middle of the patch of
+	## ground". THE HOLE, pinned where it is made.
+	##
+	## The hole was annotation 1's LEAN in its worst instance: a green cap
+	## reaching its quad over a cell that owns no cap of its own, where that cell
+	## is a BUILDING. The quad is a zero-thickness sheet and the rim cannot dress
+	## a cell that owns no cap, so the lawn ended at a bare cut you look straight
+	## past -- with a building standing in the middle of it.
+	##
+	## Both halves are closed by construction now and this says so in numbers:
+	## no garden cell is a building cell, and every garden cell owns its own
+	## sky-facing cap.
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var retained := fabric.retained_terrace_cells
+		var solids := fabric.transformed_cells(&"solid")
+		var paved := SettlementFabricAssembler.public_floor_cells(
+			fabric.surface_plan)
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+			fabric.transformed_cells(&"terrain_bearing"))
+		var garden := SettlementFabricAssembler.maze_garden_cells(retained,
+			solids, paved, plinths, walked)
+		var exposed := SettlementFabricAssembler.exposed_maze_stone_faces(
+			retained, solids, paved)
+		var up_index := SettlementFabricAssembler.STONE_FACE_DIRECTIONS.find(
+			Vector3i.UP)
+		var over_building := 0
+		var capless := 0
+		for cell_value: Variant in garden.keys():
+			var cell := cell_value as Vector3i
+			over_building += int(solids.has(cell))
+			capless += int(not exposed.has(Vector4i(cell.x, cell.y, cell.z,
+				up_index)))
+		print("MAZE_GARDEN_GROUND %s cells=%d over_building=%d capless=%d" % [
+			_label(outcome), garden.size(), over_building, capless])
+		assert_eq(over_building, 0,
+			("%s lays turf over %d building cell(s); that is the patch of " \
+				+ "ground with a building in the middle of it") % [
+				_label(outcome), over_building])
+		assert_eq(capless, 0,
+			("%s lays turf over %d cell(s) that own no cap; a sheet of lawn " \
+				+ "with nothing under it has no edge to dress") % [
+				_label(outcome), capless])
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func test_the_village_green_is_never_a_thread() -> void:
+	## TASK I4, THE ADDENDUM'S MERGED SHAPE TEST. Task I3 fixed WHERE the square
+	## is -- the run a street can reach -- and then measured that the answer is
+	## still not a square: `interior = 0` on three of four planner towns, which
+	## is a RIBBON threading between blocks rather than a clearing.
+	##
+	## The designation now asks the same "is this anywhere two cells wide"
+	## question the garden bar asks. THE FALLBACK IS DELIBERATE and this test
+	## states it exactly rather than pretending it away: a town whose only
+	## street-entered runs are threads keeps the largest of them, because a green
+	## with no shape is still where the town gathers and widening it is a PLOT
+	## question this round may not touch. So the pin is CONDITIONAL -- when any
+	## entered run holds a 2 x 2 block, the designated one must too.
+	var checked := 0
+	var shaped := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var retained := fabric.retained_terrace_cells
+		var solids := fabric.transformed_cells(&"solid")
+		var paved := SettlementFabricAssembler.public_floor_cells(
+			fabric.surface_plan)
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+			fabric.transformed_cells(&"terrain_bearing"))
+		var garden := SettlementFabricAssembler.maze_garden_cells(retained,
+			solids, paved, plinths, walked)
+		var green := SettlementFabricAssembler.maze_village_green_cells(garden,
+			walked)
+		if green.is_empty():
+			checked += 1
+			continue
+		# Any street-entered run that IS a shape, measured independently.
+		var seen: Dictionary = {}
+		var entered_shaped := false
+		for start_value: Variant in garden.keys():
+			var start := start_value as Vector3i
+			if seen.has(start):
+				continue
+			seen[start] = true
+			var run: Dictionary = {start: true}
+			var frontier: Array[Vector3i] = [start]
+			while not frontier.is_empty():
+				var cell: Vector3i = frontier.pop_back()
+				for step: Vector3i in SettlementFabricAssembler.FACE_DIRECTIONS:
+					var probe := cell + step
+					if garden.has(probe) and not seen.has(probe):
+						seen[probe] = true
+						run[probe] = true
+						frontier.append(probe)
+			if SettlementFabricAssembler.maze_plaza_entries(run,
+					walked).is_empty():
+				continue
+			entered_shaped = entered_shaped or _block_count(run) \
+				>= SettlementFabricAssembler.GARDEN_RUN_MINIMUM_BLOCKS
+		var blocks := _block_count(green)
+		print("MAZE_GREEN_SHAPE %s green=%d blocks=%d entered_shaped=%s" % [
+			_label(outcome), green.size(), blocks, str(entered_shaped)])
+		if entered_shaped:
+			assert_gte(blocks,
+				SettlementFabricAssembler.GARDEN_RUN_MINIMUM_BLOCKS,
+				("%s designates a green that is nowhere two cells wide while " \
+					+ "a street-entered run with a 2 x 2 block was available") \
+					% _label(outcome))
+		shaped += int(blocks >= SettlementFabricAssembler
+			.GARDEN_RUN_MINIMUM_BLOCKS)
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+	assert_gt(shaped, 0,
+		"no town in the corpus designates a green with a 2 x 2 block in it")
+
+
+func _block_count(cells: Dictionary) -> int:
+	## How many complete 2 x 2 blocks of its own cells a run contains -- the
+	## cheapest honest answer to "is this anywhere two cells wide", and the same
+	## one `_maze_run_block_count` gives inside the assembler.
+	var blocks := 0
+	for cell_value: Variant in cells.keys():
+		var cell := cell_value as Vector3i
+		blocks += int(cells.has(cell + Vector3i(1, 0, 0)) \
+			and cells.has(cell + Vector3i(0, 0, 1)) \
+			and cells.has(cell + Vector3i(1, 0, 1)))
+	return blocks
+
+
+func test_a_roof_never_stands_inside_the_wall_it_meets() -> void:
+	## TASK I4, ANNOTATION 4 -- "glitch with roof disappearing into the wall".
+	##
+	## The junction rule that admitted it was an EXEMPTION: any CONNECTED pair
+	## could interpenetrate without bound, and a pitched roof and the room it
+	## leans against are always connected. The gate is armed for roofs now, and
+	## this is its census -- read off the same diagnostic that measured the
+	## defect (`connected_visual_envelope_conflicts`), which the compiler already
+	## publishes and which still lists the untyped room-into-room seams the
+	## vocabulary has not classified.
+	##
+	## THE PIN IS THE ROOF SUBSET AND NOTHING ELSE. A conflict with a roof on
+	## either side may not exceed both bounds at once -- deeper than a lateral
+	## seam IN PLAN and taller than a whole band -- because that is a shell
+	## standing INSIDE the thing it meets rather than meeting it.
+	var checked := 0
+	var roof_pairs := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var embedded: Array[String] = []
+		var roofs := 0
+		for conflict: Dictionary in fabric.connected_visual_envelope_conflicts():
+			var left := fabric.recipe(conflict.left_recipe as StringName)
+			var right := fabric.recipe(conflict.right_recipe as StringName)
+			if left == null or right == null:
+				continue
+			if not left.has_tag(&"roof") and not right.has_tag(&"roof"):
+				continue
+			roofs += 1
+			var overlap := conflict.overlap_m as Vector3
+			if bool(conflict.direct_bearing):
+				continue
+			if minf(overlap.x, overlap.z) > SettlementFabricPlan \
+					.ROOF_EMBEDDED_MIN_HORIZONTAL_M \
+					and overlap.y > SettlementFabricPlan \
+						.ROOF_EMBEDDED_MIN_HEIGHT_M:
+				embedded.append("%s x %s by (%.3f, %.3f, %.3f)" % [
+					String(conflict.left_recipe), String(conflict.right_recipe),
+					overlap.x, overlap.y, overlap.z])
+		print("MAZE_ROOF_SEAM %s roof_conflicts=%d embedded=%d" % [
+			_label(outcome), roofs, embedded.size()])
+		assert_eq(embedded.size(), 0,
+			("%s admits %d roof(s) standing inside a connected neighbour: %s") \
+				% [_label(outcome), embedded.size(),
+				", ".join(PackedStringArray(embedded))])
+		roof_pairs += roofs
 		checked += 1
 	assert_gt(checked, 0, "the corpus must seal a town to measure")
 
@@ -5877,6 +6529,18 @@ func test_the_hillside_treatment_fires_on_a_planted_bank() -> void:
 		Vector4i(0, 2, 0, 4): Vector3i.ZERO,
 		Vector4i(4, 1, 0, 4): Vector3i.ZERO,
 	}
+	# TASK I4, ANNOTATION 2. A THIRD BENCH, and it is the other half of the
+	# garden bar's teeth: a 3 x 3 field of free caps at columns (10..12, 10..12),
+	# which is nine cells with 2 x 2 blocks in it and therefore a YARD. Without
+	# it "small tops take the deck" would read the same whether the bar works or
+	# demoted everything in the town.
+	for step_x in 3:
+		for step_z in 3:
+			var cap := Vector4i(10 + step_x, 1, 10 + step_z, 4)
+			exposed[cap] = true
+			exposed[Vector4i(cap.x, cap.y, cap.z, 0)] = true
+			faces[cap] = Vector3i.ZERO
+			faces[Vector4i(cap.x, cap.y, cap.z, 0)] = Vector3i.ZERO
 	var walked: Dictionary = {Vector3i(0, 3, 0): true}
 	var treatments := SettlementFabricAssembler.maze_skin_treatments(exposed,
 		faces, walked)
@@ -5899,9 +6563,21 @@ func test_the_hillside_treatment_fires_on_a_planted_bank() -> void:
 	assert_eq(int(treatments[Vector4i(0, 2, 0, 4)]),
 		SettlementFabricAssembler.SkinTreatment.MASONRY,
 		"a cap the realm walks keeps its stone")
+	# TASK I4, ANNOTATION 2 -- "these grass areas are too small, we should only
+	# have grass in large areas like plazas/gardens". A LONE free cap used to go
+	# green and is exactly the patch the annotation circled; it takes the plank
+	# terrace now, and the nine-cell field beside it is what still gets turf.
 	assert_eq(int(treatments[Vector4i(4, 1, 0, 4)]),
-		SettlementFabricAssembler.SkinTreatment.GREEN,
-		"a cap nobody walks goes green")
+		SettlementFabricAssembler.SkinTreatment.DECK,
+		("a lone free cap is a plank terrace, not a lawn -- one cell is under " \
+			+ "the %d-cell garden bar") \
+			% SettlementFabricAssembler.GARDEN_RUN_MINIMUM_CELLS)
+	for step_x in 3:
+		for step_z in 3:
+			assert_eq(int(treatments[Vector4i(10 + step_x, 1, 10 + step_z, 4)]),
+				SettlementFabricAssembler.SkinTreatment.GREEN,
+				("a free top big enough to be a yard still goes green at " \
+					+ "(%d, 1, %d)") % [10 + step_x, 10 + step_z])
 	# The pairing matters: a free cap sharing its slab with a walked cell must
 	# stay stone, or the green plate lands under a pavement.
 	var shared: Dictionary = {Vector4i(4, 1, 0, 4): Vector3i.BACK}
