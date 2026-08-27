@@ -879,6 +879,11 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			"maze_plaza_centre_feature_count": 0,
 			"maze_plaza_centre_feature_asset": &"",
 			"maze_garden_planting_count": 0,
+			"maze_garden_planting_refused_count": 0,
+			"maze_garden_decor_type_count": 0,
+			"maze_garden_decor_adjacent_repeat_count": 0,
+			"maze_stall_canopy_count": 0,
+			"maze_stall_goods_count": 0,
 			"maze_garden_dressing_instance_count": 0,
 			"maze_skywalk_span_count": 0,
 			"maze_skywalk_deck_cell_count": 0,
@@ -1167,8 +1172,12 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	# their stone because they are a street's own floor.
 	var garden := SettlementFabricAssembler.maze_garden_cells(retained, solids,
 		paved, plinths, walked, shell)
+	# TASK I4 ROUND 5, ITEM 1. The building envelope the decor stands off -- see
+	# `maze_decor_face_intrusion`, which needs the OCCLUDER set rather than the
+	# solid core to see a room's own front door.
+	var decor_occluders := plan.transformed_cells(&"occluder")
 	var planting := SettlementFabricAssembler.maze_garden_dressing(retained,
-		solids, paved, plinths, walked, shell)
+		solids, paved, plinths, walked, shell, decor_occluders)
 	# TASK I3. The square's own three facts, derived exactly as the dressing
 	# derives them: the run a street can actually reach, the mouths it reaches it
 	# by, and what stands in the clearing.
@@ -1183,11 +1192,43 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	# rather than off the dressing payload's whole instance count, which now
 	# also carries the square's paved thresholds and its centre feature.
 	var planting_instances := 0
+	# TASK I4 ROUND 5, ITEMS 1, 2 and 5. What the dressing payload really carries,
+	# by channel: what grows, what a canopy is stocked with, how many DISTINCT
+	# pieces the town's decor uses, and how many neighbours ended up wearing the
+	# same one anyway.
+	var goods_instances := 0
+	var decor_types: Dictionary = {}
+	var decor_by_cell: Dictionary = {}
 	for asset_value: Variant in planting.batches.keys():
 		var batch := planting.batches[asset_value] as Dictionary
 		for id_value: Variant in batch.get("ids", []) as Array:
-			planting_instances += int(String(id_value).begins_with(
-				"maze-garden/"))
+			var id := String(id_value)
+			goods_instances += int(id.begins_with("maze-stall-goods/"))
+			if not id.begins_with("maze-garden/"):
+				continue
+			planting_instances += 1
+			decor_types[StringName(asset_value)] = true
+			var parts := id.trim_prefix("maze-garden/").split("/")
+			decor_by_cell[Vector3i(int(parts[0]), int(parts[1]),
+				int(parts[2]))] = StringName(asset_value)
+	var decor_adjacent_repeats := 0
+	for cell_value: Variant in decor_by_cell.keys():
+		var decor_cell := cell_value as Vector3i
+		for step: Vector3i in [Vector3i(1, 0, 0), Vector3i(0, 0, 1)]:
+			if not decor_by_cell.has(decor_cell + step):
+				continue
+			decor_adjacent_repeats += int(StringName(decor_by_cell[decor_cell]) \
+				== StringName(decor_by_cell[decor_cell + step]))
+	var planting_refused := 0
+	var planting_reserved: Dictionary = {}
+	for cell_value: Variant in (plaza_feature.get("cells", {}) \
+			as Dictionary).keys():
+		planting_reserved[cell_value as Vector3i] = true
+	for site: Dictionary in SettlementFabricAssembler \
+			.maze_garden_planting_sites(garden, plaza, plaza_entries,
+				planting_reserved, treatments, solids, retained,
+				decor_occluders):
+		planting_refused += int(bool(site.refused))
 	var paved_bench_caps := 0
 	for key_value: Variant in treatments.keys():
 		var key := key_value as Vector4i
@@ -1219,15 +1260,21 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			== SettlementFabricAssembler.FacadeOutcrop.BUMP)
 	# TASK I4, ANNOTATION 1. Derived once and read twice: the edges the lawns
 	# have, and the rim pieces the payload really lays over them.
-	var rim_faces := SettlementFabricAssembler.maze_garden_rim_face_count(shell)
+	# TASK I4 ROUND 5, ITEM 4. The boundary set now carries the LEVEL junctions
+	# as well as the drops, so `walked` and `paved` come with it.
+	var rim_faces := SettlementFabricAssembler.maze_garden_rim_face_count(shell,
+		walked, paved)
 	var rim_instances := SettlementFabricAssembler.maze_green_rim_walls(retained,
 		solids, paved, plinths, walked, shell).instance_count
 	# TASK I4, ANNOTATIONS 3 and 6. The two new dressing channels, counted off
 	# the same rules the payload places them with.
+	# TASK I4 ROUND 5, ITEM 3. The headroom gate reads the capped stances too.
+	var capped := SettlementFabricAssembler.maze_capped_stance_cells(shell)
 	var floor_bearers_borne := 0
 	var floor_bearers_refused := 0
 	for site: Dictionary in SettlementFabricAssembler \
-			.maze_public_floor_bearer_sites(retained, solids, paved, walked):
+			.maze_public_floor_bearer_sites(retained, solids, paved, walked,
+				capped):
 		if bool(site.refused):
 			floor_bearers_refused += 1
 		else:
@@ -1235,9 +1282,24 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	var frontages := SettlementFabricAssembler.maze_perimeter_frontage_sites(
 		retained, solids, paved, walked, plan.world_seed)
 	var frontages_wide := 0
+	# TASK I4 ROUND 5, ITEM 2. Every canopy this fabric stands, wherever it stands
+	# it: the square's own centre feature and the town's outward front. The goods
+	# under them are counted off the payloads themselves, so "every canopy is
+	# stocked" is a ratio a reader can check rather than a promise.
+	var stall_canopies := int(SettlementFabricAssembler.STALL_CANOPIES.has(
+		StringName(plaza_feature.get("asset", &""))))
 	for site: Dictionary in frontages:
 		frontages_wide += int((site.cells as Array).size() \
 			>= SettlementFabricAssembler.PERIMETER_WINDOW_CELLS)
+		stall_canopies += int(SettlementFabricAssembler.STALL_CANOPIES.has(
+			StringName(site.asset)))
+	var frontage_payload := SettlementFabricAssembler.maze_perimeter_frontage(
+		retained, solids, paved, walked, plan.world_seed)
+	for asset_value: Variant in frontage_payload.batches.keys():
+		var frontage_batch := frontage_payload.batches[asset_value] as Dictionary
+		for id_value: Variant in frontage_batch.get("ids", []) as Array:
+			goods_instances += int(String(id_value).begins_with(
+				"maze-stall-goods/"))
 	var out := {
 		"maze_skywalk_span_count": spans.size(),
 		"maze_skywalk_deck_cell_count": skywalk_deck_cells,
@@ -1274,6 +1336,19 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		"maze_plaza_centre_feature_asset": StringName(
 			plaza_feature.get("asset", &"")),
 		"maze_garden_planting_count": planting_instances,
+		# TASK I4 ROUND 5. ITEM 1: the sites whose odds roll said "plant here" and
+		# whose real free ground held nothing the pool carries -- a cell walled on
+		# two sides is 0.394 m of a 1.5 m cell, and a bare cell there is the point.
+		# ITEM 5: how wide the town's decor vocabulary really came out, and how
+		# many lateral neighbours still ended up wearing the same piece.
+		"maze_garden_planting_refused_count": planting_refused,
+		"maze_garden_decor_type_count": decor_types.size(),
+		"maze_garden_decor_adjacent_repeat_count": decor_adjacent_repeats,
+		# ITEM 2: every canopy this fabric stands and the goods under it. Five
+		# pieces a canopy -- the stocked counter, three goods and the hanging
+		# string -- so the two numbers are each other's proof.
+		"maze_stall_canopy_count": stall_canopies,
+		"maze_stall_goods_count": goods_instances,
 		"maze_garden_dressing_instance_count": planting.instance_count,
 		"maze_paved_bench_cap_count": paved_bench_caps,
 		"maze_green_cap_jut_cell_count": green_jut_cells,
