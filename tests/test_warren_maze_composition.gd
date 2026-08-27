@@ -542,9 +542,10 @@ const UNCOMPOSED_PARCEL_GATES: Array[String] = [
 ##
 ## The path and the staleness fingerprint are the HARNESS's constants, read
 ## through this preload, so the two halves of the contract cannot drift apart.
-## A summary whose fingerprint no longer matches the fabric layer on disk is
-## refused as stale rather than believed: a green corpus assertion measured
-## against deleted code is worse than no assertion.
+## A summary whose fingerprint no longer matches the fabric layer -- or, since
+## task I4 round 2, the collision sources the clearance row's physics really
+## measures -- is refused as stale rather than believed: a green corpus
+## assertion measured against deleted code is worse than no assertion.
 ##
 ## MEASURED 20/24 at Task C6 (18/24 at C5e; the authored-room-envelope family
 ## took 12/standard, and full no-descent then took 6/compact). Pinned at
@@ -5404,6 +5405,13 @@ func test_a_green_cap_never_juts_past_the_bench_it_caps() -> void:
 		var retained := fabric.retained_terrace_cells
 		var solids := fabric.transformed_cells(&"solid")
 		var partners := _cap_partner_offsets(fabric)
+		# TASK I4 ROUND 2, MINOR. The exposed-face set is a fact about the TOWN
+		# and was being rebuilt inside the instance loop -- once per green cap,
+		# hundreds of times a town, for an answer that cannot change while the
+		# loop runs. Derived once here; the pairing call below is unchanged.
+		var exposed := SettlementFabricAssembler.exposed_maze_stone_faces(
+			retained, solids,
+			SettlementFabricAssembler.public_floor_cells(fabric.surface_plan))
 		var jut_cells := 0
 		var jut_over_air := 0
 		var caps := 0
@@ -5419,12 +5427,7 @@ func test_a_green_cap_never_juts_past_the_bench_it_caps() -> void:
 			# so the footprint this test measures is asked for through the same
 			# function the payload places it with.
 			var partner := SettlementFabricAssembler.maze_green_cap_partner(
-				face, partners.get(face, Vector3i.ZERO) as Vector3i,
-				SettlementFabricAssembler.exposed_maze_stone_faces(
-					fabric.retained_terrace_cells,
-					fabric.transformed_cells(&"solid"),
-					SettlementFabricAssembler.public_floor_cells(
-						fabric.surface_plan)))
+				face, partners.get(face, Vector3i.ZERO) as Vector3i, exposed)
 			unpaired += int(partner == Vector3i.ZERO)
 			var owned: Dictionary = {cell: true}
 			if partner != Vector3i.ZERO:
@@ -5481,7 +5484,7 @@ func test_a_green_cap_never_juts_past_the_bench_it_caps() -> void:
 
 func test_every_garden_edge_turns_the_rim() -> void:
 	## TASK I4, ANNOTATION 1 -- "sometimes the grass overhangs, and sometimes it
-	## disappears". THE CONSISTENCY PIN.
+	## disappears". THE AUDIT-AGAINST-PAYLOAD ROW.
 	##
 	## Two numbers that have to be equal: how many EDGES a town's lawns have --
 	## every lateral boundary of every cell a green cap floors where the
@@ -5491,11 +5494,15 @@ func test_every_garden_edge_turns_the_rim() -> void:
 	## reason `_rim_instances` exists: a rim that lives only in the rule is not a
 	## rim.
 	##
-	## It was NOT equal before this task. Every bare edge in the five review
-	## towns stood on a cell the quad LEANED over -- a cell that owns no cap and
-	## that `maze_green_rim_walls` therefore cannot dress. The lean is refused
-	## now (`maze_green_cap_partner`), which is what makes the equality reachable
-	## rather than aspirational.
+	## ROUND-2 CORRECTION -- WHAT THIS PIN IS FOR. It catches a rim the audit
+	## counts and the renderer never gets. It does NOT catch a BARE TURF EDGE:
+	## both terms derive their edge set from the same cells through the same
+	## `maze_green_cap_partner`, so an edge on a cell that owns no cap is absent
+	## from the count exactly as it is absent from the payload and the deficit
+	## stays at zero. That class -- every bare edge in the five review towns
+	## stood on a cell the quad LEANED over -- is closed by the lean refusal and
+	## pinned by `capless == 0` in `test_no_lawn_is_laid_over_a_building`. Where
+	## the rim really LANDS is `test_the_rim_stands_off_the_panel_it_caps`.
 	var checked := 0
 	for outcome: Dictionary in _corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
@@ -5523,6 +5530,129 @@ func test_every_garden_edge_turns_the_rim() -> void:
 			true, "%s must publish its lean refusals" % _label(outcome))
 		checked += 1
 	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func test_the_rim_stands_off_the_panel_it_caps() -> void:
+	## TASK I4 ROUND 2, ANNOTATION 1 -- THE BEHAVIOURAL PIN, and the one the
+	## round-1 review asked for by name: `rim_deficit` counts rims and
+	## `test_the_frontage_constants_mirror_the_module_descriptors` checks that
+	## GREEN_RIM_MASONRY_STANDOFF is the coursed panel's own proud-ness -- but
+	## NOTHING checked that the right stand-off reached the right rim. A slip in
+	## the keying (a treatments lookup that missed, a match arm that fell through
+	## to `_:`) gives every rim the facade's 0.000 m, re-buries every masonry
+	## edge in the turf the annotation is about, and leaves the count pins, the
+	## mirror and the whole corpus green.
+	##
+	## So this measures the placement itself, on the payload the renderer is
+	## handed:
+	##
+	## * the rim module's own roll is at its local +Z = GREEN_RIM_FRONT (the
+	##   authored envelope, `kaykit_cliff_lip.tres`), so `xform * (0, 0, FRONT)`
+	##   is where the lip really lands in the world;
+	## * the cell boundary that edge dresses is `cell x CELL + outward x CELL/2`;
+	## * the difference along `outward` is the stand-off the piece actually got.
+	##
+	## And the EXPECTED stand-off is read off the panel the payload really laid
+	## on that same face -- `maze-stone/x/y/z/w`, the masonry module or a timber
+	## one -- rather than off the treatments dictionary the rule itself keys on.
+	## Two independent readings of "what is under this rim" have to agree, which
+	## is what makes a keying slip visible here and invisible everywhere else.
+	##
+	## AND THIS TEST IS THE ONLY GUARD THE STAND-OFF HAS. The rim bakes no
+	## collider (`test_the_hillside_pushes_back` states and checks that ruling),
+	## so the corpus clearance row -- which asks the physics server -- cannot see
+	## a rim at all: a rim laid a third of a metre into a street would ship green
+	## through every other pin in this repository. Full argument at
+	## GREEN_RIM_MASONRY_STANDOFF.
+	var masonry_rims := 0
+	var facade_rims := 0
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var panels: Dictionary = {}
+		for instance: Dictionary in _stone_instances(fabric):
+			panels[instance["face"] as Vector4i] = StringName(instance["asset"])
+		var town_masonry := 0
+		var town_facade := 0
+		var unpanelled := 0
+		var natural := 0
+		var misplaced := 0
+		var worst := 0.0
+		for rim: Dictionary in _rim_instances(fabric):
+			var face := rim["face"] as Vector4i
+			var outward := Vector3(
+				SettlementFabricAssembler.FACE_DIRECTIONS[face.w])
+			if not panels.has(face):
+				# The rule's own claim is that a capped cell's side face is
+				# always a panel (`maze_green_rim_standoff`); a rim over no
+				# panel would silently take the boundary and be the same defect
+				# by another route.
+				unpanelled += 1
+				continue
+			var asset := panels[face] as StringName
+			var expected := SettlementFabricAssembler.GREEN_RIM_FACADE_STANDOFF
+			if asset == SettlementFabricAssembler.MAZE_STONE_MODULE:
+				expected = SettlementFabricAssembler.GREEN_RIM_MASONRY_STANDOFF
+				town_masonry += 1
+			elif asset == SettlementFabricAssembler.NATURAL_ROCK_FACE:
+				natural += 1
+				continue
+			else:
+				town_facade += 1
+			var xform := rim["transform"] as Transform3D
+			var roll := xform * Vector3(0.0, 0.0,
+				SettlementFabricAssembler.GREEN_RIM_FRONT)
+			var boundary := Vector3(rim["cell"] as Vector3i) \
+				* FabricRecipe.CELL_SIZE \
+				+ outward * (FabricRecipe.CELL_SIZE * 0.5)
+			var stand_off := (roll - boundary).dot(outward)
+			var error := absf(stand_off - expected)
+			worst = maxf(worst, error)
+			misplaced += int(error > 0.0005)
+		print(("MAZE_RIM_STANDOFF %s masonry=%d facade=%d unpanelled=%d " \
+			+ "natural=%d misplaced=%d worst=%.6f") % [_label(outcome),
+			town_masonry, town_facade, unpanelled, natural, misplaced, worst])
+		assert_eq(unpanelled, 0,
+			("%s lays %d rim(s) on a face that carries no panel; the rim would " \
+				+ "take the boundary and the stand-off would mean nothing") % [
+				_label(outcome), unpanelled])
+		# `maze_natural_is_permitted()` is false, so the shard branch of
+		# `maze_green_rim_standoff` is dead code with a documented number in it.
+		# Said here rather than in a report, so the day the cliffs come back this
+		# fails and the branch gets read again.
+		assert_eq(natural, 0,
+			("%s dresses %d rim(s) over a rock shard; the shard's stand-off is " \
+				+ "a per-panel roll and this pin has no answer for it") % [
+				_label(outcome), natural])
+		assert_eq(misplaced, 0,
+			("%s stands %d rim(s) off by up to %.4f m from the panel under " \
+				+ "them; the roll must land on that panel's own outer face " \
+				+ "whatever the panel is made of, and NOTHING ELSE MEASURES " \
+				+ "THIS -- the rim carries no collider, so the clearance row " \
+				+ "stays green with the turf lip standing in a street") % [
+				_label(outcome), misplaced, worst])
+		masonry_rims += town_masonry
+		facade_rims += town_facade
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+	# BOTH ARMS OR THE PIN IS HALF A PIN. The facade stand-off is 0.000 m, so a
+	# corpus with no masonry rim in it would pass every assertion above with the
+	# constant deleted. The populations are corpus-wide rather than per town for
+	# the reason the head-panel census is: which of the two clads a given town's
+	# garden drops is a fact about that town's shape.
+	print("MAZE_RIM_STANDOFF corpus masonry=%d facade=%d" % [masonry_rims,
+		facade_rims])
+	assert_gt(masonry_rims, 0,
+		"the corpus must turn a rim over coursed masonry, or the masonry " \
+			+ "stand-off is never asserted at all")
+	assert_gt(facade_rims, 0,
+		"the corpus must turn a rim over a timber facade, or the two-panel " \
+			+ "argument this task rests on is untested on one side")
 
 
 func test_a_free_top_smaller_than_a_yard_takes_the_plank_terrace() -> void:
@@ -5732,6 +5862,108 @@ func test_the_frontage_constants_mirror_the_module_descriptors() -> void:
 				+ maxf(absf(bounds.position.z), absf(bounds.end.z)) - 0.001,
 			("%s clearance reach must cover the placement offset plus the " \
 				+ "module's own outward half-extent") % String(asset_id))
+
+
+func test_the_frontage_clearance_covers_the_baked_colliders() -> void:
+	## TASK I4 ROUND 2 -- THE OTHER HALF OF THE MIRROR, and round 1's own first
+	## concern: "a re-bake that grew a collider without moving the geometry would
+	## pass every pin and put a stall back in a street."
+	##
+	## The visual mirror above can only read `measured_aabb`, and the market
+	## stall's colliders are 18 % wider, 13 % taller and 14 % deeper than the
+	## thing you can see -- which is the whole reason
+	## PERIMETER_FRONTAGE_CLEARANCE exists as a separate table. So the collider
+	## half of that table was, until this test, transcribed by hand and checked by
+	## nobody.
+	##
+	## IT NEEDS NO PHYSICS FRAME, which is why round 1 filed it as expensive and
+	## it turned out not to be. The bake writes each piece's `Shape3D` and its
+	## `local_transform` into the asset's own `EnvironmentVisual`, so the hull is
+	## a resource read: every collider's authored box, carried through its own
+	## local transform, unioned. That is the same data the physics server would be
+	## handed and it is one `load()` away.
+	##
+	## Every frontage collider in the pool is a `BoxShape3D` -- the collision
+	## sources are hand-authored convex primitives by the rule stated in
+	## `tools/environment_bake/collision_sources/README.md` -- and the test says
+	## so rather than assuming it: a shape kind this cannot measure fails here
+	## instead of quietly contributing nothing to the hull.
+	var catalog := EnvironmentCatalog.load_default()
+	assert_not_null(catalog, "the shipped environment catalogue must load")
+	if catalog == null:
+		return
+	var cache := EnvironmentRenderCache.new(catalog)
+	var measured := 0
+	for asset_value: Variant in SettlementFabricAssembler \
+			.PERIMETER_FRONTAGE_CLEARANCE.keys():
+		var asset_id := asset_value as StringName
+		var descriptor := catalog.descriptor(asset_id)
+		var visual := cache.visual(asset_id)
+		assert_not_null(descriptor, "%s must be in the catalogue" \
+			% String(asset_id))
+		assert_not_null(visual, "%s must load its visual" % String(asset_id))
+		if descriptor == null or visual == null:
+			continue
+		# The descriptor's own count against the bake it describes: a re-bake that
+		# dropped or added a piece is a different asset and this table's numbers
+		# were measured on the old one.
+		assert_eq(visual.collisions.size(), descriptor.collision_piece_count,
+			"%s must carry the piece count its descriptor claims" \
+				% String(asset_id))
+		var envelope: Vector3 = SettlementFabricAssembler \
+			.PERIMETER_FRONTAGE_CLEARANCE[asset_id]
+		if visual.collisions.is_empty():
+			# The awning and the barrel bake no collider at all, so for those the
+			# geometry IS the whole of it and the visual mirror above is the whole
+			# of the check. Printed rather than skipped silently.
+			print("MAZE_FRONTAGE_HULL %s colliders=0 (geometry is the envelope)" \
+				% String(asset_id))
+			continue
+		var hull := AABB()
+		var started := false
+		for piece: EnvironmentCollisionPiece in visual.collisions:
+			var box := piece.shape as BoxShape3D
+			assert_not_null(box, ("%s bakes a %s this mirror cannot measure; " \
+				+ "the collision sources are authored as boxes") % [
+				String(asset_id), piece.shape.get_class() if piece.shape != null \
+					else "null shape"])
+			if box == null:
+				continue
+			var local := AABB(-box.size * 0.5, box.size)
+			for corner in 8:
+				var point: Vector3 = piece.local_transform * (local.position \
+					+ Vector3(local.size.x * float(corner & 1),
+						local.size.y * float((corner >> 1) & 1),
+						local.size.z * float((corner >> 2) & 1)))
+				if started:
+					hull = hull.expand(point)
+				else:
+					hull = AABB(point, Vector3.ZERO)
+					started = true
+		assert_true(started, "%s must yield a measurable hull" % String(asset_id))
+		if not started:
+			continue
+		var reach := float(SettlementFabricAssembler
+			.PERIMETER_FRONTAGE_DEPTH[asset_id]) \
+			+ maxf(absf(hull.position.z), absf(hull.end.z))
+		print(("MAZE_FRONTAGE_HULL %s colliders=%d hull=%.3f x %.3f x %.3f " \
+			+ "half_width=%.3f rise=%.3f reach=%.3f") % [String(asset_id),
+			visual.collisions.size(), hull.size.x, hull.size.y, hull.size.z,
+			maxf(absf(hull.position.x), absf(hull.end.x)), hull.end.y, reach])
+		assert_gte(envelope.x,
+			maxf(absf(hull.position.x), absf(hull.end.x)) - 0.001,
+			("%s clearance half-width must cover the BAKED hull, not only the " \
+				+ "geometry") % String(asset_id))
+		assert_gte(envelope.y, hull.end.y - 0.001,
+			"%s clearance rise must cover the BAKED hull's own top" \
+				% String(asset_id))
+		assert_gte(envelope.z, reach - 0.001,
+			("%s clearance reach must cover the placement offset plus the " \
+				+ "BAKED hull's outward extent") % String(asset_id))
+		measured += 1
+	assert_gt(measured, 0,
+		"some frontage module must bake a collider, or this mirror is vacuous " \
+			+ "and the concern it closes is still open")
 
 
 func test_the_perimeter_stands_its_frontage_on_open_ground() -> void:
@@ -6318,14 +6550,22 @@ func _cap_partner_offsets(fabric: SettlementFabricPlan) -> Dictionary:
 
 
 func _rim_instances(fabric: SettlementFabricPlan) -> Array[Dictionary]:
-	## Every rolled-rim instance the renderer is handed, as {cell, asset}. Read
-	## out of the same payload the commit path takes, for the same reason
-	## `_stone_instances` is: a rim that exists only in the rule is not a rim.
+	## Every rolled-rim instance the renderer is handed, as
+	## {cell, face, asset, transform}. Read out of the same payload the commit
+	## path takes, for the same reason `_stone_instances` is: a rim that exists
+	## only in the rule is not a rim.
+	##
+	## TASK I4 ROUND 2. The FACE INDEX and the TRANSFORM ride along now. The id
+	## has always carried the index -- a rim is one edge of one cell, and which
+	## edge decides which panel stands under it -- and
+	## `test_the_rim_stands_off_the_panel_it_caps` needs both halves to check
+	## that the piece was placed for the panel it really caps.
 	var out: Array[Dictionary] = []
 	var payload := SettlementFabricAssembler.terrace_retaining_payload(fabric)
 	for asset_value: Variant in payload.batches.keys():
 		var batch := payload.batches[asset_value] as Dictionary
 		var ids := batch.get("ids", []) as Array
+		var transforms := batch.get("transforms", []) as Array
 		for index in ids.size():
 			var id := String(ids[index])
 			if not id.begins_with("maze-rim/"):
@@ -6333,7 +6573,10 @@ func _rim_instances(fabric: SettlementFabricPlan) -> Array[Dictionary]:
 			var parts := id.trim_prefix("maze-rim/").split("/")
 			out.append({
 				"cell": Vector3i(int(parts[0]), int(parts[1]), int(parts[2])),
-				"asset": StringName(asset_value)})
+				"face": Vector4i(int(parts[0]), int(parts[1]), int(parts[2]),
+					int(parts[3])),
+				"asset": StringName(asset_value),
+				"transform": transforms[index] as Transform3D})
 	return out
 
 
@@ -7896,14 +8139,16 @@ func test_corpus_composes() -> void:
 	# corpus measured against a tree that no longer exists.
 	var fingerprint := MAZE_SWEEP.production_fingerprint()
 	assert_ne(fingerprint, "",
-		"the fabric script directory could not be fingerprinted")
+		"the fabric script and collision-source directories could not be " \
+			+ "fingerprinted")
 	if String(summary.get("fingerprint", "")) != fingerprint:
 		pending(("the recorded 48-town corpus matrix is STALE -- it was " \
-			+ "measured against a different %s. Re-run " \
+			+ "measured against a different %s or %s. Re-run " \
 			+ "tests/harness/warren_maze_mode_sweep.gd -- --seeds " \
 			+ "1,2,3,4,5,6,7,8,9,10,11,12 --scale " \
-			+ "compact,standard,large,grand") \
-			% MAZE_SWEEP.PRODUCTION_SCRIPT_DIR)
+			+ "compact,standard,large,grand") % [
+			MAZE_SWEEP.PRODUCTION_SCRIPT_DIR,
+			MAZE_SWEEP.PRODUCTION_COLLISION_SOURCE_DIR])
 		return
 	# A three-seed spot check is not the corpus. Refuse to score against one.
 	assert_eq(_int_array(summary.get("seeds", [])), CORPUS_SWEEP_SEEDS,

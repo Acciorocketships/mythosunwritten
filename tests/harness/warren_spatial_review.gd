@@ -577,6 +577,7 @@ func _capture_all() -> void:
 	views.append_array(_roofline_views())
 	views.append_array(_dormer_views())
 	views.append_array(_roof_campaign_views())
+	views.append_array(_maze_roof_junction_views())
 	views.append_array(_interstitial_gap_views())
 	views.append_array(_interstitial_join_views())
 	views.append_array(_residual_jetty_views())
@@ -980,6 +981,105 @@ func _roof_campaign_views() -> Array[Dictionary]:
 			if out.size() >= 4:
 				return out
 	return out
+
+
+func _maze_roof_junction_views() -> Array[Dictionary]:
+	## TASK I4 ROUND 2 -- ANNOTATION 4 FINALLY GETS ITS PHOTOGRAPH.
+	##
+	## "glitch with roof disappearing into the wall" was fixed in round 1 and
+	## evidenced NUMERICALLY only: the roof-subset census fell from 10-20 pairs a
+	## town to 3-6, the refused population separated from the admitted one by more
+	## than a factor of one and a half, and not one camera in this battery was
+	## pointed at a junction. Every other channel that task touched has a frame.
+	## This is that frame.
+	##
+	## THE SUBJECT IS CHOSEN BY THE GATE'S OWN DIAGNOSTIC.
+	## `connected_visual_envelope_conflicts` reports the seams that SURVIVE its
+	## four allowances, and a pair with a `roof` recipe on one side of it is a
+	## roof meeting something. The DEEPEST survivor in plan is the worst junction
+	## the town admits, so it is the one worth a picture: if the eaves meet there,
+	## they meet everywhere.
+	##
+	## DIRECT-BEARING PAIRS ARE SKIPPED, and they would otherwise win every time.
+	## The diagnostic only waives a bearing pair whose overlap is under half a
+	## metre, so a pitched shell sitting on its own wall head reports 3.0 m of
+	## plan overlap and tops the ranking -- while the gate exempts exactly that
+	## pair BY NAME, because a roof resting on its own room is a seam and not a
+	## collision. The junction worth photographing is the one the gate had to
+	## JUDGE: a roof against something it is not carried by.
+	##
+	## THE EYE STANDS OFF THE SEAM BOX, not off either unit. A junction is a small
+	## thing between two large ones, and framing the merged pair photographs two
+	## roofs with the join a few pixels across. It is aimed from OUTSIDE -- the
+	## horizontal direction from the town's own centre through the seam -- because
+	## a roof running into a wall is a thing you see from the street.
+	var by_id: Dictionary = {}
+	for unit: FabricUnit in _fabric.units:
+		by_id[unit.stable_id] = unit
+	var ranked: Array[Dictionary] = []
+	for conflict: Dictionary in _fabric.connected_visual_envelope_conflicts():
+		var left := by_id.get(conflict.left) as FabricUnit
+		var right := by_id.get(conflict.right) as FabricUnit
+		if left == null or right == null:
+			continue
+		var left_recipe := _fabric.recipe(left.recipe_id)
+		var right_recipe := _fabric.recipe(right.recipe_id)
+		if left_recipe == null or right_recipe == null \
+				or left_recipe.placements.is_empty() \
+				or right_recipe.placements.is_empty():
+			continue
+		if not left_recipe.has_tag(&"roof") and not right_recipe.has_tag(&"roof"):
+			continue
+		if bool(conflict.direct_bearing):
+			continue
+		var overlap := conflict.overlap_m as Vector3
+		ranked.append({
+			"left": left, "right": right,
+			"left_bounds": left.transform() * left_recipe.local_clearance_bounds,
+			"right_bounds": right.transform() \
+				* right_recipe.local_clearance_bounds,
+			"plan": minf(overlap.x, overlap.z),
+			"rise": overlap.y})
+	if ranked.is_empty():
+		return [] as Array[Dictionary]
+	ranked.sort_custom(_roof_junction_before)
+	var town := _fabric_bounds()
+	var out: Array[Dictionary] = []
+	for entry: Dictionary in ranked:
+		var seam := (entry.left_bounds as AABB).intersection(
+			entry.right_bounds as AABB)
+		if seam.size.length_squared() <= 0.0001:
+			continue
+		var target := seam.get_center()
+		var outward := target - town.get_center()
+		outward.y = 0.0
+		if outward.length_squared() <= 0.01:
+			outward = Vector3(1.0, 0.0, 1.0)
+		outward = outward.normalized()
+		var left_unit := entry.left as FabricUnit
+		var right_unit := entry.right as FabricUnit
+		var eye := _best_directional_position(target, outward, 9.0, 2.0,
+			[left_unit.stable_id, right_unit.stable_id] as Array[StringName],
+			seam)
+		print(("[warren_spatial_review] roof-junction-%02d %s(%s) x %s(%s) " \
+			+ "plan=%.3f rise=%.3f at %s") % [out.size(),
+			String(left_unit.stable_id), String(left_unit.recipe_id),
+			String(right_unit.stable_id), String(right_unit.recipe_id),
+			float(entry.plan), float(entry.rise), str(target)])
+		out.append({"id": "roof-junction-%02d" % out.size(), "position": eye,
+			"target": target, "fov": 40.0})
+		if out.size() >= 3:
+			break
+	return out
+
+
+func _roof_junction_before(left: Dictionary, right: Dictionary) -> bool:
+	## Deepest IN PLAN first -- the axis round 1's bound is written on -- with the
+	## rise as the tie-break, so the ranking is a total order and the same town
+	## always photographs the same junction.
+	if not is_equal_approx(float(left.plan), float(right.plan)):
+		return float(left.plan) > float(right.plan)
+	return float(left.rise) > float(right.rise)
 
 
 func _room_columns(room: WarrenRoomStamp) -> Dictionary:

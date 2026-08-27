@@ -53,6 +53,21 @@ const SUMMARY_PATH := "user://warren_maze_mode_sweep.json"
 ## that goes stale silently, and a stale list is exactly the failure mode this
 ## fingerprint exists to prevent.
 const PRODUCTION_SCRIPT_DIR := "res://scripts/terrain/features/villages/fabric"
+## TASK I4 ROUND 2 -- AND A BAKE EDIT IS A CODE EDIT, as far as this matrix is
+## concerned. The clearance row is the one column here that asks the real physics
+## server, so what it measures is the BAKED COLLIDERS, and those are authored in
+## this directory: an edit to `market_stall_006_007.tscn` moves the hull the
+## siting gate keeps clear for a market stall without touching one line of the
+## fabric layer. Before this it left the recorded matrix looking fresh.
+##
+## The AUTHORED SOURCES rather than the baked `.res` shapes, deliberately: the
+## sources are the hand-edited, git-tracked input a person actually changes, and
+## the bake is a pure function of them plus the manifest. A re-bake that produced
+## different colliders from unchanged sources would still slip through -- named
+## in the report, not fixed here, because catching it means fingerprinting 630
+## generated files to guard a step nobody performs by hand.
+const PRODUCTION_COLLISION_SOURCE_DIR := \
+	"res://tools/environment_bake/collision_sources"
 
 ## TASK F4. The two stone tallies. `CORPUS_STONE_GROUP` prints the untagged
 ## `SWEEP RESULT stone` line Phase E's exit number was read off; the scales that
@@ -226,22 +241,56 @@ const LIFE_FLOOR_SEEDS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
 static func production_fingerprint() -> String:
 	## One hex digest over the sorted (path, content hash) pairs of every
-	## `.gd` file in the fabric layer. Content rather than modification time,
-	## so a checkout or a `touch` does not invalidate a still-valid sweep and
-	## an edit-and-revert does not leave one falsely invalid.
-	var directory := DirAccess.open(PRODUCTION_SCRIPT_DIR)
-	if directory == null:
+	## `.gd` file in the fabric layer AND every `.tscn` under the collision-source
+	## directory. Content rather than modification time, so a checkout or a
+	## `touch` does not invalidate a still-valid sweep and an edit-and-revert does
+	## not leave one falsely invalid.
+	##
+	## TASK I4 ROUND 2. The second root is new; the reason it belongs in the same
+	## digest is at PRODUCTION_COLLISION_SOURCE_DIR. Rows carry their FULL path
+	## now rather than a bare file name, so two roots cannot collide on a shared
+	## basename and a reader of the digest input can tell which tree a row came
+	## from. That changes the digest for an unchanged tree exactly once, which
+	## costs one re-record of the matrix.
+	##
+	## A MISSING ROOT IS NOT AN EMPTY ROOT. Either directory failing to open
+	## returns "", which the caller treats as "cannot be fingerprinted", rather
+	## than quietly hashing half of the definition.
+	if not DirAccess.dir_exists_absolute(PRODUCTION_SCRIPT_DIR) \
+			or not DirAccess.dir_exists_absolute(
+				PRODUCTION_COLLISION_SOURCE_DIR):
 		return ""
+	var joined := PackedStringArray()
+	joined.append_array(_fingerprint_rows(PRODUCTION_SCRIPT_DIR, ".gd"))
+	joined.append_array(_fingerprint_rows(PRODUCTION_COLLISION_SOURCE_DIR,
+		".tscn"))
+	return "\n".join(joined).sha256_text()
+
+
+static func _fingerprint_rows(root: String, suffix: String) -> PackedStringArray:
+	## One root's `path:sha256` rows, this directory first and then each
+	## subdirectory in name order -- the collision sources are filed one folder
+	## per pack, so the walk has to go down.
+	var out := PackedStringArray()
+	var directory := DirAccess.open(root)
+	if directory == null:
+		return out
 	var names := PackedStringArray()
 	for file_name: String in directory.get_files():
-		if file_name.ends_with(".gd"):
+		if file_name.ends_with(suffix):
 			names.append(file_name)
 	names.sort()
-	var joined := PackedStringArray()
 	for file_name: String in names:
-		joined.append("%s:%s" % [file_name, FileAccess.get_sha256(
-			"%s/%s" % [PRODUCTION_SCRIPT_DIR, file_name])])
-	return "\n".join(joined).sha256_text()
+		out.append("%s/%s:%s" % [root, file_name, FileAccess.get_sha256(
+			"%s/%s" % [root, file_name])])
+	var folders := PackedStringArray()
+	for folder_name: String in directory.get_directories():
+		folders.append(folder_name)
+	folders.sort()
+	for folder_name: String in folders:
+		out.append_array(_fingerprint_rows("%s/%s" % [root, folder_name],
+			suffix))
+	return out
 
 
 func _init() -> void:
@@ -872,8 +921,15 @@ static func _accumulate_skin(tally: Dictionary,
 	# TASK I4. THE SIX ANNOTATIONS, on the row the life already occupies: the
 	# turf edge (annotation 1), the demoted small tops (annotation 2), the
 	# corbels under the unborne floor plates (annotation 3) and the dressed
-	# perimeter (annotation 6). `rim_deficit` is the pin -- one bare turf edge
-	# anywhere in the matrix makes it positive.
+	# perimeter (annotation 6).
+	#
+	# ROUND-2 CORRECTION. `rim_deficit` is an AUDIT-AGAINST-PAYLOAD row, not the
+	# bare-edge pin this comment used to call it: both of its terms walk the same
+	# cell sets through the same pairing rule, so an edge nobody can dress is
+	# missing from both and the difference stays zero. It goes positive when the
+	# count and the instances disagree -- a piece the rule counted that never
+	# reached the renderer. The bare-edge class is pinned by `capless == 0` in
+	# the composition suite; see `maze_garden_rim_face_count`.
 	tally.garden_runs += int(fabric.audit.get("maze_garden_run_count", 0))
 	tally.rim_faces += int(fabric.audit.get("maze_garden_rim_face_count", 0))
 	tally.rim_instances += int(fabric.audit.get(
