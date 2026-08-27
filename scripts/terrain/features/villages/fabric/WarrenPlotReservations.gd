@@ -165,16 +165,116 @@ const EAVE_HALO_CELLS := 1
 const ASSET_QUOTA_SALT := 0x51071
 const DECK_QUOTA_SALT := 0x4dec5
 
+## TASK I4 ROUND 3 -- THE PLAZA DECK, and the whole of it is a SITING POLICY.
+##
+## The village green reads as a CORRIDOR and task I4 round 2 photographed why:
+## a square needs (1) two plan extents within some ratio of each other, (2)
+## enclosure on three or four sides, (3) a street arriving at it head-on -- and
+## all three are questions about the PLOT MODEL, which is here. `_grow_decks`
+## below grows the flattest connected region off each street cheapest-first
+## with no shape rule at all, and measured on the four planner towns that walk
+## produces 4x1, 6x1, 1x3 and 3x4 columns: a lane, not a room. So the town's
+## one deliberate open place is grown by SHAPE instead, before the ordinary
+## quota walks, and the ordinary decks take what is left.
+##
+## THE SITE IS A RECTANGLE, which is the cheapest honest way to say "aspect
+## bounded": at least PLAZA_MIN_SIDE columns on the short side and no longer
+## than PLAZA_MAX_ASPECT times it on the long one. Its area is bounded by the
+## scale's own DECK_MAX -- a plaza is a deck and the reason that bound exists
+## ("past this it reads as missing town") is the same reason here -- so a
+## compact town's square is 2 x 2 macro columns (6 x 6 m) and a grand one's is
+## 3 x 4 (9 x 12 m).
+##
+## STREET-ADJACENT is a REQUIREMENT and NEAR THE HEART is a preference: the
+## datum is a fronting street's own band, exactly as an ordinary deck's is, so a
+## square nobody can walk into is not a site at all; and among sites that
+## qualify the order is CHEAPEST FIRST, then nearest `plan.summit_cell`'s column
+## (the massif's own centre, which every other seeded roll in this file already
+## keys off), then biggest, then squarest. Cost leads because it is what the
+## corpus paid for -- see `_plaza_site_less`, which carries the seals.
+##
+## WHY THE SQUARE IS NOT ITSELF THE TURF, which is the part worth reading twice.
+## A deck plot is PAVED public floor (`WarrenVolumetricSolver._pave_maze_decks`),
+## so the plaza's own surface is stone. What it does for the green is give it a
+## WAY IN: `SettlementFabricAssembler.maze_plaza_entries` calls a garden cell
+## entered when a walked cell stands one band up and one cell across, and the
+## village-green designation prefers an entered run over a bigger unentered one.
+## Measured on 12/compact, the town's largest garden run was 36 cells in a 6 x 6
+## box with ZERO streets into it -- a rooftop shoulder nobody could reach -- so
+## the designation fell back to a 7-cell 2 x 4 ribbon. A 2 x 2 plaza beside that
+## shoulder gives it four entrances, and the designation names the 6 x 6 square
+## with a tree in the middle of it and paved thresholds at its mouths.
+##
+## The fallback is deliberate: a town with no rectangle that fits keeps exactly
+## the plots it had before this rule existed, its ordinary decks grow off the
+## same streets in the same order, and its green is designated by the same
+## corridor rule. `outcomes["plaza"]` is written only when a site is CLAIMED,
+## so a town without one is byte-identical to its pre-round record.
 
-## P3: assets first, then decks on what is left. Both write their outcomes into
-## `plan.audit["plot_outcomes"]`.
+
+## The plaza's own plot id, and what tells the town's one shaped square from the
+## quota's ordinary courtyards everywhere downstream. Deliberately NOT
+## `deck.%02d`: an id in that family would renumber the ordinary decks and make
+## "which deck is this" a question about placement order.
+const PLAZA_PLOT_ID := &"plaza.00"
+const PLAZA_MIN_SIDE := 2
+const PLAZA_MAX_ASPECT := 2
+## How deep the square may cut. The ordinary deck asks its columns to stand
+## within ONE band of the street's datum, and on a stepped cone that is a
+## CONTOUR -- one column wide, which is exactly the corridor round 2
+## photographed. A square is a terrace cut into a slope, so the plaza is allowed
+## to take the hill down to its own floor. The bound is a cut and never a fill:
+## `plot_support_ok` needs solid at `datum - 1`, and on a column carrying no
+## plot that solid stops at the massif's own top.
+##
+## FOUR IS MEASURED, not chosen. A compact massif's own tops stand at bands
+## 2-12 while its streets run at 0-5, so "within one band of the street" is a
+## contour and a contour is one column wide. Qualifying 2 x 2 sites per compact
+## town, over the twelve-seed corpus, by how deep the cut is allowed to be:
+##
+## | bands | 1 | 2 | 3 | 4 | 6 | 8 |
+## | towns with none | 11 | 9 | 4 | **0** | 0 | 0 |
+## | sites, worst town | 0 | 0 | 0 | **1** | 2 | 6 |
+##
+## Four is the first bound every town in the corpus offers a site at, and
+## stopping there keeps the excavation to two storeys of retained face around the
+## square -- which is what dresses its enclosure -- rather than the four or six a
+## looser bound would cut. (The budget below then spends fewer of those sites
+## than this table offers; the two bounds are different questions.)
+const PLAZA_LEVEL_BANDS := 4
+## And how much hill the square may take ALTOGETHER, as bands per column.
+## PLAZA_LEVEL_BANDS bounds the WORST column; this bounds the mean, so the site
+## is a levelled terrace rather than a quarry with one shallow corner. Two is
+## half the per-column bound: a 2 x 2 site standing on a single step -- two
+## columns at the datum and two a step above it -- still qualifies, and a site
+## cut out of a real slope does not.
+##
+## IT IS ALSO WHAT THE CORPUS PAID FOR, and the honest reason it exists. Without
+## it the 48-town matrix sealed 41 (grand 7/12 against a 10/12 baseline): the
+## deepest sites take four columns out of the middle of a hill and the elevated
+## court, the interstitial joins and the route graph are what fall over. With it,
+## 11/grand's 12-band site is refused, that town keeps the corridor fallback --
+## and it already had a 35-cell green with ten entrances, so it lost nothing --
+## and the scale comes back inside the round's stop condition.
+const PLAZA_CUT_BUDGET_BANDS := 2
+## How many refused sites the plaza will walk past before giving up. The source
+## plan can still refuse a rectangle every column of `_deck_column_ok` accepted
+## -- disjointness and the seal's own placement rules are its business, not
+## this file's -- and one square a town is worth a few tries. Bounded because
+## each retry is a full rescan.
+const PLAZA_SITE_ATTEMPTS := 4
+
+
+## P3: assets first, then the town's one plaza, then ordinary decks on what is
+## left. All three write their outcomes into `plan.audit["plot_outcomes"]`.
 static func reserve(plan: WarrenMazeSourcePlan,
 		profile: WarrenVillageScaleProfile) -> void:
 	var outcomes := WarrenPlotPlanner.outcomes(plan)
 	var streets := WarrenPlotPlanner.street_bands(plan)
 	var blocked := WarrenPlotPlanner.blocked_columns(plan)
 	_place_assets(plan, profile, streets, blocked, outcomes)
-	_grow_decks(plan, streets, blocked, outcomes)
+	var plaza := _place_plaza(plan, streets, blocked, outcomes)
+	_grow_decks(plan, streets, blocked, outcomes, plaza)
 
 
 static func _place_assets(plan: WarrenMazeSourcePlan,
@@ -578,8 +678,166 @@ static func _site_less(a: Dictionary, b: Dictionary) -> bool:
 	return int(a["template"]) < int(b["template"])
 
 
+static func _place_plaza(plan: WarrenMazeSourcePlan, streets: Dictionary,
+		blocked: Dictionary, outcomes: Dictionary) -> int:
+	## ONE aspect-bounded, street-fronted deck per town, claimed before the
+	## ordinary quota walks. See the PLAZA_MIN_SIDE block above for the policy
+	## and for why the no-site case has to leave no trace.
+	##
+	## Returns 1 when the square stands, and the ordinary quota is then one
+	## shorter: THE PLAZA IS A DECK, not a deck plus a plaza. A scale's quota is
+	## how many breathing spaces its town wants -- a compact town asks for one --
+	## and spending the first of them on a shaped, central, street-fronted site
+	## rather than on the first ribbon in walk order is the entire policy. Adding
+	## the square ON TOP would give every town more open floor than its scale was
+	## measured for, which is a different change and one the corpus would pay for
+	## in seals.
+	var refused: Dictionary = {}
+	for attempt in PLAZA_SITE_ATTEMPTS:
+		var site := _best_plaza_site(plan, streets, blocked, refused)
+		if site.is_empty():
+			return 0
+		var id := PLAZA_PLOT_ID
+		var datum := int(site["datum"])
+		var cells := site["cells"] as Array[Vector2i]
+		if plan.add_plot({"id": id, "kind": WarrenMazeSourcePlan.PLOT_DECK,
+				"cells": cells, "floor": datum, "top": datum,
+				"door_walk": site["door"], "building_id": id}):
+			for column: Vector2i in cells:
+				blocked[column] = true
+			outcomes["plaza"] = {"id": id, "size": cells.size(),
+				"datum": datum, "width": int(site["width"]),
+				"depth": int(site["depth"]), "anchor": site["anchor"],
+				"cost": int(site["cost"]), "reason": ""}
+			return 1
+		refused[_plaza_site_key(site)] = true
+	# Every site the scan offered was refused by the source plan itself. The
+	# town keeps the corridor fallback and says so.
+	outcomes["plaza"] = {"id": &"", "size": 0, "datum": 0, "width": 0,
+		"depth": 0, "anchor": Vector2i.ZERO, "cost": 0,
+		"reason": plan.last_rejection}
+	return 0
+
+
+static func _best_plaza_site(plan: WarrenMazeSourcePlan, streets: Dictionary,
+		blocked: Dictionary, refused: Dictionary) -> Dictionary:
+	## The best rectangle of unclaimed deck columns, over every aspect-legal
+	## shape the scale's own DECK_MAX admits and every band a street runs
+	## beside it. `_deck_column_ok` is asked of each member, so a plaza column
+	## is a deck column in exactly the sense the ordinary quota means -- the
+	## shape rule is the only thing this adds.
+	var cap := int(DECK_MAX.get(plan.scale_profile.scale_id, DECK_MIN))
+	var heart := Vector2i(plan.summit_cell.x, plan.summit_cell.z)
+	var columns: Array[Vector2i] = []
+	columns.assign(plan.massif.columns.keys())
+	columns.sort_custom(Callable(WarrenPlotPlanner, "column_less"))
+	var best: Dictionary = {}
+	for shape: Vector2i in _plaza_shapes(cap):
+		for anchor: Vector2i in columns:
+			var cells := _plaza_footprint(plan, anchor, shape, blocked)
+			if cells.is_empty():
+				continue
+			var doors := _fronting_doors(cells, streets)
+			var bands: Array = doors.keys()
+			bands.sort()
+			for datum: int in bands:
+				var cost := 0
+				var fits := true
+				for member: Vector2i in cells:
+					if not _deck_column_ok(plan, member, datum, streets,
+							blocked, PLAZA_LEVEL_BANDS):
+						fits = false
+						break
+					cost += absi(plan.massif.top_at(member) - datum)
+				if not fits \
+						or cost > cells.size() * PLAZA_CUT_BUDGET_BANDS:
+					continue
+				# Doubled column units, so an even side's centre is exact.
+				var offset := Vector2i(anchor.x * 2 + shape.x - 1 - heart.x * 2,
+					anchor.y * 2 + shape.y - 1 - heart.y * 2)
+				var site := {"anchor": anchor, "width": shape.x,
+					"depth": shape.y, "datum": datum, "cost": cost,
+					"area": shape.x * shape.y,
+					"long": maxi(shape.x, shape.y),
+					"short": mini(shape.x, shape.y),
+					"heart": offset.x * offset.x + offset.y * offset.y,
+					"cells": cells, "door": doors[datum]}
+				if refused.has(_plaza_site_key(site)):
+					continue
+				if best.is_empty() or _plaza_site_less(site, best):
+					best = site
+	return best
+
+
+static func _plaza_shapes(cap: int) -> Array[Vector2i]:
+	## Every (width, depth) a plaza may take at this scale, in a fixed order.
+	## Both sides at least PLAZA_MIN_SIDE, the long one at most
+	## PLAZA_MAX_ASPECT times the short one, and the area within the scale's
+	## own deck bound. Both orientations, because a 2 x 3 and a 3 x 2 are
+	## different sites on a hill.
+	var out: Array[Vector2i] = []
+	for width in range(PLAZA_MIN_SIDE, cap + 1):
+		for depth in range(PLAZA_MIN_SIDE, cap + 1):
+			if width * depth > cap \
+					or maxi(width, depth) > mini(width, depth) * PLAZA_MAX_ASPECT:
+				continue
+			out.append(Vector2i(width, depth))
+	return out
+
+
+static func _plaza_footprint(plan: WarrenMazeSourcePlan, anchor: Vector2i,
+		shape: Vector2i, blocked: Dictionary) -> Array[Vector2i]:
+	## The rectangle at `anchor`, or empty when a member is off the massif or
+	## already spoken for. `_footprint`'s own body, kept separate only because
+	## the plaza names its extents (width, depth) rather than (width, depth)
+	## derived from a template row.
+	return _footprint(plan, anchor, shape.x, shape.y, blocked)
+
+
+static func _plaza_site_less(a: Dictionary, b: Dictionary) -> bool:
+	## CHEAPEST FIRST, then nearest the heart, then biggest, then squarest.
+	##
+	## The aspect bound has already thrown out everything that is not a room, so
+	## what is left to choose between are rooms -- and the choice is made by how
+	## much hill each one takes, because that is what the corpus's seals turned
+	## out to be a function of. Ordering by the heart first sealed 41 of 48 (grand
+	## 7/12 against 10/12) and ordering by cost first seals 44 with the SAME
+	## squares on the towns that matter: 12/compact and 4/compact keep the site
+	## the heart order chose, because on those towns nothing cheaper exists and
+	## the heart is the tie-break that picks it.
+	##
+	## Heart before size for the reason the direction gives -- "a grass plaza in
+	## the center" -- and size before squareness because the aspect bound has
+	## already made every candidate square enough. The last two keys exist so the
+	## order is total.
+	if int(a["cost"]) != int(b["cost"]):
+		return int(a["cost"]) < int(b["cost"])
+	if int(a["heart"]) != int(b["heart"]):
+		return int(a["heart"]) < int(b["heart"])
+	if int(a["area"]) != int(b["area"]):
+		return int(a["area"]) > int(b["area"])
+	var aspect_a := int(a["long"]) * int(b["short"])
+	var aspect_b := int(b["long"]) * int(a["short"])
+	if aspect_a != aspect_b:
+		return aspect_a < aspect_b
+	for key: String in ["datum"]:
+		if int(a[key]) != int(b[key]):
+			return int(a[key]) < int(b[key])
+	var anchor_a := a["anchor"] as Vector2i
+	var anchor_b := b["anchor"] as Vector2i
+	if anchor_a != anchor_b:
+		return WarrenPlotPlanner.column_less(anchor_a, anchor_b)
+	return int(a["width"]) < int(b["width"])
+
+
+static func _plaza_site_key(site: Dictionary) -> String:
+	var anchor := site["anchor"] as Vector2i
+	return "%d,%d/%dx%d/%d" % [anchor.x, anchor.y, int(site["width"]),
+		int(site["depth"]), int(site["datum"])]
+
+
 static func _grow_decks(plan: WarrenMazeSourcePlan, streets: Dictionary,
-		blocked: Dictionary, outcomes: Dictionary) -> void:
+		blocked: Dictionary, outcomes: Dictionary, claimed: int = 0) -> void:
 	## Walk the streets in order and grow the flattest connected region beside
 	## each one, keeping them until the scale's quota is met. The seeded
 	## variation is the quota roll: a candidate is never skipped on a coin flip,
@@ -591,7 +849,10 @@ static func _grow_decks(plan: WarrenMazeSourcePlan, streets: Dictionary,
 	var quota := WarrenPlotPlanner.roll(plan, DECK_QUOTA_SALT,
 		plan.summit_cell, 0, DECK_QUOTA.get(scale, Vector2i(1, 1)))
 	var cap := int(DECK_MAX.get(scale, DECK_MIN))
-	var accepted := 0
+	# TASK I4 ROUND 3. `claimed` is the plaza, which already spent one of these
+	# slots -- see `_place_plaza`. Zero on a town that got no square, which is
+	# what makes that town's decks byte-identical to its pre-round ones.
+	var accepted := claimed
 	for street: Vector3i in WarrenPlotPlanner.walk_order(plan):
 		if accepted >= quota:
 			break
@@ -672,7 +933,8 @@ static func _deck_from(plan: WarrenMazeSourcePlan, root: Vector2i, datum: int,
 
 
 static func _deck_column_ok(plan: WarrenMazeSourcePlan, column: Vector2i,
-		datum: int, streets: Dictionary, blocked: Dictionary) -> bool:
+		datum: int, streets: Dictionary, blocked: Dictionary,
+		level_bands: int = 1) -> bool:
 	## A deck column: unclaimed, on the massif, standing within a band of the
 	## street's own datum, accepted by the support rule there, and leaving no
 	## street on it hanging.
@@ -687,7 +949,17 @@ static func _deck_column_ok(plan: WarrenMazeSourcePlan, column: Vector2i,
 	## <= 1 test already refused), so this is belt to that brace: the rule the
 	## deck actually depends on is written down where it is depended on,
 	## rather than resting on another rule's incidental range.
+	##
+	## TASK I4 ROUND 3 -- `level_bands` IS HOW DEEP THE FLOOR MAY CUT, and the
+	## ordinary quota's own answer is one band, unchanged. The bound is only ever
+	## a CUT: `plot_support_ok` asks for solid at `datum - 1`, and on a column
+	## carrying no plot yet that solid runs out at the massif's own top, so a
+	## datum above the terrain is already impossible and `absi` was symmetric
+	## about a case that cannot happen. The plaza asks for more (see
+	## PLAZA_LEVEL_BANDS): a square is a terrace CUT into a slope, and a stepped
+	## cone's own contours are one column wide, which is the shape the ordinary
+	## rule has been growing.
 	return not blocked.has(column) and plan.massif.has_column(column) \
-		and absi(plan.massif.top_at(column) - datum) <= 1 \
+		and absi(plan.massif.top_at(column) - datum) <= level_bands \
 		and plan.plot_support_ok(column, datum) \
 		and _no_street_left_hanging(streets, column, datum, datum)

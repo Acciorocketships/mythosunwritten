@@ -617,6 +617,17 @@ static func from_volume(volume: WarrenVolumePlan,
 	plan.audit.merge(WarrenSpatialFeatureSolver.last_audit, true)
 	if volume.mass_context.has(&"maze_source_plan"):
 		plan.audit["maze_deck_cell_count"] = deck_cell_count
+		# TASK I4 ROUND 3. The plaza deck, counted where the corpus sweep can
+		# see it: the macro columns `WarrenPlotReservations._place_plaza`
+		# claimed, or 0 on a town where no aspect-legal site fitted and the
+		# corridor fallback stands. It is the source's own record rather than a
+		# re-derivation, so "the town got its square" is asserted against the
+		# rule that placed it.
+		var maze_source := volume.mass_context.get(&"maze_source_plan") \
+			as WarrenMazeSourcePlan
+		plan.audit["maze_plaza_deck_column_count"] = int(((maze_source.audit.get(
+			"plot_outcomes", {}) as Dictionary).get("plaza", {}) \
+			as Dictionary).get("size", 0))
 		plan.audit["maze_slab_course_cell_count"] = int(slab_courses.cells)
 		plan.audit["maze_retained_rock_cell_count"] = int(retained_rock.cells)
 		plan.audit["maze_retained_rock_skipped_reserved"] = \

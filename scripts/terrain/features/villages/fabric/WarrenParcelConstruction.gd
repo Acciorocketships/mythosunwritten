@@ -103,17 +103,29 @@ static func roof_feature_for_phase(kind: StringName, phase: int) -> int:
 	## count stay seed-dependent so the feature cannot become a repeated stamp.
 	## Most complete square roofs receive one, split across both eaves, with one
 	## phase kept for a chimney and one quiet, so a roofscape gains readable
-	## cadence instead of either uniform repetition or confetti. The compact
-	## tower is the sparsest, because its authored slope is the shortest.
+	## cadence instead of either uniform repetition or confetti.
+	##
+	## TASK I4 ROUND 3 -- THE TOWER ARM JOINS THE SLIM ONE, and that is the whole
+	## of this round's dormer change. The direction asks for MOST pitched roofs
+	## to carry a dormer; round 2 measured the landed rate at 44.0 % by units and
+	## 37.0 % by roofs and localised the shortfall here: the corpus is
+	## tower-heavy and the tower was the sparsest arm in the table at two phases
+	## of six. Its stated reason -- "its authored slope is the shortest" -- was
+	## an assertion about the recipe rather than a measurement, and the
+	## measurement contradicts it: `roof.tower.{blue,orange}.dormer.{left,right}`
+	## are real reviewed recipes, they pass measured-envelope qualification on
+	## this corpus's tower crowns, and round 2's own conflict census photographed
+	## one standing (`roof.tower.blue.dormer.right` on 4/compact). So the tower
+	## takes the same cadence a slim house takes -- four dormered phases, one
+	## chimney, one quiet -- and the two kinds are one branch, because they now
+	## say the same thing and two copies of one cadence is how the pre-I3 table
+	## drifted apart.
 	if kind == &"long":
 		return [1, 2, 4, 5, 1, 2][posmod(phase, ROOF_FEATURE_PHASES)]
 	if kind == &"building":
 		return 1 if phase in [0, 1, 2] else 2 if phase in [3, 4] \
 			else 3 if phase == 5 else 0
-	if kind == &"tower":
-		return 1 if phase == 0 else 2 if phase == 1 \
-			else 3 if phase == 2 else 0
-	if kind == &"slim" or kind == &"row":
+	if kind == &"tower" or kind == &"slim" or kind == &"row":
 		return 1 if phase in [0, 1] else 2 if phase in [2, 3] \
 			else 3 if phase == 4 else 0
 	return 0
