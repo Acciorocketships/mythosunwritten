@@ -191,9 +191,21 @@ func add_unit(unit: FabricUnit) -> bool:
 		var existing_clearance := _clearance_bounds[index]
 		if _aabb_overlaps_volume(clearance_bounds, existing_clearance):
 			var existing_recipe := _recipes[existing.recipe_id] as FabricRecipe
-			if existing_recipe.placements.is_empty() \
-					or _units_declare_connection(unit, existing):
+			if existing_recipe.placements.is_empty():
 				continue
+			if _units_declare_connection(unit, existing):
+				if _connected_roof_seam_is_measured(unit, recipe,
+						clearance_bounds, existing, existing_recipe,
+						existing_clearance):
+					continue
+				last_rejection = ("roof envelope of %s (%s at %s/r%d) drives " \
+					+ "into connected unit %s (%s) past its measured seam: " \
+					+ "overlap %s") % [unit.stable_id, unit.recipe_id,
+						unit.lattice_origin, unit.yaw_quarters, existing.stable_id,
+						existing.recipe_id, _overlap_size(clearance_bounds,
+							existing_clearance)]
+				_rollback_claims(journal)
+				return false
 			if DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP \
 					and _is_corner_nick(clearance_bounds, existing_clearance):
 				continue
@@ -283,9 +295,16 @@ func validate() -> bool:
 			if not _aabb_overlaps_volume(left_clearance, right_clearance):
 				continue
 			var right_recipe := _recipes[right.recipe_id] as FabricRecipe
-			if right_recipe.placements.is_empty() \
-					or _units_declare_connection(left, right):
+			if right_recipe.placements.is_empty():
 				continue
+			if _units_declare_connection(left, right):
+				if _connected_roof_seam_is_measured(left, left_recipe,
+						left_clearance, right, right_recipe, right_clearance):
+					continue
+				last_rejection = ("connected roof envelopes intersect past " \
+					+ "their measured seam: %s and %s") % [left.stable_id,
+						right.stable_id]
+				return false
 			if DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP \
 					and _is_corner_nick(left_clearance, right_clearance):
 				continue
@@ -458,6 +477,78 @@ func connected_visual_envelope_conflicts() -> Array[Dictionary]:
 	return conflicts
 
 
+func _connected_roof_seam_is_measured(left: FabricUnit,
+		left_recipe: FabricRecipe, left_bounds: AABB, right: FabricUnit,
+		right_recipe: FabricRecipe, right_bounds: AABB) -> bool:
+	## TASK I4, ANNOTATION 4 -- "glitch with roof disappearing into the wall".
+	##
+	## THE JUNCTION RULE THAT ADMITTED IT IS THIS EXEMPTION. `add_unit` and
+	## `validate` both let ANY connected pair interpenetrate without bound:
+	## bearing ancestry, a socket bond or a declared visual seam and the two
+	## envelopes may pass through each other by any amount. A pitched roof and the
+	## taller room it leans against are always connected -- they share a bearing
+	## DAG -- so the roof was admitted however far its slope drove into the wall.
+	##
+	## `connected_visual_envelope_conflicts` has MEASURED that exemption since it
+	## was written and says so in its own docstring: "it identifies exemptions
+	## that must become typed seams before the rule can safely become a hard
+	## admission gate". On the four planner towns it reads 10-20 pairs a town, and
+	## the worst of them is a roof 1.198 m into an upper room over 3.0 m of height
+	## -- which is the annotation, in numbers.
+	##
+	## THE GATE IS NOW ARMED, FOR ROOFS ONLY. The allowances are exactly the four
+	## the diagnostic already documents and not a new number; what changes is that
+	## a pair one of whose sides is a `roof` recipe has to satisfy one of them
+	## instead of being waved through. Pairs with no roof in them keep the old
+	## unbounded exemption -- room-into-room is a different question with a
+	## different vocabulary behind it, and arming it here would be a change this
+	## annotation did not ask for and no capture has been read against.
+	if not left_recipe.has_tag(&"roof") and not right_recipe.has_tag(&"roof"):
+		return true
+	var overlap := _overlap_size(left_bounds, right_bounds)
+	# A roof RESTS on its own room, and that is a bearing seam rather than a
+	# collision: the shell's lower course is meant to sit inside the wall head it
+	# lands on. Only a DIRECT parent counts -- a transitive ancestor is the
+	# unrelated tower three storeys down that the diagnostic keeps catching.
+	var direct_bearing := left.parent_ids.has(right.stable_id) \
+		or right.parent_ids.has(left.stable_id)
+	if direct_bearing:
+		return true
+	var lateral_seam := left.visual_seam_ids.has(right.stable_id) \
+		or right.visual_seam_ids.has(left.stable_id) \
+		or _has_direct_socket_target(left, right.stable_id) \
+		or _has_direct_socket_target(right, left.stable_id)
+	if lateral_seam and minf(overlap.x, overlap.z) <= 0.50:
+		return true
+	if lateral_seam and (left_recipe.has_tag(&"thin_roof_face") \
+			or right_recipe.has_tag(&"thin_roof_face")) \
+			and overlap.y <= TYPED_FLASHING_MAX_HEIGHT_M \
+			and minf(overlap.x, overlap.z) <= TYPED_FLASHING_MAX_HORIZONTAL_M:
+		return true
+	var left_shed := left_recipe.has_tag(&"setback_shed")
+	var right_shed := right_recipe.has_tag(&"setback_shed")
+	if lateral_seam and (
+			(left_shed and _is_typed_shed_roof_contact(left_bounds, right_bounds)
+				if right_recipe.has_tag(&"roof")
+				else left_shed and _is_typed_shed_wall_contact(left_bounds,
+					right_bounds))
+			or (right_shed and _is_typed_shed_roof_contact(left_bounds,
+				right_bounds) if left_recipe.has_tag(&"roof")
+				else right_shed and _is_typed_shed_wall_contact(left_bounds,
+					right_bounds))):
+		return true
+	# EVERYTHING ELSE IS A SEAM THE VOCABULARY HAS NOT TYPED YET, and the gate
+	# does not pretend otherwise: it refuses only the overlaps that cannot be a
+	# seam under any reading -- deeper than a flashing IN PLAN and taller than a
+	# whole band. That is a shell standing INSIDE the thing it meets, which is
+	# what "disappearing into the wall" is, and it is the only class this
+	# annotation asks about. The narrower typed seams above stay the way a
+	# junction is admitted; the untyped remainder stays exempt and stays on the
+	# diagnostic, where the next roof task can read it.
+	return minf(overlap.x, overlap.z) <= ROOF_EMBEDDED_MIN_HORIZONTAL_M \
+		or overlap.y <= ROOF_EMBEDDED_MIN_HEIGHT_M
+
+
 static func _has_direct_socket_target(unit_value: FabricUnit,
 		target_id: StringName) -> bool:
 	for bond: Dictionary in unit_value.socket_bonds:
@@ -549,6 +640,41 @@ const TYPED_FLASHING_MAX_HEIGHT_M := 0.25
 const TYPED_SHED_WALL_MAX_HORIZONTAL_M := 0.90
 const TYPED_SHED_ROOF_MAX_HORIZONTAL_M := 1.60
 const TYPED_SHED_MAX_HEIGHT_M := 0.85
+## TASK I4, ANNOTATION 4. How far into a connected neighbour a ROOF shell has to
+## reach before the pair stops being a seam of any kind and becomes the
+## "disappearing into the wall" the annotation circled. BOTH bounds have to be
+## exceeded together, and both are read off the vocabulary rather than chosen:
+##
+## * IN PLAN, HALF A CELL. A roof that laps less than half a cell into the thing
+##   beside it still has its body on its OWN side of the shared boundary, which
+##   is a junction meeting a neighbour; past half a cell its body is centred
+##   inside the neighbour's cell, which is a shell standing in it. The bound is
+##   the lattice's own, not a taste: `FabricRecipe.CELL_SIZE * 0.5`.
+## * IN HEIGHT, more than 1.00 m. The one-band contact a roof makes with the
+##   wall head it lands on is exactly 1.5 m, so a bound at 1.5 admits every
+##   embed the corpus actually has; but that contact is a DIRECT BEARING pair
+##   and is exempted above by name. What is left at 1.5 m is a roof inside an
+##   unrelated neighbour, and 1.00 m is comfortably under it while staying well
+##   over the 0.25 m a typed flashing may overlap.
+##
+## THE PLAN BOUND WAS 0.50 m FIRST -- the lateral seam allowance `lateral_seam_ok`
+## already admits -- AND THAT WAS TOO TIGHT, measured rather than argued. At
+## 0.50 m the gate refused `roof.tower.orange` AND `roof.tower.chimney.orange` on
+## `parcel.maze.house.004.part01.room00` of 3/standard, both against the same
+## unrelated upper room and both by 0.583 m in plan; the compiler's fallback
+## chain ran out and the crown shipped with NO ROOF UNIT ON TWO OF ITS FACES
+## (`test_partial_plates_are_tiled`, and the production-site test with it). A
+## hole in a roof is a worse artefact than the seam the bound was removing, so
+## the bound moved to the first defensible number above it.
+##
+## MEASURED on the four planner towns at 0.75 m: the pairs it refuses read
+## 0.77-1.20 m in plan over 1.5-3.4 m of height, and the annotation's own worst
+## pair -- a roof 1.198 m into an upper room over 3.0 m -- is still refused, which
+## is the whole point. The typed seams the vocabulary relies on read 0.16-0.50 m
+## in plan and are untouched. Every planner town still composes AND still closes
+## every crown.
+const ROOF_EMBEDDED_MIN_HORIZONTAL_M := FabricRecipe.CELL_SIZE * 0.5
+const ROOF_EMBEDDED_MIN_HEIGHT_M := 1.00
 
 
 static func _is_corner_nick(left: AABB, right: AABB) -> bool:
