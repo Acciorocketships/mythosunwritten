@@ -139,8 +139,29 @@ const GREEN_RIM_LIFT := 0.01
 ## that panel's own outer face whatever the panel is made of. The turf turns the
 ## rim in the same plane everywhere, and it never reaches past the thing it caps:
 ## the stand-off is exactly the proud-ness of a module that is already there, so
-## nothing new occupies the cell in front of it and the corpus clearance row is
-## the measurement that says so.
+## nothing new occupies the cell in front of it.
+##
+## ROUND-2 CORRECTION -- AND THAT ARGUMENT STANDS ALONE, WHICH IS THE OPPOSITE
+## OF WHAT THE FIRST TELLING SAID. It finished "and the corpus clearance row is
+## the measurement that says so". That is not true and cannot be:
+## `kaykit.cliff.lip` BAKES NO COLLIDER -- its descriptor declares zero pieces,
+## its provenance names no collision source, and `test_the_hillside_pushes_back`
+## both states the ruling and checks it (`bare_rims == rims`, because a body on
+## a rim stands on the CAP three centimetres under it). The clearance row asks
+## the physics server, so it is blind to every rim in the corpus.
+##
+## THE FAILURE MODE IS THEREFORE SILENT, not loud. This stand-off is the coursed
+## panel's own proud-ness -- 0.33194 m by `sfv_fabric_wall_rock_plain_001`'s
+## measured 0.66389 m depth, and task I2 already recorded that the panel's own
+## clearance holds by about a millimetre. A re-bake that deepened the module
+## would push the PANEL past the gate and turn the clearance row red, which is
+## the loud half; it would push this turf lip the same distance into the same
+## street and NOTHING would go red, because there is no collider there to be
+## measured. What keeps the rim honest is the geometry above -- it reaches
+## exactly as far as the panel already standing there and not one millimetre
+## further -- and, since round 2, `test_the_rim_stands_off_the_panel_it_caps`,
+## which measures the laid transform against the panel the payload really put
+## under it. That test is the only guard this constant has.
 const GREEN_RIM_MASONRY_STANDOFF := STONE_CAP_HALF_DEPTH
 const GREEN_RIM_FACADE_STANDOFF := 0.0
 ## Measured envelopes, read off the descriptors rather than assumed:
@@ -587,8 +608,22 @@ const PLANK_TERRACE_CAP_OFFSET := 0.75
 ## 4.241 m against 4.5 m of lattice -- 13 mm and 130 mm of slack. Two cells hold
 ## the table with 0.94 m to spare and one cell holds a barrel.
 ##
-## HALF-DEPTHS, so a piece's BACK plane lands on the wall it fronts and nothing
-## reaches into the mass: half of each module's own measured z extent.
+## HALF-DEPTHS, so a piece's VISIBLE back plane lands on the wall it fronts:
+## half of each module's own measured z extent.
+##
+## ROUND-2 CORRECTION -- "AND NOTHING REACHES INTO THE MASS" WAS AN ABSOLUTE AND
+## IS NOT TRUE. These are half the VISUAL extent, and the market stall's baked
+## collider is deeper than its geometry: the hull reaches 1.831 m out from its
+## own origin against the 1.599 m this table pushes it, so 0.231 m of collider
+## stands BEHIND the wall plane, inside the town's own mass. It is harmless --
+## the cells it occupies are solid, nothing walks there, and no rule in this file
+## measures anything from a frontage's back plane -- and the alternative is
+## worse: pushing the piece out by the collider's half-depth instead would float
+## the visible stall 0.23 m off the wall it is meant to lean on. The 0.231 m is
+## footprint mass and is named here so the next reader does not rediscover it as
+## a bug. What the collider hull DOES govern is the clearance envelope in front
+## of the piece -- see PERIMETER_FRONTAGE_CLEARANCE, which takes the larger of
+## the two readings per axis for exactly this reason.
 const PERIMETER_WINDOW_CELLS := 3
 const PERIMETER_MARKET_STALL := PLAZA_MARKET_STALL
 const PERIMETER_AWNING := SettlementFabricProgram.ROOF_TERRACE_AWNING
@@ -630,6 +665,16 @@ const PERIMETER_FRONTAGE_DEPTH := {
 ## Mirrored against the descriptors by
 ## `test_the_frontage_constants_mirror_the_module_descriptors`, which fails if a
 ## re-bake moves a module and this table does not follow it.
+##
+## TASK I4 ROUND 2 -- AND AGAINST THE COLLIDERS THEMSELVES. Round 1 shipped this
+## table with only its VISUAL half checked and filed the rest as a concern: a
+## re-bake that grew a collider without moving the geometry would have passed
+## every pin and put a stall back in a street.
+## `test_the_frontage_clearance_covers_the_baked_colliders` closes it. The bake
+## writes each piece's shape and `local_transform` into the asset's own
+## `EnvironmentVisual`, so the hull is a resource read rather than the physics
+## frame the first estimate assumed, and both halves of every row above are now
+## asserted against the thing they were transcribed from.
 const PERIMETER_FRONTAGE_CLEARANCE := {
 	PERIMETER_MARKET_STALL: Vector3(2.640000, 4.550289, 3.430078),
 	PERIMETER_AWNING: Vector3(2.120373, 3.490989, 3.029970),
@@ -2478,7 +2523,16 @@ static func _append_frontage_windows(out: Array[Dictionary],
 			continue
 		var anchor := window[0]
 		var key := Vector4i(anchor.x, band, anchor.z, anchor.y)
-		var roll := _face_noise(key, PERIMETER_FRONTAGE_SALT)
+		# TASK I4 ROUND 2. THE WORLD SEED IS SPENT HERE, and until this round it
+		# was carried through `maze_perimeter_frontage`,
+		# `maze_perimeter_frontage_sites` and this function without ever being
+		# read -- three signatures asserting a dependency the code did not have.
+		# The window key is a TOWN-LOCAL lattice anchor, so without the seed two
+		# towns that happen to present a front at the same local column dress it
+		# the same way and skip it in the same places; with it they do not. It is
+		# the same argument `maze_facade_module` already makes for which timber
+		# wall a panel wears.
+		var roll := _face_noise(key, PERIMETER_FRONTAGE_SALT, world_seed)
 		if roll < PERIMETER_FRONTAGE_ODDS:
 			# ALTERNATE THE WIDE PIECES ALONG A RUN. A free roll put two
 			# identical striped market tents shoulder to shoulder on the
@@ -2496,8 +2550,8 @@ static func _append_frontage_windows(out: Array[Dictionary],
 			# (`i4r1/r6-z-market.png` against the fix). Alternation is a fact
 			# about the SEQUENCE, so the sequence needs one starting point and
 			# not one per term.
-			var pick := int(_face_noise(key, PERIMETER_FRONTAGE_SALT + 1) \
-				* float(pool.size())) % pool.size()
+			var pick := int(_face_noise(key, PERIMETER_FRONTAGE_SALT + 1,
+				world_seed) * float(pool.size())) % pool.size()
 			if width >= PERIMETER_WINDOW_CELLS:
 				if wide_start < 0:
 					wide_start = pick
@@ -2584,8 +2638,10 @@ static func maze_perimeter_frontage(retained: Dictionary, solids: Dictionary,
 	##
 	## THE YAW puts each module's authored front (local +Z) outward, which is the
 	## turn every other outward-facing module in this file takes, and the origin
-	## is pushed out by the piece's own measured half-depth so its BACK plane
-	## lands on the wall and nothing at all reaches into the mass.
+	## is pushed out by the piece's own measured half-depth so its VISIBLE back
+	## plane lands on the wall. The stall's baked collider is 0.231 m deeper than
+	## that and does reach into the mass; the correction, and why leaving it there
+	## is the right answer, are at PERIMETER_FRONTAGE_DEPTH.
 	##
 	## THE DATUM is the foot band's own floor, `band x CELL_SIZE` -- the bottom of
 	## the lowest cell of mass in that column, which is where the terrain the town
@@ -2711,16 +2767,28 @@ static func maze_public_floor_bearers(retained: Dictionary,
 
 
 static func maze_garden_rim_face_count(shell: Dictionary) -> int:
-	## TASK I4, ANNOTATION 1 -- THE CONSISTENCY PIN's left-hand side: how many
+	## TASK I4, ANNOTATION 1 -- THE CONSISTENCY ROW's left-hand side: how many
 	## turf edges a town HAS, counted off the cell sets rather than off the
 	## payload. Every lateral boundary of every cell a green cap floors where the
 	## neighbour is not mass -- which is exactly the boundary a body standing on
 	## the lawn would fall off.
 	##
 	## `maze_green_rim_walls` emits one piece per such boundary and nothing else,
-	## so `count - rim instances` is zero on a town whose turf turns the rim
-	## everywhere and positive on one with a bare cut in it. The compiler
-	## publishes the difference as `maze_garden_rim_deficit`.
+	## so `count - rim instances` is zero while the audit and the payload agree,
+	## and positive the moment a piece the rule counted fails to reach the
+	## renderer. The compiler publishes the difference as
+	## `maze_garden_rim_deficit`.
+	##
+	## ROUND-2 CORRECTION -- WHAT THIS IS NOT. It is not the pin for a BARE TURF
+	## EDGE, and the round-1 report and this docstring both said it was. Both
+	## sides of the subtraction walk the same cell sets through the same
+	## `maze_green_cap_partner`, so an edge that goes bare because its cell owns
+	## no cap is invisible to the left-hand side exactly as it is to the right,
+	## and the deficit stays at zero. This is an AUDIT-AGAINST-PAYLOAD row. The
+	## bare-edge class is pinned by `capless == 0` in
+	## `test_no_lawn_is_laid_over_a_building`, which counts garden cells that own
+	## no cap of their own -- the one number that really does go positive when a
+	## lawn gets an edge no rim can dress.
 	var faces := shell.faces as Dictionary
 	var treatments := shell.treatments as Dictionary
 	var exposed := shell.exposed as Dictionary
@@ -3237,13 +3305,23 @@ static func _maze_natural_face_transform(face: Vector4i,
 	return Transform3D(basis, origin)
 
 
-static func _face_noise(face: Vector4i, salt: int) -> float:
+static func _face_noise(face: Vector4i, salt: int,
+		world_seed: int = 0) -> float:
 	## A deterministic value in [0, 1) per panel per dial, through the same
 	## splitmix64 avalanche every other seeded placement in this project uses.
 	## A function of the PANEL and nothing else: the skin stays byte-identical
 	## for identical input, and a town cannot roll different rock on a re-solve.
-	return Helper._hash01(Helper._mix64(face.x ^ Helper._mix64(face.y \
-		^ Helper._mix64(face.z ^ Helper._mix64(face.w ^ Helper._mix64(salt))))))
+	##
+	## TASK I4 ROUND 2 -- AND, WHERE A CALLER HAS ONE, THE WORLD. The frontage
+	## rule was handed a `world_seed` through three functions and never spent it;
+	## it is spent here now, and the other eleven dials in this file are unchanged
+	## BY CONSTRUCTION rather than by inspection. The seed joins the outermost XOR
+	## the panel's own x already sits in -- `Helper.position_hash01`'s shape -- so
+	## the default of 0 is the identity (`x ^ 0 == x`) and every caller that does
+	## not pass one gets exactly the value it got before this line was written.
+	return Helper._hash01(Helper._mix64(face.x ^ world_seed \
+		^ Helper._mix64(face.y ^ Helper._mix64(face.z \
+			^ Helper._mix64(face.w ^ Helper._mix64(salt))))))
 
 
 static func maze_terrace_crown_units(plan: SettlementFabricPlan) -> Dictionary:
