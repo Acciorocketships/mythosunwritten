@@ -10,6 +10,13 @@ const PLANK_SINGLE := &"sfv.deck.floor.s.001"
 const PLANK_RAILING := &"sfv.deck.railing.s.001"
 const PLANK_RAILING_MEDIUM := &"sfv.deck.railing.m.001"
 const COURTYARD_PLANTER := &"sfv.fabric.planter.003"
+## How far over the court's own lattice plane the edge planter stands, and how
+## tall it is (`sfv_fabric_planter_003.tres`, AABB y 0 -> 0.927858). Both were
+## literals inside `_append_courtyard_paving`; task I4 round 6 needs the rise as
+## well, because a channel that never measured what it stood in front of now
+## does.
+const COURTYARD_PLANTER_LIFT := 0.04
+const COURTYARD_PLANTER_RISE := 0.927858
 const TIMBER_SUPPORT := &"sfv.deck.pillar.001"
 const TIMBER_CORNER_POST := &"sfv.fabric.wall.wood.corner.s.001"
 const LOW_RETAINING_WALL := &"sfv.fabric.wall.rock.plain.001"
@@ -510,12 +517,15 @@ const GARDEN_PLANTING: Array[StringName] = [
 ## the first piece that fits the cell's real free box -- so a roomy edge cell
 ## gets a planter and a pinched one still gets a bucket rather than nothing.
 ##
-## WHAT IS NOT IN IT, AND THE MEASUREMENT IS WHY. A bench (2.30 m and 2.05 m),
-## the lamp post (1.51 m across its arm) and the firewood stack (2.15 m) are all
-## LONGER THAN A CELL: standing one on a 1.5 m cell centre would hang it over the
-## neighbour whatever the yaw, which is the very defect item 1 of this round is
-## about. They want a rule that spans a PAIR of edge cells and this round did not
-## write one.
+## EIGHT PIECES, AND ORDER IS NOT WHAT PICKS ONE. Round 5's note here said
+## "ordered LARGEST FIRST, because the fit rule below walks the pool in order and
+## takes the first piece that fits", and the r4+r5 review is right that the code
+## does no such thing: `maze_decor_choice` walks from a SEEDED OFFSET and wraps,
+## so the first piece a cell sees is a fact about the cell's own roll and the
+## order only decides what follows it. That is deliberate -- an ordered pool
+## would put the same planter on every roomy cell in the town, which is the
+## repetition item 5 is about -- and the largest-first arrangement survives as
+## what it really is: the reading order of the list, not a policy.
 const GARDEN_PLANTER := COURTYARD_PLANTER
 const GARDEN_PLANTER_POOL: Array[StringName] = [
 	COURTYARD_PLANTER,
@@ -526,6 +536,35 @@ const GARDEN_PLANTER_POOL: Array[StringName] = [
 	SettlementFabricProgram.TERRACE_CHAIR,
 	SettlementFabricProgram.TERRACE_BUCKET,
 	SettlementFabricProgram.TERRACE_LANTERN_TABLE,
+]
+## TASK I4 ROUND 6 -- THE PIECES THAT NEED TWO CELLS, and the whole answer to
+## round 5's second concern: the square's planted boundary went thin because
+## every piece a laid-out square really has along its edge is longer than a cell.
+## Round 5 measured them and left them out; this round merges the free boxes of a
+## PAIR of boundary cells and the adjacent-differs rule treats the pair as one
+## occupant, so the boundary comes back with MORE variety rather than less.
+##
+## The three, measured off the descriptors as half-extents about each piece's own
+## origin (the same reading DECOR_CLEARANCE takes, and the same reason -- these
+## are authored off-centre):
+##
+## * `lpfv.fabric.prop.bench.02` -- 1.031 x 0.208. Fits a pair's 1.5 x 0.75 with
+##   0.47 m to spare along the run.
+## * `lpfv.fabric.prop.bench.01` -- 1.153 x 0.219. The longer bench of the two.
+## * `lpfv.fabric.prop.lantern.post.02` -- 1.234 x 0.277. The post stands on its
+##   own centre and the ARM reaches 1.234 m to one side, which is why the
+##   symmetric bound is the arm's and not half the piece's width.
+##
+## AND THE FIREWOOD STACK IS STILL REFUSED, on the measurement rather than on
+## taste: `lpfv.fabric.prop.firewood.01` is 2.147 x 1.946, so its half-extents
+## are 1.078 x 1.031 and the CROSS axis is what fails -- a pair of cells is 3.0 m
+## long and still only 1.5 m deep, which leaves 0.75 m against the stack's own
+## 1.031 m. It would hang 0.28 m over the cell behind it at every yaw. A rule
+## that spanned a 2 x 2 block would take it and this round did not write one.
+const GARDEN_WIDE_POOL: Array[StringName] = [
+	SettlementFabricProgram.TERRACE_BENCH,
+	SettlementFabricProgram.TERRACE_LANTERN_POST,
+	SettlementFabricProgram.TERRACE_BENCH_ALT,
 ]
 ## How often an ordinary yard grows something: one bench cell in three. Sparse
 ## on purpose -- the direction is "gardens/courtyards BEHIND and BETWEEN houses,
@@ -621,18 +660,32 @@ const PLAZA_FEATURE_SALT := 53
 const DECOR_MASONRY_INTRUSION := STONE_CAP_HALF_DEPTH
 const FACADE_CELL_DEPTH := 0.5530
 const DECOR_FACADE_INTRUSION := FACADE_CELL_DEPTH
-## A building's own outward wall, as the DEEPEST module the wall vocabulary can
-## put on a boundary rather than the average one: `sfv.fabric.wall.wood.door.
-## closed.001` measures 1.071 m through and is placed with its whole depth
-## OUTSIDE the room it opens, which is 12/compact's own instance of this defect
-## -- a leaf spanning x -4.821 to -3.750 across a garden cell that runs -5.25 to
-## -3.75. The pool's maximum and not the piece's, for the reason
-## PERIMETER_FRONTAGE_CLEARANCE takes the pool's maximum: "a window either has
-## room for its whole width class or is skipped and the answer never depends on
-## a roll". A boundary this deep leaves 0.419 m of a 1.5 m cell and the pool
-## carries nothing that narrow, so a cell against a building's front plants
-## nothing -- which is the right answer for a doorway.
-const DECOR_BUILT_WALL_INTRUSION := 1.0709
+## TASK I4 ROUND 6 REPLACES THE FOURTH NUMBER WITH THE MODULE'S OWN BOX.
+##
+## Round 5 charged a building's outward wall as the DEEPEST module the wall
+## vocabulary can put on a boundary -- `sfv.fabric.wall.wood.door.closed.001`
+## measures 1.071 m through -- to any face with a solid or occluder cell across
+## it or across either diagonal. The measurement is exact (12/compact's own leaf
+## spans x -4.821 to -3.750 across a garden cell running -5.25 to -3.75) and
+## charging it to that SET was not: the occluder envelope is a room's whole
+## volume INCLUDING ITS INTERIOR AIR, so a cell that merely touched a room
+## diagonally paid a front door's depth on a face with a blank wall or nothing
+## at all on it. That blanket is where 41 per cent of the corpus's planting went
+## between rounds 4 and 5, and why 12/compact's green wore four table lanterns
+## out of nine pieces: only the narrowest piece in the pool fitted what was
+## left. `maze_footprint_intrusion` asks the placement's own box instead.
+##
+## HOW TALL A PIECE THE PROBE HAS TO CLEAR, which is what makes the box a
+## question about a BAND rather than about a column: the tallest module in the
+## two garden pools is `lpfv.mushroom.03` at 1.268610 m over its own footing.
+## A gallery board 1.339 m over a lawn is therefore not a wall the planting has
+## to stand off -- it is a ceiling, and `maze_footprint_headroom` is the rule
+## that reads it.
+const DECOR_PROBE_RISE := 1.268610
+## The slack every footprint query allows itself before it calls two boxes
+## touching. A tenth of a millimetre: below the tolerance any of these modules
+## was authored to and far below anything an eye resolves at 1.5 m.
+const FOOTPRINT_EPSILON := 0.0001
 ## A hair of daylight between a piece and the wall behind it, so "just fits" is
 ## not "just touches". One centimetre -- the smallest gap the sweep's own
 ## clearance margin calls a gap.
@@ -665,6 +718,9 @@ const DECOR_CLEARANCE := {
 	&"lpfv.mushroom.01": Vector2(0.427022, 0.435514),
 	&"lpfv.mushroom.02": Vector2(0.421398, 0.399904),
 	&"lpfv.mushroom.03": Vector2(0.400689, 0.400689),
+	SettlementFabricProgram.TERRACE_BENCH: Vector2(1.030627, 0.207915),
+	SettlementFabricProgram.TERRACE_BENCH_ALT: Vector2(1.152981, 0.218718),
+	SettlementFabricProgram.TERRACE_LANTERN_POST: Vector2(1.233737, 0.276905),
 }
 ## TASK I4 ROUND 5, ITEM 2 -- "the market stall is not one of the stocked ones;
 ## it is empty. we should use the stocked ones."
@@ -689,22 +745,65 @@ const DECOR_CLEARANCE := {
 ##
 ## THE STATIONS ARE MEASURED OFF THE CANOPY'S OWN SEVEN COLLIDER BOXES. Four
 ## posts, 0.30 m square, at (+-2.08, +-1.12); the canopy and its two valances
-## from y = 4.21 up. The ground between the posts is therefore clear from
-## x = -1.93 to +1.93 and z = -0.97 to +0.97, and everything below is placed
-## inside that:
+## from y = 4.21 up. The GROUND between the posts is therefore clear from
+## x = -1.93 to +1.93 and z = -0.97 to +0.97, and every station that stands on
+## the ground is inside that. The HANGING station is not and does not need to
+## be: it is 3.9 m up, well over the posts' own 1.12 m half-depth, and what
+## bounds it is the cloth above it rather than the frame below -- which is the
+## bound round 5 never asserted and `maze_stall_hanging_station` now does.
+## (r4+r5 review, minor 3.)
 ##
 ## * the STOCKED COUNTER (`sfm.table.fishmonger.001`, 2.064 x 1.406 with its
-##   fish, its crate and its board) stands across the back at z = +0.45, so it
-##   spans x +-1.032 and z -0.359 to +1.259 -- clear of both post rows in x;
-## * THREE GOODS stand in a row along the front at z = -0.95, at x = -1.45, 0.00
-##   and +1.45, each at most 0.45 m across, so the widest of them runs 1.00 to
-##   1.90 in x against the post's own 1.93 and never touches the counter;
+##   fish, its crate and its board) stands at z = +0.45, so it spans x +-1.032
+##   and z -0.359 to +1.259 -- clear of both post rows in x;
+## * THREE GOODS stand in a row at z = -0.95, at x = -1.45, 0.00 and +1.45, each
+##   at most 0.45 m across, so the widest of them runs 1.00 to 1.90 in x against
+##   the post's own 1.93 and never touches the counter;
+##
+## WHICH SIDE IS THE FRONT is a fact about the CANOPY's own local axes and this
+## file's two siting rules disagree about it, so neither station is described as
+## front or back any more. `maze_perimeter_frontage` turns each module's
+## authored local +Z outward (see its own note), which puts the counter at
+## z = +0.45 on the MEADOW side of a perimeter stall and the three goods against
+## the town wall; the square's centre feature takes a seeded quarter turn and so
+## faces wherever the roll put it. Both compositions are inside the canopy and
+## both read as a stocked stall; what is not defensible is a comment claiming a
+## front the geometry does not have. (r4+r5 review, minor 2.)
 ## * the HANGING GOODS (`sfm.stall.veg_string.001`) hang from y = 3.90 down to
-##   2.64, which is above the 2.284 m a body needs -- the same bound
+##   2.64, which is above the 2.244 m a body needs -- the same bound
 ##   `_covered_market_recipe` states for its own two attachments.
+##
+## TASK I4 ROUND 6 -- AND THE STATION IS PER CANOPY, because the two canopies are
+## not the same piece and round 5 measured only one of them. The r4+r5 review
+## caught it: `sfv.fabric.awning.blue.001` rises 3.4910 m and the string hung
+## from 3.9 spans y 2.635 -> 3.9004, so its top stood 0.4094 m IN OPEN AIR above
+## the cloth -- on 18 of 18 awnings on the review towns and on the order of 150
+## across the matrix, a defect this file's own item-2 fix introduced.
+##
+## THE AWNING CANNOT CARRY A STRING AT ALL, and the arithmetic is what says so
+## rather than a preference. The string is 1.2653 m long with its top 0.0004 m
+## over its own origin, so a station that keeps the top under the cloth needs
+## `y <= 3.4906` and one that keeps the foot over a body's head needs
+## `y >= 2.244 + 1.2649 = 3.5089`. There is no such y. An awning is therefore
+## stocked with its counter and its three goods and hangs nothing, which is
+## `maze_stall_hanging_station` returning nothing rather than a number nobody
+## checked.
 const STALL_COUNTER := SettlementFabricProgram.COVERED_MARKET_TABLE
 const STALL_HANGING_GOODS := SettlementFabricProgram.COVERED_MARKET_HANGING_GOODS
 const STALL_COUNTER_STATION := Vector3(0.0, 0.0, 0.45)
+## The hanging string's own authored reach about its origin
+## (`sfm.stall.veg_string.001`, AABB y -1.264895 -> +0.000420), and the canopy
+## rises it is measured against. Both mirrored against the descriptors by
+## `test_the_stall_stations_fit_the_canopies_they_hang_from`.
+const STALL_HANGING_LOCAL_TOP := 0.000420
+const STALL_HANGING_LOCAL_DROP := 1.264895
+const STALL_CANOPY_RISE: Dictionary = {
+	PLAZA_MARKET_STALL: 4.019341,
+	SettlementFabricProgram.ROOF_TERRACE_AWNING: 3.490989,
+}
+## Where the market stall's string hangs, unchanged from round 5: 0.119 m of
+## daylight between the string's top and the canopy's own, and 2.635 m of head
+## room under its foot.
 const STALL_HANGING_STATION := Vector3(0.0, 3.9, 1.35)
 const STALL_GOODS_STATIONS: Array[Vector3] = [
 	Vector3(-1.45, 0.0, -0.95),
@@ -794,6 +893,21 @@ const PLANK_TERRACE_CAP_PAIR := PLANK_GALLERY
 ## WALKING FACE is the cell's own top, which means the board is sunk by its own
 ## thickness -- the opposite of the turf quad, which has none.
 const PLANK_TERRACE_THICKNESS := 0.16105233
+## TASK I4 ROUND 6, ITEM 4a -- HOW CLOSE TO THE PLANE A FLOOR HAS TO BE to make
+## the boundary beside it a LEVEL junction rather than a buried one. One board's
+## own thickness: a room's gallery or court floor lying on the lawn's plane has
+## its underside within a centimetre of it and its walking face one board over
+## it, which is the same step a plank street at the lawn's own height makes and
+## is therefore the same lip. A gallery a metre and a third overhead is well
+## outside it and is a headroom question instead -- `_maze_cap_is_free` owns
+## that one.
+const GREEN_RIM_LEVEL_REACH := PLANK_TERRACE_THICKNESS
+## HOW MUCH OF A CELL A FLOOR HAS TO COVER before the cell is called floored
+## rather than clipped. Half, and the corpus says nothing sits near the bar: the
+## two populations measured on the review towns are 162 cells covered 1.00 of
+## their own area and every other overlap at 0.22 or below. See
+## `maze_cap_is_boarded`.
+const CAP_BOARD_COVER_FRACTION := 0.5
 ## `sfv_deck_floor_s_001.tres` is AABB(-1.503246, 0, -0.75, 1.5, 0.161, 1.5):
 ## authored on its own local +X EDGE rather than centred, which is why
 ## `_add_plank_tile` shifts it half a cell and why this file does the same.
@@ -1173,7 +1287,8 @@ static func commit(parent: Node3D, plan: SettlementFabricPlan,
 	assert(parent != null and catalog != null and plan != null \
 		and plan.is_sealed())
 	var cache := EnvironmentRenderCache.new(catalog)
-	var surface_instances := surface_visual_payload(plan.surface_plan)
+	var surface_instances := surface_visual_payload(plan.surface_plan,
+		maze_module_footprints(plan))
 	var instances := payload(plan)
 	var support_instances := structural_support_payload(plan)
 	instances.append_from(support_instances)
@@ -1362,30 +1477,37 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan) \
 	# them, so every repeat was the same answer computed again. `maze_skin_shell`
 	# states that fact once and the emitters read it; the shell is a PER-CALL
 	# local handed down the stack, never a static that outlives a solve.
-	var shell := maze_skin_shell(retained, solids, paved, plinths, walked)
+	# TASK I4 ROUND 6. Derived ONCE for the whole payload, exactly as the shell
+	# is: where every authored module of every unit really stands. Four rules
+	# read it -- the cap gate, the garden's free box, the rim's junction class
+	# and the floor bearer's headroom -- and each of them used to answer a
+	# question about geometry out of a cell set that could not see it.
+	var footprints := maze_module_footprints(plan)
+	var shell := maze_skin_shell(retained, solids, paved, plinths, walked,
+		footprints)
 	var out := _plinth_payload(plinths)
 	out.append_from(maze_stone_walls(retained, solids, paved, plinths, walked,
 		shell, plan.world_seed))
 	# TASK H2b FIX 1, IMPORTANT 3. The rolled edge round every green bench,
 	# beside the shell rather than inside it -- see `maze_green_rim_walls`.
 	out.append_from(maze_green_rim_walls(retained, solids, paved, plinths,
-		walked, shell))
+		walked, shell, footprints))
 	# TASK I2. What grows on those benches once they are yards rather than lime
 	# plates, and the village green among them.
 	out.append_from(maze_garden_dressing(retained, solids, paved, plinths,
-		walked, shell, plan.transformed_cells(&"occluder")))
+		walked, shell, footprints))
 	# TASK I4, ANNOTATION 2. The guard round every deck cap the garden bar
 	# demoted, which is what makes a demoted top read as a terrace rather than as
 	# a board.
 	out.append_from(maze_plank_terrace_railings(retained, solids, paved,
-		plinths, walked, shell))
+		plinths, walked, shell, footprints))
 	# TASK I4, ANNOTATION 3. The corbels under the public floor plates that have
 	# nothing beneath them -- the "random planks on the sides of these buildings"
 	# turned into the galleries they were always meant to read as.
 	# TASK I4 ROUND 5, ITEM 3. `maze_capped_stance_cells` is what tells the
 	# headroom gate that a lawn and a plank terrace are surfaces a body stands on.
 	out.append_from(maze_public_floor_bearers(retained, solids, paved, walked,
-		maze_capped_stance_cells(shell)))
+		maze_capped_stance_cells(shell, footprints)))
 	# TASK I4, ANNOTATION 6. The town's outward foot, dressed: stalls, awnings
 	# and their props standing on the meadow against the ground storey, so the
 	# edge reads as buildings meeting open ground rather than as a sheer wall.
@@ -1582,7 +1704,8 @@ static func maze_stone_faces(retained: Dictionary, solids: Dictionary,
 
 static func maze_skin_shell(retained: Dictionary, solids: Dictionary,
 		paved: Dictionary = {}, plinths: Dictionary = {},
-		walked: Dictionary = {}) -> Dictionary:
+		walked: Dictionary = {},
+		footprints: Dictionary = {}) -> Dictionary:
 	## The WHOLE skin derivation, once: the raw shell (`exposed`), the panels
 	## the coursing and pairing rules choose out of it (`faces`), and the module
 	## each of those panels wears (`treatments`).
@@ -1605,7 +1728,8 @@ static func maze_skin_shell(retained: Dictionary, solids: Dictionary,
 	return {
 		"exposed": exposed,
 		"faces": faces,
-		"treatments": maze_skin_treatments(exposed, faces, walked, paved),
+		"treatments": maze_skin_treatments(exposed, faces, walked, paved,
+			footprints),
 	}
 
 
@@ -1705,7 +1829,8 @@ static func maze_bank_height(exposed: Dictionary, face: Vector4i) -> int:
 
 
 static func maze_skin_treatments(exposed: Dictionary, faces: Dictionary,
-		walked: Dictionary = {}, paved: Dictionary = {}) -> Dictionary:
+		walked: Dictionary = {}, paved: Dictionary = {},
+		footprints: Dictionary = {}) -> Dictionary:
 	## TASK H2b -- which module each panel of the skin wears, as
 	## `panel key -> SkinTreatment`. One entry per panel of `maze_stone_faces`
 	## and never a panel of its own, so the shell this decides the cladding of
@@ -1778,11 +1903,12 @@ static func maze_skin_treatments(exposed: Dictionary, faces: Dictionary,
 			if not maze_natural_cut_is_expressible() \
 				and maze_natural_face_is_cut(key, walked) \
 			else SkinTreatment.NATURAL
-	return _maze_demote_small_gardens(out, faces, exposed)
+	return _maze_demote_small_gardens(out, faces, exposed, footprints)
 
 
 static func _maze_demote_small_gardens(treatments: Dictionary,
-		faces: Dictionary, exposed: Dictionary) -> Dictionary:
+		faces: Dictionary, exposed: Dictionary,
+		footprints: Dictionary = {}) -> Dictionary:
 	## TASK I4, ANNOTATION 2 -- "we should only have grass in large areas like
 	## plazas/gardens". THE GARDEN IS A FACT ABOUT THE RUN, and this is where a
 	## run first exists.
@@ -1798,8 +1924,22 @@ static func _maze_demote_small_gardens(treatments: Dictionary,
 	##
 	## DEMOTION IS PER PANEL AND A PAIR IS ONE PANEL, so the two cells a paired
 	## cap floors can never disagree about what they are made of.
+	##
+	## TASK I4 ROUND 6 -- AND THE RUN IS MEASURED IN GROUND. A cell a building
+	## already floors, or one with a gallery inside body height over it, is not a
+	## piece of yard (`maze_cap_is_ground`), so it cannot lend its size to one:
+	## counting it left 4/compact and 9/standard with two-cell threads of grass
+	## that are exactly the patches annotation 2 retired.
+	##
+	## A BOARDED PANEL IS NEVER DEMOTED, and the arithmetic is why: a room's floor
+	## board lies in the top 0.161 m of the cell's own band with its walking face
+	## ON the boundary, which is exactly where `_maze_plank_terrace_transform`
+	## would put a deck cap. Decking it would z-fight the board face for face. Its
+	## turf quad sits 0.02 m inside the board and cannot be seen, so GREEN is the
+	## one treatment that costs nothing there.
 	var cover: Dictionary = {}
 	var panel_cells: Dictionary = {}
+	var boarded: Dictionary = {}
 	var keys: Array[Vector4i] = []
 	keys.assign(faces.keys())
 	keys.sort_custom(_face_before)
@@ -1814,9 +1954,39 @@ static func _maze_demote_small_gardens(treatments: Dictionary,
 			cells.append(cell + partner)
 		panel_cells[key] = cells
 		for member: Vector3i in cells:
-			cover[member] = true
-	if cover.is_empty():
+			if maze_cap_is_boarded(footprints, member):
+				boarded[key] = true
+				continue
+			if maze_cap_is_ground(footprints, member):
+				cover[member] = true
+	if cover.is_empty() and boarded.is_empty():
 		return treatments
+	var survivors := maze_garden_run_survivors(cover)
+	for key_value: Variant in panel_cells.keys():
+		var key := key_value as Vector4i
+		if boarded.has(key):
+			continue
+		var cells := panel_cells[key] as Array
+		var garden_run := false
+		for member_value: Variant in cells:
+			garden_run = garden_run or survivors.has(member_value as Vector3i)
+		if not garden_run:
+			treatments[key] = SkinTreatment.DECK
+	return treatments
+
+
+static func maze_garden_run_survivors(cover: Dictionary) -> Dictionary:
+	## TASK I4, ANNOTATION 2 -- the cells of `cover` whose own RUN clears the
+	## garden bar, as `cell -> true`. A run is laterally adjacent AT ONE BAND,
+	## which is the connectivity the village green is designated by, so "is this
+	## a garden" and "is this the square" ask about one shape.
+	##
+	## TASK I4 ROUND 6 factors it out of `_maze_demote_small_gardens` because
+	## `maze_garden_cells` has to ask the SAME question of a slightly different
+	## set. A panel that pairs a boarded cell with a bare one cannot be demoted
+	## (see there), so its bare cell keeps its turf -- and if that cell's run is
+	## two cells long it is exactly the thread annotation 2 retired, whatever the
+	## panel wears. One derivation, asked twice.
 	var run_of: Dictionary = {}
 	var run_cells: Dictionary = {}
 	var members: Array[Vector3i] = []
@@ -1840,19 +2010,16 @@ static func _maze_demote_small_gardens(treatments: Dictionary,
 					run_of[probe] = index
 					frontier.append(probe)
 		run_cells[index] = collected
-	var run_is_garden: Dictionary = {}
+	var out: Dictionary = {}
 	for index_value: Variant in run_cells.keys():
 		var collected := run_cells[index_value] as Array
-		run_is_garden[index_value] = collected.size() \
-			>= GARDEN_RUN_MINIMUM_CELLS \
-			and _maze_run_block_count(collected, cover) \
-				>= GARDEN_RUN_MINIMUM_BLOCKS
-	for key_value: Variant in panel_cells.keys():
-		var key := key_value as Vector4i
-		var cells := panel_cells[key] as Array
-		if not bool(run_is_garden[run_of[cells[0] as Vector3i]]):
-			treatments[key] = SkinTreatment.DECK
-	return treatments
+		if collected.size() < GARDEN_RUN_MINIMUM_CELLS \
+				or _maze_run_block_count(collected, cover) \
+					< GARDEN_RUN_MINIMUM_BLOCKS:
+			continue
+		for cell_value: Variant in collected:
+			out[cell_value as Vector3i] = true
+	return out
 
 
 static func _maze_run_block_count(collected: Array,
@@ -2076,26 +2243,47 @@ static func maze_natural_cut_is_expressible() -> bool:
 static func _maze_cap_is_free(key: Vector4i, partner: Vector3i,
 		exposed: Dictionary, walked: Dictionary,
 		paved: Dictionary = {}) -> bool:
-	## Does anybody WALK on either cell this sky-facing slab closes? The mate
-	## is only asked when it is a capped cell in its own right: a partner that
-	## is closed mass owns no cap, carries no surface, and cannot be walked.
+	## Does anybody WALK on either cell this sky-facing slab closes, and IS THERE
+	## ROOM TO STAND ON IT? The mate is only asked when it is a capped cell in its
+	## own right: a partner that is closed mass owns no cap, carries no surface,
+	## and cannot be walked.
 	##
-	## TASK I4 ROUND 5, ITEM 3 -- AND IS THERE ROOM TO STAND ON IT. "it looks
-	## like there is not enough headroom for the character between the two levels
-	## of platforms." A cap is a surface a body stands on -- the square's own lawn
-	## is one, and every plank terrace this file lays is one -- so it carries the
-	## same headroom every other walked surface in this town does.
+	## TASK I4 ROUND 5, ITEM 3 opened the second question -- "it looks like there
+	## is not enough headroom for the character between the two levels of
+	## platforms" -- and could only ask it of the surface plan: a cap with a
+	## public floor plate two bands over it leaves `1.5 - 0.161 = 1.339 m`
+	## against the 2.244 m a body needs, so it is an UNDERCROFT and keeps its
+	## stone rather than being dressed as a yard somebody could stand in.
 	##
-	## THE ARITHMETIC IS THE FLOOR BEARER'S. A cap's surface is the top of its own
-	## cell, `(y + 1) x CELL_SIZE`; the public realm's floor board over the cell
-	## TWO bands up lands its walking face on `(y + 2) x CELL_SIZE` and is
-	## PLANK_TERRACE_THICKNESS deep, so its underside leaves
-	## `1.5 - 0.161 = 1.339 m` against the 2.284 m a body needs. Three bands up
-	## leaves 2.839 m and clears. So a cap with a public floor two bands over it
-	## is an UNDERCROFT: it keeps its stone rather than being dressed as a yard
-	## somebody could stand in or as a terrace that looks walkable and is not.
-	## Measured on the review corpus: two deck caps on 12/compact under a gallery
-	## floor and two lawn cells on 4/compact under a court, at 1.339 m.
+	## THAT CLAUSE NEVER FIRED. The r4+r5 review measured it: zero panels change
+	## treatment on any of the five review towns, and the corpus `garden` and
+	## `deck_caps` rows are byte-identical across the round. The reason is the
+	## defect it was written for: the plate that pinches 12/compact's deck at
+	## 1.339 m is a GALLERY FLOOR AUTHORED INSIDE A ROOM RECIPE, standing over a
+	## column whose cells the surface plan does not claim -- so `paved` cannot see
+	## it, and no cell-keyed set can.
+	##
+	## TASK I4 ROUND 6 MEASURED THAT CLAUSE AND LEFT IT AS IT IS. The r4+r5 review
+	## found it INERT -- `capped_only_refusals = 0` and zero panel treatments
+	## changed on all five review towns -- and the reason is the defect it was
+	## written for: the plate that pinches 12/compact's deck at 1.339 m is a
+	## GALLERY FLOOR AUTHORED INSIDE A ROOM RECIPE, standing over a column whose
+	## cells the surface plan does not claim, so `paved` cannot see it and no
+	## cell-keyed set can.
+	##
+	## THE ROUND-6 ANSWER IS NOT HERE, and that is deliberate. Reading the module
+	## boxes at this point would demote a covered cap to MASONRY, and a masonry
+	## slab on a top nobody walks is the one thing
+	## `test_the_bench_tops_wear_the_town_s_own_materials` forbids outright --
+	## "remove all stone from everywhere but the ground floor of select
+	## buildings" is the direction this whole phase is under. So the cap keeps its
+	## treatment and what changes is what the town does with it: a top a body
+	## cannot stand on is not GROUND (`maze_garden_cells` drops it, so nothing is
+	## planted there and it is not part of the square) and not a STANCE
+	## (`maze_capped_stance_cells` drops it, so no corbel is measured against it
+	## and no plank terrace rails itself as a platform over it). The geometry it
+	## is measured against is the same in every case:
+	## `maze_footprint_headroom` and `maze_cap_is_boarded`.
 	##
 	## `paved` is the three surface kinds that PLANK themselves -- a terrain
 	## street or a stair overhead puts no plate in the air. It defaults to empty,
@@ -2435,8 +2623,8 @@ static func _maze_green_cap_transform(cell: Vector3i,
 
 static func maze_plank_terrace_railings(retained: Dictionary,
 		solids: Dictionary, paved: Dictionary = {}, plinths: Dictionary = {},
-		walked: Dictionary = {},
-		shell: Dictionary = {}) -> EnvironmentInstancePayload:
+		walked: Dictionary = {}, shell: Dictionary = {},
+		footprints: Dictionary = {}) -> EnvironmentInstancePayload:
 	## TASK I4, ANNOTATION 2 -- what makes a demoted top read as a TERRACE.
 	##
 	## The first render of the deck caps (`i4r1/f1-big.png`) is the reason this
@@ -2452,12 +2640,21 @@ static func maze_plank_terrace_railings(retained: Dictionary,
 	## walking surface. Pairs are merged into the authored 3 m guard exactly as
 	## the crown railings merge, so a two-cell run reads as one rail rather than
 	## as two fences meeting at a post.
+	##
+	## TASK I4 ROUND 6, ITEM 3 -- AND A TOP NOBODY CAN STAND ON TAKES NO RAIL.
+	## The rail is what says "this is a platform"; over a deck cap with a room's
+	## gallery board 1.339 m above it that is exactly the wrong thing to say, and
+	## it is the user's own note. `maze_capped_stance_cells` is the one
+	## derivation that decides what a stance is, so the rail and the headroom
+	## census cannot disagree.
 	var out := EnvironmentInstancePayload.new()
 	var derived := shell if not shell.is_empty() \
-		else maze_skin_shell(retained, solids, paved, plinths, walked)
+		else maze_skin_shell(retained, solids, paved, plinths, walked,
+			footprints)
 	var faces := derived.faces as Dictionary
 	var treatments := derived.treatments as Dictionary
 	var exposed := derived.exposed as Dictionary
+	var stances := maze_capped_stance_cells(derived, footprints)
 	var up_index := STONE_FACE_DIRECTIONS.find(Vector3i.UP)
 	var edges: Dictionary = {}
 	var keys: Array[Vector4i] = []
@@ -2472,7 +2669,8 @@ static func maze_plank_terrace_railings(retained: Dictionary,
 		if partner != Vector3i.ZERO:
 			covered.append(Vector3i(key.x, key.y, key.z) + partner)
 		for cell: Vector3i in covered:
-			if not exposed.has(Vector4i(cell.x, cell.y, cell.z, up_index)):
+			if not exposed.has(Vector4i(cell.x, cell.y, cell.z, up_index)) \
+					or not stances.has(cell):
 				continue
 			for index in FACE_DIRECTIONS.size():
 				if exposed.has(Vector4i(cell.x, cell.y, cell.z, index)):
@@ -2553,8 +2751,8 @@ static func _maze_plank_terrace_transform(cell: Vector3i,
 
 static func maze_green_rim_walls(retained: Dictionary, solids: Dictionary,
 		paved: Dictionary = {}, plinths: Dictionary = {},
-		walked: Dictionary = {},
-		shell: Dictionary = {}) -> EnvironmentInstancePayload:
+		walked: Dictionary = {}, shell: Dictionary = {},
+		footprints: Dictionary = {}) -> EnvironmentInstancePayload:
 	## TASK H2b FIX 1, IMPORTANT 3 -- the rolled edge round every green bench.
 	##
 	## A RIM is a green-capped cell's own exposed SIDE: turf on top of it and a
@@ -2579,7 +2777,8 @@ static func maze_green_rim_walls(retained: Dictionary, solids: Dictionary,
 	## identical second copy of the same three dictionaries.
 	var out := EnvironmentInstancePayload.new()
 	var derived := shell if not shell.is_empty() \
-		else maze_skin_shell(retained, solids, paved, plinths, walked)
+		else maze_skin_shell(retained, solids, paved, plinths, walked,
+			footprints)
 	var exposed := derived.exposed as Dictionary
 	if exposed.is_empty():
 		return out
@@ -2587,7 +2786,8 @@ static func maze_green_rim_walls(retained: Dictionary, solids: Dictionary,
 	var depth_scale := FabricRecipe.CELL_SIZE / GREEN_RIM_DEPTH
 	# TASK I4 ROUND 5, ITEM 4. The boundary set, by junction class, derived once
 	# and read by the audit as well -- see `maze_green_rim_faces`.
-	for face: Vector4i in maze_green_rim_faces(derived, walked, paved):
+	for face: Vector4i in maze_green_rim_faces(derived, walked, paved,
+			footprints):
 		var cell := Vector3i(face.x, face.y, face.z)
 		out.add(GREEN_RIM_EDGE,
 			_maze_green_rim_transform(cell, FACE_DIRECTIONS[face.w],
@@ -2600,7 +2800,7 @@ static func maze_green_rim_walls(retained: Dictionary, solids: Dictionary,
 
 
 static func maze_green_rim_faces(shell: Dictionary, walked: Dictionary = {},
-		paved: Dictionary = {}) -> Array[Vector4i]:
+		paved: Dictionary = {}, footprints: Dictionary = {}) -> Array[Vector4i]:
 	## TASK I4 ROUND 5, ITEM 4 -- EVERY BOUNDARY A LAWN HAS, BY JUNCTION CLASS,
 	## in sorted lattice order. One derivation, read by the payload and by the
 	## audit, so the two cannot drift.
@@ -2628,6 +2828,16 @@ static func maze_green_rim_faces(shell: Dictionary, walked: Dictionary = {},
 	##   the boards.
 	## * BURIED -- mass across the boundary with nothing walkable on it: the lawn
 	##   runs into a wall and there is no edge to finish.
+	##
+	## TASK I4 ROUND 6 ADDS THE THIRD LEVEL CASE, and it is item 4a's other half.
+	## A cell whose own top is FLOORED BY A BOARD -- a room's authored gallery or
+	## court floor lying on the lawn's own plane -- yields its turf at
+	## `_maze_cap_is_free` and keeps its stone under the boards. Left there the
+	## lawn beside it would stop at exactly the razor cut this rule exists to
+	## finish, against exactly the timber the user's frame shows four bright lines
+	## of. The board's walking face stands one board's thickness over the plane,
+	## which is the same junction a plank street at the lawn's own height makes,
+	## so it takes the same lip.
 	var faces := shell.faces as Dictionary
 	var treatments := shell.treatments as Dictionary
 	var exposed := shell.exposed as Dictionary
@@ -2645,16 +2855,88 @@ static func maze_green_rim_faces(shell: Dictionary, walked: Dictionary = {},
 		if partner != Vector3i.ZERO:
 			covered.append(Vector3i(key.x, key.y, key.z) + partner)
 		for cell: Vector3i in covered:
-			if not exposed.has(Vector4i(cell.x, cell.y, cell.z, up_index)):
+			# A cell a building already FLOORS carries no visible turf -- its quad
+			# is 0.02 m inside the board -- so it has no edge of its own to
+			# finish, and a lip laid there would be geometry under a floor.
+			if not exposed.has(Vector4i(cell.x, cell.y, cell.z, up_index)) \
+					or maze_cap_is_boarded(footprints, cell):
 				continue
 			for index in FACE_DIRECTIONS.size():
 				var face := Vector4i(cell.x, cell.y, cell.z, index)
 				if exposed.has(face):
 					out.append(face)
 					continue
-				var over := cell + FACE_DIRECTIONS[index] + Vector3i.UP
-				if walked.has(over) or paved.has(over):
+				var beside := cell + FACE_DIRECTIONS[index]
+				if walked.has(beside + Vector3i.UP) \
+						or paved.has(beside + Vector3i.UP) \
+						or maze_cap_is_boarded(footprints, beside):
 					out.append(face)
+	return out
+
+
+static func maze_cap_is_boarded(footprints: Dictionary,
+		cell: Vector3i) -> bool:
+	## TASK I4 ROUND 6, ITEM 4a -- is this cell's own top FLOORED by an authored
+	## board lying on it, rather than merely built over somewhere above?
+	##
+	## "there are gaps between the grass textures." Round 5 proved the turf quads
+	## innocent three ways -- the mesh is a flat 4 x 4 grid with no bevel, the
+	## transforms abut to the micron, and inflating every plate by 8 per cent
+	## leaves the lines exactly where they were -- and found the real cause: a
+	## BUILDING UNIT'S OWN FLOOR BOARD, 0.161 m thick, standing with its base ON
+	## the lawn's plane, so the turf is under the boards rather than beside them
+	## and what shows is four bright timber lines across the grass.
+	##
+	## THE TWO TESTS, and the second is what makes this surgical. The board's body
+	## has to reach this cell's own top plane within one board's thickness EITHER
+	## WAY -- a room's floor is laid the way this file lays a deck cap, walking
+	## face ON the boundary and body sunk beneath it, so the turf quad at
+	## GREEN_CAP_LIFT is inside the board rather than under it, and a gallery
+	## 1.339 m overhead is a headroom question `_maze_cap_is_free`'s own clause
+	## owns -- and it has to FLOOR the cell rather than clip its edge. Measured on
+	## the review corpus, the two populations do not overlap: 162 cells covered
+	## 1.00 of their own area by a `sfv.fabric.floor.l.001` or a
+	## `sfv.fabric.gallery.floor.m.001`, and every other overlap is 0.40 or less
+	## -- a roof eave over the lawn's edge, a wall's own footing or a brace's
+	## foot. Half a cell is the bar, and nothing sits near it.
+	return maze_footprint_floor_cover(footprints, cell) \
+		>= CAP_BOARD_COVER_FRACTION
+
+
+static func maze_footprint_floor_cover(footprints: Dictionary,
+		cell: Vector3i) -> float:
+	## How much of this cell's own top plane an authored floor really covers, as
+	## a fraction of the cell's area -- see `maze_cap_is_boarded`.
+	var boxes := footprints.get("boxes", []) as Array
+	if boxes.is_empty():
+		return 0.0
+	var by_cell := footprints.get("by_cell", {}) as Dictionary
+	var plane := float(cell.y + 1) * FabricRecipe.CELL_SIZE
+	var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
+	var half := FabricRecipe.CELL_SIZE * 0.5
+	var out := 0.0
+	var seen: Dictionary = {}
+	for band in [cell.y, cell.y + 1]:
+		var bucket := by_cell.get(Vector3i(cell.x, band, cell.z),
+			PackedInt32Array()) as PackedInt32Array
+		for index: int in bucket:
+			if seen.has(index):
+				continue
+			seen[index] = true
+			var box := boxes[index] as AABB
+			if box.position.y > plane + GREEN_RIM_LEVEL_REACH \
+					- FOOTPRINT_EPSILON \
+					or box.position.y + box.size.y \
+						< plane - GREEN_RIM_LEVEL_REACH + FOOTPRINT_EPSILON:
+				continue
+			var overlap := maxf(0.0, minf(centre.x + half,
+					box.position.x + box.size.x) \
+				- maxf(centre.x - half, box.position.x)) \
+				* maxf(0.0, minf(centre.z + half,
+					box.position.z + box.size.z) \
+					- maxf(centre.z - half, box.position.z))
+			out = maxf(out, overlap \
+				/ (FabricRecipe.CELL_SIZE * FabricRecipe.CELL_SIZE))
 	return out
 
 
@@ -2980,8 +3262,10 @@ static func maze_stall_goods(canopy: StringName, anchor: Vector3, yaw: float,
 	var basis := Basis(Vector3.UP, yaw)
 	out.append({"asset": STALL_COUNTER, "station": &"counter",
 		"transform": Transform3D(basis, anchor + basis * STALL_COUNTER_STATION)})
-	out.append({"asset": STALL_HANGING_GOODS, "station": &"hanging",
-		"transform": Transform3D(basis, anchor + basis * STALL_HANGING_STATION)})
+	var hanging := maze_stall_hanging_station(canopy)
+	if hanging != Vector3.ZERO:
+		out.append({"asset": STALL_HANGING_GOODS, "station": &"hanging",
+			"transform": Transform3D(basis, anchor + basis * hanging)})
 	var previous := &""
 	for index in STALL_GOODS_STATIONS.size():
 		var roll := _face_noise(Vector4i(key.x, key.y, key.z, key.w + index),
@@ -2997,6 +3281,35 @@ static func maze_stall_goods(canopy: StringName, anchor: Vector3, yaw: float,
 			"transform": Transform3D(Basis(Vector3.UP, yaw + roll * TAU),
 				anchor + basis * station)})
 	return out
+
+
+static func maze_stall_hanging_station(canopy: StringName) -> Vector3:
+	## TASK I4 ROUND 6 -- WHERE THIS CANOPY'S STRING HANGS, or `Vector3.ZERO` when
+	## it cannot carry one. The whole argument and both bounds are at
+	## STALL_HANGING_STATION.
+	##
+	## THE FIT IS ASSERTED RATHER THAN ASSUMED, which is the half of round 5 that
+	## was missing: the station is checked against the canopy's own rise every
+	## time it is asked for, so a third canopy entering STALL_CANOPIES with no
+	## measured rise, or with a rise the string cannot hang inside, gets nothing
+	## instead of a number transcribed from a different piece.
+	if not STALL_CANOPY_RISE.has(canopy):
+		return Vector3.ZERO
+	var rise := float(STALL_CANOPY_RISE[canopy])
+	if STALL_HANGING_STATION.y + STALL_HANGING_LOCAL_TOP > rise \
+			or STALL_HANGING_STATION.y - STALL_HANGING_LOCAL_DROP \
+				< NATURAL_ROCK_CUT_BODY_HEIGHT:
+		return Vector3.ZERO
+	return STALL_HANGING_STATION
+
+
+static func maze_stall_goods_count(canopy: StringName) -> int:
+	## How many pieces this canopy is stocked with: the counter, the three goods
+	## and -- only where the canopy is tall enough to hang one -- the string.
+	if not STALL_CANOPIES.has(canopy):
+		return 0
+	return STALL_GOODS_STATIONS.size() + 1 \
+		+ int(maze_stall_hanging_station(canopy) != Vector3.ZERO)
 
 
 static func maze_public_floor_bearer_sites(retained: Dictionary,
@@ -3037,16 +3350,25 @@ static func maze_public_floor_bearer_sites(retained: Dictionary,
 	## between the two levels of platforms." The gate above asked ONE question --
 	## is the cell below a walked cell of the public realm -- and a lawn is not
 	## one, nor is a plank terrace: both are CAPS, whose surface is the top of the
-	## cell BELOW them. So the same 0.909 m the rule refuses over a street was
-	## being hung over a garden and over a terrace without a word. Measured on the
-	## review corpus: four corbels at 0.950 m over a lawn (two on 4/compact, two
-	## on 9/standard).
+	## cell BELOW them. So the same 0.909 m the rule refuses over a street could
+	## be hung over a garden or over a terrace without a word.
 	##
 	## `capped` is every cell whose TOP a body stands on -- the garden cells and
 	## the deck cells of the same shell -- so a cap two bands under the plate puts
 	## its surface one band under it, which is the case the street rule already
 	## refuses. It defaults to empty, which keeps the pre-round answer for a
 	## caller that does not hold the shell.
+	##
+	## THE CLAUSE IS GATED AND HAS NEVER FIRED, and the round-5 report's claim
+	## that it refused two corbels on 4/compact was that town's PRE-EXISTING
+	## "not borne" pair, not this branch. The r4+r5 review measured it directly:
+	## `capped_only_refusals = 0` on all five review towns, and the corpus's
+	## `floor_bearers` row is byte-identical across that round. It is live the
+	## moment the arithmetic changes -- exactly as the one-band street case above
+	## has been since round 1 -- and until then it costs nothing and claims
+	## nothing. Round 6 narrows `capped` further (a cap with a real module inside
+	## body height of its surface is no longer dressed at all, so it is no longer
+	## a stance), which makes the clause rarer rather than commoner.
 	var out: Array[Dictionary] = []
 	if paved.is_empty():
 		return out
@@ -3079,11 +3401,26 @@ static func maze_public_floor_bearer_sites(retained: Dictionary,
 	return out
 
 
-static func maze_capped_stance_cells(shell: Dictionary) -> Dictionary:
+static func maze_capped_stance_cells(shell: Dictionary,
+		footprints: Dictionary = {}) -> Dictionary:
 	## TASK I4 ROUND 5, ITEM 3 -- every cell whose TOP is a surface a body stands
 	## on, as `cell -> true`: the garden cells and the plank terraces, which is
 	## the GREEN and DECK halves of the same cap set. Derived off the shell the
 	## payload is built from, so the headroom gate and the caps cannot drift.
+	##
+	## TASK I4 ROUND 6 -- AND A TOP WITH A GALLERY OVER IT IS NOT ONE. "it looks
+	## like there is not enough headroom for the character between the two levels
+	## of platforms." The user's own frame is a room recipe's gallery floor board
+	## 1.339 m over a DECK CAP, and a body needs 2.244: nobody stands there. Two
+	## things follow and both are the point of the note -- the floor bearer no
+	## longer measures its corbels against a surface that is not one, and
+	## `maze_plank_terrace_railings` no longer RAILS it, so a covered top stops
+	## advertising itself as a platform and reads as the undercroft floor it is.
+	##
+	## Measured on the review corpus before the change: 36 capped stances with an
+	## authored module inside body height -- gallery boards, braces, chimneys,
+	## dormer windows and hanging ivy. `footprints` defaults to empty, which
+	## keeps the pre-round answer for a caller that does not hold the plan.
 	var faces := shell.faces as Dictionary
 	var treatments := shell.treatments as Dictionary
 	var exposed := shell.exposed as Dictionary
@@ -3094,12 +3431,23 @@ static func maze_capped_stance_cells(shell: Dictionary) -> Dictionary:
 		if treatment != SkinTreatment.GREEN and treatment != SkinTreatment.DECK:
 			continue
 		var cell := Vector3i(key.x, key.y, key.z)
-		out[cell] = true
+		if _maze_cap_is_stance(footprints, cell):
+			out[cell] = true
 		var partner := maze_green_cap_partner(key, faces[key] as Vector3i,
 			exposed)
-		if partner != Vector3i.ZERO:
+		if partner != Vector3i.ZERO \
+				and _maze_cap_is_stance(footprints, cell + partner):
 			out[cell + partner] = true
 	return out
+
+
+static func _maze_cap_is_stance(footprints: Dictionary,
+		cell: Vector3i) -> bool:
+	## Is this cap's own top a surface a body can really stand on -- nothing
+	## authored inside the height a body needs over it?
+	return float(maze_footprint_headroom(footprints, cell,
+		float(cell.y + 1) * FabricRecipe.CELL_SIZE,
+		NATURAL_ROCK_CUT_BODY_HEIGHT).rise) == INF
 
 
 static func maze_public_floor_bearers(retained: Dictionary,
@@ -3137,7 +3485,8 @@ static func maze_public_floor_bearers(retained: Dictionary,
 
 
 static func maze_garden_rim_face_count(shell: Dictionary,
-		walked: Dictionary = {}, paved: Dictionary = {}) -> int:
+		walked: Dictionary = {}, paved: Dictionary = {},
+		footprints: Dictionary = {}) -> int:
 	## TASK I4, ANNOTATION 1 -- THE CONSISTENCY ROW's left-hand side: how many
 	## turf edges a town HAS, counted off the cell sets rather than off the
 	## payload. Every lateral boundary of every cell a green cap floors where the
@@ -3167,7 +3516,7 @@ static func maze_garden_rim_face_count(shell: Dictionary,
 	## finished as well as the drops. `walked` and `paved` default to empty, which
 	## keeps the pre-round answer for a caller that does not hold the surface plan
 	## -- and the compiler, which does, passes them.
-	return maze_green_rim_faces(shell, walked, paved).size()
+	return maze_green_rim_faces(shell, walked, paved, footprints).size()
 
 
 static func maze_green_rim_standoff(face: Vector4i,
@@ -3231,16 +3580,41 @@ static func _maze_green_rim_transform(cell: Vector3i, direction: Vector3i,
 
 static func maze_garden_cells(retained: Dictionary, solids: Dictionary,
 		paved: Dictionary = {}, plinths: Dictionary = {},
-		walked: Dictionary = {},
-		shell: Dictionary = {}) -> Dictionary:
+		walked: Dictionary = {}, shell: Dictionary = {},
+		footprints: Dictionary = {}) -> Dictionary:
 	## TASK I2 -- every lattice cell whose TOP is a garden, as `cell -> true`.
 	##
 	## One entry per cell rather than per panel: a green cap covers its own cell
 	## and the neighbour it was paired with, and a yard is a piece of ground, not
 	## a slab. Read off the shell the payload already derived, so the set of
 	## planted cells and the set of green-capped cells cannot drift apart.
+	##
+	## TASK I4 ROUND 6, ITEM 4a -- AND A TOP A BUILDING ALREADY FLOORS IS NOT
+	## GROUND. "there are gaps between the grass textures." Round 5 proved the
+	## turf quads innocent three ways and found the cause: a room's own floor
+	## board lays its walking face on EXACTLY this plane -- measured, base
+	## `plane - 0.1611`, top `plane + 0.0000`, which is the same transform this
+	## file gives a deck cap -- so the turf quad at GREEN_CAP_LIFT lies 0.02 m
+	## inside the board and what shows is the timber. Those cells were being
+	## counted as yard: planted on, designated as part of the square, and left
+	## with a razor-cut edge where the lawn beside them stopped. They are a
+	## BUILDING'S FLOOR, and this is where the fabric stops calling them ground.
+	##
+	## THE CAP ITSELF IS NOT TOUCHED, and that is not an oversight. The quad is
+	## invisible under the board; the two things that could replace it are a deck
+	## board (exactly coincident with the room's own -- a z-fight) and a masonry
+	## slab (which `test_the_bench_tops_wear_the_town_s_own_materials` forbids on
+	## a top nobody walks, and rightly: this phase's direction is to remove
+	## stone). What had to change is what the town DOES with the cell.
+	##
+	## A COVERED TOP IS NOT GROUND EITHER, for item 3's reason: a cap with an
+	## authored module inside body height over its surface -- a gallery board at
+	## 1.339 m, a brace at 0.894 m, a chimney at 1.500 m, a dormer at 0.220 m --
+	## is somewhere nobody can stand, so nothing is planted on it and it cannot be
+	## the square.
 	var derived := shell if not shell.is_empty() \
-		else maze_skin_shell(retained, solids, paved, plinths, walked)
+		else maze_skin_shell(retained, solids, paved, plinths, walked,
+			footprints)
 	var faces := derived.faces as Dictionary
 	var treatments := derived.treatments as Dictionary
 	var exposed := derived.exposed as Dictionary
@@ -3252,13 +3626,37 @@ static func maze_garden_cells(retained: Dictionary, solids: Dictionary,
 		if int(treatments[key]) != SkinTreatment.GREEN:
 			continue
 		var cell := Vector3i(key.x, key.y, key.z)
-		out[cell] = true
+		if maze_cap_is_ground(footprints, cell):
+			out[cell] = true
 		# TASK I4: the pair only, never the lean -- see `maze_green_cap_partner`.
 		var partner := maze_green_cap_partner(key, faces[key] as Vector3i,
 			exposed)
-		if partner != Vector3i.ZERO:
+		if partner != Vector3i.ZERO \
+				and maze_cap_is_ground(footprints, cell + partner):
 			out[cell + partner] = true
-	return out
+	# AND THE GARDEN BAR AGAIN, over the ground that is left. A panel pairing a
+	# boarded cell with a bare one keeps its GREEN treatment because decking it
+	# would z-fight the room's own board, so its bare cell can survive the
+	# demotion as a two-cell thread of grass -- which is exactly the patch
+	# annotation 2 retired. `maze_garden_run_survivors` is the same derivation
+	# the demotion uses.
+	return maze_garden_run_survivors(out)
+
+
+static func maze_cap_is_ground(footprints: Dictionary,
+		cell: Vector3i) -> bool:
+	## TASK I4 ROUND 6 -- is this capped cell's top really a piece of GROUND?
+	##
+	## Not if a building already floors it (`maze_cap_is_boarded`, item 4a) and
+	## not if a building stands over it inside the height a body needs
+	## (`maze_footprint_headroom`, item 3). Both are asked of the plan's own
+	## per-placement boxes, because both defects are authored modules standing
+	## outside the cells their unit declares -- which is task I4 round 5's first
+	## concern, and the one thing no cell-keyed rule in this file could see.
+	return not maze_cap_is_boarded(footprints, cell) \
+		and float(maze_footprint_headroom(footprints, cell,
+			float(cell.y + 1) * FabricRecipe.CELL_SIZE,
+			NATURAL_ROCK_CUT_BODY_HEIGHT).rise) == INF
 
 
 static func maze_garden_run_count(garden: Dictionary) -> int:
@@ -3345,7 +3743,8 @@ static func maze_plaza_threshold_openings(plan: SettlementFabricPlan,
 		plan.transformed_cells(&"terrain_bearing"))
 	var paved := public_floor_cells(surfaces)
 	var walked := walked_floor_cells(surfaces)
-	var garden := maze_garden_cells(retained, solids, paved, plinths, walked)
+	var garden := maze_garden_cells(retained, solids, paved, plinths, walked,
+		{}, maze_module_footprints(plan))
 	var plaza := maze_village_green_cells(garden, walked)
 	if plaza.is_empty():
 		return out
@@ -3555,63 +3954,230 @@ static func _maze_plaza_block_nearest_centroid(plaza: Dictionary,
 	return best
 
 
+static func maze_module_footprints(plan: SettlementFabricPlan) -> Dictionary:
+	## TASK I4 ROUND 6 -- WHERE EVERY AUTHORED MODULE REALLY STANDS.
+	##
+	## `{boxes: Array[AABB], assets: Array[StringName], by_cell: cell -> Array}`
+	## over every placement of every unit of a sealed plan, bucketed into the
+	## lattice cells each box touches so a rule can ask about a cell without
+	## walking eight hundred boxes.
+	##
+	## DERIVED DATA, AND THAT IS THE WHOLE DESIGN. The plan already carried both
+	## halves of this -- `expanded_placements()` yields one transform per module
+	## and `FabricRecipe.seal` already measures every module's box off the
+	## catalogue -- so nothing is authored, nothing is serialised and no
+	## signature can move. What it replaces is the ONE merged
+	## `local_clearance_bounds` a recipe keeps, which is why task I4 round 5's
+	## first concern is three defects wearing one hat: a room's front door
+	## reaching 1.071 m past the envelope its recipe claims, a gallery board
+	## reaching over a deck cap whose column carries no paved cell, and a floor
+	## board lying on a lawn one band up. A cell-based rule can see none of them,
+	## and this is the set that can.
+	var boxes: Array[AABB] = []
+	var assets: Array[StringName] = []
+	var by_cell: Dictionary = {}
+	if plan == null:
+		return {"boxes": boxes, "assets": assets, "by_cell": by_cell}
+	for placement: Dictionary in plan.expanded_placements():
+		var box := placement.get("bounds", AABB()) as AABB
+		if not box.has_volume():
+			continue
+		var index := boxes.size()
+		boxes.append(box)
+		assets.append(StringName(placement.asset_id))
+		# The cell a world point lies in: lattice x and z are cell CENTRES and
+		# lattice y is a cell's FLOOR, which is the split `FabricRecipe.
+		# _bounds_for_cells` states.
+		var low := Vector3i(
+			floori((box.position.x + FabricRecipe.CELL_SIZE * 0.5) \
+				/ FabricRecipe.CELL_SIZE),
+			floori(box.position.y / FabricRecipe.CELL_SIZE),
+			floori((box.position.z + FabricRecipe.CELL_SIZE * 0.5) \
+				/ FabricRecipe.CELL_SIZE))
+		var high := Vector3i(
+			floori((box.position.x + box.size.x + FabricRecipe.CELL_SIZE * 0.5) \
+				/ FabricRecipe.CELL_SIZE),
+			floori((box.position.y + box.size.y) / FabricRecipe.CELL_SIZE),
+			floori((box.position.z + box.size.z + FabricRecipe.CELL_SIZE * 0.5) \
+				/ FabricRecipe.CELL_SIZE))
+		for y in range(low.y, high.y + 1):
+			for z in range(low.z, high.z + 1):
+				for x in range(low.x, high.x + 1):
+					var cell := Vector3i(x, y, z)
+					if not by_cell.has(cell):
+						by_cell[cell] = PackedInt32Array()
+					var bucket := by_cell[cell] as PackedInt32Array
+					bucket.append(index)
+					by_cell[cell] = bucket
+	return {"boxes": boxes, "assets": assets, "by_cell": by_cell}
+
+
+static func maze_footprint_headroom(footprints: Dictionary, cell: Vector3i,
+		surface: float, limit: float) -> Dictionary:
+	## TASK I4 ROUND 6, ITEM 3 -- THE LOWEST THING OVER A SURFACE A BODY STANDS
+	## ON, as `{rise, asset}` with `rise = INF` when the column is clear.
+	##
+	## Measured over the BODY's own footprint at the cell's centre rather than
+	## over the whole cell, because the question is "can somebody stand here",
+	## not "does anything overhang this square metre": a wall on the boundary
+	## reaching 0.553 m in still leaves a body its 0.795 m, and a board 1.339 m
+	## overhead does not.
+	##
+	## AND ONLY THINGS WITH AN UNDERSIDE ABOVE THE SURFACE. A module rising out
+	## of the same plane -- the storey standing on the cap, the wall beside it --
+	## has its box bottom AT the surface and is not a ceiling; counting it would
+	## call every cap beside a building pinched and cost the town its gardens,
+	## which is the trade task I4 round 5 refused to make blind.
+	var out := {"rise": INF, "asset": &""}
+	var boxes := footprints.get("boxes", []) as Array
+	if boxes.is_empty():
+		return out
+	var assets := footprints.get("assets", []) as Array
+	var by_cell := footprints.get("by_cell", {}) as Dictionary
+	var half := NATURAL_ROCK_CUT_BODY_WIDTH * 0.5
+	var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
+	var seen: Dictionary = {}
+	for band in range(floori(surface / FabricRecipe.CELL_SIZE),
+			floori((surface + limit) / FabricRecipe.CELL_SIZE) + 1):
+		var bucket := by_cell.get(Vector3i(cell.x, band, cell.z),
+			PackedInt32Array()) as PackedInt32Array
+		for index: int in bucket:
+			if seen.has(index):
+				continue
+			seen[index] = true
+			var box := boxes[index] as AABB
+			var rise := box.position.y - surface
+			if rise <= FOOTPRINT_EPSILON or rise >= limit or rise >= float(
+					out.rise):
+				continue
+			if box.position.x >= centre.x + half \
+					or box.position.x + box.size.x <= centre.x - half \
+					or box.position.z >= centre.z + half \
+					or box.position.z + box.size.z <= centre.z - half:
+				continue
+			out = {"rise": rise, "asset": StringName(assets[index])}
+	return out
+
+
+static func maze_footprint_intrusion(footprints: Dictionary, cell: Vector3i,
+		step: Vector3i, base: float, rise: float) -> float:
+	## TASK I4 ROUND 6, ITEM 1 -- how far real authored geometry reaches INTO
+	## this cell across one of its four sides, over the band a piece standing on
+	## `base` and `rise` tall would occupy.
+	##
+	## EXACT, WHERE ROUND 5 TOOK THE POOL'S WORST CASE -- the whole argument, with
+	## the numbers, is at DECOR_PROBE_RISE. A cell beside a blank wall now gets
+	## the depth that wall really takes rather than a front door's metre.
+	##
+	## THE DEPTH IS THE CHEAPEST RETREAT. For each box overlapping the probe
+	## slab, the four faces are each a distance you would have to give up to be
+	## clear of it; the smallest of them is the one that box really costs, and
+	## charging it to that face is what keeps a module hanging over a corner from
+	## being read as a wall across the whole side.
+	var boxes := footprints.get("boxes", []) as Array
+	if boxes.is_empty():
+		return 0.0
+	var by_cell := footprints.get("by_cell", {}) as Dictionary
+	var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
+	var half := FabricRecipe.CELL_SIZE * 0.5
+	var out := 0.0
+	var seen: Dictionary = {}
+	for band in range(floori(base / FabricRecipe.CELL_SIZE),
+			floori((base + rise) / FabricRecipe.CELL_SIZE) + 1):
+		var bucket := by_cell.get(Vector3i(cell.x, band, cell.z),
+			PackedInt32Array()) as PackedInt32Array
+		for index: int in bucket:
+			if seen.has(index):
+				continue
+			seen[index] = true
+			var box := boxes[index] as AABB
+			if box.position.y >= base + rise - FOOTPRINT_EPSILON \
+					or box.position.y + box.size.y <= base + FOOTPRINT_EPSILON:
+				continue
+			var reach := _maze_footprint_face_reach(box, centre, half, step)
+			if reach > out:
+				out = reach
+	return out
+
+
+static func _maze_footprint_face_reach(box: AABB, centre: Vector3, half: float,
+		step: Vector3i) -> float:
+	## How much of the `step` side this box costs the cell, or 0 when it is clear
+	## of the cell or is cheaper to retreat from on another face.
+	var low := Vector2(box.position.x, box.position.z)
+	var high := Vector2(box.position.x + box.size.x, box.position.z
+		+ box.size.z)
+	if low.x >= centre.x + half - FOOTPRINT_EPSILON \
+			or high.x <= centre.x - half + FOOTPRINT_EPSILON \
+			or low.y >= centre.z + half - FOOTPRINT_EPSILON \
+			or high.y <= centre.z - half + FOOTPRINT_EPSILON:
+		return 0.0
+	# The four retreats: how deep the cell would have to give up from +x, -x, +z
+	# and -z to stand clear of this box. Only the CHEAPEST is charged, and only
+	# to its own face -- a module hanging over one corner is not a wall across a
+	# whole side. Ties go to the first face in this order, which is a fact about
+	# the box rather than about the caller and so is stable.
+	var push := centre.x + half - low.x
+	var cheapest := Vector3i(1, 0, 0)
+	var probe := high.x - (centre.x - half)
+	if probe < push:
+		push = probe
+		cheapest = Vector3i(-1, 0, 0)
+	probe = centre.z + half - low.y
+	if probe < push:
+		push = probe
+		cheapest = Vector3i(0, 0, 1)
+	probe = high.y - (centre.z - half)
+	if probe < push:
+		push = probe
+		cheapest = Vector3i(0, 0, -1)
+	return push if cheapest == step else 0.0
+
+
 static func maze_decor_face_intrusion(cell: Vector3i, step: Vector3i,
-		treatments: Dictionary, solids: Dictionary, retained: Dictionary,
-		garden: Dictionary, occluders: Dictionary = {}) -> float:
+		treatments: Dictionary, garden: Dictionary,
+		footprints: Dictionary = {}) -> float:
 	## TASK I4 ROUND 5, ITEM 1 -- how far the BUILT SURFACE across one face of a
-	## garden cell reaches back INTO that cell. The three numbers and where they
-	## come from are at DECOR_MASONRY_INTRUSION; this is the lookup that decides
-	## which of them is standing here.
+	## garden cell reaches back INTO that cell. The three panel numbers and where
+	## they come from are at DECOR_MASONRY_INTRUSION; this is the lookup that
+	## decides which of them is standing here, and the exact reach of everything
+	## the retained skin did not lay.
 	##
 	## Asked of BOTH panels, because the coursed module straddles its boundary and
 	## so belongs to neither cell alone: this cell's own face closes it from the
 	## inside and the neighbour's face closes it from the outside, and either one
 	## being masonry puts 0.332 m of stone in front of anything standing here.
 	##
-	## LAWN ACROSS THE BOUNDARY IS NOTHING. A garden neighbour is more of the same
-	## bench, so its face carries no panel and a piece may reach the plane.
-	if garden.has(cell + step):
-		return 0.0
+	## A LAWN ACROSS THE BOUNDARY CARRIES NO PANEL, AND THAT IS ALL IT MEANS.
+	## Round 5 returned 0.0 for a garden neighbour BEFORE it probed anything else,
+	## on the reasoning that "a garden neighbour is more of the same bench". True
+	## of PANELS and false of BUILDINGS: a room can stand ON the lawn one band up,
+	## and its own modules are then standing in this cell. Measured on the review
+	## corpus, with that early return gone and nothing else changed: 25 of the 28
+	## pieces that still intersected real geometry no longer fit their own free
+	## box -- every door, every window and the one plain wall. The lawn's share of
+	## the answer survives as the `garden` guard on the panel lookups alone.
+	##
+	## TASK I4 ROUND 6 -- AND THE BUILDING'S OWN REACH IS NOW EXACT. A building's
+	## outward wall is a room unit's MODULE rather than a panel of the retained
+	## skin, so no treatment names it. Round 5 asked whether a solid or occluder
+	## cell stood across this face or either diagonal and, when the answer was
+	## yes, charged the whole pool's worst case; `maze_footprint_intrusion` asks
+	## the module boxes themselves. See it for what that blanket cost.
 	var out := 0.0
+	var lawn := garden.has(cell + step)
 	var index := FACE_DIRECTIONS.find(step)
 	var back := FACE_DIRECTIONS.find(-step)
-	if index >= 0:
+	if index >= 0 and not lawn:
 		out = maxf(out, _maze_decor_panel_intrusion(treatments.get(
 			Vector4i(cell.x, cell.y, cell.z, index), -1)))
 	var neighbour := cell + step
-	if back >= 0:
+	if back >= 0 and not lawn:
 		out = maxf(out, _maze_decor_panel_intrusion(treatments.get(
 			Vector4i(neighbour.x, neighbour.y, neighbour.z, back), -1)))
-	# A BUILDING's own outward wall is a room unit's module rather than a panel of
-	# the retained skin, so no treatment names it and the lookups above are blind
-	# to it. It is asked of the neighbour AND of the cell above the neighbour,
-	# because the wall a piece really meets is the one rising out of the boundary
-	# beside the lawn, not the storey buried under it.
-	#
-	# AND OF THE TWO DIAGONALS, which is the door. The widest module in the wall
-	# vocabulary is `sfv.fabric.wall.wood.door.closed.001` at 3.000 m -- TWO
-	# cells -- so a door standing on the cell diagonally across from this one
-	# reaches the whole of this boundary as well as its own. Measured: after the
-	# per-face rule alone, every surviving intersection on the review corpus but
-	# one was a `*.door.closed.*` leaf reaching in from a diagonal.
-	#
-	# ASKED OF THE OCCLUDER ENVELOPE AND NOT OF THE SOLID CORE, which is the
-	# whole reason the first pass of this rule missed every one of them. Task I4
-	# round 4's own sixth concern states the difference: "a `room.*.base.*` recipe
-	# declares TWO solid cells against six to fourteen occluder ones ... it is the
-	# right set for 'can the camera see through this' and the wrong one for 'is
-	# this cell mass'. Anything new that reasons about occupancy should say which
-	# it means." This one means WHERE THE BUILDING IS -- its walls, its door and
-	# its eaves -- which is the envelope, so `solids` alone answered `false` on
-	# all four faces of a cell whose neighbour's front door was standing in it.
-	var tangent := Vector3i(step.z, 0, step.x)
-	for slide: Vector3i in [Vector3i.ZERO, tangent, -tangent]:
-		var probe := neighbour + slide
-		if solids.has(probe) or solids.has(probe + Vector3i.UP) \
-				or occluders.has(probe) or occluders.has(probe + Vector3i.UP):
-			out = maxf(out, DECOR_BUILT_WALL_INTRUSION)
-			break
-	return out
+	return maxf(out, maze_footprint_intrusion(footprints, cell, step,
+		float(cell.y + 1) * FabricRecipe.CELL_SIZE + GREEN_CAP_LIFT,
+		DECOR_PROBE_RISE))
 
 
 static func _maze_decor_panel_intrusion(treatment: int) -> float:
@@ -3627,8 +4193,8 @@ static func _maze_decor_panel_intrusion(treatment: int) -> float:
 
 
 static func maze_decor_free_box(cell: Vector3i, treatments: Dictionary,
-		solids: Dictionary, retained: Dictionary, garden: Dictionary,
-		occluders: Dictionary = {}) -> Dictionary:
+		garden: Dictionary, footprints: Dictionary = {},
+		run: Array[Vector3i] = []) -> Dictionary:
 	## TASK I4 ROUND 5, ITEM 1 -- the cell's REAL free ground, as
 	## `{centre: Vector3, half: Vector2}` in world XZ.
 	##
@@ -3641,14 +4207,39 @@ static func maze_decor_free_box(cell: Vector3i, treatments: Dictionary,
 	## A box can come back with a NEGATIVE half on an axis -- a cell walled on
 	## both sides by facade panels leaves 0.394 m of 1.5 m -- and the caller reads
 	## that as "nothing this pool carries fits here" rather than as an error.
-	var lo := Vector2(-FabricRecipe.CELL_SIZE * 0.5, -FabricRecipe.CELL_SIZE * 0.5)
+	##
+	## TASK I4 ROUND 6 -- AND `run` MERGES A PAIR. A bench is 2.30 m and a lamp
+	## post reaches 1.23 m off its own centre along its arm: neither fits a 1.5 m
+	## cell at any yaw, which is why round 5 left them out of the pool and the
+	## square's boundary came back thinner. Given the cells of a run, the free box
+	## is their union shrunk by what is built on the RUN's own outside faces --
+	## the boundary between two cells of the run is not a side anything stands
+	## on -- so a pair of edge cells is one 3 m stance and the bench stands in it.
+	var cells: Array[Vector3i] = run.duplicate()
+	if cells.is_empty():
+		cells.append(cell)
+	var member: Dictionary = {}
+	for member_cell: Vector3i in cells:
+		member[member_cell] = true
+	var span := Vector3(cells[cells.size() - 1] - cells[0]) \
+		* FabricRecipe.CELL_SIZE
+	var origin := (Vector3(cells[0]) + Vector3(cells[cells.size() - 1])) * 0.5 \
+		* FabricRecipe.CELL_SIZE
+	var lo := Vector2(-(absf(span.x) + FabricRecipe.CELL_SIZE) * 0.5,
+		-(absf(span.z) + FabricRecipe.CELL_SIZE) * 0.5)
 	var hi := -lo
 	for step: Vector3i in FACE_DIRECTIONS:
-		var intrusion := maze_decor_face_intrusion(cell, step, treatments, solids,
-			retained, garden, occluders)
-		if intrusion <= 0.0:
+		var reach := 0.0
+		for member_cell: Vector3i in cells:
+			if member.has(member_cell + step):
+				continue
+			var intrusion := maze_decor_face_intrusion(member_cell, step,
+				treatments, garden, footprints)
+			if intrusion > reach:
+				reach = intrusion
+		if reach <= 0.0:
 			continue
-		var reach := intrusion + DECOR_STANDOFF_MARGIN
+		reach += DECOR_STANDOFF_MARGIN
 		if step.x > 0:
 			hi.x -= reach
 		elif step.x < 0:
@@ -3658,7 +4249,7 @@ static func maze_decor_free_box(cell: Vector3i, treatments: Dictionary,
 		else:
 			lo.y += reach
 	var middle := (lo + hi) * 0.5
-	var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
+	var centre := origin
 	centre.x += middle.x
 	centre.z += middle.y
 	return {"centre": centre, "half": (hi - lo) * 0.5}
@@ -3684,7 +4275,7 @@ static func maze_decor_fits(half_free: Vector2, asset: StringName,
 static func maze_garden_dressing(retained: Dictionary, solids: Dictionary,
 		paved: Dictionary = {}, plinths: Dictionary = {},
 		walked: Dictionary = {}, shell: Dictionary = {},
-		occluders: Dictionary = {}) -> EnvironmentInstancePayload:
+		footprints: Dictionary = {}) -> EnvironmentInstancePayload:
 	## TASK I2 -- WHAT MAKES A BENCH TOP A YARD. The cap is the ground and the
 	## rim is its edge; this is what stands on it.
 	##
@@ -3715,7 +4306,8 @@ static func maze_garden_dressing(retained: Dictionary, solids: Dictionary,
 	##
 	## Every placement now goes through `maze_decor_free_box`, which is the cell
 	## minus whatever is really built on its four sides -- see
-	## DECOR_MASONRY_INTRUSION for the three depths and the defect they explain.
+	## DECOR_MASONRY_INTRUSION for the three panel depths and the defect they
+	## explain, and DECOR_PROBE_RISE for what round 6 replaced the fourth with.
 	## The pool is then walked in a seeded rotation and the FIRST piece that fits
 	## that box at its own yaw is the one that stands; a cell with room for
 	## nothing plants nothing and is counted. That is the frontage gate's rule
@@ -3727,10 +4319,11 @@ static func maze_garden_dressing(retained: Dictionary, solids: Dictionary,
 	## their pieces are excluded from its own choice; where the exclusion would
 	## leave nothing that fits, it is dropped rather than the cell going bare.
 	var derived := shell if not shell.is_empty() \
-		else maze_skin_shell(retained, solids, paved, plinths, walked)
+		else maze_skin_shell(retained, solids, paved, plinths, walked,
+			footprints)
 	var treatments := derived.treatments as Dictionary
 	var garden := maze_garden_cells(retained, solids, paved, plinths, walked,
-		derived)
+		derived, footprints)
 	var out := EnvironmentInstancePayload.new()
 	if garden.is_empty():
 		return out
@@ -3772,81 +4365,168 @@ static func maze_garden_dressing(retained: Dictionary, solids: Dictionary,
 					feature_cell.x, feature_cell.y, feature_cell.z,
 					String(goods.station)]))
 	for site: Dictionary in maze_garden_planting_sites(garden, plaza, entries,
-			reserved, treatments, solids, retained, occluders):
+			reserved, treatments, footprints):
 		if bool(site.refused):
 			continue
-		var cell := site.cell as Vector3i
 		out.add(StringName(site.asset), Transform3D(Basis(Vector3.UP,
 			float(site.yaw)), site.origin as Vector3), Color.WHITE,
-			StringName("maze-garden/%d/%d/%d" % [cell.x, cell.y, cell.z]))
+			maze_garden_decor_id(site))
 	assert(out.validate())
 	return out
 
 
+static func maze_garden_decor_id(site: Dictionary) -> StringName:
+	## TASK I4 ROUND 6 -- the stable id of one planted site, and it names the RUN
+	## rather than only the cell: `maze-garden/x/y/z` for the ordinary one-cell
+	## piece and `maze-garden/x/y/z/sx/sz` for a piece that spans on to the cell
+	## `step` away. Every reader that asked `begins_with("maze-garden/")` and took
+	## the first three fields still reads exactly what it read before; a reader
+	## that wants to know what ground the piece really stands on now can.
+	var cell := site.cell as Vector3i
+	var step := site.get("step", Vector3i.ZERO) as Vector3i
+	if step == Vector3i.ZERO:
+		return StringName("maze-garden/%d/%d/%d" % [cell.x, cell.y, cell.z])
+	return StringName("maze-garden/%d/%d/%d/%d/%d" % [cell.x, cell.y, cell.z,
+		step.x, step.z])
+
+
 static func maze_garden_planting_sites(garden: Dictionary, plaza: Dictionary,
 		entries: Dictionary, reserved: Dictionary, treatments: Dictionary,
-		solids: Dictionary, retained: Dictionary,
-		occluders: Dictionary = {}) -> Array[Dictionary]:
+		footprints: Dictionary = {}) -> Array[Dictionary]:
 	## TASK I4 ROUND 5 -- WHAT GROWS WHERE, as records rather than instances, so
 	## the audit and the payload count the same thing (the frontage channel's own
 	## shape). A refused site is the one this round added: a cell whose odds roll
 	## said "plant here" and whose real free ground holds nothing the pool
 	## carries.
+	##
+	## TASK I4 ROUND 6 -- AND A PIECE MAY SPAN A PAIR. `step` is the cell the
+	## piece runs on to, `Vector3i.ZERO` for the ordinary one-cell placement; a
+	## pair is ONE occupant, with one roll, one record and one id, so the audit
+	## and the adjacent-differs rule both read it as the single thing it is. The
+	## measurement that made it necessary is at GARDEN_WIDE_POOL.
 	var out: Array[Dictionary] = []
 	var cells: Array[Vector3i] = []
 	cells.assign(garden.keys())
 	cells.sort_custom(_cell_before)
 	var placed: Dictionary = {}
+	var taken: Dictionary = {}
 	for cell: Vector3i in cells:
 		# A threshold is a doorway and the centre feature's block is its
-		# clearing; neither grows anything.
-		if entries.has(cell) or reserved.has(cell):
+		# clearing; neither grows anything. A cell the piece beside it already
+		# runs across is spoken for.
+		if entries.has(cell) or reserved.has(cell) or taken.has(cell):
 			continue
-		var on_plaza := plaza.has(cell)
-		var odds := GARDEN_PLANTING_ODDS
-		var built := false
-		if on_plaza:
-			var edge := false
-			for step: Vector3i in FACE_DIRECTIONS:
-				edge = edge or not plaza.has(cell + step)
-			# The clearing itself stays empty; its boundary is planted, and the
-			# boundary takes the BUILT planter rather than a self-sown plant.
-			odds = VILLAGE_GREEN_EDGE_ODDS if edge else 0.0
-			built = edge
-		var seed_key := Vector4i(cell.x, cell.y, cell.z, 0)
-		if _face_noise(seed_key, 11) >= odds:
+		var built := _maze_garden_plants_built(cell, plaza)
+		if not _maze_garden_odds_say_plant(cell, plaza):
 			continue
 		# Turned so it cannot reach a neighbour: a self-sown plant takes a free
 		# yaw and the BUILT piece takes quarter turns only, which is what a
 		# laid-out square looks like and what keeps its long axis on an axis of
 		# the free box below.
+		var seed_key := Vector4i(cell.x, cell.y, cell.z, 0)
 		var yaw_roll := _face_noise(seed_key, 13)
 		var yaw := floorf(yaw_roll * 4.0) * PI * 0.5 if built else yaw_roll * TAU
 		var pool := GARDEN_PLANTER_POOL if built else GARDEN_PLANTING
-		var free := maze_decor_free_box(cell, treatments, solids, retained,
-			garden, occluders)
-		var neighbours: Dictionary = {}
-		for step: Vector3i in FACE_DIRECTIONS:
-			if placed.has(cell + step):
-				neighbours[StringName(placed[cell + step])] = true
-		var choice := maze_decor_choice(pool, free.half as Vector2, yaw,
-			int(_face_noise(seed_key, 12) * float(pool.size())) % pool.size(),
-			neighbours)
+		var run: Array[Vector3i] = [cell]
+		var step := Vector3i.ZERO
+		var free := maze_decor_free_box(cell, treatments, garden, footprints)
+		var neighbours := _maze_decor_neighbours(run, placed)
+		var choice: Dictionary = {"asset": &"", "yaw": yaw}
+		# THE WIDE PIECE FIRST, and only on the square's own boundary: the pair
+		# is what a bench or a lamp post needs and what a laid-out square wants
+		# along its edge, and an ordinary back yard is not laid out.
+		if built:
+			for probe: Vector3i in [Vector3i(1, 0, 0), Vector3i(0, 0, 1)]:
+				var partner := cell + probe
+				if taken.has(partner) or placed.has(partner) \
+						or entries.has(partner) or reserved.has(partner) \
+						or not garden.has(partner) \
+						or not _maze_garden_plants_built(partner, plaza) \
+						or not _maze_garden_odds_say_plant(partner, plaza):
+					continue
+				var pair: Array[Vector3i] = [cell, partner]
+				var wide := maze_decor_free_box(cell, treatments, garden,
+					footprints, pair)
+				var wide_choice := maze_decor_choice(GARDEN_WIDE_POOL,
+					wide.half as Vector2, atan2(-float(probe.z),
+						float(probe.x)),
+					int(_face_noise(seed_key, 12) \
+						* float(GARDEN_WIDE_POOL.size())) \
+						% GARDEN_WIDE_POOL.size(),
+					_maze_decor_neighbours(pair, placed))
+				if StringName(wide_choice.asset).is_empty():
+					continue
+				run = pair
+				step = probe
+				free = wide
+				choice = wide_choice
+				neighbours = {}
+				break
+		if StringName(choice.asset).is_empty():
+			choice = maze_decor_choice(pool, free.half as Vector2, yaw,
+				int(_face_noise(seed_key, 12) * float(pool.size())) \
+					% pool.size(), neighbours)
 		var asset := StringName(choice.asset)
 		yaw = float(choice.yaw)
 		if asset.is_empty():
 			# Nothing this pool carries stands clear of what is built here. A bare
 			# cell is the honest answer and it is counted rather than hidden --
 			# the alternative is the plant in the wall this rule exists to stop.
-			out.append({"cell": cell, "asset": &"", "yaw": 0.0,
-				"origin": Vector3.ZERO, "built": built, "refused": true})
+			out.append({"cell": cell, "step": Vector3i.ZERO, "asset": &"",
+				"yaw": 0.0, "origin": Vector3.ZERO, "built": built,
+				"refused": true})
 			continue
-		placed[cell] = asset
+		for member: Vector3i in run:
+			placed[member] = asset
+			taken[member] = true
 		# Standing on the cap's own plane, centred in the ground it really has.
 		var origin := free.centre as Vector3
 		origin.y = float(cell.y + 1) * FabricRecipe.CELL_SIZE + GREEN_CAP_LIFT
-		out.append({"cell": cell, "asset": asset, "yaw": yaw, "origin": origin,
-			"built": built, "refused": false})
+		out.append({"cell": cell, "step": step, "asset": asset, "yaw": yaw,
+			"origin": origin, "built": built, "refused": false})
+	return out
+
+
+static func _maze_garden_plants_built(cell: Vector3i,
+		plaza: Dictionary) -> bool:
+	## Does this cell take the BUILT pool -- the made planter, the barrel, the
+	## bench -- rather than a self-sown plant? Only the square's own boundary
+	## does: a cell of the plaza with a lateral neighbour that is not plaza.
+	if not plaza.has(cell):
+		return false
+	for step: Vector3i in FACE_DIRECTIONS:
+		if not plaza.has(cell + step):
+			return true
+	return false
+
+
+static func _maze_garden_odds_say_plant(cell: Vector3i,
+		plaza: Dictionary) -> bool:
+	## The cell's own seeded roll against its own rate: a third of an ordinary
+	## yard, half of the square's boundary, and NOTHING in the square's clearing
+	## -- a plaza is a clearing, and that is what keeps it one.
+	var odds := GARDEN_PLANTING_ODDS
+	if plaza.has(cell):
+		odds = VILLAGE_GREEN_EDGE_ODDS \
+			if _maze_garden_plants_built(cell, plaza) else 0.0
+	return _face_noise(Vector4i(cell.x, cell.y, cell.z, 0), 11) < odds
+
+
+static func _maze_decor_neighbours(run: Array[Vector3i],
+		placed: Dictionary) -> Dictionary:
+	## What the already decided neighbours of this run are wearing, which is what
+	## the adjacent-differs rule excludes. The run's own members are not its own
+	## neighbours.
+	var out: Dictionary = {}
+	var member: Dictionary = {}
+	for cell: Vector3i in run:
+		member[cell] = true
+	for cell: Vector3i in run:
+		for step: Vector3i in FACE_DIRECTIONS:
+			var probe := cell + step
+			if member.has(probe) or not placed.has(probe):
+				continue
+			out[StringName(placed[probe])] = true
 	return out
 
 
@@ -4920,8 +5600,8 @@ static func _column_is_occupied_below(plan: SettlementFabricPlan,
 	return false
 
 
-static func surface_visual_payload(plan: PublicRealmSurfacePlan) \
-		-> EnvironmentInstancePayload:
+static func surface_visual_payload(plan: PublicRealmSurfacePlan,
+		footprints: Dictionary = {}) -> EnvironmentInstancePayload:
 	## The continuous union remains the sole collision authority. Reviewed
 	## fixed-size plank meshes tile structural portions of that union without
 	## scaling an asset or allowing independently placed decks to define
@@ -4937,14 +5617,14 @@ static func surface_visual_payload(plan: PublicRealmSurfacePlan) \
 		if kind == PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT:
 			cells = _without_cells(cells, courtyard_set)
 		_append_plank_tiles(out, cells, int(kind))
-	_append_courtyard_paving(out, courtyard_cells, plan)
+	_append_courtyard_paving(out, courtyard_cells, plan, footprints)
 	_append_guard_instances(out, plan.guard_segments)
 	assert(out.validate())
 	return out
 
 
-static func production_surface_payload(plan: PublicRealmSurfacePlan) \
-		-> EnvironmentInstancePayload:
+static func production_surface_payload(plan: PublicRealmSurfacePlan,
+		footprints: Dictionary = {}) -> EnvironmentInstancePayload:
 	## Streaming cannot commit the review harness' generated ArrayMesh from a
 	## worker payload.  Tile the *same sealed surface union* with collision-
 	## bearing fixed modules instead.  This is deliberately a second adapter,
@@ -4964,7 +5644,7 @@ static func production_surface_payload(plan: PublicRealmSurfacePlan) \
 		if kind == PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT:
 			cells = _without_cells(cells, courtyard_set)
 		_append_plank_tiles(out, cells, int(kind))
-	_append_courtyard_paving(out, courtyard_cells, plan)
+	_append_courtyard_paving(out, courtyard_cells, plan, footprints)
 	_append_guard_instances(out, plan.guard_segments)
 	assert(out.validate())
 	return out
@@ -5022,13 +5702,13 @@ static func _append_guard_instances(out: EnvironmentInstancePayload,
 		used[index] = true
 
 
-static func production_surface_bundle(plan: PublicRealmSurfacePlan) \
-		-> EnvironmentInstancePayload:
+static func production_surface_bundle(plan: PublicRealmSurfacePlan,
+		footprints: Dictionary = {}) -> EnvironmentInstancePayload:
 	## Production adapter: plank instances plus the sealed plan's generated
 	## stair/ramp meshes in one streamable payload. Patch skins stay review
 	## diagnostics; only collision-bearing transition geometry may stream, so a
 	## STAIR claim can never remain an invisible hole between plank runs.
-	var out := production_surface_payload(plan)
+	var out := production_surface_payload(plan, footprints)
 	if plan == null or not plan.is_sealed():
 		return out
 	for mesh: Dictionary in plan.mesh_payloads:
@@ -5086,7 +5766,8 @@ static func _append_plank_tiles(out: EnvironmentInstancePayload,
 
 
 static func _append_courtyard_paving(out: EnvironmentInstancePayload,
-		cells: Array[Vector3i], plan: PublicRealmSurfacePlan) -> void:
+		cells: Array[Vector3i], plan: PublicRealmSurfacePlan,
+		footprints: Dictionary = {}) -> void:
 	## The elevated 6 m court stays timber-supported, but a checker of cool and
 	## warm weathered boards plus two edge planters separates it visually from
 	## through-galleries and broad roof decks. Every module still tiles the same
@@ -5118,10 +5799,22 @@ static func _append_courtyard_paving(out: EnvironmentInstancePayload,
 			for second: Vector3i in exposed:
 				has_corner = has_corner or first.x * second.x \
 					+ first.z * second.z == 0
-		if has_corner:
+		if has_corner and maze_courtyard_planter_is_clear(footprints, cell):
 			corner_cells.append(cell)
+	# TASK I4 ROUND 6, B2 -- EVERY DECOR CHANNEL IS GATED, INCLUDING THIS ONE.
+	# The garden planting learnt in round 5 that a lattice cell is not free
+	# space; this channel never learnt anything, and it has stood the same
+	# `sfv.fabric.planter.003` on a court corner since the courts were built with
+	# no measurement of what is really there. The fallback is filtered too: an
+	# unclear corner is not a better place to stand a planter merely because no
+	# corner was clear.
 	if corner_cells.size() < 2:
-		corner_cells.assign(cells)
+		corner_cells.assign([])
+		for cell: Vector3i in cells:
+			if maze_courtyard_planter_is_clear(footprints, cell):
+				corner_cells.append(cell)
+	if corner_cells.is_empty():
+		return
 	corner_cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
 		return _cell_before(a, b))
 	var first_cell := corner_cells[0]
@@ -5137,16 +5830,67 @@ static func _append_courtyard_paving(out: EnvironmentInstancePayload,
 				best_distance = distance
 				first_cell = a
 				second_cell = b
-	var planter_cells: Array[Vector3i] = [first_cell, second_cell]
+	var planter_cells: Array[Vector3i] = [first_cell]
+	if second_cell != first_cell:
+		planter_cells.append(second_cell)
 	for index in planter_cells.size():
 		var cell := planter_cells[index]
-		var planter_position := (Vector3(cell) + Vector3(0.5, 0.0, 0.5)) \
-			* FabricRecipe.CELL_SIZE + Vector3.UP * 0.04
 		out.add(COURTYARD_PLANTER,
 			Transform3D(Basis(Vector3.UP, float(index) * PI),
-				planter_position), Color.WHITE,
+				maze_courtyard_planter_origin(cell)), Color.WHITE,
 			StringName("courtyard-planter/%d/%d/%d/%d" % [cell.x,
 				cell.y, cell.z, index]))
+
+
+static func maze_courtyard_planter_origin(cell: Vector3i) -> Vector3:
+	## Where a court's edge planter stands: on the corner its four cells share,
+	## a plank's thickness over the boards.
+	return (Vector3(cell) + Vector3(0.5, 0.0, 0.5)) * FabricRecipe.CELL_SIZE \
+		+ Vector3.UP * COURTYARD_PLANTER_LIFT
+
+
+static func maze_courtyard_planter_is_clear(footprints: Dictionary,
+		cell: Vector3i) -> bool:
+	## TASK I4 ROUND 6, B2 -- can a planter really stand on this court corner?
+	##
+	## The piece's own envelope (DECOR_CLEARANCE, quarter turns only, so the
+	## rotated footprint is the table's two numbers either way about) against
+	## every authored module that reaches the same air. A court corner is by
+	## construction the place a room's wall is nearest, which is exactly why this
+	## channel needed the measurement the garden channel got in round 5.
+	var boxes := footprints.get("boxes", []) as Array
+	if boxes.is_empty():
+		return true
+	var by_cell := footprints.get("by_cell", {}) as Dictionary
+	var origin := maze_courtyard_planter_origin(cell)
+	var clearance: Vector2 = DECOR_CLEARANCE[COURTYARD_PLANTER]
+	var reach := maxf(clearance.x, clearance.y) + DECOR_STANDOFF_MARGIN
+	var piece := AABB(origin - Vector3(reach, 0.0, reach),
+		Vector3(reach * 2.0, COURTYARD_PLANTER_RISE, reach * 2.0))
+	var seen: Dictionary = {}
+	for band in range(floori(piece.position.y / FabricRecipe.CELL_SIZE),
+			floori((piece.position.y + piece.size.y) / FabricRecipe.CELL_SIZE) \
+				+ 1):
+		for step: Vector3i in [Vector3i.ZERO, Vector3i(1, 0, 0),
+				Vector3i(0, 0, 1), Vector3i(1, 0, 1)]:
+			var bucket := by_cell.get(Vector3i(cell.x + step.x, band,
+				cell.z + step.z), PackedInt32Array()) as PackedInt32Array
+			for index: int in bucket:
+				if seen.has(index):
+					continue
+				seen[index] = true
+				if _maze_boxes_overlap(piece, boxes[index] as AABB):
+					return false
+	return true
+
+
+static func _maze_boxes_overlap(left: AABB, right: AABB) -> bool:
+	return left.position.x + left.size.x > right.position.x + FOOTPRINT_EPSILON \
+		and right.position.x + right.size.x > left.position.x + FOOTPRINT_EPSILON \
+		and left.position.y + left.size.y > right.position.y + FOOTPRINT_EPSILON \
+		and right.position.y + right.size.y > left.position.y + FOOTPRINT_EPSILON \
+		and left.position.z + left.size.z > right.position.z + FOOTPRINT_EPSILON \
+		and right.position.z + right.size.z > left.position.z + FOOTPRINT_EPSILON
 
 
 static func _cell_set(cells: Array[Vector3i]) -> Dictionary:

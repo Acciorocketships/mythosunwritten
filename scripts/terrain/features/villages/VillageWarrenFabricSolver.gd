@@ -150,8 +150,12 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	var world_frame := placement.transform as Transform3D
 	result.world_transform = world_frame
 	var local_payload := SettlementFabricAssembler.payload(fabric)
+	# TASK I4 ROUND 6, B2. The court's own edge planters are gated on the module
+	# boxes the plan really carries, exactly as the garden planting is -- see
+	# `maze_courtyard_planter_is_clear`.
 	local_payload.append_from(SettlementFabricAssembler.production_surface_bundle(
-		fabric.surface_plan))
+		fabric.surface_plan,
+		SettlementFabricAssembler.maze_module_footprints(fabric)))
 	local_payload.append_from(SettlementFabricAssembler.low_retaining_payload(fabric))
 	local_payload.append_from(
 		SettlementFabricAssembler.terrace_retaining_payload(fabric))

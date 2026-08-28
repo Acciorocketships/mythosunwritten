@@ -934,8 +934,12 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	# (its own, one inside `maze_stone_faces`, and both again inside the
 	# `maze_stone_walls` call below), `faces` twice and `treatments` twice, for
 	# identical dictionaries every time.
+	# TASK I4 ROUND 6. The derived per-placement module boxes, built once for the
+	# whole audit and handed to the same rules the payload hands them to -- see
+	# `SettlementFabricAssembler.maze_module_footprints`.
+	var footprints := SettlementFabricAssembler.maze_module_footprints(plan)
 	var shell := SettlementFabricAssembler.maze_skin_shell(retained, solids,
-		paved, plinths, walked)
+		paved, plinths, walked, footprints)
 	var exposed := shell.exposed as Dictionary
 	var faces := shell.faces as Dictionary
 	var sides := SettlementFabricAssembler.FACE_DIRECTIONS.size()
@@ -1171,13 +1175,9 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	# of the split is beside it: sky-facing caps the realm walks, which keep
 	# their stone because they are a street's own floor.
 	var garden := SettlementFabricAssembler.maze_garden_cells(retained, solids,
-		paved, plinths, walked, shell)
-	# TASK I4 ROUND 5, ITEM 1. The building envelope the decor stands off -- see
-	# `maze_decor_face_intrusion`, which needs the OCCLUDER set rather than the
-	# solid core to see a room's own front door.
-	var decor_occluders := plan.transformed_cells(&"occluder")
+		paved, plinths, walked, shell, footprints)
 	var planting := SettlementFabricAssembler.maze_garden_dressing(retained,
-		solids, paved, plinths, walked, shell, decor_occluders)
+		solids, paved, plinths, walked, shell, footprints)
 	# TASK I3. The square's own three facts, derived exactly as the dressing
 	# derives them: the run a street can actually reach, the mouths it reaches it
 	# by, and what stands in the clearing.
@@ -1199,6 +1199,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	var goods_instances := 0
 	var decor_types: Dictionary = {}
 	var decor_by_cell: Dictionary = {}
+	var decor_group: Dictionary = {}
 	for asset_value: Variant in planting.batches.keys():
 		var batch := planting.batches[asset_value] as Dictionary
 		for id_value: Variant in batch.get("ids", []) as Array:
@@ -1209,13 +1210,23 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			planting_instances += 1
 			decor_types[StringName(asset_value)] = true
 			var parts := id.trim_prefix("maze-garden/").split("/")
-			decor_by_cell[Vector3i(int(parts[0]), int(parts[1]),
-				int(parts[2]))] = StringName(asset_value)
+			var anchor := Vector3i(int(parts[0]), int(parts[1]), int(parts[2]))
+			decor_by_cell[anchor] = StringName(asset_value)
+			decor_group[anchor] = anchor
+			# TASK I4 ROUND 6. A piece that spans a PAIR wears both cells, and
+			# its id says which -- so a bench standing beside an identical bench
+			# still reads as a repeat while the bench's own two cells do not.
+			if parts.size() >= 5:
+				var mate := anchor + Vector3i(int(parts[3]), 0, int(parts[4]))
+				decor_by_cell[mate] = StringName(asset_value)
+				decor_group[mate] = anchor
 	var decor_adjacent_repeats := 0
 	for cell_value: Variant in decor_by_cell.keys():
 		var decor_cell := cell_value as Vector3i
 		for step: Vector3i in [Vector3i(1, 0, 0), Vector3i(0, 0, 1)]:
-			if not decor_by_cell.has(decor_cell + step):
+			if not decor_by_cell.has(decor_cell + step) \
+					or Vector3i(decor_group[decor_cell]) \
+						== Vector3i(decor_group[decor_cell + step]):
 				continue
 			decor_adjacent_repeats += int(StringName(decor_by_cell[decor_cell]) \
 				== StringName(decor_by_cell[decor_cell + step]))
@@ -1226,8 +1237,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		planting_reserved[cell_value as Vector3i] = true
 	for site: Dictionary in SettlementFabricAssembler \
 			.maze_garden_planting_sites(garden, plaza, plaza_entries,
-				planting_reserved, treatments, solids, retained,
-				decor_occluders):
+				planting_reserved, treatments, footprints):
 		planting_refused += int(bool(site.refused))
 	var paved_bench_caps := 0
 	for key_value: Variant in treatments.keys():
@@ -1263,13 +1273,14 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	# TASK I4 ROUND 5, ITEM 4. The boundary set now carries the LEVEL junctions
 	# as well as the drops, so `walked` and `paved` come with it.
 	var rim_faces := SettlementFabricAssembler.maze_garden_rim_face_count(shell,
-		walked, paved)
+		walked, paved, footprints)
 	var rim_instances := SettlementFabricAssembler.maze_green_rim_walls(retained,
-		solids, paved, plinths, walked, shell).instance_count
+		solids, paved, plinths, walked, shell, footprints).instance_count
 	# TASK I4, ANNOTATIONS 3 and 6. The two new dressing channels, counted off
 	# the same rules the payload places them with.
 	# TASK I4 ROUND 5, ITEM 3. The headroom gate reads the capped stances too.
-	var capped := SettlementFabricAssembler.maze_capped_stance_cells(shell)
+	var capped := SettlementFabricAssembler.maze_capped_stance_cells(shell,
+		footprints)
 	var floor_bearers_borne := 0
 	var floor_bearers_refused := 0
 	for site: Dictionary in SettlementFabricAssembler \
