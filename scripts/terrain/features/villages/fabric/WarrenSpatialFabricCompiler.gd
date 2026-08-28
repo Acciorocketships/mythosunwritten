@@ -233,6 +233,13 @@ static func solve(source: WarrenSpatialPlan,
 		last_failure = "spatial public-surface closure failed"
 		return null
 	stage_ms = _trace_stage("surfaces", stage_ms)
+	# TASK I4 ROUND 7. The two withdrawals that need the WHOLE town: a dressing
+	# module buried in the retained skin, and a brace standing its collider in the
+	# body column of a street. Both are decided here -- after the surface plan,
+	# which is what says where the realm walks, and BEFORE the skin audit, so the
+	# audit and the payload measure the town that is really built.
+	var suppression_audit := _suppress_intruding_modules(result)
+	stage_ms = _trace_stage("suppress_intruding", stage_ms)
 	var volumes := FabricVolumeClassifier.solve(
 		StringName("%s.volumes" % result.stable_id), realm, result)
 	if volumes == null or not result.set_volume_plan(volumes):
@@ -287,6 +294,7 @@ static func solve(source: WarrenSpatialPlan,
 	lineage["retained_foundation_built_in_cell_count"] = int(
 		foundation_result.get("built_in_cell_count", 0))
 	lineage.merge(foundation_audit, true)
+	lineage.merge(suppression_audit, true)
 	lineage.merge(stone_audit, true)
 	# TASK H1. The wall metric rides beside the rock metric, never instead of
 	# it: `stone_audit` above says how much MOUNTAIN shows, this says what the
@@ -902,6 +910,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			"maze_stone_cap_jut_cell_count": 0,
 			"maze_skin_cap_trim_count": 0,
 			"maze_free_bench_stone_cap_count": 0,
+			"maze_undercroft_stone_cap_count": 0,
 			"maze_green_cap_jut_cell_count": 0,
 			"maze_green_cap_jut_over_air_count": 0,
 			"maze_shared_street_cap_count": 0,
@@ -1072,6 +1081,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	var cap_jut_cells := 0
 	var cap_trim := 0
 	var free_bench_stone_caps := 0
+	var undercroft_caps := 0
 	var shared_street_caps := 0
 	var low_bank_faces := 0
 	var tall_bank_faces := 0
@@ -1126,6 +1136,18 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			# below is the one that must be zero.
 			shared_street_caps += 1
 			var partner := faces[key] as Vector3i
+			# TASK I4 ROUND 7 -- AND AN UNDERCROFT IS NOT A FREE BENCH. The strict
+			# pin below asks "is there a top here a body could stand on and enjoy
+			# that the town paved in stone instead of greening". A cap a building's
+			# own floor board covers, or one with a module inside body height over
+			# it, is not such a top: nobody can stand on it at all, greening it lays
+			# turf nobody can see, and decking it advertises a platform nobody can
+			# reach (the r6 review's I4). `_maze_cap_is_free` is what sends those
+			# here, and this is that same question asked back.
+			if SettlementFabricAssembler.maze_cap_is_undercroft(key, partner,
+					exposed, footprints):
+				undercroft_caps += 1
+				continue
 			if partner == Vector3i.ZERO:
 				free_bench_stone_caps += 1
 				continue
@@ -1395,6 +1417,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		"maze_stone_cap_jut_cell_count": cap_jut_cells,
 		"maze_skin_cap_trim_count": cap_trim,
 		"maze_free_bench_stone_cap_count": free_bench_stone_caps,
+		"maze_undercroft_stone_cap_count": undercroft_caps,
 		"maze_shared_street_cap_count": shared_street_caps,
 		"maze_low_bank_face_count": low_bank_faces,
 		"maze_tall_bank_face_count": tall_bank_faces,
@@ -7639,6 +7662,191 @@ static func _feature_is_related_to_room(source: WarrenSpatialPlan,
 						== room.source_parcel_id:
 					return true
 	return false
+
+
+## TASK I4 ROUND 7 -- how much shared volume makes a module BURIED rather than
+## touching. One centimetre on every axis: an order of magnitude under the
+## smallest real overlap the r6 review measured (0.135 m, the ivy leaf's own
+## depth inside a rock panel) and an order over the tolerance these modules were
+## authored to, so a coplanar face cannot read as an intersection.
+const BURIED_MODULE_TOLERANCE := 0.01
+
+
+static func _suppress_intruding_modules(plan: SettlementFabricPlan) \
+		-> Dictionary:
+	## TASK I4 ROUND 7, PARTS 1 AND 2 -- the two authored modules a finished town
+	## may not carry, withdrawn per unit through the machinery the party wall
+	## already uses (`FabricUnit.suppressed_placement_ids`).
+	##
+	## 1. BURIED DRESSING. A `SettlementFabricProgram.DECOR_MODULE_ASSETS` module
+	##    sharing real volume with the vertical skin THIS COMPILE lays. That is
+	##    the user's own note -- "one of the plants is glitched into the wall" --
+	##    and the r6 review measured it: the roof garden's planter on 12/compact
+	##    shares 0.66 x 0.74 x 0.93 m with `maze-stone/-3/5/0/1` and `/1/1`, two
+	##    `sfv.fabric.wall.rock.plain.001` panels sited by
+	##    `SettlementFabricAssembler.maze_stone_walls`. The wall is the fabric's,
+	##    so the fix is the fabric's, and it costs no recipe geometry: dressing is
+	##    the one class of module a building can be built without.
+	##
+	## 2. A COLLIDER OVER A STREET. A DECOR or OUTRIGGER module that BAKES a
+	##    collider and stands it inside the body column of a cell the public realm
+	##    walks. Round 6 filed eight such pinches as a ruled exception; the r6
+	##    review then loaded each one's baked shapes and found three of them are
+	##    not a look at all -- `sfbp.wwall.support.s.002` twice (a 0.316 m slab
+	##    from 0.894 m to 4.500 m) and `sfv.fabric.brace.wood.002` once (from
+	##    1.600 m) -- standing in streets a body cannot walk down. The clearance
+	##    row could not see them: it commits the fabric dressing and no buildings
+	##    (`warren_maze_mode_sweep.gd`'s own scope note), so the two censuses cover
+	##    disjoint collision sets and both were honestly green.
+	##
+	## THE HANGING IVY IS NOT TOUCHED and that is the ruling, not an oversight: it
+	## bakes ZERO colliders, so a body walks through it, and it is the town's own
+	## dressing over its own streets. It stays the named exception, censused
+	## matrix-wide by the sweep and pinned per town by
+	## `test_no_bearer_hangs_over_a_surface_a_body_stands_on`.
+	##
+	## WHY THIS IS NOT A SECOND COMPILE. Both inputs are already here and neither
+	## depends on the outcome: `maze_skin_panel_boxes` is a pure function of the
+	## retained, solid, paved and plinth cell sets, and `walked_floor_cells` is
+	## the surface plan's. A suppression removes a VISUAL placement and nothing
+	## else -- no semantic cell, no envelope, no bound -- so nothing upstream of
+	## this point can change under it and nothing downstream sees a town it was
+	## not built from.
+	var out: Dictionary = {"suppressed_buried_decor_module_count": 0,
+		"suppressed_street_collider_module_count": 0,
+		"suppressed_intruding_module_details": [] as Array[String]}
+	if plan == null or plan.is_sealed():
+		return out
+	var retained := plan.retained_terrace_cells
+	var solids := plan.transformed_cells(&"solid")
+	var paved := SettlementFabricAssembler.public_floor_cells(plan.surface_plan)
+	var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+		plan.transformed_cells(&"terrain_bearing"))
+	var skin := SettlementFabricAssembler.maze_skin_panel_boxes(retained,
+		solids, paved, plinths)
+	var walked := SettlementFabricAssembler.walked_floor_cells(
+		plan.surface_plan)
+	if skin.is_empty() and walked.is_empty():
+		return out
+	var decor: Dictionary = {}
+	for asset: StringName in SettlementFabricProgram.DECOR_MODULE_ASSETS:
+		decor[asset] = true
+	var outrigger: Dictionary = {}
+	for asset: StringName in SettlementFabricProgram.OUTRIGGER_MODULE_ASSETS:
+		outrigger[asset] = true
+	var body_half := SettlementFabricAssembler.NATURAL_ROCK_CUT_BODY_WIDTH * 0.5
+	var body_height := SettlementFabricAssembler.NATURAL_ROCK_CUT_BODY_HEIGHT
+	var withdrawals: Array[Dictionary] = []
+	# The units in their own order, and each recipe's placements in theirs, so the
+	# withdrawal list is a function of the plan and not of a dictionary's
+	# iteration order.
+	for unit: FabricUnit in plan.units:
+		var recipe := plan.recipe(unit.recipe_id)
+		if recipe == null or recipe.placements.is_empty():
+			continue
+		var unit_transform := unit.transform()
+		for index in recipe.placements.size():
+			var placement := recipe.placements[index] as Dictionary
+			var asset := StringName(placement.asset_id)
+			var is_decor := decor.has(asset)
+			if not is_decor and not outrigger.has(asset):
+				continue
+			var placement_id := StringName(placement.id)
+			if unit.suppressed_placement_ids.has(placement_id):
+				continue
+			if index >= recipe.placement_bounds.size():
+				continue
+			var box: AABB = unit_transform * recipe.placement_bounds[index]
+			if not box.has_volume():
+				continue
+			var reason := &""
+			var against := ""
+			if is_decor:
+				for panel: AABB in skin:
+					if not _boxes_share_volume(box, panel):
+						continue
+					reason = &"buried"
+					against = "panel(%.2f,%.2f,%.2f)" % [panel.position.x,
+						panel.position.y, panel.position.z]
+					break
+			var pieces: int = recipe.placement_collision_pieces[index] \
+				if index < recipe.placement_collision_pieces.size() else 0
+			if reason.is_empty() and pieces > 0:
+				var stance: Variant = _walked_cell_under_module(box, walked,
+					body_half, body_height)
+				if stance != null:
+					reason = &"street_collider"
+					against = str(stance)
+			if reason.is_empty():
+				continue
+			withdrawals.append({"unit": unit.stable_id,
+				"placement": placement_id, "asset": asset, "reason": reason,
+				"against": against})
+	var details: Array[String] = []
+	for withdrawal: Dictionary in withdrawals:
+		var reason := StringName(withdrawal.reason)
+		var against := String(withdrawal.against)
+		if not plan.suppress_placement(withdrawal.unit as StringName,
+				withdrawal.placement as StringName):
+			# A refusal here is a defect in the rule, not in the town: the only
+			# refusals `suppress_placement` has are an unknown id and a
+			# construction run, and this loop reads the recipe's own placements.
+			# Counted and named rather than swallowed.
+			reason = &"refused"
+			against = plan.last_rejection
+		elif reason == &"buried":
+			out["suppressed_buried_decor_module_count"] = int(
+				out["suppressed_buried_decor_module_count"]) + 1
+		else:
+			out["suppressed_street_collider_module_count"] = int(
+				out["suppressed_street_collider_module_count"]) + 1
+		details.append("%s/%s %s %s %s" % [withdrawal.unit,
+			withdrawal.placement, withdrawal.asset, reason, against])
+	out["suppressed_intruding_module_details"] = details
+	return out
+
+
+static func _boxes_share_volume(a: AABB, b: AABB) -> bool:
+	## Real shared volume on every axis, past BURIED_MODULE_TOLERANCE. `AABB.
+	## intersects` calls two boxes meeting at a face an intersection, which is
+	## exactly what a module standing AGAINST a wall does.
+	return a.position.x + a.size.x - b.position.x > BURIED_MODULE_TOLERANCE \
+		and b.position.x + b.size.x - a.position.x > BURIED_MODULE_TOLERANCE \
+		and a.position.y + a.size.y - b.position.y > BURIED_MODULE_TOLERANCE \
+		and b.position.y + b.size.y - a.position.y > BURIED_MODULE_TOLERANCE \
+		and a.position.z + a.size.z - b.position.z > BURIED_MODULE_TOLERANCE \
+		and b.position.z + b.size.z - a.position.z > BURIED_MODULE_TOLERANCE
+
+
+static func _walked_cell_under_module(box: AABB, walked: Dictionary,
+		body_half: float, body_height: float) -> Variant:
+	## The lowest-ordered walked cell this module hangs into the body column of,
+	## or `null`. The arithmetic is `SettlementFabricAssembler.
+	## maze_footprint_headroom`'s, asked from the module's side: a walked cell
+	## floors at its own bottom, and a module whose UNDERSIDE is above that floor
+	## by less than a body's height stands in the way of anybody crossing it.
+	##
+	## Over the BODY's own footprint at the cell centre rather than over the whole
+	## cell, for that rule's own reason: a brace clipping the corner of a 1.5 m
+	## street still leaves the 0.795 m a body needs.
+	var found: Variant = null
+	for cell_value: Variant in walked.keys():
+		var cell := cell_value as Vector3i
+		var floor_y := float(cell.y) * FabricRecipe.CELL_SIZE
+		var rise := box.position.y - floor_y
+		if rise <= SettlementFabricAssembler.FOOTPRINT_EPSILON \
+				or rise >= body_height:
+			continue
+		var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
+		if box.position.x >= centre.x + body_half \
+				or box.position.x + box.size.x <= centre.x - body_half \
+				or box.position.z >= centre.z + body_half \
+				or box.position.z + box.size.z <= centre.z - body_half:
+			continue
+		if found == null or SettlementFabricAssembler._cell_before(cell,
+				found as Vector3i):
+			found = cell
+	return found
 
 
 static func _suppressed_party_wall_placements(grid: WarrenSpatialGrid,

@@ -155,7 +155,8 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	# `maze_courtyard_planter_is_clear`.
 	local_payload.append_from(SettlementFabricAssembler.production_surface_bundle(
 		fabric.surface_plan,
-		SettlementFabricAssembler.maze_module_footprints(fabric)))
+		SettlementFabricAssembler.maze_module_footprints(fabric),
+		SettlementFabricAssembler.maze_skin_panel_boxes_for(fabric)))
 	local_payload.append_from(SettlementFabricAssembler.low_retaining_payload(fabric))
 	local_payload.append_from(
 		SettlementFabricAssembler.terrace_retaining_payload(fabric))

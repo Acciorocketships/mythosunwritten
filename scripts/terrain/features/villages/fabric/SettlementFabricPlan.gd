@@ -62,6 +62,18 @@ var _walk_owner: Dictionary = {}
 var _headroom_owner: Dictionary = {}
 var _terrace_declared := false
 var _sealed := false
+## TASK I4 ROUND 7, r6 REVIEW MINOR 6 -- the derived module-footprint index,
+## built at most once per plan.
+##
+## Round 6 shipped it as a free function over `expanded_placements()`, and five
+## production call sites plus one per pin per town in the tests each built their
+## own copy of the same answer. It is a pure function of the units, their
+## recipes, and their suppressions, so ONE copy per plan is the same dictionary
+## every caller built for itself; the two writers that can move it -- `add_unit`
+## and `suppress_placement` -- clear it, so a mid-compile reader can never be
+## handed a town that no longer exists.
+var _module_footprints: Dictionary = {}
+var _module_footprints_built := false
 var last_rejection := ""
 
 
@@ -230,6 +242,8 @@ func add_unit(unit: FabricUnit) -> bool:
 	units.append(unit)
 	_clearance_bounds.append(clearance_bounds)
 	_by_id[unit.stable_id] = unit
+	_module_footprints_built = false
+	_module_footprints = {}
 	return true
 
 
@@ -377,6 +391,11 @@ func expanded_placements() -> Array[Dictionary]:
 	## recipe's measured box -- so it carries no new authority and cannot move a
 	## signature; it is here because every caller that wanted "where is this
 	## module really" was otherwise left with the recipe's ONE merged envelope.
+	##
+	## TASK I4 ROUND 7 adds `collision_pieces` beside it, off
+	## `FabricRecipe.placement_collision_pieces`, for the same reason and under
+	## the same contract: a rule that has to tell a slab a body walks INTO from a
+	## leaf it walks THROUGH cannot read that out of a box.
 	var out: Array[Dictionary] = []
 	for unit_value: FabricUnit in units:
 		var unit_recipe := _recipes[unit_value.recipe_id] as FabricRecipe
@@ -394,8 +413,88 @@ func expanded_placements() -> Array[Dictionary]:
 					(placement.transform as Transform3D),
 				"bounds": unit_transform * unit_recipe.placement_bounds[index] \
 					if index < unit_recipe.placement_bounds.size() else AABB(),
+				"collision_pieces": \
+					unit_recipe.placement_collision_pieces[index] \
+					if index < unit_recipe.placement_collision_pieces.size() \
+					else 0,
 			})
 	return out
+
+
+func suppress_placement(unit_id: StringName,
+		placement_id: StringName) -> bool:
+	## TASK I4 ROUND 7 -- withdraw ONE authored module from ONE built unit, before
+	## the plan seals.
+	##
+	## WHY A MUTATOR AND NOT A CONSTRUCTOR ARGUMENT, which is the whole design
+	## question. `_suppressed_party_wall_placements` decides off the sealed
+	## SPATIAL GRID, which a room already holds when its unit is built. The two
+	## suppressions round 7 adds decide off geometry that does not exist until
+	## the units are in a plan -- the retained skin's own panels, and the public
+	## realm's walk surfaces -- so the decision cannot be made at construction
+	## without compiling the town twice.
+	##
+	## IT CANNOT WIDEN ANYTHING. A suppression only REMOVES a visual placement:
+	## `transformed_cells` reads the recipe's semantic cells and never the
+	## placements, `local_bounds` and `local_clearance_bounds` are the recipe's
+	## own and are untouched, and `unit.bounds` is derived from `local_bounds`.
+	## So every gate `add_unit` already passed -- occupancy, bearing, the
+	## envelope-overlap proof -- holds unchanged, and `validate()` re-runs
+	## `_accept_unit` over every unit at seal time, which is where the placement
+	## id and the construction-run rule below are proved rather than assumed.
+	##
+	## What it DOES move is `construction_signature()`, which digests
+	## suppressions -- by design: the record must say that this unit is missing a
+	## module, and which one.
+	last_rejection = ""
+	if _sealed:
+		last_rejection = "cannot suppress %s on a sealed plan" % placement_id
+		return false
+	var unit_value := _by_id.get(unit_id) as FabricUnit
+	if unit_value == null:
+		last_rejection = "no unit %s to suppress %s on" % [unit_id, placement_id]
+		return false
+	if unit_value.suppressed_placement_ids.has(placement_id):
+		return true
+	var unit_recipe := _recipes.get(unit_value.recipe_id) as FabricRecipe
+	if unit_recipe == null:
+		last_rejection = "unit %s references missing recipe %s" % [unit_id,
+			unit_value.recipe_id]
+		return false
+	var known := false
+	for placement: Dictionary in unit_recipe.placements:
+		known = known or StringName(placement.id) == placement_id
+	if not known:
+		last_rejection = "unit %s has no placement %s to suppress" % [unit_id,
+			placement_id]
+		return false
+	# The same rule `_accept_unit` enforces, stated here so a caller learns at the
+	# decision rather than at the seal: a roof run is one construction and half of
+	# it is not a thing that can be built.
+	for run: Dictionary in unit_recipe.construction_runs:
+		for run_placement: Variant in run.placement_ids as Array:
+			if StringName(run_placement) == placement_id:
+				last_rejection = ("placement %s belongs to construction run %s " \
+					+ "and cannot be suppressed alone") % [placement_id, run.id]
+				return false
+	unit_value.suppressed_placement_ids.append(placement_id)
+	unit_value.suppressed_placement_ids.sort_custom(
+		func(a: StringName, b: StringName) -> bool:
+			return String(a) < String(b))
+	_module_footprints_built = false
+	_module_footprints = {}
+	return true
+
+
+func module_footprints() -> Dictionary:
+	## The plan's own derived footprint index, built once. See
+	## `SettlementFabricAssembler.maze_module_footprints`, which is the rule that
+	## builds it and stays the one place the bucketing is written down.
+	if not _module_footprints_built:
+		_module_footprints = SettlementFabricAssembler \
+			.build_maze_module_footprints(self)
+		_module_footprints_built = true
+	return _module_footprints
 
 
 func visual_envelope_conflicts() -> Array[Dictionary]:

@@ -114,6 +114,52 @@ const WINDOW_ROOF_BLUE_PARTY_LEFT := \
 const WINDOW_ROOF_BLUE_PARTY_RIGHT := \
 	&"sfv.fabric.wall.wood.window.roof.004.party.right"
 
+## TASK I4 ROUND 7 -- THE DECOR CLASS, enumerated off this file's own vocabulary
+## rather than guessed from an id.
+##
+## A DECOR module is a piece of DRESSING: it encloses nothing, bears nothing,
+## carries no opening, and a town with none of it is the same town less
+## furnished. That is the whole of the definition and it is why the class can be
+## withdrawn from one unit without the composition noticing -- every other module
+## a recipe places (a wall, a floor, a roof, a door, a rail, a stair, a chimney,
+## a brace) is part of what the building IS.
+##
+## WHAT IT IS FOR. The r6 review measured the user's own circled piece --
+## `...house.001.part01.room00.garden/garden.planter` on 12/compact -- sharing
+## 0.66 x 0.74 x 0.93 m with two `maze-stone` rock panels the SAME COMPILE lays,
+## and the round-7 ruling is that a dressing module standing inside fabric-laid
+## masonry is withdrawn from that unit rather than left buried. Naming the class
+## here keeps the compiler's predicate one lookup wide and keeps "what counts as
+## dressing" a vocabulary statement, next to the constants it is made of.
+##
+## The planter and the plant that stands in it are BOTH here on purpose: they are
+## two placements, they are buried together, and a planter withdrawn without its
+## plant leaves a shrub standing in a wall on its own.
+const DECOR_MODULE_ASSETS: Array[StringName] = [
+	ROOF_PLANTER, FACADE_IVY, FACADE_CLOTHES, FACADE_SIGN,
+	ROOF_FLOWER_BLUE, ROOF_FLOWER_WARM, ROOF_FLOWER_SMALL, ROOF_FLOWER_TALL,
+	ROOF_FLOWER_PALE,
+	TERRACE_LANTERN_TABLE, TERRACE_LANTERN_POST, TERRACE_BARREL_A,
+	TERRACE_BARREL_B, TERRACE_BAG, TERRACE_BENCH_ALT, TERRACE_BENCH,
+	TERRACE_BUCKET, TERRACE_CHAIR, TERRACE_CRATE, TERRACE_FIREWOOD,
+	TERRACE_PLANT_LOW, TERRACE_PLANT_MID, TERRACE_PLANT_BROAD,
+	TERRACE_PLANT_TALL,
+]
+## TASK I4 ROUND 7 -- THE OUTRIGGER CLASS: the two authored props that lean OUT
+## of the room that places them rather than standing inside its envelope.
+##
+## Both are diagonal timbers under a projecting storey, and both were measured by
+## the r6 review standing their own BAKED COLLIDER in the body column over a
+## walked public street -- `sfbp.wwall.support.s.002` from 0.894 m to 4.500 m and
+## `sfv.fabric.brace.wood.002` from 1.600 m. A body cannot pass under either.
+##
+## They are a class of their own and not DECOR because they are not
+## interchangeable with dressing: a brace reads as what holds the storey up, and
+## withdrawing one is a real loss the report has to state. What they share with
+## decor is the only property the suppression needs -- nothing in the composition
+## depends on them, so a unit can be built without one.
+const OUTRIGGER_MODULE_ASSETS: Array[StringName] = [BRACE, DIAGONAL_BRACE]
+
 ## The facade module pools, indexed by facade phase.
 ##
 ## Every entry is a COMPLETE authored wall module, so a phase change is a

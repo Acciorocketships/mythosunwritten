@@ -62,6 +62,18 @@ var local_bounds := AABB()
 ## deck a body stands on, and a floor board lying on a lawn (task I4 round 5's
 ## own first concern, all three of them one defect).
 var placement_bounds: Array[AABB] = []
+## TASK I4 ROUND 7 -- HOW MANY COLLIDERS EACH PLACEMENT BAKES, in the same order
+## as `placements`, read at `seal()` off the same descriptor the box above comes
+## from (`EnvironmentAssetDescriptor.collision_piece_count`).
+##
+## SAME CONTRACT AS `placement_bounds`: derived, unauthored, unserialised, in no
+## signature. It exists because "does a body walk into this module" is a
+## different question from "does a body see it", and until round 7 the fabric
+## layer could only ask the second: the r6 review measured three of the eight
+## ruled pinch exceptions carrying a BAKED SLAB in the body column over a public
+## street, which no box-only census could tell from a hanging ivy a body walks
+## straight through.
+var placement_collision_pieces: PackedInt32Array = PackedInt32Array()
 ## Exact authored visual bounds expanded only by a module contract's declared
 ## construction clearance. Unlike lattice occupancy this envelope exists to
 ## stop unrelated meshes from interpenetrating between otherwise valid cells.
@@ -201,6 +213,7 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 	var placement_ids: Dictionary = {}
 	var has_bounds := false
 	placement_bounds.clear()
+	placement_collision_pieces.clear()
 	for placement: Dictionary in placements:
 		var placement_id := StringName(placement.get("id", ""))
 		var asset_id := StringName(placement.get("asset_id", ""))
@@ -217,6 +230,7 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 		placement_ids[placement_id] = true
 		var bounds := transform * descriptor.measured_aabb
 		placement_bounds.append(bounds)
+		placement_collision_pieces.append(descriptor.collision_piece_count)
 		local_bounds = bounds if not has_bounds else local_bounds.merge(bounds)
 		has_bounds = true
 	var run_ids: Dictionary = {}
