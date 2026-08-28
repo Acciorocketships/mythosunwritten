@@ -48,6 +48,20 @@ var sockets: Array[Dictionary] = []
 var entrances: Array[Dictionary] = []
 var bearing_parent_count: int
 var local_bounds := AABB()
+## TASK I4 ROUND 6 -- ONE BOX PER PLACEMENT, in the same order as `placements`,
+## measured at `seal()` off the same `descriptor.measured_aabb` the merged
+## `local_bounds` above is built from.
+##
+## DERIVED AND NOT AUTHORED. No recipe writes it, nothing reads it before the
+## seal, and it enters no signature: `construction_signature()` digests unit
+## ids, recipe ids, origins, yaws, parents, bonds and suppressions, and
+## `local_bounds` is still the merge it always was. It exists because the merge
+## is the ONE fact the fabric layer had about a recipe's geometry, and the merge
+## cannot tell a door standing a metre outside its room's envelope from the room
+## itself -- which is what left a planter inside a wall, a gallery board over a
+## deck a body stands on, and a floor board lying on a lawn (task I4 round 5's
+## own first concern, all three of them one defect).
+var placement_bounds: Array[AABB] = []
 ## Exact authored visual bounds expanded only by a module contract's declared
 ## construction clearance. Unlike lattice occupancy this envelope exists to
 ## stop unrelated meshes from interpenetrating between otherwise valid cells.
@@ -186,6 +200,7 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 			return false
 	var placement_ids: Dictionary = {}
 	var has_bounds := false
+	placement_bounds.clear()
 	for placement: Dictionary in placements:
 		var placement_id := StringName(placement.get("id", ""))
 		var asset_id := StringName(placement.get("asset_id", ""))
@@ -201,6 +216,7 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 			return false
 		placement_ids[placement_id] = true
 		var bounds := transform * descriptor.measured_aabb
+		placement_bounds.append(bounds)
 		local_bounds = bounds if not has_bounds else local_bounds.merge(bounds)
 		has_bounds = true
 	var run_ids: Dictionary = {}

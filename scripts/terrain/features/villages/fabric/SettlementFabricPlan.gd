@@ -371,10 +371,18 @@ func asset_ids() -> Array[StringName]:
 
 
 func expanded_placements() -> Array[Dictionary]:
+	## TASK I4 ROUND 6 adds `bounds`: the placement's own visual box in WORLD
+	## space, `unit.transform() * recipe.placement_bounds[i]`. It is derived from
+	## the same two facts the transform is -- the unit's pose and the sealed
+	## recipe's measured box -- so it carries no new authority and cannot move a
+	## signature; it is here because every caller that wanted "where is this
+	## module really" was otherwise left with the recipe's ONE merged envelope.
 	var out: Array[Dictionary] = []
 	for unit_value: FabricUnit in units:
 		var unit_recipe := _recipes[unit_value.recipe_id] as FabricRecipe
-		for placement: Dictionary in unit_recipe.placements:
+		var unit_transform := unit_value.transform()
+		for index in unit_recipe.placements.size():
+			var placement := unit_recipe.placements[index]
 			if unit_value.suppressed_placement_ids.has(
 					StringName(placement.id)):
 				continue
@@ -382,8 +390,10 @@ func expanded_placements() -> Array[Dictionary]:
 				"stable_id": StringName("%s/%s" % [unit_value.stable_id,
 					StringName(placement.id)]),
 				"asset_id": StringName(placement.asset_id),
-				"transform": unit_value.transform() *
+				"transform": unit_transform *
 					(placement.transform as Transform3D),
+				"bounds": unit_transform * unit_recipe.placement_bounds[index] \
+					if index < unit_recipe.placement_bounds.size() else AABB(),
 			})
 	return out
 
