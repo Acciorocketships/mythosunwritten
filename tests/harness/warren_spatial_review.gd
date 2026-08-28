@@ -1513,8 +1513,11 @@ func _maze_plaza_views() -> Array[Dictionary]:
 		_fabric.surface_plan)
 	var walked := SettlementFabricAssembler.walked_floor_cells(
 		_fabric.surface_plan)
+	# TASK I4 ROUND 6. The camera reads the same ground the payload dresses: a
+	# cap a building already floors is not a piece of the square.
 	var garden := SettlementFabricAssembler.maze_garden_cells(retained, solids,
-		paved, plinths, walked)
+		paved, plinths, walked, {},
+		SettlementFabricAssembler.maze_module_footprints(_fabric))
 	var plaza := SettlementFabricAssembler.maze_village_green_cells(garden,
 		walked)
 	if plaza.is_empty():
