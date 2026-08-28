@@ -403,6 +403,9 @@ func _run() -> void:
 	# TASK I4 ROUND 7, r6 REVIEW B2 and I6. The row the matrix did not have. See
 	# `_measure_street_pinches`.
 	var pinches := _new_pinch_tally()
+	# TASK I4 ROUND 8, PART 3. Why a town's square has no entrance, censused
+	# rather than argued -- see `_measure_green_reach`.
+	var greens := _new_green_reach_tally()
 	for city_seed: int in seeds:
 		for scale_id: StringName in scale_ids:
 			attempted += 1
@@ -621,8 +624,10 @@ func _run() -> void:
 					# TASK I4 ROUND 7. And the census the clearance row is blind
 					# to BY CONSTRUCTION, on all 44 towns rather than on the four
 					# the composition suite walks.
-					_measure_street_pinches(pinches, city_seed,
-						profile.scale_id, fabric)
+					await _measure_street_pinches(pinches, city_seed,
+						profile.scale_id, fabric, cache)
+					_measure_green_reach(greens, city_seed, profile.scale_id,
+						fabric)
 				continue
 			var failure := WarrenVolumetricSolver.last_failure
 			rows.append({"seed": city_seed, "scale": String(profile.scale_id),
@@ -666,6 +671,7 @@ func _run() -> void:
 		skin_by_group[ADDED_STONE_GROUP] as Dictionary)
 	_print_clearance_result(clearance)
 	_print_pinch_result(pinches)
+	_print_green_reach_result(greens)
 	# The matrix is written BEFORE the clearance pin is judged. The summary is
 	# evidence about composition and the corpus gate reads it; a shut street is
 	# a separate question and must not cost the gate its matrix.
@@ -1099,14 +1105,18 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 
 
 static func _new_pinch_tally() -> Dictionary:
-	## TASK I4 ROUND 7, r6 REVIEW B2 and I6.
+	## TASK I4 ROUND 7, r6 REVIEW B2 and I6. TASK I4 ROUND 8 adds the physics half:
+	## `centre_blocked` and `worst_intrusion`.
 	return {"towns": 0, "walked": 0, "pinched": 0, "colliding": 0,
 		"worst_town_pinched": 0, "worst_town_colliding": 0,
-		"assets": {}, "colliding_towns": [] as Array[String]}
+		"centre_blocked": 0, "gates_blocked": 0, "worst_intrusion": 0.0,
+		"assets": {}, "colliding_towns": [] as Array[String],
+		"blockers": [] as Array[String]}
 
 
 func _measure_street_pinches(tally: Dictionary, city_seed: int,
-		scale_id: StringName, fabric: SettlementFabricPlan) -> void:
+		scale_id: StringName, fabric: SettlementFabricPlan,
+		cache: EnvironmentRenderCache) -> void:
 	## THE ROW THE MATRIX DID NOT HAVE, and the r6 review's B2 is why it exists.
 	##
 	## The clearance row above commits `terrace_retaining_payload` -- the town's
@@ -1158,6 +1168,7 @@ func _measure_street_pinches(tally: Dictionary, city_seed: int,
 	if not colliding.is_empty():
 		(tally.colliding_towns as Array[String]).append("%s (%d)" % [label,
 			colliding.size()])
+		await _measure_pinch_bodies(tally, label, fabric, colliding, walked, cache)
 	tally.towns += 1
 	tally.walked += walked.size()
 	tally.pinched += pinched
@@ -1165,6 +1176,308 @@ func _measure_street_pinches(tally: Dictionary, city_seed: int,
 	tally.worst_town_pinched = maxi(int(tally.worst_town_pinched), pinched)
 	tally.worst_town_colliding = maxi(int(tally.worst_town_colliding),
 		colliding.size())
+
+
+## TASK I4 ROUND 8. How finely the pin grid samples a walked cell's plan when it
+## measures how far a collider reaches into it. 21 x 21 over 1.5 m is one sample
+## every 75 mm, which resolves an eave's edge an order finer than the 0.25 m the
+## burial rules call a burial and costs 441 shape queries per pinch on the 0.4
+## pinches per town this matrix really has.
+const PINCH_INTRUSION_STEPS := 21
+## The most a collider over a street may reach IN from that street's own edge
+## before it stops being an eave and starts being a wall.
+##
+## DERIVED, NOT CHOSEN, and the derivation is the whole claim: a body standing on
+## the cell's centreline occupies `NATURAL_ROCK_CUT_BODY_WIDTH` of it, so an eave
+## reaching in less than HALF that width from the edge cannot touch it whatever
+## else is true. The ceiling is therefore the geometric statement the physics
+## queries beside it make one case at a time, and it holds for towns nobody has
+## rendered.
+##
+## Measured on the 18 cases round 8 determined: 0.346 m for the two
+## `lpfv.fabric.roof.compact.*` eaves, 0.294 m for `sfv.fabric.roof.window.002`
+## and 0.220 m for `.004` -- 0.051 m of margin at the worst, which is real and is
+## not much. A rise here means a roof has started oversailing streets rather than
+## clipping their edges.
+const PINCH_INTRUSION_CEILING := SettlementFabricAssembler \
+	.NATURAL_ROCK_CUT_BODY_WIDTH * 0.5
+
+
+func _measure_pinch_bodies(tally: Dictionary, label: String,
+		fabric: SettlementFabricPlan, colliding: Array[Dictionary],
+		walked: Dictionary, cache: EnvironmentRenderCache) -> void:
+	## TASK I4 ROUND 8, PART 2 -- WHAT A BODY ACTUALLY MEETS, asked of the physics
+	## server rather than inferred from a box.
+	##
+	## `maze_street_collider_pinches` gates on the asset's baked PIECE COUNT and
+	## tests its VISUAL box, which contains the authored hull -- so it is one-sided
+	## in the safe direction and a zero there is a real zero. Round 7 said so and
+	## filed the 18 survivors as its top concern precisely because the other
+	## direction was unmeasured: a hit means "this asset bakes collision AND its
+	## geometry is in the way", and a roof's geometry is mostly the slope over the
+	## eave rather than the eave itself.
+	##
+	## SO THIS COMMITS THE OFFENDING MODULE'S OWN BAKED SHAPES and asks two
+	## questions the box cannot answer:
+	##
+	## * CAN A BODY STAND ON THE STREET'S CENTRELINE? That is the difference
+	##   between an eave brushing a corner and a roof blocking a street, and it is
+	##   the number this row pins at zero.
+	## * DOES THE STREET STILL PASS? Every gate the pinched cell owns, swept along
+	##   its own width exactly as the clearance row sweeps one -- because two cells
+	##   can each admit a body while the doorway between them is shut.
+	##
+	## AND HOW FAR IN IT REACHES, off a pin grid rather than off the capsule: a
+	## capsule convolves the hull with its own 0.397 m radius, which is the right
+	## instrument for "can somebody stand here" and the wrong one for "how much of
+	## this street is under an eave".
+	##
+	## ITS OWN COMMIT, never the clearance row's. That row's scene is
+	## `terrace_retaining_payload` and its numbers are pinned; dropping a
+	## building's
+	## roof into it would move a pinned row to answer a different question.
+	var placements := fabric.expanded_placements()
+	var body_half := SettlementFabricAssembler.NATURAL_ROCK_CUT_BODY_WIDTH * 0.5
+	var body_height := SettlementFabricAssembler.NATURAL_ROCK_CUT_BODY_HEIGHT
+	var payload := EnvironmentInstancePayload.new()
+	var staged: Dictionary = {}
+	for pinch: Dictionary in colliding:
+		var cell := pinch.cell as Vector3i
+		var asset := StringName(pinch.asset)
+		var floor_y := float(cell.y) * FabricRecipe.CELL_SIZE
+		var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
+		for placement: Dictionary in placements:
+			if StringName(placement.asset_id) != asset \
+					or int(placement.get("collision_pieces", 0)) <= 0:
+				continue
+			var box := placement.get("bounds", AABB()) as AABB
+			if not box.has_volume():
+				continue
+			var rise := box.position.y - floor_y
+			if rise <= SettlementFabricAssembler.FOOTPRINT_EPSILON \
+					or rise >= body_height:
+				continue
+			if box.position.x >= centre.x + body_half \
+					or box.position.x + box.size.x <= centre.x - body_half \
+					or box.position.z >= centre.z + body_half \
+					or box.position.z + box.size.z <= centre.z - body_half:
+				continue
+			var stable := StringName(placement.stable_id)
+			if staged.has(stable):
+				break
+			staged[stable] = true
+			payload.add(asset, placement.transform as Transform3D, Color.WHITE,
+				stable)
+			break
+	if payload.instance_count == 0:
+		return
+	cache.prepare(payload.asset_ids())
+	var root := Node3D.new()
+	get_root().add_child(root)
+	EnvironmentCollisionBuilder.commit(root, payload, cache, &"SweepPinch")
+	await physics_frame
+	await physics_frame
+	var space := get_root().world_3d.direct_space_state
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = PLAYER_CAPSULE_RADIUS
+	capsule.height = PLAYER_CAPSULE_HEIGHT
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = capsule
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	query.margin = CLEARANCE_MARGIN
+	# A hair-thin column over the body's own height: the hull's real plan
+	# footprint inside the cell, undistorted by a capsule's radius.
+	var pin := BoxShape3D.new()
+	pin.size = Vector3(0.02, body_height - 0.04, 0.02)
+	var pin_query := PhysicsShapeQueryParameters3D.new()
+	pin_query.shape = pin
+	pin_query.collide_with_areas = false
+	pin_query.collide_with_bodies = true
+	pin_query.margin = 0.0
+	var half := FabricRecipe.CELL_SIZE * 0.5
+	for pinch: Dictionary in colliding:
+		var cell := pinch.cell as Vector3i
+		var floor_y := float(cell.y) * FabricRecipe.CELL_SIZE
+		var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
+		var stance := Vector3(centre.x, floor_y + PLAYER_CAPSULE_HEIGHT * 0.5 \
+			+ CLEARANCE_MARGIN + CLEARANCE_FLOOR_LIFT, centre.z)
+		query.transform = Transform3D(Basis.IDENTITY, stance)
+		var centre_blocked := not space.intersect_shape(query, 1).is_empty()
+		var gates := 0
+		var gates_blocked := 0
+		for direction: Vector3i in [Vector3i(1, 0, 0), Vector3i(-1, 0, 0),
+				Vector3i(0, 0, 1), Vector3i(0, 0, -1)]:
+			if not walked.has(cell + direction):
+				continue
+			gates += 1
+			if _clearance_of_gate(space, query, cell, direction) < 0:
+				gates_blocked += 1
+		var nearest := INF
+		var occupied := 0
+		for ix in PINCH_INTRUSION_STEPS:
+			for iz in PINCH_INTRUSION_STEPS:
+				var dx := lerpf(-half, half,
+					float(ix) / float(PINCH_INTRUSION_STEPS - 1))
+				var dz := lerpf(-half, half,
+					float(iz) / float(PINCH_INTRUSION_STEPS - 1))
+				pin_query.transform = Transform3D(Basis.IDENTITY,
+					Vector3(centre.x + dx, floor_y + body_height * 0.5,
+						centre.z + dz))
+				if space.intersect_shape(pin_query, 1).is_empty():
+					continue
+				occupied += 1
+				nearest = minf(nearest, Vector2(dx, dz).length())
+		# How far IN from the cell's own edge the hull reaches, along the shortest
+		# line to its centre. `half` when nothing is in the cell at all, which is
+		# the honest reading of a visual box that overstated its hull.
+		var intrusion := 0.0 if nearest == INF else half - nearest
+		print(("SWEEP %s PINCH_BODY cell=%s asset=%s rise=%.3f " \
+			+ "centre_blocked=%s gates=%d gates_blocked=%d cover=%d/%d " \
+			+ "intrusion=%.3f") % [label, str(cell), String(pinch.asset),
+			float(pinch.rise), str(centre_blocked), gates, gates_blocked,
+			occupied, PINCH_INTRUSION_STEPS * PINCH_INTRUSION_STEPS, intrusion])
+		if centre_blocked or gates_blocked > 0:
+			(tally.blockers as Array[String]).append("%s %s %s" % [label,
+				str(cell), String(pinch.asset)])
+		tally.centre_blocked += int(centre_blocked)
+		tally.gates_blocked += gates_blocked
+		tally.worst_intrusion = maxf(float(tally.worst_intrusion), intrusion)
+	root.queue_free()
+	await process_frame
+
+
+## TASK I4 ROUND 8, PART 3. How far a street may be from a garden run before the
+## run is not a square with a missing doorway but a rooftop yard nobody can get
+## to. Three bands is 4.5 m of climb either way, which is two full switchback
+## stairs -- past that there is nothing a mouth, a step or a stair could join.
+const GREEN_REACH_BANDS := 3
+
+
+static func _new_green_reach_tally() -> Dictionary:
+	return {"towns": 0, "garden": 0, "runs": 0, "entered": 0, "stepped": 0,
+		"isolated": 0, "towns_entered": 0, "towns_stepped_only": 0,
+		"towns_isolated": 0, "recoverable": [] as Array[String]}
+
+
+func _measure_green_reach(tally: Dictionary, city_seed: int,
+		scale_id: StringName, fabric: SettlementFabricPlan) -> void:
+	## TASK I4 ROUND 8, PART 3 -- WHY THE SQUARE HAS NO ENTRANCE, as a number
+	## instead of an argument.
+	##
+	## `maze_plaza_entries` calls a garden cell ENTERED when a walked cell stands
+	## one band up and one cell across, because that is where the two surfaces are
+	## level to the millimetre: garden ground is the TOP of its cell, a walked
+	## floor
+	## is the BOTTOM of its own. On 15 of 24 compact and standard towns NO garden
+	## run is entered anywhere, the designation falls through to `largest`, and the
+	## town keeps a green nobody can walk onto. Rounds 6 and 7 both tried to move
+	## that from the plot layer and both failed honestly; round 8 was ruled to try
+	## the fabric side and needs to know what the fabric side is even looking at.
+	##
+	## SO EVERY RUN IS CLASSIFIED BY ITS DISTANCE FROM A STREET, in bands:
+	##
+	## * ENTERED -- a street meets it at grade. Nothing to fix.
+	## * STEPPED -- no street at grade, but one stands one band off a lateral
+	##   neighbour: a 1.5 m rise, which is three times `TraversalEnvelope.
+	##   MAX_FINISHED_STEP` and therefore wants a STAIR rather than a step. The
+	##   stair vocabulary exists (`SettlementFabricProgram.STAIR_HALF` rises
+	##   exactly
+	##   one band) but it is a PLOT recipe placed into a reserved stair void and
+	##   turned into a walk surface by `PublicRealmSurfaceSolver` -- so the fabric
+	##   layer, which compiles against a surface plan that is already sealed,
+	##   cannot
+	##   put a walkable one there. This count is the size of the prize a plot-layer
+	##   round would be playing for.
+	## * ISOLATED -- no street within GREEN_REACH_BANDS of any of its edges, up or
+	##   down. Nothing joins these to the town at all, and they are the honest
+	##   view-gardens: 7 of 7/large's 8 runs, 81 of its 87 garden cells.
+	##
+	## Read-only. It derives what it needs and touches nothing.
+	var retained := fabric.retained_terrace_cells
+	var solids := fabric.transformed_cells(&"solid")
+	var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+		fabric.transformed_cells(&"terrain_bearing"))
+	var paved := SettlementFabricAssembler.public_floor_cells(fabric.surface_plan)
+	var walked := SettlementFabricAssembler.walked_floor_cells(fabric.surface_plan)
+	var footprints := SettlementFabricAssembler.maze_module_footprints(fabric)
+	var shell := SettlementFabricAssembler.maze_skin_shell(retained, solids,
+		paved, plinths, walked, footprints)
+	var garden := SettlementFabricAssembler.maze_garden_cells(retained, solids,
+		paved, plinths, walked, shell, footprints)
+	var seen: Dictionary = {}
+	var cells: Array[Vector3i] = []
+	cells.assign(garden.keys())
+	cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		return "%d/%d/%d" % [a.y, a.z, a.x] < "%d/%d/%d" % [b.y, b.z, b.x])
+	var entered := 0
+	var stepped := 0
+	var isolated := 0
+	var runs := 0
+	var best_stepped := 0
+	for start: Vector3i in cells:
+		if seen.has(start):
+			continue
+		var run: Dictionary = {start: true}
+		var frontier: Array[Vector3i] = [start]
+		seen[start] = true
+		while not frontier.is_empty():
+			var cell: Vector3i = frontier.pop_back()
+			for step: Vector3i in SettlementFabricAssembler.FACE_DIRECTIONS:
+				var probe := cell + step
+				if garden.has(probe) and not seen.has(probe):
+					seen[probe] = true
+					run[probe] = true
+					frontier.append(probe)
+		runs += 1
+		var entries := SettlementFabricAssembler.maze_plaza_entries(run, walked)
+		if not entries.is_empty():
+			entered += 1
+			continue
+		# The level junction is `cell + step + UP`; one band either side of it is a
+		# stair's worth of rise, and GREEN_REACH_BANDS either side is out of reach.
+		var nearest := GREEN_REACH_BANDS + 1
+		for cell_value: Variant in run.keys():
+			var cell := cell_value as Vector3i
+			for step: Vector3i in SettlementFabricAssembler.FACE_DIRECTIONS:
+				for lift in range(-GREEN_REACH_BANDS, GREEN_REACH_BANDS + 1):
+					if walked.has(cell + step + Vector3i.UP * (1 + lift)):
+						nearest = mini(nearest, absi(lift))
+		if nearest <= 1:
+			stepped += 1
+			best_stepped = maxi(best_stepped, run.size())
+		elif nearest > GREEN_REACH_BANDS:
+			isolated += 1
+	var label := "%d/%s" % [city_seed, String(scale_id)]
+	print(("SWEEP seed=%d scale=%s GREEN_REACH garden=%d runs=%d entered=%d " \
+		+ "stepped=%d isolated=%d best_stepped=%d") % [city_seed,
+		String(scale_id), garden.size(), runs, entered, stepped, isolated,
+		best_stepped])
+	if entered == 0 and stepped > 0:
+		# The towns a stair at the green's edge would actually buy something on.
+		(tally.recoverable as Array[String]).append("%s (%d cells)" % [label,
+			best_stepped])
+		tally.towns_stepped_only += 1
+	tally.towns_entered += int(entered > 0)
+	tally.towns_isolated += int(entered == 0 and stepped == 0 and runs > 0)
+	tally.towns += 1
+	tally.garden += garden.size()
+	tally.runs += runs
+	tally.entered += entered
+	tally.stepped += stepped
+	tally.isolated += isolated
+
+
+func _print_green_reach_result(tally: Dictionary) -> void:
+	if int(tally.towns) == 0:
+		return
+	print(("SWEEP RESULT green_reach towns=%d garden=%d runs=%d entered=%d " \
+		+ "stepped=%d isolated=%d towns_entered=%d towns_stepped_only=%d " \
+		+ "towns_isolated=%d recoverable=[%s]") % [int(tally.towns),
+		int(tally.garden), int(tally.runs), int(tally.entered),
+		int(tally.stepped), int(tally.isolated), int(tally.towns_entered),
+		int(tally.towns_stepped_only), int(tally.towns_isolated),
+		", ".join(PackedStringArray(tally.recoverable))])
 
 
 func _print_pinch_result(tally: Dictionary) -> void:
@@ -1180,11 +1493,32 @@ func _print_pinch_result(tally: Dictionary) -> void:
 			int((tally.assets as Dictionary)[StringName(asset_name)])])
 	print(("SWEEP RESULT street_pinch towns=%d walked=%d pinched=%d " \
 		+ "colliding=%d worst_town_pinched=%d worst_town_colliding=%d " \
-		+ "assets=[%s] colliding_towns=[%s]") % [int(tally.towns),
+		+ "centre_blocked=%d gates_blocked=%d worst_intrusion=%.3f " \
+		+ "assets=[%s] colliding_towns=[%s] blockers=[%s]") % [int(tally.towns),
 		int(tally.walked), int(tally.pinched), int(tally.colliding),
 		int(tally.worst_town_pinched), int(tally.worst_town_colliding),
+		int(tally.centre_blocked), int(tally.gates_blocked),
+		float(tally.worst_intrusion),
 		" ".join(assets),
-		", ".join(PackedStringArray(tally.colliding_towns))])
+		", ".join(PackedStringArray(tally.colliding_towns)),
+		", ".join(PackedStringArray(tally.blockers))])
+	# TASK I4 ROUND 8, PART 2 -- THE RULED EXCEPTION'S OWN TEETH. `colliding` is a
+	# census of visual boxes and stays one; what a body MEETS is pinned here, and
+	# both halves are needed: the count says how much of this class the corpus
+	# carries, and these two say it is still an eave rather than a wall.
+	if int(tally.centre_blocked) > 0 or int(tally.gates_blocked) > 0 \
+			or float(tally.worst_intrusion) > PINCH_INTRUSION_CEILING:
+		print(("SWEEP ERROR street_pinch %d collider(s) over a street block the " \
+			+ "centre of a walked cell and %d shut a crossing [%s]; the deepest " \
+			+ "reaches %.3f m in from the cell's edge against a ceiling of " \
+			+ "%.3f m. The ROOF class is a ruled exception only while every one " \
+			+ "of them brushes a street's edge: a centre blocker, a shut " \
+			+ "gate or " \
+			+ "a deeper reach is a walkability DEFECT and wants the eave " \
+			+ "suppressed or the junction's roof variant swapped") % [
+			int(tally.centre_blocked), int(tally.gates_blocked),
+			", ".join(PackedStringArray(tally.blockers)),
+			float(tally.worst_intrusion), PINCH_INTRUSION_CEILING])
 
 
 static func _new_clearance_tally() -> Dictionary:

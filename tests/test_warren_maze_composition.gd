@@ -661,7 +661,21 @@ const DECOR_CORPUS_TYPE_FLOOR := 12
 ## walked cells, worst town 3, and the class is `sfv.fabric.ivy.001` (5),
 ## `sfm.stall.veg_string.001` (4), `sfv.fabric.planter.003` (2) and
 ## `sfv.fabric.sign.tavern.001` (1) -- the rest of that row's histogram is the
-## COLLIDING class, which is a defect and is named there.
+## COLLIDING class.
+##
+## TASK I4 ROUND 8 DETERMINED WHAT THAT COLLIDING CLASS IS, with the physics
+## body rather than with a box. All 18 of them are ROOFS at 1.500-1.720 m over a
+## street on 9 towns, and `warren_maze_mode_sweep._measure_pinch_bodies` commits
+## each one's own baked shapes and asks the player's capsule: NONE of them
+## blocks the centre of the cell it hangs over and NONE shuts a crossing. They
+## are EAVES BRUSHING A STREET'S OUTER CORNERS -- the deepest reaches 0.346 m in
+## from the cell edge against a body whose own footprint claims 0.397 m either
+## side of the centreline -- and the row now pins `centre_blocked`,
+## `gates_blocked` and `worst_intrusion` beside the count, the last against a
+## ceiling DERIVED from that half-width rather than fitted to the
+## measurement. The count stays a census of VISUAL boxes,
+## which is what makes it one-sided and safe; the three physics numbers are what
+## say the class is still a look rather than a wall.
 ##
 ## The ceiling is the CORPUS worst, not the matrix worst, because the assertion
 ## it feeds walks the corpus; the matrix's own worst town is 3, and the sweep row
@@ -6561,8 +6575,14 @@ func test_the_perimeter_stands_its_frontage_on_open_ground() -> void:
 			fabric.surface_plan)
 		var walked := SettlementFabricAssembler.walked_floor_cells(
 			fabric.surface_plan)
+		# TASK I4 ROUND 8. The same cladding the payload hands the rule, so the
+		# sites this walks carry the stand-off the pieces really stand at.
+		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+			fabric.transformed_cells(&"terrain_bearing"))
 		var sites := SettlementFabricAssembler.maze_perimeter_frontage_sites(
-			retained, solids, paved, walked, fabric.world_seed)
+			retained, solids, paved, walked, fabric.world_seed,
+			SettlementFabricAssembler.maze_skin_panel_boxes(retained, solids,
+				paved, plinths))
 		var columns: Dictionary = {}
 		var ground_band := 1 << 30
 		for cell_value: Variant in retained.keys():
@@ -6662,6 +6682,175 @@ func test_the_perimeter_stands_its_frontage_on_open_ground() -> void:
 	assert_gt(dressed_towns, 0,
 		("no town in the corpus dressed its perimeter; the edge is meant to " \
 			+ "read as buildings meeting meadow"))
+
+
+func test_the_frontage_stands_clear_of_the_town_s_own_cladding() -> void:
+	## TASK I4 ROUND 8, PART 1 -- the r7 report's concern 2, closed and pinned.
+	##
+	## `PERIMETER_FRONTAGE_DEPTH` pushes each piece out by its own half-depth so
+	## its VISIBLE BACK PLANE lands on the wall it fronts -- and the wall that rule
+	## means is the LATTICE BOUNDARY. Where the town's edge is a building that is
+	## exactly right. Where it is the retained mass, the cladding this same compile
+	## lays stands in FRONT of that boundary, and the piece was landing its back
+	## plane inside it: 16 frontage + 15 stall-goods pieces on 12/compact, 15 + 12
+	## on 4/compact, 16 + 21 on 3/standard, 20 + 20 on 9/standard, the deepest
+	## 0.659 m in. Round 7 counted that and could not fix it;
+	## `_frontage_window_offsets` is the fix and this is its arithmetic.
+	##
+	## TWO HALVES, because the rule has two numbers and each has its own way of
+	## being wrong:
+	##
+	## 1. THE STAND-OFF IS FREE GROUND. `_frontage_window_is_free` clears
+	##    `ceil(reach / CELL_SIZE)` whole cells in front of every window, and the
+	##    stand-off spends part of that slack. If a re-bake grew a module past its
+	##    slack the rule would push a piece into ground nobody proved unwalked, and
+	##    the first anybody would know is a stall in a street -- the exact defect
+	##    round 2 fixed. Asserted per POOL, because the gate is per pool.
+	## 2. THE SHIFT STAYS ON THAT GROUND TOO. Measured on the towns themselves:
+	##    every piece the payload lays -- frontage and the goods under its canopies
+	##    -- lies inside the box its own window's gate cleared. That is the pin the
+	##    stand-off's one-sidedness rests on, and it is measured off the payload
+	##    rather than off the rule that wrote it.
+	var pools: Array[Array] = [
+		SettlementFabricAssembler.PERIMETER_WIDE_FRONTAGE,
+		SettlementFabricAssembler.PERIMETER_NARROW_FRONTAGE,
+		SettlementFabricAssembler.PERIMETER_SINGLE_FRONTAGE]
+	for pool: Array in pools:
+		var reach := 0.0
+		for asset_value: Variant in pool:
+			reach = maxf(reach, (SettlementFabricAssembler \
+				.PERIMETER_FRONTAGE_CLEARANCE[StringName(asset_value)] \
+				as Vector3).z)
+		var cleared := float(ceili(reach / FabricRecipe.CELL_SIZE)) \
+			* FabricRecipe.CELL_SIZE
+		print("MAZE_FRONTAGE_STANDOFF pool=%s reach=%.4f cleared=%.4f slack=%.4f" \
+			% [str(pool), reach, cleared, cleared - reach \
+			- SettlementFabricAssembler.PERIMETER_FRONTAGE_SKIN_STANDOFF])
+		assert_gte(cleared, reach \
+			+ SettlementFabricAssembler.PERIMETER_FRONTAGE_SKIN_STANDOFF,
+			("the %s pool reaches %.3f m and its gate clears %.3f m, so a " \
+				+ "%.3f m stand-off would push a piece past the ground that " \
+				+ "gate " \
+				+ "proved unwalked") % [str(pool), reach, cleared,
+				SettlementFabricAssembler.PERIMETER_FRONTAGE_SKIN_STANDOFF])
+	var catalog := EnvironmentCatalog.load_default()
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var retained := fabric.retained_terrace_cells
+		var solids := fabric.transformed_cells(&"solid")
+		var paved := SettlementFabricAssembler.public_floor_cells(
+			fabric.surface_plan)
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+			fabric.transformed_cells(&"terrain_bearing"))
+		var sites := SettlementFabricAssembler.maze_perimeter_frontage_sites(
+			retained, solids, paved, walked, fabric.world_seed,
+			SettlementFabricAssembler.maze_skin_panel_boxes(retained, solids,
+				paved, plinths))
+		# The ground each window's gate cleared, keyed by the id the payload
+		# stamps -- which is the one handle the two sides share.
+		var ground: Dictionary = {}
+		var moved := 0
+		var shifted := 0
+		for site: Dictionary in sites:
+			var window := site.cells as Array
+			var direction := site.direction as Vector3i
+			var head := window[0] as Vector3i
+			var tail := window[window.size() - 1] as Vector3i
+			var envelope: Vector3 = SettlementFabricAssembler \
+				.PERIMETER_FRONTAGE_CLEARANCE[StringName(site.asset)]
+			var offsets := site.get("offsets", Vector2.ZERO) as Vector2
+			moved += int(offsets.x > 0.0)
+			shifted += int(absf(offsets.y) > 0.0)
+			var centre := (Vector3(head.x, 0.0, head.z) \
+				+ Vector3(tail.x, 0.0, tail.z)) * 0.5 * FabricRecipe.CELL_SIZE
+			var spread := float(window.size() - 1) * FabricRecipe.CELL_SIZE * 0.5
+			var overhang := 0
+			while envelope.x > spread \
+					+ (float(overhang) + 0.5) * FabricRecipe.CELL_SIZE:
+				overhang += 1
+			var lateral := spread + (float(overhang) + 0.5) \
+				* FabricRecipe.CELL_SIZE
+			var depth := float(ceili(envelope.z / FabricRecipe.CELL_SIZE)) \
+				* FabricRecipe.CELL_SIZE
+			var top := float(ceili(envelope.y / FabricRecipe.CELL_SIZE)) \
+				* FabricRecipe.CELL_SIZE
+			var outward := Vector3(direction)
+			var plane := centre + outward * (FabricRecipe.CELL_SIZE * 0.5)
+			var low := plane
+			var high := plane + outward * depth
+			low.y = float(site.band) * FabricRecipe.CELL_SIZE
+			high.y = low.y + top
+			if direction.x != 0:
+				low.z = centre.z - lateral
+				high.z = centre.z + lateral
+			else:
+				low.x = centre.x - lateral
+				high.x = centre.x + lateral
+			ground[Vector4i(head.x, int(site.band), head.z, head.y)] = \
+				AABB(low.min(high), (high - low).abs())
+		var payload := SettlementFabricAssembler.terrace_retaining_payload(fabric)
+		var pieces := 0
+		var outside := 0
+		var worst := 0.0
+		var first := ""
+		for asset_value: Variant in payload.batches.keys():
+			var asset := StringName(asset_value)
+			var descriptor := catalog.descriptor(asset)
+			if descriptor == null:
+				continue
+			var batch := payload.batches[asset] as Dictionary
+			var transforms := batch.get("transforms", []) as Array
+			var ids := batch.get("ids", []) as Array
+			for index in ids.size():
+				var id := String(ids[index])
+				if not id.begins_with("maze-frontage/") \
+						and not id.begins_with("maze-stall-goods/"):
+					continue
+				var parts := id.split("/", false)
+				if parts.size() < 5:
+					continue
+				var key := Vector4i(int(parts[1]), int(parts[2]), int(parts[3]),
+					int(parts[4]))
+				if not ground.has(key):
+					continue
+				pieces += 1
+				var box: AABB = (transforms[index] as Transform3D) \
+					* (descriptor.measured_aabb as AABB)
+				var cleared := ground[key] as AABB
+				var over := maxf(maxf(cleared.position.x - box.position.x,
+					box.position.x + box.size.x - cleared.position.x \
+						- cleared.size.x),
+					maxf(cleared.position.z - box.position.z,
+						box.position.z + box.size.z - cleared.position.z \
+							- cleared.size.z))
+				if over > SettlementFabricAssembler.FOOTPRINT_EPSILON:
+					outside += 1
+					if first.is_empty():
+						first = "%s (%s)" % [id, String(asset)]
+				worst = maxf(worst, over)
+		print(("MAZE_FRONTAGE_GROUND %s sites=%d stood_off=%d shifted=%d " \
+			+ "pieces=%d outside=%d worst=%.4f first=%s") % [_label(outcome),
+			sites.size(), moved, shifted, pieces, outside, worst, first])
+		assert_gt(pieces, 0,
+			"%s must lay a frontage for this pin to mean anything" \
+				% _label(outcome))
+		assert_eq(outside, 0,
+			("%s stands %d frontage piece(s) outside the ground its own " \
+				+ "window's " \
+				+ "gate cleared -- worst %.3f m, first %s. The stand-off may " \
+				+ "spend " \
+				+ "that gate's slack and may not exceed it") % [_label(outcome),
+				outside, worst, first])
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
 
 
 func test_no_lawn_is_laid_over_a_building() -> void:
@@ -9018,9 +9207,19 @@ func test_the_big_towns_carry_the_round_s_own_zeroes() -> void:
 	## because the 48-town matrix carries two towns whose collider over a street
 	## is a ROOF (1/standard `sfv.fabric.roof.window.004` at 1.720 m, 2/large
 	## `lpfv.fabric.roof.compact.orange.06` at 1.500 m). A roof is not a module a
-	## building can be built without, so closing those is a vocabulary change this
-	## round may not make; the sweep's `street_pinch` row is where they are
+	## building can be built without, so closing those is a vocabulary change
+	## round 7 could not make; the sweep's `street_pinch` row is where they are
 	## counted, and this is where they are named.
+	##
+	## TASK I4 ROUND 8 DETERMINED THAT CLASS RATHER THAN CLOSING IT, and the
+	## determination is what makes leaving it open honest: all 18 cases across the
+	## 9 towns are EAVES BRUSHING A STREET'S OUTER CORNERS. The sweep commits each
+	## offending roof's own baked shapes and asks the player's capsule -- none
+	## blocks the centre of its cell, none shuts a crossing, and the deepest
+	## reaches 0.346 m in from the cell's edge. `centre_blocked`, `gates_blocked`
+	## and `worst_intrusion` are pinned there beside the count, so the exception
+	## has teeth: it holds while the class stays a look and fails the moment one
+	## of them becomes a wall.
 	##
 	## The garden's own demotion counts ride along, printed rather than pinned:
 	## 7/large lost 95 of its 182 cells to round 6's ground filter and the report
@@ -10178,15 +10377,16 @@ func test_no_decor_stands_inside_the_wall_beside_it() -> void:
 			"%s must place SOMETHING through its decor channels" \
 				% _label(outcome))
 		assert_eq(int(channels.in_module_ruled), 0,
-			("%s stands %d piece(s) of the planting, the square's centre or " \
-				+ "a court's planter inside a module of a unit. Round 6 pinned " \
-				+ "the planting alone; the frontage channels are counted, not " \
-				+ "pinned -- see SKIN_CLEAR_CHANNELS") % [_label(outcome),
+			("%s stands %d piece(s) of the planting, the market's own goods or " \
+				+ "a court's planter, the market frontage or its goods inside " \
+				+ "a module of a unit. TASK I4 ROUND 8 graduated the two market " \
+				+ "channels -- see SKIN_CLEAR_CHANNELS") % [_label(outcome),
 				int(channels.in_module_ruled)])
 		assert_eq(int(channels.in_skin_ruled), 0,
-			("%s stands %d piece(s) of the planting, the square's centre or " \
-				+ "a court's planter inside the retained skin (%s). The frontage " \
-				+ "channels are counted, not pinned -- see SKIN_CLEAR_CHANNELS") \
+			("%s stands %d piece(s) of the planting, the market's own goods or " \
+				+ "a court's planter, the market frontage or its goods inside " \
+				+ "the retained skin (%s). TASK I4 ROUND 8 graduated the two " \
+				+ "market channels -- see `_frontage_window_offsets`") \
 				% [_label(outcome), int(channels.in_skin_ruled),
 				String(channels.first)])
 		checked += 1
@@ -10348,28 +10548,33 @@ func test_the_courtyard_planter_gate_can_actually_refuse() -> void:
 const DECOR_CHANNEL_PREFIXES: Array[String] = ["maze-garden/",
 	"maze-plaza-centre/", "maze-stall-goods/", "maze-frontage/",
 	"courtyard-planter/"]
-## THE THREE CHANNELS ROUND 7 HOLDS CLEAR OF THE RETAINED SKIN, and the two it
-## does not, named rather than quietly omitted.
+## THE FOUR CHANNELS HELD CLEAR OF THE RETAINED SKIN, and the one that is not,
+## named rather than quietly omitted.
 ##
-## The planting, the square's centre feature and the court's edge planters all
-## stand on GROUND the fabric itself chose, so a piece of any of them inside the
-## mountain's own cladding is the user's "plant glitched into the wall" in
-## another costume, and all three are pinned at zero.
+## The planting, the court's edge planters, the market frontage and the goods
+## under its canopies all stand on GROUND the fabric itself chose, so a piece of
+## any of them inside the mountain's own cladding is the user's "plant glitched
+## into the wall" in another costume, and all four are pinned at zero.
 ##
-## THE THREE THIS ROUND COUNTS RATHER THAN PINS, each for its own measured
-## reason, and each printed on every corpus town and every big town so the
-## numbers are in the log rather than in a report:
+## TASK I4 ROUND 8 GRADUATED THE TWO MARKET CHANNELS FROM COUNTED TO PINNED.
+## Round 7 counted them and said why: a market frontage is AUTHORED to stand
+## against the town's wall plane -- that is what a market frontage is -- and
+## `PERIMETER_FRONTAGE_DEPTH` pushed each piece out by its own half-depth so its
+## back plane landed on the LATTICE BOUNDARY, which is the wall only where the
+## town's edge is a building. Where the edge is the retained mass, the cladding
+## stands in front of that boundary and the piece stood inside it: 16 frontage
+## and 15 stall-goods pieces on 12/compact, 15 + 12 on 4/compact, 16 + 21 on
+## 3/standard, 20 + 20 on 9/standard, the deepest 0.659 m in.
+## `_frontage_window_offsets` is the fix -- the same `maze_skin_panel_boxes` the
+## suppression pass reads, turned into a stand-off and a shift along the face --
+## and both channels measure ZERO on every town this pin walks. The site counts
+## are byte-identical, because the rule moves pieces and never withdraws a
+## window.
 ##
-## * `maze-frontage/` and `maze-stall-goods/`. A market frontage is AUTHORED to
-##   stand against the town's wall plane -- that is what a market frontage is --
-##   and `PERIMETER_FRONTAGE_CLEARANCE` measures its stand-off against a
-##   BUILDING's modules, which is the only wall the frontage rule knows about.
-##   Where the wall it fronts is the retained mass instead, the piece stands in
-##   the mass's own cladding: measured on 12/compact, 16 frontage and 18
-##   stall-goods pieces share real volume with a `maze-stone` panel, every one of
-##   them a `lpfv.fabric.prop.barrel.01/02` or a `lpfv.fabric.prop.bag.01` beside
-##   a coursed face. That is the same defect class as the buried planter, one
-##   layer out, and closing it is a change to the frontage siting rule.
+## THE ONE THIS STILL COUNTS RATHER THAN PINS, for its own measured reason, and
+## printed on every corpus town and every big town so the number is in the log
+## rather than in a report:
+##
 ## * `maze-plaza-centre/`. ONE module per town, and its measured AABB is a
 ##   CROWN: `lpfv.tree.05`'s box is the whole canopy, so a tree standing in a
 ##   square beside a hill reports its foliage touching the wall head every time
@@ -10380,7 +10585,7 @@ const DECOR_CHANNEL_PREFIXES: Array[String] = ["maze-garden/",
 ##   the channel is counted here and the rule that sites it -- a CLEAR
 ##   `size x size` block of plaza, no entrance cell -- is what holds it.
 const SKIN_CLEAR_CHANNELS: Array[String] = ["maze-garden/",
-	"courtyard-planter/"]
+	"courtyard-planter/", "maze-frontage/", "maze-stall-goods/"]
 ## HOW MUCH SHARED VOLUME MAKES A PIECE BURIED RATHER THAN TOUCHING, for the
 ## channel census below. A quarter of a metre on EVERY axis, and it is measured
 ## rather than chosen:

@@ -31,6 +31,16 @@ var _production_heightfield: HeightfieldPlan
 var _production_water_plan: WaterPlan
 var _production_site_cell := Vector2i.ZERO
 var _captures: Array[Dictionary] = []
+## TASK I4 ROUND 8. A camera aimed at a LATTICE CELL, for the frames a census
+## names rather than a rule sites. Every other view in this file is derived from
+## something the plan holds -- a street run, a roof junction, the square's own
+## middle -- which is right for a battery and useless the moment a row like
+## `street_pinch` prints a cell nothing has a camera for. `--cell x,y,z` puts the
+## eye on that cell's floor at eye height and looks along `--cell-look x,z`.
+var _cell_views: Array[Dictionary] = []
+## The player's own eye, near enough: the capsule is 2.244 m and the eye sits a
+## head below its crown.
+const CELL_CAMERA_EYE_HEIGHT := 1.7
 
 
 func _ready() -> void:
@@ -247,6 +257,21 @@ func _read_args() -> void:
 			_super_cell.x = int(args[index + 1])
 		elif args[index] == "--super-z" and index + 1 < args.size():
 			_super_cell.y = int(args[index + 1])
+		elif args[index] == "--cell" and index + 1 < args.size():
+			var parts := args[index + 1].split(",", false)
+			if parts.size() >= 3:
+				_cell_views.append({"cell": Vector3i(int(parts[0]),
+					int(parts[1]), int(parts[2])),
+					"look": Vector3(1.0, 0.0, 0.0), "back": 4.5})
+		elif args[index] == "--cell-look" and index + 1 < args.size():
+			var parts := args[index + 1].split(",", false)
+			if parts.size() >= 2 and not _cell_views.is_empty():
+				_cell_views[_cell_views.size() - 1]["look"] = Vector3(
+					float(parts[0]), 0.0, float(parts[1])).normalized()
+		elif args[index] == "--cell-back" and index + 1 < args.size():
+			if not _cell_views.is_empty():
+				_cell_views[_cell_views.size() - 1]["back"] = float(
+					args[index + 1])
 
 
 func _print_quality_dump(program: SettlementFabricProgram) -> void:
@@ -569,6 +594,7 @@ func _capture_all() -> void:
 		{"id": "overview-se", "position": centre + Vector3(span,
 			span * 0.65, -span), "target": centre, "fov": 54.0},
 	]
+	views.append_array(_cell_camera_views())
 	views.append_array(_orbit_views(centre, span))
 	views.append_array(_gate_approach_views())
 	views.append_array(_street_views())
@@ -668,6 +694,31 @@ func _orbit_views(centre: Vector3, span: float) -> Array[Dictionary]:
 		"position": centre + Vector3(span * 0.30, span * 1.15, span * 0.30),
 		"target": centre, "fov": 58.0})
 	return out
+
+
+func _cell_camera_views() -> Array[Dictionary]:
+	## TASK I4 ROUND 8. `--cell x,y,z [--cell-look dx,dz] [--cell-back m]` as a
+	## view: the eye stands on that cell's own floor at the player's eye height,
+	## `back` metres behind it along the look direction, so the cell the census
+	## named is in the middle of the frame with what hangs over it above.
+	##
+	## EYE HEIGHT rather than the cell's centre: the question these frames are
+	## taken to answer is what a body walking that street sees, and a camera at the
+	## cell's mid-height looks at a roof rather than under one.
+	var out: Array[Dictionary] = []
+	for index in _cell_views.size():
+		var view := _cell_views[index] as Dictionary
+		var cell := view.cell as Vector3i
+		var look := view.look as Vector3
+		var floor_point := Vector3(cell) * FabricRecipe.CELL_SIZE
+		var eye := floor_point + Vector3.UP * CELL_CAMERA_EYE_HEIGHT \
+			- look * float(view.back)
+		out.append({"id": "cell-%02d-%d-%d-%d" % [index, cell.x, cell.y, cell.z],
+			"position": eye,
+			"target": floor_point + Vector3.UP * CELL_CAMERA_EYE_HEIGHT,
+			"fov": 72.0})
+	return out
+
 
 
 func _capture_matches_filter(view_id: String) -> bool:
