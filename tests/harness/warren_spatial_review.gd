@@ -258,7 +258,9 @@ func _print_quality_dump(program: SettlementFabricProgram) -> void:
 		for segment: Dictionary in _fabric.surface_plan.guard_segments:
 			print("[quality.guard] ", JSON.stringify(segment))
 		var guard_payload := SettlementFabricAssembler.surface_visual_payload(
-			_fabric.surface_plan)
+			_fabric.surface_plan,
+			SettlementFabricAssembler.maze_module_footprints(_fabric),
+			SettlementFabricAssembler.maze_skin_panel_boxes_for(_fabric))
 		for asset_id: StringName in guard_payload.asset_ids():
 			if String(asset_id).contains("railing"):
 				var batch := guard_payload.batches[asset_id] as Dictionary

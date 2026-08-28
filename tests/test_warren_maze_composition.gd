@@ -634,14 +634,39 @@ const DECOR_ADJACENT_REPEAT_CEILING := 2
 ## pools carry.
 const DECOR_CORPUS_TYPE_FLOOR := 12
 ## TASK I4 ROUND 6, ITEM 3 -- THE RULED EXCEPTION, as a number rather than as a
-## sentence. Every stance this fabric DRESSES is now clear of authored geometry
-## by construction (`_maze_cap_is_free`); what remains is a stance the PUBLIC
-## REALM claims with a room recipe's own module reaching over it, and neither
-## half can move without a plot or a vocabulary change. Measured on the five
-## review towns: 4, 2, 0, 0 and 2 -- five hanging ivies and three diagonal
-## braces, no second walkable platform among them. The ceiling is the worst of
-## them, so the exception cannot grow in silence.
-const STANCE_PUBLIC_PINCH_CEILING := 4
+## sentence, and PER TOWN: the assertion that reads it is `assert_lte` inside the
+## per-town loop, so this is the worst town's count and not a corpus sum.
+##
+## Every stance this fabric DRESSES is clear of authored geometry by construction
+## (`_maze_cap_is_free`); what remains is a stance the PUBLIC REALM claims with a
+## room recipe's own module reaching over it.
+##
+## TASK I4 ROUND 7 SPLIT IT, because the r6 review measured that round 6's eight
+## were not one thing. Three of them carried a BAKED COLLIDER in the body column
+## over a walked street -- `sfbp.wwall.support.s.002` twice, a 0.316 m slab from
+## 0.894 m to 4.500 m, and `sfv.fabric.brace.wood.002` once from 1.600 m -- and a
+## body cannot pass under any of them. Round 6's sentence "none of the eight is a
+## second walkable platform" was true and beside the point: the user's note is
+## "there is not enough headroom for the character", and three of the eight were
+## a wall. Those three are WITHDRAWN this round
+## (`WarrenSpatialFabricCompiler._suppress_intruding_modules`), and
+## `test_no_authored_dressing_is_buried_in_the_town_s_own_masonry` pins the
+## collider-bearing count at zero rather than under a ceiling.
+##
+## WHAT THIS CEILING NOW HOLDS is the COSMETIC remainder -- a module over a
+## street that bakes no collider, so a body walks through it rather than into it.
+## Measured after the withdrawal: 2, 1, 0, 0 on the composition corpus, and the
+## 44-town matrix carries its own census on the sweep's `street_pinch` row, which
+## is where the 40 towns nothing else measures are counted: 30 pinches over 8912
+## walked cells, worst town 3, and the class is `sfv.fabric.ivy.001` (5),
+## `sfm.stall.veg_string.001` (4), `sfv.fabric.planter.003` (2) and
+## `sfv.fabric.sign.tavern.001` (1) -- the rest of that row's histogram is the
+## COLLIDING class, which is a defect and is named there.
+##
+## The ceiling is the CORPUS worst, not the matrix worst, because the assertion
+## it feeds walks the corpus; the matrix's own worst town is 3, and the sweep row
+## is what watches it.
+const STANCE_PUBLIC_PINCH_CEILING := 2
 const CORPUS_SEALED_FLOOR := 24
 const CORPUS_SWEEP_SEEDS: Array[int] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 const CORPUS_SWEEP_SCALES: Array[String] = ["compact", "standard", "large",
@@ -4785,9 +4810,12 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 		var exposed := _exposed_stone_faces(fabric)
 		var walked := _walked_cells(fabric)
 		var partners := _cap_partner_offsets(fabric)
+		var footprints := SettlementFabricAssembler.maze_module_footprints(
+			fabric)
 		var sides := SettlementFabricAssembler.FACE_DIRECTIONS.size()
 		var tall_bank_masonry := 0
 		var free_bench_stone := 0
+		var undercroft_stone := 0
 		var misplaced_natural := 0
 		var misplaced_green := 0
 		var misplaced_facade := 0
@@ -4843,23 +4871,39 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 					# unless its 3 m slab also covers a cell the realm DOES
 					# walk, in which case greening it would put lawn under a
 					# pavement and the stone is the honest answer.
+					#
+					# TASK I4 ROUND 7 -- OR UNLESS IT IS AN UNDERCROFT, which
+					# is the second honest answer and the one the round added.
+					# A cap with no real ground under it at all -- a building's
+					# own floor board on top of it, or a gallery inside body
+					# height over it -- is not a bench a body could stand on and
+					# enjoy: greening it lays turf 0.02 m inside a board nobody
+					# can see, and decking it advertises a platform nobody can
+					# reach (the r6 review's I4). `maze_cap_is_undercroft` is
+					# the ONE derivation the rule, the audit and this pin share.
 					if free:
 						var partner := partners.get(face,
 							Vector3i.ZERO) as Vector3i
 						var mate := Vector4i(face.x + partner.x,
 							face.y + partner.y, face.z + partner.z, face.w)
-						free_bench_stone += int(partner == Vector3i.ZERO \
-							or not exposed.has(mate) \
-							or not walked.has(Vector3i(mate.x, mate.y + 1,
-								mate.z)))
+						if SettlementFabricAssembler.maze_cap_is_undercroft(
+								face, partner, exposed, footprints):
+							undercroft_stone += 1
+						else:
+							free_bench_stone += int(partner == Vector3i.ZERO \
+								or not exposed.has(mate) \
+								or not walked.has(Vector3i(mate.x,
+									mate.y + 1, mate.z)))
 		var audit := fabric.audit
 		print(("MAZE_SKIN %s masonry=%d natural=%d green=%d facade=%d deck=%d " \
-			+ "tall_bank_masonry=%d free_bench_stone=%d low_bank_masonry=%d " \
+			+ "tall_bank_masonry=%d free_bench_stone=%d undercroft=%d " \
+			+ "low_bank_masonry=%d " \
 			+ "misplaced=%d/%d/%d/%d banks=%s tallest=%d " \
 			+ "families=%d/%d/%d windows=%d garden=%d green_cells=%d " \
 			+ "planting=%d") % [_label(outcome),
 			masonry, natural, green, facade, deck, tall_bank_masonry,
-			free_bench_stone, low_bank_masonry, misplaced_natural,
+			free_bench_stone, undercroft_stone, low_bank_masonry,
+			misplaced_natural,
 			misplaced_green, misplaced_facade, misplaced_deck,
 			str(audit.get("maze_bank_height_histogram", {})),
 			int(audit.get("maze_tallest_bank_bands", -1)),
@@ -4943,6 +4987,11 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 				+ "select houses, nowhere else") % _label(outcome))
 		assert_eq(int(audit.get("maze_free_bench_stone_cap_count", -1)), 0,
 			"%s audited free-bench stone caps must be zero" % _label(outcome))
+		assert_eq(int(audit.get("maze_undercroft_stone_cap_count", -1)),
+			undercroft_stone,
+			("%s audited undercroft stone caps must equal the payload's -- " \
+				+ "the exception the free-bench pin above allows is only as " \
+				+ "honest as this count") % _label(outcome))
 		# TASK I4: FIVE classes now. The plank terrace is a panel's module like
 		# any other, and leaving it out of the identity would let the shell open
 		# up by exactly the number of tops the garden bar demoted.
@@ -5296,7 +5345,9 @@ func test_no_fence_stands_across_the_square_s_mouth() -> void:
 		# A joined pair carries both of its keys in one id.
 		var guard_instances: Dictionary = {}
 		var surface_payload := SettlementFabricAssembler.production_surface_payload(
-			fabric.surface_plan)
+			fabric.surface_plan,
+			SettlementFabricAssembler.maze_module_footprints(fabric),
+			SettlementFabricAssembler.maze_skin_panel_boxes_for(fabric))
 		for asset_value: Variant in surface_payload.batches.keys():
 			var batch := surface_payload.batches[asset_value] as Dictionary
 			for id_value: Variant in batch.get("ids", []) as Array:
@@ -8948,6 +8999,93 @@ func test_large_and_grand_towns_exist() -> void:
 				% _label(outcome))
 
 
+func test_the_big_towns_carry_the_round_s_own_zeroes() -> void:
+	## TASK I4 ROUND 7, r6 REVIEW MINOR 5 -- "§4 cites '0 on 7/large in the
+	## probe'; 7/large is outside `_corpus()`, so nothing in the shipped tests
+	## holds that number."
+	##
+	## It does now. The three big-town lanes are already solved and cached by
+	## `test_large_and_grand_towns_exist`, so asking them the round's own
+	## questions costs the walk and nothing else, and the two scales that carry
+	## the biggest gardens stop being the two nothing measures.
+	##
+	## WHAT IS PINNED HERE AND WHAT IS ONLY PRINTED, because they are different
+	## claims. The two INTRUSION zeroes are pinned on every lane: no decor channel
+	## piece inside a unit module or the retained skin, and no authored dressing
+	## buried in the town's own masonry. The STREET COLLIDER count is pinned for
+	## the classes round 7 rules over -- DECOR and OUTRIGGER, the planter/ivy
+	## dressing and the two diagonal braces -- and PRINTED for everything else,
+	## because the 48-town matrix carries two towns whose collider over a street
+	## is a ROOF (1/standard `sfv.fabric.roof.window.004` at 1.720 m, 2/large
+	## `lpfv.fabric.roof.compact.orange.06` at 1.500 m). A roof is not a module a
+	## building can be built without, so closing those is a vocabulary change this
+	## round may not make; the sweep's `street_pinch` row is where they are
+	## counted, and this is where they are named.
+	##
+	## The garden's own demotion counts ride along, printed rather than pinned:
+	## 7/large lost 95 of its 182 cells to round 6's ground filter and the report
+	## has been quoting that number out of a probe.
+	var catalog := EnvironmentCatalog.load_default()
+	assert_not_null(catalog, "the shipped environment catalogue must load")
+	if catalog == null:
+		return
+	var ruled: Dictionary = {}
+	for asset: StringName in SettlementFabricProgram.DECOR_MODULE_ASSETS:
+		ruled[asset] = true
+	for asset: StringName in SettlementFabricProgram.OUTRIGGER_MODULE_ASSETS:
+		ruled[asset] = true
+	var checked := 0
+	for lane: Array in BIG_TOWN_LANES:
+		var outcome := _solved(int(lane[0]), StringName(lane[1]))
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var channels := _decor_channel_intrusions(fabric, catalog)
+		var footprints := SettlementFabricAssembler.maze_module_footprints(
+			fabric)
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var colliding := SettlementFabricAssembler \
+			.maze_street_collider_pinches(footprints, walked)
+		var ruled_colliding := 0
+		var others := PackedStringArray()
+		for pinch: Dictionary in colliding:
+			if ruled.has(StringName(pinch.asset)):
+				ruled_colliding += 1
+			else:
+				others.append("%s@%s rise=%.3f" % [String(pinch.asset),
+					str(pinch.cell), float(pinch.rise)])
+		var audit := fabric.audit
+		print(("MAZE_BIG_ZEROES %s pieces=%s in_module=%d in_skin=%d " \
+			+ "ruled=%d/%d in_module_by=%s in_skin_by=%s " \
+			+ "colliding=%d ruled_colliding=%d others=[%s] withdrew=%d/%d " \
+			+ "garden=%d green=%d entries=%d") % [_label(outcome),
+			str(channels.counts), int(channels.in_module),
+			int(channels.in_skin), int(channels.in_module_ruled),
+			int(channels.in_skin_ruled), str(channels.module_by_channel),
+			str(channels.skin_by_channel), colliding.size(), ruled_colliding,
+			", ".join(others),
+			int(audit.get("suppressed_buried_decor_module_count", -1)),
+			int(audit.get("suppressed_street_collider_module_count", -1)),
+			int(audit.get("maze_garden_cell_count", -1)),
+			int(audit.get("maze_village_green_cell_count", -1)),
+			int(audit.get("maze_plaza_entry_count", -1))])
+		assert_eq(int(channels.in_module_ruled) + int(channels.in_skin_ruled),
+			0, ("%s stands %d skin-clear-channel piece(s) in a unit module " \
+				+ "and %d in the retained skin (%s)") % [_label(outcome),
+				int(channels.in_module_ruled), int(channels.in_skin_ruled),
+				String(channels.first)])
+		assert_eq(ruled_colliding, 0,
+			("%s stands %d dressing/brace collider(s) in a walked street; " \
+				+ "round 7's suppression pass exists to withdraw exactly those") \
+				% [_label(outcome), ruled_colliding])
+		checked += 1
+	assert_gt(checked, 0, "a big town must seal for this pin to mean anything")
+
+
 func test_every_asset_the_assembler_places_is_declared() -> void:
 	## TASK H2b FIX 1, IMPORTANT 2 -- the completeness check the gate lacks.
 	##
@@ -8988,7 +9126,9 @@ func test_every_asset_the_assembler_places_is_declared() -> void:
 		scales[StringName(outcome.scale)] = true
 		var payload := SettlementFabricAssembler.payload(fabric)
 		payload.append_from(SettlementFabricAssembler.production_surface_bundle(
-			fabric.surface_plan))
+			fabric.surface_plan,
+			SettlementFabricAssembler.maze_module_footprints(fabric),
+			SettlementFabricAssembler.maze_skin_panel_boxes_for(fabric)))
 		payload.append_from(
 			SettlementFabricAssembler.low_retaining_payload(fabric))
 		payload.append_from(
@@ -10019,8 +10159,359 @@ func test_no_decor_stands_inside_the_wall_beside_it() -> void:
 				+ "is the OUTCOME, measured against the plan's own " \
 				+ "per-placement boxes") % [_label(outcome), intersecting,
 				first_hit])
+		# TASK I4 ROUND 7, r6 REVIEW I1 -- AND NOW ALL FIVE CHANNELS,
+		# AGAINST THE SKIN AS WELL AS THE UNITS. The assertion above is
+		# `maze-garden/` against unit modules, which is what round 6
+		# shipped and less than what its report claimed. The four other
+		# channels this fabric places were never measured at all, and
+		# neither was the retained SKIN -- which is exactly where the
+		# user's circled planter was buried.
+		var channels := _decor_channel_intrusions(fabric, catalog)
+		print(("MAZE_DECOR_CHANNELS %s pieces=%s in_module=%d " \
+			+ "in_skin=%d ruled=%d/%d in_module_by=%s in_skin_by=%s " \
+			+ "first=%s") % [_label(outcome),
+			str(channels.counts), int(channels.in_module),
+			int(channels.in_skin), int(channels.in_module_ruled),
+			int(channels.in_skin_ruled), str(channels.module_by_channel),
+			str(channels.skin_by_channel), String(channels.first)])
+		assert_gt(int(channels.pieces), 0,
+			"%s must place SOMETHING through its decor channels" \
+				% _label(outcome))
+		assert_eq(int(channels.in_module_ruled), 0,
+			("%s stands %d piece(s) of the planting, the square's centre or " \
+				+ "a court's planter inside a module of a unit. Round 6 pinned " \
+				+ "the planting alone; the frontage channels are counted, not " \
+				+ "pinned -- see SKIN_CLEAR_CHANNELS") % [_label(outcome),
+				int(channels.in_module_ruled)])
+		assert_eq(int(channels.in_skin_ruled), 0,
+			("%s stands %d piece(s) of the planting, the square's centre or " \
+				+ "a court's planter inside the retained skin (%s). The frontage " \
+				+ "channels are counted, not pinned -- see SKIN_CLEAR_CHANNELS") \
+				% [_label(outcome), int(channels.in_skin_ruled),
+				String(channels.first)])
 		checked += 1
 	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func test_no_authored_dressing_is_buried_in_the_town_s_own_masonry() -> void:
+	## TASK I4 ROUND 7, r6 REVIEW B1 AND B2 -- the user's own note, pinned on the
+	## outcome: "one of the plants is glitched into the wall."
+	##
+	## The r6 review measured it rather than describing it. On 12/compact,
+	## `...house.001.part01.room00.garden/garden.planter` occupies
+	## `(-4.200, 6.040, 0.146)..(-3.300, 6.968, 1.354)` and shares
+	## 0.66 x 0.74 x 0.93 m with each of two `sfv.fabric.wall.rock.plain.001`
+	## panels -- `maze-stone/-3/5/0/1` and `maze-stone/-3/5/1/1` -- sited by this
+	## fabric out of the same shell the payload is emitted from. It is centred
+	## exactly on the boundary plane the coursed panel straddles and stands in the
+	## bottom 0.93 m of a 3.00 m masonry face.
+	##
+	## TWO POPULATIONS, ONE PASS. `WarrenSpatialFabricCompiler.
+	## _suppress_intruding_modules` withdraws a DECOR-class module buried in that
+	## skin, and an OUTRIGGER or DECOR module whose BAKED COLLIDER stands in the
+	## body column of a walked street -- the r6 review's B2, which round 6 had
+	## filed under a ceiling with the hanging ivy. This asserts BOTH outcomes off
+	## the sealed plan, plus the audit's own count of what it withdrew, so the
+	## number the report states is the number the town carries.
+	var checked := 0
+	for outcome: Dictionary in _corpus():
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var retained := fabric.retained_terrace_cells
+		var solids := fabric.transformed_cells(&"solid")
+		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+			fabric.transformed_cells(&"terrain_bearing"))
+		var paved := SettlementFabricAssembler.public_floor_cells(
+			fabric.surface_plan)
+		var walked := SettlementFabricAssembler.walked_floor_cells(
+			fabric.surface_plan)
+		var shell := SettlementFabricAssembler.maze_skin_shell(retained,
+			solids, paved, plinths, walked,
+			SettlementFabricAssembler.maze_module_footprints(fabric))
+		var skin := SettlementFabricAssembler.maze_skin_panel_boxes(retained,
+			solids, paved, plinths, shell.treatments as Dictionary)
+		var decor: Dictionary = {}
+		for asset: StringName in SettlementFabricProgram.DECOR_MODULE_ASSETS:
+			decor[asset] = true
+		var dressing := 0
+		var buried := 0
+		var first := ""
+		for module: Dictionary in fabric.expanded_placements():
+			if not decor.has(StringName(module.asset_id)):
+				continue
+			dressing += 1
+			var box := module.get("bounds", AABB()) as AABB
+			if not box.has_volume():
+				continue
+			for panel: AABB in skin:
+				if not _boxes_overlap(box, panel):
+					continue
+				buried += 1
+				if first.is_empty():
+					first = "%s (%s)" % [String(module.stable_id),
+						String(module.asset_id)]
+				break
+		var colliding := SettlementFabricAssembler \
+			.maze_street_collider_pinches(
+				SettlementFabricAssembler.maze_module_footprints(fabric),
+				walked)
+		var collider_note := "" if colliding.is_empty() \
+			else "%s@%s rise=%.3f" % [String(colliding[0].asset),
+				str(colliding[0].cell), float(colliding[0].rise)]
+		var audit := fabric.audit
+		print(("MAZE_BURIED_DRESSING %s dressing=%d panels=%d buried=%d " \
+			+ "colliding=%d withdrew=%d/%d first=%s %s") % [_label(outcome),
+			dressing, skin.size(), buried, colliding.size(),
+			int(audit.get("suppressed_buried_decor_module_count", -1)),
+			int(audit.get("suppressed_street_collider_module_count", -1)),
+			first, collider_note])
+		assert_gt(skin.size(), 0,
+			"%s must lay a retained skin for this pin to mean anything" \
+				% _label(outcome))
+		assert_eq(buried, 0,
+			("%s leaves %d authored dressing module(s) inside its own " \
+				+ "masonry -- first %s. That is the user's plant in the wall") % [
+				_label(outcome), buried, first])
+		assert_eq(colliding.size(), 0,
+			("%s stands %d baked collider(s) in the body column of a walked " \
+				+ "street -- first %s. The clearance row cannot see these: it " \
+				+ "commits the fabric dressing and no buildings") % [
+				_label(outcome), colliding.size(), collider_note])
+		assert_gte(int(audit.get("suppressed_buried_decor_module_count", -1)),
+			0, "%s must audit what the suppression pass withdrew" \
+				% _label(outcome))
+		checked += 1
+	assert_gt(checked, 0, "the corpus must seal a town to measure")
+
+
+func test_the_courtyard_planter_gate_can_actually_refuse() -> void:
+	## TASK I4 ROUND 7, r6 REVIEW I2 -- round 6 shipped
+	## `maze_courtyard_planter_is_clear` as "**NEW**" with no measurement, and the
+	## review measured it: `gated == ungated` on six towns spanning all four
+	## scales, so it refuses NOTHING anywhere anybody has looked. That is the same
+	## shape as round 5's own blocking finding, in the round whose section was
+	## titled "the honest gate".
+	##
+	## SO THE GATE IS PROVED HERE INSTEAD OF ON THE CORPUS, against a footprint
+	## index built by hand. Corpus inertness is a fact about the towns; whether
+	## the predicate can fire at all is a fact about the predicate, and this is
+	## the one a reader needs before trusting the first. Both directions:
+	##
+	## * a clear corner passes (this is the corpus's own case);
+	## * a corner with an authored module standing in the planter's own envelope
+	##   is refused.
+	##
+	## The `footprints = {}` DEFAULT IS ALSO GONE this round, at
+	## `surface_visual_payload`, `production_surface_payload`,
+	## `production_surface_bundle` and `_append_courtyard_paving`: three callers
+	## were turning the gate off by omission, which is how a gate becomes inert
+	## without anybody deciding it should be.
+	var cell := Vector3i(0, 2, 0)
+	assert_true(SettlementFabricAssembler.maze_courtyard_planter_is_clear({},
+		cell), "an empty module index cannot refuse anything")
+	var origin := SettlementFabricAssembler.maze_courtyard_planter_origin(cell)
+	var clearance: Vector2 = SettlementFabricAssembler.DECOR_CLEARANCE[
+		SettlementFabricAssembler.COURTYARD_PLANTER]
+	var reach := maxf(clearance.x, clearance.y)
+	# A wall standing exactly where the planter's own envelope is, one lattice
+	# cell wide, bucketed the way `maze_module_footprints` buckets.
+	var wall := AABB(origin + Vector3(-reach * 0.5, 0.0, -reach * 0.5),
+		Vector3(reach, SettlementFabricAssembler.COURTYARD_PLANTER_RISE,
+			reach))
+	var buckets: Dictionary = {}
+	for step: Vector3i in [Vector3i.ZERO, Vector3i(1, 0, 0), Vector3i(0, 0, 1),
+			Vector3i(1, 0, 1)]:
+		buckets[Vector3i(cell.x + step.x, cell.y, cell.z + step.z)] = \
+			PackedInt32Array([0])
+	var footprints := {"boxes": [wall] as Array[AABB],
+		"assets": [&"test.wall"] as Array[StringName],
+		"collides": PackedInt32Array([1]), "by_cell": buckets}
+	assert_false(SettlementFabricAssembler.maze_courtyard_planter_is_clear(
+		footprints, cell),
+		("the courtyard gate must refuse a corner with a module in the " \
+			+ "planter's own envelope; a gate that cannot fire is a comment"))
+	var clear_footprints := {"boxes": [] as Array[AABB],
+		"assets": [] as Array[StringName],
+		"collides": PackedInt32Array(), "by_cell": {}}
+	assert_true(SettlementFabricAssembler.maze_courtyard_planter_is_clear(
+		clear_footprints, cell), "a clear corner must still take its planter")
+
+
+## TASK I4 ROUND 7, r6 REVIEW I1 -- the five decor channels this fabric places,
+## by the id prefix each one stamps on its own instances. Named here rather than
+## grepped so a sixth channel is a change to this list and not a silent gap in
+## the pin below.
+const DECOR_CHANNEL_PREFIXES: Array[String] = ["maze-garden/",
+	"maze-plaza-centre/", "maze-stall-goods/", "maze-frontage/",
+	"courtyard-planter/"]
+## THE THREE CHANNELS ROUND 7 HOLDS CLEAR OF THE RETAINED SKIN, and the two it
+## does not, named rather than quietly omitted.
+##
+## The planting, the square's centre feature and the court's edge planters all
+## stand on GROUND the fabric itself chose, so a piece of any of them inside the
+## mountain's own cladding is the user's "plant glitched into the wall" in
+## another costume, and all three are pinned at zero.
+##
+## THE THREE THIS ROUND COUNTS RATHER THAN PINS, each for its own measured
+## reason, and each printed on every corpus town and every big town so the
+## numbers are in the log rather than in a report:
+##
+## * `maze-frontage/` and `maze-stall-goods/`. A market frontage is AUTHORED to
+##   stand against the town's wall plane -- that is what a market frontage is --
+##   and `PERIMETER_FRONTAGE_CLEARANCE` measures its stand-off against a
+##   BUILDING's modules, which is the only wall the frontage rule knows about.
+##   Where the wall it fronts is the retained mass instead, the piece stands in
+##   the mass's own cladding: measured on 12/compact, 16 frontage and 18
+##   stall-goods pieces share real volume with a `maze-stone` panel, every one of
+##   them a `lpfv.fabric.prop.barrel.01/02` or a `lpfv.fabric.prop.bag.01` beside
+##   a coursed face. That is the same defect class as the buried planter, one
+##   layer out, and closing it is a change to the frontage siting rule.
+## * `maze-plaza-centre/`. ONE module per town, and its measured AABB is a
+##   CROWN: `lpfv.tree.05`'s box is the whole canopy, so a tree standing in a
+##   square beside a hill reports its foliage touching the wall head every time
+##   (0.085, 0.097 and 0.212 m on 9/standard, 7/large and 1/grand -- all three
+##   under DECOR_BURIAL_MIN_OVERLAP, and the one over it is the same crown
+##   against a unit's roof). An AABB is the wrong instrument for foliage and a
+##   threshold tuned until it passes would be a pin fitted to its own answer, so
+##   the channel is counted here and the rule that sites it -- a CLEAR
+##   `size x size` block of plaza, no entrance cell -- is what holds it.
+const SKIN_CLEAR_CHANNELS: Array[String] = ["maze-garden/",
+	"courtyard-planter/"]
+## HOW MUCH SHARED VOLUME MAKES A PIECE BURIED RATHER THAN TOUCHING, for the
+## channel census below. A quarter of a metre on EVERY axis, and it is measured
+## rather than chosen:
+##
+## * the burial the r6 review circled -- the roof garden's planter inside two
+##   `maze-stone` panels -- shares 0.664 x 0.735 x 0.928 m, so its SMALLEST axis
+##   is 0.664 m;
+## * the grazes this corpus really has are a `lpfv.tree.05` crown over a wall
+##   head (0.085, 0.097 and 0.212 m on its smallest axis, on 7/large, 9/standard
+##   and 1/grand) and a `lpfv.flower.03` leaf against a face (0.068 m on
+##   7/large).
+##
+## A quarter metre sits an order under the first and above every one of the
+## second, and it says the same thing geometrically: the deepest module a face
+## can wear reaches 0.553 m either side of its own plane, so a piece 0.25 m in is
+## inside the masonry rather than leaning on it. Foliage touching a wall head is
+## what a town beside a hill looks like; a planter with two thirds of itself in a
+## coursed panel is the defect.
+const DECOR_BURIAL_MIN_OVERLAP := 0.25
+
+
+static func _boxes_are_buried(left: AABB, right: AABB) -> bool:
+	return left.position.x + left.size.x - right.position.x \
+			> DECOR_BURIAL_MIN_OVERLAP \
+		and right.position.x + right.size.x - left.position.x \
+			> DECOR_BURIAL_MIN_OVERLAP \
+		and left.position.y + left.size.y - right.position.y \
+			> DECOR_BURIAL_MIN_OVERLAP \
+		and right.position.y + right.size.y - left.position.y \
+			> DECOR_BURIAL_MIN_OVERLAP \
+		and left.position.z + left.size.z - right.position.z \
+			> DECOR_BURIAL_MIN_OVERLAP \
+		and right.position.z + right.size.z - left.position.z \
+			> DECOR_BURIAL_MIN_OVERLAP
+
+
+func _decor_channel_intrusions(fabric: SettlementFabricPlan,
+		catalog: EnvironmentCatalog) -> Dictionary:
+	## Every instance of every decor channel, against BOTH populations a piece can
+	## be buried in: the authored modules of the units (`expanded_placements`) and
+	## the retained skin the fabric itself lays (`maze_skin_panel_boxes`).
+	##
+	## THE SECOND POPULATION IS WHERE THE ROUND'S OWN DEFECT LIVED. The r6 review
+	## measured the roof garden's planter sharing 0.66 x 0.74 x 0.93 m with two
+	## `maze-stone` rock panels, and round 6's pin could not see it: it asked only
+	## about unit modules, and a rock panel is not one. The suppression rule and
+	## this pin therefore ask the SAME question of the same boxes -- one decides,
+	## the other proves the decision was enough.
+	var retained := fabric.retained_terrace_cells
+	var solids := fabric.transformed_cells(&"solid")
+	var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+		fabric.transformed_cells(&"terrain_bearing"))
+	var paved := SettlementFabricAssembler.public_floor_cells(
+		fabric.surface_plan)
+	# EXACT depths here, where the suppression rule takes the conservative union:
+	# the rule cannot read the treatments without deciding against its own
+	# outcome, and this pin runs on a sealed plan where that question is settled.
+	# So the rule is one-sided (it may withdraw a module standing 0.4 m from a
+	# masonry face that only reaches 0.332 m) and the pin is exact.
+	var walked_cells := SettlementFabricAssembler.walked_floor_cells(
+		fabric.surface_plan)
+	var shell := SettlementFabricAssembler.maze_skin_shell(retained, solids,
+		paved, plinths, walked_cells,
+		SettlementFabricAssembler.maze_module_footprints(fabric))
+	var skin := SettlementFabricAssembler.maze_skin_panel_boxes(retained,
+		solids, paved, plinths, shell.treatments as Dictionary)
+	var modules: Array[AABB] = []
+	for module: Dictionary in fabric.expanded_placements():
+		var box := module.get("bounds", AABB()) as AABB
+		if box.has_volume():
+			modules.append(box)
+	var payloads: Array[EnvironmentInstancePayload] = [
+		SettlementFabricAssembler.terrace_retaining_payload(fabric),
+		SettlementFabricAssembler.surface_visual_payload(fabric.surface_plan,
+			SettlementFabricAssembler.maze_module_footprints(fabric), skin)]
+	var counts: Dictionary = {}
+	var skin_by_channel: Dictionary = {}
+	var module_by_channel: Dictionary = {}
+	var pieces := 0
+	var in_module := 0
+	var in_module_ruled := 0
+	var in_skin := 0
+	var in_skin_ruled := 0
+	var first := &""
+	for payload: EnvironmentInstancePayload in payloads:
+		for asset_value: Variant in payload.batches.keys():
+			var asset := StringName(asset_value)
+			var descriptor := catalog.descriptor(asset)
+			if descriptor == null:
+				continue
+			var batch := payload.batches[asset] as Dictionary
+			var ids := batch.get("ids", []) as Array
+			var transforms := batch.get("transforms", []) as Array
+			for index in ids.size():
+				var id := String(ids[index])
+				var channel := ""
+				for prefix: String in DECOR_CHANNEL_PREFIXES:
+					if id.begins_with(prefix):
+						channel = prefix
+				if channel.is_empty():
+					continue
+				pieces += 1
+				counts[channel] = int(counts.get(channel, 0)) + 1
+				var piece: AABB = (transforms[index] as Transform3D) \
+					* (descriptor.measured_aabb as AABB)
+				for box: AABB in modules:
+					if not _boxes_are_buried(piece, box):
+						continue
+					in_module += 1
+					module_by_channel[channel] = int(
+						module_by_channel.get(channel, 0)) + 1
+					if SKIN_CLEAR_CHANNELS.has(channel):
+						in_module_ruled += 1
+						if first.is_empty():
+							first = StringName("%s in a unit module" % id)
+					break
+				for panel: AABB in skin:
+					if not _boxes_are_buried(piece, panel):
+						continue
+					in_skin += 1
+					skin_by_channel[channel] = int(
+						skin_by_channel.get(channel, 0)) + 1
+					if SKIN_CLEAR_CHANNELS.has(channel):
+						in_skin_ruled += 1
+						if first.is_empty():
+							first = StringName("%s in the skin" % id)
+					break
+	return {"pieces": pieces, "counts": counts, "in_module": in_module,
+		"in_module_ruled": in_module_ruled, "in_skin": in_skin,
+		"in_skin_ruled": in_skin_ruled, "module_by_channel": module_by_channel,
+		"skin_by_channel": skin_by_channel, "first": first}
 
 
 static func _boxes_overlap(left: AABB, right: AABB) -> bool:
@@ -10470,12 +10961,14 @@ func test_no_bearer_hangs_over_a_surface_a_body_stands_on() -> void:
 		# per-placement boxes, and `_maze_cap_is_free` refuses to dress a cap
 		# with anything inside body height of it.
 		#
-		# THE RULED EXCEPTION, stated rather than hidden: a stance the PUBLIC
-		# REALM claims is the surface plan's, not this file's, and a module
-		# authored inside a room recipe cannot be moved off it without changing
-		# the plan's own identity. Measured on the review corpus: 8 such cells
-		# corpus-wide, all of them a hanging ivy (5) or a diagonal brace (3)
-		# reaching over a walked cell, none of them a second walkable platform.
+		# THE RULED EXCEPTION, stated rather than hidden -- and TASK I4 ROUND 7
+		# SPLIT IT. A stance the PUBLIC REALM claims is the surface plan's, not
+		# this file's; what round 6 could not tell apart is whether the module
+		# over it is something a body walks THROUGH or something it walks INTO.
+		# The r6 review loaded the baked shapes: three of round 6's eight were a
+		# 0.316 m slab from 0.894 m or a brace from 1.600 m, which is a wall. Those
+		# are withdrawn at compile time now; the ivy that remains bakes nothing and
+		# is what STANCE_PUBLIC_PINCH_CEILING allows.
 		var capped_pinched := 0
 		var walked_pinched := 0
 		var lowest := INF
@@ -10513,11 +11006,13 @@ func test_no_bearer_hangs_over_a_surface_a_body_stands_on() -> void:
 				capped_pinched, owner, body])
 		assert_lte(walked_pinched, STANCE_PUBLIC_PINCH_CEILING,
 			("%s has %d walked cell(s) with a recipe module inside body " \
-				+ "height. These are the ruled exception: the surface is the " \
-				+ "public realm's and the module is a room's, and moving " \
-				+ "either is a plot or a vocabulary change. The corpus " \
-				+ "measurement is 4/2/0/0 on the review towns, all ivy and " \
-				+ "braces") % [_label(outcome), walked_pinched])
+				+ "height, against a per-town ceiling of %d. What is allowed " \
+				+ "here is the COSMETIC remainder -- a hanging ivy that bakes " \
+				+ "no collider, which a body walks through. Anything that " \
+				+ "bakes one is a defect and is pinned at zero by " \
+				+ "test_no_authored_dressing_is_buried_in_the_town_s_own_" \
+				+ "masonry") % [_label(outcome), walked_pinched,
+				STANCE_PUBLIC_PINCH_CEILING])
 		assert_eq(int(audit.get("maze_public_floor_bearer_count", -1)), borne,
 			"%s audited bearer count must equal the rule's" % _label(outcome))
 		assert_eq(int(audit.get("maze_public_floor_bearer_refused_count", -1)),

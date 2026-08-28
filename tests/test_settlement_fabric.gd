@@ -191,7 +191,12 @@ func test_named_upper_courtyard_uses_distinct_collision_aligned_paving() \
 				StringName("volume.courtyard.%02d" % (z * 4 + x))))
 	assert_true(surfaces.seal(), surfaces.last_rejection)
 	assert_eq(surfaces.cells_owned_by_prefix("volume.courtyard.").size(), 16)
-	var payload := SettlementFabricAssembler.surface_visual_payload(surfaces)
+	# TASK I4 ROUND 7: the courtyard-planter gate's index is now REQUIRED, so a
+	# caller with no fabric plan says so out loud. This fixture has none -- it
+	# builds a bare surface plan -- and an empty index is the honest answer, not
+	# a default that turns the gate off behind the caller's back.
+	var payload := SettlementFabricAssembler.surface_visual_payload(surfaces,
+		{})
 	assert_true(payload.validate())
 	assert_true(payload.batches.has(SettlementFabricAssembler.PLANK_SINGLE))
 	var transforms := (payload.batches[SettlementFabricAssembler.PLANK_SINGLE] \
@@ -247,7 +252,9 @@ func test_irregular_upper_courtyard_furniture_never_uses_a_missing_aabb_corner()
 				PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
 				&"volume.courtyard.rooftop.test"))
 	assert_true(surfaces.seal(), surfaces.last_rejection)
-	var payload := SettlementFabricAssembler.surface_visual_payload(surfaces)
+	# No fabric plan in this fixture; see the note at the courtyard payload above.
+	var payload := SettlementFabricAssembler.surface_visual_payload(surfaces,
+		{})
 	var planter_batch := payload.batches[
 		SettlementFabricAssembler.COURTYARD_PLANTER] as Dictionary
 	assert_eq((planter_batch.transforms as Array).size(), 2)
@@ -1481,7 +1488,7 @@ func test_handed_door_forecourt_uses_one_guard_run_without_a_centre_post() \
 	for segment: Dictionary in surface.guard_segments:
 		joined_segments += int(segment.has("visual_join_point"))
 	assert_eq(joined_segments, 2)
-	var payload := SettlementFabricAssembler.surface_visual_payload(surface)
+	var payload := SettlementFabricAssembler.surface_visual_payload(surface, {})
 	assert_true(payload.validate())
 	assert_has(payload.asset_ids(), &"sfv.deck.railing.m.001")
 	assert_eq((payload.batches[&"sfv.deck.railing.m.001"] \
@@ -1655,7 +1662,9 @@ func test_folded_visual_proof_passes_the_common_transaction() -> void:
 		as PackedVector3Array).size(), 0)
 	assert_eq(int(plan.audit.unclassified_interval_count), 0)
 	var surface_visuals := SettlementFabricAssembler.surface_visual_payload(
-		plan.surface_plan)
+		plan.surface_plan,
+		SettlementFabricAssembler.maze_module_footprints(plan),
+		SettlementFabricAssembler.maze_skin_panel_boxes_for(plan))
 	assert_true(surface_visuals.validate())
 	assert_gt(surface_visuals.instance_count, 0)
 	assert_true(surface_visuals.asset_ids().has(

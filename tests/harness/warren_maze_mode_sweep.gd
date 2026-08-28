@@ -400,6 +400,9 @@ func _run() -> void:
 	# safety pin, and one violated cell anywhere in the matrix is the answer.
 	var cache := EnvironmentRenderCache.new(catalog)
 	var clearance := _new_clearance_tally()
+	# TASK I4 ROUND 7, r6 REVIEW B2 and I6. The row the matrix did not have. See
+	# `_measure_street_pinches`.
+	var pinches := _new_pinch_tally()
 	for city_seed: int in seeds:
 		for scale_id: StringName in scale_ids:
 			attempted += 1
@@ -615,6 +618,11 @@ func _run() -> void:
 					# four towns by hand.
 					await _measure_clearance(clearance, city_seed,
 						profile.scale_id, fabric, cache)
+					# TASK I4 ROUND 7. And the census the clearance row is blind
+					# to BY CONSTRUCTION, on all 44 towns rather than on the four
+					# the composition suite walks.
+					_measure_street_pinches(pinches, city_seed,
+						profile.scale_id, fabric)
 				continue
 			var failure := WarrenVolumetricSolver.last_failure
 			rows.append({"seed": city_seed, "scale": String(profile.scale_id),
@@ -657,6 +665,7 @@ func _run() -> void:
 	_print_skin_result(ADDED_STONE_GROUP,
 		skin_by_group[ADDED_STONE_GROUP] as Dictionary)
 	_print_clearance_result(clearance)
+	_print_pinch_result(pinches)
 	# The matrix is written BEFORE the clearance pin is judged. The summary is
 	# evidence about composition and the corpus gate reads it; a shut street is
 	# a separate question and must not cost the gate its matrix.
@@ -868,7 +877,8 @@ static func _new_skin_tally() -> Dictionary:
 		"facade": 0, "facade_windows": 0, "facade_blue": 0, "facade_orange": 0,
 		"facade_amber": 0, "above_ground_stone": 0, "garden": 0,
 		"village_green": 0, "planting": 0, "paved_bench": 0,
-		"tall_masonry": 0, "free_bench_stone": 0, "shared_street": 0,
+		"tall_masonry": 0, "free_bench_stone": 0, "undercroft": 0,
+		"shared_street": 0,
 		"low": 0, "tall": 0, "tallest": 0, "cut": 0, "cut_coursed": 0,
 		"tail_candidates": 0, "tail_unclearable": 0, "coursed_trim": 0,
 		"cap_juts": 0, "cap_trim": 0,
@@ -900,6 +910,10 @@ static func _accumulate_skin(tally: Dictionary,
 	tally.masonry += int(fabric.audit.get("maze_skin_masonry_panel_count", 0))
 	tally.natural += int(fabric.audit.get("maze_skin_natural_panel_count", 0))
 	tally.green += int(fabric.audit.get("maze_skin_green_cap_count", 0))
+	# TASK I4 ROUND 7 -- the caps that are neither turf nor bench: a building's
+	# own floor board on top of them, or a gallery inside body height over them.
+	tally.undercroft += int(fabric.audit.get(
+		"maze_undercroft_stone_cap_count", 0))
 	# TASK I2. The clad mass, its family split and its yards, so the corpus line
 	# states what the town's own walls are made of and not only what is left of
 	# the rock. `natural` above is the pin that goes with them: it is zero, and
@@ -1004,12 +1018,24 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 	## TASK H2b. The corpus answer to "what is the mountain made of". Both
 	## pins are sums rather than worsts because both are zero: one masonry
 	## panel above the retaining budget anywhere in the corpus shows up here.
+	##
+	## TASK I4 ROUND 7, r6 REVIEW MINOR 4 -- `green` AND `garden` COUNT DIFFERENT
+	## THINGS AND THIS ROW NOW SAYS SO. `green` is `maze_skin_green_cap_count`:
+	## sky-facing PANELS wearing turf, and a paired panel is ONE panel over two
+	## cells. `garden` is `maze_garden_cell_count`: the CELLS of that turf a town
+	## treats as ground -- what gets planted and what the square is designated
+	## out of. Round 6 let the two drift apart in a second way as well, by keeping
+	## GREEN on a cap a building's own floor board covers (an invisible quad,
+	## 0.02 m inside the board) while dropping it from the garden; round 7 makes
+	## that cap MASONRY and counts it under `undercroft`, so the remaining
+	## difference between the two numbers is the panel-versus-cell one and
+	## nothing else.
 	if int(tally.towns) == 0:
 		return
 	print(("SWEEP RESULT skin%s towns=%d panels=%d masonry=%d natural=%d " \
 		+ "green=%d facade=%d facade_share=%.4f windows=%d " \
 		+ "families=%d/%d/%d above_ground_stone=%d reclad_share=%.4f " \
-		+ "tall_masonry=%d free_bench_stone=%d " \
+		+ "tall_masonry=%d free_bench_stone=%d undercroft=%d " \
 		+ "shared_street=%d low_faces=%d tall_faces=%d tall_share=%.4f " \
 		+ "tallest_bank=%d cut=%d cut_share=%.4f cut_coursed=%d " \
 		+ "tail_candidates=%d tail_unclearable=%d coursed_trim=%d " \
@@ -1025,6 +1051,7 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 		float(int(tally.natural) + int(tally.green)) \
 			/ float(maxi(1, int(tally.panels))),
 		int(tally.tall_masonry), int(tally.free_bench_stone),
+		int(tally.undercroft),
 		int(tally.shared_street), int(tally.low), int(tally.tall),
 		float(int(tally.tall)) / float(maxi(1, int(tally.low) \
 			+ int(tally.tall))),
@@ -1069,6 +1096,95 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 		int(tally.lean_refusals), int(tally.deck_caps),
 		int(tally.floor_bearers), int(tally.floor_bearers_refused),
 		int(tally.frontages), int(tally.frontages_wide)])
+
+
+static func _new_pinch_tally() -> Dictionary:
+	## TASK I4 ROUND 7, r6 REVIEW B2 and I6.
+	return {"towns": 0, "walked": 0, "pinched": 0, "colliding": 0,
+		"worst_town_pinched": 0, "worst_town_colliding": 0,
+		"assets": {}, "colliding_towns": [] as Array[String]}
+
+
+func _measure_street_pinches(tally: Dictionary, city_seed: int,
+		scale_id: StringName, fabric: SettlementFabricPlan) -> void:
+	## THE ROW THE MATRIX DID NOT HAVE, and the r6 review's B2 is why it exists.
+	##
+	## The clearance row above commits `terrace_retaining_payload` -- the town's
+	## whole fabric DRESSING and not one building -- and its own docstring has
+	## said so for three tasks. So a room recipe's own module standing over a
+	## public street was outside every physics measurement this pipeline has, and
+	## three of them were: two `sfbp.wwall.support.s.002` braces on 12/compact
+	## (a 0.316 m slab from 0.894 m to 4.500 m) and one `sfv.fabric.brace.wood.002`
+	## on 4/compact at 1.600 m, each in the body column of a walked cell. Round 6
+	## measured them by their VISUAL boxes, could not tell them from a hanging
+	## ivy, and filed all eight under one ceiling.
+	##
+	## TWO COUNTS, because they are two different facts:
+	##
+	## * `pinched` -- a walked cell with ANY authored module inside body height.
+	##   That is round 6's number, and the ivy class lives here: it bakes no
+	##   collider, a body walks straight through it, and it is the town's own
+	##   dressing over the town's own street. `test_no_bearer_hangs_over_a_
+	##   surface_a_body_stands_on` pins it per town on the composition corpus;
+	##   this row is the other 40 towns, which nothing measured.
+	## * `colliding` -- the subset whose module BAKES COLLISION. That is a
+	##   walkability defect, it is pinned at ZERO, and the towns that carry one
+	##   are named on their own line so a regression is greppable.
+	var footprints := SettlementFabricAssembler.maze_module_footprints(fabric)
+	var walked := SettlementFabricAssembler.walked_floor_cells(
+		fabric.surface_plan)
+	var body := SettlementFabricAssembler.NATURAL_ROCK_CUT_BODY_HEIGHT
+	var pinched := 0
+	for cell_value: Variant in walked.keys():
+		var cell := cell_value as Vector3i
+		var head := SettlementFabricAssembler.maze_footprint_headroom(
+			footprints, cell + Vector3i.DOWN,
+			float(cell.y) * FabricRecipe.CELL_SIZE, body)
+		if float(head.rise) == INF:
+			continue
+		pinched += 1
+		var assets := tally.assets as Dictionary
+		var asset := StringName(head.asset)
+		assets[asset] = int(assets.get(asset, 0)) + 1
+	var colliding := SettlementFabricAssembler.maze_street_collider_pinches(
+		footprints, walked)
+	var label := "%d/%s" % [city_seed, String(scale_id)]
+	var first := "" if colliding.is_empty() \
+		else " first=%s@%s rise=%.3f" % [String(colliding[0].asset),
+			str(colliding[0].cell), float(colliding[0].rise)]
+	print(("SWEEP seed=%d scale=%s STREET_PINCH walked=%d pinched=%d " \
+		+ "colliding=%d%s") % [city_seed, String(scale_id), walked.size(),
+		pinched, colliding.size(), first])
+	if not colliding.is_empty():
+		(tally.colliding_towns as Array[String]).append("%s (%d)" % [label,
+			colliding.size()])
+	tally.towns += 1
+	tally.walked += walked.size()
+	tally.pinched += pinched
+	tally.colliding += colliding.size()
+	tally.worst_town_pinched = maxi(int(tally.worst_town_pinched), pinched)
+	tally.worst_town_colliding = maxi(int(tally.worst_town_colliding),
+		colliding.size())
+
+
+func _print_pinch_result(tally: Dictionary) -> void:
+	if int(tally.towns) == 0:
+		return
+	var assets := PackedStringArray()
+	var asset_keys: Array[String] = []
+	for asset_value: Variant in (tally.assets as Dictionary).keys():
+		asset_keys.append(String(asset_value))
+	asset_keys.sort()
+	for asset_name: String in asset_keys:
+		assets.append("%s=%d" % [asset_name,
+			int((tally.assets as Dictionary)[StringName(asset_name)])])
+	print(("SWEEP RESULT street_pinch towns=%d walked=%d pinched=%d " \
+		+ "colliding=%d worst_town_pinched=%d worst_town_colliding=%d " \
+		+ "assets=[%s] colliding_towns=[%s]") % [int(tally.towns),
+		int(tally.walked), int(tally.pinched), int(tally.colliding),
+		int(tally.worst_town_pinched), int(tally.worst_town_colliding),
+		" ".join(assets),
+		", ".join(PackedStringArray(tally.colliding_towns))])
 
 
 static func _new_clearance_tally() -> Dictionary:

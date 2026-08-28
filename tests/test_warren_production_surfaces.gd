@@ -60,7 +60,10 @@ func _sealed_plan_with_stairs() -> PublicRealmSurfacePlan:
 
 func test_production_surface_bundle_carries_stair_transition_meshes() -> void:
 	var plan := _sealed_plan_with_stairs()
-	var bundle := SettlementFabricAssembler.production_surface_bundle(plan)
+	# TASK I4 ROUND 7: the courtyard-planter gate's module index is a REQUIRED
+	# argument now, so a caller that has none says so. This fixture builds a bare
+	# surface plan with no fabric behind it.
+	var bundle := SettlementFabricAssembler.production_surface_bundle(plan, {})
 	assert_gt(bundle.instance_count, 0,
 		"plank instances must survive alongside the mesh channel")
 	assert_gt(bundle.surface_meshes.size(), 0,
