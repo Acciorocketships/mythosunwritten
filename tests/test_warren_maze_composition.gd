@@ -6711,6 +6711,16 @@ func test_the_frontage_stands_clear_of_the_town_s_own_cladding() -> void:
 	##    -- lies inside the box its own window's gate cleared. That is the pin the
 	##    stand-off's one-sidedness rests on, and it is measured off the payload
 	##    rather than off the rule that wrote it.
+	##
+	##    AND THE BOX IS STRICTER THAN THE RULE (r7+r8 review minor 2). The gate
+	##    clears ground for the POOL's widest member, while the box below is built
+	##    from `PERIMETER_FRONTAGE_CLEARANCE[site.asset]` -- the piece that
+	##    actually landed. On the wide pool an awning is 0.52 m narrower than a
+	##    stall, so a large lateral shift on an awning window would be reported
+	##    OUTSIDE even though the gate really had cleared it. The error is a false
+	##    alarm and never a false pass, which is the direction a pin may be wrong
+	##    in; it is written down because "the ground its own window's gate
+	##    cleared" is not literally what this measures.
 	var pools: Array[Array] = [
 		SettlementFabricAssembler.PERIMETER_WIDE_FRONTAGE,
 		SettlementFabricAssembler.PERIMETER_NARROW_FRONTAGE,
@@ -9228,6 +9238,11 @@ func test_the_big_towns_carry_the_round_s_own_zeroes() -> void:
 	assert_not_null(catalog, "the shipped environment catalogue must load")
 	if catalog == null:
 		return
+	# BY ASSET, because `maze_street_collider_pinches` reports an asset and not a
+	# placement -- and that is sound here for a measured reason: the one class
+	# member whose placement can be STRUCTURE rather than dressing is
+	# `ROOF_TERRACE_AWNING` serving as a covered market's canopy, and it bakes
+	# zero collision pieces, so it can never appear in this census at all.
 	var ruled: Dictionary = {}
 	for asset: StringName in SettlementFabricProgram.DECOR_MODULE_ASSETS:
 		ruled[asset] = true
@@ -9283,6 +9298,206 @@ func test_the_big_towns_carry_the_round_s_own_zeroes() -> void:
 				% [_label(outcome), ruled_colliding])
 		checked += 1
 	assert_gt(checked, 0, "a big town must seal for this pin to mean anything")
+
+
+## TASK I4 ROUND 8 FIX 1 (r7+r8 review B2). The eave town this suite can afford
+## to ask the physics server about. 2/large is already solved and cached by the
+## lanes above and it carries the class: `lpfv.fabric.roof.compact.orange.06` at
+## 1.500 m over a walked cell, which is one of the 18 the matrix censuses.
+const PINCH_BODY_LANE: Array = [2, &"large"]
+
+
+func test_an_eave_over_a_street_is_still_an_eave() -> void:
+	## TASK I4 ROUND 8 FIX 1 (r7+r8 review B2) -- THE RULED EXCEPTION GETS AN
+	## ASSERTION, not only a row in a matrix nobody has to run.
+	##
+	## Round 8 determined the 18 roofs over streets with the player's own capsule
+	## and ruled them eaves. Two things were wrong with where that determination
+	## lived. Its tripwire only PRINTED, so a matrix in which a roof had started
+	## blocking a street still exited 0 (fixed in the sweep, beside the clearance
+	## and life gates). And nothing in the shipped SUITE covered it at all: this
+	## file pins `colliding == 0` for the DECOR and OUTRIGGER classes only, and
+	## the roof class is neither -- `test_the_big_towns_carry_the_round_s_own_
+	## zeroes` prints 2/large's two roof pinches as `others=[...]` and asserts
+	## nothing about them.
+	##
+	## SO THE MEASUREMENT ITSELF RUNS HERE, on one town, with the same three
+	## numbers the sweep pins matrix-wide and the SAME CONSTANTS -- capsule,
+	## margin, pin grid and ceiling all read off `MAZE_SWEEP`, so the suite and
+	## the matrix cannot drift into judging two different bodies.
+	##
+	## Cheap because everything expensive is already done: the town is cached,
+	## and the only new work is committing the offending roofs' own baked shapes
+	## (two placements) and 441 pin queries per pinch.
+	var outcome := _solved(int(PINCH_BODY_LANE[0]),
+		StringName(PINCH_BODY_LANE[1]))
+	var plan := outcome.plan as WarrenSpatialPlan
+	assert_not_null(plan, "%s must seal for this pin to mean anything" \
+		% _label(outcome))
+	if plan == null:
+		return
+	var fabric := plan.compiled_fabric_cache()
+	assert_not_null(fabric, "%s sealed but cached no compiled fabric" \
+		% _label(outcome))
+	if fabric == null:
+		return
+	var walked := SettlementFabricAssembler.walked_floor_cells(
+		fabric.surface_plan)
+	var colliding := SettlementFabricAssembler.maze_street_collider_pinches(
+		SettlementFabricAssembler.maze_module_footprints(fabric), walked)
+	# A town that stopped carrying one measures nothing, and a pin that measures
+	# nothing in silence is what round 7's review caught the courtyard gate
+	# doing. If this ever fires, move the coverage to a lane that still has one.
+	assert_gt(colliding.size(), 0,
+		("%s no longer stands any collider over a walked street, so this pin " \
+			+ "is inert -- move it to a lane that carries the eave class") \
+			% _label(outcome))
+	if colliding.is_empty():
+		return
+	var catalog := EnvironmentCatalog.load_default()
+	assert_not_null(catalog, "the shipped environment catalogue must load")
+	if catalog == null:
+		return
+	var cache := EnvironmentRenderCache.new(catalog)
+	var payload := EnvironmentInstancePayload.new()
+	var body_half := SettlementFabricAssembler.NATURAL_ROCK_CUT_BODY_WIDTH * 0.5
+	var body_height := SettlementFabricAssembler.NATURAL_ROCK_CUT_BODY_HEIGHT
+	var staged: Dictionary = {}
+	var placements := fabric.expanded_placements()
+	for pinch: Dictionary in colliding:
+		var cell := pinch.cell as Vector3i
+		var floor_y := float(cell.y) * FabricRecipe.CELL_SIZE
+		var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
+		for placement: Dictionary in placements:
+			if StringName(placement.asset_id) != StringName(pinch.asset) \
+					or int(placement.get("collision_pieces", 0)) <= 0:
+				continue
+			var box := placement.get("bounds", AABB()) as AABB
+			if not box.has_volume():
+				continue
+			var rise := box.position.y - floor_y
+			if rise <= SettlementFabricAssembler.FOOTPRINT_EPSILON \
+					or rise >= body_height:
+				continue
+			if box.position.x >= centre.x + body_half \
+					or box.position.x + box.size.x <= centre.x - body_half \
+					or box.position.z >= centre.z + body_half \
+					or box.position.z + box.size.z <= centre.z - body_half:
+				continue
+			var stable := StringName(placement.stable_id)
+			if staged.has(stable):
+				continue
+			staged[stable] = true
+			payload.add(StringName(pinch.asset),
+				placement.transform as Transform3D, Color.WHITE, stable)
+	assert_gt(payload.instance_count, 0,
+		"%s must stage the hull of every collider it counted" % _label(outcome))
+	if payload.instance_count == 0:
+		return
+	cache.prepare(payload.asset_ids())
+	var world := Node3D.new()
+	add_child_autofree(world)
+	EnvironmentCollisionBuilder.commit(world, payload, cache, &"PinchBody")
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var space := world.get_world_3d().direct_space_state
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = MAZE_SWEEP.PLAYER_CAPSULE_RADIUS
+	capsule.height = MAZE_SWEEP.PLAYER_CAPSULE_HEIGHT
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = capsule
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	query.margin = MAZE_SWEEP.CLEARANCE_MARGIN
+	var pin := BoxShape3D.new()
+	pin.size = Vector3(0.02, body_height - 0.04, 0.02)
+	var pin_query := PhysicsShapeQueryParameters3D.new()
+	pin_query.shape = pin
+	pin_query.collide_with_areas = false
+	pin_query.collide_with_bodies = true
+	pin_query.margin = 0.0
+	var half := FabricRecipe.CELL_SIZE * 0.5
+	var centre_blocked := 0
+	var gates_blocked := 0
+	var worst_intrusion := 0.0
+	var worst := ""
+	for pinch: Dictionary in colliding:
+		var cell := pinch.cell as Vector3i
+		var floor_y := float(cell.y) * FabricRecipe.CELL_SIZE
+		var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
+		query.transform = Transform3D(Basis.IDENTITY, Vector3(centre.x,
+			floor_y + MAZE_SWEEP.PLAYER_CAPSULE_HEIGHT * 0.5 \
+				+ MAZE_SWEEP.CLEARANCE_MARGIN + MAZE_SWEEP.CLEARANCE_FLOOR_LIFT,
+			centre.z))
+		var blocked := not space.intersect_shape(query, 1).is_empty()
+		centre_blocked += int(blocked)
+		for direction: Vector3i in SettlementFabricAssembler.FACE_DIRECTIONS:
+			if direction.y != 0 or not walked.has(cell + direction):
+				continue
+			if not _pinch_gate_is_open(space, query, cell, direction):
+				gates_blocked += 1
+		var nearest := INF
+		for ix in MAZE_SWEEP.PINCH_INTRUSION_STEPS:
+			for iz in MAZE_SWEEP.PINCH_INTRUSION_STEPS:
+				var dx := lerpf(-half, half, float(ix) \
+					/ float(MAZE_SWEEP.PINCH_INTRUSION_STEPS - 1))
+				var dz := lerpf(-half, half, float(iz) \
+					/ float(MAZE_SWEEP.PINCH_INTRUSION_STEPS - 1))
+				pin_query.transform = Transform3D(Basis.IDENTITY,
+					Vector3(centre.x + dx, floor_y + body_height * 0.5,
+						centre.z + dz))
+				if space.intersect_shape(pin_query, 1).is_empty():
+					continue
+				nearest = minf(nearest, Vector2(dx, dz).length())
+		var intrusion := 0.0 if nearest == INF else half - nearest
+		if intrusion > worst_intrusion:
+			worst_intrusion = intrusion
+			worst = "%s@%s" % [String(pinch.asset), str(cell)]
+		print(("MAZE_PINCH_BODY %s cell=%s asset=%s rise=%.3f blocked=%s " \
+			+ "intrusion=%.3f") % [_label(outcome), str(cell),
+			String(pinch.asset), float(pinch.rise), str(blocked), intrusion])
+	assert_eq(centre_blocked, 0,
+		("%s stands a collider on the centreline of %d walked cell(s): that is " \
+			+ "a roof blocking a street, not an eave brushing its corners") % [
+			_label(outcome), centre_blocked])
+	assert_eq(gates_blocked, 0,
+		("%s shuts %d crossing(s) between two walked cells with a collider " \
+			+ "over a street") % [_label(outcome), gates_blocked])
+	assert_lte(worst_intrusion, MAZE_SWEEP.PINCH_INTRUSION_CEILING,
+		("%s reaches %.3f m towards a street's centreline (%s) against a " \
+			+ "ceiling of %.3f m -- half a cell less half a body, which is the " \
+			+ "width a body standing on that centreline claims") % [
+			_label(outcome), worst_intrusion, worst,
+			MAZE_SWEEP.PINCH_INTRUSION_CEILING])
+
+
+func _pinch_gate_is_open(space: PhysicsDirectSpaceState3D,
+		query: PhysicsShapeQueryParameters3D, cell: Vector3i,
+		direction: Vector3i) -> bool:
+	## Can a body stand ON the boundary plane two walked cells share? The sweep's
+	## `_clearance_of_gate` in miniature: the midpoint first, then a slide along
+	## the boundary's own width, because two cells can each admit a body while
+	## the doorway between them is shut.
+	var base := Vector3(float(cell.x) * FabricRecipe.CELL_SIZE,
+		float(cell.y) * FabricRecipe.CELL_SIZE \
+			+ MAZE_SWEEP.PLAYER_CAPSULE_HEIGHT * 0.5 \
+			+ MAZE_SWEEP.CLEARANCE_MARGIN + MAZE_SWEEP.CLEARANCE_FLOOR_LIFT,
+		float(cell.z) * FabricRecipe.CELL_SIZE) \
+		+ Vector3(direction) * (FabricRecipe.CELL_SIZE * 0.5)
+	query.transform = Transform3D(Basis.IDENTITY, base)
+	if space.intersect_shape(query, 1).is_empty():
+		return true
+	var along := Vector3(float(direction.z), 0.0, float(direction.x))
+	var reach := FabricRecipe.CELL_SIZE * 0.5 - MAZE_SWEEP.PLAYER_CAPSULE_RADIUS
+	if reach <= 0.0:
+		return false
+	for step in MAZE_SWEEP.CLEARANCE_OFFSET_STEPS:
+		var slide := lerpf(-reach, reach,
+			float(step) / float(MAZE_SWEEP.CLEARANCE_OFFSET_STEPS - 1))
+		query.transform = Transform3D(Basis.IDENTITY, base + along * slide)
+		if space.intersect_shape(query, 1).is_empty():
+			return true
+	return false
 
 
 func test_every_asset_the_assembler_places_is_declared() -> void:
@@ -10413,6 +10628,13 @@ func test_no_authored_dressing_is_buried_in_the_town_s_own_masonry() -> void:
 	## filed under a ceiling with the hanging ivy. This asserts BOTH outcomes off
 	## the sealed plan, plus the audit's own count of what it withdrew, so the
 	## number the report states is the number the town carries.
+	##
+	## TASK I4 ROUND 8 FIX 1 -- the skin here is the EXACT per-treatment one, which
+	## is now also the skin the RULE decides on, so the two ask the same question
+	## of the same boxes and differ only in tolerance: 0.01 m to withdraw,
+	## 0.0001 m to pass. And the BURIAL half runs on the three big lanes as well,
+	## because the class this round extended -- the covered market's contents --
+	## exists on no corpus town.
 	var checked := 0
 	for outcome: Dictionary in _corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
@@ -10421,40 +10643,9 @@ func test_no_authored_dressing_is_buried_in_the_town_s_own_masonry() -> void:
 		var fabric := plan.compiled_fabric_cache()
 		if fabric == null:
 			continue
-		var retained := fabric.retained_terrace_cells
-		var solids := fabric.transformed_cells(&"solid")
-		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
-			fabric.transformed_cells(&"terrain_bearing"))
-		var paved := SettlementFabricAssembler.public_floor_cells(
-			fabric.surface_plan)
 		var walked := SettlementFabricAssembler.walked_floor_cells(
 			fabric.surface_plan)
-		var shell := SettlementFabricAssembler.maze_skin_shell(retained,
-			solids, paved, plinths, walked,
-			SettlementFabricAssembler.maze_module_footprints(fabric))
-		var skin := SettlementFabricAssembler.maze_skin_panel_boxes(retained,
-			solids, paved, plinths, shell.treatments as Dictionary)
-		var decor: Dictionary = {}
-		for asset: StringName in SettlementFabricProgram.DECOR_MODULE_ASSETS:
-			decor[asset] = true
-		var dressing := 0
-		var buried := 0
-		var first := ""
-		for module: Dictionary in fabric.expanded_placements():
-			if not decor.has(StringName(module.asset_id)):
-				continue
-			dressing += 1
-			var box := module.get("bounds", AABB()) as AABB
-			if not box.has_volume():
-				continue
-			for panel: AABB in skin:
-				if not _boxes_overlap(box, panel):
-					continue
-				buried += 1
-				if first.is_empty():
-					first = "%s (%s)" % [String(module.stable_id),
-						String(module.asset_id)]
-				break
+		var measured := _buried_dressing(fabric)
 		var colliding := SettlementFabricAssembler \
 			.maze_street_collider_pinches(
 				SettlementFabricAssembler.maze_module_footprints(fabric),
@@ -10465,17 +10656,18 @@ func test_no_authored_dressing_is_buried_in_the_town_s_own_masonry() -> void:
 		var audit := fabric.audit
 		print(("MAZE_BURIED_DRESSING %s dressing=%d panels=%d buried=%d " \
 			+ "colliding=%d withdrew=%d/%d first=%s %s") % [_label(outcome),
-			dressing, skin.size(), buried, colliding.size(),
+			int(measured.dressing), int(measured.panels),
+			int(measured.buried), colliding.size(),
 			int(audit.get("suppressed_buried_decor_module_count", -1)),
 			int(audit.get("suppressed_street_collider_module_count", -1)),
-			first, collider_note])
-		assert_gt(skin.size(), 0,
+			String(measured.first), collider_note])
+		assert_gt(int(measured.panels), 0,
 			"%s must lay a retained skin for this pin to mean anything" \
 				% _label(outcome))
-		assert_eq(buried, 0,
+		assert_eq(int(measured.buried), 0,
 			("%s leaves %d authored dressing module(s) inside its own " \
 				+ "masonry -- first %s. That is the user's plant in the wall") % [
-				_label(outcome), buried, first])
+				_label(outcome), int(measured.buried), String(measured.first)])
 		assert_eq(colliding.size(), 0,
 			("%s stands %d baked collider(s) in the body column of a walked " \
 				+ "street -- first %s. The clearance row cannot see these: it " \
@@ -10486,6 +10678,81 @@ func test_no_authored_dressing_is_buried_in_the_town_s_own_masonry() -> void:
 				% _label(outcome))
 		checked += 1
 	assert_gt(checked, 0, "the corpus must seal a town to measure")
+	# TASK I4 ROUND 8 FIX 1 (r7+r8 review I3) -- AND THE THREE BIG LANES, for the
+	# BURIAL half. The class this round extended is the covered market's, and NO
+	# corpus town builds a covered market: 2/large is where the review found a
+	# stocked counter 0.109 m inside the cladding while the same unit's barrel and
+	# flowers had been withdrawn from it, and nothing in this file could see it.
+	# The collider half stays corpus-only, because these three carry the ROOF
+	# class the sweep censuses and `test_an_eave_over_a_street_is_still_an_eave`
+	# determines -- a pin at zero here would be asserting the exception away.
+	for lane: Array in BIG_TOWN_LANES:
+		var outcome := _solved(int(lane[0]), StringName(lane[1]))
+		var plan := outcome.plan as WarrenSpatialPlan
+		if plan == null:
+			continue
+		var fabric := plan.compiled_fabric_cache()
+		if fabric == null:
+			continue
+		var measured := _buried_dressing(fabric)
+		print("MAZE_BURIED_DRESSING_BIG %s dressing=%d panels=%d buried=%d %s" % [
+			_label(outcome), int(measured.dressing), int(measured.panels),
+			int(measured.buried), String(measured.first)])
+		assert_gt(int(measured.dressing), 0,
+			"%s must place dressing for this pin to mean anything" \
+				% _label(outcome))
+		assert_eq(int(measured.buried), 0,
+			("%s leaves %d authored dressing module(s) inside its own masonry " \
+				+ "-- first %s") % [_label(outcome), int(measured.buried),
+				String(measured.first)])
+
+
+func _buried_dressing(fabric: SettlementFabricPlan) -> Dictionary:
+	## Every DRESSING placement of a sealed town against the EXACT skin it really
+	## lays, as `{dressing, panels, buried, first}`. The rule's own question, at
+	## the rule's own boxes and a tenth of a millimetre of slack.
+	var retained := fabric.retained_terrace_cells
+	var solids := fabric.transformed_cells(&"solid")
+	var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+		fabric.transformed_cells(&"terrain_bearing"))
+	var paved := SettlementFabricAssembler.public_floor_cells(
+		fabric.surface_plan)
+	var walked := SettlementFabricAssembler.walked_floor_cells(
+		fabric.surface_plan)
+	var shell := SettlementFabricAssembler.maze_skin_shell(retained, solids,
+		paved, plinths, walked,
+		SettlementFabricAssembler.maze_module_footprints(fabric))
+	var skin := SettlementFabricAssembler.maze_skin_panel_boxes(retained,
+		solids, paved, plinths, shell.treatments as Dictionary)
+	var decor: Dictionary = {}
+	for asset: StringName in SettlementFabricProgram.DECOR_MODULE_ASSETS:
+		decor[asset] = true
+	var dressing := 0
+	var buried := 0
+	var first := ""
+	for module: Dictionary in fabric.expanded_placements():
+		# THE SAME PREDICATE THE RULE DECIDES ON, placement and all, so the pin
+		# cannot hold a module to a standard the rule was never asked to meet: a
+		# covered market's canopy is one of these assets and is its unit's own
+		# structure (`SettlementFabricProgram.DECOR_STRUCTURAL_PLACEMENTS`).
+		if not SettlementFabricProgram.decor_module_is_dressing(
+				StringName(module.asset_id),
+				StringName(module.get("placement_id", &"")), decor):
+			continue
+		dressing += 1
+		var box := module.get("bounds", AABB()) as AABB
+		if not box.has_volume():
+			continue
+		for panel: AABB in skin:
+			if not _boxes_overlap(box, panel):
+				continue
+			buried += 1
+			if first.is_empty():
+				first = "%s (%s)" % [String(module.stable_id),
+					String(module.asset_id)]
+			break
+	return {"dressing": dressing, "panels": skin.size(), "buried": buried,
+		"first": first}
 
 
 func test_the_courtyard_planter_gate_can_actually_refuse() -> void:

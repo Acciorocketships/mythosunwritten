@@ -670,7 +670,7 @@ func _run() -> void:
 	_print_skin_result(ADDED_STONE_GROUP,
 		skin_by_group[ADDED_STONE_GROUP] as Dictionary)
 	_print_clearance_result(clearance)
-	_print_pinch_result(pinches)
+	var pinch_violation := _print_pinch_result(pinches)
 	_print_green_reach_result(greens)
 	# The matrix is written BEFORE the clearance pin is judged. The summary is
 	# evidence about composition and the corpus gate reads it; a shut street is
@@ -727,6 +727,19 @@ func _run() -> void:
 			int(clearance.worst_offset_free),
 			int(clearance.worst_gates_offset)])
 		quit(3)
+		return
+	# TASK I4 ROUND 8 FIX 1 (r7+r8 review B2). THE EAVE EXCEPTION'S TRIPWIRE IS A
+	# GATE. Round 8 shipped its violation branch as a `print` alone, so a matrix
+	# in which a roof had started blocking a street's centreline said so in the
+	# log and still EXITED 0 -- and nothing else covers the class either, since
+	# no town carrying one of the 18 eaves is in the composition suite's corpus.
+	# A ruled exception whose tripwire cannot fail the run is not a tripwire.
+	# It is judged HERE, between the clearance pin and the life ratchet, for the
+	# reason the ratchet gives below: both this and the clearance row are streets
+	# a body cannot walk down, and they are read before a channel that thinned.
+	if not pinch_violation.is_empty():
+		push_error("street pinch pin violated: %s" % pinch_violation)
+		quit(5)
 		return
 	# TASK I3 FIX 1, IMPORTANT 1. The skywalk ratchet, judged after the physics
 	# pin and never instead of it: a shut street is a bug in a town that shipped,
@@ -1184,23 +1197,51 @@ func _measure_street_pinches(tally: Dictionary, city_seed: int,
 ## burial rules call a burial and costs 441 shape queries per pinch on the 0.4
 ## pinches per town this matrix really has.
 const PINCH_INTRUSION_STEPS := 21
-## The most a collider over a street may reach IN from that street's own edge
+## How far a collider over a street may reach TOWARDS THAT STREET'S CENTRELINE
 ## before it stops being an eave and starts being a wall.
 ##
-## DERIVED, NOT CHOSEN, and the derivation is the whole claim: a body standing on
-## the cell's centreline occupies `NATURAL_ROCK_CUT_BODY_WIDTH` of it, so an eave
-## reaching in less than HALF that width from the edge cannot touch it whatever
-## else is true. The ceiling is therefore the geometric statement the physics
-## queries beside it make one case at a time, and it holds for towns nobody has
-## rendered.
+## DERIVED, NOT CHOSEN, and the derivation is the whole claim -- but it is the
+## derivation the measurement below really makes, which is not the one this
+## constant carried until the r7+r8 review read it (B1). `intrusion` is
+## `half - nearest`, where `half` is HALF A CELL and `nearest` is the RADIAL
+## distance from the cell's centre to the closest occupied pin sample. A body
+## standing on the centreline claims `NATURAL_ROCK_CUT_BODY_WIDTH * 0.5` around
+## it, so it goes untouched exactly while
+##
+##     nearest > body_half
+##       <=>  CELL_SIZE * 0.5 - intrusion > body_half
+##       <=>  intrusion < CELL_SIZE * 0.5 - body_half
+##
+## -- 0.750 - 0.397 = 0.35254 m. NOT `body_half` itself (0.39746 m), which is
+## what this said and enforced. The two are close only because a 1.5 m cell is
+## nearly twice a 0.795 m body; they would be equal at `CELL_SIZE = 1.59`. As
+## written the old ceiling admitted a hull reaching 0.045 m INSIDE the radius of
+## the body it claimed to protect, so the generalisation -- the half of the
+## exception meant to hold for towns nobody has rendered -- did not hold.
+##
+## AND `intrusion` IS RADIAL, which is not "how far in from the edge" in the
+## per-edge sense that wording invites (minor 1). For the 0.346 m cases the hull
+## occupies two corner squares roughly 0.46 m deep measured square from each of
+## the two edges it brushes; 0.346 m is its shortest line to the CENTRE, which
+## is the quantity the body question asks and the only one this ceiling rules.
 ##
 ## Measured on the 18 cases round 8 determined: 0.346 m for the two
 ## `lpfv.fabric.roof.compact.*` eaves, 0.294 m for `sfv.fabric.roof.window.002`
-## and 0.220 m for `.004` -- 0.051 m of margin at the worst, which is real and is
-## not much. A rise here means a roof has started oversailing streets rather than
-## clipping their edges.
-const PINCH_INTRUSION_CEILING := SettlementFabricAssembler \
-	.NATURAL_ROCK_CUT_BODY_WIDTH * 0.5
+## and 0.220 m for `.004`. Against the corrected ceiling the worst of them keeps
+## **0.0065 m** -- six and a half millimetres, not the 51 mm round 8 published.
+## The exception stands, because what it rests on is unmoved: `centre_blocked`
+## and `gates_blocked` are direct capsule queries and both are zero matrix-wide.
+## What changes is that the tripwire is now genuinely tight, which is the point
+## of having one: a rise here means a roof has started oversailing streets
+## instead of clipping their corners, and there is almost no room left before
+## one does.
+##
+## The pin grid over-reports vertically -- it sinks a 0.02 m column through the
+## whole body height while a capsule tapers away through its top hemisphere --
+## which is why a hull at radial 0.404 m does not trip a 0.397 m capsule. That
+## slack is in the safe direction and none of it is spent here.
+const PINCH_INTRUSION_CEILING := FabricRecipe.CELL_SIZE * 0.5 \
+	- SettlementFabricAssembler.NATURAL_ROCK_CUT_BODY_WIDTH * 0.5
 
 
 func _measure_pinch_bodies(tally: Dictionary, label: String,
@@ -1262,13 +1303,19 @@ func _measure_pinch_bodies(tally: Dictionary, label: String,
 					or box.position.z >= centre.z + body_half \
 					or box.position.z + box.size.z <= centre.z - body_half:
 				continue
+			# EVERY MATCHING PLACEMENT, not the first (r7+r8 review minor 5).
+			# Round 8 broke out of this loop after one, so two distinct
+			# placements of the same asset over one cell -- a pair of eaves
+			# meeting over a corner, say -- committed one hull and measured the
+			# street against half of what hangs in it. `staged` is keyed by the
+			# placement's own stable id, so a hull already committed for an
+			# earlier pinch is skipped rather than doubled.
 			var stable := StringName(placement.stable_id)
 			if staged.has(stable):
-				break
+				continue
 			staged[stable] = true
 			payload.add(asset, placement.transform as Transform3D, Color.WHITE,
 				stable)
-			break
 	if payload.instance_count == 0:
 		return
 	cache.prepare(payload.asset_ids())
@@ -1355,9 +1402,18 @@ const GREEN_REACH_BANDS := 3
 
 
 static func _new_green_reach_tally() -> Dictionary:
+	## FOUR RUN CLASSES AND FOUR TOWN CLASSES, each a partition of its own
+	## population, so `entered + stepped + near + isolated == runs` closes on the
+	## printed row, and so does `towns_entered + towns_stepped_only +
+	## towns_near_only + towns_all_isolated == towns` for every town that has a
+	## garden run at all -- which is all 44 of the shipped matrix (r7+r8 review
+	## I1: round 8 printed three run classes that summed to 162 of 179, with the
+	## 17 runs sitting two or three bands from a street counted nowhere at all).
+	## A town is filed under the BEST class any of its runs reaches.
 	return {"towns": 0, "garden": 0, "runs": 0, "entered": 0, "stepped": 0,
-		"isolated": 0, "towns_entered": 0, "towns_stepped_only": 0,
-		"towns_isolated": 0, "recoverable": [] as Array[String]}
+		"near": 0, "isolated": 0, "towns_entered": 0, "towns_stepped_only": 0,
+		"towns_near_only": 0, "towns_all_isolated": 0,
+		"recoverable": [] as Array[String], "near_only": [] as Array[String]}
 
 
 func _measure_green_reach(tally: Dictionary, city_seed: int,
@@ -1375,7 +1431,12 @@ func _measure_green_reach(tally: Dictionary, city_seed: int,
 	## that from the plot layer and both failed honestly; round 8 was ruled to try
 	## the fabric side and needs to know what the fabric side is even looking at.
 	##
-	## SO EVERY RUN IS CLASSIFIED BY ITS DISTANCE FROM A STREET, in bands:
+	## SO EVERY RUN IS CLASSIFIED BY ITS DISTANCE FROM A STREET, in bands, and the
+	## FOUR CLASSES ARE A PARTITION -- which is the r7+r8 review's I1 and the
+	## reason this list has four entries instead of three. Round 8 printed
+	## `entered`, `stepped` and `isolated`, a reader took them for the whole of the
+	## population, and they summed to 162 of 179 runs: the 17 runs sitting TWO or
+	## THREE bands from a street fell through both tests and were counted nowhere.
 	##
 	## * ENTERED -- a street meets it at grade. Nothing to fix.
 	## * STEPPED -- no street at grade, but one stands one band off a lateral
@@ -1389,9 +1450,22 @@ func _measure_green_reach(tally: Dictionary, city_seed: int,
 	##   cannot
 	##   put a walkable one there. This count is the size of the prize a plot-layer
 	##   round would be playing for.
+	## * NEAR -- no street at grade and none one band off, but one within
+	##   GREEN_REACH_BANDS: two or three bands, 3.0 to 4.5 m of climb, two
+	##   switchback flights. Whether that is worth building is a design call this
+	##   row does not make -- but it is emphatically not "nothing reaches these",
+	##   and the towns whose only green sits here are named on the row so the
+	##   question can be asked about them by name.
 	## * ISOLATED -- no street within GREEN_REACH_BANDS of any of its edges, up or
 	##   down. Nothing joins these to the town at all, and they are the honest
 	##   view-gardens: 7 of 7/large's 8 runs, 81 of its 87 garden cells.
+	##
+	## THE TOWN CLASSES ARE THE SAME PARTITION, ONE LEVEL UP, and round 8's
+	## `towns_isolated` was not: it counted `entered == 0 and stepped == 0`, which
+	## is "no green a street meets and none one band off" -- and the report read it
+	## out as "no street within three bands", which was wrong for 8 of the 17.
+	## `towns_near_only` is those 8, and `towns_all_isolated` is what the old name
+	## claimed to be.
 	##
 	## Read-only. It derives what it needs and touches nothing.
 	var retained := fabric.retained_terrace_cells
@@ -1412,9 +1486,11 @@ func _measure_green_reach(tally: Dictionary, city_seed: int,
 		return "%d/%d/%d" % [a.y, a.z, a.x] < "%d/%d/%d" % [b.y, b.z, b.x])
 	var entered := 0
 	var stepped := 0
+	var near := 0
 	var isolated := 0
 	var runs := 0
 	var best_stepped := 0
+	var best_near := 0
 	for start: Vector3i in cells:
 		if seen.has(start):
 			continue
@@ -1443,46 +1519,71 @@ func _measure_green_reach(tally: Dictionary, city_seed: int,
 				for lift in range(-GREEN_REACH_BANDS, GREEN_REACH_BANDS + 1):
 					if walked.has(cell + step + Vector3i.UP * (1 + lift)):
 						nearest = mini(nearest, absi(lift))
+		# A run that reaches here has NO entry, so `nearest` is at least 1: the
+		# `lift == 0` probe is `walked.has(cell + step + UP)`, character for
+		# character `maze_plaza_entries`' own test. The three arms below therefore
+		# cover 1, 2..GREEN_REACH_BANDS and beyond -- every value that can occur.
 		if nearest <= 1:
 			stepped += 1
 			best_stepped = maxi(best_stepped, run.size())
-		elif nearest > GREEN_REACH_BANDS:
+		elif nearest <= GREEN_REACH_BANDS:
+			near += 1
+			best_near = maxi(best_near, run.size())
+		else:
 			isolated += 1
 	var label := "%d/%s" % [city_seed, String(scale_id)]
 	print(("SWEEP seed=%d scale=%s GREEN_REACH garden=%d runs=%d entered=%d " \
-		+ "stepped=%d isolated=%d best_stepped=%d") % [city_seed,
-		String(scale_id), garden.size(), runs, entered, stepped, isolated,
-		best_stepped])
+		+ "stepped=%d near=%d isolated=%d best_stepped=%d best_near=%d") % [
+		city_seed, String(scale_id), garden.size(), runs, entered, stepped,
+		near, isolated, best_stepped, best_near])
 	if entered == 0 and stepped > 0:
 		# The towns a stair at the green's edge would actually buy something on.
 		(tally.recoverable as Array[String]).append("%s (%d cells)" % [label,
 			best_stepped])
 		tally.towns_stepped_only += 1
+	elif entered == 0 and near > 0:
+		# And the towns two or three flights would, named rather than folded into
+		# an "isolated" total they do not belong in (review I1).
+		(tally.near_only as Array[String]).append("%s (%d cells)" % [label,
+			best_near])
+		tally.towns_near_only += 1
 	tally.towns_entered += int(entered > 0)
-	tally.towns_isolated += int(entered == 0 and stepped == 0 and runs > 0)
+	tally.towns_all_isolated += int(entered == 0 and stepped == 0 and near == 0 \
+		and runs > 0)
 	tally.towns += 1
 	tally.garden += garden.size()
 	tally.runs += runs
 	tally.entered += entered
 	tally.stepped += stepped
+	tally.near += near
 	tally.isolated += isolated
 
 
 func _print_green_reach_result(tally: Dictionary) -> void:
 	if int(tally.towns) == 0:
 		return
+	# BOTH TOTALS RECONCILE ON THE LINE, which is the whole of review I1's fix:
+	# the four run classes sum to `runs` and the four town classes sum to
+	# `towns`, so a reader can check the partition without re-deriving it.
 	print(("SWEEP RESULT green_reach towns=%d garden=%d runs=%d entered=%d " \
-		+ "stepped=%d isolated=%d towns_entered=%d towns_stepped_only=%d " \
-		+ "towns_isolated=%d recoverable=[%s]") % [int(tally.towns),
+		+ "stepped=%d near=%d isolated=%d towns_entered=%d " \
+		+ "towns_stepped_only=%d towns_near_only=%d towns_all_isolated=%d " \
+		+ "recoverable=[%s] near_only=[%s]") % [int(tally.towns),
 		int(tally.garden), int(tally.runs), int(tally.entered),
-		int(tally.stepped), int(tally.isolated), int(tally.towns_entered),
-		int(tally.towns_stepped_only), int(tally.towns_isolated),
-		", ".join(PackedStringArray(tally.recoverable))])
+		int(tally.stepped), int(tally.near), int(tally.isolated),
+		int(tally.towns_entered), int(tally.towns_stepped_only),
+		int(tally.towns_near_only), int(tally.towns_all_isolated),
+		", ".join(PackedStringArray(tally.recoverable)),
+		", ".join(PackedStringArray(tally.near_only))])
 
 
-func _print_pinch_result(tally: Dictionary) -> void:
+func _print_pinch_result(tally: Dictionary) -> String:
+	## Prints the row, and RETURNS the violation the run must die on -- empty
+	## when the exception holds. The caller owns the `push_error` and the exit
+	## code, exactly as it owns the clearance pin's and the life floor's
+	## (r7+r8 review B2).
 	if int(tally.towns) == 0:
-		return
+		return ""
 	var assets := PackedStringArray()
 	var asset_keys: Array[String] = []
 	for asset_value: Variant in (tally.assets as Dictionary).keys():
@@ -1506,19 +1607,25 @@ func _print_pinch_result(tally: Dictionary) -> void:
 	# census of visual boxes and stays one; what a body MEETS is pinned here, and
 	# both halves are needed: the count says how much of this class the corpus
 	# carries, and these two say it is still an eave rather than a wall.
-	if int(tally.centre_blocked) > 0 or int(tally.gates_blocked) > 0 \
-			or float(tally.worst_intrusion) > PINCH_INTRUSION_CEILING:
-		print(("SWEEP ERROR street_pinch %d collider(s) over a street block the " \
-			+ "centre of a walked cell and %d shut a crossing [%s]; the deepest " \
-			+ "reaches %.3f m in from the cell's edge against a ceiling of " \
-			+ "%.3f m. The ROOF class is a ruled exception only while every one " \
-			+ "of them brushes a street's edge: a centre blocker, a shut " \
-			+ "gate or " \
-			+ "a deeper reach is a walkability DEFECT and wants the eave " \
-			+ "suppressed or the junction's roof variant swapped") % [
-			int(tally.centre_blocked), int(tally.gates_blocked),
-			", ".join(PackedStringArray(tally.blockers)),
-			float(tally.worst_intrusion), PINCH_INTRUSION_CEILING])
+	if int(tally.centre_blocked) == 0 and int(tally.gates_blocked) == 0 \
+			and float(tally.worst_intrusion) <= PINCH_INTRUSION_CEILING:
+		return ""
+	print(("SWEEP ERROR street_pinch %d collider(s) over a street block the " \
+		+ "centre of a walked cell and %d shut a crossing [%s]; the deepest " \
+		+ "reaches %.3f m towards a cell's centre against a ceiling of " \
+		+ "%.3f m (half a cell less half a body). The ROOF class is a ruled " \
+		+ "exception only while every one of them brushes a street's corners: " \
+		+ "a centre blocker, a shut gate or a deeper reach is a walkability " \
+		+ "DEFECT and wants the eave suppressed or the junction's roof " \
+		+ "variant swapped") % [int(tally.centre_blocked),
+		int(tally.gates_blocked),
+		", ".join(PackedStringArray(tally.blockers)),
+		float(tally.worst_intrusion), PINCH_INTRUSION_CEILING])
+	return ("centre_blocked=%d gates_blocked=%d worst_intrusion=%.3f " \
+		+ "ceiling=%.3f [%s]") % [int(tally.centre_blocked),
+		int(tally.gates_blocked), float(tally.worst_intrusion),
+		PINCH_INTRUSION_CEILING,
+		", ".join(PackedStringArray(tally.blockers))]
 
 
 static func _new_clearance_tally() -> Dictionary:
