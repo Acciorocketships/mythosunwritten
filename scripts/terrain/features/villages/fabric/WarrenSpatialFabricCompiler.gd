@@ -7693,6 +7693,10 @@ static func _suppress_intruding_modules(plan: SettlementFabricPlan) \
 	##    so the fix is the fabric's, and it costs no recipe geometry: dressing is
 	##    the one class of module a building can be built without.
 	##
+	##    AGAINST THE EXACT PANELS SINCE THIS FIX ROUND, and against the covered
+	##    market's contents as well as the rooms' -- see the skin derivation below
+	##    and `DECOR_STRUCTURAL_PLACEMENTS`.
+	##
 	## 2. A COLLIDER OVER A STREET. A DECOR or OUTRIGGER module that BAKES a
 	##    collider and stands it inside the body column of a cell the public realm
 	##    walks. Round 6 filed eight such pinches as a ruled exception; the r6
@@ -7703,6 +7707,29 @@ static func _suppress_intruding_modules(plan: SettlementFabricPlan) \
 	##    row could not see them: it commits the fabric dressing and no buildings
 	##    (`warren_maze_mode_sweep.gd`'s own scope note), so the two censuses cover
 	##    disjoint collision sets and both were honestly green.
+	##
+	##    WHAT `placement_collision_pieces` REALLY SAYS, because the sentence
+	##    above is stronger than the test (r7+r8 review minor 3): it is
+	##    `EnvironmentAssetDescriptor.collision_piece_count`, a PER-ASSET count,
+	##    and the geometry this rule then measures is the placement's VISUAL box.
+	##    No individual collider hull is ever consulted. So the gate reads "this
+	##    asset bakes collision AND its drawn geometry is in the body column",
+	##    which is one-sided in the safe direction for a census and NOT the same
+	##    statement as "a body walks into this hull": a brace whose baked shape
+	##    hugs the wall can be withdrawn on the strength of a box that reaches
+	##    into the street. Three withdrawals ride on it, each one measured in the
+	##    r6 review by loading the shapes.
+	##
+	## THE RULE IS DECOR-ONLY FOR BURIAL AND THAT IS A DECISION (review minor 8).
+	## Only branch 1 is gated on `is_decor`; an OUTRIGGER module buried in the
+	## cladding is never withdrawn, and 93 brace and support placements across
+	## seven towns do share volume with the exact skin. They are not defects: a
+	## diagonal brace is AUTHORED to meet a wall, and its world AABB is a rotated
+	## box that hugely overstates the hull it draws -- the same argument this
+	## round makes for the plaza tree's crown, and the reason the collider branch
+	## above rules the braces instead. Withdrawing a brace because its bounding
+	## box meets the masonry it leans on would take out the timber that reads as
+	## holding the storey up, to fix nothing anybody can see.
 	##
 	## THE HANGING IVY IS NOT TOUCHED and that is the ruling, not an oversight: it
 	## bakes ZERO colliders, so a body walks through it, and it is the town's own
@@ -7727,10 +7754,37 @@ static func _suppress_intruding_modules(plan: SettlementFabricPlan) \
 	var paved := SettlementFabricAssembler.public_floor_cells(plan.surface_plan)
 	var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
 		plan.transformed_cells(&"terrain_bearing"))
-	var skin := SettlementFabricAssembler.maze_skin_panel_boxes(retained,
-		solids, paved, plinths)
 	var walked := SettlementFabricAssembler.walked_floor_cells(
 		plan.surface_plan)
+	# THE EXACT SKIN, AND NOT THE CONSERVATIVE UNION (r7+r8 review I2). Round 7
+	# withdrew against `MAZE_SKIN_PANEL_HALF_DEPTH` for every panel, which charges
+	# a coursed masonry face 0.221 m of depth it does not occupy -- and the review
+	# measured the cost: THREE of this pass's 66 withdrawals shared no volume at
+	# all with the cladding their towns really build (12/compact's
+	# `garden.flower` at -0.189 m, 1/grand's `facade.sign` at -0.104 m,
+	# 9/standard's `garden.flower` at -0.051 m). Three modules were deleted from
+	# finished towns for a wall that is not there.
+	#
+	# WHY THE TREATMENTS CAN BE READ HERE WITHOUT A FEEDBACK LOOP, which is the
+	# objection `MAZE_SKIN_PANEL_HALF_DEPTH` was written against. Only the SIDE
+	# faces carry a depth into `maze_skin_panel_boxes`, and a side face's
+	# treatment is decided by its BANK HEIGHT alone -- `maze_bank_height` over
+	# `exposed`, plus the natural-cut fallback, none of which reads the footprint
+	# index. The footprints steer cap faces only (`_maze_cap_is_free` and the
+	# small-garden demotion), and a cap contributes either a soffit box, whose
+	# depth is fixed, or -- for a sky-facing cap -- no box at all. So the panel
+	# boxes are the same array with the index and without it, and this pass
+	# passes NO footprints on purpose: the one input that could move under its own
+	# outcome is the one input it does not take.
+	#
+	# The stand-off in `_frontage_window_offsets` keeps the union, and keeps it
+	# for its own reason: standing a barrel 0.221 m further off a wall than it
+	# strictly must is free, while withdrawing a flower from a wall that is not
+	# there is not.
+	var shell := SettlementFabricAssembler.maze_skin_shell(retained, solids,
+		paved, plinths, walked)
+	var skin := SettlementFabricAssembler.maze_skin_panel_boxes(retained,
+		solids, paved, plinths, shell.treatments as Dictionary, shell)
 	if skin.is_empty() and walked.is_empty():
 		return out
 	var decor: Dictionary = {}
@@ -7753,10 +7807,17 @@ static func _suppress_intruding_modules(plan: SettlementFabricPlan) \
 		for index in recipe.placements.size():
 			var placement := recipe.placements[index] as Dictionary
 			var asset := StringName(placement.asset_id)
-			var is_decor := decor.has(asset)
+			var placement_id := StringName(placement.id)
+			# BY PLACEMENT AND NOT BY ASSET ALONE (r7+r8 review I3). The roof
+			# terrace's awning is dressing where a terrace wears it and it is a
+			# covered market's whole canopy where a bazaar does, and nothing but
+			# the placement id tells the two apart -- see
+			# `SettlementFabricProgram.DECOR_STRUCTURAL_PLACEMENTS`, which is also
+			# where the reason a canopy is never withdrawn is written down.
+			var is_decor := SettlementFabricProgram.decor_module_is_dressing(
+				asset, placement_id, decor)
 			if not is_decor and not outrigger.has(asset):
 				continue
-			var placement_id := StringName(placement.id)
 			if unit.suppressed_placement_ids.has(placement_id):
 				continue
 			if index >= recipe.placement_bounds.size():

@@ -135,6 +135,16 @@ const WINDOW_ROOF_BLUE_PARTY_RIGHT := \
 ## The planter and the plant that stands in it are BOTH here on purpose: they are
 ## two placements, they are buried together, and a planter withdrawn without its
 ## plant leaves a shrub standing in a wall on its own.
+##
+## TASK I4 ROUND 8 FIX 1 (r7+r8 review I3) -- THE COVERED MARKET'S CONTENTS JOIN
+## THE CLASS. Round 7 enumerated this list off the ROOM vocabulary and stopped
+## there, so the four modules a covered bazaar is stocked with were in no class
+## at all: the review found 2/large's market unit with its barrel and its
+## flowers withdrawn from a wall by this very rule while its own stocked counter
+## stood 0.109 m inside the same cladding, invisible to the rule and to every
+## pin. The counter, the hanging vegetables, the market wheel and the roof
+## terrace's awning are dressing by this class's own definition -- they enclose
+## nothing, bear nothing, carry no opening -- and they are here now.
 const DECOR_MODULE_ASSETS: Array[StringName] = [
 	ROOF_PLANTER, FACADE_IVY, FACADE_CLOTHES, FACADE_SIGN,
 	ROOF_FLOWER_BLUE, ROOF_FLOWER_WARM, ROOF_FLOWER_SMALL, ROOF_FLOWER_TALL,
@@ -144,7 +154,30 @@ const DECOR_MODULE_ASSETS: Array[StringName] = [
 	TERRACE_BUCKET, TERRACE_CHAIR, TERRACE_CRATE, TERRACE_FIREWOOD,
 	TERRACE_PLANT_LOW, TERRACE_PLANT_MID, TERRACE_PLANT_BROAD,
 	TERRACE_PLANT_TALL,
+	ROOF_TERRACE_AWNING, COVERED_MARKET_TABLE, COVERED_MARKET_HANGING_GOODS,
+	COVERED_MARKET_WHEEL,
 ]
+## TASK I4 ROUND 8 FIX 1 -- THE ONE PLACEMENT AT WHICH A DECOR-CLASS ASSET IS
+## STRUCTURE, named here because the class is keyed by ASSET and this asset does
+## two jobs.
+##
+## `ROOF_TERRACE_AWNING` is dressing over a roof terrace (`garden.awning`,
+## `terrace.awning`) and it is also one of the seven `COVERED_MARKET_CANOPIES` --
+## the thing a covered bazaar IS. A canopy bears the hanging goods and the wheel,
+## `_covered_market_recipe` seals canopy, posts, goods, aisle and backing socket
+## as one all-or-nothing transaction, and a market unit places nothing else: a
+## withdrawn canopy leaves vegetables hanging in mid-air over a counter, or an
+## empty patch of ground where a market is. So a suppression rule reading this
+## class skips this placement, and the burial it may carry is a MEASURED, RULED
+## case rather than an unseen one -- 2/large's canopy shares 0.584 m of a 0.664 m
+## cladding panel that hangs down from the mass ABOVE the market's own bay, at
+## 3.0-4.7 m up, where the market's authored cells legitimately are and the
+## panel's bottom half has nothing behind it.
+##
+## The rest of `COVERED_MARKET_CANOPIES` is out of the class entirely for the
+## same reason and needs no exception, because those six `sfm.stall.*` pieces are
+## canopies and nothing else.
+const DECOR_STRUCTURAL_PLACEMENTS: Array[StringName] = [&"canopy"]
 ## TASK I4 ROUND 7 -- THE OUTRIGGER CLASS: the two authored props that lean OUT
 ## of the room that places them rather than standing inside its envelope.
 ##
@@ -159,6 +192,18 @@ const DECOR_MODULE_ASSETS: Array[StringName] = [
 ## decor is the only property the suppression needs -- nothing in the composition
 ## depends on them, so a unit can be built without one.
 const OUTRIGGER_MODULE_ASSETS: Array[StringName] = [BRACE, DIAGONAL_BRACE]
+
+
+static func decor_module_is_dressing(asset_id: StringName,
+		placement_id: StringName, decor_assets: Dictionary) -> bool:
+	## Whether THIS placement of THIS asset is a withdrawable piece of dressing:
+	## the DECOR class, less the placements at which one of its assets is doing
+	## structural work. `decor_assets` is `DECOR_MODULE_ASSETS` as a set, built
+	## once by the caller, because the predicate is asked of every placement of
+	## every unit in a town.
+	return decor_assets.has(asset_id) \
+		and not DECOR_STRUCTURAL_PLACEMENTS.has(placement_id)
+
 
 ## The facade module pools, indexed by facade phase.
 ##

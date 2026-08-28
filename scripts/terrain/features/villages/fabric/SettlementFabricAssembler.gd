@@ -1782,14 +1782,26 @@ static func maze_skin_shell(retained: Dictionary, solids: Dictionary,
 ## (0.553 m), and a natural rock shard at NATURAL_ROCK_NOSE_LOCAL_Z -
 ## NATURAL_ROCK_FACE_DEPTH_CENTRE (0.375 m).
 ##
-## THE DEEPEST OF THE THREE, ON PURPOSE, AND IT IS WHAT MAKES THE RULE HONEST.
-## Which module a face wears is decided by `maze_skin_treatments`, which reads
-## the footprint index -- so a suppression rule that asked for the face's ACTUAL
-## module would be deciding against a shell that its own outcome moves. Taking
-## the union of the three keeps the box a pure function of the cell sets, and the
-## error is one-sided: a masonry face is charged 0.221 m it does not occupy, so
-## the rule can only ever ask a module to be further out of a wall than it
-## strictly has to be.
+## THE DEEPEST OF THE THREE, ON PURPOSE, AND WHAT THAT IS NOW FOR. The union
+## keeps the box a pure function of the cell sets, and its error is one-sided: a
+## masonry face is charged 0.221 m it does not occupy, so a rule reading it can
+## only ever ask a module to stand further out of a wall than it strictly must.
+##
+## THAT IS SAFE FOR A STAND-OFF AND IT WAS NOT SAFE FOR A WITHDRAWAL, which is
+## the r7+r8 review's I2 and the reason this docstring no longer claims both.
+## `_frontage_window_offsets` uses the union and keeps it: standing a barrel
+## 0.221 m further off a wall than it needs costs nothing. Round 7's suppression
+## rule also used it, and three of its 66 withdrawals turned out to share NO
+## volume with the cladding their towns really build -- two flowers and a tavern
+## sign deleted from finished towns for a wall that is not there.
+## `WarrenSpatialFabricCompiler._suppress_intruding_modules` now measures against
+## the EXACT per-treatment panels, and the objection this constant was written
+## against does not apply to it: only SIDE faces carry a depth into
+## `maze_skin_panel_boxes`, and a side face's treatment is a function of its bank
+## height alone. The footprint index steers CAP faces, which contribute a
+## fixed-depth soffit or no box at all -- so the panel boxes are the same array
+## with the index and without it, and the rule reads the version derived without
+## it.
 const MAZE_SKIN_PANEL_HALF_DEPTH := FACADE_CELL_DEPTH
 
 
@@ -4475,12 +4487,23 @@ static func maze_street_collider_pinches(footprints: Dictionary,
 	## contains their authored convex hull, so a zero here is a real zero, while a
 	## hit is "this asset bakes collision AND its geometry is in the way" and the
 	## exact hull is one `EnvironmentVisual` load away for whoever reads the row.
+	##
+	## AND THE PIECE COUNT IS PER ASSET, not per collider (r7+r8 review minor 3).
+	## `collides` comes from `FabricRecipe.placement_collision_pieces`, which is
+	## `EnvironmentAssetDescriptor.collision_piece_count` -- one number for the
+	## asset, however many hulls it bakes and wherever they sit inside it. This
+	## census therefore asks "does this asset bake anything at all, and is its
+	## DRAWN box in the body column", never "is a hull in the body column". For a
+	## count that is the right conservative reading; for anything that ACTS on a
+	## hit (`WarrenSpatialFabricCompiler._suppress_intruding_modules` withdraws
+	## on it) it is worth knowing that the acting evidence is a box.
 	var out: Array[Dictionary] = []
 	var boxes := footprints.get("boxes", []) as Array
 	if boxes.is_empty() or walked.is_empty():
 		return out
 	var assets := footprints.get("assets", []) as Array
-	var collides := footprints.get("collides", PackedInt32Array()) 		as PackedInt32Array
+	var collides := footprints.get("collides", PackedInt32Array()) \
+		as PackedInt32Array
 	var by_cell := footprints.get("by_cell", {}) as Dictionary
 	var half := NATURAL_ROCK_CUT_BODY_WIDTH * 0.5
 	var cells: Array[Vector3i] = []

@@ -396,6 +396,13 @@ func expanded_placements() -> Array[Dictionary]:
 	## `FabricRecipe.placement_collision_pieces`, for the same reason and under
 	## the same contract: a rule that has to tell a slab a body walks INTO from a
 	## leaf it walks THROUGH cannot read that out of a box.
+	##
+	## TASK I4 ROUND 8 FIX 1 adds `placement_id`, the recipe's own name for this
+	## module, under that same contract. The DECOR class is keyed by asset and one
+	## asset does two jobs -- the roof terrace's awning is also a covered market's
+	## canopy -- so every reader of that class needs the name the recipe gave the
+	## placement, and reconstructing it by splitting `stable_id` on a slash is a
+	## parser where a field will do.
 	var out: Array[Dictionary] = []
 	for unit_value: FabricUnit in units:
 		var unit_recipe := _recipes[unit_value.recipe_id] as FabricRecipe
@@ -408,6 +415,7 @@ func expanded_placements() -> Array[Dictionary]:
 			out.append({
 				"stable_id": StringName("%s/%s" % [unit_value.stable_id,
 					StringName(placement.id)]),
+				"placement_id": StringName(placement.id),
 				"asset_id": StringName(placement.asset_id),
 				"transform": unit_transform *
 					(placement.transform as Transform3D),
