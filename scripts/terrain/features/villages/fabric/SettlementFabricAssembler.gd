@@ -686,6 +686,12 @@ const DECOR_PROBE_RISE := 1.268610
 ## touching. A tenth of a millimetre: below the tolerance any of these modules
 ## was authored to and far below anything an eye resolves at 1.5 m.
 const FOOTPRINT_EPSILON := 0.0001
+## TASK I4 ROUND 8. How much two boxes have to share before they are INSIDE each
+## other rather than meeting at a face. One centimetre on every axis, which is
+## `WarrenSpatialFabricCompiler.BURIED_MODULE_TOLERANCE` restated for this file
+## and for the same reason: `AABB.intersects` counts a coplanar face as an
+## intersection, and half the geometry in this fabric is authored coplanar.
+const BOX_SHARE_TOLERANCE := 0.01
 ## A hair of daylight between a piece and the wall behind it, so "just fits" is
 ## not "just touches". One centimetre -- the smallest gap the sweep's own
 ## clearance margin calls a gap.
@@ -1006,6 +1012,39 @@ const PERIMETER_FRONTAGE_CLEARANCE := {
 	PERIMETER_TABLE: Vector3(1.084048, 1.343014, 1.511983),
 	PERIMETER_BARREL: Vector3(0.449679, 1.032944, 0.899358),
 }
+## TASK I4 ROUND 8, PART 1 -- HOW FAR A FRONTAGE STANDS OFF A CLAD WALL, and why
+## the number is the skin's own depth rather than a taste.
+##
+## `PERIMETER_FRONTAGE_DEPTH` pushes each piece out by its own measured
+## half-depth so its VISIBLE BACK PLANE lands on the wall it fronts -- and the
+## wall that rule means is the LATTICE BOUNDARY. Where the town's edge is a
+## BUILDING that is exactly right. Where it is the retained mass, the boundary is
+## not the wall: a coursed panel, a facade storey or a rock shard stands in front
+## of it, and the piece was landing its back plane inside that cladding. Measured
+## on 12/compact before this round: 16 frontage and 15 stall-goods pieces sharing
+## real volume with a `maze-stone` panel, the deepest 0.659 m in -- the r6
+## review's buried planter one layer out, and the r7 report's concern 2.
+##
+## THE SAME NUMBER THE SUPPRESSION RULE USES, for the same reason
+## (`MAZE_SKIN_PANEL_HALF_DEPTH`): which module a face wears is decided by
+## `maze_skin_treatments`, which reads the footprint index, so a siting rule that
+## asked for the ACTUAL module would decide against a shell its own outcome
+## moves. The deepest of the three keeps the stand-off a pure function of the
+## cell sets, and the error is one-sided -- a piece stands at most 0.221 m
+## further off a masonry face than it strictly must, and never inside it.
+##
+## AND IT CANNOT MOVE A SITE. `_frontage_window_is_free` clears
+## `ceil(reach / CELL_SIZE)` whole cells of ground in front of every window, so
+## the stand-off is free exactly while
+##
+##     pool reach + STANDOFF <= ceil(pool reach / CELL_SIZE) x CELL_SIZE
+##
+## which holds for all three pools with 0.517 m, 0.935 m and 0.048 m to spare.
+## `test_the_frontage_stand_off_fits_the_ground_the_gate_clears` is that
+## arithmetic, asserted rather than asserted-in-a-comment: if a re-bake grows a
+## module past its slack the pin fails here instead of silently dressing fewer
+## windows.
+const PERIMETER_FRONTAGE_SKIN_STANDOFF := FACADE_CELL_DEPTH
 ## HOW MUCH OF THE PERIMETER IS DRESSED. Seeded per window off the window's own
 ## anchor, which is this file's idiom for every dressing rate it owns. Two in
 ## three rather than all of it: a market that fills every metre of every outward
@@ -1511,8 +1550,11 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan) \
 	# TASK I4, ANNOTATION 6. The town's outward foot, dressed: stalls, awnings
 	# and their props standing on the meadow against the ground storey, so the
 	# edge reads as buildings meeting open ground rather than as a sheer wall.
+	# TASK I4 ROUND 8, PART 1. And the cladding it has to stand clear of, off the
+	# shell this payload already derived.
 	out.append_from(maze_perimeter_frontage(retained, solids, paved, walked,
-		plan.world_seed))
+		plan.world_seed,
+		maze_skin_panel_boxes(retained, solids, paved, plinths, {}, shell)))
 	# TASK C5e RULING 3. The other half of what a maze town's crown wears.
 	# The parapet course that used to cap every flat roof is released to air
 	# by `WarrenVolumetricSolver._maze_released_parapet_cells`, so the slab is
@@ -1769,7 +1811,8 @@ static func maze_skin_panel_boxes_for(
 
 static func maze_skin_panel_boxes(retained: Dictionary, solids: Dictionary,
 		paved: Dictionary = {}, plinths: Dictionary = {},
-		treatments: Dictionary = {}) -> Array[AABB]:
+		treatments: Dictionary = {},
+		shell: Dictionary = {}) -> Array[AABB]:
 	## TASK I4 ROUND 7, PART 1 -- WHERE THE TOWN'S OWN MASONRY STANDS, as world
 	## boxes, so a rule can ask "is this authored module buried in a wall this
 	## same compile lays".
@@ -1792,9 +1835,18 @@ static func maze_skin_panel_boxes(retained: Dictionary, solids: Dictionary,
 	## Pure function of the four cell sets, with no placement input at all. That
 	## is the property the suppression rule needs: the decision cannot move
 	## because of what the decision suppressed.
+	##
+	## TASK I4 ROUND 8 -- `shell` IS THE SAME DERIVATION, ALREADY DONE. The
+	## payload derives `maze_skin_shell` once for every emitter it drives, and the
+	## frontage is now one of those emitters; re-deriving `exposed` and `faces`
+	## here would be `maze_skin_shell`'s own docstring's complaint in a new place.
+	## Byte-identity is by construction: `_maze_stone_faces_from` is a pure
+	## function of arguments the shell was built from and the shell holds its
+	## answer, so the two branches are the same dictionary.
 	var out: Array[AABB] = []
-	var exposed := exposed_maze_stone_faces(retained, solids, paved)
-	var faces := _maze_stone_faces_from(exposed, retained, solids, plinths)
+	var faces := shell.get("faces", {}) as Dictionary if shell.has("faces") \
+		else _maze_stone_faces_from(exposed_maze_stone_faces(retained, solids,
+			paved), retained, solids, plinths)
 	var keys: Array[Vector4i] = []
 	keys.assign(faces.keys())
 	keys.sort_custom(_face_before)
@@ -3117,7 +3169,8 @@ static func maze_footprint_floor_cover(footprints: Dictionary,
 
 static func maze_perimeter_frontage_sites(retained: Dictionary,
 		solids: Dictionary, paved: Dictionary, walked: Dictionary,
-		world_seed: int = 0) -> Array[Dictionary]:
+		world_seed: int = 0,
+		skin: Array[AABB] = [] as Array[AABB]) -> Array[Dictionary]:
 	## TASK I4, ANNOTATION 6 -- "instead of a sheer wall at the edge of the city
 	## it would look better if there were ground story buildings or a market
 	## around the perimeter".
@@ -3146,6 +3199,14 @@ static func maze_perimeter_frontage_sites(retained: Dictionary,
 	## 4. NOBODY WALKS THERE. No public floor and no walked cell in front of the
 	##    wall, at the foot band or the one above it, so a frontage can never
 	##    stand in the mouth of a street leaving the town.
+	##
+	## AND A FIFTH FACT SINCE ROUND 8, which is not a way a site can be wrong but a
+	## way a PLACEMENT was: `skin` is `maze_skin_panel_boxes` for this same town,
+	## and each site carries the `standoff` its wall's cladding costs it. Empty
+	## `skin` means "no caller told me what clads this town", which reads the same
+	## as an unclad edge -- every production caller passes it, and the two that do
+	## not are counting sites rather than placing them. See
+	## `PERIMETER_FRONTAGE_SKIN_STANDOFF`.
 	##
 	## The window is THREE CELLS because the vocabulary is: the market stall
 	## measures 4.474 m across and the framed awning 4.241 m, against 4.5 m of
@@ -3226,13 +3287,14 @@ static func maze_perimeter_frontage_sites(retained: Dictionary,
 				run.append(walker)
 				walker += cross
 			_append_frontage_windows(out, run, direction, int(sites[slot]),
-				paved, walked, world_seed)
+				paved, walked, world_seed, skin)
 	return out
 
 
 static func _append_frontage_windows(out: Array[Dictionary],
 		run: Array[Vector3i], direction: Vector3i, band: int,
-		paved: Dictionary, walked: Dictionary, world_seed: int) -> void:
+		paved: Dictionary, walked: Dictionary, world_seed: int,
+		skin: Array[AABB] = [] as Array[AABB]) -> void:
 	## One run of outward ground-storey wall, cut into windows and dressed. The
 	## widest piece the run can hold is tried first so a long front reads as a
 	## market rather than as a row of barrels; what is left over takes the
@@ -3301,8 +3363,173 @@ static func _append_frontage_windows(out: Array[Dictionary],
 				"direction": direction,
 				"band": band,
 				"depth": PERIMETER_FRONTAGE_DEPTH[pool[pick]],
+				# TASK I4 ROUND 8. Off the POOL and not off `pick`, exactly as
+				# the gate above is: whether the wall this window fronts is clad
+				# is a fact about the WINDOW, and a stand-off that moved with a
+				# roll would put the same market at two different depths
+				# depending on which piece the seed chose.
+				"offsets": _frontage_window_offsets(window, direction, band,
+					pool, skin),
 			})
 		index += width
+
+
+static func _frontage_window_offsets(window: Array[Vector3i],
+		direction: Vector3i, band: int, pool: Array[StringName],
+		skin: Array[AABB]) -> Vector2:
+	## TASK I4 ROUND 8, PART 1 -- WHERE THE PIECE HAS TO STAND to keep out of the
+	## cladding this same compile lays, as `(standoff, shift)`: how far further
+	## OUT than its own half-depth, and how far ALONG the face from its window's
+	## own middle.
+	##
+	## TWO NUMBERS BECAUSE THERE ARE TWO WAYS A WALL IS IN THE WAY, and the second
+	## is the one the first pass of this round missed. A piece fronting a clad
+	## face is buried by the cladding IN FRONT of it, and standing further out
+	## fixes that. A piece standing in a re-entrant corner of the town's edge --
+	## where the column beside the one it fronts carries mass the ground band does
+	## not -- is buried by the cladding BESIDE it, and no amount of standing
+	## further out escapes a wall you are moving along. Measured on 12/compact:
+	## the stand-off alone took 31 buried pieces to 1, and the last one is that
+	## corner (`maze-frontage/-6/0/1/0`, a barrel 0.253 m inside a facade panel
+	## belonging to the column diagonally across from it).
+	##
+	## THE SHIFT IS THE FREE-BOX IDIOM THIS FILE ALREADY OWNS. `maze_decor_free_
+	## box` shrinks a garden cell by whatever is built on its sides and moves the
+	## planter's centre with the shrinking, "instead of centring it on a plane
+	## half of which is masonry". This is the same rule for the same reason, over
+	## the ground `_frontage_window_is_free` has already cleared: the free
+	## interval along the face, and the piece clamped into it. A window whose free
+	## interval already holds the piece keeps it dead centre, so the shift is zero
+	## everywhere the corner case is not.
+	##
+	## BOUNDED BY THE GATE'S OWN GROUND, which is what makes the shift free. The
+	## gate clears `spread + (overhang + 0.5) x CELL_SIZE` either side of the
+	## window's middle, and that span covers `half_width` by construction -- so
+	## the interval is never narrower than the piece unless cladding takes a bite
+	## out of it, and the piece never leaves ground the gate proved unwalked.
+	##
+	## OFF THE POOL, like the gate: a window either has room for its whole class
+	## or is dressed where its whole class fits.
+	if skin.is_empty() or window.is_empty():
+		return Vector2.ZERO
+	var half_width := 0.0
+	var rise := 0.0
+	var reach := 0.0
+	for asset_id: StringName in pool:
+		var envelope: Vector3 = PERIMETER_FRONTAGE_CLEARANCE[asset_id]
+		half_width = maxf(half_width, envelope.x)
+		rise = maxf(rise, envelope.y)
+		reach = maxf(reach, envelope.z)
+	var first := window[0] as Vector3i
+	var last := window[window.size() - 1] as Vector3i
+	var centre := (Vector3(first.x, 0.0, first.z) \
+		+ Vector3(last.x, 0.0, last.z)) * 0.5 * FabricRecipe.CELL_SIZE
+	var outward := Vector3(direction)
+	var plane := centre + outward * (FabricRecipe.CELL_SIZE * 0.5)
+	var spread := float(window.size() - 1) * FabricRecipe.CELL_SIZE * 0.5
+	# The gate's own overhang arithmetic, restated so the two rules bound the
+	# piece to the same ground.
+	var overhang := 0
+	while half_width > spread \
+			+ (float(overhang) + 0.5) * FabricRecipe.CELL_SIZE:
+		overhang += 1
+	var cleared := spread + (float(overhang) + 0.5) * FabricRecipe.CELL_SIZE
+	var standoff := PERIMETER_FRONTAGE_SKIN_STANDOFF \
+		if _frontage_flush_is_clad(plane, outward, direction, centre, band,
+			cleared, reach, rise, skin) else 0.0
+	# The free interval along the face, once the piece stands where the stand-off
+	# put it. Measured on the CLEARED span rather than on the piece, so a panel
+	# outside the piece's own width still bounds a shift toward it.
+	var axis := absi(direction.x) == 0
+	var middle := centre.x if axis else centre.z
+	var low := middle - cleared
+	var high := middle + cleared
+	var slab := _frontage_piece_slab(plane, outward, direction, band, middle,
+		cleared, standoff, reach, rise)
+	for panel: AABB in skin:
+		var panel_low := panel.position.x if axis else panel.position.z
+		var panel_high := panel_low + (panel.size.x if axis else panel.size.z)
+		if panel_low >= high - BOX_SHARE_TOLERANCE \
+				or panel_high <= low + BOX_SHARE_TOLERANCE:
+			continue
+		if not _boxes_share_volume(slab, panel):
+			continue
+		if panel_high <= middle:
+			low = maxf(low, panel_high)
+		elif panel_low >= middle:
+			high = minf(high, panel_low)
+	# `clampf` and not a re-centring: a window whose interval still holds the
+	# piece keeps it exactly where the window put it, and one that does not gives
+	# it the least move that stands it clear. When the bite is deeper than the
+	# piece is wide the two bounds cross, `clampf` pins the piece against the
+	# nearer wall, and the outcome pin is what says so out loud.
+	var stand := clampf(middle, low + half_width, high - half_width)
+	return Vector2(standoff, stand - middle)
+
+
+static func _frontage_flush_is_clad(plane: Vector3, outward: Vector3,
+		direction: Vector3i, centre: Vector3, band: int, cleared: float,
+		reach: float, rise: float, skin: Array[AABB]) -> bool:
+	## Does the retained skin stand inside the volume this window's pool would
+	## occupy standing FLUSH on the lattice boundary? That is the question the
+	## stand-off answers, and it is asked against the very boxes the outcome pin
+	## measures rather than by face key -- so a panel belonging to the column
+	## round the corner counts exactly as much as the one straight ahead, which
+	## is what a piece leaning on it would report.
+	var low := Vector3(plane.x, float(band) * FabricRecipe.CELL_SIZE, plane.z)
+	var high := low + outward * reach
+	high.y = low.y + rise
+	if direction.x != 0:
+		low.z = centre.z - cleared
+		high.z = centre.z + cleared
+	else:
+		low.x = centre.x - cleared
+		high.x = centre.x + cleared
+	var flush := AABB(low.min(high), (high - low).abs())
+	for panel: AABB in skin:
+		if _boxes_share_volume(flush, panel):
+			return true
+	return false
+
+
+static func _frontage_piece_slab(plane: Vector3, outward: Vector3,
+		direction: Vector3i, band: int, middle: float, cleared: float,
+		standoff: float, reach: float, rise: float) -> AABB:
+	## The piece's own volume once the stand-off has moved it, stretched across the
+	## WHOLE of the ground its window's gate cleared rather than across the piece's
+	## own width. The difference is the point: the shift is measured against panels
+	## the piece does not touch yet and would touch if it moved, and the cleared
+	## span is exactly how far it may move.
+	var base := plane + outward * standoff
+	var low := Vector3(base.x, float(band) * FabricRecipe.CELL_SIZE, base.z)
+	var high := low + outward * reach
+	high.y = low.y + rise
+	if direction.x != 0:
+		low.z = middle - cleared
+		high.z = middle + cleared
+	else:
+		low.x = middle - cleared
+		high.x = middle + cleared
+	return AABB(low.min(high), (high - low).abs())
+
+
+static func _boxes_share_volume(left: AABB, right: AABB) -> bool:
+	## Real shared volume rather than `AABB.intersects`, which counts two boxes
+	## meeting at a face. The tolerance is the compiler's own
+	## `BURIED_MODULE_TOLERANCE` restated for this file: a centimetre on every
+	## axis, an order under the smallest real burial anybody has measured here and
+	## an order over the tolerance these modules were authored to.
+	return left.position.x + left.size.x - right.position.x > BOX_SHARE_TOLERANCE \
+		and right.position.x + right.size.x - left.position.x \
+			> BOX_SHARE_TOLERANCE \
+		and left.position.y + left.size.y - right.position.y \
+			> BOX_SHARE_TOLERANCE \
+		and right.position.y + right.size.y - left.position.y \
+			> BOX_SHARE_TOLERANCE \
+		and left.position.z + left.size.z - right.position.z \
+			> BOX_SHARE_TOLERANCE \
+		and right.position.z + right.size.z - left.position.z \
+			> BOX_SHARE_TOLERANCE
 
 
 static func _frontage_window_is_free(window: Array[Vector3i],
@@ -3368,7 +3595,8 @@ static func _frontage_window_is_free(window: Array[Vector3i],
 
 static func maze_perimeter_frontage(retained: Dictionary, solids: Dictionary,
 		paved: Dictionary = {}, walked: Dictionary = {},
-		world_seed: int = 0) -> EnvironmentInstancePayload:
+		world_seed: int = 0,
+		skin: Array[AABB] = [] as Array[AABB]) -> EnvironmentInstancePayload:
 	## The frontages themselves, standing on the outside ground with their backs
 	## on the town's own wall plane. Every piece carries a `maze-frontage/` id
 	## that no reading of the skin mistakes for cladding -- the same separation
@@ -3381,13 +3609,22 @@ static func maze_perimeter_frontage(retained: Dictionary, solids: Dictionary,
 	## that and does reach into the mass; the correction, and why leaving it there
 	## is the right answer, are at PERIMETER_FRONTAGE_DEPTH.
 	##
+	## TASK I4 ROUND 8 -- AND THE WALL PLANE IS NOT ALWAYS THE LATTICE BOUNDARY.
+	## Where the town's edge is the retained mass rather than a building, the
+	## cladding this same compile lays stands in front of that boundary, and a
+	## piece whose back plane landed on it was standing inside the mass's skin --
+	## 31 pieces on 12/compact, the deepest 0.659 m in. `site.standoff` is what
+	## that face's cladding costs the piece, and it is added to the SAME push-out
+	## the piece's own half-depth already makes, so the two read as one sentence:
+	## stand off the wall by whatever is in front of it, then by half of yourself.
+	##
 	## THE DATUM is the foot band's own floor, `band x CELL_SIZE` -- the bottom of
 	## the lowest cell of mass in that column, which is where the terrain the town
 	## is cut into meets it. Every module in the pool is authored standing on
 	## y = 0, so a piece stands on the ground rather than hovering over it.
 	var out := EnvironmentInstancePayload.new()
 	for site: Dictionary in maze_perimeter_frontage_sites(retained, solids,
-			paved, walked, world_seed):
+			paved, walked, world_seed, skin):
 		var window := site.cells as Array
 		var direction := site.direction as Vector3i
 		var outward := Vector3(direction)
@@ -3395,8 +3632,15 @@ static func maze_perimeter_frontage(retained: Dictionary, solids: Dictionary,
 		var last := window[window.size() - 1] as Vector3i
 		var centre := (Vector3(first.x, 0.0, first.z) \
 			+ Vector3(last.x, 0.0, last.z)) * 0.5 * FabricRecipe.CELL_SIZE
+		var offsets := site.get("offsets", Vector2.ZERO) as Vector2
+		# `offsets.y` is a WORLD delta on the face's own lateral axis, not a
+		# multiple of the gate's signed `cross` -- `_frontage_window_offsets`
+		# measures the free interval in world coordinates, so the axis carries no
+		# sign of its own.
+		var along := Vector3(0.0, 0.0, 1.0) if direction.x != 0 \
+			else Vector3(1.0, 0.0, 0.0)
 		var origin := centre + outward * (FabricRecipe.CELL_SIZE * 0.5 \
-			+ float(site.depth))
+			+ offsets.x + float(site.depth)) + along * offsets.y
 		origin.y = float(site.band) * FabricRecipe.CELL_SIZE
 		var yaw := atan2(outward.x, outward.z)
 		out.add(StringName(site.asset), Transform3D(Basis(Vector3.UP, yaw),

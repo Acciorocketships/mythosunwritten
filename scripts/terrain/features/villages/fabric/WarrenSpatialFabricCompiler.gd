@@ -1312,8 +1312,13 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			floor_bearers_refused += 1
 		else:
 			floor_bearers_borne += 1
+	# TASK I4 ROUND 8, PART 1. The cladding the frontage stands off, from the same
+	# shell this audit already holds -- so the sites this counts are the sites the
+	# payload lays, stand-off and all.
+	var frontage_skin := SettlementFabricAssembler.maze_skin_panel_boxes(
+		retained, solids, paved, plinths, {}, shell)
 	var frontages := SettlementFabricAssembler.maze_perimeter_frontage_sites(
-		retained, solids, paved, walked, plan.world_seed)
+		retained, solids, paved, walked, plan.world_seed, frontage_skin)
 	var frontages_wide := 0
 	# TASK I4 ROUND 5, ITEM 2. Every canopy this fabric stands, wherever it stands
 	# it: the square's own centre feature and the town's outward front. The goods
@@ -1327,7 +1332,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		stall_canopies += int(SettlementFabricAssembler.STALL_CANOPIES.has(
 			StringName(site.asset)))
 	var frontage_payload := SettlementFabricAssembler.maze_perimeter_frontage(
-		retained, solids, paved, walked, plan.world_seed)
+		retained, solids, paved, walked, plan.world_seed, frontage_skin)
 	for asset_value: Variant in frontage_payload.batches.keys():
 		var frontage_batch := frontage_payload.batches[asset_value] as Dictionary
 		for id_value: Variant in frontage_batch.get("ids", []) as Array:
