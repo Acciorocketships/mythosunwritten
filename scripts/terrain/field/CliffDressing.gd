@@ -27,6 +27,18 @@ const ASSETS := {
 	"inner_wall": &"kaykit.cliff.inner_wall",
 	"inner_lip": &"kaykit.cliff.inner_lip",
 }
+## Terrain-shaped village retaining skins use these exact catalogue pieces too.
+## Keep their classification beside the canonical palette/tint authority so a
+## new skin cannot silently acquire a separate settlement colour path.
+const TERRAIN_SKIN_ASSETS := {
+	&"kaykit.terrain.top_center": true,
+	&"kaykit.cliff.wall": true,
+	&"kaykit.cliff.lip": true,
+	&"kaykit.cliff.outer_wall": true,
+	&"kaykit.cliff.outer_lip": true,
+	&"kaykit.cliff.inner_wall": true,
+	&"kaykit.cliff.inner_lip": true,
+}
 
 const TILE := 24.0
 const STOREY := 4.0
@@ -115,6 +127,17 @@ static func compute_tints(transforms: Array, world_seed: int) -> PackedColorArra
 		out[i] = Color(1, 1, 1) if world_seed == 0 else BiomeRegistry.ground_tint_at(
 			(transforms[i] as Transform3D).origin, world_seed)
 	return out
+
+
+static func is_terrain_skin_asset(asset_id: StringName) -> bool:
+	return TERRAIN_SKIN_ASSETS.has(asset_id)
+
+
+## Convenience for adapters that turn one settlement-local terrain piece into
+## a world-space instance. This still delegates to the streamed-cliff batch
+## implementation, preserving one biome lookup authority.
+static func tint_at(transform: Transform3D, world_seed: int) -> Color:
+	return compute_tints([transform], world_seed)[0]
 
 # Rows needed to cover a face of height `dip` (storey-quantised, rounded UP so the wall always
 # reaches past the exposed face; the sub-storey overshoot is buried under the neighbour's surface).

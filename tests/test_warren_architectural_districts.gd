@@ -259,7 +259,7 @@ func test_no_storey_the_town_wears_is_clad_in_stone_above_its_base() -> void:
 		"removing the upper accent must not also delete the masonry plinth")
 
 
-func test_broad_roofs_keep_the_town_palette_cool_weighted() \
+func test_broad_roofs_use_a_balanced_independent_roof_palette() \
 		-> void:
 	var cool := 0
 	var warm := 0
@@ -273,8 +273,11 @@ func test_broad_roofs_keep_the_town_palette_cool_weighted() \
 				cool += 1
 			else:
 				warm += 1
-	assert_gt(cool, warm * 2,
-		"wider roofs no longer preserve the cool-weighted district palette")
+	assert_gt(cool, 0)
+	assert_gt(warm, 0)
+	var ratio := float(cool) / float(warm)
+	assert_between(ratio, 0.75, 1.35,
+		"the independent roof field drifted back toward one dominant colour")
 
 
 func test_compact_blue_roofs_use_real_slate_palette_variants() -> void:

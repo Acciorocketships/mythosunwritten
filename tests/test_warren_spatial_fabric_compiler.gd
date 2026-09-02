@@ -13,16 +13,26 @@ const PRODUCTION_MARKET_CANDIDATES := 0
 
 
 static func _tiled_setback_caps(audit: Dictionary) -> int:
-	## How many `roof.setback.cap.*` units the flat-plate TILING placed, read
-	## out of the per-recipe histogram it publishes. Task F3 member 1: those
-	## recipes are the tail of `FLAT_PLATE_TILE_RECIPES` as well as the setback
-	## vocabulary's own plain lid, so a whole-town scan only reconciles when
-	## both producers are counted.
+	## Public partial crowns may use plank backing only when their exact source
+	## face already carries a PUBLIC_FLOOR. Count that narrow case separately
+	## from the private weather-roof vocabulary.
 	var out := 0
 	var recipe_counts := audit.get("maze_partial_plate_tile_recipe_counts",
 		{}) as Dictionary
 	for recipe_value: Variant in recipe_counts.keys():
 		if String(recipe_value).begins_with("roof.setback.cap."):
+			out += int(recipe_counts[recipe_value])
+	return out
+
+
+static func _tiled_partial_gables(audit: Dictionary) -> int:
+	## Private partial crowns use exact-footprint halves of authored compact
+	## gables. Their per-recipe histogram is the authoritative producer census.
+	var out := 0
+	var recipe_counts := audit.get("maze_partial_plate_tile_recipe_counts",
+		{}) as Dictionary
+	for recipe_value: Variant in recipe_counts.keys():
+		if String(recipe_value).begins_with("roof.partial.gable."):
 			out += int(recipe_counts[recipe_value])
 	return out
 
@@ -65,24 +75,83 @@ func test_arcade_overhang_adapter_binds_foundation_to_both_room_plates() -> void
 	assert_true(foundation.visual_seam_ids.has(lower.stable_id))
 
 
-func test_roof_gate_checks_the_candidate_full_3d_solid_volume() -> void:
+func test_roof_gate_checks_measured_volume_against_exact_finished_headroom() \
+		-> void:
 	var grid := WarrenSpatialGrid.new(Vector3i(-2, 0, -2),
 		Vector3i(5, 5, 5))
 	var transaction := grid.begin_transaction(&"test.elevated-route-air")
-	assert_true(transaction.assign_use([Vector3i(0, 2, 0)] as Array[Vector3i],
+	assert_true(transaction.assign_use([Vector3i.ZERO, Vector3i.UP] \
+		as Array[Vector3i],
 		WarrenSpatialGrid.Use.PUBLIC_AIR, &"route.air"))
+	assert_true(transaction.claim_face(Vector3i.ZERO, Vector3i.DOWN,
+		WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR, &"route.air"))
 	assert_true(transaction.commit())
-	var recipe := FabricRecipe.new(&"test.two-band-roof", [&"roof"], 0)
-	recipe.solid_cells = [Vector3i.ZERO,
-		Vector3i.UP * 2] as Array[Vector3i]
+	var recipe := FabricRecipe.new(&"test.measured-roof", [&"roof"], 0)
+	recipe.placement_collision_pieces = PackedInt32Array([1])
+	# A collider beginning below the shared 2.4 m finished-headroom plane is a
+	# real obstruction even though the semantic roof cell is only a coarse band.
+	recipe.placement_bounds = [AABB(Vector3(-0.10, 2.20, -0.10),
+		Vector3(0.20, 0.40, 0.20))] as Array[AABB]
 	var unit := FabricUnit.new(&"test.roof", recipe.recipe_id,
 		Vector3i.ZERO, 0)
 	assert_true(WarrenSpatialFabricCompiler._unit_touches_public_air(grid,
 		unit, recipe),
-		"a clear first band must not hide a taller gable entering route air")
+		"a measured collider may not enter the exact finished body column")
+	# A true 3 m storey seam is above the finished clearance and remains legal.
+	recipe.placement_bounds = [AABB(Vector3(-0.10, 3.00, -0.10),
+		Vector3(0.20, 0.40, 0.20))] as Array[AABB]
+	assert_false(WarrenSpatialFabricCompiler._unit_touches_public_air(grid,
+		unit, recipe), "a gable beginning at the storey seam must remain legal")
+	recipe.placement_bounds = [AABB(Vector3(-0.10, 2.20, -0.10),
+		Vector3(0.20, 0.40, 0.20))] as Array[AABB]
 	unit.lattice_origin = Vector3i.RIGHT
 	assert_false(WarrenSpatialFabricCompiler._unit_touches_public_air(grid,
 		unit, recipe))
+
+
+func test_roof_gate_protects_the_body_lane_but_keeps_a_shallow_eave() -> void:
+	var grid := WarrenSpatialGrid.new(Vector3i(-2, 0, -2),
+		Vector3i(5, 3, 5))
+	var transaction := grid.begin_transaction(&"test.route-body-air")
+	assert_true(transaction.assign_use([Vector3i.ZERO] as Array[Vector3i],
+		WarrenSpatialGrid.Use.PUBLIC_AIR, &"route.air"))
+	assert_true(transaction.claim_face(Vector3i.ZERO, Vector3i.DOWN,
+		WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR, &"route.air"))
+	assert_true(transaction.commit())
+	var recipe := FabricRecipe.new(&"test.collidable-eave", [&"roof"], 0)
+	recipe.placement_collision_pieces = PackedInt32Array([1])
+	var unit := FabricUnit.new(&"test.eave", recipe.recipe_id,
+		Vector3i.ZERO, 0)
+	# The cell edge is x = 0.75 m. This 0.25 m eave stays outside the
+	# capsule-plus-margin lane and is the safe corner brush the physics review
+	# already admits.
+	recipe.placement_bounds = [AABB(Vector3(0.50, 0.20, -0.10),
+		Vector3(0.25, 0.20, 0.20))] as Array[AABB]
+	assert_false(WarrenSpatialFabricCompiler._unit_touches_public_air(grid,
+		unit, recipe), "a shallow eave at the route edge must remain legal")
+	# Moving the same collider 0.20 m inward crosses the protected body lane.
+	recipe.placement_bounds = [AABB(Vector3(0.30, 0.20, -0.10),
+		Vector3(0.25, 0.20, 0.20))] as Array[AABB]
+	assert_true(WarrenSpatialFabricCompiler._unit_touches_public_air(grid,
+		unit, recipe), "a roof collider entering the body lane must be refused")
+
+
+func test_future_roof_domain_rejects_semantic_overlap_before_commit() -> void:
+	var left_recipe := FabricRecipe.new(&"test.future-left", [&"roof"], 0)
+	left_recipe.solid_cells = [Vector3i.ZERO] as Array[Vector3i]
+	var right_recipe := FabricRecipe.new(&"test.future-right", [&"roof"], 0)
+	right_recipe.headroom_cells = [Vector3i.ZERO] as Array[Vector3i]
+	var left := FabricUnit.new(&"test.future-left", left_recipe.recipe_id,
+		Vector3i.ZERO, 0)
+	var right := FabricUnit.new(&"test.future-right", right_recipe.recipe_id,
+		Vector3i.ZERO, 0)
+	assert_true(WarrenSpatialFabricCompiler._future_unit_semantic_conflict(
+		left, left_recipe, right, right_recipe),
+		"a selected roof cannot consume a later roof's exact headroom domain")
+	right.lattice_origin = Vector3i.RIGHT
+	assert_false(WarrenSpatialFabricCompiler._future_unit_semantic_conflict(
+		left, left_recipe, right, right_recipe),
+		"disjoint roof closures must remain available to the solver")
 
 
 func test_compound_roof_partition_replaces_cells_with_complete_house_crowns() \
@@ -127,6 +196,59 @@ func test_setback_gable_does_not_exempt_neighboring_room_collisions() -> void:
 		"adjacent rooms are collision obstacles unless an exact roof join names them")
 	assert_true(String(placement.recipe_id).contains("dormer"),
 		"the detailed gable is attempted before the transaction chooses a fallback")
+
+
+func test_complete_room_roof_never_uses_a_shallow_seam_piece() -> void:
+	var room := WarrenRoomStamp.new(&"roof.probe", &"building", &"tower",
+		Vector3i(8, 4, -6), 1, 1, false, false,
+		Vector3i(2147483647, 2147483647, 2147483647), Vector3i.ZERO,
+		0, &"lower", 0)
+	var recipe_ids := WarrenSpatialFabricCompiler \
+		._terminal_tight_gable_recipe_ids(room, 2697992464)
+	assert_eq(recipe_ids.size(), 1)
+	if recipe_ids.is_empty():
+		return
+	var recipe_id := String(recipe_ids[0])
+	assert_true(recipe_id.begins_with("roof.terminal.tight.tower."))
+	assert_false(recipe_id.contains(".step."))
+	assert_false(recipe_id.contains(".profile."),
+		"window-canopy seam pieces cannot discharge a whole room roof obligation")
+	assert_not_null(SettlementFabricProgram.compile(
+		EnvironmentCatalog.load_default()).recipe(recipe_ids[0]))
+
+
+func test_rotated_even_cell_roof_preserves_the_room_plate_centre() -> void:
+	var program := SettlementFabricProgram.compile(
+		EnvironmentCatalog.load_default())
+	assert_not_null(program)
+	if program == null:
+		return
+	var room := WarrenRoomStamp.new(&"roof.phase.probe", &"building", &"tower",
+		Vector3i(8, 4, -6), 0, 1, false, false,
+		Vector3i(2147483647, 2147483647, 2147483647), Vector3i.ZERO,
+		0, &"lower", 0)
+	assert_true(room.add_private_cells(WarrenRoomStamp.expected_private_cells(
+		&"tower", room.lattice_origin, room.yaw_quarters)))
+	var roof_recipe := program.recipe(&"roof.terminal.tight.tower.orange")
+	assert_not_null(roof_recipe)
+	if roof_recipe == null:
+		return
+	var roof_yaw := 1
+	var roof_origin := WarrenSpatialFabricCompiler \
+		._phase_aligned_full_roof_origin(room, roof_recipe, roof_yaw)
+	var room_min := Vector2(INF, INF)
+	var room_max := Vector2(-INF, -INF)
+	for cell: Vector3i in room.private_cells:
+		room_min = room_min.min(Vector2(cell.x, cell.z))
+		room_max = room_max.max(Vector2(cell.x, cell.z))
+	var roof_min := Vector2(INF, INF)
+	var roof_max := Vector2(-INF, -INF)
+	for cell: Vector3i in roof_recipe.solid_cells:
+		var placed := FabricRecipe.transform_cell(cell, roof_origin, roof_yaw)
+		roof_min = roof_min.min(Vector2(placed.x, placed.z))
+		roof_max = roof_max.max(Vector2(placed.x, placed.z))
+	assert_eq((roof_min + roof_max) * 0.5, (room_min + room_max) * 0.5,
+		"turning an even-cell crown may not move it onto the neighboring half-cell phase")
 
 
 func test_terminal_setback_names_only_the_neighboring_roof_seam() -> void:
@@ -231,14 +353,22 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	var program := SettlementFabricProgram.compile(
 		EnvironmentCatalog.load_default())
 	assert_not_null(program)
-	# Keep this integration fixture on the production review corpus.  Seed 7 no
-	# longer seals after the ground-arcade enclosure proof became strict, so it
-	# cannot exercise the spatial compiler contract this test owns.
-	var spatial := WarrenVolumetricSolver.solve(166029932451774690, {}, program,
+	# Keep this integration fixture on a production survivor that exercises the
+	# current roof contract. Seed 8 seals two exact partial gables, one prefab
+	# landmark, and eleven facade projections; the former fixture now correctly
+	# rejects because no complete gabled closure can avoid its public air.
+	var spatial := WarrenVolumetricSolver.solve(8, {}, program,
 		WarrenVillageScaleProfile.for_id(WarrenVillageScaleProfile.COMPACT))
 	assert_not_null(spatial, WarrenVolumetricSolver.last_failure)
 	if program == null or spatial == null:
 		return
+	# Source bridge sites are seed-dependent and are proved in the carver corpus.
+	# This exact production fixture owns the visual ratchet below: its derived
+	# two-cell upper crossing must compile into an enclosed house wing without
+	# displacing the large reviewed landmark.
+	assert_gte(int(spatial.audit.get(
+		"spatial_prefab_landmark_building_count", 0)), 1,
+		"the source bridge may not displace the large blue-roof landmark")
 	for building: WarrenBuildingVolume in spatial.buildings:
 		for room: WarrenRoomStamp in building.room_records:
 			var bridge_supports := room.audit.get(
@@ -251,31 +381,37 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 				"brackets do not turn a full one-cell room into an outcropping")
 	var realm := WarrenSpatialPublicRealmAdapter.from_spatial(spatial)
 	assert_not_null(realm, WarrenSpatialPublicRealmAdapter.last_failure)
-	var units := WarrenSpatialFabricCompiler.compile_room_units(spatial, program)
-	assert_gt(units.size(), 0, WarrenSpatialFabricCompiler.last_failure)
+	# The volumetric transaction already ran the exact measured room-envelope
+	# gate and sealed its chosen units. Consume that authoritative result here,
+	# as production does, rather than asking a later diagnostic pass to choose a
+	# second roof/facade campaign for an already sealed town.
+	var units := spatial.compiled_room_units_cache()
+	var room_audit := spatial.compiled_room_audit_cache()
+	assert_gt(units.size(), 0, "the sealed spatial solve lost its room units")
 	var expected_portals := _expected_feature_portals(spatial)
-	assert_gt((expected_portals.rooms as Dictionary).size(), 0,
-		"the reviewed seed must exercise topology-driven room portals")
-	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+	# The shrunken production fixture currently carries no balcony/skywalk
+	# portal. Keep its exact zero-capable reconciliation here; the standard
+	# planner fixture below supplies the non-vacuous portal coverage.
+	assert_eq(int(room_audit \
 		.feature_portal_room_count),
 		(expected_portals.rooms as Dictionary).size())
-	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+	assert_eq(int(room_audit \
 		.feature_portal_opening_count),
 		(expected_portals.openings as Dictionary).size())
-	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
+	assert_gt(int(room_audit \
 		.selected_facade_phase_b_count), 0,
 		"some upper storeys should retain the alternate authored facade phase")
-	assert_gt(int(WarrenSpatialFabricCompiler.last_audit \
+	assert_gt(int(room_audit \
 		.facade_phase_a_count), 0,
 		"the town should not synchronize onto one facade phase")
-	assert_true(WarrenSpatialFabricCompiler.last_audit.has(
+	assert_true(room_audit.has(
 		"physical_support_redirect_count"),
 		"support redirects are corpus-dependent, but the audit must be present")
-	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+	assert_eq(int(room_audit \
 		.desired_facade_phase_b_count),
-		int(WarrenSpatialFabricCompiler.last_audit \
+		int(room_audit \
 			.selected_facade_phase_b_count) \
-			+ int(WarrenSpatialFabricCompiler.last_audit \
+			+ int(room_audit \
 				.facade_phase_fallback_count))
 	var expected := 0
 	for building: WarrenBuildingVolume in spatial.buildings:
@@ -561,6 +697,9 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	var cap_roofs_from_vocabulary := 0
 	var cap_roofs_from_tiling := 0
 	var cap_roofs_from_elsewhere := 0
+	var partial_gable_roofs := 0
+	var partial_gables_from_tiling := 0
+	var private_canopy_tiles := 0
 	var dormered_roofs := 0
 	for roof: FabricUnit in roofs:
 		# `_cap_unit` is the only producer of a `.capNN` unit id and every
@@ -578,47 +717,22 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 			cap_roofs_from_tiling += int(from_tiling)
 			cap_roofs_from_elsewhere += int(not from_vocabulary \
 				and not from_tiling)
+		if String(roof.recipe_id).begins_with("roof.partial.gable."):
+			partial_gable_roofs += 1
+			partial_gables_from_tiling += int(from_tiling)
+		if from_tiling and String(roof.recipe_id).begins_with(
+				"roof.setback.shed."):
+			private_canopy_tiles += 1
 		var roof_recipe := program.recipe(roof.recipe_id)
 		dormered_roofs += int(roof_recipe.has_tag(&"dormer"))
-		for local_cell: Vector3i in roof_recipe.solid_cells:
-			var world_cell := FabricRecipe.transform_cell(local_cell,
-				roof.lattice_origin, roof.yaw_quarters)
-			assert_ne(spatial.grid.use_at(world_cell),
-				WarrenSpatialGrid.Use.PUBLIC_AIR,
-				"measured roof volume may not enter an elevated route's headroom")
+		assert_true(WarrenSpatialFabricCompiler._unit_public_air_conflicts(
+			spatial.grid, roof, roof_recipe).is_empty(),
+			"the exact collidable roof shell may not enter a public body lane")
 		assert_true(fabric.add_unit(roof), fabric.last_rejection)
-	# TASK F1, MEASURED. `roof.setback.cap.*` was forbidden outright here, and
-	# the searched town honoured that. The one-pass town emits 8 of them over
-	# 49 roof units, and F1 read that as a newly visible quality gap.
-	#
-	# TASK F3 MEMBER 1, MEASURED AND RECLASSIFIED. It is not one. All 8 are
-	# flat-plate TILES: `roof.setback.cap.{1,2,4,6}` is the tail of
-	# `FLAT_PLATE_TILE_RECIPES`, and the tiling covers a maze crown the flat
-	# vocabulary cannot slab in one piece -- a plank lid, not an exposed
-	# shoulder. The finite setback vocabulary emitted NOTHING on this town, and
-	# the setback counter's 0 was telling the truth about it. The
-	# exposed-shoulder rule that "forbade setback caps outright" is
-	# `setback_plain_cap_unit_count`, asserted at zero above and still zero.
-	#
-	# TASK F3 FIX 1, IMPORTANT 1 -- THE RECONCILIATION BELOW WAS WRONG, in
-	# exactly the way this comment diagnoses. It read
-	#   caps == setback_cap_unit_count + tiled caps
-	# and `setback_cap_unit_count` (now `setback_vocabulary_unit_count`) counts
-	# every unit the vocabulary emitted WHATEVER RECIPE it took -- sheds and
-	# lean-tos bump it. Adding it to a tiled-CAP total and comparing against a
-	# cap-RECIPE scan is the same category error F1 made. It is arithmetically
-	# false on three corpus towns (5/compact 9 != 13, 8/compact 17 != 18,
-	# 9/standard 12 != 16) and was green only because this seed's vocabulary
-	# emits nothing at all.
-	#
-	# The honest identity partitions the direct scan by PRODUCER, off the
-	# stable id, and never mixes a unit count with a recipe count. VERIFIED
-	# over 29 towns -- the 24-town corpus, this settlement and the four D1
-	# sloped rows -- with a throwaway probe: on every one of them
-	# `cap_from_vocabulary + cap_from_tiles == cap_recipe_units`,
-	# `cap_from_elsewhere == 0`, and `cap_from_tiles` equals the published
-	# histogram. `cap_from_vocabulary` is 0 on all 29, which is what
-	# `setback_plain_cap_unit_count == 0` above already promises.
+	# Producer identity is part of the roof contract. Private `.tileNN` units
+	# must be exact compact-gable halves; a cap tile is legal only for the public
+	# floor branch. The direct scan and published histogram must reconcile so a
+	# later fallback cannot silently reintroduce window canopies or bare boards.
 	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
 		.setback_cap_recipe_unit_count), setback_cap_roofs,
 		"the town's roof.setback.cap.* units must equal a direct scan")
@@ -644,6 +758,15 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 	assert_eq(cap_roofs_from_tiling,
 		_tiled_setback_caps(WarrenSpatialFabricCompiler.last_audit),
 		"the tiling's published histogram must equal its own units")
+	assert_eq(partial_gables_from_tiling, partial_gable_roofs,
+		"every partial gable must come from the exact crown-tiling transaction")
+	assert_eq(partial_gables_from_tiling,
+		_tiled_partial_gables(WarrenSpatialFabricCompiler.last_audit),
+		"the partial-gable histogram must equal the selected units")
+	assert_gt(partial_gable_roofs, 0,
+		"the pinned partial-crown fixture must exercise real gable halves")
+	assert_eq(private_canopy_tiles, 0,
+		"a window canopy is not a legal private weather roof")
 	assert_eq(cap_roofs_from_vocabulary,
 		int(WarrenSpatialFabricCompiler.last_audit \
 			.setback_plain_cap_unit_count) \
@@ -653,15 +776,13 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 			+ "lid-repaired strips, and nothing else takes that recipe there"))
 	assert_lte(cap_roofs_from_vocabulary, setback_vocabulary_roofs,
 		"the vocabulary's cap units are a subset of its units")
-	# Pinned at the measured count so it can only shrink. What shrinking it
-	# would mean is now stated: fewer crowns needing a tiled plank lid, not a
-	# roofscape with fewer exposed shoulders -- there are none.
-	assert_lte(setback_cap_roofs, 8,
-		"small flat roof plate tiles must not spread further")
-	gut.p("one-pass town: cap_recipe_units=%d of %d roofs (vocabulary=%d tiling=%d other=%d) setback_units=%d dormered_units=%d" % [
+	assert_eq(int(WarrenSpatialFabricCompiler.last_audit \
+		.maze_partial_plate_refused_count), 0,
+		"the complete private/public roof vocabulary must close every partial crown")
+	gut.p("one-pass town: cap_recipe_units=%d of %d roofs (vocabulary=%d tiling=%d other=%d) partial_gables=%d setback_units=%d dormered_units=%d" % [
 		setback_cap_roofs, roofs.size(), cap_roofs_from_vocabulary,
 		cap_roofs_from_tiling, cap_roofs_from_elsewhere,
-		setback_vocabulary_roofs, dormered_roofs])
+		partial_gable_roofs, setback_vocabulary_roofs, dormered_roofs])
 	var sealed := WarrenSpatialFabricCompiler.solve(spatial, program)
 	assert_not_null(sealed, WarrenSpatialFabricCompiler.last_failure)
 	if sealed != null:
@@ -678,6 +799,29 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 					% feature.stable_id)
 		assert_true(sealed.is_sealed())
 		assert_eq(sealed.audit.generation_source, &"spatial_volumetric_warren")
+		assert_lte(int(sealed.audit.get(
+			"maze_skin_max_consecutive_facade_storeys", 99)), 1,
+			"no retained face may read as a multi-storey white/timber wall")
+		assert_eq(int(sealed.audit.get(
+			"maze_skin_tall_course_mismatch_count", -1)), 0,
+			"tall faces must alternate authored stone and facade courses")
+		assert_gt(int(sealed.audit.get(
+			"maze_tall_bank_masonry_panel_count", 0)), 0,
+			"tall facade courses must be interrupted by stone siding")
+		var facade_projections := int(sealed.audit.get(
+			"maze_facade_bay_count", 0)) + int(sealed.audit.get(
+				"maze_facade_bump_out_count", 0))
+		assert_gte(facade_projections, 8,
+			"the fixed city must materially break up its flat facade planes")
+		assert_eq(int(sealed.audit.get(
+			"maze_facade_outcrop_bracket_count", -1)),
+			2 * facade_projections,
+			"every facade projection must carry two connected supports")
+		assert_eq(int(sealed.audit.get(
+			"maze_green_cap_jut_over_air_count", -1)), 0,
+			"no grass panel may extend over an unsupported gap")
+		assert_eq(int(sealed.audit.get("maze_garden_rim_deficit", -1)), 0,
+			"every grass-panel edge must receive its aligned lip")
 		# TASK F3 MEMBER 6. Retained stone is mass NOBODY built in. The plan's
 		# own `set_retained_terrace` guard says so and, with its key type
 		# fixed, enforces it -- but a guard that rejects the whole town is a
@@ -715,6 +859,11 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 				+ int(sealed.audit.modular_box_skywalk_count),
 			"every 3 m cuboid must be a roofed house, a borne stack course, " \
 				+ "or a typed two-ended skywalk")
+		assert_eq(int(sealed.audit.enclosed_skywalk_count),
+			int(sealed.audit.modular_box_skywalk_count),
+			"the sealed richness audit must count the maze bridge it built")
+		assert_eq(int(sealed.audit.collision_flattened_roof_component_count), 0,
+			"a measured roof collision must reject construction, never flatten it")
 		assert_eq(int(sealed.audit.modular_box_partial_bearing_count), 0,
 			"a 3 m room may not become a bracketed box jutting from a facade")
 		assert_eq(int(sealed.audit.modular_box_roofless_house_count), 0)
@@ -742,6 +891,31 @@ func test_measured_room_units_preserve_every_spatial_stamp() -> void:
 			0, "the legacy grouping remains visible as a non-authoritative diagnostic")
 		assert_gt(int(sealed.audit.selected_facade_phase_b_count), 0)
 		assert_eq(sealed.visual_envelope_conflicts().size(), 0)
+
+
+func test_typed_balcony_endpoint_drives_the_exact_room_portal_mask() -> void:
+	# Portal reduction is a topology adapter, so exercise its exact typed input
+	# directly instead of depending on an aesthetic feature quota in one random
+	# production town. A valid town may legitimately roll no balcony at all.
+	var source := WarrenSpatialPlan.new(&"portal.fixture", 23,
+		WarrenSpatialGrid.new(Vector3i(-4, 0, -4), Vector3i(9, 5, 9)))
+	var room := WarrenRoomStamp.new(&"portal.room", &"portal.building",
+		&"tower", Vector3i.ZERO, 0, 0, true, false)
+	var feature := WarrenFeatureReservation.new(&"portal.balcony", &"balcony")
+	assert_true(feature.add_reserved_cells([Vector3i(0, 0, -2)] \
+		as Array[Vector3i]))
+	assert_true(feature.add_endpoint(Vector3i(0, 0, -1), room.stable_id))
+	assert_true(feature.add_construction_record(&"balcony.bracketed.left.blue",
+		Vector3i(0, 0, -2), 0))
+	feature.audit = {"balcony_room_id": room.stable_id,
+		"balcony_endpoint_facing": Vector3i.FORWARD}
+	source.features.append(feature)
+	var masks := WarrenSpatialFabricCompiler._feature_portal_masks(source,
+		{room.stable_id: room})
+	assert_eq(masks.size(), 1)
+	assert_eq(int(masks.get(room.stable_id, 0)),
+		SettlementFabricProgram.FEATURE_PORTAL_NORTH,
+		"the authored north balcony opens only the room's north centre bay")
 
 
 func _expected_feature_portals(spatial: WarrenSpatialPlan) -> Dictionary:

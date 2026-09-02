@@ -1,13 +1,13 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=14 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=14 format=3 uid="uid://c04njnya38a6e"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_jyyeq"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_deck_railing_m_001_piece_00.res" id="2_8ptr3"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_deck_railing_m_001_piece_01.res" id="3_o16ol"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_deck_railing_m_001_piece_02.res" id="4_r4idt"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_deck_railing_m_001_piece_03.res" id="5_7lpol"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="6_nf7a7"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_structures/sfv_deck_railing_m_001_piece_00.res" id="7_lgi21"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="8_7070j"]
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_jyyeq"]
+[ext_resource type="Shape3D" uid="uid://d01k3qi17y0l7" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_deck_railing_m_001_piece_00.res" id="2_8ptr3"]
+[ext_resource type="Shape3D" uid="uid://38wxtfd8leh5" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_deck_railing_m_001_piece_01.res" id="3_o16ol"]
+[ext_resource type="Shape3D" uid="uid://dy6satoag3wss" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_deck_railing_m_001_piece_02.res" id="4_r4idt"]
+[ext_resource type="Shape3D" uid="uid://b05xu3nyk7u31" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_deck_railing_m_001_piece_03.res" id="5_7lpol"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="6_nf7a7"]
+[ext_resource type="ArrayMesh" uid="uid://cpr8s0opulw60" path="res://terrain/environment/meshes/fantasy_village_structures/sfv_deck_railing_m_001_piece_00.res" id="7_lgi21"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="8_7070j"]
 
 [sub_resource type="Resource" id="Resource_v4poa"]
 script = ExtResource("1_jyyeq")

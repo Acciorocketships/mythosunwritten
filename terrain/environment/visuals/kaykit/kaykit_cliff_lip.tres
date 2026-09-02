@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3 uid="uid://bts6cj3u4pnf0"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_r3i2j"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_h2ka4"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/kaykit/kaykit_cliff_lip_piece_00.res" id="3_124og"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_btmrq"]
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_r3i2j"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_h2ka4"]
+[ext_resource type="ArrayMesh" uid="uid://brx8r1d4mgnaj" path="res://terrain/environment/meshes/kaykit/kaykit_cliff_lip_piece_00.res" id="3_124og"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_btmrq"]
 
 [sub_resource type="Resource" id="Resource_pebnk"]
 script = ExtResource("2_h2ka4")

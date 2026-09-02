@@ -70,6 +70,86 @@ static func discover(terrain: VillageTerrainView,
 	return out
 
 
+static func discover_corridor(terrain: VillageTerrainView,
+		survey_origin: Vector2, arrival: Vector2, half_extents: Vector2,
+		forward_axis: Vector2, maximum_forward: float,
+		corridor_half_width: float, minimum_arrival_radius: float,
+		maximum_arrival_radius: float,
+		result_limit: int = DEFAULT_RESULT_LIMIT,
+		frontage_clearance: float = -1.0
+		) -> Array[VillageTerrainPerch]:
+	## Deterministic oriented survey whose spatial qualification precedes terrain
+	## ranking and the bounded result cap. Producers that need a branch/corridor
+	## must use this instead of globally sampling a disc and filtering its capped
+	## winners afterwards: in an irregular biome the global winners may all lie
+	## outside the only region that can participate in the topology.
+	assert(terrain != null)
+	assert(survey_origin.is_finite() and arrival.is_finite())
+	assert(half_extents.is_finite() and half_extents.x > 0.0 \
+		and half_extents.y > 0.0)
+	assert(forward_axis.is_normalized())
+	assert(is_finite(maximum_forward) and maximum_forward >= GRID_STEP)
+	assert(is_finite(corridor_half_width) and corridor_half_width >= 0.0)
+	assert(is_finite(minimum_arrival_radius) \
+		and is_finite(maximum_arrival_radius) \
+		and minimum_arrival_radius >= 0.0 \
+		and maximum_arrival_radius >= minimum_arrival_radius)
+	assert(result_limit > 0)
+	assert(is_finite(frontage_clearance) and frontage_clearance >= -1.0)
+	var envelope_radius := maximum_forward + corridor_half_width \
+		+ half_extents.length()
+	var survey_region := terrain.region_covering(Rect2(survey_origin \
+		- Vector2.ONE * envelope_radius,
+		Vector2.ONE * envelope_radius * 2.0))
+	var water_proved_dry := terrain.proves_planning_dry(survey_origin,
+		envelope_radius)
+	var side := Vector2(-forward_axis.y, forward_axis.x)
+	var forward_steps := ceili(maximum_forward / GRID_STEP)
+	var side_steps := ceili(corridor_half_width / GRID_STEP)
+	var out: Array[VillageTerrainPerch] = []
+	for forward_index in range(1, forward_steps + 1):
+		for side_index in range(-side_steps, side_steps + 1):
+			var side_distance := float(side_index) * GRID_STEP
+			if absf(side_distance) > corridor_half_width + 0.001:
+				continue
+			var lattice := Vector2i(forward_index, side_index)
+			for orientation_index in 2:
+				var axis := forward_axis.rotated(
+					float(orientation_index) * PI * 0.5)
+				var yaw := atan2(-axis.y, axis.x)
+				var forward_distance := float(forward_index) * GRID_STEP
+				if frontage_clearance >= 0.0:
+					# Keep a measured rectangular support on the same lattice as
+					# the street edge. Even- and odd-cell footprints require
+					# different centre phases; deriving the first centre from the
+					# orientation's support radius avoids rounding either family
+					# to a remote grid line.
+					var axes := _axes(yaw)
+					var support_radius := absf(forward_axis.dot(axes[0])) \
+						* half_extents.x \
+						+ absf(forward_axis.dot(axes[1])) * half_extents.y
+					forward_distance = frontage_clearance + support_radius \
+						+ float(forward_index - 1) * GRID_STEP
+				if forward_distance > maximum_forward + 0.001:
+					continue
+				var anchor := survey_origin + forward_axis * forward_distance \
+					+ side * side_distance
+				var arrival_radius := anchor.distance_to(arrival)
+				if arrival_radius < minimum_arrival_radius - 0.001 \
+						or arrival_radius > maximum_arrival_radius + 0.001:
+					continue
+				var candidate := _evaluate(terrain, survey_region,
+					water_proved_dry, survey_origin, lattice,
+					orientation_index, anchor, yaw, half_extents)
+				if candidate != null:
+					out.append(candidate)
+	_populate_neighbourhoods(out)
+	out.sort_custom(_less)
+	if out.size() > result_limit:
+		out.resize(result_limit)
+	return out
+
+
 static func expand_structural_variants(
 		base_perches: Array[VillageTerrainPerch], datum_y: float,
 		profile: VillageVerticalProfile, maximum_band: int

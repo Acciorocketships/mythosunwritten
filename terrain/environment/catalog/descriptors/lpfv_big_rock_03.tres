@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://dp5r7w5mcpy1l"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_pmlx6"]
+[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_pmlx6"]
 
 [resource]
 script = ExtResource("1_pmlx6")
@@ -8,6 +8,7 @@ id = &"lpfv.big_rock.03"
 visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_big_rock_03.tres"
 tags = Array[StringName]([&"nature", &"rock"])
 measured_aabb = AABB(-3.0707128, -0.17997807, -4.892782, 5.243411, 5.3891606, 9.50376)
+ground_contact_points = PackedVector2Array()
 collision_piece_count = 1
 tint_group = &"rock"
 supports_instance_color = true

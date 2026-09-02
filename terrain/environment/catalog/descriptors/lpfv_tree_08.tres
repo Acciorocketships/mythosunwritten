@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://cslaeoviovpq4"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_qpvs3"]
+[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_qpvs3"]
 
 [resource]
 script = ExtResource("1_qpvs3")
@@ -8,6 +8,7 @@ id = &"lpfv.tree.08"
 visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_tree_08.tres"
 tags = Array[StringName]([&"nature", &"tree"])
 measured_aabb = AABB(-4.5537524, -0.148364, -4.255506, 8.942022, 11.962398, 8.716621)
+ground_contact_points = PackedVector2Array()
 collision_piece_count = 1
 tint_group = &"tree"
 supports_instance_color = true

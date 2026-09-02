@@ -69,6 +69,8 @@ static func _solve_candidate(terrain: VillageTerrainView,
 		market: VillageMarketPlan,
 		massing: VillageMassingPlan) -> VillageUrbanFabricPlan:
 	var plan := VillageUrbanFabricPlan.new()
+	plan.public_walk_network_id = StringName("%s.urban.walk_network" \
+		% settlement_id)
 	plan.market = market
 	plan.massing = massing
 	plan.entries.append_array(market.entries)

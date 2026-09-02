@@ -1,12 +1,12 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=12 format=3 uid="uid://dow454hsy4hpy"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_2l1dl"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_01_piece_00.res" id="2_dqm4u"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_01_piece_01.res" id="3_1s46x"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_rock_01_piece_02.res" id="4_f7hbd"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="5_cb2io"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/kaykit/kaykit_rock_01_piece_00.res" id="6_vjkuh"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="7_ars5k"]
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_2l1dl"]
+[ext_resource type="Shape3D" uid="uid://ctkmgleuvdan3" path="res://terrain/environment/collisions/kaykit/kaykit_rock_01_piece_00.res" id="2_dqm4u"]
+[ext_resource type="Shape3D" uid="uid://cvqvskinm24bx" path="res://terrain/environment/collisions/kaykit/kaykit_rock_01_piece_01.res" id="3_1s46x"]
+[ext_resource type="Shape3D" uid="uid://b0rd6jg2tkb7h" path="res://terrain/environment/collisions/kaykit/kaykit_rock_01_piece_02.res" id="4_f7hbd"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="5_cb2io"]
+[ext_resource type="ArrayMesh" uid="uid://d0lm7htng4gmy" path="res://terrain/environment/meshes/kaykit/kaykit_rock_01_piece_00.res" id="6_vjkuh"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="7_ars5k"]
 
 [sub_resource type="Resource" id="Resource_n72gk"]
 script = ExtResource("1_2l1dl")

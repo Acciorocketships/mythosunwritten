@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3 uid="uid://bj26yogai8fcd"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_yqryf"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/complete_buildings/sfv_building_interior_blue_004_piece_00.res" id="2_40jox"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_53o1g"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/complete_buildings/sfv_building_interior_blue_004_piece_00.res" id="4_s23ql"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_80nxb"]
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_yqryf"]
+[ext_resource type="Shape3D" uid="uid://cduf5koskettk" path="res://terrain/environment/collisions/complete_buildings/sfv_building_interior_blue_004_piece_00.res" id="2_40jox"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_53o1g"]
+[ext_resource type="ArrayMesh" uid="uid://dau0lm6rnubgh" path="res://terrain/environment/meshes/complete_buildings/sfv_building_interior_blue_004_piece_00.res" id="4_s23ql"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_80nxb"]
 
 [sub_resource type="Resource" id="Resource_u6kf2"]
 script = ExtResource("1_yqryf")

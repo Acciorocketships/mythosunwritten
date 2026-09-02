@@ -10,6 +10,109 @@ func _program() -> SettlementFabricProgram:
 	return _program_cache
 
 
+func test_skywalk_flanks_must_be_opposite_independent_buildings() -> void:
+	var west := {"room_id": &"west.room", "building_id": &"west.house"}
+	var east := {"room_id": &"east.room", "building_id": &"east.house"}
+	assert_true(WarrenVolumetricSolver._bridge_flank_pair_is_two_ended(
+		Vector3i.LEFT, Vector3i.RIGHT, west, east),
+		"two independent opposite endpoints form a skywalk")
+	assert_false(WarrenVolumetricSolver._bridge_flank_pair_is_two_ended(
+		Vector3i.LEFT, Vector3i.BACK, west, east),
+		"a corner contact is an outcropping, not a skywalk")
+	var same_building := {
+		"room_id": &"east.wing", "building_id": &"west.house"}
+	assert_false(WarrenVolumetricSolver._bridge_flank_pair_is_two_ended(
+		Vector3i.LEFT, Vector3i.RIGHT, west, same_building),
+		"two wings of one building cannot disguise a cantilever as a skywalk")
+	assert_false(WarrenVolumetricSolver._bridge_flank_pair_is_two_ended(
+		Vector3i.LEFT, Vector3i.RIGHT, west, west),
+		"one room cannot carry both ends")
+
+
+func test_raw_single_macro_rock_crown_descends_to_a_joined_terrace() -> void:
+	var grid := WarrenSpatialGrid.new(Vector3i(-8, -2, -8),
+		Vector3i(16, 8, 16))
+	var candidates: Array[Vector3i] = []
+	var derived: Dictionary = {}
+	for macro: Vector3i in [Vector3i(0, 0, 0), Vector3i(0, 1, 0),
+			Vector3i(1, 0, 0)]:
+		for fine: Vector3i in WarrenVolumetricSolver._fine_square(macro):
+			candidates.append(fine)
+			derived[fine] = &"derived"
+	var result := WarrenVolumetricSolver \
+		._release_singleton_unclassified_rock_crowns(grid, candidates, derived)
+	assert_eq(int(result.released_cells), 4,
+		"the isolated upper course yields as raw terrain")
+	assert_eq(int(result.released_derived_cells), 4)
+	assert_eq(int(result.released_unroomed_plot_cells), 0)
+	assert_eq(int(result.released_roof_band_cells), 0)
+	assert_eq(int(result.remaining_crowns), 0)
+	assert_eq((result.cells as Array).size(), 8,
+		"the two-column lower terrace remains intact")
+
+
+func test_two_macro_rock_crowns_form_a_ridge_instead_of_being_deleted() -> void:
+	var grid := WarrenSpatialGrid.new(Vector3i(-8, -2, -8),
+		Vector3i(16, 8, 16))
+	var candidates: Array[Vector3i] = []
+	var derived: Dictionary = {}
+	for macro: Vector3i in [Vector3i(0, 0, 0), Vector3i(1, 0, 0),
+			Vector3i(0, 1, 0), Vector3i(1, 1, 0)]:
+		for fine: Vector3i in WarrenVolumetricSolver._fine_square(macro):
+			candidates.append(fine)
+			derived[fine] = &"derived"
+	var result := WarrenVolumetricSolver \
+		._release_singleton_unclassified_rock_crowns(grid, candidates, derived)
+	assert_eq(int(result.released_cells), 0,
+		"a connected ridge is legitimate terrain mass")
+	assert_eq(int(result.remaining_crowns), 0)
+	assert_eq((result.cells as Array).size(), candidates.size())
+
+
+func test_uncomposed_plot_crown_cannot_survive_as_a_raw_rock_cube() -> void:
+	var grid := WarrenSpatialGrid.new(Vector3i(-8, -2, -8),
+		Vector3i(16, 8, 16))
+	var candidates: Array[Vector3i] = []
+	var erodible: Dictionary = {}
+	for macro: Vector3i in [Vector3i(0, 0, 0), Vector3i(0, 1, 0),
+			Vector3i(1, 0, 0)]:
+		for fine: Vector3i in WarrenVolumetricSolver._fine_square(macro):
+			candidates.append(fine)
+			erodible[fine] = &"unroomed_plot" \
+				if macro.y == 1 else &"derived"
+	var result := WarrenVolumetricSolver \
+		._release_singleton_unclassified_rock_crowns(grid, candidates,
+			erodible)
+	assert_eq(int(result.released_cells), 4)
+	assert_eq(int(result.released_derived_cells), 0)
+	assert_eq(int(result.released_unroomed_plot_cells), 4,
+		"an unbuilt plot crown is raw mass, not an implicit roofless tower")
+	assert_eq(int(result.released_roof_band_cells), 0)
+	assert_eq(int(result.remaining_crowns), 0)
+
+
+func test_unused_plot_roof_band_cannot_survive_as_a_raw_rock_cube() -> void:
+	var grid := WarrenSpatialGrid.new(Vector3i(-8, -2, -8),
+		Vector3i(16, 8, 16))
+	var candidates: Array[Vector3i] = []
+	var erodible: Dictionary = {}
+	for macro: Vector3i in [Vector3i(0, 0, 0), Vector3i(0, 1, 0),
+			Vector3i(1, 0, 0)]:
+		for fine: Vector3i in WarrenVolumetricSolver._fine_square(macro):
+			candidates.append(fine)
+			erodible[fine] = &"stone_roof" \
+				if macro.y == 1 else &"derived"
+	var result := WarrenVolumetricSolver \
+		._release_singleton_unclassified_rock_crowns(grid, candidates,
+			erodible)
+	assert_eq(int(result.released_cells), 4)
+	assert_eq(int(result.released_derived_cells), 0)
+	assert_eq(int(result.released_unroomed_plot_cells), 0)
+	assert_eq(int(result.released_roof_band_cells), 4,
+		"an unused source roof band is raw mass, not an implicit roofed tower")
+	assert_eq(int(result.remaining_crowns), 0)
+
+
 func test_landmark_embeddedness_counts_only_surviving_city_mass() -> void:
 	var landmark_cells := {Vector3i.ZERO: true}
 	var protected_owners := {
@@ -71,6 +174,76 @@ func test_balcony_measured_bounds_yield_to_existing_outcrop_supports() -> void:
 	assert_false(WarrenSpatialFeatureSolver
 		._feature_bounds_overlap_existing_features(distant,
 			[outcrop] as Array[WarrenFeatureReservation], program))
+
+
+func test_balcony_doorway_preserves_an_unrelated_required_roof() -> void:
+	var program := _program()
+	var room := _unsealed_room_for_geometry(&"balcony.parent", &"slim",
+		Vector3i(4, WarrenSpatialGrid.STOREY_CELLS, -8))
+	room.source_parcel_id = &"balcony.parent.parcel"
+	var facing := Vector3i.FORWARD
+	var portal_bit := WarrenSpatialFabricCompiler._portal_bit_for_facing(facing)
+	var portal_id := WarrenSpatialFabricCompiler._room_recipe_id(room, 7,
+		false, portal_bit)
+	var ordinary_id := WarrenSpatialFabricCompiler._room_recipe_id(room, 7,
+		false)
+	var portal_recipe := program.recipe(portal_id)
+	var ordinary_recipe := program.recipe(ordinary_id)
+	assert_not_null(portal_recipe)
+	assert_not_null(ordinary_recipe)
+	var transform := FabricRecipe.lattice_transform(room.lattice_origin,
+		room.yaw_quarters)
+	var portal_bounds := transform * portal_recipe.local_clearance_bounds
+	var ordinary_bounds := transform * ordinary_recipe.local_clearance_bounds
+	# Reserve a thin exact gable edge reached by the portal's projecting jamb but
+	# not by the closed facade. This is the general geometry that falsified the
+	# former deck-only balcony preflight.
+	var roof_bounds := AABB(Vector3(portal_bounds.position.x + 0.5,
+		portal_bounds.position.y + 0.5, portal_bounds.position.z),
+		Vector3(1.0, 1.0, ordinary_bounds.position.z \
+			- portal_bounds.position.z + 0.05))
+	assert_true(SettlementFabricPlan._aabb_overlaps_volume(portal_bounds,
+		roof_bounds))
+	assert_false(SettlementFabricPlan._aabb_overlaps_volume(ordinary_bounds,
+		roof_bounds))
+	var closure: Dictionary = {
+		"owner_room_id": &"unrelated.roof.owner",
+		"options": [{
+			"recipe_id": &"roof.partial.gable.blue.2.negative",
+			"origin": Vector3i.ZERO,
+			"yaw_quarters": 0,
+			"bounds": roof_bounds,
+		}] as Array[Dictionary],
+		"allowed_room_ids": {},
+	}
+	assert_eq(WarrenSpatialFeatureSolver
+		._balcony_portal_required_roof_conflict(room, facing, 7, program,
+			[closure] as Array[Dictionary]), &"unrelated.roof.owner/roof.partial.gable.blue.2.negative",
+		"balcony admission must include its mandatory parent-wall doorway")
+
+
+func test_optional_facade_bay_preserves_one_finite_gable_option() -> void:
+	var bay_bounds := AABB(Vector3.ZERO, Vector3.ONE * 2.0)
+	var blocked := [{"owner_room_id": &"roof.owner",
+		"bounds": [AABB(Vector3.ONE * 0.5, Vector3.ONE)] as Array[AABB]}] \
+		as Array[Dictionary]
+	assert_eq(WarrenSpatialFeatureSolver._feature_required_roof_conflict(
+		bay_bounds, blocked), &"roof.owner")
+	var alternative := blocked.duplicate(true) as Array[Dictionary]
+	(alternative[0].bounds as Array[AABB]).append(AABB(
+		Vector3(10.0, 0.0, 0.0), Vector3.ONE))
+	assert_eq(WarrenSpatialFeatureSolver._feature_required_roof_conflict(
+		bay_bounds, alternative), &"",
+		"an optional bay may remain when any exact authored gable stays free")
+	assert_eq(WarrenSpatialFeatureSolver._feature_required_roof_conflict(
+		bay_bounds, blocked, &"roof.owner"), &"",
+		("a roofed bay may meet its declared parent roof seam; only unrelated " \
+			+ "closure domains are collision obligations"))
+	var unrelated := blocked.duplicate(true) as Array[Dictionary]
+	(unrelated[0] as Dictionary)["owner_room_id"] = &"unrelated.roof"
+	assert_eq(WarrenSpatialFeatureSolver._feature_required_roof_conflict(
+		bay_bounds, unrelated, &"roof.owner"), &"unrelated.roof",
+		"the parent seam never exempts a neighbouring roof")
 
 
 func test_room_outcropping_geometry_requires_full_scale_diagonal_overlap() -> void:
@@ -477,15 +650,84 @@ func test_wrap_balcony_requires_a_side_wall_contact() -> void:
 		"the doorway face alone must not qualify a straight shelf as a wrap")
 
 
+func test_balcony_support_course_must_meet_the_complete_parent_wall() -> void:
+	var program := _program()
+	var deep := program.recipe(&"balcony.walkout.deep.left.blue.planted")
+	var compact := program.recipe(&"balcony.bracketed.left.blue.planted")
+	assert_not_null(deep)
+	assert_not_null(compact)
+	assert_true(deep.has_tag(&"diagonal_support"))
+	assert_false(compact.has_tag(&"diagonal_support"))
+	var origin := Vector3i(8, 6, 8)
+	var outward := Vector3i.BACK
+	var attachment_cells: Array[Vector3i] = []
+	for local_cell: Vector3i in deep.walk_cells:
+		if local_cell.z == 0:
+			attachment_cells.append(FabricRecipe.transform_cell(local_cell,
+				origin, 0))
+	assert_gt(attachment_cells.size(), 1,
+		"the test must exercise the complete wide balcony seam")
+	var bearing_cells: Array[Vector3i] = []
+	for walk_cell: Vector3i in attachment_cells:
+		for drop in 3:
+			bearing_cells.append(walk_cell - outward - Vector3i.UP * drop)
+	var complete_grid := WarrenSpatialGrid.new(Vector3i.ZERO,
+		Vector3i(20, 14, 20))
+	var complete_tx := complete_grid.begin_transaction(&"balcony.wall.complete")
+	assert_true(complete_tx.assign_use(bearing_cells,
+		WarrenSpatialGrid.Use.PRIVATE_VOLUME, &"building.parent"))
+	assert_true(complete_tx.commit(), complete_tx.last_rejection)
+	assert_true(WarrenSpatialFeatureSolver._balcony_supports_attach_to_parent(
+		complete_grid, deep, origin, 0, &"building.parent", outward),
+		"every tall brace terminates on the same three-band parent wall")
+
+	var incomplete_grid := WarrenSpatialGrid.new(Vector3i.ZERO,
+		Vector3i(20, 14, 20))
+	var incomplete := bearing_cells.duplicate()
+	incomplete.erase(attachment_cells[-1] - outward - Vector3i.UP * 2)
+	var incomplete_tx := incomplete_grid.begin_transaction(
+		&"balcony.wall.incomplete")
+	assert_true(incomplete_tx.assign_use(incomplete,
+		WarrenSpatialGrid.Use.PRIVATE_VOLUME, &"building.parent"))
+	assert_true(incomplete_tx.commit(), incomplete_tx.last_rejection)
+	assert_false(WarrenSpatialFeatureSolver._balcony_supports_attach_to_parent(
+		incomplete_grid, deep, origin, 0, &"building.parent", outward),
+		"one dangling lower upright rejects the complete deep balcony")
+
+	var compact_bearing: Array[Vector3i] = []
+	for local_cell: Vector3i in compact.walk_cells:
+		if local_cell.z == 0:
+			compact_bearing.append(FabricRecipe.transform_cell(local_cell,
+				origin, 0) - outward)
+	var compact_grid := WarrenSpatialGrid.new(Vector3i.ZERO,
+		Vector3i(20, 14, 20))
+	var compact_tx := compact_grid.begin_transaction(&"balcony.wall.compact")
+	assert_true(compact_tx.assign_use(compact_bearing,
+		WarrenSpatialGrid.Use.PRIVATE_VOLUME, &"building.parent"))
+	assert_true(compact_tx.commit(), compact_tx.last_rejection)
+	assert_true(WarrenSpatialFeatureSolver._balcony_supports_attach_to_parent(
+		compact_grid, compact, origin, 0, &"building.parent", outward),
+		"short brackets need the full seam but no invented lower-storey wall")
+
+
 func test_only_macroscopic_or_lean_to_shoulders_are_roofable() -> void:
 	var compound := {
 		Vector2i(0, 0): true, Vector2i(1, 0): true,
 		Vector2i(0, 1): true, Vector2i(1, 1): true,
 		Vector2i(2, 0): true, Vector2i(3, 0): true,
+		Vector2i(4, 0): true, Vector2i(5, 0): true,
 	}
 	assert_true(WarrenRoomCompositionPlanner._component_has_gabled_partition(
 		compound, 0),
-		"a complete 3 x 3 m crown with one native strip is a finite roof assembly")
+		"a complete 3 x 3 m crown with one 6 m strip is a finite roof assembly")
+	var skinny_remainder := {
+		Vector2i(0, 0): true, Vector2i(1, 0): true,
+		Vector2i(0, 1): true, Vector2i(1, 1): true,
+		Vector2i(2, 0): true, Vector2i(3, 0): true,
+	}
+	assert_false(WarrenRoomCompositionPlanner._component_has_gabled_partition(
+		skinny_remainder, 0),
+		"a 3 m leftover strip would become the loose plank roof seen in review")
 	var branching := {
 		Vector2i(0, 0): true, Vector2i(1, 0): true,
 		Vector2i(2, 0): true, Vector2i(1, -1): true,

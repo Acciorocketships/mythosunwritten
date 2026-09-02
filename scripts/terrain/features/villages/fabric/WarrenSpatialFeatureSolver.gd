@@ -202,7 +202,8 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(residual_jetty_supports)
 	var arcade_overhang_supports := _reserve_arcade_overhang_supports(grid,
-		buildings, supports, construction_program, out, source.world_seed)
+		source, buildings, supports, construction_program, out,
+		source.world_seed)
 	if not last_failure.is_empty():
 		return [] as Array[WarrenFeatureReservation]
 	out.append_array(arcade_overhang_supports)
@@ -422,7 +423,12 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	# facade-bay pass for the shallow, roofed whole-room projections that break a
 	# large wall plane. It runs last so it can never steal a required support,
 	# balcony, skywalk, or market reservation.
-	var facade_bay_target_count := maxi(2, target_balconies - 1)
+	# Relief scales with the town's connectivity contract rather than a fixed
+	# universal minimum.  Each profile's required skywalk count supplies one
+	# facade-bay opportunity plus one: compact/standard towns try three, while
+	# the broader tiers expose four or five.  The measured-envelope transaction
+	# can still refuse a bay where it would damage a roof or another room.
+	var facade_bay_target_count := scale_profile.skywalk_range.x + 1
 	var facade_bay_targets := _facade_bay_targets(buildings, tower_annexes,
 		facade_bay_target_count, source.world_seed)
 	var facade_bays := _reserve_tower_annexes(grid, buildings, supports,
@@ -776,7 +782,8 @@ static func _reserve_residual_jetty_supports(grid: WarrenSpatialGrid,
 
 
 static func _reserve_arcade_overhang_supports(grid: WarrenSpatialGrid,
-		buildings: Array[WarrenBuildingVolume], supports: WarrenSupportGraph,
+		source: WarrenVolumePlan, buildings: Array[WarrenBuildingVolume],
+		supports: WarrenSupportGraph,
 		program: SettlementFabricProgram,
 		existing_features: Array[WarrenFeatureReservation], world_seed: int) \
 		-> Array[WarrenFeatureReservation]:
@@ -812,13 +819,27 @@ static func _reserve_arcade_overhang_supports(grid: WarrenSpatialGrid,
 			if geometry.is_empty():
 				continue
 			candidates.append({"lower": lower, "upper": upper,
-				"geometry": geometry})
+				"geometry": geometry, "tunnel_roof": false})
+	# A terrain-addressed base room may stand over one complete 3 m public
+	# tunnel bay.  Coarse source mass proves the tunnel roof exists, but the fine
+	# public-air projection correctly removes every direct column below the room.
+	# Such a room is admitted only when this same structural pass can wrap the
+	# bay in the measured four-sided stone portal and prove a complete flank of
+	# that portal continues through source mass to terrain.
+	for building: WarrenBuildingVolume in buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			var geometry := _tunnel_roof_arcade_geometry(room, grid, source)
+			if geometry.is_empty():
+				continue
+			candidates.append({"lower": null, "upper": room,
+				"geometry": geometry, "tunnel_roof": true})
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String((a.upper as WarrenRoomStamp).stable_id) \
 			< String((b.upper as WarrenRoomStamp).stable_id))
 	for candidate: Dictionary in candidates:
 		var lower := candidate.lower as WarrenRoomStamp
 		var upper := candidate.upper as WarrenRoomStamp
+		var tunnel_roof := bool(candidate.get("tunnel_roof", false))
 		var building := building_by_room.get(upper.stable_id) \
 			as WarrenBuildingVolume
 		var geometry := candidate.geometry as Dictionary
@@ -835,7 +856,9 @@ static func _reserve_arcade_overhang_supports(grid: WarrenSpatialGrid,
 			last_failure = "arcade overhang %s lacks foundation recipe %s" % [
 				upper.stable_id, StringName(record.recipe_id)]
 			return [] as Array[WarrenFeatureReservation]
-		var related := {upper.stable_id: true, lower.stable_id: true}
+		var related := {upper.stable_id: true}
+		if lower != null:
+			related[lower.stable_id] = true
 		var analysis := _outcrop_support_analysis([record] as Array[Dictionary],
 			related, buildings, existing_features, program, world_seed)
 		if not StringName(analysis.conflict).is_empty():
@@ -862,7 +885,9 @@ static func _reserve_arcade_overhang_supports(grid: WarrenSpatialGrid,
 			last_failure = "arcade overhang %s foundation identity failed" \
 				% upper.stable_id
 			return [] as Array[WarrenFeatureReservation]
-		var neighbor_ids: Array[StringName] = [lower.stable_id]
+		var neighbor_ids: Array[StringName] = []
+		if lower != null:
+			neighbor_ids.append(lower.stable_id)
 		for neighbor_value: Variant in analysis.neighbor_room_ids:
 			var neighbor_id := StringName(neighbor_value)
 			if neighbor_id != upper.stable_id and not neighbor_ids.has(neighbor_id):
@@ -870,8 +895,9 @@ static func _reserve_arcade_overhang_supports(grid: WarrenSpatialGrid,
 		neighbor_ids.sort()
 		if not feature.set_audit_facts({
 				"arcade_upper_room_id": upper.stable_id,
-				"arcade_lower_room_id": lower.stable_id,
+				"arcade_lower_room_id": &"" if lower == null else lower.stable_id,
 				"arcade_is_route_spanning": true,
+				"arcade_is_tunnel_roof_support": tunnel_roof,
 				"arcade_projection_direction": geometry.direction,
 				"arcade_projection_depth_cells": int(geometry.depth_cells),
 				"arcade_attachment_span_cells": int(
@@ -1151,6 +1177,95 @@ static func _public_arcade_geometry(upper: WarrenRoomStamp,
 	}
 
 
+static func _tunnel_roof_arcade_geometry(room: WarrenRoomStamp,
+		grid: WarrenSpatialGrid, source: WarrenVolumePlan) -> Dictionary:
+	## A complete compact room may cap one exact route bay when the bay receives
+	## its own authored portal shell. Prefer a full two-cell source-solid flank;
+	## when the route occupies every lower column, the complete four-sided portal
+	## is itself the load path: its native courses descend to the exact public
+	## floor and keep only the classified route openings. This admits a real
+	## gatehouse over open air without pretending the room bears on the air below.
+	if room == null or grid == null or source == null \
+			or not room.terrain_bearing:
+		return {}
+	var columns := _room_columns(room)
+	if columns.size() != WarrenSpatialGrid.ROOM_BAY_CELLS.x \
+			* WarrenSpatialGrid.ROOM_BAY_CELLS.y:
+		return {}
+	var candidates: Array[Dictionary] = []
+	for direction_3d: Vector3i in SKY_DIRECTIONS:
+		var direction := Vector2i(direction_3d.x, direction_3d.z)
+		var attachment: Array[Vector2i] = []
+		var source_grounded := true
+		for column_value: Variant in columns.keys():
+			var column := column_value as Vector2i
+			if columns.has(column - direction):
+				continue
+			var support_column := column - direction
+			if not _fine_column_reaches_source_ground(support_column,
+					room.lattice_origin.y, grid, source):
+				source_grounded = false
+			attachment.append(support_column)
+		if attachment.size() != WarrenSpatialGrid.ROOM_BAY_CELLS.x:
+			continue
+		var extension: Array[Vector2i] = []
+		extension.assign(columns.keys())
+		var geometry := _public_arcade_geometry(room, {
+			"depth_cells": WarrenSpatialGrid.ROOM_BAY_CELLS.y,
+			"attachment_span_cells": WarrenSpatialGrid.ROOM_BAY_CELLS.x,
+			"extension_column_count": columns.size(),
+			"extension_columns": _sorted_columns(columns),
+			"attachment_columns": attachment,
+			"direction": direction,
+		}, grid)
+		if geometry.is_empty():
+			continue
+		# All successful orientations describe the same world shell. Prefer the
+		# one whose grounded edge is closest to the town entrance, which follows
+		# source topology and gives ties a stable geometric answer.
+		var entrance := source.entry_cell
+		var distance := 0
+		for support_column: Vector2i in attachment:
+			distance += absi(support_column.x * 2 - entrance.x * 2) \
+				+ absi(support_column.y * 2 - entrance.z * 2)
+		geometry["grounded_attachment_columns"] = attachment.duplicate() \
+			if source_grounded else [] as Array[Vector2i]
+		geometry["portal_is_self_bearing"] = not source_grounded
+		geometry["grounded_attachment_distance"] = distance \
+			+ (0 if source_grounded else 1000000)
+		candidates.append(geometry)
+	if candidates.is_empty():
+		return {}
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.grounded_attachment_distance) \
+				!= int(b.grounded_attachment_distance):
+			return int(a.grounded_attachment_distance) \
+				< int(b.grounded_attachment_distance)
+		var ad := a.direction as Vector2i
+		var bd := b.direction as Vector2i
+		return ad.x < bd.x if ad.x != bd.x else ad.y < bd.y)
+	return candidates[0]
+
+
+static func _fine_column_reaches_source_ground(column: Vector2i,
+		support_top_y: int, grid: WarrenSpatialGrid,
+		source: WarrenVolumePlan) -> bool:
+	var macro := Vector2i(floori(float(column.x) / 2.0),
+		floori(float(column.y) / 2.0))
+	if not source.envelope.contains_column(macro):
+		return false
+	var ground := source.envelope.ground_at(macro)
+	if support_top_y <= ground:
+		return false
+	for y in range(ground, support_top_y):
+		var fine_cell := Vector3i(column.x, y, column.y)
+		if grid.use_at(fine_cell) in [WarrenSpatialGrid.Use.PUBLIC_AIR,
+				WarrenSpatialGrid.Use.DAYLIGHT_AIR] \
+				or not source.has_mass(Vector3i(macro.x, y, macro.y)):
+			return false
+	return true
+
+
 static func _arcade_overhang_geometry(lower: WarrenRoomStamp,
 		upper: WarrenRoomStamp, grid: WarrenSpatialGrid) -> Dictionary:
 	## Recognize only the basic, legible case: a two-cell tower plate is one half
@@ -1414,7 +1529,10 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 	var body_rejection_count := 0
 	var clearance_rejection_count := 0
 	var room_envelope_rejection_count := 0
+	var required_roof_rejection_count := 0
 	var partial_roof_rejection_count := 0
+	var terminal_roof_options := _terminal_roof_clearance_options(grid,
+		buildings, program, world_seed)
 	var protected_partial_roof_crown := \
 		_partial_roof_campaign_crown_cells(grid, buildings)
 	var used_endpoint_cells: Dictionary = {}
@@ -1434,11 +1552,13 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 	# finite vocabularies separate prevents a decorative bay from becoming a
 	# complete miniature house glued to another house.
 	var recipe_ids: Array[StringName] = []
-	# Facade bays are occupied pieces of architecture, not attic-window props or
-	# complete rooms attached at the facade. Each reviewed oriel crosses the
-	# parent wall plane: half of its 1.5 m shell is embedded and half projects.
+	# Facade relief is a complete native 3 m roofed bay, not a scaled window frame
+	# pasted over a still-visible parent panel. Its three authored walls, floor,
+	# gable, and exact attachment bracket form one measured recipe; the grid may
+	# select it only where the whole room-scale envelope fits.
 	if feature_kind == &"facade_bay":
 		recipe_ids.assign([
+			&"outcrop.blue", &"outcrop.orange", &"outcrop.amber",
 			&"outcrop.embedded.blue", &"outcrop.embedded.orange",
 			&"outcrop.embedded.amber",
 		])
@@ -1505,6 +1625,14 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 				socket.cell as Vector3i, Vector3i.ZERO, yaw)
 			var feature_bounds := FabricRecipe.lattice_transform(origin, yaw) \
 				* recipe.local_clearance_bounds
+			# A bump-out is a complete authored shell, but it is still optional
+			# relative to every already-required town roof. Preserve at least one
+			# exact gable in each finite closure domain before reserving the bay;
+			# crown-cell overlap alone cannot see projecting cheeks and eaves.
+			if not _feature_required_roof_conflict(feature_bounds,
+					terminal_roof_options, room.stable_id).is_empty():
+				required_roof_rejection_count += 1
+				continue
 			# Grid cells protect topology; this catches an authored dormer cheek,
 			# eave, or brace that reaches into an already committed balcony,
 			# support, skywalk, or structural outcropping between cells. The final
@@ -1551,6 +1679,11 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 				"room": room, "building": building,
 				"embedded_partial_extrusion": recipe.has_tag(
 					&"embedded_oriel"),
+				# Prefer the complete native-width gabled bay wherever its measured
+				# envelope fits. The partial-height oriel is a finite fallback for a
+				# tighter facade, not a competing way to consume an open frontage.
+				"facade_bay_priority": int(not recipe.has_tag(
+					&"embedded_oriel")),
 				"embedded_depth_m": 0.03 if recipe.has_tag(
 					&"embedded_oriel") else 0.0,
 				"projected_depth_m": 0.87 if recipe.has_tag(
@@ -1571,6 +1704,9 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 		var b_room := b.room as WarrenRoomStamp
 		if a_room.source_storey_index != b_room.source_storey_index:
 			return a_room.source_storey_index > b_room.source_storey_index
+		if feature_kind == &"facade_bay" \
+				and int(a.facade_bay_priority) != int(b.facade_bay_priority):
+			return int(a.facade_bay_priority) > int(b.facade_bay_priority)
 		if int(a.body_cell_count) != int(b.body_cell_count):
 			# Structural tower relief should be emphatic; ordinary facade bays
 			# should remain visually subordinate to their parent room.
@@ -1668,6 +1804,7 @@ static func _reserve_tower_annexes(grid: WarrenSpatialGrid,
 		"body_rejection_count": body_rejection_count,
 		"clearance_rejection_count": clearance_rejection_count,
 		"room_envelope_rejection_count": room_envelope_rejection_count,
+		"required_roof_rejection_count": required_roof_rejection_count,
 		"partial_roof_rejection_count": partial_roof_rejection_count,
 		"candidate_count": candidates.size(),
 		"refreshed_rejection_count": refreshed_rejection_count,
@@ -2271,6 +2408,16 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 				as Dictionary)[building.stable_id] = true
 	var room_clearance_bounds := _room_clearance_bounds(buildings, program,
 		world_seed)
+	# Optional attachments are selected before the final roof compiler runs, but
+	# the complete terminal crowns already determine a finite authored gable set.
+	# Carry those measured alternatives into this search so a balcony can never
+	# spend the only volume in which an unrelated house can be weather-closed.
+	# This is an alternative set per room, not one oversized roof halo: square
+	# houses may keep a quarter-turned gable when that is the exact clear choice.
+	var required_roof_closures := WarrenSpatialFabricCompiler \
+		.required_roof_closure_options(grid, buildings, program, world_seed)
+	var terminal_roof_options := _terminal_roof_clearance_options(grid,
+		buildings, program, world_seed, required_roof_closures)
 	var rejection_counts := {
 		&"missing_recipe": 0,
 		&"missing_socket": 0,
@@ -2280,6 +2427,9 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 		&"missing_return_contact": 0,
 		&"missing_public_stair_landing": 0,
 		&"portal_room_overlap": 0,
+		&"portal_required_roof_overlap": 0,
+		&"required_roof_overlap": 0,
+		&"support_attachment_missing": 0,
 		&"clearance_blocked": 0,
 		&"accepted_balcony_overlap": 0,
 	}
@@ -2358,6 +2508,16 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 					._skywalk_body_fits_grid(grid, body):
 				rejection_counts[&"body_blocked"] += 1
 				continue
+			# A balcony is a load-bearing facade construction, not a deck placed
+			# near one doorway.  Prove the complete inner deck row meets the owning
+			# building. Tall diagonal braces additionally require that same wall for
+			# the two bands below their deck; otherwise their lower end visibly stops
+			# in air. Compact bracket recipes remain the finite alternative where an
+			# upper storey has no continuing wall below it.
+			if not _balcony_supports_attach_to_parent(grid, recipe, origin, yaw,
+					building.stable_id, facing):
+				rejection_counts[&"support_attachment_missing"] += 1
+				continue
 			var return_contacts := _balcony_return_contact_cells(grid, body,
 				building.stable_id, endpoint_cell, facing, origin.y)
 			var wraparound := recipe.has_tag(&"wraparound_balcony")
@@ -2432,8 +2592,20 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 					program, room_clearance_bounds):
 				rejection_counts[&"portal_room_overlap"] += 1
 				continue
+			# A balcony is the deck AND the door assembly it opens in its parent
+			# facade. Prove that mandatory portal shell against the same finite roof
+			# domains as final room compilation; checking only the balcony AABB left
+			# a wider jamb free to pass through an unrelated partial gable.
+			if not _balcony_portal_required_roof_conflict(room, facing,
+					world_seed, program, required_roof_closures).is_empty():
+				rejection_counts[&"portal_required_roof_overlap"] += 1
+				continue
 			var balcony_bounds := FabricRecipe.lattice_transform(origin, yaw) \
 				* recipe.local_clearance_bounds
+			if not _feature_required_roof_conflict(balcony_bounds,
+					terminal_roof_options).is_empty():
+				rejection_counts[&"required_roof_overlap"] += 1
+				continue
 			# Room-scale cantilever supports are committed before balconies, but
 			# their sloped/bracketed meshes are construction records rather than
 			# private-volume cells. Compare the exact measured AABBs here; the grid
@@ -2582,11 +2754,49 @@ static func _reserve_balconies(grid: WarrenSpatialGrid,
 		used_facades[String(candidate.facade_key)] = true
 	last_skywalk_diagnostic["balcony_candidate_count"] = candidates.size()
 	last_skywalk_diagnostic["balcony_rejection_counts"] = rejection_counts
+	last_skywalk_diagnostic["required_roof_closure_count"] = \
+		terminal_roof_options.size()
+	last_skywalk_diagnostic["required_roof_closures"] = \
+		terminal_roof_options.duplicate(true)
 	last_skywalk_diagnostic["balcony_stair_rejection_samples"] = \
 		stair_rejection_samples
 	last_skywalk_diagnostic["balcony_clearance_rejection_samples"] = \
 		clearance_rejection_samples
 	return out
+
+
+static func _balcony_supports_attach_to_parent(grid: WarrenSpatialGrid,
+		recipe: FabricRecipe, origin: Vector3i, yaw: int,
+		building_id: StringName, outward: Vector3i) -> bool:
+	## The recipe's local z=0 walk row is its building seam.  Every cell in that
+	## row must meet the same owning building, so a six-metre platform cannot hang
+	## three metres past a narrow tower.  Full-storey diagonal supports also keep
+	## their authored upright against two complete lower wall bands.  This proof
+	## uses the same sealed occupancy that owns the facade; placement code never
+	## lengthens or nudges an individual support to fake contact.
+	if grid == null or recipe == null or building_id.is_empty() \
+			or yaw < 0 or yaw > 3:
+		return false
+	var attachment_cells: Dictionary = {}
+	for local_cell: Vector3i in recipe.walk_cells:
+		if local_cell.z != 0:
+			continue
+		attachment_cells[FabricRecipe.transform_cell(local_cell, origin, yaw)] \
+			= true
+	if attachment_cells.is_empty():
+		return false
+	var lower_band_count := 2 if recipe.has_tag(&"diagonal_support") else 0
+	for walk_value: Variant in attachment_cells.keys():
+		var walk_cell := walk_value as Vector3i
+		var parent := walk_cell - outward
+		for drop in range(0, lower_band_count + 1):
+			var wall_cell := parent - Vector3i.UP * drop
+			if not grid.contains(wall_cell) \
+					or grid.use_at(wall_cell) \
+						!= WarrenSpatialGrid.Use.PRIVATE_VOLUME \
+					or grid.owner_name_at(wall_cell) != building_id:
+				return false
+	return true
 
 
 static func _balcony_portal_overlaps_unrelated_room(room: WarrenRoomStamp,
@@ -2628,6 +2838,44 @@ static func _balcony_portal_overlaps_unrelated_room(room: WarrenRoomStamp,
 		if fits:
 			return false
 	return true
+
+
+static func _balcony_portal_required_roof_conflict(room: WarrenRoomStamp,
+		world_facing: Vector3i, world_seed: int,
+		program: SettlementFabricProgram,
+		required_roof_closures: Array[Dictionary]) -> StringName:
+	## Return a conflict only when every finite facade phase that contains the
+	## balcony doorway blocks a required weather closure. The compiler remains
+	## the sole owner of party-wall/roof seam policy; feature selection merely
+	## asks it while the balcony candidate is still reversible.
+	if room == null or program == null:
+		return &"missing_portal_context"
+	var local_facing := FabricRecipe.transform_direction(world_facing,
+		-room.yaw_quarters)
+	var portal_bit := WarrenSpatialFabricCompiler._portal_bit_for_facing(
+		local_facing)
+	if portal_bit == 0:
+		return &"invalid_portal_facing"
+	var seen: Dictionary = {}
+	var first_conflict := &""
+	for allow_phase_b in [true, false]:
+		var recipe_id := WarrenSpatialFabricCompiler._room_recipe_id(room,
+			world_seed, allow_phase_b, portal_bit)
+		if seen.has(recipe_id):
+			continue
+		seen[recipe_id] = true
+		var recipe := program.recipe(recipe_id)
+		if recipe == null:
+			continue
+		var conflict := WarrenSpatialFabricCompiler \
+			._room_required_roof_conflict(room, recipe,
+				required_roof_closures, program)
+		if conflict.is_empty():
+			return &""
+		if first_conflict.is_empty():
+			first_conflict = conflict
+	return first_conflict if not first_conflict.is_empty() \
+		else &"missing_portal_recipe"
 
 
 static func _commit_balcony(grid: WarrenSpatialGrid, candidate: Dictionary,
@@ -3171,7 +3419,9 @@ static func _room_clearance_bounds(
 	for building: WarrenBuildingVolume in buildings:
 		for room: WarrenRoomStamp in building.room_records:
 			var seen_recipes: Dictionary = {}
-			for allow_phase_b in [true, false]:
+			# Required flush construction first. If both phases resolve to the same
+			# recipe, the single retained record must still be marked mandatory.
+			for allow_phase_b in [false, true]:
 				var recipe_id := WarrenSpatialFabricCompiler._room_recipe_id(
 					room, world_seed, allow_phase_b)
 				if seen_recipes.has(recipe_id):
@@ -3184,11 +3434,81 @@ static func _room_clearance_bounds(
 					"building_id": building.stable_id,
 					"source_parcel_id": room.source_parcel_id,
 					"room_id": room.stable_id,
+					"room": room,
+					"recipe_id": recipe_id,
+					"origin": room.lattice_origin,
+					"yaw_quarters": room.yaw_quarters,
+					"required": not allow_phase_b,
 					"private_cells": room.private_cells.duplicate(),
 					"bounds": FabricRecipe.lattice_transform(room.lattice_origin,
 						room.yaw_quarters) * recipe.local_clearance_bounds,
 				})
 	return out
+
+
+static func _terminal_roof_clearance_options(grid: WarrenSpatialGrid,
+		buildings: Array[WarrenBuildingVolume],
+		program: SettlementFabricProgram, world_seed: int,
+		required_closures: Array[Dictionary] = []) -> Array[Dictionary]:
+	## Project the compiler's exact closure domains into feature selection. This
+	## includes partial crowns and mutually exclusive handed gables, not merely
+	## complete-room macro roofs. Room shells negotiate these same domains in the
+	## compiler's earlier roof-clearance pass; feature selection must preserve the
+	## domain rather than independently guessing which shell/roof seam will win.
+	var out: Array[Dictionary] = []
+	if grid == null or program == null:
+		return out
+	var room_by_id: Dictionary = {}
+	for building: WarrenBuildingVolume in buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			room_by_id[room.stable_id] = room
+	var closures := required_closures
+	if closures.is_empty():
+		closures = WarrenSpatialFabricCompiler.required_roof_closure_options(
+			grid, buildings, program, world_seed)
+	for closure: Dictionary in closures:
+		var owner_room_id := StringName(closure.owner_room_id)
+		var owner_room := room_by_id.get(owner_room_id) as WarrenRoomStamp
+		if owner_room == null:
+			continue
+		var owner_recipe := program.recipe(WarrenSpatialFabricCompiler \
+			._room_recipe_id(owner_room, world_seed, false))
+		if owner_recipe != null \
+				and owner_recipe.has_tag(&"integrated_pitched_roof"):
+			continue
+		var option_bounds: Array[AABB] = []
+		for option: Dictionary in closure.options as Array[Dictionary]:
+			if program.recipe(StringName(option.recipe_id)) != null:
+				option_bounds.append(option.bounds as AABB)
+		if not option_bounds.is_empty():
+			out.append({"owner_room_id": owner_room_id,
+				"bounds": option_bounds})
+	return out
+
+
+static func _feature_required_roof_conflict(feature_bounds: AABB,
+		terminal_roof_options: Array[Dictionary],
+		semantic_seam_room_id: StringName = &"") -> StringName:
+	## A room is blocked only when every finite gable alternative intersects the
+	## feature.  This mirrors final roof selection and avoids reserving the union
+	## of mutually exclusive roof orientations as fake empty space. A roofed bay
+	## is explicitly bonded to one parent room and is allowed to meet that room's
+	## closure at their declared construction seam; every unrelated room remains
+	## protected by the exact same all-options test.
+	for closure: Dictionary in terminal_roof_options:
+		var room_id := StringName(closure.owner_room_id)
+		if not semantic_seam_room_id.is_empty() \
+				and room_id == semantic_seam_room_id:
+			continue
+		var all_options_blocked := true
+		for roof_bounds: AABB in closure.bounds as Array[AABB]:
+			if not SettlementFabricPlan._aabb_overlaps_volume(feature_bounds,
+					roof_bounds):
+				all_options_blocked = false
+				break
+		if all_options_blocked:
+			return room_id
+	return &""
 
 
 static func _feature_bounds_overlap_unrelated_room(recipe: FabricRecipe,
@@ -3496,8 +3816,14 @@ static func _reserve_preplanned_skywalks(grid: WarrenSpatialGrid,
 			landmark_endpoint_count += int(is_landmark)
 			offset_endpoint_count += int(is_landmark or offset_rooms.has(
 				StringName(endpoint.room_id)))
-		if endpoint_owner_ids.size() != 2 or offset_endpoint_count < 1:
-			last_failure = "preplanned skywalk %d lacks two owners or an offset endpoint" \
+		# A passage-house is already a complete floorplate break in the skyline.
+		# Requiring one endpoint room to be laterally offset was an old visual proxy,
+		# not a bearing fact, and made the one-pass maze discard valid links between
+		# two straight but independently ground-borne houses. The exact two-owner,
+		# socket, occupancy, clearance, and lower-public-route proofs below are the
+		# construction contract.
+		if endpoint_owner_ids.size() != 2:
+			last_failure = "preplanned skywalk %d lacks two building owners" \
 				% reservation_index
 			return [] as Array[WarrenFeatureReservation]
 		var body_set := reservation.get("reserved_cells", {}) as Dictionary

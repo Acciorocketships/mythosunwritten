@@ -133,6 +133,150 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 		},
 		"tiers": [&"town"],
 	},
+	# Complete low-poly-fantasy-village houses are ideal edge parcels: they own
+	# their whole shell and roof, so they add a second architectural vocabulary
+	# without pretending to interlock with the sectional core. Their authored
+	# jamb opening receives the matching closed leaf as one contained component.
+	{
+		"id": &"lpfv.building.house.01",
+		"role": VillageAssetSpec.Role.HOUSE,
+		"access_kind": VillageAssetSpec.AccessKind.ENTERABLE,
+		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
+		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
+		"enclosed_interior": true,
+		"entrance_local": Vector2(1.311, 2.869),
+		"entrance_outward": Vector2.DOWN,
+		"entrance_floor_y": 0.0,
+		"ground_contact_rect": Rect2(-2.25, -2.25, 4.5, 4.5),
+		"interior_rect": Rect2(-2.25, -2.25, 4.5, 4.5),
+		"attachments": [{
+			"key": &"closed_door",
+			"id": &"lpfv.fabric.door.closed.01",
+			"local_offset": Vector3(1.311, 0.0, 2.869),
+		}],
+		"tiers": [&"village", &"town"],
+	},
+	{
+		"id": &"lpfv.building.house.02",
+		"role": VillageAssetSpec.Role.HOUSE,
+		"access_kind": VillageAssetSpec.AccessKind.ENTERABLE,
+		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
+		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
+		"enclosed_interior": true,
+		"entrance_local": Vector2(1.311, 2.869),
+		"entrance_outward": Vector2.DOWN,
+		"entrance_floor_y": 0.0,
+		"ground_contact_rect": Rect2(-2.25, -2.25, 4.5, 4.5),
+		"interior_rect": Rect2(-2.25, -2.25, 4.5, 4.5),
+		"attachments": [{
+			"key": &"closed_door",
+			"id": &"lpfv.fabric.door.closed.02",
+			"local_offset": Vector3(1.311, 0.0, 2.869),
+		}],
+		"tiers": [&"village", &"town"],
+	},
+	# Houses 03--06 are the source pack's broad compound silhouettes. They use
+	# the same reviewed front jamb as the compact pair, but extend three metres
+	# farther along the street; the 7.5 x 4.5 m contact is the inset module-aligned
+	# support rectangle derived from their common baked ground-contact lattice.
+	# Keeping these complete prefabs in the edge grammar gives the town substantial
+	# one- and two-storey houses without asking the dense room packer to imitate
+	# their annexes, roof junctions, chimneys, and bay windows.
+	{
+		"id": &"lpfv.building.house.03",
+		"role": VillageAssetSpec.Role.HOUSE,
+		"access_kind": VillageAssetSpec.AccessKind.ENTERABLE,
+		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
+		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
+		"enclosed_interior": true,
+		"entrance_local": Vector2(1.311, 2.869),
+		"entrance_outward": Vector2.DOWN,
+		"entrance_floor_y": 0.0,
+		"ground_contact_rect": Rect2(-5.25, -2.25, 7.5, 4.5),
+		"interior_rect": Rect2(-5.25, -2.25, 7.5, 4.5),
+		"attachments": [{
+			"key": &"closed_door",
+			"id": &"lpfv.fabric.door.closed.02",
+			"local_offset": Vector3(1.311, 0.0, 2.869),
+		}],
+		"tiers": [&"village", &"town"],
+	},
+	{
+		"id": &"lpfv.building.house.04",
+		"role": VillageAssetSpec.Role.HOUSE,
+		"access_kind": VillageAssetSpec.AccessKind.ENTERABLE,
+		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
+		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
+		"enclosed_interior": true,
+		"entrance_local": Vector2(1.311, 2.869),
+		"entrance_outward": Vector2.DOWN,
+		"entrance_floor_y": 0.0,
+		"ground_contact_rect": Rect2(-5.25, -2.25, 7.5, 4.5),
+		"interior_rect": Rect2(-5.25, -2.25, 7.5, 4.5),
+		"attachments": [{
+			"key": &"closed_door",
+			"id": &"lpfv.fabric.door.closed.01",
+			"local_offset": Vector3(1.311, 0.0, 2.869),
+		}],
+		"tiers": [&"village", &"town"],
+	},
+	{
+		"id": &"lpfv.building.house.05",
+		"role": VillageAssetSpec.Role.HOUSE,
+		"access_kind": VillageAssetSpec.AccessKind.ENTERABLE,
+		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
+		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
+		"enclosed_interior": true,
+		"entrance_local": Vector2(1.311, 2.869),
+		"entrance_outward": Vector2.DOWN,
+		"entrance_floor_y": 0.0,
+		"ground_contact_rect": Rect2(-5.25, -2.25, 7.5, 4.5),
+		"interior_rect": Rect2(-5.25, -2.25, 7.5, 4.5),
+		"attachments": [{
+			"key": &"closed_door",
+			"id": &"lpfv.fabric.door.closed.02",
+			"local_offset": Vector3(1.311, 0.0, 2.869),
+		}],
+		"tiers": [&"village", &"town"],
+	},
+	{
+		"id": &"lpfv.building.house.06",
+		"role": VillageAssetSpec.Role.HOUSE,
+		"access_kind": VillageAssetSpec.AccessKind.ENTERABLE,
+		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
+		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
+		"enclosed_interior": true,
+		"entrance_local": Vector2(1.311, 2.869),
+		"entrance_outward": Vector2.DOWN,
+		"entrance_floor_y": 0.0,
+		"ground_contact_rect": Rect2(-5.25, -2.25, 7.5, 4.5),
+		"interior_rect": Rect2(-5.25, -2.25, 7.5, 4.5),
+		"attachments": [{
+			"key": &"closed_door",
+			"id": &"lpfv.fabric.door.closed.01",
+			"local_offset": Vector3(1.311, 0.0, 2.869),
+		}],
+		"tiers": [&"village", &"town"],
+	},
+	{
+		"id": &"lpfv.building.house.07",
+		"role": VillageAssetSpec.Role.HOUSE,
+		"access_kind": VillageAssetSpec.AccessKind.ENTERABLE,
+		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
+		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
+		"enclosed_interior": true,
+		"entrance_local": Vector2(1.311, 2.869),
+		"entrance_outward": Vector2.DOWN,
+		"entrance_floor_y": 0.0,
+		"ground_contact_rect": Rect2(-2.25, -2.25, 4.5, 4.5),
+		"interior_rect": Rect2(-2.25, -2.25, 4.5, 4.5),
+		"attachments": [{
+			"key": &"closed_door",
+			"id": &"lpfv.fabric.door.closed.01",
+			"local_offset": Vector3(1.311, 0.0, 2.869),
+		}],
+		"tiers": [&"village", &"town"],
+	},
 	{
 		"id": &"aws.building.003",
 		"role": VillageAssetSpec.Role.CIVIC,
@@ -487,16 +631,22 @@ static func compile(authored: Dictionary = {},
 		var spec := VillageAssetSpec.compile(value, catalog)
 		if spec == null:
 			return null
-		for runtime_id: StringName in spec.runtime_asset_ids():
-			if seen.has(runtime_id):
-				push_error("VillageProgram runtime asset IDs must be unique")
+		for runtime_id: StringName in spec.primary_runtime_asset_ids():
+			if program.asset_specs_by_runtime_id.has(runtime_id) \
+					or seen.has(runtime_id):
+				push_error("VillageProgram primary runtime asset IDs must be unique")
 				return null
+			program.asset_specs_by_runtime_id[runtime_id] = spec
+		for runtime_id: StringName in spec.runtime_asset_ids():
+			# A contained component is reusable vocabulary: every LPFV complete
+			# house, for example, closes the same measured authored doorway. Keep
+			# one catalog reference/AABB while primary building IDs remain unique.
+			if seen.has(runtime_id):
+				continue
 			seen[runtime_id] = true
 			program.referenced_asset_ids.append(runtime_id)
 			program.runtime_aabbs[runtime_id] = catalog.descriptor(
 				runtime_id).measured_aabb
-		for runtime_id: StringName in spec.primary_runtime_asset_ids():
-			program.asset_specs_by_runtime_id[runtime_id] = spec
 		program.assets[spec.asset_id] = spec
 		program.max_asset_reach = maxf(program.max_asset_reach,
 			spec.local_reach())

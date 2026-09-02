@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://c27cugidbphfe"]
+
+[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_7ysog"]
+
+[resource]
+script = ExtResource("1_7ysog")
+id = &"lpfv.fabric.roof.compact.slate.06.rear.tight"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06_rear_tight.tres"
+tags = Array[StringName]([&"building", &"compact_roof", &"exact_footprint_eave", &"fabric_roof", &"palette_variant", &"party_seam_end", &"village"])
+measured_aabb = AABB(-1.5, 0.027698994, -1.5000004, 3, 2.1451597, 3.0000005)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.roof.compact.slate.06.rear.tight"

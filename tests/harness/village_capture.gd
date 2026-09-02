@@ -13,6 +13,7 @@ var _output_dir := "/tmp/mythos-village-visual-review"
 var _start := 0
 var _limit := -1
 var _representative_views_only := false
+var _view_recipe := ""
 var _manifest: Dictionary
 var _entries: Array
 var _streamer: FieldTerrainStreamer
@@ -69,6 +70,9 @@ func _read_args() -> void:
 					_limit = int(args[index + 1])
 			"--representative-views":
 				_representative_views_only = true
+			"--view":
+				if index + 1 < args.size():
+					_view_recipe = args[index + 1]
 
 
 func _run() -> void:
@@ -83,6 +87,12 @@ func _run() -> void:
 			await get_tree().process_frame
 		var views: Array = _representative_views(entry.views) \
 			if _representative_views_only else entry.views
+		if not _view_recipe.is_empty():
+			views = views.filter(func(value: Variant) -> bool:
+				return String((value as Dictionary).get("recipe", "")) \
+					== _view_recipe)
+			assert(not views.is_empty(), "Village capture view is absent: %s" \
+				% _view_recipe)
 		for view_index in views.size():
 			await _capture(entry, views[view_index], view_index)
 		print("[village_capture] village=%d/%d id=%s images=%d" % [
@@ -173,14 +183,15 @@ func _wait_for_site(entry: Dictionary) -> bool:
 			_streamer.KEEP_RADIUS + 1)
 		if relevant_active:
 			last_relevant_progress = now
-		var complete := true
-		for z in range(-1, 2):
-			for x in range(-1, 2):
-				var key := centre_chunk + Vector2i(x, z)
-				complete = complete and _streamer._built.has(key) \
-					and _streamer._feature_ready.has(key)
-		if complete and _streamer._feature_queue != null \
-				and _streamer._feature_queue.pending_count() == 0:
+		# Use the streamer's own playable-site gate. A centre lying exactly on a
+		# chunk corner has four support chunks rather than an arbitrary 3x3
+		# terrain square, while the feature halo is independently wider. Requiring
+		# both coordinate systems to be the same 3x3 used to wait forever even
+		# after the complete record and all camera-visible feature owners existed.
+		var complete := _streamer.startup_loading_complete() \
+			and _streamer._built.has(centre_chunk) \
+			and _streamer._feature_square_ready(centre_chunk)
+		if complete:
 			return true
 		var seconds_since_relevant := float(now - last_relevant_progress) / 1000.0
 		if _progress_lease_expired(elapsed, seconds_since_relevant,

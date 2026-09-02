@@ -168,8 +168,12 @@ func seal() -> bool:
 			last_rejection = "invalid daylight void cell %s" % key
 			return false
 		_daylight_void_set[key] = true
-	if not _all_supplemental_air_reaches_node_air():
-		last_rejection = "supplemental public air is disconnected from route air"
+	var disconnected_supplemental := _disconnected_supplemental_air_cells()
+	if not disconnected_supplemental.is_empty():
+		last_rejection = ("supplemental public air is disconnected from route " \
+			+ "air (%d cells; first=%s)") % [
+			disconnected_supplemental.size(),
+			disconnected_supplemental.slice(0, 12)]
 		return false
 	audit = _build_audit()
 	_sealed = true
@@ -260,9 +264,9 @@ func deterministic_signature() -> String:
 	return "|".join(PackedStringArray(parts))
 
 
-func _all_supplemental_air_reaches_node_air() -> bool:
+func _disconnected_supplemental_air_cells() -> Array[Vector3i]:
 	if supplemental_air_cells.is_empty():
-		return true
+		return [] as Array[Vector3i]
 	var node_air: Dictionary = {}
 	for node_value: PublicRealmNode in nodes:
 		for cell: Vector3i in node_value.air_cells:
@@ -280,10 +284,15 @@ func _all_supplemental_air_reaches_node_air() -> bool:
 			if _air_cell_by_key.has(key) and not reached.has(key):
 				reached[key] = true
 				pending.append(neighbor)
+	var disconnected: Array[Vector3i] = []
 	for cell: Vector3i in supplemental_air_cells:
 		if not reached.has(_cell_key(cell)):
-			return false
-	return true
+			disconnected.append(cell)
+	disconnected.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		if a.y != b.y:
+			return a.y < b.y
+		return a.z < b.z if a.z != b.z else a.x < b.x)
+	return disconnected
 
 
 func _has_primary_edge(a: StringName, b: StringName) -> bool:

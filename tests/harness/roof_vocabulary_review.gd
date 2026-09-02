@@ -19,6 +19,22 @@ const RECIPE_IDS: Array[StringName] = [
 	&"roof.long.orange.dormer.pair.right",
 	&"roof.tower.blue",
 	&"roof.tower.orange",
+	&"roof.terminal.tight.tower.blue",
+	&"roof.terminal.tight.tower.orange",
+	&"roof.terminal.tight.slim.blue",
+	&"roof.terminal.tight.slim.orange",
+	&"roof.terminal.step.slim.blue.0",
+	&"roof.terminal.step.slim.orange.0",
+	&"roof.terminal.tight.row.blue",
+	&"roof.terminal.tight.row.orange",
+	&"roof.partial.gable.blue.2.negative",
+	&"roof.partial.gable.blue.2.positive",
+	&"roof.partial.gable.orange.2.negative",
+	&"roof.partial.gable.orange.2.positive",
+	&"roof.setback.shed.blue.2.negative",
+	&"roof.setback.shed.blue.2.positive",
+	&"roof.setback.shed.orange.2.negative",
+	&"roof.setback.shed.orange.2.positive",
 	&"roof.tower.chimney.blue",
 	&"roof.tower.chimney.orange",
 	&"roof.slim.blue",
@@ -45,27 +61,34 @@ func _init() -> void:
 func _run() -> void:
 	var world := Node3D.new()
 	root.add_child(world)
-	_build_environment(world)
+	var recipe_ids: Array[StringName] = []
+	var recipe_prefix := _argument("--recipe-prefix", "")
+	for recipe_id: StringName in RECIPE_IDS:
+		if recipe_prefix.is_empty() or String(recipe_id).begins_with(recipe_prefix):
+			recipe_ids.append(recipe_id)
+	assert(not recipe_ids.is_empty())
+	_build_environment(world, recipe_ids.size())
 	var catalog := EnvironmentCatalog.load_default()
 	var program := SettlementFabricProgram.compile(catalog)
 	assert(catalog != null and program != null)
 	var payload := EnvironmentInstancePayload.new()
-	for index in RECIPE_IDS.size():
-		var recipe_value := program.recipe(RECIPE_IDS[index])
+	var column_count := mini(COLUMNS, recipe_ids.size())
+	for index in recipe_ids.size():
+		var recipe_value := program.recipe(recipe_ids[index])
 		assert(recipe_value != null and recipe_value.is_sealed())
-		var column := index % COLUMNS
-		var row := index / COLUMNS
-		var row_count := ceili(float(RECIPE_IDS.size()) / float(COLUMNS))
-		var anchor := Vector3((float(column) - float(COLUMNS - 1) * 0.5) \
+		var column := index % column_count
+		var row := index / column_count
+		var row_count := ceili(float(recipe_ids.size()) / float(column_count))
+		var anchor := Vector3((float(column) - float(column_count - 1) * 0.5) \
 			* SPACING.x, 0.0,
 			(float(row) - float(row_count - 1) * 0.5) * SPACING.y)
 		var anchor_transform := Transform3D(Basis.IDENTITY, anchor)
 		for placement: Dictionary in recipe_value.placements:
 			payload.add(StringName(placement.asset_id), anchor_transform \
 				* (placement.transform as Transform3D), Color.WHITE,
-				StringName("%s/%s" % [RECIPE_IDS[index], placement.id]))
+				StringName("%s/%s" % [recipe_ids[index], placement.id]))
 		var label := Label3D.new()
-		label.text = String(RECIPE_IDS[index]).trim_prefix("roof.")
+		label.text = String(recipe_ids[index]).trim_prefix("roof.")
 		label.font_size = 80
 		label.pixel_size = 0.0065
 		label.outline_size = 12
@@ -93,7 +116,7 @@ func _run() -> void:
 	quit()
 
 
-static func _build_environment(world: Node3D) -> void:
+static func _build_environment(world: Node3D, recipe_count: int) -> void:
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_COLOR
 	environment.background_color = Color("9eacb4")
@@ -110,8 +133,9 @@ static func _build_environment(world: Node3D) -> void:
 	world.add_child(sun)
 	var ground := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
-	var row_count := ceili(float(RECIPE_IDS.size()) / float(COLUMNS))
-	plane.size = Vector2(float(COLUMNS) * SPACING.x + 10.0,
+	var column_count := mini(COLUMNS, recipe_count)
+	var row_count := ceili(float(recipe_count) / float(column_count))
+	plane.size = Vector2(float(column_count) * SPACING.x + 10.0,
 		float(row_count) * SPACING.y + 10.0)
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color("718d50")
@@ -121,7 +145,7 @@ static func _build_environment(world: Node3D) -> void:
 	world.add_child(ground)
 	var camera := Camera3D.new()
 	camera.fov = 48.0
-	var span := maxf(float(COLUMNS) * SPACING.x,
+	var span := maxf(float(column_count) * SPACING.x,
 		float(row_count) * SPACING.y)
 	camera.position = Vector3(span * 0.75, span * 0.72, span * 0.92)
 	world.add_child(camera)

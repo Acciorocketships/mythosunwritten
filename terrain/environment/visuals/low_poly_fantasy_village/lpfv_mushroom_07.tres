@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3 uid="uid://dauv5lxgr8x2n"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_g5ts7"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_g6qhb"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/low_poly_fantasy_village/lpfv_mushroom_07_piece_00.res" id="3_j5w0t"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_8712c"]
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_g5ts7"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_g6qhb"]
+[ext_resource type="ArrayMesh" uid="uid://b0t5xatnrwx6i" path="res://terrain/environment/meshes/low_poly_fantasy_village/lpfv_mushroom_07_piece_00.res" id="3_j5w0t"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_8712c"]
 
 [sub_resource type="Resource" id="Resource_g6l00"]
 script = ExtResource("2_g6qhb")

@@ -25,6 +25,26 @@ static func best_link(terrain: VillageTerrainView, origin: Vector2,
 		primary_axis, a, b, placements, vocabulary, reserved_volumes)
 
 
+static func fixed_link(terrain: VillageTerrainView,
+		a: VillageCirculationNode, b: VillageCirculationNode,
+		placements: Array[VillageMassingPlacement],
+		vocabulary: VillageElevatedProgram,
+		reserved_volumes: Array[VillageOccupancyVolume] = []
+		) -> VillageCirculationLink:
+	## Validate an already-authored topology edge without replacing its shape
+	## with a Manhattan search route. Perimeter distributors use short faceted
+	## chords whose control geometry is part of their sealed graph; if that exact
+	## edge cannot traverse the terrain, its branch must be rejected rather than
+	## turning into a distant rectangular street.
+	var controls: Array[Vector2] = [a.point, b.point]
+	var street := _street_for_controls(terrain, controls, a, b, placements,
+		reserved_volumes)
+	if street != null:
+		return street
+	return _stair_for_controls(terrain, controls, a, b, placements,
+		vocabulary, reserved_volumes)
+
+
 static func direct_link(terrain: VillageTerrainView, origin: Vector2,
 		primary_axis: Vector2, a: VillageCirculationNode,
 		b: VillageCirculationNode,

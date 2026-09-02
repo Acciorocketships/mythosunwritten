@@ -100,6 +100,9 @@ func test_every_profile_asks_for_a_buildable_core_band_range() -> void:
 		var profile := WarrenVillageScaleProfile.for_id(scale_id)
 		assert_gt(profile.minimum_core_bands, 0,
 			"%s must state a vertical-development floor" % scale_id)
+		assert_lte(profile.minimum_core_bands,
+			profile.core_target_band_range.x,
+			"%s validity floor cannot exceed its preferred target" % scale_id)
 		assert_lte(profile.maximum_core_bands, WarrenMassif.BUILDABLE_LAYER_BANDS,
 			"%s may not ask for more mass than the compiler builds" % scale_id)
 		assert_lte(profile.minimum_core_bands, profile.maximum_core_bands,

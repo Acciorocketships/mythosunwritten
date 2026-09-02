@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3 uid="uid://brdljddbund6t"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_4xp7n"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/complete_buildings/sffa_building_002_piece_00.res" id="2_b1s48"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_fdkab"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/complete_buildings/sffa_building_002_piece_00.res" id="4_xcvhs"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_d4uqs"]
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_4xp7n"]
+[ext_resource type="Shape3D" uid="uid://de3n6a8t7m87c" path="res://terrain/environment/collisions/complete_buildings/sffa_building_002_piece_00.res" id="2_b1s48"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_fdkab"]
+[ext_resource type="ArrayMesh" uid="uid://h31arrbyd7gc" path="res://terrain/environment/meshes/complete_buildings/sffa_building_002_piece_00.res" id="4_xcvhs"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_d4uqs"]
 
 [sub_resource type="Resource" id="Resource_0bcmj"]
 script = ExtResource("1_4xp7n")

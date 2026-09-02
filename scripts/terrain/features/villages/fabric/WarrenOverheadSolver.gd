@@ -7,7 +7,6 @@ extends RefCounted
 ## room sockets. The caller admits candidates transactionally through the
 ## common SettlementFabricSolver, so occupancy, continuous envelopes, support,
 ## and public-air clearance remain one gate.
-
 static func candidate_specs(program: SettlementFabricProgram,
 		plan: SettlementFabricPlan, world_seed: int,
 		qualify_against_plan: bool = true) -> Array[Dictionary]:

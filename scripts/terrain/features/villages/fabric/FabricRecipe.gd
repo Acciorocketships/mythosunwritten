@@ -20,6 +20,13 @@ var placements: Array[Dictionary] = []
 ## authored run. Roof material phase and end caps therefore cannot drift through
 ## independent placement or later decoration.
 var construction_runs: Array[Dictionary] = []
+## Exact-footprint compact gables use a second construction record because one
+## authored 3 m bay may be represented by either a complete source roof or by
+## two end halves. `bays` names the original placements and carries the finite
+## start/middle/end alternatives already aligned to the same bearing plane.
+## Final fabric sealing may therefore compose adjacent units into one roof
+## without inferring mesh pivots, moving rooms, or searching by proximity.
+var compact_roof_runs: Array[Dictionary] = []
 var solid_cells: Array[Vector3i] = []
 var walk_cells: Array[Vector3i] = []
 var headroom_cells: Array[Vector3i] = []
@@ -115,6 +122,24 @@ func add_construction_run(run_id: StringName, kind: StringName,
 		"repeat_pitch": repeat_pitch,
 		"seam_profile": seam_profile,
 		"material_family": material_family,
+	})
+
+
+func add_compact_roof_run(run_id: StringName, local_start: Vector3,
+		local_end: Vector3, cross_min: float, cross_max: float,
+		repeat_pitch: float, seam_profile: StringName,
+		material_family: StringName, bays: Array[Dictionary]) -> void:
+	assert(not _sealed)
+	compact_roof_runs.append({
+		"id": run_id,
+		"local_start": local_start,
+		"local_end": local_end,
+		"cross_min": cross_min,
+		"cross_max": cross_max,
+		"repeat_pitch": repeat_pitch,
+		"seam_profile": seam_profile,
+		"material_family": material_family,
+		"bays": bays.duplicate(true),
 	})
 
 
@@ -260,6 +285,92 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 				return false
 			seen_run_placements[placement_id] = true
 		run_ids[run_id] = true
+	var compact_variant_bounds: Array[AABB] = []
+	for run: Dictionary in compact_roof_runs:
+		var run_id := StringName(run.get("id", ""))
+		var local_start := run.get("local_start", Vector3.INF) as Vector3
+		var local_end := run.get("local_end", Vector3.INF) as Vector3
+		var cross_min := float(run.get("cross_min", NAN))
+		var cross_max := float(run.get("cross_max", NAN))
+		var repeat_pitch := float(run.get("repeat_pitch", 0.0))
+		var seam_profile := StringName(run.get("seam_profile", ""))
+		var material_family := StringName(run.get("material_family", ""))
+		var bays := run.get("bays", []) as Array
+		var delta := local_end - local_start
+		var axis_x := absf(delta.x) > 0.001 and absf(delta.z) <= 0.001
+		var axis_z := absf(delta.z) > 0.001 and absf(delta.x) <= 0.001
+		var length := absf(delta.x) if axis_x else absf(delta.z)
+		if run_id.is_empty() or run_ids.has(run_id) \
+				or not local_start.is_finite() or not local_end.is_finite() \
+				or not (axis_x or axis_z) or absf(delta.y) > 0.001 \
+				or not is_finite(cross_min) or not is_finite(cross_max) \
+				or cross_max <= cross_min or repeat_pitch <= 0.0 \
+				or absf(roundf(length / repeat_pitch) * repeat_pitch \
+					- length) > 0.001 or bays.size() != roundi(length / repeat_pitch) \
+				or seam_profile.is_empty() or material_family.is_empty():
+			last_rejection = ("invalid compact roof run %s start=%s end=%s " \
+				+ "cross=%.3f..%.3f pitch=%.3f bays=%d length=%.3f") % [
+				run_id, local_start, local_end, cross_min, cross_max,
+				repeat_pitch, bays.size(), length]
+			return false
+		var seen_originals: Dictionary = {}
+		var expected_families: Array = []
+		for bay_index in bays.size():
+			var bay := bays[bay_index] as Dictionary
+			var centre := bay.get("centre", Vector3.INF) as Vector3
+			var originals := bay.get("placement_ids", []) as Array
+			var variants := bay.get("variants", {}) as Dictionary
+			var along := repeat_pitch * (float(bay_index) + 0.5)
+			var expected := local_start + delta.normalized() * along
+			if not centre.is_finite() or centre.distance_to(expected) > 0.001 \
+					or originals.is_empty() or variants.is_empty():
+				last_rejection = "invalid compact roof bay %s/%d" % [
+					run_id, bay_index]
+				return false
+			for placement_value: Variant in originals:
+				var placement_id := StringName(placement_value)
+				if placement_id.is_empty() or seen_originals.has(placement_id) \
+						or not placement_ids.has(placement_id):
+					last_rejection = "compact roof run %s references invalid placement %s" % [
+						run_id, placement_id]
+					return false
+				seen_originals[placement_id] = true
+			var families: Array = variants.keys()
+			families.sort_custom(func(a: Variant, b: Variant) -> bool:
+				return String(a) < String(b))
+			if bay_index == 0:
+				expected_families = families
+			elif families != expected_families:
+				last_rejection = "compact roof run %s changes variant vocabulary" % run_id
+				return false
+			for family_value: Variant in families:
+				var family := StringName(family_value)
+				var roles := variants[family_value] as Dictionary
+				if family.is_empty() or not roles.has(&"start") \
+						or not roles.has(&"middle") or not roles.has(&"end"):
+					last_rejection = "compact roof run %s lacks finite roles" % run_id
+					return false
+				for role in [&"start", &"middle", &"end"]:
+					var variant := (roles[role] as Dictionary).duplicate()
+					var asset_id := StringName(variant.get("asset_id", ""))
+					var transform := variant.get("transform", Transform3D()) as Transform3D
+					var descriptor := catalog.descriptor(asset_id)
+					if asset_id.is_empty() or not transform.is_finite() \
+							or descriptor == null \
+							or not descriptor.measured_aabb.has_volume():
+						last_rejection = "compact roof run %s has invalid %s/%s variant" % [
+							run_id, family, role]
+						return false
+					var bounds := transform * descriptor.measured_aabb
+					variant["bounds"] = bounds
+					variant["collision_pieces"] = descriptor.collision_piece_count
+					roles[role] = variant
+					compact_variant_bounds.append(bounds)
+				variants[family_value] = roles
+			bay["variants"] = variants
+			bays[bay_index] = bay
+		run["bays"] = bays
+		run_ids[run_id] = true
 	if not has_bounds:
 		var planning_cells: Array[Vector3i] = []
 		planning_cells.append_array(solid_cells)
@@ -275,9 +386,16 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 		has_bounds = local_bounds.has_volume()
 	if not _has_declared_clearance_bounds:
 		local_clearance_bounds = local_bounds
+		for bounds: AABB in compact_variant_bounds:
+			local_clearance_bounds = local_clearance_bounds.merge(bounds)
 	elif not local_clearance_bounds.grow(0.001).encloses(local_bounds):
 		last_rejection = "construction clearance does not enclose visual bounds"
 		return false
+	if _has_declared_clearance_bounds:
+		for bounds: AABB in compact_variant_bounds:
+			if not local_clearance_bounds.grow(0.001).encloses(bounds):
+				last_rejection = "compact roof alternative leaves construction clearance"
+				return false
 	var socket_ids: Dictionary = {}
 	for socket: Dictionary in sockets:
 		var socket_id := StringName(socket.get("id", ""))
@@ -335,6 +453,13 @@ func asset_ids() -> Array[StringName]:
 	var unique: Dictionary = {}
 	for placement: Dictionary in placements:
 		unique[StringName(placement.asset_id)] = true
+	for run: Dictionary in compact_roof_runs:
+		for bay_value: Variant in run.get("bays", []) as Array:
+			var bay := bay_value as Dictionary
+			for roles_value: Variant in (bay.get("variants", {}) \
+					as Dictionary).values():
+				for variant_value: Variant in (roles_value as Dictionary).values():
+					unique[StringName((variant_value as Dictionary).asset_id)] = true
 	var out: Array[StringName] = []
 	out.assign(unique.keys())
 	out.sort_custom(func(a: StringName, b: StringName) -> bool:

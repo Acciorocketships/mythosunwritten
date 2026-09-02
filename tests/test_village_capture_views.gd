@@ -139,13 +139,13 @@ func test_representative_review_subset_spans_every_visual_risk_category() -> voi
 			"door_sfm_stall_blue_007_outside",
 			"urban_building_core_house_00_overhang",
 			"urban_aerial_link_a_side_a", "urban_platform_shared_side_a",
-			"urban_stair_run_side_a", "outskirts_shelter_00",
+			"urban_stair_run_side_a", "outskirts_house_00",
 			"door_sfv_building_interior_blue_001_inside"]:
 		source.append({"recipe": recipe})
 	var selected := CaptureHarness._representative_views(source)
 	assert_eq(selected.size(), 14)
 	assert_eq((selected[0] as Dictionary).recipe, "skyline")
-	assert_eq((selected[-1] as Dictionary).recipe, "outskirts_shelter_00")
+	assert_eq((selected[-1] as Dictionary).recipe, "outskirts_house_00")
 	assert_false(selected.has({
 		"recipe": "door_sfv_building_interior_blue_001_inside"}),
 		"the development subset omits redundant door views; full capture does not")

@@ -19,7 +19,13 @@ static func commit(parent: Node3D, payload: EnvironmentInstancePayload,
 			body.name = body_name
 			parent.add_child(body)
 		var placements: Array = payload.batches[asset_id].transforms
-		for placement: Transform3D in placements:
+		var collision_flags: Array = payload.batches[asset_id].get(
+			"collision_enabled", [])
+		for placement_index in placements.size():
+			if not collision_flags.is_empty() \
+					and not bool(collision_flags[placement_index]):
+				continue
+			var placement := placements[placement_index] as Transform3D
 			for collision: EnvironmentCollisionPiece in visual.collisions:
 				var shape_node := CollisionShape3D.new()
 				shape_node.name = "%s_%04d" % [String(asset_id).replace(".", "_"), count]
@@ -27,4 +33,19 @@ static func commit(parent: Node3D, payload: EnvironmentInstancePayload,
 				shape_node.transform = placement * collision.local_transform
 				body.add_child(shape_node)
 				count += 1
+	for box: Dictionary in payload.collision_boxes:
+		if body == null:
+			body = StaticBody3D.new()
+			body.name = body_name
+			parent.add_child(body)
+		var shape := BoxShape3D.new()
+		shape.size = box.size as Vector3
+		var shape_node := CollisionShape3D.new()
+		var stable := String(box.get("stable_id", &""))
+		shape_node.name = stable.replace("/", "_") if not stable.is_empty() \
+			else "GeneratedBox_%04d" % count
+		shape_node.shape = shape
+		shape_node.transform = box.transform as Transform3D
+		body.add_child(shape_node)
+		count += 1
 	return count

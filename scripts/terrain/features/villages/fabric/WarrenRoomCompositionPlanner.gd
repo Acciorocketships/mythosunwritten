@@ -1,6 +1,13 @@
 class_name WarrenRoomCompositionPlanner
 extends RefCounted
 
+## Semantic protected-owner token for an exact upper-room support envelope
+## which collided with an already-selected hero feature. The composition
+## planner owns its meaning: an optional one-storey crown may stop before this
+## mass, while a required doorway/market/bridge course makes the proposal fail.
+const ROOM_SUPPORT_CLEARANCE_OWNER_ID := \
+	&"spatial.room_support.clearance"
+
 ## Re-partitions the generic parcel envelopes as a genuinely three-dimensional
 ## room grammar. Parcels still provide exact terrain roots, doors, and feature
 ## sockets, but they are not treated as immutable vertical prisms: compatible
@@ -94,6 +101,7 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 			as Dictionary)[child.support_parent_storey_index] = true
 	var lineages: Dictionary = {}
 	var input_storeys := 0
+	var support_clearance_terminated_storeys := 0
 	for proposal: Dictionary in proposals:
 		var parcel := proposal.get("parcel") as WarrenBuildingParcel
 		if parcel == null:
@@ -116,11 +124,39 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		for block_index in blocks.size():
 			if bool((blocks[block_index] as Dictionary).forced):
 				required_through = block_index
+		# A support course rejected by the exact hero-feature preflight feeds the
+		# conflicting upper room back as semantic protected mass. Source records are
+		# one storey even though the earlier offset packer works in two-storey bands,
+		# so this is the first layer that can preserve a required lower market/door/
+		# bridge socket while ending only the optional room above it. Because
+		# `required_through` is the last forced source record, resizing here can never
+		# orphan a later interface.
+		var support_clearance_block := -1
+		for block_index in blocks.size():
+			var source_block := blocks[block_index] as Dictionary
+			for cell: Vector3i in source_block.cells:
+				if (protected_owners.get(cell, {}) as Dictionary).has(
+						ROOM_SUPPORT_CLEARANCE_OWNER_ID):
+					support_clearance_block = block_index
+					break
+			if support_clearance_block >= 0:
+				break
+		if support_clearance_block >= 0:
+			if support_clearance_block <= required_through:
+				last_failure = ("room-support clearance intersects required " \
+					+ "source block %s/%d") % [parcel.stable_id,
+						support_clearance_block]
+				return {}
+			support_clearance_terminated_storeys += blocks.size() \
+				- support_clearance_block
+			blocks.resize(support_clearance_block)
+			if blocks.is_empty():
+				continue
 		# The exact-offset solve may terminate an optional upper crown instead
 		# of discarding a valid lower building when a hero feature occupies that
 		# residual mass. Count only the complete bands that actually enter this
 		# three-dimensional room grammar.
-		input_storeys += mini(int(proposal.storeys), offsets.size() * 2)
+		input_storeys += blocks.size()
 		lineages[parcel.stable_id] = {
 			"proposal": proposal,
 			"blocks": blocks,
@@ -196,6 +232,8 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 		macro_audit["macro_variation_count"] = expanded_count
 		macro_audit["macro_support_repair_count"] = \
 			early_support_repair_count
+		macro_audit["support_clearance_terminated_storey_count"] = \
+			support_clearance_terminated_storeys
 		last_audit = macro_audit.duplicate(true)
 		return {"lineages": lineages, "audit": macro_audit}
 	var registration_relief_count := _relieve_registered_lineages(lineages,
@@ -291,6 +329,18 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 	last_merge_diagnostic["variant_diagnostic"] = \
 		last_variant_diagnostic.duplicate(true)
 	var truncated_tower_storeys := _truncate_unpaired_towers(lineages)
+	# Merges and bounded crown termination may replace the source lineage that
+	# an elevated parcel originally named as its bearer.  Geometry support was
+	# already recomputed above, but leaving the old identity behind makes the
+	# construction DAG point at a block that no longer exists.  Canonicalize the
+	# semantic edge from the final occupied plate immediately beneath the child;
+	# this is the same final-state fact the support audit just proved.
+	var support_identity := _canonicalize_external_support_parents(lineages,
+		grid)
+	if int(support_identity.get("unresolved_count", 0)) > 0:
+		last_failure = "final composition has unresolved support identities: %s" \
+			% JSON.stringify(support_identity.get("details", []))
+		return {}
 	var audit := _audit(lineages, input_storeys, merged_count,
 		coupled_count, expanded_count, truncated_tower_storeys)
 	audit["merged_base_composition_count"] = merged_base_count
@@ -311,6 +361,12 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 	audit["post_relief_structural_room_repair_count"] = support_repair_count
 	audit["structural_room_repair_count"] = early_support_repair_count \
 		+ support_repair_count
+	audit["support_parent_rebind_count"] = int(
+		support_identity.get("rebound_count", 0))
+	audit["retained_support_rebind_count"] = int(
+		support_identity.get("retained_support_count", 0))
+	audit["support_clearance_terminated_storey_count"] = \
+		support_clearance_terminated_storeys
 	audit["structural_yielded_lineage_count"] = maxi(
 		pre_support_lineage_count - lineages.size(), 0)
 	audit.merge(support_audit, false)
@@ -1360,7 +1416,12 @@ static func _shoulder_component_is_roofable(component: Dictionary,
 	# edges form a narrow typed roof trench whose slope joins both masses. Corners,
 	# branches, partial wall contacts, and isolated shelves have no authored roof
 	# contract and must make the composition candidate fail.
-	if component.size() not in [2, 4, 6]:
+	# A single 3 m by 1.5 m shoulder is the skinny pasted-on cap reported in
+	# close review. Although one shallow asset can technically cover it, its
+	# complete measured eave has no useful clearance in the dense fabric and it
+	# reads as a loose roof fragment. Setbacks begin at 6 m; smaller remainders
+	# are absorbed/recomposed by the bounded crown repair above.
+	if component.size() not in [4, 6]:
 		return false
 	var minimum := Vector2i(2147483647, 2147483647)
 	var maximum := Vector2i(-2147483648, -2147483648)
@@ -1393,9 +1454,10 @@ static func _component_has_gabled_partition(component: Dictionary,
 		_y: int) -> bool:
 	## Compound L/Z shoulders are valid only when they contain at least one full
 	## authored room roof and the remainder is a finite set of straight native
-	## cap runs. The compiler uses the same largest-first partition. This admits a
-	## real intersecting roof composition without making arbitrary voxel shelves
-	## legal again.
+	## shallow-roof runs. A one-cell remainder has no authored pitched module and
+	## is rejected here, before rooms are instantiated; the former acceptance was
+	## exactly how a loose square plank survived to the roof compiler. This admits
+	## real intersecting roof composition without making voxel shelves legal.
 	if component.size() < 6:
 		return false
 	var minimum := Vector2i(2147483647, 2147483647)
@@ -1444,7 +1506,7 @@ static func _component_has_gabled_partition(component: Dictionary,
 static func _component_is_straight_native_row(component: Dictionary) -> bool:
 	if component.is_empty():
 		return true
-	if component.size() not in [1, 2, 4, 6]:
+	if component.size() not in [4, 6]:
 		return false
 	var minimum := Vector2i(2147483647, 2147483647)
 	var maximum := Vector2i(-2147483648, -2147483648)
@@ -3339,6 +3401,107 @@ static func _claimed_room_cells(lineages: Dictionary) -> Dictionary:
 			for cell: Vector3i in block.cells:
 				claimed_cells[cell] = lineage_id
 	return claimed_cells
+
+
+static func _canonicalize_external_support_parents(
+		lineages: Dictionary, grid: WarrenSpatialGrid) -> Dictionary:
+	## The construction graph consumes stable lineage/block identities, whereas
+	## the bearing proof consumes final occupied cells.  Keep those two views in
+	## lockstep after every operation that can merge or terminate a lineage.
+	## Only stale EXTERNAL edges are rewritten; ordinary storeys within one
+	## surviving lineage retain their authored parent order.
+	var owner_by_cell: Dictionary = {}
+	for lineage_id_value: Variant in lineages.keys():
+		var lineage_id := StringName(lineage_id_value)
+		var lineage := lineages[lineage_id] as Dictionary
+		for block: Dictionary in lineage.blocks as Array[Dictionary]:
+			for cell: Vector3i in block.cells:
+				owner_by_cell[cell] = {"lineage_id": lineage_id,
+					"source_block_index": int(block.source_block_index),
+					"source_storey": int(block.end_storey) - 1}
+	var rebound_count := 0
+	var retained_support_count := 0
+	var unresolved: Array[Dictionary] = []
+	var lineage_ids: Array[StringName] = []
+	lineage_ids.assign(lineages.keys())
+	lineage_ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	for lineage_id: StringName in lineage_ids:
+		var lineage := lineages[lineage_id] as Dictionary
+		var blocks := lineage.blocks as Array[Dictionary]
+		for position in blocks.size():
+			var block := blocks[position] as Dictionary
+			var stale_parent_id := StringName(block.get(
+				"support_parent_lineage_id", &""))
+			if stale_parent_id.is_empty():
+				continue
+			var stale_parent_block := int(block.get(
+				"support_parent_source_block_index", -1))
+			if lineages.has(stale_parent_id) and _block_position(
+					(lineages[stale_parent_id] as Dictionary).blocks \
+						as Array[Dictionary], stale_parent_block) >= 0:
+				continue
+			var candidate_counts: Dictionary = {}
+			var candidate_records: Dictionary = {}
+			var base_y := (block.origin as Vector3i).y
+			var retained_columns := 0
+			for column_value: Variant in (block.columns as Dictionary).keys():
+				var column := column_value as Vector2i
+				var below := Vector3i(column.x, base_y - 1, column.y)
+				var support := owner_by_cell.get(
+					below, {}) as Dictionary
+				var candidate_id := StringName(support.get("lineage_id", &""))
+				if candidate_id.is_empty():
+					retained_columns += int(grid != null and grid.use_at(below) \
+						== WarrenSpatialGrid.Use.STRUCTURAL_VOLUME)
+					continue
+				if candidate_id == lineage_id:
+					continue
+				var candidate_key := "%s/%d" % [candidate_id,
+					int(support.source_block_index)]
+				candidate_counts[candidate_key] = int(
+					candidate_counts.get(candidate_key, 0)) + 1
+				candidate_records[candidate_key] = support
+			var candidate_keys: Array[String] = []
+			for candidate_key_value: Variant in candidate_counts.keys():
+				candidate_keys.append(String(candidate_key_value))
+			candidate_keys.sort_custom(func(a: String, b: String) -> bool:
+				var a_count := int(candidate_counts[a])
+				var b_count := int(candidate_counts[b])
+				return a_count > b_count if a_count != b_count else a < b)
+			if candidate_keys.is_empty():
+				if retained_columns == (block.columns as Dictionary).size():
+					# The source's retained slab is the real complete bearer after
+					# its former room lineage yielded.  Make that root explicit instead
+					# of preserving a dangling building edge; downstream foundation and
+					# support compilation already share this structural-volume fact.
+					block.erase("support_parent_lineage_id")
+					block.erase("support_parent_source_block_index")
+					block.erase("support_parent_source_storey")
+					block["retained_support"] = true
+					blocks[position] = block
+					retained_support_count += 1
+					continue
+				if unresolved.size() < 16:
+					unresolved.append({"lineage_id": lineage_id,
+						"source_block_index": int(block.source_block_index),
+						"stale_parent_lineage_id": stale_parent_id,
+						"stale_parent_source_block_index": stale_parent_block})
+				continue
+			var selected := candidate_records[candidate_keys[0]] as Dictionary
+			block["support_parent_lineage_id"] = StringName(
+				selected.lineage_id)
+			block["support_parent_source_block_index"] = int(
+				selected.source_block_index)
+			block["support_parent_source_storey"] = int(
+				selected.source_storey)
+			blocks[position] = block
+			rebound_count += 1
+		lineage["blocks"] = blocks
+		lineages[lineage_id] = lineage
+	return {"rebound_count": rebound_count,
+		"retained_support_count": retained_support_count,
+		"unresolved_count": unresolved.size(), "details": unresolved}
 
 
 static func _direct_bearing_column_count(columns: Dictionary,

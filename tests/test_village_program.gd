@@ -21,7 +21,7 @@ func test_default_program_compiles_reviewed_catalog_metrics_and_slots() -> void:
 	assert_eq((village_massing_slots[9] as VillageMassingSlot).asset_id,
 		&"sfv.building.interior.blue.002",
 		"distinct accents are additive to the complete compact grammar")
-	assert_eq(program.assets.size(), 13)
+	assert_eq(program.assets.size(), 20)
 	var legacy_required: Array[StringName] = [
 		&"aws.building.003", &"sfbp.campfire.001",
 		&"sfbp.tent.armory.001", &"sfbp.tent.dormitory1.001",
@@ -160,9 +160,52 @@ func test_default_program_compiles_reviewed_catalog_metrics_and_slots() -> void:
 	assert_eq(market.attachments[0].asset_id,
 		&"sfm.table.fishmonger.001")
 	assert_eq(program.market_program.stall_specs.size(), 3)
-	assert_eq(program.outskirts_program.shelter_specs.size(), 4)
-	assert_eq(program.outskirts_program.target_shelters(&"village"), 1)
-	assert_eq(program.outskirts_program.target_shelters(&"town"), 2)
+	assert_eq(program.outskirts_program.house_specs.size(), 11)
+	assert_eq(program.outskirts_program.target_houses(&"village"), 3)
+	assert_eq(program.outskirts_program.target_houses(&"town"), 5)
+	assert_eq(program.outskirts_program.target_houses(&"village", 4), 8)
+	var outskirts_ids: Array[StringName] = []
+	for spec: VillageAssetSpec in program.outskirts_program.house_specs:
+		outskirts_ids.append(spec.asset_id)
+	for expected: StringName in [&"lpfv.building.house.01",
+			&"lpfv.building.house.02", &"lpfv.building.house.03",
+			&"lpfv.building.house.04", &"lpfv.building.house.05",
+			&"lpfv.building.house.06", &"lpfv.building.house.07"]:
+		assert_has(outskirts_ids, expected,
+			"complete prefab houses belong to the ground-level edge grammar")
+	for expected: StringName in [&"sfv.building.interior.blue.001",
+			&"sfv.building.interior.blue.002",
+			&"sfv.building.interior.blue.005",
+			&"sfv.building.interior.blue.006"]:
+		assert_has(outskirts_ids, expected)
+	for tier: StringName in [&"village", &"town"]:
+		var permitted_areas: Array[float] = []
+		for spec: VillageAssetSpec in program.outskirts_program.house_specs:
+			if spec.allowed_in(tier):
+				permitted_areas.append(spec.ground_contact_local_rect.size.x \
+					* spec.ground_contact_local_rect.size.y)
+		permitted_areas.sort_custom(func(a: float, b: float) -> bool:
+			return a > b)
+		var cohort_count := maxi(1, ceili(float(permitted_areas.size()) \
+			* VillageOutskirtsProgram.SUBSTANTIAL_COHORT_FRACTION))
+		var substantial_cutoff := permitted_areas[cohort_count - 1]
+		for slot_index in 16:
+			var selected := program.outskirts_program.spec_for_slot(
+				&"selection.contract", slot_index, tier)
+			var selected_area := selected.ground_contact_local_rect.size.x \
+				* selected.ground_contact_local_rect.size.y
+			assert_gte(selected_area, substantial_cutoff,
+				"edge lots select from the city-scale measured prefab cohort")
+			var candidates := program.outskirts_program.spec_candidates_for_slot(
+				&"selection.contract", slot_index, tier)
+			assert_eq(candidates.size(), permitted_areas.size())
+			var candidate_ids: Dictionary = {}
+			for candidate: VillageAssetSpec in candidates:
+				candidate_ids[candidate.asset_id] = true
+			assert_eq(candidate_ids.size(), candidates.size(),
+				"the measured fallback visits every complete prefab exactly once")
+	assert_has(program.referenced_asset_ids, &"lpfv.fabric.door.closed.01")
+	assert_has(program.referenced_asset_ids, &"lpfv.fabric.door.closed.02")
 	assert_eq((program.market_program.stall_specs[1] \
 		as VillageAssetSpec).asset_id, &"sfm.stall.butcher.001")
 	assert_eq((program.market_program.stall_specs[2] \

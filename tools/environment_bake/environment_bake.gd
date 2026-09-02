@@ -3,7 +3,7 @@ extends SceneTree
 
 ## Deterministic editor-side importer for source-pack visuals. Runtime code is
 ## intentionally unaware of every source path named by the manifests.
-const TOOL_VERSION := 21
+const TOOL_VERSION := 22
 const DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
 const INDEX_PATH := "res://terrain/environment/catalog/index.tres"
 const MANIFEST_DIR := "res://tools/environment_bake/manifests"
@@ -456,8 +456,55 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 
 func _clip_merged_asset(mesh: ArrayMesh, entry: Dictionary,
 		asset_id: String) -> ArrayMesh:
+	var ranges_value: Variant = entry.get("clip_ranges", {})
 	var axis_name := String(entry.get("clip_axis", ""))
 	var range_value: Variant = entry.get("clip_range", [])
+	if not ranges_value is Dictionary:
+		_fail("clip_ranges must be an axis-to-range dictionary: %s" % asset_id)
+		return null
+	var ranges := ranges_value as Dictionary
+	if not ranges.is_empty():
+		if not axis_name.is_empty() or (range_value is Array \
+				and not (range_value as Array).is_empty()):
+			_fail("Asset %s cannot combine clip_ranges with clip_axis/clip_range" \
+				% asset_id)
+			return null
+		var clipped := mesh
+		# Fixed axis order makes multi-plane derivatives independent of JSON key
+		# order.  Applying the ordinary convex half-space clip repeatedly gives an
+		# exact authored rectangular envelope while preserving every interpolated
+		# source channel and material surface.
+		for candidate_axis in ["x", "y", "z"]:
+			if not ranges.has(candidate_axis):
+				continue
+			var candidate_range: Variant = ranges[candidate_axis]
+			if not candidate_range is Array \
+					or (candidate_range as Array).size() != 2:
+				_fail("clip_ranges.%s must contain two bounds: %s" % [
+					candidate_axis, asset_id])
+				return null
+			var minimum := float((candidate_range as Array)[0])
+			var maximum := float((candidate_range as Array)[1])
+			if not is_finite(minimum) or not is_finite(maximum) \
+					or maximum <= minimum:
+				_fail("clip_ranges.%s must be finite and increasing: %s" % [
+					candidate_axis, asset_id])
+				return null
+			var axis := Vector3.AXIS_X if candidate_axis == "x" \
+				else Vector3.AXIS_Y if candidate_axis == "y" \
+				else Vector3.AXIS_Z
+			clipped = EnvironmentBakeGeometry.clip_axis_range(clipped, axis,
+				minimum, maximum)
+			if clipped == null:
+				_fail("clip_ranges.%s removed or could not clip asset: %s" % [
+					candidate_axis, asset_id])
+				return null
+		for key: Variant in ranges.keys():
+			if String(key) not in ["x", "y", "z"]:
+				_fail("clip_ranges contains an unknown axis %s: %s" % [
+					String(key), asset_id])
+				return null
+		return clipped
 	if axis_name.is_empty() and range_value is Array \
 			and (range_value as Array).is_empty():
 		return mesh

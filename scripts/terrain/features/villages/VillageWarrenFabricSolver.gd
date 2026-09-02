@@ -3,21 +3,24 @@ extends RefCounted
 
 ## Production adapter for the seeded volumetric warren. It aligns the maze's
 ## actual boundary landing to the road, samples immutable terrain into the same
-## 1.5 m vertical lattice, then rebuilds the selected topology attempt against
+## scaled vertical lattice, then rebuilds the selected topology attempt against
 ## those bands before materializing any geometry.
 const DATUM_GUARD := 0.08
-const MAX_TERRAIN_RELIEF := VillageUrbanFabricPlan.MAX_FABRIC_TERRAIN_RELIEF
+const MAX_TERRAIN_RELIEF := VillageUrbanFabricPlan.MAX_FABRIC_TERRAIN_RELIEF \
+	* VillageWorldScale.PRODUCTION_UNIFORM_SCALE
 const SUPPORT_STEP := 3.0
 const CLEARANCE_MARGIN := 1.5
 const WALK_HALF_THICKNESS := 0.10
 const GUARD_HALF_WIDTH := 0.10
 const GUARD_HEIGHT := 1.5
+const OPTIONAL_FRONTAGE_GROUND_TOLERANCE := 0.12
+const OPTIONAL_FRONTAGE_MAX_DROP := TraversalEnvelope.MAX_PLANNED_STEP
 const _CARDINAL_QUARTERS := 4
 
 
 static func solve(terrain: VillageTerrainView, city_seed: int,
 		stable_id: StringName, centre: Vector2, street_axis: Vector2,
-		program: VillageProgram) -> VillageUrbanFabricPlan:
+		program: VillageProgram, world_seed: int = 0) -> VillageUrbanFabricPlan:
 	assert(terrain != null and not stable_id.is_empty() and centre.is_finite())
 	assert(street_axis.is_normalized() and program != null)
 	if program.settlement_fabric_program == null:
@@ -61,7 +64,8 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 		if fabric == null:
 			continue
 		placement["local_bounds"] = _local_bounds(fabric)
-		return _materialize(terrain, stable_id, spatial, fabric, placement, program)
+		return _materialize(terrain, stable_id, spatial, fabric, placement, program,
+			world_seed)
 	return _rejected(&"terrain_footprint")
 
 
@@ -83,10 +87,10 @@ static func _placement_candidates(terrain: VillageTerrainView,
 	var candidates: Array[Dictionary] = []
 	for quarter in _CARDINAL_QUARTERS:
 		var yaw := float(quarter) * PI * 0.5
-		var basis := Basis(Vector3.UP, yaw)
+		var basis := VillageWorldScale.production_basis(yaw)
 		var rotated_entry := basis * entry_local
 		var datum_y := terrain.surface_y(centre) + DATUM_GUARD \
-			- entry_local.y
+			- rotated_entry.y
 		var world_frame := Transform3D(basis,
 			Vector3(centre.x - rotated_entry.x, datum_y,
 				centre.y - rotated_entry.z))
@@ -102,7 +106,7 @@ static func _placement_candidates(terrain: VillageTerrainView,
 		var entry_band := int((terrain_sample.ground_bands as Dictionary).get(
 			Vector2i(entry.x, entry.z), entry.y))
 		var entrance_lift := datum_y \
-			+ float(entry_band) * WarrenVolumePlan.VERTICAL_BAND_SIZE_M \
+			+ float(entry_band) * VillageWorldScale.WORLD_FINE_CELL_M \
 			- landing_y
 		if entrance_lift < 0.0 \
 				or entrance_lift > TraversalEnvelope.MAX_PLANNED_STEP:
@@ -137,7 +141,7 @@ static func _placement_candidates(terrain: VillageTerrainView,
 static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 		spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 		placement: Dictionary,
-		program: VillageProgram) -> VillageUrbanFabricPlan:
+		program: VillageProgram, world_seed: int = 0) -> VillageUrbanFabricPlan:
 	var result := VillageUrbanFabricPlan.new()
 	result.generation_kind = \
 		VillageUrbanFabricPlan.GenerationKind.VOLUMETRIC_WARREN
@@ -156,15 +160,21 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	local_payload.append_from(SettlementFabricAssembler.production_surface_bundle(
 		fabric.surface_plan,
 		SettlementFabricAssembler.maze_module_footprints(fabric),
-		SettlementFabricAssembler.maze_skin_panel_boxes_for(fabric)))
+		SettlementFabricAssembler.maze_skin_panel_boxes_for(fabric),
+		fabric.planned_plaza_cells))
 	local_payload.append_from(SettlementFabricAssembler.low_retaining_payload(fabric))
 	local_payload.append_from(
-		SettlementFabricAssembler.terrace_retaining_payload(fabric))
+		SettlementFabricAssembler.terrace_retaining_payload(fabric, false))
+	local_payload.append_from(_terrain_qualified_frontage_payload(terrain,
+		fabric, world_frame))
+	_append_terrain_bearing_foundations(local_payload, terrain, fabric,
+		world_frame)
 	_append_ground_supports(local_payload, terrain, fabric, world_frame)
 	for asset_id: StringName in local_payload.asset_ids():
 		var batch := local_payload.batches[asset_id] as Dictionary
 		for index in batch.transforms.size():
 			var local_transform := batch.transforms[index] as Transform3D
+			var world_transform := world_frame * local_transform
 			var local_instance_id := StringName(batch.ids[index]) \
 				if not batch.ids.is_empty() else StringName("anonymous.%d" % index)
 			# TASK I2. THE COLOUR CHANNEL SURVIVES THE CROSSING. `entries` carried
@@ -196,28 +206,33 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 			# a single reviewed frame. The first seed that grows one ships a
 			# two-tone deck nobody has looked at -- I4's watch list, not closed
 			# here.
+			var color := batch.colors[index] as Color
+			if CliffDressing.is_terrain_skin_asset(asset_id):
+				color = CliffDressing.tint_at(world_transform, world_seed)
 			result.entries.append({
 				"asset_id": asset_id,
-				"transform": world_frame * local_transform,
-				"color": batch.colors[index] as Color,
+				"transform": world_transform,
+				"color": color,
 				"stable_id": StringName("%s/%s" % [stable_id,
 					String(local_instance_id)]),
 			})
 	for mesh: Dictionary in local_payload.surface_meshes:
 		result.surface_meshes.append(_world_surface_mesh(mesh, world_frame,
-			stable_id))
+			stable_id, world_seed))
 	var local_bounds := placement.local_bounds as AABB
 	var local_centre := Vector3(local_bounds.get_center().x, 0.0,
 		local_bounds.get_center().z)
 	var world_centre3 := world_frame * local_centre
+	var world_scale := VillageWorldScale.scale_of(world_frame)
 	var horizontal_size := Vector2(local_bounds.size.x,
-		local_bounds.size.z)
+		local_bounds.size.z) * world_scale
 	var yaw := float(placement.yaw)
 	var district_id := StringName("%s.warren" % stable_id)
 	var district_centre := Vector2(world_centre3.x, world_centre3.z)
 	_append_typed_occupancy(result, fabric, world_frame, district_id, yaw)
 	result.clearances.append(FeatureGroundShape.oriented_rect(
-		district_centre, horizontal_size * 0.5 + Vector2.ONE * CLEARANCE_MARGIN,
+		district_centre, horizontal_size * 0.5 \
+			+ Vector2.ONE * CLEARANCE_MARGIN * world_scale,
 		yaw, 0, 0, StringName("%s.clearance" % district_id)))
 	# Ground-level cells retain the canonical path paint beneath their plank
 	# modules.  Upper cells are deliberately absent from the 2D ground field.
@@ -226,14 +241,15 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 		var world3 := world_frame * (Vector3(cell) * FabricRecipe.CELL_SIZE)
 		result.surfaces.append(FeatureGroundShape.oriented_rect(
 			Vector2(world3.x, world3.z),
-			Vector2.ONE * FabricRecipe.CELL_SIZE * 0.5, yaw,
+			Vector2.ONE * VillageWorldScale.WORLD_FINE_CELL_M * 0.5, yaw,
 			FeatureGroundField.WORN_PATH, VillagePlan.SURFACE_PRIORITY,
 			StringName("%s.ground.%d.%d" % [district_id, cell.x, cell.z])))
-	var top_y := world_frame.origin.y + local_bounds.end.y
+	var top_y := (world_frame * Vector3(local_centre.x,
+		local_bounds.end.y, local_centre.z)).y
 	result.volumes.append(VillageOccupancyVolume.new(
 		VillageOccupancy.Role.GROUND_EXCLUSIVE, district_centre,
-		horizontal_size * 0.5 + Vector2.ONE * CLEARANCE_MARGIN, yaw,
-		float(placement.minimum_y) - SUPPORT_STEP, top_y,
+		horizontal_size * 0.5 + Vector2.ONE * CLEARANCE_MARGIN * world_scale, yaw,
+		float(placement.minimum_y) - SUPPORT_STEP * world_scale, top_y,
 		StringName("%s.exclusive" % district_id), district_id))
 	for building: WarrenBuildingVolume in spatial.buildings:
 		result.buildings.append({
@@ -257,11 +273,56 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	return result
 
 
+static func _terrain_qualified_frontage_payload(terrain: VillageTerrainView,
+		fabric: SettlementFabricPlan, world_frame: Transform3D) \
+		-> EnvironmentInstancePayload:
+	## Perimeter stalls and props are optional dressing, so their complete
+	## measured envelope must fit the immutable terrain before the group exists.
+	## This is the same reservation discipline used for outskirts houses: no
+	## canopy may be repaired upward after selection, and rejecting a canopy also
+	## rejects every stocked-good child derived from that site.
+	var retained := fabric.retained_terrace_cells
+	var solids := fabric.transformed_cells(&"solid")
+	var paved := SettlementFabricAssembler.public_floor_cells(
+		fabric.surface_plan)
+	var walked := SettlementFabricAssembler.walked_floor_cells(
+		fabric.surface_plan)
+	var footprints := SettlementFabricAssembler.maze_module_footprints(fabric)
+	var skin := SettlementFabricAssembler.maze_skin_panel_boxes_for(fabric)
+	var sites := SettlementFabricAssembler.maze_perimeter_frontage_sites(
+		retained, solids, paved, walked, fabric.world_seed, skin, footprints)
+	var asset_bounds := footprints.get("asset_bounds", {}) as Dictionary
+	var accepted: Array[Dictionary] = []
+	for site: Dictionary in sites:
+		var asset_id := StringName(site.asset)
+		if not asset_bounds.has(asset_id):
+			continue
+		var local_transform := SettlementFabricAssembler \
+			.maze_perimeter_frontage_transform(site)
+		var world_transform := world_frame * local_transform
+		var world_bounds: AABB = world_frame * (local_transform \
+			* (asset_bounds[asset_id] as AABB))
+		var footprint := Rect2(Vector2(world_bounds.position.x,
+			world_bounds.position.z), Vector2(world_bounds.size.x,
+			world_bounds.size.z))
+		if not footprint.has_area():
+			continue
+		var region := terrain.region_covering(footprint)
+		var height_range := TerrainSurfaceField.height_bounds(region, footprint)
+		var base_y := world_transform.origin.y
+		if height_range.y > base_y + OPTIONAL_FRONTAGE_GROUND_TOLERANCE \
+				or height_range.x < base_y - OPTIONAL_FRONTAGE_MAX_DROP:
+			continue
+		accepted.append(site)
+	return SettlementFabricAssembler.maze_perimeter_frontage_from_sites(
+		accepted)
+
+
 static func _world_surface_mesh(mesh: Dictionary, world_frame: Transform3D,
-		stable_id: StringName) -> Dictionary:
-	## Bake the rigid town frame into the plain mesh arrays so the streamed
-	## payload needs no per-mesh transform channel. Yaw is orthogonal and scale
-	## is forbidden, so normals rotate by the basis alone.
+		stable_id: StringName, world_seed: int = 0) -> Dictionary:
+	## Bake the uniform town frame into the plain mesh arrays so the streamed
+	## payload needs no per-mesh transform channel. Uniform scale preserves normal
+	## directions, so the transformed basis only needs normalization here.
 	var out := mesh.duplicate(true)
 	var vertices := PackedVector3Array()
 	for vertex: Vector3 in mesh.vertices as PackedVector3Array:
@@ -275,6 +336,14 @@ static func _world_surface_mesh(mesh: Dictionary, world_frame: Transform3D,
 	out["vertices"] = vertices
 	out["normals"] = normals
 	out["collision_faces"] = collision
+	if bool(mesh.get("terrain_ground", false)):
+		var colors := PackedColorArray()
+		colors.resize(vertices.size())
+		for index in vertices.size():
+			colors[index] = Color.WHITE if bool(mesh.get("terrain_path", false)) \
+				else BiomeRegistry.ground_tint_at(vertices[index], world_seed) \
+				if world_seed != 0 else Color.WHITE
+		out["colors"] = colors
 	out["anchor"] = world_frame * (mesh.get("anchor", Vector3.ZERO) as Vector3)
 	out["stable_id"] = StringName("%s/%s" % [stable_id,
 		StringName(mesh.get("stable_id", ""))])
@@ -290,6 +359,7 @@ static func _append_typed_occupancy(result: VillageUrbanFabricPlan,
 	## make future extensions safe. These cell volumes are an adapter over the
 	## canonical plan, just like the render payload; they do not infer geometry.
 	var walk_network_id := StringName("%s.public" % district_id)
+	result.public_walk_network_id = walk_network_id
 	_append_cell_volumes(result, fabric.transformed_cells(&"solid"),
 		VillageOccupancy.Role.SOLID, world_frame, district_id,
 		walk_network_id, yaw)
@@ -313,12 +383,14 @@ static func _append_typed_occupancy(result: VillageUrbanFabricPlan,
 		var local_centre := (local_a + local_b) * 0.5
 		var world_centre := world_frame * local_centre
 		var local_angle := atan2(-local_delta.z, local_delta.x)
+		var world_scale := VillageWorldScale.scale_of(world_frame)
 		result.volumes.append(VillageOccupancyVolume.new(
 			VillageOccupancy.Role.WALK_GUARD,
 			Vector2(world_centre.x, world_centre.z),
-			Vector2(local_delta.length() * 0.5, GUARD_HALF_WIDTH),
+			Vector2(local_delta.length() * world_scale * 0.5,
+				GUARD_HALF_WIDTH * world_scale),
 			yaw + local_angle, world_centre.y,
-			world_centre.y + GUARD_HEIGHT,
+			world_centre.y + GUARD_HEIGHT * world_scale,
 			StringName("%s.guard.%s" % [district_id,
 				StringName(segment.stable_key)]), district_id,
 			walk_network_id))
@@ -328,7 +400,8 @@ static func _append_cell_volumes(result: VillageUrbanFabricPlan,
 		cells: Dictionary, role: int, world_frame: Transform3D,
 		district_id: StringName, walk_network_id: StringName,
 		yaw: float) -> void:
-	var half_cell := FabricRecipe.CELL_SIZE * 0.5
+	var world_scale := VillageWorldScale.scale_of(world_frame)
+	var half_cell := FabricRecipe.CELL_SIZE * world_scale * 0.5
 	# Coalesce identical-role voxels before entering the bucketed occupancy
 	# index. This retains exact cell coverage while avoiding a quadratic
 	# transaction check over hundreds of one-cell prisms.
@@ -342,12 +415,12 @@ static func _append_cell_volumes(result: VillageUrbanFabricPlan,
 		var world_centre := world_frame * local_centre
 		var cell_count := maximum - minimum + Vector3i.ONE
 		var y_min := world_frame.origin.y \
-			+ float(minimum.y) * FabricRecipe.CELL_SIZE - half_cell
+			+ float(minimum.y) * VillageWorldScale.WORLD_FINE_CELL_M - half_cell
 		var y_max := world_frame.origin.y \
-			+ float(maximum.y) * FabricRecipe.CELL_SIZE + half_cell
+			+ float(maximum.y) * VillageWorldScale.WORLD_FINE_CELL_M + half_cell
 		if role == VillageOccupancy.Role.WALK_SURFACE:
-			y_min = world_centre.y - WALK_HALF_THICKNESS
-			y_max = world_centre.y + WALK_HALF_THICKNESS
+			y_min = world_centre.y - WALK_HALF_THICKNESS * world_scale
+			y_max = world_centre.y + WALK_HALF_THICKNESS * world_scale
 		result.volumes.append(VillageOccupancyVolume.new(role,
 			Vector2(world_centre.x, world_centre.z),
 			Vector2(float(cell_count.x), float(cell_count.z)) * half_cell,
@@ -409,12 +482,14 @@ static func _append_ground_supports(payload: EnvironmentInstancePayload,
 		terrain: VillageTerrainView, fabric: SettlementFabricPlan,
 		world_frame: Transform3D) -> void:
 	## The local review scene's y=0 is real terrain in production.  When the
-	## conservative datum lifts a plank, fixed 3 m posts continue down until the
+	## conservative datum lifts a plank, scaled authored posts continue down until the
 	## lowest post is buried; no post is stretched to fit an arbitrary gap.
 	var support_cells: Dictionary = {}
 	var solids := fabric.transformed_cells(&"solid")
-	for kind in [PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET,
-			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT]:
+	# Supports belong to the same structural-floor kinds that actually emit a
+	# raised plank surface. TERRAIN_STREET is paint on the terrain sheet; giving
+	# it posts manufactures detached pegs below a floor that does not exist.
+	for kind in SettlementFabricAssembler.PAVED_FLOOR_KINDS:
 		for cell: Vector3i in fabric.surface_plan.cells_for_kind(kind):
 			support_cells[cell] = true
 	var lowest_bearing_y := _lowest_bearing_y_by_column(solids, support_cells)
@@ -447,7 +522,9 @@ static func _append_ground_supports(payload: EnvironmentInstancePayload,
 		var drop := world_point3.y - terrain_y
 		if drop <= TraversalEnvelope.MAX_PLANNED_STEP:
 			continue
-		var segment_count := ceili(drop / SUPPORT_STEP)
+		var world_support_step := SUPPORT_STEP \
+			* VillageWorldScale.scale_of(world_frame)
+		var segment_count := ceili(drop / world_support_step)
 		for segment in segment_count:
 			var local_y := local_point.y - float(segment + 1) * SUPPORT_STEP
 			payload.add(SettlementFabricAssembler.TIMBER_SUPPORT,
@@ -455,6 +532,63 @@ static func _append_ground_supports(payload: EnvironmentInstancePayload,
 					Vector3(local_point.x, local_y, local_point.z)),
 				Color.WHITE, StringName("terrain-support/%d/%d/%d/%d" % [
 					cell.x, cell.y, cell.z, segment]))
+
+
+static func _append_terrain_bearing_foundations(
+		payload: EnvironmentInstancePayload, terrain: VillageTerrainView,
+		fabric: SettlementFabricPlan, world_frame: Transform3D) -> void:
+	## A terrain-bearing room promises that its floorplate is carried by the
+	## immutable terrain field. On a continuous slope the conservative lattice
+	## datum can sit slightly above that field along one exposed facade even when
+	## every sampled point remains traversal-valid. Close that visible interval
+	## with the same complete authored foundation course used above retained
+	## stone. The course is selected from the exact bearing boundary; it is never
+	## a post, stretched mesh, or after-the-fact visual offset.
+	var bearing := fabric.transformed_cells(&"terrain_bearing")
+	if bearing.is_empty():
+		return
+	var solids := fabric.transformed_cells(&"solid")
+	var retained := fabric.retained_terrace_cells
+	var ordered: Array[Vector3i] = []
+	ordered.assign(bearing.keys())
+	ordered.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		if a.y != b.y:
+			return a.y < b.y
+		return a.z < b.z if a.z != b.z else a.x < b.x)
+	for cell: Vector3i in ordered:
+		# Retained stone already owns this foundation seam through the canonical
+		# plinth transaction. Emitting again would overlap identical courses.
+		if retained.has(cell - Vector3i.UP):
+			continue
+		for direction_index in SettlementFabricAssembler.FACE_DIRECTIONS.size():
+			var direction := SettlementFabricAssembler.FACE_DIRECTIONS[
+				direction_index]
+			if solids.has(cell + direction) or bearing.has(cell + direction):
+				continue
+			var outward := Vector3(direction)
+			var tangent := Vector3(-direction.z, 0.0, direction.x)
+			var local_face := Vector3(cell) * FabricRecipe.CELL_SIZE \
+				+ outward * FabricRecipe.CELL_SIZE * 0.5
+			var floor_world_y := (world_frame * (Vector3(cell) \
+				* FabricRecipe.CELL_SIZE)).y
+			var minimum_ground_y := INF
+			# Complete-edge support, not a centre sample: either terminal can expose
+			# a gap on sloping terrain even while the midpoint touches.
+			for along in [-0.48, 0.0, 0.48]:
+				var probe3 := world_frame * (local_face + tangent \
+					* FabricRecipe.CELL_SIZE * float(along))
+				minimum_ground_y = minf(minimum_ground_y, terrain.surface_y(
+					Vector2(probe3.x, probe3.z)))
+			if floor_world_y - minimum_ground_y \
+					<= OPTIONAL_FRONTAGE_GROUND_TOLERANCE:
+				continue
+			var origin := local_face
+			origin.y = float(cell.y) * FabricRecipe.CELL_SIZE - 3.0
+			var yaw := PI * 0.5 if direction.x != 0 else 0.0
+			payload.add(SettlementFabricAssembler.HOUSE_PLINTH,
+				Transform3D(Basis(Vector3.UP, yaw), origin), Color.WHITE,
+				StringName("terrain-foundation/%d/%d/%d/%d" % [cell.x,
+					cell.y, cell.z, direction_index]))
 
 
 static func _lowest_bearing_y_by_column(solids: Dictionary,
@@ -520,7 +654,7 @@ static func _sample_ground_bands(terrain: VillageTerrainView,
 			maximum_y = maxf(maximum_y, height)
 			column_max = maxf(column_max, height)
 		bands[column] = ceili((column_max - world_frame.origin.y) \
-			/ WarrenVolumePlan.VERTICAL_BAND_SIZE_M)
+			/ VillageWorldScale.WORLD_FINE_CELL_M)
 	return {
 		"wet": false,
 		"ground_bands": bands,

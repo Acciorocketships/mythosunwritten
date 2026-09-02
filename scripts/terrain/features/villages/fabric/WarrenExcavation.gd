@@ -38,20 +38,18 @@ var lanes: Array[Dictionary] = []
 ## this separate from ordered lane walks lets the source remain a set of simple
 ## non-revisiting paths while still sealing a cyclic public graph.
 var loop_edges: Array[Dictionary] = []
-## Level-stride public cells whose overhead mass the carver deliberately
-## retained instead of opening to the sky, so the retained mass forms a
-## walkable deck connecting the two blocks that flank the cell. Each entry is
-## one contiguous, ordered `Array[Vector3i]` run of already-public (route or
-## lane) cells; `_finalize_excavation` marks them `covered` the same as any
-## other roofed passage cell.
+## Contiguous same-datum public cells whose overhead mass the carver
+## deliberately retained instead of opening to the sky. The retained tunnel
+## roof bears an inhabited bridge-house while the route remains exterior air
+## below it. Each entry is one ordered `Array[Vector3i]` run of already-public
+## route/lane cells; `_finalize_excavation` marks them `covered` like any other
+## roofed passage cell.
 var bridge_spans: Array[Array] = []
-## TASK E3 RULING 3 -- the seed-time flank proof, published so it can be read
-## rather than trusted. `{"seeded": Array[Dictionary], "refused":
-## Array[Dictionary]}`, each record naming the span's cells, the storey band
-## interval a bridge room would occupy there, and the two flank columns the
-## proof ran against. Written only by `WarrenMazeCarver._select_bridge_spans`;
-## an excavation carved by any other producer leaves it empty, which is what
-## keeps every legacy consumer byte-identical.
+## The seed-time retained-mass proof, published so it can be read rather than
+## trusted. `{"seeded": Array[Dictionary], "refused": Array[Dictionary]}`;
+## each record names the span cells, bridge-room storey, travel direction, and
+## measured optional flank columns. Written only by `WarrenMazeCarver
+## ._select_bridge_spans`; another producer leaves it empty.
 var bridge_span_audit: Dictionary = {}
 var carved: Dictionary = {}
 var covered: Dictionary = {}
@@ -143,26 +141,23 @@ func _loop_edges_close_the_public_graph(public_cells: Dictionary) -> bool:
 
 func _bridge_spans_are_legal(public_cells: Dictionary) -> bool:
 	## A bridge span retains the overhead mass a would-be-open street cell
-	## would otherwise lose, so a consumer can build a skywalk deck across it.
+	## would otherwise lose, so a consumer can build an inhabited bridge-house
+	## across it.
 	## Each entry must be a genuine slice of already-walked public realm: a
 	## contiguous, level run of cells the route or a lane actually carved, and
 	## one `_finalize_excavation` in turn marked covered -- never an
 	## independent claim the carver invented after the fact.
 	##
-	## Review finding (2026-08-22, Important): a bridge's legality check at
-	## selection time certified its two flank columns solid at the passage and
-	## roof bands, but nothing re-checked that promise once the rest of the
-	## town's default-open carving ran -- an unrelated lower passage sharing a
-	## flank column could hollow exactly those bands out afterwards. Re-derive
-	## each span cell's travel direction from the walk itself (no massif
-	## needed, only `carved`) and re-verify both flank columns are still
-	## uncarved on EVERY band of [cell.y, cell.y + HEADROOM_BANDS] against the
-	## FINAL carved set, so a hollowed flank can never seal.
-	##
-	## Review finding (2026-08-23, minor): the two END bands are not the
-	## interval. A crossing passage carved at cell.y + 1 leaves the flank
-	## hollow exactly where the bridge's wall has to be, and the old two-band
-	## reading called that legal. Every band between floor and roof is checked.
+	## Re-derive each span cell's travel direction from the final walk and read
+	## both flank intervals back as diagnostics. Flank walls are optional in the
+	## retained-roof form: the covered central roof is the bearing fact, while a
+	## hollow flank becomes a deliberate daylight opening rather than invalidating
+	## the span.
+	var seeded := bridge_span_audit.get("seeded", []) as Array
+	if not bridge_span_audit.is_empty() and seeded.size() != bridge_spans.size():
+		last_rejection = "bridge proof ledger has %d seeded records for %d spans" \
+			% [seeded.size(), bridge_spans.size()]
+		return false
 	for index in bridge_spans.size():
 		var span := bridge_spans[index] as Array[Vector3i]
 		if span.is_empty():
@@ -193,13 +188,51 @@ func _bridge_spans_are_legal(public_cells: Dictionary) -> bool:
 			var column := Vector2i(cell.x, cell.z)
 			var roof_band := cell.y + HEADROOM_BANDS
 			for flank: Vector2i in [column + perpendicular, column - perpendicular]:
+				var solid_flank := true
 				for band in range(cell.y, roof_band + 1):
 					if not carved.has(Vector3i(flank.x, band, flank.y)):
 						continue
-					last_rejection = ("bridge span %d cell %s flank %s was " \
-						+ "hollowed out at band %d after selection") \
-						% [index, cell, flank, band]
+					solid_flank = false
+					break
+				# Deliberately diagnostic only: a zero-flank span is the most open
+				# bridge form, while a solid flank may become an occupied neighbour.
+		if not seeded.is_empty():
+			var proof := seeded[index] as Dictionary
+			var proved_cells := proof.get("cells", []) as Array
+			if proved_cells.size() != span.size():
+				last_rejection = "bridge span %d proof cell count differs" % index
+				return false
+			for cell: Vector3i in span:
+				if not proved_cells.has(cell):
+					last_rejection = "bridge span %d proof omits %s" % [index, cell]
 					return false
+			var groups := proof.get("endpoint_groups", []) as Array
+			if groups.size() != 2:
+				last_rejection = "bridge span %d has no two endpoint groups" % index
+				return false
+			var endpoint_seen: Dictionary = {}
+			for group_value: Variant in groups:
+				var group := group_value as Array
+				if group.size() != span.size():
+					last_rejection = ("bridge span %d endpoint group has %d " \
+						+ "columns, expected %d") % [index, group.size(),
+						span.size()]
+					return false
+				for column_value: Variant in group:
+					var endpoint := column_value as Vector2i
+					if endpoint_seen.has(endpoint):
+						last_rejection = "bridge span %d repeats endpoint %s" % [
+							index, endpoint]
+						return false
+					endpoint_seen[endpoint] = true
+					var adjacent := false
+					for span_cell: Vector3i in span:
+						adjacent = adjacent or absi(endpoint.x - span_cell.x) \
+							+ absi(endpoint.y - span_cell.z) == 1
+					if not adjacent:
+						last_rejection = ("bridge span %d endpoint %s is not " \
+							+ "adjacent to its span") % [index, endpoint]
+						return false
 	return true
 
 

@@ -7,10 +7,14 @@ extends RefCounted
 const EPS := 0.001
 static func solve(settlement_id: StringName,
 		circulation: VillageCirculationPlan,
-		vocabulary: VillageElevatedProgram) -> VillageRouteStairFabricPlan:
+		vocabulary: VillageElevatedProgram,
+		public_walk_network_id: StringName = &"") -> VillageRouteStairFabricPlan:
 	assert(not settlement_id.is_empty() and circulation != null)
 	assert(circulation.accepted and vocabulary != null)
 	var plan := VillageRouteStairFabricPlan.new()
+	var walk_network_id := public_walk_network_id if not \
+		public_walk_network_id.is_empty() else StringName(
+			"%s.urban.walk_network" % settlement_id)
 	for link: VillageCirculationLink in circulation.links:
 		if link.kind == VillageCirculationLink.Kind.ENTRANCE \
 				or link.stair_count <= 0:
@@ -25,6 +29,7 @@ static func solve(settlement_id: StringName,
 				run = _append_run(plan, settlement_id, link,
 					transition_index, interval, transition.stair_count,
 					transition.signed_rise, cumulative, vocabulary,
+					walk_network_id,
 					Vector2(link.samples[transition.segment_index - 1].y,
 						link.samples[transition.segment_index].y))
 				if run == null:
@@ -41,7 +46,7 @@ static func solve(settlement_id: StringName,
 			var aerial_run := _append_run(plan, settlement_id, link, 0,
 				link.stair_intervals[0], link.stair_count,
 				link.samples[-1].y - link.samples[0].y,
-				cumulative, vocabulary)
+				cumulative, vocabulary, walk_network_id)
 			if aerial_run == null:
 				return _rejected(&"aerial_geometry")
 		else:
@@ -61,6 +66,7 @@ static func _append_run(plan: VillageRouteStairFabricPlan,
 		run_index: int, interval: Vector2, count: int, signed_rise: float,
 		cumulative: PackedFloat32Array,
 		vocabulary: VillageElevatedProgram,
+		walk_network_id: StringName,
 		landing_heights: Vector2 = Vector2(INF, INF)) -> VillageRouteStairRun:
 	if count <= 0 or absf(signed_rise) \
 			<= TraversalEnvelope.MAX_PLANNED_STEP:
@@ -104,7 +110,6 @@ static func _append_run(plan: VillageRouteStairFabricPlan,
 	var owner := StringName("%s.%s" % [settlement_id, link.stable_key]) \
 		if link.is_aerial() else StringName("%s.ground_circulation" \
 			% settlement_id)
-	var walk_network_id := StringName("%s.urban.walk_network" % settlement_id)
 	var entry_start := plan.entries.size()
 	var volume_start := plan.volumes.size()
 	var clearance_start := plan.clearances.size()

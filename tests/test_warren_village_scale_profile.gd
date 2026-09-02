@@ -4,17 +4,17 @@ extends GutTest
 func test_scale_distribution_boundaries_are_exact() -> void:
 	assert_eq(WarrenVillageScaleProfile.from_roll(0).scale_id,
 		WarrenVillageScaleProfile.COMPACT)
-	assert_eq(WarrenVillageScaleProfile.from_roll(5499).scale_id,
+	assert_eq(WarrenVillageScaleProfile.from_roll(6499).scale_id,
 		WarrenVillageScaleProfile.COMPACT)
-	assert_eq(WarrenVillageScaleProfile.from_roll(5500).scale_id,
+	assert_eq(WarrenVillageScaleProfile.from_roll(6500).scale_id,
 		WarrenVillageScaleProfile.STANDARD)
-	assert_eq(WarrenVillageScaleProfile.from_roll(8499).scale_id,
+	assert_eq(WarrenVillageScaleProfile.from_roll(8999).scale_id,
 		WarrenVillageScaleProfile.STANDARD)
-	assert_eq(WarrenVillageScaleProfile.from_roll(8500).scale_id,
+	assert_eq(WarrenVillageScaleProfile.from_roll(9000).scale_id,
 		WarrenVillageScaleProfile.LARGE)
-	assert_eq(WarrenVillageScaleProfile.from_roll(9699).scale_id,
+	assert_eq(WarrenVillageScaleProfile.from_roll(9799).scale_id,
 		WarrenVillageScaleProfile.LARGE)
-	assert_eq(WarrenVillageScaleProfile.from_roll(9700).scale_id,
+	assert_eq(WarrenVillageScaleProfile.from_roll(9800).scale_id,
 		WarrenVillageScaleProfile.GRAND)
 	assert_eq(WarrenVillageScaleProfile.from_roll(9999).scale_id,
 		WarrenVillageScaleProfile.GRAND)
@@ -42,14 +42,19 @@ func test_scale_budgets_grow_monotonically_without_weakening_integrity() -> void
 			smaller.room_volume_budget.x)
 		assert_gt(larger.room_volume_budget.y,
 			smaller.room_volume_budget.y)
-		assert_gt(larger.residual_room_budget,
+		assert_gte(larger.residual_room_budget,
 			smaller.residual_room_budget)
-		assert_gt(larger.residual_kind_budget,
+		assert_gte(larger.residual_kind_budget,
 			smaller.residual_kind_budget)
 		assert_gte(larger.skywalk_range.x, smaller.skywalk_range.x)
-		assert_gte(larger.landmark_range.x, smaller.landmark_range.x)
 		assert_gte(larger.minimum_inhabited_overhead_ratio,
 			smaller.minimum_inhabited_overhead_ratio)
+	assert_eq([profiles[0].core_target_band_range,
+		profiles[1].core_target_band_range,
+		profiles[2].core_target_band_range,
+		profiles[3].core_target_band_range], [Vector2i(12, 17),
+		Vector2i(13, 17), Vector2i(14, 18), Vector2i(15, 18)],
+		"relaxing a validity floor must not reroll the preferred crown field")
 	for profile: WarrenVillageScaleProfile in profiles:
 		assert_gte(profile.skywalk_range.x, 1)
 		assert_eq(profile.cantilever_range, Vector2i.ZERO,
@@ -57,24 +62,59 @@ func test_scale_budgets_grow_monotonically_without_weakening_integrity() -> void
 			+ "shell and roof joins pass visual review")
 	assert_eq([profiles[0].skywalk_range.x, profiles[1].skywalk_range.x,
 		profiles[2].skywalk_range.x, profiles[3].skywalk_range.x],
-		[1, 1, 2, 3],
-		"village-scale towns keep a modest occupied-link floor")
+		[2, 2, 3, 4],
+		"multiple occupied links are selected by the source topology, before " \
+		+ "plots or visual reservations can reinterpret the town")
 	assert_eq([profiles[2].skywalk_range.y, profiles[3].skywalk_range.y],
-		[3, 4],
+		[4, 5],
 		"large and grand towns request an extra link; the sealed occluder "
 		+ "ranking keeps it only when it adds distinct inhabited route cover")
-	assert_eq(profiles[0].landmark_range, Vector2i(4, 4),
-		"even a compact village composes around four complete authored buildings")
-	assert_eq(profiles[1].landmark_range, Vector2i(4, 5),
-		"a standard village tries a fifth building without dropping below four")
-	assert_eq(profiles[2].landmark_range, Vector2i(5, 6))
-	assert_eq(profiles[3].landmark_range, Vector2i(6, 8))
+	assert_eq(profiles[0].landmark_range, Vector2i(4, 4))
+	assert_eq(profiles[1].landmark_range, Vector2i(3, 4))
+	assert_eq(profiles[2].landmark_range, Vector2i(4, 5))
+	assert_eq(profiles[3].landmark_range, Vector2i(5, 6))
 	assert_false(profiles[0].requires_elevated_courtyard)
 	assert_false(profiles[1].requires_elevated_courtyard)
 	assert_true(profiles[2].requires_elevated_courtyard)
 	assert_true(profiles[3].requires_elevated_courtyard)
 	assert_eq(WarrenVillageScaleProfile.review_fixture().scale_id,
 		WarrenVillageScaleProfile.LARGE)
+
+
+func test_town_macro_cell_maps_to_the_shared_six_metre_world_scale() -> void:
+	## The proof lattice retains authored asset measurements. One shared uniform
+	## production frame maps its 1.5 / 3 m fine/macro pair to 3 / 6 m in-world.
+	assert_eq(FabricRecipe.CELL_SIZE * 2.0, 3.0)
+	assert_true(VillageWorldScale.validate())
+	assert_eq(VillageWorldScale.WORLD_FINE_CELL_M, 3.0)
+	assert_eq(VillageWorldScale.WORLD_MACRO_CELL_M, 6.0)
+	assert_eq([
+		WarrenVillageScaleProfile.for_id(WarrenVillageScaleProfile.COMPACT) \
+			.radius_cells,
+		WarrenVillageScaleProfile.for_id(WarrenVillageScaleProfile.STANDARD) \
+			.radius_cells,
+		WarrenVillageScaleProfile.for_id(WarrenVillageScaleProfile.LARGE) \
+			.radius_cells,
+		WarrenVillageScaleProfile.for_id(WarrenVillageScaleProfile.GRAND) \
+			.radius_cells,
+	], [5, 6, 7, 8],
+		"town footprint tiers vary parcel count before world materialization")
+
+
+func test_town_scale_is_derived_from_terrain_and_live_player_dimensions() -> void:
+	## The explicit adapter scale is shared by render, collision, terrain sampling,
+	## and occupancy. The resulting 6 m macro cell divides terrain's 24 m field.
+	var macro := VillageWorldScale.WORLD_MACRO_CELL_M
+	assert_eq(fmod(TerrainSurfaceField.TILE, macro), 0.0)
+	assert_eq(roundi(TerrainSurfaceField.TILE / macro), 4,
+		"one terrain field cell is exactly four world town macro cells")
+	assert_gt(macro, TraversalEnvelope.CAPSULE_HEIGHT,
+		"a complete world storey is taller than the shipped player capsule")
+	assert_gt(VillageWorldScale.WORLD_FINE_CELL_M,
+		TraversalEnvelope.capsule_diameter(),
+		"each world fine-cell lane admits the shipped player body")
+	assert_gte(VillageWorldScale.WORLD_FINE_CELL_M,
+		TraversalEnvelope.MIN_APERTURE_WIDTH)
 
 
 func test_scale_selection_is_seed_stable_and_small_biased() -> void:
@@ -88,13 +128,13 @@ func test_scale_selection_is_seed_stable_and_small_biased() -> void:
 		counts[first.scale_id] = int(counts.get(first.scale_id, 0)) + 1
 	assert_true(deterministic)
 	assert_between(int(counts.get(WarrenVillageScaleProfile.COMPACT, 0)),
-		5200, 5800)
+		6200, 6800)
 	assert_between(int(counts.get(WarrenVillageScaleProfile.STANDARD, 0)),
-		2700, 3300)
+		2200, 2800)
 	assert_between(int(counts.get(WarrenVillageScaleProfile.LARGE, 0)),
-		950, 1450)
+		600, 1000)
 	assert_between(int(counts.get(WarrenVillageScaleProfile.GRAND, 0)),
-		180, 420)
+		100, 300)
 	assert_gt(int(counts.get(WarrenVillageScaleProfile.COMPACT, 0)),
 		int(counts.get(WarrenVillageScaleProfile.LARGE, 0))
 		+ int(counts.get(WarrenVillageScaleProfile.GRAND, 0)))

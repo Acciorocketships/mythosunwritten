@@ -59,6 +59,16 @@ func add_roof_end(asset_id: StringName, seam_profile: StringName) -> bool:
 	return _add(contract)
 
 
+func add_shed_roof(asset_id: StringName, high_edge: Vector3i,
+		visual_clearance: float = 0.0) -> bool:
+	var contract := _contract(asset_id, FabricModuleContract.Kind.ROOF_SHED)
+	if contract == null:
+		return false
+	contract.shed_high_edge = high_edge
+	contract.visual_clearance = visual_clearance
+	return _add(contract)
+
+
 func add_prefab(asset_id: StringName,
 		visual_clearance: float = 0.0) -> bool:
 	var contract := _contract(asset_id, FabricModuleContract.Kind.PREFAB)
@@ -121,6 +131,28 @@ func apply_visual_envelope(recipe: FabricRecipe) -> bool:
 		var placed_bounds := transform * asset_bounds
 		envelope = placed_bounds if not has_bounds else envelope.merge(placed_bounds)
 		has_bounds = true
+	# Compact continuous roofs publish every finite start/middle/end realization
+	# before this envelope is sealed. Reserve the union now; selecting a longer
+	# run later can only choose geometry which this transaction already proved.
+	for run: Dictionary in recipe.compact_roof_runs:
+		for bay_value: Variant in run.get("bays", []) as Array:
+			var bay := bay_value as Dictionary
+			for roles_value: Variant in (bay.get("variants", {}) \
+					as Dictionary).values():
+				for variant_value: Variant in (roles_value as Dictionary).values():
+					var variant := variant_value as Dictionary
+					var asset_id := StringName(variant.get("asset_id", ""))
+					var transform := variant.get("transform", Transform3D()) \
+						as Transform3D
+					var contract_value := contract(asset_id)
+					if contract_value == null \
+							or not contract_value.clearance_bounds().has_volume():
+						return false
+					var placed_bounds := transform \
+						* contract_value.clearance_bounds()
+					envelope = placed_bounds if not has_bounds \
+						else envelope.merge(placed_bounds)
+					has_bounds = true
 	return has_bounds and recipe.set_local_clearance_bounds(envelope)
 
 
@@ -167,6 +199,41 @@ func roof_bearing_aligned_transform(asset_id: StringName, pose: Transform3D,
 	var transformed := pose * contract_value.visual_bounds
 	pose.origin.y += target_bearing_y - transformed.position.y
 	return pose
+
+
+func shed_roof_aligned_transform(asset_id: StringName,
+		target_centre: Vector3, target_bearing_y: float,
+		target_high_edge: Vector3i, target_high_boundary: float) -> Transform3D:
+	## Rotate the authored high edge toward the wall, then pin that measured edge
+	## to the logical wall plane.  The transverse centre and actual lowest visual
+	## point are aligned from the same contract.  A shallow roof consequently
+	## cannot be inverted or drift off its supporting facade by construction.
+	var contract_value := contract(asset_id)
+	assert(contract_value != null and contract_value.is_sealed())
+	assert(contract_value.kind == FabricModuleContract.Kind.ROOF_SHED)
+	assert(target_high_edge.y == 0 and absi(target_high_edge.x) \
+		+ absi(target_high_edge.z) == 1)
+	var yaw_quarters := -1
+	for candidate in 4:
+		if FabricRecipe.transform_direction(contract_value.shed_high_edge,
+				candidate) == target_high_edge:
+			yaw_quarters = candidate
+			break
+	assert(yaw_quarters >= 0)
+	var pose := Transform3D(Basis(Vector3.UP,
+		float(yaw_quarters) * PI * 0.5), target_centre)
+	var transformed := pose * contract_value.visual_bounds
+	if target_high_edge.x != 0:
+		pose.origin.z += target_centre.z - transformed.get_center().z
+		pose.origin.x += target_high_boundary \
+			- (transformed.end.x if target_high_edge.x > 0 \
+			else transformed.position.x)
+	else:
+		pose.origin.x += target_centre.x - transformed.get_center().x
+		pose.origin.z += target_high_boundary \
+			- (transformed.end.z if target_high_edge.z > 0 \
+			else transformed.position.z)
+	return roof_bearing_aligned_transform(asset_id, pose, target_bearing_y)
 
 
 func stair_lane_transforms(asset_id: StringName,

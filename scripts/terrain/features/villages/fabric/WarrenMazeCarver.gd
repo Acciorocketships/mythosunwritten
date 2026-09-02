@@ -20,7 +20,6 @@ const MAX_DERIVED_ALLEY_CELLS := 320
 ## cells were concentrated at the massif's thin, peripheral edge where a
 ## genuine two-block-connecting span is structurally rare. See
 ## task-2-report.md for the before/after per-seed counts.
-const BRIDGE_SPAN_PERIOD := 4
 const MIN_LOOP_JOINS := 1
 const MAX_LOOP_JOINS := 2
 const MAX_LOOP_CONNECTOR_CELLS := 8
@@ -149,7 +148,7 @@ static func carve(world_seed: int, massif: WarrenMassif,
 		return null
 	var before_frontage := _frontage_audit(massif, excavation)
 	_carve_alleys(world_seed, massif, excavation, thickness,
-		market_cells, profile, int(descent.cells))
+		market_cells, market_square, profile, int(descent.cells))
 	var loop_target := MAX_LOOP_JOINS if profile.scale_id in [
 		WarrenVillageScaleProfile.LARGE,
 		WarrenVillageScaleProfile.GRAND] else MIN_LOOP_JOINS
@@ -715,7 +714,8 @@ static func _descent_candidates(context: Dictionary, current: Vector3i,
 
 static func _carve_alleys(world_seed: int, massif: WarrenMassif,
 		excavation: WarrenExcavation, thickness: Dictionary,
-		market_cell_count: int, profile: WarrenVillageScaleProfile,
+		market_cell_count: int, market_square: Array[Vector3i],
+		profile: WarrenVillageScaleProfile,
 		descent_cells: int) -> void:
 	var public_set: Dictionary = {}
 	for cell: Vector3i in excavation.route:
@@ -795,7 +795,9 @@ static func _carve_alleys(world_seed: int, massif: WarrenMassif,
 		var ratio_after := float(after_lane.column_ratio)
 		if ratio_after <= ratio_before \
 				or float(after_lane.ratio) < minf(FRONTAGE_FLOOR,
-					passage_before):
+					passage_before) \
+				or not _public_candidate_preserves_volume_contract(massif,
+					excavation, market_square):
 			excavation.lanes.pop_back()
 			WarrenPassageLatticeRules.rollback(excavation, public_set,
 				lane.cells as Array[Vector3i],
@@ -909,6 +911,17 @@ static func _carve_loop_joins(world_seed: int, massif: WarrenMassif,
 		var committed := false
 		for candidate: Dictionary in candidates:
 			var cells := candidate.cells as Array[Vector3i]
+			# Loop joins are alley episodes too.  Their bounded connector search
+			# used to enforce total length but not the source plan's alley
+			# straight-run contract, so a perfectly legal carve could be rejected
+			# only when the finished source re-measured it.  Admit the connector on
+			# the same walk (anchor + new cells) the sealed audit reads.
+			var lane_walk: Array[Vector3i] = [
+				candidate.anchor as Vector3i]
+			lane_walk.append_array(cells)
+			if WarrenMazeSourcePlan._max_straight_run(lane_walk) \
+					> MAX_ALLEY_STRAIGHT_RUN:
+				continue
 			var carved: Array[Vector3i] = []
 			var transitions: Array[Dictionary] = []
 			var previous := candidate.anchor as Vector3i
@@ -929,7 +942,9 @@ static func _carve_loop_joins(world_seed: int, massif: WarrenMassif,
 			excavation.lanes.append(lane)
 			excavation.loop_edges.append(edge)
 			var audit := _frontage_audit(massif, excavation)
-			if float(audit.ratio) >= minf(FRONTAGE_FLOOR, frontage_before):
+			if float(audit.ratio) >= minf(FRONTAGE_FLOOR, frontage_before) \
+					and _public_candidate_preserves_volume_contract(massif,
+						excavation, market_square):
 				for cell: Vector3i in cells:
 					loop_cells[cell] = true
 				committed = true
@@ -942,6 +957,30 @@ static func _carve_loop_joins(world_seed: int, massif: WarrenMassif,
 			break
 
 
+static func _public_candidate_preserves_volume_contract(massif: WarrenMassif,
+		excavation: WarrenExcavation,
+		market_square: Array[Vector3i]) -> bool:
+	## Loop growth is the final topology mutation before the excavation becomes
+	## a WarrenVolumePlan.  The volume owns exact 1.5 m tread expansion, landing
+	## geometry, and the local/whole-network breadth proof; reconstructing only a
+	## subset of those rules here allowed a locally narrow connector to make the
+	## complete public realm fail one stage later.  Preview the still-reversible
+	## candidate through that canonical adapter instead.  The clone is pure data,
+	## so sealing it cannot freeze or otherwise alter the live excavation that the
+	## caller may still roll back.
+	var preview := WarrenExcavation.new(excavation.world_seed)
+	preview.route.assign(excavation.route)
+	preview.lanes.assign(excavation.lanes)
+	preview.loop_edges.assign(excavation.loop_edges)
+	preview.bridge_spans.assign(excavation.bridge_spans)
+	preview.bridge_span_audit = excavation.bridge_span_audit.duplicate(true)
+	preview.carved = excavation.carved.duplicate()
+	preview.transitions.assign(excavation.transitions)
+	_finalize_excavation(massif, preview)
+	if not preview.seal():
+		return false
+	return WarrenExcavationVolumeAdapter.to_volume_plan(massif, preview,
+		market_square) != null
 static func _manhattan_connector_paths(anchor: Vector3i,
 		target: Vector3i) -> Array:
 	var out: Array = []
@@ -1286,6 +1325,18 @@ static func _open_passages_to_air(world_seed: int, massif: WarrenMassif,
 		market_set[value as Vector3i] = true
 	var bridged := _select_bridge_spans(world_seed, massif, excavation,
 		market_set, profile)
+	# An occupied bridge-house is the tunnel roof. Open its selected passage
+	# column all the way to the room floor so no retained rock slab survives as
+	# the floating grey block seen beneath the facade. Ordinary covered passages
+	# keep their natural roof; only a span with a sealed building support contract
+	# receives this additional carve.
+	for span_value: Variant in excavation.bridge_spans:
+		var span: Array[Vector3i] = []
+		span.assign(span_value as Array)
+		var storey := _bridge_room_storey(excavation, span)
+		for cell: Vector3i in span:
+			for band in range(cell.y, storey.x):
+				excavation.carved[Vector3i(cell.x, band, cell.z)] = true
 	# A bridge's own column, and both of its flank columns, can also host a
 	# lower, unrelated passage cell (the pre-existing over/under crossing
 	# pattern this maze already carves) that would otherwise open straight
@@ -1296,7 +1347,8 @@ static func _open_passages_to_air(world_seed: int, massif: WarrenMassif,
 	# deck is unrelated to it and must still open all the way to the sky, or
 	# `range(cell.y, ceiling)` silently empties and strands it covered
 	# forever, violating open-by-default.
-	var carve_cap := _build_bridge_carve_cap(bridged)
+	var carve_cap := _build_bridge_carve_cap(bridged,
+		excavation.bridge_span_audit.get("seeded", []) as Array)
 	for cell: Vector3i in excavation.public_cells():
 		if bridged.has(cell):
 			continue
@@ -1313,7 +1365,8 @@ static func _open_passages_to_air(world_seed: int, massif: WarrenMassif,
 			excavation.carved[Vector3i(cell.x, band, cell.z)] = true
 
 
-static func _build_bridge_carve_cap(bridged: Dictionary) -> Dictionary:
+static func _build_bridge_carve_cap(bridged: Dictionary,
+		seeded_proofs: Array = []) -> Dictionary:
 	## `bridged`: Vector3i cell -> Vector2i travel direction, one entry per
 	## accepted bridge-span cell. Returns Vector2i column -> int cap: the
 	## lowest y that column must stay solid from, upward -- a bridge's own
@@ -1325,6 +1378,14 @@ static func _build_bridge_carve_cap(bridged: Dictionary) -> Dictionary:
 	## promised. Factored out as a static helper (review finding 2026-08-22,
 	## Important) so the cap computation is unit-testable on its own, without
 	## needing a full carve to exercise it.
+	##
+	## The accepted source proof also owns complete endpoint-foundation groups.
+	## A lower street may already have enough headroom beneath one of those
+	## columns when the bridge is selected, then the later open-to-sky pass could
+	## remove the endpoint plot's last bearing band. Preserve `floor - 1`, the
+	## exact support datum required by `WarrenMazeSourcePlan.plot_support_ok`.
+	## This is not an extra placement rule: selection and excavation consume the
+	## same sealed compound proof, so the load path cannot change between phases.
 	var cap: Dictionary = {}
 	for cell_value: Variant in bridged.keys():
 		var cell := cell_value as Vector3i
@@ -1333,6 +1394,14 @@ static func _build_bridge_carve_cap(bridged: Dictionary) -> Dictionary:
 		_tighten_carve_cap(cap, column, cell.y)
 		for flank: Vector2i in _bridge_flank_columns(cell, direction):
 			_tighten_carve_cap(cap, flank, cell.y)
+	for proof_value: Variant in seeded_proofs:
+		var proof := proof_value as Dictionary
+		var support_band := int(proof.get("endpoint_foundation_floor",
+			proof.get("floor", 0))) - 1
+		for group_value: Variant in proof.get(
+				"endpoint_foundation_groups", []) as Array:
+			for column_value: Variant in group_value as Array:
+				_tighten_carve_cap(cap, column_value as Vector2i, support_band)
 	return cap
 
 
@@ -1375,6 +1444,7 @@ static func _select_bridge_spans(world_seed: int, massif: WarrenMassif,
 	## (each candidate still only reaches within its own physical run), but
 	## two candidates from different runs can now share one window index.
 	var accepted: Dictionary = {}
+	var reserved_columns: Dictionary = {}
 	# Opened here rather than on first use, so an empty ledger means "no
 	# candidate run offered a span" and a missing one means the seed-time
 	# proof never ran at all (TASK E3 ruling 3).
@@ -1404,7 +1474,11 @@ static func _select_bridge_spans(world_seed: int, massif: WarrenMassif,
 		var directions: Dictionary = {}
 		for index in range(1, walk.size()):
 			var cell := walk[index]
-			var eligible := level_cells.has(cell) and cell != portal \
+			# A one-bay bridge crosses a public column horizontally regardless of
+			# whether the incoming street stride rose. Only a multi-cell bridge needs
+			# a level run. Restricting candidates to LEVEL arrivals erased the broad
+			# ground-borne flank opportunities on compact climbing routes.
+			var eligible := cell != portal \
 				and _bridge_eligible(massif, excavation, market_set, cell)
 			if eligible:
 				run.append(cell)
@@ -1412,39 +1486,30 @@ static func _select_bridge_spans(world_seed: int, massif: WarrenMassif,
 					cell.z - walk[index - 1].z)
 				continue
 			if not run.is_empty():
-				_append_run_candidates(candidates, run, directions)
+				_append_run_candidates(candidates, run, directions, level_cells)
 				run = []
 				directions = {}
 		if not run.is_empty():
-			_append_run_candidates(candidates, run, directions)
+			_append_run_candidates(candidates, run, directions, level_cells)
 	if candidates.is_empty():
 		return accepted
-	var phase := WarrenPassageLatticeRules.hash_key(world_seed, 0xB21D6E,
-		portal, 0) % BRIDGE_SPAN_PERIOD
-	var window: Array[Dictionary] = []
-	var window_index := -1
-	for counter in candidates.size():
-		var record := candidates[counter]
-		var this_window := (counter + phase) / BRIDGE_SPAN_PERIOD
-		if this_window != window_index:
-			if not window.is_empty():
-				_select_span_in_window(world_seed, massif, excavation, window,
-					accepted)
-				if excavation.bridge_spans.size() >= quota:
-					return accepted
-			window = []
-			window_index = this_window
-		window.append(record)
-	if not window.is_empty():
-		_select_span_in_window(world_seed, massif, excavation, window,
-			accepted)
+	# Evaluate the complete bounded candidate set, then choose disjoint compounds
+	# by structural quality. The former fixed-period windows could pick an arcade
+	# placeholder early and never even inspect a directly grounded house later in
+	# the same walk. Quality is topology, not a coordinate exception: two direct
+	# endpoint houses outrank one, which outranks a portal fallback; stable hash
+	# only varies ties. The accepted feature still owns its complete envelope.
+	_select_spans_from_candidates(world_seed, massif, excavation, candidates,
+		accepted, reserved_columns, quota)
 	return accepted
 
 
 static func _append_run_candidates(candidates: Array[Dictionary],
-		run: Array[Vector3i], directions: Dictionary) -> void:
+		run: Array[Vector3i], directions: Dictionary,
+		level_cells: Dictionary) -> void:
 	for index in run.size():
-		candidates.append({"run": run, "index": index, "directions": directions})
+		candidates.append({"run": run, "index": index, "directions": directions,
+			"level_cells": level_cells})
 
 
 static func _level_stride_cells(walk: Array[Vector3i],
@@ -1468,41 +1533,158 @@ static func _level_stride_cells(walk: Array[Vector3i],
 	return out
 
 
-static func _select_span_in_window(world_seed: int, massif: WarrenMassif,
-		excavation: WarrenExcavation, window: Array[Dictionary],
-		accepted: Dictionary) -> void:
-	## Scans one window's cells in walk order and accepts the first one that
-	## can host a span (at most one span per window index). A cell already
-	## claimed by an earlier window's overflowing 2-cell span is skipped.
-	for record: Dictionary in window:
+static func _select_spans_from_candidates(world_seed: int,
+		massif: WarrenMassif, excavation: WarrenExcavation,
+		candidates: Array[Dictionary], accepted: Dictionary,
+		reserved_columns: Dictionary, quota: int) -> void:
+	var options: Array[Dictionary] = []
+	var seen_options: Dictionary = {}
+	for record: Dictionary in candidates:
 		var run := record.run as Array[Vector3i]
 		var index := int(record.index)
 		var directions := record.directions as Dictionary
+		var level_cells := record.level_cells as Dictionary
 		var candidate := run[index]
-		if accepted.has(candidate):
-			continue
 		var length_hash := WarrenPassageLatticeRules.hash_key(world_seed,
 			0xB21D6E, candidate, 1)
 		var length := mini(1 + (length_hash % 2), run.size() - index)
-		var span: Array[Vector3i] = run.slice(index, index + length)
-		var proof: Dictionary = {}
-		if _bridge_span_is_legal(massif, excavation, span, directions, proof):
-			excavation.bridge_spans.append(span)
-			_record_bridge_proof(excavation, proof, true)
-			for cell: Vector3i in span:
-				accepted[cell] = directions.get(cell, Vector2i.ZERO)
-			return
-		_record_bridge_proof(excavation, proof, false)
+		# A multi-cell bridge is one straight authored slim house. A route turn
+		# changes which columns are lateral bearings, so combining cells across
+		# that turn produces a footprint whose seed-time flanks cannot match the
+		# room sockets at construction. Keep the complete one-cell tower form at
+		# such a corner; never reinterpret a bend as a straight span later.
+		if length > 1 and not level_cells.has(candidate):
+			length = 1
 		if length > 1:
-			var fallback: Array[Vector3i] = run.slice(index, index + 1)
-			var fallback_proof: Dictionary = {}
-			if _bridge_span_is_legal(massif, excavation, fallback, directions,
-					fallback_proof):
-				excavation.bridge_spans.append(fallback)
-				_record_bridge_proof(excavation, fallback_proof, true)
-				accepted[candidate] = directions.get(candidate, Vector2i.ZERO)
-				return
-			_record_bridge_proof(excavation, fallback_proof, false)
+			var direction := directions.get(candidate, Vector2i.ZERO) as Vector2i
+			for offset in range(1, length):
+				if directions.get(run[index + offset], Vector2i.ZERO) != direction \
+						or run[index + offset].y != candidate.y \
+						or not level_cells.has(run[index + offset]):
+					length = 1
+					break
+		var lengths: Array[int] = [length]
+		if length > 1:
+			lengths.append(1)
+		for candidate_length: int in lengths:
+			var span: Array[Vector3i] = run.slice(index,
+				index + candidate_length)
+			var option_key := ""
+			for cell: Vector3i in span:
+				option_key += "%d,%d,%d;" % [cell.x, cell.y, cell.z]
+			if seen_options.has(option_key):
+				continue
+			seen_options[option_key] = true
+			var proof: Dictionary = {}
+			if not _bridge_span_is_legal(massif, excavation, span, directions,
+					proof):
+				_record_bridge_proof(excavation, proof, false)
+				continue
+			var direct_endpoints := 0
+			for mode_value: Variant in proof.get(
+					"endpoint_support_modes", []) as Array:
+				direct_endpoints += int(StringName(mode_value) != &"terrain_arcade")
+			# Portal feasibility depends on the compiled fine-grid public-air course.
+			# Do not reserve a hopeful source span and release it later: this source
+			# stage admits only the two complete ground-borne endpoint houses it can
+			# prove now. Other support idioms stay available to ordinary overhangs.
+			if direct_endpoints != 2:
+				proof["reason"] = "bridge lacks two ground-borne endpoint houses"
+				_record_bridge_proof(excavation, proof, false)
+				continue
+			var exterior_depth := _bridge_span_exterior_depth(massif, span)
+			proof["exterior_depth_cells"] = exterior_depth
+			options.append({"span": span, "directions": directions,
+				"proof": proof, "direct_endpoints": direct_endpoints,
+				"exterior_depth": exterior_depth,
+				"tie": WarrenPassageLatticeRules.hash_key(world_seed,
+					0xB21D6E, candidate, candidate_length + 17)})
+	options.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.direct_endpoints) != int(b.direct_endpoints):
+			return int(a.direct_endpoints) > int(b.direct_endpoints)
+		# Once both endpoint houses are structurally equivalent, prefer a span
+		# close to the massif perimeter.  It remains part of the same connected
+		# route, but reads as a real house over open air from outside the town
+		# instead of disappearing in the central roof cluster.
+		if int(a.exterior_depth) != int(b.exterior_depth):
+			return int(a.exterior_depth) < int(b.exterior_depth)
+		if (a.span as Array).size() != (b.span as Array).size():
+			return (a.span as Array).size() > (b.span as Array).size()
+		return int(a.tie) < int(b.tie))
+	for option: Dictionary in options:
+		if excavation.bridge_spans.size() >= quota:
+			break
+		var span := option.span as Array[Vector3i]
+		var overlaps_span := false
+		for span_cell: Vector3i in span:
+			overlaps_span = overlaps_span or accepted.has(span_cell)
+		var proof := option.proof as Dictionary
+		if overlaps_span or _bridge_proof_overlaps(proof, reserved_columns):
+			_record_bridge_proof(excavation, proof, false)
+			continue
+		excavation.bridge_spans.append(span)
+		_record_bridge_proof(excavation, proof, true)
+		_reserve_bridge_proof(proof, reserved_columns)
+		var directions := option.directions as Dictionary
+		for cell: Vector3i in span:
+			accepted[cell] = directions.get(cell, Vector2i.ZERO)
+
+
+static func _bridge_span_exterior_depth(massif: WarrenMassif,
+		span: Array[Vector3i]) -> int:
+	## Manhattan layers of authored mass between a bridge and exterior air.
+	## A boundary column has depth zero.  The ranking is entirely a consequence
+	## of the generated massif footprint and does not know a seed, camera, or
+	## world coordinate.
+	if massif == null or span.is_empty():
+		return 2147483647
+	var best := 2147483647
+	for cell: Vector3i in span:
+		var column := Vector2i(cell.x, cell.z)
+		if not massif.has_column(column):
+			return 0
+		var radius := 1
+		while radius <= massif.columns.size():
+			var found_air := false
+			for dx in range(-radius, radius + 1):
+				var dz := radius - absi(dx)
+				if not massif.has_column(column + Vector2i(dx, dz)) \
+						or (dz > 0 and not massif.has_column(
+							column + Vector2i(dx, -dz))):
+					found_air = true
+					break
+			if found_air:
+				best = mini(best, radius - 1)
+				break
+			radius += 1
+	return best
+
+
+static func _bridge_proof_columns(proof: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	for cell: Vector3i in proof.get("cells", []) as Array:
+		out[Vector2i(cell.x, cell.z)] = true
+	for group_value: Variant in proof.get(
+			"endpoint_foundation_groups", []) as Array:
+		for column: Vector2i in group_value as Array:
+			out[column] = true
+	return out
+
+
+static func _bridge_proof_overlaps(proof: Dictionary,
+		reserved_columns: Dictionary) -> bool:
+	for column_value: Variant in _bridge_proof_columns(proof).keys():
+		if reserved_columns.has(column_value):
+			proof["reason"] = "bridge compound overlaps an earlier compound at %s" \
+				% (column_value as Vector2i)
+			return true
+	return false
+
+
+static func _reserve_bridge_proof(proof: Dictionary,
+		reserved_columns: Dictionary) -> void:
+	for column_value: Variant in _bridge_proof_columns(proof).keys():
+		reserved_columns[column_value as Vector2i] = true
 
 
 static func _record_bridge_proof(excavation: WarrenExcavation,
@@ -1518,14 +1700,14 @@ static func _record_bridge_proof(excavation: WarrenExcavation,
 static func _bridge_span_is_legal(massif: WarrenMassif,
 		excavation: WarrenExcavation, span: Array[Vector3i],
 		directions: Dictionary, record: Dictionary) -> bool:
-	## A span is legal when both flank columns are solid on EVERY band from
-	## the passage floor to its roof -- the wall the skywalk needs, not just
-	## its two ends. Review finding (2026-08-23, minor): the old check tested
-	## `cell.y` and the roof band only, so a crossing passage carved at
-	## cell.y + 1 left the flank hollow through the middle and still passed.
-	## WarrenExcavation._bridge_spans_are_legal re-checks the nominal interval
-	## against the FINAL carved set; this one is never narrower, so the two
-	## readings cannot disagree about a span this carver accepted.
+	## A span is legal when its own occupied room interval is clear and one
+	## complete endpoint house can be constructed on EACH lateral side. The
+	## endpoint houses are part of this source feature -- they do not need to be
+	## pre-existing rock at bridge height. They need clear room envelopes and
+	## uninterrupted, terrain-reaching lower foundations. Asking for solid rock
+	## in the endpoint room envelopes made construction impossible on a compact
+	## town: it confused the material being replaced with the building being
+	## planned. This proof instead states the finished load path by construction.
 	##
 	## FIX 1, MINOR 5 -- the roof band is `slot_bands` where that is deeper
 	## than HEADROOM_BANDS. A span cell is always a LEVEL stride, whose bore is
@@ -1541,26 +1723,32 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 	## caller's ledger line and is always written: a candidate the carver
 	## tested and refused is a fact the audit needs as much as one it took.
 	##
-	## TASK E3b RULING 3 -- and ONE such flank is now enough, because a
-	## one-flank span is buildable: `WarrenVolumetricSolver
-	## ._residual_bridge_span` composes
-	## it as the authored BRACKETED JETTY (`room.jetty.*`, one bearing parent
-	## plus a measured bracket course) instead of releasing it. E3 wrote this
-	## proof when only the two-flank `room.bridge.*` form existed, so "every
-	## flank carries a room" was then the right bar and it cut the corpus from
-	## 27 seeded spans to 10 with ZERO built. The bar is now "at least one flank
-	## carries a room", the room-capable columns are published as `room_flanks`,
-	## and `_maze_bridge_proved_flanks` hands exactly those to the builder -- so
-	## the bond the builder makes is still the one this proof was about, and a
-	## span with no room-capable flank is still refused by name.
+	## A SKYWalk has two occupied endpoints. A one-sided gatehouse is useful
+	## fabric, but it is an arcade/cantilever and must not consume this contract.
+	## Requiring both lateral macro columns here makes the distinction before
+	## plots or meshes exist: the compiler can only receive a bridge span whose
+	## two sides can each compose a room at the bridge's own floor.
 	var storey := _bridge_room_storey(excavation, span)
+	var public_floors: Dictionary = {}
+	for public_cell: Vector3i in excavation.public_cells():
+		public_floors[public_cell] = true
 	var flank_columns: Array[Vector2i] = []
 	var room_flank_columns: Array[Vector2i] = []
+	var negative_room_flanks: Array[Vector2i] = []
+	var positive_room_flanks: Array[Vector2i] = []
+	var negative_foundation: Array[Vector2i] = []
+	var positive_foundation: Array[Vector2i] = []
 	record["cells"] = span.duplicate()
 	record["floor"] = storey.x
 	record["top"] = storey.y
 	record["flanks"] = flank_columns
 	record["room_flanks"] = room_flank_columns
+	record["endpoint_groups"] = [negative_room_flanks,
+		positive_room_flanks]
+	record["endpoint_foundation_groups"] = [negative_foundation,
+		positive_foundation]
+	record["endpoint_foundation_floor"] = span[0].y
+	record["endpoint_support_modes"] = [] as Array[StringName]
 	record["reason"] = ""
 	for cell: Vector3i in span:
 		var direction := directions.get(cell, Vector2i.ZERO) as Vector2i
@@ -1568,17 +1756,22 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 			record["reason"] = "span cell %s has no travel direction" % cell
 			return false
 		var column := Vector2i(cell.x, cell.z)
-		var roof_band := cell.y + maxi(WarrenPassageLatticeRules.HEADROOM_BANDS,
-			excavation.slot_bands(cell))
-		for flank: Vector2i in _bridge_flank_columns(cell, direction):
+		# The bridge room is new construction above the bore. Its exact interval
+		# must be free of another carved/public crossing, but it need not already be
+		# solid rock: the bridge compound owns and builds this envelope later.
+		for band in range(storey.x, storey.x + MIN_HOUSE_BANDS):
+			if excavation.carved.has(Vector3i(column.x, band, column.y)):
+				record["reason"] = ("span column %s has carved air at band %d " \
+					+ "inside the occupied bridge clearance [%d, %d)") % [
+					column, band, storey.x, storey.x + MIN_HOUSE_BANDS]
+				return false
+		var perpendicular := Vector2i(-direction.y, direction.x)
+		var negative_flank := column - perpendicular
+		var positive_flank := column + perpendicular
+		for flank: Vector2i in [negative_flank, positive_flank]:
 			if not flank_columns.has(flank):
 				flank_columns.append(flank)
-			for band in range(cell.y, roof_band + 1):
-				if not _column_is_solid_at(massif, excavation, flank, band):
-					record["reason"] = ("flank column %s is hollow at band " \
-						+ "%d, below the span's own roof") % [flank, band]
-					return false
-			# THE SEED-TIME MIRROR of the compiler's `bridge room ... has no
+			# The seed-time mirror of the compiler's `bridge room ... has no
 			# built flank` gate. A bridge room is not carried by the street it
 			# spans: `WarrenVolumetricSolver._residual_bridge_span` binds it to
 			# flanking ROOMS through their measured bearing sockets -- two for
@@ -1596,22 +1789,108 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 			# sufficient -- a house has still to compose in it -- but a span
 			# that fails it can never gain a flank room, so seeding one only
 			# spends retained mass and risks the town.
-			var carries_room := true
+			var carries_room := massif.has_column(flank)
 			for band in range(storey.x, storey.y):
-				if not _column_is_solid_at(massif, excavation, flank, band):
+				# A walk cell is exterior floor as well as a carved-headroom
+				# owner. `carved` alone therefore cannot distinguish intact room
+				# mass from a higher crossing whose floor lands in this interval.
+				# Reject that conflict here, in the source proof, before plot or
+				# endpoint composition can reserve the same cell two ways.
+				if public_floors.has(Vector3i(flank.x, band, flank.y)) \
+						or excavation.carved.has(Vector3i(flank.x, band,
+							flank.y)):
 					carries_room = false
 					break
 			if carries_room and not room_flank_columns.has(flank):
 				room_flank_columns.append(flank)
-		if massif.top_at(column) - cell.y \
-				< WarrenPassageLatticeRules.HEADROOM_BANDS + 2:
-			record["reason"] = \
-				"column %s has no retained mass above the span" % column
-			return false
-	if room_flank_columns.is_empty():
-		record["reason"] = ("no flank column carries room mass across the " \
-			+ "bridge storey [%d, %d)") % [storey.x, storey.y]
+				if flank == negative_flank:
+					negative_room_flanks.append(flank)
+				else:
+					positive_room_flanks.append(flank)
+	# One endpoint footprint per side, covering the span's complete macro run.
+	# Counting two arbitrary flank columns admitted a two-cell candidate whose
+	# only mass was on one side; the compound compiler then had no second end and
+	# silently lost the span instead of trying the valid one-cell fallback in the
+	# same window. This is the endpoint partition the final compiler consumes,
+	# stated at source selection time so the two stages cannot disagree.
+	if negative_room_flanks.size() != span.size() \
+			or positive_room_flanks.size() != span.size():
+		record["reason"] = ("bridge storey [%d, %d) has endpoint coverage " \
+			+ "%d/%d on one side and %d/%d on the other") % [storey.x,
+				storey.y, negative_room_flanks.size(), span.size(),
+				positive_room_flanks.size(), span.size()]
 		return false
+	# Each endpoint chooses one of two complete structural forms before plots are
+	# partitioned. Prefer a broad terraced lower house when its whole 2-deep
+	# footprint is directly borne at the route datum. Otherwise reserve the exact
+	# upper endpoint plate for the standard terrain-reaching stone arcade. The
+	# latter is not a loose post: the fabric compiler must fit its complete
+	# four-sided portal shell before the bridge transaction can commit.
+	var travel := directions.get(span[0], Vector2i.ZERO) as Vector2i
+	var lateral := Vector2i(-travel.y, travel.x)
+	for column: Vector2i in negative_room_flanks:
+		for foundation_column: Vector2i in [column, column - lateral]:
+			if not negative_foundation.has(foundation_column):
+				negative_foundation.append(foundation_column)
+	for column: Vector2i in positive_room_flanks:
+		for foundation_column: Vector2i in [column, column + lateral]:
+			if not positive_foundation.has(foundation_column):
+				positive_foundation.append(foundation_column)
+	var foundation_floor := span[0].y
+	var room_groups: Array[Array] = [negative_room_flanks,
+		positive_room_flanks]
+	var foundation_groups: Array[Array] = [negative_foundation,
+		positive_foundation]
+	for group_index in foundation_groups.size():
+		var group := foundation_groups[group_index]
+		var directly_borne := _bridge_foundation_is_direct(massif,
+			excavation, public_floors, group, foundation_floor, storey.x)
+		if directly_borne:
+			(record["endpoint_support_modes"] as Array[StringName]).append(
+				&"direct_house_wide")
+			continue
+		# A narrow terrain-borne tower is preferred to a decorative support and is
+		# allowed precisely because this same transaction connects its roof to the
+		# bridge. It is therefore never the unclassified 1 x 1 stone/grass cube the
+		# town culls elsewhere: it has a complete room stack and an occupied link.
+		var room_group := room_groups[group_index]
+		if _bridge_foundation_is_direct(massif, excavation, public_floors,
+				room_group, foundation_floor, storey.x):
+			group.clear()
+			group.append_array(room_group)
+			(record["endpoint_support_modes"] as Array[StringName]).append(
+				&"direct_house_narrow")
+			continue
+		# The arcade footprint is the endpoint room itself, not the abandoned
+		# broad-house proposal. Publish that exact reservation so the generic
+		# house partition may fill the released outer row.
+		group.clear()
+		group.append_array(room_groups[group_index])
+		for column: Vector2i in group:
+			if not massif.has_column(column) \
+					or storey.x < massif.base_at(column):
+				record["reason"] = ("bridge endpoint arcade column %s cannot " \
+					+ "reach terrain below floor %d") % [column, storey.x]
+				return false
+		(record["endpoint_support_modes"] as Array[StringName]).append(
+			&"terrain_arcade")
+	return true
+
+
+static func _bridge_foundation_is_direct(massif: WarrenMassif,
+		excavation: WarrenExcavation, public_floors: Dictionary,
+		columns: Array, foundation_floor: int, top_band: int) -> bool:
+	for column_value: Variant in columns:
+		var column := column_value as Vector2i
+		if not massif.has_column(column) \
+				or foundation_floor < massif.base_at(column) \
+				or not _column_is_solid_at(massif, excavation, column,
+					foundation_floor - 1):
+			return false
+		for band in range(foundation_floor, top_band):
+			var cell := Vector3i(column.x, band, column.y)
+			if public_floors.has(cell) or excavation.carved.has(cell):
+				return false
 	return true
 
 
@@ -1659,12 +1938,20 @@ static func _finalize_excavation(massif: WarrenMassif,
 		excavation: WarrenExcavation) -> void:
 	excavation.portals = [excavation.route[0]] as Array[Vector3i]
 	excavation.covered.clear()
+	var planned_bridge_cells: Dictionary = {}
+	for span_value: Variant in excavation.bridge_spans:
+		for bridge_cell: Vector3i in span_value as Array[Vector3i]:
+			planned_bridge_cells[bridge_cell] = true
 	for cell: Vector3i in excavation.public_cells():
 		var column := Vector2i(cell.x, cell.z)
 		var roof := Vector3i(cell.x,
 			cell.y + excavation.slot_bands(cell), cell.z)
-		excavation.covered[cell] = massif.top_at(column) > roof.y \
-			and not excavation.carved.has(roof)
+		# A selected bridge cell is covered by its planned occupied house, not by
+		# a retained rock plug. `covered` is the public-realm classification and
+		# therefore includes both natural tunnel roofs and source-owned building
+		# roofs; the bridge proof ledger distinguishes which construction owns it.
+		excavation.covered[cell] = planned_bridge_cells.has(cell) \
+			or massif.top_at(column) > roof.y and not excavation.carved.has(roof)
 
 
 static func _portal_cells(massif: WarrenMassif, market_cells: int,

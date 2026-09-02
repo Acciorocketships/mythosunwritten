@@ -6,8 +6,8 @@ extends GutTest
 ## the flat-capped jetty carries the same inhabited overhead cover without its
 ## own roofline. Both variants wear their parent's wood.
 
-## The pinned production village of world seed 2697992464 at super cell
-## (0,-1). TASK F1 SWAPPED THIS FIXTURE'S SUBJECT: it used to name a bore
+## The pinned production village of world seed 2697992464 at settlement cell
+## (11,12). TASK F1 SWAPPED THIS FIXTURE'S SUBJECT: it used to name a bore
 ## attempt, a ranked source id and a partition variant, drive
 ## `WarrenTownSolver.mass_first_attempt_frontier` +
 ## `WarrenVolumetricSolver._ranked_precomposition_variants`, and compile the
@@ -15,11 +15,13 @@ extends GutTest
 ## One-pass generation builds exactly one town per (seed, scale), so the town
 ## below is simply that solve. Every assertion in this file therefore now
 ## describes the town production really ships, not the searched one.
-const REVIEW_SEED := 166029932451774690
-## MEASURED 2026-08-25 on that town: two `outcrop.embedded.*` bays, no capped
-## jetty, and `room_outcropping_count == 0`. Pinned as a floor so the
-## vocabulary can only grow.
-const MEASURED_OUTCROP_BAYS := 2
+const REVIEW_SEED := 6357506428441529412
+## MEASURED 2026-08-31 after the canonical maximal-relief pass: this town keeps
+## three roofed structural facade bays in addition to the assembler's balanced
+## shallow bays/bump-outs. It uses at least one complete 3 m gabled bay. The
+## partial-height oriel remains the bounded fallback wherever that larger
+## measured envelope cannot fit.
+const MEASURED_OUTCROP_BAYS := 3
 
 static var _built: SettlementFabricPlan
 static var _solved := false
@@ -34,7 +36,7 @@ func _town_with_outcrops() -> SettlementFabricPlan:
 	if program == null:
 		return null
 	var profile := WarrenVillageScaleProfile.for_id(
-		WarrenVillageScaleProfile.COMPACT)
+		WarrenVillageScaleProfile.STANDARD)
 	var spatial := WarrenVolumetricSolver.solve(REVIEW_SEED, {}, program,
 		profile)
 	if spatial == null:
@@ -54,36 +56,35 @@ func _town_with_outcrops() -> SettlementFabricPlan:
 	return _built
 
 
-func test_the_probe_seed_builds_its_measured_embedded_oriel_bays() -> void:
+func test_the_probe_seed_builds_its_measured_roofed_facade_bays() -> void:
 	## TASK F1 FIX 1, finding I4. This used to be
 	## `test_probe_seed_produces_an_outcropping_town` and asserted only that
 	## the plan was non-null, while its name claimed an outcropping existed.
-	## MEASURED: the town builds two `outcrop.embedded.*` oriel bays, no
-	## capped jetty, and no full room outcropping. The floor is pinned so the
-	## bays cannot silently disappear; the family split is reported rather
-	## than pinned, so adding capped jetties back is an improvement this test
-	## welcomes instead of an assertion it breaks.
+	## The complete native-width bay is preferred; a partial-height embedded
+	## oriel may fill a frontage whose exact neighboring roofs or rooms reject
+	## that larger envelope. Both are sealed, roofed construction recipes.
 	var plan := _town_with_outcrops()
 	assert_not_null(plan, "the review seed no longer builds its town")
 	if plan == null:
 		return
 	var units := _outcrop_units(plan)
 	var embedded := 0
-	var capped := 0
+	var full_gabled := 0
 	for unit_value: FabricUnit in units:
 		embedded += int(String(unit_value.recipe_id).begins_with(
 			"outcrop.embedded."))
-		capped += int(plan.recipe(unit_value.recipe_id).has_tag(
-			&"capped_outcropping"))
-	gut.p("one-pass town: outcrop units=%d embedded_oriels=%d capped_jetties=%d"
-		% [units.size(), embedded, capped])
+		full_gabled += int(unit_value.recipe_id in [
+			&"outcrop.blue", &"outcrop.orange", &"outcrop.amber",
+		])
+	gut.p("one-pass town: outcrop units=%d full_gabled=%d embedded_oriels=%d"
+		% [units.size(), full_gabled, embedded])
 	assert_gte(units.size(), MEASURED_OUTCROP_BAYS,
 		"the review seed lost outcroppings it used to build")
-	assert_gte(embedded, MEASURED_OUTCROP_BAYS,
-		"the two measured embedded oriel bays must survive")
-	assert_eq(embedded + capped, units.size(),
-		("every outcropping must be one of the two authored families -- an " \
-			+ "embedded oriel bay or a capped jetty"))
+	assert_gte(full_gabled, 1,
+		"an open eligible facade must receive a complete native-width gabled bay")
+	assert_eq(embedded + full_gabled, units.size(),
+		("every facade bay must be either a complete native-width gabled bay " \
+			+ "or its bounded partial-height oriel fallback"))
 
 
 func test_facade_bays_cannot_fragment_a_partial_roof_campaign() -> void:
@@ -144,9 +145,10 @@ func test_facade_bays_cannot_fragment_a_partial_roof_campaign() -> void:
 
 
 func test_outcrops_are_shallow_projections() -> void:
-	## A projection is a bay, not a room: one cell deep, so it can never read
-	## as a second small building glued to the facade regardless of the parent
-	## face width.
+	## The partial-height oriel stays inside one exterior fine cell. A complete
+	## native-width bay deliberately spans the parent seam row plus one exterior
+	## row, but may project no farther than that first half-cell from the facade.
+	## Neither form is an unconstrained room pasted beyond the building.
 	var plan := _town_with_outcrops()
 	if plan == null:
 		return
@@ -157,13 +159,25 @@ func test_outcrops_are_shallow_projections() -> void:
 		var depth_rows: Dictionary = {}
 		for cell: Vector3i in recipe_value.solid_cells:
 			depth_rows[cell.z] = true
-		assert_eq(depth_rows.size(), 1,
-			("outcrop %s occupies %d cell rows of depth; a bay is one shallow " \
-			+ "module") % [unit_value.stable_id, depth_rows.size()])
-		assert_lte(recipe_value.local_bounds.end.z, 0.25,
-			("outcrop %s protrudes to %.2f m; the measured trim must remain " \
-			+ "inside one shallow half-depth module") % [unit_value.stable_id,
-				recipe_value.local_bounds.end.z])
+		if recipe_value.has_tag(&"native_width_gabled_bay"):
+			assert_eq(depth_rows.size(), 2,
+				("native-width bay %s must own exactly its parent seam row and " \
+					+ "one exterior row") % unit_value.stable_id)
+			assert_lte(recipe_value.local_bounds.end.z, 0.80,
+				("native-width bay %s protrudes to %.2f m; its complete gable " \
+					+ "must stay within the first exterior half-cell") % [
+					unit_value.stable_id, recipe_value.local_bounds.end.z])
+		else:
+			assert_true(recipe_value.has_tag(&"embedded_oriel"),
+				"the compact fallback must be the sealed embedded-oriel recipe")
+			assert_eq(depth_rows.size(), 1,
+				("embedded oriel %s occupies %d depth rows; it must remain one " \
+					+ "shallow module") % [unit_value.stable_id,
+					depth_rows.size()])
+			assert_lte(recipe_value.local_bounds.end.z, 0.25,
+				("embedded oriel %s protrudes to %.2f m; the measured trim must " \
+					+ "remain inside one shallow half-depth module") % [
+					unit_value.stable_id, recipe_value.local_bounds.end.z])
 
 
 func test_corner_bays_wrap_the_parent_corner_as_overlapping_squares() -> void:

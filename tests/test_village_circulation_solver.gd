@@ -81,6 +81,31 @@ func test_aerial_stair_interval_reserves_both_facade_departures() -> void:
 		17.9, 6.0, 7.5, 4.5).is_empty())
 
 
+func test_ground_route_distinguishes_borne_wall_from_overhead_eave() -> void:
+	var placement := VillageMassingPlacement.new()
+	placement.stable_key = &"eaved.house"
+	placement.floor_y = 0.0
+	placement.solid_centre = Vector2.ZERO
+	placement.solid_half_extents = Vector2(2.0, 2.0)
+	placement.solid_angle = 0.0
+	placement.solid_min_y = 0.0
+	placement.solid_max_y = 4.0
+	placement.support_centre = Vector2.ZERO
+	placement.support_half_extents = Vector2(1.0, 1.0)
+	placement.support_angle = 0.0
+	placement.ground_route_support_profile = true
+	var beside_wall: Array[Vector3] = [Vector3(-3.0, 0.0, 1.5),
+		Vector3(3.0, 0.0, 1.5)]
+	assert_false(VillageRouteGeometry.path_hits_solids(beside_wall,
+		[placement], &"street", &"street", 0.2),
+		"a head-clear roof eave may cover the edge of a lane beside its wall")
+	var through_wall: Array[Vector3] = [Vector3(-3.0, 0.0, 0.0),
+		Vector3(3.0, 0.0, 0.0)]
+	assert_true(VillageRouteGeometry.path_hits_solids(through_wall,
+		[placement], &"street", &"street", 0.2),
+		"the same route still collides with the borne lower-storey footprint")
+
+
 func test_rejected_massing_cannot_emit_orphan_circulation() -> void:
 	var program := VillageProgram.compile({}, EnvironmentCatalog.load_default())
 	var plan := VillageCirculationSolver.solve(

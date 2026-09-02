@@ -1,13 +1,13 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=14 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=14 format=3 uid="uid://celjlx1uew4r7"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_kk2e4"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_building_interior_orange_001_piece_00.res" id="2_m86s2"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_building_interior_orange_001_piece_01.res" id="3_pb25c"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_building_interior_orange_001_piece_02.res" id="4_7sro5"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_building_interior_orange_001_piece_03.res" id="5_452ow"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="6_gx60t"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_structures/sfv_building_interior_orange_001_piece_00.res" id="7_dltpx"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="8_2c44r"]
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_kk2e4"]
+[ext_resource type="Shape3D" uid="uid://c33gdkxec5b58" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_building_interior_orange_001_piece_00.res" id="2_m86s2"]
+[ext_resource type="Shape3D" uid="uid://ba7205xejjy68" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_building_interior_orange_001_piece_01.res" id="3_pb25c"]
+[ext_resource type="Shape3D" uid="uid://c22rt14y5hmdb" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_building_interior_orange_001_piece_02.res" id="4_7sro5"]
+[ext_resource type="Shape3D" uid="uid://2aucteigo6py" path="res://terrain/environment/collisions/fantasy_village_structures/sfv_building_interior_orange_001_piece_03.res" id="5_452ow"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="6_gx60t"]
+[ext_resource type="ArrayMesh" uid="uid://1pburuw8721f" path="res://terrain/environment/meshes/fantasy_village_structures/sfv_building_interior_orange_001_piece_00.res" id="7_dltpx"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="8_2c44r"]
 
 [sub_resource type="Resource" id="Resource_oxnpl"]
 script = ExtResource("1_kk2e4")

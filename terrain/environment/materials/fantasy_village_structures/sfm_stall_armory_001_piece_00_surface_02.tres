@@ -1,4 +1,4 @@
-[gd_resource type="StandardMaterial3D" format=3]
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://d0th6ihgaf8bb"]
 
 [resource]
 resource_name = "CANDLE_FIRE"

@@ -34,6 +34,9 @@ func _solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 		failure_reason = "missing program, stable id, unit specs, or sealed public realm"
 		return null
 	var plan := SettlementFabricPlan.new(stable_id)
+	if not plan.set_asset_visual_bounds(_program.asset_visual_bounds):
+		failure_reason = "could not attach measured fabric asset contracts"
+		return null
 	if embedding != null and not plan.set_embedding_plan(embedding):
 		failure_reason = "could not attach staggered embedding lineage"
 		return null
@@ -188,6 +191,10 @@ static func audit_plan(plan: SettlementFabricPlan,
 		"corner_outcropping_count": int(tag_counts.get(&"corner_outcropping", 0)),
 		"skywalk_count": int(tag_counts.get(&"skywalk", 0)),
 		"skywalk_link_count": skywalk_links.size(),
+		# A skywalk may come from the feature grammar or from the maze source's
+		# occupied bridge compound.  Both carry the same construction tag, so the
+		# sealed link count is the one authoritative richness measurement.
+		"enclosed_skywalk_count": skywalk_links.size(),
 		"overhead_occupied_count": int(tag_counts.get(&"overhead_occupied", 0)),
 		"stair_count": int(tag_counts.get(&"stair", 0)),
 		"tent_count": 0,
@@ -219,6 +226,13 @@ static func audit_plan(plan: SettlementFabricPlan,
 		result.merge(plan.solid_void_plan.audit(), true)
 	if plan.embedding_plan != null:
 		result.merge(plan.embedding_plan.audit(), true)
+	# Public-realm and volume audits describe their own feature reservations and
+	# may legitimately carry zero skywalks.  They must not overwrite the final
+	# construction measurement above: the recipe tags are the authoritative facts
+	# for both feature-grammar links and maze bridge compounds.
+	result["skywalk_count"] = int(tag_counts.get(&"skywalk", 0))
+	result["skywalk_link_count"] = skywalk_links.size()
+	result["enclosed_skywalk_count"] = skywalk_links.size()
 	# Generated transition meshes are authoritative public stairs even though
 	# they are not represented by authored stair FabricUnits.
 	result["stair_count"] = maxi(int(result.get("stair_count", 0)),

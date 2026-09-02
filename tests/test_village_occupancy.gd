@@ -128,6 +128,21 @@ func test_declared_walk_network_can_cross_a_structural_owner_seam_only() -> void
 		"walk-network identity never admits a solid intrusion")
 
 
+func test_declared_walk_network_carries_headroom_across_a_floor_seam() -> void:
+	var index := VillageOccupancy.new()
+	assert_true(index.add(_volume(VillageOccupancy.Role.WALK_SURFACE,
+		Vector2.ZERO, Vector2(1.5, 0.75), 0.0, 3.0, 3.2,
+		"urban.floor", "urban", "village.walk")))
+	assert_true(index.add(_volume(VillageOccupancy.Role.HEADROOM,
+		Vector2(0.75, 0.0), Vector2(1.5, 0.75), 0.0, 3.0, 5.4,
+		"edge.street.headroom", "edge.street", "village.walk")),
+		"one declared public route keeps its clear volume across an owner seam")
+	assert_false(index.can_add(_volume(VillageOccupancy.Role.HEADROOM,
+		Vector2(0.75, 0.0), Vector2(1.5, 0.75), 0.0, 3.0, 5.4,
+		"foreign.headroom", "foreign", "other.walk")),
+		"an unrelated route cannot borrow the public-floor seam")
+
+
 func test_walk_guard_can_meet_only_its_declared_public_floor_network() -> void:
 	var index := VillageOccupancy.new()
 	assert_true(index.add(_volume(VillageOccupancy.Role.WALK_SURFACE,

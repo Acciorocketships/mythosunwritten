@@ -18,6 +18,7 @@ var _maximum_radius := MAX_SEARCH_RADIUS
 var _development_limit := -1
 var _has_pinned_super_cell := false
 var _pinned_super_cell := Vector2i.ZERO
+var _include_instances := false
 
 
 func _init() -> void:
@@ -56,12 +57,42 @@ func _init() -> void:
 				continue
 			var record := world.village_plan().record_for(frame)
 			if record == null or record.payload.instance_count == 0:
+				if _has_pinned_super_cell:
+					print("[village_visual_corpus] pinned rejection volume=%s fabric=%s" \
+						% [WarrenVolumetricSolver.last_failure,
+							WarrenSpatialFabricCompiler.last_failure])
 				continue
 			var bucket := "%s/%s" % [record.tier, record.theme]
 			if int(counts.get(bucket, 0)) >= PER_TIER_THEME:
 				continue
-			selected.append(_entry(super_cell, frame, record,
-				program.villages, selected.size(), _seed))
+			var entry := _entry(super_cell, frame, record,
+				program.villages, selected.size(), _seed)
+			if _include_instances:
+				entry["instances"] = _payload_instances_json(record.payload,
+					frame.region)
+				entry["surface_meshes"] = _payload_surfaces_json(record.payload)
+				var fabric := record.urban_fabric.fabric_plan
+				if fabric != null:
+					entry["solid_cells"] = _cell_set_json(
+						fabric.transformed_cells(&"solid"))
+					entry["terrain_bearing_cells"] = _cell_set_json(
+						fabric.transformed_cells(&"terrain_bearing"))
+					entry["retained_cells"] = _cell_set_json(
+						fabric.retained_terrace_cells)
+					entry["planned_plaza_cells"] = _cell_set_json(
+						fabric.planned_plaza_cells)
+					entry["public_surface_cells"] = _surface_cells_json(
+						fabric.surface_plan)
+					entry["public_entrances"] = _entrances_json(
+						fabric.surface_plan)
+					entry["public_guards"] = _guards_json(fabric.surface_plan)
+					var ground_skin := SettlementFabricAssembler \
+						.maze_ground_skin_transaction(fabric)
+					entry["ground_skin_cap_owners"] = _cell_set_json(
+						ground_skin.cap_owners as Dictionary)
+					entry["ground_skin_cap_faces"] = _horizontal_faces_json(
+						(ground_skin.shell as Dictionary).faces as Dictionary)
+			selected.append(entry)
 			counts[bucket] = int(counts.get(bucket, 0)) + 1
 			if _development_limit >= 0 \
 					and selected.size() >= _development_limit:
@@ -119,6 +150,8 @@ func _read_args() -> void:
 			"--limit":
 				if index + 1 < args.size():
 					_development_limit = int(args[index + 1])
+			"--include-instances":
+				_include_instances = true
 			"--super-x":
 				if index + 1 < args.size():
 					_pinned_super_cell.x = int(args[index + 1])
@@ -130,6 +163,170 @@ func _read_args() -> void:
 	assert(_development_limit < 0 or (_development \
 		and _development_limit > 0),
 		"A reduced corpus limit is permitted only in explicit development runs")
+
+
+static func _payload_instances_json(payload: EnvironmentInstancePayload,
+		region: HeightfieldRegion = null) \
+		-> Array[Dictionary]:
+	## Opt-in visual-falsification evidence. Stable IDs and origins let a close-up
+	## be traced back to the procedural claim that produced it without inflating
+	## the normal multi-village corpus manifest.
+	var out: Array[Dictionary] = []
+	for asset_id: StringName in payload.asset_ids():
+		var batch := payload.batches[asset_id] as Dictionary
+		var ids := batch.get("ids", []) as Array
+		for index in batch.transforms.size():
+			var transform := batch.transforms[index] as Transform3D
+			var entry := {
+				"asset_id": String(asset_id),
+				"stable_id": String(ids[index]) if not ids.is_empty() else "",
+				"origin": _v3(transform.origin),
+				"yaw": transform.basis.get_euler().y,
+			}
+			if region != null:
+				entry["terrain_y_at_origin"] = TerrainSurfaceField.surface_y(region,
+					transform.origin.x, transform.origin.z)
+			out.append(entry)
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return String(a.stable_id) < String(b.stable_id))
+	return out
+
+
+static func _payload_surfaces_json(payload: EnvironmentInstancePayload) \
+		-> Array[Dictionary]:
+	## Meshes have no instance transform after the village adapter; publish their
+	## exact finished bounds so a surface hidden by a retained cap can be
+	## distinguished from a surface generated at the wrong elevation.
+	var out: Array[Dictionary] = []
+	for mesh: Dictionary in payload.surface_meshes:
+		var vertices := mesh.vertices as PackedVector3Array
+		if vertices.is_empty():
+			continue
+		var bounds := AABB(vertices[0], Vector3.ZERO)
+		for index in range(1, vertices.size()):
+			bounds = bounds.expand(vertices[index])
+		var logical: Array[Array] = []
+		var logical_sources := mesh.get("logical_cells", []) as Array
+		var heights: Array[Dictionary] = []
+		var color_summary: Dictionary = {}
+		var vertices_per_cell := vertices.size() / logical_sources.size() \
+			if not logical_sources.is_empty() else 0
+		for logical_index in logical_sources.size():
+			var cell_value: Variant = logical_sources[logical_index]
+			var cell := cell_value as Vector3i
+			logical.append([cell.x, cell.y, cell.z])
+			if vertices_per_cell > 0:
+				var minimum_y := INF
+				var maximum_y := -INF
+				for vertex_index in range(logical_index * vertices_per_cell,
+						(logical_index + 1) * vertices_per_cell):
+					minimum_y = minf(minimum_y, vertices[vertex_index].y)
+					maximum_y = maxf(maximum_y, vertices[vertex_index].y)
+				heights.append({"cell": [cell.x, cell.y, cell.z],
+					"minimum_y": minimum_y, "maximum_y": maximum_y})
+		if mesh.has("colors"):
+			var colors := mesh.colors as PackedColorArray
+			if not colors.is_empty():
+				var minimum := Color(INF, INF, INF, INF)
+				var maximum := Color(-INF, -INF, -INF, -INF)
+				for color: Color in colors:
+					minimum.r = minf(minimum.r, color.r)
+					minimum.g = minf(minimum.g, color.g)
+					minimum.b = minf(minimum.b, color.b)
+					minimum.a = minf(minimum.a, color.a)
+					maximum.r = maxf(maximum.r, color.r)
+					maximum.g = maxf(maximum.g, color.g)
+					maximum.b = maxf(maximum.b, color.b)
+					maximum.a = maxf(maximum.a, color.a)
+				color_summary = {
+					"first": [colors[0].r, colors[0].g, colors[0].b,
+						colors[0].a],
+					"minimum": [minimum.r, minimum.g, minimum.b, minimum.a],
+					"maximum": [maximum.r, maximum.g, maximum.b, maximum.a],
+				}
+		out.append({
+			"stable_id": String(mesh.get("stable_id", "")),
+			"terrain_ground": bool(mesh.get("terrain_ground", false)),
+			"visual_only": bool(mesh.get("visual_only", false)),
+			"bounds": _aabb_json(bounds),
+			"logical_cells": logical,
+			"logical_cell_heights": heights,
+			"color_summary": color_summary,
+		})
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return String(a.stable_id) < String(b.stable_id))
+	return out
+
+
+static func _cell_set_json(cells: Dictionary) -> Array[Array]:
+	var ordered: Array[Vector3i] = []
+	ordered.assign(cells.keys())
+	ordered.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		return a.y < b.y if a.y != b.y else a.z < b.z \
+			if a.z != b.z else a.x < b.x)
+	var out: Array[Array] = []
+	for cell: Vector3i in ordered:
+		out.append([cell.x, cell.y, cell.z])
+	return out
+
+
+static func _horizontal_faces_json(faces: Dictionary) -> Array[Array]:
+	var ordered: Array[Vector4i] = []
+	for key_value: Variant in faces.keys():
+		var key := key_value as Vector4i
+		if key.w >= SettlementFabricAssembler.FACE_DIRECTIONS.size():
+			ordered.append(key)
+	ordered.sort_custom(func(a: Vector4i, b: Vector4i) -> bool:
+		return a.y < b.y if a.y != b.y else a.z < b.z \
+			if a.z != b.z else a.x < b.x if a.x != b.x else a.w < b.w)
+	var out: Array[Array] = []
+	for key: Vector4i in ordered:
+		out.append([key.x, key.y, key.z, key.w])
+	return out
+
+
+static func _surface_cells_json(surface: PublicRealmSurfacePlan) -> Dictionary:
+	var out: Dictionary = {}
+	if surface == null:
+		return out
+	for kind_value: Variant in PublicRealmSurfacePlan.SurfaceKind.values():
+		var kind := int(kind_value)
+		var cells: Dictionary = {}
+		for cell: Vector3i in surface.cells_for_kind(kind):
+			cells[cell] = true
+		out[str(kind)] = _cell_set_json(cells)
+	return out
+
+
+static func _entrances_json(surface: PublicRealmSurfacePlan) \
+		-> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if surface == null:
+		return out
+	for entrance: Dictionary in surface.entrance_records:
+		var threshold := entrance.threshold_cell as Vector3i
+		var landing := entrance.landing_cell as Vector3i
+		var facing := entrance.facing as Vector3i
+		var openings: Array[Array] = []
+		for cell_value: Variant in entrance.get("guard_opening_cells", []) as Array:
+			var cell := cell_value as Vector3i
+			openings.append([cell.x, cell.y, cell.z])
+		out.append({"stable_id": String(entrance.stable_id),
+			"threshold": [threshold.x, threshold.y, threshold.z],
+			"landing": [landing.x, landing.y, landing.z],
+			"facing": [facing.x, facing.y, facing.z],
+			"served": bool(entrance.served), "guard_openings": openings})
+	return out
+
+
+static func _guards_json(surface: PublicRealmSurfacePlan) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if surface == null:
+		return out
+	for segment: Dictionary in surface.guard_segments:
+		out.append({"stable_key": String(segment.stable_key),
+			"a": _v3(segment.a as Vector3), "b": _v3(segment.b as Vector3)})
+	return out
 
 
 static func _empty_counts() -> Dictionary:
@@ -235,7 +432,8 @@ static func _entry(super_cell: Vector2i, frame: VillageFrame,
 	var sectional := record.urban_fabric.generation_kind in [
 		VillageUrbanFabricPlan.GenerationKind.SECTIONAL_WARREN,
 		VillageUrbanFabricPlan.GenerationKind.VOLUMETRIC_WARREN]
-	var views := _sectional_views(frame, record, centre_y) if sectional \
+	var views := _sectional_views(frame, record, program, buildings,
+		centre_y) if sectional \
 		else _views(frame, record, program, buildings, props, foundations,
 			centre_y)
 	var block_local := Vector2(fposmod(frame.centre.x,
@@ -243,7 +441,7 @@ static func _entry(super_cell: Vector2i, frame: VillageFrame,
 		TerrainChunkMesher.CHUNK_WORLD))
 	if sectional:
 		return _sectional_entry(super_cell, frame, record, index, world_seed,
-			assets, foundation_count, buildings, props, foundations,
+			program, assets, foundation_count, buildings, props, foundations,
 			urban_placements, views, block_local, centre_y)
 	return {
 		"review_index": index,
@@ -310,7 +508,7 @@ static func _entry(super_cell: Vector2i, frame: VillageFrame,
 
 static func _sectional_entry(super_cell: Vector2i, frame: VillageFrame,
 		record: VillageRecord, index: int, world_seed: int,
-		assets: Array[String], foundation_count: int,
+		program: VillageProgram, assets: Array[String], foundation_count: int,
 		buildings: Array[Dictionary], props: Array[Dictionary],
 		foundations: Array[Dictionary], urban_placements: Array[Dictionary],
 		views: Array[Dictionary], block_local: Vector2, centre_y: float
@@ -321,7 +519,15 @@ static func _sectional_entry(super_cell: Vector2i, frame: VillageFrame,
 			"transforms", []).size())
 	var railing_count := int((record.payload.batches.get(
 		SettlementFabricAssembler.PLANK_RAILING, {}) as Dictionary).get(
-			"transforms", []).size())
+		"transforms", []).size())
+	var outskirts_count := record.outskirts.placements.size() \
+		if record.outskirts != null else 0
+	var outskirts_route_stair_count := record.outskirts.route_stair_count \
+		if record.outskirts != null else 0
+	var outskirts_houses := _outskirts_shelters_json(record.outskirts,
+		program, record.stable_id) if record.outskirts != null else []
+	var outskirts_audit := record.outskirts.audit \
+		if record.outskirts != null else []
 	return {
 		"review_index": index,
 		"seed": world_seed,
@@ -381,6 +587,73 @@ static func _sectional_entry(super_cell: Vector2i, frame: VillageFrame,
 			"visual_quality_target_met": bool(audit.get(
 				"visual_quality_target_met", false)),
 		},
+		# Visual review needs the same sealed construction evidence as the tests.
+		# Keep these counts beside each image target so a distant or occluded feature
+		# cannot satisfy the town's richness contract invisibly.
+		"sectional_feature_audit": {
+			"lattice_world_transform": _transform_json(
+				record.urban_fabric.world_transform),
+			"scale_profile_id": String(audit.get("scale_profile_id", "")),
+			"enclosed_skywalk_count": int(audit.get(
+				"enclosed_skywalk_count", 0)),
+			"maze_skywalk_span_count": int(audit.get(
+				"maze_skywalk_span_count", 0)),
+			"maze_enclosed_skywalk_span_count": int(audit.get(
+				"maze_enclosed_skywalk_span_count", 0)),
+			"maze_skywalk_candidate_count": int(audit.get(
+				"maze_skywalk_candidate_count", 0)),
+			"maze_facade_bay_count": int(audit.get(
+				"maze_facade_bay_count", 0)),
+			"maze_facade_bump_out_count": int(audit.get(
+				"maze_facade_bump_out_count", 0)),
+			"maze_facade_outcrop_bracket_count": int(audit.get(
+				"maze_facade_outcrop_bracket_count", 0)),
+			"facade_bay_count": int(audit.get("facade_bay_count", 0)),
+			"dormered_roof_unit_count": int(audit.get(
+				"dormered_roof_unit_count", 0)),
+			"continuous_roof_component_count": int(
+				record.urban_fabric.fabric_plan.audit.get(
+					"continuous_roof_component_count", 0)),
+			"continuous_roof_eligible_run_count": int(
+				record.urban_fabric.fabric_plan.audit.get(
+					"continuous_roof_eligible_run_count", 0)),
+			"continuous_roof_joined_run_count": int(
+				record.urban_fabric.fabric_plan.audit.get(
+					"continuous_roof_joined_run_count", 0)),
+			"continuous_roof_internal_gable_count": int(
+				record.urban_fabric.fabric_plan.audit.get(
+					"continuous_roof_internal_gable_count", 0)),
+			"continuous_roof_normalized_repeat_count": int(
+				record.urban_fabric.fabric_plan.audit.get(
+					"continuous_roof_normalized_repeat_count", 0)),
+			"roof_neighborhood_join_count": int(audit.get(
+				"roof_neighborhood_join_count", 0)),
+			"continuous_ridge_join_count": int(audit.get(
+				"continuous_ridge_join_count", 0)),
+			"maze_retained_rock_cells": int(audit.get(
+				"maze_retained_rock_cells", 0)),
+			"maze_retained_rock_stone_roof_cells": int(audit.get(
+				"maze_retained_rock_stone_roof_cells", 0)),
+			"maze_retained_unroomed_plot_stone_cells": int(audit.get(
+				"maze_retained_unroomed_plot_stone_cells", 0)),
+			"maze_released_singleton_roof_band_cells": int(audit.get(
+				"maze_released_singleton_roof_band_cells", 0)),
+			"spatial_feature_kinds": _spatial_feature_kind_counts(
+				record.urban_fabric.volumetric_spatial),
+			"room_projection_features": _room_projection_feature_audit(
+				record.urban_fabric.volumetric_spatial),
+			"roof_alignment": _roof_alignment_audit(
+				record.urban_fabric.fabric_plan),
+			"connected_roof_conflicts": record.urban_fabric.fabric_plan \
+				.connected_visual_envelope_conflicts(),
+			"roof_units": _roof_unit_geometry_audit(
+				record.urban_fabric.fabric_plan),
+			"retained_top_courses": _retained_top_course_audit(
+				record.urban_fabric.fabric_plan,
+				record.urban_fabric.volumetric_spatial),
+			"continuous_roof_runs": _continuous_roof_run_audit(
+				record.urban_fabric.fabric_plan),
+		},
 		# TASK F1. The legacy `volumetric_town` lineage died with the searched
 		# pipeline and nothing production builds carries one, so these two
 		# diagnostics have no source left to read.
@@ -419,10 +692,12 @@ static func _sectional_entry(super_cell: Vector2i, frame: VillageFrame,
 		"urban_links": [],
 		"urban_platforms": [],
 		"urban_stair_runs": [],
-		"outskirts_shelter_count": 0,
-		"outskirts_route_stair_count": 0,
-		"outskirts_shelters": [],
-		"outskirts_audit": {},
+		# These schema keys retain their historical names so old capture indexes
+		# remain readable; every current entry is a reviewed complete house.
+		"outskirts_shelter_count": outskirts_count,
+		"outskirts_route_stair_count": outskirts_route_stair_count,
+		"outskirts_shelters": outskirts_houses,
+		"outskirts_audit": outskirts_audit,
 		"assets": assets,
 		"buildings": buildings,
 		"props": props,
@@ -430,6 +705,304 @@ static func _sectional_entry(super_cell: Vector2i, frame: VillageFrame,
 		"urban_placements": urban_placements,
 		"views": views,
 	}
+
+
+static func _roof_alignment_audit(plan: SettlementFabricPlan) -> Dictionary:
+	## Compare each complete pitched crown's measured visual centre and bearing
+	## plane with the lattice footprint it claims. This is review evidence, not a
+	## visual heuristic: a roof that is horizontally displaced or vertically
+	## floating cannot hide behind a valid socket bond.
+	var out := {"audited_count": 0, "misaligned_count": 0,
+		"max_horizontal_offset": 0.0, "max_bearing_offset": 0.0,
+		"details": [] as Array[Dictionary]}
+	if plan == null:
+		return out
+	for unit: FabricUnit in plan.units:
+		var recipe := plan.recipe(unit.recipe_id)
+		if recipe == null:
+			continue
+		# Compact runs include occupied bridge-house crowns. Audit the exact roof
+		# subassembly rather than the recipe's merged room+roof box, so an internal
+		# crown cannot pass merely because the complete building remains centred.
+		if not recipe.compact_roof_runs.is_empty():
+			var placement_index_by_id: Dictionary = {}
+			for index in recipe.placements.size():
+				placement_index_by_id[StringName(recipe.placements[index].id)] = index
+			for run: Dictionary in recipe.compact_roof_runs:
+				var roof_bounds := AABB()
+				var has_roof_bounds := false
+				for bay: Dictionary in run.bays as Array:
+					for placement_value: Variant in bay.placement_ids as Array:
+						var placement_id := StringName(placement_value)
+						var placement_index := int(placement_index_by_id.get(
+							placement_id, -1))
+						if placement_index < 0:
+							continue
+						var bounds := recipe.placement_bounds[placement_index]
+						roof_bounds = bounds if not has_roof_bounds \
+							else roof_bounds.merge(bounds)
+						has_roof_bounds = true
+				if not has_roof_bounds:
+					continue
+				var start := run.local_start as Vector3
+				var end := run.local_end as Vector3
+				var axis_x := absf(end.x - start.x) > absf(end.z - start.z)
+				var expected_local := (start + end) * 0.5
+				if axis_x:
+					expected_local.z = (float(run.cross_min) \
+						+ float(run.cross_max)) * 0.5
+				else:
+					expected_local.x = (float(run.cross_min) \
+						+ float(run.cross_max)) * 0.5
+				var expected := unit.transform() * expected_local
+				var visual := unit.transform() * roof_bounds
+				_record_roof_alignment(out, unit, expected,
+					visual, StringName(run.id))
+			continue
+		if not recipe.has_tag(&"roof") or not recipe.has_tag(&"pitched_roof") \
+				or recipe.solid_cells.is_empty():
+			continue
+		var local_min := Vector3(INF, INF, INF)
+		var local_max := Vector3(-INF, -INF, -INF)
+		for cell: Vector3i in recipe.solid_cells:
+			var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
+			local_min = local_min.min(centre - Vector3.ONE \
+				* FabricRecipe.CELL_SIZE * 0.5)
+			local_max = local_max.max(centre + Vector3.ONE \
+				* FabricRecipe.CELL_SIZE * 0.5)
+		var logical := unit.transform() * AABB(local_min, local_max - local_min)
+		var visual := unit.transform() * recipe.local_bounds
+		# Roof solids name the band whose centre is the wall-top bearing plane;
+		# subtracting half a cell here would report every correctly seated crown as
+		# floating by exactly 0.75 m.
+		var bearing_y := unit.transform().origin.y + float(local_min.y \
+			+ FabricRecipe.CELL_SIZE * 0.5)
+		_record_roof_alignment(out, unit, Vector3(logical.get_center().x,
+			bearing_y, logical.get_center().z), visual)
+	return out
+
+
+static func _record_roof_alignment(out: Dictionary, unit: FabricUnit,
+		expected: Vector3, visual: AABB, run_id: StringName = &"") -> void:
+	var horizontal_offset := Vector2(visual.get_center().x,
+		visual.get_center().z).distance_to(Vector2(expected.x, expected.z))
+	var bearing_offset := absf(visual.position.y - expected.y)
+	out.audited_count = int(out.audited_count) + 1
+	out.max_horizontal_offset = maxf(float(out.max_horizontal_offset),
+		horizontal_offset)
+	out.max_bearing_offset = maxf(float(out.max_bearing_offset),
+		bearing_offset)
+	if horizontal_offset <= 0.01 and bearing_offset <= 0.01:
+		return
+	out.misaligned_count = int(out.misaligned_count) + 1
+	if (out.details as Array).size() < 24:
+		(out.details as Array).append({"unit_id": String(unit.stable_id),
+			"recipe_id": String(unit.recipe_id), "run_id": String(run_id),
+			"horizontal_offset": horizontal_offset,
+			"bearing_offset": bearing_offset})
+
+
+static func _roof_unit_geometry_audit(plan: SettlementFabricPlan) -> Array[Dictionary]:
+	## Compact machine-readable roof census for fixed-seed visual review. It
+	## records the sealed construction contracts, not a screenshot inference, so
+	## an apparent seam can be traced back to the exact recipe and placement.
+	var out: Array[Dictionary] = []
+	if plan == null:
+		return out
+	for unit: FabricUnit in plan.units:
+		var recipe_value := plan.recipe(unit.recipe_id)
+		if recipe_value == null or not recipe_value.has_tag(&"roof") \
+				and not recipe_value.has_tag(&"integrated_pitched_roof"):
+			continue
+		var roof_placements: Array[Dictionary] = []
+		for index in recipe_value.placements.size():
+			var placement := recipe_value.placements[index] as Dictionary
+			if not String(placement.id).begins_with("roof") \
+					and not String(placement.id).begins_with("gable") \
+					and not String(placement.asset_id).contains(".roof.") \
+					and StringName(placement.asset_id) != SettlementFabricProgram.GABLE:
+				continue
+			var pose := unit.transform() * (placement.transform as Transform3D)
+			var bounds := unit.transform() * recipe_value.placement_bounds[index]
+			roof_placements.append({
+				"placement_id": String(placement.id),
+				"asset_id": String(placement.asset_id),
+				"origin": [pose.origin.x, pose.origin.y, pose.origin.z],
+				"bounds_position": [bounds.position.x, bounds.position.y,
+					bounds.position.z],
+				"bounds_size": [bounds.size.x, bounds.size.y, bounds.size.z],
+			})
+		out.append({
+			"unit_id": String(unit.stable_id),
+			"recipe_id": String(unit.recipe_id),
+			"parent_ids": Array(unit.parent_ids).map(
+				func(value: StringName) -> String: return String(value)),
+			"lattice_origin": [unit.lattice_origin.x, unit.lattice_origin.y,
+				unit.lattice_origin.z],
+			"yaw_quarters": unit.yaw_quarters,
+			"unit_bounds": _aabb_json(unit.bounds),
+			"parent_bounds": _roof_parent_bounds_json(plan, unit),
+			"parent_placements": _roof_parent_placements_json(plan, unit),
+			"construction_run_count": recipe_value.construction_runs.size(),
+			"placements": roof_placements,
+		})
+	return out
+
+
+static func _roof_parent_bounds_json(plan: SettlementFabricPlan,
+		unit: FabricUnit) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for parent_id: StringName in unit.parent_ids:
+		var parent := plan.unit(parent_id)
+		if parent == null:
+			continue
+		out.append({"unit_id": String(parent.stable_id),
+			"recipe_id": String(parent.recipe_id),
+			"bounds": _aabb_json(parent.bounds)})
+	return out
+
+
+static func _roof_parent_placements_json(plan: SettlementFabricPlan,
+		unit: FabricUnit) -> Array[Dictionary]:
+	## Keep visual review tied to the construction below the roof. A roof can be
+	## centred on its logical plate while an authored floor/eave placement in its
+	## parent protrudes beyond that plate; publishing the exact per-placement
+	## bounds makes that category distinguishable from a displaced crown.
+	var out: Array[Dictionary] = []
+	for parent_id: StringName in unit.parent_ids:
+		var parent := plan.unit(parent_id)
+		if parent == null:
+			continue
+		var parent_recipe := plan.recipe(parent.recipe_id)
+		if parent_recipe == null:
+			continue
+		for index in parent_recipe.placements.size():
+			var placement := parent_recipe.placements[index] as Dictionary
+			if parent.suppressed_placement_ids.has(StringName(placement.id)):
+				continue
+			var pose := parent.transform() * (placement.transform as Transform3D)
+			var bounds := parent.transform() \
+				* parent_recipe.placement_bounds[index]
+			out.append({
+				"parent_unit_id": String(parent.stable_id),
+				"placement_id": String(placement.id),
+				"asset_id": String(placement.asset_id),
+				"origin": [pose.origin.x, pose.origin.y, pose.origin.z],
+				"bounds_position": [bounds.position.x, bounds.position.y,
+					bounds.position.z],
+				"bounds_size": [bounds.size.x, bounds.size.y, bounds.size.z],
+			})
+	return out
+
+
+static func _room_projection_feature_audit(spatial: WarrenSpatialPlan) \
+		-> Array[Dictionary]:
+	## Publish the producer facts behind exposed upper floorplates. This keeps a
+	## visual floor-edge complaint traceable to its exact lower/upper bearing pair
+	## and support course instead of guessing from the rendered plank colour.
+	var out: Array[Dictionary] = []
+	if spatial == null:
+		return out
+	for feature: WarrenFeatureReservation in spatial.features:
+		if feature.kind not in [&"room_outcropping", &"room_overhang_support",
+				&"arcade_overhang_support", &"frontier_gateway_support"]:
+			continue
+		out.append({
+			"feature_id": String(feature.stable_id),
+			"kind": String(feature.kind),
+			"audit_text": str(feature.audit),
+			"construction_records_text": str(feature.construction_records),
+		})
+	return out
+
+
+static func _retained_top_course_audit(plan: SettlementFabricPlan,
+		spatial: WarrenSpatialPlan = null) \
+		-> Array[Dictionary]:
+	## Publish exposed retained-stone crowns on the same authored macro lattice
+	## the erosion pass reasons about. This is diagnostic evidence for visual
+	## review: it cannot alter which stone survives or infer a repair from a mesh.
+	var retained := plan.retained_terrace_cells
+	var macros: Dictionary = {}
+	for cell_value: Variant in retained.keys():
+		var cell := cell_value as Vector3i
+		if retained.has(cell + Vector3i.UP):
+			continue
+		var macro := Vector3i(floori(float(cell.x) * 0.5), cell.y,
+			floori(float(cell.z) * 0.5))
+		macros[macro] = int(macros.get(macro, 0)) + 1
+	var ordered: Array[Vector3i] = []
+	ordered.assign(macros.keys())
+	ordered.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		return a.y > b.y if a.y != b.y else str(a) < str(b))
+	var out: Array[Dictionary] = []
+	for macro: Vector3i in ordered:
+		var neighbours := 0
+		for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
+				Vector2i.UP, Vector2i.DOWN]:
+			neighbours += int(macros.has(Vector3i(macro.x + direction.x,
+				macro.y, macro.z + direction.y)))
+		var above_owners: Dictionary = {}
+		var above_uses: Dictionary = {}
+		if spatial != null:
+			for fine: Vector3i in WarrenVolumetricSolver._fine_square(
+					macro + Vector3i.UP):
+				var use := spatial.grid.use_at(fine)
+				above_uses[use] = int(above_uses.get(use, 0)) + 1
+				var owner := spatial.grid.owner_name_at(fine)
+				if not owner.is_empty():
+					above_owners[owner] = int(above_owners.get(owner, 0)) + 1
+		out.append({"macro": [macro.x, macro.y, macro.z],
+			"fine_cell_count": int(macros[macro]),
+			"same_height_neighbour_count": neighbours,
+			"above_uses": above_uses,
+			"above_owners": above_owners})
+	return out
+
+
+static func _continuous_roof_run_audit(plan: SettlementFabricPlan) \
+		-> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if plan == null or plan.continuous_roof_plan == null:
+		return out
+	for run: Dictionary in plan.continuous_roof_plan.compiled_runs:
+		out.append({
+			"unit_id": String(run.get("unit_id", "")),
+			"run_id": String(run.get("run_id", "")),
+			"kind": String(run.get("kind", "")),
+			"start": _v3(run.start as Vector3),
+			"end": _v3(run.end as Vector3),
+			"axis_x": bool(run.axis_x),
+			"cross_min": float(run.cross_min),
+			"cross_max": float(run.cross_max),
+			"base_y": float(run.base_y),
+			"peak_y": float(run.peak_y),
+			"repeat_pitch": float(run.repeat_pitch),
+			"seam_profile": String(run.seam_profile),
+			"authored_material": String(run.get("authored_material", "")),
+		})
+	return out
+
+
+static func _aabb_json(bounds: AABB) -> Dictionary:
+	return {"position": _v3(bounds.position), "size": _v3(bounds.size)}
+
+
+static func _transform_json(transform: Transform3D) -> Dictionary:
+	return {"origin": _v3(transform.origin),
+		"basis_x": _v3(transform.basis.x),
+		"basis_y": _v3(transform.basis.y),
+		"basis_z": _v3(transform.basis.z)}
+
+
+static func _spatial_feature_kind_counts(plan: WarrenSpatialPlan) -> Dictionary:
+	var out: Dictionary = {}
+	if plan == null:
+		return out
+	for feature: WarrenFeatureReservation in plan.features:
+		var key := String(feature.kind)
+		out[key] = int(out.get(key, 0)) + 1
+	return out
 
 static func _string_dictionary(source: Dictionary) -> Dictionary:
 	var out: Dictionary = {}
@@ -628,6 +1201,7 @@ static func _elevated_undercroft_json(source: Dictionary) -> Dictionary:
 
 
 static func _sectional_views(frame: VillageFrame, record: VillageRecord,
+		program: VillageProgram, buildings: Array[Dictionary],
 		ground_y: float) -> Array[Dictionary]:
 	## The production warren has no parallel legacy links/platform objects.  Its
 	## sealed fabric is reviewed from the record bounds and actual transformed
@@ -726,7 +1300,215 @@ static func _sectional_views(frame: VillageFrame, record: VillageRecord,
 			maximum_y + span * 0.65,
 			xz_centre.y + cross.y * span * 0.35),
 		centre, 58.0, span)
+	_append_sectional_feature_views(out, record)
+	_append_outskirts_views(out, frame, record, buildings, program)
 	return out
+
+
+static func _append_sectional_feature_views(out: Array[Dictionary],
+		record: VillageRecord) -> void:
+	## Whole-town orbits can hide a valid bridge behind one of its endpoint
+	## buildings. Frame sealed feature records themselves so every occupied
+	## skywalk is judged as a two-ended span, then sample the facade-relief pass
+	## from below/oblique where its depth and connected bearers are legible.
+	var urban := record.urban_fabric
+	if urban == null or urban.fabric_plan == null:
+		return
+	var world_from_lattice := urban.world_transform
+	var fabric := urban.fabric_plan
+	var skywalk_index := 0
+	if urban.volumetric_spatial != null:
+		for feature: WarrenFeatureReservation in urban.volumetric_spatial.features:
+			if feature.kind not in [&"enclosed_skywalk", &"public_skybridge"] \
+					or feature.reserved_cells.is_empty():
+				continue
+			var local_target := Vector3.ZERO
+			for cell: Vector3i in feature.reserved_cells:
+				local_target += Vector3(cell) * FabricRecipe.CELL_SIZE
+			local_target /= float(feature.reserved_cells.size())
+			var local_along := Vector3.FORWARD
+			if feature.endpoints.size() >= 2:
+				var first := (feature.endpoints[0] as Dictionary).cell as Vector3i
+				var last := (feature.endpoints[-1] as Dictionary).cell as Vector3i
+				local_along = Vector3(last.x - first.x, 0.0,
+					last.z - first.z).normalized()
+			var target := world_from_lattice * local_target
+			var along := (world_from_lattice.basis * local_along).normalized()
+			var outward := Vector3(-along.z, 0.0, along.x).normalized()
+			_add_view(out, "warren_skywalk_%02d" % skywalk_index,
+				target + outward * 9.0 - along * 2.5 + Vector3.UP * 1.5,
+				target + Vector3.UP * 0.35, 58.0, 7.0)
+			skywalk_index += 1
+	# Occupied bridge-houses are incorporated into the ordinary FabricUnit DAG
+	# after their source reservation commits. The exact `spatial.maze_bridge.NN`
+	# owner and measured recipe bounds survive there even though the transient
+	# reservation is no longer copied into `spatial.features`.
+	for unit: FabricUnit in fabric.units:
+		if not String(unit.stable_id).contains("spatial.maze_bridge."):
+			continue
+		var recipe := fabric.recipe(unit.recipe_id)
+		if recipe == null:
+			continue
+		var local_bounds := unit.transform() * recipe.local_bounds
+		var local_target := local_bounds.get_center()
+		var local_along := Vector3.RIGHT if local_bounds.size.x \
+			>= local_bounds.size.z else Vector3.FORWARD
+		if unit.parent_ids.size() >= 2:
+			var first_parent := fabric.unit(unit.parent_ids[0])
+			var second_parent := fabric.unit(unit.parent_ids[1])
+			if first_parent != null and second_parent != null:
+				var parent_delta := second_parent.bounds.get_center() \
+					- first_parent.bounds.get_center()
+				parent_delta.y = 0.0
+				if parent_delta.length_squared() > 0.01:
+					local_along = parent_delta.normalized()
+		var target := world_from_lattice * local_target
+		var along := (world_from_lattice.basis * local_along).normalized()
+		var outward := Vector3(-along.z, 0.0, along.x).normalized()
+		var world_scale := maxf(world_from_lattice.basis.x.length(),
+			world_from_lattice.basis.z.length())
+		var subject_span := maxf(local_bounds.size.x,
+			local_bounds.size.z) * world_scale
+		var orbit := maxf(22.0, subject_span * 2.5)
+		_add_view(out, "warren_skywalk_%02d" % skywalk_index,
+			target + outward * orbit - along * orbit * 0.2 \
+				+ Vector3.UP * maxf(4.0, subject_span * 0.35),
+			target, 52.0, maxf(8.0, subject_span))
+		skywalk_index += 1
+	# Integrated bridge-house crowns used to escape the roof audit because the
+	# roof is part of a room recipe. Give every such crown its own bounds-derived
+	# side view. This keeps the highest roofs inside the frame and makes either an
+	# offset crown or a roof buried in an endpoint solid impossible to miss.
+	var integrated_roof_index := 0
+	for unit: FabricUnit in fabric.units:
+		var recipe := fabric.recipe(unit.recipe_id)
+		if recipe == null or not recipe.has_tag(&"integrated_pitched_roof"):
+			continue
+		var roof_bounds := _unit_roof_placement_bounds(unit, recipe)
+		if roof_bounds.size == Vector3.ZERO:
+			continue
+		_append_roof_detail_view(out, world_from_lattice, roof_bounds,
+			"warren_integrated_roof_%02d" % integrated_roof_index)
+		integrated_roof_index += 1
+	# A terminal low bay is two tiled slopes meeting at one shared ridge. Close
+	# views of the exact low subassembly falsify the former inverted-valley bug;
+	# inspecting only the recipe's complete logical box would conceal it.
+	var shallow_gable_index := 0
+	for unit: FabricUnit in fabric.units:
+		var recipe := fabric.recipe(unit.recipe_id)
+		if recipe == null or not recipe.has_tag(&"terminal_step_gable"):
+			continue
+		var low_bounds := _unit_roof_placement_bounds(unit, recipe, true)
+		if low_bounds.size == Vector3.ZERO:
+			continue
+		_append_roof_detail_view(out, world_from_lattice, low_bounds,
+			"warren_shallow_gable_%02d" % shallow_gable_index)
+		shallow_gable_index += 1
+	# A whole-town orbit can conceal the exact seam this pass is meant to judge.
+	# Frame every derived continuous crown from its transverse side so the two
+	# exterior ends, all internal bays, and the shared ridge datum are visible in
+	# one fixed-seed image.
+	if fabric.continuous_roof_plan != null:
+		for roof_index in fabric.continuous_roof_plan.components.size():
+			var component := fabric.continuous_roof_plan.components[roof_index]
+			var local_start := component.start as Vector3
+			var local_end := component.end as Vector3
+			var local_along := (local_end - local_start).normalized()
+			var local_outward := Vector3(-local_along.z, 0.0,
+				local_along.x).normalized()
+			var local_target := (local_start + local_end) * 0.5
+			local_target.y = lerpf(float(component.base_y),
+				float(component.peak_y), 0.52)
+			var target := world_from_lattice * local_target
+			var outward := (world_from_lattice.basis * local_outward).normalized()
+			var world_scale := maxf(world_from_lattice.basis.x.length(),
+				world_from_lattice.basis.z.length())
+			var run_span := local_start.distance_to(local_end) * world_scale
+			var orbit := maxf(18.0, run_span * 1.15)
+			_add_view(out, "warren_roof_run_%02d" % roof_index,
+				target + outward * orbit + Vector3.UP * maxf(2.0,
+					run_span * 0.12), target, 48.0, maxf(7.0, run_span))
+	var retained := fabric.retained_terrace_cells
+	var solids := fabric.transformed_cells(&"solid")
+	var paved := SettlementFabricAssembler.public_floor_cells(
+		fabric.surface_plan)
+	var walked := SettlementFabricAssembler.walked_floor_cells(
+		fabric.surface_plan)
+	var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
+		fabric.transformed_cells(&"terrain_bearing"))
+	var spans := SettlementFabricAssembler.maze_skywalk_spans(fabric)
+	var kinds := SettlementFabricAssembler.maze_facade_outcrop_kinds(retained,
+		solids, paved, plinths, walked, {},
+		SettlementFabricAssembler.maze_skywalk_cells(spans))
+	var feature_index := 0
+	for key_value: Variant in kinds.keys():
+		if feature_index >= 8:
+			break
+		var key := key_value as Vector4i
+		var local_outward := Vector3(
+			SettlementFabricAssembler.STONE_FACE_DIRECTIONS[key.w])
+		var local_cross := Vector3(-local_outward.z, 0.0, local_outward.x)
+		var reach := FabricRecipe.CELL_SIZE if int(kinds[key]) \
+			== SettlementFabricAssembler.FacadeOutcrop.BAY \
+			else SettlementFabricAssembler.FACADE_BUMP_REACH
+		var local_boundary := Vector3(key.x, 0.0, key.z) \
+			* FabricRecipe.CELL_SIZE + local_outward \
+			* (FabricRecipe.CELL_SIZE * 0.5) + local_cross \
+			* (FabricRecipe.CELL_SIZE * 0.5)
+		local_boundary.y = float(key.y + 1) * FabricRecipe.CELL_SIZE \
+			- SettlementFabricAssembler.STONE_MODULE_HEIGHT
+		var target := world_from_lattice * (local_boundary \
+			+ local_outward * reach * 0.5)
+		var outward := (world_from_lattice.basis * local_outward).normalized()
+		var cross := (world_from_lattice.basis * local_cross).normalized()
+		var kind_name := "bay" if int(kinds[key]) \
+			== SettlementFabricAssembler.FacadeOutcrop.BAY else "bump"
+		_add_view(out, "warren_outcrop_%s_%02d" % [kind_name, feature_index],
+			target + outward * 16.0 + cross * 5.0 + Vector3.UP * 1.5,
+			target - Vector3.UP * 0.25, 52.0, 7.0)
+		feature_index += 1
+
+
+static func _unit_roof_placement_bounds(unit: FabricUnit,
+		recipe: FabricRecipe, low_only: bool = false) -> AABB:
+	var out := AABB()
+	var has_bounds := false
+	for index in recipe.placements.size():
+		var placement := recipe.placements[index] as Dictionary
+		var placement_id := String(placement.id)
+		var asset_id := String(placement.asset_id)
+		var is_roof := placement_id.begins_with("roof") \
+			or placement_id.begins_with("gable") \
+			or asset_id.contains(".roof.")
+		if not is_roof or low_only and not placement_id.contains(".low."):
+			continue
+		var bounds := unit.transform() * recipe.placement_bounds[index]
+		out = bounds if not has_bounds else out.merge(bounds)
+		has_bounds = true
+	return out
+
+
+static func _append_roof_detail_view(out: Array[Dictionary],
+		world_from_lattice: Transform3D, local_bounds: AABB,
+		view_name: String) -> void:
+	var along := Vector3.RIGHT if local_bounds.size.x >= local_bounds.size.z \
+		else Vector3.FORWARD
+	var outward := Vector3(-along.z, 0.0, along.x)
+	var local_target := local_bounds.get_center() - Vector3.UP * maxf(1.25,
+		local_bounds.size.y * 0.62)
+	var target := world_from_lattice * local_target
+	var world_along := (world_from_lattice.basis * along).normalized()
+	var world_outward := (world_from_lattice.basis * outward).normalized()
+	var world_scale := maxf(world_from_lattice.basis.x.length(),
+		world_from_lattice.basis.z.length())
+	var subject_span := maxf(local_bounds.size.x,
+		local_bounds.size.z) * world_scale
+	var orbit := maxf(18.0, subject_span * 2.15)
+	_add_view(out, view_name,
+		target + world_outward * orbit + world_along * orbit * 0.14 \
+			+ Vector3.UP * maxf(3.0, subject_span * 0.24),
+		target + Vector3.UP * maxf(0.5, subject_span * 0.06), 50.0,
+		maxf(7.0, subject_span))
 
 static func _highest_route_point_index(points: Array[Vector3]) -> int:
 	var result := 0
@@ -798,19 +1580,30 @@ static func _append_outskirts_views(out: Array[Dictionary],
 		buildings: Array[Dictionary], program: VillageProgram) -> void:
 	if record.outskirts == null or not record.outskirts.accepted:
 		return
+	var structural_volumes: Array[VillageOccupancyVolume] = []
+	if record.urban_fabric != null and record.urban_fabric.accepted:
+		structural_volumes = record.urban_fabric.volumes
 	for placement: VillageMassingPlacement in record.outskirts.placements:
-		var target := Vector3(placement.entrance.x,
-			placement.floor_y + 2.4, placement.entrance.y)
-		var side := Vector2(-placement.entrance_outward.y,
-			placement.entrance_outward.x)
-		var preferred := target + _xz(
-			placement.entrance_outward * 18.0 + side * 3.0, 3.2)
+		var house_centre := placement.solid_centre
+		var away := house_centre - frame.centre
+		away = away.normalized() if not away.is_zero_approx() \
+			else -placement.entrance_outward
+		var side := Vector2(-away.y, away.x)
+		# Review the relationship, not an isolated facade. Looking inward from
+		# outside the parcel keeps the prefab, its doorstep lane, and the dense
+		# town in one frame. The old front-on closeup looked away from the city and
+		# could fall back against the subject wall or into a nearby cliff.
+		var preferred_xz := house_centre + away * 24.0 + side * 8.0
+		var preferred := _terrain_eye(frame, preferred_xz, 7.0)
+		var context_target := house_centre - away * 7.0
+		var target := Vector3(context_target.x,
+			placement.floor_y + 3.0, context_target.y)
 		var stable_id := StringName("%s.%s" % [record.stable_id,
 			placement.stable_key])
 		_add_view(out, "outskirts_%s" % _safe_recipe_id(
 			String(placement.stable_key)),
 			_safe_elevated_camera(frame, preferred, target, buildings,
-				program, stable_id), target, 58.0, 8.0)
+				program, stable_id, structural_volumes), target, 64.0, 18.0)
 
 
 static func _append_urban_views(out: Array[Dictionary], frame: VillageFrame,

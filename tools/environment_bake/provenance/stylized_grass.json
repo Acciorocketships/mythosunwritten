@@ -4,6 +4,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/stylized_grass_collection_05.tres",
       "id": "stylized_grass.collection_05",
       "license": "User-provided grass source",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.53171122074127,
+            0.0,
+            -1.55626904964447
+          ],
+          "size": [
+            3.06342244148254,
+            1.17593669891357,
+            3.11253809928894
+          ]
+        },
+        "mesh_bytes": 75443,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1244
+      },
       "pack": "stylized_grass",
       "parameters": {
         "component_ribbon_rows": 3.0,
@@ -30,5 +50,5 @@
   ],
   "license": "User-provided grass source",
   "pack": "stylized_grass",
-  "tool_version": 15
+  "tool_version": 22
 }

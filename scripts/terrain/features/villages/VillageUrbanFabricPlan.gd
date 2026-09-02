@@ -27,6 +27,10 @@ var volumetric_spatial: WarrenSpatialPlan
 ## Review, navigation, and future gameplay consumers use this same authored
 ## frame instead of trying to recover it from render placements or bounds.
 var world_transform := Transform3D.IDENTITY
+## Stable identity of the public circulation union. Later edge districts use
+## this exact fact when they continue a route across the urban/outskirts seam;
+## they never reconstruct an equivalent-looking name from the generation kind.
+var public_walk_network_id: StringName
 ## Terrain-adapter facts remain explicit on generated-fabric records. The route
 ## landing may differ from natural ground only by the character's ordinary
 ## planned step; lower terrain elsewhere is handled by fixed supports.
@@ -93,7 +97,11 @@ func validate(program: VillageProgram, tier: StringName) -> bool:
 
 
 func requires_outskirts() -> bool:
-	return generation_kind == GenerationKind.LEGACY_TERRAIN_MASSING
+	# Sectional diagnostic fixtures retain their self-contained historical
+	# contract. Production volumetric warrens and the legacy terrain-led town
+	# both receive the same optional, separately sealed ground-house edge.
+	return generation_kind in [GenerationKind.LEGACY_TERRAIN_MASSING,
+		GenerationKind.VOLUMETRIC_WARREN]
 
 
 func _validate_sectional_warren(program: VillageProgram) -> bool:

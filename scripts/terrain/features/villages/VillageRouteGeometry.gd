@@ -77,10 +77,33 @@ static func first_solid_hit(samples: Array[Vector3],
 					and _inside_access_corridor(Vector2(a.x, a.z),
 						Vector2(b.x, b.z), half_width, placement):
 				continue
-			if shape.intersects(placement.solid_shape(),
+			if not placement.ground_route_support_profile:
+				if shape.intersects(placement.solid_shape(),
+						VillageMassingProgram.ACCESS_CLEARANCE) \
+						and vertical_overlap(minimum_y, maximum_y,
+							placement.solid_min_y, placement.solid_max_y):
+					return placement.stable_key
+				continue
+			# A complete prefab's measured visual OBB contains its roof eaves.
+			# Projecting that whole box to the ground made a street beside the wall
+			# collide with a harmless overhead eave. The reviewed contact rectangle
+			# is the occupied lower-storey fact; the broader visual OBB becomes a
+			# blocker only above traversal headroom. This is the same two-volume
+			# contract used when the accepted outskirts building is committed.
+			var hits_lower_storey := shape.intersects(
+				placement.support_shape(),
+				VillageMassingProgram.ACCESS_CLEARANCE) \
+				and vertical_overlap(minimum_y, maximum_y,
+					placement.solid_min_y, placement.solid_max_y)
+			var upper_solid_min := maxf(placement.solid_min_y,
+				placement.floor_y + TraversalEnvelope.MIN_HEADROOM)
+			var hits_upper_visual := upper_solid_min \
+				< placement.solid_max_y - 0.001 \
+				and shape.intersects(placement.solid_shape(),
 					VillageMassingProgram.ACCESS_CLEARANCE) \
-					and vertical_overlap(minimum_y, maximum_y,
-						placement.solid_min_y, placement.solid_max_y):
+				and vertical_overlap(minimum_y, maximum_y,
+					upper_solid_min, placement.solid_max_y)
+			if hits_lower_storey or hits_upper_visual:
 				return placement.stable_key
 	return &""
 

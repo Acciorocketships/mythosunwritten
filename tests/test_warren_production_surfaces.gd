@@ -78,6 +78,85 @@ func test_production_surface_bundle_carries_stair_transition_meshes() -> void:
 			PublicRealmSurfacePlan.SurfaceKind.STAIR):
 		assert_true(covered.has(cell),
 			"STAIR claim %s has no production surface mesh" % cell)
+
+
+func test_every_rendered_public_surface_suppresses_retained_stone_caps() -> void:
+	var plan := PublicRealmSurfacePlan.new(&"test.all-cap-owners")
+	var cells: Array[Vector3i] = []
+	for kind: PublicRealmSurfacePlan.SurfaceKind in \
+			PublicRealmSurfacePlan.SurfaceKind.values():
+		var cell := Vector3i(int(kind) * 2, 1, 0)
+		cells.append(cell)
+		assert_true(plan.add_claim(cell, kind,
+			StringName("surface.%d" % int(kind))), plan.last_rejection)
+		if kind == PublicRealmSurfacePlan.SurfaceKind.STAIR:
+			assert_true(plan.add_transition_mesh_payload(_stair_transition_payload(
+				&"test.all-cap-owners.stair", [cell] as Array[Vector3i])))
+	assert_true(plan.seal(), plan.last_rejection)
+	var owners := SettlementFabricAssembler.rendered_surface_cap_cells(plan)
+	assert_eq(owners.size(), cells.size())
+	for cell: Vector3i in cells:
+		assert_true(owners.has(cell),
+			"a rendered public surface may not leave a stone cap in its floor")
+
+
+func test_borne_concave_court_corner_becomes_an_explicit_floor_claim() -> void:
+	var surface := PublicRealmSurfacePlan.new(&"test.court-corner")
+	for cell: Vector3i in [Vector3i.LEFT, Vector3i.BACK,
+			Vector3i.LEFT + Vector3i.BACK]:
+		assert_true(surface.add_claim(cell,
+			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT, &"court"))
+	var structural := {"1:0:0": true}
+	var retained := {Vector3i.DOWN: true}
+	assert_true(PublicRealmSurfaceSolver._close_borne_court_corners(surface,
+		structural, {}, retained))
+	assert_true(surface.has_cell(Vector3i.ZERO),
+		"the supported fourth cell must be floor, not an exposed rock cube")
+	assert_true(surface.derived_claim_cells().has(Vector3i.ZERO),
+		"the closure must stay explicit so final fabric validation can audit it")
+
+
+func test_terrain_cap_is_the_only_top_and_has_no_buried_stone_soffit() -> void:
+	var surface := PublicRealmSurfacePlan.new(&"test.terrain-cap")
+	assert_true(surface.add_claim(Vector3i.UP,
+		PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET, &"plaza"))
+	assert_true(surface.seal(), surface.last_rejection)
+	var fabric := SettlementFabricPlan.new(&"test.terrain-cap.fabric")
+	assert_true(fabric.set_retained_terrace({Vector3i.ZERO: true}))
+	assert_true(fabric.set_planned_plaza({Vector3i.ZERO: true}))
+	assert_true(fabric.set_surface_plan(surface))
+	var transaction := SettlementFabricAssembler.maze_ground_skin_transaction(
+		fabric)
+	var down := SettlementFabricAssembler.STONE_FACE_DIRECTIONS.find(
+		Vector3i.DOWN)
+	var buried_soffit := Vector4i(0, 0, 0, down)
+	for channel: String in ["exposed", "faces", "treatments"]:
+		assert_false((transaction.shell as Dictionary)[channel].has(
+			buried_soffit),
+			"%s may not retain masonry beneath the terrain-parity cap" % channel)
+
+
+func test_transition_mesh_owns_its_retained_riser_without_a_rock_wall() \
+		-> void:
+	var surface := PublicRealmSurfacePlan.new(&"test.transition-riser")
+	var stair_cells: Array[Vector3i] = [Vector3i.UP, Vector3i.RIGHT]
+	for cell: Vector3i in stair_cells:
+		assert_true(surface.add_claim(cell,
+			PublicRealmSurfacePlan.SurfaceKind.STAIR, &"stair"))
+	assert_true(surface.add_transition_mesh_payload(_stair_transition_payload(
+		&"test.transition-riser.mesh", stair_cells)))
+	assert_true(surface.seal(), surface.last_rejection)
+	var fabric := SettlementFabricPlan.new(&"test.transition-riser.fabric")
+	assert_true(fabric.set_retained_terrace({Vector3i.ZERO: true}))
+	assert_true(fabric.set_planned_plaza({}))
+	assert_true(fabric.set_surface_plan(surface))
+	var transaction := SettlementFabricAssembler.maze_ground_skin_transaction(
+		fabric)
+	var face := Vector4i(0, 0, 0,
+		SettlementFabricAssembler.STONE_FACE_DIRECTIONS.find(Vector3i.RIGHT))
+	for channel: String in ["exposed", "faces", "treatments"]:
+		assert_false((transaction.shell as Dictionary)[channel].has(face),
+			"%s may not put a rock wall through one sealed stair mesh" % channel)
 func test_payload_surface_meshes_validate_and_respect_block_ownership() -> void:
 	var payload := EnvironmentInstancePayload.new()
 	var mesh := _stair_transition_payload(&"test.transition.own",

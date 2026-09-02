@@ -1,11 +1,11 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=10 format=3 uid="uid://uokvx4mmbjh5"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_hr8xr"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village/sfv_light_pole_001_piece_00.res" id="2_ve8de"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_q6027"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village/sfv_light_pole_001_piece_00.res" id="4_j5dqe"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village/sfv_light_pole_001_piece_01.res" id="5_luuiw"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="6_fchih"]
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_hr8xr"]
+[ext_resource type="Shape3D" uid="uid://ru5d858su2np" path="res://terrain/environment/collisions/fantasy_village/sfv_light_pole_001_piece_00.res" id="2_ve8de"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_q6027"]
+[ext_resource type="ArrayMesh" uid="uid://dusda07ehy6x0" path="res://terrain/environment/meshes/fantasy_village/sfv_light_pole_001_piece_00.res" id="4_j5dqe"]
+[ext_resource type="ArrayMesh" uid="uid://ca7u0clgrntpx" path="res://terrain/environment/meshes/fantasy_village/sfv_light_pole_001_piece_01.res" id="5_luuiw"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="6_fchih"]
 
 [sub_resource type="Resource" id="Resource_lufpw"]
 script = ExtResource("1_hr8xr")

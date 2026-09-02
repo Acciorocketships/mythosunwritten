@@ -8,6 +8,9 @@ var asset_id: StringName
 var perch: VillageTerrainPerch
 var origin: Vector2
 var yaw: float
+## Uniform authored-to-world scale. Legacy terrain-massing fixtures remain at
+## one; production warren outskirts use the same 2x frame as the dense city.
+var uniform_scale: float = 1.0
 var facade_index: int
 var floor_y: float
 var solid_centre: Vector2
@@ -22,6 +25,10 @@ var solid_max_y: float
 var support_centre: Vector2
 var support_half_extents: Vector2
 var support_angle: float
+## True only after a construction transaction has sealed the reviewed lower
+## support footprint and the broader visual/eave envelope as separate vertical
+## collision facts. Legacy massing keeps its conservative full-height OBB.
+var ground_route_support_profile: bool = false
 var entrance := Vector2.ZERO
 var entrance_outward := Vector2.ZERO
 var entrance_ground_contact := Vector2.ZERO
@@ -42,16 +49,20 @@ var ground_accessible: bool = false
 
 static func from_perch(slot: VillageMassingSlot, spec: VillageAssetSpec,
 		p_perch: VillageTerrainPerch,
-		p_facade_index: int = 0) -> VillageMassingPlacement:
+		p_facade_index: int = 0,
+		p_uniform_scale: float = 1.0) -> VillageMassingPlacement:
 	assert(p_facade_index == 0 or p_facade_index == 1)
+	assert(is_finite(p_uniform_scale) and p_uniform_scale > 0.0)
 	var placement := VillageMassingPlacement.new()
 	placement.stable_key = slot.stable_key
 	placement.asset_id = slot.asset_id
 	placement.perch = p_perch
 	placement.facade_index = p_facade_index
 	placement.yaw = p_perch.yaw + float(p_facade_index) * PI
+	placement.uniform_scale = p_uniform_scale
 	placement.floor_y = p_perch.floor_y
-	var basis := Basis(Vector3.UP, placement.yaw)
+	var basis := Basis(Vector3.UP, placement.yaw).scaled(
+		Vector3.ONE * placement.uniform_scale)
 	var local_contact := spec.ground_contact_local_rect.get_center()
 	var offset := basis * Vector3(local_contact.x, 0.0, local_contact.y)
 	placement.origin = p_perch.anchor - Vector2(offset.x, offset.z)
@@ -65,9 +76,12 @@ static func from_perch(slot: VillageMassingSlot, spec: VillageAssetSpec,
 	placement.support_centre = support.centre
 	placement.support_half_extents = support.half_extents
 	placement.support_angle = support.angle
-	var vertical_origin := placement.floor_y - spec.entrance_floor_local_y
-	placement.solid_min_y = vertical_origin + spec.measured_aabb.position.y
-	placement.solid_max_y = vertical_origin + spec.measured_aabb.end.y
+	var vertical_origin := placement.floor_y \
+		- spec.entrance_floor_local_y * placement.uniform_scale
+	placement.solid_min_y = vertical_origin + spec.measured_aabb.position.y \
+		* placement.uniform_scale
+	placement.solid_max_y = vertical_origin + spec.measured_aabb.end.y \
+		* placement.uniform_scale
 	return placement
 
 
@@ -78,6 +92,7 @@ func copy_for_slot(slot: VillageMassingSlot) -> VillageMassingPlacement:
 	copy.perch = perch
 	copy.origin = origin
 	copy.yaw = yaw
+	copy.uniform_scale = uniform_scale
 	copy.facade_index = facade_index
 	copy.floor_y = floor_y
 	copy.solid_centre = solid_centre
@@ -88,6 +103,7 @@ func copy_for_slot(slot: VillageMassingSlot) -> VillageMassingPlacement:
 	copy.support_centre = support_centre
 	copy.support_half_extents = support_half_extents
 	copy.support_angle = support_angle
+	copy.ground_route_support_profile = ground_route_support_profile
 	copy.entrance = entrance
 	copy.entrance_outward = entrance_outward
 	copy.entrance_ground_contact = entrance_ground_contact
@@ -105,8 +121,9 @@ func copy_for_slot(slot: VillageMassingSlot) -> VillageMassingPlacement:
 
 
 func building_transform(spec: VillageAssetSpec) -> Transform3D:
-	return Transform3D(Basis(Vector3.UP, yaw), Vector3(origin.x,
-		floor_y - spec.entrance_floor_local_y, origin.y))
+	return Transform3D(Basis(Vector3.UP, yaw).scaled(
+		Vector3.ONE * uniform_scale), Vector3(origin.x,
+		floor_y - spec.entrance_floor_local_y * uniform_scale, origin.y))
 
 
 func configure_entrance(spec: VillageAssetSpec, terrain: VillageTerrainView,
@@ -117,16 +134,16 @@ func configure_entrance(spec: VillageAssetSpec, terrain: VillageTerrainView,
 	entrance_outward = spec.world_entrance_outward(transform)
 	if not entrance_outward.is_normalized():
 		return false
-	var stair_run := vocabulary.stair_module_run
-	var stair_rise := vocabulary.stair_aabb.size.y
+	var stair_run := vocabulary.stair_module_run * uniform_scale
+	var stair_rise := vocabulary.stair_aabb.size.y * uniform_scale
 	if stair_run <= 0.0 or stair_rise <= 0.0:
 		return false
 	# Door approaches are a cell-wide public route even when the authored stair
 	# mesh is a little narrower. Keeping this width canonical lets a platform,
 	# stair, or ground lane meet the same reviewed facade aperture without a
 	# producer-specific sliver at the hand-off.
-	access_half_width = maxf(VillageProgram.MODULE * 0.5,
-		maxf(vocabulary.stair_aabb.size.x * 0.5,
+	access_half_width = maxf(VillageProgram.MODULE * uniform_scale * 0.5,
+		maxf(vocabulary.stair_aabb.size.x * uniform_scale * 0.5,
 			TraversalEnvelope.MIN_APERTURE_WIDTH * 0.5))
 	# Enumerate the small fixed stair vocabulary instead of iterating a contact
 	# distance/count guess. Every option samples the terrain at its own actual
@@ -134,7 +151,8 @@ func configure_entrance(spec: VillageAssetSpec, terrain: VillageTerrainView,
 	# final distance unsampled.
 	var choice: Dictionary = {}
 	for count in range(VillageMassingProgram.MAX_ENTRANCE_STAIR_SEGMENTS + 1):
-		var contact_distance := VillageProgram.MODULE if count == 0 \
+		var contact_distance := VillageProgram.MODULE * uniform_scale \
+			if count == 0 \
 			else float(count) * stair_run
 		var contact := entrance + entrance_outward * contact_distance
 		var region := terrain.region_at(contact)
@@ -198,7 +216,7 @@ func configure_entrance(spec: VillageAssetSpec, terrain: VillageTerrainView,
 	street_contact = entrance_ground_contact
 	street_contact_y = entrance_ground_y
 	var proposed_contact := entrance_ground_contact \
-		+ entrance_outward * VillageProgram.MODULE
+		+ entrance_outward * VillageProgram.MODULE * uniform_scale
 	var proposed_y := entrance_ground_y
 	var landing_valid := true
 	for sample_index in range(1, 4):

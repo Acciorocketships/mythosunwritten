@@ -40,10 +40,11 @@ extends SceneTree
 ## `tests/test_warren_maze_composition.gd::test_corpus_composes` to assert.
 ## The composition suite has a ~4 min budget and cannot afford 24 more
 ## production solves, so the sweep — which already runs them — writes the
-## matrix down and the test reads it. `user://` because that is where every
-## other machine-local harness artifact in this repository lives
-## (`heightfield_shot`).
-const SUMMARY_PATH := "user://warren_maze_mode_sweep.json"
+## matrix down and the test reads it. Keep it under the ignored project cache:
+## automated sandbox runs cannot write the user's global Godot data directory,
+## while `res://.godot` remains machine-local and travels with this checkout's
+## exact source fingerprint.
+const SUMMARY_PATH := "res://.godot/warren_maze_mode_sweep.json"
 
 ## The directory whose contents decide the matrix. A sweep summary is only
 ## evidence about the code that produced it, so it carries a fingerprint of
@@ -204,48 +205,31 @@ const CLEARANCE_TOWN_GATE_CEILING := 0
 const CLEARANCE_TOWN_OFFSET_FREE_CEILING := 0
 const CLEARANCE_TOWN_GATES_OFFSET_CEILING := 0
 
-## TASK I3 FIX 1, IMPORTANT 1. THE SKYWALK CHANNEL'S FLOOR, per scale group, and
-## it is a RATCHET rather than a safety pin: the two above say a street is
-## passable, and these say the town still flies bridges over it.
+## The skywalk channel's corpus ratchet. Clearance proves the streets remain
+## passable; this separately proves the algorithm still finds real overhead
+## connections. It is measured output, never a generation quota. One connection
+## is either a canonical open bridge span OR one occupied two-ended bridge-house:
+## they are alternative presentations of the same topological feature, so a
+## ratchet that counted only the open form would report a regression when the
+## stronger inhabited form replaced it.
 ##
-## Why the channel needs one at all. A span is six structural facts and a seeded
-## tie-break, so nothing in the corpus PROMISES a bridge -- and the composition
-## suite's own corpus honestly contains a town (12/compact) that builds none.
-## Without a floor, a change that made any one of the six facts unsatisfiable --
-## a walked set that stopped including crown decks, a headroom rule off by a
-## band, an occluder map that grew -- would take every bridge in all 45 sealed
-## towns and leave every other pin in this file green, because every other pin
-## counts what is THERE. The outcropping channel and the plaza already have
-## their equivalents in the composition suite; this is the skywalk's.
-##
-## MEASURED, not designed, and pinned AT the measurement rather than under it:
-## the 48-town matrix flies 42 spans over its 24 sealed compact/standard towns
-## and 192 over its 21 sealed large/grand ones. The towns are a pure function of
-## their seeds -- `warren_maze_identity_probe` repeats the same fabric on every
-## run of the same seed, and the corpus matrix has reproduced these two numbers
-## across machines -- so there is no per-machine variation to guard against and
-## no honest reason to leave slack under the number. A fall is a report to
-## write, not a tolerance to have budgeted for.
-##
-## TASK I4 ROUND 3 RE-PINS THE SECOND ONE, 192 -> 185, AND THE REASON IS A LOST
-## TOWN RATHER THAN A LOST CHANNEL. The plaza deck costs the corpus one grand
-## seal (`test_warren_maze_composition.GRAND_SEALED_FLOOR` names it), so the
-## large+grand total is now measured over 20 towns instead of 21: 185 spans over
-## 20 is 9.25 a town against the floor's own 192 over 21, which is 9.14. The
-## channel did not weaken -- it flies MORE bridges per town than the corpus this
-## floor came from -- and a ratchet on a total has to move when the total's
-## denominator does. compact+standard is unmoved: 42 spans over the same 24
-## towns, exactly its floor, which is the stronger evidence that neither of this
-## round's changes took a bridge anywhere.
-##
-## The round's two changes are separable here and were measured apart: the plaza
-## deck alone flies 186 over the same 20 towns, and the dormer arm takes the last
-## one (one tower crown that used to carry a plain pitch now carries a dormered
-## one, and the roof gate refuses it, which is one fewer flat crown for a span to
-## land on). Both legs are in the round's report.
-const LIFE_SPAN_FLOOR_BY_GROUP: Dictionary = {
-	CORPUS_STONE_GROUP: 42,
-	ADDED_STONE_GROUP: 185,
+## The final 2026-08-30 matrix follows both the construction-by-contract revision
+## and Task I8's source-footprint reduction from 7/8/9/11 to 5/6/7/8 cells. An
+## open span must join the reachable exterior network, while an occupied span is
+## one atomic bridge room plus two endpoint/foundation compounds and semantic
+## party roofs. Former candidates whose roofs, endpoints, or supports floated are
+## deliberately absent rather than preserved as decoration. The new 48-attempt
+## matrix seals 20 compact/standard towns with 5 open connections and 19
+## large/grand towns with 2 open + 5 occupied connections. It retains zero
+## blocked cells and gates across 7,668 public cells and 10,888 route gates.
+## Fewer source columns create fewer valid same-band, two-ended crossing sites;
+## this ratchet was therefore remeasured with the footprint instead of preserving
+## a count measured on towns the user explicitly rejected as too large. Output
+## above a floor remains evidence, not a generation quota. Any future fall below
+## a floor is a regression to inspect and remeasure, not a tolerance budget.
+const LIFE_CONNECTION_FLOOR_BY_GROUP: Dictionary = {
+	CORPUS_STONE_GROUP: 5,
+	ADDED_STONE_GROUP: 7,
 }
 ## The matrix those floors were measured on. A corpus TOTAL means nothing on a
 ## three-seed spot check, so unlike the clearance ceilings (which are per-town
@@ -427,10 +411,20 @@ func _run() -> void:
 				rows.append({"seed": city_seed,
 					"scale": String(profile.scale_id), "ms": elapsed,
 					"sealed": true, "gate": "", "failure": ""})
-				print("SWEEP seed=%d scale=%s ms=%d SEALED rooms=%s" % [
-					city_seed, String(profile.scale_id), elapsed,
-					str(plan.audit.get("room_storey_kind_counts", {}))])
 				var fabric := plan.compiled_fabric_cache()
+				print(("SWEEP seed=%d scale=%s ms=%d SEALED buildings=%d " \
+					+ "markets=%d open_skywalks=%d occupied_skywalks=%d " \
+					+ "enclosed=%d rooms=%s") % [
+					city_seed, String(profile.scale_id), elapsed,
+					plan.buildings.size(),
+					int(plan.audit.get("covered_market_count", 0)),
+					int(fabric.audit.get("maze_skywalk_span_count", 0)) \
+						if fabric != null else 0,
+					int(fabric.audit.get("modular_box_skywalk_count", 0)) \
+						if fabric != null else 0,
+					int(fabric.audit.get("maze_enclosed_skywalk_span_count", 0)) \
+						if fabric != null else 0,
+					str(plan.audit.get("room_storey_kind_counts", {}))])
 				if fabric != null:
 					_accumulate_stone(stone_by_group[group] as Dictionary,
 						fabric)
@@ -750,11 +744,15 @@ func _run() -> void:
 		if not _life_floor_group_ran(seeds, scale_ids, group):
 			continue
 		var life_tally := skin_by_group[group] as Dictionary
-		var floor_value := int(LIFE_SPAN_FLOOR_BY_GROUP[group])
-		if int(life_tally.spans) >= floor_value:
+		var connections := int(life_tally.spans) \
+			+ int(life_tally.occupied_spans)
+		var floor_value := int(LIFE_CONNECTION_FLOOR_BY_GROUP[group])
+		if connections >= floor_value:
 			continue
-		life_shortfalls.append("%s flies %d span(s) over %d town(s), floor %d" % [
-			group, int(life_tally.spans), int(life_tally.towns), floor_value])
+		life_shortfalls.append(("%s flies %d connection(s) (%d open + %d " \
+			+ "occupied) over %d town(s), floor %d") % [group, connections,
+			int(life_tally.spans), int(life_tally.occupied_spans),
+			int(life_tally.towns), floor_value])
 	if not life_shortfalls.is_empty():
 		print(("SWEEP ERROR life the skywalk channel fell below its measured " \
 			+ "floor: %s. The floor is a RATCHET on the corpus totals of " \
@@ -773,7 +771,7 @@ func _run() -> void:
 
 static func _life_floor_group_ran(seeds: Array[int],
 		scale_ids: Array[StringName], group: String) -> bool:
-	## Whether this run covered the matrix `LIFE_SPAN_FLOOR_BY_GROUP` was
+	## Whether this run covered the matrix `LIFE_CONNECTION_FLOOR_BY_GROUP` was
 	## measured on for one scale group. A corpus total is only comparable
 	## against the corpus it came from, so a spot check is not judged at all
 	## rather than judged and failed.
@@ -901,7 +899,8 @@ static func _new_skin_tally() -> Dictionary:
 		"low": 0, "tall": 0, "tallest": 0, "cut": 0, "cut_coursed": 0,
 		"tail_candidates": 0, "tail_unclearable": 0, "coursed_trim": 0,
 		"cap_juts": 0, "cap_trim": 0,
-		"spans": 0, "span_cells": 0, "span_instances": 0, "bays": 0,
+		"spans": 0, "occupied_spans": 0, "span_cells": 0,
+		"span_instances": 0, "bays": 0,
 		"bumps": 0, "outcrop_brackets": 0, "dormers": 0, "plaza_entries": 0,
 		"plaza_features": 0, "plaza_towns": 0,
 		# TASK I4 ROUND 3. The plaza deck: how many towns got the shaped,
@@ -980,6 +979,8 @@ static func _accumulate_skin(tally: Dictionary,
 	# and its square" should get a corpus number off one row rather than infer it
 	# from the panel counts above.
 	tally.spans += int(fabric.audit.get("maze_skywalk_span_count", 0))
+	tally.occupied_spans += int(fabric.audit.get(
+		"modular_box_skywalk_count", 0))
 	tally.span_cells += int(fabric.audit.get("maze_skywalk_deck_cell_count", 0))
 	tally.span_instances += int(fabric.audit.get(
 		"maze_skywalk_instance_count", 0))
@@ -1091,13 +1092,15 @@ func _print_skin_result(group: String, tally: Dictionary) -> void:
 	# own `bare_overhangs`, because "every overhang shows its bracket" is the
 	# promise both rows exist to make checkable.
 	print(("SWEEP RESULT life%s towns=%d spans=%d span_cells=%d " \
-		+ "span_instances=%d bays=%d bumps=%d outcrops=%d brackets=%d " \
+		+ "occupied_spans=%d span_instances=%d bays=%d bumps=%d " \
+		+ "outcrops=%d brackets=%d " \
 		+ "bare_outcrops=%d dormers=%d plaza_towns=%d plaza_entries=%d " \
 		+ "plaza_features=%d plaza_decks=%d plaza_deck_columns=%d " \
 		+ "plaza_mouths=%d railed_mouths=%d") % [
 		"" if group == CORPUS_STONE_GROUP else "/%s" % group,
 		int(tally.towns), int(tally.spans), int(tally.span_cells),
-		int(tally.span_instances), int(tally.bays), int(tally.bumps),
+		int(tally.occupied_spans), int(tally.span_instances), int(tally.bays),
+		int(tally.bumps),
 		int(tally.bays) + int(tally.bumps), int(tally.outcrop_brackets),
 		int(tally.outcrop_brackets) - 2 * (int(tally.bays) + int(tally.bumps)),
 		int(tally.dormers), int(tally.plaza_towns), int(tally.plaza_entries),
@@ -1379,10 +1382,11 @@ func _measure_pinch_bodies(tally: Dictionary, label: String,
 		# line to its centre. `half` when nothing is in the cell at all, which is
 		# the honest reading of a visual box that overstated its hull.
 		var intrusion := 0.0 if nearest == INF else half - nearest
-		print(("SWEEP %s PINCH_BODY cell=%s asset=%s rise=%.3f " \
+		print(("SWEEP %s PINCH_BODY cell=%s asset=%s placement=%s rise=%.3f " \
 			+ "centre_blocked=%s gates=%d gates_blocked=%d cover=%d/%d " \
 			+ "intrusion=%.3f") % [label, str(cell), String(pinch.asset),
-			float(pinch.rise), str(centre_blocked), gates, gates_blocked,
+			String(pinch.get("stable_id", &"")), float(pinch.rise),
+			str(centre_blocked), gates, gates_blocked,
 			occupied, PINCH_INTRUSION_STEPS * PINCH_INTRUSION_STEPS, intrusion])
 		if centre_blocked or gates_blocked > 0:
 			(tally.blockers as Array[String]).append("%s %s %s" % [label,
@@ -1691,6 +1695,7 @@ func _measure_clearance(tally: Dictionary, city_seed: int,
 	get_root().add_child(root)
 	var shapes := EnvironmentCollisionBuilder.commit(root, payload, cache,
 		&"SweepClearance")
+	var shape_sources := _clearance_shape_sources(payload, cache)
 	# The commit creates the bodies; a physics frame is what registers them with
 	# the space. Querying before one runs reads an EMPTY world and calls every
 	# street clear -- the row would be green and meaningless.
@@ -1729,6 +1734,13 @@ func _measure_clearance(tally: Dictionary, city_seed: int,
 			centre_free += 1
 		elif fit > 0:
 			offset_free += 1
+			if worst.size() < CLEARANCE_WORST_LIMIT:
+				query.transform = Transform3D(Basis.IDENTITY,
+					_clearance_stance(cell))
+				worst.append("%s offset-cell(%d,%d,%d) by[%s]" % [label,
+					cell.x, cell.y, cell.z,
+					_clearance_blockers(space, query,
+						_clearance_stance(cell), shape_sources)])
 		else:
 			blocked += 1
 			if worst.size() < CLEARANCE_WORST_LIMIT:
@@ -1754,7 +1766,7 @@ func _measure_clearance(tally: Dictionary, city_seed: int,
 						cell.y + direction.y, cell.z + direction.z,
 						_clearance_blockers(space, query,
 							_clearance_stance(cell) + Vector3(direction) \
-								* (FabricRecipe.CELL_SIZE * 0.5))])
+								* (FabricRecipe.CELL_SIZE * 0.5), shape_sources)])
 	# THE ROUTE GRAPH. A shut crossing only matters if the town NEEDED it: two
 	# cells with another way round are narrowed, two cells without one are cut
 	# apart, and those are different bugs. Read as DAMAGE against the town's own
@@ -1954,8 +1966,37 @@ static func _clearance_cells_cut_off(walked: Dictionary, design: Dictionary,
 	return cut_off
 
 
+func _clearance_shape_sources(payload: EnvironmentInstancePayload,
+		cache: EnvironmentRenderCache) -> Dictionary:
+	## Mirror EnvironmentCollisionBuilder's deterministic naming walk so a
+	## physics offender names the procedural placement that created it, not only
+	## the repeated asset family. This is diagnostic metadata; it never feeds a
+	## generation decision.
+	var out: Dictionary = {}
+	var count := 0
+	for asset_id: StringName in payload.asset_ids():
+		var visual := cache.visual(asset_id)
+		if visual == null or visual.collisions.is_empty():
+			continue
+		var batch := payload.batches[asset_id] as Dictionary
+		var placements := batch.transforms as Array
+		var ids := batch.get("ids", []) as Array
+		var flags := batch.get("collision_enabled", []) as Array
+		for placement_index in placements.size():
+			if not flags.is_empty() and not bool(flags[placement_index]):
+				continue
+			for _collision in visual.collisions:
+				var name := "%s_%04d" % [String(asset_id).replace(".", "_"),
+					count]
+				out[name] = String(ids[placement_index]) \
+					if placement_index < ids.size() else ""
+				count += 1
+	return out
+
+
 func _clearance_blockers(space: PhysicsDirectSpaceState3D,
-		query: PhysicsShapeQueryParameters3D, at: Vector3) -> String:
+		query: PhysicsShapeQueryParameters3D, at: Vector3,
+		shape_sources: Dictionary = {}) -> String:
 	## WHAT is standing there, named by the asset its shape was baked from. A
 	## fired pin should say what to look at and not only where: "two facing
 	## cliff shards" and "a green cap in the wrong place" are different bugs and
@@ -1969,7 +2010,10 @@ func _clearance_blockers(space: PhysicsDirectSpaceState3D,
 		var owner_id := body.shape_find_owner(int(hit.get("shape", 0)))
 		var owner := body.shape_owner_get_owner(owner_id) as Node
 		if owner != null:
-			names[String(owner.name)] = true
+			var shape_name := String(owner.name)
+			var source := String(shape_sources.get(shape_name, ""))
+			names[shape_name if source.is_empty() \
+				else "%s=>%s" % [shape_name, source]] = true
 	var listed: Array = names.keys()
 	listed.sort()
 	return ",".join(PackedStringArray(listed))

@@ -70,7 +70,7 @@ func _build(frame: VillageFrame) -> VillageRecord:
 	# the two outputs are never combined in one record.
 	var urban_fabric := VillageWarrenFabricSolver.solve(terrain,
 		_warren_seed(frame), frame.settlement_id, frame.centre, street_axis,
-		_program) if _program.settlement_fabric_program != null \
+		_program, _world_seed) if _program.settlement_fabric_program != null \
 		else VillageUrbanFabricSolver.solve(terrain, frame.settlement_id,
 			frame.centre, street_axis, tier, theme, _program)
 	_last_build_budget_interrupted = String(urban_fabric.reason) \
@@ -80,7 +80,8 @@ func _build(frame: VillageFrame) -> VillageRecord:
 			clearances, occupancy)
 	var outskirts := VillageOutskirtsSolver.solve(terrain,
 		frame.settlement_id, frame.centre, street_axis, tier, theme, _program,
-		urban_fabric, occupancy.volumes()) if urban_fabric.accepted \
+		urban_fabric, occupancy.volumes(), frame.path_ground) \
+			if urban_fabric.accepted \
 			and urban_fabric.requires_outskirts() else null
 	if outskirts != null and outskirts.accepted:
 		_materialize_outskirts(outskirts, payload, surfaces, clearances,
@@ -246,10 +247,17 @@ func _bounded_roll(frame: VillageFrame, salt: int, bound: int) -> int:
 
 
 func _warren_seed(frame: VillageFrame) -> int:
-	var value := Helper._mix64(_world_seed ^ SEED_VERSION \
+	return warren_seed_for_cell(_world_seed, frame.cell)
+
+
+static func warren_seed_for_cell(world_seed: int, cell: Vector2i) -> int:
+	## Canonical derivation shared by production and fixed-seed construction
+	## tests. Keeping this projection public avoids copying the seed salt into a
+	## diagnostic and accidentally reviewing a different town.
+	var value := Helper._mix64(world_seed ^ SEED_VERSION \
 		^ _SALT_WARREN_GEOMETRY)
-	value = Helper._mix64(value ^ Helper._mix64(frame.cell.x))
-	value = Helper._mix64(value ^ Helper._mix64(frame.cell.y))
+	value = Helper._mix64(value ^ Helper._mix64(cell.x))
+	value = Helper._mix64(value ^ Helper._mix64(cell.y))
 	return value
 
 static func _footprint_samples(centre: Vector2, half_extents: Vector2,

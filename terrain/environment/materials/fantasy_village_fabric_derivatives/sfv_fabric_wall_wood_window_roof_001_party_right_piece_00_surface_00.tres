@@ -1,6 +1,6 @@
-[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://bpeqyrk8x36q5"]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/fantasy_village_fabric_derivatives/66e7853d2ac1790a17b2.res" id="1_4fwcc"]
+[ext_resource type="Texture2D" uid="uid://cufx8f2ovkv2n" path="res://terrain/environment/textures/fantasy_village_fabric_derivatives/66e7853d2ac1790a17b2.res" id="1_4fwcc"]
 
 [resource]
 resource_name = "SFV_ROOF_ORANGE"

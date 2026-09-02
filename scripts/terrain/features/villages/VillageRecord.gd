@@ -59,9 +59,9 @@ func validate(program: VillageProgram) -> bool:
 				or not outskirts.validate(program.outskirts_program, tier):
 			return false
 	elif outskirts != null:
-		# A generated warren owns its complete bounded composition. Admitting
-		# legacy outskirts here would recreate the detached tents/props that the
-		# transaction was designed to eliminate.
+		# A sectional diagnostic owns its complete bounded composition. Production
+		# volumetric towns opt in above and receive only the sealed ground-house
+		# grammar; detached tents and incidental props remain suppressed.
 		return false
 	if not urban_fabric.accepted and not is_empty():
 		# A rejected structural solve cannot leave a tent or prop masquerading as

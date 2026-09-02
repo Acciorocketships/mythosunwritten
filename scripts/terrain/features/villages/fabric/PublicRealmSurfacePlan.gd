@@ -25,6 +25,10 @@ var entrance_records: Array[Dictionary] = []
 var unserved_entrances: Array[Dictionary] = []
 var unclassified_required_cells: Array[Vector3i] = []
 var _claims: Dictionary = {}
+## Typed union closures derived by PublicRealmSurfaceSolver. They remain
+## explicit expected cells during the final fabric seal; this is never a
+## tolerance for arbitrary claims that appeared outside source topology.
+var _derived_claim_cells: Dictionary = {}
 var _entrance_openings: Dictionary = {}
 var _entrance_forecourt_join_points: Dictionary = {}
 var _public_openings: Dictionary = {}
@@ -74,6 +78,15 @@ func add_claim(cell: Vector3i, kind: SurfaceKind, owner_id: StringName) -> bool:
 	return true
 
 
+func add_derived_claim(cell: Vector3i, kind: SurfaceKind,
+		owner_id: StringName) -> bool:
+	if _sealed or _claims.has(_cell_key(cell)) \
+			or not add_claim(cell, kind, owner_id):
+		return false
+	_derived_claim_cells[_cell_key(cell)] = cell
+	return true
+
+
 func add_transition_mesh_payload(payload: Dictionary) -> bool:
 	## Transition geometry is admitted only when it is collision-bearing and
 	## names every STAIR claim it materializes. This keeps logical circulation,
@@ -113,6 +126,21 @@ func set_support_base(cell: Vector3i, base_band: int) -> bool:
 
 func has_support_base(cell: Vector3i) -> bool:
 	return _support_base_bands.has(_cell_key(cell))
+
+
+func has_transition_geometry(cell: Vector3i) -> bool:
+	## A stair cell is carried longitudinally by its one sealed transition mesh,
+	## not by a vertical post beneath every tread. Expose that exact construction
+	## fact so support audits do not misclassify a connected flight over open air
+	## as a floating platform.
+	return _transition_claim_owners.has(_cell_key(cell))
+
+
+func transition_owner_at(cell: Vector3i) -> StringName:
+	## The identity matters at retained risers: two adjacent stair claims suppress
+	## a masonry face only when one sealed transition mesh owns both cells. Mere
+	## proximity between unrelated flights is not permission to open the hill.
+	return StringName(_transition_claim_owners.get(_cell_key(cell), &""))
 
 
 func support_base_at(cell: Vector3i) -> int:
@@ -199,6 +227,13 @@ func kind_at(cell: Vector3i) -> int:
 
 func claim_count() -> int:
 	return _claims.size()
+
+
+func derived_claim_cells() -> Array[Vector3i]:
+	var out: Array[Vector3i] = []
+	out.assign(_derived_claim_cells.values())
+	out.sort_custom(_cell_less)
+	return out
 
 
 func cells_for_kind(kind: SurfaceKind) -> Array[Vector3i]:
@@ -677,9 +712,9 @@ func _classify_entrances(entrances: Array[Dictionary]) -> void:
 		if door_phase in [0, 1]:
 			# Generated facade doors are complete 3 m modules on a 1.5 m public
 			# lattice.  The declared threshold is the actually walkable half; the
-			# companion half changes with the mirrored door phase.  Open its guard
-			# only when a real public surface owns it, so the full authored arch is
-			# unobstructed without turning neighboring empty air into a promise.
+			# companion half changes with the mirrored door phase.  A real companion
+			# landing must open too, but an absent companion remains empty air rather
+			# than silently becoming an unguarded extension of the threshold.
 			var local_left: Vector3i = Vector3i(-facing.z, 0, facing.x)
 			var companion: Vector3i = landing + (local_left if door_phase == 0 \
 				else -local_left)

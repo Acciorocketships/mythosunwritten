@@ -12,6 +12,165 @@ func _program() -> SettlementFabricProgram:
 	return _compiled_program
 
 
+func test_maze_bridge_room_is_one_roofed_two_ended_skywalk_recipe() -> void:
+	var program := _program()
+	assert_not_null(program)
+	if program == null:
+		return
+	for recipe_id: StringName in [
+			&"room.bridge.tower.blue", &"room.bridge.tower.orange",
+			&"room.bridge.slim.blue", &"room.bridge.slim.orange"]:
+		var recipe := program.recipe(recipe_id)
+		assert_not_null(recipe, String(recipe_id))
+		if recipe == null:
+			continue
+		assert_eq(recipe.bearing_parent_count, 2,
+			"an occupied skywalk must bind both endpoint buildings")
+		assert_true(recipe.has_tag(&"skywalk"))
+		assert_true(recipe.has_tag(&"overhead_occupied"))
+		assert_true(recipe.has_tag(&"integrated_pitched_roof"),
+			"the roof may not be selected or flattened after the span commits")
+		assert_true(recipe.has_tag(&"bridge_eave_roof"),
+			"bridge houses retain the authored eaves of an ordinary house")
+		var roof_placements := recipe.placements.filter(
+			func(value: Dictionary) -> bool:
+				return String(value.id).begins_with("roof"))
+		assert_gt(roof_placements.size(), 0,
+			"the occupied span must contain real gabled roof geometry")
+		var clipped_roof_assets: Array[StringName] = [
+			SettlementFabricProgram.COMPACT_ROOF_ORANGE_REAR_TIGHT,
+			SettlementFabricProgram.COMPACT_ROOF_ORANGE_FRONT_TIGHT,
+			SettlementFabricProgram.COMPACT_ROOF_SLATE_REAR_TIGHT,
+			SettlementFabricProgram.COMPACT_ROOF_SLATE_FRONT_TIGHT,
+			SettlementFabricProgram.COMPACT_ROOF_ORANGE_REAR_END_TIGHT,
+			SettlementFabricProgram.COMPACT_ROOF_ORANGE_FRONT_END_TIGHT,
+			SettlementFabricProgram.COMPACT_ROOF_SLATE_REAR_END_TIGHT,
+			SettlementFabricProgram.COMPACT_ROOF_SLATE_FRONT_END_TIGHT,
+		]
+		var roof_bounds := AABB()
+		var has_roof_bounds := false
+		for placement: Dictionary in roof_placements:
+			assert_false(clipped_roof_assets.has(StringName(placement.asset_id)),
+				"an exposed bridge edge must not use footprint-clipped eaves")
+			var contract_value := program.module_program.contract(
+				StringName(placement.asset_id))
+			assert_not_null(contract_value)
+			if contract_value == null:
+				continue
+			var bounds: AABB = (placement.transform as Transform3D) \
+				* contract_value.visual_bounds
+			roof_bounds = bounds if not has_roof_bounds else roof_bounds.merge(bounds)
+			has_roof_bounds = true
+		assert_true(has_roof_bounds)
+		if has_roof_bounds:
+			assert_gt(roof_bounds.size.x, 3.0,
+				"authored side eaves must project beyond the 3 m bridge walls")
+			var wall_length := 6.0 if String(recipe_id).contains(".slim.") else 3.0
+			assert_almost_eq(roof_bounds.size.z, wall_length, 0.001,
+				"the roof must cover the bridge house's complete span")
+	for recipe_id: StringName in [
+			&"room.jetty.tower.blue", &"room.jetty.tower.orange",
+			&"room.jetty.slim.blue", &"room.jetty.slim.orange"]:
+		assert_false(program.recipe(recipe_id).has_tag(&"skywalk"),
+			"a one-ended bracketed jetty is not a two-ended skywalk")
+
+
+func test_setback_sheds_keep_the_high_edge_on_the_parent_wall() -> void:
+	var program := _program()
+	assert_not_null(program)
+	if program == null:
+		return
+	for theme in [&"blue", &"orange"]:
+		for eave_side in [-1, 1]:
+			var recipe_id := StringName("roof.setback.shed.%s.2.%s" % [
+				theme, "negative" if eave_side < 0 else "positive"])
+			var recipe_value := program.recipe(recipe_id)
+			assert_not_null(recipe_value, String(recipe_id))
+			if recipe_value == null:
+				continue
+			var placement := recipe_value.placements[0] as Dictionary
+			var contract_value := program.module_program.contract(StringName(
+				placement.asset_id))
+			assert_eq(contract_value.kind,
+				FabricModuleContract.Kind.ROOF_SHED)
+			var high_vector := (placement.transform as Transform3D).basis \
+				* Vector3(contract_value.shed_high_edge)
+			var transformed_high := Vector3i(roundi(high_vector.x), 0,
+				roundi(high_vector.z))
+			var expected_high := Vector3i(0, 0, -eave_side)
+			assert_eq(transformed_high, expected_high,
+				"the high edge must face the continuing wall")
+			var bounds := (placement.transform as Transform3D) \
+				* contract_value.visual_bounds
+			var high_plane := bounds.end.z if expected_high.z > 0 \
+				else bounds.position.z
+			assert_almost_eq(high_plane,
+				-float(eave_side) * FabricRecipe.CELL_SIZE * 0.5, 0.001,
+				"the measured high edge must meet the logical wall plane")
+
+
+func test_terminal_low_gable_slopes_rise_to_one_shared_ridge() -> void:
+	var program := _program()
+	for recipe_id: StringName in [
+			&"roof.terminal.step.tower.blue.0",
+			&"roof.terminal.step.tower.orange.0",
+			&"roof.terminal.profile.row.blue.3",
+			&"roof.terminal.profile.row.orange.3"]:
+		var recipe_value := program.recipe(recipe_id)
+		assert_not_null(recipe_value, String(recipe_id))
+		if recipe_value == null:
+			continue
+		var low_placements := recipe_value.placements.filter(
+			func(value: Dictionary) -> bool:
+				return String(value.id).contains(".low."))
+		assert_gt(low_placements.size(), 0)
+		var ridge_axes: Dictionary = {}
+		for placement: Dictionary in low_placements:
+			var contract_value := program.module_program.contract(StringName(
+				placement.asset_id))
+			assert_eq(contract_value.kind,
+				FabricModuleContract.Kind.ROOF_SHED)
+			var high := (placement.transform as Transform3D).basis \
+				* Vector3(contract_value.shed_high_edge)
+			var high_direction := Vector3i(roundi(high.x), 0, roundi(high.z))
+			ridge_axes[high_direction] = true
+		assert_true(ridge_axes.has(Vector3i.LEFT) \
+			and ridge_axes.has(Vector3i.RIGHT) \
+			or ridge_axes.has(Vector3i.FORWARD) \
+			and ridge_axes.has(Vector3i.BACK),
+			"the paired high edges must oppose across one ridge, never face outward")
+
+
+func test_integrated_bridge_roof_has_no_unbounded_bearing_exemption() -> void:
+	var program := _program()
+	var plan := SettlementFabricPlan.new(&"warren.test.integrated-roof-seam")
+	var bridge := FabricUnit.new(&"bridge", &"room.bridge.tower.blue",
+		Vector3i.ZERO, 0, [&"endpoint"])
+	var endpoint := FabricUnit.new(&"endpoint", &"room.tower.upper.stone",
+		Vector3i.ZERO, 0)
+	var bridge_recipe := program.recipe(bridge.recipe_id)
+	var endpoint_recipe := program.recipe(endpoint.recipe_id)
+	assert_false(plan._connected_roof_seam_is_measured(bridge, bridge_recipe,
+		AABB(Vector3.ZERO, Vector3(4.0, 5.0, 4.0)), endpoint,
+		endpoint_recipe, AABB(Vector3(2.0, 0.0, 0.0), Vector3(4.0, 5.0, 4.0))),
+		"a lateral bridge support cannot authorize a roof buried through a solid")
+	assert_true(plan._connected_roof_seam_is_measured(bridge, bridge_recipe,
+		AABB(Vector3(0.0, 2.9, 0.0), Vector3(4.0, 3.0, 4.0)), endpoint,
+		endpoint_recipe, AABB(Vector3.ZERO, Vector3(4.0, 3.0, 4.0))),
+		"a shallow vertical wall-head seat remains a valid bearing seam")
+	var first_roof := FabricUnit.new(&"roof.a",
+		&"roof.tower.orange.dormer.right", Vector3i.ZERO, 0)
+	var second_roof := FabricUnit.new(&"roof.b",
+		&"roof.terminal.tight.slim.orange", Vector3i.ZERO, 0)
+	first_roof.visual_seam_ids.append(second_roof.stable_id)
+	assert_false(plan._connected_roof_seam_is_measured(first_roof,
+		program.recipe(first_roof.recipe_id),
+		AABB(Vector3.ZERO, Vector3(4.0, 2.2, 4.0)), second_roof,
+		program.recipe(second_roof.recipe_id),
+		AABB(Vector3(3.42, 0.0, 0.0), Vector3(4.0, 2.2, 4.0))),
+		"two full crowns cannot use the generic shallow-plan fallback to cross")
+
+
 func _folded_proof() -> SettlementFabricPlan:
 	if _folded_plan == null:
 		_folded_plan = FoldedProof.solve(_program())
@@ -386,6 +545,14 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 	assert_not_null(market)
 	assert_true(market.asset_ids().has(SettlementFabricProgram.ROOF_FLOWER_SMALL))
 	assert_true(market.asset_ids().has(SettlementFabricProgram.ROOF_FLOWER_PALE))
+	var stocked_counter := market.placements.filter(
+		func(value: Dictionary) -> bool:
+			return StringName(value.id) == &"stocked.counter")[0] as Dictionary
+	assert_almost_eq((stocked_counter.transform as Transform3D).origin.y,
+		0.0, 0.0001,
+		"the fish table is grounded by the covered-market transaction")
+	assert_true(SettlementFabricAssembler.PERIMETER_NARROW_FRONTAGE.is_empty(),
+		"a freestanding table may never be used to patch an outer facade gap")
 	var awning_market := program.recipe(&"market.covered.05.garden")
 	assert_not_null(awning_market)
 	assert_true(awning_market.asset_ids().has(
@@ -604,6 +771,35 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 		assert_false(String(asset_id).begins_with("sfbp.tent"), String(asset_id))
 
 
+func test_room_jetty_support_is_two_floor_pinned_native_corbels() -> void:
+	var program := _program()
+	var recipe := program.recipe(&"outcrop.support.bracketed.2")
+	assert_not_null(recipe)
+	if recipe == null:
+		return
+	assert_true(recipe.has_tag(&"paired_wall_corbels"))
+	assert_eq(recipe.placements.size(), 2,
+		"a two-column jetty receives one support at each bearing column")
+	var contract_value := program.module_program.contract(
+		SettlementFabricProgram.BRACE)
+	assert_not_null(contract_value)
+	if contract_value == null:
+		return
+	var column_origins: Array[float] = []
+	for placement: Dictionary in recipe.placements:
+		assert_eq(StringName(placement.asset_id), SettlementFabricProgram.BRACE,
+			"a shallow jetty uses a compact authored corbel, not a broad plank")
+		var transform := placement.transform as Transform3D
+		var bounds: AABB = transform * contract_value.visual_bounds
+		assert_almost_eq(bounds.end.y, 0.0, 0.001,
+			"each measured support top is pinned to the room underside")
+		column_origins.append(transform.origin.x)
+	column_origins.sort()
+	assert_almost_eq(column_origins[0], 0.0, 0.001)
+	assert_almost_eq(column_origins[1], FabricRecipe.CELL_SIZE, 0.001,
+		"support positions are derived from the two occupied bearing columns")
+
+
 func test_dormer_styles_keep_steep_gables_and_replace_the_weak_shell_with_sheds() -> void:
 	var program := _program()
 	for recipe_id: StringName in [
@@ -632,6 +828,39 @@ func test_dormer_styles_keep_steep_gables_and_replace_the_weak_shell_with_sheds(
 				and StringName(placement.asset_id) \
 					== SettlementFabricProgram.ROOF_WINDOW_04),
 			"the weaker shallow gable is replaced by the complete shed shell")
+
+
+func test_terminal_gables_cover_every_finite_low_bay_profile() -> void:
+	## Public circulation can cross above any subset of a terminal house's ridge
+	## bays. The recipe set must therefore be complete by topology, not patched
+	## with the handful of profiles encountered by one reviewed seed.
+	var program := _program()
+	for spec: Dictionary in [
+		{"kind": "tower", "runs": 1},
+		{"kind": "slim", "runs": 2},
+		{"kind": "row", "runs": 2},
+		{"kind": "building", "runs": 2},
+		{"kind": "long", "runs": 3},
+	]:
+		for theme in ["blue", "orange"]:
+			assert_not_null(program.recipe(StringName(
+				"roof.terminal.tight.%s.%s" % [spec.kind, theme])))
+			for mask in range(1, 1 << int(spec.runs)):
+				var recipe_id: StringName
+				if (mask & (mask - 1)) == 0:
+					var run_index := 0
+					while (1 << run_index) != mask:
+						run_index += 1
+					recipe_id = StringName("roof.terminal.step.%s.%s.%d" % [
+						spec.kind, theme, run_index])
+				else:
+					recipe_id = StringName("roof.terminal.profile.%s.%s.%d" % [
+						spec.kind, theme, mask])
+				var recipe := program.recipe(recipe_id)
+				assert_not_null(recipe, String(recipe_id))
+				if recipe != null:
+					assert_true(recipe.has_tag(&"terminal_step_gable"))
+					assert_true(recipe.has_tag(&"pitched_roof"))
 
 
 func test_addressed_room_vocabulary_has_two_exact_door_phases() -> void:
@@ -826,6 +1055,94 @@ func test_module_contracts_pin_floor_facade_and_roof_datums() -> void:
 		assert_lte(absf(stair_max_x - 0.75), 0.05)
 
 
+func test_collinear_modular_roofs_compile_as_one_continuous_run() -> void:
+	var program := _program()
+	var plan := SettlementFabricPlan.new(&"warren.test.continuous-roof")
+	assert_true(plan.register_recipe(program.recipe(&"roof.blue")))
+	assert_true(plan.register_recipe(program.recipe(&"roof.orange")))
+	# Two independently selected six-metre crowns meet on one exact gable seam.
+	# Their structural units remain separate, but construction must not emit two
+	# internal gable triangles or change roof colour halfway along the ridge.
+	plan.units.append(FabricUnit.new(&"roof.left", &"roof.blue",
+		Vector3i.ZERO, 0))
+	plan.units.append(FabricUnit.new(&"roof.right", &"roof.orange",
+		Vector3i(4, 0, 0), 0))
+	var raw := plan.expanded_placements()
+	assert_eq(raw.size(), 12,
+		"two complete source roofs each begin with four repeats and two ends")
+	var continuous := FabricContinuousRoofPlan.compile(plan)
+	assert_true(continuous.is_valid(), continuous.last_rejection)
+	assert_eq(continuous.components.size(), 1)
+	assert_eq(int(continuous.components[0].run_count), 2)
+	assert_eq(continuous.internal_gable_count, 2,
+		"the touching pair contributes no visible internal gable caps")
+	var realized := continuous.apply_to(raw)
+	assert_eq(realized.size(), 10,
+		"one twelve-metre roof has eight slope repeats and two exterior ends")
+	var gable_count := 0
+	var repeat_assets: Dictionary = {}
+	for placement: Dictionary in realized:
+		if StringName(placement.asset_id) == SettlementFabricProgram.GABLE:
+			gable_count += 1
+		elif String(placement.placement_id).contains(".repeat."):
+			repeat_assets[StringName(placement.asset_id)] = true
+	assert_eq(gable_count, 2)
+	assert_eq(repeat_assets.size(), 1,
+		"a continuous roof chooses one compatible tile material for the whole run")
+
+	var stepped := SettlementFabricPlan.new(&"warren.test.stepped-roof")
+	assert_true(stepped.register_recipe(program.recipe(&"roof.blue")))
+	stepped.units.append(FabricUnit.new(&"roof.low", &"roof.blue",
+		Vector3i.ZERO, 0))
+	stepped.units.append(FabricUnit.new(&"roof.high", &"roof.blue",
+		Vector3i(4, 1, 0), 0))
+	var separated := FabricContinuousRoofPlan.compile(stepped)
+	assert_true(separated.is_valid(), separated.last_rejection)
+	assert_eq(separated.components.size(), 0,
+		"different bearing planes stay separate instead of being visually snapped")
+
+
+func test_three_compact_house_crowns_realize_one_exact_roof_run() -> void:
+	var program := _program()
+	var blue_id := &"roof.terminal.tight.tower.blue"
+	var orange_id := &"roof.terminal.tight.tower.orange"
+	var plan := SettlementFabricPlan.new(&"warren.test.compact-continuous-roof")
+	assert_true(plan.register_recipe(program.recipe(blue_id)))
+	assert_true(plan.register_recipe(program.recipe(orange_id)))
+	# Three independently selected one-bay houses share the same ridge and wall
+	# datum. The source form has two clipped end halves per house; construction
+	# must replace that six-piece sequence with start/middle/end bays.
+	plan.units.append(FabricUnit.new(&"roof.0", blue_id,
+		Vector3i.ZERO, 0))
+	plan.units.append(FabricUnit.new(&"roof.1", orange_id,
+		Vector3i(0, 0, 2), 0))
+	plan.units.append(FabricUnit.new(&"roof.2", blue_id,
+		Vector3i(0, 0, 4), 0))
+	var raw := plan.expanded_placements()
+	assert_eq(raw.size(), 6)
+	var continuous := FabricContinuousRoofPlan.compile(plan)
+	assert_true(continuous.is_valid(), continuous.last_rejection)
+	assert_eq(continuous.components.size(), 1)
+	assert_eq(int(continuous.components[0].run_count), 3)
+	assert_eq(continuous.internal_gable_count, 4)
+	var realized := continuous.apply_to(raw)
+	assert_eq(realized.size(), 3,
+		"three touching houses emit three tiled bays, not six overlapping ends")
+	var prior_end := -INF
+	var families: Dictionary = {}
+	for placement: Dictionary in realized:
+		var bounds := placement.bounds as AABB
+		assert_almost_eq(bounds.size.z, 3.0, 0.001)
+		assert_almost_eq(bounds.position.y, 0.0, 0.001)
+		if is_finite(prior_end):
+			assert_almost_eq(bounds.position.z, prior_end, 0.001,
+				"every compact bay must meet the preceding bay on one seam")
+		prior_end = bounds.end.z
+		families[String(placement.asset_id).contains(".slate.")] = true
+	assert_eq(families.size(), 1,
+		"one continuous crown cannot change tile material halfway along")
+
+
 func test_circulation_recipes_express_section_changes_and_local_ground() -> void:
 	var program := _program()
 	var prefab := program.recipe(&"anchor.prefab.00")
@@ -985,8 +1302,13 @@ func test_feature_portal_room_variants_finish_exact_private_socket_facades() \
 		"the balcony must not paste a second doorway over its parent shell")
 
 
-func test_route_spanning_overhang_is_a_four_sided_foundation_shell() -> void:
+func test_route_spanning_overhang_is_a_four_corner_support_frame() -> void:
 	var program := _program()
+	var pillar_contract := program.module_program.contract(
+		SettlementFabricProgram.DECK_PILLAR)
+	assert_not_null(pillar_contract)
+	if pillar_contract == null:
+		return
 	for mask in range(1, SettlementFabricProgram.FEATURE_PORTAL_MASK_ALL + 1):
 		var recipe := program.recipe(SettlementFabricProgram \
 			.arcade_overhang_foundation_recipe_id(mask))
@@ -996,20 +1318,36 @@ func test_route_spanning_overhang_is_a_four_sided_foundation_shell() -> void:
 		assert_true(recipe.has_tag(&"cantilever_support"))
 		assert_true(recipe.has_tag(&"arcade_portal_support"))
 		assert_true(recipe.has_tag(&"route_spanning_overhang"))
-		assert_true(recipe.has_tag(&"four_sided_foundation_shell"))
+		assert_true(recipe.has_tag(&"four_corner_support_frame"))
 		assert_eq(recipe.placements.size(), 4,
-			"every gatehouse must close north/east/south/west")
+			"every arcade must carry all four corners of the upper plate")
 		var ids: Dictionary = {}
-		var portal_count := 0
 		for placement: Dictionary in recipe.placements:
 			ids[StringName(placement.id)] = true
-			portal_count += int(StringName(placement.asset_id) \
-				== SettlementFabricProgram.ROCK_DOOR)
+			assert_eq(StringName(placement.asset_id),
+				SettlementFabricProgram.DECK_PILLAR)
+			var bounds := (placement.transform as Transform3D) \
+				* pillar_contract.visual_bounds
+			# Each post is tangent to a corner of the two-by-two portal. Its
+			# nearest corner must remain outside the canonical padded player
+			# envelope, so the proof follows both asset and controller changes.
+			var portal_centre := Vector2(FabricRecipe.CELL_SIZE * 0.5,
+				FabricRecipe.CELL_SIZE * 1.5)
+			var nearest_lane_centre := Vector2(
+				FabricRecipe.CELL_SIZE if bounds.get_center().x \
+					>= portal_centre.x else 0.0,
+				FabricRecipe.CELL_SIZE * 2.0 if bounds.get_center().z \
+					>= portal_centre.y else FabricRecipe.CELL_SIZE)
+			var nearest_point := Vector2(
+				clampf(nearest_lane_centre.x, bounds.position.x, bounds.end.x),
+				clampf(nearest_lane_centre.y, bounds.position.z, bounds.end.z))
+			assert_gte(nearest_lane_centre.distance_to(nearest_point),
+				TraversalEnvelope.structural_clearance_radius() - 0.000001,
+				"%s support enters the padded route body" % placement.id)
 		assert_eq(ids.size(), 4)
-		for side: StringName in [&"north", &"east", &"south", &"west"]:
-			assert_true(ids.has(side), "foundation omits %s" % side)
-		assert_eq(portal_count, WarrenSpatialFeatureSolver._bit_count_4(mask),
-			"only route continuation faces may be arches")
+		for corner: StringName in [&"north_west", &"north_east",
+				&"south_east", &"south_west"]:
+			assert_true(ids.has(corner), "support frame omits %s" % corner)
 
 
 func test_recomposed_room_door_phase_is_derived_from_final_geometry() -> void:

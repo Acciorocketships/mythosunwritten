@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://cll6a8k37rit2"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ks31x"]
+[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ks31x"]
 
 [resource]
 script = ExtResource("1_ks31x")
@@ -8,6 +8,7 @@ id = &"lpfv.plant.03"
 visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village/lpfv_plant_03.tres"
 tags = Array[StringName]([&"nature", &"plant"])
 measured_aabb = AABB(-1.3182197, 0.025568083, -1.098025, 2.8605342, 1.0912343, 2.4951382)
+ground_contact_points = PackedVector2Array()
 tint_group = &"grass"
 supports_instance_color = true
 provenance_id = &"low_poly_fantasy_village:lpfv.plant.03"

@@ -1,6 +1,6 @@
-[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://cmg7nx7jhsc6l"]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/complete_buildings/7bfa7c2f12ee312ad9d6.res" id="1_1kq3u"]
+[ext_resource type="Texture2D" uid="uid://cnjkvhbhix1m5" path="res://terrain/environment/textures/complete_buildings/7bfa7c2f12ee312ad9d6.res" id="1_1kq3u"]
 
 [resource]
 resource_name = "SFT_MAIN_MATERIAL"

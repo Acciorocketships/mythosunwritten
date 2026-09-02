@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://dknepenyo8f2v"]
+
+[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_lkku2"]
+
+[resource]
+script = ExtResource("1_lkku2")
+id = &"lpfv.fabric.roof.compact.slate.03.middle"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_middle.tres"
+tags = Array[StringName]([&"building", &"compact_roof", &"fabric_roof", &"palette_variant", &"party_seam_middle", &"village"])
+measured_aabb = AABB(-1.828262, 0, -1.5, 3.656524, 2.0865865, 3)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.roof.compact.slate.03.middle"

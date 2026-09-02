@@ -11,6 +11,7 @@ extends Node3D
 const DEFAULT_PRODUCTION_WORLD_SEED := 2697992464
 const DEFAULT_PRODUCTION_SUPER_CELL := Vector2i(0, -1)
 const PRODUCTION_REGION_RADIUS := 5
+const SCALE_CHARACTER_SCENE := preload("res://characters/character.tscn")
 
 var _output_dir := "/tmp/mythos-warren-spatial-review"
 var _world_seed := 7
@@ -24,6 +25,7 @@ var _quality_dump := false
 var _capture_filter := ""
 var _trace_room_gate := false
 var _camera := Camera3D.new()
+var _scale_character: CharacterBody3D
 var _spatial: WarrenSpatialPlan
 var _fabric: SettlementFabricPlan
 var _production_urban: VillageUrbanFabricPlan
@@ -48,6 +50,7 @@ func _ready() -> void:
 	WarrenVolumetricSolver.diagnostic_trace_room_gate = _trace_room_gate
 	WarrenVolumetricSolver.diagnostic_trace_skywalk_timing = _trace_room_gate
 	WarrenRoomCompositionPlanner.diagnostic_trace = _trace_room_gate
+	WarrenSpatialFabricCompiler.diagnostic_trace_timing = _trace_room_gate
 	# The review must render exactly the same strict envelope policy as
 	# production. Edge-nick cameras remain as a falsification aid and should now
 	# produce no captures.
@@ -157,13 +160,14 @@ func _ready() -> void:
 	if _production_urban != null:
 		_build_production_terrain(_production_urban.world_transform)
 	else:
-		_build_ground()
+		_build_ground(catalog)
 	var root := Node3D.new()
 	root.name = "AuthoritativeSpatialWarren"
 	add_child(root)
 	var committed := _commit_production_entries(root, catalog) \
 		if _production_urban != null \
 		else SettlementFabricAssembler.commit(root, _fabric, catalog, false)
+	_install_scale_character(root)
 	print("[warren_spatial_review] seed=%d features=%d landmarks=%d balconies=%d instances=%d" \
 		% [_world_seed, _spatial.features.size(),
 			int(_spatial.audit.get("prefab_landmark_count", 0)),
@@ -285,7 +289,8 @@ func _print_quality_dump(program: SettlementFabricProgram) -> void:
 		var guard_payload := SettlementFabricAssembler.surface_visual_payload(
 			_fabric.surface_plan,
 			SettlementFabricAssembler.maze_module_footprints(_fabric),
-			SettlementFabricAssembler.maze_skin_panel_boxes_for(_fabric))
+			SettlementFabricAssembler.maze_skin_panel_boxes_for(_fabric),
+			_fabric.planned_plaza_cells)
 		for asset_id: StringName in guard_payload.asset_ids():
 			if String(asset_id).contains("railing"):
 				var batch := guard_payload.batches[asset_id] as Dictionary
@@ -597,6 +602,7 @@ func _capture_all() -> void:
 	views.append_array(_cell_camera_views())
 	views.append_array(_orbit_views(centre, span))
 	views.append_array(_gate_approach_views())
+	views.append_array(_player_scale_views())
 	views.append_array(_street_views())
 	views.append_array(_transition_views())
 	views.append_array(_market_views())
@@ -604,6 +610,7 @@ func _capture_all() -> void:
 	views.append_array(_route_connected_rooftop_court_views())
 	views.append_array(_roof_terrace_views())
 	views.append_array(_roofline_views())
+	views.append_array(_partial_crown_views())
 	views.append_array(_dormer_views())
 	views.append_array(_roof_campaign_views())
 	views.append_array(_maze_roof_junction_views())
@@ -627,6 +634,8 @@ func _capture_all() -> void:
 	for view: Dictionary in views:
 		if not _capture_matches_filter(String(view.id)):
 			continue
+		if _scale_character != null:
+			_scale_character.visible = bool(view.get("show_character", false))
 		_camera.fov = float(view.fov)
 		_camera.look_at_from_position(view.position as Vector3,
 			view.target as Vector3)
@@ -645,6 +654,80 @@ func _capture_all() -> void:
 		print("[warren_spatial_review] captured ", path)
 	_write_manifest()
 	get_tree().quit()
+
+
+func _install_scale_character(parent: Node3D) -> void:
+	## Use the shipped player scene as the scale reference. A review-only proxy
+	## cube would silently drift when the character changes and would not expose
+	## whether doors, lanes, storeys, and the town silhouette still feel sized for
+	## the body that actually walks them. The body is disabled and non-colliding;
+	## it exists only in the two explicit scale captures below.
+	_scale_character = SCALE_CHARACTER_SCENE.instantiate() as CharacterBody3D
+	assert(_scale_character != null)
+	_scale_character.name = "PlayerScaleReference"
+	_scale_character.collision_layer = 0
+	_scale_character.collision_mask = 0
+	_scale_character.visible = false
+	parent.add_child(_scale_character)
+	# Keep the shipped idle animation but disable movement physics. This is the
+	# real player model at rest, not its bind pose and not a simulated actor that
+	# can fall away while the capture queue renders other views.
+	_scale_character.set_physics_process(false)
+	var pose := _player_scale_pose()
+	_scale_character.position = pose.position as Vector3
+	_scale_character.rotation.y = float(pose.yaw)
+	var animation_tree := _scale_character.find_child(
+		"AnimationTree", true, false) as AnimationTree
+	if animation_tree != null:
+		animation_tree.active = true
+
+
+func _player_scale_pose() -> Dictionary:
+	if _spatial == null or _spatial.source_volume == null:
+		return {"position": Vector3.ZERO, "outward": Vector3.BACK, "yaw": 0.0}
+	var entry := _spatial.source_volume.entry_cell
+	var gate := Vector3(
+		float(entry.x) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
+			+ FabricRecipe.CELL_SIZE * 0.5,
+		float(entry.y) * WarrenVolumePlan.VERTICAL_BAND_SIZE_M,
+		float(entry.z) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
+			+ FabricRecipe.CELL_SIZE * 0.5)
+	var outward := gate - _fabric_bounds().get_center()
+	outward.y = 0.0
+	if outward.length_squared() <= 0.01:
+		outward = Vector3.BACK
+	outward = outward.normalized()
+	# The authored entry floor owns the exact body datum. Keeping the character
+	# on that claim avoids a decorative offset that could make a correctly sized
+	# doorway look too small or too large.
+	return {"position": gate, "outward": outward,
+		"yaw": atan2(-outward.x, -outward.z)}
+
+
+func _player_scale_views() -> Array[Dictionary]:
+	## Two complementary readings of the same real body: a close threshold view
+	## validates door/storey/lane proportions; the farther low view validates the
+	## city and its descending edge against the player rather than against an
+	## arbitrary camera altitude.
+	if _scale_character == null:
+		return []
+	var pose := _player_scale_pose()
+	var player := pose.position as Vector3
+	var outward := pose.outward as Vector3
+	var side := Vector3(-outward.z, 0.0, outward.x)
+	var town_target := _fabric_bounds().get_center()
+	return [
+		{"id": "player-scale-threshold",
+			"position": player + outward * 7.0 + side * 3.2 \
+				+ Vector3.UP * 2.4,
+			"target": player + Vector3.UP * 1.15 - outward * 1.8,
+			"fov": 55.0, "show_character": true},
+		{"id": "player-scale-silhouette",
+			"position": player + outward * 22.0 + side * 7.0 \
+				+ Vector3.UP * 4.0,
+			"target": town_target.lerp(player + Vector3.UP, 0.35),
+			"fov": 53.0, "show_character": true},
+	]
 
 
 ## TASK I4 ROUND 5, ITEM 6 -- "i'd like to see screenshots from more angles to
@@ -959,6 +1042,8 @@ func _roofline_views() -> Array[Dictionary]:
 			best_bounds = unit_bounds
 	if best == null:
 		return []
+	print("[warren_spatial_review] roofline perch=%s recipe=%s bounds=%s" % [
+		best.stable_id, best.recipe_id, best_bounds])
 	var bounds := _fabric_bounds()
 	var eye := best_bounds.get_center()
 	eye.y = best_bounds.end.y + 1.7
@@ -975,6 +1060,46 @@ func _roofline_views() -> Array[Dictionary]:
 	for index in corners.size():
 		out.append({"id": "roofline-%02d" % index, "position": eye,
 			"target": corners[index], "fov": 78.0})
+	return out
+
+
+func _partial_crown_views() -> Array[Dictionary]:
+	## A partial crown is visually small but used to be the source of the most
+	## obvious beige plank caps in the overview. Frame every selected handed
+	## recipe family from its finished gable end so the capture corpus verifies
+	## the actual weather skin, not merely the roof-face accounting.
+	var out: Array[Dictionary] = []
+	var seen_recipes: Dictionary = {}
+	for unit: FabricUnit in _fabric.units:
+		if not String(unit.recipe_id).begins_with("roof.partial.gable.") \
+				or seen_recipes.has(unit.recipe_id):
+			continue
+		var recipe := _fabric.recipe(unit.recipe_id)
+		if recipe == null or recipe.placements.is_empty():
+			continue
+		seen_recipes[unit.recipe_id] = true
+		var bounds := unit.transform() * recipe.local_clearance_bounds
+		var local_outward := Vector3.BACK \
+			if String(unit.recipe_id).ends_with("positive") else Vector3.FORWARD
+		var outward := unit.transform().basis * local_outward
+		outward.y = 0.0
+		if outward.length_squared() <= 0.01:
+			outward = Vector3.FORWARD
+		outward = outward.normalized()
+		var target := bounds.get_center()
+		target.y = bounds.position.y + bounds.size.y * 0.45
+		# Stand above the little crown. An eye at facade height necessarily aims
+		# through the room that bears it, which turns this roof QA frame into an
+		# interior wall close-up instead of exposing the weather surface.
+		var eye := target + outward * maxf(4.5, bounds.size.x + 1.5) \
+			+ Vector3.UP * 5.0
+		print(("[warren_spatial_review] partial-crown-%02d unit=%s " \
+			+ "recipe=%s bounds=%s") % [out.size(), unit.stable_id,
+				unit.recipe_id, bounds])
+		out.append({"id": "partial-crown-%02d" % out.size(),
+			"position": eye, "target": target, "fov": 42.0})
+		if out.size() >= 4:
+			break
 	return out
 
 
@@ -1443,6 +1568,8 @@ func _bridge_room_views() -> Array[Dictionary]:
 	## from the street it passes over looking up at its underside.
 	var out: Array[Dictionary] = []
 	var ordinal := 0
+	var source_spans := _spatial.audit.get("maze_source_bridge_seeds", []) \
+		as Array
 	for building: WarrenBuildingVolume in _spatial.buildings:
 		if not String(building.stable_id).begins_with("spatial.maze_bridge."):
 			continue
@@ -1464,14 +1591,52 @@ func _bridge_room_views() -> Array[Dictionary]:
 		var span_eye := _best_orbit_position(centre,
 			maxf(16.0, maxf(bounds.size.x, bounds.size.z) + 11.0), 7.5,
 			[building.stable_id] as Array[StringName], bounds)
-		out.append({"id": "bridge-room-%02d-span" % ordinal,
-			"position": span_eye, "target": centre, "fov": 60.0})
 		var under_target := Vector3(centre.x,
 			bounds.position.y - 0.15, centre.z)
 		var under_eye := _best_orbit_position(under_target, 7.0, -2.6,
 			[building.stable_id] as Array[StringName], bounds)
+		var reference_eye := span_eye
+		var reference_target := centre - Vector3.UP * 0.75
+		# The former generic orbit routinely chose the bridge's FLANK side, where
+		# the retained wall correctly hides the bore and a real tunnel looked like
+		# a solid tower. When the source proof is available, stand in the named
+		# passage and look ALONG its travel direction at the underside. This is the
+		# view that can falsify the opening the source promised to preserve.
+		if ordinal < source_spans.size():
+			var source_span := source_spans[ordinal] as Dictionary
+			var travel_values := source_span.get("travel_directions", []) as Array
+			var passage_values := source_span.get("cells", []) as Array
+			if not travel_values.is_empty() and not passage_values.is_empty():
+				var travel2 := travel_values[0] as Vector2i
+				var passage := passage_values[0] as Vector3i
+				var travel := Vector3(travel2.x, 0.0, travel2.y).normalized()
+				# The occupied bridge is read from its side, perpendicular to the
+				# street it tunnels over. This distinguishes the user's enclosed
+				# house-wing skywalk from the separate open timber footbridge.
+				var side := Vector3(-travel.z, 0.0, travel.x)
+				span_eye = centre + side * maxf(16.0,
+					maxf(bounds.size.x, bounds.size.z) + 11.0) \
+					+ Vector3.UP * 6.5
+				# Match the supplied reference's diagnostic three-quarter stance:
+				# partway down the tunneled street, offset toward one bank, high
+				# enough to read the pitched roof and low enough to retain the air
+				# opening beneath the occupied room in the same frame.
+				reference_eye = centre - travel * 11.0 + side * 8.5 \
+					+ Vector3.UP * 3.25
+				reference_target = centre - Vector3.UP * 1.0
+				under_eye = Vector3(centre.x,
+					float(passage.y) * FabricRecipe.CELL_SIZE \
+						+ CELL_CAMERA_EYE_HEIGHT, centre.z) \
+					- travel * FabricRecipe.CELL_SIZE * 4.5
+				under_target = under_eye + travel * FabricRecipe.CELL_SIZE * 8.0 \
+					+ Vector3.UP * FabricRecipe.CELL_SIZE * 2.0
+		out.append({"id": "bridge-room-%02d-span" % ordinal,
+			"position": span_eye, "target": centre, "fov": 60.0})
 		out.append({"id": "bridge-room-%02d-under" % ordinal,
 			"position": under_eye, "target": under_target, "fov": 70.0})
+		out.append({"id": "bridge-room-%02d-reference" % ordinal,
+			"position": reference_eye, "target": reference_target,
+			"fov": 63.0})
 		ordinal += 1
 		if ordinal >= 3:
 			break
@@ -1571,8 +1736,10 @@ func _maze_plaza_views() -> Array[Dictionary]:
 	var garden := SettlementFabricAssembler.maze_garden_cells(retained, solids,
 		paved, plinths, walked, {},
 		SettlementFabricAssembler.maze_module_footprints(_fabric))
-	var plaza := SettlementFabricAssembler.maze_village_green_cells(garden,
-		walked)
+	for planned_cell_value: Variant in _fabric.planned_plaza_cells.keys():
+		garden[planned_cell_value as Vector3i] = true
+	var plaza := SettlementFabricAssembler.maze_plaza_cells_for(_fabric,
+		garden, walked)
 	if plaza.is_empty():
 		return [] as Array[Dictionary]
 	var cells: Array[Vector3i] = []
@@ -1877,14 +2044,25 @@ static func _plaza_orbit_eye(target: Vector3, distance: float,
 
 
 func _maze_skywalk_views() -> Array[Dictionary]:
-	## TASK I3. The OPEN timber skywalks are fabric rather than features or
-	## rooms, so neither `_skywalk_views` (which photographs `enclosed_skywalk`
+	## TASK I3. These derived crossings are fabric rather than features or
+	## rooms, so neither `_skywalk_views` (which photographs reserved hero
+	## `enclosed_skywalk`
 	## reservations) nor `_bridge_room_views` (which photographs
-	## `spatial.maze_bridge.*` buildings) can find one. Read them off the
-	## assembler's own rule, and take the two cameras that decide whether a span
-	## works: one across it at deck height, one on the street underneath looking
-	## up at its underside and its bearers.
+	## `spatial.maze_bridge.*` buildings) can find one. A two-cell crossing is
+	## the blue-roofed enclosed house wing; a one-cell fallback is the open
+	## timber form. Read both off the assembler's own rule, then take the two
+	## cameras that decide whether each works: one down its open entrance, one
+	## square to an inhabited side facade (or an honest oblique for the open
+	## form), and -- only when the span actually crosses a street -- one on that
+	## street underneath looking up at its bearing. An upper-air fallback has no
+	## lower street and must not manufacture an ``underside`` camera in terrain.
 	var out: Array[Dictionary] = []
+	var mass: Dictionary = {}
+	for source: Dictionary in [_fabric.retained_terrace_cells,
+			_fabric.transformed_cells(&"solid"),
+			_fabric.transformed_cells(&"occluder")]:
+		for cell_value: Variant in source.keys():
+			mass[cell_value as Vector3i] = true
 	var ordinal := 0
 	for span: Dictionary in SettlementFabricAssembler.maze_skywalk_spans(
 			_fabric):
@@ -1893,24 +2071,80 @@ func _maze_skywalk_views() -> Array[Dictionary]:
 		var gap := int(span.gap)
 		var centre := (Vector3(cell + step) \
 			+ Vector3(step) * (float(gap) - 1.0) * 0.5) * FabricRecipe.CELL_SIZE
-		var deck_target := centre + Vector3.UP * 0.9
-		var span_eye := _best_orbit_position(deck_target,
-			maxf(13.0, float(gap + 2) * FabricRecipe.CELL_SIZE + 9.0), 2.4)
+		var along_axis := Vector3(step)
+		var cross := Vector3(step.z, 0.0, step.x)
+		var deck_target := centre + Vector3.UP * 1.3
+		var entrance_candidates: Array[Vector3] = []
+		for end: int in [-1, 1]:
+			for side: int in [-1, 1]:
+				entrance_candidates.append(centre \
+					+ along_axis * 12.0 * float(end) \
+					+ cross * 2.5 * float(side) + Vector3.UP * 3.2)
+		var span_eye := _maze_skywalk_best_eye(entrance_candidates,
+			deck_target, mass)
 		out.append({"id": "maze-skywalk-%02d-span" % ordinal,
 			"position": span_eye, "target": deck_target, "fov": 58.0})
-		# Under it: stand on the street the span crosses and look up. The eye
-		# goes at body height in the gap's own column, two bands down.
-		var under := centre
-		under.y -= float(SettlementFabricAssembler.SKYWALK_MIN_HEADROOM_BANDS) \
-			* FabricRecipe.CELL_SIZE
-		var back := Vector3(step.z, 0.0, step.x) * FabricRecipe.CELL_SIZE * 3.0
-		out.append({"id": "maze-skywalk-%02d-under" % ordinal,
-			"position": under + back + Vector3.UP * 1.45,
-			"target": centre, "fov": 74.0})
+		var side_target := centre + Vector3.UP * 1.5
+		var side_candidates: Array[Vector3] = []
+		if bool(span.get("enclosed", false)):
+			for side: int in [-1, 1]:
+				for end: int in [-1, 1]:
+					side_candidates.append(centre + cross * 11.0 * float(side) \
+						+ along_axis * 3.0 * float(end) + Vector3.UP * 3.8)
+			out.append({"id": "maze-skywalk-%02d-facade" % ordinal,
+				"position": _maze_skywalk_best_eye(side_candidates,
+					side_target, mass), "target": side_target, "fov": 56.0})
+		else:
+			# The open link has no facade. Show its complete floor, rails, and the
+			# occupied endpoint masses that bear it instead of photographing a
+			# nearby unrelated house as though it were the bridge wall.
+			for side: int in [-1, 1]:
+				for end: int in [-1, 1]:
+					side_candidates.append(centre + cross * 8.0 * float(side) \
+						+ along_axis * 7.0 * float(end) + Vector3.UP * 6.0)
+			out.append({"id": "maze-skywalk-%02d-oblique" % ordinal,
+				"position": _maze_skywalk_best_eye(side_candidates,
+					side_target, mass), "target": side_target, "fov": 62.0})
+		if bool(span.get("crosses_street", false)):
+			# Stand on the actual lower street and look up. The eye stays below
+			# the deck and chooses the clearer side/oblique rather than spawning
+			# inside whichever dense neighbour occupies -cross.
+			var under_target := centre - Vector3.UP * 0.15
+			var under_candidates: Array[Vector3] = []
+			for side: int in [-1, 1]:
+				for end: int in [-1, 1]:
+					under_candidates.append(centre + cross * 7.0 * float(side) \
+						+ along_axis * 2.5 * float(end) - Vector3.UP * 2.2)
+			out.append({"id": "maze-skywalk-%02d-under" % ordinal,
+				"position": _maze_skywalk_best_eye(under_candidates,
+					under_target, mass), "target": under_target, "fov": 68.0})
 		ordinal += 1
 		if ordinal >= 3:
 			break
 	return out
+
+
+func _maze_skywalk_best_eye(candidates: Array[Vector3], target: Vector3,
+		mass: Dictionary) -> Vector3:
+	## Constrained camera choice: entrance candidates remain entrance views,
+	## facade candidates remain side views, and underside candidates stay below
+	## the deck. Score those small honest sets against both unit envelopes and
+	## the retained/occluder volume that the general unit-only orbit misses.
+	assert(not candidates.is_empty())
+	var best := candidates[0]
+	var best_score := 1 << 30
+	for candidate: Vector3 in candidates:
+		var eye_cell := Vector3i(
+			roundi(candidate.x / FabricRecipe.CELL_SIZE),
+			floori(candidate.y / FabricRecipe.CELL_SIZE),
+			roundi(candidate.z / FabricRecipe.CELL_SIZE))
+		var score := _view_occlusion_score(candidate, target, []) \
+			+ 4 * _plaza_sight_blocked(candidate, target, mass) \
+			+ (1024 if mass.has(eye_cell) else 0)
+		if score < best_score:
+			best = candidate
+			best_score = score
+	return best
 
 
 func _maze_outcrop_views() -> Array[Dictionary]:
@@ -2651,31 +2885,29 @@ func _build_environment() -> void:
 	add_child(sun)
 
 
-func _build_ground() -> void:
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color("718d50")
-	material.roughness = 1.0
+func _build_ground(catalog: EnvironmentCatalog) -> void:
+	## Render the diagnostic site's terrain with the same lattice field, welded
+	## surface kernel, atlas UV, and commit path as production.  The former review
+	## stand-in extruded every support column as a thirty-metre green BoxMesh. Its
+	## vertical faces consequently appeared through stone plinth seams as the
+	## green-sided rectangles reported under prefab houses.  A terrain surface
+	## owns only its walkable top; exposed vertical structure remains the fabric
+	## assembler's authored stone shell, exactly as it is in the shipped town.
+	assert(catalog != null)
 	if _spatial == null or _spatial.source_volume == null \
 			or _spatial.source_volume.envelope == null:
-		var fallback := MeshInstance3D.new()
-		var fallback_mesh := BoxMesh.new()
-		fallback_mesh.size = Vector3(120.0, 0.4, 120.0)
-		fallback.mesh = fallback_mesh
-		fallback.position = Vector3(0.0, -0.2, 0.0)
-		fallback.material_override = material
-		add_child(fallback)
+		_commit_review_ground(_flat_review_ground_payload(), catalog)
 		return
-	# The town is terrain-relative. A single y=0 review plane made correctly
-	# terrain-rooted edge houses appear to hover on posts whenever their natural
-	# ground band was higher. Render the sealed envelope's own stepped datum as
-	# deep terrain columns so visual support review matches production rather than
-	# showing thin green slabs floating below otherwise valid foundations.
+	# The town is terrain-relative. Keep the sealed envelope's own datum, and add
+	# only the exact prefab bearing columns beyond it.  Expanding each 3 m source
+	# column into the two-by-two 1.5 m field it actually denotes preserves the
+	# source phase instead of guessing a visual offset for an individual mesh.
 	var envelope := _spatial.source_volume.envelope
-	var review_columns: Dictionary = {}
+	var top_by_cell: Dictionary = {}
 	for column_value: Variant in envelope.height_bands.keys():
 		var envelope_column := column_value as Vector2i
-		review_columns[envelope_column] = float(
-			envelope.ground_at(envelope_column)) * FabricRecipe.CELL_SIZE
+		_append_review_ground_column(top_by_cell, envelope_column,
+			envelope.ground_at(envelope_column))
 	# A complete prefab may stand just beyond the authored massif while still
 	# bearing on immutable natural terrain. The old review surface stopped at the
 	# massif dictionary and therefore falsified those valid foundations as houses
@@ -2685,28 +2917,104 @@ func _build_ground() -> void:
 		for bearing_cell: Vector3i in feature.terrain_bearing_cells:
 			var bearing_column := Vector2i(floori(float(bearing_cell.x) / 2.0),
 				floori(float(bearing_cell.z) / 2.0))
-			review_columns[bearing_column] = float(bearing_cell.y) \
-				* FabricRecipe.CELL_SIZE
-	for column_value: Variant in review_columns.keys():
+			_append_review_ground_column(top_by_cell, bearing_column,
+				bearing_cell.y)
+	_commit_review_ground(_review_ground_payload(top_by_cell), catalog)
+
+
+func _append_review_ground_column(top_by_cell: Dictionary,
+		column: Vector2i, top_band: int) -> void:
+	for dz in 2:
+		for dx in 2:
+			var fine := column * 2 + Vector2i(dx, dz)
+			top_by_cell[fine] = maxi(top_band,
+				int(top_by_cell.get(fine, -2147483648)))
+
+
+func _review_ground_payload(top_by_cell: Dictionary) -> Array[Dictionary]:
+	assert(not top_by_cell.is_empty())
+	var minimum := Vector2i(2147483647, 2147483647)
+	var maximum := Vector2i(-2147483648, -2147483648)
+	var minimum_top := 2147483647
+	for column_value: Variant in top_by_cell.keys():
 		var column := column_value as Vector2i
-		var top := float(review_columns[column])
-		var instance := MeshInstance3D.new()
-		var mesh := BoxMesh.new()
-		const REVIEW_GROUND_DEPTH_M := 30.0
-		mesh.size = Vector3(WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M,
-			REVIEW_GROUND_DEPTH_M,
-			WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M)
-		instance.mesh = mesh
-		# The envelope key identifies the first of two 1.5 m fine cells, so the
-		# rendered 3 m column centre is half a fine cell beyond that key.
-		instance.position = Vector3(float(column.x) \
-			* WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
-			+ FabricRecipe.CELL_SIZE * 0.5,
-			top - REVIEW_GROUND_DEPTH_M * 0.5, float(column.y) \
-			* WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
-			+ FabricRecipe.CELL_SIZE * 0.5)
-		instance.material_override = material
-		add_child(instance)
+		minimum.x = mini(minimum.x, column.x)
+		minimum.y = mini(minimum.y, column.y)
+		maximum.x = maxi(maximum.x, column.x)
+		maximum.y = maxi(maximum.y, column.y)
+		minimum_top = mini(minimum_top, int(top_by_cell[column]))
+	# Emit the authored town columns through the full terrain field kernel. The
+	# surrounding meadow is a separate, coarser top-only lattice below it. This
+	# is the same distinction production makes between retained village earth
+	# and streamed terrain, and avoids spending most of a diagnostic capture
+	# tessellating thousands of perfectly flat 1.5 m meadow owners.
+	var default_top := minimum_top - 2
+	var cells: Dictionary = {}
+	for column_value: Variant in top_by_cell.keys():
+		var column := column_value as Vector2i
+		cells[Vector3i(column.x, int(top_by_cell[column]) - 1,
+			column.y)] = true
+	var region := LatticeTerrainSurfaceRegion.new(top_by_cell,
+		FabricRecipe.CELL_SIZE, default_top)
+	var town_mesh := TerrainChunkMesher.field_ground_surface(cells, region,
+		FabricRecipe.CELL_SIZE, 0.0, &"review-shared-town-terrain", false)
+	_tint_review_ground(town_mesh)
+	# Four fine bands form one 6 m meadow owner. Preserve the exact requested
+	# world height with a lift rather than rounding the terrain datum onto this
+	# cheaper diagnostic lattice.
+	const MEADOW_CELL_SIZE := FabricRecipe.CELL_SIZE * 4.0
+	const FINE_PER_MEADOW := 4
+	var meadow_top := floori(float(default_top) / float(FINE_PER_MEADOW))
+	var meadow_lift := float(default_top) * FabricRecipe.CELL_SIZE \
+		- float(meadow_top) * MEADOW_CELL_SIZE
+	var margin := maxi(8, maxi(maximum.x - minimum.x,
+		maximum.y - minimum.y) / 3)
+	var meadow_min := Vector2i(floori(float(minimum.x - margin) \
+		/ float(FINE_PER_MEADOW)), floori(float(minimum.y - margin) \
+		/ float(FINE_PER_MEADOW)))
+	var meadow_max := Vector2i(ceili(float(maximum.x + margin) \
+		/ float(FINE_PER_MEADOW)), ceili(float(maximum.y + margin) \
+		/ float(FINE_PER_MEADOW)))
+	var meadow_cells: Dictionary = {}
+	for z in range(meadow_min.y, meadow_max.y + 1):
+		for x in range(meadow_min.x, meadow_max.x + 1):
+			meadow_cells[Vector3i(x, meadow_top - 1, z)] = true
+	var meadow_mesh := TerrainChunkMesher.flat_ground_surface(meadow_cells,
+		MEADOW_CELL_SIZE, meadow_lift, &"review-shared-meadow", false)
+	_tint_review_ground(meadow_mesh)
+	return [meadow_mesh, town_mesh]
+
+
+func _tint_review_ground(mesh: Dictionary) -> void:
+	var colors := PackedColorArray()
+	for vertex: Vector3 in mesh.vertices as PackedVector3Array:
+		colors.append(BiomeRegistry.ground_tint_at(vertex, _world_seed))
+	mesh["colors"] = colors
+
+
+func _flat_review_ground_payload() -> Array[Dictionary]:
+	var tops: Dictionary = {}
+	for z in range(-12, 13):
+		for x in range(-12, 13):
+			tops[Vector2i(x, z)] = 0
+	return _review_ground_payload(tops)
+
+
+func _commit_review_ground(meshes: Array[Dictionary],
+		catalog: EnvironmentCatalog) -> void:
+	var payload := EnvironmentInstancePayload.new()
+	for mesh: Dictionary in meshes:
+		assert(EnvironmentInstancePayload._surface_mesh_is_valid(mesh))
+		payload.add_surface_mesh(mesh)
+	var cache := EnvironmentRenderCache.new(catalog)
+	var queue := FeatureCommitQueue.new(cache)
+	queue.enqueue(Vector2i.ZERO, 1, self, payload)
+	while queue.pending_count() > 0:
+		# Even a mesh-only payload must be allowed through WAITING_ASSETS once so
+		# the queue can observe that its demanded-asset list is empty. A zero load
+		# budget exits that phase before the empty-list check and would spin this
+		# synchronous diagnostic drain forever.
+		queue.drain(1, 64, 64)
 
 
 func _write_manifest() -> void:

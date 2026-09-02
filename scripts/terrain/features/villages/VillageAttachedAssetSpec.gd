@@ -21,9 +21,10 @@ static func compile(data: Dictionary, catalog: EnvironmentCatalog,
 		push_error("Village attachment requires stable key and catalog asset")
 		return null
 	var descriptor := catalog.descriptor(spec.asset_id)
-	if descriptor == null or not descriptor.tags.has(&"village_prop") \
+	if descriptor == null or not (descriptor.tags.has(&"village_prop") \
+			or descriptor.tags.has(&"prefab_attachment")) \
 			or descriptor.collision_piece_count <= 0:
-		push_error("Village attachment must be a collidable village prop: %s" \
+		push_error("Village attachment must be a collidable village component: %s" \
 			% String(spec.asset_id))
 		return null
 	spec.measured_aabb = descriptor.measured_aabb
@@ -40,7 +41,8 @@ static func compile(data: Dictionary, catalog: EnvironmentCatalog,
 			spec.asset_id))
 		var variant_descriptor := catalog.descriptor(variant_id)
 		if variant_descriptor == null \
-				or not variant_descriptor.tags.has(&"village_prop") \
+				or not (variant_descriptor.tags.has(&"village_prop") \
+					or variant_descriptor.tags.has(&"prefab_attachment")) \
 				or variant_descriptor.collision_piece_count <= 0 \
 				or not _same_bounds(spec.measured_aabb,
 					variant_descriptor.measured_aabb):

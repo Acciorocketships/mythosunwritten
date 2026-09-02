@@ -161,6 +161,15 @@ const DECK_QUOTA: Dictionary = {
 ## See `_site_realises` for why asking it of the whole box is deliberately
 ## conservative rather than exact.
 const EAVE_HALO_CELLS := 1
+## A later modular house is not confined to its macro column: its authored roof
+## can project from the far side of the fronting street back into the prefab's
+## street-facing eave halo. The landmark builder sees only already-claimed grid
+## cells, so reserving the prefab's own envelope alone is one phase too late to
+## prevent that future visual overlap. One macro column is two fine cells; add
+## that exact reach behind the entrance while selecting the site. The inward
+## and lateral sides already carry the prefab reach plus its own eave halo and
+## need no blanket extra ring (which would erase viable edge sites).
+const FUTURE_HOUSE_CLEARANCE_CELLS := 2
 
 const ASSET_QUOTA_SALT := 0x51071
 const DECK_QUOTA_SALT := 0x4dec5
@@ -273,6 +282,15 @@ static func reserve(plan: WarrenMazeSourcePlan,
 	var streets := WarrenPlotPlanner.street_bands(plan)
 	var blocked := WarrenPlotPlanner.blocked_columns(plan)
 	_place_assets(plan, profile, streets, blocked, outcomes)
+	# The extra measured prefab reach is a height-bounded construction
+	# reservation, not ownership of every band in a column. Rebuild the ordinary
+	# source-plan set here; `_deck_column_ok` and P4 both consult the published
+	# vertical reservation, so a plaza/house above the measured roof remains
+	# legal while neither can excavate the retained support or visual envelope
+	# below it. Treating this as a flat blocked-column set erased valid upper
+	# courts; forgetting it entirely let a later deck remove rock under an
+	# authored prefab footing.
+	blocked = WarrenPlotPlanner.blocked_columns(plan)
 	var plaza := _place_plaza(plan, streets, blocked, outcomes)
 	_grow_decks(plan, streets, blocked, outcomes, plaza)
 
@@ -286,6 +304,7 @@ static func _place_assets(plan: WarrenMazeSourcePlan,
 	## site the source plan still refuses is set aside and the next-cheapest
 	## tried, so a refusal never silently costs the town a landmark.
 	var records: Array[Dictionary] = []
+	var clearance_reservations: Array[Dictionary] = []
 	var quota := WarrenPlotPlanner.roll(plan, ASSET_QUOTA_SALT,
 		plan.summit_cell, 0, profile.landmark_range)
 	var columns: Array[Vector2i] = []
@@ -312,10 +331,24 @@ static func _place_assets(plan: WarrenMazeSourcePlan,
 					"door_walk": site["door"], "building_id": id}):
 				for cell_value: Variant in site["cells"] as Array:
 					blocked[cell_value as Vector2i] = true
+				var clearance_columns: Array[Vector2i] = []
+				clearance_columns.assign(site.get("reserved_columns", []) as Array)
+				var support_columns: Array[Vector2i] = []
+				support_columns.assign(site.get("support_columns", []) as Array)
+				for column: Vector2i in clearance_columns:
+					blocked[column] = true
+				if not clearance_columns.is_empty() \
+						or not support_columns.is_empty():
+					clearance_reservations.append({"id": id,
+						"columns": clearance_columns.duplicate(),
+						"support_columns": support_columns.duplicate(),
+						"floor": datum,
+						"top": datum + int(template["height_bands"])})
 				record = {"kind_id": StringName(template["kind_id"]),
 					"site": {"id": id, "anchor": site["anchor"],
 						"datum": datum, "cost": int(site["cost"]),
-						"orientation": int(site["orientation"])},
+						"orientation": int(site["orientation"]),
+						"clearance_column_count": clearance_columns.size()},
 					"realisable": bool(site.get("realisable", false)),
 					"mirror": mirror, "reason": ""}
 				break
@@ -323,6 +356,12 @@ static func _place_assets(plan: WarrenMazeSourcePlan,
 			record["reason"] = plan.last_rejection
 		records.append(record)
 	outcomes["assets"] = records
+	# P4 rebuilds its blocked-column set after this function returns. Publish
+	# the exact extra columns here so the reservation survives that phase
+	# boundary; they remain residual massif (rendered as stone), not a second
+	# asset plot, and the prefab builder can claim their still-allocatable fine
+	# cells before residual packing begins.
+	outcomes["asset_clearance_reservations"] = clearance_reservations
 
 
 static func _new_mirror_tally() -> Dictionary:
@@ -390,17 +429,24 @@ static func _best_asset_site(plan: WarrenMazeSourcePlan, streets: Dictionary,
 						fallback = site
 					# The realisation mirror is the expensive test, so it runs
 					# only on a site that would otherwise become the winner.
+					var realisation: Dictionary = {}
 					if (best.is_empty() or _site_less(site, best)) \
 							and _site_realises(plan, streets, template, cells,
-								doors[datum], datum, mirror):
+								doors[datum], datum, mirror, blocked,
+								realisation):
 						site["realisable"] = true
+						site["reserved_columns"] = realisation.get(
+							"reserved_columns", [])
+						site["support_columns"] = realisation.get(
+							"support_columns", [])
 						best = site
 	return best if not best.is_empty() else fallback
 
 
 static func _site_realises(plan: WarrenMazeSourcePlan, streets: Dictionary,
 		template: Dictionary, cells: Array[Vector2i], door: Vector3i,
-		datum: int, mirror: Dictionary = {}) -> bool:
+		datum: int, mirror: Dictionary = {}, blocked: Dictionary = {},
+		realisation: Dictionary = {}) -> bool:
 	## TASK C5b RULING 3 -- the planner's mirror of
 	## `WarrenVolumetricSolver._maze_asset_landmark`. A site is only a site if
 	## the prefab really lands on it, and the landmark builder anchors the
@@ -460,19 +506,29 @@ static func _site_realises(plan: WarrenMazeSourcePlan, streets: Dictionary,
 				door.z * 2 + z_offset) + side
 			if not columns.has(_macro_column(doorway)):
 				continue
-			if not _fine_box_inside(plan, columns, doorway, side, lateral,
-					int(template["reach_forward"]) + EAVE_HALO_CELLS,
-					int(template["reach_left"]) + EAVE_HALO_CELLS,
-					int(template["reach_right"]) + EAVE_HALO_CELLS):
+			var reservation := _fine_box_reservation(plan, columns, blocked,
+				doorway, side, lateral,
+				int(template["reach_forward"]) + EAVE_HALO_CELLS,
+				int(template["reach_left"]) + EAVE_HALO_CELLS,
+				int(template["reach_right"]) + EAVE_HALO_CELLS,
+				EAVE_HALO_CELLS + FUTURE_HOUSE_CLEARANCE_CELLS)
+			if not bool(reservation.get("fits", false)):
 				continue
 			body_fits = true
+			var support_columns: Dictionary = {}
 			if _fine_box_bears(plan, doorway, side, lateral,
 					int(template["bearing_forward"]),
 					int(template["bearing_left"]),
-					int(template["bearing_right"]), datum):
+					int(template["bearing_right"]), datum, support_columns):
 				if not mirror.is_empty():
 					mirror["tested"] = int(mirror.get("tested", 0)) + 1
 					mirror["realisable"] = int(mirror.get("realisable", 0)) + 1
+				realisation["reserved_columns"] = reservation.get("columns", [])
+				var ordered_supports: Array[Vector2i] = []
+				ordered_supports.assign(support_columns.keys())
+				ordered_supports.sort_custom(Callable(WarrenPlotPlanner,
+					"column_less"))
+				realisation["support_columns"] = ordered_supports
 				return true
 	return _tally(mirror,
 		"bearing_off_ground" if body_fits else "body_outside_plot")
@@ -513,6 +569,14 @@ static func _macro_column(fine: Vector2i) -> Vector2i:
 static func _fine_box_inside(plan: WarrenMazeSourcePlan, columns: Dictionary,
 		doorway: Vector2i, side: Vector2i, lateral: Vector2i, forward: int,
 		left: int, right: int) -> bool:
+	return bool(_fine_box_reservation(plan, columns, {}, doorway, side,
+		lateral, forward, left, right).get("fits", false))
+
+
+static func _fine_box_reservation(plan: WarrenMazeSourcePlan,
+		columns: Dictionary, blocked: Dictionary, doorway: Vector2i,
+		side: Vector2i, lateral: Vector2i, forward: int, left: int,
+		right: int, backward: int = 0) -> Dictionary:
 	## TASK E3 RULING 4. A column just OFF THE MASSIF is as good as one this
 	## plot owns, and that is the whole of the alignment.
 	##
@@ -552,18 +616,35 @@ static func _fine_box_inside(plan: WarrenMazeSourcePlan, columns: Dictionary,
 	## `landmarks >= realisable` assertion is for, and why its accepted count is
 	## pinned two-sidedly: the day either of those bites, the pin is red.
 	##
-	## Measured: the mirror accepted 0 of 78 sites on the 24-town corpus before
-	## this and 2 after, against 2 landmarks the production pass really builds.
-	for step in range(0, forward + 1):
+	## TASK I6 closes the remaining gap without enlarging the plot itself. A
+	## measured envelope may cross an unclaimed massif column; P4 used to place
+	## an ordinary house there after this mirror ran, so a source-stage "yes"
+	## became a builder-stage clearance collision. Such columns are now returned
+	## as an exact reservation. They stay allocatable residual mass until the
+	## landmark transaction claims them, but P4 cannot turn them into a house.
+	## The one-cell backward reach is the roof halo on the street-facing side;
+	## the previous one-way box omitted it even though the builder expands the
+	## roof band in all four horizontal directions.
+	var reserved: Dictionary = {}
+	for step in range(-backward, forward + 1):
 		for across in range(-right, left + 1):
 			var column := _macro_column(doorway + side * step \
 				+ lateral * across)
 			if columns.has(column):
 				continue
-			if plan.massif.has_column(column) \
-					or not _touches_the_massif(plan, column):
-				return false
-	return true
+			if plan.massif.has_column(column):
+				# A typed bridge/passages reservation is already unavailable to P4.
+				# Do not mistake it for a future generic house; the exact volumetric
+				# feature pass arbitrates the two authored envelopes later.
+				if blocked.has(column):
+					continue
+				reserved[column] = true
+			elif not _touches_the_massif(plan, column):
+				return {"fits": false, "columns": [] as Array[Vector2i]}
+	var ordered: Array[Vector2i] = []
+	ordered.assign(reserved.keys())
+	ordered.sort_custom(Callable(WarrenPlotPlanner, "column_less"))
+	return {"fits": true, "columns": ordered}
 
 
 static func _touches_the_massif(plan: WarrenMazeSourcePlan,
@@ -579,7 +660,7 @@ static func _touches_the_massif(plan: WarrenMazeSourcePlan,
 
 static func _fine_box_bears(plan: WarrenMazeSourcePlan, doorway: Vector2i,
 		side: Vector2i, lateral: Vector2i, forward: int, left: int, right: int,
-		datum: int) -> bool:
+		datum: int, support_columns: Dictionary = {}) -> bool:
 	## The builder's `_landmark_bearing_follows_terrain`, restated in macro
 	## columns. Natural ground AT the datum is the original rule; a datum ABOVE
 	## natural ground is accepted when the band below it is solid the source
@@ -592,6 +673,7 @@ static func _fine_box_bears(plan: WarrenMazeSourcePlan, doorway: Vector2i,
 				+ lateral * across)
 			if not plan.massif.has_column(column):
 				return false
+			support_columns[column] = true
 			var ground := plan.massif.bearing_at(column)
 			if ground == datum:
 				continue
@@ -838,98 +920,42 @@ static func _plaza_site_key(site: Dictionary) -> String:
 
 static func _grow_decks(plan: WarrenMazeSourcePlan, streets: Dictionary,
 		blocked: Dictionary, outcomes: Dictionary, claimed: int = 0) -> void:
-	## Walk the streets in order and grow the flattest connected region beside
-	## each one, keeping them until the scale's quota is met. The seeded
-	## variation is the quota roll: a candidate is never skipped on a coin flip,
-	## or the same town would grow its decks elsewhere the moment its walk order
-	## shifted. A region the source plan refuses is recorded with its reason and
-	## does not count against the quota.
+	## Every public open room uses the same aspect-bounded rectangle transaction
+	## as the primary plaza. The former second algorithm grew cheapest-first
+	## tendrils from individual street cells; although connected, those regions
+	## could be 1-column ledges and therefore created the small platform vocabulary
+	## the visual adapter was later asked to disguise. One siting grammar now owns
+	## all plazas and courts: complete rectangles, bounded aspect, exact support,
+	## and an explicit same-band street threshold. A refused rectangle leaves no
+	## partial floor and the next complete site is considered.
 	var records: Array[Dictionary] = []
 	var scale := plan.scale_profile.scale_id
 	var quota := WarrenPlotPlanner.roll(plan, DECK_QUOTA_SALT,
 		plan.summit_cell, 0, DECK_QUOTA.get(scale, Vector2i(1, 1)))
-	var cap := int(DECK_MAX.get(scale, DECK_MIN))
-	# TASK I4 ROUND 3. `claimed` is the plaza, which already spent one of these
-	# slots -- see `_place_plaza`. Zero on a town that got no square, which is
-	# what makes that town's decks byte-identical to its pre-round ones.
 	var accepted := claimed
-	for street: Vector3i in WarrenPlotPlanner.walk_order(plan):
-		if accepted >= quota:
+	var refused: Dictionary = {}
+	while accepted < quota:
+		var site := _best_plaza_site(plan, streets, blocked, refused)
+		if site.is_empty():
 			break
-		var region := _deck_region(plan, street, streets, blocked, cap)
-		if region.size() < DECK_MIN:
-			continue
 		var id := StringName("deck.%02d" % records.size())
-		var record := {"id": id, "size": region.size(), "datum": street.y,
+		var region := site["cells"] as Array[Vector2i]
+		var datum := int(site["datum"])
+		var record := {"id": id, "size": region.size(), "datum": datum,
+			"width": int(site["width"]), "depth": int(site["depth"]),
 			"reason": ""}
 		if plan.add_plot({"id": id, "kind": WarrenMazeSourcePlan.PLOT_DECK,
-				"cells": region, "floor": street.y, "top": street.y,
-				"door_walk": street, "building_id": id}):
+				"cells": region, "floor": datum, "top": datum,
+				"door_walk": site["door"], "building_id": id}):
 			for column: Vector2i in region:
 				blocked[column] = true
 			accepted += 1
 		else:
 			record["reason"] = plan.last_rejection
+			refused[_plaza_site_key(site)] = true
 		records.append(record)
 	outcomes["decks"] = records
 	outcomes["decks_short"] = quota - accepted
-
-
-static func _deck_region(plan: WarrenMazeSourcePlan, street: Vector3i,
-		streets: Dictionary, blocked: Dictionary,
-		cap: int) -> Array[Vector2i]:
-	## Try each of the street's four neighbours as a root, cheapest first, and
-	## keep the first region that reaches DECK_MIN. One root at a time is what
-	## makes a deck connected: two opposite neighbours of the same street cell
-	## are not adjacent to each other, so a frontier seeded with both can grow
-	## two islands the source plan would rightly refuse as one footprint.
-	var roots: Array[Vector2i] = []
-	var origin := Vector2i(street.x, street.z)
-	for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
-		var root := origin + direction
-		if _deck_column_ok(plan, root, street.y, streets, blocked):
-			roots.append(root)
-	roots.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		return WarrenPlotPlanner.closer(plan, a, b, street.y))
-	for root: Vector2i in roots:
-		var region := _deck_from(plan, root, street.y, streets, blocked, cap)
-		if region.size() >= DECK_MIN:
-			return region
-	return [] as Array[Vector2i]
-
-
-static func _deck_from(plan: WarrenMazeSourcePlan, root: Vector2i, datum: int,
-		streets: Dictionary, blocked: Dictionary,
-		cap: int) -> Array[Vector2i]:
-	## Cheapest-first growth from one root. Every frontier column is a
-	## 4-neighbour of a column already in the region, so the result is one
-	## connected floor by construction.
-	var region: Array[Vector2i] = [root]
-	var frontier: Array[Vector2i] = []
-	var expand: Array[Vector2i] = [root]
-	var seen: Dictionary = {root: true}
-	while region.size() < cap:
-		while not expand.is_empty():
-			var from := expand.pop_back() as Vector2i
-			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
-				var next := from + direction
-				if seen.has(next) \
-						or not _deck_column_ok(plan, next, datum, streets,
-							blocked):
-					continue
-				seen[next] = true
-				frontier.append(next)
-		if frontier.is_empty():
-			break
-		var choice := 0
-		for index in range(1, frontier.size()):
-			if WarrenPlotPlanner.closer(plan, frontier[index],
-					frontier[choice], datum):
-				choice = index
-		region.append(frontier[choice])
-		expand.append(frontier[choice])
-		frontier.remove_at(choice)
-	return region
 
 
 static func _deck_column_ok(plan: WarrenMazeSourcePlan, column: Vector2i,
@@ -950,16 +976,16 @@ static func _deck_column_ok(plan: WarrenMazeSourcePlan, column: Vector2i,
 	## deck actually depends on is written down where it is depended on,
 	## rather than resting on another rule's incidental range.
 	##
-	## TASK I4 ROUND 3 -- `level_bands` IS HOW DEEP THE FLOOR MAY CUT, and the
-	## ordinary quota's own answer is one band, unchanged. The bound is only ever
+	## `level_bands` is how deep the floor may cut. Every court passes the shared
+	## plaza bound. The bound is only ever
 	## a CUT: `plot_support_ok` asks for solid at `datum - 1`, and on a column
 	## carrying no plot yet that solid runs out at the massif's own top, so a
 	## datum above the terrain is already impossible and `absi` was symmetric
-	## about a case that cannot happen. The plaza asks for more (see
-	## PLAZA_LEVEL_BANDS): a square is a terrace CUT into a slope, and a stepped
-	## cone's own contours are one column wide, which is the shape the ordinary
-	## rule has been growing.
-	return not blocked.has(column) and plan.massif.has_column(column) \
+	## about a case that cannot happen. A plaza/court is a terrace cut into a
+	## slope, so its complete footprint is evaluated as one transaction.
+	return not blocked.has(column) \
+		and not WarrenPlotPlanner._asset_clearance_blocks(plan, column, datum) \
+		and plan.massif.has_column(column) \
 		and absi(plan.massif.top_at(column) - datum) <= level_bands \
 		and plan.plot_support_ok(column, datum) \
 		and _no_street_left_hanging(streets, column, datum, datum)

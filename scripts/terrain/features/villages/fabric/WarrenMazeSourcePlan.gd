@@ -202,11 +202,14 @@ func seal() -> bool:
 	# computed keys, it never destroys theirs.
 	var built := _build_audit()
 	audit.merge(built, true)
-	if int(audit.get("max_spine_straight_run", 0)) \
-			> MAX_SPINE_STRAIGHT_RUN \
-			or int(audit.get("max_alley_straight_run", 0)) \
-				> MAX_ALLEY_STRAIGHT_RUN:
-		return _reject("a passage exceeds its straight-run cap")
+	var spine_straight := int(audit.get("max_spine_straight_run", 0))
+	var alley_straight := int(audit.get("max_alley_straight_run", 0))
+	if spine_straight > MAX_SPINE_STRAIGHT_RUN \
+			or alley_straight > MAX_ALLEY_STRAIGHT_RUN:
+		return _reject(("a passage exceeds its straight-run cap " \
+			+ "(spine %d/%d, alley %d/%d)") % [spine_straight,
+				MAX_SPINE_STRAIGHT_RUN, alley_straight,
+				MAX_ALLEY_STRAIGHT_RUN])
 	# The plot model's own invariants (2026-08-21 design): solids contiguous
 	# from terrain on every column, every plot still supported, no plot
 	# standing in a carved street's headroom, plots pairwise disjoint. A town
@@ -958,6 +961,7 @@ func _rebuild_rock_shoulders() -> void:
 	if massif == null:
 		return
 	var street_floors := _street_rock_floors()
+	var prefab_support_floors := _prefab_support_rock_floors()
 	var columns: Array[Vector2i] = []
 	columns.assign(massif.columns.keys())
 	columns.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
@@ -986,8 +990,29 @@ func _rebuild_rock_shoulders() -> void:
 		for member: Vector2i in region:
 			var derived := shoulder if shoulder >= 0 \
 				else massif.top_at(member)
-			_rock_shoulders[member] = maxi(derived,
-				int(street_floors.get(member, derived)))
+			_rock_shoulders[member] = maxi(maxi(derived,
+				int(street_floors.get(member, derived))),
+				int(prefab_support_floors.get(member, derived)))
+
+
+func _prefab_support_rock_floors() -> Dictionary:
+	## A prefab is selected before the generic plot partition, from an exact
+	## doorway-relative bearing proof. Some authored feet can sit on a no-plot
+	## column in the prefab's measured reach. The finished shoulder flood must
+	## retain that already-proved support to the prefab floor; otherwise a later
+	## low neighbouring house lowers the complete no-plot region and silently
+	## removes the footing after it was certified. This typed reservation is the
+	## construction analogue of `_street_rock_floors`: both preserve only the
+	## vertical mass a sealed earlier phase requires, never a whole column.
+	var out: Dictionary = {}
+	for record_value: Variant in (audit.get("plot_outcomes", {}) as Dictionary) \
+			.get("asset_clearance_reservations", []) as Array:
+		var record := record_value as Dictionary
+		var floor_band := int(record.get("floor", 0))
+		for column_value: Variant in record.get("support_columns", []) as Array:
+			var column := column_value as Vector2i
+			out[column] = maxi(int(out.get(column, floor_band)), floor_band)
+	return out
 
 
 func _street_rock_floors() -> Dictionary:
@@ -1108,7 +1133,17 @@ func _plot_placement_rejection(plot: Dictionary, self_index: int) -> String:
 				+ "touches") % [id, door]
 	for cell_value: Variant in plot["cells"] as Array:
 		var column := cell_value as Vector2i
-		if not plot_support_ok(column, floor_band):
+		# A bridge plot is carried laterally by its authored room sockets or by a
+		# complete terrain-reaching portal. Its own column is deliberately the
+		# public bore, so applying the ordinary vertical support rule would require
+		# recreating the rock slab the bridge-house replaces. The occupied interval
+		# still has to be clear, and the band directly below must be the carved bore.
+		if kind == PLOT_BRIDGE:
+			if excavation == null or not excavation.carved.has(Vector3i(
+					column.x, floor_band - 1, column.y)):
+				return ("bridge plot %s lacks its open bore below column %s at " \
+					+ "band %d") % [id, column, floor_band - 1]
+		elif not plot_support_ok(column, floor_band):
 			if massif != null and floor_band < massif.base_at(column):
 				return ("plot %s breaks support rule 3 at column %s: its " \
 					+ "floor %d is %d bands inside the terrain, which " \
@@ -1182,6 +1217,17 @@ func deterministic_signature() -> String:
 		var span := excavation.bridge_spans[span_index] as Array[Vector3i]
 		for cell: Vector3i in span:
 			parts.append("b:%d:%d,%d,%d" % [span_index, cell.x, cell.y, cell.z])
+	var bridge_proofs := excavation.bridge_span_audit.get("seeded", []) as Array
+	for span_index in mini(excavation.bridge_spans.size(), bridge_proofs.size()):
+		var proof := bridge_proofs[span_index] as Dictionary
+		var groups := proof.get("endpoint_groups", []) as Array
+		for side_index in groups.size():
+			var endpoints: Array[Vector2i] = []
+			endpoints.assign(groups[side_index] as Array)
+			endpoints.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
+			for column: Vector2i in endpoints:
+				parts.append("be:%d:%d:%d,%d" % [span_index, side_index,
+					column.x, column.y])
 	var air: Array[Vector3i] = []
 	air.assign(excavation.carved.keys())
 	air.sort_custom(Callable(WarrenMazeSourcePlan, "_cell_less"))

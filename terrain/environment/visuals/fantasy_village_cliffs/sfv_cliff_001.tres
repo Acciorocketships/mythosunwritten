@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3 uid="uid://b3bktwso1unf8"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_0t0dj"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_wlr67"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_cliffs/sfv_cliff_001_piece_00.res" id="3_vc6ry"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_gekyl"]
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_0t0dj"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_wlr67"]
+[ext_resource type="ArrayMesh" uid="uid://caryw4olfp5gr" path="res://terrain/environment/meshes/fantasy_village_cliffs/sfv_cliff_001_piece_00.res" id="3_vc6ry"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_gekyl"]
 
 [sub_resource type="Resource" id="Resource_wits3"]
 script = ExtResource("2_wlr67")

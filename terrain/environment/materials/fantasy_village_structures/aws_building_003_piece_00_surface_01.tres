@@ -1,4 +1,4 @@
-[gd_resource type="StandardMaterial3D" format=3]
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://deby0kvp15y3m"]
 
 [resource]
 resource_name = "GLOW_PINK"

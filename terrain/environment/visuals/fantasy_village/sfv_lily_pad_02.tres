@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3 uid="uid://dxq4064saikqo"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_yyox1"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_qq1ve"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village/sfv_lily_pad_02_piece_00.res" id="3_34yce"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_s2me3"]
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_yyox1"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_qq1ve"]
+[ext_resource type="ArrayMesh" uid="uid://cf5i11tg74b4w" path="res://terrain/environment/meshes/fantasy_village/sfv_lily_pad_02_piece_00.res" id="3_34yce"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_s2me3"]
 
 [sub_resource type="Resource" id="Resource_0jcv7"]
 script = ExtResource("2_qq1ve")

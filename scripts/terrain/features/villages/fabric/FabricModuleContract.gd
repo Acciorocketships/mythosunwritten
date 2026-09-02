@@ -9,6 +9,7 @@ enum Kind {
 	WALK_SURFACE,
 	ROOF_REPEAT,
 	ROOF_END,
+	ROOF_SHED,
 	PREFAB,
 	STAIR_SWITCHBACK,
 }
@@ -26,6 +27,11 @@ var pair_axis := Vector3i.ZERO
 var pair_offset := 0.0
 var seam_profile: StringName
 var material_family: StringName
+## Cardinal local direction of an authored shed roof's high edge.  Recipes
+## orient this edge toward the supporting wall; the opposite edge is therefore
+## always the free, draining eave.  This is source-asset metadata, never a
+## per-placement visual correction.
+var shed_high_edge := Vector3i.ZERO
 var visual_clearance := 0.0
 ## Authored tread planes exclude handrails/posts from their vertical datums.
 ## A switchback may therefore seal above its high walking surface.
@@ -65,6 +71,11 @@ func seal() -> bool:
 		Kind.ROOF_END:
 			if seam_profile.is_empty():
 				last_rejection = "roof end lacks a seam profile"
+				return false
+		Kind.ROOF_SHED:
+			if absi(shed_high_edge.x) + absi(shed_high_edge.y) \
+					+ absi(shed_high_edge.z) != 1 or shed_high_edge.y != 0:
+				last_rejection = "shed roof lacks a cardinal high edge"
 				return false
 		Kind.STAIR_SWITCHBACK:
 			if stair_high_tread_y <= stair_low_tread_y \

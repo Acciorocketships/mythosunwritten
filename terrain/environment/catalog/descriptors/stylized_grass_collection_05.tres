@@ -8,6 +8,7 @@ id = &"stylized_grass.collection_05"
 visual_path = "res://terrain/environment/visuals/stylized_grass/stylized_grass_collection_05.tres"
 tags = Array[StringName]([&"grass", &"nature"])
 measured_aabb = AABB(-1.5317112, 0, -1.556269, 3.0634224, 1.1759367, 3.112538)
+ground_contact_points = PackedVector2Array()
 tint_group = &"ground"
 supports_instance_color = true
 provenance_id = &"stylized_grass:stylized_grass.collection_05"

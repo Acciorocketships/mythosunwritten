@@ -109,15 +109,17 @@ const MAX_LAYER_BANDS := WarrenMassif.BUILDABLE_LAYER_BANDS
 ## public journey with headroom and construction above it. No production code
 ## ever read it -- the floor `_shape_gate_failure` enforces, and therefore the
 ## floor every sealed massif satisfies by construction, is the size profile's
-## own `minimum_core_bands` (compact 12, standard 13, large 14, grand 15).
+## own `minimum_core_bands` (compact 10, standard 10, large 12, grand 14).
 ## Measured on the terraced field the constant is also unreachable: the peak
-## layer is the rolled core quantized down under the rim ceiling, and every
-## planner town and every flat review-fixture seed measures 14. The pin moved
-## to the profile floor rather than the field moving to the pin, because the
-## field is what 24 of 24 corpus towns are built from.
+## layer is a whole two-band storey. Those profile floors now name complete
+## terrace counts rather than odd band values which silently round upward.
+## Five terraces is the shared grammar floor; larger profiles ask for one and
+## two additional terraces without making the smaller fields pretend to have
+## the footprint of the old scale.
 
-## A town must expose at least five inhabited height terraces. Fewer terraces
-## read as a single block; the reviewed corpus normally produces far more.
+## Every production town exposes at least five inhabited height terraces. The
+## selected scale profiles start at the smallest source radius proved capable
+## of sealing this complete stepped silhouette.
 const MIN_TERRACE_LEVELS := 5
 const MIN_COLUMN_BANDS := 2
 ## A neighbouring pair of columns may step by at most this many bands OF
@@ -270,9 +272,10 @@ static func build(world_seed: int, ground_bands: Dictionary = {},
 		last_failure = "invalid village scale profile"
 		return null
 	var radius_cells := profile.radius_cells
-	var footprint_core := profile.minimum_core_bands \
+	var footprint_core := profile.core_target_band_range.x \
 		+ posmod(_hash(world_seed, 5, 0, 0),
-			profile.maximum_core_bands - profile.minimum_core_bands + 1)
+			profile.core_target_band_range.y \
+				- profile.core_target_band_range.x + 1)
 	var warp_phase := float(posmod(_hash(world_seed, 7, 0, 0), 1000)) \
 		/ 1000.0 * TAU
 	var warp_strength := 0.22 + float(posmod(_hash(world_seed, 11, 0, 0),
@@ -321,11 +324,12 @@ static func _terraced_massif(world_seed: int, raw_at: Dictionary,
 	var depths := _depths(raw_at)
 	var ceilings := _terrace_ceilings(depths)
 	var massif: WarrenMassif = null
+	var valid_fallback: WarrenMassif = null
 	var closest_failure := ""
 	for phase_attempt in FIELD_PHASE_ATTEMPTS:
 		var phase_seed := world_seed + phase_attempt * FIELD_PHASE_STRIDE
 		var terraces := _terrace_field(order, depths, ceilings, phase_seed,
-			footprint_core, profile.minimum_core_bands)
+			footprint_core, profile.core_target_band_range.x)
 		var candidate := WarrenMassif.new(world_seed)
 		for column: Vector2i in order:
 			var base := int(ground_bands.get(column, 0))
@@ -337,9 +341,24 @@ static func _terraced_massif(world_seed: int, raw_at: Dictionary,
 			}
 		var failure := _shape_gate_failure(candidate, profile)
 		if failure.is_empty():
-			massif = candidate
-			break
+			# Prefer the first field that reaches the profile's established
+			# crown target. Only after exhausting that exact bounded family may
+			# the generator use the first field which clears the independent
+			# five-terrace validity floor. Existing target-complete towns are
+			# therefore output-stable, while a smaller but still complete town is
+			# accepted instead of becoming a seed-specific refusal.
+			var core_top := 0
+			for column: Vector2i in candidate.columns:
+				core_top = maxi(core_top, candidate.layer_at(column))
+			if core_top >= profile.core_target_band_range.x:
+				massif = candidate
+				break
+			if valid_fallback == null:
+				valid_fallback = candidate
+			continue
 		closest_failure = failure
+	if massif == null:
+		massif = valid_fallback
 	if massif == null:
 		last_failure = "no terrace field sealed after %d phases: %s" % [
 			FIELD_PHASE_ATTEMPTS, closest_failure]
@@ -415,16 +434,16 @@ static func _terrace_ceilings(depths: Dictionary) -> Dictionary:
 
 static func _terrace_field(order: Array[Vector2i], depths: Dictionary,
 		ceilings: Dictionary, phase_seed: int, footprint_core: int,
-		minimum_core_bands: int) -> Dictionary:
+		target_floor_bands: int) -> Dictionary:
 	## Steps 1-5 of the class comment: ramp, noise, quantize, repair, merge.
 	var max_depth := 1
 	for column: Vector2i in order:
 		max_depth = maxi(max_depth, int(depths.get(column, 1)))
-	# Whole storeys, and never below what the profile demands of the crown:
-	# rounding the rolled core DOWN to a terrace can land a seed under its own
-	# scale's floor, and rounding it UP can stand a compact town taller than
-	# its scale was ever authored to be.
-	var core_terraces := clampi(maxi(int(ceil(float(minimum_core_bands)
+	# Whole storeys. Preserve the preferred target distribution's authored
+	# quantization exactly; the independent validity floor participates only in
+	# the final shape proof. This prevents relaxing that proof floor from
+	# rerolling already-valid massifs.
+	var core_terraces := clampi(maxi(int(ceil(float(target_floor_bands)
 		/ float(TERRACE_BANDS))), footprint_core / TERRACE_BANDS),
 		MIN_TERRACES, MAX_TERRACES)
 	# The whole available depth is spent on the descent: the deepest column

@@ -4,6 +4,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_big_rock_01.tres",
       "id": "lpfv.big_rock.01",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -2.52799487113953,
+            -0.492649406194687,
+            -2.37848973274231
+          ],
+          "size": [
+            5.1954174041748,
+            9.95983695983887,
+            5.12712955474854
+          ]
+        },
+        "mesh_bytes": 15336,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 170
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "flat_rock",
@@ -24,6 +44,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_big_rock_02.tres",
       "id": "lpfv.big_rock.02",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -2.93253970146179,
+            -0.387102663516998,
+            -2.38198161125183
+          ],
+          "size": [
+            5.78033208847046,
+            9.39769077301025,
+            4.82106876373291
+          ]
+        },
+        "mesh_bytes": 12110,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 144
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "flat_rock",
@@ -44,6 +84,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_big_rock_03.tres",
       "id": "lpfv.big_rock.03",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -3.07071280479431,
+            -0.17997807264328,
+            -4.89278221130371
+          ],
+          "size": [
+            5.24341106414795,
+            5.38916063308716,
+            9.50376033782959
+          ]
+        },
+        "mesh_bytes": 5390,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 54
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "flat_rock",
@@ -64,6 +124,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_branch_01.tres",
       "id": "lpfv.branch.01",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.347985863685608,
+            -0.150415256619453,
+            -0.0421779826283455
+          ],
+          "size": [
+            1.1452329158783,
+            0.655574321746826,
+            4.32948160171509
+          ]
+        },
+        "mesh_bytes": 49710,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 964
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "oriented_capsule",
@@ -85,6 +165,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_flower_01.tres",
       "id": "lpfv.flower.01",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.267346143722534,
+            -0.0124019104987383,
+            -0.165448635816574
+          ],
+          "size": [
+            0.596173226833344,
+            0.57685661315918,
+            0.387505352497101
+          ]
+        },
+        "mesh_bytes": 10662,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 122
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.flower.01",
@@ -104,6 +204,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_flower_02.tres",
       "id": "lpfv.flower.02",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.469769954681396,
+            -0.024467071518302,
+            -0.383288979530334
+          ],
+          "size": [
+            0.976676225662231,
+            0.691189706325531,
+            0.570211708545685
+          ]
+        },
+        "mesh_bytes": 26062,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 322
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.flower.02",
@@ -123,6 +243,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_flower_03.tres",
       "id": "lpfv.flower.03",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.232207104563713,
+            -0.0129587380215526,
+            -0.184539318084717
+          ],
+          "size": [
+            0.583226919174194,
+            0.767424166202545,
+            0.416668772697449
+          ]
+        },
+        "mesh_bytes": 21342,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 264
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.flower.03",
@@ -142,6 +282,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_flower_04.tres",
       "id": "lpfv.flower.04",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.517619490623474,
+            -0.00766588049009442,
+            -0.302336692810059
+          ],
+          "size": [
+            1.04619002342224,
+            0.784624874591827,
+            0.670279860496521
+          ]
+        },
+        "mesh_bytes": 48110,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 616
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.flower.04",
@@ -161,6 +321,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_flower_05.tres",
       "id": "lpfv.flower.05",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.564780414104462,
+            -0.0117711499333382,
+            -0.433237314224243
+          ],
+          "size": [
+            1.12243950366974,
+            1.04513764381409,
+            0.820435345172882
+          ]
+        },
+        "mesh_bytes": 37558,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 490
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.flower.05",
@@ -180,6 +360,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_log_01.tres",
       "id": "lpfv.log.01",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.14052379131317,
+            -0.0289743989706039,
+            -2.86552762985229
+          ],
+          "size": [
+            2.2680778503418,
+            1.54272472858429,
+            5.71467399597168
+          ]
+        },
+        "mesh_bytes": 18275,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 232
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "oriented_cylinder",
@@ -201,6 +401,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_log_02.tres",
       "id": "lpfv.log.02",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.609315752983093,
+            -0.111036755144596,
+            -2.65287089347839
+          ],
+          "size": [
+            1.77275156974792,
+            2.05869174003601,
+            5.33651733398438
+          ]
+        },
+        "mesh_bytes": 13955,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 212
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "oriented_cylinder",
@@ -222,6 +442,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_log_03.tres",
       "id": "lpfv.log.03",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.43360090255737,
+            -0.512243747711182,
+            -2.0816764831543
+          ],
+          "size": [
+            2.80904150009155,
+            2.4245445728302,
+            4.07991552352905
+          ]
+        },
+        "mesh_bytes": 175233,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1640
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "oriented_cylinder",
@@ -243,6 +483,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_mushroom_01.tres",
       "id": "lpfv.mushroom.01",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.420059710741043,
+            -0.00797392893582582,
+            -0.435826122760773
+          ],
+          "size": [
+            0.847187221050262,
+            1.14468514919281,
+            0.841200351715088
+          ]
+        },
+        "mesh_bytes": 24024,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 328
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.mushroom.01",
@@ -262,6 +522,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_mushroom_02.tres",
       "id": "lpfv.mushroom.02",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.414445012807846,
+            -0.00797377899289131,
+            -0.396112591028214
+          ],
+          "size": [
+            0.83586311340332,
+            1.05878341197968,
+            0.79606831073761
+          ]
+        },
+        "mesh_bytes": 27096,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 368
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.mushroom.02",
@@ -281,6 +561,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_mushroom_03.tres",
       "id": "lpfv.mushroom.03",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.400580137968063,
+            -0.00797396246343851,
+            -0.400579959154129
+          ],
+          "size": [
+            0.801160216331482,
+            1.27658438682556,
+            0.801160216331482
+          ]
+        },
+        "mesh_bytes": 7034,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 90
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.mushroom.03",
@@ -300,6 +600,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_mushroom_04.tres",
       "id": "lpfv.mushroom.04",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.375901311635971,
+            -0.00797396060079336,
+            -0.358004808425903
+          ],
+          "size": [
+            0.751802563667297,
+            0.969187319278717,
+            0.716009855270386
+          ]
+        },
+        "mesh_bytes": 8976,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 102
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.mushroom.04",
@@ -319,6 +639,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_mushroom_05.tres",
       "id": "lpfv.mushroom.05",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.237306922674179,
+            -0.0213999208062887,
+            -0.364245772361755
+          ],
+          "size": [
+            0.468305051326752,
+            0.896230340003967,
+            0.559465646743774
+          ]
+        },
+        "mesh_bytes": 26328,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 328
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.mushroom.05",
@@ -338,6 +678,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_mushroom_06.tres",
       "id": "lpfv.mushroom.06",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.331044435501099,
+            -0.0233852751553059,
+            -0.363937169313431
+          ],
+          "size": [
+            0.590254604816437,
+            0.913053750991821,
+            0.662788510322571
+          ]
+        },
+        "mesh_bytes": 20064,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 246
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.mushroom.06",
@@ -357,6 +717,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_mushroom_07.tres",
       "id": "lpfv.mushroom.07",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.297401189804077,
+            -0.0324634313583374,
+            -0.164368718862534
+          ],
+          "size": [
+            0.55643230676651,
+            1.08625769615173,
+            0.302670359611511
+          ]
+        },
+        "mesh_bytes": 53304,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 464
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.mushroom.07",
@@ -376,6 +756,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_plant_01.tres",
       "id": "lpfv.plant.01",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.60118138790131,
+            -0.0163145195692778,
+            -1.41927123069763
+          ],
+          "size": [
+            3.09212875366211,
+            1.00294780731201,
+            2.77417135238647
+          ]
+        },
+        "mesh_bytes": 69869,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 658
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.plant.01",
@@ -395,6 +795,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_plant_02.tres",
       "id": "lpfv.plant.02",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.31821966171265,
+            -0.00597261777147651,
+            -1.14555501937866
+          ],
+          "size": [
+            2.82579183578491,
+            1.77663147449493,
+            2.6229031085968
+          ]
+        },
+        "mesh_bytes": 139853,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1378
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.plant.02",
@@ -414,6 +834,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_plant_03.tres",
       "id": "lpfv.plant.03",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.31821966171265,
+            0.0255680829286575,
+            -1.09802496433258
+          ],
+          "size": [
+            2.86053419113159,
+            1.09123432636261,
+            2.49513816833496
+          ]
+        },
+        "mesh_bytes": 98249,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 968
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.plant.03",
@@ -433,6 +873,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_plant_04.tres",
       "id": "lpfv.plant.04",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.48801851272583,
+            -0.0619732290506363,
+            -1.1488471031189
+          ],
+          "size": [
+            3.15506482124329,
+            1.8201767206192,
+            2.6294264793396
+          ]
+        },
+        "mesh_bytes": 136529,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1260
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.plant.04",
@@ -452,6 +912,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_reeds_01.tres",
       "id": "lpfv.reeds.01",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.322152465581894,
+            -0.0161746833473444,
+            -0.374928385019302
+          ],
+          "size": [
+            0.785508036613464,
+            2.23745608329773,
+            0.592852413654327
+          ]
+        },
+        "mesh_bytes": 25993,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 348
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "id": "lpfv.reeds.01",
@@ -471,6 +951,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_01.tres",
       "id": "lpfv.rock.01",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.994568586349487,
+            -0.60377448797226,
+            -1.04939377307892
+          ],
+          "size": [
+            2.0727686882019,
+            1.29600787162781,
+            2.1192946434021
+          ]
+        },
+        "mesh_bytes": 3404,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 28
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "flat_rock",
@@ -491,6 +991,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_02.tres",
       "id": "lpfv.rock.02",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.10469996929169,
+            -0.391969591379166,
+            -1.04887712001801
+          ],
+          "size": [
+            2.11434364318848,
+            1.02844512462616,
+            2.11747121810913
+          ]
+        },
+        "mesh_bytes": 2796,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 20
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "flat_rock",
@@ -511,6 +1031,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_03.tres",
       "id": "lpfv.rock.03",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.937818765640259,
+            -0.25210040807724,
+            -0.83955717086792
+          ],
+          "size": [
+            1.3628294467926,
+            0.774384200572968,
+            1.71528017520905
+          ]
+        },
+        "mesh_bytes": 3516,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 30
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "flat_rock",
@@ -531,6 +1071,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_04.tres",
       "id": "lpfv.rock.04",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.14848279953003,
+            -0.0910938605666161,
+            -0.381026864051819
+          ],
+          "size": [
+            1.54897820949554,
+            0.81000143289566,
+            1.2790994644165
+          ]
+        },
+        "mesh_bytes": 2796,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 20
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_footprint": 0.88,
@@ -554,6 +1114,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_05.tres",
       "id": "lpfv.rock.05",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.550341129302979,
+            -0.28802627325058,
+            -1.55928432941437
+          ],
+          "size": [
+            2.11841654777527,
+            1.01399385929108,
+            2.12823915481567
+          ]
+        },
+        "mesh_bytes": 3252,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 26
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_footprint": 0.88,
@@ -577,6 +1157,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_06.tres",
       "id": "lpfv.rock.06",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.02529013156891,
+            -0.28439062833786,
+            -1.02528989315033
+          ],
+          "size": [
+            2.05058002471924,
+            1.0815052986145,
+            2.05058002471924
+          ]
+        },
+        "mesh_bytes": 3388,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 32
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_max_height": 0.4347826,
@@ -599,6 +1199,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_07.tres",
       "id": "lpfv.rock.07",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 2,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.39399516582489,
+            -0.290396392345428,
+            -2.37364840507507
+          ],
+          "size": [
+            2.98460054397583,
+            2.21453094482422,
+            3.11820840835571
+          ]
+        },
+        "mesh_bytes": 114460,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1618
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_component_count": 2.0,
@@ -620,6 +1240,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_08.tres",
       "id": "lpfv.rock.08",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 2,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.02529001235962,
+            -0.335851788520813,
+            -1.38881814479828
+          ],
+          "size": [
+            3.63279724121094,
+            2.5429859161377,
+            2.81160402297974
+          ]
+        },
+        "mesh_bytes": 116668,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1628
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_component_count": 2.0,
@@ -641,6 +1281,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_rock_09.tres",
       "id": "lpfv.rock.09",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 2,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.23657143115997,
+            -0.706383645534515,
+            -2.17055296897888
+          ],
+          "size": [
+            3.69702911376953,
+            2.68684506416321,
+            3.72106456756592
+          ]
+        },
+        "mesh_bytes": 100932,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 956
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_component_count": 2.0,
@@ -662,6 +1322,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_stump_01.tres",
       "id": "lpfv.stump.01",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.37788343429565,
+            -0.113071791827679,
+            -1.27458262443542
+          ],
+          "size": [
+            2.59242868423462,
+            1.52694022655487,
+            2.36078643798828
+          ]
+        },
+        "mesh_bytes": 7983,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 124
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "stump_cylinder",
@@ -682,6 +1362,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_stump_02.tres",
       "id": "lpfv.stump.02",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.887815654277802,
+            -0.0830136090517044,
+            -1.37522625923157
+          ],
+          "size": [
+            2.33609199523926,
+            1.50105702877045,
+            2.50195932388306
+          ]
+        },
+        "mesh_bytes": 10015,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 126
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "stump_cylinder",
@@ -702,6 +1402,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_stump_03.tres",
       "id": "lpfv.stump.03",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.45597243309021,
+            -0.127855747938156,
+            -1.63699150085449
+          ],
+          "size": [
+            2.9042489528656,
+            2.03979301452637,
+            3.03391742706299
+          ]
+        },
+        "mesh_bytes": 69807,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 972
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "stump_cylinder",
@@ -722,6 +1442,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_stump_04.tres",
       "id": "lpfv.stump.04",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.41792118549347,
+            -0.117851532995701,
+            -2.03131699562073
+          ],
+          "size": [
+            2.81908416748047,
+            2.4859607219696,
+            3.23703765869141
+          ]
+        },
+        "mesh_bytes": 110751,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1052
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "stump_cylinder",
@@ -742,6 +1482,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_01.tres",
       "id": "lpfv.tree.01",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -4.35205316543579,
+            -0.036251962184906,
+            -6.23539590835571
+          ],
+          "size": [
+            8.9860897064209,
+            16.5967044830322,
+            13.5625734329224
+          ]
+        },
+        "mesh_bytes": 37260,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 496
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "trunk_capsule",
@@ -762,6 +1522,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_02.tres",
       "id": "lpfv.tree.02",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 4,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -11.2015390396118,
+            -0.570093214511871,
+            -10.4356985092163
+          ],
+          "size": [
+            24.5145301818848,
+            25.8640747070312,
+            16.508358001709
+          ]
+        },
+        "mesh_bytes": 87844,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1170
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_joint_points_m": [
@@ -815,6 +1595,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_03.tres",
       "id": "lpfv.tree.03",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -6.78145790100098,
+            -0.205055266618729,
+            -6.03211116790771
+          ],
+          "size": [
+            12.1195507049561,
+            17.7335987091064,
+            14.2302331924438
+          ]
+        },
+        "mesh_bytes": 51364,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 782
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_height_fraction": 0.2,
@@ -837,6 +1637,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_04.tres",
       "id": "lpfv.tree.04",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.17800045013428,
+            -0.0187139566987753,
+            -2.38643836975098
+          ],
+          "size": [
+            3.14782977104187,
+            9.70291519165039,
+            4.34194898605347
+          ]
+        },
+        "mesh_bytes": 11828,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 162
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "trunk_capsule",
@@ -857,6 +1677,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_05.tres",
       "id": "lpfv.tree.05",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.45380198955536,
+            -0.0646913349628448,
+            -1.38013827800751
+          ],
+          "size": [
+            2.49787640571594,
+            5.99134683609009,
+            2.14189386367798
+          ]
+        },
+        "mesh_bytes": 16660,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 234
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "trunk_capsule",
@@ -877,6 +1717,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_06.tres",
       "id": "lpfv.tree.06",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -3.51730275154114,
+            -0.0147854685783386,
+            -2.48501634597778
+          ],
+          "size": [
+            6.18024253845215,
+            15.0795745849609,
+            5.32599306106567
+          ]
+        },
+        "mesh_bytes": 21956,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 276
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "trunk_capsule",
@@ -897,6 +1757,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_07.tres",
       "id": "lpfv.tree.07",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -5.00469493865967,
+            -0.192491918802261,
+            -5.03817987442017
+          ],
+          "size": [
+            9.98432540893555,
+            16.6895160675049,
+            10.0860195159912
+          ]
+        },
+        "mesh_bytes": 55824,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 594
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "trunk_capsule",
@@ -917,6 +1797,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_08.tres",
       "id": "lpfv.tree.08",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -4.55375242233276,
+            -0.148363992571831,
+            -4.25550603866577
+          ],
+          "size": [
+            8.9420223236084,
+            11.9623975753784,
+            8.71662139892578
+          ]
+        },
+        "mesh_bytes": 51192,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 554
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_profile": "trunk_capsule",
@@ -937,6 +1837,26 @@
       "descriptor": "res://terrain/environment/catalog/descriptors/lpfv_tree_09.tres",
       "id": "lpfv.tree.09",
       "license": "LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -8.45932865142822,
+            -0.137543067336082,
+            -5.61789035797119
+          ],
+          "size": [
+            17.6009483337402,
+            18.7888221740723,
+            10.3744964599609
+          ]
+        },
+        "mesh_bytes": 71404,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 936
+      },
       "pack": "low_poly_fantasy_village",
       "parameters": {
         "collision_height_fraction": 0.2,
@@ -958,5 +1878,5 @@
   ],
   "license": "LowPolyFantasyVillage source-pack license",
   "pack": "low_poly_fantasy_village",
-  "tool_version": 15
+  "tool_version": 22
 }

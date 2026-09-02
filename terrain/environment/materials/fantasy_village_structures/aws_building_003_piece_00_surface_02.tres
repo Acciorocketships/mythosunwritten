@@ -1,4 +1,4 @@
-[gd_resource type="StandardMaterial3D" format=3]
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://co6a31pet3omc"]
 
 [resource]
 resource_name = "TRANSPARENT"

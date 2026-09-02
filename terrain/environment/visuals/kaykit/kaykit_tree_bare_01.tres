@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3 uid="uid://cl4u2c80qjria"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_rtvki"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit/kaykit_tree_bare_01_piece_00.res" id="2_xi3ex"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_y8fch"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/kaykit/kaykit_tree_bare_01_piece_00.res" id="4_bxcry"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_ns8sr"]
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_rtvki"]
+[ext_resource type="Shape3D" uid="uid://5b7seo5lr2f1" path="res://terrain/environment/collisions/kaykit/kaykit_tree_bare_01_piece_00.res" id="2_xi3ex"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_y8fch"]
+[ext_resource type="ArrayMesh" uid="uid://cgftvxoslkt41" path="res://terrain/environment/meshes/kaykit/kaykit_tree_bare_01_piece_00.res" id="4_bxcry"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_ns8sr"]
 
 [sub_resource type="Resource" id="Resource_2dxee"]
 script = ExtResource("1_rtvki")

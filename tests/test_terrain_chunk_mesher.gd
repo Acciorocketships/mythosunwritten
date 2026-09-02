@@ -30,6 +30,38 @@ func _region_for(plan, chunk: Vector2i) -> HeightfieldRegion:
 	return plan.compute_region(centre.x, centre.y, Mesher.CELLS_PER_CHUNK)
 
 
+func test_structural_terrain_uses_the_world_slope_kernel_at_its_own_scale() -> void:
+	var tops: Dictionary = {}
+	for z in range(-1, 2):
+		for x in range(-1, 3):
+			tops[Vector2i(x, z)] = 1
+	tops[Vector2i.ZERO] = 2
+	var region := LatticeTerrainSurfaceRegion.new(tops, 1.5, 1)
+	var cells := {
+		Vector3i(0, 1, 0): true,
+		Vector3i(1, 0, 0): true,
+	}
+	var payload := Mesher.field_ground_surface(cells, region, 1.5, 0.0,
+		&"test-structural-terrain")
+	assert_false(payload.is_empty())
+	var vertices := payload.vertices as PackedVector3Array
+	var high_centre := -INF
+	var shared_edge_min := INF
+	var shared_edge_max := -INF
+	for vertex: Vector3 in vertices:
+		if is_zero_approx(vertex.x) and is_zero_approx(vertex.z):
+			high_centre = maxf(high_centre, vertex.y)
+		if is_equal_approx(vertex.x, 0.75) and is_zero_approx(vertex.z):
+			# Both owners emit the seam. They must name the same lower value.
+			shared_edge_min = minf(shared_edge_min, vertex.y)
+			shared_edge_max = maxf(shared_edge_max, vertex.y)
+	assert_almost_eq(high_centre, 3.0, 0.0001)
+	assert_almost_eq(shared_edge_min, 1.5, 0.0001)
+	assert_almost_eq(shared_edge_max, 1.5, 0.0001)
+	assert_false(TerrainSurfaceField.is_exposed_edge(region, 0, 0,
+		Vector2i.RIGHT), "a one-band transition is a slope, not a lipped cliff")
+
+
 static func _triangle_y_at_xz(a: Vector3, b: Vector3, c: Vector3,
 		p: Vector2) -> float:
 	var denom: float = (b.z - c.z) * (a.x - c.x) \

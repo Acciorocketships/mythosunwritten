@@ -6,12 +6,12 @@ extends RefCounted
 
 const TILE := 24.0
 const CELLS_PER_CHUNK := 8
-# 8 samples/cell (3u resolution) tessellates the smootherstep slope band finely
+# 12 samples/cell (2 m resolution) tessellates the smootherstep slope band finely
 # enough to read as a smooth curve rather than a few flat facets.
 const SAMPLES_PER_CELL := 12
 const CHUNK_WORLD := TILE * CELLS_PER_CHUNK          # 192
-const STEP := TILE / SAMPLES_PER_CELL                # 3.0
-const GRID := CELLS_PER_CHUNK * SAMPLES_PER_CELL     # 64 quads per axis
+const STEP := TILE / SAMPLES_PER_CELL                # 2.0
+const GRID := CELLS_PER_CHUNK * SAMPLES_PER_CELL     # 96 quads per axis
 const SEA_LEVEL := 2.0   # water surface ~half a storey above the storey-0 basin floor (a shallow pool)
 const SKIRT_RECESS := 1.3 # the rock skirt sits this far behind the cell boundary — just behind the
                           # KayKit wall pieces (old-tile spacing: scalloped face spans PLACE+0.25..
@@ -78,6 +78,170 @@ var _water_seed: int = 0   # set by streamer via set_seed(); 0 in tests
 
 func set_seed(seed: int) -> void:
 	_water_seed = seed
+
+
+## Build a flat, visual-only union on an arbitrary procedural lattice using the
+## same payload contract, palette marker, winding, and exact shared boundaries
+## as the terrain sheet. Settlement terraces call this instead of scaling and
+## overlapping authored grass panels. Resource binding remains a main-thread
+## commit concern; this worker-safe function returns plain arrays only.
+static func flat_ground_surface(cells: Dictionary, cell_size: float,
+		lift: float, stable_id: StringName,
+		include_collision: bool = true) -> Dictionary:
+	assert(cell_size > 0.0 and not stable_id.is_empty())
+	if cells.is_empty():
+		return {}
+	var ordered: Array[Vector3i] = []
+	ordered.assign(cells.keys())
+	ordered.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		if a.y != b.y:
+			return a.y < b.y
+		return a.z < b.z if a.z != b.z else a.x < b.x)
+	var vertices := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var uvs := PackedVector2Array()
+	var indices := PackedInt32Array()
+	var collision_faces := PackedVector3Array()
+	vertices.resize(ordered.size() * 4)
+	normals.resize(vertices.size())
+	uvs.resize(vertices.size())
+	indices.resize(ordered.size() * 6)
+	if include_collision:
+		collision_faces.resize(ordered.size() * 6)
+	var half := cell_size * 0.5
+	for cell_index in ordered.size():
+		var cell := ordered[cell_index]
+		var centre := Vector3(float(cell.x) * cell_size,
+			float(cell.y + 1) * cell_size + lift,
+			float(cell.z) * cell_size)
+		var vi := cell_index * 4
+		vertices[vi] = centre + Vector3(-half, 0.0, -half)
+		vertices[vi + 1] = centre + Vector3(half, 0.0, -half)
+		vertices[vi + 2] = centre + Vector3(half, 0.0, half)
+		vertices[vi + 3] = centre + Vector3(-half, 0.0, half)
+		for corner in 4:
+			normals[vi + corner] = Vector3.UP
+			# Main-thread terrain binding replaces this worker-safe sentinel
+			# with `CliffDressing.ground_uv()`.
+			uvs[vi + corner] = Vector2.ZERO
+		var ii := cell_index * 6
+		indices[ii] = vi
+		indices[ii + 1] = vi + 2
+		indices[ii + 2] = vi + 1
+		indices[ii + 3] = vi
+		indices[ii + 4] = vi + 3
+		indices[ii + 5] = vi + 2
+		if include_collision:
+			for corner in 6:
+				collision_faces[ii + corner] = vertices[indices[ii + corner]]
+	return {
+		"stable_id": stable_id,
+		"anchor": vertices[0],
+		# Preserve the exact selected owners beside their tessellation. Consumers
+		# must not reverse-engineer a logical cell from a sloped sub-quad's centre:
+		# one cell deliberately emits several patches at different heights.
+		"logical_cells": ordered,
+		"vertices": vertices,
+		"normals": normals,
+		"uvs": uvs,
+		"indices": indices,
+		"collision_faces": collision_faces,
+		"visual_only": not include_collision,
+		"terrain_ground": true,
+	}
+
+
+## The scale-independent form of the production terrain sheet. `cells` selects
+## which lattice owners emit, while `region` decides every centre, shared edge,
+## corner, slope and cliff exactly as TerrainSurfaceField does for the streamed
+## world. This is intentionally not a village-specific tiler: any structural
+## terrain column field can use the same pure payload path.
+static func field_ground_surface(cells: Dictionary, region,
+		cell_size: float, lift: float, stable_id: StringName,
+		include_collision: bool = true, samples_per_cell: int = 2) -> Dictionary:
+	assert(region != null and is_equal_approx(
+		TerrainSurfaceField.tile_size(region), cell_size))
+	assert(samples_per_cell >= 1 and not stable_id.is_empty())
+	if cells.is_empty():
+		return {}
+	var ordered: Array[Vector3i] = []
+	ordered.assign(cells.keys())
+	ordered.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		if a.y != b.y:
+			return a.y < b.y
+		return a.z < b.z if a.z != b.z else a.x < b.x)
+	var quad_count := ordered.size() * samples_per_cell * samples_per_cell
+	var vertices := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var uvs := PackedVector2Array()
+	var indices := PackedInt32Array()
+	var collision_faces := PackedVector3Array()
+	vertices.resize(quad_count * 4)
+	normals.resize(vertices.size())
+	uvs.resize(vertices.size())
+	indices.resize(quad_count * 6)
+	if include_collision:
+		collision_faces.resize(quad_count * 6)
+	var half := cell_size * 0.5
+	var step := cell_size / float(samples_per_cell)
+	var quad_index := 0
+	for cell: Vector3i in ordered:
+		var baked := TerrainSurfaceField.bake_cell(region, cell.x, cell.z)
+		var min_x := float(cell.x) * cell_size - half
+		var min_z := float(cell.z) * cell_size - half
+		for iz in samples_per_cell:
+			for ix in samples_per_cell:
+				var x0 := min_x + float(ix) * step
+				var x1 := x0 + step
+				var z0 := min_z + float(iz) * step
+				var z1 := z0 + step
+				var v00 := Vector3(x0, TerrainSurfaceField.sample_baked(
+					baked, cell.x, cell.z, x0, z0, region) + lift, z0)
+				var v10 := Vector3(x1, TerrainSurfaceField.sample_baked(
+					baked, cell.x, cell.z, x1, z0, region) + lift, z0)
+				var v11 := Vector3(x1, TerrainSurfaceField.sample_baked(
+					baked, cell.x, cell.z, x1, z1, region) + lift, z1)
+				var v01 := Vector3(x0, TerrainSurfaceField.sample_baked(
+					baked, cell.x, cell.z, x0, z1, region) + lift, z1)
+				var vi := quad_index * 4
+				vertices[vi] = v00
+				vertices[vi + 1] = v10
+				vertices[vi + 2] = v11
+				vertices[vi + 3] = v01
+				# Match the production winding. Averaging its two triangle normals
+				# gives a stable up-facing normal even on a 2-D corner patch.
+				var normal := ((v11 - v00).cross(v10 - v00) \
+					+ (v01 - v00).cross(v11 - v00)).normalized()
+				for corner in 4:
+					normals[vi + corner] = normal
+					uvs[vi + corner] = Vector2.ZERO
+				var ii := quad_index * 6
+				indices[ii] = vi
+				indices[ii + 1] = vi + 2
+				indices[ii + 2] = vi + 1
+				indices[ii + 3] = vi
+				indices[ii + 4] = vi + 3
+				indices[ii + 5] = vi + 2
+				if include_collision:
+					for corner in 6:
+						collision_faces[ii + corner] = vertices[
+							indices[ii + corner]]
+				quad_index += 1
+	return {
+		"stable_id": stable_id,
+		"anchor": vertices[0],
+		# One selected owner intentionally tessellates into several patches. Keep
+		# the topology beside the mesh so audits and downstream adapters do not
+		# infer a different cell from each sloped patch centre.
+		"logical_cells": ordered,
+		"vertices": vertices,
+		"normals": normals,
+		"uvs": uvs,
+		"indices": indices,
+		"collision_faces": collision_faces,
+		"visual_only": not include_collision,
+		"terrain_ground": true,
+	}
 
 # Chunk (ccx,ccz) covers cells [ccx*8 .. ccx*8+7]; its world origin (min corner):
 func _origin(chunk: Vector2i) -> Vector2:

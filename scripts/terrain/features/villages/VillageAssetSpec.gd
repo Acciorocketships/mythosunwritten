@@ -282,9 +282,11 @@ static func _world_rect(transform: Transform3D, rect: Rect2) -> Dictionary:
 	var local_centre := rect.get_center()
 	var point := transform * Vector3(local_centre.x, 0.0, local_centre.y)
 	var local_x := transform.basis * Vector3.RIGHT
+	var basis_scale := transform.basis.get_scale()
 	return {
 		"centre": Vector2(point.x, point.z),
-		"half_extents": rect.size * 0.5,
+		"half_extents": Vector2(rect.size.x * basis_scale.x,
+			rect.size.y * basis_scale.z) * 0.5,
 		"angle": Vector2(local_x.x, local_x.z).angle(),
 	}
 

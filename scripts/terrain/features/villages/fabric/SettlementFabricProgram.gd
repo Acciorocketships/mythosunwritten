@@ -16,6 +16,11 @@ const WOOD_PLAIN := &"sfv.fabric.wall.wood.plain.001"
 # with an interactive door later.
 const ROCK_DOOR_CLOSED := &"sfv.fabric.wall.rock.door.closed.005"
 const WOOD_DOOR_CLOSED := &"sfv.fabric.wall.wood.door.closed.001"
+# Static exterior entrances always use the reviewed closed leaf above. This
+# open assembly is reserved for the two ends of a continuously traversable
+# bridge-house: both thresholds already land on sealed upper walking surfaces,
+# so the visible opening is circulation rather than a decorative mid-air door.
+const WOOD_DOOR_OPEN := &"sfv.fabric.wall.wood.door.open.001"
 const ROCK_DOOR := ROCK_DOOR_CLOSED
 const WOOD_DOOR := WOOD_DOOR_CLOSED
 const PORTAL_JAMB := &"sfv.deck.pillar.001"
@@ -40,6 +45,38 @@ const COMPACT_ROOF_SLATE_REAR := \
 	&"lpfv.fabric.roof.compact.slate.06.rear"
 const COMPACT_ROOF_SLATE_FRONT := \
 	&"lpfv.fabric.roof.compact.slate.03.front"
+const COMPACT_ROOF_ORANGE_REAR_END := \
+	&"lpfv.fabric.roof.compact.orange.03.rear.end"
+const COMPACT_ROOF_ORANGE_FRONT_END := \
+	&"lpfv.fabric.roof.compact.orange.06.front.end"
+const COMPACT_ROOF_SLATE_REAR_END := \
+	&"lpfv.fabric.roof.compact.slate.06.rear.end"
+const COMPACT_ROOF_SLATE_FRONT_END := \
+	&"lpfv.fabric.roof.compact.slate.03.front.end"
+const COMPACT_ROOF_ORANGE_MIDDLE := \
+	&"lpfv.fabric.roof.compact.orange.06.middle"
+const COMPACT_ROOF_SLATE_MIDDLE := \
+	&"lpfv.fabric.roof.compact.slate.03.middle"
+const COMPACT_ROOF_ORANGE_REAR_END_TIGHT := \
+	&"lpfv.fabric.roof.compact.orange.03.rear.end.tight"
+const COMPACT_ROOF_ORANGE_FRONT_END_TIGHT := \
+	&"lpfv.fabric.roof.compact.orange.06.front.end.tight"
+const COMPACT_ROOF_ORANGE_REAR_TIGHT := \
+	&"lpfv.fabric.roof.compact.orange.03.rear.tight"
+const COMPACT_ROOF_ORANGE_MIDDLE_TIGHT := \
+	&"lpfv.fabric.roof.compact.orange.06.middle.tight"
+const COMPACT_ROOF_ORANGE_FRONT_TIGHT := \
+	&"lpfv.fabric.roof.compact.orange.06.front.tight"
+const COMPACT_ROOF_SLATE_REAR_END_TIGHT := \
+	&"lpfv.fabric.roof.compact.slate.06.rear.end.tight"
+const COMPACT_ROOF_SLATE_FRONT_END_TIGHT := \
+	&"lpfv.fabric.roof.compact.slate.03.front.end.tight"
+const COMPACT_ROOF_SLATE_REAR_TIGHT := \
+	&"lpfv.fabric.roof.compact.slate.06.rear.tight"
+const COMPACT_ROOF_SLATE_MIDDLE_TIGHT := \
+	&"lpfv.fabric.roof.compact.slate.03.middle.tight"
+const COMPACT_ROOF_SLATE_FRONT_TIGHT := \
+	&"lpfv.fabric.roof.compact.slate.03.front.tight"
 const ROOM_ROOF_01 := &"lpfv.fabric.roof.room.orange.01"
 const ROOM_ROOF_04 := &"lpfv.fabric.roof.room.orange.04"
 const ROOM_ROOF_02 := &"lpfv.fabric.roof.room.boarded.02"
@@ -91,6 +128,7 @@ const LPFV_PREFAB_DOORS: Array[StringName] = [
 const LPFV_PREFAB_DOOR_ORIGIN := Vector3(1.311, 0.0, 2.869)
 const GABLE := &"sfv.fabric.gable.wood.m.001"
 const BRACE := &"sfv.fabric.brace.wood.002"
+const ATTACHMENT_BRACKET_M := &"sfv.fabric.bracket.wood.m.attach.001"
 const DIAGONAL_BRACE := &"sfbp.wwall.support.s.002"
 const DECK_PILLAR := &"sfv.deck.pillar.001"
 const WALL_WOOD_S_A := &"sfv.fabric.wall.wood.s.001"
@@ -487,6 +525,11 @@ const PREFAB_ANCHORS: Array[StringName] = [
 ]
 
 var referenced_asset_ids: Array[StringName] = []
+## Resource-free visual contracts for every asset this vocabulary or one of its
+## assembly adapters can emit.  The catalogue is read exactly once here; worker
+## layout and payload assembly receive only plain AABBs and never reopen a
+## resource to decide whether optional dressing fits the finished town.
+var asset_visual_bounds: Dictionary = {}
 var module_program: FabricModuleProgram
 var _recipes: Dictionary = {}
 
@@ -592,6 +635,7 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_tower_room_recipe(&"room.tower.upper.amber", false, &"amber", false, modules),
 		_tower_room_recipe(&"room.tower.upper.stone", false, &"stone", false, modules),
 		_bridge_room_recipe(&"room.bridge.tower.blue", &"blue", modules),
+		_open_bridge_gallery_recipe(&"room.bridge.gallery.blue", &"blue", modules),
 		_bridge_room_recipe(&"room.bridge.tower.orange", &"orange", modules),
 		_bridge_room_recipe(&"room.bridge.slim.blue", &"blue", modules),
 		_bridge_room_recipe(&"room.bridge.slim.orange", &"orange", modules),
@@ -691,6 +735,42 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			ROOF_ORANGE, ROOF_WINDOW_04, 1, modules),
 		_tower_roof_recipe(&"roof.tower.blue", COMPACT_ROOF_SLATE_03, modules),
 		_tower_roof_recipe(&"roof.tower.orange", COMPACT_ROOF_06, modules),
+		_terminal_tight_gable_recipe(&"roof.tower.party.blue",
+			Vector3i(-1, 0, -1), Vector3i(2, 1, 2), &"z", &"blue",
+			modules, -1, 0, false),
+		_terminal_tight_gable_recipe(&"roof.tower.party.orange",
+			Vector3i(-1, 0, -1), Vector3i(2, 1, 2), &"z", &"orange",
+			modules, -1, 0, false),
+		_terminal_tight_gable_recipe(&"roof.terminal.tight.tower.blue",
+			Vector3i(-1, 0, -1), Vector3i(2, 1, 2), &"z",
+			&"blue", modules),
+		_terminal_tight_gable_recipe(&"roof.terminal.tight.tower.orange",
+			Vector3i(-1, 0, -1), Vector3i(2, 1, 2), &"z",
+			&"orange", modules),
+		_terminal_tight_gable_recipe(&"roof.terminal.tight.slim.blue",
+			Vector3i(-1, 0, -2), Vector3i(2, 1, 4), &"z",
+			&"blue", modules),
+		_terminal_tight_gable_recipe(&"roof.terminal.tight.slim.orange",
+			Vector3i(-1, 0, -2), Vector3i(2, 1, 4), &"z",
+			&"orange", modules),
+		_terminal_tight_gable_recipe(&"roof.terminal.tight.row.blue",
+			Vector3i(-2, 0, -1), Vector3i(4, 1, 2), &"x",
+			&"blue", modules),
+		_terminal_tight_gable_recipe(&"roof.terminal.tight.row.orange",
+			Vector3i(-2, 0, -1), Vector3i(4, 1, 2), &"x",
+			&"orange", modules),
+		_terminal_tight_gable_recipe(&"roof.terminal.tight.building.blue",
+			Vector3i(-2, 0, -2), Vector3i(4, 1, 4), &"z",
+			&"blue", modules),
+		_terminal_tight_gable_recipe(&"roof.terminal.tight.building.orange",
+			Vector3i(-2, 0, -2), Vector3i(4, 1, 4), &"z",
+			&"orange", modules),
+		_terminal_tight_gable_recipe(&"roof.terminal.tight.long.blue",
+			Vector3i(-2, 0, -3), Vector3i(4, 1, 6), &"z",
+			&"blue", modules),
+		_terminal_tight_gable_recipe(&"roof.terminal.tight.long.orange",
+			Vector3i(-2, 0, -3), Vector3i(4, 1, 6), &"z",
+			&"orange", modules),
 		_dormered_tower_roof_recipe(&"roof.tower.blue.dormer.left",
 			COMPACT_ROOF_SLATE_03, ROOF_WINDOW_02, -1, modules),
 		_dormered_tower_roof_recipe(&"roof.tower.blue.dormer.right",
@@ -802,6 +882,30 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			-1, WINDOW_ROOF_ORANGE, modules),
 		_setback_shed_roof_recipe(&"roof.setback.shed.orange.6.positive", 6,
 			1, WINDOW_ROOF_ORANGE, modules),
+		_partial_gable_roof_recipe(&"roof.partial.gable.blue.2.negative", 2,
+			-1, &"blue", modules),
+		_partial_gable_roof_recipe(&"roof.partial.gable.blue.2.positive", 2,
+			1, &"blue", modules),
+		_partial_gable_roof_recipe(&"roof.partial.gable.orange.2.negative", 2,
+			-1, &"orange", modules),
+		_partial_gable_roof_recipe(&"roof.partial.gable.orange.2.positive", 2,
+			1, &"orange", modules),
+		_partial_gable_roof_recipe(&"roof.partial.gable.blue.4.negative", 4,
+			-1, &"blue", modules),
+		_partial_gable_roof_recipe(&"roof.partial.gable.blue.4.positive", 4,
+			1, &"blue", modules),
+		_partial_gable_roof_recipe(&"roof.partial.gable.orange.4.negative", 4,
+			-1, &"orange", modules),
+		_partial_gable_roof_recipe(&"roof.partial.gable.orange.4.positive", 4,
+			1, &"orange", modules),
+		_partial_gable_roof_recipe(&"roof.partial.gable.blue.6.negative", 6,
+			-1, &"blue", modules),
+		_partial_gable_roof_recipe(&"roof.partial.gable.blue.6.positive", 6,
+			1, &"blue", modules),
+		_partial_gable_roof_recipe(&"roof.partial.gable.orange.6.negative", 6,
+			-1, &"orange", modules),
+		_partial_gable_roof_recipe(&"roof.partial.gable.orange.6.positive", 6,
+			1, &"orange", modules),
 		_interstitial_seal_recipe(&"interstitial.seal.1.capped", 1, true,
 			modules),
 		_interstitial_seal_recipe(&"interstitial.seal.1.buried", 1, false,
@@ -844,6 +948,7 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		_short_slim_roof_recipe(&"roof.slim.short.orange", ROOF_ORANGE, modules),
 		_outcrop_recipe(&"outcrop.blue", &"blue", modules),
 		_outcrop_recipe(&"outcrop.orange", &"orange", modules),
+		_outcrop_recipe(&"outcrop.amber", &"amber", modules),
 		_outcrop_recipe(&"outcrop.corner.left.blue", &"blue", modules, 0, -2),
 		_outcrop_recipe(&"outcrop.corner.left.orange", &"orange", modules, 0, -2),
 		_outcrop_recipe(&"outcrop.corner.right.blue", &"blue", modules, 0, 1),
@@ -990,6 +1095,7 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 				StringName(flat_spec.family), side, modules))
 	_append_address_door_phase_vocabulary(candidates)
 	_append_feature_portal_vocabulary(candidates, modules)
+	_append_terminal_step_gable_vocabulary(candidates, modules)
 	_append_roof_seam_vocabulary(candidates, modules)
 	_append_bisected_valley_vocabulary(candidates, modules)
 	for index in MARKET_STALLS.size():
@@ -1066,6 +1172,7 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		SettlementFabricAssembler.TERRAIN_GREEN_CAP,
 		SettlementFabricAssembler.NATURAL_ROCK_FACE,
 		SettlementFabricAssembler.GREEN_RIM_EDGE,
+		SettlementFabricAssembler.GREEN_RIM_OUTER_CORNER,
 		SettlementFabricAssembler.SKYWALK_DECK,
 		SettlementFabricAssembler.SKYWALK_DECK_SHORT,
 		SettlementFabricAssembler.SKYWALK_RAIL,
@@ -1090,6 +1197,13 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	program.referenced_asset_ids.assign(unique_assets.keys())
 	program.referenced_asset_ids.sort_custom(func(a: StringName,
 			b: StringName) -> bool: return String(a) < String(b))
+	for asset_id: StringName in program.referenced_asset_ids:
+		var descriptor := catalog.descriptor(asset_id)
+		if descriptor == null or not descriptor.measured_aabb.has_volume():
+			push_error("Fabric asset has no measured visual contract: %s" \
+				% asset_id)
+			return null
+		program.asset_visual_bounds[asset_id] = descriptor.measured_aabb
 	return program
 
 
@@ -1126,7 +1240,9 @@ static func _compile_module_program(catalog: EnvironmentCatalog) \
 		-> FabricModuleProgram:
 	var modules := FabricModuleProgram.new(catalog)
 	var facade_assets: Array[StringName] = [
-		ROCK_PLAIN, ROCK_DOOR, ROCK_WINDOW, WOOD_PLAIN, WOOD_DOOR,
+		ROCK_PLAIN, ROCK_DOOR, ROCK_WINDOW,
+		WOOD_PLAIN, WOOD_DOOR,
+		WOOD_DOOR_OPEN,
 		PORTAL_JAMB,
 		STAIR_HALF,
 		WALL_WOOD_S_A, WALL_WOOD_S_B, WALL_WOOD_CORNER_S,
@@ -1137,12 +1253,22 @@ static func _compile_module_program(catalog: EnvironmentCatalog) \
 		COMPACT_ROOF_SLATE_03, COMPACT_ROOF_SLATE_06,
 		COMPACT_ROOF_ORANGE_REAR, COMPACT_ROOF_ORANGE_FRONT,
 		COMPACT_ROOF_SLATE_REAR, COMPACT_ROOF_SLATE_FRONT,
+		COMPACT_ROOF_ORANGE_REAR_END, COMPACT_ROOF_ORANGE_FRONT_END,
+		COMPACT_ROOF_SLATE_REAR_END, COMPACT_ROOF_SLATE_FRONT_END,
+		COMPACT_ROOF_ORANGE_MIDDLE, COMPACT_ROOF_SLATE_MIDDLE,
+		COMPACT_ROOF_ORANGE_REAR_END_TIGHT,
+		COMPACT_ROOF_ORANGE_FRONT_END_TIGHT,
+		COMPACT_ROOF_ORANGE_REAR_TIGHT,
+		COMPACT_ROOF_ORANGE_MIDDLE_TIGHT, COMPACT_ROOF_ORANGE_FRONT_TIGHT,
+		COMPACT_ROOF_SLATE_REAR_END_TIGHT,
+		COMPACT_ROOF_SLATE_FRONT_END_TIGHT,
+		COMPACT_ROOF_SLATE_REAR_TIGHT,
+		COMPACT_ROOF_SLATE_MIDDLE_TIGHT, COMPACT_ROOF_SLATE_FRONT_TIGHT,
 		ROOF_WINDOW_01, ROOF_WINDOW_02, ROOF_WINDOW_03, ROOF_WINDOW_04,
 		ROOF_SEAM,
 		ROOF_BISECT_LEFT_BLUE, ROOF_BISECT_RIGHT_BLUE,
 		ROOF_BISECT_LEFT_ORANGE, ROOF_BISECT_RIGHT_ORANGE,
-		ROOF_TERRACE_AWNING, DIAGONAL_BRACE,
-		WINDOW_ROOF_ORANGE, WINDOW_ROOF_BLUE,
+		ROOF_TERRACE_AWNING, ATTACHMENT_BRACKET_M, BRACE, DIAGONAL_BRACE,
 		WINDOW_ROOF_ORANGE_TRIMMED, WINDOW_ROOF_BLUE_TRIMMED,
 		WINDOW_ROOF_ORANGE_PARTY_LEFT, WINDOW_ROOF_ORANGE_PARTY_RIGHT,
 		WINDOW_ROOF_BLUE_PARTY_LEFT, WINDOW_ROOF_BLUE_PARTY_RIGHT,
@@ -1167,7 +1293,12 @@ static func _compile_module_program(catalog: EnvironmentCatalog) \
 	# Preset 003 shares preset 004's stair/landing datum; its complete handrails
 	# extend above the walking plane. Keep the real upper tread in the contract so
 	# every use meets its destination platform instead of aligning by the post top.
-	if not modules.add_switchback_stair(STAIR_FULL, 0.0, 2.9479) \
+	# Both reviewed window-roof colours share the same source geometry: local
+	# -Z is the measured high edge.  Treat them as typed shed roofs even when a
+	# facade recipe also uses them as a canopy; no caller may guess their pitch.
+	if not modules.add_shed_roof(WINDOW_ROOF_ORANGE, Vector3i.FORWARD) \
+			or not modules.add_shed_roof(WINDOW_ROOF_BLUE, Vector3i.FORWARD) \
+			or not modules.add_switchback_stair(STAIR_FULL, 0.0, 2.9479) \
 			or not modules.add_walk_surface(FLOOR) \
 			or not modules.add_walk_surface(GALLERY_FLOOR) \
 			or not modules.add_walk_surface(SETBACK_CAP) \
@@ -1534,6 +1665,64 @@ static func _bridge_room_recipe(recipe_id: StringName, theme: StringName,
 	recipe_value.bearing_parent_count = bearing_parent_count
 	recipe_value.role_tags.append(&"bridge_room" if bearing_parent_count == 2 \
 		else &"bracketed_jetty_room")
+	if bearing_parent_count == 2:
+		# The occupied span is itself the skywalk.  Put that semantic fact on the
+		# same recipe as its body, two-sided bearing contract, and roof so generic
+		# fabric audits do not have to infer a bridge from room names or source
+		# reservations after construction.
+		recipe_value.role_tags.append(&"skywalk")
+		recipe_value.role_tags.append(&"overhead_occupied")
+	# A bridge room is a complete house envelope, not an ordinary room whose
+	# crown may later be reinterpreted as a terrace or a plank cap.  Keeping its
+	# pitched shell in this recipe makes the two flank bonds, occupied body and
+	# weather closure one measured transaction.  In particular, a late roof-
+	# neighborhood collision can no longer flatten the connector and recreate
+	# the broad timber lid that the visual review rejected.
+	recipe_value.role_tags.append(&"integrated_pitched_roof")
+	recipe_value.role_tags.append(&"bridge_eave_roof")
+	var roof_centre := FabricModuleProgram.footprint_centre(
+		Vector3i(-1, 0, -2) if String(recipe_id).contains(".slim.") \
+		else Vector3i(-1, 0, -1),
+		Vector3i(2, 1, 4) if String(recipe_id).contains(".slim.") \
+		else Vector3i(2, 1, 2))
+	if String(recipe_id).contains(".slim."):
+		# The occupied link is exactly two 3 m construction bays long. Rear/front
+		# sections terminate at the typed party planes while retaining their normal
+		# 0.328 m eaves across the exposed side walls. The roof therefore meets both
+		# endpoint buildings without looking narrower than the bridge-house below.
+		var rear_asset := COMPACT_ROOF_SLATE_REAR if theme == &"blue" \
+			else COMPACT_ROOF_ORANGE_REAR
+		var front_asset := COMPACT_ROOF_SLATE_FRONT if theme == &"blue" \
+			else COMPACT_ROOF_ORANGE_FRONT
+		recipe_value.add_placement(&"roof.rear", rear_asset,
+			modules.roof_bearing_aligned_transform(rear_asset,
+				_pose(roof_centre + Vector3(0.0, 3.0, -1.5), 0.0), 3.0))
+		recipe_value.add_placement(&"roof.front", front_asset,
+			modules.roof_bearing_aligned_transform(front_asset,
+				_pose(roof_centre + Vector3(0.0, 3.0, 1.5), 0.0), 3.0))
+		_add_compact_roof_run_contract(recipe_value, &"compact", [
+			roof_centre + Vector3(0.0, 3.0, -1.5),
+			roof_centre + Vector3(0.0, 3.0, 1.5),
+		], [[&"roof.rear"], [&"roof.front"]], &"z", theme, modules)
+	else:
+		# A one-bay bridge has exposed side eaves but two exact party seams where
+		# it enters its endpoint houses. Two finite half-run assets preserve the
+		# normal cross-ridge overhang while ending precisely at those seam planes;
+		# a complete 4.16 m source roof would bury 0.58 m under each endpoint.
+		var rear_end := COMPACT_ROOF_SLATE_REAR_END if theme == &"blue" \
+			else COMPACT_ROOF_ORANGE_REAR_END
+		var front_end := COMPACT_ROOF_SLATE_FRONT_END if theme == &"blue" \
+			else COMPACT_ROOF_ORANGE_FRONT_END
+		for roof_part: Dictionary in [
+				{"id": &"roof.rear", "asset": rear_end},
+				{"id": &"roof.front", "asset": front_end}]:
+			var asset_id := StringName(roof_part.asset)
+			recipe_value.add_placement(StringName(roof_part.id), asset_id,
+				modules.roof_bearing_aligned_transform(asset_id,
+					_pose(roof_centre + Vector3.UP * 3.0, 0.0), 3.0))
+		_add_compact_roof_run_contract(recipe_value, &"compact", [
+			roof_centre + Vector3.UP * 3.0,
+		], [[&"roof.rear", &"roof.front"]], &"z", theme, modules, false)
 	var minimum := Vector3i(-1, 0, -1)
 	var size := Vector3i(2, 2, 2)
 	if String(recipe_id).contains(".slim."):
@@ -1566,6 +1755,38 @@ static func _bridge_room_recipe(recipe_id: StringName, theme: StringName,
 					String(side.prefix), band, index]),
 					FabricRecipe.SocketKind.BEARING,
 					side_cells[index] + Vector3i(0, band, 0), facing)
+	return recipe_value
+
+
+static func _open_bridge_gallery_recipe(recipe_id: StringName,
+		theme: StringName, modules: FabricModuleProgram) -> FabricRecipe:
+	## A bridge-house is still a complete occupied room shell, but its two ends
+	## are typed circulation openings rather than closed facades. Rebuild those
+	## faces through the module program's measured facade alignment contract:
+	## no runtime offset, scaling, or detached entrance posts can make a roof
+	## appear borne when the underlying wall geometry says otherwise.
+	var recipe_value := _bridge_room_recipe(recipe_id, theme, modules)
+	var retained: Array[Dictionary] = []
+	for placement: Dictionary in recipe_value.placements:
+		if StringName(placement.id) not in [&"west", &"east"]:
+			retained.append(placement)
+	recipe_value.placements = retained
+	var centre := FabricModuleProgram.footprint_centre(
+		Vector3i(-1, 0, -1), Vector3i(2, 1, 2))
+	for side: Dictionary in [
+		{"id": &"west", "asset": WOOD_DOOR_OPEN,
+			"offset": Vector3(-1.5, 0.0, 0.0), "yaw": PI * 0.5,
+			"outward": Vector3i.LEFT, "boundary": centre.x - 1.5},
+		{"id": &"east", "asset": _mirrored_facade_asset(WOOD_DOOR_OPEN),
+			"offset": Vector3(1.5, 0.0, 0.0), "yaw": -PI * 0.5,
+			"outward": Vector3i.RIGHT, "boundary": centre.x + 1.5},
+	]:
+		var asset_id := StringName(side.asset)
+		recipe_value.add_placement(StringName(side.id), asset_id,
+			modules.facade_aligned_transform(asset_id,
+				_pose(centre + side.offset as Vector3, float(side.yaw)),
+				side.outward as Vector3i, float(side.boundary)))
+	recipe_value.role_tags.append(&"open_end_gallery")
 	return recipe_value
 
 
@@ -2305,6 +2526,79 @@ static func _paired_dormered_long_roof_recipe(recipe_id: StringName,
 	return recipe_value
 
 
+static func _compact_roof_variants(centre: Vector3, yaw: float,
+		bearing_y: float, modules: FabricModuleProgram,
+		tight_cross_eaves: bool = true) -> Dictionary:
+	## Every continuous compact-gable alternative is aligned here, while the
+	## asset contract and its authored pivot are still available. The final town
+	## compiler receives finite transforms; it never knows a source filename or
+	## invents an offset for a mesh that happened to look close.
+	var definitions := {
+		&"blue": {
+			&"start": COMPACT_ROOF_SLATE_REAR_TIGHT if tight_cross_eaves \
+				else COMPACT_ROOF_SLATE_REAR,
+			&"middle": COMPACT_ROOF_SLATE_MIDDLE_TIGHT if tight_cross_eaves \
+				else COMPACT_ROOF_SLATE_MIDDLE,
+			&"end": COMPACT_ROOF_SLATE_FRONT_TIGHT if tight_cross_eaves \
+				else COMPACT_ROOF_SLATE_FRONT,
+		},
+		&"orange": {
+			&"start": COMPACT_ROOF_ORANGE_REAR_TIGHT if tight_cross_eaves \
+				else COMPACT_ROOF_ORANGE_REAR,
+			&"middle": COMPACT_ROOF_ORANGE_MIDDLE_TIGHT if tight_cross_eaves \
+				else COMPACT_ROOF_ORANGE_MIDDLE,
+			&"end": COMPACT_ROOF_ORANGE_FRONT_TIGHT if tight_cross_eaves \
+				else COMPACT_ROOF_ORANGE_FRONT,
+		},
+	}
+	var out: Dictionary = {}
+	for family_value: Variant in definitions.keys():
+		var family := StringName(family_value)
+		var roles: Dictionary = {}
+		for role_value: Variant in (definitions[family_value] as Dictionary).keys():
+			var role := StringName(role_value)
+			var asset_id := StringName((definitions[family_value] as Dictionary)[role_value])
+			assert(modules.contract(asset_id) != null)
+			roles[role] = {
+				"asset_id": asset_id,
+				"transform": modules.roof_bearing_aligned_transform(asset_id,
+					_pose(centre, yaw), bearing_y),
+			}
+		out[family] = roles
+	return out
+
+
+static func _add_compact_roof_run_contract(recipe_value: FabricRecipe,
+		run_id: StringName, centres: Array[Vector3], original_ids: Array,
+		ridge_axis: StringName, authored_family: StringName,
+		modules: FabricModuleProgram, tight_cross_eaves: bool = true) -> void:
+	assert(recipe_value != null and not centres.is_empty()
+		and centres.size() == original_ids.size())
+	assert(ridge_axis in [&"x", &"z"])
+	assert(authored_family in [&"blue", &"orange"])
+	# Local run records are ordered from the numerically smaller seam to the
+	# larger one. Godot's `FORWARD` is -Z, so the positive Z run axis is `BACK`.
+	var axis := Vector3.RIGHT if ridge_axis == &"x" else Vector3.BACK
+	var yaw := PI * 0.5 if ridge_axis == &"x" else 0.0
+	var bays: Array[Dictionary] = []
+	for index in centres.size():
+		var placement_ids: Array[StringName] = []
+		placement_ids.assign(original_ids[index] as Array)
+		bays.append({
+			"centre": centres[index],
+			"placement_ids": placement_ids,
+			"variants": _compact_roof_variants(centres[index], yaw,
+				centres[index].y, modules, tight_cross_eaves),
+		})
+	var first := centres[0]
+	var last := centres[-1]
+	var cross := first.z if ridge_axis == &"x" else first.x
+	recipe_value.add_compact_roof_run(run_id,
+		first - axis * CELL, last + axis * CELL,
+		cross - CELL, cross + CELL, CELL * 2.0,
+		&"compact_gable_exact_3m", authored_family, bays)
+
+
 static func _tower_roof_recipe(recipe_id: StringName, roof_asset: StringName,
 		modules: FabricModuleProgram) -> FabricRecipe:
 	## The Fantasy Village modular gable is 6.5 m wide and cannot close a 3 m
@@ -2319,6 +2613,9 @@ static func _tower_roof_recipe(recipe_id: StringName, roof_asset: StringName,
 	recipe_value.add_placement(&"roof", roof_asset,
 		modules.roof_bearing_aligned_transform(roof_asset,
 			_pose(centre, 0.0), 0.0))
+	_add_compact_roof_run_contract(recipe_value, &"compact", [centre],
+		[[&"roof"]], &"z", &"blue" if roof_asset == COMPACT_ROOF_SLATE_03 \
+		else &"orange", modules)
 	recipe_value.solid_cells = FabricRecipe.box_cells(Vector3i(-1, 0, -1),
 		Vector3i(2, 1, 2))
 	recipe_value.occluder_cells.assign(recipe_value.solid_cells)
@@ -2327,6 +2624,198 @@ static func _tower_roof_recipe(recipe_id: StringName, roof_asset: StringName,
 	_add_roof_junction_sockets(recipe_value, Vector3i(-1, 0, -1),
 		Vector3i(2, 1, 2))
 	return recipe_value
+
+
+static func _terminal_tight_gable_recipe(recipe_id: StringName,
+		minimum: Vector3i, size: Vector3i, ridge_axis: StringName,
+		theme: StringName, modules: FabricModuleProgram,
+		low_run_index: int = -1, low_run_mask: int = 0,
+		continuous_run_tight_cross_eaves: bool = true) -> FabricRecipe:
+	## A full-height authored gable for dense terminal houses whose ordinary eaves
+	## cannot coexist with an adjacent roof-wall/support junction. The bake clips
+	## only the eave to the exact three-metre construction lane; longer ridges are
+	## made from measured rear/middle/front party-seam sections of that same source
+	## roof. Thus a terminal crown is real tile-and-gable geometry by construction,
+	## never a plank cap, window canopy, scaled substitute, or post-pack repair.
+	## Party roofs at occupied bridge endpoints keep this tight authored fallback,
+	## but publish the bridge's ordinary cross-eave profile to the continuous-run
+	## compiler. When an endpoint and bridge meet, every source piece is replaced
+	## by one compatible start/middle/end family; when they do not meet, the tight
+	## complete roof remains. The measured union of both finite alternatives is
+	## reserved before placement, so this does not create a late visual exception.
+	assert(ridge_axis in [&"x", &"z"])
+	assert(theme in [&"blue", &"orange"])
+	assert(modules != null)
+	var recipe_value := FabricRecipe.new(recipe_id, [
+		&"roof", &"occupied_mass", &"pitched_roof", &"terminal_tight_gable",
+		StringName("ridge_%s" % ridge_axis),
+	], 1)
+	var rear_end_asset := COMPACT_ROOF_SLATE_REAR_END_TIGHT \
+		if theme == &"blue" else COMPACT_ROOF_ORANGE_REAR_END_TIGHT
+	var front_end_asset := COMPACT_ROOF_SLATE_FRONT_END_TIGHT \
+		if theme == &"blue" else COMPACT_ROOF_ORANGE_FRONT_END_TIGHT
+	var rear_asset := COMPACT_ROOF_SLATE_REAR_TIGHT if theme == &"blue" \
+		else COMPACT_ROOF_ORANGE_REAR_TIGHT
+	var middle_asset := COMPACT_ROOF_SLATE_MIDDLE_TIGHT if theme == &"blue" \
+		else COMPACT_ROOF_ORANGE_MIDDLE_TIGHT
+	var front_asset := COMPACT_ROOF_SLATE_FRONT_TIGHT if theme == &"blue" \
+		else COMPACT_ROOF_ORANGE_FRONT_TIGHT
+	var centre := FabricModuleProgram.footprint_centre(minimum, size)
+	var run_cells := size.x if ridge_axis == &"x" else size.z
+	var cross_cells := size.z if ridge_axis == &"x" else size.x
+	assert(posmod(run_cells, 2) == 0 and posmod(cross_cells, 2) == 0)
+	var run_count := run_cells / 2
+	var cross_count := cross_cells / 2
+	assert(low_run_index >= -1 and low_run_index < run_count)
+	assert(low_run_mask >= 0 and low_run_mask < (1 << run_count))
+	var effective_low_mask := low_run_mask
+	if low_run_index >= 0:
+		effective_low_mask |= 1 << low_run_index
+	if effective_low_mask != 0:
+		recipe_value.role_tags.append(&"terminal_step_gable")
+	if effective_low_mask == (1 << run_count) - 1:
+		# An all-low terminal profile is one continuous shallow setback roof, not
+		# a pitched gable with some decoration removed. Naming that construction
+		# role lets the shared measured T-junction policy join it to a neighboring
+		# wall/eave without granting arbitrary roof overlap.
+		recipe_value.role_tags.append(&"setback_shed")
+	var low_asset := WINDOW_ROOF_BLUE if theme == &"blue" \
+		else WINDOW_ROOF_ORANGE
+	for cross_index in cross_count:
+		var cross_offset := (float(cross_index * 2 + 1)
+			- float(cross_cells) * 0.5) * CELL
+		for run_index in run_count:
+			var run_offset := (float(run_index * 2 + 1)
+				- float(run_cells) * 0.5) * CELL
+			var target := centre + (Vector3(run_offset, 0.0, cross_offset) \
+				if ridge_axis == &"x" else Vector3(cross_offset, 0.0, run_offset))
+			if (effective_low_mask & (1 << run_index)) != 0:
+				_add_terminal_low_tiled_bay(recipe_value, StringName(
+					"gable.%02d.%02d.low" % [cross_index, run_index]),
+					low_asset, target, ridge_axis, modules)
+				continue
+			var roof_asset := rear_asset if run_index == 0 \
+				else front_asset if run_index == run_count - 1 \
+				else middle_asset
+			var yaw := PI * 0.5 if ridge_axis == &"x" else 0.0
+			var assets: Array[StringName] = []
+			if run_count == 1:
+				assets.assign([rear_end_asset, front_end_asset])
+			else:
+				assets.append(roof_asset)
+			for asset_index in assets.size():
+				var selected_asset := assets[asset_index]
+				assert(modules.contract(selected_asset) != null)
+				var pose := modules.roof_bearing_aligned_transform(selected_asset,
+					_pose(target, yaw), 0.0)
+				recipe_value.add_placement(StringName("gable.%02d.%02d.%02d" % [
+					cross_index, run_index, asset_index]), selected_asset, pose)
+	# Publish each uninterrupted full-height ridge interval. A deliberately low
+	# setback bay is a real break in the crown and cannot be bridged by the later
+	# composition pass.
+	for cross_index in cross_count:
+		var segment_centres: Array[Vector3] = []
+		var segment_ids: Array = []
+		var segment_index := 0
+		for run_index in run_count + 1:
+			var is_full := run_index < run_count \
+				and (effective_low_mask & (1 << run_index)) == 0
+			if is_full:
+				var cross_offset := (float(cross_index * 2 + 1)
+					- float(cross_cells) * 0.5) * CELL
+				var run_offset := (float(run_index * 2 + 1)
+					- float(run_cells) * 0.5) * CELL
+				segment_centres.append(centre + (Vector3(run_offset, 0.0,
+					cross_offset) if ridge_axis == &"x" else Vector3(
+					cross_offset, 0.0, run_offset)))
+				var ids: Array[StringName] = []
+				if run_count == 1:
+					ids.assign([StringName("gable.%02d.%02d.00" % [
+						cross_index, run_index]), StringName(
+						"gable.%02d.%02d.01" % [cross_index, run_index])])
+				else:
+					ids.append(StringName("gable.%02d.%02d.00" % [
+						cross_index, run_index]))
+				segment_ids.append(ids)
+			if is_full and run_index < run_count - 1:
+				continue
+			if not segment_centres.is_empty():
+				_add_compact_roof_run_contract(recipe_value, StringName(
+					"compact.%02d.%02d" % [cross_index, segment_index]),
+					segment_centres, segment_ids, ridge_axis, theme, modules,
+					continuous_run_tight_cross_eaves)
+				segment_centres = []
+				segment_ids = []
+				segment_index += 1
+	recipe_value.solid_cells = FabricRecipe.box_cells(minimum, size)
+	recipe_value.occluder_cells.assign(recipe_value.solid_cells)
+	recipe_value.add_socket(&"bearing.bottom", FabricRecipe.SocketKind.BEARING,
+		Vector3i.ZERO, Vector3i.DOWN)
+	_add_roof_junction_sockets(recipe_value, minimum, size)
+	return recipe_value
+
+
+static func _add_terminal_low_tiled_bay(recipe_value: FabricRecipe,
+		placement_prefix: StringName, roof_asset: StringName, centre: Vector3,
+		ridge_axis: StringName, modules: FabricModuleProgram) -> void:
+	## One genuine tiled low bay lets a longer terminal house descend below typed
+	## public headroom while the remaining run keeps a full-height gable. The pair
+	## is one measured roof recipe; it is not a later cap pasted over a failed roof.
+	var contract_value := modules.contract(roof_asset)
+	assert(contract_value != null)
+	for side in [-1, 1]:
+		# Derive both slopes from one ridge plane. `side` names the eave side,
+		# while the shed's high edge always points back toward the shared centre.
+		# This makes an upward gable by construction; two unrelated yaw literals
+		# can no longer turn the pair into a valley when the ridge axis rotates.
+		var target := centre + (Vector3(0.0, 0.0, float(side) * 0.775) \
+			if ridge_axis == &"x" else Vector3(float(side) * 0.775, 0.0, 0.0))
+		var high_direction := Vector3i(0, 0, -side) if ridge_axis == &"x" \
+			else Vector3i(-side, 0, 0)
+		var high_boundary := centre.z if ridge_axis == &"x" else centre.x
+		var pose := modules.shed_roof_aligned_transform(roof_asset, target, 0.0,
+			high_direction, high_boundary)
+		recipe_value.add_placement(StringName("%s.%s" % [placement_prefix,
+			"negative" if side < 0 else "positive"]), roof_asset, pose)
+
+
+static func _append_terminal_step_gable_vocabulary(
+		candidates: Array[FabricRecipe], modules: FabricModuleProgram) -> void:
+	## Every footprint receives the complete finite set of full/low ridge-bay
+	## profiles. A one-bay tower therefore has one all-low alternative; a two-bay
+	## house has both one-low steps and the all-low profile; the three-bay
+	## longhouse has every non-empty subset. Selection is left to the ordinary
+	## measured public-air/envelope transaction, so the exact clearance field
+	## chooses the least altered profile that fits without seed, coordinate, or
+	## mesh-specific repair.
+	for spec: Dictionary in [
+		{"kind": &"tower", "minimum": Vector3i(-1, 0, -1),
+			"size": Vector3i(2, 1, 2), "ridge": &"z", "runs": 1},
+		{"kind": &"slim", "minimum": Vector3i(-1, 0, -2),
+			"size": Vector3i(2, 1, 4), "ridge": &"z", "runs": 2},
+		{"kind": &"row", "minimum": Vector3i(-2, 0, -1),
+			"size": Vector3i(4, 1, 2), "ridge": &"x", "runs": 2},
+		{"kind": &"building", "minimum": Vector3i(-2, 0, -2),
+			"size": Vector3i(4, 1, 4), "ridge": &"z", "runs": 2},
+		{"kind": &"long", "minimum": Vector3i(-2, 0, -3),
+			"size": Vector3i(4, 1, 6), "ridge": &"z", "runs": 3},
+	]:
+		for theme: StringName in [&"blue", &"orange"]:
+			for low_run_index in int(spec.runs):
+				candidates.append(_terminal_tight_gable_recipe(StringName(
+					"roof.terminal.step.%s.%s.%d" % [StringName(spec.kind),
+						theme, low_run_index]), spec.minimum as Vector3i,
+					spec.size as Vector3i, StringName(spec.ridge), theme, modules,
+					low_run_index))
+			for low_run_mask in range(1, 1 << int(spec.runs)):
+				# Singleton masks already have the stable step.<index> names above.
+				if (low_run_mask & (low_run_mask - 1)) == 0:
+					continue
+				candidates.append(_terminal_tight_gable_recipe(StringName(
+					"roof.terminal.profile.%s.%s.%d" % [StringName(spec.kind),
+						theme, low_run_mask]), spec.minimum as Vector3i,
+					spec.size as Vector3i, StringName(spec.ridge), theme, modules,
+					-1, low_run_mask))
 
 
 static func _dormered_tower_roof_recipe(recipe_id: StringName,
@@ -2790,7 +3279,8 @@ static func _setback_shed_roof_recipe(recipe_id: StringName,
 	## authored for a 3 m slope and projected through buildings across a nominal
 	## alley. This reviewed window-roof mesh is a true shallow shed: 1.55 m deep,
 	## 3.06 m wide, and less than one metre high. One unscaled piece closes each
-	## 3 m run, with its timber fascia making the free high edge look finished.
+	## 3 m run. Its typed high edge meets the continuing wall and its low edge
+	## drains toward the exposed shoulder.
 	assert(length_cells in [2, 4, 6] and eave_side in [-1, 1])
 	assert(roof_asset == WINDOW_ROOF_BLUE or roof_asset == WINDOW_ROOF_ORANGE)
 	assert(modules != null)
@@ -2798,23 +3288,56 @@ static func _setback_shed_roof_recipe(recipe_id: StringName,
 		&"roof", &"thin_roof_face", &"setback_shed", &"occupied_mass",
 		&"pitched_roof",
 	], 1)
-	var yaw := 0.0 if eave_side < 0 else PI
 	var contract_value := modules.contract(roof_asset)
-	assert(contract_value != null)
-	# The adjoining room/roof already overhangs its logical wall plane. Move this
-	# shallow roof 0.62 m away from that bound edge so the two measured envelopes
-	# meet instead of burying one roof under the other. This is a recipe datum,
-	# not per-instance repair, and both drainage directions remain native scale.
-	var seam_offset_z := -float(eave_side) * 0.62
+	assert(contract_value != null \
+		and contract_value.kind == FabricModuleContract.Kind.ROOF_SHED)
+	var high_direction := Vector3i(0, 0, -eave_side)
+	var high_boundary := -float(eave_side) * CELL * 0.5
 	for run_index in length_cells / 2:
 		var target := Vector3((float(run_index) * 2.0 + 1.0) * CELL,
-			0.0, seam_offset_z)
-		var pose := _pose(target, yaw)
+			0.0, 0.0)
+		var pose := modules.shed_roof_aligned_transform(roof_asset, target, 0.0,
+			high_direction, high_boundary)
+		recipe_value.add_placement(StringName("shed.%02d" % run_index),
+			roof_asset, pose)
+	for x in length_cells:
+		recipe_value.occluder_cells.append(Vector3i(x, 0, 0))
+	recipe_value.add_socket(&"bearing.bottom",
+		FabricRecipe.SocketKind.BEARING, Vector3i.ZERO, Vector3i.DOWN)
+	return recipe_value
+
+
+static func _partial_gable_roof_recipe(recipe_id: StringName,
+		length_cells: int, gable_side: int, theme: StringName,
+		modules: FabricModuleProgram) -> FabricRecipe:
+	## A private one-cell-deep crown remainder is a tiny complete roof edge, not a
+	## walk deck and not a window canopy standing in for one. Each 3 m bay uses one
+	## exact 3 m x 1.5 m derivative of the same authored compact gable as ordinary
+	## houses. The chosen half retains its exterior gable end; its bake-clipped end
+	## is the party seam toward the adjoining mass. Both handed alternatives are
+	## finite recipes and the normal measured-envelope transaction selects them.
+	assert(length_cells in [2, 4, 6] and gable_side in [-1, 1])
+	assert(theme in [&"blue", &"orange"] and modules != null)
+	var rear_asset := COMPACT_ROOF_SLATE_REAR_END_TIGHT \
+		if theme == &"blue" else COMPACT_ROOF_ORANGE_REAR_END_TIGHT
+	var front_asset := COMPACT_ROOF_SLATE_FRONT_END_TIGHT \
+		if theme == &"blue" else COMPACT_ROOF_ORANGE_FRONT_END_TIGHT
+	var roof_asset := rear_asset if gable_side < 0 else front_asset
+	var contract_value := modules.contract(roof_asset)
+	assert(contract_value != null)
+	var recipe_value := FabricRecipe.new(recipe_id, [
+		&"roof", &"thin_roof_face", &"partial_gable", &"occupied_mass",
+		&"pitched_roof", &"ridge_x",
+	], 1)
+	for run_index in length_cells / 2:
+		var target := Vector3((float(run_index) * 2.0 + 0.5) * CELL,
+			0.0, 0.0)
+		var pose := _pose(target, 0.0)
 		var transformed := pose * contract_value.visual_bounds
 		pose.origin.x += target.x - transformed.get_center().x
 		pose.origin.z += target.z - transformed.get_center().z
 		pose = modules.roof_bearing_aligned_transform(roof_asset, pose, 0.0)
-		recipe_value.add_placement(StringName("shed.%02d" % run_index),
+		recipe_value.add_placement(StringName("gable.%02d" % run_index),
 			roof_asset, pose)
 	for x in length_cells:
 		recipe_value.occluder_cells.append(Vector3i(x, 0, 0))
@@ -2882,6 +3405,11 @@ static func _slim_roof_recipe(recipe_id: StringName, roof_asset: StringName,
 	recipe_value.add_placement(&"roof.front", second_asset,
 		modules.roof_bearing_aligned_transform(second_asset,
 			_pose(centre + Vector3(0.0, 0.0, 1.5), 0.0), 0.0))
+	_add_compact_roof_run_contract(recipe_value, &"compact", [
+		centre + Vector3(0.0, 0.0, -1.5),
+		centre + Vector3(0.0, 0.0, 1.5),
+	], [[&"roof.rear"], [&"roof.front"]], &"z",
+		&"blue" if roof_asset == ROOF_BLUE else &"orange", modules)
 	recipe_value.solid_cells = FabricRecipe.box_cells(Vector3i(-1, 0, -2),
 		Vector3i(2, 2, 4))
 	recipe_value.occluder_cells.assign(recipe_value.solid_cells)
@@ -2915,6 +3443,11 @@ static func _row_roof_recipe(recipe_id: StringName, roof_asset: StringName,
 	recipe_value.add_placement(&"roof.right", second_asset,
 		modules.roof_bearing_aligned_transform(second_asset,
 			_pose(centre + Vector3(1.5, 0.0, 0.0), PI * 0.5), 0.0))
+	_add_compact_roof_run_contract(recipe_value, &"compact", [
+		centre + Vector3(-1.5, 0.0, 0.0),
+		centre + Vector3(1.5, 0.0, 0.0),
+	], [[&"roof.left"], [&"roof.right"]], &"x",
+		&"blue" if roof_asset == ROOF_BLUE else &"orange", modules)
 	recipe_value.solid_cells = FabricRecipe.box_cells(Vector3i(-2, 0, -1),
 		Vector3i(4, 2, 2))
 	recipe_value.occluder_cells.assign(recipe_value.solid_cells)
@@ -3479,6 +4012,8 @@ static func _outcrop_recipe(recipe_id: StringName, theme: StringName,
 		role_tags.append(&"corner_jetty")
 	else:
 		role_tags.append(&"oriel_window")
+		role_tags.append(&"native_width_gabled_bay")
+		role_tags.append(&"roofed_facade_bay")
 	if bearing_drop_cells == 1:
 		role_tags.append(&"half_raised_outcropping")
 		role_tags.append(&"half_level_oriel")
@@ -3519,7 +4054,12 @@ static func _outcrop_recipe(recipe_id: StringName, theme: StringName,
 		{"id": &"right", "x": 1.5, "yaw": -PI * 0.5,
 			"outward": Vector3i.RIGHT},
 	]:
-		var side_asset := _mirrored_facade_asset(wall)
+		# Timber panels own one terminal post. Hand the left return its baked
+		# mirror and the right return the source hand so the two outer corners each
+		# receive one post; using the mirror on both sides doubled one corner and
+		# left the other edge visually open in close-up captures.
+		var side_asset := _mirrored_facade_asset(wall) \
+			if StringName(side.id) == &"left" else wall
 		recipe_value.add_placement(StringName(side.id), side_asset,
 			modules.facade_aligned_transform(side_asset,
 				_pose(centre + Vector3(float(side.x), 0.0, 0.0),
@@ -3528,17 +4068,22 @@ static func _outcrop_recipe(recipe_id: StringName, theme: StringName,
 	recipe_value.add_placement(&"roof", roof_asset,
 		modules.roof_bearing_aligned_transform(roof_asset,
 			_pose(centre + Vector3.UP * 3.0, 0.0), 3.0))
-	recipe_value.add_placement(&"brace.left", BRACE,
-		_pose(centre + Vector3(-0.9, -0.55, -1.5), 0.0))
-	recipe_value.add_placement(&"brace.right", BRACE,
-		_pose(centre + Vector3(0.9, -0.55, -1.5), 0.0))
+	var bracket_contract := modules.contract(ATTACHMENT_BRACKET_M)
+	if bracket_contract == null:
+		return null
+	# One complete 3 m wall bracket carries the bay. Its source pivot is at the
+	# right/rear end, so the +1.5 m placement centres the authored -3..0 m run on
+	# this bay and pins its measured top to the floor underside. The old pair of
+	# generic wall braces crossed at the corners and read as protruding planks.
+	recipe_value.add_placement(&"support.bracket", ATTACHMENT_BRACKET_M,
+		_pose(centre + Vector3(1.5, -bracket_contract.visual_bounds.end.y,
+			-1.5), 0.0))
 	if bearing_drop_cells == 1:
-		# A second fixed brace course makes the half-level offset visibly borne by
-		# its parent. No asset is stretched to bridge the extra datum.
-		recipe_value.add_placement(&"brace.low.left", BRACE,
-			_pose(centre + Vector3(-0.9, -2.05, -1.5), 0.0))
-		recipe_value.add_placement(&"brace.low.right", BRACE,
-			_pose(centre + Vector3(0.9, -2.05, -1.5), 0.0))
+		# A second authored course covers the half-level drop without scaling or
+		# leaving a timber pole dangling below the projection.
+		recipe_value.add_placement(&"support.bracket.low", ATTACHMENT_BRACKET_M,
+			_pose(centre + Vector3(1.5,
+				-bracket_contract.visual_bounds.end.y - CELL, -1.5), 0.0))
 	recipe_value.solid_cells = FabricRecipe.box_cells(
 		Vector3i(minimum_x, 0, -1), Vector3i(2, 4, 2))
 	recipe_value.occluder_cells.assign(recipe_value.solid_cells)
@@ -4264,16 +4809,24 @@ static func _integrated_cantilever_support_recipe(
 	## One measured 3 m bracket course beneath a room-scale jetty. The parent
 	## room remains the occupied construction authority; this zero-cell recipe is
 	## an explicit visual/collision attachment derived from the sealed bearing
-	## edge. Rotating the authored stair-wall support by a quarter turn makes its
-	## 1.94 m long axis project outward from the facade rather than run along it.
-	## Two unscaled supports sit beneath the two 1.5 m attachment columns.
+	## edge. A single broad attachment bracket hid its diagonal detail at skyline
+	## distance and read as a loose horizontal plank. Use one native wall corbel
+	## per bearing column instead. Each corbel projects along local BACK (the
+	## solver's typed cantilever direction), never sideways beyond a corner, and
+	## its measured top is pinned to the room underside. The measured two-piece
+	## envelope still participates in the ordinary feature-clearance proof.
+	var contract_value := modules.contract(BRACE)
+	if contract_value == null:
+		return null
+	var bounds := contract_value.visual_bounds
 	var recipe_value := FabricRecipe.new(&"outcrop.support.bracketed.2", [
 		&"visual_attachment", &"cantilever_support", &"bracket_supported",
-		&"integrated_room_outcropping",
+		&"integrated_room_outcropping", &"paired_wall_corbels",
 	], 0)
-	for index in 2:
-		recipe_value.add_placement(StringName("brace.%d" % index), BRACE,
-			_pose(Vector3(float(index) * CELL, -0.55, 0.0), PI * 0.5))
+	for column_index in 2:
+		recipe_value.add_placement(StringName("corbel.%d" % column_index),
+			BRACE, _pose(Vector3(float(column_index) * CELL,
+				-bounds.end.y, 0.0), PI * 0.5))
 	return recipe_value
 
 
@@ -4336,37 +4889,62 @@ static func arcade_overhang_foundation_recipe_id(open_mask: int) -> StringName:
 
 static func _arcade_overhang_foundation_recipe(open_mask: int,
 		modules: FabricModuleProgram) -> FabricRecipe:
-	## The unsupported half of a tower-to-row/slim transition is a small
-	## gatehouse, not one facade floating beneath a room.  Four complete stone
-	## modules close the perimeter.  Sides that continue the carved route use an
-	## authored arch; the remaining sides use solid masonry.  The interior stays
-	## topology-owned PUBLIC_AIR, so this visual support never fills the tunnel.
+	## The unsupported half of a tower-to-row/slim transition is a borne arcade,
+	## not one facade floating beneath a room.  A 3 m masonry arch puts its jambs
+	## on the centres of the two 1.5 m public lanes it is meant to protect; four
+	## such wall panels therefore leave a visually plausible slit but invalidate
+	## the route graph.  Use the reviewed one-storey support post at each exact
+	## corner of the upper plate instead.  Their measured 0.28 x 0.59 m bases stay
+	## outside both body lanes, while the complete four-corner frame transfers the
+	## overhang to the lower course.  `open_mask` still identifies the topological
+	## route continuation in the stable recipe id, but geometry no longer invents
+	## a closed wall around that already-proved public air.
 	var recipe_value := FabricRecipe.new(
 		arcade_overhang_foundation_recipe_id(open_mask), [
 		&"visual_attachment", &"cantilever_support", &"arcade_portal_support",
-		&"route_spanning_overhang", &"four_sided_foundation_shell",
+		&"route_spanning_overhang", &"four_corner_support_frame",
 	], 0)
+	var pillar_contract := modules.contract(DECK_PILLAR)
+	if pillar_contract == null:
+		return null
+	var pillar_bounds := pillar_contract.visual_bounds
+	var pillar_half_x := maxf(absf(pillar_bounds.position.x),
+		absf(pillar_bounds.end.x))
+	var pillar_half_z := maxf(absf(pillar_bounds.position.z),
+		absf(pillar_bounds.end.z))
+	# The logical portal boundary is a construction limit, not a post centreline.
+	# Keeping each measured post wholly inside it fixes the old corner condition
+	# where half a pillar occupied the neighboring house/roof envelope. The
+	# authored reveal is capped by the exact radial clearance left between the
+	# post's measured inner corner and the centre of either 1.5 m body lane. Thus
+	# a changed pillar, player capsule, or import bound recomputes the frame; no
+	# seed, town, or reported collision cell participates in construction.
+	var lane_clearance_x := CELL * 0.5 - pillar_bounds.size.x
+	var lane_clearance_z := CELL * 0.5 - pillar_bounds.size.z
+	var required_radius := TraversalEnvelope.structural_clearance_radius()
+	var clearance_discriminant := 2.0 * required_radius * required_radius \
+		- pow(lane_clearance_x - lane_clearance_z, 2.0)
+	if clearance_discriminant < 0.0:
+		return null
+	var maximum_reveal := (lane_clearance_x + lane_clearance_z \
+		- sqrt(clearance_discriminant)) * 0.5
+	if maximum_reveal < 0.0:
+		return null
+	var edge_reveal := minf(CELL * 0.05, maximum_reveal)
+	var corner_x := CELL - pillar_half_x - edge_reveal
+	var corner_z := CELL - pillar_half_z - edge_reveal
+	assert(Vector2(lane_clearance_x - edge_reveal,
+		lane_clearance_z - edge_reveal).length() + 0.000001 \
+		>= required_radius)
 	var centre := Vector3(CELL * 0.5, -CELL * 2.0, CELL * 1.5)
-	for side: Dictionary in [
-		{"id": &"north", "bit": FEATURE_PORTAL_NORTH,
-			"offset": Vector3(0.0, 0.0, -CELL), "yaw": PI,
-			"outward": Vector3i.FORWARD, "boundary": CELL * 0.5},
-		{"id": &"east", "bit": FEATURE_PORTAL_EAST,
-			"offset": Vector3(CELL, 0.0, 0.0), "yaw": -PI * 0.5,
-			"outward": Vector3i.RIGHT, "boundary": CELL * 1.5},
-		{"id": &"south", "bit": FEATURE_PORTAL_SOUTH,
-			"offset": Vector3(0.0, 0.0, CELL), "yaw": 0.0,
-			"outward": Vector3i.BACK, "boundary": CELL * 2.5},
-		{"id": &"west", "bit": FEATURE_PORTAL_WEST,
-			"offset": Vector3(-CELL, 0.0, 0.0), "yaw": PI * 0.5,
-			"outward": Vector3i.LEFT, "boundary": -CELL * 0.5},
+	for corner: Dictionary in [
+		{"id": &"north_west", "offset": Vector3(-corner_x, 0.0, -corner_z)},
+		{"id": &"north_east", "offset": Vector3(corner_x, 0.0, -corner_z)},
+		{"id": &"south_east", "offset": Vector3(corner_x, 0.0, corner_z)},
+		{"id": &"south_west", "offset": Vector3(-corner_x, 0.0, corner_z)},
 	]:
-		var asset_id := ROCK_DOOR if open_mask & int(side.bit) != 0 \
-			else ROCK_PLAIN
-		recipe_value.add_placement(StringName(side.id), asset_id,
-			modules.facade_aligned_transform(asset_id,
-				_pose(centre + side.offset as Vector3, float(side.yaw)),
-				side.outward as Vector3i, float(side.boundary)))
+		recipe_value.add_placement(StringName(corner.id), DECK_PILLAR,
+			_pose(centre + corner.offset as Vector3, 0.0))
 	return recipe_value
 
 

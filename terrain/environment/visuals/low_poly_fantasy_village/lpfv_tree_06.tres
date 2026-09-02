@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3 uid="uid://c0lxy13ndd3f5"]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_geaa8"]
-[ext_resource type="Shape3D" path="res://terrain/environment/collisions/low_poly_fantasy_village/lpfv_tree_06_piece_00.res" id="2_7x46f"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_hyyn5"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/low_poly_fantasy_village/lpfv_tree_06_piece_00.res" id="4_xyn5r"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_y4mdv"]
+[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_geaa8"]
+[ext_resource type="Shape3D" uid="uid://ddhdbnr8c7mex" path="res://terrain/environment/collisions/low_poly_fantasy_village/lpfv_tree_06_piece_00.res" id="2_7x46f"]
+[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_hyyn5"]
+[ext_resource type="ArrayMesh" uid="uid://b6dsxwvogeuwu" path="res://terrain/environment/meshes/low_poly_fantasy_village/lpfv_tree_06_piece_00.res" id="4_xyn5r"]
+[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_y4mdv"]
 
 [sub_resource type="Resource" id="Resource_2fw2f"]
 script = ExtResource("1_geaa8")

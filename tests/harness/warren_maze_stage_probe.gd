@@ -1,5 +1,9 @@
 extends SceneTree
 
+var _trace_roof_closures := false
+var _trace_roof_room := StringName()
+var _trace_bridges := false
+
 ## How far does a town actually get before a gate discards it, and
 ## WHERE does the wall clock go? Walks the solid-first pipeline stage by stage
 ## and reports what EXISTS at each step, so "the carver makes nothing" can be
@@ -42,6 +46,13 @@ func _init() -> void:
 			# break the second one down. This turns that on, which is how the
 			# composition's inner loops are named rather than guessed at.
 			WarrenRoomCompositionPlanner.diagnostic_trace = true
+		elif args[index] == "--trace-roof-closures":
+			_trace_roof_closures = true
+		elif args[index] == "--trace-roof-room" and index + 1 < args.size():
+			_trace_roof_closures = true
+			_trace_roof_room = StringName(args[index + 1])
+		elif args[index] == "--trace-bridges":
+			_trace_bridges = true
 	if seeds.is_empty():
 		seeds = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 	if scale_ids.is_empty():
@@ -88,11 +99,36 @@ func _probe(city_seed: int, scale_id: StringName,
 	if maze == null:
 		print(line + " carve=REJECTED:" + WarrenMazeCarver.last_failure.left(70))
 		return
-	line += " carve=ok"
+	var bridge_seeded := maze.excavation.bridge_span_audit.get("seeded", []) \
+		as Array
+	var bridge_refused := maze.excavation.bridge_span_audit.get("refused", []) \
+		as Array
+	line += " carve=ok source_bridges=%d bridge_refusals=%d" % [
+		maze.excavation.bridge_spans.size(), bridge_refused.size()]
+	if _trace_bridges:
+		var bridge_reasons: Dictionary = {}
+		for refusal_value: Variant in bridge_refused:
+			var reason := String((refusal_value as Dictionary).get("reason", ""))
+			bridge_reasons[reason] = int(bridge_reasons.get(reason, 0)) + 1
+		print("BRIDGE_CANDIDATES seed=%d scale=%s legal=%d reasons=%s" % [
+			city_seed, String(profile.scale_id), int(maze.excavation \
+				.bridge_span_audit.get("legal_candidate_count", 0)),
+			JSON.stringify(bridge_reasons)])
+	if bridge_seeded.size() != maze.excavation.bridge_spans.size():
+		print("BRIDGE_LEDGER_MISMATCH seed=%d scale=%s spans=%d seeded=%d" % [
+			city_seed, String(profile.scale_id),
+			maze.excavation.bridge_spans.size(), bridge_seeded.size()])
+	if not bridge_seeded.is_empty():
+		print("BRIDGE_SOURCE seed=%d scale=%s %s" % [city_seed,
+			String(profile.scale_id), JSON.stringify(bridge_seeded)])
 
 	started_ms = Time.get_ticks_msec()
 	WarrenPlotPlanner.reserve(maze, profile)
 	WarrenPlotPlanner.partition(maze, profile)
+	if _trace_bridges:
+		print("BRIDGE_PLOTS seed=%d scale=%s %s" % [city_seed,
+			String(profile.scale_id), JSON.stringify((maze.audit.get(
+				"plot_outcomes", {}) as Dictionary).get("bridges", []))])
 	timings.append("plots=%d" % (Time.get_ticks_msec() - started_ms))
 	if not maze.seal():
 		print(line + " plots=REJECTED:" + maze.last_rejection.left(70))
@@ -107,13 +143,36 @@ func _probe(city_seed: int, scale_id: StringName,
 			+ WarrenMazeVolumeAdapter.last_failure.left(70))
 		return
 	line += " adapt=ok"
+	var bridge_compounds := WarrenVolumetricSolver \
+		._maze_bridge_compound_plans(volume)
+	for compound_value: Variant in bridge_compounds.get("plans", []) as Array:
+		var compound := compound_value as Dictionary
+		var endpoint_support: Array[Dictionary] = []
+		for group_value: Variant in compound.get("endpoint_groups", []) as Array:
+			var group: Array[Vector2i] = []
+			group.assign(group_value as Array)
+			var columns: Array[Dictionary] = []
+			for column: Vector2i in group:
+				var bearing := volume.envelope.bearing_at(column)
+				var floor_band := int(compound.floor)
+				var whole := true
+				for band in range(bearing, floor_band):
+					whole = whole and volume.has_mass(Vector3i(column.x,
+						band, column.y))
+				columns.append({"column": column, "bearing": bearing,
+					"floor": floor_band, "whole": whole,
+					"below": volume.has_mass(Vector3i(column.x,
+						floor_band - 1, column.y))})
+			endpoint_support.append({"columns": columns})
+		print("BRIDGE_SUPPORT_SOURCE seed=%d scale=%s %s" % [city_seed,
+			String(profile.scale_id), JSON.stringify(endpoint_support)])
 
 	# The parcels ARE the buildings: this is the "substitute groups of grid
 	# cells for houses" step. If this succeeds, a town physically exists.
 	var parcels := WarrenTownSolver.partition_parcels(volume)
 	if parcels == null:
 		print(line + " parcels=REJECTED:" \
-			+ WarrenTownSolver.last_partition_failure.left(70))
+			+ WarrenTownSolver.last_partition_failure.left(4000))
 		return
 	line += " parcels=%d" % parcels.parcels.size()
 
@@ -124,7 +183,11 @@ func _probe(city_seed: int, scale_id: StringName,
 	timings.append("compose=%d" % compose_ms)
 	if plan == null:
 		print(line + " compose=REJECTED:" \
-			+ WarrenVolumetricSolver.last_failure.left(90))
+			+ WarrenVolumetricSolver.last_failure.left(4000))
+		if not WarrenSpatialFabricCompiler.last_audit.is_empty():
+			print("COMPOSE_ROOM_AUDIT seed=%d scale=%s %s" % [city_seed,
+				String(profile.scale_id), JSON.stringify(
+					WarrenSpatialFabricCompiler.last_audit)])
 		print("STAGE_MS seed=%d scale=%s %s %s" % [city_seed,
 			String(profile.scale_id), " ".join(timings),
 			_sub_stages(compose_ms)])
@@ -132,18 +195,56 @@ func _probe(city_seed: int, scale_id: StringName,
 	var room_count := 0
 	for building: WarrenBuildingVolume in plan.buildings:
 		room_count += building.room_records.size()
-	line += " buildings=%d rooms=%d" % [plan.buildings.size(), room_count]
+	line += " buildings=%d rooms=%d bridge_rooms=%d planned_skywalks=%d" % [
+		plan.buildings.size(), room_count,
+		int(plan.audit.get("maze_bridge_rooms", 0)),
+		int(plan.audit.get("preplanned_skywalk_count", 0))]
+	if maze.excavation.bridge_spans.size() > 0:
+		print("BRIDGE_OUTCOMES seed=%d scale=%s %s" % [city_seed,
+			String(profile.scale_id), JSON.stringify(plan.audit.get(
+				"maze_bridge_outcomes", []))])
+	if _trace_roof_closures:
+		var closures := WarrenSpatialFabricCompiler \
+			.required_roof_closure_options(plan.grid, plan.buildings, program,
+				plan.world_seed)
+		var shown: Array[Dictionary] = []
+		for closure: Dictionary in closures:
+			if not _trace_roof_room.is_empty() \
+					and StringName(closure.owner_room_id) != _trace_roof_room:
+				continue
+			shown.append(closure)
+		print("ROOF_CLOSURES seed=%d scale=%s count=%d %s" % [city_seed,
+			String(profile.scale_id), closures.size(), JSON.stringify(shown)])
+		var filtered: Array[Dictionary] = []
+		for closure_value: Variant in WarrenSpatialFeatureSolver \
+				.last_skywalk_diagnostic.get("required_roof_closures", []):
+			var closure := closure_value as Dictionary
+			if not _trace_roof_room.is_empty() \
+					and StringName(closure.owner_room_id) != _trace_roof_room:
+				continue
+			filtered.append(closure)
+		print("FEATURE_ROOF_CLOSURES seed=%d scale=%s count=%d %s" % [
+			city_seed, String(profile.scale_id), int(WarrenSpatialFeatureSolver \
+				.last_skywalk_diagnostic.get("required_roof_closure_count", 0)),
+			JSON.stringify(filtered)])
 
 	started_ms = Time.get_ticks_msec()
 	var fabric := WarrenSpatialFabricCompiler.solve(plan, program)
 	timings.append("fabric=%d" % (Time.get_ticks_msec() - started_ms))
 	if fabric == null:
 		print(line + " fabric=REJECTED:" \
-			+ WarrenSpatialFabricCompiler.last_failure.left(90))
+			+ WarrenSpatialFabricCompiler.last_failure.left(4000))
 		print("STAGE_MS seed=%d scale=%s %s %s" % [city_seed,
 			String(profile.scale_id), " ".join(timings),
 			_sub_stages(compose_ms)])
 		return
+	var route_holes := _route_support_holes(plan, fabric)
+	if not route_holes.is_empty():
+		print("ROUTE_SUPPORT_HOLES seed=%d scale=%s %s" % [city_seed,
+			String(profile.scale_id), JSON.stringify(route_holes)])
+	line += " open_skywalks=%d occupied_skywalks=%d" % [int(
+		fabric.audit.get("maze_skywalk_span_count", 0)), int(
+		fabric.audit.get("modular_box_skywalk_count", 0))]
 	print(line + " fabric=ok SEALED")
 	print("STAGE_MS seed=%d scale=%s %s %s" % [city_seed,
 		String(profile.scale_id), " ".join(timings),
@@ -171,3 +272,41 @@ func _sub_stages(compose_ms: int) -> String:
 	accounted += int(stamps.get(&"hero_beam", 0))
 	parts.append("other=%d" % maxi(0, compose_ms - accounted))
 	return " ".join(parts)
+
+
+func _route_support_holes(plan: WarrenSpatialPlan,
+		fabric: SettlementFabricPlan) -> Array[Dictionary]:
+	## Diagnostic mirror of the corpus gate: name the surface classification of
+	## every public floor whose lower band is genuinely empty and has no explicit
+	## support datum. This makes a floating court distinguishable from a stair
+	## transition or a deliberately terrain-borne street in one probe run.
+	var out: Array[Dictionary] = []
+	var solids := fabric.transformed_cells(&"solid")
+	var retained := fabric.retained_terrace_cells
+	var maze_source := plan.source_volume.mass_context.get(
+		&"maze_source_plan") as WarrenMazeSourcePlan if plan.source_volume != null \
+		else null
+	for cell: Vector3i in plan.route_floor_cells:
+		var below := cell + Vector3i.DOWN
+		var macro_column := Vector2i(floori(float(cell.x) / 2.0),
+			floori(float(cell.z) / 2.0))
+		var on_terrain: bool = maze_source != null and maze_source.massif != null \
+			and maze_source.massif.has_column(macro_column) \
+			and below.y < maze_source.massif.base_at(macro_column)
+		if plan.grid.use_at(below) != WarrenSpatialGrid.Use.OUTSIDE \
+				or solids.has(below) or retained.has(below) or on_terrain:
+			continue
+		var supported := fabric.surface_plan != null \
+			and fabric.surface_plan.has_cell(cell) \
+			and (fabric.surface_plan.has_support_base(cell) \
+				or fabric.surface_plan.has_transition_geometry(cell))
+		if supported:
+			continue
+		out.append({"cell": cell, "below": below,
+			"surface_kind": fabric.surface_plan.kind_at(cell) \
+				if fabric.surface_plan != null else -1,
+			"has_surface": fabric.surface_plan != null \
+				and fabric.surface_plan.has_cell(cell)})
+		if out.size() >= 16:
+			break
+	return out

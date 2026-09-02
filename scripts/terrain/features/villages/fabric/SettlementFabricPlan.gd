@@ -24,6 +24,12 @@ var embedding_plan: StaggeredFabricEmbeddingPlan
 ## Empty for a legacy town: the retired asset compiler declared the wider hill
 ## only where the massif provenance is present.
 var retained_terrace_cells: Dictionary = {}
+## Support cells directly beneath the plot model's one typed village-green
+## rectangle. The source planner reserves the complete street-fronted rectangle
+## before any house is packed; carrying that identity through compilation keeps
+## the visible green, its traversal surface, guards, and furniture tied to the
+## same topology fact instead of rediscovering a nearby patch of leftover turf.
+var planned_plaza_cells: Dictionary = {}
 ## TASK I2. The town's own world seed, carried here because the retained-mass
 ## skin now has to answer a question only the seed can answer: WHICH TIMBER
 ## FAMILY a clad mass face belongs to. A fake storey and the real house beside
@@ -40,7 +46,16 @@ var retained_terrace_cells: Dictionary = {}
 ## that signature is seed-independent by contract -- and a legacy plan leaves it
 ## 0, which is inert because a legacy plan tags no maze stone at all.
 var world_seed: int = 0
+## Plain measured local AABBs compiled by SettlementFabricProgram for every
+## asset an adapter may emit.  They are construction inputs, not render
+## resources: optional dressing is accepted against the finished town's exact
+## module/skin envelopes before a payload is produced.
+var asset_visual_bounds: Dictionary = {}
 var audit: Dictionary = {}
+## Derived at seal time from exact modular roof-run seams. Structural roof
+## units remain the occupancy authority; this render construction plan removes
+## their internal gables and unifies compatible repeats into one long roof.
+var continuous_roof_plan: FabricContinuousRoofPlan
 var _recipes: Dictionary = {}
 var _by_id: Dictionary = {}
 ## Each accepted unit's clearance box, parallel to `units` and read by index.
@@ -61,6 +76,7 @@ var _solid_owner: Dictionary = {}
 var _walk_owner: Dictionary = {}
 var _headroom_owner: Dictionary = {}
 var _terrace_declared := false
+var _plaza_declared := false
 var _sealed := false
 ## TASK I4 ROUND 7, r6 REVIEW MINOR 6 -- the derived module-footprint index,
 ## built at most once per plan.
@@ -89,6 +105,19 @@ func register_recipe(recipe: FabricRecipe) -> bool:
 	return true
 
 
+func set_asset_visual_bounds(bounds: Dictionary) -> bool:
+	if _sealed or not asset_visual_bounds.is_empty() or bounds.is_empty():
+		return false
+	for asset_value: Variant in bounds.keys():
+		var asset_id := StringName(asset_value)
+		var box := bounds[asset_value] as AABB
+		if asset_id.is_empty() or not box.has_volume() \
+				or not box.position.is_finite() or not box.size.is_finite():
+			return false
+	asset_visual_bounds = bounds.duplicate()
+	return true
+
+
 func set_public_realm(realm: SectionalPublicRealmPlan) -> bool:
 	if _sealed or realm == null or not realm.is_sealed() or public_realm != null:
 		return false
@@ -100,6 +129,12 @@ func set_surface_plan(plan_value: PublicRealmSurfacePlan) -> bool:
 	if _sealed or plan_value == null or not plan_value.is_sealed() \
 			or surface_plan != null:
 		return false
+	# The plaza is topology, so it may be declared before the public surface is
+	# solved (the guard solver needs its mouths). Accept the surface only when
+	# every declared support cell really owns the promised public floor.
+	for cell_value: Variant in planned_plaza_cells.keys():
+		if not plan_value.has_cell((cell_value as Vector3i) + Vector3i.UP):
+			return false
 	surface_plan = plan_value
 	return true
 
@@ -150,6 +185,49 @@ func set_retained_terrace(cells: Dictionary) -> bool:
 			return false
 	retained_terrace_cells = cells.duplicate()
 	_terrace_declared = true
+	return true
+
+
+func set_planned_plaza(cells: Dictionary) -> bool:
+	## Declared once before the public surface is solved. The square is a topology
+	## fact, not late dressing: its exact cells are required while guards are
+	## derived so every street mouth is open by construction. Cells name the solid
+	## band under the walk plane, matching every retained-cap API in the fabric.
+	## `set_surface_plan` subsequently proves that `cell + UP` is an actual public
+	## claim; callers that already hold a surface receive the same check here.
+	## Empty is a valid declaration for a source town whose bounded plot search
+	## found no square, but no inferred garden may masquerade as this typed feature.
+	if _sealed or _plaza_declared:
+		return false
+	var first_band := 0
+	var first := true
+	for cell_value: Variant in cells.keys():
+		var cell := cell_value as Vector3i
+		if surface_plan != null and not surface_plan.has_cell(
+				cell + Vector3i.UP):
+			return false
+		if first:
+			first_band = cell.y
+			first = false
+		elif cell.y != first_band:
+			return false
+	if not cells.is_empty():
+		var unseen := cells.duplicate()
+		var starts: Array[Vector3i] = []
+		starts.assign(unseen.keys())
+		var frontier: Array[Vector3i] = [starts[0]]
+		unseen.erase(starts[0])
+		while not frontier.is_empty():
+			var cell: Vector3i = frontier.pop_back()
+			for step: Vector3i in [Vector3i.RIGHT, Vector3i.LEFT,
+					Vector3i.FORWARD, Vector3i.BACK]:
+				if unseen.has(cell + step):
+					unseen.erase(cell + step)
+					frontier.append(cell + step)
+		if not unseen.is_empty():
+			return false
+	planned_plaza_cells = cells.duplicate()
+	_plaza_declared = true
 	return true
 
 
@@ -262,6 +340,18 @@ func seal(p_audit: Dictionary = {}) -> bool:
 	audit = p_audit.duplicate(true)
 	if not validate():
 		return false
+	continuous_roof_plan = FabricContinuousRoofPlan.compile(self)
+	if continuous_roof_plan == null or not continuous_roof_plan.is_valid():
+		last_rejection = "continuous roof plan rejected: %s" % (
+			continuous_roof_plan.last_rejection if continuous_roof_plan != null \
+			else "missing compiler result")
+		continuous_roof_plan = null
+		return false
+	var roof_audit := continuous_roof_plan.audit()
+	for key_value: Variant in roof_audit.keys():
+		audit[key_value] = roof_audit[key_value]
+	_module_footprints_built = false
+	_module_footprints = {}
 	_sealed = true
 	return true
 
@@ -377,6 +467,11 @@ func asset_ids() -> Array[StringName]:
 					StringName(placement.id)):
 				continue
 			unique[StringName(placement.asset_id)] = true
+	if continuous_roof_plan != null:
+		for asset_value: Variant in continuous_roof_plan.asset_overrides.values():
+			unique[StringName(asset_value)] = true
+		for placement: Dictionary in continuous_roof_plan.synthetic_placements:
+			unique[StringName(placement.asset_id)] = true
 	var out: Array[StringName] = []
 	out.assign(unique.keys())
 	out.sort_custom(func(a: StringName, b: StringName) -> bool:
@@ -426,6 +521,8 @@ func expanded_placements() -> Array[Dictionary]:
 					if index < unit_recipe.placement_collision_pieces.size() \
 					else 0,
 			})
+	if continuous_roof_plan != null:
+		return continuous_roof_plan.apply_to(out)
 	return out
 
 
@@ -613,14 +710,15 @@ func _connected_roof_seam_is_measured(left: FabricUnit,
 	## the worst of them is a roof 1.198 m into an upper room over 3.0 m of height
 	## -- which is the annotation, in numbers.
 	##
-	## THE GATE IS NOW ARMED, FOR ROOFS ONLY. The allowances are exactly the four
-	## the diagnostic already documents and not a new number; what changes is that
+	## THE GATE IS NOW ARMED, FOR ROOFS ONLY. The allowances are finite typed
+	## construction seams; what changes is that
 	## a pair one of whose sides is a `roof` recipe has to satisfy one of them
 	## instead of being waved through. Pairs with no roof in them keep the old
 	## unbounded exemption -- room-into-room is a different question with a
 	## different vocabulary behind it, and arming it here would be a change this
 	## annotation did not ask for and no capture has been read against.
-	if not left_recipe.has_tag(&"roof") and not right_recipe.has_tag(&"roof"):
+	if not _contains_pitched_roof(left_recipe) \
+			and not _contains_pitched_roof(right_recipe):
 		return true
 	var overlap := _overlap_size(left_bounds, right_bounds)
 	# A roof RESTS on its own room, and that is a bearing seam rather than a
@@ -629,7 +727,16 @@ func _connected_roof_seam_is_measured(left: FabricUnit,
 	# unrelated tower three storeys down that the diagnostic keeps catching.
 	var direct_bearing := left.parent_ids.has(right.stable_id) \
 		or right.parent_ids.has(left.stable_id)
-	if direct_bearing:
+	# A direct bearing bond does not imply "vertically below". Occupied bridge
+	# houses bind their two lateral endpoint buildings through the same socket
+	# kind, and the old unconditional allowance let the bridge roof disappear
+	# arbitrarily far into either endpoint. Only the thin wall-head course of a
+	# genuinely vertical roof seat is a roof/bearing seam. Lateral bridge bonds
+	# continue into the explicit eave/gable rules below.
+	var vertical_bearing := direct_bearing \
+		and _is_vertical_roof_bearing(left, left_recipe, left_bounds,
+			right, right_recipe, right_bounds)
+	if vertical_bearing:
 		return true
 	var lateral_seam := left.visual_seam_ids.has(right.stable_id) \
 		or right.visual_seam_ids.has(left.stable_id) \
@@ -654,6 +761,27 @@ func _connected_roof_seam_is_measured(left: FabricUnit,
 				else right_shed and _is_typed_shed_wall_contact(left_bounds,
 					right_bounds))):
 		return true
+	# Occupied bridge houses deliberately retain the ordinary side eave the
+	# screenshot was missing, while their endpoint tower owns a footprint-tight
+	# seam gable. The source topology names the direct visual seam; constrain its
+	# permissible lap to one fine construction cell, the finite domain occupied
+	# by that authored eave. This is not a general roof tolerance: both semantic
+	# roles and the explicit connection are required.
+	var typed_bridge_gable := lateral_seam and (
+		(left_recipe.has_tag(&"bridge_eave_roof") \
+			and right_recipe.has_tag(&"terminal_tight_gable"))
+		or (right_recipe.has_tag(&"bridge_eave_roof") \
+			and left_recipe.has_tag(&"terminal_tight_gable")))
+	if typed_bridge_gable \
+			and minf(overlap.x, overlap.z) <= FabricRecipe.CELL_SIZE:
+		return true
+	# Two pitched crowns may touch only through one of the finite junctions above.
+	# The generic shallow-envelope fallback below exists for a roof meeting a wall
+	# course; applying it to two full-height slopes admitted crossed or nested
+	# crowns whose ridges could never tile as one roof.
+	if _contains_pitched_roof(left_recipe) \
+			and _contains_pitched_roof(right_recipe):
+		return false
 	# EVERYTHING ELSE IS A SEAM THE VOCABULARY HAS NOT TYPED YET, and the gate
 	# does not pretend otherwise: it refuses only the overlaps that cannot be a
 	# seam under any reading -- deeper than a flashing IN PLAN and taller than a
@@ -664,6 +792,39 @@ func _connected_roof_seam_is_measured(left: FabricUnit,
 	# diagnostic, where the next roof task can read it.
 	return minf(overlap.x, overlap.z) <= ROOF_EMBEDDED_MIN_HORIZONTAL_M \
 		or overlap.y <= ROOF_EMBEDDED_MIN_HEIGHT_M
+
+
+static func _contains_pitched_roof(recipe_value: FabricRecipe) -> bool:
+	return recipe_value != null and (recipe_value.has_tag(&"roof") \
+		or recipe_value.has_tag(&"integrated_pitched_roof"))
+
+
+static func _is_vertical_roof_bearing(left: FabricUnit,
+		left_recipe: FabricRecipe, left_bounds: AABB, right: FabricUnit,
+		right_recipe: FabricRecipe, right_bounds: AABB) -> bool:
+	## A roof-bearing seam is a horizontal wall-head plane. Parenthood by itself
+	## cannot prove that orientation because occupied bridges also have lateral
+	## bearing parents. Require the lower envelope to terminate at the upper
+	## envelope's bearing course, with only the reviewed shallow embed in Y.
+	var left_is_roof := _contains_pitched_roof(left_recipe)
+	var right_is_roof := _contains_pitched_roof(right_recipe)
+	if left_is_roof == right_is_roof:
+		# An integrated roofed room can stand on another ordinary room, but two
+		# roof-bearing envelopes meeting laterally are never a wall-head seat.
+		if left_is_roof and right_is_roof:
+			return false
+		return true
+	var roof_unit := left if left_is_roof else right
+	var support_unit := right if left_is_roof else left
+	if not roof_unit.parent_ids.has(support_unit.stable_id):
+		return false
+	var roof_bounds := left_bounds if left_is_roof else right_bounds
+	var support_bounds := right_bounds if left_is_roof else left_bounds
+	var overlap := _overlap_size(roof_bounds, support_bounds)
+	return overlap.x > 0.0 and overlap.z > 0.0 \
+		and overlap.y <= ROOF_EMBEDDED_MIN_HEIGHT_M \
+		and absf(roof_bounds.position.y - support_bounds.end.y) \
+			<= ROOF_EMBEDDED_MIN_HEIGHT_M
 
 
 static func _has_direct_socket_target(unit_value: FabricUnit,
@@ -1012,6 +1173,15 @@ func _validate_surface_coverage() -> bool:
 				last_rejection = "public unit %s has no surface at %s" % [
 					unit_value.stable_id, cell]
 				return false
+	# The surface compiler's bounded concave-corner closure is a first-class
+	# topology result. Name its exact cells in the expected union rather than
+	# weakening the equality check that catches all other invented surfaces.
+	for cell: Vector3i in surface_plan.derived_claim_cells():
+		if solids.has(cell):
+			last_rejection = "derived public surface %s overlaps structural solid" \
+				% cell
+			return false
+		expected[_cell_key(cell)] = true
 	if surface_plan.claim_count() != expected.size():
 		last_rejection = "surface union has %d claims for %d expected cells" % [
 			surface_plan.claim_count(), expected.size()]
@@ -1033,6 +1203,12 @@ func _accept_unit(unit_value: FabricUnit, seen: Dictionary,
 			unit_value.stable_id, unit_value.recipe_id]
 		return false
 	var unit_recipe := _recipes[unit_value.recipe_id] as FabricRecipe
+	if unit_recipe.has_tag(&"pitched_roof") \
+			and not unit_recipe.has_tag(&"partial_gable") \
+			and not _pitched_roof_alignment_holds(unit_recipe):
+		last_rejection = ("pitched roof %s is not centred and seated on its " \
+			+ "declared lattice footprint") % unit_value.recipe_id
+		return false
 	var recipe_placement_ids: Dictionary = {}
 	for placement: Dictionary in unit_recipe.placements:
 		recipe_placement_ids[StringName(placement.id)] = true
@@ -1104,6 +1280,32 @@ func _accept_unit(unit_value: FabricUnit, seen: Dictionary,
 			[solid, walk], &"walk", journal):
 		return false
 	return true
+
+
+static func _pitched_roof_alignment_holds(recipe_value: FabricRecipe) -> bool:
+	## A complete crown's lattice solid is its construction contract. Authored
+	## eaves may extend outside it, but their measured union must remain centred
+	## over the footprint and its lowest visual point must sit on the wall-top
+	## band centre. This rejects floating/offset roofs before any unit can enter a
+	## plan; render-time offsets are neither needed nor permitted.
+	if recipe_value == null or recipe_value.solid_cells.is_empty() \
+			or not recipe_value.local_bounds.has_volume():
+		return false
+	var local_min := Vector3(INF, INF, INF)
+	var local_max := Vector3(-INF, -INF, -INF)
+	for cell: Vector3i in recipe_value.solid_cells:
+		var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
+		local_min = local_min.min(centre - Vector3.ONE \
+			* FabricRecipe.CELL_SIZE * 0.5)
+		local_max = local_max.max(centre + Vector3.ONE \
+			* FabricRecipe.CELL_SIZE * 0.5)
+	var logical_centre := (local_min + local_max) * 0.5
+	var visual_centre := recipe_value.local_bounds.get_center()
+	var horizontal_offset := Vector2(visual_centre.x, visual_centre.z) \
+		.distance_to(Vector2(logical_centre.x, logical_centre.z))
+	var bearing_y := local_min.y + FabricRecipe.CELL_SIZE * 0.5
+	return horizontal_offset <= 0.01 \
+		and absf(recipe_value.local_bounds.position.y - bearing_y) <= 0.01
 
 
 func _all_public_walk_reaches_landing(by_id: Dictionary) -> bool:

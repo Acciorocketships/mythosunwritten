@@ -200,7 +200,8 @@ func _collision_items(payload: EnvironmentInstancePayload) -> Array[Dictionary]:
 					"piece": visual.collisions[piece_index],
 				})
 	for mesh: Dictionary in payload.surface_meshes:
-		out.append({"surface_mesh": mesh})
+		if not bool(mesh.get("visual_only", false)):
+			out.append({"surface_mesh": mesh})
 	return out
 
 func _commit_collision(job: Dictionary, item: Dictionary) -> void:
@@ -258,11 +259,21 @@ func _commit_mesh_visual(block: Node3D, mesh: Dictionary) -> void:
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = mesh.vertices as PackedVector3Array
 	arrays[Mesh.ARRAY_NORMAL] = mesh.normals as PackedVector3Array
-	arrays[Mesh.ARRAY_TEX_UV] = mesh.uvs as PackedVector2Array
+	var uvs := mesh.uvs as PackedVector2Array
+	if bool(mesh.get("terrain_ground", false)):
+		uvs = PackedVector2Array()
+		uvs.resize((mesh.vertices as PackedVector3Array).size())
+		uvs.fill(SlopeAtlas.path_uv() if bool(mesh.get("terrain_path", false)) \
+			else CliffDressing.ground_uv())
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	if mesh.has("colors"):
+		arrays[Mesh.ARRAY_COLOR] = mesh.colors as PackedColorArray
 	arrays[Mesh.ARRAY_INDEX] = mesh.indices as PackedInt32Array
 	var array_mesh := ArrayMesh.new()
 	array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	array_mesh.surface_set_material(0, _shared_surface_mesh_material())
+	array_mesh.surface_set_material(0, CliffDressing.shared_material() \
+		if bool(mesh.get("terrain_ground", false)) \
+		else _shared_surface_mesh_material())
 	var instance := MeshInstance3D.new()
 	instance.name = String(StringName(mesh.stable_id)).replace("/", "_")
 	instance.mesh = array_mesh

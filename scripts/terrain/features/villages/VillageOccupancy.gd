@@ -99,14 +99,18 @@ static func _incompatible(a: VillageOccupancyVolume,
 			and a.walk_network_id == b.walk_network_id:
 		var walk_pair := a.role == Role.WALK_SURFACE \
 			and b.role == Role.WALK_SURFACE
+		var walk_headroom_pair := (a.role == Role.HEADROOM \
+			and b.role == Role.WALK_SURFACE) \
+			or (b.role == Role.HEADROOM \
+				and a.role == Role.WALK_SURFACE)
 		var guard_contact := (a.role == Role.WALK_GUARD \
 			and b.role in [Role.WALK_SURFACE, Role.WALK_GUARD]) \
 			or (b.role == Role.WALK_GUARD \
 				and a.role in [Role.WALK_SURFACE, Role.WALK_GUARD])
-		if walk_pair or guard_contact:
+		if walk_pair or walk_headroom_pair or guard_contact:
 			# Structural ownership may change where public floors and their exact
-			# boundary guards meet at a skirt, platform, turn, or stair landing.
-			# Generic solids never gain this permission.
+			# traversable headroom or boundary guards meet at a skirt, platform,
+			# turn, or stair landing. Generic solids never gain this permission.
 			return false
 	if not a.owner_id.is_empty() and a.owner_id == b.owner_id:
 		if (_is_rigid(a.role) and b.role == Role.HEADROOM) \

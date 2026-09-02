@@ -14,8 +14,21 @@ const STOREY := 4.0        # one cliff storey; slopes ramp at most this much per
 
 const _CARDINALS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
-static func _cell_of(v: float) -> int:
-	return int(roundf(v / TILE))
+static func tile_size(region = null) -> float:
+	## HeightfieldRegion uses the world's authored 24 m field. Structural
+	## terrain (village benches, future bridge abutments) may expose the same
+	## field contract on another deterministic lattice. Keeping scale in the
+	## region lets both consumers share the classifier and smootherstep kernel
+	## instead of copying a visually similar slope rule.
+	if region != null and region.has_method("terrain_tile_size"):
+		var value: float = region.terrain_tile_size()
+		assert(is_finite(value) and value > 0.0)
+		return value
+	return TILE
+
+
+static func _cell_of(v: float, region = null) -> int:
+	return int(roundf(v / tile_size(region)))
 
 # Ramp the full drop over the whole half-cell, EXACTLY like the old SlopeProfile.edge_height
 # (4m over CELL=12u ≈ 18°, smooth & walkable). `off_along_dir` runs 0 (centre, weight 0) ..
@@ -23,8 +36,8 @@ static func _cell_of(v: float) -> int:
 # smootherstep is flat at both ends, so the centre stays level and the seam tangent is 0.
 # (The previous outer-half-only band crammed the drop into ~6u ≈ 34° — angular & barely
 # climbable; this restores the gentle slopes the owner liked in the old slope tiles.)
-static func _edge_weight(off_along_dir: float) -> float:
-	return SlopeProfile.smootherstep(clampf(off_along_dir / HALF, 0.0, 1.0))
+static func _edge_weight(off_along_dir: float, half: float = HALF) -> float:
+	return SlopeProfile.smootherstep(clampf(off_along_dir / half, 0.0, 1.0))
 
 const _DIAGONALS := [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
 
@@ -136,12 +149,14 @@ static func is_flat_cell(region, cx: int, cz: int) -> bool:
 # own lower ground, or both — cell-centre storey differences alone miss the slope cases (owner's
 # see-through voids next to slopes).
 static func edge_profile(region, cx: int, cz: int, d: Vector2i, samples: int) -> PackedFloat32Array:
-	var bx := float(cx) * TILE + float(d.x) * HALF
-	var bz := float(cz) * TILE + float(d.y) * HALF
+	var span := tile_size(region)
+	var half := span * 0.5
+	var bx := float(cx) * span + float(d.x) * half
+	var bz := float(cz) * span + float(d.y) * half
 	var out := PackedFloat32Array()
 	for i in samples + 1:
 		var t := (float(i) / float(samples)) * 2.0 - 1.0
-		out.append(surface_y_in_cell(region, bx + float(d.y) * HALF * t, bz + float(d.x) * HALF * t, cx + d.x, cz + d.y))
+		out.append(surface_y_in_cell(region, bx + float(d.y) * half * t, bz + float(d.x) * half * t, cx + d.x, cz + d.y))
 	return out
 
 # Is the cell's OWN surface flat at its cell height along this edge? A cliff top always is; a
@@ -151,11 +166,13 @@ static func own_edge_flat(region, cx: int, cz: int, d: Vector2i) -> bool:
 	if _is_cliff_top(region, cx, cz):
 		return true
 	var h: float = region.surface_height(cx, cz)
-	var bx := float(cx) * TILE + float(d.x) * HALF
-	var bz := float(cz) * TILE + float(d.y) * HALF
+	var span := tile_size(region)
+	var half := span * 0.5
+	var bx := float(cx) * span + float(d.x) * half
+	var bz := float(cz) * span + float(d.y) * half
 	for i in 9:
 		var t := (float(i) / 8.0) * 2.0 - 1.0
-		if surface_y_in_cell(region, bx + float(d.y) * HALF * t, bz + float(d.x) * HALF * t, cx, cz) < h - 0.01:
+		if surface_y_in_cell(region, bx + float(d.y) * half * t, bz + float(d.x) * half * t, cx, cz) < h - 0.01:
 			return false
 	return true
 
@@ -186,7 +203,7 @@ static func is_exposed_edge(region, cx: int, cz: int, d: Vector2i) -> bool:
 # storey/level slopes remain legal, while cliffs, inner-corner walls, diagonal
 # cliff shoulders, and edges facing a higher flat cell are rejected without a
 # second terrain classifier that could drift from the mesh.
-static func is_walkable_edge(region: HeightfieldRegion, cell: Vector2i, d: Vector2i) -> bool:
+static func is_walkable_edge(region, cell: Vector2i, d: Vector2i) -> bool:
 	assert(absi(d.x) + absi(d.y) == 1, "walkability requires a cardinal unit direction")
 	return not is_exposed_edge(region, cell.x, cell.y, d) \
 		and not is_exposed_edge(region, cell.x + d.x, cell.y + d.y, -d)
@@ -195,7 +212,7 @@ static func is_walkable_edge(region: HeightfieldRegion, cell: Vector2i, d: Vecto
 ## Proves that a grid-aligned strip crosses no rendered wall. Village streets,
 ## future boardwalks, and other authored corridors use this finished-surface
 ## fact instead of reproducing cliff rules or accepting a centre-point sample.
-static func cardinal_strip_is_walkable(region: HeightfieldRegion, start: Vector2,
+static func cardinal_strip_is_walkable(region, start: Vector2,
 		end: Vector2, half_width: float) -> bool:
 	assert(region != null)
 	assert(is_finite(half_width) and half_width >= 0.0)
@@ -212,10 +229,10 @@ static func cardinal_strip_is_walkable(region: HeightfieldRegion, start: Vector2
 	return true
 
 
-static func _cardinal_line_is_walkable(region: HeightfieldRegion,
+static func _cardinal_line_is_walkable(region,
 		start: Vector2, end: Vector2, direction: Vector2i) -> bool:
-	var cell := Vector2i(_cell_of(start.x), _cell_of(start.y))
-	var end_cell := Vector2i(_cell_of(end.x), _cell_of(end.y))
+	var cell := Vector2i(_cell_of(start.x, region), _cell_of(start.y, region))
+	var end_cell := Vector2i(_cell_of(end.x, region), _cell_of(end.y, region))
 	assert((direction.x == 0 and cell.x == end_cell.x) \
 		or (direction.y == 0 and cell.y == end_cell.y))
 	while cell != end_cell:
@@ -226,7 +243,8 @@ static func _cardinal_line_is_walkable(region: HeightfieldRegion,
 
 
 static func surface_y(region, x: float, z: float) -> float:
-	return surface_y_in_cell(region, x, z, _cell_of(x), _cell_of(z))
+	return surface_y_in_cell(region, x, z, _cell_of(x, region),
+		_cell_of(z, region))
 
 ## Exact conservative extrema for every clipped quadrant patch intersecting a
 ## world-space AABB. Within one quadrant the surface is bilinear in two
@@ -234,36 +252,38 @@ static func surface_y(region, x: float, z: float) -> float:
 ## parameter interval occur at the four clipped corners. This keeps narrow
 ## structural stencils from inheriting an unrelated far edge of the same 12 m
 ## quadrant while retaining a proof rather than a sample-density assumption.
-static func height_bounds(region: HeightfieldRegion, footprint: Rect2) -> Vector2:
+static func height_bounds(region, footprint: Rect2) -> Vector2:
 	assert(region != null)
 	assert(is_finite(footprint.position.x) and is_finite(footprint.position.y))
 	assert(is_finite(footprint.size.x) and is_finite(footprint.size.y))
 	assert(footprint.size.x >= 0.0 and footprint.size.y >= 0.0)
+	var span := tile_size(region)
+	var half := span * 0.5
 	var min_cell := Vector2i(
-		ceili((footprint.position.x - HALF) / TILE),
-		ceili((footprint.position.y - HALF) / TILE))
+		ceili((footprint.position.x - half) / span),
+		ceili((footprint.position.y - half) / span))
 	var max_cell := Vector2i(
-		floori((footprint.end.x + HALF) / TILE),
-		floori((footprint.end.y + HALF) / TILE))
+		floori((footprint.end.x + half) / span),
+		floori((footprint.end.y + half) / span))
 	var minimum := INF
 	var maximum := -INF
 	for cz in range(min_cell.y, max_cell.y + 1):
 		for cx in range(min_cell.x, max_cell.x + 1):
-			var centre := Vector2(float(cx) * TILE, float(cz) * TILE)
+			var centre := Vector2(float(cx) * span, float(cz) * span)
 			for z_sign: int in [-1, 1]:
 				var quadrant_min_z := centre.y \
-					+ (-HALF if z_sign < 0 else 0.0)
+					+ (-half if z_sign < 0 else 0.0)
 				var quadrant_max_z := centre.y \
-					+ (0.0 if z_sign < 0 else HALF)
+					+ (0.0 if z_sign < 0 else half)
 				var lo_z := maxf(footprint.position.y, quadrant_min_z)
 				var hi_z := minf(footprint.end.y, quadrant_max_z)
 				if lo_z > hi_z + 0.000001:
 					continue
 				for x_sign: int in [-1, 1]:
 					var quadrant_min_x := centre.x \
-						+ (-HALF if x_sign < 0 else 0.0)
+						+ (-half if x_sign < 0 else 0.0)
 					var quadrant_max_x := centre.x \
-						+ (0.0 if x_sign < 0 else HALF)
+						+ (0.0 if x_sign < 0 else half)
 					var lo_x := maxf(footprint.position.x, quadrant_min_x)
 					var hi_x := minf(footprint.end.x, quadrant_max_x)
 					if lo_x > hi_x + 0.000001:
@@ -309,12 +329,14 @@ static func surface_y_in_cell(region, x: float, z: float, cx: int, cz: int) -> f
 	# A cliff top is FLAT (its lip needs flat backing); the KayKit tile draws its edges.
 	if _is_cliff_top(region, cx, cz):
 		return h
-	var lx := x - float(cx) * TILE
-	var lz := z - float(cz) * TILE
+	var span := tile_size(region)
+	var half := span * 0.5
+	var lx := x - float(cx) * span
+	var lz := z - float(cz) * span
 	var dx_sign := 1 if lx >= 0.0 else -1
 	var dz_sign := 1 if lz >= 0.0 else -1
-	var a := _edge_weight(lx * float(dx_sign))                 # weight toward facing x-edge
-	var b := _edge_weight(lz * float(dz_sign))                 # weight toward facing z-edge
+	var a := _edge_weight(lx * float(dx_sign), half)            # weight toward facing x-edge
+	var b := _edge_weight(lz * float(dz_sign), half)            # weight toward facing z-edge
 	# Shared controls. Edge midpoint heights are pairwise minima: a higher cell
 	# ramps down, a lower cell never ramps up, and BOTH owners nevertheless name
 	# the same seam value. The corner is the corresponding four-cell minimum.
@@ -370,16 +392,19 @@ static func bake_cell(region, cx: int, cz: int) -> PackedFloat32Array:
 
 # The ramp math of surface_y_in_cell, reading baked per-cell data. Keep the
 # two functions in lockstep — the equivalence test enforces it.
-static func sample_baked(baked: PackedFloat32Array, cx: int, cz: int, x: float, z: float) -> float:
+static func sample_baked(baked: PackedFloat32Array, cx: int, cz: int,
+		x: float, z: float, region = null) -> float:
 	if baked[0] > 0.5:
 		return baked[1]
 	var h := baked[1]
-	var lx := x - float(cx) * TILE
-	var lz := z - float(cz) * TILE
+	var span := tile_size(region)
+	var half := span * 0.5
+	var lx := x - float(cx) * span
+	var lz := z - float(cz) * span
 	var ix := 1 if lx >= 0.0 else 0
 	var iz := 1 if lz >= 0.0 else 0
-	var a := _edge_weight(absf(lx))
-	var b := _edge_weight(absf(lz))
+	var a := _edge_weight(absf(lx), half)
+	var b := _edge_weight(absf(lz), half)
 	var d_x := baked[2 + ix]
 	var d_z := baked[4 + iz]
 	var d_corner := baked[6 + ix * 2 + iz]

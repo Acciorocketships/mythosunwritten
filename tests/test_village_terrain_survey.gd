@@ -53,6 +53,23 @@ func test_flat_survey_is_deterministic_and_naturally_supported() -> void:
 	assert_eq(a[0].elevation_band_count, 1)
 
 
+func test_corridor_qualification_happens_before_the_result_cap() -> void:
+	var terrain := VillageTerrainView.from_region(_flat_region())
+	var arrival := Vector2.ZERO
+	var contact := Vector2(-18.0, 0.0)
+	var outward := Vector2.LEFT
+	var perches := VillageTerrainSurvey.discover_corridor(terrain,
+		contact, arrival, Vector2(3.0, 4.5), outward, 30.0, 15.0,
+		36.0, 60.0, 8)
+	assert_eq(perches.size(), 8)
+	for perch: VillageTerrainPerch in perches:
+		assert_gte(perch.anchor.distance_to(arrival), 36.0 - 0.001)
+		assert_lte(perch.anchor.distance_to(arrival), 60.0 + 0.001)
+		var delta := perch.anchor - contact
+		assert_gte(delta.dot(outward), VillageTerrainSurvey.GRID_STEP - 0.001)
+		assert_lte(absf(delta.dot(Vector2(0.0, 1.0))), 15.0 + 0.001)
+
+
 func test_terraced_survey_prefers_compact_useful_relief() -> void:
 	var region := _terraced_region()
 	var perches := VillageTerrainSurvey.discover(VillageTerrainView.from_region(
