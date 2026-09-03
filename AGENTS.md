@@ -261,10 +261,25 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   endpoints, bearing planes, transverse profiles, pitches, and seam profiles. Rooms retain their
   complete structural roof volumes, while realized construction removes the two internal gable
   caps at every proved join and selects one compatible repeat material for the entire chain.
-  Compact-house crowns publish exact 3 m bays with pre-aligned start, middle, and end alternatives
-  for every reviewed material family. Their maximum alternative envelope is reserved before
-  layout; a joined chain is rebuilt as two exterior ends plus true middle bays on the one bearing
-  plane, so adjacent complete houses cannot leave nested end caps or change colour mid-ridge.
+  Compact-house crowns publish pre-aligned start, middle, and end alternatives for every reviewed
+  material family. All three roles are clipped from one source crown around the same symmetric 3 m
+  party-seam profile: each semantic 6 m construction bay emits two exact 3 m sections, while only
+  the two exterior sections retain the
+  source roof's measured outer eave. Provisional layout reserves the exact party span plus the
+  complete transverse eaves and height; after component topology is known, the final plan proves
+  the two actual exterior eaves against every unsuppressed placement. An explicitly socket-bound
+  neighboring pitched roof may meet that realized skin only when the existing finite seam contract
+  also proves the final world-space boxes; this preserves a real flashing junction without granting
+  any exemption to undeclared roofs, walls, or retained stone. The only other exception is the
+  named roof of a socket-bound facade bay on that same component, whose typed flashing joint is
+  allowed while its walls and supports remain collision-checked. A joined chain is rebuilt as two
+  exterior ends plus true middle bays on the one bearing plane,
+  so adjacent complete houses cannot leave nested end caps, mismatched cut profiles, or change
+  colour mid-ridge. Exterior end sections keep their complete source eave by default. When that
+  finite eave would enter unrelated finished construction, the final transaction may select the
+  corresponding pre-baked flush end whose bounds are a strict subset of the full end; the flush
+  alternative is accepted only after it clears the same finished-fabric proof, so roof junctions
+  are resolved by a valid authored construction choice rather than an overlap exception.
   Ambiguous branches and non-matching roofs remain separate; the renderer performs no proximity
   search, snapping, or per-mesh offset repair. A one-bay occupied bridge-house crown is two finite
   party-seam end halves: it terminates exactly at both endpoint planes while retaining its ordinary
@@ -285,13 +300,29 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   stair, gallery, and bridge claims; the assembler commits visual and collision faces from the
   same payload. Every rendered surface kind is also the sole owner of its horizontal boundary,
   so retained masonry cannot reappear as a rock cap in a street, stair, court, or bridge. A
+  floor-facing retained boundary is sealed with an exact one/two-cell authored timber soffit,
+  never an upright rock-wall module rotated into a horizontal shelf. Side masonry maps its
+  measured 1.7701733 m face to the exact 1.5 m fine-grid claim and is inset by its measured half
+  depth; perpendicular walls therefore meet at the lattice corner without protruding panels.
+  Village turf is evaluated by the same `TerrainSurfaceField` kernel as streamed ground, with the
+  complete public-surface union and non-rendered plaza control ring supplying its neighboring
+  height controls. Rolled grass lips occur only on true exposed field edges, never at an
+  equal-height turf/plank material seam. A
   supported missing fourth cell in an otherwise complete 2 x 2 structural court is sealed as an
   explicit derived claim before surfaces, guards, or audits are built; closure cannot cascade
   across arbitrary empty space. When one sealed transition mesh owns both the upper and lower
   tread across a retained riser, it also owns that vertical seam and the generic stone skin is
   suppressed there; adjacent unrelated stair claims cannot open the massif. Every structural court, gallery, and bridge cell also carries the exact local
   envelope-ground support datum; renderer posts descend to that datum rather than an implicit
-  global band zero, so a support cannot stop in air or continue through unrelated terrain.
+  global band zero, so a support cannot stop in air or continue through unrelated terrain. All
+  low and tall post candidates derive from the complete final structural-surface outline vertices,
+  repeat at the authored 3 m pitch, and are rejected when their thickness would enter any public
+  lane below; internal surface seams can never manufacture posts in a plaza. The route entry also
+  emits one player-wide terrain-sampled handoff ramp from its sealed boundary to the natural
+  ground, so its first street tile cannot cantilever over the world. Every rendered exterior door
+  requires both its exact threshold landing and a clear direct approach tile beyond every open
+  facade half; a proposal that cannot provide that two-cell-deep approach is rejected before
+  guards or facade assets are derived.
   Reviewed fixed-size floor/gallery meshes tile structural claims as authored plank
   visuals without replacing the union's collision authority or scaling assets. Exposed court
   guards derive from that union and structural occupancy, so graph
@@ -567,7 +598,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   `roof.terminal.step.*` and `roof.terminal.profile.*` remain facade/junction seam vocabulary and
   can never masquerade as a whole-room roof. The reversible source-plan gate derives every
   complete candidate with the same phase-aligned origin and exact public-air test as final roof
-  assembly; an empty roof domain removes an optional parcel or rejects the layout before commit.
+  assembly. Every roof obligation enters the layout transaction even when that candidate list is
+  empty, so an impossible optional parcel is displaced (or the layout rejects) before commit rather
+  than losing the obligation and reaching the renderer roofless or embedded in retained stone.
   Flat/cap vocabulary is reserved for typed public terraces, circulation backing, and partial
   setback closure whose finished topology already requires a level surface; it is never a collision
   repair or an exposed plank weather roof.
@@ -882,6 +915,15 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   `CliffDressing.TERRAIN_SKIN_ASSETS` and `CliffDressing.tint_at`, so their wall/lip assets and biome
   colour follow the terrain authority too. Shared cell boundaries and a rim derived from the final
   union make grass gaps, duplicate coplanar panels, and misaligned lips impossible by construction.
+  Retained source stone is finalized only after measured roofs and structural cells are accepted:
+  exact roof-placement volumes are subtracted, then the completed fine-lattice solid union is
+  flood-solved from the sampled terrain bearing. A face-disconnected source component is discarded
+  before skinning even when its obsolete envelope happens to touch finished structure; the sealed
+  room/foundation bearing DAG, not incidental source stone, is the authority for building support.
+  Detached construction-envelope scaffolding can therefore never appear as a rock cube around a
+  roof or silently carry a floating building. Transition-owned and buried raw faces are removed
+  before adjacent stone cells are paired, then face pairs and their treatments are rebuilt from the
+  final exposed set; suppressing one surface can therefore never leave its former partner missing.
   Masonry panels are inset by their
   measured half-depth so their visible outer faces share the timber facade's lattice plane, keeping
   the grass lip continuous through material transitions. Tall retained faces alternate complete

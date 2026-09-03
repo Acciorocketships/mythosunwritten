@@ -347,6 +347,13 @@ func seal(p_audit: Dictionary = {}) -> bool:
 			else "missing compiler result")
 		continuous_roof_plan = null
 		return false
+	_resolve_continuous_roof_endpoint_clearance()
+	var roof_realization_conflict := _continuous_roof_realization_conflict()
+	if not roof_realization_conflict.is_empty():
+		last_rejection = "continuous roof realization intersects finished fabric: %s" \
+			% roof_realization_conflict
+		continuous_roof_plan = null
+		return false
 	var roof_audit := continuous_roof_plan.audit()
 	for key_value: Variant in roof_audit.keys():
 		audit[key_value] = roof_audit[key_value]
@@ -354,6 +361,288 @@ func seal(p_audit: Dictionary = {}) -> bool:
 	_module_footprints = {}
 	_sealed = true
 	return true
+
+
+func _resolve_continuous_roof_endpoint_clearance() -> void:
+	## A maximal roof run keeps its complete authored exterior gables unless one
+	## intersects unrelated finished fabric. Endpoint sections alone carry a baked
+	## flush alternative ending at the semantic building plane. Selecting that
+	## strict-subset envelope is monotone: it can remove an overlap, never create
+	## one. This pass therefore converges without mesh offsets or seed-specific
+	## repairs, while `_continuous_roof_realization_conflict` remains the final
+	## unconditional proof.
+	if continuous_roof_plan == null:
+		return
+	var realized := continuous_roof_plan.synthetic_placements
+	for synthetic: Dictionary in realized:
+		var alternative := synthetic.get("flush_alternative", {}) as Dictionary
+		if alternative.is_empty():
+			continue
+		var current_bounds := synthetic.get("bounds", AABB()) as AABB
+		var alternative_bounds := alternative.get("bounds", AABB()) as AABB
+		if _continuous_roof_section_conflicts_with_finished_fabric(
+				synthetic, current_bounds) \
+				and not _continuous_roof_section_conflicts_with_finished_fabric(
+					synthetic, alternative_bounds):
+			continuous_roof_plan.select_flush_alternative(synthetic)
+	# Endpoint alternatives are strict subsets, so resolving one synthetic pair
+	# cannot invalidate a pair already visited. Restart after each selection only
+	# to keep the preference for a complete eave deterministic.
+	var changed := true
+	while changed:
+		changed = false
+		for left_index in realized.size():
+			var left := realized[left_index] as Dictionary
+			var left_bounds := left.get("bounds", AABB()) as AABB
+			for right_index in range(left_index + 1, realized.size()):
+				var right := realized[right_index] as Dictionary
+				var right_bounds := right.get("bounds", AABB()) as AABB
+				if not _aabb_overlaps_volume(left_bounds, right_bounds) \
+						or _continuous_components_have_measured_roof_junction(
+							left, left_bounds, right, right_bounds):
+					continue
+				var left_alternative := left.get(
+					"flush_alternative", {}) as Dictionary
+				var right_alternative := right.get(
+					"flush_alternative", {}) as Dictionary
+				var left_alt_bounds := left_alternative.get(
+					"bounds", AABB()) as AABB
+				var right_alt_bounds := right_alternative.get(
+					"bounds", AABB()) as AABB
+				if left_alt_bounds.has_volume() \
+						and not _continuous_roof_section_conflicts_with_finished_fabric(
+							left, left_alt_bounds) \
+						and not _aabb_overlaps_volume(left_alt_bounds, right_bounds):
+					continuous_roof_plan.select_flush_alternative(left)
+					changed = true
+					break
+				if right_alt_bounds.has_volume() \
+						and not _continuous_roof_section_conflicts_with_finished_fabric(
+							right, right_alt_bounds) \
+						and not _aabb_overlaps_volume(left_bounds, right_alt_bounds):
+					continuous_roof_plan.select_flush_alternative(right)
+					changed = true
+					break
+				if left_alt_bounds.has_volume() and right_alt_bounds.has_volume() \
+						and not _continuous_roof_section_conflicts_with_finished_fabric(
+							left, left_alt_bounds) \
+						and not _continuous_roof_section_conflicts_with_finished_fabric(
+							right, right_alt_bounds) \
+						and not _aabb_overlaps_volume(
+							left_alt_bounds, right_alt_bounds):
+					continuous_roof_plan.select_flush_alternative(left)
+					continuous_roof_plan.select_flush_alternative(right)
+					changed = true
+					break
+			if changed:
+				break
+
+
+func _continuous_roof_section_conflicts_with_finished_fabric(
+		synthetic: Dictionary, roof_bounds: AABB) -> bool:
+	# A run endpoint can project beyond every source roof section.  The public
+	# surface is already sealed when this realization is compiled, so test the
+	# final authored bounds against the same continuous body prism used by the
+	# spatial compiler.  This is deliberately part of endpoint selection: where
+	# the complete eave enters a lane, the finite flush alternative can still be
+	# selected without moving the roof or editing an individual mesh.
+	if _continuous_roof_bounds_enter_public_route(roof_bounds):
+		return true
+	var suppressed := continuous_roof_plan.suppressed_placement_ids
+	var component_members: Dictionary = {}
+	for unit_id: StringName in synthetic.get(
+			"roof_component_unit_ids", []) as Array[StringName]:
+		component_members[unit_id] = true
+	var component_bearers: Dictionary = {}
+	for unit_id: StringName in synthetic.get(
+			"roof_component_bearing_ids", []) as Array[StringName]:
+		component_bearers[unit_id] = true
+	for unit_value: FabricUnit in units:
+		if component_members.has(unit_value.stable_id):
+			continue
+		var unit_recipe := _recipes[unit_value.recipe_id] as FabricRecipe
+		var unit_transform := unit_value.transform()
+		for placement_index in unit_recipe.placements.size():
+			var placement := unit_recipe.placements[placement_index] as Dictionary
+			var stable_placement_id := StringName("%s/%s" % [
+				unit_value.stable_id, StringName(placement.id)])
+			if unit_value.suppressed_placement_ids.has(
+					StringName(placement.id)) \
+					or suppressed.has(stable_placement_id) \
+					or placement_index >= unit_recipe.placement_bounds.size():
+				continue
+			if StringName(placement.id) == &"roof" \
+					and unit_recipe.has_tag(&"roofed_facade_bay") \
+					and _unit_bears_on_component(unit_value,
+						component_members, component_bearers):
+				continue
+			var other_bounds := unit_transform \
+				* unit_recipe.placement_bounds[placement_index]
+			if _aabb_overlaps_volume(roof_bounds, other_bounds) \
+					and not _continuous_component_has_measured_roof_junction(
+						component_members, roof_bounds, unit_value,
+						unit_recipe, other_bounds):
+				return true
+	return false
+
+
+func _continuous_roof_bounds_enter_public_route(roof_bounds: AABB) -> bool:
+	## The finished public-surface union is the traversal authority.  A stitched
+	## roof must clear the real player prism above every one of its cells, even
+	## when the smaller structural roof pieces it replaces each cleared on their
+	## own.  Iterating the enum makes this automatically cover future public
+	## surface kinds instead of maintaining a second list of streets/decks.
+	if surface_plan == null or not roof_bounds.has_volume():
+		return false
+	for kind_value: Variant in PublicRealmSurfacePlan.SurfaceKind.values():
+		for cell: Vector3i in surface_plan.cells_for_kind(int(kind_value)):
+			var clearance := TraversalEnvelope.clearance_prism(cell,
+				FabricRecipe.CELL_SIZE)
+			if _aabb_overlaps_volume(roof_bounds, clearance):
+				return true
+	return false
+
+
+func _continuous_roof_realization_conflict() -> String:
+	## Layout reserves compact bays only to their exact party planes because an
+	## outer eave does not exist until maximal connected runs are known. Prove the
+	## actual synthetic roof geometry here, against actual unsuppressed placement
+	## boxes rather than the broader recipe envelope, so the final eaves cannot
+	## enter a wall, another crown, or an unrelated feature.
+	if continuous_roof_plan == null:
+		return ""
+	var suppressed := continuous_roof_plan.suppressed_placement_ids
+	var realized := continuous_roof_plan.synthetic_placements
+	for synthetic_index in realized.size():
+		var synthetic := realized[synthetic_index] as Dictionary
+		var roof_bounds := synthetic.get("bounds", AABB()) as AABB
+		if not roof_bounds.has_volume():
+			return "%s has no measured bounds" % StringName(synthetic.stable_id)
+		if _continuous_roof_bounds_enter_public_route(roof_bounds):
+			return "%s enters a finished public traversal envelope" % \
+				StringName(synthetic.stable_id)
+		var component_members: Dictionary = {}
+		for unit_id: StringName in synthetic.get(
+				"roof_component_unit_ids", []) as Array[StringName]:
+			component_members[unit_id] = true
+		var component_bearers: Dictionary = {}
+		for unit_id: StringName in synthetic.get(
+				"roof_component_bearing_ids", []) as Array[StringName]:
+			component_bearers[unit_id] = true
+		for unit_value: FabricUnit in units:
+			if component_members.has(unit_value.stable_id):
+				continue
+			var unit_recipe := _recipes[unit_value.recipe_id] as FabricRecipe
+			var unit_transform := unit_value.transform()
+			for placement_index in unit_recipe.placements.size():
+				var placement := unit_recipe.placements[placement_index] as Dictionary
+				var stable_placement_id := StringName("%s/%s" % [
+					unit_value.stable_id, StringName(placement.id)])
+				if unit_value.suppressed_placement_ids.has(
+						StringName(placement.id)) \
+						or suppressed.has(stable_placement_id):
+					continue
+				# A native-width facade bay is fastened into its bearing room at a
+				# typed socket. Its little roof deliberately tucks under that room's
+				# outer eave; treating the flashing joint as an unrelated collision
+				# rejects an otherwise closed house. The exemption is deliberately
+				# narrower than the unit: only the bay's named roof placement may meet
+				# a continuous crown owned by its exact bearing parent. Its walls,
+				# brackets, and every unattached roof remain subject to the same hard
+				# overlap proof.
+				if StringName(placement.id) == &"roof" \
+						and unit_recipe.has_tag(&"roofed_facade_bay") \
+						and _unit_bears_on_component(unit_value,
+							component_members, component_bearers):
+					continue
+				if placement_index >= unit_recipe.placement_bounds.size():
+					continue
+				var other_bounds := unit_transform \
+					* unit_recipe.placement_bounds[placement_index]
+				if _aabb_overlaps_volume(roof_bounds, other_bounds):
+					# Continuous realization changes only the roof skin; it does
+					# not erase the exact junction contracts carried by the roof
+					# units which contributed that skin. Re-evaluate those same
+					# finite contracts against the realized section. This permits
+					# an authored roof/roof flashing joint while stone, walls, and
+					# undeclared neighbors remain unconditional hard conflicts.
+					if _continuous_component_has_measured_roof_junction(
+							component_members, roof_bounds, unit_value,
+							unit_recipe, other_bounds):
+						continue
+					return "%s overlaps %s" % [
+						StringName(synthetic.stable_id), stable_placement_id]
+		for other_index in range(synthetic_index + 1, realized.size()):
+			var other := realized[other_index] as Dictionary
+			var other_bounds := other.get("bounds", AABB()) as AABB
+			if _aabb_overlaps_volume(roof_bounds, other_bounds):
+				if _continuous_components_have_measured_roof_junction(
+						synthetic, roof_bounds, other, other_bounds):
+					continue
+				return "%s %s members=%s overlaps %s %s members=%s" % [
+					StringName(synthetic.stable_id), str(roof_bounds),
+					str(synthetic.get("roof_component_unit_ids", [])),
+					StringName(other.stable_id), str(other_bounds),
+					str(other.get("roof_component_unit_ids", []))]
+	return ""
+
+
+func _continuous_component_has_measured_roof_junction(
+		component_members: Dictionary, realized_bounds: AABB,
+		other: FabricUnit, other_recipe: FabricRecipe,
+		other_bounds: AABB) -> bool:
+	if not _contains_pitched_roof(other_recipe):
+		return false
+	for member_id_value: Variant in component_members.keys():
+		var member_id := StringName(member_id_value)
+		var member := _by_id.get(member_id) as FabricUnit
+		if member == null or not _units_declare_connection(member, other):
+			continue
+		var member_recipe := _recipes.get(member.recipe_id) as FabricRecipe
+		if member_recipe == null or not _contains_pitched_roof(member_recipe):
+			continue
+		if _connected_roof_seam_is_measured(member, member_recipe,
+				realized_bounds, other, other_recipe, other_bounds):
+			return true
+	return false
+
+
+func _continuous_components_have_measured_roof_junction(
+		left: Dictionary, left_bounds: AABB,
+		right: Dictionary, right_bounds: AABB) -> bool:
+	## Two separately realized runs may touch only where their source roof units
+	## already named one another. Re-use the same finite junction proof as the
+	## ordinary placement gate against the final section boxes; proximity alone
+	## can never turn crossing crowns into a legal roof intersection.
+	for left_id: StringName in left.get(
+			"roof_component_unit_ids", []) as Array[StringName]:
+		var left_unit := _by_id.get(left_id) as FabricUnit
+		if left_unit == null:
+			continue
+		var left_recipe := _recipes.get(left_unit.recipe_id) as FabricRecipe
+		if left_recipe == null or not _contains_pitched_roof(left_recipe):
+			continue
+		for right_id: StringName in right.get(
+				"roof_component_unit_ids", []) as Array[StringName]:
+			var right_unit := _by_id.get(right_id) as FabricUnit
+			if right_unit == null or not _units_declare_connection(
+					left_unit, right_unit):
+				continue
+			var right_recipe := _recipes.get(right_unit.recipe_id) as FabricRecipe
+			if right_recipe == null or not _contains_pitched_roof(right_recipe):
+				continue
+			if _connected_roof_seam_is_measured(left_unit, left_recipe,
+					left_bounds, right_unit, right_recipe, right_bounds):
+				return true
+	return false
+
+
+static func _unit_bears_on_component(unit_value: FabricUnit,
+		component_members: Dictionary, component_bearers: Dictionary) -> bool:
+	for parent_id: StringName in unit_value.parent_ids:
+		if component_members.has(parent_id) or component_bearers.has(parent_id):
+			return true
+	return false
 
 
 func validate() -> bool:

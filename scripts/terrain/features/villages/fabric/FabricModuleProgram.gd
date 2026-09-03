@@ -132,8 +132,11 @@ func apply_visual_envelope(recipe: FabricRecipe) -> bool:
 		envelope = placed_bounds if not has_bounds else envelope.merge(placed_bounds)
 		has_bounds = true
 	# Compact continuous roofs publish every finite start/middle/end realization
-	# before this envelope is sealed. Reserve the union now; selecting a longer
-	# run later can only choose geometry which this transaction already proved.
+	# before this envelope is sealed. During layout each provisional bay owns its
+	# exact party-seam interval, not both possible exterior eaves: whether a bay is
+	# an end is a property of the maximal connected component and does not exist
+	# yet. SettlementFabricPlan validates the two realized exterior eaves against
+	# every unrelated finished placement after that component is compiled.
 	for run: Dictionary in recipe.compact_roof_runs:
 		for bay_value: Variant in run.get("bays", []) as Array:
 			var bay := bay_value as Dictionary
@@ -150,10 +153,49 @@ func apply_visual_envelope(recipe: FabricRecipe) -> bool:
 						return false
 					var placed_bounds := transform \
 						* contract_value.clearance_bounds()
+					placed_bounds = _compact_roof_party_span_bounds(
+						placed_bounds, run)
+					if not placed_bounds.has_volume():
+						# A half-depth source claim can meet an exterior-role
+						# section exactly at its party plane. That role owns no
+						# early clearance inside this isolated claim; the original
+						# finite half-roof still supplies its provisional envelope,
+						# and the final component checks its two real exterior eaves.
+						continue
 					envelope = placed_bounds if not has_bounds \
 						else envelope.merge(placed_bounds)
 					has_bounds = true
 	return has_bounds and recipe.set_local_clearance_bounds(envelope)
+
+
+static func _compact_roof_party_span_bounds(bounds: AABB,
+		run: Dictionary) -> AABB:
+	## The run endpoints are the semantic outer party planes in recipe-local
+	## space. Clip only along the ridge; authored transverse eaves and the full
+	## height profile remain part of the early construction envelope.
+	var start := run.get("local_start", Vector3.INF) as Vector3
+	var end := run.get("local_end", Vector3.INF) as Vector3
+	var delta := end - start
+	var axis_x := absf(delta.x) > 0.001 and absf(delta.z) <= 0.001
+	var axis_z := absf(delta.z) > 0.001 and absf(delta.x) <= 0.001
+	if not start.is_finite() or not end.is_finite() or not (axis_x or axis_z):
+		return AABB()
+	var low := minf(start.x, end.x) if axis_x else minf(start.z, end.z)
+	var high := maxf(start.x, end.x) if axis_x else maxf(start.z, end.z)
+	var clipped_low := maxf(bounds.position.x, low) if axis_x \
+		else maxf(bounds.position.z, low)
+	var clipped_high := minf(bounds.end.x, high) if axis_x \
+		else minf(bounds.end.z, high)
+	if clipped_high <= clipped_low:
+		return AABB()
+	var out := bounds
+	if axis_x:
+		out.position.x = clipped_low
+		out.size.x = clipped_high - clipped_low
+	else:
+		out.position.z = clipped_low
+		out.size.z = clipped_high - clipped_low
+	return out
 
 
 func walk_aligned_transform(asset_id: StringName, pose: Transform3D,

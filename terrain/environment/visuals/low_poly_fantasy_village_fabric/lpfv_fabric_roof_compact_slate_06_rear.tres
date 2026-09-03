@@ -1,11 +1,11 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=9 format=3 uid="uid://c55va6nts4etw"]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=9 format=3]
 
-[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_lq5yk"]
-[ext_resource type="Shape3D" uid="uid://p1tm7w326x75" path="res://terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06_rear_piece_00.res" id="2_31iib"]
-[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_880ey"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_lq5yk"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06_rear_piece_00.res" id="2_31iib"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_880ey"]
 [ext_resource type="Material" path="res://terrain/environment/materials/warren/compact_roof_slate.tres" id="4_70l3o"]
-[ext_resource type="ArrayMesh" uid="uid://bbv4ew33vvxws" path="res://terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06_rear_piece_00.res" id="5_krwwi"]
-[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="6_begwu"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06_rear_piece_00.res" id="5_krwwi"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="6_begwu"]
 
 [sub_resource type="Resource" id="Resource_onnp0"]
 script = ExtResource("1_lq5yk")

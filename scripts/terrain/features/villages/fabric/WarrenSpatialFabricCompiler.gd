@@ -309,8 +309,13 @@ static func solve(source: WarrenSpatialPlan,
 	if int(stone_audit.get("maze_stone_missing_face_count", 0)) > 0 \
 			or int(stone_audit.get("maze_stone_doubled_cap_count", 0)) > 0 \
 			or int(stone_audit.get("maze_turf_backed_facade_count", 0)) > 0:
-		last_failure = "retained maze stone is not fully skinned: %s" % \
-			str(stone_audit)
+		last_failure = ("retained maze stone is not fully skinned " \
+			+ "(missing=%d %s doubled_caps=%d turf_facades=%d): %s") % [
+				int(stone_audit.get("maze_stone_missing_face_count", 0)),
+				str(stone_audit.get("maze_stone_missing_faces", [])),
+				int(stone_audit.get("maze_stone_doubled_cap_count", 0)),
+				int(stone_audit.get("maze_turf_backed_facade_count", 0)),
+				str(stone_audit)]
 		return null
 	stage_ms = _trace_stage("stone_skin", stage_ms)
 	var solid_void := FabricSolidVoidClassifier.solve(
@@ -338,6 +343,17 @@ static func solve(source: WarrenSpatialPlan,
 	# every flat corpus town, 6 on the D1 `step/3/standard` row.
 	lineage["retained_foundation_built_in_cell_count"] = int(
 		foundation_result.get("built_in_cell_count", 0))
+	# Final retained terrain is resolved only after every measured roof and
+	# structural cell exists. Publish both constructive withdrawals so visual
+	# review can distinguish a roof-volume intersection from a detached source
+	# scaffold without re-inferring either from render placements.
+	for key: StringName in [&"maze_stone_withdrawn_for_roof_cells",
+			&"maze_stone_withdrawn_for_roof_cell_keys",
+			&"maze_unsupported_stone_cells_removed",
+			&"maze_unsupported_stone_components_removed",
+			&"maze_unsupported_stone_cell_keys"]:
+		lineage[key] = foundation_result.get(key, 0 if String(key).ends_with(
+			"cells") or String(key).ends_with("removed") else [])
 	lineage.merge(foundation_audit, true)
 	lineage.merge(suppression_audit, true)
 	lineage.merge(stone_audit, true)
@@ -866,6 +882,11 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 	# reader of the channel has ever looked at a retained cell's value, and a
 	# legacy plan still writes `true`, so the tag is additive.
 	var maze_stone: Dictionary = {}
+	var roof_visual_cells: Dictionary = {} if plan == null \
+		else _actual_roof_visual_cells(plan)
+	var maze_stone_withdrawn_for_roof: Dictionary = {}
+	var unsupported_maze_stone: Dictionary = {}
+	var unsupported_maze_stone_components := 0
 	if source.grid != null:
 		var maze_owned: Array[Vector3i] = []
 		for cell: Vector3i in source.grid.cells_with_use(
@@ -878,8 +899,45 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 		# too, so it is read once at the top of the function and both halves
 		# subtract the same set -- one reading of the fabric per compile
 		# instead of one, and the same answer for both.
+		var maze_candidates: Dictionary = {}
 		for cell: Vector3i in maze_owned:
 			if built_solid.has(cell):
+				continue
+			# Retained source mass is allowed to BEAR a finished roof, but it may
+			# never remain visible THROUGH that roof.  Source construction keeps
+			# conservative slab/shoulder cells until every room and roof has been
+			# accepted, because those cells are useful bearing facts while the
+			# town is assembled.  This final transaction is where that temporary
+			# scaffold becomes visible retained terrain.  Subtract the exact
+			# measured placement volume of every accepted roof here -- neither the
+			# source planner nor the renderer has to guess which stone cube a roof
+			# was meant to replace.
+			if roof_visual_cells.has(cell):
+				maze_stone_withdrawn_for_roof[cell] = true
+				continue
+			maze_candidates[cell] = true
+		# A source massif is a temporary construction envelope, not permission to
+		# render arbitrary leftover cubes.  Keep only retained stone whose exact
+		# face-connected load path reaches the sampled terrain datum, either
+		# directly or through final fabric solids/plinths.  This makes a retained
+		# tunnel shoulder valid while removing roof-height source scaffolding that
+		# became isolated when rooms and their measured roofs were committed.
+		#
+		# Retained source stone is never the authority that proves a final room's
+		# bearing; the sealed room/foundation DAG already owns that proof. Therefore
+		# every unreachable source component is culled, even when its old envelope
+		# touches a terrain-bearing footprint. Treating that incidental touch as a
+		# new support obligation made obsolete roof-height source cubes veto an
+		# otherwise grounded finished building—the exact stone-around-roof defect
+		# this final transaction exists to prevent.
+		var support := _supported_retained_maze_cells(source, plan, cells,
+			maze_candidates, built_solid)
+		var supported_candidates := support.get("supported", {}) as Dictionary
+		unsupported_maze_stone = support.get("unsupported", {}) as Dictionary
+		unsupported_maze_stone_components = int(support.get(
+			"unsupported_component_count", 0))
+		for cell: Vector3i in maze_candidates:
+			if not supported_candidates.has(cell):
 				continue
 			cells[cell] = SettlementFabricAssembler.MAZE_STONE_TAG
 			maze_stone[cell] = true
@@ -901,6 +959,15 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 		# `maze_retained_rock_cells` means DERIVED ROCK everywhere it appears,
 		# in this audit and in the solver's alike.
 		"maze_retained_stone_cells": maze_stone.size(),
+		"maze_stone_withdrawn_for_roof_cells": \
+			maze_stone_withdrawn_for_roof.size(),
+		"maze_stone_withdrawn_for_roof_cell_keys": \
+			_sorted_v3_keys(maze_stone_withdrawn_for_roof),
+		"maze_unsupported_stone_cells_removed": unsupported_maze_stone.size(),
+		"maze_unsupported_stone_components_removed": \
+			unsupported_maze_stone_components,
+		"maze_unsupported_stone_cell_keys": \
+			_sorted_v3_keys(unsupported_maze_stone),
 		"maze_stone_borne_room_count": maze_stone_borne_room_count,
 		# TASK C5c RULING 1: the retained channel carries ONE material and
 		# THREE facts. `WarrenVolumetricSolver` split them where the split is
@@ -921,6 +988,181 @@ static func _retained_foundation_cells(source: WarrenSpatialPlan,
 			"maze_unroomed_plot_share", 0.0)),
 		"maze_stone_cells": maze_stone,
 		"flush_room_count": flush_room_count, "room_records": room_records}
+
+
+static func _supported_retained_maze_cells(source: WarrenSpatialPlan,
+		plan: SettlementFabricPlan, plinth_cells: Dictionary,
+		candidates: Dictionary, built_solid: Dictionary) -> Dictionary:
+	## Resolve support on the same 1.5 m construction lattice used by rooms,
+	## roofs, and retained stone.  The source envelope supplies only the root
+	## datum; it does not itself become a visible solid.  Flooding the completed
+	## construction union from those roots means support is transitive and
+	## correct by construction, rather than inferred from a component's size,
+	## height, seed, or proximity to a particular roof.
+	var connected: Dictionary = {}
+	var unsupported: Dictionary = {}
+	if source == null or source.source_volume == null \
+			or source.source_volume.envelope == null or candidates.is_empty():
+		return {"supported": connected, "unsupported": unsupported,
+			"unsupported_component_count": 0,
+			"unsupported_structural_contact_count": 0,
+			"unsupported_structural_contact_cells": []}
+	var union: Dictionary = {}
+	for cell: Vector3i in candidates:
+		union[cell] = true
+	for cell: Vector3i in built_solid:
+		union[cell] = true
+	for cell: Vector3i in plinth_cells:
+		union[cell] = true
+	# Some authored terrain contacts are deliberately openings in a shell (a
+	# doorway threshold is the common case).  They remain exact bearing nodes
+	# even when they are not also semantic wall solids.
+	var terrain_bearing: Dictionary = {} if plan == null \
+		else plan.transformed_cells(&"terrain_bearing")
+	if plan != null:
+		for cell: Vector3i in terrain_bearing:
+			union[cell] = true
+	var queue: Array[Vector3i] = []
+	var envelope := source.source_volume.envelope
+	for cell: Vector3i in union:
+		var macro := Vector2i(floori(float(cell.x) / 2.0),
+			floori(float(cell.z) / 2.0))
+		if envelope.contains_column(macro) \
+				and cell.y <= envelope.bearing_at(macro):
+			connected[cell] = true
+			queue.append(cell)
+	var directions: Array[Vector3i] = [Vector3i.LEFT, Vector3i.RIGHT,
+		Vector3i.FORWARD, Vector3i.BACK, Vector3i.UP, Vector3i.DOWN]
+	var cursor := 0
+	while cursor < queue.size():
+		var cell := queue[cursor]
+		cursor += 1
+		for direction: Vector3i in directions:
+			var neighbor := cell + direction
+			if union.has(neighbor) and not connected.has(neighbor):
+				connected[neighbor] = true
+				queue.append(neighbor)
+	var supported: Dictionary = {}
+	for cell: Vector3i in candidates:
+		if connected.has(cell):
+			supported[cell] = true
+		else:
+			unsupported[cell] = true
+	# Face connectivity is enough for a tunnel crown, because its opening is a
+	# typed PUBLIC_AIR void and the neighboring stone carries it. It is not enough
+	# for a source cell above an unclaimed OUTSIDE cell: that pattern is exactly a
+	# leftover rock shelf after the lower source mass was released for a roof or
+	# room. Retained terrain has no cantilever vocabulary, so keep only the
+	# bottom-up prefix of each such column. This is a monotone structural closure,
+	# not a size/seed exception: once a lower stone cell is absent, no higher stone
+	# cell can restore that column's load path.
+	var supported_order: Array[Vector3i] = []
+	supported_order.assign(supported.keys())
+	supported_order.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		if a.y != b.y:
+			return a.y < b.y
+		if a.z != b.z:
+			return a.z < b.z
+		return a.x < b.x)
+	for cell: Vector3i in supported_order:
+		var macro := Vector2i(floori(float(cell.x) / 2.0),
+			floori(float(cell.z) / 2.0))
+		if not envelope.contains_column(macro) \
+				or cell.y <= envelope.bearing_at(macro):
+			continue
+		var below := cell + Vector3i.DOWN
+		if source.grid.use_at(below) != WarrenSpatialGrid.Use.OUTSIDE \
+				or supported.has(below) or built_solid.has(below) \
+				or plinth_cells.has(below) or terrain_bearing.has(below):
+			continue
+		supported.erase(cell)
+		unsupported[cell] = true
+	var component_count := 0
+	var structural_contacts: Dictionary = {}
+	var unvisited := unsupported.duplicate()
+	while not unvisited.is_empty():
+		component_count += 1
+		var component_queue: Array[Vector3i] = [unvisited.keys()[0] as Vector3i]
+		unvisited.erase(component_queue[0])
+		var component_cursor := 0
+		while component_cursor < component_queue.size():
+			var cell := component_queue[component_cursor]
+			component_cursor += 1
+			# Side contact with a wall is merely a closed visual seam. Only a
+			# typed terrain-bearing footprint on or immediately above this
+			# unsupported stone claims it as a load path and must reject rather
+			# than be cosmetically culled.
+			if terrain_bearing.has(cell) \
+					or terrain_bearing.has(cell + Vector3i.UP):
+				structural_contacts[cell] = true
+			for direction: Vector3i in directions:
+				var neighbor := cell + direction
+				if unvisited.has(neighbor):
+					unvisited.erase(neighbor)
+					component_queue.append(neighbor)
+	return {"supported": supported, "unsupported": unsupported,
+		"unsupported_component_count": component_count,
+		"unsupported_structural_contact_count": structural_contacts.size(),
+		"unsupported_structural_contact_cells": \
+			_sorted_v3_keys(structural_contacts)}
+
+
+static func _actual_roof_visual_cells(plan: SettlementFabricPlan) -> Dictionary:
+	## Rasterize only final accepted roof placements, not a prospective closure
+	## or a roof recipe's broad merged clearance box.  Fine-grid cells are the
+	## retained terrain's actual construction currency, so one shared exact
+	## AABB/cell-volume overlap decides whether a source-mass cell may enter the
+	## visible retained channel.  The roof stays authoritative even when its
+	## sloped shell occupies only part of the conservative semantic solid band.
+	var out: Dictionary = {}
+	if plan == null:
+		return out
+	var cell_size := FabricRecipe.CELL_SIZE
+	var half := cell_size * 0.5
+	for unit: FabricUnit in plan.units:
+		var recipe := plan.recipe(unit.recipe_id)
+		if recipe == null or not recipe.has_tag(&"roof"):
+			continue
+		var unit_transform := unit.transform()
+		for index in recipe.placements.size():
+			var placement := recipe.placements[index] as Dictionary
+			if unit.suppressed_placement_ids.has(StringName(placement.id)) \
+					or index >= recipe.placement_bounds.size():
+				continue
+			var bounds: AABB = unit_transform * recipe.placement_bounds[index]
+			if not bounds.has_volume():
+				continue
+			var minimum := bounds.position
+			var maximum := bounds.end
+			var min_x := floori((minimum.x - half) / cell_size) - 1
+			var max_x := ceili((maximum.x + half) / cell_size) + 1
+			var min_y := floori(minimum.y / cell_size) - 1
+			var max_y := ceili(maximum.y / cell_size) + 1
+			var min_z := floori((minimum.z - half) / cell_size) - 1
+			var max_z := ceili((maximum.z + half) / cell_size) + 1
+			for y in range(min_y, max_y + 1):
+				for z in range(min_z, max_z + 1):
+					for x in range(min_x, max_x + 1):
+						var cell := Vector3i(x, y, z)
+						var cell_bounds := AABB(Vector3(cell) * cell_size \
+							+ Vector3(-half, 0.0, -half),
+							Vector3.ONE * cell_size)
+						if SettlementFabricPlan._aabb_overlaps_volume(
+								bounds, cell_bounds):
+							out[cell] = true
+	return out
+
+
+static func _sorted_v3_keys(source: Dictionary) -> Array[Vector3i]:
+	var out: Array[Vector3i] = []
+	out.assign(source.keys())
+	out.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		if a.y != b.y:
+			return a.y < b.y
+		if a.z != b.z:
+			return a.z < b.z
+		return a.x < b.x)
+	return out
 
 
 static func _maze_terrace_audit(plan: SettlementFabricPlan,
@@ -997,6 +1239,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			"maze_stone_faces_suppressed_by_paving": 0,
 			"maze_stone_faces_deferred_to_plinth": 0,
 			"maze_skin_masonry_panel_count": 0,
+			"maze_skin_soffit_panel_count": 0,
 			"maze_skin_natural_panel_count": 0,
 			"maze_skin_green_cap_count": 0,
 			"maze_terrain_ground_cell_count": 0,
@@ -1109,6 +1352,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	var top_face_count := 0
 	var bottom_face_count := 0
 	var missing_face_count := 0
+	var missing_faces: Array[Vector4i] = []
 	var doubled_cap_count := 0
 	for key_value: Variant in exposed.keys():
 		var key := key_value as Vector4i
@@ -1118,7 +1362,9 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			top_face_count += int(direction == Vector3i.UP)
 			bottom_face_count += int(direction == Vector3i.DOWN)
 			var slabs := int(cap_coverage.get(key, 0))
-			missing_face_count += int(slabs == 0)
+			if slabs == 0:
+				missing_face_count += 1
+				missing_faces.append(key)
 			doubled_cap_count += int(slabs > 1)
 			continue
 		# A side course hangs from the top of its cell and is 3 m tall, so the
@@ -1133,6 +1379,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			deferred_to_plinth += 1
 			continue
 		missing_face_count += 1
+		missing_faces.append(key)
 	var rendered := SettlementFabricAssembler.maze_stone_walls(retained,
 		solids, paved, plinths, walked, shell, plan.world_seed)
 	# TASK H2b. What the shell WEARS, counted over the same panel set the
@@ -1142,6 +1389,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	# is the other one.
 	var treatments := shell.treatments as Dictionary
 	var masonry_panels := 0
+	var soffit_panels := 0
 	var natural_panels := 0
 	var green_panels := 0
 	# TASK I2. THE WALL-MATERIAL METRIC, EXTENDED OVER CLAD MASS. Task H1's
@@ -1223,8 +1471,17 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	for key_value: Variant in treatments.keys():
 		var key := key_value as Vector4i
 		var treatment := int(treatments[key])
+		var is_down_soffit := key.w >= sides \
+			and SettlementFabricAssembler.STONE_FACE_DIRECTIONS[key.w] \
+				== Vector3i.DOWN
+		# MASONRY remains the semantic fallback treatment, but a floor-facing
+		# boundary realizes that treatment as an authored timber soffit. Keep the
+		# material census faithful to what the renderer actually builds instead of
+		# reporting those planks as rock.
+		soffit_panels += int(is_down_soffit)
 		masonry_panels += int(treatment \
-			== SettlementFabricAssembler.SkinTreatment.MASONRY)
+			== SettlementFabricAssembler.SkinTreatment.MASONRY \
+			and not is_down_soffit)
 		natural_panels += int(treatment \
 			== SettlementFabricAssembler.SkinTreatment.NATURAL)
 		green_panels += int(treatment \
@@ -1252,9 +1509,15 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 			if treatment == SettlementFabricAssembler.SkinTreatment.MASONRY:
 				cap_jut_cells += SettlementFabricAssembler \
 					.maze_stone_cap_jut_cells(key, faces[key] as Vector3i).size()
+				# Every unpaired upward cap is now the exact 1.5 m singleton
+				# variant. Count that construction fact directly; the former audit
+				# asked whether the obsolete 3 m slab would have jutted over a
+				# walkway and therefore reported zero even while the renderer used
+				# the trimmed mesh. Downward masonry treatments render as soffits,
+				# so they are deliberately outside this horizontal cap census.
 				cap_trim += int(SettlementFabricAssembler \
-					.maze_stone_cap_juts_over_walk(key, faces[key] as Vector3i,
-						walked))
+					.STONE_FACE_DIRECTIONS[key.w] == Vector3i.UP \
+					and (faces[key] as Vector3i) == Vector3i.ZERO)
 			if treatment != SettlementFabricAssembler.SkinTreatment.MASONRY \
 					or SettlementFabricAssembler.STONE_FACE_DIRECTIONS[key.w] \
 						!= Vector3i.UP \
@@ -1490,8 +1753,10 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	# TASK I4 ROUND 5, ITEM 4. The boundary set now carries the LEVEL junctions
 	# as well as the drops, so `walked` and `paved` come with it.
 	var capped_ground := ground_skin.capped_ground as Dictionary
+	var terrain_controls := SettlementFabricAssembler \
+		.maze_terrain_control_surface_cells(plan)
 	var terrain_region := SettlementFabricAssembler.maze_terrain_surface_region(
-		retained, capped_ground)
+		retained, capped_ground, terrain_controls)
 	var rim_faces := SettlementFabricAssembler.maze_garden_rim_face_count(shell,
 		walked, paved, footprints, capped_ground, true, terrain_region)
 	var rim_instances := SettlementFabricAssembler.maze_green_rim_walls(retained,
@@ -1561,6 +1826,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 				SettlementFabricAssembler.maze_skywalk_cells(spans)) \
 			.instance_count,
 		"maze_skin_masonry_panel_count": masonry_panels,
+		"maze_skin_soffit_panel_count": soffit_panels,
 		"maze_skin_natural_panel_count": natural_panels,
 		"maze_skin_green_cap_count": green_panels,
 		# Turf is no longer counted through one asset instance per logical cap
@@ -1653,6 +1919,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		# still individual EnvironmentVisual instances.
 		"maze_stone_rendered_face_count": rendered.instance_count + green_panels,
 		"maze_stone_missing_face_count": missing_face_count,
+		"maze_stone_missing_faces": missing_faces,
 		"maze_stone_doubled_cap_count": doubled_cap_count,
 		"maze_stone_top_face_count": top_face_count,
 		"maze_stone_bottom_face_count": bottom_face_count,
@@ -2992,15 +3259,30 @@ static func _required_roof_clearance_for_grid(grid: WarrenSpatialGrid,
 					var reserve_recipe := program.recipe(reserve_id)
 					if reserve_recipe == null:
 						continue
+					# Publish only closures that the final assembler could actually
+					# commit.  The former partial-roof branch exposed both handed
+					# assets even when their measured collider entered a public body
+					# lane, so a room could survive proposal selection and discover
+					# that it had no legal roof only after the layout was irreversible.
+					var reserve_probe := FabricUnit.new(StringName(
+						"required-roof.%s.%s.r%d" % [room.stable_id,
+							reserve_id, int(cap.yaw_quarters)]), reserve_id,
+						cap.origin as Vector3i, int(cap.yaw_quarters))
+					if not _unit_public_air_conflicts(grid, reserve_probe,
+							reserve_recipe).is_empty():
+						continue
 					options.append({"recipe_id": reserve_id,
 						"origin": cap.origin as Vector3i,
 						"yaw_quarters": int(cap.yaw_quarters),
 						"bounds": cap_transform \
 							* reserve_recipe.local_clearance_bounds})
-				if not options.is_empty():
-					out.append({"owner_room_id": room.stable_id,
-						"options": options,
-						"allowed_room_ids": allowed_room_ids})
+				# Empty is an explicit construction result, not absence of an
+				# obligation. The room-envelope solver consumes this empty domain
+				# while it can still yield/replace the source parcel. Omitting it
+				# allowed the exact roof failure to survive until final assembly.
+				out.append({"owner_room_id": room.stable_id,
+					"options": options,
+					"allowed_room_ids": allowed_room_ids})
 	return out
 
 

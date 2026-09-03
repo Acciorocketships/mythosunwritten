@@ -187,22 +187,26 @@ static func field_ground_surface(cells: Dictionary, region,
 	var quad_index := 0
 	for cell: Vector3i in ordered:
 		var baked := TerrainSurfaceField.bake_cell(region, cell.x, cell.z)
-		var min_x := float(cell.x) * cell_size - half
-		var min_z := float(cell.z) * cell_size - half
+		var field_min_x := float(cell.x) * cell_size - half
+		var field_min_z := float(cell.z) * cell_size - half
 		for iz in samples_per_cell:
 			for ix in samples_per_cell:
-				var x0 := min_x + float(ix) * step
-				var x1 := x0 + step
-				var z0 := min_z + float(iz) * step
-				var z1 := z0 + step
-				var v00 := Vector3(x0, TerrainSurfaceField.sample_baked(
-					baked, cell.x, cell.z, x0, z0, region) + lift, z0)
-				var v10 := Vector3(x1, TerrainSurfaceField.sample_baked(
-					baked, cell.x, cell.z, x1, z0, region) + lift, z0)
-				var v11 := Vector3(x1, TerrainSurfaceField.sample_baked(
-					baked, cell.x, cell.z, x1, z1, region) + lift, z1)
-				var v01 := Vector3(x0, TerrainSurfaceField.sample_baked(
-					baked, cell.x, cell.z, x0, z1, region) + lift, z1)
+				var field_x0 := field_min_x + float(ix) * step
+				var field_x1 := field_x0 + step
+				var field_z0 := field_min_z + float(iz) * step
+				var field_z1 := field_z0 + step
+				var v00 := Vector3(field_x0, TerrainSurfaceField.sample_baked(
+					baked, cell.x, cell.z, field_x0, field_z0, region) + lift,
+					field_z0)
+				var v10 := Vector3(field_x1, TerrainSurfaceField.sample_baked(
+					baked, cell.x, cell.z, field_x1, field_z0, region) + lift,
+					field_z0)
+				var v11 := Vector3(field_x1, TerrainSurfaceField.sample_baked(
+					baked, cell.x, cell.z, field_x1, field_z1, region) + lift,
+					field_z1)
+				var v01 := Vector3(field_x0, TerrainSurfaceField.sample_baked(
+					baked, cell.x, cell.z, field_x0, field_z1, region) + lift,
+					field_z1)
 				var vi := quad_index * 4
 				vertices[vi] = v00
 				vertices[vi + 1] = v10

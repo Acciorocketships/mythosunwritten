@@ -2957,7 +2957,7 @@ func _review_ground_payload(top_by_cell: Dictionary) -> Array[Dictionary]:
 	var region := LatticeTerrainSurfaceRegion.new(top_by_cell,
 		FabricRecipe.CELL_SIZE, default_top)
 	var town_mesh := TerrainChunkMesher.field_ground_surface(cells, region,
-		FabricRecipe.CELL_SIZE, 0.0, &"review-shared-town-terrain", false)
+		FabricRecipe.CELL_SIZE, 0.0, &"review-shared-town-terrain", false, 2)
 	_tint_review_ground(town_mesh)
 	# Four fine bands form one 6 m meadow owner. Preserve the exact requested
 	# world height with a lift rather than rounding the terrain datum onto this

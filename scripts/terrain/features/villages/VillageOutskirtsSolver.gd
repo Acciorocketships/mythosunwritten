@@ -1451,87 +1451,38 @@ static func _ground_contacts(terrain: VillageTerrainView, arrival: Vector2,
 					or node.kind == VillageCirculationNode.Kind.TERRAIN_CONTACT:
 				out.append(node)
 		return out
-	# Volumetric warren: derive route exits from the exact sealed public union.
-	# A terrain-street endpoint qualifies only where its world floor is within an
-	# ordinary player step of natural terrain. The same local-to-world transform
-	# that materialized the town supplies its point, so an outskirts lane cannot
-	# start at a guessed radius, inside a wall, or halfway up the massif.
-	if urban.fabric_plan != null and urban.fabric_plan.surface_plan != null:
-		var surface := urban.fabric_plan.surface_plan
-		var street_cells := surface.cells_for_kind(
-			PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET)
-		var candidates: Array[Dictionary] = []
-		for cell: Vector3i in street_cells:
-			var degree := 0
-			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-					Vector3i.FORWARD, Vector3i.BACK]:
-				for rise in range(-1, 2):
-					if surface.has_cell(cell + direction + Vector3i.UP * rise):
-						degree += 1
-						break
-			if degree > 1:
-				continue
-			var world3 := urban.world_transform \
-				* (Vector3(cell) * FabricRecipe.CELL_SIZE)
+	# Volumetric warren: consume the exact same sealed contact records that make
+	# the terrain handoff ramps. This single source of truth prevents an outskirts
+	# road from beginning at a guessed fine-cell endpoint while the rendered town
+	# opens somewhere else. The contact point is the ramp's terrain-side edge,
+	# already one complete 3 m run beyond the finished two-lane street boundary.
+	if urban.volumetric_spatial != null and urban.fabric_plan != null:
+		var specs := VillageWarrenFabricSolver.terrain_contact_specs(
+			urban.volumetric_spatial, urban.fabric_plan)
+		for spec: Dictionary in specs:
+			var boundary_cells := spec.cells as Array[Vector3i]
+			var local_outward := spec.outward as Vector3i
+			var centre := Vector3.ZERO
+			for cell: Vector3i in boundary_cells:
+				centre += (Vector3(cell) + Vector3(0.5, 0.0, 0.5)) \
+					* FabricRecipe.CELL_SIZE
+			centre /= float(boundary_cells.size())
+			var outer_centre := centre + Vector3(local_outward) \
+				* FabricRecipe.CELL_SIZE * 1.5
+			var world3 := urban.world_transform * outer_centre
 			var point := Vector2(world3.x, world3.z)
 			var ground_y := terrain.surface_y(point)
-			if absf(world3.y - ground_y) \
-					> TraversalEnvelope.MAX_PLANNED_STEP + 0.001:
+			var world_outward3 := urban.world_transform.basis \
+				* Vector3(local_outward)
+			var outward := Vector2(world_outward3.x, world_outward3.z).normalized()
+			if outward.is_zero_approx():
 				continue
-			candidates.append({"cell": cell, "point": point,
-				"height": ground_y, "distance": point.distance_squared_to(arrival)})
-		candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-			return float(a.distance) > float(b.distance) \
-				if not is_equal_approx(float(a.distance), float(b.distance)) \
-				else String(a.cell) < String(b.cell))
-		for candidate: Dictionary in candidates:
-			var point := candidate.point as Vector2
-			var separated := true
-			for contact: VillageCirculationNode in out:
-				separated = separated and contact.point.distance_to(point) \
-					>= FabricRecipe.CELL_SIZE * 2.0
-			if not separated:
-				continue
-			var outward := point - arrival
-			outward = outward.normalized() if not outward.is_zero_approx() \
-				else -primary_axis
 			out.append(VillageCirculationNode.new(StringName(
-				"warren.exit.%d.%d.%d" % [(candidate.cell as Vector3i).x,
-					(candidate.cell as Vector3i).y, (candidate.cell as Vector3i).z]),
-				VillageCirculationNode.Kind.TERRAIN_CONTACT, point,
-				float(candidate.height), &"warren.public_exit", outward))
+				"warren.contact.%s" % String(spec.stable_suffix)),
+				VillageCirculationNode.Kind.TERRAIN_CONTACT, point, ground_y,
+				&"warren.public_entry" if String(spec.stable_suffix) == "entry" \
+				else &"warren.public_exit", outward))
 		if not out.is_empty():
-			return out
-	# A generated warren has one canonical boundary entry and a first itinerary
-	# segment that points into its mass. Transform both with the same sealed world
-	# frame used by render, collision, and ground paint; the opposite direction is
-	# therefore the authored exterior continuation. This remains available when
-	# the finished terrain-street union has no degree-one endpoint (for example a
-	# loop at the threshold), and replaces the old guessed point halfway through
-	# the outskirts annulus.
-	if urban.volumetric_spatial != null \
-			and urban.volumetric_spatial.source_volume != null:
-		var source := urban.volumetric_spatial.source_volume
-		var entry := source.entry_cell
-		var entry_local := Vector3(
-			float(entry.x) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
-				+ FabricRecipe.CELL_SIZE * 0.5,
-			float(entry.y) * WarrenVolumePlan.VERTICAL_BAND_SIZE_M,
-			float(entry.z) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
-				+ FabricRecipe.CELL_SIZE * 0.5)
-		var world_entry := urban.world_transform * entry_local
-		var entry_point := Vector2(world_entry.x, world_entry.z)
-		var route_delta := source.primary_itinerary[1] - entry
-		var local_inward := Vector3(float(route_delta.x), 0.0,
-			float(route_delta.z)).normalized()
-		var world_inward3 := urban.world_transform.basis * local_inward
-		var outward := -Vector2(world_inward3.x, world_inward3.z).normalized()
-		var ground_y := terrain.surface_y(entry_point)
-		if outward.is_normalized() and absf(world_entry.y - ground_y) \
-				<= TraversalEnvelope.MAX_PLANNED_STEP + 0.001:
-			out.append(VillageCirculationNode.new(&"warren.canonical_entry",
-				VillageCirculationNode.Kind.TERRAIN_CONTACT, entry_point,
-				ground_y, &"warren.public_entry", outward))
 			return out
 	# Compact isolated fixtures have no source volume. Retain a contract-derived
 	# approach only for those tests/custom programs; production warrens take one

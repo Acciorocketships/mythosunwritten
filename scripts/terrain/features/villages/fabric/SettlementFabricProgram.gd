@@ -77,6 +77,54 @@ const COMPACT_ROOF_SLATE_MIDDLE_TIGHT := \
 	&"lpfv.fabric.roof.compact.slate.03.middle.tight"
 const COMPACT_ROOF_SLATE_FRONT_TIGHT := \
 	&"lpfv.fabric.roof.compact.slate.03.front.tight"
+const COMPACT_ROOF_ORANGE_RUN_START := \
+	&"lpfv.fabric.roof.compact.orange.03.run.start"
+const COMPACT_ROOF_ORANGE_RUN_MIDDLE := \
+	&"lpfv.fabric.roof.compact.orange.03.run.middle"
+const COMPACT_ROOF_ORANGE_RUN_MIDDLE_MIRROR := \
+	&"lpfv.fabric.roof.compact.orange.03.run.middle.mirror_z"
+const COMPACT_ROOF_ORANGE_RUN_END := \
+	&"lpfv.fabric.roof.compact.orange.03.run.end"
+const COMPACT_ROOF_ORANGE_RUN_START_TIGHT := \
+	&"lpfv.fabric.roof.compact.orange.03.run.start.tight"
+const COMPACT_ROOF_ORANGE_RUN_START_FLUSH := \
+	&"lpfv.fabric.roof.compact.orange.03.run.start.flush"
+const COMPACT_ROOF_ORANGE_RUN_START_TIGHT_FLUSH := \
+	&"lpfv.fabric.roof.compact.orange.03.run.start.tight.flush"
+const COMPACT_ROOF_ORANGE_RUN_MIDDLE_TIGHT := \
+	&"lpfv.fabric.roof.compact.orange.03.run.middle.tight"
+const COMPACT_ROOF_ORANGE_RUN_MIDDLE_TIGHT_MIRROR := \
+	&"lpfv.fabric.roof.compact.orange.03.run.middle.tight.mirror_z"
+const COMPACT_ROOF_ORANGE_RUN_END_TIGHT := \
+	&"lpfv.fabric.roof.compact.orange.03.run.end.tight"
+const COMPACT_ROOF_ORANGE_RUN_END_FLUSH := \
+	&"lpfv.fabric.roof.compact.orange.03.run.end.flush"
+const COMPACT_ROOF_ORANGE_RUN_END_TIGHT_FLUSH := \
+	&"lpfv.fabric.roof.compact.orange.03.run.end.tight.flush"
+const COMPACT_ROOF_SLATE_RUN_START := \
+	&"lpfv.fabric.roof.compact.slate.03.run.start"
+const COMPACT_ROOF_SLATE_RUN_MIDDLE := \
+	&"lpfv.fabric.roof.compact.slate.03.run.middle"
+const COMPACT_ROOF_SLATE_RUN_MIDDLE_MIRROR := \
+	&"lpfv.fabric.roof.compact.slate.03.run.middle.mirror_z"
+const COMPACT_ROOF_SLATE_RUN_END := \
+	&"lpfv.fabric.roof.compact.slate.03.run.end"
+const COMPACT_ROOF_SLATE_RUN_START_TIGHT := \
+	&"lpfv.fabric.roof.compact.slate.03.run.start.tight"
+const COMPACT_ROOF_SLATE_RUN_START_FLUSH := \
+	&"lpfv.fabric.roof.compact.slate.03.run.start.flush"
+const COMPACT_ROOF_SLATE_RUN_START_TIGHT_FLUSH := \
+	&"lpfv.fabric.roof.compact.slate.03.run.start.tight.flush"
+const COMPACT_ROOF_SLATE_RUN_MIDDLE_TIGHT := \
+	&"lpfv.fabric.roof.compact.slate.03.run.middle.tight"
+const COMPACT_ROOF_SLATE_RUN_MIDDLE_TIGHT_MIRROR := \
+	&"lpfv.fabric.roof.compact.slate.03.run.middle.tight.mirror_z"
+const COMPACT_ROOF_SLATE_RUN_END_TIGHT := \
+	&"lpfv.fabric.roof.compact.slate.03.run.end.tight"
+const COMPACT_ROOF_SLATE_RUN_END_FLUSH := \
+	&"lpfv.fabric.roof.compact.slate.03.run.end.flush"
+const COMPACT_ROOF_SLATE_RUN_END_TIGHT_FLUSH := \
+	&"lpfv.fabric.roof.compact.slate.03.run.end.tight.flush"
 const ROOM_ROOF_01 := &"lpfv.fabric.roof.room.orange.01"
 const ROOM_ROOF_04 := &"lpfv.fabric.roof.room.orange.04"
 const ROOM_ROOF_02 := &"lpfv.fabric.roof.room.boarded.02"
@@ -1264,6 +1312,26 @@ static func _compile_module_program(catalog: EnvironmentCatalog) \
 		COMPACT_ROOF_SLATE_FRONT_END_TIGHT,
 		COMPACT_ROOF_SLATE_REAR_TIGHT,
 		COMPACT_ROOF_SLATE_MIDDLE_TIGHT, COMPACT_ROOF_SLATE_FRONT_TIGHT,
+		COMPACT_ROOF_ORANGE_RUN_START, COMPACT_ROOF_ORANGE_RUN_MIDDLE,
+		COMPACT_ROOF_ORANGE_RUN_END, COMPACT_ROOF_ORANGE_RUN_START_TIGHT,
+		COMPACT_ROOF_ORANGE_RUN_MIDDLE_TIGHT,
+		COMPACT_ROOF_ORANGE_RUN_MIDDLE_MIRROR,
+		COMPACT_ROOF_ORANGE_RUN_MIDDLE_TIGHT_MIRROR,
+		COMPACT_ROOF_ORANGE_RUN_END_TIGHT,
+		COMPACT_ROOF_ORANGE_RUN_START_FLUSH,
+		COMPACT_ROOF_ORANGE_RUN_START_TIGHT_FLUSH,
+		COMPACT_ROOF_ORANGE_RUN_END_FLUSH,
+		COMPACT_ROOF_ORANGE_RUN_END_TIGHT_FLUSH,
+		COMPACT_ROOF_SLATE_RUN_START, COMPACT_ROOF_SLATE_RUN_MIDDLE,
+		COMPACT_ROOF_SLATE_RUN_END, COMPACT_ROOF_SLATE_RUN_START_TIGHT,
+		COMPACT_ROOF_SLATE_RUN_MIDDLE_TIGHT,
+		COMPACT_ROOF_SLATE_RUN_MIDDLE_MIRROR,
+		COMPACT_ROOF_SLATE_RUN_MIDDLE_TIGHT_MIRROR,
+		COMPACT_ROOF_SLATE_RUN_END_TIGHT,
+		COMPACT_ROOF_SLATE_RUN_START_FLUSH,
+		COMPACT_ROOF_SLATE_RUN_START_TIGHT_FLUSH,
+		COMPACT_ROOF_SLATE_RUN_END_FLUSH,
+		COMPACT_ROOF_SLATE_RUN_END_TIGHT_FLUSH,
 		ROOF_WINDOW_01, ROOF_WINDOW_02, ROOF_WINDOW_03, ROOF_WINDOW_04,
 		ROOF_SEAM,
 		ROOF_BISECT_LEFT_BLUE, ROOF_BISECT_RIGHT_BLUE,
@@ -2535,20 +2603,32 @@ static func _compact_roof_variants(centre: Vector3, yaw: float,
 	## invents an offset for a mesh that happened to look close.
 	var definitions := {
 		&"blue": {
-			&"start": COMPACT_ROOF_SLATE_REAR_TIGHT if tight_cross_eaves \
-				else COMPACT_ROOF_SLATE_REAR,
-			&"middle": COMPACT_ROOF_SLATE_MIDDLE_TIGHT if tight_cross_eaves \
-				else COMPACT_ROOF_SLATE_MIDDLE,
-			&"end": COMPACT_ROOF_SLATE_FRONT_TIGHT if tight_cross_eaves \
-				else COMPACT_ROOF_SLATE_FRONT,
+			&"start": COMPACT_ROOF_SLATE_RUN_START_TIGHT \
+				if tight_cross_eaves else COMPACT_ROOF_SLATE_RUN_START,
+			&"start_flush": COMPACT_ROOF_SLATE_RUN_START_TIGHT_FLUSH \
+				if tight_cross_eaves else COMPACT_ROOF_SLATE_RUN_START_FLUSH,
+			&"middle": COMPACT_ROOF_SLATE_RUN_MIDDLE_TIGHT \
+				if tight_cross_eaves else COMPACT_ROOF_SLATE_RUN_MIDDLE,
+			&"middle_mirror": COMPACT_ROOF_SLATE_RUN_MIDDLE_TIGHT_MIRROR \
+				if tight_cross_eaves else COMPACT_ROOF_SLATE_RUN_MIDDLE_MIRROR,
+			&"end": COMPACT_ROOF_SLATE_RUN_END_TIGHT \
+				if tight_cross_eaves else COMPACT_ROOF_SLATE_RUN_END,
+			&"end_flush": COMPACT_ROOF_SLATE_RUN_END_TIGHT_FLUSH \
+				if tight_cross_eaves else COMPACT_ROOF_SLATE_RUN_END_FLUSH,
 		},
 		&"orange": {
-			&"start": COMPACT_ROOF_ORANGE_REAR_TIGHT if tight_cross_eaves \
-				else COMPACT_ROOF_ORANGE_REAR,
-			&"middle": COMPACT_ROOF_ORANGE_MIDDLE_TIGHT if tight_cross_eaves \
-				else COMPACT_ROOF_ORANGE_MIDDLE,
-			&"end": COMPACT_ROOF_ORANGE_FRONT_TIGHT if tight_cross_eaves \
-				else COMPACT_ROOF_ORANGE_FRONT,
+			&"start": COMPACT_ROOF_ORANGE_RUN_START_TIGHT \
+				if tight_cross_eaves else COMPACT_ROOF_ORANGE_RUN_START,
+			&"start_flush": COMPACT_ROOF_ORANGE_RUN_START_TIGHT_FLUSH \
+				if tight_cross_eaves else COMPACT_ROOF_ORANGE_RUN_START_FLUSH,
+			&"middle": COMPACT_ROOF_ORANGE_RUN_MIDDLE_TIGHT \
+				if tight_cross_eaves else COMPACT_ROOF_ORANGE_RUN_MIDDLE,
+			&"middle_mirror": COMPACT_ROOF_ORANGE_RUN_MIDDLE_TIGHT_MIRROR \
+				if tight_cross_eaves else COMPACT_ROOF_ORANGE_RUN_MIDDLE_MIRROR,
+			&"end": COMPACT_ROOF_ORANGE_RUN_END_TIGHT \
+				if tight_cross_eaves else COMPACT_ROOF_ORANGE_RUN_END,
+			&"end_flush": COMPACT_ROOF_ORANGE_RUN_END_TIGHT_FLUSH \
+				if tight_cross_eaves else COMPACT_ROOF_ORANGE_RUN_END_FLUSH,
 		},
 	}
 	var out: Dictionary = {}
@@ -2571,7 +2651,9 @@ static func _compact_roof_variants(centre: Vector3, yaw: float,
 static func _add_compact_roof_run_contract(recipe_value: FabricRecipe,
 		run_id: StringName, centres: Array[Vector3], original_ids: Array,
 		ridge_axis: StringName, authored_family: StringName,
-		modules: FabricModuleProgram, tight_cross_eaves: bool = true) -> void:
+		modules: FabricModuleProgram, tight_cross_eaves: bool = true,
+		run_half_length: float = CELL, run_pitch: float = CELL * 2.0,
+		section_pitch: float = CELL) -> void:
 	assert(recipe_value != null and not centres.is_empty()
 		and centres.size() == original_ids.size())
 	assert(ridge_axis in [&"x", &"z"])
@@ -2594,9 +2676,9 @@ static func _add_compact_roof_run_contract(recipe_value: FabricRecipe,
 	var last := centres[-1]
 	var cross := first.z if ridge_axis == &"x" else first.x
 	recipe_value.add_compact_roof_run(run_id,
-		first - axis * CELL, last + axis * CELL,
-		cross - CELL, cross + CELL, CELL * 2.0,
-		&"compact_gable_exact_3m", authored_family, bays)
+		first - axis * run_half_length, last + axis * run_half_length,
+		cross - CELL, cross + CELL, run_pitch,
+		&"compact_gable_exact_3m", authored_family, bays, section_pitch)
 
 
 static func _tower_roof_recipe(recipe_id: StringName, roof_asset: StringName,
@@ -3339,6 +3421,16 @@ static func _partial_gable_roof_recipe(recipe_id: StringName,
 		pose = modules.roof_bearing_aligned_transform(roof_asset, pose, 0.0)
 		recipe_value.add_placement(StringName("gable.%02d" % run_index),
 			roof_asset, pose)
+		# A half-depth crown is still a typed ridge run. Neighboring source
+		# strips can therefore join before realization, replacing repeated
+		# exterior halves with one start/middle/end roof. The 1.5 m run pitch
+		# describes the source claim; the 1.5 m section pitch describes the
+		# symmetric baked repeat. Keeping both explicit avoids inferring either
+		# measurement from a rendered AABB.
+		_add_compact_roof_run_contract(recipe_value,
+			StringName("compact.%02d" % run_index), [target],
+			[[StringName("gable.%02d" % run_index)]], &"z", theme,
+			modules, true, CELL * 0.5, CELL, CELL)
 	for x in length_cells:
 		recipe_value.occluder_cells.append(Vector3i(x, 0, 0))
 	recipe_value.add_socket(&"bearing.bottom",

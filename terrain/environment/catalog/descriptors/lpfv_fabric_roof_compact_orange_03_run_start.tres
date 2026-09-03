@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_54vln"]
+
+[resource]
+script = ExtResource("1_54vln")
+id = &"lpfv.fabric.roof.compact.orange.03.run.start"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_start.tres"
+tags = Array[StringName]([&"building", &"compact_roof", &"continuous_roof_start", &"fabric_roof", &"village"])
+measured_aabb = AABB(-1.8227121, 5.453201e-07, -2.0819523, 3.645424, 2.1728582, 1.3319523)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.roof.compact.orange.03.run.start"

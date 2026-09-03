@@ -19,6 +19,7 @@ var eligible_run_count := 0
 var joined_run_count := 0
 var internal_gable_count := 0
 var normalized_repeat_count := 0
+var flush_endpoint_count := 0
 var last_rejection := ""
 var _valid := false
 
@@ -40,6 +41,7 @@ func audit() -> Dictionary:
 		"continuous_roof_joined_run_count": joined_run_count,
 		"continuous_roof_internal_gable_count": internal_gable_count,
 		"continuous_roof_normalized_repeat_count": normalized_repeat_count,
+		"continuous_roof_flush_endpoint_count": flush_endpoint_count,
 	}
 
 
@@ -307,12 +309,17 @@ func _compile_compact_run(unit: FabricUnit, run_value: Dictionary) -> Dictionary
 			var source_roles := (bay.variants as Dictionary)[family_value] \
 				as Dictionary
 			var compiled_roles: Dictionary = {}
-			for world_role: StringName in [&"start", &"middle", &"end"]:
+			for world_role: StringName in [&"start", &"start_flush", &"middle",
+					&"middle_mirror", &"end", &"end_flush"]:
 				var source_role: StringName = world_role
 				if reversed and world_role == &"start":
 					source_role = &"end"
 				elif reversed and world_role == &"end":
 					source_role = &"start"
+				elif reversed and world_role == &"start_flush":
+					source_role = &"end_flush"
+				elif reversed and world_role == &"end_flush":
+					source_role = &"start_flush"
 				var source := source_roles[source_role] as Dictionary
 				var bounds := unit_transform * (source.bounds as AABB)
 				compiled_roles[world_role] = {
@@ -339,6 +346,7 @@ func _compile_compact_run(unit: FabricUnit, run_value: Dictionary) -> Dictionary
 	return {
 		"kind": &"compact_gable",
 		"unit_id": unit.stable_id,
+		"bearing_parent_ids": unit.parent_ids.duplicate(),
 		"run_id": StringName(run_value.get("id", "")),
 		"start": start,
 		"end": end,
@@ -348,6 +356,8 @@ func _compile_compact_run(unit: FabricUnit, run_value: Dictionary) -> Dictionary
 		"base_y": profile_base,
 		"peak_y": profile_peak,
 		"repeat_pitch": float(run_value.get("repeat_pitch", 0.0)),
+		"section_pitch": float(run_value.get("section_pitch",
+			float(run_value.get("repeat_pitch", 0.0)) * 0.5)),
 		"seam_profile": StringName(run_value.get("seam_profile", "")),
 		"authored_material": StringName(run_value.get("material_family", "")),
 		"bays": compiled_bays,
@@ -391,7 +401,16 @@ func _realize_compact_component(component_runs: Array[Dictionary],
 	var common_families: Dictionary = {}
 	var first := true
 	var bays: Array[Dictionary] = []
+	var component_unit_ids: Array[StringName] = []
+	var component_bearing_ids: Array[StringName] = []
 	for run: Dictionary in component_runs:
+		var component_unit_id := StringName(run.unit_id)
+		if not component_unit_ids.has(component_unit_id):
+			component_unit_ids.append(component_unit_id)
+		for parent_id: StringName in run.get(
+				"bearing_parent_ids", []) as Array[StringName]:
+			if not component_bearing_ids.has(parent_id):
+				component_bearing_ids.append(parent_id)
 		var run_bays := run.bays as Array
 		if run_bays.is_empty():
 			return &""
@@ -431,23 +450,126 @@ func _realize_compact_component(component_runs: Array[Dictionary],
 		if StringName(run.authored_material) != canonical:
 			normalized_repeat_count += (run.bays as Array).size()
 	internal_gable_count += component_joins.size() * 2
-	for bay_index in bays.size():
-		var role := &"start" if bay_index == 0 else &"end" \
-			if bay_index == bays.size() - 1 else &"middle"
-		var bay := bays[bay_index] as Dictionary
-		var variant := (((bay.variants as Dictionary)[canonical] \
-			as Dictionary)[role]) as Dictionary
+	# The source compact roof bows upward toward both authored gable ends. Cutting
+	# one three-metre piece from it and translating that whole piece by three
+	# metres therefore joins two *different* cross-sections and opens a visible
+	# notch even though their AABBs touch. Construction instead repeats the
+	# symmetric central 1.5 m profile: the negative and positive cut planes are
+	# mirror-equivalent. Separate exterior strips keep the source roof's complete
+	# measured eaves. This produces one continuous crown from compatible section
+	# boundaries rather than covering a bad seam with trim or an overlap.
+	var axis := Vector3.RIGHT if bool(component_runs[0].axis_x) \
+		else Vector3.BACK
+	var section_pitch := float(component_runs[0].section_pitch)
+	var component_start := component_runs[0].start as Vector3
+	var component_end := component_runs[-1].end as Vector3
+	var desired_first_scalar := _axis_scalar(component_start,
+		component_runs[0]) + section_pitch
+	var desired_last_scalar := _axis_scalar(component_end,
+		component_runs[0]) - section_pitch
+	if desired_last_scalar + PROFILE_EPSILON < desired_first_scalar:
+		return &""
+	var first_bay := bays[0] as Dictionary
+	var last_bay := bays[-1] as Dictionary
+	var first_centre := first_bay.centre as Vector3
+	var last_centre := last_bay.centre as Vector3
+	var first_shift := axis * (desired_first_scalar \
+		- _axis_scalar(first_centre, component_runs[0]))
+	var last_shift := axis * (desired_last_scalar \
+		- _axis_scalar(last_centre, component_runs[0]))
+	var centre_distance := desired_last_scalar - desired_first_scalar
+	var middle_count := roundi(centre_distance / section_pitch) + 1
+	if middle_count < 1 \
+			or absf(centre_distance - float(middle_count - 1) * section_pitch) \
+			> PROFILE_EPSILON:
+		return &""
+	var sections: Array[Dictionary] = [{
+		"variant": (((first_bay.variants as Dictionary)[canonical] \
+			as Dictionary)[&"start"]) as Dictionary,
+		"flush_variant": (((first_bay.variants as Dictionary)[canonical] \
+			as Dictionary)[&"start_flush"]) as Dictionary,
+		"offset": first_shift,
+	}]
+	var middle_variant := (((first_bay.variants as Dictionary)[canonical] \
+		as Dictionary)[&"middle"]) as Dictionary
+	var mirrored_middle_variant := (((first_bay.variants as Dictionary)[canonical] \
+		as Dictionary)[&"middle_mirror"]) as Dictionary
+	for middle_index in middle_count:
+		sections.append({
+			# Adjacent source cross-sections are identical only after alternating
+			# the properly baked Z reflection. Runtime transforms remain proper;
+			# winding, normals, tangents, and collision were corrected by the bake.
+			"variant": middle_variant if middle_index % 2 == 0 \
+				else mirrored_middle_variant,
+			"offset": first_shift + axis * section_pitch * float(middle_index),
+		})
+	sections.append({
+		"variant": (((last_bay.variants as Dictionary)[canonical] \
+			as Dictionary)[&"end"]) as Dictionary,
+		"flush_variant": (((last_bay.variants as Dictionary)[canonical] \
+			as Dictionary)[&"end_flush"]) as Dictionary,
+		"offset": last_shift,
+	})
+	for section_index in sections.size():
+		var section := sections[section_index] as Dictionary
+		var variant := section.variant as Dictionary
+		var offset := section.offset as Vector3
+		# Transform3D and AABB are value types. Reconstruct them explicitly so
+		# the validation envelope and committed transform receive the identical
+		# section translation.
+		var source_transform := variant.transform as Transform3D
+		var section_transform := Transform3D(source_transform.basis,
+			source_transform.origin + offset)
+		var source_bounds := variant.bounds as AABB
+		var section_bounds := AABB(source_bounds.position + offset,
+			source_bounds.size)
 		var stable_id := StringName("%s/continuous-roof/%03d/%03d" % [
-			StringName(component_runs[0].unit_id), component_index, bay_index])
-		synthetic_placements.append({
+			StringName(component_runs[0].unit_id), component_index,
+			section_index])
+		var synthetic := {
 			"stable_id": stable_id,
 			"placement_id": stable_id,
 			"asset_id": StringName(variant.asset_id),
-			"transform": variant.transform as Transform3D,
-			"bounds": variant.bounds as AABB,
+			"transform": section_transform,
+			"bounds": section_bounds,
 			"collision_pieces": int(variant.collision_pieces),
-		})
+			"roof_component_unit_ids": component_unit_ids.duplicate(),
+			"roof_component_bearing_ids": component_bearing_ids.duplicate(),
+		}
+		if section.has("flush_variant"):
+			var flush_variant := section.flush_variant as Dictionary
+			var flush_source_transform := flush_variant.transform as Transform3D
+			var flush_source_bounds := flush_variant.bounds as AABB
+			synthetic["flush_alternative"] = {
+				"asset_id": StringName(flush_variant.asset_id),
+				"transform": Transform3D(flush_source_transform.basis,
+					flush_source_transform.origin + offset),
+				"bounds": AABB(flush_source_bounds.position + offset,
+					flush_source_bounds.size),
+				"collision_pieces": int(flush_variant.collision_pieces),
+			}
+		synthetic_placements.append(synthetic)
 	return canonical
+
+
+func select_flush_alternative(synthetic: Dictionary) -> bool:
+	## Exterior gable overhangs remain the preferred construction. At a measured
+	## perpendicular junction the plan may instead select the baked endpoint whose
+	## ridge span ends at the semantic building plane. Because its bounds are a
+	## strict subset of the preferred endpoint, this choice can remove but never
+	## create an intersection.
+	var alternative := synthetic.get("flush_alternative", {}) as Dictionary
+	var current_bounds := synthetic.get("bounds", AABB()) as AABB
+	var alternative_bounds := alternative.get("bounds", AABB()) as AABB
+	if alternative.is_empty() or not alternative_bounds.has_volume() \
+			or not current_bounds.grow(PROFILE_EPSILON).encloses(
+				alternative_bounds):
+		return false
+	for key: String in ["asset_id", "transform", "bounds", "collision_pieces"]:
+		synthetic[key] = alternative[key]
+	synthetic.erase("flush_alternative")
+	flush_endpoint_count += 1
+	return true
 
 
 static func _endpoint_key(endpoint: Vector3, run: Dictionary) -> String:
@@ -473,10 +595,13 @@ static func _is_gapless_chain(runs: Array[Dictionary]) -> bool:
 	if runs.size() < 2:
 		return false
 	var pitch := float(runs[0].repeat_pitch)
+	var section_pitch := float(runs[0].get("section_pitch", pitch * 0.5))
 	for index in runs.size():
 		var run := runs[index]
 		if StringName(run.kind) != StringName(runs[0].kind) \
-				or absf(float(run.repeat_pitch) - pitch) > PROFILE_EPSILON:
+				or absf(float(run.repeat_pitch) - pitch) > PROFILE_EPSILON \
+				or absf(float(run.get("section_pitch", pitch * 0.5)) \
+					- section_pitch) > PROFILE_EPSILON:
 			return false
 		var length := _axis_scalar(run.end as Vector3, run) \
 			- _axis_scalar(run.start as Vector3, run)

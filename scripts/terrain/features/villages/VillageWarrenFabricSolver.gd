@@ -13,6 +13,8 @@ const CLEARANCE_MARGIN := 1.5
 const WALK_HALF_THICKNESS := 0.10
 const GUARD_HALF_WIDTH := 0.10
 const GUARD_HEIGHT := 1.5
+const TERRAIN_HANDOFF_LIFT := 0.025
+const TERRAIN_HANDOFF_SUPPORT_EPSILON := 0.005
 const OPTIONAL_FRONTAGE_GROUND_TOLERANCE := 0.12
 const OPTIONAL_FRONTAGE_MAX_DROP := TraversalEnvelope.MAX_PLANNED_STEP
 const _CARDINAL_QUARTERS := 4
@@ -219,6 +221,13 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	for mesh: Dictionary in local_payload.surface_meshes:
 		result.surface_meshes.append(_world_surface_mesh(mesh, world_frame,
 			stable_id, world_seed))
+	# Both sealed itinerary ends are exterior contacts. Bridge each finished
+	# street boundary back to the immutable terrain; deriving the pair from the
+	# same route transaction prevents one end from remaining a floating slab.
+	for handoff: Dictionary in _terrain_handoff_meshes(terrain, spatial,
+			fabric, world_frame):
+		result.surface_meshes.append(_world_surface_mesh(handoff, world_frame,
+			stable_id, world_seed))
 	var local_bounds := placement.local_bounds as AABB
 	var local_centre := Vector3(local_bounds.get_center().x, 0.0,
 		local_bounds.get_center().z)
@@ -340,13 +349,298 @@ static func _world_surface_mesh(mesh: Dictionary, world_frame: Transform3D,
 		var colors := PackedColorArray()
 		colors.resize(vertices.size())
 		for index in vertices.size():
-			colors[index] = Color.WHITE if bool(mesh.get("terrain_path", false)) \
-				else BiomeRegistry.ground_tint_at(vertices[index], world_seed) \
+			# Streamed grass, path paint, cliff skirts, and village terrain
+			# surfaces all multiply the shared atlas by the same world-space biome
+			# tint. Leaving structural paths white made a handoff change colour at
+			# the exact seam even when its vertices were coincident with terrain.
+			colors[index] = BiomeRegistry.ground_tint_at(vertices[index], world_seed) \
 				if world_seed != 0 else Color.WHITE
 		out["colors"] = colors
 	out["anchor"] = world_frame * (mesh.get("anchor", Vector3.ZERO) as Vector3)
 	out["stable_id"] = StringName("%s/%s" % [stable_id,
 		StringName(mesh.get("stable_id", ""))])
+	return out
+
+
+static func terrain_contact_specs(spatial: WarrenSpatialPlan,
+		fabric: SettlementFabricPlan) -> Array[Dictionary]:
+	## The finished terrain street is made of complete 2 x 2 fine-cell macro
+	## blocks. Its same-datum macro graph, not the source itinerary's first cell,
+	## owns every real exterior end: ground arcades may introduce a second route
+	## end long after the primary itinerary has climbed into the town. Resolve
+	## each degree-one block to its exact outer two-cell row. The result is shared
+	## by render handoffs and the outskirts solver, so roads, ramps, and houses
+	## cannot disagree about where the town ends.
+	var out: Array[Dictionary] = []
+	if spatial == null or fabric == null or fabric.surface_plan == null:
+		return out
+	var street: Dictionary = {}
+	for cell: Vector3i in fabric.surface_plan.cells_for_kind(
+			PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET):
+		street[cell] = true
+	if street.is_empty():
+		return out
+	var blocks: Dictionary = {}
+	for cell_value: Variant in street.keys():
+		var cell := cell_value as Vector3i
+		var macro := Vector3i(floori(float(cell.x) * 0.5), cell.y,
+			floori(float(cell.z) * 0.5))
+		var complete := true
+		for dx in 2:
+			for dz in 2:
+				complete = complete and street.has(Vector3i(
+					macro.x * 2 + dx, macro.y, macro.z * 2 + dz))
+		if complete:
+			blocks[macro] = true
+	var ordered_blocks: Array[Vector3i] = []
+	ordered_blocks.assign(blocks.keys())
+	ordered_blocks.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		if a.y != b.y:
+			return a.y < b.y
+		return a.z < b.z if a.z != b.z else a.x < b.x)
+	var seen: Dictionary = {}
+	# The authored entrance remains a semantic boundary even when the finished
+	# street immediately bends or widens and therefore has macro degree two.
+	# Resolve its outer row from the same source-route fact that seals the spatial
+	# plan, then let the graph search below add any later ground arcade exits.
+	if spatial.source_volume != null \
+			and spatial.source_volume.primary_itinerary.size() >= 2:
+		var source := spatial.source_volume
+		var entry_macro := source.primary_itinerary[0]
+		var route_delta := source.primary_itinerary[1] - entry_macro
+		var inward := Vector3i(signi(route_delta.x), 0,
+			signi(route_delta.z))
+		if absi(inward.x) + absi(inward.z) == 1:
+			var outward := -inward
+			var lateral := Vector3i(-inward.z, 0, inward.x)
+			var boundary_cells: Array[Vector3i] = []
+			for lateral_index in 2:
+				var cell := Vector3i(
+					entry_macro.x * 2 + (1 if outward.x > 0 else 0),
+					entry_macro.y,
+					entry_macro.z * 2 + lateral_index) \
+					if outward.x != 0 else Vector3i(
+					entry_macro.x * 2 + lateral_index, entry_macro.y,
+					entry_macro.z * 2 + (1 if outward.z > 0 else 0))
+				while street.has(cell + outward):
+					cell += outward
+				boundary_cells.append(cell)
+			boundary_cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+				return a.x * lateral.x + a.z * lateral.z \
+					< b.x * lateral.x + b.z * lateral.z)
+			if boundary_cells.size() == 2 \
+					and boundary_cells[0] + lateral == boundary_cells[1]:
+				var contact_key := "%s/%s" % [boundary_cells[0], outward]
+				seen[contact_key] = true
+				out.append({
+					"cells": boundary_cells,
+					"outward": outward,
+					"lateral": lateral,
+					"stable_suffix": "entry",
+				})
+	for macro: Vector3i in ordered_blocks:
+		var neighbours: Array[Vector3i] = []
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			if blocks.has(macro + direction):
+				neighbours.append(macro + direction)
+		if neighbours.size() != 1:
+			continue
+		var inward_delta := neighbours[0] - macro
+		var inward := Vector3i(signi(inward_delta.x), 0,
+			signi(inward_delta.z))
+		if absi(inward.x) + absi(inward.z) != 1:
+			continue
+		var outward := -inward
+		var lateral := Vector3i(-inward.z, 0, inward.x)
+		var boundary_set: Dictionary = {}
+		for lateral_index in 2:
+			var cell := Vector3i(
+				macro.x * 2 + (1 if outward.x > 0 else 0), macro.y,
+				macro.z * 2 + lateral_index) if outward.x != 0 else Vector3i(
+				macro.x * 2 + lateral_index, macro.y,
+				macro.z * 2 + (1 if outward.z > 0 else 0))
+			while street.has(cell + outward):
+				cell += outward
+			if not street.has(cell + outward):
+				boundary_set[cell] = true
+		var boundary_cells: Array[Vector3i] = []
+		boundary_cells.assign(boundary_set.keys())
+		boundary_cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+			return a.x * lateral.x + a.z * lateral.z \
+				< b.x * lateral.x + b.z * lateral.z)
+		# A legal two-lane macro street owns exactly one adjacent pair on its
+		# outer row. Refuse a partial or widened accident rather than inventing a
+		# decorative ramp whose width no topology owns.
+		if boundary_cells.size() != 2 \
+				or boundary_cells[0].y != boundary_cells[1].y \
+				or boundary_cells[0] + lateral != boundary_cells[1]:
+			continue
+		var contact_key := "%s/%s" % [boundary_cells[0], outward]
+		if seen.has(contact_key):
+			continue
+		seen[contact_key] = true
+		out.append({
+			"cells": boundary_cells,
+			"outward": outward,
+			"lateral": lateral,
+			"stable_suffix": "%d.%d.%d" % [macro.x, macro.y, macro.z],
+		})
+	return out
+
+
+static func _terrain_handoff_meshes(terrain: VillageTerrainView,
+		spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
+		world_frame: Transform3D) -> Array[Dictionary]:
+	## Each contact becomes one exact two-cell-wide top plus a perimeter support
+	## skin. Its inner edge is the
+	## finished street boundary; both outer corners independently sample the same
+	## immutable terrain view that admitted the settlement. Every top corner also
+	## carries that terrain sample as its bearing datum. Where the ramp rises above
+	## the field, rock faces close the interval; where it meets the field they
+	## collapse to zero. A legal walk surface therefore cannot render as a floating
+	## sheet even when the low camera can see its sides. No reviewed seed,
+	## coordinate, or after-the-fact visual offset enters this construction.
+	var out: Array[Dictionary] = []
+	if terrain == null or spatial == null or fabric == null \
+			or world_frame.basis.determinant() == 0.0:
+		return out
+	var world_scale := VillageWorldScale.scale_of(world_frame)
+	for spec: Dictionary in terrain_contact_specs(spatial, fabric):
+		var boundary_cells := spec.cells as Array[Vector3i]
+		var outward := spec.outward as Vector3i
+		var lateral := spec.lateral as Vector3i
+		var centre := Vector3.ZERO
+		for cell: Vector3i in boundary_cells:
+			centre += (Vector3(cell) + Vector3(0.5, 0.0, 0.5)) \
+				* FabricRecipe.CELL_SIZE
+		centre /= float(boundary_cells.size())
+		var half_width := FabricRecipe.CELL_SIZE \
+			* float(boundary_cells.size()) * 0.5
+		var out3 := Vector3(outward)
+		var side3 := Vector3(lateral)
+		var inner_centre := centre + out3 * FabricRecipe.CELL_SIZE * 0.5
+		var outer_centre := inner_centre + out3 * FabricRecipe.CELL_SIZE
+		var inner_y := float(boundary_cells[0].y) \
+			* FabricRecipe.CELL_SIZE + TERRAIN_HANDOFF_LIFT
+		var a := inner_centre - side3 * half_width
+		var b := outer_centre - side3 * half_width
+		var c := outer_centre + side3 * half_width
+		var d := inner_centre + side3 * half_width
+		a.y = inner_y
+		d.y = inner_y
+		var outer_corners: Array[Vector3] = [b, c]
+		var contact_is_walkable := true
+		for index in outer_corners.size():
+			var point := outer_corners[index]
+			var sample_world := world_frame * Vector3(point.x, 0.0, point.z)
+			point.y = (terrain.surface_y(Vector2(sample_world.x,
+				sample_world.z)) + TERRAIN_HANDOFF_LIFT \
+				- world_frame.origin.y) / world_scale
+			# This is a ramp, not a bare step. Its one-cell horizontal run may
+			# reconcile at most one matching fabric band; larger relief requires
+			# the stair system and cannot be disguised by a stretched quad.
+			contact_is_walkable = contact_is_walkable and absf(
+				(point.y - inner_y) * world_scale) \
+				<= FabricRecipe.CELL_SIZE * world_scale + 0.001
+			outer_corners[index] = point
+		if not contact_is_walkable:
+			continue
+		b = outer_corners[0]
+		c = outer_corners[1]
+		var vertices := PackedVector3Array([a, b, c, d])
+		var normals := PackedVector3Array()
+		var normal := (c - a).cross(b - a).normalized()
+		if normal.y < 0.0:
+			normal = -normal
+		for _index in 4:
+			normals.append(normal)
+		var uvs := PackedVector2Array()
+		for point: Vector3 in vertices:
+			uvs.append(Vector2(point.x, point.z) / 3.0)
+		out.append({
+			"kind": PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET,
+			"vertices": vertices,
+			"normals": normals,
+			"uvs": uvs,
+			"indices": PackedInt32Array([0, 2, 1, 0, 3, 2]),
+			"collision_faces": PackedVector3Array([a, c, b, a, d, c]),
+			"logical_cells": boundary_cells,
+			"anchor": centre,
+			"stable_id": StringName("public-terrain-handoff/%s" \
+				% String(spec.stable_suffix)),
+			"terrain_ground": true,
+			"terrain_path": true,
+		})
+		var top_corners: Array[Vector3] = [a, b, c, d]
+		var ground_corners: Array[Vector3] = []
+		for top: Vector3 in top_corners:
+			var ground_world := world_frame * Vector3(top.x, 0.0, top.z)
+			var ground := top
+			ground.y = (terrain.surface_y(Vector2(ground_world.x,
+				ground_world.z)) - world_frame.origin.y) / world_scale
+			ground_corners.append(ground)
+		var support_vertices := PackedVector3Array()
+		var support_normals := PackedVector3Array()
+		var support_uvs := PackedVector2Array()
+		var support_indices := PackedInt32Array()
+		var support_collision := PackedVector3Array()
+		for edge_index in 4:
+			var next_index := (edge_index + 1) % 4
+			var top_a := top_corners[edge_index]
+			var top_b := top_corners[next_index]
+			var ground_a := ground_corners[edge_index]
+			var ground_b := ground_corners[next_index]
+			if top_a.y - ground_a.y <= TERRAIN_HANDOFF_SUPPORT_EPSILON \
+					and top_b.y - ground_b.y <= TERRAIN_HANDOFF_SUPPORT_EPSILON:
+				continue
+			# Keep the indexed winding, declared normal, and visible side in one
+			# transaction. The four perimeter edges do not share one winding once
+			# their ground corners independently follow the field, so deriving a
+			# normal from only the edge direction made alternate cheeks back-facing.
+			var edge_normal := (ground_b - top_a).cross(
+				top_b - top_a).normalized()
+			if edge_normal.is_zero_approx():
+				continue
+			var edge_midpoint := (top_a + top_b + ground_a + ground_b) * 0.25
+			var outward_hint := edge_midpoint - centre
+			outward_hint.y = 0.0
+			var reverse_winding := edge_normal.dot(outward_hint) < 0.0
+			if reverse_winding:
+				edge_normal = -edge_normal
+			var base_index := support_vertices.size()
+			support_vertices.append_array(PackedVector3Array([
+				top_a, top_b, ground_b, ground_a]))
+			for _corner in 4:
+				support_normals.append(edge_normal)
+				support_uvs.append(Vector2.ZERO)
+			if reverse_winding:
+				support_indices.append_array(PackedInt32Array([
+					base_index, base_index + 1, base_index + 2,
+					base_index, base_index + 2, base_index + 3]))
+				support_collision.append_array(PackedVector3Array([
+					top_a, top_b, ground_b, top_a, ground_b, ground_a]))
+			else:
+				support_indices.append_array(PackedInt32Array([
+					base_index, base_index + 2, base_index + 1,
+					base_index, base_index + 3, base_index + 2]))
+				support_collision.append_array(PackedVector3Array([
+					top_a, ground_b, top_b, top_a, ground_a, ground_b]))
+		if not support_vertices.is_empty():
+			out.append({
+				"kind": PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET,
+				"vertices": support_vertices,
+				"normals": support_normals,
+				"uvs": support_uvs,
+				"indices": support_indices,
+				"collision_faces": support_collision,
+				"logical_cells": boundary_cells,
+				"anchor": centre,
+				"stable_id": StringName("public-terrain-handoff-support/%s" \
+					% String(spec.stable_suffix)),
+				"terrain_ground": true,
+				"terrain_rock": true,
+			})
 	return out
 
 
@@ -493,29 +787,27 @@ static func _append_ground_supports(payload: EnvironmentInstancePayload,
 		for cell: Vector3i in fabric.surface_plan.cells_for_kind(kind):
 			support_cells[cell] = true
 	var lowest_bearing_y := _lowest_bearing_y_by_column(solids, support_cells)
-	var ordered: Array[Vector3i] = []
-	ordered.assign(support_cells.keys())
-	ordered.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
-		return a.x < b.x if a.x != b.x else a.z < b.z)
-	for cell: Vector3i in ordered:
-		if fabric.surface_plan.has_support_base(cell) \
-				and cell.y - fabric.surface_plan.support_base_at(cell) == 1:
+	var walked := SettlementFabricAssembler.walked_floor_cells(
+		fabric.surface_plan)
+	for anchor: Dictionary in SettlementFabricAssembler \
+			.structural_support_anchors(support_cells):
+		var owner_cells := anchor.cells as Array[Vector3i]
+		var surface_band := (owner_cells[0] as Vector3i).y
+		var support_base := 2147483647
+		for owner: Vector3i in owner_cells:
+			support_base = mini(support_base,
+				fabric.surface_plan.support_base_at(owner))
+		if surface_band - support_base == 1 \
+				or SettlementFabricAssembler._support_anchor_crosses_public_lane(
+					anchor.point as Vector3, support_base, surface_band, walked):
 			continue
-		# The exact exposed boundary owns the support rhythm. Every terminal corner
-		# receives a post; straight runs repeat at the native 3 m module pitch.
-		# Interior cells supported by four neighbors still need no post forest.
-		var exposed_directions: Array[Vector3i] = []
-		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
-				Vector3i.FORWARD, Vector3i.BACK]:
-			if not support_cells.has(cell + direction):
-				exposed_directions.append(direction)
-		if exposed_directions.is_empty() \
-				or not SettlementFabricAssembler._is_structural_support_anchor(
-					cell, exposed_directions):
+		var borne := false
+		for owner: Vector3i in owner_cells:
+			borne = borne or int(lowest_bearing_y.get(
+				Vector2i(owner.x, owner.z), owner.y)) < owner.y
+		if borne:
 			continue
-		if int(lowest_bearing_y.get(Vector2i(cell.x, cell.z), cell.y)) < cell.y:
-			continue
-		var local_point := Vector3(cell) * FabricRecipe.CELL_SIZE
+		var local_point := anchor.point as Vector3
 		var world_point3 := world_frame * local_point
 		var terrain_y := terrain.surface_y(Vector2(world_point3.x,
 			world_point3.z))
@@ -531,7 +823,7 @@ static func _append_ground_supports(payload: EnvironmentInstancePayload,
 				Transform3D(Basis.IDENTITY,
 					Vector3(local_point.x, local_y, local_point.z)),
 				Color.WHITE, StringName("terrain-support/%d/%d/%d/%d" % [
-					cell.x, cell.y, cell.z, segment]))
+					int(anchor.x2), surface_band, int(anchor.z2), segment]))
 
 
 static func _append_terrain_bearing_foundations(
@@ -582,7 +874,8 @@ static func _append_terrain_bearing_foundations(
 			if floor_world_y - minimum_ground_y \
 					<= OPTIONAL_FRONTAGE_GROUND_TOLERANCE:
 				continue
-			var origin := local_face
+			var origin := local_face - outward \
+				* SettlementFabricAssembler.STONE_CAP_HALF_DEPTH
 			origin.y = float(cell.y) * FabricRecipe.CELL_SIZE - 3.0
 			var yaw := PI * 0.5 if direction.x != 0 else 0.0
 			payload.add(SettlementFabricAssembler.HOUSE_PLINTH,

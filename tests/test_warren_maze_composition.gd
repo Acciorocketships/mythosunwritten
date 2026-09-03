@@ -1267,7 +1267,7 @@ func test_unroomed_plot_mass_is_bounded() -> void:
 				% _label(outcome))
 		# The stone the retention pass tagged and the residue this audit
 		# derives are two readings of one fact. TASK E4 FIX 1 makes the gap
-		# between them FOUR terms rather than one: a cell whose non-shareable
+		# between them four terms rather than one: a cell whose non-shareable
 		# FEATURE bit another owner already held (`_retain_maze_rock` skips
 		# and counts exactly those), a cell the stone TRIM cut off two storeys
 		# above the plot's own public floor, and unused envelope from an authored
@@ -1283,6 +1283,14 @@ func test_unroomed_plot_mass_is_bounded() -> void:
 			"maze_trimmed_roof_band_stone_cells", -1))
 		var released_asset := int(plan.audit.get(
 			"maze_released_asset_envelope_cells", -1))
+		var released_required_roof := int(plan.audit.get(
+			"maze_released_required_roof_envelope_cells", -1))
+		var released_required_roof_derived := int(plan.audit.get(
+			"maze_released_required_roof_derived_cells", -1))
+		var released_required_roof_unroomed := int(plan.audit.get(
+			"maze_released_required_roof_unroomed_plot_cells", -1))
+		var released_required_roof_band := int(plan.audit.get(
+			"maze_released_required_roof_band_cells", -1))
 		var released_singletons := int(plan.audit.get(
 			"maze_released_singleton_rock_crown_cells", -1))
 		var released_singleton_derived := int(plan.audit.get(
@@ -1294,16 +1302,27 @@ func test_unroomed_plot_mass_is_bounded() -> void:
 		var refused_trims := int(plan.audit.get(
 			"maze_refused_unroomed_plot_trims", -1))
 		print(("MAZE_STONE_TRIM %s trimmed=%d (unroomed=%d roof_band=%d) " \
-			+ "asset_envelope=%d singleton=%d/%d/%d/%d refused_plots=%d retained_unroomed=%d " \
+			+ "asset_envelope=%d required_roof=%d/%d/%d/%d " \
+			+ "singleton=%d/%d/%d/%d refused_plots=%d retained_unroomed=%d " \
 			+ "unroomed=%d") % [
 			_label(outcome), trimmed + trimmed_roof, trimmed, trimmed_roof,
-			released_asset, released_singletons, released_singleton_derived,
+			released_asset, released_required_roof,
+			released_required_roof_derived,
+			released_required_roof_unroomed,
+			released_required_roof_band,
+			released_singletons, released_singleton_derived,
 			released_singleton_unroomed, released_singleton_roof_band,
 			refused_trims, retained_unroomed,
 			unroomed])
 		assert_gte(released_asset, 0,
 			"%s must publish unused prefab envelope released to air" \
 				% _label(outcome))
+		assert_eq(released_required_roof,
+			released_required_roof_derived \
+				+ released_required_roof_unroomed \
+				+ released_required_roof_band,
+			("%s required-roof release must partition into derived, plot, " \
+				+ "and roof-band source mass") % _label(outcome))
 		assert_gte(trimmed_roof, 0,
 			"%s must publish the roof-band stone its trim released" \
 				% _label(outcome))
@@ -1323,8 +1342,10 @@ func test_unroomed_plot_mass_is_bounded() -> void:
 			"%s must publish the plots that refused to trim" \
 				% _label(outcome))
 		assert_between(unroomed - retained_unroomed,
-			trimmed + released_asset + released_singleton_unroomed,
-			trimmed + released_asset + released_singleton_unroomed \
+			trimmed + released_asset + released_required_roof_unroomed \
+				+ released_singleton_unroomed,
+			trimmed + released_asset + released_required_roof_unroomed \
+				+ released_singleton_unroomed \
 				+ int(plan.audit.get(
 				"maze_retained_rock_skipped_reserved", -1)),
 			("%s retains %d of the %d plot cells it left unroomed, having " \
@@ -3717,6 +3738,11 @@ func test_rock_is_retained_as_stone() -> void:
 			continue
 		var solids := fabric.transformed_cells(&"solid")
 		var retained := fabric.retained_terrace_cells
+		var permitted_withdrawals: Dictionary = {}
+		for key: String in ["maze_stone_withdrawn_for_roof_cell_keys",
+				"maze_unsupported_stone_cell_keys"]:
+			for cell: Vector3i in fabric.audit.get(key, []) as Array[Vector3i]:
+				permitted_withdrawals[cell] = true
 		var expected := 0
 		var missing := 0
 		var first := ""
@@ -3726,10 +3752,14 @@ func test_rock_is_retained_as_stone() -> void:
 			if use in [WarrenSpatialGrid.Use.PUBLIC_AIR,
 					WarrenSpatialGrid.Use.PRIVATE_VOLUME,
 					WarrenSpatialGrid.Use.DAYLIGHT_AIR] \
-					or solids.has(cell):
+					or solids.has(cell) \
+					or plan.grid.owner_name_at(cell) \
+						!= WarrenSpatialFabricCompiler.MAZE_RETAINED_STONE_ID:
 				continue
 			expected += 1
 			if retained.has(cell):
+				continue
+			if permitted_withdrawals.has(cell):
 				continue
 			missing += 1
 			if first.is_empty():
@@ -3753,10 +3783,29 @@ func test_rock_is_retained_as_stone() -> void:
 			"%s must publish the plinth faces retained stone suppressed" \
 				% _label(outcome))
 		assert_eq(missing, 0,
-			"%s discards %d of %d rock cells (first %s)" % [_label(outcome),
+			("%s discards %d of %d rock cells outside the final measured-roof " \
+			+ "and terrain-support withdrawals (first %s)") % [_label(outcome),
 				missing, expected, first])
 		assert_gt(audited, 0,
 			"%s must publish the retained rock it kept" % _label(outcome))
+		var maze_stone := SettlementFabricAssembler.maze_stone_cells(retained)
+		var plinth_cells := retained.duplicate()
+		for cell: Vector3i in maze_stone:
+			plinth_cells.erase(cell)
+		var support := WarrenSpatialFabricCompiler \
+			._supported_retained_maze_cells(plan, fabric, plinth_cells,
+				maze_stone, solids)
+		assert_eq((support.get("unsupported", {}) as Dictionary).size(), 0,
+			("%s exposes retained stone without a face-connected load path " \
+			+ "to the sampled terrain datum") % _label(outcome))
+		var roof_visual := WarrenSpatialFabricCompiler \
+			._actual_roof_visual_cells(fabric)
+		var roof_intersection := 0
+		for cell: Vector3i in maze_stone:
+			roof_intersection += int(roof_visual.has(cell))
+		assert_eq(roof_intersection, 0,
+			"%s keeps retained stone through a final roof placement" \
+				% _label(outcome))
 		var standing_audit := _route_floor_standing(plan, fabric)
 		var standing := int(standing_audit["standing"])
 		var holes := standing_audit["holes"] as Dictionary
@@ -4340,6 +4389,32 @@ func _stone_instances(fabric: SettlementFabricPlan) -> Array[Dictionary]:
 	return out
 
 
+func _stone_closure_instances(fabric: SettlementFabricPlan) \
+		-> Array[Dictionary]:
+	## Complete retained-boundary construction census.  `_stone_instances`
+	## intentionally returns only masonry/facade modules for material tests; the
+	## floor-facing half of the same shell now wears exact timber soffits.  This
+	## companion view includes both ID families for the shell-coverage identity.
+	var out := _stone_instances(fabric)
+	var payload := SettlementFabricAssembler.terrace_retaining_payload(fabric)
+	for asset_value: Variant in payload.batches.keys():
+		var batch := payload.batches[asset_value] as Dictionary
+		var ids := batch.get("ids", []) as Array
+		var transforms := batch.get("transforms", []) as Array
+		for index in ids.size():
+			var id := String(ids[index])
+			if not id.begins_with("maze-soffit/"):
+				continue
+			var parts := id.trim_prefix("maze-soffit/").split("/")
+			out.append({
+				"face": Vector4i(int(parts[0]), int(parts[1]), int(parts[2]),
+					int(parts[3])),
+				"asset": StringName(asset_value),
+				"transform": transforms[index] as Transform3D,
+			})
+	return out
+
+
 ## TASK H2b -- the authored extent of each module that can close a horizontal
 ## boundary, as `asset -> [local axis, from, to]` along the axis it spans,
 ## read off the module's own descriptor and declared HERE so this file decodes
@@ -4704,44 +4779,16 @@ func _plane_key(cell: Vector3i, index: int) -> Vector3i:
 
 
 func _exposed_stone_faces(fabric: SettlementFabricPlan) -> Dictionary:
-	## The test's own statement of the face rule, derived from the sealed plan
-	## and never from the assembler: a retained maze-stone cell owes a panel on
-	## every side whose neighbour is not mass, on a top whose neighbour is
-	## neither mass nor a public floor that PLANKS itself, and on a bottom
-	## whose neighbour is not mass -- the roof of a bored passage.
-	##
-	## Three surface kinds plank a floor, not five (fix 1, IMPORTANT 4):
-	## `SettlementFabricAssembler.production_surface_payload` tiles
-	## STRUCTURAL_COURT, INTERIOR_PASSAGE and BRIDGE. A TERRAIN_STREET is paint
-	## on the terrain mesh, which in a maze town lies below the retained stone,
-	## and a STAIR is a generated transition mesh; neither draws the top of the
-	## stone cell it runs over.
-	var out: Dictionary = {}
-	var retained := fabric.retained_terrace_cells
-	var solids := fabric.transformed_cells(&"solid")
-	var paved: Dictionary = {}
-	if fabric.surface_plan != null:
-		for kind in [PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
-				PublicRealmSurfacePlan.SurfaceKind.INTERIOR_PASSAGE,
-				PublicRealmSurfacePlan.SurfaceKind.BRIDGE]:
-			for cell: Vector3i in fabric.surface_plan.cells_for_kind(kind):
-				paved[cell] = true
-	for cell_value: Variant in retained.keys():
-		var tag: Variant = retained[cell_value]
-		if not (tag is StringName) or StringName(tag) \
-				!= SettlementFabricAssembler.MAZE_STONE_TAG:
-			continue
-		var cell := cell_value as Vector3i
-		for index in 6:
-			var direction: Vector3i = [Vector3i.LEFT, Vector3i.RIGHT,
-				Vector3i.FORWARD, Vector3i.BACK, Vector3i.UP,
-				Vector3i.DOWN][index]
-			var neighbor := cell + direction
-			if retained.has(neighbor) or solids.has(neighbor) \
-					or (direction == Vector3i.UP and paved.has(neighbor)):
-				continue
-			out[Vector4i(cell.x, cell.y, cell.z, index)] = true
-	return out
+	## The renderer and audit deliberately consume one sealed ground-skin
+	## transaction.  Public transitions, terrain caps, and buried garden soffits
+	## are semantic boundary owners, so re-deriving only a raw retained-cell shell
+	## here would assert that intentionally suppressed faces are missing.  Read the
+	## transaction's final boundary, while the focused transition/cap tests below
+	## independently prove each suppression rule.
+	if fabric == null or fabric.surface_plan == null:
+		return {}
+	return (SettlementFabricAssembler.maze_ground_skin_transaction(fabric) \
+		.shell as Dictionary).exposed as Dictionary
 
 
 func test_retained_stone_is_skinned() -> void:
@@ -4780,23 +4827,15 @@ func test_retained_stone_is_skinned() -> void:
 			"maze_stone_faces_suppressed_by_paving", -1))
 		var raw := int(fabric.audit.get("maze_stone_exposed_face_count", -1))
 		var derived := _exposed_stone_faces(fabric)
-		var instances := _stone_instances(fabric)
+		var instances := _stone_closure_instances(fabric)
 		var plinths := SettlementFabricAssembler.plinth_faces(
 			fabric.retained_terrace_cells,
 			fabric.transformed_cells(&"solid"),
 			fabric.transformed_cells(&"terrain_bearing"))
-		var panels := SettlementFabricAssembler.maze_stone_faces(
-			fabric.retained_terrace_cells,
-			fabric.transformed_cells(&"solid"),
-			SettlementFabricAssembler.public_floor_cells(fabric.surface_plan),
-			plinths)
-		var walked := _walked_cells(fabric)
-		var footprints := SettlementFabricAssembler.maze_module_footprints(fabric)
-		var shell := SettlementFabricAssembler.maze_skin_shell(
-			fabric.retained_terrace_cells,
-			fabric.transformed_cells(&"solid"),
-			SettlementFabricAssembler.public_floor_cells(fabric.surface_plan),
-			plinths, walked, footprints)
+		var transaction := SettlementFabricAssembler \
+			.maze_ground_skin_transaction(fabric)
+		var shell := transaction.shell as Dictionary
+		var panels := shell.faces as Dictionary
 		var treatments := shell.treatments as Dictionary
 		# A plinth panel is 3 m tall and hangs from the top of its own cell, so
 		# it closes its band and the one below -- on either keying of its
@@ -5026,6 +5065,7 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 		var turf_backed_facades := 0
 		var free_bench_stone := 0
 		var undercroft_stone := 0
+		var soffits := 0
 		var misplaced_natural := 0
 		var misplaced_green := 0
 		var misplaced_facade := 0
@@ -5119,6 +5159,13 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 								or not exposed.has(mate) \
 								or not walked.has(Vector3i(mate.x,
 									mate.y + 1, mate.z)))
+		for key_value: Variant in (SettlementFabricAssembler \
+				.maze_ground_skin_transaction(fabric).shell as Dictionary) \
+				.faces.keys():
+			var key := key_value as Vector4i
+			soffits += int(key.w >= sides \
+				and SettlementFabricAssembler.STONE_FACE_DIRECTIONS[key.w] \
+					== Vector3i.DOWN)
 		var audit := fabric.audit
 		print(("MAZE_SKIN %s masonry=%d natural=%d green=%d facade=%d " \
 			+ "tall_bank_masonry=%d free_bench_stone=%d undercroft=%d " \
@@ -5188,6 +5235,9 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 		assert_eq(int(audit.get("maze_skin_masonry_panel_count", -1)), masonry,
 			"%s audited masonry panel count must equal the payload's" \
 				% _label(outcome))
+		assert_eq(int(audit.get("maze_skin_soffit_panel_count", -1)), soffits,
+			"%s audited soffit count must equal the timber floor closures" \
+				% _label(outcome))
 		assert_eq(int(audit.get("maze_skin_natural_panel_count", -1)), natural,
 			"%s audited natural panel count must equal the payload's" \
 				% _label(outcome))
@@ -5240,7 +5290,7 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 				+ "honest as this count") % _label(outcome))
 		# Every shell panel has exactly one structural treatment. Public surfaces
 		# are compiled elsewhere and cannot be invented by this identity.
-		assert_eq(masonry + natural + green + facade,
+		assert_eq(masonry + natural + green + facade + soffits,
 			int(audit.get("maze_stone_expected_face_count", -1)),
 			("%s every panel of the shell wears exactly one module") \
 				% _label(outcome))
@@ -6448,7 +6498,7 @@ func test_every_garden_edge_turns_the_rim() -> void:
 		var edges := int(audit.get("maze_garden_rim_face_count", -1))
 		var rims := int(audit.get("maze_garden_rim_instance_count", -1))
 		var deficit := int(audit.get("maze_garden_rim_deficit", -1))
-		var laid := _rim_instances(fabric).size()
+		var laid := _rim_instance_count(fabric)
 		print("MAZE_GARDEN_RIM %s edges=%d rims=%d payload=%d deficit=%d" % [
 			_label(outcome), edges, rims, laid, deficit])
 		assert_eq(deficit, 0,
@@ -7461,6 +7511,7 @@ func test_a_roof_never_stands_inside_the_wall_it_meets() -> void:
 	## standing INSIDE the thing it meets rather than meeting it.
 	var checked := 0
 	var roof_pairs := 0
+	var flush_endpoints := 0
 	for outcome: Dictionary in _corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
 		if plan == null:
@@ -7490,6 +7541,8 @@ func test_a_roof_never_stands_inside_the_wall_it_meets() -> void:
 					overlap.x, overlap.y, overlap.z])
 		print("MAZE_ROOF_SEAM %s roof_conflicts=%d embedded=%d" % [
 			_label(outcome), roofs, embedded.size()])
+		flush_endpoints += int(fabric.audit.get(
+			"continuous_roof_flush_endpoint_count", 0))
 		assert_eq(embedded.size(), 0,
 			("%s admits %d roof(s) standing inside a connected neighbour: %s") \
 				% [_label(outcome), embedded.size(),
@@ -7497,6 +7550,9 @@ func test_a_roof_never_stands_inside_the_wall_it_meets() -> void:
 		roof_pairs += roofs
 		checked += 1
 	assert_gt(checked, 0, "the corpus must seal a town to measure")
+	assert_gt(flush_endpoints, 0,
+		("the corpus must exercise a finite flush roof endpoint; otherwise " \
+			+ "perpendicular roof clearance is no longer covered"))
 
 
 ## TASK I1 FIX 1 -- THE THIRD LEG OF THE STREET-CUTS-THE-ROCK MACHINERY, AND
@@ -7647,10 +7703,12 @@ func test_a_stone_cap_never_reaches_over_a_street() -> void:
 
 func test_a_cap_over_a_street_is_trimmed_to_the_run_it_closes() -> void:
 	## TASK I1 FIX 1 -- the trim's own teeth, on a shell this test builds by
-	## hand. Three unpaired masonry caps: one SKY-FACING over a street in the
-	## column beside it, one FLOOR-FACING over a street one band under the
-	## column beside it, and one over nothing at all. The first two must be cut
-	## back to the run they close and the third must keep its corbel.
+	## hand. Two unpaired masonry caps and one occupied floor closure: the
+	## SKY-FACING cap stands over a street in the column beside it, the
+	## FLOOR-FACING boundary stands over a street one band under the column
+	## beside it, and the final sky cap stands over nothing. The first cap must
+	## be cut back to the run it closes, the floor closure must become an exact
+	## timber soffit, and the third cap must keep its corbel.
 	var size := FabricRecipe.CELL_SIZE
 	var sky := Vector4i(0, 0, 0, 4)
 	var floor_cap := Vector4i(0, 4, 0, 5)
@@ -7681,8 +7739,8 @@ func test_a_cap_over_a_street_is_trimmed_to_the_run_it_closes() -> void:
 		floor_cap, Vector3i.ZERO, walked),
 		"a floor-facing singleton is also trimmed to its owned cell")
 	assert_false(SettlementFabricAssembler.maze_stone_cap_juts_over_walk(free,
-		Vector3i.ZERO, walked), "a cap corbelling over closed mass is left " \
-			+ "alone; a stone ledge is correct vocabulary")
+		Vector3i.ZERO, walked), "a cap over closed mass still owns only its " \
+			+ "exact lattice face")
 	assert_eq(SettlementFabricAssembler.maze_stone_cap_jut_cells(sky,
 		Vector3i.BACK).size(), 0,
 		"a PAIRED cap lays 3 m over a 3 m run and juts nothing")
@@ -7722,8 +7780,14 @@ func test_a_cap_over_a_street_is_trimmed_to_the_run_it_closes() -> void:
 		var near := xform.origin.dot(axis)
 		var far := near + along.length() * local.size.y
 		runs[String(ids[index])] = [minf(near, far), maxf(near, far), axis]
-	for row: Array in [["maze-stone/0/0/0/4", sky], ["maze-stone/0/4/0/5",
-			floor_cap]]:
+	assert_false(ids.has(&"maze-stone/0/4/0/5"),
+		"a floor-facing closure may never rotate an upright rock wall flat")
+	assert_has(payload.batches, SettlementFabricAssembler.PLANK_SINGLE)
+	var soffit_batch := payload.batches[
+		SettlementFabricAssembler.PLANK_SINGLE] as Dictionary
+	assert_has(soffit_batch.ids, &"maze-soffit/0/4/0/5",
+		"the occupied floor boundary closes with one exact authored soffit")
+	for row: Array in [["maze-stone/0/0/0/4", sky]]:
 		var run: Array = runs[row[0]]
 		assert_almost_eq(float(run[1]) - float(run[0]), size, 0.001,
 			"%s must lay exactly the one cell it closes" % row[0])
@@ -7737,8 +7801,8 @@ func test_a_cap_over_a_street_is_trimmed_to_the_run_it_closes() -> void:
 			"%s must still reach its cell's far edge" % row[0])
 	var kept: Array = runs["maze-stone/0/8/0/4"]
 	assert_almost_eq(float(kept[1]) - float(kept[0]),
-		SettlementFabricAssembler.STONE_MODULE_HEIGHT, 0.001,
-		"a cap over nobody keeps the module's whole 3 m")
+		FabricRecipe.CELL_SIZE, 0.001,
+		"even a free cap maps the authored face to its exact 1.5 m claim")
 
 
 func _cap_partner_offsets(fabric: SettlementFabricPlan) -> Dictionary:
@@ -7786,6 +7850,20 @@ func _rim_instances(fabric: SettlementFabricPlan) -> Array[Dictionary]:
 				"asset": StringName(asset_value),
 				"transform": transforms[index] as Transform3D})
 	return out
+
+
+func _rim_instance_count(fabric: SettlementFabricPlan) -> int:
+	## Straight edges and authored turn pieces are both one rendered rim
+	## instance. `_rim_instances` intentionally returns only straight pieces
+	## because its callers inspect a face direction; this census includes turns.
+	var count := 0
+	var payload := SettlementFabricAssembler.terrace_retaining_payload(fabric)
+	for batch_value: Variant in payload.batches.values():
+		for id_value: Variant in (batch_value as Dictionary).get("ids", []) as Array:
+			var id := String(id_value)
+			count += int(id.begins_with("maze-rim/") \
+				or id.begins_with("maze-rim-corner/"))
+	return count
 
 
 func _terrain_ground_cells(fabric: SettlementFabricPlan) -> Dictionary:
@@ -10810,8 +10888,28 @@ func test_the_production_site_builds_a_maze_town_on_real_terrain() -> void:
 		int(urban.fabric_audit.get("modular_box_skywalk_count", -2)),
 		"the richness audit and compact-module classifier must count one skywalk")
 	assert_eq(int(urban.fabric_audit.get(
-		"collision_flattened_roof_component_count", -1)), 0,
+			"collision_flattened_roof_component_count", -1)), 0,
 		"roof collisions must reject proposals rather than turn gables into caps")
+	var production_fabric := urban.fabric_plan
+	assert_not_null(production_fabric,
+		"the accepted production town carries no final construction plan")
+	if production_fabric != null:
+		var production_roofs := WarrenSpatialFabricCompiler \
+			._actual_roof_visual_cells(production_fabric)
+		var production_stone := SettlementFabricAssembler.maze_stone_cells(
+			production_fabric.retained_terrace_cells)
+		var roof_stone_overlap := 0
+		var first_roof_stone_overlap := Vector3i.ZERO
+		for cell: Vector3i in production_stone:
+			if not production_roofs.has(cell):
+				continue
+			if roof_stone_overlap == 0:
+				first_roof_stone_overlap = cell
+			roof_stone_overlap += 1
+		assert_eq(roof_stone_overlap, 0,
+			("the production town embeds %d final roof cells in retained " \
+			+ "stone (first %s)") % [roof_stone_overlap,
+				str(first_roof_stone_overlap)])
 	assert_eq(int(urban.fabric_audit.get("visual_envelope_overlap_count", -1)),
 		0, "the production construction may not contain measured visual overlap")
 	assert_eq(int(urban.fabric_audit.get(

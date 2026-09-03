@@ -184,7 +184,7 @@ func seal(required_cells: Array[Vector3i] = [],
 	# the surface transaction, where both the exact aperture and final landing
 	# union are known.
 	if not unserved_entrances.is_empty():
-		last_rejection = "%d exterior entrances have no exact public landing" % \
+		last_rejection = "%d exterior entrances have no clear public approach" % \
 			unserved_entrances.size()
 		return false
 	_classify_public_openings(transition_seams)
@@ -706,7 +706,6 @@ func _classify_entrances(entrances: Array[Dictionary]) -> void:
 		var entrance := source.duplicate()
 		var landing := entrance.get("landing_cell", Vector3i()) as Vector3i
 		var facing := entrance.get("facing", Vector3i()) as Vector3i
-		var served := _claims.has(_cell_key(landing))
 		var guard_opening_cells: Array[Vector3i] = [landing]
 		var door_phase := int(entrance.get("door_phase", -1))
 		if door_phase in [0, 1]:
@@ -720,8 +719,23 @@ func _classify_entrances(entrances: Array[Dictionary]) -> void:
 				else -local_left)
 			if _claims.has(_cell_key(companion)):
 				guard_opening_cells.append(companion)
+		# The threshold edge being open is insufficient: a one-cell balcony can
+		# still place its terminal rail immediately behind the character and make
+		# the visible door unusable.  Every authored doorway half therefore owns a
+		# direct two-cell-deep approach in the final public-surface union.  This is
+		# decided before guards are derived, so guard construction can never turn a
+		# decorative facade door into a traversal dead end.
+		var approach_cells: Array[Vector3i] = []
+		var served := true
+		for opening_cell: Vector3i in guard_opening_cells:
+			var approach_cell := opening_cell + facing
+			approach_cells.append(approach_cell)
+			if not _claims.has(_cell_key(opening_cell)) \
+					or not _claims.has(_cell_key(approach_cell)):
+				served = false
 		entrance["served"] = served
 		entrance["guard_opening_cells"] = guard_opening_cells
+		entrance["approach_cells"] = approach_cells
 		entrance_records.append(entrance)
 		if not served:
 			unserved_entrances.append(entrance)

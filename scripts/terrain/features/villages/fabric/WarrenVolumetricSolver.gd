@@ -551,7 +551,8 @@ static func from_volume(volume: WarrenVolumePlan,
 	# back every cell of it the source calls solid (Task C5 ruling 3), after
 	# the shell so no room's facade changes, and give it one sealed feature
 	# owner so the sealed plan can carry it as structure.
-	var retained_rock := _retain_maze_rock(grid, volume, route_floors)
+	var retained_rock := _retain_maze_rock(grid, volume, route_floors,
+		buildings, construction_program)
 	if bool(retained_rock.failed):
 		return null
 	# Ruling 1: with every use settled, ask the plot mass what became of it.
@@ -693,6 +694,14 @@ static func from_volume(volume: WarrenVolumePlan,
 		# of hiding it in a smaller stone total.
 		plan.audit["maze_released_asset_envelope_cells"] = int(
 			retained_rock.released_asset_envelope_cells)
+		plan.audit["maze_released_required_roof_envelope_cells"] = int(
+			retained_rock.released_required_roof_envelope_cells)
+		plan.audit["maze_released_required_roof_derived_cells"] = int(
+			retained_rock.released_required_roof_derived_cells)
+		plan.audit["maze_released_required_roof_unroomed_plot_cells"] = int(
+			retained_rock.released_required_roof_unroomed_plot_cells)
+		plan.audit["maze_released_required_roof_band_cells"] = int(
+			retained_rock.released_required_roof_band_cells)
 		plan.audit["maze_refused_unroomed_plot_trims"] = int(
 			retained_rock.refused_plot_trims)
 		# TASK C5e RULING 2, widened by TASK H2. The crown bands left as AIR
@@ -1253,7 +1262,9 @@ static func _retain_maze_slab_courses(grid: WarrenSpatialGrid,
 
 static func _retain_maze_rock(grid: WarrenSpatialGrid,
 		volume: WarrenVolumePlan,
-		route_floors: Array[Vector3i] = [] as Array[Vector3i]) -> Dictionary:
+		route_floors: Array[Vector3i] = [] as Array[Vector3i],
+		buildings: Array[WarrenBuildingVolume] = [] as Array[WarrenBuildingVolume],
+		program: SettlementFabricProgram = null) -> Dictionary:
 	## Ruling 3. Every fine cell the SOURCE calls solid at or above its own
 	## column's terrain datum that the composed town did not build in is
 	## retained as stone instead of being thrown away: shoulders, tunnel roofs,
@@ -1308,6 +1319,10 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 			"unroomed_plot_cells": 0, "roof_cells": 0,
 			"trimmed_unroomed_plot_cells": 0, "trimmed_roof_band_cells": 0,
 			"released_asset_envelope_cells": 0,
+			"released_required_roof_envelope_cells": 0,
+			"released_required_roof_derived_cells": 0,
+			"released_required_roof_unroomed_plot_cells": 0,
+			"released_required_roof_band_cells": 0,
 			"released_singleton_crown_cells": 0,
 			"released_singleton_derived_rock_cells": 0,
 			"released_singleton_unroomed_plot_cells": 0,
@@ -1324,6 +1339,9 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 	var plot_roof := _maze_plot_roof_cells(volume)
 	var released := _maze_released_parapet_cells(grid, volume, route_floors)
 	var released_asset_envelope := _maze_released_asset_envelope_cells(source)
+	var released_required_roof_envelope := \
+		_maze_released_required_roof_envelope_cells(grid, buildings, program,
+			volume.world_seed)
 	var trim := _maze_trimmed_plot_stone(source, route_floors)
 	var trim_cells := trim.cells as Dictionary
 	var stranded := _repair_stranded_release(grid, source, released,
@@ -1337,6 +1355,10 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 	var trimmed_cells := 0
 	var trimmed_roof_cells := 0
 	var released_asset_cells := 0
+	var released_required_roof_cells := 0
+	var released_required_roof_derived_cells := 0
+	var released_required_roof_unroomed_cells := 0
+	var released_required_roof_band_cells := 0
 	# Every cell admitted here is unclassified retained massif: either raw
 	# derived hillside or plot volume for which composition built no room. A real
 	# room, roof, public surface, feature, prefab envelope or structural bearing
@@ -1362,6 +1384,21 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 					continue
 				if _feature_bit_is_taken(grid, fine):
 					skipped += 1
+					continue
+				# Roof closure is a mandatory measured construction domain even
+				# though its mesh is selected after this retained-mass pass. Source
+				# rock may never reclaim any OUTSIDE cell intersecting one of the
+				# finite legal closures; doing so made the final roof appear embedded
+				# in a solid stone cube. The union is deliberate: every option the
+				# compiler may legally choose must remain constructible.
+				if released_required_roof_envelope.has(fine):
+					released_required_roof_cells += 1
+					if not plot_mass.has(fine):
+						released_required_roof_derived_cells += 1
+					elif plot_roof.has(fine):
+						released_required_roof_band_cells += 1
+					else:
+						released_required_roof_unroomed_cells += 1
 					continue
 				# A prefab's source plot is only a coarse search/reservation box.
 				# Its exact authored body has already changed its cells away from
@@ -1425,6 +1462,14 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 			"trimmed_unroomed_plot_cells": trimmed_cells,
 			"trimmed_roof_band_cells": trimmed_roof_cells,
 			"released_asset_envelope_cells": released_asset_cells,
+			"released_required_roof_envelope_cells": \
+				released_required_roof_cells,
+			"released_required_roof_derived_cells": \
+				released_required_roof_derived_cells,
+			"released_required_roof_unroomed_plot_cells": \
+				released_required_roof_unroomed_cells,
+			"released_required_roof_band_cells": \
+				released_required_roof_band_cells,
 			"released_singleton_crown_cells": released_singleton_crown_cells,
 			"released_singleton_derived_rock_cells": \
 				released_singleton_derived_rock_cells,
@@ -1443,6 +1488,14 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 			"trimmed_unroomed_plot_cells": trimmed_cells,
 			"trimmed_roof_band_cells": trimmed_roof_cells,
 			"released_asset_envelope_cells": released_asset_cells,
+			"released_required_roof_envelope_cells": \
+				released_required_roof_cells,
+			"released_required_roof_derived_cells": \
+				released_required_roof_derived_cells,
+			"released_required_roof_unroomed_plot_cells": \
+				released_required_roof_unroomed_cells,
+			"released_required_roof_band_cells": \
+				released_required_roof_band_cells,
 			"released_singleton_crown_cells": released_singleton_crown_cells,
 			"released_singleton_derived_rock_cells": \
 				released_singleton_derived_rock_cells,
@@ -1460,6 +1513,14 @@ static func _retain_maze_rock(grid: WarrenSpatialGrid,
 		"trimmed_unroomed_plot_cells": trimmed_cells,
 		"trimmed_roof_band_cells": trimmed_roof_cells,
 		"released_asset_envelope_cells": released_asset_cells,
+		"released_required_roof_envelope_cells": \
+			released_required_roof_cells,
+		"released_required_roof_derived_cells": \
+			released_required_roof_derived_cells,
+		"released_required_roof_unroomed_plot_cells": \
+			released_required_roof_unroomed_cells,
+		"released_required_roof_band_cells": \
+			released_required_roof_band_cells,
 		"released_singleton_crown_cells": released_singleton_crown_cells,
 		"released_singleton_derived_rock_cells": \
 			released_singleton_derived_rock_cells,
@@ -1644,6 +1705,29 @@ static func _maze_released_asset_envelope_cells(
 						column.y)):
 					out[fine] = true
 	return out
+
+
+static func _maze_released_required_roof_envelope_cells(
+		grid: WarrenSpatialGrid, buildings: Array[WarrenBuildingVolume],
+		program: SettlementFabricProgram, world_seed: int) -> Dictionary:
+	## Roofs are selected after retained source mass is classified, but they are
+	## not optional decoration: every exposed inhabited top owns a finite closure
+	## domain compiled from measured authored envelopes. Raster the union of that
+	## exact domain before stone retention so a later-selected roof can never be
+	## encased by source rock. This is construction authority, not a visual repair:
+	## it uses the same closure records and AABB/cell intersection predicate as the
+	## final fabric compiler and contains no asset, seed, or coordinate exception.
+	if grid == null or program == null or buildings.is_empty():
+		return {}
+	var closures := WarrenSpatialFabricCompiler.required_roof_closure_options(
+		grid, buildings, program, world_seed)
+	var bounds: Array[AABB] = []
+	for closure: Dictionary in closures:
+		for option: Dictionary in closure.get("options", []) as Array[Dictionary]:
+			var option_bounds := option.get("bounds", AABB()) as AABB
+			if option_bounds.size.length_squared() > 0.0:
+				bounds.append(option_bounds)
+	return _visual_clearance_bounds_cells(bounds)
 
 
 ## TASK E4 FIX 1 -- THE TRIM. The user's first binding direction, applied
@@ -5442,8 +5526,6 @@ static func _exact_room_pair_envelope_failure(grid: WarrenSpatialGrid,
 	# compare only authored visual envelopes and exact room-to-room seam facts.
 	if grid == null or program == null:
 		return "missing exact room-pair construction context"
-	if displaced_parcels.size() > 6:
-		return "room-pair clearance would displace more than six parcels"
 	var prior_unit_by_cell: Dictionary = {}
 	var prior_records: Dictionary = {}
 	for record: Dictionary in ordered:
@@ -5543,8 +5625,6 @@ static func _exact_room_roof_envelope_failure(grid: WarrenSpatialGrid,
 	if grid == null or program == null:
 		return "missing exact room/roof construction context"
 	for _pass in range(room_probes.size() + 1):
-		if displaced_parcels.size() > 6:
-			return "room/roof clearance would displace more than six parcels"
 		var active_rooms: Array[WarrenRoomStamp] = []
 		var parcel_by_room_id: Dictionary = {}
 		for record: Dictionary in room_probes:
@@ -5640,9 +5720,6 @@ static func _exact_room_support_envelope_result(grid: WarrenSpatialGrid,
 		if recorded_room != null:
 			probe_by_room_id[recorded_room.stable_id] = record
 	for _pass in range(room_probes.size() + 1):
-		if displaced_parcels.size() > 6:
-			return {"failure": (
-				"room-support clearance would displace more than six parcels")}
 		var rooms_by_source: Dictionary = {}
 		for record: Dictionary in room_probes:
 			var room := record.room as WarrenRoomStamp
@@ -6735,9 +6812,7 @@ static func _skywalk_visual_clearance_cells(components: Array[Dictionary],
 	## reservation. The exact AABB test uses the same tolerance as final fabric
 	## assembly, so topology yields only where an unrelated mesh would really be
 	## rejected later; the connector's own occupancy remains a separate fact.
-	var out: Dictionary = {}
-	var cell_size := FabricRecipe.CELL_SIZE
-	var half := cell_size * 0.5
+	var all_bounds: Array[AABB] = []
 	for component: Dictionary in components:
 		var recipe := program.recipe(StringName(component.recipe_id))
 		if recipe == null:
@@ -6763,25 +6838,35 @@ static func _skywalk_visual_clearance_cells(components: Array[Dictionary],
 					* contract_value.clearance_bounds())
 			if bounds_to_raster.is_empty():
 				return {}
-		for bounds: AABB in bounds_to_raster:
-			var minimum := bounds.position
-			var maximum := bounds.end
-			var min_x := floori((minimum.x - half) / cell_size) - 1
-			var max_x := ceili((maximum.x + half) / cell_size) + 1
-			var min_y := floori(minimum.y / cell_size) - 1
-			var max_y := ceili(maximum.y / cell_size) + 1
-			var min_z := floori((minimum.z - half) / cell_size) - 1
-			var max_z := ceili((maximum.z + half) / cell_size) + 1
-			for y in range(min_y, max_y + 1):
-				for z in range(min_z, max_z + 1):
-					for x in range(min_x, max_x + 1):
-						var cell := Vector3i(x, y, z)
-						var cell_bounds := AABB(Vector3(cell) * cell_size \
-							+ Vector3(-half, 0.0, -half),
-							Vector3.ONE * cell_size)
-						if SettlementFabricPlan._aabb_overlaps_volume(bounds,
-								cell_bounds):
-							out[cell] = true
+		all_bounds.append_array(bounds_to_raster)
+	return _visual_clearance_bounds_cells(all_bounds)
+
+
+static func _visual_clearance_bounds_cells(bounds_to_raster: Array[AABB]) \
+		-> Dictionary:
+	## One authoritative measured-envelope raster for every pre-construction
+	## reservation: skywalks, source bridge compounds, and required roof closure.
+	var out: Dictionary = {}
+	var cell_size := FabricRecipe.CELL_SIZE
+	var half := cell_size * 0.5
+	for bounds: AABB in bounds_to_raster:
+		var minimum := bounds.position
+		var maximum := bounds.end
+		var min_x := floori((minimum.x - half) / cell_size) - 1
+		var max_x := ceili((maximum.x + half) / cell_size) + 1
+		var min_y := floori(minimum.y / cell_size) - 1
+		var max_y := ceili(maximum.y / cell_size) + 1
+		var min_z := floori((minimum.z - half) / cell_size) - 1
+		var max_z := ceili((maximum.z + half) / cell_size) + 1
+		for y in range(min_y, max_y + 1):
+			for z in range(min_z, max_z + 1):
+				for x in range(min_x, max_x + 1):
+					var cell := Vector3i(x, y, z)
+					var cell_bounds := AABB(Vector3(cell) * cell_size \
+						+ Vector3(-half, 0.0, -half), Vector3.ONE * cell_size)
+					if SettlementFabricPlan._aabb_overlaps_volume(bounds,
+							cell_bounds):
+						out[cell] = true
 	return out
 
 

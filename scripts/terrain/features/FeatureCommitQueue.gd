@@ -263,7 +263,10 @@ func _commit_mesh_visual(block: Node3D, mesh: Dictionary) -> void:
 	if bool(mesh.get("terrain_ground", false)):
 		uvs = PackedVector2Array()
 		uvs.resize((mesh.vertices as PackedVector3Array).size())
-		uvs.fill(SlopeAtlas.path_uv() if bool(mesh.get("terrain_path", false)) \
+		uvs.fill(SlopeAtlas.cliff_uv() \
+			if bool(mesh.get("terrain_rock", false)) \
+			else SlopeAtlas.path_uv() \
+			if bool(mesh.get("terrain_path", false)) \
 			else CliffDressing.ground_uv())
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	if mesh.has("colors"):

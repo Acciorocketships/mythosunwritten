@@ -92,6 +92,13 @@ func _init() -> void:
 						ground_skin.cap_owners as Dictionary)
 					entry["ground_skin_cap_faces"] = _horizontal_faces_json(
 						(ground_skin.shell as Dictionary).faces as Dictionary)
+					var spatial := record.urban_fabric.volumetric_spatial
+					if spatial != null and spatial.source_volume != null:
+						entry["source_primary_itinerary"] = []
+						for route_cell: Vector3i in \
+								spatial.source_volume.primary_itinerary:
+							(entry.source_primary_itinerary as Array).append([
+								route_cell.x, route_cell.y, route_cell.z])
 			selected.append(entry)
 			counts[bucket] = int(counts.get(bucket, 0)) + 1
 			if _development_limit >= 0 \
@@ -638,6 +645,33 @@ static func _sectional_entry(super_cell: Vector2i, frame: VillageFrame,
 				"maze_retained_unroomed_plot_stone_cells", 0)),
 			"maze_released_singleton_roof_band_cells": int(audit.get(
 				"maze_released_singleton_roof_band_cells", 0)),
+			"maze_released_required_roof_envelope_cells": int(record.urban_fabric \
+				.volumetric_spatial.audit.get(
+				"maze_released_required_roof_envelope_cells", 0)),
+			"maze_released_required_roof_derived_cells": int(record.urban_fabric \
+				.volumetric_spatial.audit.get(
+				"maze_released_required_roof_derived_cells", 0)),
+			"maze_released_required_roof_unroomed_plot_cells": int(record \
+				.urban_fabric.volumetric_spatial.audit.get(
+				"maze_released_required_roof_unroomed_plot_cells", 0)),
+			"maze_released_required_roof_band_cells": int(record.urban_fabric \
+				.volumetric_spatial.audit.get(
+				"maze_released_required_roof_band_cells", 0)),
+			"maze_stone_withdrawn_for_roof_cells": int(record.urban_fabric \
+				.fabric_plan.audit.get(
+				"maze_stone_withdrawn_for_roof_cells", 0)),
+			"maze_stone_withdrawn_for_roof_cell_keys": record.urban_fabric \
+				.fabric_plan.audit.get(
+				"maze_stone_withdrawn_for_roof_cell_keys", []),
+			"maze_unsupported_stone_cells_removed": int(record.urban_fabric \
+				.fabric_plan.audit.get(
+				"maze_unsupported_stone_cells_removed", 0)),
+			"maze_unsupported_stone_components_removed": int(record.urban_fabric \
+				.fabric_plan.audit.get(
+				"maze_unsupported_stone_components_removed", 0)),
+			"maze_unsupported_stone_cell_keys": record.urban_fabric \
+				.fabric_plan.audit.get(
+				"maze_unsupported_stone_cell_keys", []),
 			"spatial_feature_kinds": _spatial_feature_kind_counts(
 				record.urban_fabric.volumetric_spatial),
 			"room_projection_features": _room_projection_feature_audit(

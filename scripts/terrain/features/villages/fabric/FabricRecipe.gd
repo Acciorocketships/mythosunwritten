@@ -128,8 +128,11 @@ func add_construction_run(run_id: StringName, kind: StringName,
 func add_compact_roof_run(run_id: StringName, local_start: Vector3,
 		local_end: Vector3, cross_min: float, cross_max: float,
 		repeat_pitch: float, seam_profile: StringName,
-		material_family: StringName, bays: Array[Dictionary]) -> void:
+		material_family: StringName, bays: Array[Dictionary],
+		section_pitch: float = -1.0) -> void:
 	assert(not _sealed)
+	var resolved_section_pitch := section_pitch if section_pitch > 0.0 \
+		else repeat_pitch * 0.5
 	compact_roof_runs.append({
 		"id": run_id,
 		"local_start": local_start,
@@ -137,6 +140,7 @@ func add_compact_roof_run(run_id: StringName, local_start: Vector3,
 		"cross_min": cross_min,
 		"cross_max": cross_max,
 		"repeat_pitch": repeat_pitch,
+		"section_pitch": resolved_section_pitch,
 		"seam_profile": seam_profile,
 		"material_family": material_family,
 		"bays": bays.duplicate(true),
@@ -285,7 +289,7 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 				return false
 			seen_run_placements[placement_id] = true
 		run_ids[run_id] = true
-	var compact_variant_bounds: Array[AABB] = []
+	var compact_variant_bounds: Array[Dictionary] = []
 	for run: Dictionary in compact_roof_runs:
 		var run_id := StringName(run.get("id", ""))
 		var local_start := run.get("local_start", Vector3.INF) as Vector3
@@ -293,6 +297,8 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 		var cross_min := float(run.get("cross_min", NAN))
 		var cross_max := float(run.get("cross_max", NAN))
 		var repeat_pitch := float(run.get("repeat_pitch", 0.0))
+		var section_pitch := float(run.get("section_pitch",
+			repeat_pitch * 0.5))
 		var seam_profile := StringName(run.get("seam_profile", ""))
 		var material_family := StringName(run.get("material_family", ""))
 		var bays := run.get("bays", []) as Array
@@ -305,6 +311,7 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 				or not (axis_x or axis_z) or absf(delta.y) > 0.001 \
 				or not is_finite(cross_min) or not is_finite(cross_max) \
 				or cross_max <= cross_min or repeat_pitch <= 0.0 \
+				or section_pitch <= 0.0 or section_pitch > repeat_pitch \
 				or absf(roundf(length / repeat_pitch) * repeat_pitch \
 					- length) > 0.001 or bays.size() != roundi(length / repeat_pitch) \
 				or seam_profile.is_empty() or material_family.is_empty():
@@ -347,10 +354,15 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 				var family := StringName(family_value)
 				var roles := variants[family_value] as Dictionary
 				if family.is_empty() or not roles.has(&"start") \
-						or not roles.has(&"middle") or not roles.has(&"end"):
+						or not roles.has(&"start_flush") \
+						or not roles.has(&"middle") \
+						or not roles.has(&"middle_mirror") \
+						or not roles.has(&"end") \
+						or not roles.has(&"end_flush"):
 					last_rejection = "compact roof run %s lacks finite roles" % run_id
 					return false
-				for role in [&"start", &"middle", &"end"]:
+				for role in [&"start", &"start_flush", &"middle",
+						&"middle_mirror", &"end", &"end_flush"]:
 					var variant := (roles[role] as Dictionary).duplicate()
 					var asset_id := StringName(variant.get("asset_id", ""))
 					var transform := variant.get("transform", Transform3D()) as Transform3D
@@ -365,7 +377,7 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 					variant["bounds"] = bounds
 					variant["collision_pieces"] = descriptor.collision_piece_count
 					roles[role] = variant
-					compact_variant_bounds.append(bounds)
+					compact_variant_bounds.append({"bounds": bounds, "run": run})
 				variants[family_value] = roles
 			bay["variants"] = variants
 			bays[bay_index] = bay
@@ -386,14 +398,21 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 		has_bounds = local_bounds.has_volume()
 	if not _has_declared_clearance_bounds:
 		local_clearance_bounds = local_bounds
-		for bounds: AABB in compact_variant_bounds:
-			local_clearance_bounds = local_clearance_bounds.merge(bounds)
+		for row: Dictionary in compact_variant_bounds:
+			var party_bounds := _compact_roof_party_span_bounds(
+				row.bounds as AABB, row.run as Dictionary)
+			if party_bounds.has_volume():
+				local_clearance_bounds = local_clearance_bounds.merge(party_bounds)
 	elif not local_clearance_bounds.grow(0.001).encloses(local_bounds):
 		last_rejection = "construction clearance does not enclose visual bounds"
 		return false
 	if _has_declared_clearance_bounds:
-		for bounds: AABB in compact_variant_bounds:
-			if not local_clearance_bounds.grow(0.001).encloses(bounds):
+		for row: Dictionary in compact_variant_bounds:
+			var party_bounds := _compact_roof_party_span_bounds(
+				row.bounds as AABB, row.run as Dictionary)
+			if party_bounds.has_volume() \
+					and not local_clearance_bounds.grow(0.001).encloses(
+						party_bounds):
 				last_rejection = "compact roof alternative leaves construction clearance"
 				return false
 	var socket_ids: Dictionary = {}
@@ -435,6 +454,36 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 			return false
 	_sealed = has_bounds
 	return _sealed
+
+
+static func _compact_roof_party_span_bounds(bounds: AABB,
+		run: Dictionary) -> AABB:
+	## A provisional bay can reserve only the semantic run interval. The final
+	## connected component decides which two roles retain exterior eaves and the
+	## plan then collision-checks those realized eaves against finished geometry.
+	var start := run.get("local_start", Vector3.INF) as Vector3
+	var end := run.get("local_end", Vector3.INF) as Vector3
+	var delta := end - start
+	var axis_x := absf(delta.x) > 0.001 and absf(delta.z) <= 0.001
+	var axis_z := absf(delta.z) > 0.001 and absf(delta.x) <= 0.001
+	if not start.is_finite() or not end.is_finite() or not (axis_x or axis_z):
+		return AABB()
+	var low := minf(start.x, end.x) if axis_x else minf(start.z, end.z)
+	var high := maxf(start.x, end.x) if axis_x else maxf(start.z, end.z)
+	var clipped_low := maxf(bounds.position.x, low) if axis_x \
+		else maxf(bounds.position.z, low)
+	var clipped_high := minf(bounds.end.x, high) if axis_x \
+		else minf(bounds.end.z, high)
+	if clipped_high <= clipped_low:
+		return AABB()
+	var out := bounds
+	if axis_x:
+		out.position.x = clipped_low
+		out.size.x = clipped_high - clipped_low
+	else:
+		out.position.z = clipped_low
+		out.size.z = clipped_high - clipped_low
+	return out
 
 
 func is_sealed() -> bool:

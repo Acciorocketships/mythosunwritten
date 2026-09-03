@@ -1087,10 +1087,23 @@ func test_asset_clearance_reservation_survives_into_house_partitioning() -> void
 	## refused the prefab and the town fell back to the same modular shell family
 	## everywhere. P3 now publishes its extra columns with a vertical top: P4
 	## must keep low houses out while still allowing a higher terrace above it.
-	var seed_value := 166029932451774690
-	var plan := _sealed_town(seed_value,
-		WarrenVillageScaleProfile.COMPACT)
-	assert_not_null(plan, WarrenMazeSitePlanner.last_failure)
+	# Select the first non-vacuous member of a bounded deterministic fixture
+	# corpus. The contract is clearance propagation, not the accident that one
+	# opaque seed happens to need extra eave columns after every grammar change.
+	var plan: WarrenMazeSourcePlan = null
+	for seed_value in range(32):
+		var candidate := _sealed_town(seed_value,
+			WarrenVillageScaleProfile.COMPACT)
+		if candidate == null:
+			continue
+		var candidate_outcomes := candidate.audit.get(
+			"plot_outcomes", {}) as Dictionary
+		if not (candidate_outcomes.get(
+				"asset_clearance_reservations", []) as Array).is_empty():
+			plan = candidate
+			break
+	assert_not_null(plan, "the bounded compact corpus needs a prefab with " \
+		+ "clearance beyond its parcel: %s" % WarrenMazeSitePlanner.last_failure)
 	if plan == null:
 		return
 	var outcomes := plan.audit.get("plot_outcomes", {}) as Dictionary

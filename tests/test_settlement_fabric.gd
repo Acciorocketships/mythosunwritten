@@ -1102,6 +1102,28 @@ func test_collinear_modular_roofs_compile_as_one_continuous_run() -> void:
 		"different bearing planes stay separate instead of being visually snapped")
 
 
+func test_continuous_roof_endpoints_clear_the_finished_public_body() -> void:
+	## The continuous roof compiler replaces independently reserved roof pieces.
+	## Its outer end can therefore be the only piece that enters a route.  Pin the
+	## final-envelope proof directly to the canonical traversal prism: contact
+	## below head height is rejected, while the same roof above it remains legal.
+	var plan := SettlementFabricPlan.new(&"warren.test.roof-public-clearance")
+	var surface := PublicRealmSurfacePlan.new(&"public.test.roof-clearance")
+	var floor_cell := Vector3i(2, 1, -3)
+	assert_true(surface.add_claim(floor_cell,
+		PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET, &"street.test"))
+	assert_true(surface.seal([floor_cell] as Array[Vector3i]))
+	assert_true(plan.set_surface_plan(surface))
+	var body := TraversalEnvelope.clearance_prism(floor_cell,
+		FabricRecipe.CELL_SIZE)
+	assert_true(plan._continuous_roof_bounds_enter_public_route(AABB(
+		body.position + Vector3(0.05, 1.0, 0.05),
+		Vector3(body.size.x - 0.1, 0.4, body.size.z - 0.1))))
+	assert_false(plan._continuous_roof_bounds_enter_public_route(AABB(
+		Vector3(body.position.x, body.end.y + 0.01, body.position.z),
+		Vector3(body.size.x, 0.4, body.size.z))))
+
+
 func test_three_compact_house_crowns_realize_one_exact_roof_run() -> void:
 	var program := _program()
 	var blue_id := &"roof.terminal.tight.tower.blue"
@@ -1126,21 +1148,60 @@ func test_three_compact_house_crowns_realize_one_exact_roof_run() -> void:
 	assert_eq(int(continuous.components[0].run_count), 3)
 	assert_eq(continuous.internal_gable_count, 4)
 	var realized := continuous.apply_to(raw)
-	assert_eq(realized.size(), 3,
-		"three touching houses emit three tiled bays, not six overlapping ends")
+	assert_eq(realized.size(), 7,
+		"three touching houses emit exterior ends around five repeated sections")
 	var prior_end := -INF
 	var families: Dictionary = {}
-	for placement: Dictionary in realized:
+	for index in realized.size():
+		var placement := realized[index] as Dictionary
 		var bounds := placement.bounds as AABB
-		assert_almost_eq(bounds.size.z, 3.0, 0.001)
+		if index == 0 or index == realized.size() - 1:
+			assert_gt(bounds.size.z, 0.75,
+				"the two outside strips retain the source roof's real eaves")
+		else:
+			assert_almost_eq(bounds.size.z, 1.5, 0.001,
+				"the repeat is the source roof's symmetric central profile")
 		assert_almost_eq(bounds.position.y, 0.0, 0.001)
 		if is_finite(prior_end):
 			assert_almost_eq(bounds.position.z, prior_end, 0.001,
 				"every compact bay must meet the preceding bay on one seam")
 		prior_end = bounds.end.z
+		assert_true(String(placement.asset_id).contains(".03.run."),
+			"every bay in a continuous crown comes from one source roof profile")
 		families[String(placement.asset_id).contains(".slate.")] = true
 	assert_eq(families.size(), 1,
 		"one continuous crown cannot change tile material halfway along")
+
+
+func test_neighboring_half_depth_crowns_realize_one_complete_roof() -> void:
+	var program := _program()
+	var roof_id := &"roof.partial.gable.blue.2.positive"
+	var plan := SettlementFabricPlan.new(&"warren.test.partial-continuous-roof")
+	assert_true(plan.register_recipe(program.recipe(roof_id)))
+	# The topology owns two adjacent 1.5 m roof-face strips. They are separate
+	# bearing units, but their typed ridge endpoints meet exactly and must realize
+	# as one three-metre crown rather than two exterior halves with a slot.
+	plan.units.append(FabricUnit.new(&"partial.0", roof_id,
+		Vector3i.ZERO, 0))
+	plan.units.append(FabricUnit.new(&"partial.1", roof_id,
+		Vector3i(0, 0, 1), 0))
+	var raw := plan.expanded_placements()
+	assert_eq(raw.size(), 2)
+	var continuous := FabricContinuousRoofPlan.compile(plan)
+	assert_true(continuous.is_valid(), continuous.last_rejection)
+	assert_eq(continuous.components.size(), 1)
+	assert_eq(int(continuous.components[0].run_count), 2)
+	var realized := continuous.apply_to(raw)
+	assert_eq(realized.size(), 3,
+		"two half-depth claims emit one complete start/middle/end crown")
+	var prior_end := -INF
+	for placement: Dictionary in realized:
+		var bounds := placement.bounds as AABB
+		if is_finite(prior_end):
+			assert_almost_eq(bounds.position.z, prior_end, 0.001,
+				"every half-depth roof section meets the preceding section")
+		prior_end = bounds.end.z
+		assert_true(String(placement.asset_id).contains(".03.run."))
 
 
 func test_circulation_recipes_express_section_changes_and_local_ground() -> void:
@@ -1768,14 +1829,34 @@ func test_sectional_surface_rejects_an_exterior_door_without_a_landing() -> void
 	assert_false(surface.seal([], {}, {}, [entrance]),
 		"an exterior door may not survive without its exact public landing")
 	assert_eq(surface.unserved_entrances.size(), 1)
-	assert_true(surface.last_rejection.contains("no exact public landing"))
+	assert_true(surface.last_rejection.contains("no clear public approach"))
 
 	var served := PublicRealmSurfacePlan.new(&"surface.served-door")
-	assert_true(served.add_claim(Vector3i(3, 2, 0),
-		PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT, &"landing"))
+	for cell: Vector3i in [Vector3i(3, 2, 0), Vector3i(3, 2, 1)]:
+		assert_true(served.add_claim(cell,
+			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT, &"landing"))
 	assert_true(served.seal([], {}, {}, [entrance]),
-		"the same doorway is valid once its landing belongs to the union")
+		"the same doorway is valid once its landing and direct approach belong " \
+			+ "to the union")
 	assert_true(served.validate())
+	assert_eq(served.entrance_records[0].approach_cells,
+		[Vector3i(3, 2, 1)])
+
+
+func test_sectional_surface_rejects_a_door_with_only_a_one_cell_balcony() -> void:
+	var surface := PublicRealmSurfacePlan.new(&"surface.railed-door")
+	assert_true(surface.add_claim(Vector3i.ZERO,
+		PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT, &"landing"))
+	var entrance := {
+		"stable_id": &"door.railed",
+		"landing_cell": Vector3i.ZERO,
+		"facing": Vector3i.FORWARD,
+	}
+	assert_false(surface.seal([], {}, {}, [entrance]),
+		"a threshold tile without a clear tile beyond it is not an approach")
+	assert_eq(surface.unserved_entrances.size(), 1)
+	assert_eq(surface.entrance_records[0].approach_cells,
+		[Vector3i.FORWARD])
 
 
 func test_generated_door_opens_both_guard_halves_of_its_authored_facade() \
@@ -1808,7 +1889,7 @@ func test_handed_door_forecourt_uses_one_guard_run_without_a_centre_post() \
 	# Phase zero's optional facade companion is LEFT, while this real forecourt
 	# continues RIGHT. The post repair must follow the finished public surface,
 	# not assume the optional second doorway lane exists.
-	for cell: Vector3i in [Vector3i.ZERO, Vector3i.RIGHT]:
+	for cell: Vector3i in [Vector3i.ZERO, Vector3i.RIGHT, Vector3i.BACK]:
 		assert_true(surface.add_claim(cell,
 			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT, &"landing"))
 	var entrance := {
