@@ -4,8 +4,9 @@ extends Node
 ##
 ## The target PackedScene is loaded on a ResourceLoader thread, then installed
 ## behind this scene's high CanvasLayer. If that scene owns a
-## FieldTerrainStreamer, the overlay stays visible until every chunk beneath the
-## player's startup footprint has been integrated on the main thread.
+## FieldTerrainStreamer, the overlay stays visible until every chunk in the
+## camera-visible environment around spawn has been integrated on the main
+## thread.
 
 signal scene_load_started(path: String)
 signal scene_resource_progress(path: String, progress: float)

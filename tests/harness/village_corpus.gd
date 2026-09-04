@@ -192,13 +192,15 @@ static func _run_seed(seed_value: int, radius: int,
 				assert(descriptor != null)
 				var batch: Dictionary = record.payload.batches[asset_id]
 				var count: int = batch.transforms.size()
+				var collision_flags: Array = batch.get("collision_enabled", [])
 				report.demanded_assets[String(asset_id)] = int(
 					report.demanded_assets.get(String(asset_id), 0)) + count
-				report.collision_shapes += count \
-					* descriptor.collision_piece_count
 				if asset_id == program.villages.foundation_asset_id:
 					report.foundation_instances += count
 				for index in count:
+					if collision_flags.is_empty() or bool(collision_flags[index]):
+						report.collision_shapes += \
+							descriptor.collision_piece_count
 					if not batch.ids.is_empty():
 						var stable_id: StringName = batch.ids[index]
 						if stable_ids.has(stable_id):
@@ -211,6 +213,7 @@ static func _run_seed(seed_value: int, radius: int,
 						/ TerrainChunkMesher.CHUNK_WORLD))
 					block_payloads[block] = int(
 						block_payloads.get(block, 0)) + 1
+			report.collision_shapes += record.payload.collision_boxes.size()
 	var blocks: Array[Vector2i] = []
 	blocks.assign(block_payloads.keys())
 	blocks.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:

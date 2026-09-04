@@ -70,14 +70,115 @@ func test_production_surface_bundle_carries_stair_transition_meshes() -> void:
 		"stair transition meshes must enter the production payload")
 	var covered: Dictionary = {}
 	for mesh: Dictionary in bundle.surface_meshes:
+		if bool(mesh.get("visual_only", false)):
+			continue
 		assert_false((mesh.collision_faces as PackedVector3Array).is_empty(),
-			"a production surface mesh must be collision-bearing")
-		for cell: Vector3i in mesh.claim_cells as Array:
+			"a collision-authoritative production mesh must carry faces")
+		for cell: Vector3i in mesh.get("claim_cells", []) as Array:
 			covered[cell] = true
 	for cell: Vector3i in plan.cells_for_kind(
 			PublicRealmSurfacePlan.SurfaceKind.STAIR):
 		assert_true(covered.has(cell),
 			"STAIR claim %s has no production surface mesh" % cell)
+
+
+func test_patchwork_planks_have_one_exact_recessed_closure_skin() -> void:
+	var plan := _sealed_plan_with_stairs()
+	var bundle := SettlementFabricAssembler.production_surface_bundle(plan, {})
+	var closure: Dictionary = {}
+	for mesh: Dictionary in bundle.surface_meshes:
+		if bool(mesh.get("structural_plank", false)):
+			assert_true(closure.is_empty(),
+				"one surface kind must have one continuous closure skin")
+			closure = mesh
+	assert_false(closure.is_empty(),
+		"irregular authored boards need the exact public-union closure beneath")
+	assert_eq((closure.logical_cells as Array).size(), 4,
+		"the closure must cover every structural cell, including edge slivers")
+	var visual_top := -INF
+	for vertex: Vector3 in closure.vertices as PackedVector3Array:
+		visual_top = maxf(visual_top, vertex.y)
+	var collision_top := -INF
+	for vertex: Vector3 in closure.collision_faces as PackedVector3Array:
+		collision_top = maxf(collision_top, vertex.y)
+	assert_almost_eq(collision_top - visual_top,
+		SettlementFabricAssembler.STRUCTURAL_CLOSURE_RECESS, 0.0001,
+		"closure visuals sit just below the authored detail without moving collision")
+	for asset_id: StringName in [SettlementFabricAssembler.PLANK_FLOOR,
+			SettlementFabricAssembler.PLANK_GALLERY,
+			SettlementFabricAssembler.PLANK_SINGLE]:
+		if not bundle.batches.has(asset_id):
+			continue
+		for enabled: Variant in (bundle.batches[asset_id] as Dictionary).get(
+				"collision_enabled", []):
+			assert_false(bool(enabled),
+				"decorative board seams may not create a second collision floor")
+
+
+func test_ground_finished_court_cells_are_not_hidden_by_patchwork_wood() \
+		-> void:
+	var plan := PublicRealmSurfacePlan.new(&"test.production.ground-finish")
+	for z in 2:
+		for x in 2:
+			assert_true(plan.add_claim(Vector3i(x, 1, z),
+				PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+				&"volume.courtyard.test"), plan.last_rejection)
+	assert_true(plan.seal(), plan.last_rejection)
+	# Finish ownership is expressed at its supporting solid cell, one band below
+	# the canonical public walk claim, exactly like planned village greens.
+	var bundle := SettlementFabricAssembler.production_surface_bundle(plan, {},
+		[], {Vector3i(0, 0, 0): true})
+	var closure: Dictionary = {}
+	for mesh: Dictionary in bundle.surface_meshes:
+		if bool(mesh.get("structural_plank", false)):
+			closure = mesh
+			break
+	assert_false(closure.is_empty())
+	var closure_cells := closure.logical_cells as Array
+	assert_eq(closure_cells.size(), 3)
+	assert_false(closure_cells.has(Vector3i(0, 1, 0)),
+		"village turf must be the sole visual/collision finish on its cell")
+	assert_true(closure_cells.has(Vector3i(1, 1, 0)),
+		"ordinary structural court remains sealed by patchwork wood")
+	var detail_batch := bundle.batches.get(
+		SettlementFabricAssembler.PLANK_SINGLE, {}) as Dictionary
+	assert_eq((detail_batch.get("transforms", []) as Array).size(), 3,
+		"courtyard styling must also defer to the canonical turf finish")
+
+
+func test_town_streets_reuse_sparse_spots_without_rounding_their_edges() -> void:
+	var plan := PublicRealmSurfacePlan.new(&"test.production.spotted-street")
+	for z in 8:
+		for x in 8:
+			assert_true(plan.add_claim(Vector3i(x, 0, z),
+				PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET,
+				&"street.owner"), plan.last_rejection)
+	assert_true(plan.seal(), plan.last_rejection)
+	var bundle := SettlementFabricAssembler.production_surface_bundle(plan, {})
+	var spots: Dictionary = {}
+	for mesh: Dictionary in bundle.surface_meshes:
+		if bool(mesh.get("terrain_path_spot", false)):
+			spots = mesh
+			break
+	assert_false(spots.is_empty(),
+		"a representative town street must carry the normal path spot finish")
+	assert_true(bool(spots.get("visual_only", false)))
+	assert_true((spots.collision_faces as PackedVector3Array).is_empty(),
+		"spots paint the canonical street and never add a raised collider")
+	var vertices := spots.vertices as PackedVector3Array
+	var disc_stride := TerrainChunkMesher.PATH_SPOT_SIDES + 1
+	assert_eq(vertices.size() % disc_stride, 0)
+	for disc_start in range(0, vertices.size(), disc_stride):
+		var centre := vertices[disc_start]
+		var cell_centre := Vector2(roundf(centre.x / FabricRecipe.CELL_SIZE),
+			roundf(centre.z / FabricRecipe.CELL_SIZE)) * FabricRecipe.CELL_SIZE
+		for index in range(disc_start + 1, disc_start + disc_stride):
+			var rim := vertices[index]
+			assert_lte(absf(rim.x - cell_centre.x),
+				FabricRecipe.CELL_SIZE * 0.5 + 0.0001)
+			assert_lte(absf(rim.z - cell_centre.y),
+				FabricRecipe.CELL_SIZE * 0.5 + 0.0001,
+				"spot discs stay inside square street cells and cannot round a turn")
 
 
 func test_every_rendered_public_surface_suppresses_retained_stone_caps() -> void:
@@ -134,6 +235,61 @@ func test_terrain_cap_is_the_only_top_and_has_no_buried_stone_soffit() -> void:
 		assert_false((transaction.shell as Dictionary)[channel].has(
 			buried_soffit),
 			"%s may not retain masonry beneath the terrain-parity cap" % channel)
+
+
+func test_borne_three_sided_turf_corner_closes_once_without_spreading() -> void:
+	var missing := Vector3i(0, 4, 1)
+	var garden: Dictionary = {
+		Vector3i(0, 4, 0): true,
+		Vector3i(1, 4, 0): true,
+		Vector3i(1, 4, 1): true,
+		# This extra cell would form another three-sided square only after the
+		# intended closure. It proves the pass cannot cascade sideways.
+		Vector3i(-1, 4, 0): true,
+	}
+	var retained: Dictionary = {
+		missing: SettlementFabricAssembler.MAZE_STONE_TAG,
+		Vector3i(-1, 4, 1): SettlementFabricAssembler.MAZE_STONE_TAG,
+	}
+	var up_index := SettlementFabricAssembler.STONE_FACE_DIRECTIONS.find(
+		Vector3i.UP)
+	var shell := {"exposed": {
+		Vector4i(missing.x, missing.y, missing.z, up_index): true,
+		Vector4i(-1, 4, 1, up_index): true,
+	}}
+	var closed := SettlementFabricAssembler.close_borne_turf_corners(garden,
+		retained, {}, {}, {}, shell)
+	assert_true(closed.has(missing),
+		"the retained fourth cell of a real 2x2 lawn must receive turf")
+	assert_false(closed.has(Vector3i(-1, 4, 1)),
+		"a derived closure may not seed another derived closure")
+
+
+func test_turf_field_uses_only_level_cross_material_controls() -> void:
+	var capped := {Vector3i(0, 4, 0): true}
+	var lower_public := {Vector3i(0, 4, 1): true}
+	var lower_region := SettlementFabricAssembler.maze_terrain_surface_region(
+		{}, capped, lower_public)
+	assert_eq(lower_region.storey_at(0, 1), 3,
+		"a lower street behind a retained wall must remain a cliff fallback")
+	var level_public := {Vector3i(0, 5, 1): true}
+	var level_region := SettlementFabricAssembler.maze_terrain_surface_region(
+		{}, capped, level_public)
+	assert_eq(level_region.storey_at(0, 1), 5,
+		"an equal-height path/plank seam must share the turf control plane")
+
+
+func test_selected_turf_owns_its_datum_below_higher_retained_mass() -> void:
+	var retained := {
+		Vector3i(0, 3, 0): SettlementFabricAssembler.MAZE_STONE_TAG,
+		Vector3i(0, 4, 0): SettlementFabricAssembler.MAZE_STONE_TAG,
+		Vector3i(0, 5, 0): SettlementFabricAssembler.MAZE_STONE_TAG,
+	}
+	var capped := {Vector3i(0, 3, 0): true}
+	var region := SettlementFabricAssembler.maze_terrain_surface_region(
+		retained, capped)
+	assert_eq(region.storey_at(0, 0), 4,
+		"the selected garden floor must not be lifted onto masonry above it")
 
 
 func test_transition_mesh_owns_its_retained_riser_without_a_rock_wall() \
@@ -232,9 +388,9 @@ func _house_over(retained: Dictionary, band: int) -> Dictionary:
 func test_a_bank_under_a_house_is_one_plinth_course_and_no_more() -> void:
 	## Round-3b doctrine, RE-MEASURED for the buildable layer. The last course
 	## under the house is the authored FOUNDATION piece -- the liked
-	## wood-over-stone junction -- and the bank below it is now the MOUNTAIN,
-	## which SettlementReliefPlan stamped into the heightfield and the terrain
-	## mesher renders, dresses and collides. The fabric draws none of it.
+	## wood-over-stone junction -- and the bank below it is natural terrain,
+	## which the terrain mesher renders, dresses and collides. The fabric draws
+	## none of it.
 	## Faces the town itself already closes still get nothing.
 	var retained: Dictionary = {}
 	for band in 6:

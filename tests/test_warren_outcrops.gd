@@ -298,8 +298,7 @@ func test_embedded_oriels_use_composed_partial_height_window_bays() -> void:
 			&"bay.post.right": false,
 			&"bay.cheek.left": false,
 			&"bay.cheek.right": false, &"bay.sill": false,
-			&"bay.canopy": false, &"bay.corbel.left": false,
-			&"bay.corbel.right": false,
+			&"bay.canopy": false,
 		}
 		for placement: Dictionary in recipe_value.placements:
 			var placement_id := StringName(placement.id)

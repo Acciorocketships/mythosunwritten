@@ -125,12 +125,16 @@ static func flat_ground_surface(cells: Dictionary, cell_size: float,
 			# with `CliffDressing.ground_uv()`.
 			uvs[vi + corner] = Vector2.ZERO
 		var ii := cell_index * 6
+		# Godot treats clockwise triangles as front-facing.  Keep this in the
+		# same XZ order as the streamed sheet (`p00, p10, p11`): reversing these
+		# indices leaves collision intact but culls the turf from every camera
+		# above it.
 		indices[ii] = vi
-		indices[ii + 1] = vi + 2
-		indices[ii + 2] = vi + 1
+		indices[ii + 1] = vi + 1
+		indices[ii + 2] = vi + 2
 		indices[ii + 3] = vi
-		indices[ii + 4] = vi + 3
-		indices[ii + 5] = vi + 2
+		indices[ii + 4] = vi + 2
+		indices[ii + 5] = vi + 3
 		if include_collision:
 			for corner in 6:
 				collision_faces[ii + corner] = vertices[indices[ii + corner]]
@@ -158,7 +162,8 @@ static func flat_ground_surface(cells: Dictionary, cell_size: float,
 ## terrain column field can use the same pure payload path.
 static func field_ground_surface(cells: Dictionary, region,
 		cell_size: float, lift: float, stable_id: StringName,
-		include_collision: bool = true, samples_per_cell: int = 2) -> Dictionary:
+		include_collision: bool = true, samples_per_cell: int = 2,
+		clip_cache: Dictionary = {}) -> Dictionary:
 	assert(region != null and is_equal_approx(
 		TerrainSurfaceField.tile_size(region), cell_size))
 	assert(samples_per_cell >= 1 and not stable_id.is_empty())
@@ -171,6 +176,7 @@ static func field_ground_surface(cells: Dictionary, region,
 			return a.y < b.y
 		return a.z < b.z if a.z != b.z else a.x < b.x)
 	var quad_count := ordered.size() * samples_per_cell * samples_per_cell
+	var rock_vertices := PackedInt32Array()
 	var vertices := PackedVector3Array()
 	var normals := PackedVector3Array()
 	var uvs := PackedVector2Array()
@@ -220,18 +226,46 @@ static func field_ground_surface(cells: Dictionary, region,
 					normals[vi + corner] = normal
 					uvs[vi + corner] = Vector2.ZERO
 				var ii := quad_index * 6
+				# Match the clockwise top-face winding used by the production
+				# SurfaceTool sheet.  The former reverse order made this otherwise
+				# valid surface visible only from below.
 				indices[ii] = vi
-				indices[ii + 1] = vi + 2
-				indices[ii + 2] = vi + 1
+				indices[ii + 1] = vi + 1
+				indices[ii + 2] = vi + 2
 				indices[ii + 3] = vi
-				indices[ii + 4] = vi + 3
-				indices[ii + 5] = vi + 2
+				indices[ii + 4] = vi + 2
+				indices[ii + 5] = vi + 3
 				if include_collision:
 					for corner in 6:
 						collision_faces[ii + corner] = vertices[
 							indices[ii + corner]]
+				# The very same lip/corner clipping kernel as streamed terrain.
+				# Save the full collision sheet first: dressing never shrinks walking.
+				if not clip_cache.is_empty():
+					var raw := [v00, v10, v11, v01]
+					for corner in 4:
+						vertices[vi + corner] = _clip_vert(region, clip_cache,
+							cell.x, cell.z, vertices[vi + corner])
+					# Match the streamed sheet's complete-triangle rock treatment
+					# below concave lips. Split only these triangles so the adjacent
+					# lawn can keep its grass UV without interpolation across a seam.
+					for triangle in 2:
+						var offset := ii + triangle * 3
+						var is_backing := false
+						for corner in 3:
+							is_backing = is_backing or _inner_corner_vertex(region,
+								clip_cache, cell.x, cell.z, raw[indices[offset + corner] - vi])
+						if not is_backing:
+							continue
+						for corner in 3:
+							var original := indices[offset + corner]
+							indices[offset + corner] = vertices.size()
+							rock_vertices.append(vertices.size())
+							vertices.append(vertices[original])
+							normals.append(normals[original])
+							uvs.append(Vector2.ZERO)
 				quad_index += 1
-	return {
+	var payload := {
 		"stable_id": stable_id,
 		"anchor": vertices[0],
 		# One selected owner intentionally tessellates into several patches. Keep
@@ -245,7 +279,10 @@ static func field_ground_surface(cells: Dictionary, region,
 		"collision_faces": collision_faces,
 		"visual_only": not include_collision,
 		"terrain_ground": true,
+		"terrain_rock_vertices": rock_vertices,
 	}
+	return payload
+
 
 # Chunk (ccx,ccz) covers cells [ccx*8 .. ccx*8+7]; its world origin (min corner):
 func _origin(chunk: Vector2i) -> Vector2:
@@ -752,7 +789,7 @@ const LIP_LIFT := 0.05    # matches CliffDressing.LIP_LIFT — clipped sheet edg
 # corner piece (CliffDressing.corner_flags — the dressing's own decision, so sheet and pieces
 # always agree). Slots are ordered along pdir=(dir.y,dir.x). Returns {"dirs": {dir: {"lips",
 # "prof"}}, "corners": {cdir: kind}}, or null when nothing on this cell is lipped.
-func _cell_clip_info(region, cache: Dictionary, cx: int, cz: int):
+static func _cell_clip_info(region, cache: Dictionary, cx: int, cz: int):
 	var key := Vector2i(cx, cz)
 	if cache.has(key):
 		return cache[key]
@@ -787,22 +824,26 @@ func _cell_clip_info(region, cache: Dictionary, cx: int, cz: int):
 	return out
 
 # Pointwise neighbour surface from a cached 25-sample edge profile (1u spacing, along pdir).
-func _prof_at(prof: PackedFloat32Array, along: float) -> float:
-	var a := clampf(along + 12.0, 0.0, 24.0)
+static func _prof_at(prof: PackedFloat32Array, along: float,
+		tile_size: float = TILE) -> float:
+	var last := prof.size() - 1
+	var a := clampf((along / tile_size + 0.5) * float(last), 0.0, float(last))
 	var i := int(floorf(a))
-	if i >= 24:
-		return prof[24]
+	if i >= last:
+		return prof[last]
 	return lerpf(prof[i], prof[i + 1], a - float(i))
 
 # Is slot s of this cell's `dir` edge lipped? Out-of-range slots look across the cell seam into
 # the CONTINUATION cell's colinear edge — so two cells always agree about their shared corner.
-func _slot_lipped(region, cache: Dictionary, cx: int, cz: int, dir: Vector2i, s: int) -> bool:
-	if s < 0 or s > 7:
+static func _slot_lipped(region, cache: Dictionary, cx: int, cz: int, dir: Vector2i, s: int) -> bool:
+	var tile := TerrainSurfaceField.tile_size(region)
+	var slots := int(roundf(tile / minf(3.0, tile)))
+	if s < 0 or s >= slots:
 		var pdir := Vector2i(dir.y, dir.x)
-		var step := 1 if s > 7 else -1
+		var step := 1 if s >= slots else -1
 		cx += pdir.x * step
 		cz += pdir.y * step
-		s = 0 if s > 7 else 7
+		s = 0 if s >= slots else slots - 1
 	var info = _cell_clip_info(region, cache, cx, cz)
 	if info == null or not info["dirs"].has(dir):
 		return false
@@ -815,7 +856,7 @@ func _slot_lipped(region, cache: Dictionary, cx: int, cz: int, dir: Vector2i, s:
 # a flap through the inner piece — "ground plane sticking out of inner corner lip"). The height
 # gate keeps a higher cell's own corner piece (a different storey's junction) from holding this
 # cell's clip open with nothing at this level to cover the band.
-func _corner_capped(region, cache: Dictionary, cx: int, cz: int, cdir: Vector2i) -> bool:
+static func _corner_capped(region, cache: Dictionary, cx: int, cz: int, cdir: Vector2i) -> bool:
 	var h: float = region.surface_height(cx, cz)
 	for o in [Vector2i(0, 0), Vector2i(cdir.x, 0), Vector2i(0, cdir.y), cdir]:
 		var info = _cell_clip_info(region, cache, cx + o.x, cz + o.y)
@@ -831,32 +872,36 @@ func _corner_capped(region, cache: Dictionary, cx: int, cz: int, cdir: Vector2i)
 # slot — including across the cell seam. This keeps the sheet C0-continuous: a lipped cell
 # never tears away from an unclipped neighbour (the owner's triangular holes), and the clip
 # fades out exactly where the lip run ends.
-func _edge_w(region, cache: Dictionary, cx: int, cz: int, dir: Vector2i, a: float) -> float:
-	var s := clampi(int(floorf((a + 12.0) / 3.0)), 0, 7)
+static func _edge_w(region, cache: Dictionary, cx: int, cz: int, dir: Vector2i, a: float) -> float:
+	var tile := TerrainSurfaceField.tile_size(region)
+	var module_size := minf(3.0, tile)
+	var slots := int(roundf(tile / module_size))
+	var s := clampi(int(floorf((a + tile * 0.5) / module_size)), 0, slots - 1)
 	var w_c := 1.0 if _slot_lipped(region, cache, cx, cz, dir, s) else 0.0
-	var t := (a - (-10.5 + 3.0 * float(s))) / 1.5   # -1 at the slot's low corner, +1 at its high corner
+	var t := (a - (-tile * 0.5 + module_size * (float(s) + 0.5))) / (module_size * 0.5)
 	var nb := s + 1 if t >= 0.0 else s - 1
 	var nb_lipped := _slot_lipped(region, cache, cx, cz, dir, nb)
-	if not nb_lipped and (nb < 0 or nb > 7):
+	if not nb_lipped and (nb < 0 or nb >= slots):
 		# This slot boundary IS a cell corner. When a dressing corner PIECE sits on it, the lip
 		# line TURNS there and keeps going — the clip must hold its weight, else the sheet
 		# drapes into a steep flap through/behind the cap (owner round 4: the "slight gap" slit
 		# at the lip back + a needle sliver poking from the wall at a slope-facing wrap corner).
 		# Only a truly uncapped run end tapers out.
 		var pdir := Vector2i(dir.y, dir.x)
-		nb_lipped = _corner_capped(region, cache, cx, cz, dir + (pdir if nb > 7 else -pdir))
+		nb_lipped = _corner_capped(region, cache, cx, cz, dir + (pdir if nb >= slots else -pdir))
 	var w_corner := w_c if nb_lipped else 0.0
 	return lerpf(w_c, w_corner, clampf(absf(t), 0.0, 1.0))
 
 
-func _inner_corner_vertex(region, cache: Dictionary, qcx: int, qcz: int,
+static func _inner_corner_vertex(region, cache: Dictionary, qcx: int, qcz: int,
 		v: Vector3) -> bool:
 	var info = _cell_clip_info(region, cache, qcx, qcz)
 	if info == null:
 		return false
-	var lx: float = v.x - float(qcx) * TILE
-	var lz: float = v.z - float(qcz) * TILE
-	var tuck := TILE * 0.5 - 1.3
+	var tile := TerrainSurfaceField.tile_size(region)
+	var lx: float = v.x - float(qcx) * tile
+	var lz: float = v.z - float(qcz) * tile
+	var tuck := tile * 0.5 - 1.3 * minf(3.0, tile) / 3.0
 	for cdir in info["corners"]:
 		var kind: String = info["corners"][cdir]
 		if kind != "inner" and kind != "pocket_cap":
@@ -872,29 +917,33 @@ func _inner_corner_vertex(region, cache: Dictionary, qcx: int, qcz: int,
 #  - BLEND it down (capped at EXPOSE_EPS) onto a neighbour that has dipped LESS than the lip
 #    threshold, scaled by (1-w): sub-lip dips weld instead of opening a hairline slit at the
 #    boundary (the owner's dark dashes where a slope flattens out).
-func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Vector3:
+static func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Vector3:
 	var info = _cell_clip_info(region, cache, qcx, qcz)
 	if info == null:
 		return v
 	var h: float = region.surface_height(qcx, qcz)
-	var lx := v.x - float(qcx) * TILE
-	var lz := v.z - float(qcz) * TILE
+	var tile := TerrainSurfaceField.tile_size(region)
+	var asset_scale := minf(3.0, tile) / 3.0
+	var inset := (TILE * 0.5 - TOP_CLIP) * asset_scale
+	var top_clip := tile * 0.5 - inset
+	var lx := v.x - float(qcx) * tile
+	var lz := v.z - float(qcz) * tile
 	var lift := 0.0
 	var down := 0.0
 	for dir in info["dirs"]:
 		var coord := lx * float(dir.x) + lz * float(dir.y)       # distance toward this edge
 		var along := lx * float(dir.y) + lz * float(dir.x)       # signed along pdir=(dir.y,dir.x)
 		var w := _edge_w(region, cache, qcx, qcz, dir, along)
-		var f := clampf((coord - TOP_CLIP) / (TILE * 0.5 - TOP_CLIP), 0.0, 1.0)
+		var f := clampf((coord - top_clip) / inset, 0.0, 1.0)
 		if f > 0.0 and w < 1.0:
 			# UNCAPPED drape: where the clip fades out, the edge follows the neighbour all the
 			# way down (a hovering full-height flare read as "ground plane sticking out" at
 			# lip-run ends/steps — owner round 4). The cell's own wall modules back the fold.
-			var dip := maxf(h - _prof_at(info["dirs"][dir]["prof"], along), 0.0)
+			var dip := maxf(h - _prof_at(info["dirs"][dir]["prof"], along, tile), 0.0)
 			down = maxf(down, dip * f * (1.0 - w))
 		if w <= 0.0:
 			continue
-		var target := TILE * 0.5 - (TILE * 0.5 - TOP_CLIP) * w
+		var target := tile * 0.5 - inset * w
 		if coord > target:
 			# 0.02 keeps the compressed band a few cm wide — truly degenerate slivers get
 			# zero-area normals and render as dark dashes. The lift tucks the edge 1cm BELOW
@@ -904,7 +953,7 @@ func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Ve
 				lx = pulled * float(dir.x)
 			else:
 				lz = pulled * float(dir.y)
-			lift = maxf(lift, (LIP_LIFT - 0.01) * w)
+			lift = maxf(lift, float(info.get("sheet_edge_lift", LIP_LIFT - 0.01)) * w)
 	# INNER-CORNER dip: a flat cell that OWNS a classic inner corner (its diagonal is the
 	# pocket) has no dressed edge of its own there, so its bare sheet ran flat to the very
 	# corner point and poked out through the rounded front of the inner-corner piece as a
@@ -921,14 +970,14 @@ func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Ve
 	# can still see that cliff-backing fold.
 	# (Ghost corners need no dip: their diagonal cell is a HIGHER flat, already edge-clipped.)
 	if _inner_corner_vertex(region, cache, qcx, qcz, v):
-		down = maxf(down, 1.3)
+		down = maxf(down, 1.3 * asset_scale)
 		# ("outer" one-armed flush-step corners need NO corner pull here: the dressed
 		# arm's edge clip holds full weight through the corner — _slot_lipped's
 		# continuation rule sees the taller cell's collinear lip run — so the boundary
 		# row retracts along that axis alone and the cap's L-band covers the vacated
 		# strip. A diagonal tuck abandons ground the band can't roof: a water-blue
 		# wedge opened beside the cap.)
-	return Vector3(float(qcx) * TILE + lx, v.y + lift - down, float(qcz) * TILE + lz)
+	return Vector3(float(qcx) * tile + lx, v.y + lift - down, float(qcz) * tile + lz)
 
 # Ground aprons: continue this cell's ground sheet APRON deep under each FLAT neighbour whose
 # edge toward us is EXPOSED — a higher cliff, or a same-level cliff top this cell's slope dips

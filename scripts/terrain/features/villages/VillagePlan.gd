@@ -6,7 +6,6 @@ extends RefCounted
 ## that transaction succeeds. Projection consumes only sealed complete records.
 const SEED_VERSION := 1
 const PLAZA_RADIUS := PathProgram.PLAZA_RADIUS
-const CONNECTOR_RADIUS := PathProgram.PATH_WIDTH * 0.5
 const SURFACE_PRIORITY := FeatureGroundField.PATH_PRIORITY + 20
 const _SALT_TIER := 7039
 const _SALT_THEME := 7121
@@ -27,7 +26,8 @@ var _last_build_budget_interrupted := false
 
 func _init(world_seed: int, program: VillageProgram,
 		fields: WorldFieldBlockCache = null) -> void:
-	assert(program != null)
+	assert(program != null and program.settlement_fabric_program != null,
+		"VillagePlan requires the canonical warren fabric program")
 	_world_seed = world_seed
 	_program = program
 	_fields = fields
@@ -64,15 +64,9 @@ func _build(frame: VillageFrame) -> VillageRecord:
 	var terrain := VillageTerrainView.from_fields(_fields) \
 		if _fields != null else VillageTerrainView.from_region(
 			frame.region, frame.water)
-	# Default production uses the common volumetric solver transaction. Compact
-	# authored programs without that vocabulary retain the terrain-led solver so
-	# its isolated unit tests and data-driven extension point remain meaningful;
-	# the two outputs are never combined in one record.
 	var urban_fabric := VillageWarrenFabricSolver.solve(terrain,
 		_warren_seed(frame), frame.settlement_id, frame.centre, street_axis,
-		_program, _world_seed) if _program.settlement_fabric_program != null \
-		else VillageUrbanFabricSolver.solve(terrain, frame.settlement_id,
-			frame.centre, street_axis, tier, theme, _program)
+		_program, _world_seed)
 	_last_build_budget_interrupted = String(urban_fabric.reason) \
 		.begins_with("volume_production search budget")
 	if urban_fabric.accepted:
@@ -91,21 +85,9 @@ func _build(frame: VillageFrame) -> VillageRecord:
 		if not urban_fabric.accepted:
 			prop_results[slot.stable_key] = &"urban_fabric_unavailable"
 			continue
-		if urban_fabric.generation_kind in [
-				VillageUrbanFabricPlan.GenerationKind.SECTIONAL_WARREN,
-				VillageUrbanFabricPlan.GenerationKind.VOLUMETRIC_WARREN]:
-			# The warren transaction already owns its markets, public furnishing,
-			# and complete clearance.  Do not scatter legacy plaza/outskirts props
-			# around it after the fact.
-			prop_results[slot.stable_key] = &"generated_fabric_owned"
-			continue
-		var prop_spec := _program.prop_assets[slot.asset_id] as VillagePropSpec
-		var stable_id := StringName("%s.%s" % [frame.settlement_id,
-			String(slot.stable_key)])
-		var rejection := _try_prop(frame, prop_spec, slot, theme, street_axis,
-			stable_id, payload, surfaces, clearances, occupancy)
-		prop_results[slot.stable_key] = &"accepted" \
-			if rejection.is_empty() else rejection
+		# The one canonical transaction owns markets, furnishing, and clearance;
+		# a second post-pass cannot scatter overlapping legacy props around it.
+		prop_results[slot.stable_key] = &"generated_fabric_owned"
 	var bounds := _record_bounds(frame.centre, payload, surfaces, clearances,
 		occupancy.volumes(), _program)
 	var record := VillageRecord.new(frame.settlement_id, frame.centre, bounds,
@@ -131,7 +113,11 @@ static func _materialize_urban_fabric(fabric: VillageUrbanFabricPlan,
 		# does, so a bench top is the same green as the ground it sits in. Every
 		# channel that names none keeps the white it always had.
 		payload.add(entry.asset_id, entry.transform,
-			entry.get("color", Color.WHITE) as Color, entry.stable_id)
+			entry.get("color", Color.WHITE) as Color, entry.stable_id,
+			bool(entry.get("collision_enabled", true)))
+	for box: Dictionary in fabric.collision_boxes:
+		payload.add_collision_box(box.transform as Transform3D,
+			box.size as Vector3, StringName(box.get("stable_id", &"")))
 	for mesh: Dictionary in fabric.surface_meshes:
 		payload.add_surface_mesh(mesh)
 	surfaces.append_array(fabric.surfaces)
@@ -153,66 +139,6 @@ static func _materialize_outskirts(outskirts: VillageOutskirtsPlan,
 	clearances.append_array(outskirts.clearances)
 	assert(occupancy.add_all(outskirts.volumes))
 
-func _try_prop(frame: VillageFrame, spec: VillagePropSpec,
-		slot: VillagePropSlotSpec, theme: StringName, street_axis: Vector2,
-		stable_id: StringName, payload: EnvironmentInstancePayload,
-		surfaces: Array[FeatureGroundShape],
-		clearances: Array[FeatureGroundShape],
-		occupancy: VillageOccupancy) -> StringName:
-	var cross_axis := Vector2(-street_axis.y, street_axis.x)
-	var anchor := frame.centre + street_axis * slot.local_anchor.x \
-		+ cross_axis * slot.local_anchor.y
-	if not _program.anchor_allowed(frame.centre, anchor):
-		return &"anchor_bounds"
-	var facing := (street_axis * slot.local_facing.x \
-		+ cross_axis * slot.local_facing.y).normalized()
-	var flat_transform := spec.placement_for(anchor, facing, 0.0)
-	var lot: Dictionary = spec.world_lot(flat_transform)
-	var footprint := FeatureGroundShape.oriented_rect(lot.centre,
-		lot.half_extents, lot.angle)
-	if slot.path_policy == VillagePropSlotSpec.PathPolicy.AVOID_ALL_PATHS \
-			and frame.path_ground != null \
-			and frame.path_ground.overlaps_clearance(footprint):
-		return &"path_clearance"
-	if slot.path_policy \
-			== VillagePropSlotSpec.PathPolicy.ALLOW_BASE_SURFACE:
-		for direction: Vector2i in frame.incident_directions:
-			var route_mouth := FeatureGroundShape.capsule(frame.centre,
-				frame.centre + Vector2(direction) \
-					* (slot.local_anchor.length() + 12.0),
-				CONNECTOR_RADIUS)
-			if route_mouth.intersects(footprint):
-				return &"route_mouth_clearance"
-	for shape: FeatureGroundShape in surfaces:
-		if shape.intersects(footprint):
-			return &"village_path_clearance"
-	var contact: Dictionary = spec.world_contact(flat_transform)
-	var contact_shape := FeatureGroundShape.oriented_rect(contact.centre,
-		contact.half_extents, contact.angle)
-	var region := frame.region if _fields == null else _fields.region_at(anchor)
-	var terrain_bounds := TerrainSurfaceField.height_bounds(region,
-		contact_shape.bounds())
-	if terrain_bounds.y - terrain_bounds.x > spec.max_ground_relief:
-		return &"terrain_relief"
-	for point: Vector2 in _footprint_samples(lot.centre,
-			lot.half_extents, lot.angle):
-		if _is_wet(frame, point):
-			return &"lot_water"
-	var transform := spec.placement_for(anchor, facing, terrain_bounds.y)
-	var solid_rect: Dictionary = spec.world_solid(transform)
-	var solid := VillageOccupancyVolume.new(VillageOccupancy.Role.SOLID,
-		solid_rect.centre, solid_rect.half_extents, solid_rect.angle,
-		terrain_bounds.y, terrain_bounds.y + spec.measured_aabb.size.y,
-		StringName("%s.solid" % stable_id))
-	if not occupancy.add(solid):
-		return &"solid_occupancy"
-	payload.add(spec.asset_for_theme(theme), transform,
-		Color.WHITE, stable_id)
-	clearances.append(FeatureGroundShape.oriented_rect(lot.centre,
-		lot.half_extents, lot.angle, FeatureGroundField.NATURAL, 0,
-		StringName("%s.clearance" % stable_id)))
-	return &""
-
 func _street_axis(frame: VillageFrame) -> Vector2:
 	var axis := Vector2(frame.dominant_axis)
 	var positive := false
@@ -227,10 +153,6 @@ func _street_axis(frame: VillageFrame) -> Vector2:
 		return -axis if positive else axis
 	return axis if _bounded_roll(frame, _SALT_STREET_DIRECTION, 2) == 0 \
 		else -axis
-
-func _is_wet(frame: VillageFrame, point: Vector2) -> bool:
-	var water := frame.water if _fields == null else _fields.water_at(point)
-	return water.is_wet(point)
 
 func _tier(frame: VillageFrame) -> StringName:
 	return VillageProgram.production_tier(_roll(frame, _SALT_TIER))
@@ -259,16 +181,6 @@ static func warren_seed_for_cell(world_seed: int, cell: Vector2i) -> int:
 	value = Helper._mix64(value ^ Helper._mix64(cell.x))
 	value = Helper._mix64(value ^ Helper._mix64(cell.y))
 	return value
-
-static func _footprint_samples(centre: Vector2, half_extents: Vector2,
-		angle: float) -> Array[Vector2]:
-	var out: Array[Vector2] = [centre]
-	for local: Vector2 in [Vector2(-half_extents.x, -half_extents.y),
-			Vector2(half_extents.x, -half_extents.y),
-			Vector2(half_extents.x, half_extents.y),
-			Vector2(-half_extents.x, half_extents.y)]:
-		out.append(centre + local.rotated(angle))
-	return out
 
 static func _record_bounds(centre: Vector2,
 		payload: EnvironmentInstancePayload,

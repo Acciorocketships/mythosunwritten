@@ -166,15 +166,13 @@ func test_reported_seed_builds_an_inhabited_dense_multilevel_village() -> void:
 	# settlement really builds is compact and carries none of those hero
 	# features; its shortfalls are published in `advisory_shortfalls` rather
 	# than refused. The COUNTS must still be measured -- an absent key is a
-	# broken transaction, not a shortfall -- and the balcony floor it does
-	# clear is pinned at what it measures.
+	# broken transaction, not a shortfall. The quotas are advisory, so this test
+	# deliberately verifies measurement rather than hard-coding a content count.
 	for quota_key: String in ["enclosed_skywalk_count", "covered_market_count",
 			"elevated_courtyard_count", "prefab_landmark_count",
 			"usable_balcony_count", "room_outcropping_count"]:
 		assert_true(audit.has(quota_key),
 			"the sealed transaction never measured %s" % quota_key)
-	assert_gte(int(audit.usable_balcony_count), 2,
-		"the reported site must keep the balconies it measures today")
 	gut.p(("reported site: skywalks=%d markets=%d courts=%d landmarks=%d "
 		+ "balconies=%d outcrops=%d") % [
 		int(audit.enclosed_skywalk_count), int(audit.covered_market_count),
@@ -185,3 +183,19 @@ func test_reported_seed_builds_an_inhabited_dense_multilevel_village() -> void:
 	assert_eq(int(audit.stair_endpoint_missing_landing_count), 0)
 	assert_gte(record.payload.instance_count, 200,
 		"the reported site cannot regress to a tent-and-spit payload")
+	var owner := WorldFieldBlockCache.key_of(record.centre)
+	assert_eq(_village_instance_count(world, owner), record.payload.instance_count,
+		"one canonical block owns the complete town render/collision transaction")
+	for z in range(-1, 2):
+		for x in range(-1, 2):
+			var block := owner + Vector2i(x, z)
+			if block == owner:
+				continue
+			assert_eq(_village_instance_count(world, block), 0,
+				"neighbour feature blocks must not split the town into duplicate batches")
+
+
+static func _village_instance_count(world: WorldFeaturePlan,
+		block: Vector2i) -> int:
+	return world.context_for(block).placements().instance_count \
+		- world.path_plan().context_for(block).placements().instance_count

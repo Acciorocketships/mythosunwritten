@@ -45,6 +45,13 @@ func _process(_delta: float) -> void:
 		push_error("Overlay disappeared before all startup support chunks were ready.")
 		get_tree().quit(1)
 		return
+	var expected_support: Array[Vector2i] = [
+		Vector2i(-1, -1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i.ZERO,
+	]
+	if streamer.startup_support_chunks() != expected_support:
+		push_error("Production startup did not cover all four visible origin quadrants.")
+		get_tree().quit(1)
+		return
 	if _progress_values.is_empty() or not is_equal_approx(_progress_values[-1], 1.0):
 		push_error("Startup progress never reached completion.")
 		get_tree().quit(1)

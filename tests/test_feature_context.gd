@@ -36,18 +36,16 @@ func test_centred_surface_uses_geometric_union() -> void:
 		"the 4m strip covers the two 2m quad-centre columns")
 	assert_eq(context.surface_at(Vector2(7.0, 3.0)), FeatureGroundField.NATURAL)
 
-func test_village_node_paints_a_large_circle_instead_of_a_square() -> void:
+func test_village_node_is_one_path_width_square_without_a_plaza_blob() -> void:
 	var masks := {Vector2i.ZERO: 3}
 	var context := _context(Rect2(-Vector2.ONE * 24.0, Vector2.ONE * 48.0),
 		[], [], 2.0, masks, {Vector2i.ZERO: true})
-	assert_eq(context.surface_at(Vector2(7.9, 0.0)),
+	assert_eq(context.surface_at(Vector2(1.9, 1.9)),
 		FeatureGroundField.WORN_PATH,
-		"the circular plaza is wider than the old twelve-metre square")
-	assert_eq(context.surface_at(Vector2(5.0, 5.0)),
-		FeatureGroundField.WORN_PATH,
-		"the large circle fills its interior beyond the old road strip")
-	assert_eq(context.surface_at(Vector2(7.0, 7.0)), FeatureGroundField.NATURAL,
-		"the village plaza has a circular boundary, not a larger square")
+		"the node closes the exact four-metre road junction")
+	assert_eq(context.surface_at(Vector2(2.1, 2.1)),
+		FeatureGroundField.NATURAL,
+		"the node does not stamp a circular town-centre plaza")
 
 func test_geometric_surfaces_remain_visible_when_path_masks_exist() -> void:
 	var supplement := Rect2(Vector2(-2.0, 8.0), Vector2(4.0, 4.0))

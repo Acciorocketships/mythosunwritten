@@ -146,7 +146,6 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 		return null
 	return result
 
-
 static func _close_borne_court_corners(result: PublicRealmSurfacePlan,
 		structural_solids: Dictionary, daylight_voids: Dictionary,
 		retained: Dictionary) -> bool:

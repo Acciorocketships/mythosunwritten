@@ -94,14 +94,17 @@ func seal() -> bool:
 			last_rejection = "route teleports from %s to %s" \
 				% [route[index - 1], route[index]]
 			return false
-	for portal: Vector3i in portals:
-		if not seen.has(portal):
-			last_rejection = "portal %s is not on the route" % portal
-			return false
 	if not _transitions_tile_the_route():
 		return false
 	if not _lanes_hang_off_the_public_realm(seen):
 		return false
+	# A town may open through either the primary itinerary or one of its sealed
+	# public lanes. Validate portals only after lanes have joined `seen`; the old
+	# route-only check made every secondary gate illegal by construction.
+	for portal: Vector3i in portals:
+		if not seen.has(portal):
+			last_rejection = "portal %s is not on the public realm" % portal
+			return false
 	if not _loop_edges_close_the_public_graph(seen):
 		return false
 	if not _bridge_spans_are_legal(seen):
@@ -263,16 +266,21 @@ func _lanes_hang_off_the_public_realm(seen: Dictionary) -> bool:
 	## ground the route or an earlier lane already took.
 	##
 	## The one rule that is a lane's alone is the anchor: a lane must start from
-	## a cell of the public realm that already exists when it is declared, so the
-	## whole network is reachable from the route's mouth by construction.
+	## a transition endpoint that already exists when it is declared, so the
+	## whole graph is reachable from the route's mouth by construction. A stride
+	## intermediate is public floor, but its transition already owns that column's
+	## surface and it therefore cannot become a second walk node or lane junction.
 	## WarrenVolumePlan._all_walk_connected() rejects the entire town for an
 	## orphan alley one stage later, and it names only the symptom.
+	var walk_nodes: Dictionary = {route[0]: true}
+	for transition: Dictionary in transitions:
+		walk_nodes[transition["to"] as Vector3i] = true
 	for index in lanes.size():
 		var lane := lanes[index]
 		var anchor := lane["anchor"] as Vector3i
-		if not seen.has(anchor):
-			last_rejection = "lane %d is anchored at %s, which is not public " \
-				% [index, anchor] + "realm the route or an earlier lane reaches"
+		if not walk_nodes.has(anchor):
+			last_rejection = "lane %d is anchored at %s, which is not a walk " \
+				% [index, anchor] + "node the route or an earlier lane reaches"
 			return false
 		var cells := lane["cells"] as Array[Vector3i]
 		if cells.is_empty():
@@ -300,6 +308,8 @@ func _lanes_hang_off_the_public_realm(seen: Dictionary) -> bool:
 		if not _transitions_tile(walk, lane["transitions"] as Array[Dictionary],
 				"lane %d" % index):
 			return false
+		for transition: Dictionary in lane["transitions"] as Array[Dictionary]:
+			walk_nodes[transition["to"] as Vector3i] = true
 	return true
 
 

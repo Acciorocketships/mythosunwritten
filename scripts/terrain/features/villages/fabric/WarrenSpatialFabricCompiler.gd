@@ -394,7 +394,6 @@ static func solve(source: WarrenSpatialPlan,
 	last_audit = audit
 	return result
 
-
 static func _modular_box_use_audit(source: WarrenSpatialPlan,
 		program: SettlementFabricProgram, room_units: Array[FabricUnit],
 		roof_units: Array[FabricUnit]) -> Dictionary:
@@ -1769,15 +1768,15 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		footprints)
 	for capped_cell_value: Variant in capped_ground.keys():
 		capped[capped_cell_value as Vector3i] = true
+	# The former short corbel asset read as stairs floating beneath every
+	# overhang. Structural skins and their boundary posts own bearing now, so the
+	# whole legacy bearer channel is intentionally withdrawn.
 	var floor_bearers_borne := 0
 	var floor_bearers_refused := 0
 	for site: Dictionary in SettlementFabricAssembler \
 			.maze_public_floor_bearer_sites(retained, solids, paved, walked,
 				capped):
-		if bool(site.refused):
-			floor_bearers_refused += 1
-		else:
-			floor_bearers_borne += 1
+		floor_bearers_refused += 1
 	# TASK I4 ROUND 8, PART 1. The cladding the frontage stands off, from the same
 	# shell this audit already holds -- so the sites this counts are the sites the
 	# payload lays, stand-off and all.

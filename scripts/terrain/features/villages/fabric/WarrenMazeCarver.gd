@@ -154,6 +154,13 @@ static func carve(world_seed: int, massif: WarrenMassif,
 		WarrenVillageScaleProfile.GRAND] else MIN_LOOP_JOINS
 	_carve_loop_joins(world_seed, massif, excavation, thickness,
 		market_square, loop_target)
+	# The historical grammar stopped after cutting the one spine mouth, so three
+	# sides of an otherwise connected town could be solid wall. Extend existing
+	# at-grade public ground to one or two other perimeter cells before the plan
+	# is sealed. These are ordinary lanes with owned headroom and transitions,
+	# not facade holes inferred by the renderer.
+	var secondary_gates := _carve_secondary_gate_lanes(world_seed, massif,
+		excavation, portal, profile)
 	var after_frontage := _frontage_audit(massif, excavation)
 	# TASK D1 FIX 1, controller ruling: ADVISORY. FRONTAGE_FLOOR is the
 	# growth POLICY both ratchets steer by, not a verdict on the town. It is
@@ -176,6 +183,9 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	var forced_open: Array[Vector3i] = []
 	forced_open.assign(excavation.route.slice(0, market_cells))
 	for cell: Vector3i in market_square:
+		if cell not in forced_open:
+			forced_open.append(cell)
+	for cell: Vector3i in secondary_gates:
 		if cell not in forced_open:
 			forced_open.append(cell)
 	_open_passages_to_air(world_seed, massif, excavation, forced_open,
@@ -1936,7 +1946,7 @@ static func _column_is_public_facade(massif: WarrenMassif,
 
 static func _finalize_excavation(massif: WarrenMassif,
 		excavation: WarrenExcavation) -> void:
-	excavation.portals = [excavation.route[0]] as Array[Vector3i]
+	excavation.portals = _finished_public_portals(massif, excavation)
 	excavation.covered.clear()
 	var planned_bridge_cells: Dictionary = {}
 	for span_value: Variant in excavation.bridge_spans:
@@ -1952,6 +1962,153 @@ static func _finalize_excavation(massif: WarrenMassif,
 		# roofs; the bridge proof ledger distinguishes which construction owns it.
 		excavation.covered[cell] = planned_bridge_cells.has(cell) \
 			or massif.top_at(column) > roof.y and not excavation.carved.has(roof)
+
+
+static func _finished_public_portals(massif: WarrenMassif,
+		excavation: WarrenExcavation) -> Array[Vector3i]:
+	## Select two or three genuine, separated boundary openings from the already
+	## connected public graph. The spine mouth remains first (and therefore the
+	## canonical world-road handoff); later gates are topology, never decorative
+	## holes cut into an unrelated facade.
+	var primary := excavation.route[0]
+	var candidates: Array[Vector3i] = []
+	for cell: Vector3i in excavation.public_cells():
+		var base := massif.base_at(Vector2i(cell.x, cell.z))
+		if cell == primary or cell.y > base + 1 \
+				or not WarrenPassageLatticeRules.opens_to_exterior(massif, cell):
+			continue
+		candidates.append(cell)
+	candidates.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		var ad := absi(a.x - primary.x) + absi(a.z - primary.z)
+		var bd := absi(b.x - primary.x) + absi(b.z - primary.z)
+		if ad != bd:
+			return ad > bd
+		var ah := WarrenPassageLatticeRules.hash_key(
+			excavation.world_seed, 0x47415445, a)
+		var bh := WarrenPassageLatticeRules.hash_key(
+			excavation.world_seed, 0x47415445, b)
+		return ah < bh if ah != bh else _cell_less(a, b))
+	var out: Array[Vector3i] = [primary]
+	for candidate: Vector3i in candidates:
+		var separated := true
+		for selected: Vector3i in out:
+			if absi(candidate.x - selected.x) + absi(candidate.z - selected.z) < 4:
+				separated = false
+				break
+		if not separated:
+			continue
+		out.append(candidate)
+		if out.size() == 3:
+			break
+	return out
+
+
+static func _carve_secondary_gate_lanes(world_seed: int, massif: WarrenMassif,
+		excavation: WarrenExcavation, primary: Vector3i,
+		profile: WarrenVillageScaleProfile) -> Array[Vector3i]:
+	## Connect the existing public graph to separated perimeter cells on its
+	## ground band. Compact towns receive two total gates; larger towns receive
+	## three. A candidate is committed only as a legal level lane, so every exit
+	## is reachable from the primary entrance through the same public graph.
+	var target_count := 2 if profile.scale_id \
+		== WarrenVillageScaleProfile.COMPACT else 3
+	var occupied: Dictionary = {}
+	for cell: Vector3i in excavation.public_cells():
+		occupied[cell] = true
+	var walk_nodes: Dictionary = {}
+	for cell: Vector3i in _walk_nodes(excavation):
+		walk_nodes[cell] = true
+	var accepted: Array[Vector3i] = [primary]
+	var candidates := _portal_cells(massif, 2, world_seed)
+	for candidate: Vector3i in candidates:
+		if accepted.size() >= target_count:
+			break
+		if occupied.has(candidate) or not _gate_is_separated(candidate, accepted):
+			continue
+		var connection := _level_gate_connection(massif, excavation, occupied,
+			walk_nodes, candidate)
+		if connection.is_empty():
+			continue
+		var anchor := connection.anchor as Vector3i
+		var cells := connection.cells as Array[Vector3i]
+		var walk: Array[Vector3i] = [anchor]
+		walk.append_array(cells)
+		if WarrenMazeSourcePlan._max_straight_run(walk) \
+				> WarrenMazeSourcePlan.MAX_ALLEY_STRAIGHT_RUN:
+			continue
+		var trial := occupied.duplicate()
+		var broad := false
+		for cell: Vector3i in cells:
+			if WarrenPassageLatticeRules.completes_public_square(trial, cell):
+				broad = true
+				break
+			trial[cell] = true
+		if broad:
+			continue
+		var transitions: Array[Dictionary] = []
+		for index in range(1, walk.size()):
+			transitions.append({"from": walk[index - 1], "to": walk[index],
+				"kind": WarrenVolumeTransition.Kind.LEVEL})
+		excavation.lanes.append({"anchor": anchor, "cells": cells,
+			"transitions": transitions, "feature_kind": &"secondary_gate"})
+		for cell: Vector3i in cells:
+			occupied[cell] = true
+			# Every move in a secondary gate lane is one LEVEL step, so every
+			# admitted cell is a real transition endpoint and may anchor a later
+			# lane.  This is deliberately narrower than `occupied`: stair/ramp
+			# stride intermediates are public floor but cannot own another surface.
+			walk_nodes[cell] = true
+			for band in range(cell.y,
+					cell.y + WarrenPassageLatticeRules.HEADROOM_BANDS):
+				excavation.carved[Vector3i(cell.x, band, cell.z)] = true
+		accepted.append(candidate)
+	return accepted.slice(1)
+
+
+static func _level_gate_connection(massif: WarrenMassif,
+		excavation: WarrenExcavation, public: Dictionary,
+		walk_nodes: Dictionary,
+		candidate: Vector3i) -> Dictionary:
+	## Breadth-first search from a boundary mouth through borable columns on the
+	## same terrain band. Parents point back toward the mouth, so the returned
+	## cells naturally run from their public anchor to the exterior endpoint.
+	var parents: Dictionary = {candidate: candidate}
+	var queue: Array[Vector3i] = [candidate]
+	var cursor := 0
+	while cursor < queue.size() and cursor < 256:
+		var cell := queue[cursor]
+		cursor += 1
+		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+			var next := cell + Vector3i(direction.x, 0, direction.y)
+			if public.has(next):
+				# Public stride intermediates already carry their transition's
+				# complete tread surface.  They may look like a valid junction in a
+				# cell union, but making one a lane anchor would introduce a second
+				# surface owner and a non-node graph endpoint downstream.
+				if not walk_nodes.has(next):
+					continue
+				var cells: Array[Vector3i] = [cell]
+				while cells[-1] != candidate:
+					cells.append(parents[cells[-1]] as Vector3i)
+				return {"anchor": next, "cells": cells}
+			if parents.has(next) or not massif.has_column(
+					Vector2i(next.x, next.z)) \
+					or massif.base_at(Vector2i(next.x, next.z)) != candidate.y \
+					or not WarrenPassageLatticeRules.slot_is_borable(massif,
+						excavation, next,
+						WarrenPassageLatticeRules.HEADROOM_BANDS):
+				continue
+			parents[next] = cell
+			queue.append(next)
+	return {}
+
+
+static func _gate_is_separated(candidate: Vector3i,
+		accepted: Array[Vector3i]) -> bool:
+	for gate: Vector3i in accepted:
+		if absi(candidate.x - gate.x) + absi(candidate.z - gate.z) < 4:
+			return false
+	return true
 
 
 static func _portal_cells(massif: WarrenMassif, market_cells: int,

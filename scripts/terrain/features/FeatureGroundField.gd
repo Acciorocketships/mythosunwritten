@@ -103,23 +103,30 @@ func extended(surface_shapes: Array[FeatureGroundShape],
 
 func _path_at_cell(world_xz: Vector2, cell: Vector2i) -> bool:
 	var local := world_xz - Vector2(cell) * TerrainSurfaceField.TILE
-	if _node_cells.has(cell) \
-			and local.length_squared() <= PathProgram.PLAZA_RADIUS * PathProgram.PLAZA_RADIUS:
+	# A settlement node is a built junction: its square and every arm meet at
+	# right angles, so the town's street and handoff ramp butt against straight
+	# edges. The rounded fillet belongs to open-country bends only.
+	var is_node := _node_cells.has(cell)
+	if is_node \
+			and absf(local.x) <= PathProgram.NODE_JUNCTION_HALF_WIDTH \
+			and absf(local.y) <= PathProgram.NODE_JUNCTION_HALF_WIDTH:
 		return true
 	var mask: int = _connection_masks.get(cell, 0)
-	if (mask & 1) != 0 and (mask & 4) != 0 \
-			and _rounded_corner_at(local, Vector2(1.0, 1.0)):
-		return true
-	if (mask & 1) != 0 and (mask & 8) != 0 \
-			and _rounded_corner_at(local, Vector2(1.0, -1.0)):
-		return true
-	if (mask & 2) != 0 and (mask & 4) != 0 \
-			and _rounded_corner_at(local, Vector2(-1.0, 1.0)):
-		return true
-	if (mask & 2) != 0 and (mask & 8) != 0 \
-			and _rounded_corner_at(local, Vector2(-1.0, -1.0)):
-		return true
-	var arm_start := PathProgram.CORNER_RADIUS if _is_simple_turn(mask) else 0.0
+	if not is_node:
+		if (mask & 1) != 0 and (mask & 4) != 0 \
+				and _rounded_corner_at(local, Vector2(1.0, 1.0)):
+			return true
+		if (mask & 1) != 0 and (mask & 8) != 0 \
+				and _rounded_corner_at(local, Vector2(1.0, -1.0)):
+			return true
+		if (mask & 2) != 0 and (mask & 4) != 0 \
+				and _rounded_corner_at(local, Vector2(-1.0, 1.0)):
+			return true
+		if (mask & 2) != 0 and (mask & 8) != 0 \
+				and _rounded_corner_at(local, Vector2(-1.0, -1.0)):
+			return true
+	var arm_start := PathProgram.CORNER_RADIUS \
+		if _is_simple_turn(mask) and not is_node else 0.0
 	if absf(local.y) <= PathProgram.PATH_WIDTH * 0.5:
 		if local.x >= arm_start and local.x <= TerrainSurfaceField.HALF \
 				and (mask & 1) != 0:

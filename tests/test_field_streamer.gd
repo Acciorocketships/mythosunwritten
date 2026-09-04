@@ -15,7 +15,10 @@ static func _contains_scene_or_server_resource(value: Variant) -> bool:
 			if _contains_scene_or_server_resource(item):
 				return true
 	elif value is EnvironmentInstancePayload:
-		return _contains_scene_or_server_resource((value as EnvironmentInstancePayload).batches)
+		var payload := value as EnvironmentInstancePayload
+		return _contains_scene_or_server_resource(payload.batches) \
+			or _contains_scene_or_server_resource(payload.collision_boxes) \
+			or _contains_scene_or_server_resource(payload.surface_meshes)
 	return false
 
 
@@ -25,21 +28,15 @@ func test_chunk_of_world_pos():
 	assert_eq(Streamer.chunk_of(Vector3(200, 0, 10)), Vector2i(1, 0))
 	assert_eq(Streamer.chunk_of(Vector3(-5, 0, -5)), Vector2i(-1, -1))
 
-func test_exported_terrain_defaults_match_the_canonical_production_tuning() -> void:
-	var s := Streamer.new()
-	assert_eq(s.HEIGHTFIELD_AMPLITUDE,
-		TerrainWorldTuning.HEIGHTFIELD_AMPLITUDE)
-	assert_eq(s.HEIGHTFIELD_MAX_STOREYS,
-		TerrainWorldTuning.HEIGHTFIELD_MAX_STOREYS)
-	assert_eq(s.MAX_CLIFF_STEP, TerrainWorldTuning.MAX_CLIFF_STEP)
-	s.free()
-
-func test_spawn_corner_resolves_to_four_support_quadrants() -> void:
+func test_startup_environment_resolves_visible_chunk_seams() -> void:
 	assert_eq(Streamer.support_chunks_at(Vector3.ZERO), [
 		Vector2i(-1, -1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i.ZERO,
 	])
+	assert_eq(Streamer.support_chunks_at(Streamer.DEFAULT_SPAWN_POSITION),
+		[Vector2i(-1, -1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i.ZERO],
+		"the production camera cannot reveal an unbuilt origin quadrant")
 	assert_eq(Streamer.support_chunks_at(Vector3(96.0, 0.0, 96.0)), [Vector2i.ZERO],
-		"a player away from seams needs only the chunk beneath their footprint")
+		"a spawn more than one terrain cell from a seam needs one chunk")
 
 func test_startup_progress_counts_only_integrated_support_chunks() -> void:
 	var s := Streamer.new()

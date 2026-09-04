@@ -12,6 +12,8 @@ var surfaces: Array[FeatureGroundShape] = []
 var clearances: Array[FeatureGroundShape] = []
 var placements: Array[VillageMassingPlacement] = []
 var route_stair_count: int = 0
+## Stocked stalls mirrored across a market street from the town's own frontage.
+var market_stall_count: int = 0
 ## Distinct entrance-neighbourhood street sides that serve at least one edge
 ## parcel. This is not the number of house spurs: several houses may address
 ## the same short local street, while each sealed city exit still needs a

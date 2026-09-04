@@ -63,3 +63,65 @@ func test_invalidation_discards_a_detached_partial_commit() -> void:
 	assert_eq(queue.pending_count(), 0)
 	assert_eq(parent.get_child_count(), 0)
 	assert_true(queue.drain(1, 100, 100, 100000).is_empty())
+
+
+func test_collision_contract_skips_visual_instances_and_commits_boxes() -> void:
+	var cache := EnvironmentRenderCache.new(EnvironmentCatalog.load_default())
+	var queue := FeatureCommitQueue.new(cache)
+	var parent := Node3D.new()
+	add_child_autofree(parent)
+	var payload := EnvironmentInstancePayload.new()
+	payload.add(&"sfv.light_pole.001", Transform3D.IDENTITY, Color.WHITE,
+		&"visual-only", false)
+	var box_transform := Transform3D(Basis.IDENTITY, Vector3(2.0, 1.0, 3.0))
+	payload.add_collision_box(box_transform, Vector3(2.5, 2.0, 0.2),
+		&"generated/barrier")
+	queue.enqueue(Vector2i.ZERO, 1, parent, payload)
+	var events: Array[Dictionary] = []
+	for _iteration in 8:
+		events = queue.drain(1, 8, 0, 100000)
+		if not events.is_empty():
+			break
+	assert_eq(events.size(), 1)
+	var body := (events[0].node as Node3D).get_node(
+		"FeatureCollision") as StaticBody3D
+	assert_eq(body.get_child_count(), 1,
+		"the visual-only asset contributes no collision pieces")
+	var committed := body.get_child(0) as CollisionShape3D
+	assert_eq(committed.transform, box_transform)
+	assert_eq((committed.shape as BoxShape3D).size, Vector3(2.5, 2.0, 0.2))
+
+
+func test_box_only_payload_waits_for_collision_commit() -> void:
+	var queue := FeatureCommitQueue.new(EnvironmentRenderCache.new(
+		EnvironmentCatalog.load_default()))
+	var parent := Node3D.new()
+	add_child_autofree(parent)
+	var payload := EnvironmentInstancePayload.new()
+	payload.add_collision_box(Transform3D.IDENTITY, Vector3.ONE,
+		&"generated/box-only")
+	queue.enqueue(Vector2i.ZERO, 1, parent, payload)
+	assert_true(queue.drain(0, 0, 0).is_empty(),
+		"box-only payloads cannot bypass staged collision")
+	var events := queue.drain(0, 1, 0)
+	assert_eq(events.size(), 1)
+	var body := (events[0].node as Node3D).get_node(
+		"FeatureCollision") as StaticBody3D
+	assert_eq(body.get_child_count(), 1)
+
+
+func test_terrain_corner_backing_keeps_rock_uv_at_commit() -> void:
+	var mesh := TerrainChunkMesher.flat_ground_surface({Vector3i.ZERO: true},
+		1.5, 0.0, &"test-corner-material")
+	mesh["terrain_rock_vertices"] = PackedInt32Array([0, 1, 2])
+	var queue := FeatureCommitQueue.new(EnvironmentRenderCache.new(
+		EnvironmentCatalog.load_default()))
+	var block := Node3D.new()
+	add_child_autofree(block)
+	queue._commit_mesh_visual(block, mesh)
+	var visual := block.get_node("Visuals").get_child(0) as MeshInstance3D
+	var uvs: PackedVector2Array = visual.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
+	for index in uvs.size():
+		assert_eq(uvs[index], SlopeAtlas.cliff_uv() if index < 3
+			else CliffDressing.ground_uv(),
+			"the commit adapter must not repaint tucked rock as bright grass")

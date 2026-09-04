@@ -279,7 +279,18 @@ func _read_args() -> void:
 
 
 func _print_quality_dump(program: SettlementFabricProgram) -> void:
+	var contact_specs := VillageWarrenFabricSolver.terrain_contact_specs(
+		_spatial, _fabric)
+	print("[quality.terrain_contacts] count=", contact_specs.size(),
+		" specs=", JSON.stringify(contact_specs))
 	if _fabric.surface_plan != null:
+		for kind in PublicRealmSurfacePlan.SurfaceKind.values():
+			var surface_cells := _fabric.surface_plan.cells_for_kind(kind)
+			if surface_cells.is_empty():
+				continue
+			print("[quality.surface.cells] kind=", kind, " count=",
+				surface_cells.size(), " cells=", JSON.stringify(surface_cells))
+		_print_structural_gap_diagnostics()
 		print("[warren_spatial_review] QUALITY_ENTRANCES_BEGIN audit=",
 			JSON.stringify(_fabric.surface_plan.audit()))
 		for entrance: Dictionary in _fabric.surface_plan.entrance_records:
@@ -298,6 +309,69 @@ func _print_quality_dump(program: SettlementFabricProgram) -> void:
 					(batch.transforms as Array).size(), " stable_ids=",
 					batch.ids)
 		print("[warren_spatial_review] QUALITY_ENTRANCES_END")
+	if _production_urban != null:
+		print("[quality.world_transform] ", _production_urban.world_transform)
+		print("[quality.plaza.supports] ", JSON.stringify(
+			_fabric.planned_plaza_cells.keys()))
+		var plaza_surface_probe := SettlementFabricAssembler \
+			.production_surface_bundle(_fabric.surface_plan,
+				SettlementFabricAssembler.maze_module_footprints(_fabric),
+				SettlementFabricAssembler.maze_skin_panel_boxes_for(_fabric),
+				_fabric.planned_plaza_cells)
+		for probe_asset: StringName in plaza_surface_probe.asset_ids():
+			var probe_batch := plaza_surface_probe.batches[probe_asset] as Dictionary
+			var probe_ids := probe_batch.get("ids", []) as Array
+			for probe_index in probe_ids.size():
+				if String(probe_ids[probe_index]).begins_with("public-surface/"):
+					print("[quality.plaza.surface-probe] id=",
+						probe_ids[probe_index], " local=",
+						(probe_batch.transforms[probe_index] as Transform3D).origin)
+		for mesh: Dictionary in _production_urban.surface_meshes:
+			var stable_mesh_id := String(mesh.get("stable_id", ""))
+			if not (stable_mesh_id.contains("maze-ground-turf") \
+					or stable_mesh_id.contains("public-structural-skin")):
+				continue
+			var local_vertices := PackedVector3Array()
+			var inverse := _production_urban.world_transform.affine_inverse()
+			for vertex: Vector3 in mesh.vertices as PackedVector3Array:
+				local_vertices.append(inverse * vertex)
+			print("[quality.surface.mesh] id=", stable_mesh_id,
+				" bounds=", _points_bounds(local_vertices), " logical_cells=",
+				JSON.stringify(mesh.get("logical_cells", [])))
+		var plaza_centres: Array[Vector3] = []
+		for plaza_cell_value: Variant in _fabric.planned_plaza_cells.keys():
+			var plaza_cell := plaza_cell_value as Vector3i
+			plaza_centres.append(Vector3(plaza_cell.x, plaza_cell.y + 1,
+				plaza_cell.z) * FabricRecipe.CELL_SIZE)
+		var inverse_entries := _production_urban.world_transform.affine_inverse()
+		for entry: Dictionary in _production_urban.entries:
+			var local_origin := (inverse_entries \
+				* (entry.transform as Transform3D)).origin
+			var near_plaza := false
+			for centre: Vector3 in plaza_centres:
+				if absf(local_origin.y - centre.y) <= 1.0 \
+						and Vector2(local_origin.x - centre.x,
+							local_origin.z - centre.z).length() <= 2.25:
+					near_plaza = true
+					break
+			if near_plaza:
+				print("[quality.plaza.entry] id=", entry.stable_id,
+					" asset=", entry.asset_id, " local=", local_origin)
+		var ground_payload := SettlementFabricAssembler.terrace_retaining_payload(
+			_fabric, false)
+		for asset_id: StringName in ground_payload.asset_ids():
+			var batch := ground_payload.batches[asset_id] as Dictionary
+			var transforms := batch.get("transforms", []) as Array
+			var ids := batch.get("ids", []) as Array
+			for placement_index in transforms.size():
+				var stable_id := String(ids[placement_index])
+				if not (stable_id.begins_with("maze-rim/") \
+						or stable_id.begins_with("maze-rim-corner/") \
+						or stable_id.begins_with("maze-stone/")):
+					continue
+				print("[quality.ground.placement] id=", stable_id,
+					" asset=", asset_id, " transform=",
+					transforms[placement_index])
 	print("[warren_spatial_review] QUALITY_ROOMS_BEGIN")
 	for building: WarrenBuildingVolume in _spatial.buildings:
 		for room: WarrenRoomStamp in building.room_records:
@@ -427,6 +501,91 @@ func _quality_cell_bounds(cells: Array[Vector3i]) -> String:
 	return "%s..%s" % [minimum, maximum]
 
 
+func _points_bounds(points: PackedVector3Array) -> AABB:
+	assert(not points.is_empty())
+	var bounds := AABB(points[0], Vector3.ZERO)
+	for index in range(1, points.size()):
+		bounds = bounds.expand(points[index])
+	return bounds
+
+
+func _print_structural_gap_diagnostics() -> void:
+	var courts := _fabric.surface_plan.cells_for_kind(
+		PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT)
+	var court_set: Dictionary = {}
+	var bounds_by_level: Dictionary = {}
+	for cell: Vector3i in courts:
+		court_set[cell] = true
+		var bounds := bounds_by_level.get(cell.y, Rect2i(cell.x, cell.z, 1, 1)) \
+			as Rect2i
+		bounds = bounds.expand(Vector2i(cell.x, cell.z))
+		bounds_by_level[cell.y] = bounds
+	for level_value: Variant in bounds_by_level.keys():
+		var level := int(level_value)
+		var bounds := bounds_by_level[level] as Rect2i
+		for z in range(bounds.position.y, bounds.end.y + 1):
+			for x in range(bounds.position.x, bounds.end.x + 1):
+				var candidate := Vector3i(x, level, z)
+				if _fabric.surface_plan.has_cell(candidate):
+					continue
+				var court_neighbors := 0
+				for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+						Vector3i.FORWARD, Vector3i.BACK]:
+					court_neighbors += int(court_set.has(candidate + direction))
+				if court_neighbors < 2:
+					continue
+				print("[quality.structural_gap] cell=", candidate,
+					" court_neighbors=", court_neighbors,
+					" spatial_use=", _spatial.grid.use_at(candidate),
+					" spatial_owner=", _spatial.grid.owner_name_at(candidate),
+					" daylight=", _fabric.public_realm != null \
+						and _fabric.public_realm.is_daylight_void(candidate),
+					" exterior_air=", _fabric.volume_plan != null \
+						and _fabric.volume_plan.has_exterior_air(candidate),
+					" retained_below=", _fabric.retained_terrace_cells.has(
+						candidate + Vector3i.DOWN),
+					" retained_here=", _fabric.retained_terrace_cells.get(
+						candidate, null), " retained_above=",
+					_fabric.retained_terrace_cells.get(candidate + Vector3i.UP,
+						null))
+				var retained_neighbors: Array[Vector3i] = []
+				for y in range(candidate.y, candidate.y + 5):
+					var probe := Vector3i(candidate.x, y, candidate.z)
+					if not _fabric.retained_terrace_cells.has(probe):
+						break
+					retained_neighbors.append(probe)
+					for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+							Vector3i.FORWARD, Vector3i.BACK]:
+						if _fabric.retained_terrace_cells.has(probe + direction):
+							retained_neighbors.append(probe + direction)
+				print("[quality.structural_gap.retained] cell=", candidate,
+					" run=", retained_neighbors, " level_component=",
+					_retained_level_component(candidate))
+
+
+func _retained_level_component(start: Vector3i) -> Array[Vector3i]:
+	var out: Array[Vector3i] = []
+	var tag: Variant = _fabric.retained_terrace_cells.get(start, null)
+	if tag == null:
+		return out
+	var seen: Dictionary = {start: true}
+	var pending: Array[Vector3i] = [start]
+	while not pending.is_empty():
+		var cell: Vector3i = pending.pop_back()
+		out.append(cell)
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+				Vector3i.FORWARD, Vector3i.BACK]:
+			var neighbor := cell + direction
+			if seen.has(neighbor) or _fabric.retained_terrace_cells.get(
+					neighbor, null) != tag:
+				continue
+			seen[neighbor] = true
+			pending.append(neighbor)
+	out.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		return a.z < b.z if a.z != b.z else a.x < b.x)
+	return out
+
+
 func _solve_production_site(catalog: EnvironmentCatalog) \
 		-> VillageUrbanFabricPlan:
 	var water := TerrainWorldTuning.make_water(_world_seed)
@@ -543,11 +702,27 @@ func _commit_production_entries(parent: Node3D,
 	assert(payload.validate())
 	var cache := EnvironmentRenderCache.new(catalog)
 	assert(cache.prepare(payload.asset_ids()))
-	var queue := EnvironmentCommitQueue.new(cache, &"ProductionFabricVisuals")
-	queue.register_chunk(Vector2i.ZERO, 1)
+	# The streamer prepares every KayKit lip/wall piece (retexelled grass region,
+	# shared ground palette) on its own cache before any village commits. Do the
+	# same here, or the review renders rims with the raw catalogue grass texel
+	# and shows a two-tone lawn that production never has.
+	CliffDressing.prepare(cache)
+	# Use the production feature queue, not the ambient-instance-only queue.
+	# Village turf, continuous structural closure, streets, and handoff ramps are
+	# surface meshes; silently dropping that channel made the visual review show
+	# authored boards where the shipped renderer draws the ground finish.
+	var queue := FeatureCommitQueue.new(cache)
 	queue.enqueue(Vector2i.ZERO, 1, parent, payload)
 	while queue.pending_count() > 0:
-		queue.drain(64)
+		queue.drain(64, 256, 64)
+	if _quality_dump:
+		for candidate: Node in parent.find_children("*maze-ground-turf*",
+				"MeshInstance3D", true, false):
+			var instance := candidate as MeshInstance3D
+			print("[quality.committed.turf] name=", instance.name,
+				" transform=", instance.global_transform,
+				" local_aabb=", instance.get_aabb(),
+				" visible=", instance.is_visible_in_tree())
 	var terrain_support_count := 0
 	for entry: Dictionary in _production_urban.entries:
 		terrain_support_count += int(String(entry.stable_id).contains(
@@ -625,6 +800,8 @@ func _capture_all() -> void:
 	views.append_array(_maze_skywalk_views())
 	views.append_array(_maze_outcrop_views())
 	views.append_array(_maze_plaza_views())
+	views.append_array(_turf_quality_views())
+	views.append_array(_platform_edge_quality_views())
 	views.append_array(_bridge_room_views())
 	views.append_array(_room_outcropping_views())
 	views.append_array(_tower_annex_views())
@@ -816,42 +993,139 @@ func _capture_matches_filter(view_id: String) -> bool:
 
 
 func _gate_approach_views() -> Array[Dictionary]:
-	## TASK G1. Stand outside the town at eye level and walk in through its one
-	## authored entry. Every other camera in this harness is already inside the
-	## fabric, so nothing here photographed the silhouette a player actually
-	## meets first -- the approach that decides whether the town reads as one
-	## clustered mass or as a wall of equal blocks. The entry cell is the sealed
-	## plan's own `entry_cell` (`primary_itinerary[0]`), not a guess.
+	## Stand outside every topology-owned ground contact. The same contact records
+	## build the handoff ramps and outskirts roads, so these views falsify both the
+	## requested 2-3 openings and their visual seams without guessing from bounds.
 	var out: Array[Dictionary] = []
-	if _spatial == null or _spatial.source_volume == null:
+	if _spatial == null or _fabric == null:
 		return out
-	var entry := _spatial.source_volume.entry_cell
-	var gate := Vector3(
-		float(entry.x) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
-			+ FabricRecipe.CELL_SIZE * 0.5,
-		float(entry.y) * WarrenVolumePlan.VERTICAL_BAND_SIZE_M,
-		float(entry.z) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
-			+ FabricRecipe.CELL_SIZE * 0.5)
 	var bounds := _fabric_bounds()
-	var outward := gate - bounds.get_center()
-	outward.y = 0.0
-	if outward.length_squared() <= 0.01:
-		outward = Vector3.BACK
-	outward = outward.normalized()
 	var span := maxf(bounds.size.x, bounds.size.z)
-	# Two ranges: the far one carries the whole approaching silhouette, the near
-	# one is the threshold itself at walking distance.
-	for entry_range: Dictionary in [
-			{"token": "far", "distance": maxf(26.0, span * 0.55),
-				"height": 3.4, "fov": 62.0},
-			{"token": "near", "distance": 11.0, "height": 1.7, "fov": 70.0}]:
-		out.append({
-			"id": "gate-approach-%s" % String(entry_range.token),
-			"position": gate + outward * float(entry_range.distance) \
-				+ Vector3.UP * float(entry_range.height),
-			"target": gate - outward * 6.0 + Vector3.UP * 2.2,
-			"fov": float(entry_range.fov)})
+	var specs := VillageWarrenFabricSolver.terrain_contact_specs(_spatial,
+		_fabric)
+	for spec_index in specs.size():
+		var spec := specs[spec_index]
+		var contact := VillageWarrenFabricSolver \
+			.terrain_contact_local_geometry(spec)
+		var gate := contact.inner_centre as Vector3
+		var outward := Vector3(spec.outward as Vector3i).normalized()
+		var suffix := String(spec.stable_suffix).replace(".", "-")
+		# Two ranges: the far one carries the whole approaching silhouette, the
+		# near one is the threshold itself at walking distance.
+		for entry_range: Dictionary in [
+				{"token": "far", "distance": maxf(26.0, span * 0.55),
+					"height": 3.4, "fov": 62.0},
+				{"token": "near", "distance": 11.0, "height": 1.7,
+					"fov": 70.0}]:
+			out.append({
+				"id": "gate-approach-%02d-%s-%s" % [spec_index, suffix,
+					String(entry_range.token)],
+				"position": gate + outward * float(entry_range.distance) \
+					+ Vector3.UP * float(entry_range.height),
+				"target": gate - outward * 6.0 + Vector3.UP * 2.2,
+				"fov": float(entry_range.fov)})
 	return out
+
+
+func _turf_quality_views() -> Array[Dictionary]:
+	## Inspect every disconnected same-height turf run, not just the selected
+	## village green. The production payload deliberately welds all retained
+	## garden cells into one terrain-kernel mesh, but separate elevation bands
+	## still need individual frames to prove their centres and corner seams.
+	var turf_cells: Array[Vector3i] = []
+	if _production_urban == null:
+		return [] as Array[Dictionary]
+	for mesh: Dictionary in _production_urban.surface_meshes:
+		if not String(mesh.get("stable_id", "")).contains("maze-ground-turf"):
+			continue
+		for cell_value: Variant in mesh.get("logical_cells", []):
+			turf_cells.append(cell_value as Vector3i)
+		break
+	if turf_cells.is_empty():
+		return [] as Array[Dictionary]
+	var pending: Dictionary = {}
+	for cell: Vector3i in turf_cells:
+		pending[cell] = true
+	var components: Array[Array] = []
+	while not pending.is_empty():
+		var starts: Array[Vector3i] = []
+		starts.assign(pending.keys())
+		starts.sort_custom(_plaza_cell_before)
+		var component: Array[Vector3i] = []
+		var frontier: Array[Vector3i] = [starts[0]]
+		pending.erase(starts[0])
+		while not frontier.is_empty():
+			var cell: Vector3i = frontier.pop_back()
+			component.append(cell)
+			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.FORWARD, Vector3i.BACK]:
+				var neighbor := cell + direction
+				if neighbor.y == cell.y and pending.has(neighbor):
+					pending.erase(neighbor)
+					frontier.append(neighbor)
+		component.sort_custom(_plaza_cell_before)
+		components.append(component)
+	components.sort_custom(func(a: Array, b: Array) -> bool:
+		return _plaza_cell_before(a[0] as Vector3i, b[0] as Vector3i))
+	var out: Array[Dictionary] = []
+	for component_index in components.size():
+		var component := components[component_index]
+		var minimum := Vector3(INF, INF, INF)
+		var maximum := Vector3(-INF, -INF, -INF)
+		for cell_value: Variant in component:
+			var cell := cell_value as Vector3i
+			var point := Vector3(float(cell.x), float(cell.y + 1),
+				float(cell.z)) * FabricRecipe.CELL_SIZE
+			minimum = minimum.min(point - Vector3(FabricRecipe.CELL_SIZE * 0.5,
+				0.0, FabricRecipe.CELL_SIZE * 0.5))
+			maximum = maximum.max(point + Vector3(FabricRecipe.CELL_SIZE * 0.5,
+				0.0, FabricRecipe.CELL_SIZE * 0.5))
+		var centre := (minimum + maximum) * 0.5
+		var span := maxf(maximum.x - minimum.x, maximum.z - minimum.z)
+		var distance := maxf(7.5, span * 1.15)
+		out.append({
+			"id": "turf-component-%02d-overview" % component_index,
+			"position": centre + Vector3(distance * 0.72, distance * 0.86,
+				distance * 0.72),
+			"target": centre, "fov": 52.0,
+		})
+		out.append({
+			"id": "turf-component-%02d-edge" % component_index,
+			"position": centre + Vector3(distance * 0.72, 2.2,
+				distance * 0.72),
+			"target": centre + Vector3.UP * 0.05, "fov": 60.0,
+		})
+		# A near-plan view is the falsification frame for a missing centre cell:
+		# oblique views can hide it behind the rim or a neighboring roof. The small
+		# diagonal offset avoids an exactly vertical look-at basis while preserving
+		# the complete component outline and every internal seam.
+		out.append({
+			"id": "turf-component-%02d-plan" % component_index,
+			"position": centre + Vector3(0.2, maxf(9.0, span * 1.8), 0.2),
+			"target": centre, "fov": 44.0,
+		})
+	return out
+
+
+func _platform_edge_quality_views() -> Array[Dictionary]:
+	## Exact reproduction of the reported seed's transition at world
+	## (-574.7, 10.8, 1129.1), mapped through the production transform to the
+	## stair/court seam around fine cells (-3, 2, 5-6). The two orthogonal views
+	## expose both the board-end inset and the adjacent retained-stone top.
+	if _production_urban == null:
+		return [] as Array[Dictionary]
+	var seam := Vector3(-3.0, 2.0, 5.5) * FabricRecipe.CELL_SIZE
+	return [{
+		"id": "platform-edge-reported-longitudinal",
+		"position": seam + Vector3(0.0, 1.7, 5.2),
+		"target": seam + Vector3.UP * 0.1,
+		"fov": 62.0,
+	}, {
+		"id": "platform-edge-reported-transverse",
+		"position": seam + Vector3(5.2, 1.7, 0.0),
+		"target": seam + Vector3.UP * 0.1,
+		"fov": 62.0,
+	}]
 
 
 func _street_views() -> Array[Dictionary]:

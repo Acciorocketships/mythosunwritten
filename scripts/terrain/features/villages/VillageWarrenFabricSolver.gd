@@ -47,6 +47,7 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	if preview_fabric == null:
 		return _rejected(StringName("fabric_%s" %
 			WarrenSpatialFabricCompiler.last_failure))
+	var last_materialization_reason := &"terrain_footprint"
 	for placement: Dictionary in _placement_candidates(terrain, preview,
 			centre, street_axis, city_seed):
 		var spatial := preview if bool(placement.flat_ground) \
@@ -66,9 +67,12 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 		if fabric == null:
 			continue
 		placement["local_bounds"] = _local_bounds(fabric)
-		return _materialize(terrain, stable_id, spatial, fabric, placement, program,
-			world_seed)
-	return _rejected(&"terrain_footprint")
+		var materialized := _materialize(terrain, stable_id, spatial, fabric,
+			placement, program, world_seed)
+		if materialized.accepted:
+			return materialized
+		last_materialization_reason = materialized.reason
+	return _rejected(last_materialization_reason)
 
 
 static func _placement_candidates(terrain: VillageTerrainView,
@@ -85,54 +89,80 @@ static func _placement_candidates(terrain: VillageTerrainView,
 	var route_delta := volume.primary_itinerary[1] - entry
 	var local_inward := Vector3(float(route_delta.x), 0.0,
 		float(route_delta.z)).normalized()
+	# The world route's node is where the arriving road ends. Put the entry's
+	# TERRAIN CONTACT on the road's near edge -- the outer edge of the handoff
+	# ramp, one macro cell beyond the entry cell's centre -- rather than the
+	# entry cell itself on the node. With
+	# the entry cell on the node, a town whose gate could not face the road
+	# (terrain refused that quarter) swallowed the road's last metres under its
+	# own edge houses: the road dead-ended into a wall three metres from a gate
+	# that opened sideways. With the contact on the node the road always ends
+	# at the ramp's foot, meeting a straight gate head-on or a sideways gate as
+	# a plain right-angled T.
+	# The road's own half width (in authored units) keeps the ramp's foot flush
+	# with the road's edge and leaves the road one verge clear of the facade
+	# beside the gate instead of running under its eaves.
+	var road_half_local := PathProgram.PATH_HALF_WIDTH \
+		/ VillageWorldScale.PRODUCTION_UNIFORM_SCALE
+	var contact_local := entry_local - local_inward \
+		* (WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M + road_half_local)
+	# The entry cell itself is the second anchoring, tried only after every
+	# contact-anchored frame of a better-aligned quarter: the town's terrain
+	# bands shift with the frame, and a seed whose secondary gate loses its
+	# projection at the contact anchor must still build rather than vanish.
+	var anchors: Array[Vector3] = [contact_local, entry_local]
 	var world_inward := Vector3(street_axis.x, 0.0, street_axis.y)
 	var candidates: Array[Dictionary] = []
 	for quarter in _CARDINAL_QUARTERS:
-		var yaw := float(quarter) * PI * 0.5
-		var basis := VillageWorldScale.production_basis(yaw)
-		var rotated_entry := basis * entry_local
-		var datum_y := terrain.surface_y(centre) + DATUM_GUARD \
-			- rotated_entry.y
-		var world_frame := Transform3D(basis,
-			Vector3(centre.x - rotated_entry.x, datum_y,
-				centre.y - rotated_entry.z))
-		var terrain_sample := _sample_ground_bands(terrain, volume.envelope,
-			world_frame)
-		if terrain_sample.is_empty() or bool(terrain_sample.wet):
-			continue
-		var minimum_y := float(terrain_sample.minimum_y)
-		var maximum_y := float(terrain_sample.maximum_y)
-		if maximum_y - minimum_y > MAX_TERRAIN_RELIEF:
-			continue
-		var landing_y := terrain.surface_y(centre)
-		var entry_band := int((terrain_sample.ground_bands as Dictionary).get(
-			Vector2i(entry.x, entry.z), entry.y))
-		var entrance_lift := datum_y \
-			+ float(entry_band) * VillageWorldScale.WORLD_FINE_CELL_M \
-			- landing_y
-		if entrance_lift < 0.0 \
-				or entrance_lift > TraversalEnvelope.MAX_PLANNED_STEP:
-			continue
-		var tie := posmod(Helper._mix64(city_seed ^ quarter * 0x45d9f3b),
-			0x7fffffff)
-		var alignment := (basis * local_inward).dot(world_inward)
-		candidates.append({
-			"quarter": quarter,
-			"yaw": yaw,
-			"datum_y": datum_y,
-			"minimum_y": minimum_y,
-			"maximum_y": maximum_y,
-			"entrance_lift": entrance_lift,
-			"ground_bands": terrain_sample.ground_bands,
-			"flat_ground": _all_zero(terrain_sample.ground_bands as Dictionary),
-			# The first maze segment should carry the village route into the mass.
-			# Terrain support then decides between equally aligned frames.
-			"score": (1.0 - alignment) * 10000.0
-				+ entrance_lift * 1000.0
-				+ (maximum_y - minimum_y) * 100.0,
-			"tie": tie,
-			"transform": world_frame,
-		})
+		for anchor_index in anchors.size():
+			var yaw := float(quarter) * PI * 0.5
+			var basis := VillageWorldScale.production_basis(yaw)
+			var rotated_entry := basis * entry_local
+			var rotated_anchor := basis * anchors[anchor_index]
+			var datum_y := terrain.surface_y(centre) + DATUM_GUARD \
+				- rotated_entry.y
+			var world_frame := Transform3D(basis,
+				Vector3(centre.x - rotated_anchor.x, datum_y,
+				centre.y - rotated_anchor.z))
+			var terrain_sample := _sample_ground_bands(terrain, volume.envelope,
+				world_frame)
+			if terrain_sample.is_empty() or bool(terrain_sample.wet):
+				continue
+			var minimum_y := float(terrain_sample.minimum_y)
+			var maximum_y := float(terrain_sample.maximum_y)
+			if maximum_y - minimum_y > MAX_TERRAIN_RELIEF:
+				continue
+			var landing_y := terrain.surface_y(centre)
+			var entry_band := int((terrain_sample.ground_bands as Dictionary).get(
+				Vector2i(entry.x, entry.z), entry.y))
+			var entrance_lift := datum_y \
+				+ float(entry_band) * VillageWorldScale.WORLD_FINE_CELL_M \
+				- landing_y
+			if entrance_lift < 0.0 \
+					or entrance_lift > TraversalEnvelope.MAX_PLANNED_STEP:
+				continue
+			var tie := posmod(Helper._mix64(city_seed ^ quarter * 0x45d9f3b),
+				0x7fffffff)
+			var alignment := (basis * local_inward).dot(world_inward)
+			candidates.append({
+				"quarter": quarter,
+				"yaw": yaw,
+				"datum_y": datum_y,
+				"minimum_y": minimum_y,
+				"maximum_y": maximum_y,
+				"entrance_lift": entrance_lift,
+				"ground_bands": terrain_sample.ground_bands,
+				"flat_ground": _all_zero(terrain_sample.ground_bands as Dictionary),
+				# The first maze segment should carry the village route into the mass.
+				# Terrain support then decides between equally aligned frames.
+				"score": (1.0 - alignment) * 10000.0
+					+ float(anchor_index) * 5000.0
+					+ entrance_lift * 1000.0
+					+ (maximum_y - minimum_y) * 100.0,
+				"tie": tie,
+				"anchor": anchor_index,
+				"transform": world_frame,
+			})
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return float(a.score) < float(b.score) \
 			if not is_equal_approx(float(a.score), float(b.score)) \
@@ -154,6 +184,27 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	result.terrain_relief_m = float(placement.maximum_y) \
 		- float(placement.minimum_y)
 	var world_frame := placement.transform as Transform3D
+	# The maze, not a renderer-side graph heuristic, owns the town gates. Refuse
+	# this terrain placement unless every sealed portal becomes one complete
+	# walkable handoff. Otherwise a steep sample can silently leave a visually
+	# open doorway with no road, or a degree-one interior street can masquerade
+	# as the town's missing third exit.
+	var contact_specs := terrain_contact_specs(spatial, fabric)
+	var maze_source := spatial.source_volume.mass_context.get(
+		&"maze_source_plan") as WarrenMazeSourcePlan \
+		if spatial.source_volume != null else null
+	if maze_source != null \
+			and contact_specs.size() != maze_source.excavation.portals.size():
+		return _rejected(&"terrain_gate_projection")
+	var terrain_handoffs := _terrain_handoff_meshes(terrain, spatial, fabric,
+		world_frame)
+	var handoff_top_count := 0
+	for handoff: Dictionary in terrain_handoffs:
+		if String(handoff.get("stable_id", "")).begins_with(
+				"public-terrain-handoff/"):
+			handoff_top_count += 1
+	if handoff_top_count != contact_specs.size():
+		return _rejected(&"terrain_gate_handoff")
 	result.world_transform = world_frame
 	var local_payload := SettlementFabricAssembler.payload(fabric)
 	# TASK I4 ROUND 6, B2. The court's own edge planters are gated on the module
@@ -167,13 +218,15 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	local_payload.append_from(SettlementFabricAssembler.low_retaining_payload(fabric))
 	local_payload.append_from(
 		SettlementFabricAssembler.terrace_retaining_payload(fabric, false))
-	local_payload.append_from(_terrain_qualified_frontage_payload(terrain,
-		fabric, world_frame))
+	var frontage := _terrain_qualified_frontage(terrain, fabric, world_frame)
+	result.frontage_sites = frontage.records
+	local_payload.append_from(frontage.payload as EnvironmentInstancePayload)
 	_append_terrain_bearing_foundations(local_payload, terrain, fabric,
 		world_frame)
 	_append_ground_supports(local_payload, terrain, fabric, world_frame)
 	for asset_id: StringName in local_payload.asset_ids():
 		var batch := local_payload.batches[asset_id] as Dictionary
+		var collision_flags: Array = batch.get("collision_enabled", [])
 		for index in batch.transforms.size():
 			var local_transform := batch.transforms[index] as Transform3D
 			var world_transform := world_frame * local_transform
@@ -215,17 +268,25 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 				"asset_id": asset_id,
 				"transform": world_transform,
 				"color": color,
+				"collision_enabled": collision_flags.is_empty() \
+					or bool(collision_flags[index]),
 				"stable_id": StringName("%s/%s" % [stable_id,
 					String(local_instance_id)]),
 			})
+	for box: Dictionary in local_payload.collision_boxes:
+		result.collision_boxes.append({
+			"transform": world_frame * (box.transform as Transform3D),
+			"size": box.size as Vector3,
+			"stable_id": StringName("%s/%s" % [stable_id,
+				String(StringName(box.get("stable_id", &"generated-box")))]),
+		})
 	for mesh: Dictionary in local_payload.surface_meshes:
 		result.surface_meshes.append(_world_surface_mesh(mesh, world_frame,
 			stable_id, world_seed))
 	# Both sealed itinerary ends are exterior contacts. Bridge each finished
 	# street boundary back to the immutable terrain; deriving the pair from the
 	# same route transaction prevents one end from remaining a floating slab.
-	for handoff: Dictionary in _terrain_handoff_meshes(terrain, spatial,
-			fabric, world_frame):
+	for handoff: Dictionary in terrain_handoffs:
 		result.surface_meshes.append(_world_surface_mesh(handoff, world_frame,
 			stable_id, world_seed))
 	var local_bounds := placement.local_bounds as AABB
@@ -285,6 +346,12 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 static func _terrain_qualified_frontage_payload(terrain: VillageTerrainView,
 		fabric: SettlementFabricPlan, world_frame: Transform3D) \
 		-> EnvironmentInstancePayload:
+	return _terrain_qualified_frontage(terrain, fabric, world_frame).payload \
+		as EnvironmentInstancePayload
+
+
+static func _terrain_qualified_frontage(terrain: VillageTerrainView,
+		fabric: SettlementFabricPlan, world_frame: Transform3D) -> Dictionary:
 	## Perimeter stalls and props are optional dressing, so their complete
 	## measured envelope must fit the immutable terrain before the group exists.
 	## This is the same reservation discipline used for outskirts houses: no
@@ -302,6 +369,7 @@ static func _terrain_qualified_frontage_payload(terrain: VillageTerrainView,
 		retained, solids, paved, walked, fabric.world_seed, skin, footprints)
 	var asset_bounds := footprints.get("asset_bounds", {}) as Dictionary
 	var accepted: Array[Dictionary] = []
+	var records: Array[Dictionary] = []
 	for site: Dictionary in sites:
 		var asset_id := StringName(site.asset)
 		if not asset_bounds.has(asset_id):
@@ -323,8 +391,22 @@ static func _terrain_qualified_frontage_payload(terrain: VillageTerrainView,
 				or height_range.x < base_y - OPTIONAL_FRONTAGE_MAX_DROP:
 			continue
 		accepted.append(site)
-	return SettlementFabricAssembler.maze_perimeter_frontage_from_sites(
-		accepted)
+		var outward3 := (world_frame.basis \
+			* Vector3(site.direction as Vector3i)).normalized()
+		records.append({
+			"asset": asset_id,
+			"transform": world_transform,
+			"centre": footprint.get_center(),
+			"half_extents": footprint.size * 0.5,
+			"height": world_bounds.size.y,
+			"outward": Vector2(outward3.x, outward3.z).normalized(),
+			"width_cells": (site.cells as Array).size(),
+		})
+	return {
+		"payload": SettlementFabricAssembler.maze_perimeter_frontage_from_sites(
+			accepted),
+		"records": records,
+	}
 
 
 static func _world_surface_mesh(mesh: Dictionary, world_frame: Transform3D,
@@ -364,13 +446,12 @@ static func _world_surface_mesh(mesh: Dictionary, world_frame: Transform3D,
 
 static func terrain_contact_specs(spatial: WarrenSpatialPlan,
 		fabric: SettlementFabricPlan) -> Array[Dictionary]:
-	## The finished terrain street is made of complete 2 x 2 fine-cell macro
-	## blocks. Its same-datum macro graph, not the source itinerary's first cell,
-	## owns every real exterior end: ground arcades may introduce a second route
-	## end long after the primary itinerary has climbed into the town. Resolve
-	## each degree-one block to its exact outer two-cell row. The result is shared
-	## by render handoffs and the outskirts solver, so roads, ramps, and houses
-	## cannot disagree about where the town ends.
+	## Production maze towns carry explicit, sealed exterior portals. Project
+	## those facts onto the finished two-lane fine-grid street and never infer a
+	## gate from graph degree: a short interior cul-de-sac is also degree one and
+	## the old heuristic put a handoff road straight through its facade. The
+	## fallback below remains only for non-maze compatibility fixtures which have
+	## no portal provenance.
 	var out: Array[Dictionary] = []
 	if spatial == null or fabric == null or fabric.surface_plan == null:
 		return out
@@ -380,6 +461,11 @@ static func terrain_contact_specs(spatial: WarrenSpatialPlan,
 		street[cell] = true
 	if street.is_empty():
 		return out
+	var maze_source := spatial.source_volume.mass_context.get(
+		&"maze_source_plan") as WarrenMazeSourcePlan \
+		if spatial.source_volume != null else null
+	if maze_source != null:
+		return _explicit_maze_contact_specs(maze_source, street)
 	var blocks: Dictionary = {}
 	for cell_value: Variant in street.keys():
 		var cell := cell_value as Vector3i
@@ -489,6 +575,116 @@ static func terrain_contact_specs(spatial: WarrenSpatialPlan,
 	return out
 
 
+static func _explicit_maze_contact_specs(source: WarrenMazeSourcePlan,
+		street: Dictionary) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if source == null or not source.is_sealed() or source.excavation == null:
+		return out
+	var public: Dictionary = {}
+	for cell: Vector3i in source.excavation.public_cells():
+		public[cell] = true
+	for portal_index in source.excavation.portals.size():
+		var portal := source.excavation.portals[portal_index]
+		var outward := _explicit_portal_outward(source, portal, public)
+		if absi(outward.x) + absi(outward.z) != 1:
+			continue
+		var boundary_cells: Array[Vector3i] = []
+		for across in 2:
+			var cell := Vector3i(
+				portal.x * 2 + (1 if outward.x > 0 else 0), portal.y,
+				portal.z * 2 + across) if outward.x != 0 else Vector3i(
+				portal.x * 2 + across, portal.y,
+				portal.z * 2 + (1 if outward.z > 0 else 0))
+			if street.has(cell):
+				boundary_cells.append(cell)
+		if boundary_cells.size() != 2:
+			continue
+		# Positive-Z for an X-facing row and positive-X for a Z-facing row give
+		# the exact adjacent pair in increasing fine-cell order. Geometry needs
+		# only a consistent tangent; it does not attach semantics to handedness.
+		var lateral := Vector3i.BACK if outward.x != 0 else Vector3i.RIGHT
+		boundary_cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+			return a.x * lateral.x + a.z * lateral.z \
+				< b.x * lateral.x + b.z * lateral.z)
+		if boundary_cells[0] + lateral != boundary_cells[1] \
+				or street.has(boundary_cells[0] + outward) \
+				or street.has(boundary_cells[1] + outward):
+			continue
+		out.append({
+			"cells": boundary_cells,
+			"outward": outward,
+			"lateral": lateral,
+			"stable_suffix": "entry" if portal_index == 0 \
+				else "gate.%02d" % portal_index,
+			"source_portal": portal,
+		})
+	return out
+
+
+static func _explicit_portal_outward(source: WarrenMazeSourcePlan,
+		portal: Vector3i, public: Dictionary) -> Vector3i:
+	## Prefer the direction in which the authored walk actually reaches the
+	## massif edge. At a corner two sides can be exterior; checking the approach
+	## first keeps the camera, road, and facade opening on the intended side.
+	var intended := Vector3i.ZERO
+	var excavation := source.excavation
+	if portal == excavation.route[0] and excavation.route.size() >= 2:
+		intended = portal - excavation.route[1]
+	elif portal == excavation.route[-1] and excavation.route.size() >= 2:
+		intended = portal - excavation.route[-2]
+	else:
+		for lane_value: Variant in excavation.lanes:
+			var lane := lane_value as Dictionary
+			var cells := lane.get("cells", []) as Array[Vector3i]
+			if cells.is_empty() or cells[-1] != portal:
+				continue
+			var previous := lane.get("anchor", Vector3i.ZERO) as Vector3i \
+				if cells.size() == 1 else cells[-2]
+			intended = portal - previous
+			break
+	intended = Vector3i(signi(intended.x), 0, signi(intended.z))
+	var exterior: Array[Vector3i] = []
+	for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+		var outward := Vector3i(direction.x, 0, direction.y)
+		if not source.massif.has_column(Vector2i(portal.x + outward.x,
+				portal.z + outward.z)):
+			exterior.append(outward)
+	if intended in exterior:
+		return intended
+	for outward: Vector3i in exterior:
+		if public.has(portal - outward):
+			return outward
+	return exterior[0] if not exterior.is_empty() else Vector3i.ZERO
+
+
+static func terrain_contact_local_geometry(spec: Dictionary) -> Dictionary:
+	## Convert one topology-owned pair of fine cells into the exact ramp seam.
+	## PublicRealmSurfacePlan indexes cells by their centres (`cell * 1.5 m`),
+	## not by their lower corners. Keeping this conversion beside the contact
+	## solver prevents the rendered handoff and the outskirts road from acquiring
+	## independent half-cell phases.
+	var boundary_cells := spec.get("cells", []) as Array[Vector3i]
+	var outward := spec.get("outward", Vector3i.ZERO) as Vector3i
+	var lateral := spec.get("lateral", Vector3i.ZERO) as Vector3i
+	assert(boundary_cells.size() == 2)
+	assert(absi(outward.x) + absi(outward.z) == 1)
+	assert(absi(lateral.x) + absi(lateral.z) == 1)
+	var street_centre := Vector3.ZERO
+	for cell: Vector3i in boundary_cells:
+		street_centre += Vector3(cell) * FabricRecipe.CELL_SIZE
+	street_centre /= float(boundary_cells.size())
+	var inner_centre := street_centre + Vector3(outward) \
+		* FabricRecipe.CELL_SIZE * 0.5
+	return {
+		"street_centre": street_centre,
+		"inner_centre": inner_centre,
+		"outer_centre": inner_centre + Vector3(outward) \
+			* FabricRecipe.CELL_SIZE,
+		"half_width": FabricRecipe.CELL_SIZE \
+			* float(boundary_cells.size()) * 0.5,
+	}
+
+
 static func _terrain_handoff_meshes(terrain: VillageTerrainView,
 		spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 		world_frame: Transform3D) -> Array[Dictionary]:
@@ -510,17 +706,13 @@ static func _terrain_handoff_meshes(terrain: VillageTerrainView,
 		var boundary_cells := spec.cells as Array[Vector3i]
 		var outward := spec.outward as Vector3i
 		var lateral := spec.lateral as Vector3i
-		var centre := Vector3.ZERO
-		for cell: Vector3i in boundary_cells:
-			centre += (Vector3(cell) + Vector3(0.5, 0.0, 0.5)) \
-				* FabricRecipe.CELL_SIZE
-		centre /= float(boundary_cells.size())
-		var half_width := FabricRecipe.CELL_SIZE \
-			* float(boundary_cells.size()) * 0.5
+		var contact := terrain_contact_local_geometry(spec)
+		var half_width := float(contact.half_width)
 		var out3 := Vector3(outward)
 		var side3 := Vector3(lateral)
-		var inner_centre := centre + out3 * FabricRecipe.CELL_SIZE * 0.5
-		var outer_centre := inner_centre + out3 * FabricRecipe.CELL_SIZE
+		var inner_centre := contact.inner_centre as Vector3
+		var outer_centre := contact.outer_centre as Vector3
+		var ramp_centre := (inner_centre + outer_centre) * 0.5
 		var inner_y := float(boundary_cells[0].y) \
 			* FabricRecipe.CELL_SIZE + TERRAIN_HANDOFF_LIFT
 		var a := inner_centre - side3 * half_width
@@ -558,15 +750,27 @@ static func _terrain_handoff_meshes(terrain: VillageTerrainView,
 		var uvs := PackedVector2Array()
 		for point: Vector3 in vertices:
 			uvs.append(Vector2(point.x, point.z) / 3.0)
+		# A top face renders from above only when its winding is clockwise seen
+		# from above, i.e. the right-hand normal of (b - a) x (c - a) points DOWN,
+		# exactly as TerrainChunkMesher's sheet. The `lateral` tangent is a fixed
+		# increasing-cell-order convention, not a handedness, so for half the
+		# gate orientations the fixed order [a, b, c] was counter-clockwise and
+		# the ramp was back-face culled while its collision stayed. Choose the
+		# order per contact instead of per convention.
+		var top_indices := PackedInt32Array([0, 1, 2, 0, 2, 3])
+		var top_collision := PackedVector3Array([a, b, c, a, c, d])
+		if (b - a).cross(c - a).y > 0.0:
+			top_indices = PackedInt32Array([0, 2, 1, 0, 3, 2])
+			top_collision = PackedVector3Array([a, c, b, a, d, c])
 		out.append({
 			"kind": PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET,
 			"vertices": vertices,
 			"normals": normals,
 			"uvs": uvs,
-			"indices": PackedInt32Array([0, 2, 1, 0, 3, 2]),
-			"collision_faces": PackedVector3Array([a, c, b, a, d, c]),
+			"indices": top_indices,
+			"collision_faces": top_collision,
 			"logical_cells": boundary_cells,
-			"anchor": centre,
+			"anchor": ramp_centre,
 			"stable_id": StringName("public-terrain-handoff/%s" \
 				% String(spec.stable_suffix)),
 			"terrain_ground": true,
@@ -603,7 +807,7 @@ static func _terrain_handoff_meshes(terrain: VillageTerrainView,
 			if edge_normal.is_zero_approx():
 				continue
 			var edge_midpoint := (top_a + top_b + ground_a + ground_b) * 0.25
-			var outward_hint := edge_midpoint - centre
+			var outward_hint: Vector3 = edge_midpoint - ramp_centre
 			outward_hint.y = 0.0
 			var reverse_winding := edge_normal.dot(outward_hint) < 0.0
 			if reverse_winding:
@@ -635,7 +839,7 @@ static func _terrain_handoff_meshes(terrain: VillageTerrainView,
 				"indices": support_indices,
 				"collision_faces": support_collision,
 				"logical_cells": boundary_cells,
-				"anchor": centre,
+				"anchor": ramp_centre,
 				"stable_id": StringName("public-terrain-handoff-support/%s" \
 					% String(spec.stable_suffix)),
 				"terrain_ground": true,

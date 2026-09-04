@@ -32,7 +32,8 @@ func enqueue(chunk: Vector2i, generation: int, parent: Node3D,
 	assert(parent != null and payload != null and payload.validate())
 	assert(not has_chunk(chunk), "one feature generation may be queued only once")
 	_current_generation[chunk] = generation
-	if payload.instance_count == 0 and payload.surface_meshes.is_empty():
+	if payload.instance_count == 0 and payload.collision_boxes.is_empty() \
+			and payload.surface_meshes.is_empty():
 		_ready_events.append({
 			"chunk": chunk, "generation": generation, "node": null,
 		})
@@ -62,12 +63,14 @@ func drain(max_asset_loads: int, max_collision_shapes: int,
 	_discard_stale_jobs()
 	var loaded := 0
 	for job: Dictionary in _jobs:
-		if loaded >= max_asset_loads or _time_exhausted(started, max_usec):
+		if _time_exhausted(started, max_usec):
 			break
 		if int(job.state) != State.WAITING_ASSETS:
 			continue
 		var ids: Array = job.asset_ids
 		if int(job.asset_index) < ids.size():
+			if loaded >= max_asset_loads:
+				continue
 			var asset_id: StringName = ids[int(job.asset_index)]
 			assert(_render_cache.visual(asset_id) != null)
 			job.asset_index = int(job.asset_index) + 1
@@ -192,13 +195,20 @@ func _collision_items(payload: EnvironmentInstancePayload) -> Array[Dictionary]:
 	for asset_id: StringName in payload.asset_ids():
 		var visual := _render_cache.visual(asset_id)
 		var placements: Array = payload.batches[asset_id].transforms
+		var collision_flags: Array = payload.batches[asset_id].get(
+			"collision_enabled", [])
 		for placement_index in placements.size():
+			if not collision_flags.is_empty() \
+					and not bool(collision_flags[placement_index]):
+				continue
 			for piece_index in visual.collisions.size():
 				out.append({
 					"asset_id": asset_id,
 					"placement": placements[placement_index],
 					"piece": visual.collisions[piece_index],
 				})
+	for box: Dictionary in payload.collision_boxes:
+		out.append({"collision_box": box})
 	for mesh: Dictionary in payload.surface_meshes:
 		if not bool(mesh.get("visual_only", false)):
 			out.append({"surface_mesh": mesh})
@@ -221,6 +231,15 @@ func _commit_collision(job: Dictionary, item: Dictionary) -> void:
 			mesh.stable_id)).replace(".", "_").replace("/", "_"),
 			int(job.collision_index)]
 		shape_node.shape = shape
+	elif item.has("collision_box"):
+		var box := item.collision_box as Dictionary
+		var shape := BoxShape3D.new()
+		shape.size = box.size as Vector3
+		var stable := String(box.get("stable_id", &""))
+		shape_node.name = stable.replace("/", "_") if not stable.is_empty() \
+			else "GeneratedBox_%04d" % int(job.collision_index)
+		shape_node.shape = shape
+		shape_node.transform = box.transform as Transform3D
 	else:
 		var collision := item.piece as EnvironmentCollisionPiece
 		shape_node.name = "%s_%04d" % [String(item.asset_id).replace(".", "_"),
@@ -265,9 +284,13 @@ func _commit_mesh_visual(block: Node3D, mesh: Dictionary) -> void:
 		uvs.resize((mesh.vertices as PackedVector3Array).size())
 		uvs.fill(SlopeAtlas.cliff_uv() \
 			if bool(mesh.get("terrain_rock", false)) \
+			else SlopeAtlas.path_spot_uv() \
+			if bool(mesh.get("terrain_path_spot", false)) \
 			else SlopeAtlas.path_uv() \
 			if bool(mesh.get("terrain_path", false)) \
 			else CliffDressing.ground_uv())
+		for index: int in mesh.get("terrain_rock_vertices", PackedInt32Array()):
+			uvs[index] = SlopeAtlas.cliff_uv()
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	if mesh.has("colors"):
 		arrays[Mesh.ARRAY_COLOR] = mesh.colors as PackedColorArray

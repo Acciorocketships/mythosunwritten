@@ -636,8 +636,9 @@ func _project_context(core: Rect2, routes: Array[Dictionary]) -> FeatureContext:
 			if (mask & int(_BITS[direction])) != 0:
 				corridors.append(_connection_rect(centre, direction))
 		if nodes.has(cell):
-			corridors.append(Rect2(centre - Vector2.ONE * PathProgram.PLAZA_RADIUS,
-				Vector2.ONE * PathProgram.PLAZA_SIZE))
+			corridors.append(Rect2(centre - Vector2.ONE \
+				* PathProgram.NODE_JUNCTION_HALF_WIDTH, Vector2.ONE \
+				* PathProgram.NODE_JUNCTION_HALF_WIDTH * 2.0))
 		elif FeatureGroundField.path_mask_has_join(mask):
 			corridors.append(Rect2(centre - Vector2.ONE * PathProgram.JUNCTION_SIZE * 0.5,
 				Vector2.ONE * PathProgram.JUNCTION_SIZE))

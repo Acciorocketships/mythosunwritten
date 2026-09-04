@@ -3,16 +3,23 @@
 # player on ONE background thread. The worker returns CPU-side mesh arrays,
 # collision faces, transforms, and sampler data only; the main thread commits
 # those payloads into render/physics resources and nodes, budgeted per frame. Evicts
-# beyond a keep radius. At startup the player is held until every chunk under
-# their footprint exists; later, their current chunk alone gates movement.
+# beyond a keep radius. At startup the player is held until every chunk within
+# one terrain cell of spawn exists, so the camera cannot reveal an unbuilt
+# quadrant; later, their current chunk alone gates movement.
 class_name FieldTerrainStreamer
 extends Node3D
 
 const CHUNK_WORLD := 192.0   # TerrainChunkMesher.CHUNK_WORLD
-## Half-extent used to identify every chunk beneath the player's spawn
-## footprint. Spawn is intentionally on a chunk corner, so these four probes
-## resolve to four support quadrants instead of only floor(pos / CHUNK_WORLD).
-const STARTUP_SUPPORT_HALF_EXTENT := 0.5
+## The initial camera boom is 8 m. Requiring the chunks touched by one complete
+## logical terrain cell around spawn guarantees the visible ground is present
+## even when spawn is close to a chunk seam. This is a readiness boundary, not
+## extra generated terrain: the ordinary radius would request these chunks a
+## few frames later anyway.
+const STARTUP_SUPPORT_HALF_EXTENT := TerrainChunkMesher.TILE
+## Keep the production spawn just inside one chunk instead of exactly on the
+## four-way world-origin seam so the player capsule has one collision owner.
+## The startup environment gate still includes all nearby visible quadrants.
+const DEFAULT_SPAWN_POSITION := Vector3(0.5, 0.0, 0.5)
 ## Calibrated from the cold 49-chunk phase profile. The first shared water
 ## trace/network region dominates startup and is tracked separately; treating
 ## it as one sixteenth of a feature block was why the old bar appeared frozen.
@@ -46,19 +53,6 @@ signal startup_loading_completed
 ## Dense grass is visual-only and is skipped by headless terrain/test runs.
 ## Its field and renderer have direct headless tests; production enables it.
 @export var GRASS_ENABLED: bool = true
-## READ-ONLY MIRRORS of the canonical tuning, kept so the inspector still shows
-## what the streamed world is built from. The plan itself is constructed by
-## TerrainWorldTuning.make_water/make_relief/make_heightfield in _ready(), so
-## that harnesses, corpora and the streamed world cannot diverge about what the
-## world is; overriding these in a scene changes nothing. Change
-## TerrainWorldTuning instead (every value there re-rolls the whole world).
-@export var HEIGHTFIELD_AMPLITUDE: float = \
-	TerrainWorldTuning.HEIGHTFIELD_AMPLITUDE
-@export var HEIGHTFIELD_MAX_STOREYS: int = \
-	TerrainWorldTuning.HEIGHTFIELD_MAX_STOREYS
-## Max storey difference between adjacent cells. 1 = all walkable slopes (SP1);
-## 3 = cliffs up to 3 storeys (12m) form where the field steps down steeply.
-@export var MAX_CLIFF_STEP: int = TerrainWorldTuning.MAX_CLIFF_STEP
 ## 0 = random each run. Set non-zero to pin the world for debugging (pairs
 ## with the F3 coord overlay screenshot workflow).
 @export var SEED_OVERRIDE: int = 0
@@ -76,11 +70,6 @@ var _dressing_program: DressingProgram
 var _dressing_queue: EnvironmentCommitQueue
 var _feature_program: FeatureProgram
 var _settlements: SettlementPlan
-# Untyped and usually null: the mass-first settlement relief stamp. Duck-typed
-# into _plan the way _water is, and part of the PLAN, so a chunk is built with
-# the hill already in it the first time and forever — nothing invalidates and
-# nothing re-meshes (there is no terrain rebuild API, and none is needed).
-var _relief = null
 var _fields: WorldFieldBlockCache
 var _features: WorldFeaturePlan
 var _feature_queue: FeatureCommitQueue
@@ -161,18 +150,11 @@ func _ready() -> void:
 	_last_diagnostic_msec = _diagnostic_started_msec
 	print("[terrain-streamer] startup_begin seed=%d support_chunks=%s" % [
 		world_seed, str(_startup_support_chunks)])
-	# Built through TerrainWorldTuning rather than from these exports, so the
-	# streamed world and every harness/test that calls make_heightfield are
-	# provably the same world. Two construction sites for one plan is design
-	# risk 4: a stamp wired into one and not the other means renders and tests
-	# disagree about what the world IS.
+	# The canonical tuning keeps the streamed world and offline harnesses from
+	# silently constructing different terrain fields.
 	_water = TerrainWorldTuning.make_water(world_seed)
 	_settlements = SettlementPlan.new(world_seed, _water)
-	# Null in a route-first world (the shipping default), so nothing about an
-	# existing world moves; a mass-first world gets its towns' landform as real
-	# heightfield, before any chunk near a site is built.
-	_relief = TerrainWorldTuning.make_relief(world_seed, _water, _settlements)
-	_plan = TerrainWorldTuning.make_heightfield(world_seed, _water, _relief)
+	_plan = TerrainWorldTuning.make_heightfield(world_seed, _water)
 	_mesher = TerrainChunkMesher.new()
 	_mesher.set_seed(world_seed)
 	_environment_catalog = EnvironmentCatalog.load_default()
@@ -655,10 +637,10 @@ func _process(_delta: float) -> void:
 	_log_worker_diagnostics()
 	var current_chunk_ready := _built.has(centre) and _feature_square_ready(centre)
 	_freeze_player(not current_chunk_ready or not startup_loading_complete())
-	# Startup is the one time the player deliberately straddles a four-chunk
-	# corner. Queue those four terrain+feature jobs ahead of the normal radius so
-	# the loading screen tracks the exact support set it is waiting for.
-	if not startup_loading_complete():
+	var startup_pending := not startup_loading_complete()
+	# Queue the spawn environment boundary ahead of the normal radius so the
+	# loading screen cannot clear while the camera can still see missing ground.
+	if startup_pending:
 		var startup_wakes := 0
 		_mutex.lock()
 		for chunk: Vector2i in _startup_support_chunks:
@@ -670,26 +652,29 @@ func _process(_delta: float) -> void:
 		_mutex.unlock()
 		for _i in startup_wakes:
 			_sem.post()
-	# The player's terrain request receives distance zero. It stays asynchronous.
-	if not _built.has(centre) and not _has_pending_terrain(centre):
-		_mutex.lock()
-		var wake := _request_job_locked(centre, true, true, 0, 0)
-		_mutex.unlock()
-		if wake:
+	else:
+		# Do not let ordinary radius work merge terrain into feature-only startup
+		# dependencies. Such merging used to make the overlay wait while unrelated
+		# chunks were meshed. Once startup is complete, resume nearest-first
+		# streaming normally.
+		if not _built.has(centre) and not _has_pending_terrain(centre):
+			_mutex.lock()
+			var wake := _request_job_locked(centre, true, true, 0, 0)
+			_mutex.unlock()
+			if wake:
+				_sem.post()
+		var requested := 0
+		for c: Vector2i in desired_chunks(centre, CHUNK_RADIUS):
+			if _built.has(c) or _has_pending_terrain(c):
+				continue
+			_mutex.lock()
+			if _request_job_locked(c, true, true,
+					maxi(absi(c.x - centre.x), absi(c.y - centre.y)),
+					_terrain_priority_tier(c, centre, lod_origin)):
+				requested += 1
+			_mutex.unlock()
+		for _i in requested:
 			_sem.post()
-	# Queue missing chunks nearest-first, so terrain grows outward from the player.
-	var requested := 0
-	for c: Vector2i in desired_chunks(centre, CHUNK_RADIUS):
-		if _built.has(c) or _has_pending_terrain(c):
-			continue
-		_mutex.lock()
-		if _request_job_locked(c, true, true,
-				maxi(absi(c.x - centre.x), absi(c.y - centre.y)),
-				_terrain_priority_tier(c, centre, lod_origin)):
-			requested += 1
-		_mutex.unlock()
-	for _i in requested:
-		_sem.post()
 	if _grass_runtime_enabled:
 		_queue_grass_jobs(lod_origin)
 	# Evict chunks beyond keep radius (Chebyshev).
@@ -812,7 +797,8 @@ func _commit_feature_result(result: Dictionary, centre: Vector2i) -> void:
 	# Empty blocks have no resource or collision stage. Publish their explicit
 	# readiness directly, which also keeps this pure fast path unit-testable
 	# without constructing main-thread render services.
-	if payload.instance_count == 0:
+	if payload.instance_count == 0 and payload.collision_boxes.is_empty() \
+			and payload.surface_meshes.is_empty():
 		if int(_feature_generation.get(c, 0)) == generation \
 				and not _feature_ready.has(c) \
 				and maxi(absi(c.x - centre.x), absi(c.y - centre.y)) \

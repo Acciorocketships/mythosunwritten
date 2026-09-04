@@ -194,7 +194,8 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 	if _sealed or catalog == null or recipe_id.is_empty() \
 			or role_tags.is_empty() or bearing_parent_count < 0 \
 			or bearing_parent_count > 2 \
-			or (placements.is_empty() and not has_tag(&"topology_only")):
+			or (placements.is_empty() and not has_tag(&"topology_only") \
+				and not _has_declared_clearance_bounds):
 		last_rejection = "missing id/catalog/tags, invalid bearing count, or empty visual recipe"
 		return false
 	if not _valid_names(role_tags) or not _unique_cells(solid_cells) \
@@ -383,6 +384,13 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 			bays[bay_index] = bay
 		run["bays"] = bays
 		run_ids[run_id] = true
+	if not has_bounds and placements.is_empty() \
+			and _has_declared_clearance_bounds:
+		# A proved-but-unrendered attachment: it seals with exactly the envelope
+		# its former visuals occupied, so every clearance proof downstream keeps
+		# the same input while nothing is drawn (the cantilever support courses).
+		local_bounds = local_clearance_bounds
+		has_bounds = local_bounds.has_volume()
 	if not has_bounds:
 		var planning_cells: Array[Vector3i] = []
 		planning_cells.append_array(solid_cells)

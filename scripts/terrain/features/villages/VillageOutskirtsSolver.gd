@@ -9,20 +9,33 @@ const SURVEY_LIMIT := 256
 ## outskirts are world-space construction, so using the old authored 1.5 m
 ## module here put the distributor on a half-cell phase beside the town.
 const OUTSKIRTS_GRID_STEP := VillageWorldScale.WORLD_FINE_CELL_M
-const PATH_HALF_WIDTH := OUTSKIRTS_GRID_STEP * 0.5
+const PATH_HALF_WIDTH := PathProgram.PATH_HALF_WIDTH
 const PATH_CLEARANCE := PATH_HALF_WIDTH + 0.5
 const BRANCH_CORRIDOR_HALF_WIDTH := VillageProgram.MODULE * 4.0
 const PARCEL_PATH_MARGIN := 0.25
 const DOOR_BRANCH_ALIGNMENT_MIN := 0.85
-const PERIMETER_ROOTS_PER_SIDE := 4
+const PERIMETER_ROOTS_PER_SIDE := 6
 const PERIMETER_GRID_MARGIN := 3
 const PERIMETER_ROOT_SEPARATION := OUTSKIRTS_GRID_STEP * 2.0
-## An exit authors a small edge neighbourhood, not a town-wide belt road.
-## Eight fine cells give the two flanking runs enough continuous frontage for
-## a 12-15 m authored house beside an irregular city silhouette while still
-## bounding every shared route to the 24 m terrain-cell neighborhood of its
-## actual entrance. This remains a local edge street, never a belt road.
-const ENTRY_NEIGHBOURHOOD_STEPS := 8
+## Each exit authors an edge neighbourhood that reaches around the town's
+## corners (2026-09-04 direction: "more ground-level buildings surrounding the
+## city ... so it decreases in height towards the edges"). Sixteen fine cells
+## from a gate let the flanking runs of two or three gates wrap most of a
+## compact/standard silhouette with single-storey prefabs, while every shared
+## lane still derives from a real exit rather than from a belt road drawn
+## around the bounding box.
+const ENTRY_NEIGHBOURHOOD_STEPS := 16
+## A MARKET STREET mirrors the town's own perimeter stalls (2026-09-04): the
+## contour lane runs in front of those stalls, a ring house whose root faces a
+## stall row stands one stall band back from the lane, and stocked stalls of the
+## same reviewed vocabulary fill that band facing the town, so the street has
+## market fronts on both sides and a building behind each. The band is three
+## world cells because the scaled market stall is 8.0 m deep.
+const MARKET_STALL_BAND := OUTSKIRTS_GRID_STEP * 3.0
+const MARKET_STALL_WINDOW := OUTSKIRTS_GRID_STEP * 3.0
+const MARKET_STALL_ASSETS: Array[StringName] = [
+	SettlementFabricAssembler.PERIMETER_MARKET_STALL,
+	SettlementFabricAssembler.PERIMETER_AWNING]
 ## The public lane occupies the one-cell gap.  A prefab's irregular authored
 ## eaves may leave at most half a cell beyond that lane before it stops reading
 ## as part of the same street wall.
@@ -85,6 +98,7 @@ static func solve(terrain: VillageTerrainView, settlement_id: StringName,
 		var accepted_direction := Vector2.ZERO
 		var accepted_branch_point := Vector2.ZERO
 		var accepted_source := StringName()
+		var accepted_market_stalls := 0
 		var rejection_counts: Dictionary = {}
 		var rejection_examples: Dictionary = {}
 		var best_rejected_alignment := -1.0
@@ -216,6 +230,19 @@ static func solve(terrain: VillageTerrainView, settlement_id: StringName,
 						blockers.append(placement)
 						selected_spec = spec
 						accepted_contact = survey_key
+						if bool(branch_descriptor.get("market", false)):
+							var market := _market_stalls(terrain, settlement_id,
+								placement, branch_descriptor.get("node") \
+									as VillageCirculationNode,
+								float(candidate.perimeter_gap), program,
+								occupancy, prefab_scale, urban.frontage_sites)
+							_append_unique_entries(plan.entries,
+								market.entries as Array[Dictionary], entry_ids)
+							_append_unique_volumes(plan.volumes,
+								market.volumes as Array[VillageOccupancyVolume],
+								volume_ids)
+							plan.market_stall_count += int(market.count)
+							accepted_market_stalls = int(market.count)
 						used_branches[branch_group] = true
 						used_branch_roots[accepted_contact] = true
 						accepted_alignment = float(candidate.door_branch_alignment)
@@ -263,6 +290,7 @@ static func solve(terrain: VillageTerrainView, settlement_id: StringName,
 			"rejection_examples": rejection_examples,
 			"parcel_connector_length": accepted_connector_length,
 			"perimeter_gap": accepted_perimeter_gap,
+			"market_stalls": accepted_market_stalls,
 			"inner_radius": inner_radius, "outer_radius": outer_radius})
 	plan.branch_count = used_branches.size()
 	plan.accepted = true
@@ -297,11 +325,8 @@ static func _outskirts_branches(terrain: VillageTerrainView,
 	if contacts.is_empty():
 		return out
 	if volumetric:
-		# Every sealed ground exit joins the same exact exterior contour. Build
-		# the contour view from each exit, then let each lot root keep the shortest
-		# source-to-root route. This produces one shared wrapping street graph even
-		# when a town has several doors to natural terrain; it cannot degenerate
-		# into unrelated radial spokes or duplicate the same frontage per exit.
+		# Local gates choose nearby frontage opportunities on the same contour.
+		# Deduplicate their lots before rooting the finished street network below.
 		var by_root: Dictionary = {}
 		var root_order: Array[String] = []
 		for source: VillageCirculationNode in contacts:
@@ -329,7 +354,12 @@ static func _outskirts_branches(terrain: VillageTerrainView,
 					by_root[root_key] = branch
 		for root_key: String in root_order:
 			out.append(by_root[root_key] as Dictionary)
-		return out
+		# Local gates choose the close-set frontage lots. Their actual streets
+		# must also belong to ONE exterior network rooted on the primary road;
+		# separate shortest paths to separate gates otherwise paint disconnected
+		# fragments. This is a tree of demanded streets, not a full ring road.
+		return _root_exterior_streets(terrain, arrival, primary_axis,
+			contacts[0], urban, out)
 	for contact_index in contacts.size():
 		var source := contacts[contact_index]
 		var outward := source.outward
@@ -364,6 +394,43 @@ static func _outskirts_branches(terrain: VillageTerrainView,
 	return out
 
 
+static func _root_exterior_streets(terrain: VillageTerrainView,
+		arrival: Vector2, primary_axis: Vector2, root: VillageCirculationNode,
+		urban: VillageUrbanFabricPlan, branches: Array[Dictionary]) -> Array[Dictionary]:
+	var grid := _urban_perimeter_grid(urban, arrival, primary_axis)
+	var side := Vector2(-primary_axis.y, primary_axis.x)
+	var entry := _nearest_perimeter_cell(grid.perimeter,
+		_grid_local(root.point, arrival, primary_axis),
+		Vector2(root.outward.dot(primary_axis), root.outward.dot(side)))
+	var shapes: Array[FeatureGroundShape] = []
+	shapes.assign(grid.shapes)
+	var graph := _perimeter_component(entry, grid.walkable, shapes,
+		arrival, primary_axis)
+	var out: Array[Dictionary] = []
+	for branch: Dictionary in branches:
+		var local := _grid_local(branch.node.point, arrival, primary_axis) \
+			/ OUTSKIRTS_GRID_STEP
+		var path := _perimeter_path(Vector2i(roundi(local.x), roundi(local.y)),
+			entry, graph.parents)
+		if path.is_empty():
+			continue
+		var nodes: Array[VillageCirculationNode] = [root]
+		for cell: Vector2i in path:
+			var point := _grid_world(Vector2(cell) * OUTSKIRTS_GRID_STEP,
+				arrival, primary_axis)
+			if nodes[-1].point.distance_to(point) <= 0.01:
+				continue
+			nodes.append(VillageCirculationNode.new(StringName(
+				"%s.street.%d.%d" % [root.stable_key, cell.x, cell.y]),
+				VillageCirculationNode.Kind.TERRAIN_CONTACT, point,
+				terrain.surface_y(point), root.owner_key))
+		branch.network_nodes = nodes
+		branch.main_path_a = root.point
+		branch.main_path_b = root.point
+		out.append(branch)
+	return out
+
+
 static func _network_length(nodes: Array[VillageCirculationNode]) -> float:
 	var total := 0.0
 	for index in range(1, nodes.size()):
@@ -377,8 +444,8 @@ static func _grid_edge_branches(terrain: VillageTerrainView,
 		) -> Array[Dictionary]:
 	## The city and its edge district share one orthogonal world-fine lattice. Rasterize
 	## the exact sealed structural/public union, take the one-cell exterior contour,
-	## and retain only the bounded component around the real public exit. The lane
-	## follows nearby recesses and stepped wings without becoming a belt road.
+	## and retain only the bounded component around the real public exit. Lots
+	## follow the contour; the lane minimizes turns in its wider exterior band.
 	## There is no radial ring and no free rotation: every prefab remains on the
 	## same axes as the town.
 	assert(urban != null)
@@ -402,6 +469,7 @@ static func _grid_edge_branches(terrain: VillageTerrainView,
 	var grid := _urban_perimeter_grid(urban, arrival, primary_axis)
 	var perimeter := grid.perimeter as Dictionary
 	var blocked := grid.blocked as Dictionary
+	var stall_cells := grid.get("stall_cells", {}) as Dictionary
 	var shapes: Array[FeatureGroundShape] = []
 	shapes.assign(grid.shapes as Array)
 	if perimeter.is_empty():
@@ -411,7 +479,7 @@ static func _grid_edge_branches(terrain: VillageTerrainView,
 		outward.dot(side_axis))
 	var entry_cell := _nearest_perimeter_cell(perimeter, source_local,
 		outward_local)
-	var graph := _perimeter_component(entry_cell, perimeter, shapes,
+	var graph := _perimeter_component(entry_cell, grid.walkable, shapes,
 		arrival, primary_axis)
 	var component := graph.component as Dictionary
 	var parents := graph.parents as Dictionary
@@ -430,6 +498,8 @@ static func _grid_edge_branches(terrain: VillageTerrainView,
 		var local_outward := local_directions[side_index]
 		for cell_variant: Variant in component.keys():
 			var cell := cell_variant as Vector2i
+			if not perimeter.has(cell):
+				continue
 			var graph_distance := int(distances.get(cell, 1 << 30))
 			if graph_distance <= 0 \
 					or graph_distance > ENTRY_NEIGHBOURHOOD_STEPS:
@@ -477,7 +547,10 @@ static func _grid_edge_branches(terrain: VillageTerrainView,
 				separated.append(candidate)
 				if separated.size() >= PERIMETER_ROOTS_PER_SIDE:
 					break
-			ranked_by_side[side_index] = separated
+		# Every requested side has an explicit candidate set.  Empty sides are a
+		# normal geometric result, not a missing dictionary entry for the commit
+		# loop to discover by crashing.
+		ranked_by_side[side_index] = separated
 	var out: Array[Dictionary] = []
 	var used_roots: Dictionary = {}
 	for rank in PERIMETER_ROOTS_PER_SIDE:
@@ -504,6 +577,13 @@ static func _grid_edge_branches(terrain: VillageTerrainView,
 					VillageCirculationNode.Kind.TERRAIN_CONTACT, point,
 					terrain.surface_y(point), source.owner_key, Vector2.ZERO))
 			var branch_node := nodes[-1]
+			# `graph_distance` counts perimeter-cell hops after the entry cell,
+			# while the real street also contains the source-to-entry handoff.  Bound
+			# the finished polyline itself so widening the lane cannot quietly move
+			# an edge house one extra 3 m bay away from its city gate.
+			if _network_length(nodes) > ENTRY_NEIGHBOURHOOD_STEPS \
+					* OUTSKIRTS_GRID_STEP + 0.001:
+				continue
 			branch_node.outward = directions[target_side]
 			out.append({
 				"node": branch_node,
@@ -515,6 +595,10 @@ static func _grid_edge_branches(terrain: VillageTerrainView,
 						source.stable_key, target_side]),
 				"grid_edge": true,
 				"perimeter_lot": true,
+				# The root faces the town's own stall row across the lane, so
+				# this lot is the far side of a market street.
+				"market": stall_cells.has(root_cell
+					- local_directions[target_side]),
 			})
 	return out
 
@@ -563,6 +647,24 @@ static func _urban_perimeter_grid(urban: VillageUrbanFabricPlan,
 			minimum.y = minf(minimum.y, local.y)
 			maximum.x = maxf(maximum.x, local.x)
 			maximum.y = maxf(maximum.y, local.y)
+	# The town's perimeter stalls lean on its outward wall. They are dressing,
+	# not occupancy, but the lane must run in FRONT of them, so they block the
+	# contour like mass and are remembered separately: a root facing one is a
+	# market lot.
+	var stall_shapes: Array[FeatureGroundShape] = []
+	for site: Dictionary in urban.frontage_sites:
+		var centre := site.centre as Vector2
+		var half_extents := site.half_extents as Vector2
+		stall_shapes.append(FeatureGroundShape.oriented_rect(centre,
+			half_extents, 0.0))
+		for point: Vector2 in [centre - half_extents, centre + half_extents,
+				centre + Vector2(half_extents.x, -half_extents.y),
+				centre + Vector2(-half_extents.x, half_extents.y)]:
+			var local := _grid_local(point, arrival, primary_axis)
+			minimum.x = minf(minimum.x, local.x)
+			minimum.y = minf(minimum.y, local.y)
+			maximum.x = maxf(maximum.x, local.x)
+			maximum.y = maxf(maximum.y, local.y)
 	var step := OUTSKIRTS_GRID_STEP
 	if shapes.is_empty():
 		# Only isolated test/custom fixtures can claim an accepted urban plan with
@@ -577,6 +679,7 @@ static func _urban_perimeter_grid(urban: VillageUrbanFabricPlan,
 	var hi := Vector2i(ceili(maximum.x / step) + PERIMETER_GRID_MARGIN,
 		ceili(maximum.y / step) + PERIMETER_GRID_MARGIN)
 	var blocked: Dictionary = {}
+	var stall_cells: Dictionary = {}
 	for z in range(lo.y, hi.y + 1):
 		for x in range(lo.x, hi.x + 1):
 			var cell := Vector2i(x, z)
@@ -587,12 +690,23 @@ static func _urban_perimeter_grid(urban: VillageUrbanFabricPlan,
 						<= PATH_HALF_WIDTH + PARCEL_PATH_MARGIN:
 					blocked[cell] = true
 					break
+			if blocked.has(cell):
+				continue
+			for shape: FeatureGroundShape in stall_shapes:
+				if shape.signed_distance(point) \
+						<= PATH_HALF_WIDTH + PARCEL_PATH_MARGIN:
+					blocked[cell] = true
+					stall_cells[cell] = true
+					break
+	shapes.append_array(stall_shapes)
 	var perimeter: Dictionary = {}
+	var walkable: Dictionary = {}
 	for z in range(lo.y, hi.y + 1):
 		for x in range(lo.x, hi.x + 1):
 			var cell := Vector2i(x, z)
 			if blocked.has(cell):
 				continue
+			walkable[cell] = true
 			for dz in range(-1, 2):
 				for dx in range(-1, 2):
 					if (dx != 0 or dz != 0) \
@@ -602,7 +716,8 @@ static func _urban_perimeter_grid(urban: VillageUrbanFabricPlan,
 				if perimeter.has(cell):
 					break
 	return {"blocked": blocked, "perimeter": perimeter,
-		"shapes": shapes, "centre": (minimum + maximum) * 0.5}
+		"shapes": shapes, "centre": (minimum + maximum) * 0.5,
+		"stall_cells": stall_cells, "walkable": walkable}
 
 
 static func _nearest_perimeter_cell(perimeter: Dictionary,
@@ -628,25 +743,54 @@ static func _nearest_perimeter_cell(perimeter: Dictionary,
 static func _perimeter_component(entry: Vector2i, perimeter: Dictionary,
 		shapes: Array[FeatureGroundShape], arrival: Vector2,
 		primary_axis: Vector2) -> Dictionary:
-	var component: Dictionary = {entry: true}
-	var parents: Dictionary = {entry: entry}
-	var distances: Dictionary = {entry: 0}
-	var queue: Array[Vector2i] = [entry]
-	var cursor := 0
-	while cursor < queue.size():
-		var cell := queue[cursor]
-		cursor += 1
-		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN,
-				Vector2i.LEFT, Vector2i.UP]:
+	## A state includes arrival direction: a cell-only BFS cannot minimize turns.
+	## Search the bounded exterior band, not just its jagged innermost contour;
+	## lots remain on that contour but streets can bridge its little recesses.
+	var component: Dictionary = {}
+	var parents: Dictionary = {"best_states": {}}
+	var distances: Dictionary = {}
+	var initial := Vector3i(entry.x, entry.y, -1)
+	var costs: Dictionary = {initial: 0}
+	var steps: Dictionary = {initial: 0}
+	var settled: Dictionary = {}
+	var edge_cache: Dictionary = {}
+	var queue := PriorityQueue.new()
+	queue.push(initial, 0.0)
+	var directions: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.DOWN,
+		Vector2i.LEFT, Vector2i.UP]
+	var turn_cost := perimeter.size() * 4 + 1
+	while not queue.is_empty():
+		var state: Vector3i = queue.pop()
+		if settled.has(state):
+			continue
+		settled[state] = true
+		var cell := Vector2i(state.x, state.y)
+		if not component.has(cell):
+			component[cell] = true
+			parents.best_states[cell] = state
+			distances[cell] = steps[state]
+		for heading in directions.size():
+			var direction := directions[heading]
 			var next := cell + direction
-			if not perimeter.has(next) or component.has(next) \
-					or not _perimeter_edge_clear(cell, next, shapes, arrival,
-						primary_axis):
+			if not perimeter.has(next):
 				continue
-			component[next] = true
-			parents[next] = cell
-			distances[next] = int(distances[cell]) + 1
-			queue.append(next)
+			var key := Vector4i(cell.x, cell.y, next.x, next.y)
+			if not edge_cache.has(key):
+				edge_cache[key] = _perimeter_edge_clear(cell, next, shapes,
+					arrival, primary_axis)
+				edge_cache[Vector4i(next.x, next.y, cell.x, cell.y)] = edge_cache[key]
+			if not bool(edge_cache[key]):
+				continue
+			var next_state := Vector3i(next.x, next.y, heading)
+			var cost := int(costs[state]) + 1 \
+				+ (turn_cost if state.z >= 0 and state.z != heading else 0)
+			if cost >= int(costs.get(next_state, 1 << 60)):
+				continue
+			costs[next_state] = cost
+			steps[next_state] = int(steps[state]) + 1
+			parents[next_state] = state
+			queue.push(next_state, float(cost))
+	queue.free()
 	return {"component": component, "parents": parents,
 		"distances": distances}
 
@@ -668,13 +812,13 @@ static func _perimeter_edge_clear(a: Vector2i, b: Vector2i,
 
 static func _perimeter_path(root: Vector2i, entry: Vector2i,
 		parents: Dictionary) -> Array[Vector2i]:
-	if not parents.has(root):
+	if not parents.best_states.has(root):
 		return []
 	var reverse: Array[Vector2i] = [root]
-	var current := root
-	while current != entry:
-		current = parents[current] as Vector2i
-		reverse.append(current)
+	var current: Vector3i = parents.best_states[root]
+	while Vector2i(current.x, current.y) != entry:
+		current = parents[current] as Vector3i
+		reverse.append(Vector2i(current.x, current.y))
 	reverse.reverse()
 	return reverse
 
@@ -736,17 +880,21 @@ static func _ordered_surveys(terrain: VillageTerrainView, arrival: Vector2,
 			outward = contact.point - arrival
 			outward = outward.normalized() if not outward.is_zero_approx() \
 				else -primary_axis
-		var key := "branch:%s:%0.3f:%0.3f" % [String(contact.stable_key),
-			footprint.x, footprint.y]
+		var market := bool(branch_descriptor.get("market", false))
+		var key := "branch:%s:%0.3f:%0.3f:%s" % [String(contact.stable_key),
+			footprint.x, footprint.y, "market" if market else "lane"]
 		var grid_edge := bool(branch_descriptor.get("grid_edge", false))
 		var perimeter_lot := bool(branch_descriptor.get("perimeter_lot", false))
 		# An edge lot is one building depth plus the public clearance and one
 		# shared module beyond its real portal. Its own footprint therefore sets
 		# the maximum setback; town scale and a legacy radial annulus cannot push
-		# a small house away from its neighbours.
+		# a small house away from its neighbours. A market lot adds the stall
+		# band it must leave between the lane and its facade.
 		var maximum_forward := PATH_CLEARANCE \
 			+ maxf(footprint.x, footprint.y) * 2.0 \
-			+ VillageProgram.MODULE * 2.0 if grid_edge else outer_radius
+			+ VillageProgram.MODULE * 2.0 \
+			+ (MARKET_STALL_BAND if market else 0.0) if grid_edge \
+			else outer_radius
 		var minimum_arrival_radius := 0.0 if grid_edge else inner_radius
 		var maximum_arrival_radius := contact.point.distance_to(arrival) \
 			+ maximum_forward + BRANCH_CORRIDOR_HALF_WIDTH \
@@ -764,7 +912,11 @@ static func _ordered_surveys(terrain: VillageTerrainView, arrival: Vector2,
 				maximum_forward,
 				BRANCH_CORRIDOR_HALF_WIDTH + minf(footprint.x, footprint.y),
 				minimum_arrival_radius, maximum_arrival_radius, SURVEY_LIMIT,
+				# A perimeter perch is generated with its support edge exactly on
+				# the lane's outer edge; a market lot's edge is one stall band
+				# further out so the mirrored stalls fit between lane and facade.
 				PATH_HALF_WIDTH + PARCEL_PATH_MARGIN \
+					+ (MARKET_STALL_BAND if market else 0.0) \
 					if perimeter_lot else -1.0)
 			cache[key] = discovered
 		var discovered := cache[key] as Array[VillageTerrainPerch]
@@ -774,7 +926,7 @@ static func _ordered_surveys(terrain: VillageTerrainView, arrival: Vector2,
 		var perches := _corridor_perches(discovered, arrival,
 			contact.point, outward, footprint, inner_radius,
 			outer_radius, preferred_side, not grid_edge,
-			perimeter_lot)
+			perimeter_lot, market)
 		var contact_nodes: Array[VillageCirculationNode] = [contact]
 		out.append({"contact_key": contact.stable_key,
 			"contact_point": [contact.point.x, contact.point.y],
@@ -790,7 +942,7 @@ static func _corridor_perches(discovered: Array[VillageTerrainPerch],
 		footprint: Vector2, inner_radius: float,
 		outer_radius: float, preferred_side: int = 1,
 		enforce_arrival_annulus: bool = true,
-		perimeter_lot: bool = false
+		perimeter_lot: bool = false, market: bool = false
 		) -> Array[VillageTerrainPerch]:
 	var out: Array[VillageTerrainPerch] = []
 	var side := Vector2(-outward.y, outward.x)
@@ -829,6 +981,11 @@ static func _corridor_perches(discovered: Array[VillageTerrainPerch],
 		# plane. Non-perimeter side lots still need the ordinary minimum offset.
 		var minimum_forward := 0.0 if perimeter_lot else (PATH_CLEARANCE \
 			+ minf(footprint.x, footprint.y))
+		# A market lot's facade stands one stall band beyond the lane's outer
+		# edge, leaving room for the mirrored stalls in front of it.
+		if market and along - forward_radius \
+				< PATH_HALF_WIDTH + MARKET_STALL_BAND - 0.001:
+			continue
 		if (enforce_arrival_annulus and (radius < inner_radius - 0.001 \
 				or radius > outer_radius + 0.001)) \
 				or along < minimum_forward - 0.001 \
@@ -1080,7 +1237,11 @@ static func _candidate(terrain: VillageTerrainView,
 		perimeter_gap = maxf(0.0,
 			placement.support_shape().signed_distance(branch_node.point)
 			- PATH_HALF_WIDTH)
-		if perimeter_lot and perimeter_gap > MAX_PERIMETER_GAP + 0.001:
+		var market_setback := MARKET_STALL_BAND \
+			if bool(branch_descriptor.get("market", false)) else 0.0
+		if perimeter_lot and (perimeter_gap \
+				> market_setback + MAX_PERIMETER_GAP + 0.001 \
+				or perimeter_gap < market_setback - 0.001):
 			return {"accepted": false, "reason": &"perimeter_setback",
 				"perimeter_gap": perimeter_gap,
 				"diagnostic_geometry": {
@@ -1240,16 +1401,21 @@ static func _candidate(terrain: VillageTerrainView,
 	volumes.append_array(stairs.volumes)
 	var surfaces: Array[FeatureGroundShape] = []
 	var clearances: Array[FeatureGroundShape] = []
+	var street_points: Array[Vector2] = []
 	var ground_owner := StringName("%s.ground_circulation" % settlement_id)
 	var walk_network := urban.public_walk_network_id
 	if walk_network.is_empty():
 		walk_network = StringName("%s.urban.walk_network" % settlement_id)
 	for route_index in routes.size():
 		var route := routes[route_index]
-		# The shared street keeps the full scaled fine-cell width. Its last few
-		# metres taper to the prefab's measured doorway aperture; widening that
-		# private threshold back to a whole 3 m cell would reserve headroom through
-		# the two wall piers beside the door.
+		for point: Vector3 in route.control_points:
+			street_points.append(Vector2(point.x, point.z))
+		# Every painted lane -- the shared street and the spur to a doorstep --
+		# is the ordinary world path width, so a house path never reads as a
+		# thinner ribbon beside the road it leaves. Only the reserved HEADROOM of
+		# the final threshold spur narrows to the prefab's measured doorway
+		# aperture; widening that private volume to a whole cell would reserve
+		# air through the two wall piers beside the door.
 		var is_parcel_route := not branch_descriptor.is_empty() \
 			and route_index == parcel_route_index
 		var route_half_width := placement.access_half_width \
@@ -1269,12 +1435,6 @@ static func _candidate(terrain: VillageTerrainView,
 				continue
 			var route_id := StringName("%s.%s.outskirts.%03d" % [
 				settlement_id, route.stable_key, index])
-			surfaces.append(FeatureGroundShape.capsule(a2, b2,
-				route_half_width, FeatureGroundField.WORN_PATH,
-				VillagePlan.SURFACE_PRIORITY, route_id))
-			clearances.append(FeatureGroundShape.capsule(a2, b2,
-				route_half_width + 0.5, FeatureGroundField.NATURAL, 0,
-				StringName("%s.clearance" % route_id)))
 			volumes.append(VillageOccupancyVolume.new(
 				VillageOccupancy.Role.HEADROOM, (a2 + b2) * 0.5,
 				Vector2(a2.distance_to(b2) * 0.5, route_half_width),
@@ -1282,6 +1442,23 @@ static func _candidate(terrain: VillageTerrainView,
 				maxf(a.y, b.y) + TraversalEnvelope.MIN_HEADROOM,
 				StringName("%s.headroom" % route_id), route_owner,
 				walk_network))
+	# Curves belong to the complete route, not its 3 m reservation segments.
+	# Surface paint still goes through the ordinary terrain path/spot material.
+	surfaces = PathProgram.filleted_path_shapes(street_points, PATH_HALF_WIDTH,
+		FeatureGroundField.WORN_PATH, VillagePlan.SURFACE_PRIORITY,
+		StringName("%s.street" % stable_id))
+	clearances = PathProgram.filleted_path_shapes(street_points, PATH_CLEARANCE,
+		FeatureGroundField.NATURAL, 0, StringName("%s.street-clearance" % stable_id))
+	for shape: FeatureGroundShape in surfaces:
+		var ground_y := terrain.surface_y(shape.bounds().get_center())
+		for volume: VillageOccupancyVolume in occupancy.volumes():
+			if volume.role != VillageOccupancy.Role.SOLID \
+					or volume.y_range.y <= ground_y + 0.01 \
+					or volume.y_range.x >= ground_y + TraversalEnvelope.MIN_HEADROOM:
+				continue
+			if shape.intersects(FeatureGroundShape.oriented_rect(volume.centre,
+					volume.half_extents, volume.angle)):
+				return {"accepted": false, "reason": &"curved_street_occupied"}
 	var lot := spec.world_lot(building_transform)
 	clearances.append(FeatureGroundShape.oriented_rect(
 		lot.centre, lot.half_extents, lot.angle,
@@ -1460,15 +1637,10 @@ static func _ground_contacts(terrain: VillageTerrainView, arrival: Vector2,
 		var specs := VillageWarrenFabricSolver.terrain_contact_specs(
 			urban.volumetric_spatial, urban.fabric_plan)
 		for spec: Dictionary in specs:
-			var boundary_cells := spec.cells as Array[Vector3i]
 			var local_outward := spec.outward as Vector3i
-			var centre := Vector3.ZERO
-			for cell: Vector3i in boundary_cells:
-				centre += (Vector3(cell) + Vector3(0.5, 0.0, 0.5)) \
-					* FabricRecipe.CELL_SIZE
-			centre /= float(boundary_cells.size())
-			var outer_centre := centre + Vector3(local_outward) \
-				* FabricRecipe.CELL_SIZE * 1.5
+			var contact := VillageWarrenFabricSolver \
+				.terrain_contact_local_geometry(spec)
+			var outer_centre := contact.outer_centre as Vector3
 			var world3 := urban.world_transform * outer_centre
 			var point := Vector2(world3.x, world3.z)
 			var ground_y := terrain.surface_y(point)
@@ -1501,6 +1673,154 @@ static func _market_blocking_volumes(urban: VillageUrbanFabricPlan
 		return urban.market.blocking_volumes()
 	var empty: Array[VillageOccupancyVolume] = []
 	return empty
+
+
+static func _market_stalls(terrain: VillageTerrainView,
+		settlement_id: StringName, placement: VillageMassingPlacement,
+		node: VillageCirculationNode, perimeter_gap: float,
+		program: VillageProgram, occupancy: VillageOccupancy,
+		prefab_scale: float,
+		frontage_sites: Array[Dictionary]) -> Dictionary:
+	## The far side of a market street. Every one of the town's own stalls that
+	## fronts this lane gets a twin of the same reviewed asset directly across
+	## the lane, standing in the stall band with its back toward the accepted
+	## ring house and its front toward the town, so the street reads as two
+	## rows of stocked fronts with a building behind. The window the house's
+	## door spur crosses stays open, and each twin must stand on level dry
+	## ground and clear the occupancy the district already holds, exactly like
+	## the house itself. Twins are keyed by the town stall they mirror, so two
+	## market lots on one run cannot double them.
+	var out := {"entries": [] as Array[Dictionary],
+		"volumes": [] as Array[VillageOccupancyVolume], "count": 0}
+	var entries := out.entries as Array[Dictionary]
+	var volumes := out.volumes as Array[VillageOccupancyVolume]
+	if node == null or not node.outward.is_normalized():
+		return out
+	var outward := node.outward
+	var tangent := Vector2(-outward.y, outward.x)
+	# The lane-facing edge of the house's foundation. The twin stands as close
+	# to the lane as the lane's own clearance allows and never past that wall;
+	# the scaled prefab's eave overhangs its foundation by several metres, and a
+	# stall under that eave is admitted exactly as the house admits its eave
+	# over the pavement: its occupancy stops at the headroom line.
+	var support_edge := (placement.support_centre - node.point).dot(outward) \
+		- _oriented_half_extent(placement.support_half_extents,
+			placement.support_angle, outward)
+	var eave_line := placement.floor_y + TraversalEnvelope.MIN_HEADROOM
+	var facade_half := _oriented_half_extent(placement.support_half_extents,
+		placement.support_angle, tangent)
+	var facade_centre := (placement.support_centre - node.point).dot(tangent)
+	var door := (placement.entrance - node.point).dot(tangent)
+	var door_half := PATH_HALF_WIDTH + PARCEL_PATH_MARGIN
+	var placed := 0
+	for site_index in frontage_sites.size():
+		var site := frontage_sites[site_index]
+		var site_outward := site.outward as Vector2
+		if site_outward.dot(outward) < 0.9:
+			continue
+		var delta := (site.centre as Vector2) - node.point
+		var along := delta.dot(outward)
+		var across := delta.dot(tangent)
+		# The town's stall stands on the near side of this lane, opposite a
+		# stretch of stall band the house's frontage can plausibly claim.
+		if along > 0.0 or along < -(MARKET_STALL_BAND + OUTSKIRTS_GRID_STEP) \
+				or absf(across - facade_centre) \
+					> facade_half + MARKET_STALL_WINDOW:
+			continue
+		var asset := StringName(site.asset)
+		if not MARKET_STALL_ASSETS.has(asset):
+			continue
+		# The twin is the same measured module turned a half turn, so the town
+		# stall's own world footprint is its footprint too.
+		var site_half := site.half_extents as Vector2
+		var half_width := absf(tangent.x) * site_half.x \
+			+ absf(tangent.y) * site_half.y
+		if absf(across - door) < half_width + door_half:
+			# The house is usually centred on the stall it faces, so a strict
+			# mirror would stand in its own doorway. Slide the twin along the
+			# lane to the nearer side of the door spur; it must still lie within
+			# the frontage this house can plausibly claim.
+			var clearance := door_half + half_width + PARCEL_PATH_MARGIN
+			var slid := door - clearance if across <= door \
+				else door + clearance
+			if absf(slid - facade_centre) > facade_half + MARKET_STALL_WINDOW:
+				slid = door + clearance if across <= door else door - clearance
+			if absf(slid - facade_centre) > facade_half + MARKET_STALL_WINDOW:
+				continue
+			across = slid
+		var depth := float(SettlementFabricAssembler.PERIMETER_FRONTAGE_DEPTH[
+			asset]) * prefab_scale
+		var half_extents := site_half
+		var half_depth := absf(outward.x) * site_half.x \
+			+ absf(outward.y) * site_half.y
+		var back_distance := minf(support_edge - PARCEL_PATH_MARGIN,
+			PATH_HALF_WIDTH + PARCEL_PATH_MARGIN * 2.0 + half_depth * 2.0)
+		if back_distance - half_depth * 2.0 \
+				< PATH_HALF_WIDTH + PARCEL_PATH_MARGIN - 0.001:
+			continue
+		var back := node.point + outward * back_distance + tangent * across
+		# `depth` is the authored pivot's push-out from the back plane; the
+		# measured box is deeper in front of the pivot than behind it, so the
+		# occupancy box is centred on the module's geometric centre, one measured
+		# half depth in front of the back plane, never on the pivot.
+		var origin := back - outward * depth
+		var centre := back - outward * half_depth
+		var footprint := Rect2(centre - half_extents, half_extents * 2.0)
+		var base_y := terrain.surface_y(origin)
+		var height_range := TerrainSurfaceField.height_bounds(
+			terrain.region_covering(footprint), footprint)
+		if terrain.may_be_wet(origin) \
+				or height_range.y > base_y \
+					+ VillageWarrenFabricSolver.OPTIONAL_FRONTAGE_GROUND_TOLERANCE \
+				or height_range.x < base_y \
+					- VillageWarrenFabricSolver.OPTIONAL_FRONTAGE_MAX_DROP:
+			continue
+		var stable_id := StringName("%s.market.%02d" % [settlement_id,
+			site_index])
+		var top_y := minf(base_y + maxf(float(site.get("height", 3.0)), 1.0),
+			eave_line - 0.01)
+		if top_y <= base_y + 1.0:
+			continue
+		var volume := VillageOccupancyVolume.new(VillageOccupancy.Role.SOLID,
+			centre, half_extents, 0.0, base_y, top_y,
+			StringName("%s.solid" % stable_id), stable_id)
+		if not occupancy.add(volume):
+			continue
+		volumes.append(volume)
+		# The authored front is local +Z; turn it to face the town.
+		var yaw := atan2(-outward.x, -outward.y)
+		var transform := Transform3D(Basis(Vector3.UP, yaw).scaled(
+			Vector3.ONE * prefab_scale), Vector3(origin.x, base_y, origin.y))
+		entries.append({"asset_id": asset, "stable_id": stable_id,
+			"transform": transform})
+		for goods: Dictionary in SettlementFabricAssembler.maze_stall_goods(
+				asset, Vector3.ZERO, 0.0, Vector4i(roundi(origin.x),
+					site_index, roundi(origin.y),
+					String(settlement_id).hash() & 0xffff)):
+			entries.append({"asset_id": StringName(goods.asset),
+				"stable_id": StringName("%s.%s" % [stable_id,
+					String(goods.station)]),
+				"transform": transform * (goods.transform as Transform3D)})
+		placed += 1
+	out.count = placed
+	return out
+
+
+static func _right_angle_path_segment(a: Vector2, b: Vector2,
+		half_width: float, surface_id: int, priority: int,
+		stable_id: StringName) -> FeatureGroundShape:
+	## Outskirts routes are sealed as cardinal grid walks. Paint each edge as an
+	## exact butt-ended rectangle; adjacent edges then make a clean right-angle
+	## junction instead of the rounded capsule lobes previously seen at the town
+	## entrances and house branches.
+	var delta := b - a
+	assert(delta.length() > 0.01)
+	# Square caps recover the same endpoint reach the former capsule owned. At a
+	# turn the two caps overlap as one full path-width square, producing a clean
+	# orthogonal elbow with neither a rounded lobe nor a missing outer quadrant.
+	return FeatureGroundShape.oriented_rect((a + b) * 0.5,
+		Vector2(delta.length() * 0.5 + half_width, half_width), delta.angle(),
+		surface_id, priority, stable_id)
 
 
 static func _rejected(reason: StringName) -> VillageOutskirtsPlan:

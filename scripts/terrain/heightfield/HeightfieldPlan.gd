@@ -34,14 +34,6 @@ var _raw_override: Callable = Callable()
 # class-resolution cycle; duck-typed: needs carve_at_cell(cx, cz) -> float).
 var _water_plan = null
 
-# Optional settlement relief stamp (untyped, same convention as the carve;
-# duck-typed: needs relief_at_cell(cx, cz) -> float, metres, >= 0). Exact
-# mirror of the carve: the carve LOWERS the continuous field before
-# quantization, the stamp RAISES it, and both land in _sample so that storey
-# quantization, the trickle-down clamp, the level tier, cliff classification,
-# dressing, grass suppression and collision are all downstream and unchanged.
-var _relief_plan = null
-
 # Per-cell sample memo: Vector2i(cx,cz) -> [height_after_carve: float, carve: float].
 # Purely a performance cache — raw_height is a pure function of (seed, cell) —
 # persisted across compute_region calls so the ~77%-overlapping windows of
@@ -64,18 +56,7 @@ func _sample(cx: int, cz: int) -> Array:
 		var carve: float = 0.0
 		if _water_plan != null:
 			carve = _water_plan.carve_at_cell(cx, cz)
-		var relief: float = 0.0
-		# ZERO WHERE THE CARVE IS NON-ZERO. This is the only place that knows
-		# the carve actually applied to this cell, so it is where the two
-		# height writers are kept from arguing: the stamp can never fill a
-		# channel back in, and a settlement's stamp radius is bounded well
-		# below SettlementPlan.WATER_CLEARANCE so the rule is a backstop rather
-		# than a shape the terrain ever shows.
-		if _relief_plan != null and carve <= 0.0:
-			relief = _relief_plan.relief_at_cell(cx, cz)
-			assert(relief >= 0.0,
-				"a settlement relief stamp may only ever raise the field")
-		s = [h - carve + relief, carve]
+		s = [h - carve, carve]
 		if _samples.size() >= _SAMPLE_CACHE_MAX:
 			_samples.clear()
 		_samples[key] = s
@@ -93,8 +74,10 @@ func _init(
 	# max_storeys is the clamp window margin; a non-positive value collapses the
 	# window to a single cell and silently breaks the churn-free guarantee.
 	assert(p_max_storeys > 0, "HeightfieldPlan: max_storeys must be positive")
-	if not (p_aggregation == "min" or p_aggregation == "mean" or p_aggregation == "max"):
-		push_warning("HeightfieldPlan: unknown aggregation '%s', defaulting to nearest (mean)" % p_aggregation)
+	assert(p_aggregation == "min" or p_aggregation == "mean" \
+		or p_aggregation == "max",
+		"HeightfieldPlan: aggregation must be min, mean, or max")
+	assert(p_max_step > 0, "HeightfieldPlan: max_step must be positive")
 	world_seed = p_world_seed
 	height_amplitude = p_height_amplitude
 	max_storeys = p_max_storeys
@@ -108,23 +91,6 @@ func _init(
 ## two must never disagree about what the ground is.
 func set_raw_height_override(fn: Callable) -> void:
 	_raw_override = fn
-	if _relief_plan != null \
-			and _relief_plan.has_method("set_natural_height_override"):
-		_relief_plan.set_natural_height_override(fn)
-	_samples.clear()
-
-
-## Attach the settlement relief stamp: raw_height ADDS its relief BEFORE storey
-## quantization, so the hill, its slopes, its terrace benches, its dressed
-## cliffs, its grass suppression and its collision all come from the existing
-## clamp + surface-field + mesher machinery with no downstream changes. Mirror
-## of set_water_plan; passing null (the shipping default for a route-first
-## world) leaves every value bit-identical to a world with no stamp at all.
-func set_relief_plan(p_relief_plan) -> void:
-	_relief_plan = p_relief_plan
-	if _relief_plan != null and _raw_override.is_valid() \
-			and _relief_plan.has_method("set_natural_height_override"):
-		_relief_plan.set_natural_height_override(_raw_override)
 	_samples.clear()
 
 
@@ -177,15 +143,18 @@ func _height01(pos: Vector3) -> float:
 
 
 ## Apply the aggregation rounding mode to a quotient: min=floor (hug valleys),
-## max=ceil (build up), mean/unknown=nearest. Shared by storey and level quantization.
+## max=ceil (build up), mean=nearest. Shared by storey and level quantization.
 func _round_mode(q: float) -> int:
 	match aggregation:
 		"min":
 			return floori(q)
+		"mean":
+			return roundi(q)
 		"max":
 			return ceili(q)
 		_:
-			return roundi(q)
+			assert(false, "HeightfieldPlan has an invalid aggregation")
+			return 0
 
 
 ## Quantize a height (metres) to an integer storey index, clamped to [0, max_storeys].
@@ -223,6 +192,7 @@ static func _has_diagonal_cliff(storeys: Dictionary, cell: Vector2i) -> bool:
 ## (each cell <= min_neighbour + 1) is unique regardless of sweep order. `targets`
 ## maps Vector2i(cx, cz) -> storey; returns a new clamped map.
 static func clamp_field(targets: Dictionary, max_step: int = 1) -> Dictionary:
+	assert(max_step > 0, "HeightfieldPlan.clamp_field: max_step must be positive")
 	var out: Dictionary = targets.duplicate()
 	var changed: bool = true
 	while changed:

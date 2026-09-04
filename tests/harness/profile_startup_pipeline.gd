@@ -2,7 +2,8 @@
 # Production-faithful startup + streaming profiler. Mirrors
 # FieldTerrainStreamer._ready() construction order exactly (TerrainWorldTuning
 # factories, relief, programs, caches), then replays the startup gate work
-# (4 support chunks + their feature-halo keys) and a steady-state ring sweep,
+# (the production spawn support footprint + its feature-halo keys) and a
+# steady-state ring sweep,
 # attributing wall time to each phase. Everything runs on one thread, like the
 # production worker.
 #
@@ -56,9 +57,7 @@ func _init() -> void:
 	t = _mark("ready.make_water", t)
 	var settlements := SettlementPlan.new(seed_value, water)
 	t = _mark("ready.settlement_plan", t)
-	var relief = TerrainWorldTuning.make_relief(seed_value, water, settlements)
-	t = _mark("ready.make_relief(active=%s)" % (relief != null), t)
-	var plan := TerrainWorldTuning.make_heightfield(seed_value, water, relief)
+	var plan := TerrainWorldTuning.make_heightfield(seed_value, water)
 	t = _mark("ready.make_heightfield", t)
 	var mesher := TerrainChunkMesher.new()
 	mesher.set_seed(seed_value)
@@ -113,7 +112,8 @@ func _init() -> void:
 	print("[profile] READY_TOTAL ms=%s" % _ms(Time.get_ticks_usec() - _t0))
 
 	# --- startup gate replay ----------------------------------------------
-	var supports := FieldTerrainStreamer.support_chunks_at(Vector3.ZERO)
+	var supports := FieldTerrainStreamer.support_chunks_at(
+		FieldTerrainStreamer.DEFAULT_SPAWN_POSITION)
 	var halo := feature_program.geometry_halo
 	var key_set: Dictionary = {}
 	for chunk: Vector2i in supports:
@@ -146,8 +146,8 @@ func _init() -> void:
 			dressing_program, features, fields, render_cache, seed_value, true)
 		print("[profile] startup.support chunk=%d,%d %s" % [
 			chunk.x, chunk.y, built])
-	print("[profile] STARTUP_TOTAL ms=%s (contexts + 4 supports)" \
-		% _ms(Time.get_ticks_usec() - startup_started))
+	print("[profile] STARTUP_TOTAL ms=%s (contexts + %d supports)" % [
+		_ms(Time.get_ticks_usec() - startup_started), supports.size()])
 
 	# --- steady-state sweep ------------------------------------------------
 	var sweep_started := Time.get_ticks_usec()
@@ -184,7 +184,9 @@ func _init() -> void:
 
 	# --- grass tiles -------------------------------------------------------
 	if do_grass and grass_program != null:
-		var tiles := GrassStreamer.desired_tiles(Vector2.ZERO)
+		var tiles := GrassStreamer.desired_tiles(Vector2(
+			FieldTerrainStreamer.DEFAULT_SPAWN_POSITION.x,
+			FieldTerrainStreamer.DEFAULT_SPAWN_POSITION.z))
 		var grass_started := Time.get_ticks_usec()
 		var grass_worst := 0
 		for tile: Vector2i in tiles:

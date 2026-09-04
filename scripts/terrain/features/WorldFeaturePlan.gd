@@ -36,8 +36,6 @@ func context_for(block: Vector2i) -> FeatureContext:
 	if _contexts.size() >= CONTEXT_CACHE_CAP:
 		_contexts.clear()
 	var path_context := _paths.context_for(block)
-	var core := Rect2(Vector2(block) * TerrainChunkMesher.CHUNK_WORLD,
-		Vector2.ONE * TerrainChunkMesher.CHUNK_WORLD)
 	var surface_shapes: Array[FeatureGroundShape] = []
 	var clearance_shapes: Array[FeatureGroundShape] = []
 	var village_payload := EnvironmentInstancePayload.new()
@@ -52,9 +50,17 @@ func context_for(block: Vector2i) -> FeatureContext:
 			if shape.bounds().grow(_program.maximum_clearance).intersects(
 					path_context.coverage(), true):
 				clearance_shapes.append(shape)
-		village_payload.append_from(record.payload)
+		# A village is already one sealed atomic record whose maximum reach is
+		# smaller than one streaming block. Own its complete render/collision
+		# payload from the block containing the canonical centre. Splitting the
+		# same town by individual placement anchors multiplied MultiMesh batches
+		# and physics bodies across as many as four blocks; the one-block halo
+		# already guarantees this owner is resident for every intersecting terrain
+		# chunk. Ground/clearance shapes remain projected per query above.
+		if WorldFieldBlockCache.key_of(record.centre) == block:
+			village_payload.append_from(record.payload)
 	var context := path_context.extended(surface_shapes, clearance_shapes,
-		village_payload, core)
+		village_payload, Rect2())
 	_contexts[block] = context
 	return context
 

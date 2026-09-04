@@ -3,27 +3,21 @@ extends RefCounted
 ## GROUND FRAMES for the mass-first suites, in the plain
 ## `Dictionary[Vector2i -> int]` WarrenMassifBuilder.build actually takes.
 ##
-## The massif now authors a deep 2-18-band inhabited mountain above real terrain
-## (SettlementReliefPlan, stamped into HeightfieldPlan._sample). Flat ground is
-## valid, but the terrain-sensitive suites still share this measured hill so
-## their relief, bearing, and route-grade assertions describe the same town.
+## Synthetic terrain frames for the terrain-sensitive fabric suites. Flat
+## ground is valid, but these tests also share one terraced hill so their
+## relief, bearing, and route-grade assertions describe the same town.
 ##
-## `hill()` is a synthetic reproduction of what
-## VillageWarrenFabricSolver._sample_ground_bands reads back off a stamped site,
-## not an invention. The three numbers it reproduces were measured through the
-## real chain (TerrainWorldTuning.make_relief -> make_heightfield ->
-## compute_region -> VillageTerrainView -> the five-probe ceil) by
-## tests/harness/warren_buildable_layer_probe.gd over seeds 0-39:
+## `hill()` is a compact adversarial terrace family for
+## VillageWarrenFabricSolver._sample_ground_bands. Its dimensions exercise the
+## same range as natural stepped terrain:
 ##
 ##   - relief under the footprint: 2-13 bands, mean 6;
 ##   - riser between adjacent terraces: 2-3 bands, i.e. the 4 m terrain storey
 ##     read through 1.5 m warren bands;
-##   - bench width: 8-12 columns, i.e. SettlementReliefPlan.RING_WIDTH_CELLS of
-##     24 m terrain cell divided by the 3 m column pitch.
+##   - bench width: 8-12 columns at the 3 m construction pitch.
 ##
-## The probe harness remains the instrument of record for anything measured
-## against the REAL stamp; this fixture exists so a unit suite can build a town
-## in milliseconds without standing up the terrain stack.
+## The fixture exists so a unit suite can exercise those shapes in milliseconds
+## without standing up the terrain stack.
 
 ## One 4 m terrain storey read through 1.5 m warren bands, ceiled the way the
 ## production sampler ceils.
@@ -37,7 +31,7 @@ const BENCH_COUNT := 3
 static func hill(span: int, world_seed: int = 0) -> Dictionary:
 	## A terraced bell in the massif's own 3 m column lattice: a crown, one flat
 	## bench per storey of relief, and band zero outside. Warped and
-	## peak-offset in the same three-lobe family SettlementReliefPlan uses, so
+	## peak-offset with a three-lobe warp so
 	## the frame is not a bullseye centred on column (0, 0) and a route cannot
 	## climb it by walking a perfect radius.
 	var phase := float(posmod(world_seed * 73856093 ^ 2311, 1000)) / 1000.0 * TAU
@@ -78,8 +72,7 @@ static func ramp(span: int, bands_per_column: float = 0.25) -> Dictionary:
 ## per call so a suite can measure how a rule degrades with grade. Five is the
 ## middle of the 4-6 band range Task D1 measures the plot pipeline over, and it
 ## is relief a NATURAL hillside hands back through the five-probe ceil: 7.5 m
-## of fall over a compact town's 45 m span is a 17 % grade, well inside what
-## SettlementReliefPlan will stamp a settlement onto.
+## of fall over a compact town's 45 m span is a 17 % grade.
 ##
 ## It is ALSO steeper than a production placement will ever accept --
 ## VillageUrbanFabricPlan.MAX_FABRIC_TERRAIN_RELIEF is 4.5 m, three bands --

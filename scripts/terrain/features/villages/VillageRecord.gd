@@ -74,7 +74,8 @@ func validate(program: VillageProgram) -> bool:
 	return true
 
 func is_empty() -> bool:
-	return payload.instance_count == 0 and payload.surface_meshes.is_empty() \
+	return payload.instance_count == 0 and payload.collision_boxes.is_empty() \
+		and payload.surface_meshes.is_empty() \
 		and surface_shapes.is_empty() \
 		and clearance_shapes.is_empty() and occupancy.is_empty()
 

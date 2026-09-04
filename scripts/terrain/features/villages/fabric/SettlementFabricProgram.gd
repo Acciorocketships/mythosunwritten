@@ -4301,12 +4301,8 @@ static func _embedded_oriel_recipe(recipe_id: StringName, theme: StringName,
 	# mirrored instances back toward the bay centre so their visual centres land
 	# beneath the sill corners; placing their pivots at the corners produced two
 	# apparently detached planks projecting beyond the little bay.
-	recipe_value.add_placement(&"bay.corbel.left", BRACE,
-		_scaled_pose(Vector3(-0.11, 0.27, -0.18), 0.0,
-			Vector3(0.32, 0.80, 0.60)))
-	recipe_value.add_placement(&"bay.corbel.right", BRACE,
-		_scaled_pose(Vector3(0.11, 0.27, -0.18), PI,
-			Vector3(0.32, 0.80, 0.60)))
+	# No corbels under the sill: the ribbed brace reads as a stair flight hung
+	# beneath the oriel. The sill and canopy carry the bay visually.
 	# The grid conservatively owns the one exterior cell. The mesh deliberately
 	# crosses its inward boundary (local Z = -0.75 m) through the semantic room
 	# socket; only this declared parent seam may overlap the parent shell.
@@ -4371,10 +4367,7 @@ static func _capped_outcrop_recipe(recipe_id: StringName, theme: StringName,
 	recipe_value.add_placement(&"cap", GALLERY_FLOOR,
 		modules.walk_aligned_transform(GALLERY_FLOOR,
 			_pose(Vector3(centre_x, 3.0, row_z), 0.0), 3.0))
-	recipe_value.add_placement(&"brace.left", BRACE,
-		_pose(Vector3(centre_x - 0.9, -0.55, row_z + 0.3), 0.0))
-	recipe_value.add_placement(&"brace.right", BRACE,
-		_pose(Vector3(centre_x + 0.9, -0.55, row_z + 0.3), 0.0))
+	# No ribbed braces under the jetty: they read as stairs from the street.
 	if not chimney_asset.is_empty():
 		# A flue standing on the bay's own deck, against the parent wall. It
 		# claims no extra cell -- the bay's occupancy is untouched -- so the
@@ -4408,10 +4401,7 @@ static func _dormer_outcrop_recipe(recipe_id: StringName,
 		modules.facade_aligned_transform(dormer_asset,
 			_pose(Vector3(centre_x, 0.0, row_z), 0.0),
 			Vector3i.BACK, -0.75))
-	recipe_value.add_placement(&"brace.left", BRACE,
-		_pose(Vector3(centre_x - 0.9, -0.55, row_z + 0.3), 0.0))
-	recipe_value.add_placement(&"brace.right", BRACE,
-		_pose(Vector3(centre_x + 0.9, -0.55, row_z + 0.3), 0.0))
+	# The authored dormer carries its own corbel feet; no ribbed braces below.
 	_seal_shallow_bay_cells_and_sockets(recipe_value, minimum_x)
 	return recipe_value
 
@@ -4475,10 +4465,7 @@ static func _corner_wrap_outcrop_recipe(recipe_id: StringName,
 		_pose(Vector3(square_centre_x, roof_origin_y, -2.34278), PI))
 	recipe_value.add_placement(&"roof.pitch.south", roof_asset,
 		_pose(Vector3(square_centre_x, roof_origin_y, -0.65722), 0.0))
-	recipe_value.add_placement(&"brace.north", BRACE,
-		_pose(Vector3(square_centre_x, -0.55, -1.8), 0.0))
-	recipe_value.add_placement(&"brace.outer", BRACE,
-		_pose(Vector3(sign_x * 1.8, -0.55, -0.75), sign_x * PI * 0.5))
+	# No ribbed braces under the wrap: they read as stairs hung under the room.
 	# Solid cells stay the two-band exterior room body. The shallow eaves add no
 	# fictitious full-band volume above the occupied room.
 	recipe_value.solid_cells = [
@@ -4725,11 +4712,9 @@ static func _balcony_recipe(recipe_id: StringName, theme: StringName,
 			recipe_value.add_placement(StringName("support.diagonal.%d" % index),
 				DIAGONAL_BRACE, _pose(Vector3(brace_x, -support_bounds.end.y,
 					-support_bounds.position.z), 0.0))
-	else:
-		for index in 4:
-			var brace_x := float(index - 2) * CELL
-			recipe_value.add_placement(StringName("brace.%d" % index), BRACE,
-				_pose(Vector3(brace_x, -0.55, -CELL * 0.35), 0.0))
+	# The bracketed variant carries no ribbed corbels: from the street they read
+	# as a row of stair flights hung under the deck. The deck's authored
+	# thickness against the parent facade is its visible bearing.
 	if decorated:
 		# Decoration is a separate measured construction variant. This prevents
 		# plants from silently widening the long-standing structural balcony
@@ -4911,14 +4896,21 @@ static func _integrated_cantilever_support_recipe(
 	if contract_value == null:
 		return null
 	var bounds := contract_value.visual_bounds
+	# The support course is a sealed attachment the compiler still proves and
+	# audits once per bearing edge, but it renders NOTHING: the ribbed corbel it
+	# used to place read as a flight of stairs hung under the jetty. It declares
+	# exactly the envelope those two corbels occupied, so the feature-clearance
+	# proof keeps the same input.
 	var recipe_value := FabricRecipe.new(&"outcrop.support.bracketed.2", [
 		&"visual_attachment", &"cantilever_support", &"bracket_supported",
 		&"integrated_room_outcropping", &"paired_wall_corbels",
 	], 0)
+	var envelope := AABB()
 	for column_index in 2:
-		recipe_value.add_placement(StringName("corbel.%d" % column_index),
-			BRACE, _pose(Vector3(float(column_index) * CELL,
-				-bounds.end.y, 0.0), PI * 0.5))
+		var box: AABB = _pose(Vector3(float(column_index) * CELL,
+			-bounds.end.y, 0.0), PI * 0.5) * bounds
+		envelope = box if column_index == 0 else envelope.merge(box)
+	assert(recipe_value.set_local_clearance_bounds(envelope))
 	return recipe_value
 
 
@@ -4949,12 +4941,17 @@ static func _integrated_cantilever_terminal_support_recipe(
 		modules: FabricModuleProgram) -> FabricRecipe:
 	## Odd 4.5/7.5 m bearing edges tile as native 3 m courses plus this final
 	## unscaled brace. It is a measured terminal, not a half-width scaled copy.
+	var contract_value := modules.contract(BRACE)
+	if contract_value == null:
+		return null
 	var recipe_value := FabricRecipe.new(&"outcrop.support.bracketed.1", [
 		&"visual_attachment", &"cantilever_support", &"bracket_supported",
 		&"integrated_room_outcropping", &"terminal_support",
 	], 0)
-	recipe_value.add_placement(&"brace.0", BRACE,
-		_pose(Vector3(0.0, -0.55, 0.0), PI * 0.5))
+	# Sealed and audited like the paired course, and equally invisible.
+	assert(recipe_value.set_local_clearance_bounds(
+		_pose(Vector3(0.0, -0.55, 0.0), PI * 0.5) \
+			* contract_value.visual_bounds))
 	return recipe_value
 
 

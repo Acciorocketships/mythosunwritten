@@ -266,14 +266,15 @@ func test_join_target_hits_channel_only_when_downhill() -> void:
 	other.points = PackedVector2Array([Vector2(0, 0), Vector2(100, 0), Vector2(200, 0)])
 	other.widths = PackedFloat32Array([10.0, 10.0, 10.0])
 	other.beds = PackedFloat32Array([5.0, 5.0, 5.0])
+	var index := plan._index_neighbour_rivers([other])
 	# On the channel (within width) and our bed at/above theirs => join.
-	assert_eq(plan._join_target(Vector2(100, 3), 6.0, [other]), other,
+	assert_eq(plan._join_target(Vector2(100, 3), 6.0, index), other,
 		"point within width and downhill joins the channel")
 	# Our bed well below theirs (uphill) => no join.
-	assert_null(plan._join_target(Vector2(100, 3), 4.0, [other]),
+	assert_null(plan._join_target(Vector2(100, 3), 4.0, index),
 		"cannot join water whose bed is above ours (uphill)")
 	# Beyond the channel width => no join.
-	assert_null(plan._join_target(Vector2(100, 50), 6.0, [other]),
+	assert_null(plan._join_target(Vector2(100, 50), 6.0, index),
 		"point beyond channel width does not join")
 
 func test_join_target_hits_pond_footprint() -> void:
@@ -285,10 +286,11 @@ func test_join_target_hits_pond_footprint() -> void:
 	other.widths = PackedFloat32Array([10.0])
 	other.beds = PackedFloat32Array([5.0])
 	other.pond = PondStamp.new(Vector2(300, 300), 60.0, 4242, 2, 3.5)
+	var index := plan._index_neighbour_rivers([other])
 	# pond.surface_y() = 2*4 - SURFACE_DROP(1) = 7. Inside footprint + bed>=7 => join.
-	assert_eq(plan._join_target(Vector2(300, 300), 8.0, [other]), other,
+	assert_eq(plan._join_target(Vector2(300, 300), 8.0, index), other,
 		"point inside pond footprint and downhill joins")
-	assert_null(plan._join_target(Vector2(300, 300), 6.0, [other]),
+	assert_null(plan._join_target(Vector2(300, 300), 6.0, index),
 		"pond surface above our bed does not accept the join")
 
 # ------------------------------------------------------------

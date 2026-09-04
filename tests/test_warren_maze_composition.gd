@@ -5335,22 +5335,14 @@ func test_the_bench_tops_read_as_gardens_with_one_village_green() -> void:
 		var fabric := plan.compiled_fabric_cache()
 		if fabric == null:
 			continue
-		var retained := fabric.retained_terrace_cells
-		var solids := fabric.transformed_cells(&"solid")
-		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
-			fabric.transformed_cells(&"terrain_bearing"))
-		var paved := SettlementFabricAssembler.public_floor_cells(
-			fabric.surface_plan)
+		var transaction := SettlementFabricAssembler \
+			.maze_ground_skin_transaction(fabric)
 		var walked := SettlementFabricAssembler.walked_floor_cells(
 			fabric.surface_plan)
-		var garden := SettlementFabricAssembler.maze_garden_cells(retained,
-			solids, paved, plinths, walked, {},
-			SettlementFabricAssembler.maze_module_footprints(fabric))
-		# TASK I3. The designation now prefers the largest run a STREET reaches;
-		# `walked` is what tells it which those are, and a caller that omits it
-		# gets the old size-only answer.
-		for planned_cell_value: Variant in fabric.planned_plaza_cells.keys():
-			garden[planned_cell_value as Vector3i] = true
+		# The finished shell participates in ground classification, so the sealed
+		# transaction -- not a partial re-derivation with an empty shell -- is the
+		# authority for the exact cells rendered and planted.
+		var garden := (transaction.capped_ground as Dictionary).duplicate()
 		var plaza := SettlementFabricAssembler.maze_plaza_cells_for(fabric,
 			garden, walked)
 		var plaza_entries := SettlementFabricAssembler.maze_plaza_entries(plaza,
@@ -5899,20 +5891,16 @@ func test_skywalk_corbel_course_stays_inside_the_crossing_lane() -> void:
 		"gap": 2, "width": 1, "walk_width": 1, "cross": Vector3i.BACK,
 		"enclosed": false}
 	var payload := SettlementFabricAssembler.maze_skywalks_from([span])
-	var batch := payload.batches.get(
-		SettlementFabricAssembler.SKYWALK_BEARER, {}) as Dictionary
-	var transforms := batch.get("transforms", []) as Array
-	assert_eq(transforms.size(), 2,
-		"one complete corbel must connect each endpoint building to the span")
-	for transform_value: Variant in transforms:
-		var box := (transform_value as Transform3D) \
-			* SettlementFabricAssembler.SKYWALK_BEARER_LOCAL_BOUNDS
-		assert_gt(box.position.z, -FabricRecipe.CELL_SIZE * 0.5,
-			"a skywalk corbel may not enter the lateral street behind it")
-		assert_lt(box.end.z, FabricRecipe.CELL_SIZE * 0.5,
-			"a skywalk corbel may not enter the lateral street in front of it")
-		assert_gt(box.end.x, FabricRecipe.CELL_SIZE * 0.5,
-			"the endpoint corbel must actually reach into the bridge span")
+	# 2026-09-04: the ribbed corbel read as a flight of stairs hung under the
+	# span (owner: "stairs randomly underneath overhangs ... lets remove them").
+	# The deck bears on its two facades; no bearer module is placed at all, so
+	# nothing can enter the lateral streets either.
+	assert_false(payload.asset_ids().has(
+		SettlementFabricAssembler.SKYWALK_BEARER),
+		"no ribbed corbel hangs under a skywalk end")
+	assert_true(payload.asset_ids().has(SettlementFabricAssembler.SKYWALK_DECK) \
+		or payload.asset_ids().has(SettlementFabricAssembler.SKYWALK_DECK_SHORT),
+		"the span still carries its authored deck")
 
 
 func test_the_life_constants_mirror_the_module_descriptors() -> void:
@@ -6014,7 +6002,6 @@ func test_the_life_constants_mirror_the_module_descriptors() -> void:
 		SettlementFabricAssembler.SKYWALK_DECK_SHORT,
 		SettlementFabricAssembler.SKYWALK_RAIL,
 		SettlementFabricAssembler.SKYWALK_RAIL_MEDIUM,
-		SettlementFabricAssembler.SKYWALK_BEARER,
 		SettlementFabricAssembler.FACADE_OUTCROP_POST,
 		SettlementFabricAssembler.FACADE_OUTCROP_CAP,
 	]
@@ -6252,10 +6239,14 @@ func test_the_town_gets_its_life() -> void:
 					or int(kinds.get("roof", 0)) != 0 \
 					or int(kinds.get("rail", 0)) != 2 * pieces \
 					or int(kinds.get("bearer", 0)) != 2)
+		# 2026-09-04: the ribbed corbel pair under every projection read as a
+		# hanging flight of stairs and was removed; the bearer stations survive
+		# only as the selection-time clearance proof. `bare_outcrops` now counts
+		# projections that still RENDER a corbel, and must be zero.
 		var bare_outcrops := 0
 		for key_value: Variant in outcrop_pieces.keys():
 			bare_outcrops += int(int((outcrop_pieces[key_value] \
-				as Dictionary).get("bearer", 0)) != 2)
+				as Dictionary).get("bearer", 0)) != 0)
 		# 4. the square.
 		var retained := fabric.retained_terrace_cells
 		var solids := fabric.transformed_cells(&"solid")
@@ -6328,8 +6319,8 @@ func test_the_town_gets_its_life() -> void:
 			"%s must audit every enclosure-qualified enclosed house wing" \
 				% _label(outcome))
 		assert_eq(bare_outcrops, 0,
-			("%s projects %d outcropping(s) with no bracket course under " \
-				+ "them") % [_label(outcome), bare_outcrops])
+			("%s projects %d outcropping(s) that still hang a ribbed corbel " \
+				+ "under them") % [_label(outcome), bare_outcrops])
 		assert_eq(outcrop_pieces.size(),
 			int(audit.get("maze_facade_bay_count", -1)) \
 				+ int(audit.get("maze_facade_bump_out_count", -1)),
@@ -6387,9 +6378,9 @@ func test_the_town_gets_its_life() -> void:
 
 func test_a_green_cap_never_juts_past_the_bench_it_caps() -> void:
 	## Village turf now uses the terrain mesher's exact cell-union primitive.
-	## Each owned cell emits the same 2 x 2 smootherstep patches as streamed
-	## terrain. Audit the complete patch group against its explicit logical owner;
-	## individual sub-quads are deliberately 0.75 m wide and may slope.
+	## Like streamed terrain, collision retains the complete logical cell while
+	## the visual sheet tucks behind the lips. Audit both authorities: complete
+	## walkable coverage, and no rendered vertex outside its logical owner.
 	var checked := 0
 	var corpus_cells := 0
 	for outcome: Dictionary in _corpus():
@@ -6410,35 +6401,37 @@ func test_a_green_cap_never_juts_past_the_bench_it_caps() -> void:
 				continue
 			var vertices := mesh.vertices as PackedVector3Array
 			var indices := mesh.indices as PackedInt32Array
+			var collision := mesh.collision_faces as PackedVector3Array
 			var logical := mesh.get("logical_cells", []) as Array
-			quad_count += vertices.size() / 4
+			quad_count += indices.size() / 6
 			logical_count += logical.size()
-			assert_eq(indices.size(), vertices.size() / 4 * 6,
-				"terrain-ground union must emit two triangles per sub-quad")
+			assert_eq(indices.size(), logical.size() * 24,
+				"four two-triangle sub-quads must remain per logical cell")
+			assert_eq(collision.size(), indices.size())
 			assert_gt(logical.size(), 0,
 				"terrain-ground tessellation must publish its logical owners")
 			if logical.is_empty():
 				continue
-			assert_eq(vertices.size() % logical.size(), 0,
-				"terrain-ground vertices must partition by logical owner")
-			var vertices_per_cell := vertices.size() / logical.size()
-			assert_eq(vertices_per_cell, 16,
-				"two samples per axis produce four quads per logical cell")
 			for logical_index in logical.size():
 				var owner := logical[logical_index] as Vector3i
 				assert_false(seen.has(owner),
 					"a terrain-ground logical cell may be emitted only once")
 				seen[owner] = true
-				var first := logical_index * vertices_per_cell
-				var low := vertices[first]
-				var high := vertices[first]
-				for corner in range(1, vertices_per_cell):
-					low = low.min(vertices[first + corner])
-					high = high.max(vertices[first + corner])
+				var first := logical_index * 24
+				var low := collision[first]
+				var high := collision[first]
+				for corner in range(24):
+					low = low.min(collision[first + corner])
+					high = high.max(collision[first + corner])
+					var visual := vertices[indices[first + corner]]
+					assert_lte(absf(visual.x - float(owner.x) * FabricRecipe.CELL_SIZE),
+						FabricRecipe.CELL_SIZE * 0.5 + 0.000001)
+					assert_lte(absf(visual.z - float(owner.z) * FabricRecipe.CELL_SIZE),
+						FabricRecipe.CELL_SIZE * 0.5 + 0.000001)
 				assert_almost_eq(high.x - low.x, FabricRecipe.CELL_SIZE,
-					0.000001, "terrain turf closes exactly one lattice cell")
+					0.000001, "walkable turf closes exactly one lattice cell")
 				assert_almost_eq(high.z - low.z, FabricRecipe.CELL_SIZE,
-					0.000001, "terrain turf closes exactly one lattice cell")
+					0.000001, "walkable turf closes exactly one lattice cell")
 		var audit := fabric.audit
 		print("MAZE_TERRAIN_GROUND %s cells=%d quads=%d surfaces=%d" % [
 			_label(outcome), cells.size(), quad_count,
@@ -6531,9 +6524,12 @@ func test_the_rim_stands_off_the_panel_it_caps() -> void:
 	##
 	## * the rim module's own roll is at its local +Z = GREEN_RIM_FRONT (the
 	##   authored envelope, `kaykit_cliff_lip.tres`), so `xform * (0, 0, FRONT)`
-	##   is where the lip really lands in the world;
+	##   is where the lip really ends;
 	## * the cell boundary that edge dresses is `cell x CELL + outward x CELL/2`;
-	## * the difference along `outward` is the stand-off the piece actually got.
+	## * normal `CliffDressing` keeps that modeled end 0.25 m inside its 24 m
+	##   terrain cell.  The scaled fabric copy must retain the corresponding
+	##   `GREEN_RIM_BOUNDARY_INSET`, so straight repeats and corner pieces share
+	##   one edge-slot origin instead of crossing at every turn.
 	##
 	## And the EXPECTED stand-off is read off the panel the payload really laid
 	## on that same face -- `maze-stone/x/y/z/w`, the masonry module or a timber
@@ -6614,7 +6610,8 @@ func test_the_rim_stands_off_the_panel_it_caps() -> void:
 					+ outward * (FabricRecipe.CELL_SIZE * 0.5)
 				var level_error := absf((level_roll - level_boundary) \
 					.dot(outward) \
-					- SettlementFabricAssembler.GREEN_RIM_FACADE_STANDOFF)
+					- (SettlementFabricAssembler.GREEN_RIM_FACADE_STANDOFF \
+						- SettlementFabricAssembler.GREEN_RIM_BOUNDARY_INSET))
 				worst = maxf(worst, level_error)
 				misplaced += int(level_error > 0.0005)
 				continue
@@ -6635,7 +6632,8 @@ func test_the_rim_stands_off_the_panel_it_caps() -> void:
 				* FabricRecipe.CELL_SIZE \
 				+ outward * (FabricRecipe.CELL_SIZE * 0.5)
 			var stand_off := (roll - boundary).dot(outward)
-			var error := absf(stand_off - expected)
+			var error := absf(stand_off - (expected \
+				- SettlementFabricAssembler.GREEN_RIM_BOUNDARY_INSET))
 			worst = maxf(worst, error)
 			misplaced += int(error > 0.0005)
 		print(("MAZE_RIM_STANDOFF %s masonry=%d facade=%d level=%d " \
@@ -6770,19 +6768,12 @@ func test_a_free_top_smaller_than_a_yard_remains_a_closed_roof() -> void:
 	assert_gt(checked, 0, "the corpus must seal a town to measure")
 
 
-func test_every_public_floor_plate_with_air_under_it_shows_its_bearer() -> void:
-	## TASK I4, ANNOTATION 3 -- "a bunch of random planks on the sides of these
-	## buildings". The producer is the public realm's own floor tiling, and the
-	## plates it hangs with nothing beneath them are the boards the annotation
-	## circled. Every one of them now carries the same measured corbel the
-	## jetties, bays and skywalks carry, so this branch's "every overhang renders
-	## its brackets" holds for the floor channel too.
-	##
-	## Measured off the payload: one `maze-floor-bearer/` instance per site the
-	## rule names, and no site left bare except the ones the rule REFUSES and
-	## counts (a plate with no wall to spring from, or one whose street is a
-	## single band below).
+func test_public_floor_plates_never_use_stair_like_bearers() -> void:
+	## The short ribbed bearer reads as a flight of stairs suspended beneath an
+	## overhang. Structural plates already have an exact generated skin and
+	## boundary-derived posts, so no legacy bearer candidate may reach render.
 	var checked := 0
+	var corpus_candidates := 0
 	for outcome: Dictionary in _corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
 		if plan == null:
@@ -6797,13 +6788,7 @@ func test_every_public_floor_plate_with_air_under_it_shows_its_bearer() -> void:
 		var sites := SettlementFabricAssembler.maze_public_floor_bearer_sites(
 			fabric.retained_terrace_cells,
 			fabric.transformed_cells(&"solid"), paved, walked)
-		var borne := 0
-		var refused := 0
-		for site: Dictionary in sites:
-			if bool(site.refused):
-				refused += 1
-			else:
-				borne += 1
+		corpus_candidates += sites.size()
 		var laid := 0
 		var payload := SettlementFabricAssembler.terrace_retaining_payload(
 			fabric)
@@ -6811,13 +6796,15 @@ func test_every_public_floor_plate_with_air_under_it_shows_its_bearer() -> void:
 			var batch := payload.batches[asset_value] as Dictionary
 			for id_value: Variant in batch.get("ids", []) as Array:
 				laid += int(String(id_value).begins_with("maze-floor-bearer/"))
-		print("MAZE_FLOOR_BEARER %s borne=%d refused=%d laid=%d" % [
-			_label(outcome), borne, refused, laid])
-		assert_eq(laid, borne,
-			"%s must lay one corbel per borne public floor site" \
+		print("MAZE_FLOOR_BEARER_RETIRED %s candidates=%d laid=%d" % [
+			_label(outcome), sites.size(), laid])
+		assert_eq(laid, 0,
+			"%s may not render the stair-like public-floor bearer" \
 				% _label(outcome))
 		checked += 1
 	assert_gt(checked, 0, "the corpus must seal a town to measure")
+	assert_gt(corpus_candidates, 0,
+		"the corpus must exercise a location where the retired bearer was offered")
 
 
 func test_the_frontage_constants_mirror_the_module_descriptors() -> void:
@@ -7879,12 +7866,10 @@ func _terrain_ground_cells(fabric: SettlementFabricPlan) -> Dictionary:
 		if not bool(mesh.get("terrain_ground", false)):
 			continue
 		var stable_id := StringName(mesh.get("stable_id", &""))
-		if stable_id == &"maze-ground-plaza":
-			assert_true(bool(mesh.get("visual_only", false)),
-				"typed plaza turf must reuse its public-floor collision")
-		else:
-			assert_false(bool(mesh.get("visual_only", false)),
-				"retained garden turf must carry the terrain-style floor")
+		assert_eq(stable_id, &"maze-ground-turf",
+			"the village green and its surrounding garden must be one welded field")
+		assert_false(bool(mesh.get("visual_only", false)),
+			"the welded retained-ground turf must carry collision once")
 		assert_true(mesh.has("logical_cells"),
 			"terrain-ground mesh must publish its selected field owners")
 		for cell_value: Variant in mesh.get("logical_cells", []) as Array:
@@ -10890,6 +10875,24 @@ func test_the_production_site_builds_a_maze_town_on_real_terrain() -> void:
 	assert_eq(int(urban.fabric_audit.get(
 			"collision_flattened_roof_component_count", -1)), 0,
 		"roof collisions must reject proposals rather than turn gables into caps")
+	var handoff_top_count := 0
+	for mesh: Dictionary in urban.surface_meshes:
+		if not String(mesh.get("stable_id", "")).contains(
+				"public-terrain-handoff/"):
+			continue
+		handoff_top_count += 1
+		var handoff_vertices := mesh.vertices as PackedVector3Array
+		var handoff_indices := mesh.indices as PackedInt32Array
+		assert_eq(handoff_vertices.size(), 4,
+			"one gate handoff is one exact rectangular top")
+		assert_eq(handoff_indices.size(), 6)
+		var a := handoff_vertices[handoff_indices[0]]
+		var b := handoff_vertices[handoff_indices[1]]
+		var c := handoff_vertices[handoff_indices[2]]
+		assert_lt((b - a).cross(c - a).y, 0.0,
+			"the clockwise gate ramp must be visible from above")
+	assert_between(handoff_top_count, 2, 3,
+		"the production town exposes two or three rendered gate handoffs")
 	var production_fabric := urban.fabric_plan
 	assert_not_null(production_fabric,
 		"the accepted production town carries no final construction plan")
@@ -12076,11 +12079,11 @@ func test_no_bearer_hangs_over_a_surface_a_body_stands_on() -> void:
 				+ "test_no_authored_dressing_is_buried_in_the_town_s_own_" \
 				+ "masonry") % [_label(outcome), walked_pinched,
 				STANCE_PUBLIC_PINCH_CEILING])
-		assert_eq(int(audit.get("maze_public_floor_bearer_count", -1)), borne,
-			"%s audited bearer count must equal the rule's" % _label(outcome))
+		assert_eq(int(audit.get("maze_public_floor_bearer_count", -1)), 0,
+			"%s must audit zero rendered stair-like bearers" % _label(outcome))
 		assert_eq(int(audit.get("maze_public_floor_bearer_refused_count", -1)),
-			refused,
-			"%s audited bearer refusals must equal the rule's" \
+			borne + refused,
+			"%s must record every legacy bearer candidate as withdrawn" \
 				% _label(outcome))
 		checked += 1
 	assert_gt(checked, 0, "the corpus must seal a town to measure")

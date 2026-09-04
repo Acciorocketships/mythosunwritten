@@ -14,10 +14,13 @@ const OUTER_RADIUS := INNER_RADIUS + OUTSKIRTS_BAND_WIDTH
 # Volumetric towns instead derive their reach from the exact occupied contour
 # and selected prefab footprint.
 const MAX_CONNECTOR_LENGTH := OUTER_RADIUS
+## The edge district is meant to RING the dense core so the skyline steps down
+## toward open ground (2026-09-04); a sealed exit is still worth extra houses.
 const TARGET_HOUSES := {
-	&"village": 3,
-	&"town": 5,
+	&"village": 6,
+	&"town": 9,
 }
+const HOUSES_PER_EXIT := 3
 const SUBSTANTIAL_COHORT_FRACTION := 0.30
 
 var house_specs: Array[VillageAssetSpec] = []
@@ -54,7 +57,8 @@ func target_houses(tier: StringName, route_exit_count: int = 0) -> int:
 	## expose several real terrain exits; each exit is an opportunity for one
 	## sparse branch and ground house, so the edge population grows from sealed
 	## circulation topology rather than from a separate town-size table.
-	return maxi(int(TARGET_HOUSES.get(tier, 0)), route_exit_count * 2)
+	return maxi(int(TARGET_HOUSES.get(tier, 0)),
+		route_exit_count * HOUSES_PER_EXIT)
 
 
 func spec_for_slot(settlement_id: StringName,

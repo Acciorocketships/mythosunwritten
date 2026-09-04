@@ -148,7 +148,8 @@ static func to_volume_plan(massif: WarrenMassif,
 		if not plan.mark_market_square_cell(cell):
 			last_failure = "market square cell %s is not a walk node" % cell
 			return null
-	_close_landing_turns(plan)
+	if not _close_landing_turns(plan):
+		return null
 	plan.mass_context = {&"massif": massif, &"excavation": excavation}
 	if not plan.seal(excavation.portals[0]):
 		last_failure = "plan seal rejected: %s" % plan.last_rejection
@@ -217,6 +218,10 @@ static func _close_landing_turns(plan: WarrenVolumePlan) -> bool:
 	for cell: Vector3i in plan.walk_cells:
 		incident[cell] = [] as Array[WarrenVolumeTransition]
 	for value: WarrenVolumeTransition in plan.transitions:
+		if not incident.has(value.from_cell) or not incident.has(value.to_cell):
+			last_failure = "transition %s has a non-walk endpoint (%s -> %s)" % [
+				value.stable_id, value.from_cell, value.to_cell]
+			return false
 		(incident[value.from_cell] as Array[WarrenVolumeTransition]).append(value)
 		(incident[value.to_cell] as Array[WarrenVolumeTransition]).append(value)
 	for cell: Vector3i in plan.walk_cells:

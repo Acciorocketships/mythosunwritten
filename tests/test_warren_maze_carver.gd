@@ -149,8 +149,15 @@ func test_each_scale_builds_one_connected_building_fronted_maze() -> void:
 		if plan == null:
 			continue
 		assert_true(plan.is_sealed(), plan.last_rejection)
-		assert_eq(plan.excavation.portals.size(), 1,
-			"v1 owns exactly one entrance")
+		assert_between(plan.excavation.portals.size(), 2, 3,
+			"every town owns two or three true exterior gates")
+		for portal: Vector3i in plan.excavation.portals:
+			assert_true(portal in plan.excavation.public_cells())
+			assert_true(WarrenPassageLatticeRules.opens_to_exterior(
+				plan.massif, portal))
+			assert_lte(portal.y, plan.massif.base_at(
+				Vector2i(portal.x, portal.z)) + 1,
+				"a gate must be at grade or one ramp band above it")
 		# TASK E2 RE-PIN. `summit_cell == route.back()` was true BY
 		# CONSTRUCTION before E2 -- the spine DFS returned the instant it
 		# arrived at the crown -- so the assertion could never fail and never
@@ -437,7 +444,7 @@ func test_production_seed_corpus_seals_without_attempt_search() -> void:
 		assert_true(plan.is_sealed())
 		assert_gte(float(plan.audit.frontage_ratio), CARVE_FRONTAGE_FLOOR)
 		assert_gte(int(plan.audit.loop_join_count), 1)
-		assert_eq(plan.excavation.portals.size(), 1)
+		assert_between(plan.excavation.portals.size(), 2, 3)
 	assert_eq(sealed, PRODUCTION_CORPUS.size() - CORPUS_MASSIF_REFUSALS.size(),
 		"one deterministic construction seals every corpus seed the massif "
 			+ "builds")

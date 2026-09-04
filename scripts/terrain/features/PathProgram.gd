@@ -3,9 +3,11 @@ extends RefCounted
 
 const PATH_WIDTH := 4.0
 const PATH_HALF_WIDTH := PATH_WIDTH * 0.5
-# The future-village site keeps this compact validation footprint. Its path
-# surface is a broad circular gathering place rather than a square stamp.
+# The future-village site keeps this compact validation footprint. The road
+# surface itself owns only the ordinary path-width square at the node: a broad
+# circular stamp made every town entrance flare into an unrelated plaza.
 const NODE_SUPPORT_SIZE := 12.0
+const NODE_JUNCTION_HALF_WIDTH := PATH_HALF_WIDTH
 const PLAZA_RADIUS := 8.0
 const PLAZA_SIZE := PLAZA_RADIUS * 2.0 # conservative rectangular reservation bound
 # A bend's centreline follows a quarter circle. Offsetting that curve by half
@@ -14,6 +16,52 @@ const CORNER_RADIUS := PATH_WIDTH
 const CORNER_INNER_RADIUS := CORNER_RADIUS - PATH_HALF_WIDTH
 const CORNER_OUTER_RADIUS := CORNER_RADIUS + PATH_HALF_WIDTH
 const JUNCTION_SIZE := CORNER_RADIUS * 2.0 # conservative reservation bound
+
+static func filleted_path_shapes(points: Array[Vector2], half_width: float,
+		surface: int, priority: int, stable_id: StringName) \
+		-> Array[FeatureGroundShape]:
+	## Same centreline radius and width as the path-grid quarter annulus. The
+	## primitive field already supports capsules, so a bounded 32-chord arc
+	## needs no new renderer, material, shape kind, or independent texture.
+	var line: Array[Vector2] = []
+	for point: Vector2 in points:
+		if not line.is_empty() and line[-1].distance_to(point) < 0.001:
+			continue
+		if line.size() > 1 and (line[-1] - line[-2]).normalized().dot(
+				(point - line[-1]).normalized()) > 0.9999:
+			line[-1] = point
+		else:
+			line.append(point)
+	var out: Array[FeatureGroundShape] = []
+	if line.size() < 2:
+		return out
+	var start := line[0]
+	for index in range(1, line.size()):
+		var end := line[index]
+		var arc: Array[Vector2] = []
+		if index + 1 < line.size():
+			var incoming := (line[index] - line[index - 1]).normalized()
+			var outgoing := (line[index + 1] - line[index]).normalized()
+			if absf(incoming.dot(outgoing)) < 0.001:
+				var radius := minf(CORNER_RADIUS, minf(
+					line[index].distance_to(line[index - 1]) * 0.5,
+					line[index + 1].distance_to(line[index]) * 0.5))
+				end -= incoming * radius
+				var centre := end + outgoing * radius
+				for step in range(33):
+					arc.append(centre + (end - centre).rotated(
+						incoming.cross(outgoing) * PI * 0.5 * float(step) / 32.0))
+		if start.distance_to(end) > 0.001:
+			out.append(FeatureGroundShape.oriented_rect((start + end) * 0.5,
+				Vector2(start.distance_to(end) * 0.5, half_width),
+				(end - start).angle(), surface, priority,
+				StringName("%s.straight.%d" % [stable_id, index])))
+		for step in range(1, arc.size()):
+			out.append(FeatureGroundShape.capsule(arc[step - 1], arc[step],
+				half_width, surface, priority,
+				StringName("%s.bend.%d.%d" % [stable_id, index, step])))
+		start = arc[-1] if not arc.is_empty() else end
+	return out
 const SUPER_CELLS := SettlementPlan.SUPER_CELLS
 const NODE_MAX_SUPPORT_SPAN := 1.0
 const ROUTE_VERTICAL_BUDGET_UNITS := 28

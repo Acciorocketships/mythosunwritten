@@ -60,6 +60,79 @@ func test_structural_terrain_uses_the_world_slope_kernel_at_its_own_scale() -> v
 	assert_almost_eq(shared_edge_max, 1.5, 0.0001)
 	assert_false(TerrainSurfaceField.is_exposed_edge(region, 0, 0,
 		Vector2i.RIGHT), "a one-band transition is a slope, not a lipped cliff")
+	var indices := payload.indices as PackedInt32Array
+	var front_a := vertices[indices[0]]
+	var front_b := vertices[indices[1]]
+	var front_c := vertices[indices[2]]
+	assert_lt((front_b - front_a).cross(front_c - front_a).y, 0.0,
+		"Godot's clockwise terrain top face must be visible from above")
+
+
+func test_flat_structural_terrain_uses_visible_top_face_winding() -> void:
+	var payload := Mesher.flat_ground_surface({Vector3i.ZERO: true},
+		1.5, 0.0, &"test-flat-terrain")
+	var vertices := payload.vertices as PackedVector3Array
+	var indices := payload.indices as PackedInt32Array
+	var front_a := vertices[indices[0]]
+	var front_b := vertices[indices[1]]
+	var front_c := vertices[indices[2]]
+	assert_lt((front_b - front_a).cross(front_c - front_a).y, 0.0,
+		"flat village turf must use the same visible winding as world terrain")
+
+
+func test_lattice_turf_clips_only_visuals_behind_authored_lips() -> void:
+	var cells := {Vector3i.ZERO: true, Vector3i.RIGHT: true}
+	var region := LatticeTerrainSurfaceRegion.new(
+		{Vector2i.ZERO: 1, Vector2i.RIGHT: 1}, 1.5, 0)
+	# The same 2.4 m lip-back overlap as streamed terrain, at half asset scale.
+	var cache := SettlementFabricAssembler.maze_turf_clip_cache(cells, region,
+		{"faces": [Vector4i(0, 0, 0, SettlementFabricAssembler.FACE_DIRECTIONS.find(
+			Vector3i.RIGHT))], "corners": []})
+	# A continued/capped run holds its clip all the way to both endpoints.
+	cache[Vector2i.ZERO].corners = {Vector2i(1, -1): "outer", Vector2i(1, 1): "outer"}
+	var clipped := Mesher.field_ground_surface(cells, region, 1.5, 0.0,
+		&"test-lip-clip", true, 2, cache)
+	var plain := Mesher.field_ground_surface(cells, region, 1.5, 0.0,
+		&"test-lip-plain")
+	assert_eq(clipped.collision_faces, plain.collision_faces,
+		"lip trimming must not shrink the walkable collision sheet")
+	assert_eq(clipped.logical_cells, plain.logical_cells,
+		"a lip can cover a whole narrow cell without deleting its logical owner")
+	var leak := false
+	var unclipped_neighbour := false
+	for vertex: Vector3 in clipped.vertices:
+		leak = leak or (vertex.x > -0.4259 and vertex.x < 0.7499)
+		unclipped_neighbour = unclipped_neighbour or vertex.x > 2.249
+	assert_false(leak, "the square green sheet must stop behind the rounded lip")
+	assert_true(unclipped_neighbour, "unlipped cells keep their full sheet")
+	for index in clipped.vertices.size():
+		var owner: Vector3i = clipped.logical_cells[index / 16]
+		assert_eq(clipped.vertices[index], Mesher._clip_vert(region, cache,
+			owner.x, owner.z, plain.vertices[index]),
+			"city turf must use the production vertex clipping kernel, not a second trim")
+
+
+func test_lattice_inner_corner_uses_the_world_rock_backing_classification() -> void:
+	var cells := {Vector3i.ZERO: true}
+	var region := LatticeTerrainSurfaceRegion.new({Vector2i.ZERO: 1}, 1.5, 0)
+	var cache := SettlementFabricAssembler.maze_turf_clip_cache(cells, region,
+		{"faces": [], "corners": [], "inner_corners": [Vector4i(0, 0, 0, 3)]})
+	var clipped := Mesher.field_ground_surface(cells, region, 1.5, 0.0,
+		&"test-inner-turf", true, 2, cache)
+	var plain := Mesher.field_ground_surface(cells, region, 1.5, 0.0,
+		&"test-inner-plain")
+	var rock_vertices: PackedInt32Array = clipped.get("terrain_rock_vertices", PackedInt32Array())
+	assert_gt(rock_vertices.size(), 0,
+		"the corner tuck must be rock backing, not a green flap below the lip")
+	for index in range(0, clipped.indices.size(), 3):
+		var expected_rock := false
+		for corner in 3:
+			expected_rock = expected_rock or Mesher._inner_corner_vertex(region,
+				cache, 0, 0, plain.vertices[plain.indices[index + corner]])
+		for corner in 3:
+			assert_eq(rock_vertices.has(clipped.indices[index + corner]), expected_rock,
+				"both terrain producers classify each complete tuck triangle identically")
+	assert_eq(clipped.collision_faces, plain.collision_faces)
 
 
 static func _triangle_y_at_xz(a: Vector3, b: Vector3, c: Vector3,

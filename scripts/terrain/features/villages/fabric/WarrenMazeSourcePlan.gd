@@ -162,11 +162,14 @@ func seal() -> bool:
 		return _reject("market zone is empty or longer than the spine")
 	if not _has_typed_square(market_square_cells):
 		return _reject("universal market is not one typed 2x2 square")
-	if excavation.portals.size() != 1 \
-			or excavation.portals[0] != excavation.route[0] \
-			or not WarrenPassageLatticeRules.opens_to_exterior(
-				massif, excavation.route[0]):
-		return _reject("v1 requires one exterior entrance at the spine mouth")
+	if excavation.portals.size() < 2 or excavation.portals.size() > 3 \
+			or excavation.portals[0] != excavation.route[0]:
+		return _reject("a town requires two or three gates, led by the spine mouth")
+	for portal: Vector3i in excavation.portals:
+		if not public.has(portal) \
+				or portal.y > massif.base_at(Vector2i(portal.x, portal.z)) + 1 \
+				or not WarrenPassageLatticeRules.opens_to_exterior(massif, portal):
+			return _reject("gate %s is not a reachable exterior public edge" % portal)
 	for index in market_zone.size():
 		var cell := market_zone[index]
 		if excavation.route[index] != cell \

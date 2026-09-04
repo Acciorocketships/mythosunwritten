@@ -697,6 +697,23 @@ func _build_mesh_payloads() -> void:
 		mesh_payloads.append(_mesh_for_cells(kind, cells))
 
 
+func mesh_for_claim_cells(kind: int, cells: Array[Vector3i]) -> Dictionary:
+	## Rebuild an exact visual/collision skin for a proved subset of one public
+	## surface kind.  Finish adapters use this when another canonical finish
+	## (for example village turf) owns some cells without changing the public
+	## topology, guards, or traversal graph.
+	if not _sealed or cells.is_empty() or kind < SurfaceKind.TERRAIN_STREET \
+			or kind > SurfaceKind.BRIDGE or kind == SurfaceKind.STAIR:
+		return {}
+	var ordered := cells.duplicate()
+	for cell: Vector3i in ordered:
+		var claim := _claims.get(_cell_key(cell), {}) as Dictionary
+		if claim.is_empty() or int(claim.kind) != kind:
+			return {}
+	ordered.sort_custom(_cell_less)
+	return _mesh_for_cells(kind, ordered)
+
+
 func _classify_entrances(entrances: Array[Dictionary]) -> void:
 	entrance_records.clear()
 	unserved_entrances.clear()

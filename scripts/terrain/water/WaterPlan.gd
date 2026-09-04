@@ -55,6 +55,7 @@ const SELF_AVOID_SKIP := 8        # ignore this many most-recent samples
 const GRAD_EPS := 6.0             # finite-difference step for the gradient
 const SENSE_RADIUS := 96.0        # junction steering bias range
 const STEER := 0.35               # max blend toward sensed water
+const _NEIGHBOUR_INDEX_CELL := SENSE_RADIUS
 # Min half-width covers the adjacent cell CENTRE (w + FEATHER > 17u), or
 # upstream reaches leave uncarved cells jutting into the channel.
 const W_MIN := 9.0
@@ -346,6 +347,10 @@ func _trace(sc: Vector2i, depth: int,
 		if progress_start >= 0.0 else -1.0
 	var others: Array = _neighbour_rivers(sc, depth,
 		progress_start, neighbour_end)
+	# Joining and steering are local queries.  Index the immutable neighbour
+	# traces once instead of scanning every point of every river twice for each
+	# of this trace's (up to 220) samples.
+	var neighbour_index := _index_neighbour_rivers(others)
 	var p: Vector2 = source_pos(sc)
 	t.source_pool = _make_pool(p)
 	var meander_offset: float = float(absi(t.priority) % 4096) * 37.0
@@ -362,7 +367,7 @@ func _trace(sc: Vector2i, depth: int,
 		t.points.append(p)
 		t.beds.append(bed)
 		t.widths.append(lerpf(W_MIN, W_MAX, arc / (MAX_STEPS * TRACE_STEP)))
-		if _join_test(p, bed, others):
+		if _join_target(p, bed, neighbour_index) != null:
 			t.joined = true
 			return t
 		var g: Vector2 = grad(p)
@@ -386,7 +391,7 @@ func _trace(sc: Vector2i, depth: int,
 				rep += (p - t.points[k]) / maxf(sd, 1.0)
 		if rep.length_squared() > 0.000001:
 			dir = (dir + rep.normalized() * SELF_AVOID).normalized()
-		dir = _steer(dir, p, others)
+		dir = _steer(dir, p, neighbour_index)
 		var q: Vector2 = p + dir * TRACE_STEP
 		if q.length() < SPAWN_WATER_RADIUS:
 			break                                   # truncate at the spawn ring
@@ -449,44 +454,94 @@ func _neighbour_rivers(sc: Vector2i, depth: int,
 ## The higher-priority river whose water p lands in, or null. A join needs
 ## the target's bed at the touch point to be at-or-below ours (+0.5 m slack)
 ## — water never joins uphill. Pond/pool footprints count as their river.
-func _join_target(p: Vector2, bed: float, others: Array) -> RiverTrace:
-	for other in others:
+func _join_target(p: Vector2, bed: float,
+		index: Dictionary) -> RiverTrace:
+	var others: Array = index.rivers
+	var first_match := others.size()
+	# Pools and ponds are few and can be substantially wider than the point
+	# index cell.  Keep their exact source-order precedence while the channel
+	# samples use the local index below.
+	for other_index in others.size():
+		var other := others[other_index] as RiverTrace
 		if other.source_pool != null and other.source_pool.footprint_t(p) < 1.0 \
 				and other.source_pool.surface_y() <= bed + 0.5:
-			return other
+			first_match = other_index
+			break
 		if other.pond != null and other.pond.footprint_t(p) < 1.0 \
 				and other.pond.surface_y() <= bed + 0.5:
-			return other
-		for i in other.points.size():
-			if p.distance_to(other.points[i]) <= other.widths[i] \
-					and other.beds[i] <= bed + 0.5:
-				return other
-	return null
-
-
-func _join_test(p: Vector2, bed: float, others: Array) -> bool:
-	return _join_target(p, bed, others) != null
+			first_match = other_index
+			break
+	for entry: Vector3i in _nearby_neighbour_points(index, p, W_MAX):
+		if entry.x >= first_match:
+			continue
+		var other := others[entry.x] as RiverTrace
+		var point := other.points[entry.y] as Vector2
+		var width := float(other.widths[entry.y])
+		if p.distance_squared_to(point) <= width * width \
+				and float(other.beds[entry.y]) <= bed + 0.5:
+			first_match = entry.x
+	return others[first_match] as RiverTrace if first_match < others.size() \
+		else null
 
 
 ## Bend `dir` toward the nearest higher-priority water sample within
 ## SENSE_RADIUS, weighted by proximity — junctions become common instead of
 ## coincidental, per the spec's "bias the tracing so they end in other water".
-func _steer(dir: Vector2, p: Vector2, others: Array) -> Vector2:
-	var best_d: float = SENSE_RADIUS
+func _steer(dir: Vector2, p: Vector2, index: Dictionary) -> Vector2:
+	var others: Array = index.rivers
+	var best_d := SENSE_RADIUS
 	var best_at: Vector2 = Vector2.ZERO
+	var best_order := 1 << 30
 	var found: bool = false
-	for other in others:
-		for i in other.points.size():
-			var d: float = p.distance_to(other.points[i])
-			if d < best_d:
-				best_d = d
-				best_at = other.points[i]
-				found = true
+	for entry: Vector3i in _nearby_neighbour_points(index, p, SENSE_RADIUS):
+		var other := others[entry.x] as RiverTrace
+		var point := other.points[entry.y] as Vector2
+		# Keep the original distance_to comparison, including its rounding at
+		# exact ties. Bucket iteration order is different from river order, so the
+		# global ordinal explicitly restores the old first-match precedence.
+		var distance := p.distance_to(point)
+		if distance < best_d \
+				or (distance == best_d \
+					and entry.z < best_order):
+			best_d = distance
+			best_order = entry.z
+			best_at = point
+			found = true
 	if not found:
 		return dir
 	var toward: Vector2 = (best_at - p).normalized()
 	var w: float = STEER * (1.0 - best_d / SENSE_RADIUS)
 	return (dir * (1.0 - w) + toward * w).normalized()
+
+
+func _index_neighbour_rivers(others: Array) -> Dictionary:
+	var buckets: Dictionary = {}
+	var order := 0
+	for other_index in others.size():
+		var other := others[other_index] as RiverTrace
+		for point_index in other.points.size():
+			var point := other.points[point_index] as Vector2
+			var cell := Vector2i(floori(point.x / _NEIGHBOUR_INDEX_CELL),
+				floori(point.y / _NEIGHBOUR_INDEX_CELL))
+			if not buckets.has(cell):
+				buckets[cell] = []
+			buckets[cell].append(Vector3i(other_index, point_index, order))
+			order += 1
+	return {"rivers": others, "buckets": buckets}
+
+
+func _nearby_neighbour_points(index: Dictionary, p: Vector2,
+		radius: float) -> Array[Vector3i]:
+	var buckets := index.buckets as Dictionary
+	var lo := Vector2i(floori((p.x - radius) / _NEIGHBOUR_INDEX_CELL),
+		floori((p.y - radius) / _NEIGHBOUR_INDEX_CELL))
+	var hi := Vector2i(floori((p.x + radius) / _NEIGHBOUR_INDEX_CELL),
+		floori((p.y + radius) / _NEIGHBOUR_INDEX_CELL))
+	var out: Array[Vector3i] = []
+	for z in range(lo.y, hi.y + 1):
+		for x in range(lo.x, hi.x + 1):
+			out.append_array(buckets.get(Vector2i(x, z), []) as Array)
+	return out
 
 
 # ---------------------------------------------------------------

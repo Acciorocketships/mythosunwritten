@@ -161,9 +161,9 @@ func test_default_program_compiles_reviewed_catalog_metrics_and_slots() -> void:
 		&"sfm.table.fishmonger.001")
 	assert_eq(program.market_program.stall_specs.size(), 3)
 	assert_eq(program.outskirts_program.house_specs.size(), 11)
-	assert_eq(program.outskirts_program.target_houses(&"village"), 3)
-	assert_eq(program.outskirts_program.target_houses(&"town"), 5)
-	assert_eq(program.outskirts_program.target_houses(&"village", 4), 8)
+	assert_eq(program.outskirts_program.target_houses(&"village"), 6)
+	assert_eq(program.outskirts_program.target_houses(&"town"), 9)
+	assert_eq(program.outskirts_program.target_houses(&"village", 4), 12)
 	var outskirts_ids: Array[StringName] = []
 	for spec: VillageAssetSpec in program.outskirts_program.house_specs:
 		outskirts_ids.append(spec.asset_id)

@@ -493,8 +493,8 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 			and placement.asset_id == SettlementFabricProgram.RAILING
 	).size(), 2, "short end guards move the seams off the doorway sightline")
 	assert_eq(balcony.placements.filter(func(placement: Dictionary) -> bool:
-		return String(placement.id).begins_with("brace.")).size(), 4,
-		"the overhang remains visibly bracket-supported")
+		return placement.asset_id == SettlementFabricProgram.BRACE).size(), 0,
+		"no ribbed corbel hangs under the deck: it reads as a stair flight")
 	var deep_balcony := program.recipe(
 		&"balcony.walkout.deep.left.blue.planted")
 	assert_not_null(deep_balcony)
@@ -672,10 +672,12 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 		for required_piece: StringName in [&"bay.face", &"bay.post.left",
 				&"bay.post.right",
 				&"bay.cheek.left",
-				&"bay.cheek.right", &"bay.sill", &"bay.canopy",
-				&"bay.corbel.left", &"bay.corbel.right"]:
+				&"bay.cheek.right", &"bay.sill", &"bay.canopy"]:
 			assert_true(embedded.placements.any(func(value: Dictionary) -> bool:
 				return StringName(value.id) == required_piece))
+		assert_false(embedded.placements.any(func(value: Dictionary) -> bool:
+			return StringName(value.asset_id) == SettlementFabricProgram.BRACE),
+			"no ribbed corbel hangs under the oriel sill")
 		var front := embedded.placements.filter(func(value: Dictionary) -> bool:
 			return StringName(value.id) == &"bay.face")[0] as Dictionary
 		assert_true(String(front.asset_id).contains("wall.wood.window.s"),
@@ -771,33 +773,31 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 		assert_false(String(asset_id).begins_with("sfbp.tent"), String(asset_id))
 
 
-func test_room_jetty_support_is_two_floor_pinned_native_corbels() -> void:
+func test_room_jetty_support_is_a_sealed_invisible_course() -> void:
+	## The compiler still proves and audits one support course per bearing edge,
+	## but the course renders nothing: the ribbed corbel it used to place read as
+	## a flight of stairs hung under the jetty.
 	var program := _program()
-	var recipe := program.recipe(&"outcrop.support.bracketed.2")
-	assert_not_null(recipe)
-	if recipe == null:
-		return
-	assert_true(recipe.has_tag(&"paired_wall_corbels"))
-	assert_eq(recipe.placements.size(), 2,
-		"a two-column jetty receives one support at each bearing column")
-	var contract_value := program.module_program.contract(
-		SettlementFabricProgram.BRACE)
-	assert_not_null(contract_value)
-	if contract_value == null:
-		return
-	var column_origins: Array[float] = []
-	for placement: Dictionary in recipe.placements:
-		assert_eq(StringName(placement.asset_id), SettlementFabricProgram.BRACE,
-			"a shallow jetty uses a compact authored corbel, not a broad plank")
-		var transform := placement.transform as Transform3D
-		var bounds: AABB = transform * contract_value.visual_bounds
-		assert_almost_eq(bounds.end.y, 0.0, 0.001,
-			"each measured support top is pinned to the room underside")
-		column_origins.append(transform.origin.x)
-	column_origins.sort()
-	assert_almost_eq(column_origins[0], 0.0, 0.001)
-	assert_almost_eq(column_origins[1], FabricRecipe.CELL_SIZE, 0.001,
-		"support positions are derived from the two occupied bearing columns")
+	for recipe_id: StringName in [&"outcrop.support.bracketed.2",
+			&"outcrop.support.bracketed.1"]:
+		var recipe := program.recipe(recipe_id)
+		assert_not_null(recipe, String(recipe_id))
+		if recipe == null:
+			continue
+		assert_true(recipe.has_tag(&"cantilever_support"))
+		assert_eq(recipe.placements.size(), 0,
+			"%s renders no ribbed corbel" % recipe_id)
+		assert_true(recipe.local_clearance_bounds.has_volume(),
+			"%s still declares the envelope its clearance proof uses" \
+				% recipe_id)
+	for recipe: FabricRecipe in program.recipes():
+		if recipe.has_tag(&"sealed_infill"):
+			continue
+		for placement: Dictionary in recipe.placements:
+			assert_false(StringName(placement.asset_id) \
+					== SettlementFabricProgram.BRACE,
+				"%s hangs a ribbed corbel (%s) under an overhang" % [
+					recipe.recipe_id, String(placement.id)])
 
 
 func test_dormer_styles_keep_steep_gables_and_replace_the_weak_shell_with_sheds() -> void:
@@ -2088,13 +2088,23 @@ func test_folded_visual_proof_passes_the_common_transaction() -> void:
 	assert_gt(surface_visuals.instance_count, 0)
 	assert_true(surface_visuals.asset_ids().has(
 		SettlementFabricAssembler.PLANK_FLOOR))
-	assert_false(SettlementFabricAssembler.renders_generated_surface_underlay(
-		PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT),
-		"authored platform boards must not reveal a dark duplicate mesh below")
-	assert_false(SettlementFabricAssembler.renders_generated_surface_underlay(
-		PublicRealmSurfacePlan.SurfaceKind.BRIDGE))
-	assert_true(SettlementFabricAssembler.renders_generated_surface_underlay(
-		PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET))
+	# The exact structural union is the closure layer beneath the authored
+	# patchwork boards: their irregular silhouettes stop short of some logical
+	# edges, and the skin fills those slivers. It renders for every horizontal
+	# kind, in the same lit timber tone as the boards (never a dark diagnostic
+	# duplicate), so the platform edge reads as one floor.
+	for kind in [PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,
+			PublicRealmSurfacePlan.SurfaceKind.BRIDGE,
+			PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET]:
+		assert_true(SettlementFabricAssembler.renders_generated_surface_underlay(
+			kind), "kind %d closes its board slivers with the structural skin" \
+				% kind)
+	var skin_tone := FeatureCommitQueue._shared_surface_mesh_material() \
+		.albedo_color
+	assert_gt(skin_tone.v, 0.55,
+		"the structural skin is lit timber, not a dark duplicate below the boards")
+	assert_gt(skin_tone.r, skin_tone.b,
+		"the structural skin keeps the plank palette's warm hue")
 
 
 func test_staggered_embedder_closes_route_sides_without_entering_public_air() \

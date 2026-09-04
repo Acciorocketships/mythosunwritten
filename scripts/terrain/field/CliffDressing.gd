@@ -72,14 +72,31 @@ static var _ground_uv := Vector2.ZERO
 static var _has_ground_uv := false
 
 static func prepare(render_cache: EnvironmentRenderCache) -> void:
-	if not _pieces.is_empty():
-		return
+	if _pieces.is_empty():
+		for key in ASSETS:
+			var visual := render_cache.visual(ASSETS[key])
+			assert(visual != null and visual.pieces.size() == 1)
+			var piece := visual.pieces[0]
+			_pieces[key] = [piece.mesh, piece.local_transform]
+		_finish_piece_setup()
+	_apply_cache_piece_overrides(render_cache)
+
+
+static func _apply_cache_piece_overrides(
+		render_cache: EnvironmentRenderCache) -> void:
+	## Cliff dressing can also be emitted by the village's ordinary environment
+	## payload. That path used to resolve the catalogue's raw lip meshes while
+	## streamed terrain used the retexelled meshes prepared above plus the shared
+	## ground material. Publish the exact prepared piece to this main-thread cache
+	## so both producers draw one construction vocabulary; placement remains plain
+	## worker-side data.
+	var material := shared_material()
 	for key in ASSETS:
 		var visual := render_cache.visual(ASSETS[key])
 		assert(visual != null and visual.pieces.size() == 1)
 		var piece := visual.pieces[0]
-		_pieces[key] = [piece.mesh, piece.local_transform]
-	_finish_piece_setup()
+		piece.mesh = _pieces[key][0] as Mesh
+		piece.material_override = material
 
 # THE terrain material, shared by every terrain surface — dressing pieces (via
 # material_override), the walkable sheet, aprons, rock skirt, and dense-grass

@@ -42,10 +42,20 @@ var circulation: VillageCirculationPlan
 var timber: VillageTimberFabricPlan
 var route_stairs: VillageRouteStairFabricPlan
 var entries: Array[Dictionary] = []
+## Exact generated collision primitives that replace overly broad source-mesh
+## hulls for specialized structural uses such as occupied bridge houses.
+## These remain resource-free until the feature commit adapter runs.
+var collision_boxes: Array[Dictionary] = []
 ## World-space generated walk-surface meshes (stair/ramp spans). They stream
 ## inside the record payload beside asset instances; a STAIR claim therefore
 ## has visible, collision-bearing production geometry by construction.
 var surface_meshes: Array[Dictionary] = []
+## Terrain-qualified perimeter market frontages (world space): `asset`,
+## `transform`, `centre` (XZ), `half_extents` (XZ, of the measured visual
+## bounds), `outward` (unit XZ, away from the town wall the piece leans on).
+## The outskirts solver reads these to keep its lanes in front of the stalls
+## and to mirror a market street across from them.
+var frontage_sites: Array[Dictionary] = []
 var volumes: Array[VillageOccupancyVolume] = []
 var surfaces: Array[FeatureGroundShape] = []
 var clearances: Array[FeatureGroundShape] = []
@@ -66,7 +76,8 @@ var candidate_audit: Array[Dictionary] = []
 func validate(program: VillageProgram, tier: StringName) -> bool:
 	if not accepted:
 		return entries.is_empty() and volumes.is_empty() \
-			and surfaces.is_empty() and clearances.is_empty()
+			and surfaces.is_empty() and clearances.is_empty() \
+			and collision_boxes.is_empty()
 	if generation_kind == GenerationKind.SECTIONAL_WARREN:
 		return _validate_sectional_warren(program)
 	if generation_kind == GenerationKind.VOLUMETRIC_WARREN:
@@ -258,6 +269,12 @@ func _validate_compiled_fabric(program: VillageProgram) -> bool:
 		entry_ids[stable_entry_id] = true
 	for mesh: Dictionary in surface_meshes:
 		if not EnvironmentInstancePayload._surface_mesh_is_valid(mesh):
+			return false
+	for box: Dictionary in collision_boxes:
+		var transform := box.get("transform", Transform3D()) as Transform3D
+		var size := box.get("size", Vector3.ZERO) as Vector3
+		if not transform.is_finite() or not size.is_finite() \
+				or size.x <= 0.0 or size.y <= 0.0 or size.z <= 0.0:
 			return false
 	var occupancy_roles: Dictionary = {}
 	for volume: VillageOccupancyVolume in volumes:
