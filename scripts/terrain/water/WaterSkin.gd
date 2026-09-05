@@ -1416,10 +1416,9 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 		var p: Vector2 = pts[i]
 		var nrm: Vector2 = normals[i]
 		var lvl: float = levels[i]
-		# Curl angle per row, about the curve tangent, pinched toward 0 (UP) at
-		# wall points by the SAME wf[i] blend — see _curl_normal's own
-		# docstring. Deliberately wall-only (not rf[i]): see the Rim-normals
-		# constants block's own r3 Task 14 note.
+		# Every level shelf owns a level normal too. A still-wet diagonal
+		# connection can have no wall in this column; retaining its free-edge
+		# curl normals made a flat sheet reflect as an 80-degree crease.
 		# A direct contact is authoritative at full strength. `wf` may extend a
 		# fractional transition into neighbouring columns, but filtering must
 		# never shorten a point that independently proved it hits the wall.
@@ -1427,10 +1426,10 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 		var wet_shelf_strength := 1.0 \
 			if wet_shelf_reach[i] > RIM_ROW1_REACH else 0.0
 		var level_strength: float = maxf(wall_strength, wet_shelf_strength)
-		var ang1: float = lerpf(RIM_NORMAL_ANGLE1, 0.0, wall_strength)
-		var ang2: float = lerpf(RIM_NORMAL_ANGLE2, 0.0, wall_strength)
-		var ang3: float = lerpf(RIM_NORMAL_ANGLE3, 0.0, wall_strength)
-		var ang4: float = lerpf(PI * 4.0 / 9.0, 0.0, wall_strength)
+		var ang1: float = lerpf(RIM_NORMAL_ANGLE1, 0.0, level_strength)
+		var ang2: float = lerpf(RIM_NORMAL_ANGLE2, 0.0, level_strength)
+		var ang3: float = lerpf(RIM_NORMAL_ANGLE3, 0.0, level_strength)
+		var ang4: float = lerpf(PI * 4.0 / 9.0, 0.0, level_strength)
 		row0[i] = _weld_vert(st, p, lvl, Vector3.UP)
 		# Start moving outward immediately.  The old row1 reused p.xz and only
 		# changed Y, which made the meniscus begin with a literal vertical

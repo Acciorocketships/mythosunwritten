@@ -224,8 +224,9 @@ const _TRACE_REGION_MARGIN_CELLS := 4
 ## already-cached profile.levels; this cost is paid once per trace, the
 ## first time ANY chunk anywhere touches it, not once per chunk.
 static func _trace_owned_region(trace: RiverTrace, plan: HeightfieldPlan) -> HeightfieldRegion:
-	if _trace_regions.has(trace.source_cell):
-		return _trace_regions[trace.source_cell]
+	var key := [trace.get_instance_id(), plan.get_instance_id()]
+	if _trace_regions.has(key):
+		return _trace_regions[key]
 	var bounds: Rect2 = trace.bounds()
 	var centre: Vector2 = bounds.get_center()
 	var half_span: float = maxf(bounds.size.x, bounds.size.y) * 0.5
@@ -233,7 +234,7 @@ static func _trace_owned_region(trace: RiverTrace, plan: HeightfieldPlan) -> Hei
 	var cx: int = int(roundf(centre.x / TILE))
 	var cz: int = int(roundf(centre.y / TILE))
 	var region: HeightfieldRegion = plan.compute_region(cx, cz, radius)
-	_trace_regions[trace.source_cell] = region
+	_trace_regions[key] = region
 	return region
 
 
@@ -757,19 +758,12 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 	# same trace at once. Profiles are small, so holding the lock across the
 	# compute (not just the dictionary ops) costs nothing measurable.
 	var plan_backed: bool = region != null and region.plan != null
-	# Cache key: a plan-backed call is keyed on source_cell ALONE — sound,
-	# because _trace_owned_region guarantees every plan-backed caller for
-	# this source_cell shapes against the identical canonical region (see
-	# that function's own docstring), so there is no longer a "which region"
-	# axis left to disambiguate. A non-plan-backed call (region-less probe,
-	# or a hand-built-fixture region with no plan) keeps the OLD key
-	# (region != null) so it can never collide with, or be shadowed by, a
-	# plan-backed call for the same trace — the two regimes are disjoint by
-	# construction (different Array shapes never compare equal as Dictionary
-	# keys), matching the region-optional note above: a region-less probe
-	# must never poison the cache for the same trace's later terrain-aware
-	# call, or vice versa.
-	var cache_key = trace.source_cell if plan_backed else [trace.source_cell, region != null]
+	# Source cells are identities only within one water plan. Different worlds,
+	# junction prefixes and frozen review fixtures may share a cell while owning
+	# different beds. Cache the immutable trace and its canonical terrain owner;
+	# every chunk of that same river still shares exactly one profile.
+	var cache_key := [trace.get_instance_id(),
+		region.plan.get_instance_id() if plan_backed else 0, region != null]
 	_profiles_lock.lock()
 	if _profiles.has(cache_key):
 		var cached: Dictionary = _profiles[cache_key]

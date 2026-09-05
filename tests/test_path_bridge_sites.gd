@@ -2,7 +2,7 @@ extends GutTest
 
 func _real_plan() -> PathPlan:
 	var seed_value := 2697992464
-	var water := WaterPlan.new(seed_value, 22.0, 8)
+	var water := preload("res://tests/fixtures/ReportedWaterPlan.gd").new(seed_value)
 	var settlements := SettlementPlan.new(seed_value, water)
 	var heights := HeightfieldPlan.new(seed_value, 22.0, 8, "mean", 3)
 	heights.set_water_plan(water)

@@ -73,7 +73,7 @@ static var _regions: Dictionary = {}
 static func _water(seed_v: int) -> WaterPlan:
 	if not _waters.has(seed_v):
 		var plan := HeightfieldPlan.new(seed_v, 22.0, 8, "mean", 3)
-		var water := WaterPlan.new(seed_v, 22.0, 8)
+		var water := preload("res://tests/fixtures/ReportedWaterPlan.gd").new(seed_v)
 		plan.set_water_plan(water)
 		_plans[seed_v] = plan
 		_waters[seed_v] = water
@@ -2129,3 +2129,22 @@ func test_legal_sloped_reach_keeps_its_trigger() -> void:
 	print("MEAS test_legal_sloped_reach_keeps_its_trigger: %d points walked along the reach, %d offenders" % [checked, offenders.size()])
 	assert_eq(checked, 61, "61 points walked (>=60 per the parity test's own per-class density)")
 	assert_true(offenders.is_empty(), "every point along the legal sloped reach is covered by the trigger: %s" % str(offenders))
+
+## 2026-07-23 exact camera: the diagonal water connection must have one flat
+## optical surface. A level shelf carrying curled normals draws a bright seam.
+func test_reported_diagonal_contact_has_level_surface_normals() -> void:
+	var chunk := Vector2i(-2, -4)
+	var skin := WaterSkin.build(_water(SEED), chunk, _region(SEED, chunk))
+	var vertices: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = skin.arrays[Mesh.ARRAY_NORMAL]
+	var checked := 0
+	var worst := 1.0
+	for i in vertices.size():
+		var v := vertices[i]
+		if Vector2(v.x, v.z).distance_to(Vector2(-228, -756)) < 0.8 and absf(v.y - 3.0) < 0.01:
+			checked += 1
+			worst = minf(worst, normals[i].y)
+			if normals[i].y < 0.99:
+				print("DIAGONAL ", v, " normal=", normals[i])
+	assert_gt(checked, 0, "exact diagonal has surface vertices")
+	assert_gt(worst, 0.99, "flat diagonal contact cannot inherit a free-edge curl")

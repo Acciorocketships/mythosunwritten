@@ -21,7 +21,7 @@ func _mib(bytes: int) -> String:
 
 func _profile_pass(label: String, plan: HeightfieldPlan, water: WaterPlan,
 		mesher: TerrainChunkMesher, water_builder: WaterSurfaceBuilder,
-		dressing_program: DressingProgram, path_program: PathProgram,
+		dressing_program: DressingProgram,
 		fields: WorldFieldBlockCache, features: WorldFeaturePlan,
 		render_cache: EnvironmentRenderCache) -> void:
 	var worker_total := 0
@@ -199,8 +199,8 @@ func _init() -> void:
 		dressing_program.estimated_proposals_per_chunk])
 
 	_profile_pass("cold sweep", plan, water, mesher, water_builder, dressing_program,
-		path_program, fields, features, render_cache)
+		fields, features, render_cache)
 	if OS.get_cmdline_user_args().has("--warm"):
 		_profile_pass("warm sweep", plan, water, mesher, water_builder, dressing_program,
-			path_program, fields, features, render_cache)
+			fields, features, render_cache)
 	quit()
