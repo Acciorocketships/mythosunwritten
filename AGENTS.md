@@ -1431,11 +1431,22 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
 - **`terrain/tools/SlopeProfile.gd` / `SlopeAtlas.gd`** — the `smootherstep` slope profile math
   and grass/rock UV sampling from KayKit pieces, shared by the field and mesher.
 - **Water** (`scripts/terrain/water/`): a deterministic **river network carved into the
-  heightfield** — `WaterPlan` (sources on a super-grid, downhill traces locked to the fall
-  line on steep ground, terminal `PondStamp` bowls; carve applied inside
-  `HeightfieldPlan.raw_height`). Trace-to-neighbour join and steering queries use one immutable
-  `SENSE_RADIUS` spatial index per river trace; candidate ordering remains the original canonical
-  river/point order, so the index changes cost but not deterministic output. Channel carving
+  heightfield** — `WaterPlan` surveys four stratified candidates per 768 m district,
+  climbs the highest to a prominent summit, and uses an 85% source roll. Its bounded
+  2D contour walk prefers modest descent, keeps a winding handedness and clearance from
+  old reaches, and drifts outward so it cannot close a loop around itself. Natural terrain
+  can rise along a proposed open cutting, but the bank-contained hydraulic bed never rises.
+  Raw routes allow 4.32 km of arc inside a 2.4 km displacement bound; basin termination
+  starts at 2.64 km. The finite discovery halo includes summit ascent and the lake bound.
+  Junction resolution selects a prefix of the cached raw route, never retraces the mountain.
+  Odd-depth dependency prefixes remain contained in the realized depth-two network, so a
+  tributary cannot join a part of another river that subsequently disappears.
+  Raw bounds reject distant sources before expanding junction dependencies; neighbour queries
+  use an immutable spatial index with canonical precedence. Terminal `PondStamp` bowls vary
+  in size, axis and elongation within the same conservative radius bound. Carve applies
+  inside `HeightfieldPlan.raw_height`. The 20–26 m channel half-width exceeds half a terrain
+  cell's diagonal: diagonal centreline crossings fully excavate both intermediate cells,
+  preserving a finite cardinal passage rather than corner-only contact. Channel carving
   projects each terrain sample onto the same
   variable-width trace **segment capsule** used by `WaterField` (not isolated trace-point
   discs), so bathymetry cannot leave uncarved 12m gaps beneath continuous rendered water.
@@ -1452,7 +1463,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   keep the original shallow carve (never turn a vertical film into a deep swim volume).
   Pure data flows `WaterField → WaterContour → WaterSkin`, turned into nodes by
   `WaterSurfaceBuilder`; one shader renders it all:
-  - `WaterField` — the continuous water surface as ONE height field `level_at(x,z)`, with
+  - `WaterField` — profile and canonical-region caches identify both the immutable trace
+    and its terrain-plan owner, preventing different worlds or junction prefixes with the
+    same source cell from sharing stale levels. The continuous water surface is ONE height field `level_at(x,z)`, with
     **no cuts anywhere**: `profile()` is a single monotone, continuous curve per river.
     Ordinary reaches ride a smooth trend between anchors or hug a nearby steep face
     (unchanged in spirit); but a genuine multi-segment descent — several storeys down a
@@ -1543,7 +1556,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
     interior-lattice rings where a narrow channel falls below the render grid; the boundary zipper
     splits those into local components and partitions the contour among them instead of joining
     them with non-local fan triangles. Remaining over-scale faces are adaptively subdivided, and
-    only tiny local closed surface holes are triangulated. Per-vertex CUSTOM0 bakes `(s, d,
+    only tiny local closed surface holes are triangulated. Level shelves also use level normals, including still-wet columns between diagonal banks;
+    a free-edge curl normal on such a shelf creates a false reflective crease.
+    Per-vertex CUSTOM0 bakes `(s, d,
     slope, shore_dist)` — arc length / signed cross-channel distance / continuous profile
     slope along the nearest river trace, plus shore distance. `CUSTOM1` bakes `(velocity.x,
     velocity.z, vorticity, compression)` from the shared `WaterCurrentField`. Vertex normals are real

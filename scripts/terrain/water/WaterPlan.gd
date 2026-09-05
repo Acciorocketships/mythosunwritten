@@ -1,7 +1,7 @@
 # scripts/terrain/water/WaterPlan.gd
 # Deterministic water-network plan: river sources on a coarse super-grid,
 # each ascended to its local mountain/hill summit (spring pool at the top),
-# traced downhill on the smooth landform field, always ending in water —
+# traced along descending contours, always ending in water —
 # a junction with a higher-priority river or a terminal pond. Pure function
 # of (world_seed, super_cell) with bounded windows: the same anti-churn
 # guarantee as HeightfieldPlan. Instance caches are performance only.
@@ -15,51 +15,43 @@ const SUPER := 768.0              # source super-grid pitch (32 tiles)
 const TILE := 24.0
 const STOREY := 4.0
 
-const SOURCE_MIN01 := 0.55        # smooth height01 floor for a source
+const SOURCE_MIN01 := 0.48        # smooth height01 floor for a source
 # Sources ASCEND to the local summit: rivers rise from mountain/hill TOPS
 # (owner request), spring pool at the peak. A cell fires only when the climb
 # converges on a prominent top — plateaus never qualify (they may still
 # cross flat ground on the way down).
 const ASCEND_STEP := 12.0         # uphill stride of the summit climb
-# Climb budget caps REACH growth so REACH_SUPERS stays 4 (19*12 = 228 m —
-# candidates must land within ~a quarter super-cell of their summit).
-const ASCEND_MAX_STEPS := 19
+# The finite climb is included in the source-discovery bound.
+const ASCEND_MAX_STEPS := 32
 const SOURCE_PEAK_EPS := 0.02     # |grad| in m/m at an accepted summit
 # Cheap floor on the PRE-climb jitter point: the expensive ascent only runs
 # on candidates already on meaningfully high ground (the climb budget can't
 # lift lowland candidates to a qualifying peak anyway).
-const SOURCE_JITTER_MIN01 := 0.42
+const SOURCE_JITTER_MIN01 := 0.32
 const PROMINENCE_R := 48.0        # ring radius for the prominence test
 const PROMINENCE_MIN := 0.03      # mean ring |grad| — real hills only
-const SOURCE_PROB := 0.8          # fraction of qualifying super-cells that fire
+const SOURCE_PROB := 0.85          # fraction of qualifying super-cells that fire
 const TRACE_STEP := 12.0
-const MAX_STEPS := 220            # hard bound => max length 2640 u
-# Gentle, long-wavelength snaking. Amplitude/wavelength must stay small
-# relative to channel width or the trace switchbacks over itself: overlapping
-# reaches read as blobs, the sliver between passes stays uncarved (ground
-# protruding mid-river), and per-cell flow flips between reaches.
-const MOMENTUM := 0.75
-const MEANDER_AMP := 0.35         # radians of curve wobble (~20°)
-# Slope-adaptive steering: on steep ground the trace locks to the FALL LINE
-# (momentum and meander fade out with slope), carving a channel straight down
-# the hillside the way the old gradient-descent rivers did. Free meandering
-# there lets the trace contour ACROSS a slope, leaving the downhill bank
-# below the water level — hanging shelf water spilling on every side.
-# Flat ground keeps the full meander (rivers still wander and flow when flat).
-const STEEP_LO := 0.035           # |grad| (m/m) where fall-line locking starts
-const STEEP_HI := 0.10            # |grad| where the trace is fully locked
-const MEANDER_SCALE := 150.0      # along-arc metres per meander noise cell
-const SELF_AVOID_R := 60.0        # steer away from own path within this range
-const SELF_AVOID := 0.5           # strength of the self-repulsion blend
-const SELF_AVOID_SKIP := 8        # ignore this many most-recent samples
+const MAX_STEPS := 360            # hard bound => max arc length 4320 m
+# A bounded contour walk: prefer a small descent along the mountain's side,
+# retain a winding handedness, and reserve space around previously visited
+# reaches. The hydraulic bed remains monotone and bank-contained independently.
+const CONTOUR_DESCENT := 0.22
+const MEANDER_AMP := 0.25
+const MEANDER_SCALE := 180.0
+const STEEP_HI := 0.10
+const SELF_AVOID_R := 76.0
+const SELF_AVOID_SKIP := 10
+# Arc length may grow without growing the source-discovery dependency halo.
+const TRACE_REACH := 2400.0
 const GRAD_EPS := 6.0             # finite-difference step for the gradient
-const SENSE_RADIUS := 96.0        # junction steering bias range
-const STEER := 0.35               # max blend toward sensed water
+const SENSE_RADIUS := 96.0        # conservative junction lookup halo
 const _NEIGHBOUR_INDEX_CELL := SENSE_RADIUS
-# Min half-width covers the adjacent cell CENTRE (w + FEATHER > 17u), or
-# upstream reaches leave uncarved cells jutting into the channel.
-const W_MIN := 9.0
-const W_MAX := 16.0               # ... at max length
+# Full-depth core exceeds half a terrain-cell diagonal (16.97m). Both
+# bridge cells at a diagonal crossing therefore excavate fully, keeping a
+# finite cardinal connection instead of two wet tiles touching at a corner.
+const W_MIN := 20.0
+const W_MAX := 26.0               # ... at max length
 # Bed below the smooth terrain. MUST exceed one 4m storey + quantization
 # slack (±2m), or the channel vanishes in storey rounding: floor and banks
 # land on the same storey and the ribbon reads as water lying on flat grass.
@@ -102,10 +94,10 @@ const POND_R_MIN := 60.0
 const POND_R_MAX := 140.0
 const POND_DEPTH := 3.5
 const FLAT_EPS := 0.012           # |grad| (m/m) below which a basin ends the trace
-# Basins/lowlands may only end a river after this many steps (~1.4 km): flat
+# Basins/lowlands may only end a river after this many steps (~2.6 km): flat
 # ground keeps the trace meandering (bed simply stays level), so rivers are
 # LONG winding channels, not short chutes into the first hollow.
-const MIN_STEPS := 120
+const MIN_STEPS := 220
 const LOWLANDS01 := 0.08          # smooth height01 floor => terminal pond
 const SPAWN_WATER_RADIUS := 200.0 # dry spawn disk (spawn clear 60+120 + margin)
 const JOIN_DEPTH := 2             # junction dependency recursion cap
@@ -118,9 +110,9 @@ const PATH_INTERVAL_TOLERANCE := 0.05
 const PLANNING_DISTANCE_LIPSCHITZ := 2.0
 const _PATH_INSIDE_EPS := 0.0001
 # Any point a river can influence lies within the summit ascent + the trace
-# length + the largest pond bound + carve feather of its source's JITTER
+# displacement + the largest pond bound + carve feather of its source's JITTER
 # point ⇒ a fixed super-cell ring.
-const REACH := ASCEND_MAX_STEPS * ASCEND_STEP + MAX_STEPS * TRACE_STEP \
+const REACH := ASCEND_MAX_STEPS * ASCEND_STEP + TRACE_REACH \
 	+ POND_R_MAX * (1.0 + PondStamp.WOBBLE) + FEATHER
 const REACH_SUPERS := int(ceil(REACH / SUPER))   # = 4
 
@@ -236,9 +228,19 @@ func _ring_prominence(p: Vector2) -> float:
 
 ## The jittered pre-climb candidate point inside the super-cell.
 func _jitter_pos(sc: Vector2i) -> Vector2:
-	var jx: float = Helper._hash01(_hash_cell(sc, 101))
-	var jz: float = Helper._hash01(_hash_cell(sc, 102))
-	return Vector2((float(sc.x) + jx) * SUPER, (float(sc.y) + jz) * SUPER)
+	# Survey four stratified candidates before climbing the highest. A single
+	# random foothill used to reject a whole 768m mountain district.
+	var best := Vector2.ZERO
+	var best_h := -INF
+	for i in 4:
+		var jx := (float(i % 2) + Helper._hash01(_hash_cell(sc, 101 + i * 17))) * 0.5
+		var jz := (float(i / 2) + Helper._hash01(_hash_cell(sc, 102 + i * 17))) * 0.5
+		var p := (Vector2(sc) + Vector2(jx, jz)) * SUPER
+		var h := smooth01(p)
+		if h > best_h:
+			best = p
+			best_h = h
+	return best
 
 
 ## Source point for a super-cell: the jittered candidate ascended to its
@@ -266,7 +268,7 @@ func has_source(sc: Vector2i) -> bool:
 
 func _has_source_uncached(sc: Vector2i) -> bool:
 	if Helper._hash01(_hash_cell(sc, 103)) >= SOURCE_PROB:
-		return false   # density roll — free, kills 20% before any noise eval
+		return false   # density roll before the summit survey
 	var j: Vector2 = _jitter_pos(sc)
 	if j.length() < SPAWN_WATER_RADIUS:
 		return false   # summit position re-checked below; this skips the climb
@@ -309,9 +311,13 @@ func _make_pool(p: Vector2) -> PondStamp:
 
 
 func _make_pond(p: Vector2, arc: float) -> PondStamp:
-	var r: float = lerpf(POND_R_MIN, POND_R_MAX, clampf(arc / (MAX_STEPS * TRACE_STEP), 0.0, 1.0))
-	return PondStamp.new(p, r, _hash_cell(Vector2i(roundi(p.x), roundi(p.y)), 8),
-		_pond_level(p, r), POND_DEPTH)
+	var shape_seed := _hash_cell(Vector2i(roundi(p.x), roundi(p.y)), 8)
+	var maturity := clampf(arc / (MAX_STEPS * TRACE_STEP), 0.0, 1.0)
+	var size_roll := Helper._hash01(Helper._mix64(shape_seed + 19))
+	var r := lerpf(POND_R_MIN, POND_R_MAX, maturity * (0.35 + 0.65 * size_roll))
+	var pond := PondStamp.new(p, r, shape_seed, _pond_level(p, r), POND_DEPTH)
+	pond.aspect_ratio = lerpf(0.5, 0.9, Helper._hash01(Helper._mix64(shape_seed + 23)))
+	return pond
 
 
 ## Bank storey for a pond at p: storey-quantized minimum of the PRE-CARVE
@@ -340,17 +346,11 @@ func _trace(sc: Vector2i, depth: int,
 		progress_start := -1.0, progress_end := -1.0) -> RiverTrace:
 	if not has_source(sc):
 		return null
+	if depth > 0:
+		return _joined_trace(sc, depth, progress_start, progress_end)
 	var t: RiverTrace = RiverTrace.new()
 	t.source_cell = sc
 	t.priority = priority_of(sc)
-	var neighbour_end := lerpf(progress_start, progress_end, 0.84) \
-		if progress_start >= 0.0 else -1.0
-	var others: Array = _neighbour_rivers(sc, depth,
-		progress_start, neighbour_end)
-	# Joining and steering are local queries.  Index the immutable neighbour
-	# traces once instead of scanning every point of every river twice for each
-	# of this trace's (up to 220) samples.
-	var neighbour_index := _index_neighbour_rivers(others)
 	var p: Vector2 = source_pos(sc)
 	t.source_pool = _make_pool(p)
 	var meander_offset: float = float(absi(t.priority) % 4096) * 37.0
@@ -360,46 +360,111 @@ func _trace(sc: Vector2i, depth: int,
 		dir = (-g0).normalized()
 	var bed: float = _contained_bed(INF, p, dir, W_MIN)
 	var arc: float = 0.0
+	var visited: Dictionary = {}
+	var source := p
+	var handedness := -1.0 if _hash_cell(sc, 107) < 0 else 1.0
 	for i in MAX_STEPS:
 		if progress_start >= 0.0 and i % 8 == 0:
-			_report_planning_progress(lerpf(neighbour_end, progress_end,
+			_report_planning_progress(lerpf(progress_start, progress_end,
 				float(i) / float(MAX_STEPS)))
+		var bucket := Vector2i((p / SELF_AVOID_R).floor())
+		if not visited.has(bucket):
+			visited[bucket] = []
+		visited[bucket].append(t.points.size())
 		t.points.append(p)
 		t.beds.append(bed)
 		t.widths.append(lerpf(W_MIN, W_MAX, arc / (MAX_STEPS * TRACE_STEP)))
-		if _join_target(p, bed, neighbour_index) != null:
-			t.joined = true
-			return t
 		var g: Vector2 = grad(p)
 		if i >= MIN_STEPS and g.length() < FLAT_EPS:
 			break                                   # basin floor (late only)
 		if i >= MIN_STEPS and smooth01(p) < LOWLANDS01:
 			break                                   # lowlands (late only)
-		var down: Vector2 = (-g).normalized() if g.length() > 0.000001 else dir
-		var lock: float = clampf((g.length() - STEEP_LO) / (STEEP_HI - STEEP_LO), 0.0, 1.0)
-		dir = (dir * MOMENTUM * (1.0 - lock) + down * (1.0 - MOMENTUM * (1.0 - lock))).normalized()
-		var m01: float = Helper._value_noise01(
-			Vector3(arc, 0.0, meander_offset), world_seed + 71, MEANDER_SCALE)
-		dir = dir.rotated((m01 - 0.5) * 2.0 * MEANDER_AMP * (1.0 - lock))
-		# Self-avoidance: repel from the river's own OLDER samples so meanders
-		# never fold back onto an earlier reach (overlapping channels left
-		# uncarved slivers mid-river and flipped per-cell flow directions).
-		var rep: Vector2 = Vector2.ZERO
-		for k in range(0, t.points.size() - SELF_AVOID_SKIP):
-			var sd: float = p.distance_to(t.points[k])
-			if sd < SELF_AVOID_R:
-				rep += (p - t.points[k]) / maxf(sd, 1.0)
-		if rep.length_squared() > 0.000001:
-			dir = (dir + rep.normalized() * SELF_AVOID).normalized()
-		dir = _steer(dir, p, neighbour_index)
-		var q: Vector2 = p + dir * TRACE_STEP
-		if q.length() < SPAWN_WATER_RADIUS:
-			break                                   # truncate at the spawn ring
-		p = q
+		var next := _contour_step(t, visited, p, dir, g, source, arc,
+			meander_offset, handedness)
+		if next == Vector2.INF:
+			break
+		dir = (next - p).normalized()
+		p = next
 		arc += TRACE_STEP
 		bed = _contained_bed(bed, p, dir, lerpf(W_MIN, W_MAX, arc / (MAX_STEPS * TRACE_STEP)))
 	t.pond = _make_pond(p, arc)
 	return t
+
+
+## Plan the expensive contour walk once. Junction resolution only selects a
+## prefix of that immutable walk; neighbour recursion cannot reroute a mountain
+## or multiply all of its terrain probes at every dependency depth.
+func _joined_trace(sc: Vector2i, depth: int, progress_start: float,
+		progress_end: float) -> RiverTrace:
+	var raw := river_for(sc, 0)
+	var others := _neighbour_rivers(sc, depth, progress_start, progress_end)
+	var index := _index_neighbour_rivers(others)
+	for i in raw.points.size():
+		if _join_target(raw.points[i], raw.beds[i], index) == null:
+			continue
+		var t := RiverTrace.new()
+		t.source_cell = raw.source_cell
+		t.priority = raw.priority
+		t.source_pool = raw.source_pool
+		t.points = raw.points.slice(0, i + 1)
+		t.beds = raw.beds.slice(0, i + 1)
+		t.widths = raw.widths.slice(0, i + 1)
+		t.joined = true
+		return t
+	return raw
+
+
+## Score a finite fan of open-air steps, like a maze walk with occupied
+## corridors. Level travel wins over rushing downhill; uphill excavation is
+## expensive, and old reaches/spawn/the finite planning boundary are hard walls.
+func _contour_step(t: RiverTrace, visited: Dictionary, p: Vector2,
+		dir: Vector2, g: Vector2, source: Vector2, arc: float,
+		phase: float, hand: float) -> Vector2:
+	var down := -g.normalized() if g.length_squared() > 0.000001 else dir
+	var contour := down.rotated(hand * acos(CONTOUR_DESCENT))
+	var strength := clampf(g.length() / STEEP_HI, 0.0, 1.0)
+	# Outside the summit's first bend, a broad outward potential carries the
+	# river through successive lowland basins instead of orbiting one hollow.
+	var outward := (p - source).normalized() if p.distance_to(source) > TILE else dir
+	var preferred := outward.lerp(contour, strength * 0.75).normalized()
+	var wobble := Helper._value_noise01(Vector3(arc + phase, 0, 0),
+		world_seed + 71, MEANDER_SCALE) * 2.0 - 1.0
+	preferred = preferred.rotated(wobble * MEANDER_AMP)
+	var height := smooth_h(p)
+	var best := Vector2.INF
+	var best_score := INF
+	var nearby: Array[Vector2] = []
+	var lo := Vector2i(((p - Vector2.ONE * (SELF_AVOID_R + TRACE_STEP)) / SELF_AVOID_R).floor())
+	var hi := Vector2i(((p + Vector2.ONE * (SELF_AVOID_R + TRACE_STEP)) / SELF_AVOID_R).floor())
+	for z in range(lo.y, hi.y + 1):
+		for x in range(lo.x, hi.x + 1):
+			for k: int in visited.get(Vector2i(x, z), []):
+				if k < t.points.size() - SELF_AVOID_SKIP:
+					nearby.append(t.points[k])
+	for turn in range(-6, 7):
+		var heading := dir.rotated(float(turn) * PI / 12.0)
+		var q := p + heading * TRACE_STEP
+		if q.length() < SPAWN_WATER_RADIUS + SOURCE_POOL_R \
+			or q.distance_to(source) > TRACE_REACH:
+			continue
+		# A gentle outward drift leaves room for the next turn around the hill.
+		# It prevents the contour walk from sealing itself inside its first loop.
+		if p.distance_to(source) > TILE * 4.0 and heading.dot(outward) < 0.15:
+			continue
+		var clearance := SELF_AVOID_R
+		for old: Vector2 in nearby:
+			clearance = minf(clearance, q.distance_to(old))
+		if clearance < W_MAX * 2.0 + FEATHER:
+			continue
+		var change := smooth_h(q) - height
+		var desired_drop := g.length() * TRACE_STEP * CONTOUR_DESCENT
+		var score := absf(change + desired_drop) * 2.0 \
+			+ maxf(change, 0.0) * 3.0 + (1.0 - heading.dot(preferred)) * 3.0 \
+			+ (1.0 - clearance / SELF_AVOID_R) * 3.0
+		if score < best_score:
+			best_score = score
+			best = q
+	return best
 
 
 ## Bed candidate at p: CHANNEL_DEPTH under the smooth field, ALSO capped a
@@ -428,6 +493,7 @@ func _neighbour_rivers(sc: Vector2i, depth: int,
 			_report_planning_progress(progress_end)
 		return []
 	var mine: int = priority_of(sc)
+	var mine_bounds := river_for(sc, 0).bounds().grow(SENSE_RADIUS + W_MAX)
 	var out: Array = []
 	var side := REACH_SUPERS * 4 + 1
 	var total := side * side
@@ -441,6 +507,11 @@ func _neighbour_rivers(sc: Vector2i, depth: int,
 			var child_end := lerpf(progress_start, progress_end,
 				float(done) / float(total)) if progress_start >= 0.0 else -1.0
 			if nb == sc or priority_of(nb) <= mine:
+				if progress_start >= 0.0:
+					_report_planning_progress(child_end)
+				continue
+			var raw := river_for(nb, 0)
+			if raw == null or not raw.bounds().intersects(mine_bounds):
 				if progress_start >= 0.0:
 					_report_planning_progress(child_end)
 				continue
@@ -482,36 +553,6 @@ func _join_target(p: Vector2, bed: float,
 			first_match = entry.x
 	return others[first_match] as RiverTrace if first_match < others.size() \
 		else null
-
-
-## Bend `dir` toward the nearest higher-priority water sample within
-## SENSE_RADIUS, weighted by proximity — junctions become common instead of
-## coincidental, per the spec's "bias the tracing so they end in other water".
-func _steer(dir: Vector2, p: Vector2, index: Dictionary) -> Vector2:
-	var others: Array = index.rivers
-	var best_d := SENSE_RADIUS
-	var best_at: Vector2 = Vector2.ZERO
-	var best_order := 1 << 30
-	var found: bool = false
-	for entry: Vector3i in _nearby_neighbour_points(index, p, SENSE_RADIUS):
-		var other := others[entry.x] as RiverTrace
-		var point := other.points[entry.y] as Vector2
-		# Keep the original distance_to comparison, including its rounding at
-		# exact ties. Bucket iteration order is different from river order, so the
-		# global ordinal explicitly restores the old first-match precedence.
-		var distance := p.distance_to(point)
-		if distance < best_d \
-				or (distance == best_d \
-					and entry.z < best_order):
-			best_d = distance
-			best_order = entry.z
-			best_at = point
-			found = true
-	if not found:
-		return dir
-	var toward: Vector2 = (best_at - p).normalized()
-	var w: float = STEER * (1.0 - best_d / SENSE_RADIUS)
-	return (dir * (1.0 - w) + toward * w).normalized()
 
 
 func _index_neighbour_rivers(others: Array) -> Dictionary:
@@ -572,9 +613,15 @@ func _region_for(rc: Vector2i) -> Dictionary:
 			var candidate_start := float(candidate_done) / float(candidate_total)
 			candidate_done += 1
 			var candidate_end := float(candidate_done) / float(candidate_total)
-			var t: RiverTrace = river_for(rc + Vector2i(dx, dz), JOIN_DEPTH,
-				candidate_start, candidate_end)
-			if t == null or not t.bounds().grow(FEATHER).intersects(region_rect):
+			var sc := rc + Vector2i(dx, dz)
+			# Junctions only shorten this immutable route. Reject its raw bounds
+			# before expanding neighbour dependencies for a distant source.
+			var raw := river_for(sc, 0)
+			if raw == null or not raw.bounds().grow(FEATHER).intersects(region_rect):
+				_report_planning_progress(candidate_end)
+				continue
+			var t: RiverTrace = river_for(sc, JOIN_DEPTH, candidate_start, candidate_end)
+			if not t.bounds().grow(FEATHER).intersects(region_rect):
 				continue
 			rivers.append(t)
 			for i in t.points.size():

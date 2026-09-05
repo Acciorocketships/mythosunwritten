@@ -7,7 +7,7 @@ const SEED := 2697992464
 const CHUNK := Vector2i(-4, -18)
 
 func test_context_matches_water_field_and_has_canonical_dry_nan() -> void:
-	var water := WaterPlan.new(SEED, 22.0, 8)
+	var water := preload("res://tests/fixtures/ReportedWaterPlan.gd").new(SEED)
 	var plan := HeightfieldPlan.new(SEED, 22.0, 8, "mean", 3)
 	plan.set_water_plan(water)
 	var centre := CHUNK * 8 + Vector2i(4, 4)

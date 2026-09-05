@@ -22,6 +22,7 @@ var radius: float            # base radius, metres
 var shape_seed: int
 var level: int               # storey index of the banks; water just below
 var depth: float             # bowl depth below level*STOREY
+var aspect_ratio := 1.0      # minor/major axis; one preserves circular fixtures
 
 
 func _init(p_center: Vector2, p_radius: float, p_shape_seed: int, p_level: int, p_depth: float) -> void:
@@ -37,7 +38,10 @@ func _init(p_center: Vector2, p_radius: float, p_shape_seed: int, p_level: int, 
 func radius_at(ang: float) -> float:
 	var a: float = Helper._hash01(Helper._mix64(shape_seed)) * TAU
 	var b: float = Helper._hash01(Helper._mix64(shape_seed + 1)) * TAU
-	return radius * (1.0 + WOBBLE * (0.6 * sin(2.0 * ang + a) + 0.4 * sin(3.0 * ang + b)))
+	var minor := clampf(aspect_ratio, 0.5, 1.0)
+	var across := sin(ang - a)
+	var ellipse := minor / sqrt(minor * minor * (1.0 - across * across) + across * across)
+	return radius * ellipse * (1.0 + WOBBLE * (0.6 * sin(2.0 * ang + a) + 0.4 * sin(3.0 * ang + b)))
 
 
 ## Everything the pond can touch lies within this radius (bucketing bound).

@@ -137,33 +137,24 @@ func test_channel_water_is_contained_by_both_banks() -> void:
 						t.source_cell, i, prof[i], bank])
 	assert_true(checked > 0, "window has contained channel samples to check")
 
-func test_trace_locks_to_the_fall_line_on_steep_ground() -> void:
-	# Owner regression: free meander on steep hillsides let the trace contour
-	# ACROSS the slope, leaving the downhill bank below the water level —
-	# hanging shelf water spilling on every side. Fully-locked steps (|grad| >=
-	# STEEP_HI) must follow the local downhill direction. Depth 0: no junction
-	# steering, so only self-avoidance can bend a step off the fall line.
-	var plan: WaterPlan = _plan()
-	var locked: int = 0
-	var dot_sum: float = 0.0
-	for sz in range(-4, 5):
-		for sx in range(-4, 5):
-			var t: RiverTrace = plan.river_for(Vector2i(sx, sz), 0)
-			if t == null:
+func test_steep_reaches_follow_contours_while_the_bed_descends() -> void:
+	var plan := _plan()
+	var checked := 0
+	var contour_steps := 0
+	for sc in _sources_in(plan, 3):
+		var t := plan.river_for(sc, 0)
+		for i in t.points.size() - 1:
+			var g := plan.grad(t.points[i])
+			if g.length() < WaterPlan.STEEP_HI:
 				continue
-			for i in range(0, t.points.size() - 1):
-				var g: Vector2 = plan.grad(t.points[i])
-				if g.length() < WaterPlan.STEEP_HI:
-					continue
-				var step_dir: Vector2 = (t.points[i + 1] - t.points[i]).normalized()
-				var d: float = step_dir.dot((-g).normalized())
-				locked += 1
-				dot_sum += d
-				assert_true(d >= 0.5,
-					"steep step %d of river %s heads downhill (dot %.2f)" % [i, t.source_cell, d])
-	assert_true(locked > 0, "the window has fully-locked steep reaches")
-	assert_true(dot_sum / float(locked) >= 0.9,
-		"steep reaches hug the fall line on average (mean dot %.2f)" % (dot_sum / float(locked)))
+			checked += 1
+			var heading := (t.points[i + 1] - t.points[i]).normalized()
+			contour_steps += int(absf(heading.dot(g.normalized())) < 0.6)
+			assert_lte(t.beds[i + 1], t.beds[i], "hydraulic bed never climbs along a contour")
+	assert_gt(checked, 20, "real mountain reaches exercised")
+	assert_gt(float(contour_steps) / maxi(checked, 1), 0.5,
+		"most mountain steps follow the hillside instead of rushing straight down")
+
 
 func test_source_pool_never_overtops_its_ring() -> void:
 	# Owner: rivers starting on hills had "a waterfall on all sides" — the pool
@@ -226,29 +217,25 @@ func test_full_depth_rivers_deterministic_across_instances() -> void:
 func test_joined_rivers_touch_higher_priority_water() -> void:
 	var plan: WaterPlan = _plan()
 	var rivers: Array = _all_rivers(plan, 4)
-	var by_cell: Dictionary = {}
-	for t in rivers:
-		by_cell[t.source_cell] = t
-	for t in rivers:
+	for t: RiverTrace in rivers:
 		if not t.joined:
 			continue
-		var tail: Vector2 = t.points[t.points.size() - 1]
-		var found: bool = false
-		for other in rivers:
-			if other.priority <= t.priority:
-				continue
-			# tail must lie inside the other's channel or a pond footprint
-			if other.source_pool != null and other.source_pool.footprint_t(tail) < 1.2:
-				found = true
-			if other.pond != null and other.pond.footprint_t(tail) < 1.2:
-				found = true
-			for i in other.points.size():
-				if tail.distance_to(other.points[i]) <= other.widths[i] + WaterPlan.FEATHER:
-					found = true
-					break
-			if found:
-				break
-		assert_true(found, "joined river %s tail sits in higher-priority water" % t.source_cell)
+		# The discovery halo extends beyond the measured window. Validate the
+		# actual immutable dependency set, including those outside its edges.
+		var index := plan._index_neighbour_rivers(plan._neighbour_rivers(t.source_cell, WaterPlan.JOIN_DEPTH))
+		assert_not_null(plan._join_target(t.points[-1], t.beds[-1], index),
+			"joined tail touches lower water on a higher-priority dependency")
+
+func test_junction_dependencies_remain_in_the_realized_network() -> void:
+	var plan := _plan()
+	for sc in _sources_in(plan, 2):
+		var dependency := plan.river_for(sc, 1)
+		var realized := plan.river_for(sc, WaterPlan.JOIN_DEPTH)
+		assert_gte(realized.points.size(), dependency.points.size(),
+			"a depth-one join target remains present in the final depth-two river")
+		assert_eq(realized.points.slice(0, dependency.points.size()), dependency.points,
+			"junction resolution keeps one immutable route, including every dependent join")
+
 
 func test_every_river_still_ends_in_water_at_full_depth() -> void:
 	for t in _all_rivers(_plan(), 4):

@@ -131,7 +131,7 @@ func test_super_cell_ownership_is_identical_on_both_sides() -> void:
 			water.planning_signed_distance(Vector2(boundary + 0.1, 0.0)), 0.0001)
 
 func test_exact_intervals_use_zero_limit_context_curves_and_reverse() -> void:
-	var water := WaterPlan.new(EXACT_SEED, 22.0, 8)
+	var water := preload("res://tests/fixtures/ReportedWaterPlan.gd").new(EXACT_SEED)
 	var plan := HeightfieldPlan.new(EXACT_SEED, 22.0, 8, "mean", 3)
 	plan.set_water_plan(water)
 	var centre := EXACT_CHUNK * 8 + Vector2i(4, 4)
