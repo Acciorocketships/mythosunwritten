@@ -65,8 +65,8 @@ func test_every_rock_facade_module_stays_within_the_shipped_width() -> void:
 
 
 func test_the_frozen_phases_still_name_the_pre_wave_modules() -> void:
-	## Phases 0-2 are the pre-wave vocabulary in its pre-wave order, so any
-	## recipe asking for a bare phase renders what it rendered before the wave.
+	## Preserve the family order. The September 5 review replaces the narrow
+	## stone plain panel with its full-width sibling in a full-width facade slot.
 	assert_eq(SettlementFabricProgram.WOOD_FACADE_BLUE.slice(0, 3),
 		[&"sfv.fabric.wall.wood.window.001", &"sfv.fabric.wall.wood.window.040",
 			&"sfv.fabric.wall.wood.window.010"] as Array[StringName])
@@ -74,7 +74,7 @@ func test_the_frozen_phases_still_name_the_pre_wave_modules() -> void:
 		[&"sfv.fabric.wall.wood.window.020", &"sfv.fabric.wall.wood.window.060",
 			&"sfv.fabric.wall.wood.window.010"] as Array[StringName])
 	assert_eq(SettlementFabricProgram.ROCK_FACADE.slice(0, 3),
-		[&"sfv.fabric.wall.rock.window.010", &"sfv.fabric.wall.rock.plain.001",
+		[&"sfv.fabric.wall.rock.window.010", &"sfv.fabric.wall.rock.plain.002",
 			&"sfv.fabric.wall.rock.window.010"] as Array[StringName])
 	assert_eq(SettlementFabricProgram.WOOD_DOORS,
 		[SettlementFabricProgram.WOOD_DOOR_CLOSED] as Array[StringName],

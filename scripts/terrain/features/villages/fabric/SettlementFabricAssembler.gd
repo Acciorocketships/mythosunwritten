@@ -18,7 +18,7 @@ const COURTYARD_PLANTER := &"sfv.fabric.planter.003"
 const COURTYARD_PLANTER_LIFT := 0.04
 const COURTYARD_PLANTER_RISE := 0.927858
 const TIMBER_SUPPORT := &"sfv.deck.pillar.001"
-const TIMBER_CORNER_POST := &"sfv.fabric.wall.wood.corner.s.001"
+const TIMBER_CORNER_POST := SettlementFabricProgram.PORTAL_JAMB
 const LOW_RETAINING_WALL := &"sfv.fabric.wall.rock.plain.001"
 ## The authored foundation piece, not a wall panel pressed into service as one.
 ## Same measured envelope as LOW_RETAINING_WALL (1.77 x 3.00 x 0.66, pivot at
@@ -115,6 +115,7 @@ const MAZE_STONE_MODULE := LOW_RETAINING_WALL
 ##   retaining wall, which is correct medieval vocabulary and quaint.
 const TERRAIN_GREEN_CAP := &"kaykit.terrain.top_center"
 const NATURAL_ROCK_FACE := &"kaykit.cliff.wall"
+const TURF_ROCK_CORNER := &"kaykit.cliff.outer_wall"
 ## TASK H2b FIX 1, IMPORTANT 3 -- the bench RIM, and the third module from the
 ## same kit. The grass quad has no thickness: from anywhere but straight
 ## overhead the only thing between lawn and cliff is a LINE, so a bench reads
@@ -1331,13 +1332,32 @@ static func _modular_room_corner_transforms(recipe_value: FabricRecipe) \
 			or recipe_value.has_tag(&"support_house"):
 		half_x = 1.5
 		half_z = 1.5
-	const POST_HALF_WIDTH := 0.375
+	const POST_HALF_WIDTH := 0.14
+	# The kit's "wood.corner" is a handed plaster wall, not a post: adding it
+	# as an unoriented stitch exposes its cream return sheets at every corner.
+	# Use the same solid timber as door jambs, fitted inside the existing square
+	# framing envelope. No facade plane or public-space envelope moves.
+	var post_basis := Basis.from_scale(Vector3(
+		0.28 / 0.28136563, 1.0, 0.28 / 0.5908542))
 	var centre := Vector3(-0.75, 0.0, -0.75)
 	for signs: Vector2 in [Vector2(-1.0, -1.0), Vector2(1.0, -1.0),
 			Vector2(-1.0, 1.0), Vector2(1.0, 1.0)]:
-		out.append(Transform3D(Basis.IDENTITY, centre + Vector3(
+		out.append(Transform3D(post_basis, centre + Vector3(
 			signs.x * (half_x - POST_HALF_WIDTH), 0.0,
 			signs.y * (half_z - POST_HALF_WIDTH))))
+	# A long wall can terminate against another room halfway along its side.
+	# Frame every authored facade-bay endpoint, not just the room AABB corners;
+	# otherwise a suppressed party facade leaves an unstitched T-shaped slot.
+	for x_index in range(1, roundi(half_x * 2.0 / 3.0)):
+		for side in [-1.0, 1.0]:
+			out.append(Transform3D(post_basis, centre + Vector3(
+				-half_x + x_index * 3.0, 0.0,
+				side * (half_z - POST_HALF_WIDTH))))
+	for z_index in range(1, roundi(half_z * 2.0 / 3.0)):
+		for side in [-1.0, 1.0]:
+			out.append(Transform3D(post_basis, centre + Vector3(
+				side * (half_x - POST_HALF_WIDTH), 0.0,
+				-half_z + z_index * 3.0)))
 	return out
 
 
@@ -1588,8 +1608,11 @@ static func maze_ground_skin_transaction(plan: SettlementFabricPlan) -> Dictiona
 	## has become an explicit owner by then.  Payload and audit both consume this
 	## record instead of reconstructing either phase independently.
 	assert(plan != null and plan.surface_plan != null)
-	var retained := plan.retained_terrace_cells
 	var solids := plan.transformed_cells(&"solid")
+	var suspended := suspended_plaza_cells(plan, solids)
+	var retained := plan.retained_terrace_cells.duplicate()
+	for cell: Vector3i in suspended:
+		retained.erase(cell)
 	var bearing := plan.transformed_cells(&"terrain_bearing")
 	var paved := public_floor_cells(plan.surface_plan)
 	var walked := walked_floor_cells(plan.surface_plan)
@@ -1641,6 +1664,7 @@ static func maze_ground_skin_transaction(plan: SettlementFabricPlan) -> Dictiona
 		footprints)
 	return {
 		"retained": retained,
+		"suspended_plaza": suspended,
 		"solids": solids,
 		"bearing": bearing,
 		"paved": paved,
@@ -1653,6 +1677,25 @@ static func maze_ground_skin_transaction(plan: SettlementFabricPlan) -> Dictiona
 		"cap_owners": final_cap_owners,
 		"shell": shell,
 	}
+
+
+static func suspended_plaza_cells(plan: SettlementFabricPlan,
+		solids: Dictionary) -> Dictionary:
+	## A planted public deck over air is structural floor, not a one-cell rock
+	## column. Its source support marker cannot manufacture a dangling six-metre
+	## wall. Real retained/inhabited mass directly beneath keeps its normal skin.
+	var out: Dictionary = {}
+	for cell: Vector3i in plan.planned_plaza_cells:
+		var base_band := 0
+		if plan.surface_plan != null \
+				and plan.surface_plan.has_support_base(cell + Vector3i.UP):
+			base_band = plan.surface_plan.support_base_at(cell + Vector3i.UP)
+		if cell.y <= base_band:
+			continue
+		if not plan.retained_terrace_cells.has(cell + Vector3i.DOWN) \
+				and not solids.has(cell + Vector3i.DOWN):
+			out[cell] = true
+	return out
 
 
 static func close_borne_turf_corners(garden: Dictionary,
@@ -1807,15 +1850,29 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan,
 	var skin_boxes := maze_skin_panel_boxes(retained, solids, paved, plinths,
 		shell.treatments as Dictionary, shell)
 	var out := _plinth_payload(plinths)
+	var suspended_floor := EnvironmentInstancePayload.new()
+	var suspended_cells: Array[Vector3i] = []
+	for cell: Vector3i in transaction.suspended_plaza:
+		suspended_cells.append(cell + Vector3i.UP)
+	_append_plank_tiles(suspended_floor, suspended_cells,
+		PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT)
+	for asset: StringName in suspended_floor.batches:
+		var batch := suspended_floor.batches[asset] as Dictionary
+		for index in (batch.transforms as Array).size():
+			var transform := batch.transforms[index] as Transform3D
+			transform.origin.y -= 0.20
+			batch.transforms[index] = transform
+			batch.ids[index] = StringName("turf-substrate/%s" % batch.ids[index])
+	out.append_from(suspended_floor)
 	out.append_from(maze_stone_walls(retained, solids, paved, plinths, walked,
 		shell, plan.world_seed, capped_ground_cells))
+	out.append_from(masonry_corner_joints(retained, solids))
 	# Terrain-parity surface: grass is one exact procedural cell union, never a
 	# collection of scaled KayKit panels. Shared boundaries eliminate panel gaps;
 	# the streaming commit binds the same ground palette/UV as TerrainChunkMesher
 	# and production fills the same world-space biome tint field.
 	var terrain_controls := maze_terrain_control_surface_cells(plan)
-	var terrain_region := maze_terrain_surface_region(retained,
-		capped_ground_cells, terrain_controls)
+	var terrain_region := maze_terrain_surface_region(capped_ground_cells, terrain_controls)
 	# The ordinary yard and the planned village green are one continuous turf
 	# field.  Splitting them into two meshes left the centre dependent on a
 	# second selection dictionary and put the two halves on different lifts,
@@ -1885,31 +1942,17 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan,
 	return out
 
 
-static func maze_terrain_surface_region(retained: Dictionary,
-		capped_cells: Dictionary, control_surface_cells: Dictionary = {}) \
+static func maze_terrain_surface_region(capped_cells: Dictionary,
+		control_surface_cells: Dictionary = {}) \
 		-> LatticeTerrainSurfaceRegion:
-	## Column tops are derived once from the same retained-mass authority that
-	## emits the village shell. The renderer only selects green owners from this
-	## field; buildings and public surfaces remain buildings and public surfaces.
+	## Only finished surface owners supply height controls. Retained occupancy
+	## describes structure, not exposed ground: a lower block beneath a timber
+	## deck must never pull its lawn down through that deck's substrate.
 	## Missing neighbours sit at least two bands down, so the standard terrain
-	## classifier makes a real cliff there. A one-band retained transition becomes
+	## classifier makes a real cliff there. A one-band selected turf transition becomes
 	## the same shared-control slope the streamed world would render.
 	var tops: Dictionary = {}
 	var minimum_top := 2147483647
-	for cell_value: Variant in retained.keys():
-		var cell := cell_value as Vector3i
-		var tag: Variant = retained[cell]
-		# The shared channel also carries ordinary building foundations as
-		# booleans. Only the explicitly tagged raw massif belongs to this field.
-		if typeof(tag) != TYPE_STRING_NAME:
-			continue
-		if tag != MAZE_STONE_TAG:
-			continue
-		var column := Vector2i(cell.x, cell.z)
-		var top := cell.y + 1
-		if top > int(tops.get(column, -2147483648)):
-			tops[column] = top
-			minimum_top = mini(minimum_top, top)
 	# Planned plaza cells can be structural public ground rather than retained
 	# stone. They still name their exact surface datum in the same fine lattice.
 	# This is an OVERRIDE, not another candidate for the column maximum: the
@@ -3061,6 +3104,40 @@ static func walked_floor_cells(surface_plan: PublicRealmSurfacePlan) \
 	return out
 
 
+static func masonry_corner_joints(retained: Dictionary, solids: Dictionary) \
+		-> EnvironmentInstancePayload:
+	## Recessed wall skins leave an open joint at a three-cell concave corner
+	## or a two-cell diagonal contact. One timber member owns that lattice vertex
+	## through each occupied band. Straight runs and buried four-cell vertices
+	## need no extra member. All owners discover the same integer key.
+	var occupied := solids.duplicate()
+	occupied.merge(retained)
+	var joints: Dictionary = {}
+	for cell: Vector3i in retained:
+		for dx in [-1, 1]:
+			for dz in [-1, 1]:
+				var diagonal := occupied.has(cell + Vector3i(dx,0,dz))
+				var side_x := occupied.has(cell + Vector3i(dx,0,0))
+				var side_z := occupied.has(cell + Vector3i(0,0,dz))
+				if (diagonal and not side_x and not side_z) \
+						or int(diagonal) + int(side_x) + int(side_z) == 2:
+					joints[Vector3i(cell.x * 2 + dx, cell.y, cell.z * 2 + dz)] = true
+	var keys: Array[Vector3i] = []
+	keys.assign(joints.keys())
+	keys.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+		return a.y < b.y if a.y != b.y else a.z < b.z if a.z != b.z else a.x < b.x)
+	var out := EnvironmentInstancePayload.new()
+	var width := STONE_CAP_HALF_DEPTH * 2.0
+	for key: Vector3i in keys:
+		var position := Vector3(key.x * FabricRecipe.CELL_SIZE * 0.5,
+			key.y * FabricRecipe.CELL_SIZE, key.z * FabricRecipe.CELL_SIZE * 0.5)
+		out.add(TIMBER_SUPPORT, Transform3D(Basis.from_scale(Vector3(
+			width / 0.28136563, FabricRecipe.CELL_SIZE / 3.0,
+			width / 0.5908542)), position), Color.WHITE,
+			StringName("masonry-joint/%d/%d/%d" % [key.x,key.y,key.z]))
+	return out
+
+
 static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 		paved: Dictionary = {}, plinths: Dictionary = {},
 		walked: Dictionary = {},
@@ -3098,16 +3175,55 @@ static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 	var faces := derived.faces as Dictionary
 	var treatments := derived.treatments as Dictionary
 	var exposed := derived.exposed as Dictionary
+	var turf_faces_done: Dictionary = {}
 	var keys: Array[Vector4i] = []
 	keys.assign(faces.keys())
 	keys.sort_custom(_face_before)
 	for key: Vector4i in keys:
+		if turf_faces_done.has(key):
+			continue
 		var cell := Vector3i(key.x, key.y, key.z)
 		var direction := STONE_FACE_DIRECTIONS[key.w]
 		var partner := faces[key] as Vector3i
 		var cap_partner := maze_green_cap_partner(key, partner, exposed)
 		var stable_id := StringName("maze-stone/%d/%d/%d/%d" % [key.x, key.y,
 			key.z, key.w])
+		if direction.y == 0 and finished_turf.has(cell) \
+				and int(treatments[key]) == SkinTreatment.MASONRY:
+			# The top retaining course and rolled grass are one authored terrain
+			# seam. Square SFV masonry reaches beyond the KayKit lip's recessed
+			# nose; sinking it vertically cannot fix that horizontal intersection.
+			# Use the matching straight/corner rock in the same slot as its lip.
+			var turn := Vector2i.ZERO
+			var paired_key := key
+			for other_dir: Vector3i in FACE_DIRECTIONS:
+				if direction.x * other_dir.x + direction.z * other_dir.z != 0:
+					continue
+				var other_key := Vector4i(cell.x, cell.y, cell.z,
+					STONE_FACE_DIRECTIONS.find(other_dir))
+				if faces.has(other_key) and not turf_faces_done.has(other_key) \
+						and int(treatments[other_key]) == SkinTreatment.MASONRY:
+					turn = Vector2i(direction.x + other_dir.x,
+						direction.z + other_dir.z)
+					paired_key = other_key
+					break
+			var trim := maze_stone_face_overhangs_walk(key, walked)
+			var height := FabricRecipe.CELL_SIZE if trim else STONE_MODULE_HEIGHT
+			var rock := _maze_green_rim_corner_transform(cell, turn) \
+				if turn != Vector2i.ZERO else _maze_green_rim_transform(
+					cell, direction, GREEN_CAP_CROSS_SCALE, 0.0)
+			rock.origin.y -= GREEN_RIM_LIFT + height
+			rock.basis.y = Vector3.UP * (height / CliffDressing.STOREY)
+			if paired_key != key:
+				stable_id = StringName("%s/paired/%d" % [stable_id, paired_key.w])
+			out.add(TURF_ROCK_CORNER if turn != Vector2i.ZERO else NATURAL_ROCK_FACE,
+				rock, Color.WHITE, stable_id)
+			_append_turf_wall_collision(out, key, walked)
+			turf_faces_done[key] = true
+			if paired_key != key:
+				_append_turf_wall_collision(out, paired_key, walked)
+				turf_faces_done[paired_key] = true
+			continue
 		# A public plank finish owns the top of this vertical boundary. Sink the
 		# wall to the board's underside so its irregular authored top cannot poke
 		# through the finished walking plane. The decision comes from the sealed
@@ -3165,6 +3281,23 @@ static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 					maze_masonry_tint(key, world_seed), stable_id)
 	assert(out.validate())
 	return out
+
+
+static func _append_turf_wall_collision(out: EnvironmentInstancePayload,
+		face: Vector4i, walked: Dictionary) -> void:
+	## Terrain dressing has no baked physics. The sealed wall face, not the
+	## irregular decorative rock, owns collision just as streamed cliff skirts do.
+	var direction := Vector3(STONE_FACE_DIRECTIONS[face.w])
+	var height := FabricRecipe.CELL_SIZE if maze_stone_face_overhangs_walk(
+		face, walked) else STONE_MODULE_HEIGHT
+	var centre := Vector3(face.x, face.y + 1, face.z) * FabricRecipe.CELL_SIZE
+	centre += direction * (FabricRecipe.CELL_SIZE * 0.5 - 0.05)
+	centre.y -= height * 0.5
+	var size := Vector3(FabricRecipe.CELL_SIZE, height, 0.10)
+	if direction.x != 0.0:
+		size = Vector3(0.10, height, FabricRecipe.CELL_SIZE)
+	out.add_collision_box(Transform3D(Basis.IDENTITY, centre), size,
+		StringName("turf-wall/%d/%d/%d/%d" % [face.x, face.y, face.z, face.w]))
 
 
 static func _append_maze_floor_soffit(out: EnvironmentInstancePayload,
@@ -3493,7 +3626,8 @@ static func maze_turf_clip_cache(cells: Dictionary,
 				cache[Vector2i(cell.x + dx, cell.z + dz)] = null
 	for cell: Vector3i in cells:
 		cache[Vector2i(cell.x, cell.z)] = {"dirs": {}, "corners": {},
-			"sheet_edge_lift": maxf(0.0, GREEN_RIM_LIFT - GREEN_CAP_LIFT - 0.005)}
+			"sheet_edge_lift": maxf(0.0, GREEN_RIM_LIFT - GREEN_CAP_LIFT - 0.005),
+			"max_uncapped_drape": 0.0}
 	var faces: Array[Vector4i] = []
 	faces.assign(layout.faces)
 	for corner: Vector4i in layout.corners:
@@ -4573,7 +4707,8 @@ static func maze_garden_rim_face_count(shell: Dictionary,
 	## -- and the compiler, which does, passes them.
 	var layout := maze_green_rim_layout(shell, walked, paved, footprints,
 		capped_cells, use_capped_cells, terrain_region)
-	return (layout.faces as Array).size() + (layout.corners as Array).size()
+	return (layout.faces as Array).size() + (layout.corners as Array).size() \
+		+ (layout.get("inner_corners", []) as Array).size()
 
 
 static func maze_green_rim_standoff(face: Vector4i,
@@ -4631,6 +4766,7 @@ static func _maze_green_rim_transform(cell: Vector3i, direction: Vector3i,
 	origin.y = float(cell.y + 1) * FabricRecipe.CELL_SIZE + GREEN_RIM_LIFT
 	var basis := Basis(Vector3.UP, atan2(outward.x, outward.z))
 	basis.x = basis.x * GREEN_CAP_CROSS_SCALE
+	basis.y = basis.y * GREEN_CAP_CROSS_SCALE
 	basis.z = basis.z * depth_scale
 	return Transform3D(basis, origin)
 
@@ -7047,7 +7183,9 @@ static func maze_facade_outcrop_kinds(retained: Dictionary, solids: Dictionary,
 		# BUILT mass, so a bay could hang its corbels inside the roof of the
 		# house across the street. The skywalk path has carried the matching
 		# guard since it landed (`SKYWALK_UNDERCUT_BANDS`); this is its twin.
-		for band in range(0, STONE_COURSE_BANDS + 1):
+		# The covering course bears above the wall top, so reserve that band
+		# as well as the wall and its lower support envelope.
+		for band in range(-1, STONE_COURSE_BANDS + 1):
 			var probe := front - Vector3i.UP * band
 			free = free and not solids.has(probe) and not retained.has(probe) \
 				and not paved.has(probe) and not walked.has(probe) \
@@ -7227,8 +7365,10 @@ static func maze_facade_outcroppings(retained: Dictionary, solids: Dictionary,
 					Color.WHITE, StringName("%s/cheek/%d" % [stable, side]))
 			var cap_origin := boundary \
 				+ outward * (FabricRecipe.CELL_SIZE * 0.5)
-			cap_origin.y = float(key.y + 1) * FabricRecipe.CELL_SIZE \
-				- SKYWALK_DECK_THICKNESS
+			# A covering course bears ON the wall, unlike a public floor whose
+			# authored top is aligned to a walk plane. Recessing this cap by its
+			# thickness made its top coplanar with the wall's horizontal faces.
+			cap_origin.y = float(key.y + 1) * FabricRecipe.CELL_SIZE
 			var cap_basis := Basis(Vector3.UP, yaw)
 			out.add(PLANK_GALLERY, Transform3D(cap_basis, cap_origin),
 				Color.WHITE, StringName("%s/cap" % stable))
@@ -7254,8 +7394,7 @@ static func maze_facade_outcroppings(retained: Dictionary, solids: Dictionary,
 					Transform3D(Basis(Vector3.UP, yaw), post_origin),
 					Color.WHITE, StringName("%s/post/%d" % [stable, side]))
 			var cap_origin := boundary + outward * (FACADE_BUMP_REACH * 0.5)
-			cap_origin.y = float(key.y + 1) * FabricRecipe.CELL_SIZE \
-				- SKYWALK_DECK_THICKNESS
+			cap_origin.y = float(key.y + 1) * FabricRecipe.CELL_SIZE
 			out.add(PLANK_GALLERY,
 				Transform3D(Basis(Vector3.UP, yaw), cap_origin), Color.WHITE,
 				StringName("%s/cap" % stable))
@@ -7473,18 +7612,14 @@ static func maze_terrain_control_surface_cells(plan: SettlementFabricPlan) \
 		-> Dictionary:
 	## The complete lattice-height field needed to evaluate the selected village
 	## turf with TerrainSurfaceField. Public surfaces are controls even when their
-	## own planks/path remain the render authority. A planned green also carries a
-	## one-cell non-rendered control ring so its complete boundary stays level;
-	## absent lattice controls otherwise mean a two-band drop to the field kernel.
+	## own planks/path remain the render authority. Never invent a same-height
+	## ring around a green: it erases its exposed-edge classification and leaves
+	## a floating paper edge. Missing neighbours are real drops; the shared
+	## kernel already keeps cliff tops level without phantom control cells.
 	var out: Dictionary = {}
 	if plan == null:
 		return out
 	out = rendered_surface_cap_cells(plan.surface_plan)
-	for plaza_value: Variant in plan.planned_plaza_cells.keys():
-		var plaza_surface := plaza_value as Vector3i + Vector3i.UP
-		for dx in range(-1, 2):
-			for dz in range(-1, 2):
-				out[plaza_surface + Vector3i(dx, 0, dz)] = true
 	return out
 
 
@@ -7922,7 +8057,12 @@ static func _append_courtyard_paving(out: EnvironmentInstancePayload,
 		var exposed: Array[Vector3i] = []
 		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
 				Vector3i.FORWARD, Vector3i.BACK]:
-			if plan == null or not plan.has_cell(cell + direction):
+			var route_neighbor := false
+			if plan != null:
+				for band in range(-1, 2):
+					route_neighbor = route_neighbor or plan.has_cell(
+						cell + direction + Vector3i(0, band, 0))
+			if not route_neighbor:
 				exposed.append(direction)
 		var has_corner := false
 		for first: Vector3i in exposed:
@@ -7932,18 +8072,9 @@ static func _append_courtyard_paving(out: EnvironmentInstancePayload,
 		if has_corner and maze_courtyard_planter_is_clear(footprints, cell,
 				skin):
 			corner_cells.append(cell)
-	# TASK I4 ROUND 6, B2 -- EVERY DECOR CHANNEL IS GATED, INCLUDING THIS ONE.
-	# The garden planting learnt in round 5 that a lattice cell is not free
-	# space; this channel never learnt anything, and it has stood the same
-	# `sfv.fabric.planter.003` on a court corner since the courts were built with
-	# no measurement of what is really there. The fallback is filtered too: an
-	# unclear corner is not a better place to stand a planter merely because no
-	# corner was clear.
-	if corner_cells.size() < 2:
-		corner_cells.assign([])
-		for cell: Vector3i in cells:
-			if maze_courtyard_planter_is_clear(footprints, cell, skin):
-				corner_cells.append(cell)
+	# Optional furniture has no quota. The former fallback searched every floor
+	# cell when fewer than two corners fit, putting two planters directly across
+	# the stair approach. A missing safe exterior corner means no planter.
 	if corner_cells.is_empty():
 		return
 	corner_cells.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:

@@ -269,25 +269,20 @@ func test_turf_field_uses_only_level_cross_material_controls() -> void:
 	var capped := {Vector3i(0, 4, 0): true}
 	var lower_public := {Vector3i(0, 4, 1): true}
 	var lower_region := SettlementFabricAssembler.maze_terrain_surface_region(
-		{}, capped, lower_public)
+		capped, lower_public)
 	assert_eq(lower_region.storey_at(0, 1), 3,
 		"a lower street behind a retained wall must remain a cliff fallback")
 	var level_public := {Vector3i(0, 5, 1): true}
 	var level_region := SettlementFabricAssembler.maze_terrain_surface_region(
-		{}, capped, level_public)
+		capped, level_public)
 	assert_eq(level_region.storey_at(0, 1), 5,
 		"an equal-height path/plank seam must share the turf control plane")
 
 
-func test_selected_turf_owns_its_datum_below_higher_retained_mass() -> void:
-	var retained := {
-		Vector3i(0, 3, 0): SettlementFabricAssembler.MAZE_STONE_TAG,
-		Vector3i(0, 4, 0): SettlementFabricAssembler.MAZE_STONE_TAG,
-		Vector3i(0, 5, 0): SettlementFabricAssembler.MAZE_STONE_TAG,
-	}
+func test_selected_turf_alone_owns_its_datum() -> void:
 	var capped := {Vector3i(0, 3, 0): true}
 	var region := SettlementFabricAssembler.maze_terrain_surface_region(
-		retained, capped)
+		capped)
 	assert_eq(region.storey_at(0, 0), 4,
 		"the selected garden floor must not be lifted onto masonry above it")
 

@@ -275,6 +275,32 @@ func test_compute_chunk_payload_is_safe_to_cross_the_worker_boundary():
 	assert_false(_contains_scene_or_server_resource(payload),
 		"worker payload contains data only; nodes, meshes, materials, and shapes are committed on the main thread")
 
+func test_path_boundary_partitions_are_welded_and_preserve_the_ground_triangle() -> void:
+	var vertices: Array[Vector3] = [Vector3(0,1,0),Vector3(1,2,0),Vector3(0,1,1)]
+	var colors: Array[Color] = [Color.RED,Color.GREEN,Color.BLUE]
+	var predicate := func(p: Vector2) -> bool: return p.x + p.y > 0.37
+	var parts := Mesher.partition_paint_triangle(vertices, colors, [false,true,true], predicate)
+	var area := 0.0
+	var boundary: Array[Vector3] = []
+	for part: Dictionary in parts:
+		for index in range(1, part.vertices.size() - 1):
+			area += (part.vertices[index] - part.vertices[0]).cross(
+				part.vertices[index+1] - part.vertices[0]).length() * 0.5
+		for point: Vector3 in part.vertices:
+			assert_almost_eq(point.y, 1.0 + point.x, 0.00001, "paint remains on the original triangle")
+			if absf(point.x + point.z - 0.37) < 0.0001:
+				boundary.append(point)
+	assert_almost_eq(area, 0.5 * sqrt(2.0), 0.00001, "no overlap and no removed area")
+	assert_eq(boundary.size(), 4)
+	assert_eq(boundary[0], boundary[2], "both paint owners use bit-identical boundary vertices")
+	assert_eq(boundary[1], boundary[3])
+	var reversed := Mesher.partition_paint_triangle(
+		[vertices[2],vertices[1],vertices[0]], [colors[2],colors[1],colors[0]],
+		[true,true,false], predicate)
+	for point: Vector3 in boundary:
+		assert_true(reversed[0].vertices.has(point), "reversed neighbouring winding cannot move the seam")
+
+
 func test_path_paint_changes_only_walkable_sheet_uvs() -> void:
 	var p = _plan()
 	var m := Mesher.new()
@@ -327,6 +353,34 @@ func test_path_paint_changes_only_walkable_sheet_uvs() -> void:
 		"the single ground layer at the reported path is the path palette")
 	assert_false(_has_axis_aligned_t_junction(after),
 		"adaptive path patches stitch every fine boundary vertex into coarse grass")
+
+func test_graded_terrain_has_one_visible_sheet_and_matching_collision() -> void:
+	var p = _plan()
+	p.set_raw_height_override(func(_x: int, _z: int) -> float: return 0.0)
+	var region := _region_for(p, Vector2i.ZERO).with_terrain_grades([
+		TerrainGradePatch.new(&"graded", {Vector2i.ZERO: 1.08}, Vector2(49.5, 49.5), 3.0)])
+	var m := Mesher.new()
+	m.prepare_resources()
+	var payload := m.compute_chunk(Vector2i.ZERO, region)
+	var arrays: Array = payload.surface_arrays
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var collisions: PackedVector3Array = payload.collision_faces
+	var visual_points: Dictionary = {}
+	for vertex: Vector3 in vertices:
+		visual_points[vertex] = true
+	var mismatches := 0
+	var checked := 0
+	for vertex: Vector3 in collisions:
+		if Rect2(40, 40, 18, 18).has_point(Vector2(vertex.x, vertex.z)):
+			checked += 1
+			if not visual_points.has(vertex):
+				mismatches += 1
+	assert_gt(checked, 100, "graded collision follows the fine terrain tessellation")
+	assert_eq(mismatches, 0, "collision and visual terrain use identical vertices")
+	assert_eq(_surface_uv_layers_at(arrays, Vector2(49.37, 49.41),
+		SlopeAtlas.path_spot_uv()).size(), 1, "no second ground sheet")
+	assert_false(_has_axis_aligned_t_junction(arrays), "grade collar joins coarse terrain")
+
 
 func test_build_returns_meshinstance_with_geometry():
 	var p = _plan()

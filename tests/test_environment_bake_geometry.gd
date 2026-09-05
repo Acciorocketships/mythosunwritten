@@ -1,5 +1,23 @@
 extends GutTest
 
+func test_diagonal_corner_cut_preserves_channels_and_stays_inside_source() -> void:
+	var source_root := Node3D.new()
+	var material := StandardMaterial3D.new()
+	source_root.add_child(_box_instance("Panel", Vector3(0, 1.5, 0),
+		Vector3(3, 3, 0.6), material))
+	var mesh := EnvironmentBakeGeometry.merge_pieces(source_root, Transform3D.IDENTITY)
+	var plane := Plane(Vector3(1, 0, -1), 1.2)
+	var clipped := EnvironmentBakeGeometry.clip_half_space(mesh, plane)
+	assert_not_null(clipped)
+	assert_eq(clipped.surface_get_material(0), material)
+	assert_true(mesh.get_aabb().grow(0.0001).encloses(clipped.get_aabb()))
+	var arrays := clipped.surface_get_arrays(0)
+	for vertex: Vector3 in arrays[Mesh.ARRAY_VERTEX]:
+		assert_lte(plane.normal.dot(vertex), plane.d + 0.0001)
+	assert_eq((arrays[Mesh.ARRAY_NORMAL] as PackedVector3Array).size(),
+		(arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size())
+	source_root.free()
+
 func _box_instance(name: String, position: Vector3, size: Vector3,
 		material: Material) -> MeshInstance3D:
 	var instance := MeshInstance3D.new()

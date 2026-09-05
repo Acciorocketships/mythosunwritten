@@ -9,6 +9,10 @@ var _payload: EnvironmentInstancePayload
 var connection_masks: Dictionary
 var node_cells: Dictionary
 var bridge_cells: Dictionary
+var terrain_grades: Array[TerrainGradePatch] = []
+
+func graded_region(natural: HeightfieldRegion) -> HeightfieldRegion:
+	return natural.with_terrain_grades(terrain_grades)
 
 func _init(p_coverage: Rect2, ground: FeatureGroundField,
 		p_payload: EnvironmentInstancePayload, masks: Dictionary = {},
@@ -56,6 +60,8 @@ func extended(surface_shapes: Array[FeatureGroundShape],
 	assert(additional_payload != null)
 	var combined_payload := _payload.duplicate_payload()
 	combined_payload.append_from(additional_payload, ownership)
-	return FeatureContext.new(_coverage,
+	var result := FeatureContext.new(_coverage,
 		_ground.extended(surface_shapes, clearance_shapes), combined_payload,
 		connection_masks, node_cells, bridge_cells)
+	result.terrain_grades.assign(terrain_grades)
+	return result

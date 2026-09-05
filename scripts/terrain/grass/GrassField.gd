@@ -449,7 +449,7 @@ static func _surface_y(region: HeightfieldRegion, cache: Dictionary,
 		roundi(z / TerrainSurfaceField.TILE))
 	if not cache.has(cell):
 		cache[cell] = TerrainSurfaceField.bake_cell(region, cell.x, cell.y)
-	return TerrainSurfaceField.sample_baked(cache[cell], cell.x, cell.y, x, z)
+	return TerrainSurfaceField.sample_baked(cache[cell], cell.x, cell.y, x, z, region)
 
 static func _biome_dot(values: PackedFloat32Array, weights: Dictionary) -> float:
 	var total := 0.0

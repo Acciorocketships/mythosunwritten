@@ -37,7 +37,13 @@ static func _cell_of(v: float, region = null) -> int:
 # (The previous outer-half-only band crammed the drop into ~6u ≈ 34° — angular & barely
 # climbable; this restores the gentle slopes the owner liked in the old slope tiles.)
 static func _edge_weight(off_along_dir: float, half: float = HALF) -> float:
-	return SlopeProfile.smootherstep(clampf(off_along_dir / half, 0.0, 1.0))
+	return transition_weight(off_along_dir, half)
+
+
+## One physical transition profile for natural slopes and sealed ground edits.
+## Construction pitch controls snapping, not the length of an outdoor slope.
+static func transition_weight(distance: float, width: float = HALF) -> float:
+	return SlopeProfile.smootherstep(clampf(distance / width, 0.0, 1.0))
 
 const _DIAGONALS := [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
 
@@ -253,6 +259,13 @@ static func surface_y(region, x: float, z: float) -> float:
 ## structural stencils from inheriting an unrelated far edge of the same 12 m
 ## quadrant while retaining a proof rather than a sample-density assumption.
 static func height_bounds(region, footprint: Rect2) -> Vector2:
+	var natural := _natural_height_bounds(region, footprint)
+	if region.has_method("graded_height_bounds"):
+		return region.graded_height_bounds(footprint, natural)
+	return natural
+
+
+static func _natural_height_bounds(region, footprint: Rect2) -> Vector2:
 	assert(region != null)
 	assert(is_finite(footprint.position.x) and is_finite(footprint.position.y))
 	assert(is_finite(footprint.size.x) and is_finite(footprint.size.y))
@@ -291,7 +304,7 @@ static func height_bounds(region, footprint: Rect2) -> Vector2:
 					for point: Vector2 in [Vector2(lo_x, lo_z),
 							Vector2(hi_x, lo_z), Vector2(hi_x, hi_z),
 							Vector2(lo_x, hi_z)]:
-						var height := surface_y_in_cell(region,
+						var height := _natural_surface_y_in_cell(region,
 							point.x, point.y, cx, cz)
 						minimum = minf(minimum, height)
 						maximum = maxf(maximum, height)
@@ -325,6 +338,14 @@ static func _quadrant_corner_height(region, cx: int, cz: int,
 # boundary (no slanted face); the vertical drop to the lower cell is then a separate rock skirt.
 # For a point inside its natural cell this is identical to surface_y.
 static func surface_y_in_cell(region, x: float, z: float, cx: int, cz: int) -> float:
+	return _apply_grade(region, x, z, _natural_surface_y_in_cell(region, x, z, cx, cz))
+
+static func _apply_grade(region, x: float, z: float, height: float) -> float:
+	return region.graded_height(x, z, height) \
+		if region != null and region.has_method("graded_height") else height
+
+static func _natural_surface_y_in_cell(region, x: float, z: float,
+		cx: int, cz: int) -> float:
 	var h: float = region.surface_height(cx, cz)
 	# A cliff top is FLAT (its lip needs flat backing); the KayKit tile draws its edges.
 	if _is_cliff_top(region, cx, cz):
@@ -395,7 +416,7 @@ static func bake_cell(region, cx: int, cz: int) -> PackedFloat32Array:
 static func sample_baked(baked: PackedFloat32Array, cx: int, cz: int,
 		x: float, z: float, region = null) -> float:
 	if baked[0] > 0.5:
-		return baked[1]
+		return _apply_grade(region, x, z, baked[1])
 	var h := baked[1]
 	var span := tile_size(region)
 	var half := span * 0.5
@@ -411,4 +432,4 @@ static func sample_baked(baked: PackedFloat32Array, cx: int, cz: int,
 	var near_drop := lerpf(0.0, d_x, a)
 	var far_drop := lerpf(d_z, d_corner, a)
 	var drop := lerpf(near_drop, far_drop, b)
-	return h - drop
+	return _apply_grade(region, x, z, h - drop)

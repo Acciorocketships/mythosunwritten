@@ -27,6 +27,7 @@ var volumetric_spatial: WarrenSpatialPlan
 ## Review, navigation, and future gameplay consumers use this same authored
 ## frame instead of trying to recover it from render placements or bounds.
 var world_transform := Transform3D.IDENTITY
+var terrain_grade: TerrainGradePatch
 ## Stable identity of the public circulation union. Later edge districts use
 ## this exact fact when they continue a route across the urban/outskirts seam;
 ## they never reconstruct an equivalent-looking name from the generation kind.
@@ -265,6 +266,7 @@ func _validate_compiled_fabric(program: VillageProgram) -> bool:
 		if asset_id.is_empty() or not allowed.has(asset_id) \
 				or stable_entry_id.is_empty() or entry_ids.has(stable_entry_id) \
 				or not (entry.get("transform") is Transform3D):
+			push_error("compiled fabric entry: %s %s allowed=%s" % [stable_entry_id, asset_id, allowed.has(asset_id)])
 			return false
 		entry_ids[stable_entry_id] = true
 	for mesh: Dictionary in surface_meshes:

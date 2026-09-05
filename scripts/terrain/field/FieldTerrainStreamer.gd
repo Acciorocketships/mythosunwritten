@@ -408,7 +408,7 @@ func _worker() -> void:
 			_begin_worker_phase(c, &"grass_feature_context")
 			var grass_features := _features.context_for(c)
 			_begin_worker_phase(c, &"grass_fields")
-			var grass_region := _fields.region(c)
+			var grass_region := grass_features.graded_region(_fields.region(c))
 			var grass_water := _fields.water(c)
 			_begin_worker_phase(c, &"grass_placement")
 			var grass_payload := GrassField.compute(_grass_program, world_seed, tile,
@@ -439,7 +439,7 @@ func _worker() -> void:
 				_set_startup_worker_progress(c, 0.58)
 			if job.build_terrain:
 				_begin_worker_phase(c, &"heightfield_region")
-				var region := _fields.region(c)
+				var region := features.graded_region(_fields.region(c))
 				_set_startup_worker_progress(c, 0.62)
 				_begin_worker_phase(c, &"water_context")
 				var water_context := _fields.water(c)

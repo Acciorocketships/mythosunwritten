@@ -72,7 +72,11 @@ func _build(frame: VillageFrame) -> VillageRecord:
 	if urban_fabric.accepted:
 		_materialize_urban_fabric(urban_fabric, payload, surfaces,
 			clearances, occupancy)
-	var outskirts := VillageOutskirtsSolver.solve(terrain,
+	# The town and its neighbours must survey the same finished ground. Sampling
+	# untouched nature here introduced competing lower pads beside town doors.
+	var outskirts_terrain := terrain.with_terrain_grades([urban_fabric.terrain_grade]) \
+		if urban_fabric.terrain_grade != null else terrain
+	var outskirts := VillageOutskirtsSolver.solve(outskirts_terrain,
 		frame.settlement_id, frame.centre, street_axis, tier, theme, _program,
 		urban_fabric, occupancy.volumes(), frame.path_ground) \
 			if urban_fabric.accepted \
@@ -90,6 +94,8 @@ func _build(frame: VillageFrame) -> VillageRecord:
 		prop_results[slot.stable_key] = &"generated_fabric_owned"
 	var bounds := _record_bounds(frame.centre, payload, surfaces, clearances,
 		occupancy.volumes(), _program)
+	if urban_fabric.terrain_grade != null:
+		bounds = bounds.merge(urban_fabric.terrain_grade.bounds)
 	var record := VillageRecord.new(frame.settlement_id, frame.centre, bounds,
 		payload, surfaces, clearances, occupancy.volumes())
 	record.tier = tier

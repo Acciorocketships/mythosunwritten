@@ -318,7 +318,11 @@ func test_structural_support_rhythm_anchors_corners_and_native_edge_pitch() \
 
 
 func test_every_modular_room_shell_has_four_symmetric_corner_posts() -> void:
+	assert_eq(SettlementFabricAssembler.TIMBER_CORNER_POST,
+		SettlementFabricProgram.PORTAL_JAMB,
+		"room stitches must be solid timber, not a plaster corner-wall panel")
 	var program := _program()
+	var catalog := EnvironmentCatalog.load_default()
 	for recipe_id: StringName in [
 		&"room.base.rock", &"room.tower.base.rock",
 		&"room.slim.base.rock", &"room.row.base.rock",
@@ -330,14 +334,20 @@ func test_every_modular_room_shell_has_four_symmetric_corner_posts() -> void:
 			continue
 		var posts := SettlementFabricAssembler \
 			._modular_room_corner_transforms(recipe_value)
-		assert_eq(posts.size(), 4,
-			"%s needs one explicit timber post at every corner" % recipe_id)
+		assert_gte(posts.size(), 4,
+			"%s needs timber at corners and intermediate facade joints" % recipe_id)
 		var positions: Dictionary = {}
 		for post: Transform3D in posts:
 			var origin := post.origin
 			positions[Vector2(origin.x, origin.z)] = true
-		assert_eq(positions.size(), 4,
+		assert_eq(positions.size(), posts.size(),
 			"corner framing may not double one side and omit the other")
+		for post: Transform3D in posts:
+			var bounds := post * catalog.descriptor(
+				SettlementFabricAssembler.TIMBER_CORNER_POST).measured_aabb
+			assert_almost_eq(bounds.size.x, 0.28, 0.001,
+				"corner stitches must stay at the facade's timber scale")
+			assert_almost_eq(bounds.size.z, 0.28, 0.001)
 
 
 func test_named_upper_courtyard_uses_distinct_collision_aligned_paving() \
@@ -891,10 +901,12 @@ func test_addressed_room_vocabulary_has_two_exact_door_phases() -> void:
 			"door phase may not add a facade overlay")
 		for index in primary.placements.size():
 			var primary_asset := StringName(primary.placements[index].asset_id)
+			var base_asset := StringName(String(primary_asset).split(".miter")[0])
+			var corner_suffix := String(primary_asset).trim_prefix(String(base_asset))
 			var expected_asset := primary_asset
-			if SettlementFabricProgram.WOOD_DOORS.has(primary_asset) \
-					or SettlementFabricProgram.ROCK_DOORS.has(primary_asset):
-				expected_asset = StringName(String(primary_asset) + ".mirror_x")
+			if SettlementFabricProgram.WOOD_DOORS.has(base_asset) \
+					or SettlementFabricProgram.ROCK_DOORS.has(base_asset):
+				expected_asset = StringName(String(base_asset) + ".mirror_x" + corner_suffix)
 			assert_eq(StringName(alternate.placements[index].asset_id),
 				expected_asset,
 				"phase B must move the visible aperture with baked handed geometry")

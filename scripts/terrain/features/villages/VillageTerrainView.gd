@@ -8,6 +8,16 @@ extends RefCounted
 var _fixed_region: HeightfieldRegion
 var _fixed_water: WaterFieldContext
 var _fields: WorldFieldBlockCache
+var _grades: Array[TerrainGradePatch] = []
+
+
+func with_terrain_grades(grades: Array[TerrainGradePatch]) -> VillageTerrainView:
+	var view := VillageTerrainView.new()
+	view._fields = _fields
+	view._fixed_region = _fixed_region
+	view._fixed_water = _fixed_water
+	view._grades.assign(grades)
+	return view
 
 
 static func from_region(region: HeightfieldRegion,
@@ -28,7 +38,8 @@ static func from_fields(fields: WorldFieldBlockCache) -> VillageTerrainView:
 
 func region_at(point: Vector2) -> HeightfieldRegion:
 	assert(point.is_finite())
-	return _fields.region_at(point) if _fields != null else _fixed_region
+	var natural := _fields.region_at(point) if _fields != null else _fixed_region
+	return natural.with_terrain_grades(_grades)
 
 
 func surface_y(point: Vector2) -> float:
@@ -40,8 +51,8 @@ func surface_y(point: Vector2) -> float:
 func region_covering(world_rect: Rect2) -> HeightfieldRegion:
 	assert(world_rect.position.is_finite() and world_rect.size.is_finite())
 	if _fields != null:
-		return _fields.region_covering(world_rect)
-	return _fixed_region
+		return _fields.region_covering(world_rect).with_terrain_grades(_grades)
+	return _fixed_region.with_terrain_grades(_grades)
 
 
 func is_wet(point: Vector2) -> bool:

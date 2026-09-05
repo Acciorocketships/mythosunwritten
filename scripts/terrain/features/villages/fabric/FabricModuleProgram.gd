@@ -216,6 +216,12 @@ func facade_aligned_transform(asset_id: StringName, pose: Transform3D,
 	var contract_value := contract(asset_id)
 	assert(contract_value != null and contract_value.is_sealed())
 	assert(outward.y == 0 and absi(outward.x) + absi(outward.z) == 1)
+	# Every authored facade presents its finished exterior toward local +Z.
+	# A cardinal boundary is also its facing contract, not just an AABB anchor.
+	# In particular the historical left/right poses used the opposite yaw and
+	# exposed the back of the plaster and its open return sheets to the street.
+	if pose.basis.z.dot(Vector3(outward)) < 0.0:
+		pose.basis = pose.basis * Basis(Vector3.UP, PI)
 	var transformed := pose * contract_value.visual_bounds
 	if outward.x > 0:
 		pose.origin.x += boundary - transformed.end.x
@@ -226,6 +232,45 @@ func facade_aligned_transform(asset_id: StringName, pose: Transform3D,
 	else:
 		pose.origin.z += boundary - transformed.position.z
 	return pose
+
+
+func finish_facade_corners(recipe: FabricRecipe) -> void:
+	## Two finite perpendicular wall runs share a miter, not two full-depth end
+	## slabs. Straight repeats keep their uncut ends. Select a baked subset of
+	## each original panel; the already-compiled conservative envelope remains
+	## unchanged, so this finish cannot change parcel admission or public air.
+	if not recipe.has_tag(&"room") or not recipe.has_tag(&"generated_building"):
+		return
+	var original := recipe.placements.duplicate(true)
+	for index in original.size():
+		var panel: Dictionary = original[index]
+		var asset_id := StringName(panel.asset_id)
+		var base := contract(asset_id)
+		if base == null or not _contracts.has(StringName("%s.miter3" % asset_id)) \
+				or base.visual_bounds.size.x < 2.9:
+			continue
+		var pose := panel.transform as Transform3D
+		var mask := 0
+		for end in 2:
+			var point := pose * Vector3(-1.5 if end == 0 else 1.5, 0,
+				base.visual_bounds.end.z)
+			for other: Dictionary in original:
+				var other_asset := StringName(other.asset_id)
+				if not String(other_asset).begins_with("sfv.fabric.wall."):
+					continue
+				var other_pose := other.transform as Transform3D
+				if absf(pose.basis.z.dot(other_pose.basis.z)) > 0.01 \
+						or absf(pose.origin.y - other_pose.origin.y) > 0.01:
+					continue
+				var other_bounds := contract(other_asset).visual_bounds
+				var local := other_pose.affine_inverse() * point
+				if absf(local.z - other_bounds.end.z) < 0.05 \
+						and local.x >= other_bounds.position.x - 0.05 \
+						and local.x <= other_bounds.end.x + 0.05:
+					mask |= 1 << end
+					break
+		if mask != 0:
+			recipe.placements[index].asset_id = StringName("%s.miter%d" % [asset_id, mask])
 
 
 func roof_bearing_aligned_transform(asset_id: StringName, pose: Transform3D,

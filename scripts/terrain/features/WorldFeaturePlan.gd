@@ -39,10 +39,13 @@ func context_for(block: Vector2i) -> FeatureContext:
 	var surface_shapes: Array[FeatureGroundShape] = []
 	var clearance_shapes: Array[FeatureGroundShape] = []
 	var village_payload := EnvironmentInstancePayload.new()
+	var grades: Array[TerrainGradePatch] = []
 	# Dressing may carry a broad canopy into this block from an anchor outside
 	# it. Discover records over the same complete context used by reservation
 	# queries so those intersections cannot disappear at block seams.
 	for record: VillageRecord in _records_affecting(path_context.coverage()):
+		if record.urban_fabric != null and record.urban_fabric.terrain_grade != null:
+			grades.append(record.urban_fabric.terrain_grade)
 		for shape: FeatureGroundShape in record.surface_shapes:
 			if shape.bounds().intersects(path_context.coverage(), true):
 				surface_shapes.append(shape)
@@ -61,6 +64,7 @@ func context_for(block: Vector2i) -> FeatureContext:
 			village_payload.append_from(record.payload)
 	var context := path_context.extended(surface_shapes, clearance_shapes,
 		village_payload, Rect2())
+	context.terrain_grades = grades
 	_contexts[block] = context
 	return context
 

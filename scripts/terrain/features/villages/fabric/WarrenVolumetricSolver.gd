@@ -3885,6 +3885,8 @@ static func _maze_landmark_refusal(grid: WarrenSpatialGrid,
 			or int(floor_claim.get("kind", -1)) \
 				!= WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
 		return {"reason": "landing %s is not canonical public floor" % landing}
+	if WarrenSpatialFabricCompiler.stair_blocks_doorstep(volume, landing, -side):
+		return {"reason": "doorway approach crosses a stair flight or its side rail"}
 	if not grid.contains(entrance_cell) \
 			or grid.use_at(entrance_cell) not in [
 				WarrenSpatialGrid.Use.OUTSIDE,

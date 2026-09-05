@@ -1,0 +1,16 @@
+[
+  ["stone_joints_facade", "A1 — Left diagonal stone slit", [300, 20, 525, 440]],
+  ["stone_joints_facade", "A2 — Central diagonal stone slit", [765, 20, 930, 365]],
+  ["stone_joints_facade", "A3 — Cream facade fin", [1130, 0, 1340, 460]],
+  ["unsupported_room", "B1 — Upper room without visible bearing", [100, 0, 850, 610]],
+  ["ground_slopes_path_edges", "C1 — Left stone facade end", [755, 0, 895, 270]],
+  ["ground_slopes_path_edges", "C2 — Right stone facade end", [1010, 0, 1130, 275]],
+  ["ground_slopes_path_edges", "C3 — Rear cream facade end", [1190, 0, 1280, 285]],
+  ["ground_slopes_path_edges", "C4 — Front cream facade end", [1270, 0, 1420, 325]],
+  ["ground_slopes_path_edges", "C5 — Rear-left narrow grade ripples", [300, 145, 805, 295]],
+  ["ground_slopes_path_edges", "C6 — Front-right narrow grade", [1010, 320, 1480, 665]],
+  ["ground_slopes_path_edges", "C7 — Pixelated inner path turn", [960, 555, 1320, 765]],
+  ["ground_slopes_path_edges", "C8 — Pixelated outer path turn", [1440, 755, 1920, 1080]],
+  ["turf_wood_overlap", "D1 — Flickering surface beneath rail", [40, 440, 565, 815]],
+  ["turf_wood_overlap", "D2 — Angular grass cut-out and timber", [790, 530, 1345, 1040]]
+]

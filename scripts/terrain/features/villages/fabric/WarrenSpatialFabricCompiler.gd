@@ -251,6 +251,10 @@ static func solve(source: WarrenSpatialPlan,
 			str(foundation_audit)
 		return null
 	stage_ms = _trace_stage("foundation", stage_ms)
+	var frame_audit := _finish_ground_bearing_frames(source, result)
+	if not bool(frame_audit.get("valid", false)):
+		last_failure = String(frame_audit.get("rejection", "invalid final bearing frame"))
+		return null
 	# The typed green precedes the surface transaction: guard construction needs
 	# its exact mouths, so declaring it after the surface sealed made the topology
 	# and the later render audit observe different squares.
@@ -355,6 +359,8 @@ static func solve(source: WarrenSpatialPlan,
 		lineage[key] = foundation_result.get(key, 0 if String(key).ends_with(
 			"cells") or String(key).ends_with("removed") else [])
 	lineage.merge(foundation_audit, true)
+	lineage["final_ground_frame_room_ids"] = frame_audit.final_ground_frame_room_ids
+	lineage["final_ground_frame_member_count"] = frame_audit.final_ground_frame_member_count
 	lineage.merge(suppression_audit, true)
 	lineage.merge(stone_audit, true)
 	# TASK H1. The wall metric rides beside the rock metric, never instead of
@@ -575,6 +581,135 @@ static func _modular_box_use_audit(source: WarrenSpatialPlan,
 		"modular_box_details": details,
 		"modular_box_invalid_details": invalid_details,
 	}
+
+
+static func _finish_ground_bearing_frames(source: WarrenSpatialPlan,
+		plan: SettlementFabricPlan) -> Dictionary:
+	## A temporary source massif is not a finished bearing. Recheck root room
+	## plates against the actual retained/constructed union after roof subtraction.
+	## Where all support was withdrawn, an explicit four-corner timber frame must
+	## reach the local terrain datum and clear the same public-body and measured
+	## construction envelopes as every other component. Never silently accept
+	## the room on the strength of the now-obsolete source stone.
+	var solids := plan.transformed_cells(&"solid")
+	var solid_owners: Dictionary = {}
+	for built: FabricUnit in plan.units:
+		for local: Vector3i in plan.recipe(built.recipe_id).solid_cells:
+			solid_owners[FabricRecipe.transform_cell(local, built.lattice_origin,
+				built.yaw_quarters)] = built
+	var room_ids: Array[StringName] = []
+	var member_count := 0
+	var envelope := source.source_volume.envelope
+	# Room volume can also transfer load through a complete cardinal face to a
+	# grounded neighbour. Public platforms and pitched-roof bounding boxes are
+	# not inhabited mass, and edge/diagonal contacts never enter this graph.
+	var body_union := plan.retained_terrace_cells.duplicate()
+	var body_by_unit: Dictionary = {}
+	for building: WarrenBuildingVolume in source.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			var unit_id := StringName("spatial.fabric.%s" % room.stable_id)
+			body_by_unit[unit_id] = room.private_cells
+			for cell: Vector3i in room.private_cells:
+				body_union[cell] = true
+	var grounded := _ground_connected_mass(source, body_union)
+	var roots := plan.units.duplicate()
+	for room_unit: FabricUnit in roots:
+		var room_recipe := plan.recipe(room_unit.recipe_id)
+		if not room_recipe.has_tag(&"room") \
+				or not room_recipe.has_tag(&"terrain_bearing"):
+			continue
+		var face_connected := false
+		for cell: Vector3i in body_by_unit.get(room_unit.stable_id, []):
+			face_connected = face_connected or grounded.has(cell)
+		if face_connected:
+			continue
+		var footprint: Dictionary = {}
+		var borne := 0
+		var low := Vector2i(2147483647, 2147483647)
+		var high := Vector2i(-2147483647, -2147483647)
+		for local: Vector3i in room_recipe.terrain_bearing_cells:
+			var cell := FabricRecipe.transform_cell(local, room_unit.lattice_origin,
+				room_unit.yaw_quarters)
+			var macro := Vector2i(floori(float(cell.x) / 2.0), floori(float(cell.z) / 2.0))
+			if not envelope.contains_column(macro):
+				return {"valid":false, "rejection":"room bearing leaves terrain envelope"}
+			footprint[cell] = envelope.bearing_at(macro)
+			borne += int(cell.y <= envelope.bearing_at(macro) \
+				or solids.has(cell + Vector3i.DOWN) \
+				or plan.retained_terrace_cells.has(cell + Vector3i.DOWN))
+			low = Vector2i(mini(low.x, cell.x), mini(low.y, cell.z))
+			high = Vector2i(maxi(high.x, cell.x), maxi(high.y, cell.z))
+		if borne > 0 or footprint.is_empty():
+			continue
+		var top_band := room_unit.lattice_origin.y
+		var corners := [Vector3i(high.x, top_band, high.y),
+			Vector3i(high.x, top_band, low.y), Vector3i(low.x, top_band, low.y),
+			Vector3i(low.x, top_band, high.y)]
+		var proposals: Array[FabricUnit] = []
+		for corner in 4:
+			var cell := corners[corner] as Vector3i
+			if not footprint.has(cell):
+				return {"valid":false,"rejection":"unborne room lacks rectangular frame footprint"}
+			var ground_band := int(footprint[cell])
+			var seams: Array[StringName] = [room_unit.stable_id]
+			var base_owner: FabricUnit = null
+			for band in range(top_band - 1, ground_band - 1, -1):
+				var support_cell := Vector3i(cell.x, band, cell.z)
+				if solid_owners.has(support_cell):
+					base_owner = solid_owners[support_cell] as FabricUnit
+					if plan.recipe(base_owner.recipe_id).has_tag(&"pitched_roof"):
+						return {"valid":false,"rejection":"ground frame for %s corner %d cannot stand on pitched roof %s" % [room_unit.stable_id, corner, base_owner.stable_id]}
+					ground_band = band + 1
+					break
+				if plan.retained_terrace_cells.has(support_cell):
+					ground_band = band + 1
+					break
+			var segment := 0
+			for top in range(top_band, ground_band, -2):
+				var bands := mini(2, top - ground_band)
+				var recipe := plan.recipe(StringName("foundation.timber.post.%d" % bands))
+				if base_owner != null and top - bands == ground_band:
+					seams.append(base_owner.stable_id)
+				var member := FabricUnit.new(StringName("%s/ground-frame/%d/%d" %
+					[room_unit.stable_id, corner, segment]), recipe.recipe_id,
+					Vector3i(cell.x, top - bands, cell.z), corner, [], [], &"", seams)
+				var bounds := member.transform() * recipe.local_bounds
+				if _box_touches_public_air(source.grid, bounds):
+					return {"valid":false,"rejection":"ground frame enters public lane: %s" % member.stable_id}
+				proposals.append(member)
+				seams = [member.stable_id]
+				segment += 1
+		for member: FabricUnit in proposals:
+			if not plan.add_unit(member):
+				return {"valid":false,"rejection":"ground frame cannot bear %s: %s" %
+					[room_unit.stable_id, plan.last_rejection]}
+		room_ids.append(room_unit.stable_id)
+		member_count += proposals.size()
+	return {"valid":true, "final_ground_frame_room_ids":room_ids,
+		"final_ground_frame_member_count":member_count}
+
+
+static func _ground_connected_mass(source: WarrenSpatialPlan,
+		union: Dictionary) -> Dictionary:
+	var connected: Dictionary = {}
+	var queue: Array[Vector3i] = []
+	var envelope := source.source_volume.envelope
+	for cell: Vector3i in union:
+		var macro := Vector2i(floori(float(cell.x) / 2.0), floori(float(cell.z) / 2.0))
+		if envelope.contains_column(macro) and cell.y <= envelope.bearing_at(macro):
+			connected[cell] = true
+			queue.append(cell)
+	var cursor := 0
+	while cursor < queue.size():
+		var cell := queue[cursor]
+		cursor += 1
+		for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD,
+				Vector3i.BACK, Vector3i.UP, Vector3i.DOWN]:
+			var neighbor := cell + direction
+			if union.has(neighbor) and not connected.has(neighbor):
+				connected[neighbor] = true
+				queue.append(neighbor)
+	return connected
 
 
 static func _retained_foundation_cells(source: WarrenSpatialPlan,
@@ -1021,26 +1156,10 @@ static func _supported_retained_maze_cells(source: WarrenSpatialPlan,
 	if plan != null:
 		for cell: Vector3i in terrain_bearing:
 			union[cell] = true
-	var queue: Array[Vector3i] = []
+	connected = _ground_connected_mass(source, union)
 	var envelope := source.source_volume.envelope
-	for cell: Vector3i in union:
-		var macro := Vector2i(floori(float(cell.x) / 2.0),
-			floori(float(cell.z) / 2.0))
-		if envelope.contains_column(macro) \
-				and cell.y <= envelope.bearing_at(macro):
-			connected[cell] = true
-			queue.append(cell)
 	var directions: Array[Vector3i] = [Vector3i.LEFT, Vector3i.RIGHT,
 		Vector3i.FORWARD, Vector3i.BACK, Vector3i.UP, Vector3i.DOWN]
-	var cursor := 0
-	while cursor < queue.size():
-		var cell := queue[cursor]
-		cursor += 1
-		for direction: Vector3i in directions:
-			var neighbor := cell + direction
-			if union.has(neighbor) and not connected.has(neighbor):
-				connected[neighbor] = true
-				queue.append(neighbor)
 	var supported: Dictionary = {}
 	for cell: Vector3i in candidates:
 		if connected.has(cell):
@@ -1380,7 +1499,12 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		missing_face_count += 1
 		missing_faces.append(key)
 	var rendered := SettlementFabricAssembler.maze_stone_walls(retained,
-		solids, paved, plinths, walked, shell, plan.world_seed)
+		solids, paved, plinths, walked, shell, plan.world_seed,
+		ground_skin.capped_ground as Dictionary)
+	var paired_corner_faces := 0
+	for batch: Dictionary in rendered.batches.values():
+		for id: StringName in batch.ids:
+			paired_corner_faces += int(String(id).contains("/paired/"))
 	# TASK H2b. What the shell WEARS, counted over the same panel set the
 	# coverage identity above is measured on, and split by the bank each side
 	# panel stands in so the two pins have a denominator: masonry above the
@@ -1470,6 +1594,12 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	for key_value: Variant in treatments.keys():
 		var key := key_value as Vector4i
 		var treatment := int(treatments[key])
+		# Count closed logical faces: the terrain corner realizes two of them
+		# with one mesh, while its two explicit colliders keep both walls solid.
+		var is_turf_wall := key.w < sides \
+			and (ground_skin.capped_ground as Dictionary).has(
+				Vector3i(key.x, key.y, key.z)) \
+			and treatment == SettlementFabricAssembler.SkinTreatment.MASONRY
 		var is_down_soffit := key.w >= sides \
 			and SettlementFabricAssembler.STONE_FACE_DIRECTIONS[key.w] \
 				== Vector3i.DOWN
@@ -1480,9 +1610,9 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		soffit_panels += int(is_down_soffit)
 		masonry_panels += int(treatment \
 			== SettlementFabricAssembler.SkinTreatment.MASONRY \
-			and not is_down_soffit)
+			and not is_down_soffit and not is_turf_wall)
 		natural_panels += int(treatment \
-			== SettlementFabricAssembler.SkinTreatment.NATURAL)
+			== SettlementFabricAssembler.SkinTreatment.NATURAL or is_turf_wall)
 		green_panels += int(treatment \
 			== SettlementFabricAssembler.SkinTreatment.GREEN)
 		if treatment == SettlementFabricAssembler.SkinTreatment.FACADE:
@@ -1755,7 +1885,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	var terrain_controls := SettlementFabricAssembler \
 		.maze_terrain_control_surface_cells(plan)
 	var terrain_region := SettlementFabricAssembler.maze_terrain_surface_region(
-		retained, capped_ground, terrain_controls)
+		capped_ground, terrain_controls)
 	var rim_faces := SettlementFabricAssembler.maze_garden_rim_face_count(shell,
 		walked, paved, footprints, capped_ground, true, terrain_region)
 	var rim_instances := SettlementFabricAssembler.maze_green_rim_walls(retained,
@@ -1916,7 +2046,8 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		# covered by the procedural terrain-ground union, so include their logical
 		# panel count in this shell-coverage identity without pretending they are
 		# still individual EnvironmentVisual instances.
-		"maze_stone_rendered_face_count": rendered.instance_count + green_panels,
+		"maze_stone_rendered_face_count": rendered.instance_count \
+			+ paired_corner_faces + green_panels,
 		"maze_stone_missing_face_count": missing_face_count,
 		"maze_stone_missing_faces": missing_faces,
 		"maze_stone_doubled_cap_count": doubled_cap_count,
@@ -2632,6 +2763,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	var physical_support_redirect_count := 0
 	var retained_stone_bearing_count := 0
 	var suppressed_party_wall_module_count := 0
+	var stair_blocked_door_ids: Array[StringName] = []
 	var facade_family_counts: Dictionary = {}
 	var facade_style_counts: Dictionary = {}
 	var building_variant_counts: Dictionary = {}
@@ -2645,6 +2777,9 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			return [] as Array[FabricUnit]
 	for room: WarrenRoomStamp in rooms:
 		var feature_portal_mask := int(feature_portal_masks.get(room.stable_id, 0))
+		var stair_blocked_door := _door_approach_uses_stairs(room, source.source_volume)
+		if stair_blocked_door:
+			stair_blocked_door_ids.append(room.stable_id)
 		var on_retained_stone := _room_bears_on_retained_stone(source, program,
 			room, feature_portal_mask)
 		retained_stone_bearing_count += int(on_retained_stone)
@@ -2654,7 +2789,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		# the wider masonry shell.
 		var recipe_id := _room_recipe_id(room, source.world_seed, true,
 			feature_portal_mask, on_retained_stone, true, low_base_lineages,
-			stone_base_lineages)
+			stone_base_lineages, stair_blocked_door)
 		var desired_phase_b := _is_phase_b_recipe(recipe_id)
 		desired_phase_b_count += int(desired_phase_b)
 		var recipe := program.recipe(recipe_id)
@@ -2662,7 +2797,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			last_failure = "measured recipe %s changes room stamp %s" % [
 				recipe_id, room.stable_id]
 			return [] as Array[FabricUnit]
-		if not _entrance_matches(recipe, room):
+		if not _entrance_matches(recipe, room, stair_blocked_door):
 			var entrance := (recipe.entrances[0] as Dictionary) \
 				if recipe != null and recipe.entrances.size() == 1 else {}
 			var actual_cell := FabricRecipe.transform_cell(
@@ -2756,7 +2891,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		# a change of material.
 		var fallback_id := _room_recipe_id(room, source.world_seed, false,
 			feature_portal_mask, on_retained_stone, true, low_base_lineages,
-			stone_base_lineages)
+			stone_base_lineages, stair_blocked_door)
 		var fallback_recipe := program.recipe(fallback_id)
 		var feature_conflict := _room_feature_envelope_conflict(source,
 			program, room, recipe)
@@ -2785,7 +2920,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 				return [] as Array[FabricUnit]
 			if fallback_recipe == null \
 					or not _recipe_stays_inside_stamp(fallback_recipe, room) \
-					or not _entrance_matches(fallback_recipe, room):
+					or not _entrance_matches(fallback_recipe, room, stair_blocked_door):
 				last_failure = "room %s has no measured facade fallback" \
 					% room.stable_id
 				return [] as Array[FabricUnit]
@@ -2873,6 +3008,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 				STONE_BASE_SELECTION_MARKER))),
 		"suppressed_party_wall_module_count": \
 			suppressed_party_wall_module_count,
+		"stair_blocked_door_ids": stair_blocked_door_ids,
 		"feature_portal_room_count": feature_portal_masks.size(),
 		"feature_portal_opening_count": feature_portal_opening_count,
 		"facade_family_counts": facade_family_counts,
@@ -6979,7 +7115,8 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 		allow_phase_b: bool = true, feature_portal_mask: int = 0,
 		on_retained_stone: bool = false, chosen_material: bool = false,
 		low_base_lineages: Dictionary = {},
-		stone_base_lineages: Dictionary = {}) -> StringName:
+		stone_base_lineages: Dictionary = {},
+		suppress_exterior_door: bool = false) -> StringName:
 	## TASK H1. `chosen_material` separates the shell a room RESERVES from the
 	## shell it WEARS, and only `compile_room_units` -- the one pass that decides
 	## what the town is built of -- passes `true`.
@@ -7003,6 +7140,7 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 	## default: no reservation caller needs it, and passing it nowhere else
 	## keeps this a pure function of the stamp for all of them. See
 	## `_low_base_lineages`.
+	var has_exterior_door := room.addressed and not suppress_exterior_door
 	if not (room.audit.get("bridge_support_room_ids", []) as Array).is_empty():
 		# A street-bridge room keeps its ordinary unaddressed shell but swaps
 		# the bearing contract: normally two flank parents through span sockets;
@@ -7055,8 +7193,8 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 			else String(_architectural_district_theme(room.lattice_origin,
 				world_seed))
 		var terrain_recipe := StringName("%s.base.%s%s" % [prefix, base_theme,
-			"" if room.addressed else ".closed"])
-		if room.addressed:
+			"" if has_exterior_door else ".closed"])
+		if has_exterior_door:
 			terrain_recipe = SettlementFabricProgram.address_door_phase_recipe_id(
 				terrain_recipe, room.address_door_phase)
 		return SettlementFabricProgram.feature_portal_recipe_id(terrain_recipe,
@@ -7077,7 +7215,7 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 				^ room.lattice_origin.x * 73856093 \
 				^ room.lattice_origin.z * 19349663 ^ 0x4d41534f4e5259), 6) == 0:
 		theme = "stone"
-	var addressed := ".address" if room.addressed else ""
+	var addressed := ".address" if has_exterior_door else ""
 	# Alternate complete facade recipes by storey. The phase-B vocabulary uses a
 	# different authored module arrangement plus measured ivy, laundry, or sign
 	# projections; its clearance envelope participates in the same compiler
@@ -7096,7 +7234,7 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 	else:
 		base_recipe_id = StringName("%s.upper%s.%s%s" % [prefix, addressed, theme,
 			SettlementFabricProgram._facade_phase_suffix(facade_phase)])
-	if room.addressed:
+	if has_exterior_door:
 		base_recipe_id = SettlementFabricProgram.address_door_phase_recipe_id(
 			base_recipe_id, room.address_door_phase)
 	return SettlementFabricProgram.feature_portal_recipe_id(base_recipe_id,
@@ -8753,8 +8891,47 @@ static func _recipe_stays_inside_stamp(recipe: FabricRecipe,
 	return not claimed.is_empty()
 
 
+static func _door_approach_uses_stairs(room: WarrenRoomStamp,
+		volume: WarrenVolumePlan) -> bool:
+	# A stair claim names a swept, rising span, not a level doorstep. Its side
+	# guards cannot be opened like flat court guards. Keep the room and all its
+	# reserved clearance, but choose the existing closed facade if the doorstep
+	# lies on a flight or the approach crosses its side. Keep open-end access to
+	# a flat doorstep. Never move or remove a rail.
+	if not room.addressed or volume == null:
+		return false
+	var landing := room.threshold_cell + room.frontage_direction
+	var landings: Array[Vector3i] = [landing]
+	var left := Vector3i(-room.frontage_direction.z, 0, room.frontage_direction.x)
+	var companion := landing + (left if room.address_door_phase == 0 else -left)
+	if volume.has_exact_route_surface(companion):
+		landings.append(companion)
+	for doorstep: Vector3i in landings:
+		if stair_blocks_doorstep(volume, doorstep, room.frontage_direction):
+			return true
+	return false
+
+
+static func stair_blocks_doorstep(volume: WarrenVolumePlan,
+		doorstep: Vector3i, facing: Vector3i) -> bool:
+	# Shared by room facades and early prefab admission. A flat doorstep can
+	# face a flight's open end, but cannot sit on a flight or cross its side rail.
+	for transition: WarrenVolumeTransition in volume.transitions:
+		if transition.is_vertical():
+			var cells := transition.surface_cells()
+			if cells.has(doorstep):
+				return true
+			if cells.has(doorstep + facing) and \
+					transition.direction.x * facing.x \
+					+ transition.direction.y * facing.z == 0:
+				return true
+	return false
+
+
 static func _entrance_matches(recipe: FabricRecipe,
-		room: WarrenRoomStamp) -> bool:
+		room: WarrenRoomStamp, stair_blocked_door: bool = false) -> bool:
+	if stair_blocked_door:
+		return recipe.entrances.is_empty()
 	if room.addressed and recipe.entrances.size() != 1:
 		return false
 	if not room.addressed:

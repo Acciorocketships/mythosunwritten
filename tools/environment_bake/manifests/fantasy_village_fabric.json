@@ -1,6 +1,11 @@
 {
  "pack": "fantasy_village_fabric",
  "license": "Fantasy Village source-pack license",
+ "facade_miter_prefixes": [
+  "sfv.fabric.wall.rock.door.",
+  "sfv.fabric.wall.rock.window.",
+  "sfv.fabric.wall.rock.plain."
+ ],
  "default_scale": [
   1.0,
  1.0,

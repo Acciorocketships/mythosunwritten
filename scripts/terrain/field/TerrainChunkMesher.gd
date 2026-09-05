@@ -316,6 +316,7 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 	var col_faces := PackedVector3Array()
 	col_faces.resize(GRID * GRID * 6)
 	var col_i := 0
+	var graded_collision: Array[Vector3] = []
 	var clip_cache := {}           # per-cell lipped-slot masks for the visual clip
 	var baked_cache := {}          # per-cell baked surface samplers
 	# Biome ground tint sampled at the coarse cell-corner lattice (CELLS_PER_CHUNK+1
@@ -360,10 +361,10 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			if baked.is_empty():
 				baked = TerrainSurfaceField.bake_cell(region, qcx, qcz)
 				baked_cache[qkey] = baked
-			var y00 := TerrainSurfaceField.sample_baked(baked, qcx, qcz, x0, z0)
-			var y10 := TerrainSurfaceField.sample_baked(baked, qcx, qcz, x1, z0)
-			var y11 := TerrainSurfaceField.sample_baked(baked, qcx, qcz, x1, z1)
-			var y01 := TerrainSurfaceField.sample_baked(baked, qcx, qcz, x0, z1)
+			var y00 := TerrainSurfaceField.sample_baked(baked, qcx, qcz, x0, z0, region)
+			var y10 := TerrainSurfaceField.sample_baked(baked, qcx, qcz, x1, z0, region)
+			var y11 := TerrainSurfaceField.sample_baked(baked, qcx, qcz, x1, z1, region)
+			var y01 := TerrainSurfaceField.sample_baked(baked, qcx, qcz, x0, z1, region)
 			# Grid quads are the WALKABLE surface — flat tops + gentle (≤1 storey) slopes — always
 			# grass. Cliff FACES are the separate vertical rock skirts, not slanted grid quads.
 			var quad_centre := Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5)
@@ -376,13 +377,14 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			var v10 := Vector3(x1, y10, z0)
 			var v11 := Vector3(x1, y11, z1)
 			var v01 := Vector3(x0, y01, z1)
-			col_faces[col_i] = v00
-			col_faces[col_i + 1] = v10
-			col_faces[col_i + 2] = v11
-			col_faces[col_i + 3] = v00
-			col_faces[col_i + 4] = v11
-			col_faces[col_i + 5] = v01
-			col_i += 6
+			if not region.has_grade_in(Rect2(Vector2(x0, z0), Vector2.ONE * STEP)):
+				col_faces[col_i] = v00
+				col_faces[col_i + 1] = v10
+				col_faces[col_i + 2] = v11
+				col_faces[col_i + 3] = v00
+				col_faces[col_i + 4] = v11
+				col_faces[col_i + 5] = v01
+				col_i += 6
 			# The visual sheet pulls back to TOP_CLIP on lipped edges (the KayKit lip is the
 			# visible edge there — a sheet running to the boundary pokes out past/over it).
 			var c00 := _clip_vert(region, clip_cache, qcx, qcz, v00)
@@ -399,7 +401,7 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			# One surface layer cannot z-fight with itself and still preserves the
 			# rounded 0.25 m path boundary.
 			var path_state := _emit_path_surface(st, region, water, features,
-				qkey, x0, z0, clip_cache, [t00, t10, t11, t01])
+				qkey, x0, z0, clip_cache, [t00, t10, t11, t01], graded_collision)
 			if path_state == 0:
 				var i00: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v00)
 				var i10: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v10)
@@ -416,6 +418,8 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			if path_state == 2:
 				_emit_path_spot(st, region, water, features, quad_centre, qcx, qcz,
 					x0, z0, [t00, t10, t11, t01])
+	col_faces.resize(col_i)
+	col_faces.append_array(PackedVector3Array(graded_collision))
 	# Cliff FACES: a VERTICAL rock skirt down each cliff-top wall edge, filling the vertical gap the
 	# pinned grid leaves between a cliff top and the lower cell. This is the actual rock cliff face
 	# (replacing the old slanted grey quads); the KayKit wall pieces dress it, and it doubles as the
@@ -584,7 +588,7 @@ const PATH_SPOT_DARKEN := 0.94
 const PATH_SPOT_SIDES := 12
 
 # Emit one finely subdivided ground surface where a path may be present. Each
-# fine patch chooses either grass or path UV; there is never a second coplanar
+# fine triangle is partitioned at the shared path boundary; there is never a second coplanar
 # path sheet. Terrain collision remains the unchanged coarse continuous sheet.
 # Return 0 when the caller should emit its ordinary coarse grass quad, 1 when a
 # fine all-grass quad was emitted, and 2 when at least one fine patch is path.
@@ -593,13 +597,14 @@ const PATH_SPOT_SIDES := 12
 func _emit_path_surface(st: SurfaceTool, region: HeightfieldRegion,
 		water: WaterFieldContext, features: FeatureContext, qkey: Vector2i,
 		x0: float, z0: float, clip_cache: Dictionary,
-		quad_tints: Array[Color]) -> int:
-	if features == null or water == null:
+		quad_tints: Array[Color], graded_collision: Array[Vector3] = []) -> int:
+	var graded := region.has_grade_in(Rect2(Vector2(x0, z0), Vector2.ONE * STEP))
+	if (features == null or water == null) and region.terrain_grades.is_empty():
 		return 0
 	# Most terrain quads are nowhere near a path. Centre/corner rejection avoids
 	# the 8x8 subdivision there while still admitting a circular join that merely
 	# clips a coarse quad's corner.
-	var candidate := _path_quad_candidate(features, qkey, x0, z0)
+	var candidate := graded or _path_quad_candidate(features, qkey, x0, z0)
 	if not candidate:
 		# A finely divided neighbour would otherwise terminate in T-junctions
 		# along this coarse edge. GPU rasterization exposed those as long white
@@ -615,7 +620,8 @@ func _emit_path_surface(st: SurfaceTool, region: HeightfieldRegion,
 			var neighbour_cell := Vector2i(roundi(neighbour_centre.x / TILE),
 				roundi(neighbour_centre.y / TILE))
 			transition_sides[side_index] = 1 if _path_quad_candidate(features,
-				neighbour_cell, nx0, nz0) else 0
+				neighbour_cell, nx0, nz0) or region.has_grade_in(
+					Rect2(Vector2(nx0, nz0), Vector2.ONE * STEP)) else 0
 		if transition_sides.has(1):
 			_emit_path_transition(st, region, qkey, x0, z0, clip_cache,
 				quad_tints, transition_sides)
@@ -623,16 +629,16 @@ func _emit_path_surface(st: SurfaceTool, region: HeightfieldRegion,
 		return 0
 	var sub_step := STEP / float(PATH_OVERLAY_DIVISIONS)
 	var emitted_path := false
+	var paint_cache: Dictionary = {}
+	var path_at := func(point: Vector2) -> bool:
+		return features != null and features.surface_at(point) == FeatureGroundField.WORN_PATH \
+			and (water == null or not water.is_wet(point))
 	for sz in PATH_OVERLAY_DIVISIONS:
 		for sx in PATH_OVERLAY_DIVISIONS:
 			var sx0 := x0 + float(sx) * sub_step
 			var sz0 := z0 + float(sz) * sub_step
 			var sx1 := sx0 + sub_step
 			var sz1 := sz0 + sub_step
-			var centre := Vector2((sx0 + sx1) * 0.5, (sz0 + sz1) * 0.5)
-			var is_path := features.surface_at_cell(centre, qkey) \
-				== FeatureGroundField.WORN_PATH \
-				and not water.is_wet(centre)
 			var p00 := Vector3(sx0,
 				TerrainSurfaceField.surface_y_in_cell(region, sx0, sz0, qkey.x, qkey.y), sz0)
 			var p10 := Vector3(sx1,
@@ -641,6 +647,8 @@ func _emit_path_surface(st: SurfaceTool, region: HeightfieldRegion,
 				TerrainSurfaceField.surface_y_in_cell(region, sx1, sz1, qkey.x, qkey.y), sz1)
 			var p01 := Vector3(sx0,
 				TerrainSurfaceField.surface_y_in_cell(region, sx0, sz1, qkey.x, qkey.y), sz1)
+			if graded:
+				graded_collision.append_array([p00, p10, p11, p00, p11, p01])
 			p00 = _clip_vert(region, clip_cache, qkey.x, qkey.y, p00)
 			p10 = _clip_vert(region, clip_cache, qkey.x, qkey.y, p10)
 			p11 = _clip_vert(region, clip_cache, qkey.x, qkey.y, p11)
@@ -649,22 +657,80 @@ func _emit_path_surface(st: SurfaceTool, region: HeightfieldRegion,
 			var c10 := _quad_tint(Vector2(sx1, sz0), x0, z0, quad_tints)
 			var c11 := _quad_tint(Vector2(sx1, sz1), x0, z0, quad_tints)
 			var c01 := _quad_tint(Vector2(sx0, sz1), x0, z0, quad_tints)
-			var uv0 := _path_uv if is_path else _grass_uv
-			var uv1 := uv0
-			if not is_path:
-				var i00 := _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, p00)
-				var i10 := _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, p10)
-				var i11 := _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, p11)
-				var i01 := _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, p01)
-				uv0 = _cliff_uv if (i00 or i10 or i11) else uv0
-				uv1 = _cliff_uv if (i00 or i11 or i01) else uv1
-			_tri_tinted(st, [p00, p10, p11], uv0, [c00, c10, c11])
-			_tri_tinted(st, [p00, p11, p01], uv1, [c00, c11, c01])
-			emitted_path = emitted_path or is_path
+			var i00 := _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, p00)
+			var i10 := _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, p10)
+			var i11 := _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, p11)
+			var i01 := _inner_corner_vertex(region, clip_cache, qkey.x, qkey.y, p01)
+			var first := _emit_painted_triangle(st, [p00,p10,p11], [c00,c10,c11],
+				_cliff_uv if (i00 or i10 or i11) else _grass_uv, path_at, paint_cache)
+			var second := _emit_painted_triangle(st, [p00,p11,p01], [c00,c11,c01],
+				_cliff_uv if (i00 or i11 or i01) else _grass_uv, path_at, paint_cache)
+			emitted_path = emitted_path or first or second
 	return 2 if emitted_path else 1
+
+
+func _emit_painted_triangle(st: SurfaceTool, vertices: Array[Vector3], colors: Array[Color],
+		ground_uv: Vector2, path_at: Callable, cache: Dictionary) -> bool:
+	var paint: Array[bool] = []
+	for vertex: Vector3 in vertices:
+		var point := Vector2(vertex.x, vertex.z)
+		if not cache.has(point):
+			cache[point] = bool(path_at.call(point))
+		paint.append(cache[point])
+	if paint[0] == paint[1] and paint[1] == paint[2]:
+		_tri_tinted(st, vertices, _path_uv if paint[0] else ground_uv, colors)
+	else:
+		for part: Dictionary in partition_paint_triangle(vertices, colors, paint, path_at):
+			for index in range(1, part.vertices.size() - 1):
+				_tri_tinted(st, [part.vertices[0],part.vertices[index],part.vertices[index+1]],
+					_path_uv if part.path else ground_uv,
+					[part.colors[0],part.colors[index],part.colors[index+1]])
+	return paint.has(true)
+
+
+## Partition one existing terrain triangle, never overlay another sheet.
+## Both materials receive the SAME crossing vertex. Canonical endpoint order
+## makes neighbouring triangles/chunks agree even when their winding reverses.
+## The predicate is the existing feature field, so world roads and house lanes
+## retain one shape/corner authority instead of a second meshing approximation.
+static func partition_paint_triangle(vertices: Array[Vector3], colors: Array[Color],
+		paint: Array[bool], path_at: Callable) -> Array[Dictionary]:
+	var parts: Array[Dictionary] = [
+		{"path":false,"vertices":[] as Array[Vector3],"colors":[] as Array[Color]},
+		{"path":true,"vertices":[] as Array[Vector3],"colors":[] as Array[Color]}]
+	for index in 3:
+		var next := (index + 1) % 3
+		var side := 1 if paint[index] else 0
+		parts[side].vertices.append(vertices[index])
+		parts[side].colors.append(colors[index])
+		if paint[index] == paint[next]:
+			continue
+		var a := index
+		var b := next
+		if vertices[b].x < vertices[a].x or (vertices[b].x == vertices[a].x and vertices[b].z < vertices[a].z):
+			a = next
+			b = index
+		var lo := 0.0
+		var hi := 1.0
+		for step in 14:
+			var mid := (lo + hi) * 0.5
+			var p := vertices[a].lerp(vertices[b], mid)
+			if bool(path_at.call(Vector2(p.x,p.z))) == paint[a]:
+				lo = mid
+			else:
+				hi = mid
+		var fraction := (lo + hi) * 0.5
+		var crossing := vertices[a].lerp(vertices[b], fraction)
+		var tint := colors[a].lerp(colors[b], fraction)
+		for part: Dictionary in parts:
+			part.vertices.append(crossing)
+			part.colors.append(tint)
+	return parts
 
 func _path_quad_candidate(features: FeatureContext, qkey: Vector2i,
 		x0: float, z0: float) -> bool:
+	if features == null:
+		return false
 	var x1 := x0 + STEP
 	var z1 := z0 + STEP
 	for probe: Vector2 in [
@@ -744,7 +810,7 @@ func _emit_path_spot(st: SurfaceTool, region: HeightfieldRegion,
 		var angle := TAU * float(i) / float(PATH_SPOT_SIDES)
 		var p := centre + Vector2(cos(angle), sin(angle)) * radius
 		if features.surface_at_cell(p, Vector2i(qcx, qcz)) \
-				!= FeatureGroundField.WORN_PATH or water.is_wet(p):
+				!= FeatureGroundField.WORN_PATH or (water != null and water.is_wet(p)):
 			return
 		rim.append(p)
 	var centre3 := Vector3(centre.x,
@@ -940,6 +1006,10 @@ static func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3
 			# way down (a hovering full-height flare read as "ground plane sticking out" at
 			# lip-run ends/steps — owner round 4). The cell's own wall modules back the fold.
 			var dip := maxf(h - _prof_at(info["dirs"][dir]["prof"], along, tile), 0.0)
+			# Natural cliff ends have a rock wall backing the drape. Structural
+			# planted decks may instead end at a facade over open air; their sealed
+			# boundary forbids extending a grass curtain down into that void.
+			dip = minf(dip, float(info.get("max_uncapped_drape", INF)))
 			down = maxf(down, dip * f * (1.0 - w))
 		if w <= 0.0:
 			continue

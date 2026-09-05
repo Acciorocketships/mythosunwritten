@@ -4386,6 +4386,13 @@ func _stone_instances(fabric: SettlementFabricPlan) -> Array[Dictionary]:
 				# footprint rather than by one assumed idiom.
 				"asset": StringName(asset_value),
 				"transform": transforms[index] as Transform3D})
+			# A terrain corner is one actual instance closing two named faces.
+			# Decode its published coverage, not a proximity-inferred neighbour.
+			if parts.size() == 6 and parts[4] == "paired":
+				var second: Dictionary = out.back().duplicate()
+				second.face = Vector4i(int(parts[0]), int(parts[1]),
+					int(parts[2]), int(parts[5]))
+				out.append(second)
 	return out
 
 
@@ -5106,6 +5113,7 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 			var is_facade := facade_assets.has(asset)
 			var is_masonry := not is_facade \
 				and asset != SettlementFabricAssembler.NATURAL_ROCK_FACE \
+				and asset != SettlementFabricAssembler.TURF_ROCK_CORNER \
 				and asset != SettlementFabricAssembler.TERRAIN_GREEN_CAP
 			if is_side and tall:
 				var course := SettlementFabricAssembler.maze_bank_course_from_top(
@@ -5123,9 +5131,12 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 				misplaced_facade += int(not is_side or not tall)
 				continue
 			match asset:
-				SettlementFabricAssembler.NATURAL_ROCK_FACE:
+				SettlementFabricAssembler.NATURAL_ROCK_FACE, \
+						SettlementFabricAssembler.TURF_ROCK_CORNER:
 					natural += 1
-					misplaced_natural += int(not is_side or not tall)
+					misplaced_natural += int(not is_side or not \
+						_terrain_ground_cells(fabric).has(
+							Vector3i(face.x, face.y, face.z)))
 				SettlementFabricAssembler.TERRAIN_GREEN_CAP:
 					fail_test("legacy per-panel turf asset survived the terrain union")
 				_:
@@ -5215,18 +5226,10 @@ func test_the_rock_reads_as_hillside_not_masonry() -> void:
 		# cubes this classifier exists to reject; the vocabulary must still fire
 		# somewhere across the representative corpus.
 		corpus_green += green
-		# TASK I2. THE CLIFF PIN. Zero shard faces anywhere, rim included, and a
-		# positive facade count beside it so the zero cannot be reached by the
-		# skin having stopped cladding tall banks at all. `misplaced_natural` is
-		# kept and asserted with it: it is vacuous today, and it is the assertion
-		# that would fire FIRST if `maze_natural_is_permitted` were ever turned
-		# back on for a population the rule no longer sorts.
-		assert_eq(natural, 0,
-			("%s still renders %d natural rock face(s); the direction is " \
-				+ "\"these are the parts that i think we should remove: the " \
-				+ "cliffs\", rim included") % [_label(outcome), natural])
+		# The Sept 4 terrain-parity ruling permits matching rock directly under
+		# rolled lawn lips, but never restores arbitrary cliff-shard building walls.
 		assert_eq(misplaced_natural, 0,
-			("%s may only use the natural rock face on a tall bank's side") \
+			("%s terrain rock must back a rendered lawn, never unrelated mass") \
 				% _label(outcome))
 		assert_gt(facade, 0,
 			("%s must clad its tall banks in building storeys -- with no " \
@@ -6544,6 +6547,7 @@ func test_the_rim_stands_off_the_panel_it_caps() -> void:
 	## through every other pin in this repository. Full argument at
 	## GREEN_RIM_MASONRY_STANDOFF.
 	var masonry_rims := 0
+	var terrain_rims := 0
 	var facade_rims := 0
 	var checked := 0
 	for outcome: Dictionary in _corpus():
@@ -6583,6 +6587,18 @@ func test_the_rim_stands_off_the_panel_it_caps() -> void:
 			var outward := Vector3(
 				SettlementFabricAssembler.FACE_DIRECTIONS[face.w])
 			if not panels.has(face):
+				# A suspended planted deck has a timber substrate, not a hanging
+				# stone column. Still prove a real floor is present in the payload.
+				var rim_cell := rim["cell"] as Vector3i
+				var transaction := SettlementFabricAssembler.maze_ground_skin_transaction(fabric)
+				if (transaction.suspended_plaza as Dictionary).has(rim_cell):
+					var substrate_count := 0
+					var payload := SettlementFabricAssembler.terrace_retaining_payload(fabric)
+					for batch: Dictionary in payload.batches.values():
+						for id: StringName in batch.ids:
+							substrate_count += int(String(id).begins_with("turf-substrate/"))
+					assert_gt(substrate_count, 0, "suspended turf needs a real timber floor")
+					continue
 				# TASK I4 ROUND 5, ITEM 4 -- AND THIS CLASS IS NOW LEGITIMATE,
 				# which is the whole of what changed here. The rim used to dress
 				# DROPS only, and a drop's face is always a panel of the skin, so
@@ -6620,9 +6636,12 @@ func test_the_rim_stands_off_the_panel_it_caps() -> void:
 			if asset == SettlementFabricAssembler.MAZE_STONE_MODULE:
 				expected = SettlementFabricAssembler.GREEN_RIM_MASONRY_STANDOFF
 				town_masonry += 1
-			elif asset == SettlementFabricAssembler.NATURAL_ROCK_FACE:
+			elif asset == SettlementFabricAssembler.NATURAL_ROCK_FACE \
+					or asset == SettlementFabricAssembler.TURF_ROCK_CORNER:
 				natural += 1
-				continue
+				# The top turf course now uses the matching unjittered terrain
+				# wall in the lip's own slot, not a randomly relieved rock shard.
+				expected = 0.0
 			else:
 				town_facade += 1
 			var xform := rim["transform"] as Transform3D
@@ -6649,14 +6668,7 @@ func test_the_rim_stands_off_the_panel_it_caps() -> void:
 		# receive no lip. `level` remains diagnostic for a genuine same-datum
 		# material junction, not a per-town quota.
 		assert_gte(level, 0, "%s level rim census must be valid" % _label(outcome))
-		# `maze_natural_is_permitted()` is false, so the shard branch of
-		# `maze_green_rim_standoff` is dead code with a documented number in it.
-		# Said here rather than in a report, so the day the cliffs come back this
-		# fails and the branch gets read again.
-		assert_eq(natural, 0,
-			("%s dresses %d rim(s) over a rock shard; the shard's stand-off is " \
-				+ "a per-panel roll and this pin has no answer for it") % [
-				_label(outcome), natural])
+		terrain_rims += natural
 		assert_eq(misplaced, 0,
 			("%s stands %d rim(s) off by up to %.4f m from the panel under " \
 				+ "them; the roll must land on that panel's own outer face " \
@@ -6675,9 +6687,8 @@ func test_the_rim_stands_off_the_panel_it_caps() -> void:
 	# garden drops is a fact about that town's shape.
 	print("MAZE_RIM_STANDOFF corpus masonry=%d facade=%d" % [masonry_rims,
 		facade_rims])
-	assert_gt(masonry_rims, 0,
-		"the corpus must turn a rim over coursed masonry, or the masonry " \
-			+ "stand-off is never asserted at all")
+	assert_gt(terrain_rims, 0,
+		"the corpus must exercise the matching terrain wall/lip seam")
 	# Current garden caps terminate over coursed masonry or same-level streets;
 	# facade contact is optional. Every facade rim that does occur was still
 	# measured above against the facade-specific zero stand-off.
@@ -7016,7 +7027,8 @@ func test_the_perimeter_stands_its_frontage_on_open_ground() -> void:
 		var fabric := plan.compiled_fabric_cache()
 		if fabric == null:
 			continue
-		var retained := fabric.retained_terrace_cells
+		var transaction := SettlementFabricAssembler.maze_ground_skin_transaction(fabric)
+		var retained := transaction.retained as Dictionary
 		var solids := fabric.transformed_cells(&"solid")
 		var paved := SettlementFabricAssembler.public_floor_cells(
 			fabric.surface_plan)
@@ -7027,8 +7039,7 @@ func test_the_perimeter_stands_its_frontage_on_open_ground() -> void:
 		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
 			fabric.transformed_cells(&"terrain_bearing"))
 		var footprints := SettlementFabricAssembler.maze_module_footprints(fabric)
-		var shell := SettlementFabricAssembler.maze_skin_shell(retained, solids,
-			paved, plinths, walked, footprints)
+		var shell := transaction.shell as Dictionary
 		var skin := SettlementFabricAssembler.maze_skin_panel_boxes(retained,
 			solids, paved, plinths, shell.treatments as Dictionary, shell)
 		var sites := SettlementFabricAssembler.maze_perimeter_frontage_sites(
@@ -7966,6 +7977,11 @@ func test_the_hillside_pushes_back() -> void:
 				continue
 			var bare := visual.collisions.is_empty()
 			var face := instance["face"] as Vector4i
+			var collision_id := "turf-wall/%d/%d/%d/%d" % [face.x, face.y,
+				face.z, face.w]
+			for box: Dictionary in retaining_payload.collision_boxes:
+				if String(box.stable_id) == collision_id:
+					bare = false
 			if face.w < side_count:
 				var direction: Vector3i = \
 					SettlementFabricAssembler.FACE_DIRECTIONS[face.w]
@@ -10877,22 +10893,22 @@ func test_the_production_site_builds_a_maze_town_on_real_terrain() -> void:
 		"roof collisions must reject proposals rather than turn gables into caps")
 	var handoff_top_count := 0
 	for mesh: Dictionary in urban.surface_meshes:
-		if not String(mesh.get("stable_id", "")).contains(
-				"public-terrain-handoff/"):
-			continue
-		handoff_top_count += 1
-		var handoff_vertices := mesh.vertices as PackedVector3Array
-		var handoff_indices := mesh.indices as PackedInt32Array
-		assert_eq(handoff_vertices.size(), 4,
-			"one gate handoff is one exact rectangular top")
-		assert_eq(handoff_indices.size(), 6)
-		var a := handoff_vertices[handoff_indices[0]]
-		var b := handoff_vertices[handoff_indices[1]]
-		var c := handoff_vertices[handoff_indices[2]]
-		assert_lt((b - a).cross(c - a).y, 0.0,
-			"the clockwise gate ramp must be visible from above")
-	assert_between(handoff_top_count, 2, 3,
-		"the production town exposes two or three rendered gate handoffs")
+		var id := String(mesh.get("stable_id", ""))
+		handoff_top_count += int("public-terrain-handoff/" in id \
+			or "public-terrain-street/" in id)
+	assert_eq(handoff_top_count, 0,
+		"the final heightfield owns streets and transitions, not stacked ramp sheets")
+	assert_not_null(urban.terrain_grade)
+	var source: WarrenMazeSourcePlan = urban.volumetric_spatial.source_volume \
+		.mass_context[&"maze_source_plan"]
+	assert_between(source.excavation.portals.size(), 2, 3,
+		"grading preserves the town's separated exterior entrances")
+	for cell: Vector3i in urban.fabric_plan.surface_plan.cells_for_kind(
+			PublicRealmSurfacePlan.SurfaceKind.TERRAIN_STREET):
+		var point := urban.world_transform * (Vector3(cell) * FabricRecipe.CELL_SIZE)
+		assert_almost_eq(urban.terrain_grade.surface_y(Vector2(point.x, point.z),
+			point.y), point.y - VillageWarrenFabricSolver.DATUM_GUARD, 0.001,
+			"every city street sits on its edited ground datum")
 	var production_fabric := urban.fabric_plan
 	assert_not_null(production_fabric,
 		"the accepted production town carries no final construction plan")
@@ -11977,7 +11993,8 @@ func test_no_bearer_hangs_over_a_surface_a_body_stands_on() -> void:
 		var fabric := plan.compiled_fabric_cache()
 		if fabric == null:
 			continue
-		var retained := fabric.retained_terrace_cells
+		var transaction := SettlementFabricAssembler.maze_ground_skin_transaction(fabric)
+		var retained := transaction.retained as Dictionary
 		var solids := fabric.transformed_cells(&"solid")
 		var plinths := SettlementFabricAssembler.plinth_faces(retained, solids,
 			fabric.transformed_cells(&"terrain_bearing"))
@@ -11987,10 +12004,10 @@ func test_no_bearer_hangs_over_a_surface_a_body_stands_on() -> void:
 			fabric.surface_plan)
 		var footprints := SettlementFabricAssembler.maze_module_footprints(
 			fabric)
-		var shell := SettlementFabricAssembler.maze_skin_shell(retained, solids,
-			paved, plinths, walked, footprints)
+		var shell := transaction.shell as Dictionary
 		var capped := SettlementFabricAssembler.maze_capped_stance_cells(shell,
 			footprints)
+		capped.merge(transaction.capped_ground as Dictionary)
 		var borne := 0
 		var refused := 0
 		var pinched := 0

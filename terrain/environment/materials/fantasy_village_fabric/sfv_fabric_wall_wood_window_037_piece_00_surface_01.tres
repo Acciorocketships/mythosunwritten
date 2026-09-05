@@ -1,4 +1,4 @@
-[gd_resource type="StandardMaterial3D" format=3 uid="uid://bq7atl0ntjt7x"]
+[gd_resource type="StandardMaterial3D" format=3]
 
 [resource]
 resource_name = "SFV_TRANSPARENT"

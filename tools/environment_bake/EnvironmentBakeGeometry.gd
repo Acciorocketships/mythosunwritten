@@ -177,6 +177,35 @@ static func clip_axis_range(source: ArrayMesh, axis: int, minimum: float,
 	return clipped if clipped.get_surface_count() > 0 else null
 
 
+static func clip_half_space(source: ArrayMesh, plane: Plane) -> ArrayMesh:
+	## Use the same attribute-preserving clipper for a non-axis-aligned join.
+	## The plane's positive half-space is discarded. Like a party seam, a miter
+	## is deliberately uncapped: the perpendicular owner closes that cut.
+	if source == null or plane.normal.length_squared() < 0.000001:
+		return null
+	var normal := plane.normal.normalized()
+	var helper := Vector3.UP if absf(normal.y) < 0.9 else Vector3.RIGHT
+	var tangent := helper.cross(normal).normalized()
+	var frame := Basis(normal, tangent, normal.cross(tangent)).transposed()
+	var aligned := transform_mesh(source, Transform3D(frame, Vector3.ZERO))
+	var clipped := clip_axis_range(aligned, Vector3.AXIS_X,
+		aligned.get_aabb().position.x - 1.0, plane.d / plane.normal.length())
+	return transform_mesh(clipped, Transform3D(frame.transposed(), Vector3.ZERO))
+
+
+static func transform_mesh(source: ArrayMesh, pose: Transform3D) -> ArrayMesh:
+	if source == null:
+		return null
+	var out := ArrayMesh.new()
+	for index in source.get_surface_count():
+		var surface := SurfaceTool.new()
+		surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+		surface.set_material(source.surface_get_material(index))
+		surface.append_from(source, index, pose)
+		surface.commit(out)
+	return out
+
+
 static func _mesh_vertex(arrays: Array, index: int) -> Dictionary:
 	var normals := arrays[Mesh.ARRAY_NORMAL] as PackedVector3Array \
 		if arrays[Mesh.ARRAY_NORMAL] is PackedVector3Array \

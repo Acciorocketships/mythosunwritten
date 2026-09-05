@@ -136,6 +136,22 @@ func has_transition_geometry(cell: Vector3i) -> bool:
 	return _transition_claim_owners.has(_cell_key(cell))
 
 
+func door_approach_is_clear(landing: Vector3i, facing: Vector3i) -> bool:
+	# A door needs a flat doorstep. A flight may lead straight into that
+	# doorstep through its open end; approaching across its side rail may not.
+	if has_transition_geometry(landing):
+		return false
+	var approach := landing + facing
+	if not has_transition_geometry(approach):
+		return true
+	var owner := transition_owner_at(approach)
+	for mesh: Dictionary in _transition_mesh_payloads:
+		if StringName(mesh.stable_id) == owner:
+			var run := mesh.get("run_direction", Vector3i.ZERO) as Vector3i
+			return absi(run.x * facing.x + run.z * facing.z) == 1
+	return false
+
+
 func transition_owner_at(cell: Vector3i) -> StringName:
 	## The identity matters at retained risers: two adjacent stair claims suppress
 	## a masonry face only when one sealed transition mesh owns both cells. Mere
@@ -749,6 +765,11 @@ func _classify_entrances(entrances: Array[Dictionary]) -> void:
 			approach_cells.append(approach_cell)
 			if not _claims.has(_cell_key(opening_cell)) \
 					or not _claims.has(_cell_key(approach_cell)):
+				served = false
+			# Generated spans include their side guards and swept rise. Legacy
+			# authored stair recipes separately declare their flat threshold pad;
+			# do not confuse that reviewed pad with a generated flight interior.
+			elif not door_approach_is_clear(opening_cell, facing):
 				served = false
 		entrance["served"] = served
 		entrance["guard_opening_cells"] = guard_opening_cells

@@ -3,7 +3,7 @@ extends SceneTree
 
 ## Deterministic editor-side importer for source-pack visuals. Runtime code is
 ## intentionally unaware of every source path named by the manifests.
-const TOOL_VERSION := 22
+const TOOL_VERSION := 23
 const DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
 const INDEX_PATH := "res://terrain/environment/catalog/index.tres"
 const MANIFEST_DIR := "res://tools/environment_bake/manifests"
@@ -26,7 +26,8 @@ func _run() -> void:
 		if _failed:
 			quit(1)
 			return
-	_prune_unmanifested_descriptors()
+	if not OS.get_cmdline_user_args().has("--keep-existing"):
+		_prune_unmanifested_descriptors()
 	if _failed:
 		quit(1)
 		return
@@ -34,7 +35,8 @@ func _run() -> void:
 	if _failed:
 		quit(1)
 		return
-	_prune_generated_orphans()
+	if not OS.get_cmdline_user_args().has("--keep-existing"):
+		_prune_generated_orphans()
 	print("Environment bake complete: %d manifest(s)" % manifests.size())
 	quit(0)
 
@@ -154,6 +156,23 @@ func _expanded_manifest_entries(manifest: Dictionary, path: String) -> Array:
 			derived["tags"] = tags
 			ids[derived_id] = true
 			out.append(derived)
+	# A finite corner alternative is selected by a construction contract, never
+	# cut or offset by the runtime renderer. Both ends are independent so an
+	# intermediate panel in a straight wall never receives a corner notch.
+	var corner_sources := out.duplicate(true)
+	for prefix: String in manifest.get("facade_miter_prefixes", []):
+		for source: Dictionary in corner_sources:
+			if not String(source.id).begins_with(prefix):
+				continue
+			for mask in range(1, 4):
+				var derived := source.duplicate(true)
+				derived.id = "%s.miter%d" % [source.id, mask]
+				if ids.has(derived.id):
+					_fail("Manifest %s derives duplicate asset id %s" % [path, derived.id])
+					return []
+				ids[derived.id] = true
+				derived["facade_miter_ends"] = mask
+				out.append(derived)
 	return out
 
 func _bake_asset(pack: String, license_label: String, entry: Dictionary,
@@ -304,6 +323,18 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		if merged == null:
 			root.free()
 			return {}
+		var miter_mask := int(entry.get("facade_miter_ends", 0))
+		if miter_mask != 0:
+			var front := merged.get_aabb().end.z
+			for end in 2:
+				if miter_mask & (1 << end):
+					merged = EnvironmentBakeGeometry.clip_half_space(merged,
+						Plane(Vector3(-1.0 if end == 0 else 1.0, 0.0, -1.0),
+							1.5 - front))
+			if merged == null:
+				_fail("Could not miter facade %s" % asset_id)
+				root.free()
+				return {}
 		var baked_mesh := _bake_mesh(merged, pack, asset_id, piece_index,
 			supports_color, material_tint, green_hue, fallback_albedo,
 			fallback_albedos_by_material)

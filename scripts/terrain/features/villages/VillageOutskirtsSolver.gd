@@ -151,7 +151,31 @@ static func solve(terrain: VillageTerrainView, settlement_id: StringName,
 						and used_branches.size() < mini(target,
 							branch_groups.size()):
 					continue
-				for perch: VillageTerrainPerch in survey.perches:
+				for surveyed_perch: VillageTerrainPerch in survey.perches:
+					var perch := surveyed_perch
+					var candidate_terrain := terrain
+					var candidate_grade := urban.terrain_grade
+					if volumetric and candidate_grade != null:
+						# Outskirts are part of the same construction heightfield,
+						# not arbitrary fractional-height islands inside its collar.
+						# Propose the complete flat pad BEFORE door/route/occupancy
+						# proof; publish it only with the accepted building.
+						var datum := urban.world_transform.origin.y - VillageWarrenFabricSolver.DATUM_GUARD
+						var ground_y := datum + roundf((perch.maximum_y - datum) / OUTSKIRTS_GRID_STEP) * OUTSKIRTS_GRID_STEP
+						var pad := FeatureGroundShape.oriented_rect(perch.anchor, perch.half_extents, perch.yaw)
+						candidate_grade = candidate_grade.with_foundation_pads([
+							{"area":pad.bounds(),"height":ground_y}], true)
+						if candidate_grade == null:
+							continue
+						var pad_bounds := candidate_grade.height_bounds(pad.bounds(), Vector2(ground_y,ground_y))
+						if absf(pad_bounds.x - ground_y) > 0.001 or absf(pad_bounds.y - ground_y) > 0.001:
+							continue # another ground band owns part of this footprint
+						candidate_terrain = terrain.with_terrain_grades([candidate_grade])
+						perch = VillageTerrainPerch.new(perch.candidate_key, perch.lattice_offset,
+							perch.orientation_index, perch.anchor, perch.yaw, perch.half_extents,
+							ground_y + VillageTerrainSurvey.FLOOR_GUARD, ground_y, ground_y,
+							1.0, perch.exposed_edge_mask, VillageTerrainPerch.SupportKind.NATURAL,
+							perch.distance_from_arrival)
 					var radius := perch.anchor.distance_to(arrival)
 					var uses_arrival_annulus := not bool(
 						branch_descriptor.get("grid_edge", false))
@@ -169,9 +193,9 @@ static func solve(terrain: VillageTerrainView, settlement_id: StringName,
 						var perimeter_door := bool(branch_for_door.get(
 							"perimeter_lot", false))
 						var entrance_result: Dictionary = _configure_perimeter_door(
-							terrain, placement, spec, program.elevated_program,
+							candidate_terrain, placement, spec, program.elevated_program,
 							survey) if perimeter_door else {
-								"accepted": placement.configure_entrance(spec, terrain,
+								"accepted": placement.configure_entrance(spec, candidate_terrain,
 									program.elevated_program),
 							}
 						var entrance_ready := bool(entrance_result.accepted)
@@ -191,7 +215,7 @@ static func solve(terrain: VillageTerrainView, settlement_id: StringName,
 						# only above public headroom. Seal that same profile before routing
 						# so lane feasibility and committed occupancy are the same fact.
 						placement.ground_route_support_profile = true
-						var candidate := _candidate(terrain, settlement_id, arrival,
+						var candidate := _candidate(candidate_terrain, settlement_id, arrival,
 							primary_axis, theme, program, urban, spec, placement,
 							survey, blockers, occupancy, outer_radius,
 							canonical_ground)
@@ -226,6 +250,9 @@ static func solve(terrain: VillageTerrainView, settlement_id: StringName,
 						plan.foundation_piece_count += int(
 							candidate.foundation_piece_count)
 						plan.placements.append(placement)
+						if candidate_grade != null:
+							urban.terrain_grade = candidate_grade
+							terrain = candidate_terrain
 						assert(occupancy.add_all(novel_volumes))
 						blockers.append(placement)
 						selected_spec = spec

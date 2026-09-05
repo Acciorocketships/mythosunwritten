@@ -11,6 +11,32 @@ const LEVEL_HEIGHT: float = 1.0
 var _storeys: Dictionary  # Vector2i -> int
 var _levels: Dictionary   # Vector2i -> int
 var _carved: Dictionary   # Vector2i -> true (water carve removed ground here)
+var terrain_grades: Array[TerrainGradePatch] = []
+
+func with_terrain_grades(grades: Array[TerrainGradePatch]) -> HeightfieldRegion:
+	if grades.is_empty():
+		return self
+	var result := HeightfieldRegion.new(_storeys, _levels, _carved, plan)
+	result.terrain_grades.assign(grades)
+	return result
+
+func graded_height(x: float, z: float, natural_height: float) -> float:
+	var height := natural_height
+	for grade: TerrainGradePatch in terrain_grades:
+		height = grade.surface_y(Vector2(x, z), height)
+	return height
+
+func has_grade_in(area: Rect2) -> bool:
+	for grade: TerrainGradePatch in terrain_grades:
+		if grade.bounds.intersects(area, true):
+			return true
+	return false
+
+func graded_height_bounds(area: Rect2, natural: Vector2) -> Vector2:
+	var interval := natural
+	for grade: TerrainGradePatch in terrain_grades:
+		interval = grade.height_bounds(area, interval)
+	return interval
 
 ## Back-pointer to the HeightfieldPlan this region was computed from (null
 ## for hand-built test fixtures that construct a HeightfieldRegion directly

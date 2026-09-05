@@ -63,13 +63,25 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   chunk's storeys+levels in two clamps and returns a `HeightfieldRegion`. Per-cell noise+carve
   samples are **memoized on the plan instance** (`_sample`, cleared by `set_raw_height_override`/
   `set_water_plan`) so the ~77 %-overlapping windows of successive chunk builds are sampled once —
-  a pure-performance cache, output-identical. Settlement and village layout never feed this plan:
-  the natural heightfield has no village stamp or settlement mutation hook.
+  a pure-performance cache, output-identical. This remains the immutable natural planning
+  input. Following the 2026-09-04 ground review, a sealed village publishes a finite
+  `TerrainGradePatch` on its 3 m construction lattice. `WorldFeaturePlan` supplies that
+  patch before final terrain sampling; it never mutates the natural plan or changes a
+  loaded cell in response to streaming neighbours.
   - **Levels are rendered** (`RENDER_LEVELS = true`): adjacent same-storey cells may differ
     by one 1 m level, and that short step uses the same shared smootherstep surface patch as
     a 4 m storey slope. Levels do not emit cliff dressing or vertical backing walls.
 - **`heightfield/HeightfieldRegion.gd`** — precomputed storey/level dictionaries with O(1)
   `storey_at` / `level_at` / `surface_height`. Same read API as the plan.
+  Its final graded view composes the village's sealed ground-band and foundation-pad
+  constraints through `TerrainGradePatch`, using the same centre/edge/corner smootherstep
+  kernel for target heights. The finite collar applies the normal 12 m transition profile
+  once to distance from the claimed-cell union, with continuous boundary-height blending;
+  it never resmooths weights at every 3 m construction cell or switches nearest-pad owners.
+  Natural fields remain available
+  for deterministic site and parcel selection. The final view is shared by terrain visuals,
+  collision and environmental dressing; foundation bounds use conservative interval
+  composition rather than assuming a coarse natural quadrant still contains every extremum.
 - **`field/TerrainSurfaceField.gd`** — reconstructs the **continuous walkable height** from a
   region. Each non-cliff cell quadrant is a smootherstep patch through four shared controls:
   its centre, the pairwise-minimum height at each adjoining edge midpoint, and the four-cell
@@ -225,7 +237,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   triangles keep the original tan; sparse varied-size world-hashed circular decals use one
   slightly darker tan from the same atlas island. The circles conform to the sheet and share its
   mesh, material, and draw call; exposed aprons use the base path tan. Path colour replaces the
-  local 0.25m ground patches in-place rather than riding on a second depth-fighting sheet;
+  local 0.25m ground triangles in-place rather than riding on a second depth-fighting sheet.
+  Mixed triangles partition at the existing feature field's continuous boundary; both paint
+  owners share canonical crossing vertices, so curved corners are not whole-tile staircases;
   transition fans give adjacent coarse grass quads the same boundary vertices, so adaptive path
   edges cannot open T-junction hairlines. Bridges are
   exact-water-validated before becoming atomic route macro-edges; ordinary routes use cheap
@@ -253,7 +267,7 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   player-width seams, primary itinerary, loops, cover policies, and required interval
   classifications. A sealed maze source names two or three separated, at-grade exterior portals
   (the primary mouth first); production projects every one to an exact two-lane terrain street and
-  terrain-sampled handoff rather than inferring exits from cul-de-sac degree. Each episode carries
+  heightfield-painted handoff rather than inferring exits from cul-de-sac degree. Each episode carries
   explicit exterior-air cells above its walk surface.
   `FabricVolumeClassifier` unions those claims with structural solids and inhabited volume,
   rejects every public-air/occupied-volume overlap, and flood-proves all public air back to the
@@ -314,13 +328,33 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   never an upright rock-wall module rotated into a horizontal shelf. Side masonry maps its
   measured 1.7701733 m face to the exact 1.5 m fine-grid claim and is inset by its measured half
   depth; perpendicular walls therefore meet at the lattice corner without protruding panels.
+  A single occupancy-vertex rule seals concave and diagonal retained joints with one timber
+  member per band; straight and buried vertices emit none. Facade alignment always presents
+  the authored +Z exterior toward its declared normal. Full-width facade slots use full-width
+  panels; proved perpendicular plain/window/door joins select baked finite miter ends (including
+  handed variants), while straight repeats keep square ends. These clipped choices remain
+  subsets of the original measured clearance envelope rather than adding overlap exemptions.
   Village turf is evaluated by the same `TerrainSurfaceField` kernel as streamed ground. Every
   capped yard and planned-green cell is emitted in one logical-cell union, with the complete
-  public-surface union and non-rendered plaza control ring supplying its neighboring height
-  controls; separate decorative panels may never own or omit a centre cell. Rolled grass lips occur only on true exposed field edges, never at an
+  public-surface union supplying its real neighboring height controls; invented equal-height
+  rings are forbidden because they suppress exposed lawn edges. Only finished turf and public
+  surfaces supply height controls; hidden retained blocks are structural occupancy, never a
+  second ground-height authority that can pull a lawn through its timber substrate. Separate decorative panels
+  may never own or omit a centre cell. Straight lips and corner lips use the same uniform
+  lattice/module scale. Turf's top retaining course uses the matching terrain rock family,
+  not square masonry protruding through its recessed rolled edge. A paired corner covers
+  two named logical faces; every face retains its own exact inset wall collider, since
+  terrain dressing meshes are visual-only. Rim audits count inner as well as outer corners.
+  Rolled grass lips occur only on true exposed field edges, never at an
   equal-height turf/plank material seam. Like `CliffDressing`, a concave turn of an L-shaped lawn
   receives the authored inner-corner lip (rotated the extra half turn the kit needs) so the two
   straight lips round into each other instead of leaving a notch over the wall's corner block. A
+  planted public deck over air uses a connected timber substrate instead of expanding
+  one-band support markers into hanging stone courses. Grounded retained mass is preserved.
+  Decorative facade caps bear with their authored underside on the wall-top plane, unlike
+  walk-aligned public floors. Their visible tops cannot share the wall's horizontal faces.
+  Its shared terrain clip kernel suppresses unbacked run-end drapes: grass cannot form
+  a vertical curtain through the public air below a structural deck. A
   supported missing fourth cell in an otherwise complete 2 x 2 structural court is sealed as an
   explicit derived claim before surfaces, guards, or audits are built; closure cannot cascade
   across arbitrary empty space. When one sealed transition mesh owns both the upper and lower
@@ -331,11 +365,28 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   low and tall post candidates derive from the complete final structural-surface outline vertices,
   repeat at the authored 3 m pitch, and are rejected when their thickness would enter any public
   lane below; internal surface seams can never manufacture posts in a plaza. The route entry also
-  emits one player-wide terrain-sampled handoff ramp from its sealed boundary to the natural
-  ground, so its first street tile cannot cantilever over the world. Every rendered exterior door
+  publishes ground-height constraints and path paint at each boundary. Production no longer
+  emits separate town-street or handoff-ramp meshes: the terrain's fine local tessellation owns
+  both their appearance and collision. Nearby accepted house pads join the same sealed grading
+  transaction, retaining the neighbourhood while the collar meets untouched natural ground.
+  Outskirts survey the finished field and propose pads on that same construction datum/grid
+  before their entrance and route proofs. A later pad cannot overwrite a sealed ground band.
+  After retained masonry is finalized, root rooms are re-proved against the actual
+  six-neighbour ground-connected mass, not temporary source stone. Edge-only contact
+  and pitched-roof bounding boxes cannot establish bearing. An otherwise unborne room
+  requires four finite timber corner courses reaching the local support datum; every
+  member passes the existing public-air and measured visual-clearance transaction.
+  Every rendered exterior door
   requires both its exact threshold landing and a clear direct approach tile beyond every open
   facade half; a proposal that cannot provide that two-cell-deep approach is rejected before
-  guards or facade assets are derived.
+  guards or facade assets are derived. Stair-span claims are not flat doorsteps: construction
+  selects the existing closed facade when its doorstep lies on a flight or its approach
+  crosses a flight's side rail, records the suppressed door IDs, and preserves the room
+  envelope and stair guards. An aligned flight may lead through its open end to a flat
+  doorstep. Prefab admission applies the same proof before reserving its mass, and surface
+  sealing independently rejects any surviving unserved entrance. Courtyard planters have
+  no minimum quota; only genuine outside corners qualify, with adjoining stair bands counted
+  as route neighbours so furniture cannot occupy a flight's approach.
   Reviewed fixed-size floor/gallery meshes tile structural claims as authored plank
   visuals without replacing the union's collision authority or scaling assets. Production also
   emits the exact sealed structural union as a minimally recessed skin beneath those boards, so
@@ -404,7 +455,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   so east/west faces use bake-time X-mirrored variants with corrected winding, normals, tangents,
   collision, and material surfaces. Runtime transforms remain proper rotations; rectangular shells
   must resolve to exactly one post at every corner, never doubled diagonal corners and empty opposite
-  corners. Every compact 3 m by 3 m modular room is also classified at the final fabric boundary:
+  corners. Modular room stitches use the solid timber jamb fitted to a 0.28 m square,
+  not the kit's plaster-bearing corner-wall panel. Every authored 3 m facade-bay
+  endpoint is framed, including intermediate T-joints on long rooms; party-wall
+  suppression must not leave an unstitched slot halfway along a room side.
+  Every compact 3 m by 3 m modular room is also classified at the final fabric boundary:
   it must be a fully borne stack/foundation course, a two-ended occupied skywalk, or the roofed top
   of a compact house. Partial-bearing tower rooms, roofless compact houses, and unclassified
   micro-boxes reject the transaction; larger jetties remain governed by their separate exact

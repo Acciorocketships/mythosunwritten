@@ -27,6 +27,7 @@ static func build(stable_id: StringName,
 	var end := endpoints.end as Vector3
 	var direction := Vector3(float(transition.direction.x), 0.0,
 		float(transition.direction.y))
+	payload["run_direction"] = Vector3i(direction)
 	var lateral := Vector3(-direction.z, 0.0, direction.x)
 	if transition.kind == WarrenVolumeTransition.Kind.RAMP:
 		_append_ramp(payload, start, end, lateral)

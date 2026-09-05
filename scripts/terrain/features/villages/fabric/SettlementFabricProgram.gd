@@ -420,12 +420,12 @@ const WOOD_CELL_FACADE_AMBER: Array[StringName] = [
 const WOOD_CELL_FACADE_FRONT_DEPTH := 0.27658215
 const ROCK_FACADE: Array[StringName] = [
 	&"sfv.fabric.wall.rock.window.010",
-	&"sfv.fabric.wall.rock.plain.001",
+	&"sfv.fabric.wall.rock.plain.002",
 	&"sfv.fabric.wall.rock.window.010",
 	&"sfv.fabric.wall.rock.window.m.016",
 	&"sfv.fabric.wall.rock.window.m.019",
 	&"sfv.fabric.wall.rock.plain.002",
-	&"sfv.fabric.wall.rock.window.s.003",
+	&"sfv.fabric.wall.rock.window.m.016",
 ]
 ## Static generated thresholds are closed. Open frames remain catalogued for a
 ## future interactive-door assembly but are never selected as a finished wall.
@@ -1141,6 +1141,18 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 				"roof.flat.%s.terrace.%s" % [flat_spec.kind, side]),
 				flat_spec.minimum as Vector3i, flat_spec.size as Vector3i,
 				StringName(flat_spec.family), side, modules))
+	# A finite timber member for final ground-bearing frames. The same
+	# post used by public decks sits inside a cell corner, leaving body lanes
+	# clear. Repeated courses meet end-to-end; only the lowest may bury in soil.
+	var post_bounds := modules.contract(DECK_PILLAR).visual_bounds
+	for bands in [1, 2]:
+		var ground_post := FabricRecipe.new(StringName("foundation.timber.post.%d" % bands),
+			[&"visual_attachment", &"grounded_frame_member"], 0)
+		ground_post.add_placement(&"post", DECK_PILLAR,
+			Transform3D(Basis.from_scale(Vector3(0.28 / post_bounds.size.x,
+				float(bands) * CELL / post_bounds.size.y, 0.28 / post_bounds.size.z)),
+				Vector3(0.61, -0.1611, 0.61)))
+		candidates.append(ground_post)
 	_append_address_door_phase_vocabulary(candidates)
 	_append_feature_portal_vocabulary(candidates, modules)
 	_append_terminal_step_gable_vocabulary(candidates, modules)
@@ -1175,6 +1187,7 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			and modules.apply_visual_envelope(candidate)
 		if compiled:
 			compiled = _preserve_lpfv_prefab_clearance(candidate, modules)
+			modules.finish_facade_corners(candidate)
 		if not compiled or not candidate.seal(catalog) \
 				or not program._add_recipe(candidate):
 			push_error("Could not compile settlement fabric recipe %s: %s" % [
@@ -1217,8 +1230,11 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	#   is the blank-town failure this list exists to stop.
 	var adapter_assets: Array[StringName] = [
 		RAILING_MEDIUM,
+		SettlementFabricAssembler.MAZE_STONE_MODULE,
 		SettlementFabricAssembler.TERRAIN_GREEN_CAP,
 		SettlementFabricAssembler.NATURAL_ROCK_FACE,
+		SettlementFabricAssembler.TURF_ROCK_CORNER,
+		SettlementFabricAssembler.GREEN_RIM_INNER_CORNER,
 		SettlementFabricAssembler.GREEN_RIM_EDGE,
 		SettlementFabricAssembler.GREEN_RIM_OUTER_CORNER,
 		SettlementFabricAssembler.SKYWALK_DECK,
@@ -1352,12 +1368,21 @@ static func _compile_module_program(catalog: EnvironmentCatalog) \
 			push_error("Could not compile facade contract %s: %s" % [
 				wall_asset, modules.last_rejection])
 			return null
+		for mask in range(1, 4):
+			var miter := StringName("%s.miter%d" % [wall_asset, mask])
+			if catalog.has(miter) and not modules.add_generic(miter):
+				return null
 		var mirrored_asset := _mirrored_facade_asset(wall_asset)
 		if mirrored_asset != wall_asset and catalog.has(mirrored_asset) \
 				and not modules.add_generic(mirrored_asset):
 			push_error("Could not compile mirrored facade contract %s: %s" % [
 				mirrored_asset, modules.last_rejection])
 			return null
+		if mirrored_asset != wall_asset:
+			for mask in range(1, 4):
+				var miter := StringName("%s.miter%d" % [mirrored_asset, mask])
+				if catalog.has(miter) and not modules.add_generic(miter):
+					return null
 	# Preset 003 shares preset 004's stair/landing datum; its complete handrails
 	# extend above the walking plane. Keep the real upper tread in the contract so
 	# every use meets its destination platform instead of aligning by the post top.
