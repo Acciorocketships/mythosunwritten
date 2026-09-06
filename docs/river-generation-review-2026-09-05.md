@@ -54,8 +54,17 @@ source cell from sharing stale hydraulic data.
 
 ## Validation
 
-- 126 focused water tests passed before the final cache-identity correction.
-- 26 planner tests passed, including immutable junction-prefix containment.
-- Five new generation tests passed, including actual rendered-field wet width and the
-  red-first cache-collision regression.
-- Full project suite was run; results are recorded in the task completion message.
+- Final focused water suite: all 127 tests / 29,413 assertions passed. Godot then
+  exited with a `recursive_mutex lock failed` error during process teardown (exit 134).
+  This is not a clean process exit and is retained here as a verification limitation.
+- All 26 planner tests passed, including immutable junction-prefix containment.
+- All five new generation tests passed, including actual rendered-field wet width and
+  the red-first cache-collision regression. Rerunning them in the merged main worktree
+  passed with a clean exit, as did the exact diagonal-normal regression.
+- Both preserved historical bridge tests passed.
+- The full project attempt reported village asset-UID warnings and failures in dry-fixture
+  village/maze composition tests. It also exposed the cross-world water-cache collision
+  fixed in this change. The final focused water run supersedes those earlier water
+  results; the outdated full-suite process was stopped after recording its failures.
+- Code merged into the main worktree as `13cb0221`, preserving the concurrent facade
+  edits and combining the water invariants with the other agent's `AGENTS.md` changes.
