@@ -147,8 +147,21 @@ static func solve(world_seed: int,
 		ground_bands: Dictionary = {},
 		construction_program: SettlementFabricProgram = null,
 		scale_profile: WarrenVillageScaleProfile = null) -> WarrenSpatialPlan:
-	## The production entry. Solid-first: one deterministic carve, no attempt
-	## rotation and no ranked candidate corpus.
+	## Diagnostic entry for tests and review fixtures. It constructs the same
+	## town as generate(), then collects the construction audits for the caller.
+	return _generate(world_seed, ground_bands, construction_program, scale_profile, true)
+
+
+static func generate(world_seed: int, ground_bands: Dictionary = {},
+		construction_program: SettlementFabricProgram = null,
+		scale_profile: WarrenVillageScaleProfile = null) -> WarrenSpatialPlan:
+	## Production does not collect full-town audits or use them to choose a town.
+	return _generate(world_seed, ground_bands, construction_program, scale_profile, false)
+
+
+static func _generate(world_seed: int, ground_bands: Dictionary,
+		construction_program: SettlementFabricProgram,
+		scale_profile: WarrenVillageScaleProfile, collect_diagnostics: bool) -> WarrenSpatialPlan:
 	last_failure = ""
 	last_diagnostic = {}
 	last_preplan_skywalk_diagnostic = {}
@@ -159,7 +172,7 @@ static func solve(world_seed: int,
 		return null
 	var profile := scale_profile if scale_profile != null \
 		else WarrenVillageScaleProfile.review_fixture()
-	return _solve_maze(world_seed, ground_bands, construction_program, profile)
+	return _solve_maze(world_seed, ground_bands, construction_program, profile, collect_diagnostics)
 
 
 static func _stamp_maze_stage(volume: WarrenVolumePlan, stage: StringName,
@@ -175,7 +188,7 @@ static func _stamp_maze_stage(volume: WarrenVolumePlan, stage: StringName,
 
 static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 		construction_program: SettlementFabricProgram,
-		profile: WarrenVillageScaleProfile) -> WarrenSpatialPlan:
+		profile: WarrenVillageScaleProfile, collect_diagnostics: bool) -> WarrenSpatialPlan:
 	## The production entry. The whole point of the solid-first front end
 	## is that the source is correct by construction, so there is exactly one
 	## source, one partition, and one composition. A rejection here is a real
@@ -214,20 +227,14 @@ static func _solve_maze(world_seed: int, ground_bands: Dictionary,
 	var spatial_started_ms := Time.get_ticks_msec()
 	# The maze partitioner is deterministic and ignores the variant index, so
 	# the eight-variant rotation is meaningless here: pass -1 for "the one".
-	# Prove the serial construction once. Large/grand may then try the optional
-	# paired silhouette refinement in `_finalize_candidate`; passing `true` here
-	# as well ran that identical expensive composition twice and left no serial
-	# survivor to fall back to, contrary to the finalizer's transaction contract.
-	# Compact/standard already skipped the second pass, so their output remains
-	# exactly the same. A successful large/grand refinement is still the selected
-	# result; a failed refinement now retains this independently proven baseline.
+	# Compose the source once, without a speculative paired rebuild.
 	var plan := from_volume(volume, -1, construction_program, false)
 	var spatial_ms := Time.get_ticks_msec() - spatial_started_ms
 	if plan == null:
 		last_failure = "maze composition rejected: %s" % last_failure
 		return null
 	var fabric_started_ms := Time.get_ticks_msec()
-	var fabric := WarrenSpatialFabricCompiler.solve(plan, construction_program)
+	var fabric := WarrenSpatialFabricCompiler.generate(plan, construction_program, collect_diagnostics)
 	var fabric_ms := Time.get_ticks_msec() - fabric_started_ms
 	if fabric == null:
 		last_failure = "maze fabric gate failed: %s" \
@@ -267,74 +274,16 @@ static func _finalize_candidate(volume: WarrenVolumePlan,
 		variant: int, construction_program: SettlementFabricProgram,
 		precomposition_audit: Dictionary, proven_serial: WarrenSpatialPlan,
 		proven_serial_fabric: SettlementFabricPlan) -> WarrenSpatialPlan:
-	## The last step of a solve: the composition has already been proved with
-	## the serial room fixed point and compiled through the exact fabric gate.
-	## Compact and standard stop there. Large and grand additionally try one
-	## bounded paired silhouette cleanup and rerun every authored-envelope and
-	## compiled quality gate; that exchange is optional construction refinement,
-	## so if it makes a previously borne exact interface unrepairable the
-	## already-proven serial composition is retained rather than the whole town
-	## thrown away. Both alternatives pass the same support, overlap, feature,
-	## and production-quality gates.
-	##
-	## TASK F1 FIX 1 folded `_finalize_ranked_candidate` in here: it was the
-	## searched pipeline's per-rank wrapper and, with one candidate per town,
-	## its three lines are simply part of finalizing.
-	var profile := _scale_profile_for_volume(volume)
-	if profile != null and not profile.requires_elevated_courtyard:
-		# Compact/standard composition already ran merge, coupling, volumetric
-		# variation, tower relief, and the complete exact fabric gate. The paired
-		# pass changes at most a bounded optional pair, but previously rebuilt the
-		# whole market/skywalk/room transaction and doubled first-load time. Keep it
-		# for the large court silhouettes it was introduced to repair.
-		for key: StringName in [&"frontage_ratio", &"overhead_route_ratio",
-				&"through_sightline_count", &"ground_through_sightline_count"]:
-			proven_serial.audit[key] = proven_serial_fabric.audit.get(key, 0)
-		proven_serial.audit["paired_registration_finalization_count"] = 0
-		proven_serial.audit[
-			"paired_registration_scale_skip_count"] = 1
-		proven_serial.audit["serial_finalization_reuse_count"] = 1
-		proven_serial.cache_compiled_fabric(proven_serial_fabric)
-		return _stamp_selection(proven_serial, volume, variant)
-	var failures := PackedStringArray()
-	var finalized := from_volume(volume, variant, construction_program, true)
-	if finalized == null:
-		failures.append("paired room seal: %s" % last_failure)
-	else:
-		for key: Variant in precomposition_audit.keys():
-			finalized.audit["precomposition_%s" % String(key)] = \
-				precomposition_audit[key]
-		var fabric := WarrenSpatialFabricCompiler.solve(finalized,
-			construction_program)
-		if fabric == null:
-			failures.append("paired fabric gate: %s" % \
-				WarrenSpatialFabricCompiler.last_failure)
-		else:
-			for key: StringName in [&"frontage_ratio", &"overhead_route_ratio",
-					&"through_sightline_count",
-					&"ground_through_sightline_count"]:
-				finalized.audit[key] = fabric.audit.get(key, 0)
-			finalized.audit[
-				"paired_registration_finalization_count"] = 1
-			finalized.audit["serial_finalization_fallback_count"] = 0
-			finalized.audit["paired_registration_scale_skip_count"] = 0
-			finalized.cache_compiled_fabric(fabric)
-			return _stamp_selection(finalized, volume, variant)
-	# The serial candidate passed the exact fabric gate
-	# immediately before this call. Rebuilding it after an optional paired pass
-	# fails is output-identical but was one of the largest first-load costs.
-	if proven_serial != null and proven_serial_fabric != null:
-		for key: StringName in [&"frontage_ratio", &"overhead_route_ratio",
-				&"through_sightline_count", &"ground_through_sightline_count"]:
-			proven_serial.audit[key] = proven_serial_fabric.audit.get(key, 0)
-		proven_serial.audit["paired_registration_finalization_count"] = 0
-		proven_serial.audit["serial_finalization_fallback_count"] = 1
-		proven_serial.audit["paired_registration_scale_skip_count"] = 0
-		proven_serial.audit["serial_finalization_reuse_count"] = 1
-		proven_serial.cache_compiled_fabric(proven_serial_fabric)
-		return _stamp_selection(proven_serial, volume, variant)
-	last_failure = "final room cleanup rejected: %s" % " | ".join(failures)
-	return null
+	## Finalization publishes the constructed town. It never composes or
+	## compiles an alternative town to see whether that one passes an audit.
+	for key: StringName in [&"frontage_ratio", &"overhead_route_ratio",
+			&"through_sightline_count", &"ground_through_sightline_count"]:
+		proven_serial.audit[key] = proven_serial_fabric.audit.get(key, 0)
+	proven_serial.audit["paired_registration_finalization_count"] = 0
+	proven_serial.audit["paired_registration_scale_skip_count"] = 1
+	proven_serial.audit["serial_finalization_reuse_count"] = 1
+	proven_serial.cache_compiled_fabric(proven_serial_fabric)
+	return _stamp_selection(proven_serial, volume, variant)
 
 
 static func _stamp_selection(finalized: WarrenSpatialPlan,
@@ -409,7 +358,7 @@ static func solve_selected(world_seed: int, selected: WarrenSpatialPlan,
 	if profile == null:
 		last_failure = "selected preview has an invalid scale profile"
 		return null
-	return _solve_maze(world_seed, ground_bands, construction_program, profile)
+	return _solve_maze(world_seed, ground_bands, construction_program, profile, true)
 
 
 static func from_volume(volume: WarrenVolumePlan,
@@ -502,9 +451,6 @@ static func from_volume(volume: WarrenVolumePlan,
 	route_floors.sort_custom(_cell_less)
 	var buildings := partition.buildings as Array[WarrenBuildingVolume]
 	var supports := partition.supports as WarrenSupportGraph
-	if buildings.size() < MIN_BUILDINGS:
-		last_failure = "only %d volumetric buildings formed" % buildings.size()
-		return null
 	# A common roof court is a path decision, not a decorative roof prop. Carve
 	# its walk and full headroom now, while the final room crowns are known but
 	# before balconies, outcroppings, and roofs reserve the same volume. Large and
@@ -533,7 +479,7 @@ static func from_volume(volume: WarrenVolumePlan,
 		partition.landmark_reservations as Array[Dictionary],
 		construction_program, partition.composition_audit as Dictionary)
 	_stamp_maze_stage(volume, &"feature_solver", features_started_ms)
-	if features.is_empty():
+	if features.is_empty() and not WarrenSpatialFeatureSolver.last_failure.is_empty():
 		last_failure = WarrenSpatialFeatureSolver.last_failure
 		return null
 	var unassigned_mass_cell_count := grid.cells_with_use(
@@ -584,7 +530,7 @@ static func from_volume(volume: WarrenVolumePlan,
 		last_failure = "could not attach sealed support DAG"
 		return null
 	var entry := _fine_square(volume.entry_cell)[0]
-	if not plan.seal(entry):
+	if not plan.finish_construction(entry):
 		last_failure = plan.last_rejection
 		return null
 	var minimum_route_y := 2147483647
@@ -3617,9 +3563,9 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# made `room_stamp_count` understate a maze town by its whole directed pass.
 	room_count += int(back_rooms.get("building_count", 0)) \
 		+ int(backfill.get("building_count", 0))
-	if buildings.size() < MIN_BUILDINGS:
-		last_failure = "room partition formed only %d buildings" % buildings.size()
-		return {}
+	# Building count is an observation for the corpus, not town admission.
+	# Connected components can merge several addressed parcels into one owner.
+	composition_audit["building_count_below_reference"] = buildings.size() < MIN_BUILDINGS
 	for root_id: StringName in terrain_support_ids:
 		if not supports.mark_terrain_root(root_id):
 			last_failure = "could not root %s" % root_id

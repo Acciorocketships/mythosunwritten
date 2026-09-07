@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_settings")
 grass_seed_version = 3
-coverage_by_biome = {&"meadow": 0.75, &"deep_forest": 0.6, &"highland": 0.32, &"blossom_grove": 0.66, &"twilight_marsh": 0.45}
+coverage_by_biome = {&"meadow": 0.75, &"deep_forest": 0.6, &"highland": 0.32, &"blossom_grove": 0.66, &"twilight_marsh": 0.45, &"amber_heath": 0.75, &"jade_wetlands": 0.45}
 variant_asset_ids = Array[StringName]([&"stylized_grass.collection_05"])
 scale_range = Vector2(0.94, 1.08)
 max_grade = 1.0

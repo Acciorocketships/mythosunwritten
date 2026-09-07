@@ -1,14 +1,9 @@
 # scripts/terrain/biome/BiomeChunkFx.gd
-# Render-only per-chunk children: pocket FogVolume + particle emitters from the
-# dominant biome profile + point lights for light-carrying recipes. Built by the
-# streamer (never in headless); freed with the chunk. Internal positions are
-# chunk-local (0..CHUNK); the streamer positions this node at the chunk's world
-# origin. Spec §3 + §5.
-#
-# ADDING A NEW PARTICLE TYPE: add one RECIPES entry below and reference its name
-# from a BiomeProfile.particles dict — no code changes needed. A recipe with
-# "lights": true also gets ground-anchored OmniLights (the streamer supplies the
-# surface points; see FieldTerrainStreamer._attach_biome_fx).
+# Main-thread render adapter for BiomeAtmosphereField's world-space arrays.
+# Fog samples cross chunk edges continuously. Particle anchors follow the exact
+# ground/water field; a spirit sprite and its moving light share one parent.
+# The profile-only build() helper below is an isolated recipe preview for tests;
+# production calls build_field(), never dominant-biome chunk selection.
 class_name BiomeChunkFx
 extends RefCounted
 
@@ -42,6 +37,15 @@ const RECIPES := {
 		"size": 0.35, "albedo": Color(0.95, 0.72, 0.85, 0.9), "soft_alpha": true,
 		"gravity": Vector3(0.4, -0.6, 0.2), "velocity": Vector2(0.2, 0.8),
 	},
+	&"spray": {
+		"size": 3.0, "albedo": Color(0.75, 0.90, 0.95, 0.10), "soft_alpha": true,
+		"gravity": Vector3(0.03, 0.08, 0.0), "velocity": Vector2(0.03, 0.12),
+		"lifetime": 4.0, "scale": Vector2(0.4, 1.2),
+	},
+	&"leaves": {
+		"size": 0.23, "albedo": Color(1.0, 0.53, 0.18, 0.85), "soft_alpha": true,
+		"gravity": Vector3(0.12, -0.12, 0.08), "velocity": Vector2(0.05, 0.2),
+	},
 	&"motes": {
 		"size": 0.2, "albedo": Color(1.0, 0.95, 0.8, 0.6),
 		"emission": Color(1.0, 0.95, 0.8), "emission_energy": 1.5,
@@ -50,6 +54,7 @@ const RECIPES := {
 }
 
 static var _glow_tex: GradientTexture2D = null
+static var _petal_tex: ImageTexture = null
 
 # Radial white→transparent falloff: the ONE soft-glow sprite every ambient
 # particle uses — no hard silhouette at any size, bloom supplies the halo.
@@ -68,6 +73,19 @@ static func glow_texture() -> GradientTexture2D:
 	t.height = 64
 	_glow_tex = t
 	return _glow_tex
+
+static func petal_texture() -> ImageTexture:
+	if _petal_tex != null:
+		return _petal_tex
+	var pixels := Image.create_empty(32, 32, false, Image.FORMAT_RGBA8)
+	for y in 32:
+		for x in 32:
+			var p := (Vector2(x, y) + Vector2.ONE * 0.5) / 32.0 * 2.0 - Vector2.ONE
+			var radius := Vector2(p.x * 1.7, p.y + 0.15 * p.x).length()
+			var alpha := 1.0 - smoothstep(0.68, 0.92, radius)
+			pixels.set_pixel(x, y, Color(1, 1, 1, alpha))
+	_petal_tex = ImageTexture.create_from_image(pixels)
+	return _petal_tex
 
 # Does any of this profile's particle recipes want ground-anchored lights?
 # (The streamer asks this before spending region lookups on surface points.)
@@ -150,19 +168,98 @@ static func _emitter(recipe: StringName, density: float, surf_lo := 0.0, surf_hi
 	var mat := StandardMaterial3D.new()
 	var size: float = r.get("size", 0.25)
 	mat.albedo_color = r.get("albedo", Color.WHITE)
-	mat.albedo_texture = glow_texture()
+	mat.albedo_texture = petal_texture() if recipe == &"petals" or recipe == &"leaves" else glow_texture()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	if not r.get("soft_alpha", false):
 		mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	if r.has("emission"):
+		mat.emission_texture = glow_texture()
 		mat.emission_enabled = true
 		mat.emission = r["emission"]
 		mat.emission_energy_multiplier = r.get("emission_energy", 2.0)
 	var qm := QuadMesh.new()
 	qm.size = Vector2(size, size)
 	qm.material = mat
+	if recipe == &"petals" or recipe == &"leaves":
+		m.angle_min = -180.0
+		m.angle_max = 180.0
+		m.angular_velocity_min = -35.0
+		m.angular_velocity_max = 35.0
 	e.process_material = m
 	e.draw_pass_1 = qm
 	return e
+
+# Production uses this spatial payload; the profile-only builder above remains
+# available for isolated recipe/asset previews.
+static func build_field(data: Dictionary) -> Node3D:
+	var root := Node3D.new()
+	root.name = "BiomeFx"
+	var fog_image := Image.create_empty(13, 13, false, Image.FORMAT_RGBAF)
+	var ground_image := Image.create_empty(13, 13, false, Image.FORMAT_RF)
+	var density_max := 0.0
+	for i in 169:
+		var c: Color = data.fog[i]
+		fog_image.set_pixel(i % 13, i / 13, c)
+		ground_image.set_pixel(i % 13, i / 13, Color(data.ground[i], 0, 0))
+		density_max = maxf(density_max, c.a)
+	if density_max > 0.0001:
+		var volume := FogVolume.new()
+		volume.name = "WorldMist"
+		volume.shape = RenderingServer.FOG_VOLUME_SHAPE_BOX
+		volume.size = Vector3(CHUNK, data.hi - data.lo + 160.0, CHUNK)
+		volume.position = Vector3(CHUNK * 0.5, (data.lo + data.hi) * 0.5 + 60.0, CHUNK * 0.5)
+		var material := ShaderMaterial.new()
+		material.shader = load("res://terrain/materials/biome_mist.gdshader")
+		material.set_shader_parameter("atmosphere_field", ImageTexture.create_from_image(fog_image))
+		material.set_shader_parameter("ground_field", ImageTexture.create_from_image(ground_image))
+		material.set_shader_parameter("chunk_origin", Vector2(data.origin.x, data.origin.z))
+		volume.material = material
+		root.add_child(volume)
+	for recipe: StringName in data.points:
+		var points: PackedVector3Array = data.points[recipe]
+		if points.is_empty():
+			continue
+		var emitter := _emitter(recipe, 1.0, data.lo, data.hi)
+		emitter.amount = clampi(points.size() * 5, 8, 240)
+		emitter.preprocess = 5.0
+		emitter.fixed_fps = 30
+		var process := emitter.process_material as ParticleProcessMaterial
+		process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_POINTS
+		process.emission_shape_offset = Vector3.ZERO
+		process.emission_point_count = points.size()
+		var positions := Image.create_empty(points.size(), 1, false, Image.FORMAT_RGBF)
+		for i in points.size():
+			positions.set_pixel(i, 0, Color(points[i].x, points[i].y, points[i].z))
+		process.emission_point_texture = ImageTexture.create_from_image(positions)
+		root.add_child(emitter)
+	for point: Vector3 in data.orbs:
+		var orb := SpiritOrb.new()
+		orb.name = "SpiritOrb"
+		orb.anchor = point
+		orb.position = point
+		orb.phase = fposmod(point.x * 0.37 + point.z * 0.71, TAU)
+		var sprite := MeshInstance3D.new()
+		var mesh := QuadMesh.new()
+		mesh.size = Vector2(2.2, 2.2)
+		var material := ShaderMaterial.new()
+		material.shader = load("res://terrain/materials/spirit_orb.gdshader")
+		material.set_shader_parameter("phase", orb.phase)
+		var color := Color("80e8df").lerp(Color("ffce83"), (sin(orb.phase) + 1.0) * 0.5)
+		material.set_shader_parameter("glow_color", color)
+		mesh.material = material
+		sprite.mesh = mesh
+		sprite.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		orb.add_child(sprite)
+		var light := OmniLight3D.new()
+		light.light_color = color
+		light.light_energy = 0.8
+		light.omni_range = 8.0
+		light.light_volumetric_fog_energy = 0.45
+		light.distance_fade_enabled = true
+		light.distance_fade_begin = 65.0
+		light.distance_fade_length = 25.0
+		orb.add_child(light)
+		root.add_child(orb)
+	return root

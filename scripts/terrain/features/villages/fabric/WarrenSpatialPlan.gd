@@ -76,14 +76,50 @@ func set_support_graph(value: WarrenSupportGraph) -> bool:
 
 
 func seal(p_entry_floor_cell: Vector3i) -> bool:
+	entry_floor_cell = p_entry_floor_cell
+	if _sealed or not validate_construction():
+		return false
+	return finish_construction(p_entry_floor_cell)
+
+
+func finish_construction(p_entry_floor_cell: Vector3i) -> bool:
+	entry_floor_cell = p_entry_floor_cell
+	construction_plan = WarrenConstructionRegionPlan.derive(
+		StringName("%s.construction" % stable_id), grid)
+	if construction_plan == null:
+		return _reject("construction interfaces could not be derived")
+	audit = {
+		"public_route_floor_count": route_floor_cells.size(),
+		"public_air_cell_count": grid.count_use(
+			WarrenSpatialGrid.Use.PUBLIC_AIR),
+		"private_volume_cell_count": grid.count_use(
+			WarrenSpatialGrid.Use.PRIVATE_VOLUME),
+		"structural_volume_cell_count": grid.count_use(
+			WarrenSpatialGrid.Use.STRUCTURAL_VOLUME),
+		"daylight_air_cell_count": grid.count_use(
+			WarrenSpatialGrid.Use.DAYLIGHT_AIR),
+		"allocatable_cell_count": grid.count_use(WarrenSpatialGrid.Use.ALLOCATABLE),
+		"building_count": buildings.size(),
+		"feature_count": features.size(),
+	}
+	audit.merge(_source_route_lineage_audit(), true)
+	audit.merge(_interface_audit(), true)
+	audit.merge(_building_access_audit(), true)
+	audit.merge(construction_plan.audit, true)
+	if not grid.seal():
+		return _reject("fine grid could not seal")
+	_sealed = true
+	return true
+
+
+func validate_construction() -> bool:
 	last_rejection = ""
-	if _sealed or stable_id.is_empty() or grid == null or not grid.is_valid() \
-			or grid.is_sealed() or route_floor_cells.size() < 2 \
+	if stable_id.is_empty() or grid == null or not grid.is_valid() \
+			or route_floor_cells.size() < 2 \
 			or buildings.is_empty() or support_graph == null \
 			or not support_graph.is_sealed() or not _route_set.has(
-				p_entry_floor_cell):
+				entry_floor_cell):
 		return _reject("missing grid, route, entry, buildings, or support graph")
-	entry_floor_cell = p_entry_floor_cell
 	if not _validate_route():
 		return false
 	var lineage_audit := _source_route_lineage_audit()
@@ -110,31 +146,6 @@ func seal(p_entry_floor_cell: Vector3i) -> bool:
 		return _reject("private volume terminates without a roof interface")
 	if int(interface_audit.threshold_face_mismatch_count) != 0:
 		return _reject("building threshold is not a door interface")
-	construction_plan = WarrenConstructionRegionPlan.derive(
-		StringName("%s.construction" % stable_id), grid)
-	if construction_plan == null:
-		return _reject("construction interfaces could not be derived")
-	audit = {
-		"public_route_floor_count": route_floor_cells.size(),
-		"public_air_cell_count": grid.count_use(
-			WarrenSpatialGrid.Use.PUBLIC_AIR),
-		"private_volume_cell_count": grid.count_use(
-			WarrenSpatialGrid.Use.PRIVATE_VOLUME),
-		"structural_volume_cell_count": grid.count_use(
-			WarrenSpatialGrid.Use.STRUCTURAL_VOLUME),
-		"daylight_air_cell_count": grid.count_use(
-			WarrenSpatialGrid.Use.DAYLIGHT_AIR),
-		"allocatable_cell_count": allocatable_count,
-		"building_count": buildings.size(),
-		"feature_count": features.size(),
-	}
-	audit.merge(lineage_audit, true)
-	audit.merge(interface_audit, true)
-	audit.merge(access_audit, true)
-	audit.merge(construction_plan.audit, true)
-	if not grid.seal():
-		return _reject("fine grid could not seal")
-	_sealed = true
 	return true
 
 

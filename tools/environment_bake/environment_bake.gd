@@ -3,13 +3,14 @@ extends SceneTree
 
 ## Deterministic editor-side importer for source-pack visuals. Runtime code is
 ## intentionally unaware of every source path named by the manifests.
-const TOOL_VERSION := 23
+const TOOL_VERSION := 24
 const DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
 const INDEX_PATH := "res://terrain/environment/catalog/index.tres"
 const MANIFEST_DIR := "res://tools/environment_bake/manifests"
 const RIGID_NATURE_TAGS: Array[String] = ["tree", "rock", "deadwood"]
 
 var _texture_cache: Dictionary = {}
+var _canopy_assets: Dictionary = {}
 var _failed := false
 
 func _init() -> void:
@@ -208,6 +209,7 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 	var pivot := _vector3(entry.get("pivot", [0.0, 0.0, 0.0]), Vector3.ZERO)
 	var correction := Transform3D(Basis.IDENTITY.scaled(scale), -pivot)
 	var supports_color := bool(entry.get("supports_instance_color", false))
+	_canopy_assets[asset_id] = bool(entry.get("biome_canopy", false))
 	var material_tint := _color(entry.get("material_tint", [1.0, 1.0, 1.0, 1.0]))
 	var fallback_albedo: Texture2D = null
 	var fallback_albedo_path := String(entry.get("fallback_albedo_texture", ""))
@@ -333,6 +335,22 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 							1.5 - front))
 			if merged == null:
 				_fail("Could not miter facade %s" % asset_id)
+				root.free()
+				return {}
+		if entry.has("facade_return_depths"):
+			var depths: Array = entry.facade_return_depths
+			if depths.size() != 2 or float(depths[0]) < 0.0 or float(depths[1]) < 0.0 \
+					or float(depths[0]) + float(depths[1]) >= 3.0:
+				_fail("Invalid measured facade return depths: %s" % asset_id)
+				root.free()
+				return {}
+			var minimum := -1.5 + float(depths[0]) if float(depths[0]) > 0.0 \
+				else merged.get_aabb().position.x - 1.0
+			var maximum := 1.5 - float(depths[1]) if float(depths[1]) > 0.0 \
+				else merged.get_aabb().end.x + 1.0
+			merged = EnvironmentBakeGeometry.clip_axis_range(merged,Vector3.AXIS_X,minimum,maximum)
+			if merged == null:
+				_fail("Could not construct facade return: %s" % asset_id)
 				root.free()
 				return {}
 		var baked_mesh := _bake_mesh(merged, pack, asset_id, piece_index,
@@ -2013,6 +2031,16 @@ func _bake_material(source: Material, pack: String, asset_id: String, piece_inde
 		variant.set_shader_parameter("albedo_texture", standard.albedo_texture)
 		variant.set_shader_parameter("green_target", Color.from_hsv(green_hue, 0.72, 1.0))
 		material = variant
+	if _canopy_assets.get(asset_id, false):
+		var standard := material as StandardMaterial3D
+		if standard == null or standard.albedo_texture == null or not supports_color:
+			_fail("Biome canopy requires a textured, instance-coloured material: %s" % asset_id)
+			return null
+		var canopy := ShaderMaterial.new()
+		canopy.shader = load("res://terrain/environment/materials/biome_canopy.gdshader")
+		canopy.set_shader_parameter("albedo_texture", standard.albedo_texture)
+		canopy.set_shader_parameter("base_color", standard.albedo_color)
+		material = canopy
 	var material_path := "res://terrain/environment/materials/%s/%s_piece_%02d_surface_%02d.tres" % [
 		_slug(pack), _slug(asset_id), piece_index, surface_index]
 	_ensure_parent(material_path)

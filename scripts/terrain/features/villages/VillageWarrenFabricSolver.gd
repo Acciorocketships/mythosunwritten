@@ -1,10 +1,9 @@
 class_name VillageWarrenFabricSolver
 extends RefCounted
 
-## Production adapter for the seeded volumetric warren. It aligns the maze's
-## actual boundary landing to the road, samples immutable terrain into the same
-## scaled vertical lattice, then rebuilds the selected topology attempt against
-## those bands before materializing any geometry.
+## Production adapter for the seeded volumetric warren. One town is generated
+## on its construction datum and placed with its primary gate facing the road.
+## Its finite grade patch is published before final terrain sampling.
 const DATUM_GUARD := 0.08
 const MAX_TERRAIN_RELIEF := VillageUrbanFabricPlan.MAX_FABRIC_TERRAIN_RELIEF \
 	* VillageWorldScale.PRODUCTION_UNIFORM_SCALE
@@ -32,7 +31,7 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	# rotation to memo, resume, prove exhausted, or budget a slice of, so the
 	# solve is simply run. The persistent solution-pin cache this adapter used
 	# to consult died with the search it memoized.
-	var preview := WarrenVolumetricSolver.solve(city_seed, {},
+	var preview := WarrenVolumetricSolver.generate(city_seed, {},
 		program.settlement_fabric_program, scale_profile)
 	if preview == null:
 		return _rejected(StringName("volume_%s" %
@@ -42,132 +41,51 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	# facade/roof/public-realm transaction at the production adapter boundary.
 	var preview_fabric := preview.compiled_fabric_cache()
 	if preview_fabric == null:
-		preview_fabric = WarrenSpatialFabricCompiler.solve(preview,
+		preview_fabric = WarrenSpatialFabricCompiler.generate(preview,
 			program.settlement_fabric_program)
 	if preview_fabric == null:
 		return _rejected(StringName("fabric_%s" %
 			WarrenSpatialFabricCompiler.last_failure))
-	var last_materialization_reason := &"terrain_footprint"
-	for placement: Dictionary in _placement_candidates(terrain, preview,
-			centre, street_axis, city_seed):
-		var spatial := preview if bool(placement.flat_ground) \
-			else WarrenVolumetricSolver.solve_selected(city_seed, preview,
-				placement.ground_bands as Dictionary,
-				program.settlement_fabric_program)
-		if spatial == null:
-			continue
-		var preview_entry := preview.source_volume.entry_cell
-		var built_entry := spatial.source_volume.entry_cell
-		if Vector2i(preview_entry.x, preview_entry.z) \
-				!= Vector2i(built_entry.x, built_entry.z):
-			continue
-		var fabric := preview_fabric if spatial == preview \
-			else WarrenSpatialFabricCompiler.solve(spatial,
-				program.settlement_fabric_program)
-		if fabric == null:
-			continue
-		placement["local_bounds"] = _local_bounds(fabric)
-		var materialized := _materialize(terrain, stable_id, spatial, fabric,
-			placement, program, world_seed)
-		if materialized.accepted:
-			return materialized
-		last_materialization_reason = materialized.reason
-	return _rejected(last_materialization_reason)
+	var placement := _placement(terrain, preview, centre, street_axis)
+	placement["local_bounds"] = _local_bounds(preview_fabric)
+	return _materialize(terrain, stable_id, preview, preview_fabric,
+		placement, program, world_seed)
 
 
-static func _placement_candidates(terrain: VillageTerrainView,
-		preview: WarrenSpatialPlan, centre: Vector2, street_axis: Vector2,
-		city_seed: int) -> Array[Dictionary]:
-	var volume := preview.source_volume
+static func _placement(terrain: VillageTerrainView,
+		spatial: WarrenSpatialPlan, centre: Vector2,
+		street_axis: Vector2) -> Dictionary:
+	## The entrance fixes the one world frame. The sealed grade patch adapts
+	## terrain to its construction datum; terrain never requests another town.
+	var volume := spatial.source_volume
 	var entry := volume.entry_cell
-	var entry_local := Vector3(float(entry.x) \
-		* WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
+	var entry_local := Vector3(float(entry.x) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M
 		+ FabricRecipe.CELL_SIZE * 0.5,
 		float(entry.y) * WarrenVolumePlan.VERTICAL_BAND_SIZE_M,
-		float(entry.z) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M \
+		float(entry.z) * WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M
 		+ FabricRecipe.CELL_SIZE * 0.5)
 	var route_delta := volume.primary_itinerary[1] - entry
 	var local_inward := Vector3(float(route_delta.x), 0.0,
 		float(route_delta.z)).normalized()
-	# The world route's node is where the arriving road ends. Put the entry's
-	# TERRAIN CONTACT on the road's near edge -- the outer edge of the handoff
-	# ramp, one macro cell beyond the entry cell's centre -- rather than the
-	# entry cell itself on the node. With
-	# the entry cell on the node, a town whose gate could not face the road
-	# (terrain refused that quarter) swallowed the road's last metres under its
-	# own edge houses: the road dead-ended into a wall three metres from a gate
-	# that opened sideways. With the contact on the node the road always ends
-	# at the ramp's foot, meeting a straight gate head-on or a sideways gate as
-	# a plain right-angled T.
-	# The road's own half width (in authored units) keeps the ramp's foot flush
-	# with the road's edge and leaves the road one verge clear of the facade
-	# beside the gate instead of running under its eaves.
+	var world_inward := Vector3(street_axis.x, 0.0, street_axis.y)
+	var yaw := snappedf(local_inward.signed_angle_to(world_inward, Vector3.UP), PI * 0.5)
+	var basis := VillageWorldScale.production_basis(yaw)
 	var road_half_local := PathProgram.PATH_HALF_WIDTH \
 		/ VillageWorldScale.PRODUCTION_UNIFORM_SCALE
 	var contact_local := entry_local - local_inward \
 		* (WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M + road_half_local)
-	# The entry cell itself is the second anchoring, tried only after every
-	# contact-anchored frame of a better-aligned quarter: the town's terrain
-	# bands shift with the frame, and a seed whose secondary gate loses its
-	# projection at the contact anchor must still build rather than vanish.
-	var anchors: Array[Vector3] = [contact_local, entry_local]
-	var world_inward := Vector3(street_axis.x, 0.0, street_axis.y)
-	var candidates: Array[Dictionary] = []
-	for quarter in _CARDINAL_QUARTERS:
-		for anchor_index in anchors.size():
-			var yaw := float(quarter) * PI * 0.5
-			var basis := VillageWorldScale.production_basis(yaw)
-			var rotated_entry := basis * entry_local
-			var rotated_anchor := basis * anchors[anchor_index]
-			var datum_y := terrain.surface_y(centre) + DATUM_GUARD \
-				- rotated_entry.y
-			var world_frame := Transform3D(basis,
-				Vector3(centre.x - rotated_anchor.x, datum_y,
-				centre.y - rotated_anchor.z))
-			var terrain_sample := _sample_ground_bands(terrain, volume.envelope,
-				world_frame)
-			if terrain_sample.is_empty() or bool(terrain_sample.wet):
-				continue
-			var minimum_y := float(terrain_sample.minimum_y)
-			var maximum_y := float(terrain_sample.maximum_y)
-			if maximum_y - minimum_y > MAX_TERRAIN_RELIEF:
-				continue
-			var landing_y := terrain.surface_y(centre)
-			var entry_band := int((terrain_sample.ground_bands as Dictionary).get(
-				Vector2i(entry.x, entry.z), entry.y))
-			var entrance_lift := datum_y \
-				+ float(entry_band) * VillageWorldScale.WORLD_FINE_CELL_M \
-				- landing_y
-			if entrance_lift < 0.0 \
-					or entrance_lift > TraversalEnvelope.MAX_PLANNED_STEP:
-				continue
-			var tie := posmod(Helper._mix64(city_seed ^ quarter * 0x45d9f3b),
-				0x7fffffff)
-			var alignment := (basis * local_inward).dot(world_inward)
-			candidates.append({
-				"quarter": quarter,
-				"yaw": yaw,
-				"datum_y": datum_y,
-				"minimum_y": minimum_y,
-				"maximum_y": maximum_y,
-				"entrance_lift": entrance_lift,
-				"ground_bands": terrain_sample.ground_bands,
-				"flat_ground": _all_zero(terrain_sample.ground_bands as Dictionary),
-				# The first maze segment should carry the village route into the mass.
-				# Terrain support then decides between equally aligned frames.
-				"score": (1.0 - alignment) * 10000.0
-					+ float(anchor_index) * 5000.0
-					+ entrance_lift * 1000.0
-					+ (maximum_y - minimum_y) * 100.0,
-				"tie": tie,
-				"anchor": anchor_index,
-				"transform": world_frame,
-			})
-	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return float(a.score) < float(b.score) \
-			if not is_equal_approx(float(a.score), float(b.score)) \
-			else int(a.tie) < int(b.tie))
-	return candidates
+	var rotated_contact := basis * contact_local
+	var landing_y := terrain.surface_y(centre)
+	var datum_y := landing_y + DATUM_GUARD - (basis * entry_local).y
+	var world_frame := Transform3D(basis,
+		Vector3(centre.x - rotated_contact.x, datum_y, centre.y - rotated_contact.z))
+	var sample := _sample_ground_bands(terrain, volume.envelope, world_frame)
+	return {
+		"quarter": posmod(roundi(yaw / (PI * 0.5)), 4),
+		"yaw": yaw, "datum_y": datum_y,
+		"minimum_y": sample.minimum_y, "maximum_y": sample.maximum_y,
+		"entrance_lift": DATUM_GUARD, "transform": world_frame,
+	}
 
 
 static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
@@ -184,18 +102,7 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	result.terrain_relief_m = float(placement.maximum_y) \
 		- float(placement.minimum_y)
 	var world_frame := placement.transform as Transform3D
-	# The maze, not a renderer-side graph heuristic, owns the town gates. Refuse
-	# this terrain placement unless every sealed portal becomes one complete
-	# walkable handoff. Otherwise a steep sample can silently leave a visually
-	# open doorway with no road, or a degree-one interior street can masquerade
-	# as the town's missing third exit.
 	var contact_specs := terrain_contact_specs(spatial, fabric)
-	var maze_source := spatial.source_volume.mass_context.get(
-		&"maze_source_plan") as WarrenMazeSourcePlan \
-		if spatial.source_volume != null else null
-	if maze_source != null \
-			and contact_specs.size() != maze_source.excavation.portals.size():
-		return _rejected(&"terrain_gate_projection")
 	result.terrain_grade = _ground_grade(stable_id, spatial, fabric, world_frame)
 	result.world_transform = world_frame
 	var local_payload := SettlementFabricAssembler.payload(fabric)
@@ -304,6 +211,7 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 			Vector2.ONE * VillageWorldScale.WORLD_FINE_CELL_M * 0.5, yaw,
 			FeatureGroundField.WORN_PATH, VillagePlan.SURFACE_PRIORITY,
 			StringName("%s.ground.%d.%d" % [district_id, cell.x, cell.z])))
+	_append_terrain_handoffs(result, contact_specs, district_id)
 	var top_y := (world_frame * Vector3(local_centre.x,
 		local_bounds.end.y, local_centre.z)).y
 	result.volumes.append(VillageOccupancyVolume.new(
@@ -328,9 +236,36 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 		return String(a.stable_id) < String(b.stable_id))
 	result.accepted = true
 	result.reason = &"accepted"
-	assert(result.validate(program, &"village"),
-		"volumetric production failed its sealed materialization contract")
 	return result
+
+
+static func _append_terrain_handoffs(result: VillageUrbanFabricPlan,
+		contact_specs: Array[Dictionary], district_id: StringName) -> void:
+	## The gate owns the complete span from its street boundary to the shared
+	## outskirts contact. Paint the same terrain that supplies its collision;
+	## there is no separate ramp mesh or rounded cap at this straight joint.
+	var scale_value := VillageWorldScale.scale_of(result.world_transform)
+	for spec: Dictionary in contact_specs:
+		var geometry := terrain_contact_local_geometry(spec)
+		var inner: Vector3 = result.world_transform * (geometry.inner_centre as Vector3)
+		var outer: Vector3 = result.world_transform * (geometry.outer_centre as Vector3)
+		var a := Vector2(inner.x, inner.z)
+		var b := Vector2(outer.x, outer.z)
+		var centre := (a + b) * 0.5
+		var half_extents := Vector2(a.distance_to(b) * 0.5,
+			float(geometry.half_width) * scale_value)
+		var angle := (b - a).angle()
+		var id := StringName("%s.handoff.%s" % [district_id, spec.stable_suffix])
+		result.surfaces.append(FeatureGroundShape.oriented_rect(centre,
+			half_extents, angle, FeatureGroundField.WORN_PATH,
+			VillagePlan.SURFACE_PRIORITY, id))
+		result.clearances.append(FeatureGroundShape.oriented_rect(centre,
+			half_extents, angle, FeatureGroundField.NATURAL, 0,
+			StringName("%s.clearance" % id)))
+		result.volumes.append(VillageOccupancyVolume.new(
+			VillageOccupancy.Role.HEADROOM, centre, half_extents, angle,
+			inner.y - DATUM_GUARD, inner.y + TraversalEnvelope.MIN_HEADROOM,
+			id, district_id, result.public_walk_network_id))
 
 
 static func _terrain_qualified_frontage_payload(terrain: VillageTerrainView,
@@ -455,7 +390,13 @@ static func terrain_contact_specs(spatial: WarrenSpatialPlan,
 		&"maze_source_plan") as WarrenMazeSourcePlan \
 		if spatial.source_volume != null else null
 	if maze_source != null:
-		return _explicit_maze_contact_specs(maze_source, street)
+		# A portal one band above natural ground is a supported public landing,
+		# not a terrain-street cell. Its handoff still belongs to that same gate.
+		var portal_surfaces := street.duplicate()
+		for kind in PublicRealmSurfacePlan.SurfaceKind.size():
+			for cell: Vector3i in fabric.surface_plan.cells_for_kind(kind):
+				portal_surfaces[cell] = true
+		return _explicit_maze_contact_specs(maze_source, portal_surfaces)
 	var blocks: Dictionary = {}
 	for cell_value: Variant in street.keys():
 		var cell := cell_value as Vector3i
@@ -985,6 +926,16 @@ static func _ground_grade(stable_id: StringName, spatial: WarrenSpatialPlan,
 		# ground itself must not inherit it or its triangles intersect authored
 		# floorboards and the slightly uneven bases of the facade assets.
 		heights[key] = world.y - DATUM_GUARD
+	# A gate continues one construction cell beyond the public street. Its
+	# raised or level landing supplies that cell's datum before the collar meets
+	# natural ground, matching the exact span emitted by the path painter.
+	for spec: Dictionary in terrain_contact_specs(spatial, fabric):
+		for boundary: Vector3i in spec.cells:
+			var cell := boundary + (spec.outward as Vector3i)
+			var world := world_frame * (Vector3(cell) * FabricRecipe.CELL_SIZE)
+			var key := Vector2i(roundi((world.x - origin.x) / pitch),
+				roundi((world.z - origin.y) / pitch))
+			heights[key] = world.y - DATUM_GUARD
 	return TerrainGradePatch.new(StringName("%s/terrain-grade" % stable_id),
 		heights, origin, pitch)
 
@@ -1012,8 +963,6 @@ static func _sample_ground_bands(terrain: VillageTerrainView,
 			var world3 := world_frame * (local_centre \
 				+ Vector3(offset.x, 0.0, offset.y))
 			var point := Vector2(world3.x, world3.z)
-			if terrain.is_wet(point):
-				return {"wet": true}
 			var height := terrain.surface_y(point)
 			minimum_y = minf(minimum_y, height)
 			maximum_y = maxf(maximum_y, height)

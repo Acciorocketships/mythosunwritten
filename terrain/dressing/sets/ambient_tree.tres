@@ -8,60 +8,60 @@
 script = ExtResource("1_choice")
 asset_id = &"kaykit.tree.01"
 weight = 0.5
-biome_affinity = {&"meadow": 1.0, &"deep_forest": 0.7, &"highland": 1.0, &"blossom_grove": 0.4, &"twilight_marsh": 0.8}
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 0.7, &"highland": 1.0, &"blossom_grove": 0.4, &"twilight_marsh": 0.8, &"amber_heath": 1.0, &"jade_wetlands": 0.8}
 
 [sub_resource type="Resource" id="LPFV_1"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.tree.01"
-biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+biome_affinity = {&"meadow": 1.6, &"deep_forest": 0.5, &"highland": 0.05, &"blossom_grove": 3.4, &"twilight_marsh": 0.15, &"amber_heath": 1.1, &"jade_wetlands": 0.9}
 scale_multiplier = 1.45
 spacing_radius = 8.0
 
 [sub_resource type="Resource" id="LPFV_2"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.tree.02"
-biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
-scale_multiplier = 1.45
+biome_affinity = {&"meadow": 0.35, &"deep_forest": 2.4, &"highland": 0.05, &"blossom_grove": 0.7, &"twilight_marsh": 2.4, &"amber_heath": 0.2, &"jade_wetlands": 1.9}
+scale_multiplier = 1.20
 spacing_radius = 11.0
 
 [sub_resource type="Resource" id="LPFV_3"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.tree.03"
-biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 0.6, &"highland": 0.1, &"blossom_grove": 2.5, &"twilight_marsh": 0.2, &"amber_heath": 1.8, &"jade_wetlands": 0.6}
 
 [sub_resource type="Resource" id="LPFV_4"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.tree.04"
-biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+biome_affinity = {&"meadow": 0.2, &"deep_forest": 0.4, &"highland": 1.0, &"blossom_grove": 0.05, &"twilight_marsh": 1.5, &"amber_heath": 0.5, &"jade_wetlands": 1.0}
 
 [sub_resource type="Resource" id="LPFV_5"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.tree.05"
-biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+biome_affinity = {&"meadow": 0.3, &"deep_forest": 0.25, &"highland": 0.6, &"blossom_grove": 0.05, &"twilight_marsh": 0.7, &"amber_heath": 0.9, &"jade_wetlands": 0.8}
 
 [sub_resource type="Resource" id="LPFV_6"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.tree.06"
-biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+biome_affinity = {&"meadow": 0.45, &"deep_forest": 0.8, &"highland": 3.0, &"blossom_grove": 0.05, &"twilight_marsh": 0.2, &"amber_heath": 0.5, &"jade_wetlands": 0.15}
 scale_multiplier = 1.35
 spacing_radius = 7.0
 
 [sub_resource type="Resource" id="LPFV_7"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.tree.07"
-biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.8, &"highland": 0.3, &"blossom_grove": 0.4, &"twilight_marsh": 1.2, &"amber_heath": 0.4, &"jade_wetlands": 1.5}
 scale_multiplier = 2.1
 spacing_radius = 11.0
 
 [sub_resource type="Resource" id="LPFV_8"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.tree.08"
-biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+biome_affinity = {&"meadow": 0.9, &"deep_forest": 0.5, &"highland": 0.1, &"blossom_grove": 1.9, &"twilight_marsh": 0.3, &"amber_heath": 2.1, &"jade_wetlands": 0.6}
 
 [sub_resource type="Resource" id="LPFV_9"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.tree.09"
-biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.2, &"highland": 0.7, &"blossom_grove": 1.0, &"twilight_marsh": 0.8}
+biome_affinity = {&"meadow": 0.4, &"deep_forest": 0.7, &"highland": 2.4, &"blossom_grove": 0.1, &"twilight_marsh": 0.4, &"amber_heath": 0.3, &"jade_wetlands": 0.2}
 scale_multiplier = 1.65
 spacing_radius = 11.0
 
@@ -69,7 +69,7 @@ spacing_radius = 11.0
 script = ExtResource("3_habitat")
 channel = &"woodland_canopy"
 scale = 132.0
-coverage = {&"meadow": 0.22, &"deep_forest": 0.82, &"highland": 0.14, &"blossom_grove": 0.72, &"twilight_marsh": 0.42}
+coverage = {&"meadow": 0.22, &"deep_forest": 0.82, &"highland": 0.14, &"blossom_grove": 0.72, &"twilight_marsh": 0.42, &"amber_heath": 0.22, &"jade_wetlands": 0.42}
 edge_softness = 0.075
 
 [resource]
@@ -77,7 +77,7 @@ script = ExtResource("2_set")
 id = &"ambient.tree"
 feature_clearance = 2.0
 choices = Array[ExtResource("1_choice")]([SubResource("KayKit_1"), SubResource("LPFV_1"), SubResource("LPFV_2"), SubResource("LPFV_3"), SubResource("LPFV_4"), SubResource("LPFV_5"), SubResource("LPFV_6"), SubResource("LPFV_7"), SubResource("LPFV_8"), SubResource("LPFV_9")])
-fill_per_cell = {&"meadow": 0.45, &"deep_forest": 1.15, &"highland": 0.38, &"blossom_grove": 0.95, &"twilight_marsh": 0.55}
+fill_per_cell = {&"meadow": 0.45, &"deep_forest": 1.15, &"highland": 0.38, &"blossom_grove": 0.95, &"twilight_marsh": 0.55, &"amber_heath": 0.45, &"jade_wetlands": 0.55}
 habitat_layers = Array[ExtResource("3_habitat")]([SubResource("Canopy")])
 community_channel = &"forest_species"
 community_scale = 84.0

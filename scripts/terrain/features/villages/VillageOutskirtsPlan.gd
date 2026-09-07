@@ -1,6 +1,9 @@
 class_name VillageOutskirtsPlan
 extends RefCounted
 
+## Canonical street centrelines, retained until their shared junctions are built.
+var street_paths: Array[Dictionary] = []
+
 ## Optional sealed edge payload. Failure to place a house never invalidates
 ## the already-proved inhabited core, but accepted pieces still pass the same
 ## typed occupancy transaction as every other village structure.

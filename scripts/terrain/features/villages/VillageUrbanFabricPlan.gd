@@ -245,7 +245,7 @@ func _validate_compiled_fabric(program: VillageProgram) -> bool:
 	if terrain_entrance_lift_m < 0.0 \
 			or terrain_entrance_lift_m > TraversalEnvelope.MAX_PLANNED_STEP \
 			or terrain_relief_m < 0.0 \
-			or terrain_relief_m > MAX_FABRIC_TERRAIN_RELIEF:
+			or terrain_relief_m > MAX_FABRIC_TERRAIN_RELIEF * VillageWorldScale.PRODUCTION_UNIFORM_SCALE:
 		return false
 	if not _fabric_audit_matches_plan() \
 			or int(fabric_audit.get("walk_surface_component_count", 1)) != 1 \

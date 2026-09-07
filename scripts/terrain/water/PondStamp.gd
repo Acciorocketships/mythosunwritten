@@ -22,6 +22,9 @@ var radius: float            # base radius, metres
 var shape_seed: int
 var level: int               # storey index of the banks; water just below
 var depth: float             # bowl depth below level*STOREY
+var island_radius := 0.0
+var island_offset := Vector2.ZERO
+var peninsula := false
 var aspect_ratio := 1.0      # minor/major axis; one preserves circular fixtures
 
 
@@ -73,4 +76,11 @@ func carve_at(p: Vector2, ground_y: float) -> float:
 	if t >= 1.0:
 		return 0.0
 	var w: float = SlopeProfile.smootherstep(clampf((1.0 - t) / RIM_FEATHER, 0.0, 1.0))
+	if island_radius > 0.0:
+		var local := p - center - island_offset
+		if peninsula:
+			var direction := island_offset.normalized()
+			var along := clampf(local.dot(direction), 0.0, radius)
+			local -= direction * along
+		w *= smoothstep(island_radius * 0.75, island_radius * 1.25, local.length())
 	return maxf(0.0, (ground_y - bed_y()) * w)

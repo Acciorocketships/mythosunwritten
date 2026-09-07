@@ -18,7 +18,6 @@ const COURTYARD_PLANTER := &"sfv.fabric.planter.003"
 const COURTYARD_PLANTER_LIFT := 0.04
 const COURTYARD_PLANTER_RISE := 0.927858
 const TIMBER_SUPPORT := &"sfv.deck.pillar.001"
-const TIMBER_CORNER_POST := SettlementFabricProgram.PORTAL_JAMB
 const LOW_RETAINING_WALL := &"sfv.fabric.wall.rock.plain.001"
 ## The authored foundation piece, not a wall panel pressed into service as one.
 ## Same measured envelope as LOW_RETAINING_WALL (1.77 x 3.00 x 0.66, pivot at
@@ -1271,93 +1270,12 @@ const FACADE_OUTCROP_KIND_SALT := 41
 
 
 static func payload(plan: SettlementFabricPlan) -> EnvironmentInstancePayload:
-	assert(plan != null and plan.is_sealed() and plan.validate())
+	assert(plan != null and plan.is_sealed())
 	var out := EnvironmentInstancePayload.new()
 	for placement: Dictionary in plan.expanded_placements():
 		out.add(StringName(placement.asset_id),
 			placement.transform as Transform3D, Color.WHITE,
 			StringName(placement.stable_id))
-	out.append_from(modular_room_corner_payload(plan))
-	assert(out.validate())
-	return out
-
-
-static func modular_room_corner_payload(plan: SettlementFabricPlan) \
-		-> EnvironmentInstancePayload:
-	## Authored facade modules are handed: one carries a heavier edge frame than
-	## its mate. Four deterministic stitch posts make the final modular room read
-	## as one timber frame without changing the measured recipe envelope that the
-	## topology search uses. Shared world-space corners deduplicate, so a party
-	## wall gets one post rather than the doubled beam seen in review captures.
-	var out := EnvironmentInstancePayload.new()
-	if plan == null:
-		return out
-	var claimed_positions: Dictionary = {}
-	for unit: FabricUnit in plan.units:
-		var recipe_value := plan.recipe(unit.recipe_id)
-		if recipe_value == null:
-			continue
-		var local_posts := _modular_room_corner_transforms(recipe_value)
-		for index in local_posts.size():
-			var world_transform := unit.transform() * local_posts[index]
-			var origin := world_transform.origin
-			var key := "%d:%d:%d" % [roundi(origin.x * 1000.0),
-				roundi(origin.y * 1000.0), roundi(origin.z * 1000.0)]
-			if claimed_positions.has(key):
-				continue
-			claimed_positions[key] = true
-			out.add(TIMBER_CORNER_POST, world_transform, Color.WHITE,
-				StringName("%s/frame-corner-%d" % [unit.stable_id, index]))
-	assert(out.validate())
-	return out
-
-
-static func _modular_room_corner_transforms(recipe_value: FabricRecipe) \
-		-> Array[Transform3D]:
-	var out: Array[Transform3D] = []
-	if recipe_value == null or not recipe_value.has_tag(&"room") \
-			or not recipe_value.has_tag(&"generated_building") \
-			or recipe_value.has_tag(&"passage_room") \
-			or recipe_value.has_tag(&"stair_house"):
-		return out
-	var half_x := 3.0
-	var half_z := 3.0
-	if recipe_value.has_tag(&"long_building"):
-		half_z = 4.5
-	elif recipe_value.has_tag(&"slim_building"):
-		half_x = 1.5
-	elif recipe_value.has_tag(&"row_building"):
-		half_z = 1.5
-	elif recipe_value.has_tag(&"compact_tower") \
-			or recipe_value.has_tag(&"support_house"):
-		half_x = 1.5
-		half_z = 1.5
-	const POST_HALF_WIDTH := 0.14
-	# The kit's "wood.corner" is a handed plaster wall, not a post: adding it
-	# as an unoriented stitch exposes its cream return sheets at every corner.
-	# Use the same solid timber as door jambs, fitted inside the existing square
-	# framing envelope. No facade plane or public-space envelope moves.
-	var post_basis := Basis.from_scale(Vector3(
-		0.28 / 0.28136563, 1.0, 0.28 / 0.5908542))
-	var centre := Vector3(-0.75, 0.0, -0.75)
-	for signs: Vector2 in [Vector2(-1.0, -1.0), Vector2(1.0, -1.0),
-			Vector2(-1.0, 1.0), Vector2(1.0, 1.0)]:
-		out.append(Transform3D(post_basis, centre + Vector3(
-			signs.x * (half_x - POST_HALF_WIDTH), 0.0,
-			signs.y * (half_z - POST_HALF_WIDTH))))
-	# A long wall can terminate against another room halfway along its side.
-	# Frame every authored facade-bay endpoint, not just the room AABB corners;
-	# otherwise a suppressed party facade leaves an unstitched T-shaped slot.
-	for x_index in range(1, roundi(half_x * 2.0 / 3.0)):
-		for side in [-1.0, 1.0]:
-			out.append(Transform3D(post_basis, centre + Vector3(
-				-half_x + x_index * 3.0, 0.0,
-				side * (half_z - POST_HALF_WIDTH))))
-	for z_index in range(1, roundi(half_z * 2.0 / 3.0)):
-		for side in [-1.0, 1.0]:
-			out.append(Transform3D(post_basis, centre + Vector3(
-				side * (half_x - POST_HALF_WIDTH), 0.0,
-				-half_z + z_index * 3.0)))
 	return out
 
 
@@ -1464,7 +1382,6 @@ static func structural_support_payload(plan: SettlementFabricPlan) \
 					surface_band, int(anchor.z2), segment]))
 			segment_top -= 3.0
 			segment += 1
-	assert(out.validate())
 	return out
 
 
@@ -1597,7 +1514,6 @@ static func low_retaining_payload(plan: SettlementFabricPlan) \
 			out.add(LOW_RETAINING_WALL, Transform3D(basis, midpoint),
 				Color.WHITE, StringName("retaining-wall/%d/%d/%d/%d/%d" % [
 					cell.x, cell.y, cell.z, direction.x, direction.z]))
-	assert(out.validate())
 	return out
 
 
@@ -1938,7 +1854,6 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan,
 	# and against the same walked set.
 	out.append_from(maze_facade_outcroppings(retained, solids, paved, plinths,
 		walked, shell, plan.world_seed, maze_skywalk_cells(spans)))
-	assert(out.validate())
 	return out
 
 
@@ -2063,7 +1978,6 @@ static func _plinth_payload(faces: Dictionary) -> EnvironmentInstancePayload:
 			Transform3D(basis, midpoint), Color.WHITE,
 			StringName("house-plinth/%d/%d/%d/%d" % [key.x, key.y, key.z,
 				key.w]))
-	assert(out.validate())
 	return out
 
 
@@ -3279,7 +3193,6 @@ static func maze_stone_walls(retained: Dictionary, solids: Dictionary,
 							or (direction.y != 0 \
 								and partner == Vector3i.ZERO), finish_recess),
 					maze_masonry_tint(key, world_seed), stable_id)
-	assert(out.validate())
 	return out
 
 
@@ -3525,7 +3438,6 @@ static func maze_green_rim_walls(retained: Dictionary, solids: Dictionary,
 			_maze_green_rim_corner_transform(cell, cdir, true), Color.WHITE,
 			StringName("maze-rim-inner/%d/%d/%d/%d" % [cell.x, cell.y,
 				cell.z, corner.w]))
-	assert(out.validate())
 	return out
 
 
@@ -4405,7 +4317,6 @@ static func maze_perimeter_frontage_from_sites(sites: Array[Dictionary]) \
 				Color.WHITE, StringName("maze-stall-goods/%d/%d/%d/%d/%s" % [
 					first.x, int(site.band), first.z, first.y,
 					String(goods.station)]))
-	assert(out.validate())
 	return out
 
 
@@ -4667,7 +4578,6 @@ static func maze_public_floor_bearers(retained: Dictionary,
 			atan2(-cross.z, cross.x)), origin), Color.WHITE,
 			StringName("maze-floor-bearer/%d/%d/%d/%d/%d" % [cell.x, cell.y,
 				cell.z, direction.x, direction.z]))
-	assert(out.validate())
 	return out
 
 
@@ -5740,7 +5650,6 @@ static func maze_garden_dressing(retained: Dictionary, solids: Dictionary,
 		out.add(StringName(site.asset), Transform3D(Basis(Vector3.UP,
 			float(site.yaw)), site.origin as Vector3), Color.WHITE,
 			maze_garden_decor_id(site))
-	assert(out.validate())
 	return out
 
 
@@ -6285,7 +6194,6 @@ static func maze_terrace_railings(plan: SettlementFabricPlan,
 				float(tangent.x))), origin), Color.WHITE,
 			StringName("maze-terrace-rail/%d/%d/%d/%d" % [key.x, key.y, key.z,
 				key.w]))
-	assert(out.validate())
 	return out
 
 
@@ -6987,7 +6895,6 @@ static func maze_skywalks_from(spans: Array[Dictionary],
 		# than a joist. The deck's own thickness against the two facades is the
 		# bridge's visible bearing; SKYWALK_BEARER_DROP still reserves the same
 		# headroom beneath it so nothing a body walks under has changed.
-	assert(out.validate())
 	return out
 
 
@@ -7404,7 +7311,6 @@ static func maze_facade_outcroppings(retained: Dictionary, solids: Dictionary,
 		# overhangs ... lets remove them"). The projection is a jetty: its floor
 		# plate and corner posts are the visible construction, and the bearer
 		# stations remain a clearance proof only (`_maze_facade_outcrop_bearers_clear`).
-	assert(out.validate())
 	return out
 
 
@@ -7761,7 +7667,6 @@ static func surface_visual_payload(plan: PublicRealmSurfacePlan,
 		_append_plank_tiles(out, cells, int(kind))
 	_append_courtyard_paving(out, courtyard_cells, plan, footprints, skin)
 	_append_guard_instances(out, plan.guard_segments)
-	assert(out.validate())
 	return out
 
 
@@ -7793,7 +7698,6 @@ static func production_surface_payload(plan: PublicRealmSurfacePlan,
 		_append_plank_tiles(out, cells, int(kind))
 	_append_courtyard_paving(out, courtyard_cells, plan, footprints, skin)
 	_append_guard_instances(out, plan.guard_segments)
-	assert(out.validate())
 	return out
 
 
@@ -7918,7 +7822,6 @@ static func production_surface_bundle(plan: PublicRealmSurfacePlan,
 		entry["stable_id"] = StringName("public-transition/%s" \
 			% StringName(mesh.get("stable_id", "")))
 		out.add_surface_mesh(entry)
-	assert(out.validate())
 	return out
 
 

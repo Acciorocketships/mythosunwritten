@@ -47,7 +47,7 @@ static func plan(world_seed: int, ground_bands: Dictionary,
 	if stop_after == &"partition":
 		return source_plan
 
-	if not source_plan.seal():
+	if not source_plan.finish_construction():
 		last_failure = "seal: %s" % source_plan.last_rejection
 		return null
 	return source_plan

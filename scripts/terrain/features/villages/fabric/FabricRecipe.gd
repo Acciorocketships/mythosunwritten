@@ -16,6 +16,9 @@ const CELL_SIZE := 1.5
 var recipe_id: StringName
 var role_tags: Array[StringName] = []
 var placements: Array[Dictionary] = []
+## Finite facade end choices tied to the exact perpendicular placement that
+## closes each cut. A suppressed party wall withdraws its corner cut too.
+var facade_end_owners: Dictionary = {}
 ## Multi-placement construction records whose internal seams must remain one
 ## authored run. Roof material phase and end caps therefore cannot drift through
 ## independent placement or later decoration.
@@ -508,6 +511,14 @@ func socket(socket_id: StringName) -> Dictionary:
 
 func asset_ids() -> Array[StringName]:
 	var unique: Dictionary = {}
+	for finish: Dictionary in facade_end_owners.values():
+		unique[finish.base_asset] = true
+		if finish.has("alternatives"):
+			for asset_id: StringName in finish.alternatives.values(): unique[asset_id]=true
+			continue
+		for mask in range(1,4):
+			if mask & int(finish.mask) == mask:
+				unique[StringName("%s.miter%d" % [finish.base_asset,mask])] = true
 	for placement: Dictionary in placements:
 		unique[StringName(placement.asset_id)] = true
 	for run: Dictionary in compact_roof_runs:
@@ -522,6 +533,22 @@ func asset_ids() -> Array[StringName]:
 	out.sort_custom(func(a: StringName, b: StringName) -> bool:
 		return String(a) < String(b))
 	return out
+
+
+func realized_facade_asset(placement: Dictionary,
+		suppressed: Array[StringName]) -> StringName:
+	var finish: Dictionary = facade_end_owners.get(StringName(placement.id), {})
+	if finish.is_empty():
+		return StringName(placement.asset_id)
+	var mask := 0
+	for end in 2:
+		var owner := StringName(finish.owners[end])
+		if not owner.is_empty() and not suppressed.has(owner):
+			mask |= 1 << end
+	if finish.has("alternatives"):
+		return finish.alternatives[mask]
+	return StringName("%s.miter%d" % [finish.base_asset,mask]) if mask != 0 \
+		else StringName(finish.base_asset)
 
 
 static func lattice_transform(origin: Vector3i, yaw_quarters: int) -> Transform3D:

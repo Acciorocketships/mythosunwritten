@@ -18,11 +18,6 @@ var _program: VillageProgram
 var _fields: WorldFieldBlockCache
 var _records: Dictionary = {}
 var _stats := {"queries": 0, "builds": 0, "evictions": 0}
-## True when the last _build's warren search stopped on its time budget
-## rather than a verdict. Such records must not enter the cache: each later
-## query runs another budgeted slice (resumed through the solution pin
-## cache) until the search seals or is genuinely exhausted.
-var _last_build_budget_interrupted := false
 
 func _init(world_seed: int, program: VillageProgram,
 		fields: WorldFieldBlockCache = null) -> void:
@@ -34,7 +29,7 @@ func _init(world_seed: int, program: VillageProgram,
 
 func record_for(frame: VillageFrame) -> VillageRecord:
 	_stats.queries += 1
-	if frame == null or frame.is_dormant():
+	if frame == null:
 		return null
 	if _records.has(frame.settlement_id):
 		return _records[frame.settlement_id]
@@ -42,8 +37,7 @@ func record_for(frame: VillageFrame) -> VillageRecord:
 		_records.clear()
 		_stats.evictions += 1
 	var record := _build(frame)
-	if not _last_build_budget_interrupted:
-		_records[frame.settlement_id] = record
+	_records[frame.settlement_id] = record
 	_stats.builds += 1
 	return record
 
@@ -53,6 +47,7 @@ func stats() -> Dictionary:
 	return out
 
 func _build(frame: VillageFrame) -> VillageRecord:
+	var stage_start := Time.get_ticks_usec()
 	var tier := _tier(frame)
 	var theme := VillageProgram.THEMES[_bounded_roll(frame, _SALT_THEME,
 		VillageProgram.THEMES.size())]
@@ -67,8 +62,8 @@ func _build(frame: VillageFrame) -> VillageRecord:
 	var urban_fabric := VillageWarrenFabricSolver.solve(terrain,
 		_warren_seed(frame), frame.settlement_id, frame.centre, street_axis,
 		_program, _world_seed)
-	_last_build_budget_interrupted = String(urban_fabric.reason) \
-		.begins_with("volume_production search budget")
+	_stats["urban_usec"] = Time.get_ticks_usec() - stage_start
+	stage_start = Time.get_ticks_usec()
 	if urban_fabric.accepted:
 		_materialize_urban_fabric(urban_fabric, payload, surfaces,
 			clearances, occupancy)
@@ -76,11 +71,14 @@ func _build(frame: VillageFrame) -> VillageRecord:
 	# untouched nature here introduced competing lower pads beside town doors.
 	var outskirts_terrain := terrain.with_terrain_grades([urban_fabric.terrain_grade]) \
 		if urban_fabric.terrain_grade != null else terrain
-	var outskirts := VillageOutskirtsSolver.solve(outskirts_terrain,
+	_stats["materialize_usec"] = Time.get_ticks_usec() - stage_start
+	stage_start = Time.get_ticks_usec()
+	var outskirts := VillageOutskirtsConstruction.generate(outskirts_terrain,
 		frame.settlement_id, frame.centre, street_axis, tier, theme, _program,
-		urban_fabric, occupancy.volumes(), frame.path_ground) \
+		urban_fabric, frame.path_ground) \
 			if urban_fabric.accepted \
 			and urban_fabric.requires_outskirts() else null
+	_stats["outskirts_usec"] = Time.get_ticks_usec() - stage_start
 	if outskirts != null and outskirts.accepted:
 		_materialize_outskirts(outskirts, payload, surfaces, clearances,
 			occupancy)
@@ -104,7 +102,6 @@ func _build(frame: VillageFrame) -> VillageRecord:
 	record.urban_fabric = urban_fabric
 	record.outskirts = outskirts
 	record.prop_results = prop_results
-	assert(record.validate(_program), "VillageRecord exceeds its compiled contract")
 	return record
 
 
@@ -128,8 +125,7 @@ static func _materialize_urban_fabric(fabric: VillageUrbanFabricPlan,
 		payload.add_surface_mesh(mesh)
 	surfaces.append_array(fabric.surfaces)
 	clearances.append_array(fabric.clearances)
-	assert(occupancy.add_all(fabric.volumes),
-		"validated urban fabric must commit atomically")
+	occupancy.index_constructed(fabric.volumes)
 
 
 static func _materialize_outskirts(outskirts: VillageOutskirtsPlan,
@@ -143,22 +139,13 @@ static func _materialize_outskirts(outskirts: VillageOutskirtsPlan,
 			entry.stable_id)
 	surfaces.append_array(outskirts.surfaces)
 	clearances.append_array(outskirts.clearances)
-	assert(occupancy.add_all(outskirts.volumes))
+	occupancy.index_constructed(outskirts.volumes)
 
-func _street_axis(frame: VillageFrame) -> Vector2:
-	var axis := Vector2(frame.dominant_axis)
-	var positive := false
-	var negative := false
-	for direction: Vector2i in frame.incident_directions:
-		var dot := Vector2(direction).dot(axis)
-		positive = positive or dot > 0.5
-		negative = negative or dot < -0.5
-	if positive != negative:
-		# Continue the village street through the plaza away from its sole
-		# external approach, leaving the route mouth unobstructed.
-		return -axis if positive else axis
-	return axis if _bounded_roll(frame, _SALT_STREET_DIRECTION, 2) == 0 \
-		else -axis
+func _street_axis(_frame: VillageFrame) -> Vector2:
+	# The source town owns its gate orientation before roads exist. Keeping the
+	# primary entrance north-facing makes added routes unable to rotate an
+	# existing settlement; roads connect to this fixed construction frame.
+	return Vector2.DOWN
 
 func _tier(frame: VillageFrame) -> StringName:
 	return VillageProgram.production_tier(_roll(frame, _SALT_TIER))

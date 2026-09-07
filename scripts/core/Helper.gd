@@ -101,12 +101,9 @@ static func _value_noise01(pos: Vector3, world_seed: int, scale: float) -> float
 # carve distinct cores out of the noise so each biome covers a meaningful
 # share of the map instead of everything being a 50/50 blend.
 const BIOME_FOREST_SCALE: float = 480.0
-# ROCKY is TERRAIN-COUPLED: HeightfieldPlan.height01 multiplies the landform by
-# this field (mountain spines live in rocky cores), so its scale is part of the
-# world's shape — changing it re-rolls every seed's terrain. Mood biomes above/
-# below scale freely; rocky stays put. Highland "flips" along a run are real
-# geography (you climbed a mountain), not atmosphere churn.
-const BIOME_ROCKY_SCALE: float = 150.0
+# Broad rocky provinces now share the walking-scale biome transition width.
+# Their landforms and river gradients also read the new geological province field.
+const BIOME_ROCKY_SCALE: float = 420.0
 
 static func biome_forest01(pos: Vector3, world_seed: int) -> float:
 	# Lower, narrower ramp => forest cores saturate to 1.0 over more of their
@@ -128,7 +125,7 @@ const BIOME_BLOSSOM_SCALE: float = 650.0
 const BIOME_MARSH_SCALE: float = 750.0
 # Canonical biome order, consumed by BiomeRegistry for lookups/UI.
 const BIOME_NAMES: Array[StringName] = [
-	&"meadow", &"deep_forest", &"highland", &"blossom_grove", &"twilight_marsh",
+	&"meadow", &"deep_forest", &"highland", &"blossom_grove", &"twilight_marsh", &"amber_heath", &"jade_wetlands",
 ]
 
 # Moisture/mood axis (master §11.2): wet side boosts marsh; later gates reeds
@@ -138,30 +135,42 @@ static func biome_moisture01(pos: Vector3, world_seed: int) -> float:
 
 # Sparse pocket fields: high smoothstep thresholds carve isolated cores.
 static func biome_blossom_pocket01(pos: Vector3, world_seed: int) -> float:
-	return smoothstep(0.78, 0.90, _value_noise01(pos, world_seed + 43, BIOME_BLOSSOM_SCALE))
+	return smoothstep(0.66, 0.88, _value_noise01(pos, world_seed + 43, BIOME_BLOSSOM_SCALE))
 
 static func biome_marsh_pocket01(pos: Vector3, world_seed: int) -> float:
 	var n := _value_noise01(pos, world_seed + 47, BIOME_MARSH_SCALE)
-	return smoothstep(0.89, 0.97, n + 0.15 * biome_moisture01(pos, world_seed))
+	return smoothstep(0.74, 0.96, n + 0.15 * biome_moisture01(pos, world_seed))
 
-# Five normalized biome weights. Pockets claim their share first (their cores
+# Seven normalized biome weights (legacy function name retained for callers). Pockets claim their share first (their cores
 # saturate and suppress the rest); forest/rocky split what remains; meadow is
 # the leftover baseline — ≥ 0 by construction, so weights always sum to 1.
 static func biome_weights5(pos: Vector3, world_seed: int) -> Dictionary[StringName, float]:
 	var marsh := biome_marsh_pocket01(pos, world_seed)
 	var blossom := biome_blossom_pocket01(pos, world_seed) * (1.0 - marsh)
-	var rest := 1.0 - marsh - blossom
+	var remaining := 1.0 - marsh - blossom
+	var amber := smoothstep(0.58, 0.86, _value_noise01(pos, world_seed + 53, 720.0)) * remaining
+	var jade := smoothstep(0.64, 0.88, biome_moisture01(pos, world_seed)) * (remaining - amber)
+	var rest := remaining - amber - jade
 	var f01 := biome_forest01(pos, world_seed)
 	var r01 := biome_rocky01(pos, world_seed)
 	var forest := f01 * rest
 	var highland := r01 * (1.0 - f01) * rest
 	var meadow := rest - forest - highland
+	var spawn_blend := smoothstep(100.0, 280.0, Vector2(pos.x, pos.z).length())
+	marsh *= spawn_blend
+	blossom *= spawn_blend
+	forest *= spawn_blend
+	highland *= spawn_blend
+	amber *= spawn_blend
+	jade *= spawn_blend
+	meadow = 1.0 - (1.0 - meadow) * spawn_blend
 	return {
 		&"meadow": meadow, &"deep_forest": forest, &"highland": highland,
 		&"blossom_grove": blossom, &"twilight_marsh": marsh,
+		&"amber_heath": amber, &"jade_wetlands": jade,
 	}
 
-# Dominant biome — for discrete choices only (fog volumes, F3 readout, prop sets).
+# Dominant biome is for labels only; scenery and atmosphere use the full blend.
 static func biome_at(pos: Vector3, world_seed: int) -> StringName:
 	var w := biome_weights5(pos, world_seed)
 	var best: StringName = &"meadow"

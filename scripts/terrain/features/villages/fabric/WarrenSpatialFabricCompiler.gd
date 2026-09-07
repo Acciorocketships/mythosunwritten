@@ -156,6 +156,39 @@ static func _planned_plaza_support_cells(source: WarrenSpatialPlan) \
 
 static func solve(source: WarrenSpatialPlan,
 		program: SettlementFabricProgram) -> SettlementFabricPlan:
+	## Explicit checked compiler for tests and diagnostic fixtures. Production
+	## calls generate() and never uses an audit as a town-existence predicate.
+	var result := generate(source, program, true)
+	if result == null:
+		return null
+	var failures := validation_errors(result)
+	if not failures.is_empty():
+		last_failure = "; ".join(failures)
+		return null
+	return result
+
+
+static func validation_errors(plan: SettlementFabricPlan) -> PackedStringArray:
+	var failures := PackedStringArray()
+	if not plan.validate():
+		failures.append(plan.last_rejection)
+	var roof_conflict := plan._continuous_roof_realization_conflict()
+	if not roof_conflict.is_empty():
+		failures.append(roof_conflict)
+	for key: String in ["modular_box_unclassified_count",
+			"modular_box_roofless_house_count", "modular_box_partial_bearing_count",
+			"foundation_incomplete_shell_count", "foundation_missing_face_count",
+			"foundation_floating_column_count", "maze_stone_missing_face_count",
+			"maze_stone_doubled_cap_count", "maze_turf_backed_facade_count",
+			"orphan_exterior_door_module_count", "entrance_surface_gap_count"]:
+		if int(plan.audit.get(key, 0)) > 0:
+			failures.append("%s: %s" % [key, plan.audit[key]])
+	return failures
+
+
+static func generate(source: WarrenSpatialPlan,
+		program: SettlementFabricProgram,
+		collect_diagnostics: bool = false) -> SettlementFabricPlan:
 	## Compile the authoritative spatial town through the same sealed fabric,
 	## surface, exterior-air, and solid/void transaction used by production.
 	## Nothing in this adapter may infer a replacement footprint or route.
@@ -191,16 +224,7 @@ static func solve(source: WarrenSpatialPlan,
 	var roof_audit := last_audit.duplicate(true)
 	stage_ms = _trace_stage("roofs", stage_ms)
 	var modular_box_audit := _modular_box_use_audit(source, program, rooms,
-		roofs)
-	if int(modular_box_audit.get("modular_box_unclassified_count", 0)) > 0 \
-			or int(modular_box_audit.get("modular_box_roofless_house_count", 0)) \
-				> 0 \
-			or int(modular_box_audit.get("modular_box_partial_bearing_count", 0)) \
-				> 0:
-		last_failure = "spatial modular-box contract failed: %s" % \
-			JSON.stringify(modular_box_audit.get(
-				"modular_box_invalid_details", []))
-		return null
+		roofs) if collect_diagnostics else {}
 	stage_ms = _trace_stage("modular_box", stage_ms)
 	var result := SettlementFabricPlan.new(StringName("%s.fabric" % \
 		source.stable_id))
@@ -220,20 +244,11 @@ static func solve(source: WarrenSpatialPlan,
 			last_failure = "could not register recipe %s" % recipe.recipe_id
 			return null
 	for unit: FabricUnit in rooms:
-		if not result.add_unit(unit):
-			last_failure = "room %s rejected by common fabric: %s" % [
-				unit.stable_id, result.last_rejection]
-			return null
+		result.append_constructed_unit(unit)
 	for unit: FabricUnit in features:
-		if not result.add_unit(unit):
-			last_failure = "feature component %s rejected by common fabric: %s" % [
-				unit.stable_id, result.last_rejection]
-			return null
+		result.append_constructed_unit(unit)
 	for unit: FabricUnit in roofs:
-		if not result.add_unit(unit):
-			last_failure = "roof %s rejected by common fabric: %s" % [
-				unit.stable_id, result.last_rejection]
-			return null
+		result.append_constructed_unit(unit)
 	# The occupied-link grammar runs after the complete room/roof massing exists
 	stage_ms = _trace_stage("add_units", stage_ms)
 	var foundation_result := _retained_foundation_cells(source, result)
@@ -243,13 +258,8 @@ static func solve(source: WarrenSpatialPlan,
 		last_failure = "spatial terrain foundations failed: %s" % String(
 			foundation_result.get("rejection", "overlaps built mass"))
 		return null
-	var foundation_audit := _foundation_shell_audit(foundation_result, result)
-	if int(foundation_audit.get("foundation_incomplete_shell_count", 0)) > 0 \
-			or int(foundation_audit.get("foundation_missing_face_count", 0)) > 0 \
-			or int(foundation_audit.get("foundation_floating_column_count", 0)) > 0:
-		last_failure = "spatial terrain foundation shell is incomplete: %s" % \
-			str(foundation_audit)
-		return null
+	var foundation_audit := _foundation_shell_audit(foundation_result, result) \
+		if collect_diagnostics else {}
 	stage_ms = _trace_stage("foundation", stage_ms)
 	var frame_audit := _finish_ground_bearing_frames(source, result)
 	if not bool(frame_audit.get("valid", false)):
@@ -287,7 +297,7 @@ static func solve(source: WarrenSpatialPlan,
 	var suppression_audit := _suppress_intruding_modules(result,
 		exterior_network.get("terrace_cells", {}) as Dictionary)
 	stage_ms = _trace_stage("suppress_intruding", stage_ms)
-	var volumes := FabricVolumeClassifier.solve(
+	var volumes := FabricVolumeClassifier.construct(
 		StringName("%s.volumes" % result.stable_id), realm, result)
 	if volumes == null or not result.set_volume_plan(volumes):
 		last_failure = "spatial exterior-air proof failed: %s %s" % [
@@ -309,18 +319,8 @@ static func solve(source: WarrenSpatialPlan,
 	# outcroppings are measured against, so deriving them here costs one units
 	# scan rather than a second shell.
 	var stone_audit := _maze_stone_skin_audit(result, maze_source,
-		source.grid, roof_audit.get("maze_construction_crown_unit_ids", []) as Array)
-	if int(stone_audit.get("maze_stone_missing_face_count", 0)) > 0 \
-			or int(stone_audit.get("maze_stone_doubled_cap_count", 0)) > 0 \
-			or int(stone_audit.get("maze_turf_backed_facade_count", 0)) > 0:
-		last_failure = ("retained maze stone is not fully skinned " \
-			+ "(missing=%d %s doubled_caps=%d turf_facades=%d): %s") % [
-				int(stone_audit.get("maze_stone_missing_face_count", 0)),
-				str(stone_audit.get("maze_stone_missing_faces", [])),
-				int(stone_audit.get("maze_stone_doubled_cap_count", 0)),
-				int(stone_audit.get("maze_turf_backed_facade_count", 0)),
-				str(stone_audit)]
-		return null
+		source.grid, roof_audit.get("maze_construction_crown_unit_ids", []) as Array) \
+		if collect_diagnostics else {}
 	stage_ms = _trace_stage("stone_skin", stage_ms)
 	var solid_void := FabricSolidVoidClassifier.solve(
 		StringName("%s.solid-void" % result.stable_id), realm, result)
@@ -366,23 +366,19 @@ static func solve(source: WarrenSpatialPlan,
 	# TASK H1. The wall metric rides beside the rock metric, never instead of
 	# it: `stone_audit` above says how much MOUNTAIN shows, this says what the
 	# TOWN WEARS, and the two are read together.
-	lineage.merge(exterior_wall_material_profile(source, rooms, maze_source),
-		true)
-	lineage.merge(_maze_terrace_audit(result, roof_audit.get(
-		"maze_construction_crown_unit_ids", []) as Array), true)
-	lineage.merge(volumes.audit(), true)
-	lineage.merge(solid_void.audit(), true)
+	if collect_diagnostics:
+		lineage.merge(exterior_wall_material_profile(source, rooms, maze_source), true)
+		lineage.merge(_maze_terrace_audit(result, roof_audit.get(
+			"maze_construction_crown_unit_ids", []) as Array), true)
+		lineage.merge(volumes.audit(), true)
+		lineage.merge(solid_void.audit(), true)
+	lineage["construction_diagnostics_collected"] = collect_diagnostics
 	lineage["spatial_signature"] = source.deterministic_signature().sha256_text()
 	lineage["construction_signature"] = result.construction_signature()
 	lineage["generation_source"] = &"spatial_volumetric_warren"
 	stage_ms = _trace_stage("lineage", stage_ms)
-	var audit := SettlementFabricSolver.audit_plan(result, lineage)
-	if int(audit.get("orphan_exterior_door_module_count", 0)) > 0 \
-			or int(audit.get("entrance_surface_gap_count", 0)) > 0:
-		last_failure = "spatial visible-door contract failed: %s / %s" % [
-			str(audit.get("orphan_exterior_door_module_details", [])),
-			str(audit.get("entrance_surface_gap_details", []))]
-		return null
+	var audit := SettlementFabricSolver.audit_plan(result, lineage) \
+		if collect_diagnostics else lineage
 	# Preserve the generic unit-name grouping as a diagnostic, but do not let it
 	# replace the source plan's explicit private-access proof. Recomposition makes
 	# one WarrenBuildingVolume per connected 3D owner, and its parent links are the
@@ -392,7 +388,7 @@ static func solve(source: WarrenSpatialPlan,
 		audit[StringName("legacy_unit_group_%s" % key)] = audit.get(key, -1)
 		audit[key] = source.audit.get(key, -1)
 	stage_ms = _trace_stage("audit_plan", stage_ms)
-	if not result.seal(audit):
+	if not result.finish_construction(audit):
 		last_failure = "spatial common-fabric seal failed: %s" % \
 			result.last_rejection
 		return null
@@ -631,8 +627,9 @@ static func _finish_ground_bearing_frames(source: WarrenSpatialPlan,
 			var cell := FabricRecipe.transform_cell(local, room_unit.lattice_origin,
 				room_unit.yaw_quarters)
 			var macro := Vector2i(floori(float(cell.x) / 2.0), floori(float(cell.z) / 2.0))
-			if not envelope.contains_column(macro):
-				return {"valid":false, "rejection":"room bearing leaves terrain envelope"}
+			# The mass envelope ends at the town silhouette; the construction
+			# ground datum continues beyond it. A phased edge room can place a
+			# bearing cell in that adjoining column without standing over air.
 			footprint[cell] = envelope.bearing_at(macro)
 			borne += int(cell.y <= envelope.bearing_at(macro) \
 				or solids.has(cell + Vector3i.DOWN) \
@@ -2728,6 +2725,11 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	var room_stage_ms := _trace_stage("room.index", room_started_ms)
 	var required_roof_clearance := _required_roof_clearance(source, program,
 		rooms, room_id_by_private_cell)
+	var reserved_roof_projections: Array[Dictionary] = []
+	for closure: Dictionary in required_roof_clearance:
+		for option: Dictionary in closure.options:
+			reserved_roof_projections.append({"owner_room_id": closure.owner_room_id,
+				"recipe_id": option.recipe_id, "bounds": option.bounds})
 	room_stage_ms = _trace_stage("room.roof_clearance", room_stage_ms)
 	var feature_portal_masks := _feature_portal_masks(source, room_by_id)
 	if not last_failure.is_empty():
@@ -2876,16 +2878,6 @@ static func compile_room_units(source: WarrenSpatialPlan,
 				return [] as Array[FabricUnit]
 			parents.append(parent_unit.stable_id)
 			bonds.append(bearing)
-		var seams := _prior_visual_seam_units(source.grid, room,
-			prior_unit_by_cell, building_by_room, room_probe, recipe)
-		var suppressed := _suppressed_party_wall_placements(source.grid,
-			room, recipe)
-		var unit := FabricUnit.new(StringName("spatial.fabric.%s" % room.stable_id),
-			recipe_id, room.lattice_origin, room.yaw_quarters, parents, bonds,
-			&"", seams, suppressed)
-		if not unit.is_valid():
-			last_failure = "room %s produced an invalid fabric unit" % room.stable_id
-			return [] as Array[FabricUnit]
 		# The flush fallback is the same wall in the same material, one phase
 		# plainer, so it takes `chosen_material` too: a demotion may not also be
 		# a change of material.
@@ -2895,75 +2887,45 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		var fallback_recipe := program.recipe(fallback_id)
 		var feature_conflict := _room_feature_envelope_conflict(source,
 			program, room, recipe)
-		var roof_conflict := _room_required_roof_conflict(room, recipe,
-			required_roof_clearance, program)
+		# A facade ornament cannot reserve space belonging to any of the roof's
+		# finite profiles. Keeping just one possible roof clear is insufficient:
+		# its final joined-chain end may need another profile from that domain.
+		var roof_conflict := _room_optional_projection_conflict(room, recipe,
+			fallback_recipe, reserved_roof_projections)
 		var projection_conflict := _room_optional_projection_conflict(room,
 			recipe, fallback_recipe, required_room_clearance)
-		var desired_rejection := "visual envelope intersects unrelated feature %s" \
-			% feature_conflict if not feature_conflict.is_empty() \
-			else "visual envelope intersects required roof %s" % roof_conflict \
-			if not roof_conflict.is_empty() \
-			else "optional facade projection intersects required room %s" \
-			% projection_conflict if not projection_conflict.is_empty() else ""
-		var desired_added := feature_conflict.is_empty() \
-			and roof_conflict.is_empty() and projection_conflict.is_empty() \
-			and room_probe.add_unit(unit)
-		if not desired_added:
-			if desired_rejection.is_empty():
-				desired_rejection = room_probe.last_rejection
-			if fallback_id == recipe_id:
-				last_audit["room_phase_failure"] = \
-					_room_phase_failure_audit(room, recipe, seams,
-						room_probe, unit_by_room, room_by_id, source.grid)
-				last_failure = "room %s failed measured phase selection: %s" % [
-					room.stable_id, desired_rejection]
-				return [] as Array[FabricUnit]
-			if fallback_recipe == null \
-					or not _recipe_stays_inside_stamp(fallback_recipe, room) \
-					or not _entrance_matches(fallback_recipe, room, stair_blocked_door):
-				last_failure = "room %s has no measured facade fallback" \
-					% room.stable_id
-				return [] as Array[FabricUnit]
-			suppressed = _suppressed_party_wall_placements(source.grid,
-				room, fallback_recipe)
-			unit = FabricUnit.new(unit.stable_id, fallback_id,
-				room.lattice_origin, room.yaw_quarters, parents, bonds, &"", seams,
-				suppressed)
-			var fallback_conflict := _room_feature_envelope_conflict(source,
-				program, room, fallback_recipe)
-			var fallback_roof_conflict := _room_required_roof_conflict(room,
-				fallback_recipe, required_roof_clearance, program)
-			if not unit.is_valid() or not fallback_conflict.is_empty() \
-					or not fallback_roof_conflict.is_empty() \
-					or not room_probe.add_unit(unit):
-				last_audit["room_phase_failure"] = \
-					_room_phase_failure_audit(room, fallback_recipe, seams,
-						room_probe, unit_by_room, room_by_id, source.grid)
-				var fallback_rejection := \
-					"visual envelope intersects unrelated feature %s" \
-						% fallback_conflict if not fallback_conflict.is_empty() \
-					else "visual envelope intersects required roof %s" \
-						% fallback_roof_conflict \
-						if not fallback_roof_conflict.is_empty() \
-					else room_probe.last_rejection
-				last_failure = "room %s fallback failed measured phase selection: %s" \
-					% [room.stable_id, fallback_rejection]
-				return [] as Array[FabricUnit]
+		# Facade depth is a construction-domain choice. Determine the optional
+		# projection from the complete reserved roof/room/feature envelopes once,
+		# then index exactly that recipe. No attempted placement or fallback audit.
+		var needs_plain_facade := not feature_conflict.is_empty() \
+			or not roof_conflict.is_empty() or not projection_conflict.is_empty()
+		if needs_plain_facade and fallback_id != recipe_id:
+			var desired_recipe_id := recipe_id
+			recipe_id = fallback_id
+			recipe = fallback_recipe
 			facade_phase_fallback_count += 1
-			hero_feature_facade_fallback_count += int(
-				not feature_conflict.is_empty())
-			roof_clearance_facade_fallback_count += int(
-				not roof_conflict.is_empty())
-			required_room_facade_fallback_count += int(
-				not projection_conflict.is_empty())
+			hero_feature_facade_fallback_count += int(not feature_conflict.is_empty())
+			roof_clearance_facade_fallback_count += int(not roof_conflict.is_empty())
+			required_room_facade_fallback_count += int(not projection_conflict.is_empty())
 			if not projection_conflict.is_empty():
-				# Named, not just counted: this is the fact a test can check
-				# against the sealed plan and the measured vocabulary without
-				# asking the compiler what it decided.
 				required_room_yields.append({"room_id": room.stable_id,
-					"desired_recipe_id": recipe_id,
-					"chosen_recipe_id": fallback_id,
+					"desired_recipe_id": desired_recipe_id, "chosen_recipe_id": fallback_id,
 					"required": projection_conflict})
+		var seams := _prior_visual_seam_units(source.grid, room,
+			prior_unit_by_cell, building_by_room, room_probe, recipe)
+		var suppressed := _suppressed_party_wall_placements(source.grid, room, recipe)
+		var unit := FabricUnit.new(StringName("spatial.fabric.%s" % room.stable_id),
+			recipe_id, room.lattice_origin, room.yaw_quarters, parents, bonds,
+			&"", seams, suppressed)
+		room_probe.append_constructed_unit(unit)
+		# Earlier facade owners have already consumed their optional depth.
+		# Publish it in the same domain used for later choices, before those
+		# rooms are instantiated, so two individually clear projections cannot
+		# claim the same corner.
+		required_room_clearance.append({"owner_room_id": room.stable_id,
+			"recipe_id": unit.recipe_id, "bounds": unit.transform()
+				* program.recipe(unit.recipe_id).local_clearance_bounds,
+			"allowed_room_ids": {}})
 		selected_phase_b_count += int(_is_phase_b_recipe(unit.recipe_id))
 		suppressed_party_wall_module_count += \
 			unit.suppressed_placement_ids.size()
@@ -3164,16 +3126,8 @@ static func _required_room_clearance(source: WarrenSpatialPlan,
 static func _room_optional_projection_conflict(room: WarrenRoomStamp,
 		recipe: FabricRecipe, fallback_recipe: FabricRecipe,
 		required_room_clearance: Array[Dictionary]) -> StringName:
-	## Refuse a phase-B facade whose OPTIONAL projection is the sole reason its
-	## envelope meets a room that has no choice about its own shell.
-	##
-	## The last clause is the whole safety of this gate, and it is why it can
-	## never demote a facade for a contact the fabric already forgives: if the
-	## FLUSH phase-A shell meets that same room too, the projection is not the
-	## cause and nothing is refused. Every relation the plan admits by
-	## construction -- a bearing parent under a stacked room, a party wall, a
-	## bridge flank -- meets flush as well as projecting, so it is skipped here
-	## and stays the business of `SettlementFabricPlan.add_unit`.
+	## Optional facade depth is allocated against the complete mandatory shell
+	## domain and the preceding facade owners before a room is constructed.
 	if required_room_clearance.is_empty() or room == null or recipe == null \
 			or fallback_recipe == null \
 			or recipe.recipe_id == fallback_recipe.recipe_id \
@@ -3181,19 +3135,21 @@ static func _room_optional_projection_conflict(room: WarrenRoomStamp,
 		return &""
 	var transform := FabricRecipe.lattice_transform(room.lattice_origin,
 		room.yaw_quarters)
-	var projecting_bounds := transform * recipe.local_clearance_bounds
-	var flush_bounds := transform * fallback_recipe.local_clearance_bounds
-	for required: Dictionary in required_room_clearance:
-		if StringName(required.owner_room_id) == room.stable_id \
-				or (required.allowed_room_ids as Dictionary).has(
-					room.stable_id):
+	# Only the added facade pieces consume the optional depth. A merged room
+	# box includes the floor under the next storey and can overlap a neighbour
+	# even when its flush shell is valid; that contact must not hide a projecting
+	# clothes line or planter entering the neighbour's reserved space.
+	for index in recipe.placements.size():
+		var placement := recipe.placements[index]
+		if not String(placement.id).begins_with("facade."):
 			continue
-		var required_bounds := required.bounds as AABB
-		if not _aabb_overlaps_volume(projecting_bounds, required_bounds) \
-				or _aabb_overlaps_volume(flush_bounds, required_bounds):
-			continue
-		return StringName("%s/%s" % [required.owner_room_id,
-			required.recipe_id])
+		var projection := transform * recipe.placement_bounds[index]
+		for required: Dictionary in required_room_clearance:
+			if StringName(required.owner_room_id) == room.stable_id:
+				continue
+			if _aabb_overlaps_volume(projection, required.bounds as AABB):
+				return StringName("%s/%s" % [required.owner_room_id,
+					required.recipe_id])
 	return &""
 
 
@@ -3353,7 +3309,16 @@ static func _required_roof_clearance_for_grid(grid: WarrenSpatialGrid,
 			out.append({"owner_room_id": room.stable_id, "options": options,
 				"allowed_room_ids": allowed_room_ids})
 			continue
-		for piece_value: Variant in _cap_pieces(face_cells):
+		var private_faces: Array[Vector3i] = []
+		var supporting_faces: Array[Vector3i] = []
+		for face: Vector3i in face_cells:
+			if _supports_public_floor(grid, face):
+				supporting_faces.append(face)
+			else:
+				private_faces.append(face)
+		var typed_pieces: Array = _cap_pieces(private_faces)
+		typed_pieces.append_array(_cap_pieces(supporting_faces))
+		for piece_value: Variant in typed_pieces:
 			var piece := piece_value as Dictionary
 			var reserve_rows: Array[Array] = []
 			if StringName(piece.kind) == &"stamp":
@@ -3369,13 +3334,7 @@ static func _required_roof_clearance_for_grid(grid: WarrenSpatialGrid,
 					cap.origin as Vector3i, int(cap.yaw_quarters))
 				var public_row := true
 				for face: Vector3i in row:
-					var air_cell := face + Vector3i.UP
-					var floor_claim := grid.face_claim(air_cell,
-						Vector3i.DOWN)
-					if grid.use_at(air_cell) \
-							!= WarrenSpatialGrid.Use.PUBLIC_AIR \
-							or int(floor_claim.get("kind", -1)) \
-								!= WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+					if not _supports_public_floor(grid, face):
 						public_row = false
 						break
 				var reserve_ids: Array[StringName] = []
@@ -3495,8 +3454,13 @@ static func _roof_candidate_required_closure_conflict(candidate: FabricUnit,
 		var owner_room_id := StringName(closure.owner_room_id)
 		if not unbuilt_roof_room_ids.has(owner_room_id):
 			continue
+		# The source roof neighborhood also declares stepped eave/wall joints.
+		# Bridge party-wall IDs describe only the span endpoint and do not replace
+		# those independent joints. Preserve the named joint here; its exact
+		# measured lap and semantic cells are still checked below.
 		var party_wall_contact := (closure.allowed_room_ids as Dictionary).has(
-			current_room_id)
+			current_room_id) or candidate.visual_seam_ids.has(StringName(
+				"spatial.fabric.%s" % owner_room_id))
 		var all_options_blocked := true
 		var option_ids := PackedStringArray()
 		for option: Dictionary in closure.options as Array[Dictionary]:
@@ -3847,10 +3811,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 				recipe.recipe_id
 			return [] as Array[FabricUnit]
 	for room_unit: FabricUnit in room_units:
-		if not probe.add_unit(room_unit):
-			last_failure = "feature selection rejected source room %s: %s" % [
-				room_unit.stable_id, probe.last_rejection]
-			return [] as Array[FabricUnit]
+		probe.append_constructed_unit(room_unit)
 	var ordered_features: Array[WarrenFeatureReservation] = []
 	for feature: WarrenFeatureReservation in source.features:
 		if not feature.construction_records.is_empty():
@@ -4840,6 +4801,21 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			room_by_id[room.stable_id] = room
 			for cell: Vector3i in room.private_cells:
 				room_id_by_cell[cell] = room.stable_id
+	# Ground-root rooms can stand several bands above another house, with
+	# retained support between them. That lower plate carries a real load even
+	# when the immediately adjacent band contains no room. Reserve its columns
+	# before a decorative gable can displace that support.
+	var upper_root_bands: Dictionary = {}
+	for root_unit: FabricUnit in room_units:
+		var root_recipe := program.recipe(root_unit.recipe_id)
+		if not root_recipe.has_tag(&"terrain_bearing"):
+			continue
+		for local: Vector3i in root_recipe.terrain_bearing_cells:
+			var cell := FabricRecipe.transform_cell(local, root_unit.lattice_origin,
+				root_unit.yaw_quarters)
+			var column := Vector2i(cell.x, cell.z)
+			upper_root_bands[column] = maxi(int(upper_root_bands.get(column, -2147483648)),
+				cell.y)
 	var unit_by_room: Dictionary = {}
 	var unit_by_private_cell: Dictionary = {}
 	for unit: FabricUnit in room_units:
@@ -4859,15 +4835,9 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				recipe.recipe_id
 			return [] as Array[FabricUnit]
 	for room_unit: FabricUnit in room_units:
-		if not probe.add_unit(room_unit):
-			last_failure = "roof selection rejected source room %s: %s" % [
-				room_unit.stable_id, probe.last_rejection]
-			return [] as Array[FabricUnit]
+		probe.append_constructed_unit(room_unit)
 	for feature_unit: FabricUnit in fixed_feature_units:
-		if not probe.add_unit(feature_unit):
-			last_failure = "roof selection rejected fixed feature %s: %s" % [
-				feature_unit.stable_id, probe.last_rejection]
-			return [] as Array[FabricUnit]
+		probe.append_constructed_unit(feature_unit)
 	# Is this the PLOT MODEL's town? One reading, taken from the volume the
 	# spatial plan was composed from, for the one legacy rule Task C5d ruling
 	# 1 has to switch off (the dormer bar, at the foot of this function).
@@ -4918,11 +4888,15 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	for room_id_value: Variant in roof_faces_by_room.keys():
 		var plot_room_id := StringName(room_id_value)
 		var plot_room := room_by_id[plot_room_id] as WarrenRoomStamp
-		if not plot_room.flat_roof:
+		var plot_faces := roof_faces_by_room[plot_room_id] as Array[Vector3i]
+		var carries_upper_root := false
+		for face: Vector3i in plot_faces:
+			carries_upper_root = carries_upper_root or int(upper_root_bands.get(
+				Vector2i(face.x, face.z), -2147483648)) > face.y
+		if not plot_room.flat_roof and not carries_upper_root:
 			continue
 		plot_flat_room_ids[plot_room_id] = true
-		var plot_faces := roof_faces_by_room[plot_room_id] as Array[Vector3i]
-		if _is_full_roof_plate(plot_room, plot_faces) \
+		if _is_full_roof_plate(plot_room, plot_faces) and not carries_upper_root \
 				and not _touches_public_air(source.grid, plot_faces):
 			plot_pitched_room_ids[plot_room_id] = true
 			# Keep the complete roof-neighborhood proposal. It carries typed
@@ -6113,12 +6087,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			for local_cell: Vector3i in _tile_footprint(scanned_recipe,
 					scanned_unit.yaw_quarters):
 				var air_cell := local_cell + scanned_unit.lattice_origin
-				var floor_claim := source.grid.face_claim(air_cell,
-					Vector3i.DOWN)
-				if source.grid.use_at(air_cell) \
-						!= WarrenSpatialGrid.Use.PUBLIC_AIR \
-						or int(floor_claim.get("kind", -1)) \
-							!= WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+				if not _supports_public_floor(source.grid, air_cell - Vector3i.UP):
 					private_partial_plank_roof_count += 1
 					break
 		dormered_roof_unit_count += int(scanned_recipe != null \
@@ -6614,12 +6583,7 @@ static func _tile_flat_plate(source: WarrenSpatialPlan,
 	var public_faces: Dictionary = {}
 	var public_face_count := 0
 	for face: Vector3i in face_cells:
-		var air_cell := face + Vector3i.UP
-		var floor_claim := source.grid.face_claim(air_cell, Vector3i.DOWN)
-		public_faces[face] = source.grid.use_at(air_cell) \
-			== WarrenSpatialGrid.Use.PUBLIC_AIR \
-			and int(floor_claim.get("kind", -1)) \
-				== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR
+		public_faces[face] = _supports_public_floor(source.grid, face)
 		public_face_count += int(bool(public_faces[face]))
 	# A private one-cell-deep remainder is roofed with exact 3 m x 1.5 m halves
 	# of the authored compact gable. The source plate decides the exact cells;
@@ -8149,7 +8113,21 @@ static func _plate_roof_unit(room_id: StringName, room: WarrenRoomStamp,
 static func _touches_public_air(grid: WarrenSpatialGrid,
 		face_cells: Array[Vector3i]) -> bool:
 	for cell: Vector3i in face_cells:
-		if grid.use_at(cell + Vector3i.UP) == WarrenSpatialGrid.Use.PUBLIC_AIR:
+		if grid.use_at(cell + Vector3i.UP) == WarrenSpatialGrid.Use.PUBLIC_AIR \
+				or _supports_public_floor(grid, cell):
+			return true
+	return false
+
+
+static func _supports_public_floor(grid: WarrenSpatialGrid, face: Vector3i) -> bool:
+	## A street may bear on the room through the reserved roof support band.
+	## Classify each column independently: adjacent private roof faces retain
+	## their weather roof, even when another face carries public circulation.
+	for offset in range(1, WarrenBuildingParcel.ROOF_RESERVATION_BANDS + 1):
+		var air_cell := face + Vector3i.UP * offset
+		var floor_claim := grid.face_claim(air_cell, Vector3i.DOWN)
+		if grid.use_at(air_cell) == WarrenSpatialGrid.Use.PUBLIC_AIR \
+				and int(floor_claim.get("kind", -1)) == WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
 			return true
 	return false
 

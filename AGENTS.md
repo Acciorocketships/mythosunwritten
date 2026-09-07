@@ -1,5 +1,88 @@
 # Project Instructions (AGENTS.md)
 
+> September 7 atmosphere rebuild: seven art-directed biomes retain the five
+> historical content IDs and add `amber_heath` and `jade_wetlands`; display names
+> are Sunwash Meadows, Lanternwood, Opal Highlands, Cherryveil, Moonfen, Amber
+> Heath and Jade Estuary. `Helper.biome_weights5` is a compatibility name for
+> seven normalized weights. Mood never changes the global sky, sun, fog or
+> ambient light at the player's position. `BiomeAtmosphereField` samples the
+> actual ground and continuous biome blend into CPU arrays; `BiomeChunkFx`
+> commits world-space mist, grounded particles, exact-water fall spray and
+> moving spirit lights on the main thread. Adjacent mist chunks share boundary
+> samples. `BiomeGroundMap` projects the same field onto a canonical 48m grid
+> in a bounded 3072m render window; 768m scrolls preserve overlapping samples
+> exactly. Terrain, lips and grass share `ground_style.gdshaderinc` and the
+> palette's real texture; paths and rock retain their distinct atlas texels.
+> Canonical substrate colours live in `BiomeRegistry.SUBSTRATES`, with moss,
+> chalk, silt, petal litter and amber earth detail resolved in world space.
+> Tree materials use a manifest-declared `biome_canopy` hue replacement that
+> preserves bark, including at bake time. Ground-cover grass remains beneath
+> woodland canopy; the separate ecology/feature fields still own empty paths.
+> `LandformField` contributes deterministic 768m geological provinces to BOTH
+> natural ground and river descent (scarps, amphitheatres, terraces, mesas,
+> ridges/passes, hollows and clefts). Production amplitude is 32m. Large lake
+> stamps may preserve natural islands or peninsulas through their shared carve;
+> no water-only decoration or second terrain authority is added. This changes
+> seed geography. Construction must retain the owner's single-town policy.
+> F6 cycles the biome review locations; F4 retains the existing review list.
+
+> September 6 construction policy (owner instruction): a settlement generates
+> one deterministic town and one world placement. Do not use audits to erase
+> towns, retry terrain placements, or rebuild an optional alternate town.
+> Construction defects belong in regression/corpus tests and must be corrected
+> in the generator's space reservations and ownership rules. The production
+> adapter now aligns its single primary gate and publishes the sealed grade
+> patch; it no longer re-solves a flat preview against trial terrain quarters.
+> Road connectivity does not control whether a settlement exists. The compiler
+> now exposes `generate()` separately from the explicitly checked `solve()` and
+> `validation_errors()` used by tests. `WarrenVolumetricSolver.generate()` is
+> the production entry; its diagnostic `solve()` additionally collects the
+> full-town module, foundation, masonry, terrace, and material audits. Payload
+> assembly no longer revalidates a complete town or each generated payload.
+> A parity regression requires identical construction with diagnostics enabled
+> and disabled. The remaining lower-level construction
+> searches and mixed seal/audit methods are still being migrated; this work is
+> not yet accepted as a complete removal of runtime checks or retries.
+
+> September 7 construction follow-up: production outskirts now use
+> `VillageOutskirtsConstruction` and `VillageFrontageDomain`. Measured house
+> envelopes subtract occupied space from continuous frontage intervals before
+> a lot is selected; each selected lot emits one house and a flat grade pad.
+> Different pad datums reserve disjoint footprints. The substantial-house
+> cohort precedes smaller infill, and every final lane samples the completed
+> grade. Inset porches own the walk from the outer base to the door; terrain
+> paint stops at that base. Shared T/X junctions derive both inner curves from
+> all declared street arms. Landings shorter than a path half-width stay square
+> so capsule ends cannot overrun a doorway. The old outskirts trial solver is
+> retained for legacy tests but is no longer called by `VillagePlan`.
+> Deep door panels now keep whole ends, while perpendicular returns terminate
+> at the measured doorway back plane. `export_door_return_manifest.gd` discovers
+> the finite square/miter/back-plane alternatives offline; ordinary asset bake
+> produces their visuals and collision. Suppressing an end owner withdraws its
+> return cut. These choices retain the original conservative envelope. Matched
+> doorway/facade review is still in progress; do not report it accepted yet.
+> Terrain screenshot regressions additionally pin the original reported field
+> in `tests/fixtures/september6_reported_terrain.json`, because the atmosphere
+> rebuild intentionally changes seed geography. Exact historical screenshots
+> use the original-world review copy; current-world tests remain separate.
+
+
+> September 5 evening facade follow-up: generated-room miter choices carry
+> explicit perpendicular end-owner placement IDs in `FabricRecipe`. Final
+> placement expansion withdraws a cut when its owner is suppressed as a party
+> wall; demand discovery includes the finite square/single/double-end choices.
+> These choices remain inside the original uncut conservative envelope. This
+> change is under visual review; it must not be reported as accepted before
+> the matched doorway screenshots pass.
+
+> September 6 facade follow-up: timber plain/window/door families now bake the
+> same finite corner choices as masonry. Full framed panels own their joins;
+> the renderer no longer adds coplanar room stitch posts or extra portal jambs.
+> Unrelated combined clearance boxes use the actual module-bound union as a
+> narrow phase, so empty space between a floor and an ornament is not treated
+> as a solid room corner. The matched evening captures remain under review;
+> street handoffs and some facade joins are still open issues.
+
 > Keep this file current. When the architecture, conventions, or core invariants
 > change, update it in the same change.
 
@@ -1633,21 +1716,18 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   swell's own crest nudge the gate used to be able to latch a false swim state on a single
   crest-timed frame at a knife-edge shoreline depth, which is why classification reads the
   static field alone.
-- **One tint field**: every terrain surface — walkable sheet, aprons, rock skirt, and all
-  KayKit dressing pieces (per-instance colours) — plus dense grass multiplies THE shared
-  `terrain/materials/ground_palette.tres` texture by `BiomeRegistry.ground_tint_at` sampled at
-  its own position. That pure field combines the biome multiplier with deterministic subtle
-  108 m value and 156 m warmth patches, so colour can vary within one biome without chunk seams.
-  Change the palette texture, biome tint, or shared patch field once and every consumer follows;
-  never give a ground consumer its own copied colour.
-  Meadow deliberately uses the sub-unity `(0.72, 0.66, 1.0)` ground multiplier: the shared atlas
-  swatch is already saturated green, and its former above-one boost clipped into neon under clear
-  daylight.
-- **Global sun shadows**: `AtmosphereDirector` keeps the low golden-hour direction with restrained
-  `SUN_ENERGY = 1.1` and `SUN_SHADOW_OPACITY = 0.40`. Stronger full-opacity lighting on 4–12 m
-  terrain cliffs formed broad dark bands across open meadows while equally distant lit ground
-  clipped bright; use the shared sun controls rather than grass-specific colour compensation for
-  that lighting contrast.
+- **One ground appearance field**: the shared `ground_palette.tres` atlas and
+  `BiomeRegistry.ground_tint_at` still identify turf, rock and path. Terrain,
+  rolled turf lips and dense grass all apply `ground_style.gdshaderinc` to turf,
+  sampling `BiomeGroundMap`'s seven weights and canonical linear substrate
+  colours. Broad moss, chalk, silt, petal and earth patterns remain world-aligned.
+  Rock and path texels retain their authored palette. Change the shared field
+  once; never give a ground consumer its own copied colour.
+- **Global lighting and local atmosphere**: `AtmosphereDirector` owns one fixed
+  warm sun (energy 1.2, shadow opacity 0.65), cool ambient fill, restrained glow,
+  matte contact shading and adjustable camera focus. It updates only the
+  deterministic ground lookup as the player travels; a biome boundary can never
+  change distant lighting. World mist supplies regional depth and colour.
 
 ## Character & camera
 

@@ -71,8 +71,9 @@ func test_perpendicular_stone_facades_select_baked_corner_ends() -> void:
 		if String(panel.asset_id).contains(".miter"):
 			miter_count += 1
 		if String(panel.asset_id).begins_with("sfv.fabric.wall.rock.door."):
-			assert_true(String(panel.asset_id).ends_with(".miter3"),
-				"door-panel return cheeks share both corner seams with the side walls")
+			assert_eq(room.realized_facade_asset(panel, []),
+				SettlementFabricProgram.ROCK_DOOR_CLOSED,
+				"the whole deep doorway owns its ends; adjacent panels stop at its back plane")
 	assert_gte(miter_count, 2, "both perpendicular stone panels need finite corner ends")
 	for asset: StringName in SettlementFabricProgram.ROCK_FACADE:
 		assert_gte(catalog.descriptor(asset).measured_aabb.size.x, 3.0,

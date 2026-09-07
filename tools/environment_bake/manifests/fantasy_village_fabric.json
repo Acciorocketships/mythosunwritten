@@ -2,6 +2,9 @@
  "pack": "fantasy_village_fabric",
  "license": "Fantasy Village source-pack license",
  "facade_miter_prefixes": [
+  "sfv.fabric.wall.wood.door.",
+  "sfv.fabric.wall.wood.window.",
+  "sfv.fabric.wall.wood.plain.",
   "sfv.fabric.wall.rock.door.",
   "sfv.fabric.wall.rock.window.",
   "sfv.fabric.wall.rock.plain."

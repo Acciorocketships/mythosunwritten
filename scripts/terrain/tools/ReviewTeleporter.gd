@@ -10,11 +10,13 @@ class_name ReviewTeleporter
 extends CanvasLayer
 
 const PATH := "res://review_teleports.json"
+const BIOME_PATH := "res://biome_review_teleports.json"
 const LABEL_SECS := 4.0
 
 @export var player: Node3D
 
 var _spots: Array = []
+var _biome_idx: int = -1
 var _idx: int = -1
 var _label: Label
 var _label_until: float = 0.0
@@ -29,10 +31,10 @@ func _ready() -> void:
 	add_child(_label)
 
 
-func _reload() -> void:
+func _reload(path: String = PATH) -> void:
 	_spots = []
-	if FileAccess.file_exists(PATH):
-		var data = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+	if FileAccess.file_exists(path):
+		var data = JSON.parse_string(FileAccess.get_file_as_string(path))
 		if data is Array:
 			_spots = data
 
@@ -40,15 +42,21 @@ func _reload() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
-	if event.keycode != KEY_F4:
+	if event.keycode != KEY_F4 and event.keycode != KEY_F6:
 		return
-	_reload()   # pick up newly-written spots without restarting
+	var biome_review: bool = event.keycode == KEY_F6
+	var path := BIOME_PATH if biome_review else PATH
+	_reload(path)   # pick up newly-written spots without restarting
 	if _spots.is_empty() or player == null:
-		_label.text = "no review spots (%s missing/empty)" % PATH
+		_label.text = "no review spots (%s missing/empty)" % path
 		_label_until = Time.get_ticks_msec() / 1000.0 + LABEL_SECS
 		return
-	_idx = (_idx + 1) % _spots.size()
-	var s: Dictionary = _spots[_idx]
+	var index := ((_biome_idx if biome_review else _idx) + 1) % _spots.size()
+	if biome_review:
+		_biome_idx = index
+	else:
+		_idx = index
+	var s: Dictionary = _spots[index]
 	var p: Array = s.get("pos", [0.0, 10.0, 0.0])
 	if player is CharacterBody3D:
 		player.velocity = Vector3.ZERO
@@ -57,7 +65,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var l: Array = s["look"]
 		player.rotation.y = atan2(float(l[0]) - float(p[0]), float(l[1]) - float(p[2]))
 	_snap_pending = true
-	_label.text = "[%d/%d] %s" % [_idx + 1, _spots.size(), str(s.get("name", ""))]
+	_label.text = "[%d/%d] %s" % [index + 1, _spots.size(), str(s.get("name", ""))]
 	_label_until = Time.get_ticks_msec() / 1000.0 + LABEL_SECS
 
 

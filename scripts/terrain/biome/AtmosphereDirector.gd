@@ -1,90 +1,78 @@
-# scripts/terrain/biome/AtmosphereDirector.gd
-# Applies the fixed-time global grade once, then continuously eases fog/sky/
-# ambient toward the biome blend at the player position. Master §11.9 / spec §3+§6.
 class_name AtmosphereDirector
 extends Node
 
+## One coherent sky and sun. Local biome mood belongs to world-space fog,
+## vegetation and ground, so walking cannot relight distant scenery.
 @export var environment_node: WorldEnvironment
 @export var sun: DirectionalLight3D
 @export var camera: Camera3D
 @export var streamer: FieldTerrainStreamer
 @export var player: Node3D
+@export_range(0.0, 0.3) var focus_softness := 0.12
 
-const SAMPLE_INTERVAL := 0.2
-const EASE_SPEED := 1.5          # fraction of remaining distance per second
+var _ground_map := BiomeGroundMap.new()
 
-# — the global grade, one place to tune —
-const SUN_COLOR := Color("ffeacc")
-const SUN_ENERGY := 1.1
-const SUN_ANGLE_DEG := Vector3(-35.0, 40.0, 0.0)   # low golden hour
-const SUN_SHADOW_OPACITY := 0.40
-const GLOW_BLOOM := 0.15
-const GLOW_HDR_THRESHOLD := 1.05
-# Fog tints the sky toward the fog colour; keep it low so each biome's sky KEEPS
-# its own hue instead of every biome converging to "milky fog". Fog then reads
-# as ground-level depth haze, not an all-over wash.
-const FOG_SKY_AFFECT := 0.25
-# Tilt-shift: near blur for the toy-diorama foreground; far blur pushed out so
-# mid-distance terrain stays crisp (a close far-plane read as haze everywhere).
-const DOF_FAR_DISTANCE := 450.0
-const DOF_FAR_TRANSITION := 200.0
-const DOF_NEAR_DISTANCE := 5.0
-const DOF_NEAR_TRANSITION := 4.0
-const DOF_AMOUNT := 0.06
-
-var _accum := SAMPLE_INTERVAL   # sample immediately on first frame
-var _target: Dictionary = {}
+const SUN_COLOR := Color("ffe3be")
+const SUN_ENERGY := 1.2
+const SUN_ANGLE_DEG := Vector3(-32.0, -28.0, 0.0)
+const SUN_SHADOW_OPACITY := 0.65
+const GLOW_BLOOM := 0.035
+const GLOW_HDR_THRESHOLD := 1.15
 
 func _ready() -> void:
-	if Helper.is_headless():
-		set_process(false)
-		return
-	_apply_grade()
+	set_process(not Helper.is_headless())
+	if not Helper.is_headless():
+		_apply_grade()
 
 func _apply_grade() -> void:
 	var env := environment_node.environment
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.tonemap_exposure = 1.05
 	env.glow_enabled = true
 	env.glow_bloom = GLOW_BLOOM
 	env.glow_hdr_threshold = GLOW_HDR_THRESHOLD
+	env.glow_intensity = 0.8
+	env.glow_strength = 1.1
+	env.glow_normalized = true
 	env.fog_enabled = true
-	env.fog_sky_affect = FOG_SKY_AFFECT
+	env.fog_density = 0.00035
+	env.fog_light_color = Color("b4c9d1")
+	env.fog_sky_affect = 0.12
 	env.volumetric_fog_enabled = true
-	env.volumetric_fog_density = 0.0    # pockets only (FogVolumes, Task 12)
+	env.volumetric_fog_density = 0.0
+	env.volumetric_fog_length = 512.0
+	env.volumetric_fog_detail_spread = 0.65
+	env.volumetric_fog_ambient_inject = 0.45
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color("bacede")
+	env.ambient_light_energy = 0.65
+	env.ssao_enabled = true
+	env.ssao_radius = 2.0
+	env.ssao_intensity = 1.1
+	env.ssao_light_affect = 0.2
+	env.ssao_ao_channel_affect = 0.0
+	var sky := env.sky.sky_material as ProceduralSkyMaterial
+	sky.sky_top_color = Color("739bb9")
+	sky.sky_horizon_color = Color("e5d8c6")
+	sky.ground_horizon_color = sky.sky_horizon_color
+	sky.ground_bottom_color = Color("697c8c")
 	sun.light_color = SUN_COLOR
 	sun.light_energy = SUN_ENERGY
 	sun.rotation_degrees = SUN_ANGLE_DEG
-	# Low-angle cliffs cast intentionally long shadows. Full-opacity shadow maps
-	# divided open meadows into a dark foreground band and blown-out background;
-	# retain readable grounding without letting large terrain shadows dominate.
 	sun.shadow_opacity = SUN_SHADOW_OPACITY
+	sun.light_angular_distance = 2.5
+	sun.light_volumetric_fog_energy = 1.1
 	var attrs := CameraAttributesPractical.new()
 	attrs.dof_blur_far_enabled = true
-	attrs.dof_blur_far_distance = DOF_FAR_DISTANCE
-	attrs.dof_blur_far_transition = DOF_FAR_TRANSITION
+	attrs.dof_blur_far_distance = 190.0
+	attrs.dof_blur_far_transition = 180.0
 	attrs.dof_blur_near_enabled = true
-	attrs.dof_blur_near_distance = DOF_NEAR_DISTANCE
-	attrs.dof_blur_near_transition = DOF_NEAR_TRANSITION
-	attrs.dof_blur_amount = DOF_AMOUNT
+	attrs.dof_blur_near_distance = 7.0
+	attrs.dof_blur_near_transition = 5.0
+	attrs.dof_blur_amount = focus_softness
 	camera.attributes = attrs
 
-func _process(dt: float) -> void:
-	if streamer == null or streamer.world_seed == 0 or player == null:
-		return
-	_accum += dt
-	if _accum >= SAMPLE_INTERVAL:
-		_accum = 0.0
-		_target = BiomeRegistry.blend_atmosphere(
-				Helper.biome_weights5(player.global_position, streamer.world_seed))
-	if _target.is_empty():
-		return
-	var k := clampf(EASE_SPEED * dt, 0.0, 1.0)
-	var env := environment_node.environment
-	env.fog_light_color = env.fog_light_color.lerp(_target[&"fog_color"], k)
-	env.fog_density = lerpf(env.fog_density, _target[&"fog_density"], k)
-	env.ambient_light_color = env.ambient_light_color.lerp(_target[&"ambient_color"], k)
-	env.ambient_light_energy = lerpf(env.ambient_light_energy, _target[&"ambient_energy"], k)
-	var sky_mat := env.sky.sky_material as ProceduralSkyMaterial
-	sky_mat.sky_top_color = sky_mat.sky_top_color.lerp(_target[&"sky_top"], k)
-	sky_mat.sky_horizon_color = sky_mat.sky_horizon_color.lerp(_target[&"sky_horizon"], k)
+func _process(_dt: float) -> void:
+	# Only scroll the deterministic substrate lookup; lighting never changes.
+	if not Helper.is_headless() and streamer != null and player != null:
+		_ground_map.update(player.global_position, streamer.world_seed)

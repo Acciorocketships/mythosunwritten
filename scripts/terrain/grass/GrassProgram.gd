@@ -3,7 +3,7 @@ extends RefCounted
 
 const CANOPY_CHANNEL := &"woodland_canopy"
 const CANOPY_SCALE := 132.0
-static var CANOPY_COVERAGE := PackedFloat32Array([0.22, 0.82, 0.14, 0.72, 0.42])
+static var CANOPY_COVERAGE := PackedFloat32Array([0.22, 0.82, 0.14, 0.72, 0.42, 0.22, 0.42])
 const CANOPY_SOFTNESS := 0.11
 const FEATURE_CLEARANCE := 0.3
 const QUERY_MARGIN := DressingCompiler.SURFACE_STENCIL

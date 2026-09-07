@@ -73,6 +73,10 @@ static func solve(terrain: VillageTerrainView, settlement_id: StringName,
 	plan.route_exit_count = contacts.size() if volumetric else 0
 	var branches := _outskirts_branches(terrain, arrival, primary_axis,
 		contacts, inner_radius, urban, volumetric)
+	if volumetric:
+		_construct_gate_connections(plan, terrain, settlement_id, arrival,
+			primary_axis, contacts, urban)
+		occupancy.index_constructed(plan.volumes)
 	var target := program.outskirts_program.target_houses(tier,
 		plan.route_exit_count)
 	var used_branches: Dictionary = {}
@@ -338,6 +342,59 @@ static func solve(terrain: VillageTerrainView, settlement_id: StringName,
 				validation_existing.owner_id]
 		assert(false, validation_message)
 	return plan
+
+
+static func _construct_gate_connections(plan: VillageOutskirtsPlan,
+		terrain: VillageTerrainView, settlement_id: StringName, arrival: Vector2,
+		axis: Vector2, contacts: Array[VillageCirculationNode],
+		urban: VillageUrbanFabricPlan) -> void:
+	## Streets are part of the town's public graph, independently of edge-house
+	## placement. Every declared gate joins the same exterior component once.
+	var grid := _urban_perimeter_grid(urban, arrival, axis)
+	var side := Vector2(-axis.y, axis.x)
+	var root := contacts[0]
+	var root_cell := _nearest_perimeter_cell(grid.perimeter,
+		_grid_local(root.point, arrival, axis),
+		Vector2(root.outward.dot(axis), root.outward.dot(side)))
+	var shapes: Array[FeatureGroundShape] = []
+	shapes.assign(grid.shapes)
+	var graph := _perimeter_component(root_cell, grid.walkable, shapes, arrival, axis)
+	var owner := StringName("%s.gate-streets" % settlement_id)
+	var volume_ids: Dictionary = {}
+	for contact: VillageCirculationNode in contacts:
+		var end_cell := _nearest_perimeter_cell(grid.perimeter,
+			_grid_local(contact.point, arrival, axis),
+			Vector2(contact.outward.dot(axis), contact.outward.dot(side)))
+		var points: Array[Vector2] = [root.point]
+		for cell: Vector2i in _perimeter_path(end_cell, root_cell, graph.parents):
+			var point := _grid_world(Vector2(cell) * OUTSKIRTS_GRID_STEP, arrival, axis)
+			if points[-1].distance_to(point) > 0.001:
+				points.append(point)
+		if points[-1].distance_to(contact.point) > 0.001:
+			points.append(contact.point)
+		var street_id := StringName("%s.%s" % [owner,contact.stable_key])
+		plan.street_paths.append({"points":points,"owner":street_id})
+		plan.surfaces.append_array(PathProgram.filleted_path_shapes(points,
+			PATH_HALF_WIDTH, FeatureGroundField.WORN_PATH,
+			VillagePlan.SURFACE_PRIORITY, street_id))
+		plan.clearances.append_array(PathProgram.filleted_path_shapes(points,
+			PATH_CLEARANCE, FeatureGroundField.NATURAL, 0,
+			StringName("%s.clearance" % street_id)))
+		for index in range(1,points.size()):
+			var a := points[index-1]
+			var b := points[index]
+			if a.distance_to(b) < 0.001: continue
+			var key := "%s/%s" % [a,b] if a.x < b.x or (a.x==b.x and a.y<b.y) \
+				else "%s/%s" % [b,a]
+			if volume_ids.has(key): continue
+			volume_ids[key] = true
+			var ay := terrain.surface_y(a)
+			var by := terrain.surface_y(b)
+			plan.volumes.append(VillageOccupancyVolume.new(
+				VillageOccupancy.Role.HEADROOM,(a+b)*0.5,
+				Vector2(a.distance_to(b)*0.5,PATH_HALF_WIDTH),(b-a).angle(),
+				minf(ay,by),maxf(ay,by)+TraversalEnvelope.MIN_HEADROOM,
+				StringName("%s.%s" % [owner,key]),owner,urban.public_walk_network_id))
 
 
 static func _outskirts_branches(terrain: VillageTerrainView,

@@ -1188,6 +1188,7 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		if compiled:
 			compiled = _preserve_lpfv_prefab_clearance(candidate, modules)
 			modules.finish_facade_corners(candidate)
+			modules.finish_door_returns(candidate)
 		if not compiled or not candidate.seal(catalog) \
 				or not program._add_recipe(candidate):
 			push_error("Could not compile settlement fabric recipe %s: %s" % [
@@ -1383,6 +1384,9 @@ static func _compile_module_program(catalog: EnvironmentCatalog) \
 				var miter := StringName("%s.miter%d" % [mirrored_asset, mask])
 				if catalog.has(miter) and not modules.add_generic(miter):
 					return null
+	for asset_id: StringName in catalog.ids():
+		if ".doorreturn." in String(asset_id) and not modules.add_generic(asset_id):
+			return null
 	# Preset 003 shares preset 004's stair/landing datum; its complete handrails
 	# extend above the walking plane. Keep the real upper tread in the contract so
 	# every use meets its destination platform instead of aligning by the post top.
@@ -3818,21 +3822,9 @@ static func _feature_portal_variant(base: FabricRecipe, portal_mask: int,
 			variant.add_placement(placement_id,
 				StringName(placement.asset_id),
 				placement.transform as Transform3D)
-	# The portal is a complete architectural joint, not merely a wall texture
-	# swap. Give every opened face two matching jambs that hide the repeat-module
-	# seam. The adjoining balcony/skywalk recipe owns its walk surface; putting a
-	# one-cell threshold in this room recipe would incorrectly enlarge the room's
-	# visual envelope into neighboring roofs before the related feature is bound.
-	for bit_value: Variant in portal_by_placement.values():
-		var portal_spec := bit_value as Dictionary
-		var outward := portal_spec.outward as Vector3i
-		var wall_pose := portal_spec.pose as Transform3D
-		var tangent := Vector3(float(outward.z), 0.0, float(-outward.x))
-		for side in [-1, 1]:
-			variant.add_placement(StringName("portal.jamb.%d.%s" % [
-				_portal_bit_for_outward(outward), "left" if side < 0 else "right"]),
-				PORTAL_JAMB, _pose(wall_pose.origin + tangent * (CELL - 0.12) \
-					* float(side), 0.0))
+	# The closed door already includes its complete frame. Its finite corner
+	# ends share ownership with the perpendicular facade, exactly like a window.
+	# Additional jamb posts would duplicate the panel's exterior planes.
 	for run: Dictionary in base.construction_runs:
 		var placement_ids: Array[StringName] = []
 		placement_ids.assign(run.placement_ids as Array)

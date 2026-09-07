@@ -37,9 +37,8 @@ static var _regions: Dictionary = {}
 
 static func _water(seed_v: int) -> WaterPlan:
 	if not _waters.has(seed_v):
-		var plan := HeightfieldPlan.new(seed_v, 22.0, 8, "mean", 3)
 		var water := preload("res://tests/fixtures/ReportedWaterPlan.gd").new(seed_v)
-		plan.set_water_plan(water)
+		var plan := water.make_heightfield()
 		_plans[seed_v] = plan
 		_waters[seed_v] = water
 	return _waters[seed_v]

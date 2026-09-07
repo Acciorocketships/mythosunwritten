@@ -460,7 +460,7 @@ func _worker() -> void:
 				_set_startup_worker_progress(c, 0.97)
 				# FX data stays worker-side; nodes are built during integration.
 				_begin_worker_phase(c, &"biome_fx")
-				result["fx"] = _biome_fx_data(c, region)
+				result["fx"] = _biome_fx_data(c, region, water_context)
 				_set_startup_worker_progress(c, 1.0)
 		_finish_worker_job(c)
 		_mutex.lock()
@@ -566,47 +566,17 @@ func worker_progress_snapshot() -> Dictionary:
 func _is_startup_diagnostic_chunk(chunk: Vector2i) -> bool:
 	return _startup_support_chunks.has(chunk) or _startup_feature_keys.has(chunk)
 
-# Worker-thread: pure data for the chunk's biome FX (dominant profile + ground-
-# anchored light points). No node/renderer calls — those happen on the main
-# thread in _build_fx. Empty when headless (FX is render-only).
-func _biome_fx_data(c: Vector2i, region) -> Dictionary:
+# Worker-side atmosphere sampling contains only CPU arrays and world coordinates.
+func _biome_fx_data(c: Vector2i, region, water: WaterFieldContext = null) -> Dictionary:
 	if _headless:
 		return {}
-	var origin := Vector3(float(c.x) * CHUNK_WORLD, 0.0, float(c.y) * CHUNK_WORLD)
-	var centre := origin + Vector3(CHUNK_WORLD * 0.5, 0.0, CHUNK_WORLD * 0.5)
-	var prof := BiomeRegistry.profile(Helper.biome_at(centre, world_seed))
-	var light_points: Array = []
-	if BiomeChunkFx.wants_light_points(prof):
-		for i in 3:
-			var hx := Helper._cell_hash01(world_seed + 7000 + i, c.x, c.y)
-			var hz := Helper._cell_hash01(world_seed + 8000 + i, c.x, c.y)
-			var lx := origin.x + hx * CHUNK_WORLD
-			var lz := origin.z + hz * CHUNK_WORLD
-			var ly := TerrainSurfaceField.surface_y(region, lx, lz) + 2.5
-			light_points.append(Vector3(lx - origin.x, ly, lz - origin.z))
-	# The chunk's surface height band — particle emission + pocket fog hug the
-	# actual ground instead of a fixed 0..12 band (orbs on a storey-5 plateau
-	# floated inside the terrain / far underfoot before).
-	var surf_lo := INF
-	var surf_hi := -INF
-	var lo_cx := c.x * TerrainChunkMesher.CELLS_PER_CHUNK
-	var lo_cz := c.y * TerrainChunkMesher.CELLS_PER_CHUNK
-	for dz in TerrainChunkMesher.CELLS_PER_CHUNK:
-		for dx in TerrainChunkMesher.CELLS_PER_CHUNK:
-			var h: float = region.surface_height(lo_cx + dx, lo_cz + dz)
-			surf_lo = minf(surf_lo, h)
-			surf_hi = maxf(surf_hi, h)
-	return {"profile": prof, "lights": light_points, "origin": origin,
-			"surf_lo": surf_lo, "surf_hi": surf_hi}
+	return BiomeAtmosphereField.compute(c, region, world_seed, water)
 
-# Main-thread: build the FX nodes from the worker's data and parent them under
-# the (now in-tree) chunk node.
 func _build_fx(node: Node3D, fx_data: Dictionary) -> void:
 	if fx_data.is_empty():
 		return
-	var fx := BiomeChunkFx.build(fx_data["profile"], fx_data["lights"],
-			fx_data["surf_lo"], fx_data["surf_hi"])
-	fx.position = fx_data["origin"]
+	var fx := BiomeChunkFx.build_field(fx_data)
+	fx.position = fx_data.origin
 	node.add_child(fx)
 
 

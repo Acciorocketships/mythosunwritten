@@ -1972,7 +1972,9 @@ static func _finished_public_portals(massif: WarrenMassif,
 	## holes cut into an unrelated facade.
 	var primary := excavation.route[0]
 	var candidates: Array[Vector3i] = []
-	for cell: Vector3i in excavation.public_cells():
+	# Only landing squares own a two-lane gate. An intermediate stair macro
+	# cell has two different tread heights and cannot supply that boundary.
+	for cell: Vector3i in _walk_nodes(excavation):
 		var base := massif.base_at(Vector2i(cell.x, cell.z))
 		if cell == primary or cell.y > base + 1 \
 				or not WarrenPassageLatticeRules.opens_to_exterior(massif, cell):

@@ -110,14 +110,17 @@ static func shared_material() -> Material:
 	assert(mat != null and mat.albedo_texture != null)
 	assert(mat.vertex_color_use_as_albedo and is_equal_approx(mat.roughness, 1.0)
 		and is_zero_approx(mat.metallic_specular))
-	_shared_mat = mat
+	var surface := ShaderMaterial.new()
+	surface.shader = load("res://terrain/materials/ground_surface.gdshader")
+	surface.set_shader_parameter("ground_palette_texture", mat.albedo_texture)
+	_shared_mat = surface
 	return _shared_mat
 
 ## The one palette binding consumed by the terrain sheet and dense grass.
 ## Both the texture object and its grass-island UV come from the same lip mesh,
 ## so changing the shared atlas can never leave grass with a copied swatch.
 static func ground_texture() -> Texture2D:
-	var material := shared_material() as StandardMaterial3D
+	var material := load(GROUND_PALETTE) as StandardMaterial3D
 	assert(material != null and material.albedo_texture != null)
 	return material.albedo_texture
 
@@ -199,6 +202,9 @@ static func _ghost_mode(region, cx: int, cz: int, cdir: Vector2i) -> int:
 	if not TerrainSurfaceField.is_higher_flat(region, cx, cz, ca):
 		return 0
 	if not TerrainSurfaceField.is_higher_flat(region, cx, cz, cb):
+		return 0
+	if not TerrainSurfaceField.own_edge_flat(region, cx + ca.x, cz + ca.y, -ca) \
+			or not TerrainSurfaceField.own_edge_flat(region, cx + cb.x, cz + cb.y, -cb):
 		return 0
 	if TerrainSurfaceField._is_inner_corner(region, cx + cdir.x, cz + cdir.y, Vector2i(-cdir.x, -cdir.y)):
 		return 0

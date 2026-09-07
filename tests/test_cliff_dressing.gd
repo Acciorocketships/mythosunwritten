@@ -843,24 +843,22 @@ func _region_inner_corner_arm():
 		return m.get(Vector2i(cx, cz), 16.0))
 	return plan.compute_region(2, 1, 8)
 
-func test_inner_corner_fires_when_an_arm_is_flat_via_its_own_inner_corner() -> void:
+func test_another_inner_corner_does_not_make_a_sloping_arm_a_wall() -> void:
 	var r = _region_inner_corner_arm()
-	# the fixture's shape: D=(2,1)@24 owns the corner over slope pocket (1,2)@20; arm (1,1)
-	# is a cliff top; arm (2,2)@24 is flat ONLY via its own inner corner toward (3,1)@20
-	assert_false(Field._is_cliff_top(r, 2, 2), "east arm is not a cliff top (fixture shape)")
-	assert_true(Field.is_flat_cell(r, 2, 2), "east arm is flat via its own inner corner")
-	assert_false(Field.is_flat_cell(r, 1, 2), "the pocket is a slope cell")
+	assert_false(Field._is_cliff_top(r, 2, 2))
+	assert_true(Field.has_inner_corner(r, 2, 2), "the arm holds a different corner")
+	assert_false(Field.own_edge_flat(r, 2, 2, Vector2i.LEFT),
+		"its edge toward this pocket still descends")
 	var flags := Dress.corner_flags(r, 2, 1)
-	assert_eq(flags.get(Vector2i(-1, 1), ""), "inner",
-		"the diagonal owner registers a classic inner corner (so the arms' clips hold)")
-	# exactly one piece at the corner slot — the classic one; the ghost must dedupe itself
+	assert_ne(flags.get(Vector2i(-1, 1), ""), "inner",
+		"a rounded corner must not replace the straight wall beside a slope")
 	var data = Dress.compute(r, 0, 0, 5)
 	var pieces := 0
 	for t in (data["inner_lip"] as Array):
 		var o := (t as Transform3D).origin
 		if absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1:
 			pieces += 1
-	assert_eq(pieces, 1, "one inner-corner piece at the point (classic, not a duplicate ghost)")
+	assert_eq(pieces, 0, "neither a classic nor a ghost inner lip can own this slope")
 
 func test_registered_inner_corner_holds_the_arm_clips_no_drape_notch() -> void:
 	# The mesher half of the same bug: with nothing registered at the point, both arms' lip

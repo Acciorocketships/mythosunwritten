@@ -241,7 +241,9 @@ static func _bake_tile_fields(program: GrassProgram, origin: Vector2,
 				canopy_coverage, DressingHabitatLayer.Preference.EXTERIOR,
 				GrassProgram.CANOPY_SOFTNESS)
 			out.append({
-				"coverage": clampf(biome_base * canopy_opening, 0.0, 1.0),
+				# Woods retain a low carpet. The independent land-occupancy
+				# field still owns exact-zero paths and ecological clearings.
+				"coverage": clampf(biome_base * lerpf(0.5, 1.0, canopy_opening), 0.0, 1.0),
 				"land_occupancy": DressingEcology.land_occupancy01(
 					point, world_seed),
 				"tint": BiomeRegistry.ground_tint_at(

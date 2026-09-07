@@ -93,8 +93,8 @@ func frame_for(super_cell: Vector2i) -> VillageFrame:
 		return null
 	var node := _paths.node_for(super_cell)
 	if node.is_empty():
-		_frames[super_cell] = null
-		return null
+		# A road's support constraints do not decide whether the town exists.
+		node = site
 	var point := Vector2(node.cell) * TerrainSurfaceField.TILE
 	var block := WorldFieldBlockCache.key_of(point)
 	var frame := VillageFrame.build(node, _paths.context_for(block),
@@ -130,7 +130,7 @@ func _records_affecting(core: Rect2) -> Array[VillageRecord]:
 					_program.maximum_clearance), true):
 				continue
 			var frame := frame_for(super_cell)
-			if frame == null or frame.is_dormant():
+			if frame == null:
 				continue
 			var conservative := _village_program.record_bound(frame.centre)
 			if not conservative.intersects(core.grow(

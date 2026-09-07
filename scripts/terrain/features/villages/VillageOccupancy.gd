@@ -38,6 +38,13 @@ func add_all(candidates: Array[VillageOccupancyVolume]) -> bool:
 		_insert(candidate)
 	return true
 
+func index_constructed(candidates: Array[VillageOccupancyVolume]) -> void:
+	## Index the completed layout. Collision audits are explicit test queries,
+	## and indexing must execute in release builds as well as debug builds.
+	for candidate: VillageOccupancyVolume in candidates:
+		_insert(candidate)
+
+
 ## Returns the first stable conflict without mutation. Atomic compound
 ## planners can expose a precise audit reason instead of a generic overlap.
 func first_conflict(candidates: Array[VillageOccupancyVolume]) -> Dictionary:

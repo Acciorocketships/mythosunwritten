@@ -449,6 +449,12 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 	st.index()
 	st.generate_normals()
 	var surface_arrays: Array = st.commit_to_arrays()
+	# Aprons continue this exact sheet, including its edge lighting and tint.
+	var edge_appearance := {}
+	var surface_vertices: PackedVector3Array = surface_arrays[Mesh.ARRAY_VERTEX]
+	for i in surface_vertices.size():
+		edge_appearance[surface_vertices[i]] = [
+			surface_arrays[Mesh.ARRAY_NORMAL][i], surface_arrays[Mesh.ARRAY_COLOR][i]]
 
 	# Ground APRONS: continue each cell's ground sheet APRON deep under every HIGHER flat
 	# neighbour, sealing the slot floor behind that neighbour's recessed wall face (owner:
@@ -460,11 +466,11 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 	for cz in range(lo_cz, lo_cz + CELLS_PER_CHUNK):
 		for cx in range(lo_cx, lo_cx + CELLS_PER_CHUNK):
 			if _emit_aprons(ast, region, clip_cache, cx, cz, _cell_tint(cx, cz),
-					water, features):
+					water, features, edge_appearance):
 				any_apron = true
 	var apron_arrays: Array = []
 	if any_apron:
-		# no index()/generate_normals(): normals are explicit verticals (welding the two
+		# no index()/generate_normals(): normals extend the sheet (welding the two
 		# windings would zero them out and break the lighting)
 		apron_arrays = ast.commit_to_arrays()
 
@@ -1061,7 +1067,8 @@ static func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3
 # plane jutting out below the lip from any low angle, owner rounds 12-13. The round-11
 # "tiny gaps" it papered over are handled at ground level where they actually live.)
 func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: int,
-		tint: Color, water: WaterFieldContext, features: FeatureContext) -> bool:
+		tint: Color, water: WaterFieldContext, features: FeatureContext,
+		edge_appearance: Dictionary) -> bool:
 	var emitted := false
 	var active := {}
 	for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
@@ -1137,7 +1144,10 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 			if not ((cap_hi and a1 >= TOP_CLIP) or (cap_lo and a1 <= -TOP_CLIP)):
 				p1 = _clip_vert(region, clip_cache, cx, cz, p1)
 				q1 = _clip_perp(region, clip_cache, ncx, ncz, dir, q1)
-			_apron_quad(st, p0, p1, q0, q1, tint, water, features)
+			for v: Vector3 in [p0, p1]:
+				if not edge_appearance.has(v):
+					edge_appearance[v] = _apron_edge_appearance(region, clip_cache, v)
+			_apron_quad(st, p0, p1, q0, q1, tint, water, features, edge_appearance)
 			emitted = true
 	for cdir in [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]:
 		if not (active[Vector2i(cdir.x, 0)] and active[Vector2i(0, cdir.y)]):
@@ -1151,12 +1161,49 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 		var b := a + Vector3(float(cdir.x) * APRON, 0.0, 0.0)
 		var c := a + Vector3(0.0, 0.0, float(cdir.y) * APRON)
 		var d2 := a + Vector3(float(cdir.x) * APRON, 0.0, float(cdir.y) * APRON)
-		_apron_quad(st, a, b, c, d2, tint, water, features)
+		_apron_quad(st, a, b, c, d2, tint, water, features, edge_appearance)
 		emitted = true
 	# (Round 8 floored the flush-step cap notch with a flat grass patch here; the owner
 	# rejected it — round 9 extends the run's straight modules to the boundary and turns
 	# the cap lip one slot INTO the taller cell instead, so there is no notch to floor.)
 	return emitted
+
+func _apron_edge_appearance(region, clip_cache: Dictionary, point: Vector3) -> Array:
+	## Apron ownership is by cell centre, whereas the sheet is cut on chunk
+	## boundaries. Its joining vertex can belong to the adjacent chunk. Build
+	## the same incident sheet triangles locally; never substitute an up normal.
+	var normal_sum := Vector3.ZERO
+	var start_x := floorf(point.x / STEP) * STEP
+	var start_z := floorf(point.z / STEP) * STEP
+	for dx in [-1, 0]:
+		for dz in [-1, 0]:
+			var x0 := start_x + float(dx) * STEP
+			var z0 := start_z + float(dz) * STEP
+			var cx := TerrainSurfaceField._cell_of(x0 + STEP * 0.5)
+			var cz := TerrainSurfaceField._cell_of(z0 + STEP * 0.5)
+			var vertices: Array[Vector3] = []
+			for offset: Vector2 in [Vector2.ZERO, Vector2(STEP, 0),
+					Vector2(STEP, STEP), Vector2(0, STEP)]:
+				var x := x0 + offset.x
+				var z := z0 + offset.y
+				vertices.append(_clip_vert(region, clip_cache, cx, cz,
+					Vector3(x, TerrainSurfaceField.surface_y_in_cell(region, x, z, cx, cz), z)))
+			for ids in [[0, 1, 2], [0, 2, 3]]:
+				var a: Vector3 = vertices[ids[0]]
+				var b: Vector3 = vertices[ids[1]]
+				var c: Vector3 = vertices[ids[2]]
+				if a.is_equal_approx(point) or b.is_equal_approx(point) or c.is_equal_approx(point):
+					normal_sum += (c - a).cross(b - a).normalized()
+	var x0 := floorf(point.x / TILE) * TILE
+	var z0 := floorf(point.z / TILE) * TILE
+	var fx := (point.x - x0) / TILE
+	var fz := (point.z - z0) / TILE
+	var a := BiomeRegistry.ground_tint_at(Vector3(x0, 0, z0), _water_seed)
+	var b := BiomeRegistry.ground_tint_at(Vector3(x0 + TILE, 0, z0), _water_seed)
+	var c := BiomeRegistry.ground_tint_at(Vector3(x0, 0, z0 + TILE), _water_seed)
+	var d := BiomeRegistry.ground_tint_at(Vector3(x0 + TILE, 0, z0 + TILE), _water_seed)
+	return [normal_sum.normalized() if normal_sum.length_squared() > 0.0001 else Vector3.UP,
+		a.lerp(b, fx).lerp(c.lerp(d, fx), fz)]
 
 # The TOP face must wind like the sheet's top faces (right-hand geometric normal DOWN — the
 # front side seen from above in this project), lit UP. Half the directions used to wind the
@@ -1164,7 +1211,7 @@ func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: 
 # colour "ground skirt". The flipped copy sits 2cm lower (never z-fights) with a DOWN normal.
 func _apron_quad(st: SurfaceTool, p0: Vector3, p1: Vector3, q0: Vector3,
 		q1: Vector3, tint: Color, water: WaterFieldContext,
-		features: FeatureContext) -> void:
+		features: FeatureContext, edge_appearance: Dictionary) -> void:
 	var drop := Vector3(0.0, -0.02, 0.0)
 	var centre := (p0 + p1 + q0 + q1) * 0.25
 	var point := Vector2(centre.x, centre.z)
@@ -1174,16 +1221,15 @@ func _apron_quad(st: SurfaceTool, p0: Vector3, p1: Vector3, q0: Vector3,
 	for tri in [[p0, q0, q1], [p0, q1, p1]]:
 		var n: Vector3 = (tri[1] - tri[0]).cross(tri[2] - tri[0])
 		var order: Array = tri if n.y < 0.0 else [tri[0], tri[2], tri[1]]
-		st.set_normal(Vector3.UP)
-		for v in order:
-			st.set_uv(uv)
-			st.set_color(tint)
-			st.add_vertex(v)
-		st.set_normal(Vector3.DOWN)
-		for i in [0, 2, 1]:
-			st.set_uv(uv)
-			st.set_color(tint)
-			st.add_vertex(order[i] + drop)
+		for side in [1.0, -1.0]:
+			for i in ([0, 1, 2] if side > 0.0 else [0, 2, 1]):
+				var v: Vector3 = order[i]
+				var source := p0 if v == q0 else (p1 if v == q1 else v)
+				var appearance: Array = edge_appearance.get(source, [Vector3.UP, tint])
+				st.set_normal((appearance[0] as Vector3) * side)
+				st.set_uv(uv)
+				st.set_color(appearance[1])
+				st.add_vertex(v + (drop if side < 0.0 else Vector3.ZERO))
 
 # Clamp a point's ALONG coordinates by cell (ncx,ncz)'s clip on its two edges perpendicular to
 # `d` — used for apron ends reaching into that cell (never pull along d itself: the apron

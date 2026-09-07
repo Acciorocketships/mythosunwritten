@@ -9,8 +9,9 @@ extends RefCounted
 const SEED_VERSION := 1
 const SUPER_CELLS := 32
 const SUPER_WORLD := SUPER_CELLS * TerrainSurfaceField.TILE
-const SITE_PROBABILITY := 0.75
-const SITE_CANDIDATES := 5
+const SITE_PROBABILITY := 1.0
+const SITE_CANDIDATES := 16
+const PRIMARY_SITE_CANDIDATES := 5
 const MIN_MEADOW_WEIGHT := 0.08
 const MAX_ROCKY_WEIGHT := 0.82
 const WATER_CLEARANCE := 108.0
@@ -65,8 +66,10 @@ func _compute_site(super_cell: Vector2i) -> Dictionary:
 		var weights := Helper.biome_weights5(world, _world_seed)
 		var meadow := float(weights[&"meadow"])
 		var rocky := Helper.biome_rocky01(world, _world_seed)
-		if meadow < MIN_MEADOW_WEIGHT or rocky > MAX_ROCKY_WEIGHT:
-			continue
+		# Biome colour is a preference, not a town-existence condition. New
+		# provinces must not lose every settlement because their meadow share is
+		# small. Preserve existing preferred sites before filling those gaps.
+		var preferred_biome := meadow >= MIN_MEADOW_WEIGHT and rocky <= MAX_ROCKY_WEIGHT
 		var heights := PackedFloat32Array()
 		for offset: Vector2 in [Vector2.ZERO, Vector2(-6.0, -6.0),
 				Vector2(6.0, -6.0), Vector2(-6.0, 6.0), Vector2(6.0, 6.0)]:
@@ -79,7 +82,9 @@ func _compute_site(super_cell: Vector2i) -> Dictionary:
 			lo = minf(lo, height)
 			hi = maxf(hi, height)
 		candidates.append({"cell": cell,
-			"score": (hi - lo) * LOCAL_RELIEF_WEIGHT + rocky * 3.0 - meadow,
+			"score": (hi - lo) * LOCAL_RELIEF_WEIGHT + rocky * 3.0 - meadow \
+				+ (1000.0 if index >= PRIMARY_SITE_CANDIDATES else 0.0) \
+				+ (0.0 if preferred_biome else 2000.0),
 			"tie": _hash(_SALT_TIE, [cell.x, cell.y, index])})
 	if candidates.is_empty():
 		return {}

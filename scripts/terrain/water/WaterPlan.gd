@@ -317,6 +317,13 @@ func _make_pond(p: Vector2, arc: float) -> PondStamp:
 	var r := lerpf(POND_R_MIN, POND_R_MAX, maturity * (0.35 + 0.65 * size_roll))
 	var pond := PondStamp.new(p, r, shape_seed, _pond_level(p, r), POND_DEPTH)
 	pond.aspect_ratio = lerpf(0.5, 0.9, Helper._hash01(Helper._mix64(shape_seed + 23)))
+	if r >= 85.0:
+		var geology := Helper._hash01(Helper._mix64(shape_seed + 29))
+		if geology < 0.65:
+			pond.island_radius = maxf(24.0, r * 0.24)
+			var angle := Helper._hash01(Helper._mix64(shape_seed + 31)) * TAU
+			pond.island_offset = Vector2.from_angle(angle) * r * 0.24
+			pond.peninsula = geology < 0.25
 	return pond
 
 
