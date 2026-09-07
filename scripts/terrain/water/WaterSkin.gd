@@ -303,7 +303,10 @@ static func build(water: WaterPlan, chunk: Vector2i, region,
 	var span: float = WaterField.TILE * 8.0
 	var rect := Rect2(Vector2(chunk) * span, Vector2.ONE * span)
 	var curves: Array = WaterContour.curves(ctx, rect)
-	if curves.is_empty():
+	# No shoreline can also mean this entire chunk is submerged. Its interior
+	# still belongs to the shared water field; dropping it leaves a rectangular
+	# hole beside the shoreline chunks. Dry chunks retain the cheap exit.
+	if curves.is_empty() and not WaterField.wet(ctx, region, rect.get_center()):
 		return {}
 
 	var buckets: Dictionary = _build_buckets(curves)

@@ -50,6 +50,7 @@ func _profile_pass(label: String, plan: HeightfieldPlan, water: WaterPlan,
 	for dz in range(-RADIUS, RADIUS + 1):
 		for dx in range(-RADIUS, RADIUS + 1):
 			var chunk := Vector2i(dx, dz)
+			print("PROFILE chunk=", chunk, " phase=worker")
 			var worker_started := Time.get_ticks_usec()
 
 			var started := Time.get_ticks_usec()
@@ -57,7 +58,7 @@ func _profile_pass(label: String, plan: HeightfieldPlan, water: WaterPlan,
 			feature_context_total += Time.get_ticks_usec() - started
 
 			started = Time.get_ticks_usec()
-			var region: HeightfieldRegion = fields.region(chunk)
+			var region: HeightfieldRegion = feature_context.graded_region(fields.region(chunk))
 			region_total += Time.get_ticks_usec() - started
 
 			var core := Rect2(Vector2(chunk) * CHUNK_WORLD, Vector2.ONE * CHUNK_WORLD)
@@ -119,6 +120,7 @@ func _profile_pass(label: String, plan: HeightfieldPlan, water: WaterPlan,
 			feature_queue.enqueue(chunk, 1, feature_root, feature_payload)
 			feature_batches += feature_queue.drain(1000000)
 			feature_commit_total += Time.get_ticks_usec() - started
+			print("PROFILE chunk=", chunk, " worker_ms=", float(worker_usec) / 1000.0)
 			feature_root.free()
 			terrain_node.free()
 

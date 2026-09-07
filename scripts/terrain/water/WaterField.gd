@@ -105,54 +105,14 @@ const DESCENT_CLAMP := 0.10
 # than inventing an unrelated new one.
 const DESCENT_POOL_GAP := 24.0
 
-# Fill lattice: chunk span (TILE*8 = 192m) plus a margin on every side so a
-# basin whose flood extends past the chunk's own border is fully resolved
-# inside BOTH of two neighbouring chunks' windows (window determinism —
-# test_fill_is_deterministic_across_chunks). Margin is 30m world-space each
-# side (matching the brief's "concretely: fill over lattice indices covering
-# chunk cells ±10 cells at 3 m step" — 10 lattice cells at the ORIGINAL 3m
-# step = 30m; kept as a fixed WORLD-SPACE margin, not a fixed lattice-cell
-# count, so the perf-driven coarsening below doesn't silently shrink the
-# safety margin). The fill's own lower-level-wins relaxation converges to a
-# unique fixpoint regardless of BFS/seed order (Phase 0 controller ruling,
-# mitigation (a)); the margin exists only so a basin isn't clipped
-# differently by two neighbours' windows (mitigation (b)) — see the
-# WaterField section of the Phase 1 report for the derivation.
-#
-# I-1 (final-review-run2.md): the plan also specifies the fill as "unlimited
-# distance, no depth cap," which is in tension with ANY fixed window — a
-# flood reaching >30m past a chunk border from its own seeds (a pond near
-# POND_R_MAX=140m, or a long still-water flood over storey-flat ground)
-# could in principle leave its own seeds outside a neighbouring chunk's
-# window, so that chunk would mesh the flooded ground dry: a hard wet/dry
-# crack at the border. MEASURED, not assumed: tests/test_water_field.gd's
-# test_wet_agreement_across_all_chunk_borders walks all four borders of
-# several chunks (including a pond at bound_radius=139.0, right at
-# POND_R_MAX's own ceiling) on two independently-generated seeds (the pinned
-# 2697992464 plus 991177), comparing wet() between neighbouring chunks at
-# every 3m step across the FULL 0-30m margin on both sides of each shared
-# border — 8712 points checked, ZERO mismatches. The margin is therefore
-# promoted from "the brief said so" to measured-adequate on the seeds this
-# suite exercises; it remains a WINDOWING HAZARD in principle (a pond whose
-# true reach exceeds this margin, or a still-water flood over unusually flat
-# terrain, could still crack on some future seed) — named as a known
-# limitation in .superpowers/sdd/progress.md's own running ledger. This
-# finite-window risk is distinct from the now-fixed 6m topology blind spot:
-# the reported (-17,-20) inner corner proved a real submerged 3m passage can
-# lie between two dry 6m endpoints, so `_build_sub_lattice_rescue` handles
-# that case adaptively. The border oracle above remains the window regression gate: if
-# a future seed/site DOES trip it, the fix is a seed-aware adaptive window
-# (extend the margin to cover any in-ctx body's own footprint + slack)
-# rather than a blind margin bump.
-#
-# PERF (Phase 1 report): the 3m lattice (85x85=7225 samples) measured a
-# median 59.8ms per ctx() on this machine — ~4x over the 15ms budget (the
-# brief's own escape hatch: "if the 3m lattice fill exceeds budget, fill at
-# 6m and bilinear down"). Coarsened to 6m (43x43=1849 samples, ~3.9x fewer);
-# level_at's existing bilinear (_fill_bilinear) already interpolates at
-# whatever FILL_STEP is configured, so no other code changed — only these
-# constants. Both timings are in the Phase 1 report.
-const FILL_STEP := 6.0        # coarsened from 3.0 (the mesh's own lattice step) — see PERF above
+# Projection lattice: 192m chunk plus 42m for the local surface relaxation
+# and shoreline interpolation. It is NOT the hydraulic solve boundary.
+# _source_fill includes each in-context river/lake's entire bounds plus three
+# terrain cells, caches that source-owned solve, then projects its labels here.
+# The old per-chunk solve lost downstream seeds outside this small window and
+# disagreed by up to 11m at the September 7 production borders. Full source
+# extent is necessary even when all local channel samples already agree.
+const FILL_STEP := 6.0
 ## Sparse topology-only refinement used at coarse wet/dry boundaries. The
 ## 6m fill remains the canonical surface/performance lattice; mixed cells
 ## seed a 3m flood only into points the coarse signed-depth field calls dry.
@@ -291,6 +251,63 @@ static func ctx(water: WaterPlan, chunk: Vector2i, region = null) -> Dictionary:
 ##     is exactly Dijkstra's greedy invariant with level standing in for
 ##     distance and same-level propagation standing in for zero-cost edges.
 ## Returns {"levels": PackedFloat32Array((FILL_M+1)^2, -INF where dry)}.
+# A chunk is a projection of a source-owned hydraulic solve. Solving only its
+# 42m halo lets a downstream seed disappear from its neighbour's solve, changing
+# both wetness and level at the same world coordinate. Keep the full source
+# extent in the solve; the normal small halo remains sufficient for smoothing.
+const BASIN_CACHE_LIMIT := 16
+static var _basin_cache: Dictionary = {}
+static var _basin_lock := Mutex.new()
+
+static func _source_fill(c: Dictionary, region) -> Dictionary:
+	var ids: Array[int] = []
+	var bounds := Rect2()
+	var has_bounds := false
+	for river: RiverTrace in c.rivers:
+		ids.append(river.get_instance_id())
+		bounds = bounds.merge(river.bounds()) if has_bounds else river.bounds()
+		has_bounds = true
+	for pond: PondStamp in c.ponds:
+		ids.append(pond.get_instance_id())
+		var pb := Rect2(pond.center - Vector2.ONE * pond.bound_radius(), Vector2.ONE * pond.bound_radius() * 2.0)
+		bounds = bounds.merge(pb) if has_bounds else pb
+		has_bounds = true
+	if not has_bounds: return {}
+	ids.sort()
+	var key := [region.plan.get_instance_id(), ids]
+	_basin_lock.lock()
+	if _basin_cache.has(key):
+		var cached: Dictionary = _basin_cache[key]
+		_basin_cache.erase(key)
+		_basin_cache[key] = cached
+		_basin_lock.unlock()
+		return cached
+	bounds = bounds.grow(TILE * 3.0)
+	var base := (bounds.position / FILL_STEP).floor() * FILL_STEP
+	var m1 := ceili(maxf(bounds.end.x - base.x, bounds.end.y - base.y) / FILL_STEP) + 1
+	var centre := base + Vector2.ONE * float(m1 - 1) * FILL_STEP * 0.5
+	var owned: HeightfieldRegion = region.plan.compute_region(roundi(centre.x / TILE), roundi(centre.y / TILE),
+		ceili(float(m1 - 1) * FILL_STEP * 0.5 / TILE) + 2)
+	var levels := PackedFloat32Array(); levels.resize(m1 * m1); levels.fill(-INF)
+	var ground := PackedFloat32Array(); ground.resize(m1 * m1); ground.fill(INF)
+	var rivers := PackedFloat32Array(); rivers.resize(m1 * m1); rivers.fill(-INF)
+	var queue := PriorityQueue.new()
+	_seed_rivers(c, owned, base, m1, levels, ground, rivers, queue)
+	_seed_ponds(c, owned, base, m1, levels, ground, queue)
+	_relax_fill(owned, base, m1, levels, ground, rivers, queue)
+	queue.free()
+	var boundary_wet := 0
+	for i in m1:
+		for index in [i, (m1 - 1) * m1 + i, i * m1, i * m1 + m1 - 1]:
+			if is_finite(levels[index]): boundary_wet += 1
+	var result := {"base": base, "size": m1, "levels": levels, "rivers": rivers,
+		"boundary_wet": boundary_wet}
+	if _basin_cache.size() >= BASIN_CACHE_LIMIT: _basin_cache.erase(_basin_cache.keys()[0])
+	_basin_cache[key] = result
+	_basin_lock.unlock()
+	return result
+
+
 static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
 	var m1 := FILL_M + 1
 	var levels := PackedFloat32Array()
@@ -322,9 +339,21 @@ static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
 	# build), so leaving this unfreed leaks one Object per chunk over a play
 	# session. free() explicitly once relaxation is done.
 	var pq := PriorityQueue.new()
-	_seed_rivers(c, region, base, m1, levels, gnd, river_levels, pq)
-	_seed_ponds(c, region, base, m1, levels, gnd, pq)
-	_relax_fill(region, base, m1, levels, gnd, river_levels, pq)
+	if region.plan != null:
+		var source := _source_fill(c, region)
+		if not source.is_empty():
+			var offset := Vector2i(((base - source.base) / FILL_STEP).round())
+			for j in m1:
+				for i in m1:
+					var x := i + offset.x
+					var z := j + offset.y
+					if x < 0 or z < 0 or x >= int(source.size) or z >= int(source.size): continue
+					levels[j * m1 + i] = source.levels[z * int(source.size) + x]
+					river_levels[j * m1 + i] = source.rivers[z * int(source.size) + x]
+	else:
+		_seed_rivers(c, region, base, m1, levels, gnd, river_levels, pq)
+		_seed_ponds(c, region, base, m1, levels, gnd, pq)
+		_relax_fill(region, base, m1, levels, gnd, river_levels, pq)
 	_smooth_fill_surface(region, base, m1, levels, gnd, river_levels)
 	pq.free()
 	var sub_fill: Dictionary = _build_sub_lattice_rescue(
@@ -605,9 +634,9 @@ static func _claim_river_segment(base: Vector2, m1: int,
 		a: Vector2, b: Vector2, wa: float, wb: float, la: float, lb: float) -> void:
 	var reach: float = maxf(wa, wb)
 	var lo_i: int = maxi(0, int(floor((minf(a.x, b.x) - reach - base.x) / FILL_STEP)))
-	var hi_i: int = mini(FILL_M, int(ceil((maxf(a.x, b.x) + reach - base.x) / FILL_STEP)))
+	var hi_i: int = mini(m1 - 1, int(ceil((maxf(a.x, b.x) + reach - base.x) / FILL_STEP)))
 	var lo_j: int = maxi(0, int(floor((minf(a.y, b.y) - reach - base.y) / FILL_STEP)))
-	var hi_j: int = mini(FILL_M, int(ceil((maxf(a.y, b.y) + reach - base.y) / FILL_STEP)))
+	var hi_j: int = mini(m1 - 1, int(ceil((maxf(a.y, b.y) + reach - base.y) / FILL_STEP)))
 	var ab: Vector2 = b - a
 	var len2: float = ab.length_squared()
 	for j in range(lo_j, hi_j + 1):
@@ -650,9 +679,9 @@ static func _seed_ponds(c: Dictionary, region, base: Vector2, m1: int,
 	for pond: PondStamp in c.ponds:
 		var lvl: float = pond.surface_y()
 		var lo_i: int = maxi(0, int(floor((pond.center.x - pond.bound_radius() - base.x) / FILL_STEP)))
-		var hi_i: int = mini(FILL_M, int(ceil((pond.center.x + pond.bound_radius() - base.x) / FILL_STEP)))
+		var hi_i: int = mini(m1 - 1, int(ceil((pond.center.x + pond.bound_radius() - base.x) / FILL_STEP)))
 		var lo_j: int = maxi(0, int(floor((pond.center.y - pond.bound_radius() - base.y) / FILL_STEP)))
-		var hi_j: int = mini(FILL_M, int(ceil((pond.center.y + pond.bound_radius() - base.y) / FILL_STEP)))
+		var hi_j: int = mini(m1 - 1, int(ceil((pond.center.y + pond.bound_radius() - base.y) / FILL_STEP)))
 		for j in range(lo_j, hi_j + 1):
 			for i in range(lo_i, hi_i + 1):
 				var p: Vector2 = base + Vector2(i, j) * FILL_STEP
@@ -700,7 +729,7 @@ static func _relax_fill(region, base: Vector2, m1: int,
 		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 			var ni: int = i + d.x
 			var nj: int = j + d.y
-			if ni < 0 or ni > FILL_M or nj < 0 or nj > FILL_M:
+			if ni < 0 or ni >= m1 or nj < 0 or nj >= m1:
 				continue
 			var nidx: int = nj * m1 + ni
 			if levels[nidx] != -INF:

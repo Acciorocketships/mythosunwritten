@@ -310,12 +310,16 @@ func _make_pool(p: Vector2) -> PondStamp:
 		_pond_level(p, SOURCE_POOL_R), POOL_DEPTH)
 
 
-func _make_pond(p: Vector2, arc: float) -> PondStamp:
+func _make_pond(p: Vector2, arc: float, incoming_bed := INF) -> PondStamp:
 	var shape_seed := _hash_cell(Vector2i(roundi(p.x), roundi(p.y)), 8)
 	var maturity := clampf(arc / (MAX_STEPS * TRACE_STEP), 0.0, 1.0)
 	var size_roll := Helper._hash01(Helper._mix64(shape_seed + 19))
 	var r := lerpf(POND_R_MIN, POND_R_MAX, maturity * (0.35 + 0.65 * size_roll))
 	var pond := PondStamp.new(p, r, shape_seed, _pond_level(p, r), POND_DEPTH)
+	# A contour trace may excavate through naturally higher land after its bed
+	# has descended. The receiving lake cannot lift that entire river back up.
+	# PondStamp applies this same datum to the terrain carve and water surface.
+	pond.surface_ceiling = incoming_bed + WaterField.SURFACE_RIDE
 	pond.aspect_ratio = lerpf(0.5, 0.9, Helper._hash01(Helper._mix64(shape_seed + 23)))
 	if r >= 85.0:
 		var geology := Helper._hash01(Helper._mix64(shape_seed + 29))
@@ -394,7 +398,7 @@ func _trace(sc: Vector2i, depth: int,
 		p = next
 		arc += TRACE_STEP
 		bed = _contained_bed(bed, p, dir, lerpf(W_MIN, W_MAX, arc / (MAX_STEPS * TRACE_STEP)))
-	t.pond = _make_pond(p, arc)
+	t.pond = _make_pond(p, arc, t.beds[-1])
 	return t
 
 

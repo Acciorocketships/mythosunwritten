@@ -1,5 +1,24 @@
 # Project Instructions (AGENTS.md)
 
+> September 7 water/travel follow-up: a terminal `PondStamp` caps its natural
+> bank datum at the incoming river's hydraulic surface; its carved bed follows
+> that same datum. Never reconcile a new lake by raising kilometres of an
+> already-descended river. `WaterField` solves complete in-context source
+> extents before projecting the normal 42m chunk halo; a bounded CPU cache
+> shares those solves. Current-geography seam regressions are separate from
+> historical screenshot fixtures. Fully flooded chunks emit water even when
+> no shoreline crosses the chunk. The source solve remains finite; the border
+> survey reports wet domain edges as well as shared-chunk disagreement.
+> Streaming requests retain ownership through
+> the worker-to-main hand-off, skip unchanged queue mutations, and rebase
+> priorities as the player travels. Urgent feature dependencies can publish
+> before their distant terrain component. `PROFILE_STREAMING` enables bounded
+> queue/phase diagnostics; `tests/harness/travel_profile.tscn` provides real
+> walking, separately labelled obstacle-bypassing traversal, and fixed-camera
+> graphics ablations. The 49-chunk profiler now includes production grading.
+> These measurements identify expensive graded/path subdivision and collision
+> commits; they do not establish that construction or rendering is fully optimized.
+
 > September 7 atmosphere rebuild: seven art-directed biomes retain the five
 > historical content IDs and add `amber_heath` and `jade_wetlands`; display names
 > are Sunwash Meadows, Lanternwood, Opal Highlands, Cherryveil, Moonfen, Amber
@@ -1572,8 +1591,8 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
     uphill), with the LOWER level winning wherever two spreads meet. Those flood labels decide
     the deterministic **wet mask**, not the final flowing surface: five fixed Jacobi passes,
     anchored by the continuous river profile, relax the wet labels across river/pond joins so a
-    lower flood cannot leave a one-cell sideways water cliff. The pass radius is 30m inside a
-    42m chunk margin, preserving bit-identical overlap between chunks. The canonical surface stays
+    lower flood cannot leave a one-cell sideways water cliff. Complete source extents are solved before the labels are projected into
+    each 42m chunk margin; the five local passes then have a 30m radius. The canonical surface stays
     on a 6m world-space lattice; mixed coarse cells seed a sparse, topology-only 3m rescue where
     real terrain exposes a submerged passage between dry 6m endpoints. The rescue walks only
     downhill-or-level through points the coarse continuous field calls dry, lower level still wins,

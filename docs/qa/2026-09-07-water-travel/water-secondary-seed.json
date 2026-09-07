@@ -1,0 +1,62 @@
+{
+  "domains": [
+    {
+      "base": "(-2046.0, -1866.0)",
+      "boundary_wet": 0,
+      "size": 480
+    },
+    {
+      "base": "(-918.0, -1866.0)",
+      "boundary_wet": 20,
+      "size": 427
+    },
+    {
+      "base": "(-918.0, -1866.0)",
+      "boundary_wet": 20,
+      "size": 695
+    },
+    {
+      "base": "(-714.0, -984.0)",
+      "boundary_wet": 45,
+      "size": 258
+    },
+    {
+      "base": "(-714.0, -984.0)",
+      "boundary_wet": 37,
+      "size": 548
+    },
+    {
+      "base": "(-1086.0, -1866.0)",
+      "boundary_wet": 8,
+      "size": 427
+    },
+    {
+      "base": "(-1086.0, -1866.0)",
+      "boundary_wet": 8,
+      "size": 427
+    },
+    {
+      "base": "(-918.0, -1866.0)",
+      "boundary_wet": 20,
+      "size": 427
+    },
+    {
+      "base": "(-918.0, -1866.0)",
+      "boundary_wet": 20,
+      "size": 695
+    },
+    {
+      "base": "(228.0, -324.0)",
+      "boundary_wet": 0,
+      "size": 438
+    },
+    {
+      "base": "(228.0, -324.0)",
+      "boundary_wet": 0,
+      "size": 438
+    }
+  ],
+  "elapsed_ms": 51925,
+  "seams": [],
+  "seed": 991177
+}

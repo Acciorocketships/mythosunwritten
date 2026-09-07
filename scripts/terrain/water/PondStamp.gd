@@ -1,6 +1,7 @@
 # scripts/terrain/water/PondStamp.gd
 # One pond/pool: a wobbly-radius bowl carved into the heightfield with a
-# storey-aligned water level. Terminal lakes, river source pools, and (future)
+# storey-aligned natural bank level, capped by an incoming river datum for
+# terminal lakes. River source pools and (future)
 # standalone decorative ponds are all this one primitive. Pure record + pure
 # math — deterministic per (center, radius, shape_seed, level, depth).
 class_name PondStamp
@@ -21,7 +22,8 @@ var center: Vector2          # world XZ
 var radius: float            # base radius, metres
 var shape_seed: int
 var level: int               # storey index of the banks; water just below
-var depth: float             # bowl depth below level*STOREY
+var surface_ceiling := INF  # incoming river datum; unbounded for standalone pools
+var depth: float             # bowl depth below the resolved water datum + SURFACE_DROP
 var island_radius := 0.0
 var island_offset := Vector2.ZERO
 var peninsula := false
@@ -61,11 +63,11 @@ func footprint_t(p: Vector2) -> float:
 
 
 func surface_y() -> float:
-	return float(level) * STOREY - SURFACE_DROP
+	return minf(float(level) * STOREY - SURFACE_DROP, surface_ceiling)
 
 
 func bed_y() -> float:
-	return float(level) * STOREY - depth
+	return surface_y() + SURFACE_DROP - depth
 
 
 ## Metres to remove at world point p given the pre-carve ground height there.

@@ -27,6 +27,7 @@ const APRON := 2.4        # ground/skirt continuation depth under a HIGHER flat 
                           # "extend the tile at the current level underneath the higher tile").
 
 var _material: Material = null
+var profile_enabled := false
 var _ground_tinted: Material = null
 var _grass_uv: Vector2 = SlopeAtlas.grass_uv()
 var _path_uv: Vector2 = SlopeAtlas.path_uv()
@@ -307,6 +308,10 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 		push_error("TerrainChunkMesher.prepare_resources() must run on the main thread before compute_chunk()")
 		return {}
 	assert(region != null)
+	var profile_started := Time.get_ticks_usec() if profile_enabled else 0
+	var path_usec := 0
+	var fine_quads := 0
+	var graded_quads := 0
 	var o := _origin(chunk)
 	var st := SurfaceTool.new()    # VISUAL sheet: clipped back to TOP_CLIP under the lips
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -400,8 +405,13 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			# one and depth-fought into detached strips at gameplay distance.
 			# One surface layer cannot z-fight with itself and still preserves the
 			# rounded 0.25 m path boundary.
+			var path_started := Time.get_ticks_usec() if profile_enabled else 0
 			var path_state := _emit_path_surface(st, region, water, features,
 				qkey, x0, z0, clip_cache, [t00, t10, t11, t01], graded_collision)
+			if profile_enabled:
+				path_usec += Time.get_ticks_usec() - path_started
+				if path_state != 0: fine_quads += 1
+				if region.has_grade_in(Rect2(Vector2(x0, z0), Vector2.ONE * STEP)): graded_quads += 1
 			if path_state == 0:
 				var i00: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v00)
 				var i10: bool = _inner_corner_vertex(region, clip_cache, qcx, qcz, v10)
@@ -418,6 +428,7 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			if path_state == 2:
 				_emit_path_spot(st, region, water, features, quad_centre, qcx, qcz,
 					x0, z0, [t00, t10, t11, t01])
+	var surface_finished := Time.get_ticks_usec() if profile_enabled else 0
 	col_faces.resize(col_i)
 	col_faces.append_array(PackedVector3Array(graded_collision))
 	# Cliff FACES: a VERTICAL rock skirt down each cliff-top wall edge, filling the vertical gap the
@@ -446,9 +457,11 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 	# Weld coincident grid vertices BEFORE generating normals so shared vertices get
 	# averaged (smooth) normals instead of per-face (flat) ones — this is what makes
 	# the slopes read as smooth curves rather than angular facets.
+	var normals_started := Time.get_ticks_usec() if profile_enabled else 0
 	st.index()
 	st.generate_normals()
 	var surface_arrays: Array = st.commit_to_arrays()
+	var normals_finished := Time.get_ticks_usec() if profile_enabled else 0
 	# Aprons continue this exact sheet, including its edge lighting and tint.
 	var edge_appearance := {}
 	var surface_vertices: PackedVector3Array = surface_arrays[Mesh.ARRAY_VERTEX]
@@ -485,7 +498,15 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 		wall_arrays = skirt.commit_to_arrays()
 		wall_collision_arrays = skirtc.commit_to_arrays()
 
+	var timings := {}
+	if profile_enabled:
+		timings = {"surface": surface_finished - profile_started, "paths": path_usec,
+			"normals": normals_finished - normals_started,
+			"aprons_and_walls": Time.get_ticks_usec() - normals_finished}
 	return {
+		"profile": timings,
+		"profile_counts": {"fine_quads": fine_quads, "graded_quads": graded_quads,
+			"vertices": surface_vertices.size(), "collision_triangles": col_faces.size() / 3} if profile_enabled else {},
 		"chunk": chunk,
 		"surface_arrays": surface_arrays,
 		"collision_faces": col_faces,
