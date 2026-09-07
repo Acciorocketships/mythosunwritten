@@ -409,7 +409,7 @@ static func solve_selected(world_seed: int, selected: WarrenSpatialPlan,
 	if profile == null:
 		last_failure = "selected preview has an invalid scale profile"
 		return null
-	return _solve_maze(world_seed, ground_bands, construction_program, profile)
+	return solve(world_seed, ground_bands, construction_program, profile)
 
 
 static func from_volume(volume: WarrenVolumePlan,
