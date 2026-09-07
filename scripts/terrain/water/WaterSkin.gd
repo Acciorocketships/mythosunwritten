@@ -524,6 +524,7 @@ static func _vertex_payload(st: Dictionary, current: Dictionary) -> Dictionary:
 	cust.resize(st.verts.size() * 4)
 	cust1.resize(st.verts.size() * 4)
 	colors.resize(st.verts.size())
+	var water_tints: Dictionary = {}
 	for vi in st.verts.size():
 		var v: Vector3 = st.verts[vi]
 		var p := Vector2(v.x, v.z)
@@ -538,7 +539,20 @@ static func _vertex_payload(st: Dictionary, current: Dictionary) -> Dictionary:
 		cust1[vi * 4 + 2] = flow.vorticity
 		cust1[vi * 4 + 3] = flow.compression
 		var scale: float = _swell_scale(st, p, v.y, frame.shore_dist)
-		colors[vi] = Color(scale, 1.0, 1.0, 1.0)
+		# A shared 24m colour lattice keeps this inexpensive and continuous;
+		# GBA are free (R remains the authoritative displacement scale).
+		var q := p / 24.0
+		var cell := Vector2i(floori(q.x), floori(q.y))
+		var fraction := q - Vector2(cell)
+		var tint := Color(0, 0, 0, 0)
+		for dz in 2:
+			for dx in 2:
+				var owner := cell + Vector2i(dx, dz)
+				if not water_tints.has(owner):
+					water_tints[owner] = BiomeRegistry.water_tint_at(Vector3(owner.x * 24.0, 0, owner.y * 24.0), st.ctx.water.world_seed)
+				var weight := (fraction.x if dx == 1 else 1.0 - fraction.x) * (fraction.y if dz == 1 else 1.0 - fraction.y)
+				tint += water_tints[owner] * weight
+		colors[vi] = Color(scale, tint.r, tint.g, tint.b)
 	return {"custom0": cust, "custom1": cust1, "colors": colors}
 
 

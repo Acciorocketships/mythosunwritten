@@ -6,7 +6,7 @@
 [sub_resource type="Resource" id="C1"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.reeds.01"
-biome_affinity = {&"meadow": 0.7, &"deep_forest": 0.8, &"highland": 0.15, &"blossom_grove": 0.6, &"twilight_marsh": 1.5}
+biome_affinity = {&"meadow": 0.7, &"deep_forest": 0.8, &"highland": 0.15, &"blossom_grove": 0.6, &"twilight_marsh": 1.5, &"amber_heath": 0.7, &"jade_wetlands": 1.5}
 scale_multiplier = 1.55
 
 [resource]
@@ -14,7 +14,7 @@ script = ExtResource("2_set")
 id = &"ambient.reeds"
 feature_clearance = 0.3
 choices = Array[ExtResource("1_choice")]([SubResource("C1")])
-fill_per_cell = {&"meadow": 6.0, &"deep_forest": 7.0, &"highland": 2.0, &"blossom_grove": 6.0, &"twilight_marsh": 10.0}
+fill_per_cell = {&"meadow": 6.0, &"deep_forest": 7.0, &"highland": 2.0, &"blossom_grove": 6.0, &"twilight_marsh": 10.0, &"amber_heath": 6.0, &"jade_wetlands": 10.0}
 water_mode = 3
 depth_range = Vector2(0.05, 3.2)
 shore_distance_range = Vector2(0.0, 4.0)

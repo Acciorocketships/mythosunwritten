@@ -648,20 +648,15 @@ func test_sheet_skirt_and_pieces_share_one_material():
 	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
 	var mi := node.find_child("Surface", true, false) as MeshInstance3D
 	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
-	var sheet_mat := mi.mesh.surface_get_material(0) as StandardMaterial3D
-	var cliff_mat := faces.mesh.surface_get_material(0) as StandardMaterial3D
-	assert_eq(sheet_mat.albedo_texture, cliff_mat.albedo_texture,
-		"the sheet and the skirt share the KayKit palette texture")
-	assert_eq(sheet_mat.roughness, cliff_mat.roughness, "same de-sheened roughness")
-	assert_eq(sheet_mat.metallic_specular, cliff_mat.metallic_specular, "same killed specular")
-	assert_true(sheet_mat.vertex_color_use_as_albedo,
-		"the sheet multiplies the palette by the per-vertex biome tint")
+	var sheet_mat := mi.mesh.surface_get_material(0) as ShaderMaterial
+	var cliff_mat := faces.mesh.surface_get_material(0) as ShaderMaterial
+	assert_same(sheet_mat, cliff_mat, "sheet and skirt share the complete ground style")
+	assert_same(sheet_mat.get_shader_parameter("ground_palette_texture"), CliffDressing.ground_texture(),
+		"one palette remains the source for turf, paths and rock")
 	var walls := node.find_child("Walls", true, false) as MultiMeshInstance3D
 	var lips := node.find_child("Lips", true, false) as MultiMeshInstance3D
-	assert_eq((walls.material_override as StandardMaterial3D).albedo_texture, cliff_mat.albedo_texture,
-		"the wall pieces render with the shared palette texture")
-	assert_eq((lips.material_override as StandardMaterial3D).albedo_texture, cliff_mat.albedo_texture,
-		"the lip pieces render with the shared palette texture")
+	assert_same(walls.material_override, cliff_mat)
+	assert_same(lips.material_override, cliff_mat)
 	# the sheet's grass texel comes from the lip piece's grass top, not the terrain atlas
 	var lip_mesh := CliffDressing._pieces["lip"][0] as Mesh
 	var arr = lip_mesh.surface_get_arrays(0)
@@ -684,9 +679,9 @@ func test_skirt_material_has_no_specular_sheen():
 	# skirt uses a de-sheened DUPLICATE of the wall material.
 	var m := Mesher.new()
 	m._ensure_skirt_style()
-	var mat := m._skirt_material as StandardMaterial3D
-	assert_almost_eq(mat.roughness, 1.0, 0.001, "skirt roughness maxed (no angle-dependent sheen)")
-	assert_almost_eq(mat.metallic_specular, 0.0, 0.001, "skirt specular removed")
+	var mat := m._skirt_material as ShaderMaterial
+	assert_true(mat.shader.code.contains("ROUGHNESS = 1.0"), "matte ground")
+	assert_true(mat.shader.code.contains("SPECULAR = 0.0"), "no angle-dependent sheen")
 
 func test_cliff_top_visual_plane_stops_at_the_lip_back():
 	# Owner: "there is still a plane on the cliff top that extends past the cliff edge/corner
@@ -957,8 +952,8 @@ func test_skirt_uses_the_kaykit_wall_material():
 	var wall_mat := (CliffDressing._pieces["wall"][0] as Mesh).surface_get_material(0) as StandardMaterial3D
 	assert_not_null(wall_mat, "the KayKit wall piece has a material")
 	# a de-sheened DUPLICATE of the wall material (round 7): same albedo texture, no specular
-	var skirt_mat := faces.mesh.surface_get_material(0) as StandardMaterial3D
-	assert_eq(skirt_mat.albedo_texture, wall_mat.albedo_texture, "the skirt shares the KayKit wall texture")
+	var skirt_mat := faces.mesh.surface_get_material(0) as ShaderMaterial
+	assert_eq(skirt_mat.get_shader_parameter("ground_palette_texture"), wall_mat.albedo_texture, "the skirt shares the KayKit wall texture")
 	node.free()
 
 func test_apron_top_faces_use_the_sheet_winding():

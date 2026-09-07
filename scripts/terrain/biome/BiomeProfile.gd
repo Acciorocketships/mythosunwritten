@@ -6,6 +6,8 @@ class_name BiomeProfile
 extends Resource
 
 @export var biome_name: StringName
+@export var display_name: String
+@export var water_tint: Color = Color.WHITE
 # atmosphere
 @export var fog_color: Color
 @export var fog_density: float

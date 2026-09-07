@@ -134,7 +134,8 @@ static func height01(pos: Vector3, p_world_seed: int, include_detail: bool = tru
 		var n: float = Helper._value_noise01(pos, p_world_seed + 17, 190.0)
 		var ridge: float = 1.0 - absf(2.0 * n - 1.0)
 		h += ridge * ridge * (rocky - 0.5) * 0.9
-	var falloff: float = clampf((Vector2(pos.x, pos.z).length() - 60.0) / 120.0, 0.0, 1.0)
+	h = lerpf(h, LandformField.height01(pos, p_world_seed), 0.7)
+	var falloff: float = SlopeProfile.smootherstep(clampf((Vector2(pos.x, pos.z).length() - 60.0) / 180.0, 0.0, 1.0))
 	return clampf(h * falloff, 0.0, 1.0)
 
 

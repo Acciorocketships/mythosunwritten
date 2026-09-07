@@ -38,23 +38,26 @@ func test_apply_grade_sets_render_stack() -> void:
 		"low sun keeps readable but non-dominating terrain shadows")
 	_free_director(d)
 
-func test_process_eases_env_toward_biome_blend() -> void:
+func test_moving_between_biomes_cannot_relight_the_world() -> void:
 	var d := _mock_director()
 	d._apply_grade()
 	var s := FieldTerrainStreamer.new()
-	s.world_seed = 991177
+	s.world_seed = 2697992464
 	d.streamer = s
 	var p := Node3D.new()
-	add_child_autofree(p)   # global_position asserts is_inside_tree()
-	p.position = Vector3(1200, 0, -900)
+	add_child_autofree(p)
 	d.player = p
 	var env := d.environment_node.environment
-	# capture the target the director will chase, then step easing a few times.
-	var target := BiomeRegistry.blend_atmosphere(Helper.biome_weights5(p.global_position, s.world_seed))
-	var before := absf(env.fog_density - float(target[&"fog_density"]))
-	for i in 30:
-		d._process(0.1)
-	var after := absf(env.fog_density - float(target[&"fog_density"]))
-	assert_lt(after, before, "fog_density eased toward the biome blend target")
+	var before := [env.fog_density, env.fog_light_color,
+		env.ambient_light_color, env.ambient_light_energy,
+		(env.sky.sky_material as ProceduralSkyMaterial).sky_top_color]
+	for point: Vector3 in [Vector3(48, 0, -1500), Vector3(1200, 0, -900), Vector3.ZERO]:
+		p.position = point
+		for frame in 30:
+			d._process(0.1)
+		assert_eq([env.fog_density, env.fog_light_color,
+			env.ambient_light_color, env.ambient_light_energy,
+			(env.sky.sky_material as ProceduralSkyMaterial).sky_top_color], before,
+			"world light and distant biomes must be independent of the observer")
 	s.free()
 	_free_director(d)

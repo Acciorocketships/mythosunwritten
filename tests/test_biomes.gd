@@ -42,7 +42,7 @@ func test_biome_composition_shifts_with_fields() -> void:
 		if Helper.biome_marsh_pocket01(p, world_seed) > 0.05 \
 				or Helper.biome_blossom_pocket01(p, world_seed) > 0.05:
 			continue
-		if forest_pos == Vector3.INF and Helper.biome_forest01(p, world_seed) > 0.9 \
+		if forest_pos == Vector3.INF and Helper.biome_weights5(p, world_seed)[&"deep_forest"] > 0.9 \
 				and Helper.biome_rocky01(p, world_seed) < 0.3:
 			forest_pos = p
 		if rocky_pos == Vector3.INF and Helper.biome_rocky01(p, world_seed) > 0.9 \
@@ -60,7 +60,7 @@ func test_weights5_normalized_and_deterministic() -> void:
 	for i in range(48):
 		var p := Vector3(i * 311.0 - 7000.0, 0.0, i * -173.0 + 2000.0)
 		var w := Helper.biome_weights5(p, s)
-		assert_eq(w.size(), 5)
+		assert_eq(w.size(), Helper.BIOME_NAMES.size())
 		var total := 0.0
 		for k: StringName in w:
 			assert_between(w[k], 0.0, 1.0, "weight %s in range" % k)
@@ -109,5 +109,5 @@ func test_pocket_census() -> void:
 			match Helper.biome_at(p, s):
 				&"twilight_marsh": marsh += 1
 				&"blossom_grove": blossom += 1
-	assert_between(float(marsh) / float(n), 0.01, 0.06, "marsh pockets ~2-4%% of area")
-	assert_between(float(blossom) / float(n), 0.02, 0.08, "blossom groves ~4-6%% of area")
+	assert_between(float(marsh) / float(n), 0.04, 0.25, "Moonfen has substantial explorable cores")
+	assert_between(float(blossom) / float(n), 0.04, 0.20, "Cherryveil is discoverable rather than vanishingly rare")

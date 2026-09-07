@@ -8,8 +8,7 @@ const CHUNK := Vector2i(-4, -18)
 
 func test_context_matches_water_field_and_has_canonical_dry_nan() -> void:
 	var water := preload("res://tests/fixtures/ReportedWaterPlan.gd").new(SEED)
-	var plan := HeightfieldPlan.new(SEED, 22.0, 8, "mean", 3)
-	plan.set_water_plan(water)
+	var plan := water.make_heightfield()
 	var centre := CHUNK * 8 + Vector2i(4, 4)
 	var region := plan.compute_region(centre.x, centre.y, 8)
 	var core := Rect2(Vector2(CHUNK) * 192.0, Vector2.ONE * 192.0)
@@ -53,7 +52,9 @@ func test_context_matches_water_field_and_has_canonical_dry_nan() -> void:
 	for set_data: Dictionary in dressing_program.sets:
 		if set_data.id in [&"ambient.reeds", &"ambient.lily_pad"]:
 			var dense := set_data.duplicate(true)
-			dense.fill_per_cell = PackedFloat32Array([16.0, 16.0, 16.0, 16.0, 16.0])
+			dense.fill_per_cell = PackedFloat32Array()
+			dense.fill_per_cell.resize(Helper.BIOME_NAMES.size())
+			dense.fill_per_cell.fill(16.0)
 			dense.habitat_layers = []
 			dense.slot_count = 16
 			focused.sets.append(dense)
