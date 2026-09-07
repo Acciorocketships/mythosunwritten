@@ -41,3 +41,15 @@ Use F6 in the game for the biome tour, or run
 `res://tests/harness/atmosphere_review.tscn` with `--x`, `--z`, `--capture`,
 and optionally `--wide`. The harness pins horizontal motion while loading so
 river currents cannot move the review to another region.
+
+Final main-copy integration check: **159 / 160 tests passed**, 12,392 passing
+assertions, 74.1 s. The concurrent town task added two tests during integration.
+Its new `test_a_street_above_the_reserved_roof_band_receives_structural_support`
+is the sole failure (a flat town recipe's roof closure,
+`tests/test_settlement_september6.gd:32`). The original two settlement tests and
+its new runtime/diagnostic identity check pass. No roof logic was altered by
+the atmosphere branch. The town task also corrected its transient missing
+argument during integration; that correction is preserved in main.
+
+The final atmosphere/terrain/vegetation/water-context run directly in main is
+**156 / 156 passing**, 12,380 assertions, 46.6 s, process exit 0.
