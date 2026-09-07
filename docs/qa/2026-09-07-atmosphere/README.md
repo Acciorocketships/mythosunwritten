@@ -41,8 +41,3 @@ Use F6 in the game for the biome tour, or run
 `res://tests/harness/atmosphere_review.tscn` with `--x`, `--z`, `--capture`,
 and optionally `--wide`. The harness pins horizontal motion while loading so
 river currents cannot move the review to another region.
-
-Final integration also routes the legacy `solve_selected` call through `solve`,
-preserving its diagnostic behavior while the town work changes the private
-`_solve_maze` signature. This fixes the missing-argument parse error without
-altering the production `generate` path.
