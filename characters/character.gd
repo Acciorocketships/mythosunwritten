@@ -87,6 +87,10 @@ var water_current := Vector2.ZERO
 # band OR full in_water (swimming is trivially "in water" too — see
 # _update_in_water's h-task-4 fix note). Does not affect movement.
 var wading: bool = false
+var _locomotion_amount := 0.0
+var _animation_direction := Vector2.UP
+var _animation_rate := 0.6
+var _movement_input := Vector2.ZERO
 
 func _ready() -> void:
 	_setup_player_controller()
@@ -105,6 +109,7 @@ func _physics_process(delta: float) -> void:
 
 	# inputs (already camera-rotated by controller)
 	var mv2: Vector2 = controller.get_move_vector(self, delta)
+	_movement_input = mv2
 	var wants_jump := controller.wants_jump(self, delta)
 
 	_update_in_water()
@@ -129,9 +134,13 @@ func _physics_process(delta: float) -> void:
 	var has_input := desired_dir.length() > 0.001
 	if has_input:
 		desired_dir = desired_dir.normalized()
-		var target_yaw := atan2(desired_dir.x, desired_dir.z)
-		var turn_speed: float = TURN_SPEED if (on_ground or in_water) else TURN_SPEED_AIR
-		rotation.y = lerp_angle(rotation.y, target_yaw, turn_speed * delta)
+	var facing := controller.get_facing_vector(self, delta)
+	if facing == Vector2.ZERO and not controller is PlayerController:
+		facing = mv2
+	if facing.length_squared() > 0.000001:
+		var target_yaw := atan2(facing.x, facing.y)
+		var turn_speed: float = TURN_SPEED if (on_ground or in_water or controller is PlayerController) else TURN_SPEED_AIR
+		global_rotation.y = lerp_angle(global_rotation.y, target_yaw, 1.0 - exp(-turn_speed * delta))
 
 	# Accel/friction on XZ. Swimming control is relative to the surrounding
 	# water: without input, no artificial brake fights the current. The shared
@@ -168,7 +177,7 @@ func _physics_process(delta: float) -> void:
 			apply_floor_snap()
 			if is_on_floor(): velocity.y = 0.0
 	_update_step_visual_smoothing(delta)
-	movement_animation(target_speed)
+	movement_animation(Vector2(velocity.x, velocity.z).length(), delta)
 
 
 # Swimming verticals, force based: gravity always pulls; reusable buoyancy
@@ -192,7 +201,7 @@ func _swim_vertical(delta: float, wants_jump: bool) -> void:
 
 
 # Mirrors _try_step_up's forward probe: while swimming near the surface and
-# pressing jump (held or fresh), probe ahead along the facing direction. If a
+# pressing jump (held or fresh), probe along travel (or facing at rest). If a
 # bank wall blocks within WATER_EXIT_PROBE, launch out of the water like a
 # jump — no need to be touching the wall.
 func _try_water_exit(wants_jump: bool, delta: float) -> bool:
@@ -200,7 +209,9 @@ func _try_water_exit(wants_jump: bool, delta: float) -> bool:
 		return false
 	if global_position.y < water_surface_y - BODY_HEIGHT:
 		return false
-	var facing: Vector3 = global_transform.basis.z
+	var facing := Vector3(_movement_input.x, 0.0, _movement_input.y)
+	if facing.length_squared() < 0.000001:
+		facing = global_transform.basis.z
 	facing.y = 0.0
 	if facing.length() < 0.001:
 		return false
@@ -342,13 +353,26 @@ func jump_animation(started_animation: bool):
 		state_machine.travel("JumpLand")
 		
 	
-func movement_animation(speed: float):
-	var amount = speed / MAX_SPEED
+func movement_animation(speed: float, delta: float = 1.0 / 60.0) -> void:
+	var flat_velocity := Vector3(velocity.x, 0.0, velocity.z)
+	var run_stride := DirectionalLocomotion.stride_length(flat_velocity, global_basis)
+	var amount := clampf(speed / (DirectionalLocomotion.RUN_CADENCE * run_stride), 0.0, 1.0)
 	if anim_tree.get("parameters/BlendTree/OneShot/active") and amount > 0 and on_ground:
 		anim_tree.set("parameters/BlendTree/OneShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FADE_OUT)
-	anim_tree.set("parameters/BlendTree/WalkRun/blend_position", amount)
-	anim_tree.set("parameters/BlendTree/RunSpeed/scale", 1 + amount)
-	
+	var run_blend := clampf((amount - 0.4) / 0.6, 0.0, 1.0)
+	var forward_stride := lerpf(DirectionalLocomotion.WALK_STRIDE, DirectionalLocomotion.RUN_STRIDE, run_blend)
+	var direction := DirectionalLocomotion.blend_direction(flat_velocity, global_basis, forward_stride)
+	if direction != Vector2.ZERO:
+		_animation_direction = _animation_direction.lerp(direction, 1.0 - exp(-14.0 * delta))
+		anim_tree.set("parameters/BlendTree/Direction/blend_position", _animation_direction)
+	_locomotion_amount = move_toward(_locomotion_amount, clampf(amount * 5.0, 0.0, 1.0), delta * 8.0)
+	anim_tree.set("parameters/BlendTree/IdleMotion/blend_amount", _locomotion_amount)
+	anim_tree.set("parameters/BlendTree/Direction/0/blend_position", run_blend)
+	var stride := DirectionalLocomotion.stride_length(flat_velocity, global_basis, forward_stride)
+	_animation_rate = lerpf(_animation_rate, clampf(speed / stride, 0.6, 2.5), 1.0 - exp(-14.0 * delta))
+	anim_tree.set("parameters/BlendTree/RunSpeed/scale", _animation_rate)
+
+
 
 # --------------------------------------------
 # Wiring
@@ -357,7 +381,7 @@ func movement_animation(speed: float):
 func _setup_player_controller():
 	assert(controller, "Assign a controller")
 	if controller is PlayerController:
-		(controller as PlayerController)._set_player(self)
+		controller = controller.duplicate() as PlayerController
 	
 
 func _cache_body_and_skeleton() -> void:
@@ -373,6 +397,9 @@ func _wire_animations() -> void:
 	anim_player.root_node = body.get_path()
 	# Tie the AnimationTree to this player
 	anim_tree.anim_player = anim_player.get_path()
+	if not anim_tree.has_meta("directional_locomotion"):
+		DirectionalLocomotion.install(anim_tree, anim_player)
+		anim_tree.set_meta("directional_locomotion", true)
 	anim_tree.active = true
 
 func _bind_all_attachments() -> void:

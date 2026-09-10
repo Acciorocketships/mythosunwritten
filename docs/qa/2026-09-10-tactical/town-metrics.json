@@ -1,0 +1,41 @@
+{
+  "support": "(237.4, 8.0, -370.2)",
+  "views": [
+    {
+      "components": 60,
+      "materials": 67,
+      "shader_variants": 7,
+      "update_max_ms": 2.198,
+      "update_median_ms": 1.51,
+      "update_p95_ms": 1.895,
+      "yaw_degrees": 0.0
+    },
+    {
+      "components": 64,
+      "materials": 69,
+      "shader_variants": 6,
+      "update_max_ms": 2.174,
+      "update_median_ms": 1.647,
+      "update_p95_ms": 1.933,
+      "yaw_degrees": 90.0
+    },
+    {
+      "components": 63,
+      "materials": 66,
+      "shader_variants": 6,
+      "update_max_ms": 1.928,
+      "update_median_ms": 1.473,
+      "update_p95_ms": 1.854,
+      "yaw_degrees": 180.0
+    },
+    {
+      "components": 62,
+      "materials": 63,
+      "shader_variants": 6,
+      "update_max_ms": 2.245,
+      "update_median_ms": 1.463,
+      "update_p95_ms": 1.806,
+      "yaw_degrees": 270.0
+    }
+  ]
+}

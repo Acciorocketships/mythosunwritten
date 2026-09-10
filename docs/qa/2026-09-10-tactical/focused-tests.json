@@ -1,0 +1,33 @@
+{
+  "godot": "4.5.1",
+  "headless": {
+    "scripts": 6,
+    "tests": 28,
+    "passed": 28,
+    "assertions": 241,
+    "elapsed_seconds": 21.937,
+    "exit_code": 0
+  },
+  "source_sha256": {
+    "characters/character.gd": "4ecbacb04e9fef466a42bd6de1fcf126a8888a01f9d6e5f168c8f7ff9c16cd77",
+    "characters/character.tscn": "c2f8b6c502e9afa9d520aaed3d6d5f2bc6bdb78f22ff4b47b578eb3e1a86299e",
+    "characters/animations/DirectionalAnimationTree.tres": "24abff68dfc7395bb31ee09ca76e84b6efe4061956d068f137fcc3ed94ae09f8",
+    "scripts/controllers/player_controller.gd": "4372b798943823ce71156a8aa2002a1b6a4bd9c4d749d97998224af9db5c103e",
+    "scripts/controllers/character_controller.gd": "47a558e8cba46908ccb11149448c0fae23ab61cd5fc0838a4a52accbab765a76",
+    "scripts/controllers/DirectionalLocomotion.gd": "91040930d56902234ca6a105725cbe95ee46ffdd7c9975eabde5413c108fdbb3",
+    "scripts/camera/camera.gd": "c84bd34ffbad69efaf8e13d538b50944e8a107d07774b29c135942e2c36ec418",
+    "scripts/camera/CameraVisibilityBubble.gd": "e14b97b9a001c655600d538be8b790b2eeb76d92b5bc06510e3d6c77c5b85320",
+    "scripts/camera/visibility_bubble.gdshaderinc": "5c7d0953145603429a9183a5643407cfb678127c75a25711e5613ab3fdf23f2d",
+    "scripts/camera/tactical_standard.gdshader": "8297c36c71540e414cd6738fc16f726b3a75e6154087012284026a8f4da33133"
+  },
+  "gpu": {
+    "scripts": 1,
+    "tests": 6,
+    "passed": 6,
+    "assertions": 27,
+    "elapsed_seconds": 0.618,
+    "exit_code": 0,
+    "renderer": "Metal Forward+ on Apple M1 Pro"
+  },
+  "gpu_prior_run_note": "An earlier GPU-only run passed its assertions but exited with signal 11 during shutdown. The final test lets rendered frames consume changed parameters before restoring materials; its repeat exited 0. The synthetic and streamed-world capture runs also exited 0."
+}

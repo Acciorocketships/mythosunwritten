@@ -1,0 +1,20 @@
+{
+  "bubble_zero_fade": {
+    "changed_pixels": 92860,
+    "maximum_channel_difference": 2
+  },
+  "bubble_restored": {
+    "changed_pixels": 0,
+    "maximum_channel_difference": 0
+  },
+  "bubble_after": {
+    "changed_pixels": 107726,
+    "maximum_channel_difference": 166
+  },
+  "far_batch_object": {
+    "changed_bounds": null
+  },
+  "floor_left": {
+    "changed_bounds": null
+  }
+}

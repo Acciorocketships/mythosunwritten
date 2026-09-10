@@ -1,0 +1,79 @@
+{
+  "base_commit": "f3203d96",
+  "process_exit_code": 134,
+  "source_note": "Full suite ran from a frozen feature copy. The subsequent physical-floor guard, live-source-uniform synchronization and return-to-centre orbit guard have their own final focused and GPU checks.",
+  "failing_tests": {
+    "res://tests/test_cliff_dressing.gd": [
+      "test_carved_flush_step_cap_sits_at_the_very_end",
+      "test_carved_pocket_level_diagonal_gets_a_pocket_cap",
+      "test_carved_pocket_with_unequal_arms_and_continuing_wall_gets_seam_walls"
+    ],
+    "res://tests/test_field_streamer.gd": [
+      "test_background_builds_populate_radius"
+    ],
+    "res://tests/test_warren_maze_carver.gd": [
+      "test_production_seed_corpus_seals_without_attempt_search"
+    ],
+    "res://tests/test_warren_maze_composition.gd": [
+      "test_assets_land",
+      "test_bridges_become_rooms_decks_or_audited_releases",
+      "test_every_garden_edge_turns_the_rim",
+      "test_large_and_grand_towns_exist",
+      "test_sloped_ground_composes",
+      "test_the_bench_tops_read_as_gardens_with_one_village_green",
+      "test_the_big_towns_carry_the_round_s_own_zeroes",
+      "test_the_hillside_pushes_back",
+      "test_the_plaza_deck_opens_the_square",
+      "test_the_rock_reads_as_hillside_not_masonry",
+      "test_the_town_s_decor_is_not_one_repeated_piece"
+    ],
+    "res://tests/test_warren_maze_plots.gd": [
+      "test_ownership_is_pinned_on_the_planner_seeds",
+      "test_sloped_ground_seals_and_translates",
+      "test_stack_invariant_rejects_a_floating_plot_at_seal",
+      "test_streets_keep_their_floor",
+      "test_the_plaza_deck_is_a_room_not_a_lane"
+    ],
+    "res://tests/test_warren_spatial_fabric_compiler.gd": [
+      "test_measured_room_units_preserve_every_spatial_stamp"
+    ],
+    "res://tests/test_water_contour.gd": [
+      "test_border_curves_weld",
+      "test_pond_yields_smooth_closed_curve",
+      "test_reported_saddle_outward_frame_does_not_reverse"
+    ],
+    "res://tests/test_water_skin.gd": [
+      "test_reported_exact_bank_rim_reaches_recessed_cliff_face",
+      "test_reported_exact_corner_wet_region_has_connected_skin_coverage",
+      "test_s_is_continuous_along_river",
+      "test_skin_handles_closed_and_border_exit_curves",
+      "test_wall_rim_reaches_the_face"
+    ]
+  },
+  "new_failing_tests": [],
+  "baseline_failures_not_observed": [],
+  "scripts": 157,
+  "tests": 1208,
+  "passed": 1177,
+  "failed": 30,
+  "pending": 1,
+  "passing_assertions": 401374,
+  "total_assertions": 401467,
+  "elapsed_seconds": 3239.537,
+  "frozen_source_sha256": {
+    "characters/character.gd": "4ecbacb04e9fef466a42bd6de1fcf126a8888a01f9d6e5f168c8f7ff9c16cd77",
+    "characters/character.tscn": "c2f8b6c502e9afa9d520aaed3d6d5f2bc6bdb78f22ff4b47b578eb3e1a86299e",
+    "characters/animations/DirectionalAnimationTree.tres": "24abff68dfc7395bb31ee09ca76e84b6efe4061956d068f137fcc3ed94ae09f8",
+    "scripts/camera/CameraObstructionSolver.gd": "405c19e96114e484cc32f1f50d5ba45e139ed5cc8a4f727075ae1f77567a8a74",
+    "scripts/camera/CameraVisibilityBubble.gd": "789299a806f3a5a9d0b51c64fa93feedbdecd6e7a1f7257d8ef89306065dec04",
+    "scripts/camera/camera.gd": "6bb76ea499747ecec82ab7ec9101e6b0be10a0ca541b82c4ca912d0c1f452a11",
+    "scripts/camera/tactical_standard.gdshader": "8297c36c71540e414cd6738fc16f726b3a75e6154087012284026a8f4da33133",
+    "scripts/camera/visibility_bubble.gdshaderinc": "9cd5302de456719a0dbaf252c659423ec523a52a42302948fe79f4b00c09c033",
+    "scripts/controllers/DirectionalLocomotion.gd": "91040930d56902234ca6a105725cbe95ee46ffdd7c9975eabde5413c108fdbb3",
+    "scripts/controllers/character_controller.gd": "47a558e8cba46908ccb11149448c0fae23ab61cd5fc0838a4a52accbab765a76",
+    "scripts/controllers/player_controller.gd": "4372b798943823ce71156a8aa2002a1b6a4bd9c4d749d97998224af9db5c103e"
+  },
+  "shutdown_error": "After all test summaries: recursive_mutex lock failed: Invalid argument (same error and exit 134 as consolidation baseline).",
+  "local_raw_log": ".artifacts/tactical/validation/full-suite.log",
+  "local_frozen_sources": ".artifacts/tactical/validation/frozen-source"
+}
