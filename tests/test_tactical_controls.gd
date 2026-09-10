@@ -21,18 +21,122 @@ func test_player_input_preserves_original_speed_independent_of_facing() -> void:
 				"Player speed and streaming intent retain the original 10 m/s cap")
 			for action in actions: Input.action_release(action)
 
-func test_drag_reserves_centre_and_is_proportional_to_motion() -> void:
-	assert_eq(CameraScript.edge_drag(400, 600, 1000, 0.6), 0.0)
-	assert_eq(CameraScript.edge_drag(850, 890, 1000, 0.6), 40.0)
-	assert_eq(CameraScript.edge_drag(190, 100, 1000, 0.6), -90.0)
-	assert_eq(CameraScript.edge_drag(780, 850, 1000, 0.6), 50.0)
-	assert_eq(CameraScript.edge_drag(900, 900, 1000, 0.6), 0.0)
-	assert_eq(CameraScript.edge_drag(900, 500, 1000, 0.6), 0.0, "Returning to clicks preserves the chosen view")
-	assert_eq(CameraScript.edge_drag(100, 500, 1000, 0.6), 0.0)
-	assert_eq(CameraScript.edge_drag(500,900,1000,0.6) + CameraScript.edge_drag(900,500,1000,0.6)
-		+ CameraScript.edge_drag(500,900,1000,0.6), 200.0, "Repeated gestures can orbit indefinitely")
-	assert_eq(CameraScript.edge_drag(780, 850, 1000, 0.6),
-		CameraScript.edge_drag(780, 810, 1000, 0.6) + CameraScript.edge_drag(810, 850, 1000, 0.6))
+func test_drag_starts_only_beyond_the_actual_edge_and_counts_overflow() -> void:
+	assert_eq(CameraScript.edge_drag(850, 100, 1000), 0.0, "The former outer zone is ordinary pointer space")
+	assert_eq(CameraScript.edge_drag(950, 49, 1000), 0.0, "Reaching the last pixel alone does not rotate")
+	assert_eq(CameraScript.edge_drag(950, 89, 1000), 40.0)
+	assert_eq(CameraScript.edge_drag(999, 40, 1000), 40.0, "A clamped cursor still has outward motion")
+	assert_eq(CameraScript.edge_drag(10, -50, 1000), -40.0)
+	assert_eq(CameraScript.edge_drag(0, -40, 1000), -40.0)
+	assert_eq(CameraScript.edge_drag(999, 0, 1000), 0.0, "Dwelling never rotates")
+	assert_eq(CameraScript.edge_drag(999, -400, 1000), 0.0, "Returning inward does not undo rotation")
+	assert_eq(CameraScript.edge_drag(0, 400, 1000), 0.0)
+	assert_eq(CameraScript.edge_drag(950, 149, 1000),
+		CameraScript.edge_drag(950, 79, 1000) + CameraScript.edge_drag(999, 70, 1000))
+
+func test_drag_gain_tracks_field_of_view_and_viewport_scaling() -> void:
+	var size := Vector2(1280,800)
+	var gain := CameraScript.drag_radians_per_pixel(size, 50)
+	assert_almost_eq(rad_to_deg(gain * size.x), 73.44, 0.1)
+	assert_lt(rad_to_deg(gain * 100), 6.0, "100 pixels no longer turns 34 degrees")
+	assert_almost_eq(gain * 100, CameraScript.drag_radians_per_pixel(size * 2, 50) * 200, 0.00001)
+	assert_almost_eq(CameraScript.drag_radians_per_pixel(size, 75, true) * size.x, deg_to_rad(75), 0.00001)
+
+func _motion(camera: Camera3D, position: Vector2, relative: Vector2) -> void:
+	var event := InputEventMouseMotion.new()
+	event.position = position
+	event.relative = relative
+	camera.get_viewport().push_input(event, true)
+
+func test_edge_capture_tracks_raw_motion_and_releases_on_return_toggle_and_focus_loss() -> void:
+	var previous_mode := Input.mouse_mode
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	# Dummy display has no native-window hover; graphical runs use the real path.
+	var viewport
+	if DisplayServer.get_name() == "headless":
+		viewport = SubViewport.new()
+	else:
+		viewport = Window.new()
+		viewport.hide()
+		viewport.force_native = true
+	viewport.size = Vector2i(1000,600)
+	viewport.own_world_3d = true
+	add_child_autofree(viewport)
+	if viewport is Window: viewport.show()
+	var world := Node3D.new()
+	viewport.add_child(world)
+	var target := Node3D.new()
+	world.add_child(target)
+	var camera := Camera3D.new()
+	camera.set_script(CameraScript)
+	camera.target = target
+	camera.visibility_bubble_enabled = false
+	world.add_child(camera)
+	camera.make_current()
+	camera.set_physics_process(false)
+	if viewport is Window: viewport.grab_focus()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var size: Vector2 = viewport.get_visible_rect().size
+	var edge := Vector2(size.x - 1, size.y / 2)
+	_motion(camera, edge - Vector2(50,0), Vector2(10,0))
+	assert_false(camera._edge_captured)
+	assert_eq(camera._mouse_orbit, 0.0)
+	_motion(camera, edge, Vector2(50,0))
+	assert_true(camera._edge_captured)
+	assert_eq(camera._mouse_orbit, 0.0)
+	_motion(camera, size / 2, Vector2(40,0))
+	_motion(camera, size / 2, Vector2(60,0))
+	var expected := 100 * CameraScript.drag_radians_per_pixel(size, camera.fov)
+	assert_almost_eq(camera._mouse_orbit, expected, 0.00001)
+	assert_eq(camera.pointing_position(), edge, "Aim stays at the drawn cursor while OS input is captured")
+	var click := InputEventMouseButton.new()
+	var button := Button.new()
+	button.position = edge - Vector2(49,20)
+	button.size = Vector2(50,40)
+	viewport.add_child(button)
+	await get_tree().process_frame
+	var clicks := [0]
+	button.pressed.connect(func(): clicks[0] += 1)
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	click.position = size / 2
+	viewport.push_input(click, true)
+	click = click.duplicate()
+	click.position = edge
+	click.pressed = false
+	viewport.push_input(click, true)
+	assert_eq(clicks[0], 1, "GUI dispatch clicks the visible edge button, not the OS capture centre")
+	button.free()
+	assert_false(camera._edge_captured, "Clicking restores normal picking")
+	_motion(camera, edge, Vector2(1,0))
+	_motion(camera, size / 2, Vector2(-5,0))
+	assert_false(camera._edge_captured)
+	assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE)
+	assert_almost_eq(camera._mouse_orbit, expected, 0.00001, "Returning before the physics tick keeps the completed drag")
+	camera._physics_process(0.0)
+	assert_almost_eq(camera._yaw, expected, 0.00001)
+	_motion(camera, edge, Vector2(5,0))
+	assert_true(camera._edge_captured)
+	camera.toggle_view()
+	assert_false(camera._edge_captured)
+	assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE)
+	camera.toggle_view()
+	_motion(camera, edge, Vector2(1,0))
+	assert_true(camera._edge_captured)
+	camera._notification(Node.NOTIFICATION_WM_WINDOW_FOCUS_OUT)
+	assert_false(camera._edge_captured)
+	assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE)
+	_motion(camera, edge, Vector2(1,0))
+	var escape := InputEventKey.new()
+	escape.keycode = KEY_ESCAPE
+	escape.pressed = true
+	viewport.push_input(escape, true)
+	assert_false(camera._edge_captured)
+	_motion(camera, edge, Vector2(20,0))
+	assert_false(camera._edge_captured, "Escape releases the pointer until the next game click")
+	assert_eq(camera._mouse_orbit, 0.0)
+	Input.mouse_mode = previous_mode
 
 func test_camera_relative_wasd_and_diagonal_speed_in_every_quadrant() -> void:
 	for yaw in [0.0, PI * 0.5, PI, PI * 1.5]:

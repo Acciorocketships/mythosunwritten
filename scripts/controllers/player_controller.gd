@@ -26,6 +26,8 @@ func get_facing_vector(character: CharacterBody3D, _dt: float) -> Vector2:
 	var view := character.get_viewport()
 	var active_camera := view.get_camera_3d()
 	var cursor := view.get_mouse_position()
+	if active_camera != null and active_camera.has_method("pointing_position"):
+		cursor = active_camera.pointing_position()
 	if active_camera == null or not view.get_visible_rect().has_point(cursor):
 		return _last_facing
 	# A plane through the feet makes aim independent of foreground roofs and

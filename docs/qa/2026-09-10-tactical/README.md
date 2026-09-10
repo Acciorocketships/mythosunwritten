@@ -15,11 +15,15 @@ speed and adds a reversible view comparison.
   views keep mouse-facing and camera-relative movement. Key repeat is ignored.
 - WASD moves relative to the current camera. Mouse aim controls facing even
   while stationary, airborne, or travelling sideways/backwards.
-- Outward horizontal mouse motion in the outer 22.5% on either side rotates the camera
-  at 0.006 radians per viewport pixel. No button is required. The central 55%
-  does not rotate; leaving the mouse stationary never rotates. Returning toward
-  the centre keeps the chosen view, so repeated outward gestures can orbit fully.
-  Q/E still works.
+- Mouse rotation starts only after reaching the actual left/right viewport edge.
+  Only the outward portion of each movement rotates; movement inside the window,
+  dwelling at the edge, and returning inward cause no rotation. No button is required.
+  A full viewport-width of outward drag turns by one horizontal field of view;
+  at 1280 × 800 and FOV 50, 100 pixels turns approximately 5.7 degrees (previously
+  34.4 degrees). The scale follows viewport size and FOV without time acceleration.
+  At the edge, raw mouse capture retains a visible cursor and its aim position.
+  Moving inward, clicking, F7, focus loss or pausing releases capture. Escape
+  releases the cursor until the next click in the game. Q/E still works.
 - The aim ray meets a plane at the player's feet, so foreground roofs cannot
   steal aim. A 25 cm zone at the player's feet holds the last facing direction.
 - Player movement again reaches the original 10 m/s land speed in all directions;
@@ -134,6 +138,23 @@ regressions exercise actual player inputs in all directions and camera quadrants
 the 10 m/s streaming intent, F7 repeat suppression, both camera poses/FOVs, and
 the original view's collision response. Both test runs and the graphical capture
 exit successfully. The repository-wide suite was not repeated for this follow-up.
+
+### Edge-drag follow-up
+
+The former outer 22.5% activation area is removed. Regression coverage includes
+reaching the last pixel without turning, crossing with only partial overflow,
+continued motion while clamped, inward return without undoing a pending turn,
+FOV/resolution scaling, GUI button clicks at the drawn cursor, F7, focus loss
+and Escape release. Controls and camera checks pass 14 tests / 107 assertions
+headlessly; the eight controls tests also pass all 88 assertions in a native
+graphical window. Both final processes exit 0.
+
+Godot's macOS confined mode clamps the reported delta at the boundary, so the
+camera temporarily uses captured mode to receive continued outward movement.
+See the [Godot 4.5 macOS input implementation](https://github.com/godotengine/godot/blob/4.5/platform/macos/display_server_macos.mm#L1313)
+and [mouse mode documentation](https://docs.godotengine.org/en/4.5/classes/class_input.html).
+Corrected cursor events are dispatched once through the viewport so GUI hover
+and clicks follow the drawn cursor; clicks restore normal physics picking.
 
 ### Original feature validation
 

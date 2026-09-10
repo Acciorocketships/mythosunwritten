@@ -204,9 +204,11 @@
 
 > September 10 tactical-camera feature (merged, testing follow-up): the player uses a
 > fixed elevated orbit (26 m horizontal, 16 m high, 50-degree FOV), independent
-> of movement. Outward mouse motion outside the central 55% rotates yaw;
-> returning toward the centre preserves yaw so clicks never unwind the view.
-> The centre remains available for clicks and a stationary mouse never rotates.
+> of movement. Mouse rotation starts at the actual left/right viewport edge;
+> only outward overflow contributes, at one horizontal FOV per viewport-width
+> of drag. Returning inward and dwelling never rotate. Edge-only raw capture
+> preserves the visible cursor and aim; inward motion, clicks, view switches,
+> focus loss and pause release capture. Escape releases it until the next click.
 > F7 switches to the original 8 m / 5 m follow/collision camera and back,
 > preserving yaw and keeping the new controls in both views. Q/E remains available.
 > Mouse aim projects onto the player's foot-height plane;
