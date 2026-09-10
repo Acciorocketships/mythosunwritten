@@ -461,8 +461,9 @@ func test_plain_flat_roof_has_a_measured_central_garden_fallback() -> void:
 		if micro != null:
 			assert_true(micro.has_tag(&"micro_roof_garden"))
 			assert_eq(micro.asset_ids(), [
+				SettlementFabricProgram.TERRACE_BUCKET,
 				SettlementFabricProgram.ROOF_FLOWER_SMALL] as Array[StringName],
-				"the last fallback remains one authored accent, not a bare cap")
+				"the narrow garden remains a complete container and plant")
 
 
 func test_wrap_balconies_are_true_l_shaped_floorplates() -> void:

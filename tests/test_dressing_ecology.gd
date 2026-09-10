@@ -76,8 +76,13 @@ func test_tree_stature_and_mushroom_colonies_are_explicit_content_data() -> void
 		stature[choice.asset_id] = choice.scale_multiplier
 	assert_gt(stature[&"lpfv.tree.07"], 1.8,
 		"one full-canopy conifer is a landmark tree")
-	assert_gt(stature[&"lpfv.tree.02"], 1.3,
-		"a broad-canopy variety grows into a tall canopy tree")
+	var catalog := EnvironmentCatalog.load_default()
+	var broad_height := catalog.descriptor(&"lpfv.tree.02").measured_aabb.size.y \
+		* float(stature[&"lpfv.tree.02"])
+	var small_height := catalog.descriptor(&"lpfv.tree.04").measured_aabb.size.y \
+		* float(stature[&"lpfv.tree.04"])
+	assert_gt(broad_height, small_height * 2.0,
+		"the broad canopy remains a taller tier in actual world metres")
 	assert_almost_eq(stature[&"lpfv.tree.04"], 1.0, 0.001,
 		"small tree varieties retain their natural tier")
 	var patch: Dictionary = by_id[&"ambient.mushroom.patch"]

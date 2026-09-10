@@ -52,8 +52,38 @@ var _claims: Dictionary
 var _targets: Controls
 var _target_cache: Dictionary = {}
 var _nearby_claims: Dictionary = {}
+var _collar_rectangles_by_cell: Dictionary = {}
+var _collar_rectangles: Array[Rect2] = []
+var _nearby_collar_rectangles: Dictionary = {}
 var _collar_cells: int
 var _uniform := true
+var _continuous_source: TerrainGradePatch
+var _continuous_cells: Dictionary = {}
+var _continuous_datum := 0.0
+const SURFACE_CACHE_LIMIT := 32768
+var _surface_cache: Dictionary = {}
+
+
+## Road reservations inherit an already reconstructed continuous field. Their
+## centre samples are planning facts, not new plateau controls for that field.
+func with_continuous_extension(heights: Dictionary, datum: float) -> TerrainGradePatch:
+	var result := TerrainGradePatch.new(stable_id, heights, _origin, _targets.pitch)
+	result._continuous_source = self
+	result._continuous_cells = heights.duplicate()
+	result._continuous_datum = datum
+	return result
+
+
+## New foundation pads own fixed heights; previously reserved street cells
+## retain their continuous source instead of baking that slope a second time.
+func with_fixed_extension(heights: Dictionary) -> TerrainGradePatch:
+	var result := TerrainGradePatch.new(stable_id, heights, _origin, _targets.pitch)
+	result._continuous_source = self
+	for cell: Vector2i in heights:
+		if _claims.has(cell) and float(_claims[cell]) == float(heights[cell]):
+			result._continuous_cells[cell] = true
+	result._continuous_datum = _targets.fallback
+	return result
 
 
 func _init(id: StringName, heights: Dictionary, origin: Vector2,
@@ -82,21 +112,40 @@ func _init(id: StringName, heights: Dictionary, origin: Vector2,
 		hi = Vector2i(maxi(hi.x, cell.x), maxi(hi.y, cell.y))
 	bounds = Rect2(origin + Vector2(lo) * pitch,
 		Vector2(hi - lo) * pitch).grow(TRANSITION_WIDTH + pitch * 0.5)
+	_build_collar_rectangles(ordered)
 
 
 func surface_y(point: Vector2, natural_height: float) -> float:
 	if not bounds.has_point(point):
 		return natural_height
+	if _surface_cache.has(point):
+		var cached: PackedFloat64Array = _surface_cache[point]
+		return lerpf(natural_height,cached[0],cached[1])
+	if _surface_cache.size() >= SURFACE_CACHE_LIMIT:
+		_surface_cache.clear()
 	var local := point - _origin
 	var cell := Vector2i(roundi(local.x / _targets.pitch),
 		roundi(local.y / _targets.pitch))
-	var weight := 1.0 - TerrainSurfaceField.transition_weight(_claim_distance(local))
+	var weight := _collar_weight(local,cell)
 	if weight <= 0.0:
+		_surface_cache[point] = PackedFloat64Array([0.0,0.0])
 		return natural_height
-	var target := _targets.fallback if _uniform else (
-		_sample(_targets, _target_cache, cell, local) if _claims.has(cell)
-		else _collar_height(local, cell))
+	var target := _target_at(local,cell) if _claims.has(cell) else (
+		_continuous_source.surface_y(point,_continuous_datum)
+		if _continuous_source != null and _continuous_cells.size() == _claims.size()
+		else (_targets.fallback if _uniform and _continuous_source == null
+		else _collar_height(local,cell)))
+	# Cache only the immutable target/weight, never the caller's natural height.
+	# Neighboring mesh triangles, collision and nested grade fields revisit the
+	# same world coordinates; eviction cannot change their sampled surface.
+	_surface_cache[point] = PackedFloat64Array([target,weight])
 	return lerpf(natural_height, target, weight)
+
+
+func _target_at(local: Vector2, cell: Vector2i) -> float:
+	if _continuous_source != null and _continuous_cells.has(cell):
+		return _continuous_source.surface_y(_origin+local,_continuous_datum)
+	return _targets.fallback if _uniform else _sample(_targets,_target_cache,cell,local)
 
 
 ## Extend actual boundary values, not the identity of the nearest building.
@@ -114,7 +163,7 @@ func _collar_height(local: Vector2, cell: Vector2i) -> float:
 		var distance := local.distance_to(boundary)
 		if distance >= TRANSITION_WIDTH:
 			continue
-		var height := _sample(_targets, _target_cache, key, boundary)
+		var height := _target_at(boundary,key)
 		if distance < 0.000001:
 			return height
 		var w := (1.0 - TerrainSurfaceField.transition_weight(distance)) / (distance * distance)
@@ -123,20 +172,76 @@ func _collar_height(local: Vector2, cell: Vector2i) -> float:
 	return weighted / total if total > 0.0 else _targets.fallback
 
 
-## Exact distance to the union of construction cells, not a second smooth
-## interpolation of already-smoothed 3 m weights. The latter stopped the slope
-## at every fine-cell centre and produced visible corrugations. Finite buckets
-## keep the query local; inside the plateau the answer is a single lookup.
-func _claim_distance(local: Vector2) -> float:
-	var pitch := _targets.pitch
-	var cell := Vector2i(roundi(local.x / pitch), roundi(local.y / pitch))
+## Cover the claim union with its maximal axis-aligned rectangles. Every
+## rectangle is a convex distance field; their compact weights can form a C1
+## union instead of switching nearest owners at a concave medial axis. Maximal
+## rectangles are determined by the outline, not arbitrary row partitions, so
+## a long straight pad retains one 12 m profile across construction-cell seams.
+func _build_collar_rectangles(ordered: Array[Vector2i]) -> void:
+	var rows: Dictionary={}
+	for cell: Vector2i in ordered:
+		if not rows.has(cell.y): rows[cell.y]=[]
+		var runs: Array=rows[cell.y]
+		if not runs.is_empty() and runs[-1].y==cell.x-1:
+			runs[-1]=Vector2i(runs[-1].x,cell.x)
+		else: runs.append(Vector2i(cell.x,cell.x))
+	var rectangles: Array[Rect2]=[]
+	for top: int in rows:
+		var common: Array=rows[top].duplicate()
+		var bottom := top
+		while rows.has(bottom) and not common.is_empty():
+			if bottom>top: common=_intersect_runs(common,rows[bottom])
+			for run: Vector2i in common:
+				if _row_contains(rows.get(top-1,[]),run) or _row_contains(rows.get(bottom+1,[]),run): continue
+				var index := rectangles.size()
+				rectangles.append(Rect2(Vector2(run.x,top)*_targets.pitch-Vector2.ONE*_targets.pitch*0.5,
+					Vector2(run.y-run.x+1,bottom-top+1)*_targets.pitch))
+				for z in range(top,bottom+1):
+					for x in range(run.x,run.y+1):
+						var key:=Vector2i(x,z)
+						if not _collar_rectangles_by_cell.has(key): _collar_rectangles_by_cell[key]=[]
+						_collar_rectangles_by_cell[key].append(index)
+			bottom+=1
+	_collar_rectangles.assign(rectangles)
+
+
+static func _row_contains(runs: Array, interval: Vector2i) -> bool:
+	for run: Vector2i in runs:
+		if run.x<=interval.x and run.y>=interval.y: return true
+	return false
+
+
+static func _intersect_runs(first: Array, second: Array) -> Array:
+	var result: Array=[]
+	for a: Vector2i in first:
+		for b: Vector2i in second:
+			var lo:=maxi(a.x,b.x)
+			var hi:=mini(a.y,b.y)
+			if lo<=hi: result.append(Vector2i(lo,hi))
+	return result
+
+
+func _rectangle_distances(local: Vector2, cell: Vector2i) -> Dictionary:
+	if not _nearby_collar_rectangles.has(cell):
+		var nearby: Dictionary = {}
+		for key: Vector2i in _nearby(cell):
+			for index: int in _collar_rectangles_by_cell.get(key, []): nearby[index] = true
+		_nearby_collar_rectangles[cell] = nearby.keys()
+	var distances: Dictionary = {}
+	for index: int in _nearby_collar_rectangles[cell]:
+		var area: Rect2 = _collar_rectangles[index]
+		var nearest := local.clamp(area.position, area.end)
+		distances[index] = local.distance_to(nearest)
+	return distances
+
+
+func _collar_weight(local: Vector2, cell: Vector2i) -> float:
 	if _claims.has(cell):
-		return 0.0
-	var distance := TRANSITION_WIDTH
-	for key: Vector2i in _nearby(cell):
-		var delta := (local - Vector2(key) * pitch).abs() - Vector2.ONE * pitch * 0.5
-		distance = minf(distance, delta.max(Vector2.ZERO).length())
-	return distance
+		return 1.0
+	var remaining := 1.0
+	for distance: float in _rectangle_distances(local,cell).values():
+		remaining *= TerrainSurfaceField.transition_weight(distance)
+	return 1.0-remaining
 
 
 func _nearby(cell: Vector2i) -> Array:
@@ -166,12 +271,16 @@ func _weight_bounds(area: Rect2) -> Vector2:
 				continue
 			var part := area.intersection(Rect2(Vector2(cell) * _targets.pitch - Vector2.ONE * half,
 				Vector2.ONE * _targets.pitch))
-			var distance := _claim_distance(part.get_center())
-			# Distance to a closed union is 1-Lipschitz. This interval remains
-			# conservative even when its nearest owner changes inside the box.
+			# Each convex-boundary distance is 1-Lipschitz. The smooth union is
+			# monotone in every input, so composing their intervals is conservative.
 			var radius := part.size.length() * 0.5
-			interval.x = minf(interval.x, 1.0 - TerrainSurfaceField.transition_weight(distance + radius))
-			interval.y = maxf(interval.y, 1.0 - TerrainSurfaceField.transition_weight(maxf(0, distance - radius)))
+			var remaining_lo := 1.0
+			var remaining_hi := 1.0
+			for distance: float in _rectangle_distances(part.get_center(),cell).values():
+				remaining_lo *= TerrainSurfaceField.transition_weight(maxf(0,distance-radius))
+				remaining_hi *= TerrainSurfaceField.transition_weight(distance+radius)
+			interval.x=minf(interval.x,1.0-remaining_hi)
+			interval.y=maxf(interval.y,1.0-remaining_lo)
 	return interval
 
 
@@ -195,7 +304,8 @@ func with_foundation_pads(pads: Array[Dictionary], preserve_claims := false) -> 
 						and not is_equal_approx(float(claims[key]), float(pad.height)):
 					return null # A later parcel may not invalidate sealed ground.
 				claims[key] = minf(float(claims.get(key, pad.height)), float(pad.height))
-	return TerrainGradePatch.new(stable_id, claims, _origin, pitch)
+	return with_fixed_extension(claims) if _continuous_source != null \
+		else TerrainGradePatch.new(stable_id, claims, _origin, pitch)
 
 
 ## Interval composition is conservative even where the fine grading controls
@@ -214,6 +324,17 @@ func height_bounds(footprint: Rect2, natural: Vector2) -> Vector2:
 	var targets := Vector2(_targets.fallback, _targets.fallback) if _uniform else (
 		_control_bounds(_targets, _target_cache, local) if weights.x == 1.0
 		else _collar_target_bounds(local))
+	if _continuous_source != null:
+		# Inherited curves can have extrema between this reservation's lattice
+		# corners. Ask their original field for its conservative interval.
+		var inherited_area := footprint if _continuous_cells.size() == _claims.size() \
+			else footprint.grow(TRANSITION_WIDTH + _targets.pitch * 2.0)
+		var inherited := _continuous_source.height_bounds(inherited_area,
+			Vector2(_continuous_datum,_continuous_datum))
+		if _continuous_cells.size() == _claims.size():
+			targets = inherited
+		else:
+			targets = Vector2(minf(targets.x,inherited.x),maxf(targets.y,inherited.y))
 	var interval := Vector2(INF, -INF)
 	for n: float in [natural.x, natural.y]:
 		for t: float in [targets.x, targets.y]:

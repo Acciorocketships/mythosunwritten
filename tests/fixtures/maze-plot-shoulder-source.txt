@@ -1,0 +1,831 @@
+{
+"excavation": {
+"bridge_spans": Array[Array]([Array[Vector3i]([Vector3i(-2, 2, 2)]), Array[Vector3i]([Vector3i(4, 3, 1)]), Array[Vector3i]([Vector3i(-1, 3, 2)])]),
+"carved": {
+Vector3i(-3, 1, 0): true,
+Vector3i(-3, 1, 1): true,
+Vector3i(-3, 2, 0): true,
+Vector3i(-3, 2, 1): true,
+Vector3i(-3, 2, 2): true,
+Vector3i(-3, 3, 0): true,
+Vector3i(-3, 3, 1): true,
+Vector3i(-3, 3, 2): true,
+Vector3i(-3, 4, 0): true,
+Vector3i(-3, 4, 1): true,
+Vector3i(-3, 4, 2): true,
+Vector3i(-3, 5, 0): true,
+Vector3i(-3, 5, 1): true,
+Vector3i(-3, 5, 2): true,
+Vector3i(-3, 6, 0): true,
+Vector3i(-3, 6, 1): true,
+Vector3i(-3, 6, 2): true,
+Vector3i(-3, 7, 0): true,
+Vector3i(-3, 7, 1): true,
+Vector3i(-3, 7, 2): true,
+Vector3i(-3, 8, 1): true,
+Vector3i(-3, 9, 1): true,
+Vector3i(-3, 10, 1): true,
+Vector3i(-3, 11, 1): true,
+Vector3i(-2, 0, -2): true,
+Vector3i(-2, 1, -2): true,
+Vector3i(-2, 1, 0): true,
+Vector3i(-2, 2, -2): true,
+Vector3i(-2, 2, 0): true,
+Vector3i(-2, 2, 2): true,
+Vector3i(-2, 3, 0): true,
+Vector3i(-2, 3, 2): true,
+Vector3i(-2, 4, 0): true,
+Vector3i(-2, 4, 2): true,
+Vector3i(-2, 5, 0): true,
+Vector3i(-2, 5, 2): true,
+Vector3i(-2, 6, 0): true,
+Vector3i(-2, 7, 0): true,
+Vector3i(-2, 8, 0): true,
+Vector3i(-2, 9, 0): true,
+Vector3i(-2, 10, 0): true,
+Vector3i(-2, 11, 0): true,
+Vector3i(-1, 0, -2): true,
+Vector3i(-1, 0, 0): true,
+Vector3i(-1, 1, -2): true,
+Vector3i(-1, 1, 0): true,
+Vector3i(-1, 2, -2): true,
+Vector3i(-1, 2, 0): true,
+Vector3i(-1, 3, -2): true,
+Vector3i(-1, 3, 2): true,
+Vector3i(-1, 4, -2): true,
+Vector3i(-1, 4, 2): true,
+Vector3i(-1, 5, -2): true,
+Vector3i(-1, 5, 2): true,
+Vector3i(-1, 6, -2): true,
+Vector3i(-1, 6, 2): true,
+Vector3i(-1, 7, -2): true,
+Vector3i(0, 0, -2): true,
+Vector3i(0, 0, -1): true,
+Vector3i(0, 0, 0): true,
+Vector3i(0, 0, 3): true,
+Vector3i(0, 1, -2): true,
+Vector3i(0, 1, -1): true,
+Vector3i(0, 1, 0): true,
+Vector3i(0, 1, 3): true,
+Vector3i(0, 2, -2): true,
+Vector3i(0, 2, -1): true,
+Vector3i(0, 2, 0): true,
+Vector3i(0, 2, 3): true,
+Vector3i(0, 3, 0): true,
+Vector3i(0, 3, 1): true,
+Vector3i(0, 3, 2): true,
+Vector3i(0, 4, -1): true,
+Vector3i(0, 4, 0): true,
+Vector3i(0, 4, 1): true,
+Vector3i(0, 4, 2): true,
+Vector3i(0, 5, -1): true,
+Vector3i(0, 5, 0): true,
+Vector3i(0, 5, 1): true,
+Vector3i(0, 5, 2): true,
+Vector3i(0, 6, -1): true,
+Vector3i(0, 6, 0): true,
+Vector3i(0, 6, 1): true,
+Vector3i(0, 6, 2): true,
+Vector3i(0, 7, -1): true,
+Vector3i(0, 7, 0): true,
+Vector3i(0, 7, 1): true,
+Vector3i(0, 7, 2): true,
+Vector3i(0, 8, -1): true,
+Vector3i(0, 8, 0): true,
+Vector3i(0, 8, 1): true,
+Vector3i(0, 9, -1): true,
+Vector3i(0, 9, 0): true,
+Vector3i(0, 9, 1): true,
+Vector3i(0, 10, -1): true,
+Vector3i(0, 10, 0): true,
+Vector3i(0, 10, 1): true,
+Vector3i(0, 11, -1): true,
+Vector3i(0, 11, 0): true,
+Vector3i(0, 11, 1): true,
+Vector3i(0, 12, -1): true,
+Vector3i(0, 12, 0): true,
+Vector3i(0, 13, -1): true,
+Vector3i(0, 13, 0): true,
+Vector3i(0, 14, -1): true,
+Vector3i(0, 14, 0): true,
+Vector3i(0, 15, -1): true,
+Vector3i(0, 15, 0): true,
+Vector3i(1, 0, -3): true,
+Vector3i(1, 0, -2): true,
+Vector3i(1, 0, 0): true,
+Vector3i(1, 0, 1): true,
+Vector3i(1, 0, 2): true,
+Vector3i(1, 0, 3): true,
+Vector3i(1, 1, -3): true,
+Vector3i(1, 1, -2): true,
+Vector3i(1, 1, 0): true,
+Vector3i(1, 1, 1): true,
+Vector3i(1, 1, 2): true,
+Vector3i(1, 1, 3): true,
+Vector3i(1, 2, -3): true,
+Vector3i(1, 2, -2): true,
+Vector3i(1, 2, 0): true,
+Vector3i(1, 2, 1): true,
+Vector3i(1, 2, 2): true,
+Vector3i(1, 2, 3): true,
+Vector3i(1, 3, 3): true,
+Vector3i(1, 4, -1): true,
+Vector3i(1, 5, -1): true,
+Vector3i(1, 6, -1): true,
+Vector3i(1, 7, -1): true,
+Vector3i(2, 0, -3): true,
+Vector3i(2, 0, -2): true,
+Vector3i(2, 1, -3): true,
+Vector3i(2, 1, -2): true,
+Vector3i(2, 2, -3): true,
+Vector3i(2, 2, -2): true,
+Vector3i(2, 4, 1): true,
+Vector3i(2, 4, 2): true,
+Vector3i(2, 5, -1): true,
+Vector3i(2, 5, 0): true,
+Vector3i(2, 5, 1): true,
+Vector3i(2, 5, 2): true,
+Vector3i(2, 6, -1): true,
+Vector3i(2, 6, 0): true,
+Vector3i(2, 6, 1): true,
+Vector3i(2, 6, 2): true,
+Vector3i(2, 7, -1): true,
+Vector3i(2, 7, 0): true,
+Vector3i(3, 3, 2): true,
+Vector3i(3, 4, 2): true,
+Vector3i(3, 5, 2): true,
+Vector3i(3, 6, 2): true,
+Vector3i(3, 7, 2): true,
+Vector3i(4, 3, 1): true,
+Vector3i(4, 3, 2): true,
+Vector3i(4, 4, 1): true,
+Vector3i(4, 4, 2): true,
+Vector3i(4, 5, 1): true,
+Vector3i(4, 5, 2): true,
+Vector3i(4, 6, 1): true
+},
+"covered": {
+Vector3i(-3, 1, 0): false,
+Vector3i(-3, 1, 1): false,
+Vector3i(-3, 2, 2): false,
+Vector3i(-2, 0, -2): true,
+Vector3i(-2, 1, 0): false,
+Vector3i(-2, 2, 2): true,
+Vector3i(-1, 0, -2): false,
+Vector3i(-1, 0, 0): true,
+Vector3i(-1, 3, 2): true,
+Vector3i(0, 0, -2): true,
+Vector3i(0, 0, -1): true,
+Vector3i(0, 0, 0): false,
+Vector3i(0, 0, 3): true,
+Vector3i(0, 3, 1): false,
+Vector3i(0, 3, 2): false,
+Vector3i(0, 4, -1): false,
+Vector3i(0, 4, 0): false,
+Vector3i(1, 0, -3): true,
+Vector3i(1, 0, -2): true,
+Vector3i(1, 0, 0): true,
+Vector3i(1, 0, 1): true,
+Vector3i(1, 0, 2): true,
+Vector3i(1, 0, 3): false,
+Vector3i(1, 4, -1): true,
+Vector3i(2, 0, -3): true,
+Vector3i(2, 0, -2): true,
+Vector3i(2, 4, 1): true,
+Vector3i(2, 4, 2): true,
+Vector3i(2, 5, -1): false,
+Vector3i(2, 5, 0): true,
+Vector3i(3, 3, 2): false,
+Vector3i(4, 3, 1): true,
+Vector3i(4, 3, 2): false
+},
+"lanes": Array[Dictionary]([{
+"anchor": Vector3i(2, 0, -2),
+"cells": Array[Vector3i]([Vector3i(2, 0, -3), Vector3i(1, 0, -3)]),
+"feature_kind": &"market_square",
+"transitions": Array[Dictionary]([{
+"from": Vector3i(2, 0, -2),
+"kind": 0,
+"to": Vector3i(2, 0, -3)
+}, {
+"from": Vector3i(2, 0, -3),
+"kind": 0,
+"to": Vector3i(1, 0, -3)
+}])
+}, {
+"anchor": Vector3i(4, 3, 2),
+"cells": Array[Vector3i]([Vector3i(4, 3, 1)]),
+"transitions": Array[Dictionary]([{
+"from": Vector3i(4, 3, 2),
+"kind": 0,
+"to": Vector3i(4, 3, 1)
+}])
+}, {
+"anchor": Vector3i(0, 0, -2),
+"cells": Array[Vector3i]([Vector3i(-1, 0, -2), Vector3i(-2, 0, -2)]),
+"feature_kind": &"secondary_gate",
+"transitions": Array[Dictionary]([{
+"from": Vector3i(0, 0, -2),
+"kind": 0,
+"to": Vector3i(-1, 0, -2)
+}, {
+"from": Vector3i(-1, 0, -2),
+"kind": 0,
+"to": Vector3i(-2, 0, -2)
+}])
+}, {
+"anchor": Vector3i(0, 0, 0),
+"cells": Array[Vector3i]([Vector3i(1, 0, 0), Vector3i(1, 0, 1), Vector3i(1, 0, 2), Vector3i(1, 0, 3), Vector3i(0, 0, 3)]),
+"feature_kind": &"secondary_gate",
+"transitions": Array[Dictionary]([{
+"from": Vector3i(0, 0, 0),
+"kind": 0,
+"to": Vector3i(1, 0, 0)
+}, {
+"from": Vector3i(1, 0, 0),
+"kind": 0,
+"to": Vector3i(1, 0, 1)
+}, {
+"from": Vector3i(1, 0, 1),
+"kind": 0,
+"to": Vector3i(1, 0, 2)
+}, {
+"from": Vector3i(1, 0, 2),
+"kind": 0,
+"to": Vector3i(1, 0, 3)
+}, {
+"from": Vector3i(1, 0, 3),
+"kind": 0,
+"to": Vector3i(0, 0, 3)
+}])
+}]),
+"loop_edges": Array[Dictionary]([{
+"from": Vector3i(1, 0, -3),
+"kind": 0,
+"to": Vector3i(1, 0, -2)
+}]),
+"portals": Array[Vector3i]([Vector3i(2, 0, -2), Vector3i(0, 0, 3), Vector3i(-2, 0, -2)]),
+"route": Array[Vector3i]([Vector3i(2, 0, -2), Vector3i(1, 0, -2), Vector3i(0, 0, -2), Vector3i(0, 0, -1), Vector3i(0, 0, 0), Vector3i(-1, 0, 0), Vector3i(-2, 1, 0), Vector3i(-3, 1, 0), Vector3i(-3, 1, 1), Vector3i(-3, 2, 2), Vector3i(-2, 2, 2), Vector3i(-1, 3, 2), Vector3i(0, 3, 2), Vector3i(0, 3, 1), Vector3i(0, 4, 0), Vector3i(0, 4, -1), Vector3i(1, 4, -1), Vector3i(2, 5, -1), Vector3i(2, 5, 0), Vector3i(2, 4, 1), Vector3i(2, 4, 2), Vector3i(3, 3, 2), Vector3i(4, 3, 2)]),
+"transitions": Array[Dictionary]([{
+"from": Vector3i(2, 0, -2),
+"kind": 0,
+"to": Vector3i(1, 0, -2)
+}, {
+"from": Vector3i(1, 0, -2),
+"kind": 0,
+"to": Vector3i(0, 0, -2)
+}, {
+"from": Vector3i(0, 0, -2),
+"kind": 0,
+"to": Vector3i(0, 0, -1)
+}, {
+"from": Vector3i(0, 0, -1),
+"kind": 0,
+"to": Vector3i(0, 0, 0)
+}, {
+"from": Vector3i(0, 0, 0),
+"kind": 1,
+"to": Vector3i(-3, 1, 0)
+}, {
+"from": Vector3i(-3, 1, 0),
+"kind": 2,
+"to": Vector3i(-3, 2, 2)
+}, {
+"from": Vector3i(-3, 2, 2),
+"kind": 1,
+"to": Vector3i(0, 3, 2)
+}, {
+"from": Vector3i(0, 3, 2),
+"kind": 1,
+"to": Vector3i(0, 4, -1)
+}, {
+"from": Vector3i(0, 4, -1),
+"kind": 2,
+"to": Vector3i(2, 5, -1)
+}, {
+"from": Vector3i(2, 5, -1),
+"kind": 1,
+"to": Vector3i(2, 4, 2)
+}, {
+"from": Vector3i(2, 4, 2),
+"kind": 2,
+"to": Vector3i(4, 3, 2)
+}])
+},
+"massif_columns": {
+Vector2i(-6, 2): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-6, 3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-5, 1): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-5, 2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-5, 3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-4, 0): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-4, 1): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-4, 2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-4, 3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-3, -1): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-3, 0): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-3, 1): {
+"base": 0,
+"terrace": 12,
+"top": 12
+},
+Vector2i(-3, 2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-3, 3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-2, -4): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-2, -3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-2, -2): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-2, -1): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-2, 0): {
+"base": 0,
+"terrace": 12,
+"top": 12
+},
+Vector2i(-2, 1): {
+"base": 0,
+"terrace": 12,
+"top": 12
+},
+Vector2i(-2, 2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-2, 3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-1, -6): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-1, -5): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-1, -4): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-1, -3): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-1, -2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-1, -1): {
+"base": 0,
+"terrace": 12,
+"top": 12
+},
+Vector2i(-1, 0): {
+"base": 0,
+"terrace": 16,
+"top": 16
+},
+Vector2i(-1, 1): {
+"base": 0,
+"terrace": 12,
+"top": 12
+},
+Vector2i(-1, 2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-1, 3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(0, -6): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(0, -5): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(0, -4): {
+"base": 0,
+"terrace": 12,
+"top": 12
+},
+Vector2i(0, -3): {
+"base": 0,
+"terrace": 12,
+"top": 12
+},
+Vector2i(0, -2): {
+"base": 0,
+"terrace": 12,
+"top": 12
+},
+Vector2i(0, -1): {
+"base": 0,
+"terrace": 16,
+"top": 16
+},
+Vector2i(0, 0): {
+"base": 0,
+"terrace": 16,
+"top": 16
+},
+Vector2i(0, 1): {
+"base": 0,
+"terrace": 12,
+"top": 12
+},
+Vector2i(0, 2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(0, 3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(1, -6): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(1, -5): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(1, -4): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(1, -3): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(1, -2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(1, -1): {
+"base": 0,
+"terrace": 12,
+"top": 12
+},
+Vector2i(1, 0): {
+"base": 0,
+"terrace": 16,
+"top": 16
+},
+Vector2i(1, 1): {
+"base": 0,
+"terrace": 12,
+"top": 12
+},
+Vector2i(1, 2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(1, 3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(2, -5): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(2, -4): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(2, -3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(2, -2): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(2, -1): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(2, 0): {
+"base": 0,
+"terrace": 12,
+"top": 12
+},
+Vector2i(2, 1): {
+"base": 0,
+"terrace": 12,
+"top": 12
+},
+Vector2i(2, 2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(2, 3): {
+"base": 0,
+"terrace": 6,
+"top": 6
+},
+Vector2i(2, 4): {
+"base": 0,
+"terrace": 2,
+"top": 2
+},
+Vector2i(3, -1): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(3, 0): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(3, 1): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(3, 2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(3, 3): {
+"base": 0,
+"terrace": 6,
+"top": 6
+},
+Vector2i(3, 4): {
+"base": 0,
+"terrace": 2,
+"top": 2
+},
+Vector2i(4, 0): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(4, 1): {
+"base": 0,
+"terrace": 6,
+"top": 6
+},
+Vector2i(4, 2): {
+"base": 0,
+"terrace": 6,
+"top": 6
+},
+Vector2i(4, 3): {
+"base": 0,
+"terrace": 6,
+"top": 6
+},
+Vector2i(4, 4): {
+"base": 0,
+"terrace": 2,
+"top": 2
+},
+Vector2i(5, 1): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(5, 2): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(5, 3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(5, 4): {
+"base": 0,
+"terrace": 2,
+"top": 2
+}
+},
+"massif_core": 16,
+"profile": &"standard",
+"source": {
+"audit": {},
+"block_thickness": {
+Vector2i(-6, 2): 2,
+Vector2i(-6, 3): 2,
+Vector2i(-5, 1): 2,
+Vector2i(-5, 2): 2,
+Vector2i(-5, 3): 2,
+Vector2i(-4, 0): 2,
+Vector2i(-4, 1): 2,
+Vector2i(-4, 2): 2,
+Vector2i(-4, 3): 2,
+Vector2i(-3, -1): 2,
+Vector2i(-3, 0): 2,
+Vector2i(-3, 1): 2,
+Vector2i(-3, 2): 2,
+Vector2i(-3, 3): 2,
+Vector2i(-2, -4): 2,
+Vector2i(-2, -3): 2,
+Vector2i(-2, -2): 2,
+Vector2i(-2, -1): 2,
+Vector2i(-2, 0): 2,
+Vector2i(-2, 1): 2,
+Vector2i(-2, 2): 2,
+Vector2i(-2, 3): 2,
+Vector2i(-1, -6): 2,
+Vector2i(-1, -5): 2,
+Vector2i(-1, -4): 2,
+Vector2i(-1, -3): 2,
+Vector2i(-1, -2): 2,
+Vector2i(-1, -1): 3,
+Vector2i(-1, 0): 2,
+Vector2i(-1, 1): 2,
+Vector2i(-1, 2): 2,
+Vector2i(-1, 3): 2,
+Vector2i(0, -6): 2,
+Vector2i(0, -5): 2,
+Vector2i(0, -4): 2,
+Vector2i(0, -3): 3,
+Vector2i(0, -2): 3,
+Vector2i(0, -1): 3,
+Vector2i(0, 0): 3,
+Vector2i(0, 1): 3,
+Vector2i(0, 2): 2,
+Vector2i(0, 3): 2,
+Vector2i(1, -6): 2,
+Vector2i(1, -5): 2,
+Vector2i(1, -4): 2,
+Vector2i(1, -3): 3,
+Vector2i(1, -2): 3,
+Vector2i(1, -1): 3,
+Vector2i(1, 0): 3,
+Vector2i(1, 1): 3,
+Vector2i(1, 2): 2,
+Vector2i(1, 3): 2,
+Vector2i(2, -5): 2,
+Vector2i(2, -4): 3,
+Vector2i(2, -3): 3,
+Vector2i(2, -2): 3,
+Vector2i(2, -1): 4,
+Vector2i(2, 0): 3,
+Vector2i(2, 1): 3,
+Vector2i(2, 2): 3,
+Vector2i(2, 3): 2,
+Vector2i(2, 4): 2,
+Vector2i(3, -1): 3,
+Vector2i(3, 0): 3,
+Vector2i(3, 1): 3,
+Vector2i(3, 2): 2,
+Vector2i(3, 3): 2,
+Vector2i(3, 4): 2,
+Vector2i(4, 0): 3,
+Vector2i(4, 1): 3,
+Vector2i(4, 2): 2,
+Vector2i(4, 3): 2,
+Vector2i(4, 4): 2,
+Vector2i(5, 1): 2,
+Vector2i(5, 2): 2,
+Vector2i(5, 3): 2,
+Vector2i(5, 4): 2
+},
+"feature_stamps": Array[Dictionary]([{
+"adaptation": &"fit",
+"cells": Array[Vector3i]([Vector3i(1, 0, -3), Vector3i(2, 0, -3), Vector3i(1, 0, -2), Vector3i(2, 0, -2)]),
+"kind": &"market_square"
+}]),
+"market_square_cells": Array[Vector3i]([Vector3i(1, 0, -3), Vector3i(2, 0, -3), Vector3i(1, 0, -2), Vector3i(2, 0, -2)]),
+"market_zone": Array[Vector3i]([Vector3i(2, 0, -2), Vector3i(1, 0, -2), Vector3i(0, 0, -2), Vector3i(0, 0, -1)]),
+"passage_kinds": {
+Vector3i(-3, 1, 0): &"spine",
+Vector3i(-3, 1, 1): &"spine",
+Vector3i(-3, 2, 2): &"spine",
+Vector3i(-2, 0, -2): &"alley",
+Vector3i(-2, 1, 0): &"spine",
+Vector3i(-2, 2, 2): &"spine",
+Vector3i(-1, 0, -2): &"alley",
+Vector3i(-1, 0, 0): &"spine",
+Vector3i(-1, 3, 2): &"spine",
+Vector3i(0, 0, -2): &"spine",
+Vector3i(0, 0, -1): &"spine",
+Vector3i(0, 0, 0): &"spine",
+Vector3i(0, 0, 3): &"alley",
+Vector3i(0, 3, 1): &"spine",
+Vector3i(0, 3, 2): &"spine",
+Vector3i(0, 4, -1): &"spine",
+Vector3i(0, 4, 0): &"spine",
+Vector3i(1, 0, -3): &"market",
+Vector3i(1, 0, -2): &"spine",
+Vector3i(1, 0, 0): &"alley",
+Vector3i(1, 0, 1): &"alley",
+Vector3i(1, 0, 2): &"alley",
+Vector3i(1, 0, 3): &"alley",
+Vector3i(1, 4, -1): &"spine",
+Vector3i(2, 0, -3): &"market",
+Vector3i(2, 0, -2): &"spine",
+Vector3i(2, 4, 1): &"spine",
+Vector3i(2, 4, 2): &"spine",
+Vector3i(2, 5, -1): &"spine",
+Vector3i(2, 5, 0): &"spine",
+Vector3i(3, 3, 2): &"spine",
+Vector3i(4, 3, 1): &"alley",
+Vector3i(4, 3, 2): &"spine"
+},
+"plots": Array[Dictionary]([]),
+"summit_cell": Vector3i(2, 5, -1)
+},
+"world_seed": 12
+}

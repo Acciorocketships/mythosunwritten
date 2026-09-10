@@ -7,6 +7,12 @@ extends Resource
 @export_file("*.tres", "*.res") var visual_path: String
 @export var tags: Array[StringName] = []
 @export var measured_aabb: AABB
+## Original surface removed by an explicitly open construction interface.
+## Zero height is intentional for a horizontal cap; empty means no interface.
+@export var omitted_face_bounds: AABB
+## Attribute-preserving source triangles for the uncovered part of an interface.
+## Packed CPU data only; material references remain stable catalogue IDs.
+@export var omitted_face_surfaces: Array[Dictionary] = []
 ## Lightweight XZ samples of the authored geometry that actually reaches its
 ## ground datum. Structural planners use this instead of treating roofs/eaves'
 ## full visual AABB as a foundation. Generated only for assets tagged building.

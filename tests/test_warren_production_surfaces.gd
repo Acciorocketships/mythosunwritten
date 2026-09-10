@@ -217,6 +217,25 @@ func test_borne_concave_court_corner_becomes_an_explicit_floor_claim() -> void:
 		"the closure must stay explicit so final fabric validation can audit it")
 
 
+func test_court_corner_cannot_claim_an_inhabited_room() -> void:
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	var spatial := WarrenVolumetricSolver.solve(2, {}, program,
+		WarrenVillageScaleProfile.for_id(&"grand"))
+	assert_not_null(spatial, WarrenVolumetricSolver.last_failure)
+	if spatial == null: return
+	var fabric := spatial.compiled_fabric_cache()
+	var inhabited := fabric.transformed_cells(&"inhabited")
+	var walked := SettlementFabricAssembler.walked_floor_cells(fabric.surface_plan)
+	var overlaps: Array[Vector3i] = []
+	for cell: Vector3i in inhabited:
+		if walked.has(cell): overlaps.append(cell)
+	assert_eq(overlaps, [] as Array[Vector3i],
+		"courtyard closure cannot turn a room interior into a public walkway")
+	assert_eq(SettlementFabricAssembler.maze_street_collider_pinches(
+		SettlementFabricAssembler.maze_module_footprints(fabric), walked),
+		[] as Array[Dictionary])
+
+
 func test_terrain_cap_is_the_only_top_and_has_no_buried_stone_soffit() -> void:
 	var surface := PublicRealmSurfacePlan.new(&"test.terrain-cap")
 	assert_true(surface.add_claim(Vector3i.UP,

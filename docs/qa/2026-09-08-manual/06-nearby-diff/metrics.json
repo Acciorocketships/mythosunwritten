@@ -1,0 +1,332 @@
+{
+  "03_door_edges_exact": {
+    "roi": [
+      864,
+      0,
+      1766,
+      702
+    ],
+    "mean_abs_rgb": 20.709212641460905,
+    "roi_mean_abs_rgb": 25.640590288964273,
+    "roi_changed_over_20_fraction": 0.5789319082002009
+  },
+  "03_door_edges_gameplay_camera": {
+    "roi": [
+      864,
+      0,
+      1766,
+      702
+    ],
+    "mean_abs_rgb": 20.737783886316873,
+    "roi_mean_abs_rgb": 25.683026849693515,
+    "roi_changed_over_20_fraction": 0.5789461216290485
+  },
+  "03_door_edges_jitter_0": {
+    "roi": [
+      864,
+      0,
+      1766,
+      702
+    ],
+    "mean_abs_rgb": 20.729950327932098,
+    "roi_mean_abs_rgb": 25.683213203538408,
+    "roi_changed_over_20_fraction": 0.5791466889027864
+  },
+  "03_door_edges_jitter_1": {
+    "roi": [
+      864,
+      0,
+      1766,
+      702
+    ],
+    "mean_abs_rgb": 20.72587287808642,
+    "roi_mean_abs_rgb": 25.679779870836782,
+    "roi_changed_over_20_fraction": 0.5782622977744929
+  },
+  "03_door_edges_near_left": {
+    "roi": [
+      864,
+      0,
+      1766,
+      702
+    ],
+    "mean_abs_rgb": 23.47160960005144,
+    "roi_mean_abs_rgb": 24.825829695748396,
+    "roi_changed_over_20_fraction": 0.5714619617058642
+  },
+  "03_door_edges_near_right": {
+    "roi": [
+      864,
+      0,
+      1766,
+      702
+    ],
+    "mean_abs_rgb": 19.001895736882716,
+    "roi_mean_abs_rgb": 25.505300029690275,
+    "roi_changed_over_20_fraction": 0.5690867398184472
+  },
+  "04_wall_end_exact": {
+    "roi": [
+      576,
+      0,
+      941,
+      540
+    ],
+    "mean_abs_rgb": 1.4083841306584362,
+    "roi_mean_abs_rgb": 2.05527989176391,
+    "roi_changed_over_20_fraction": 0.035078640284119736
+  },
+  "04_wall_end_gameplay_camera": {
+    "roi": [
+      576,
+      0,
+      941,
+      540
+    ],
+    "mean_abs_rgb": 1.4108170974794239,
+    "roi_mean_abs_rgb": 2.133003551496702,
+    "roi_changed_over_20_fraction": 0.03501775748351091
+  },
+  "04_wall_end_jitter_0": {
+    "roi": [
+      576,
+      0,
+      941,
+      540
+    ],
+    "mean_abs_rgb": 1.38711339377572,
+    "roi_mean_abs_rgb": 2.0510451547437847,
+    "roi_changed_over_20_fraction": 0.03486555048198884
+  },
+  "04_wall_end_jitter_1": {
+    "roi": [
+      576,
+      0,
+      941,
+      540
+    ],
+    "mean_abs_rgb": 1.265574363425926,
+    "roi_mean_abs_rgb": 1.9649230509047861,
+    "roi_changed_over_20_fraction": 0.03492643328259767
+  },
+  "04_wall_end_near_left": {
+    "roi": [
+      576,
+      0,
+      941,
+      540
+    ],
+    "mean_abs_rgb": 1.0408434606481483,
+    "roi_mean_abs_rgb": 2.10555386436665,
+    "roi_changed_over_20_fraction": 0.03122272957889396
+  },
+  "04_wall_end_near_right": {
+    "roi": [
+      576,
+      0,
+      941,
+      540
+    ],
+    "mean_abs_rgb": 1.3377380722736625,
+    "roi_mean_abs_rgb": 1.168251310671402,
+    "roi_changed_over_20_fraction": 0.006489091831557585
+  },
+  "07_wall_seams_exact": {
+    "roi": [
+      922,
+      0,
+      1382,
+      616
+    ],
+    "mean_abs_rgb": 26.268671875,
+    "roi_mean_abs_rgb": 23.698414266892527,
+    "roi_changed_over_20_fraction": 0.4707227555053642
+  },
+  "07_wall_seams_gameplay_camera": {
+    "roi": [
+      922,
+      0,
+      1382,
+      616
+    ],
+    "mean_abs_rgb": 26.260294495884775,
+    "roi_mean_abs_rgb": 23.742752446828533,
+    "roi_changed_over_20_fraction": 0.4705851214003388
+  },
+  "07_wall_seams_jitter_0": {
+    "roi": [
+      922,
+      0,
+      1382,
+      616
+    ],
+    "mean_abs_rgb": 26.269616608796298,
+    "roi_mean_abs_rgb": 23.7015845567476,
+    "roi_changed_over_20_fraction": 0.47076510446075664
+  },
+  "07_wall_seams_jitter_1": {
+    "roi": [
+      922,
+      0,
+      1382,
+      616
+    ],
+    "mean_abs_rgb": 26.354945826903293,
+    "roi_mean_abs_rgb": 23.67608695652174,
+    "roi_changed_over_20_fraction": 0.4710544889892716
+  },
+  "07_wall_seams_near_left": {
+    "roi": [
+      922,
+      0,
+      1382,
+      616
+    ],
+    "mean_abs_rgb": 27.977072080761317,
+    "roi_mean_abs_rgb": 22.942991247882553,
+    "roi_changed_over_20_fraction": 0.4593485319028797
+  },
+  "07_wall_seams_near_right": {
+    "roi": [
+      922,
+      0,
+      1382,
+      616
+    ],
+    "mean_abs_rgb": 24.878543595679012,
+    "roi_mean_abs_rgb": 27.703382034632035,
+    "roi_changed_over_20_fraction": 0.5006352343308865
+  },
+  "09_facade_return_exact": {
+    "roi": [
+      1037,
+      54,
+      1440,
+      713
+    ],
+    "mean_abs_rgb": 8.184260706018518,
+    "roi_mean_abs_rgb": 21.806076329401016,
+    "roi_changed_over_20_fraction": 0.5623905684603712
+  },
+  "09_facade_return_gameplay_camera": {
+    "roi": [
+      1037,
+      54,
+      1440,
+      713
+    ],
+    "mean_abs_rgb": 8.331787069187243,
+    "roi_mean_abs_rgb": 22.11792938896566,
+    "roi_changed_over_20_fraction": 0.5623905684603712
+  },
+  "09_facade_return_jitter_0": {
+    "roi": [
+      1037,
+      54,
+      1440,
+      713
+    ],
+    "mean_abs_rgb": 8.303486046810699,
+    "roi_mean_abs_rgb": 22.03789735807945,
+    "roi_changed_over_20_fraction": 0.5624357530960888
+  },
+  "09_facade_return_jitter_1": {
+    "roi": [
+      1037,
+      54,
+      1440,
+      713
+    ],
+    "mean_abs_rgb": 8.286108378343622,
+    "roi_mean_abs_rgb": 22.12286204503151,
+    "roi_changed_over_20_fraction": 0.563139880336023
+  },
+  "09_facade_return_near_left": {
+    "roi": [
+      1037,
+      54,
+      1440,
+      713
+    ],
+    "mean_abs_rgb": 8.197444058641976,
+    "roi_mean_abs_rgb": 19.65304600925532,
+    "roi_changed_over_20_fraction": 0.4881145581130896
+  },
+  "09_facade_return_near_right": {
+    "roi": [
+      1037,
+      54,
+      1440,
+      713
+    ],
+    "mean_abs_rgb": 7.83449765303498,
+    "roi_mean_abs_rgb": 23.074144221826437,
+    "roi_changed_over_20_fraction": 0.5885035225188928
+  },
+  "11_floor_caps_exact": {
+    "roi": [
+      269,
+      335,
+      1382,
+      734
+    ],
+    "mean_abs_rgb": 2.113787294238683,
+    "roi_mean_abs_rgb": 0.4481779471139664,
+    "roi_changed_over_20_fraction": 0.001781182516038524
+  },
+  "11_floor_caps_gameplay_camera": {
+    "roi": [
+      269,
+      335,
+      1382,
+      734
+    ],
+    "mean_abs_rgb": 2.099117316100823,
+    "roi_mean_abs_rgb": 0.409016701682328,
+    "roi_changed_over_20_fraction": 0.0019748382636735596
+  },
+  "11_floor_caps_jitter_0": {
+    "roi": [
+      269,
+      335,
+      1382,
+      734
+    ],
+    "mean_abs_rgb": 2.1023035622427986,
+    "roi_mean_abs_rgb": 0.376468274609855,
+    "roi_changed_over_20_fraction": 0.0013285685012171039
+  },
+  "11_floor_caps_jitter_1": {
+    "roi": [
+      269,
+      335,
+      1382,
+      734
+    ],
+    "mean_abs_rgb": 2.157445987654321,
+    "roi_mean_abs_rgb": 0.38280487081735487,
+    "roi_changed_over_20_fraction": 0.0016393184218407655
+  },
+  "11_floor_caps_near_left": {
+    "roi": [
+      269,
+      335,
+      1382,
+      734
+    ],
+    "mean_abs_rgb": 1.301667148919753,
+    "roi_mean_abs_rgb": 0.42987147413307153,
+    "roi_changed_over_20_fraction": 0.002179753066403655
+  },
+  "11_floor_caps_near_right": {
+    "roi": [
+      269,
+      335,
+      1382,
+      734
+    ],
+    "mean_abs_rgb": 10.322698849022634,
+    "roi_mean_abs_rgb": 0.5368107300296263,
+    "roi_changed_over_20_fraction": 0.000999804092441346
+  }
+}

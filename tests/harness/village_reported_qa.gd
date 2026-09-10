@@ -48,6 +48,7 @@ func _spots() -> Array:
 
 
 func _ready() -> void:
+	Engine.max_fps = 30
 	_read_args()
 	get_window().size = Vector2i(1920, 1080)
 	DirAccess.make_dir_recursive_absolute(_output_dir)
@@ -62,6 +63,7 @@ func _ready() -> void:
 	_streamer.GRASS_ENABLED = false
 	_character.position = Vector3(_spot[2]) + Vector3.UP * 4.0
 	_character.velocity = Vector3.ZERO
+	_character.set_physics_process(false)
 	add_child(world)
 	_run.call_deferred()
 
@@ -123,6 +125,7 @@ func _wait_for_site() -> bool:
 	var started := Time.get_ticks_msec()
 	var idle_since := -1
 	while true:
+		_character.global_position = Vector3(_spot[2])
 		var elapsed := float(Time.get_ticks_msec() - started) / 1000.0
 		if elapsed >= WAIT_HARD_TIMEOUT_SECONDS:
 			push_error("Village visual QA timed out; missing=%s" % _missing(wanted))

@@ -8,6 +8,8 @@ var stable_id: StringName
 var units: Array[FabricUnit] = []
 var public_realm: SectionalPublicRealmPlan
 var surface_plan: PublicRealmSurfacePlan
+var facade_corner_placements: Array[Dictionary] = []
+var wall_cap_surfaces: Array[Dictionary] = []
 var volume_plan: FabricVolumePlan
 var solid_void_plan: FabricSolidVoidPlan
 var embedding_plan: StaggeredFabricEmbeddingPlan
@@ -51,6 +53,7 @@ var world_seed: int = 0
 ## resources: optional dressing is accepted against the finished town's exact
 ## module/skin envelopes before a payload is produced.
 var asset_visual_bounds: Dictionary = {}
+var asset_wall_interfaces: Dictionary = {}
 var audit: Dictionary = {}
 ## Derived at seal time from exact modular roof-run seams. Structural roof
 ## units remain the occupancy authority; this render construction plan removes
@@ -105,7 +108,7 @@ func register_recipe(recipe: FabricRecipe) -> bool:
 	return true
 
 
-func set_asset_visual_bounds(bounds: Dictionary) -> bool:
+func set_asset_visual_bounds(bounds: Dictionary, interfaces: Dictionary = {}) -> bool:
 	if _sealed or not asset_visual_bounds.is_empty() or bounds.is_empty():
 		return false
 	for asset_value: Variant in bounds.keys():
@@ -115,6 +118,7 @@ func set_asset_visual_bounds(bounds: Dictionary) -> bool:
 				or not box.position.is_finite() or not box.size.is_finite():
 			return false
 	asset_visual_bounds = bounds.duplicate()
+	asset_wall_interfaces = interfaces.duplicate()
 	return true
 
 
@@ -239,6 +243,25 @@ func set_embedding_plan(plan_value: StaggeredFabricEmbeddingPlan) -> bool:
 	return true
 
 
+func append_constructed_unit(unit_value: FabricUnit) -> void:
+	## Index an authored placement without using an audit as an admission gate.
+	## validate() reconstructs these claims independently in the test suite.
+	var unit_recipe := _recipes[unit_value.recipe_id] as FabricRecipe
+	unit_value.bounds = unit_value.transform() * unit_recipe.local_bounds
+	for layer: Array in [[unit_recipe.solid_cells, _solid_owner],
+			[unit_recipe.walk_cells, _walk_owner],
+			[unit_recipe.headroom_cells, _headroom_owner]]:
+		var owner := layer[1] as Dictionary
+		for local_cell: Vector3i in layer[0]:
+			owner[_cell_key(FabricRecipe.transform_cell(local_cell,
+				unit_value.lattice_origin, unit_value.yaw_quarters))] = unit_value.stable_id
+	units.append(unit_value)
+	_clearance_bounds.append(unit_value.transform() * unit_recipe.local_clearance_bounds)
+	_by_id[unit_value.stable_id] = unit_value
+	_module_footprints_built = false
+	_module_footprints = {}
+
+
 func add_unit(unit: FabricUnit) -> bool:
 	last_rejection = ""
 	if _sealed:
@@ -286,7 +309,8 @@ func add_unit(unit: FabricUnit) -> bool:
 			if _units_declare_connection(unit, existing):
 				if _connected_roof_seam_is_measured(unit, recipe,
 						clearance_bounds, existing, existing_recipe,
-						existing_clearance):
+						existing_clearance) or _connected_parts_have_measured_seams(
+						unit, recipe, existing, existing_recipe):
 					continue
 				last_rejection = ("roof envelope of %s (%s at %s/r%d) drives " \
 					+ "into connected unit %s (%s) past its measured seam: " \
@@ -296,6 +320,8 @@ func add_unit(unit: FabricUnit) -> bool:
 							existing_clearance)]
 				_rollback_claims(journal)
 				return false
+			if not _visual_placements_overlap(unit, recipe, existing, existing_recipe):
+				continue
 			if DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP \
 					and _is_corner_nick(clearance_bounds, existing_clearance):
 				continue
@@ -335,107 +361,303 @@ func _rollback_claims(journal: Array[Array]) -> void:
 
 
 func seal(p_audit: Dictionary = {}) -> bool:
+	## Checked entry for fixtures and explicit validation callers.
+	if not validate():
+		return false
+	if not finish_construction(p_audit):
+		return false
+	var conflict := _continuous_roof_realization_conflict()
+	if not conflict.is_empty():
+		last_rejection = "continuous roof realization intersects finished fabric: %s" % conflict
+		_sealed = false
+		return false
+	return true
+
+
+func finish_construction(p_audit: Dictionary = {}) -> bool:
+	## Production freezes the construction it has authored. The independent
+	## validate() and roof-realization proof belong to tests, not town admission.
 	if _sealed or stable_id.is_empty() or units.is_empty():
 		return false
 	audit = p_audit.duplicate(true)
-	if not validate():
-		return false
 	continuous_roof_plan = FabricContinuousRoofPlan.compile(self)
-	if continuous_roof_plan == null or not continuous_roof_plan.is_valid():
-		last_rejection = "continuous roof plan rejected: %s" % (
-			continuous_roof_plan.last_rejection if continuous_roof_plan != null \
-			else "missing compiler result")
-		continuous_roof_plan = null
+	if continuous_roof_plan == null:
 		return false
 	_resolve_continuous_roof_endpoint_clearance()
-	var roof_realization_conflict := _continuous_roof_realization_conflict()
-	if not roof_realization_conflict.is_empty():
-		last_rejection = "continuous roof realization intersects finished fabric: %s" \
-			% roof_realization_conflict
-		continuous_roof_plan = null
-		return false
-	var roof_audit := continuous_roof_plan.audit()
-	for key_value: Variant in roof_audit.keys():
-		audit[key_value] = roof_audit[key_value]
+	_assign_facade_corner_joints()
+	_assign_facade_run_joints()
+	_assign_wall_cap_owners()
+	audit.merge(continuous_roof_plan.audit(), true)
 	_module_footprints_built = false
 	_module_footprints = {}
 	_sealed = true
 	return true
 
 
+
+func floor_surface_bounds() -> Array[AABB]:
+	var floors: Array[AABB] = []
+	for placement: Dictionary in expanded_placements():
+		if placement.asset_id == SettlementFabricProgram.FLOOR: floors.append(placement.bounds)
+	return floors
+
+
+func floor_owned_cells() -> Dictionary:
+	var out: Dictionary = {}
+	var pitch := FabricRecipe.CELL_SIZE
+	for floor_box: AABB in floor_surface_bounds():
+		var band := roundi(floor_box.end.y/pitch)
+		for x in range(ceili((floor_box.position.x+pitch*0.5)/pitch),floori((floor_box.end.x-pitch*0.5)/pitch)+1):
+			for z in range(ceili((floor_box.position.z+pitch*0.5)/pitch),floori((floor_box.end.z-pitch*0.5)/pitch)+1):
+				out[Vector3i(x,band,z)] = true
+	return out
+
+
+func inhabited_room_cells() -> Dictionary:
+	var occupied: Dictionary = {}
+	for room: FabricUnit in units:
+		var r := recipe(room.recipe_id)
+		if not r.has_tag(&"room") or not r.has_tag(&"generated_building"): continue
+		for local: Vector3i in r.solid_cells + r.headroom_cells:
+			occupied[FabricRecipe.transform_cell(local,room.lattice_origin,room.yaw_quarters)] = room.stable_id
+	return occupied
+
+
+func _assign_facade_corner_joints() -> void:
+	# A diagonal contact is shared by two room shells. Their independent end
+	# cuts cannot own this junction: the common timber member owns it, and the
+	# four incident walls retain their square ends into that member.
+	facade_corner_placements.clear()
+	var occupied := inhabited_room_cells()
+	var vertices: Dictionary = {}
+	for room: FabricUnit in units: room.square_corner_end_masks.clear()
+	for cell: Vector3i in occupied:
+		for dx in [-1,1]:
+			for dz in [-1,1]:
+				vertices[Vector3i(cell.x*2+dx,cell.y,cell.z*2+dz)] = true
+	var joints: Dictionary = {}
+	for key: Vector3i in vertices:
+		var x := int((key.x-1)/2)
+		var z := int((key.z-1)/2)
+		var owners: Array[StringName] = []
+		for offset: Vector2i in [Vector2i.ZERO,Vector2i.RIGHT,Vector2i.ONE,Vector2i.DOWN]:
+			owners.append(occupied.get(Vector3i(x+offset.x,key.y,z+offset.y), &""))
+		if owners[0] != &"" and owners[2] != &"" and owners[0] != owners[2] \
+				and owners[1] == &"" and owners[3] == &"" \
+				or owners[1] != &"" and owners[3] != &"" and owners[1] != owners[3] \
+				and owners[0] == &"" and owners[2] == &"":
+			joints[key] = Vector3.ZERO
+		var count := 0
+		var distinct: Dictionary = {}
+		var missing := Vector3.ZERO
+		var corners: Array[Vector3] = [Vector3(-1,0,-1),Vector3(1,0,-1),Vector3(1,0,1),Vector3(-1,0,1)]
+		for index in 4:
+			if owners[index] == &"": missing = corners[index]
+			else:
+				count += 1
+				distinct[owners[index]] = true
+		if count == 3 and distinct.size() > 1:
+			# At a concave vertex the return belongs inside the occupied
+			# quadrant opposite the public corner, not across its walkway.
+			joints[key] = -missing
+	if joints.is_empty(): return
+	var end_facts: Dictionary = {}
+	for room: FabricUnit in units:
+		var r := recipe(room.recipe_id)
+		if not r.has_tag(&"room") or not r.has_tag(&"generated_building"): continue
+		for panel: Dictionary in r.placements:
+			if room.suppressed_placement_ids.has(StringName(panel.id)): continue
+			var finish: Dictionary = r.facade_end_owners.get(StringName(panel.id),{})
+			var base := StringName(finish.get("base_asset",panel.asset_id))
+			if not String(base).begins_with("sfv.fabric.wall."): continue
+			var local_pose: Transform3D = panel.transform
+			var base_box: AABB = asset_visual_bounds[base]
+			var pose := room.transform() * local_pose
+			var mask := 0
+			for end in 2:
+				var p := pose * Vector3(-1.5 if end==0 else 1.5,0,base_box.end.z)
+				var key := Vector3i(roundi(p.x/FabricRecipe.CELL_SIZE*2),roundi(p.y/FabricRecipe.CELL_SIZE),roundi(p.z/FabricRecipe.CELL_SIZE*2))
+				var back := pose * Vector3(-1.5 if end==0 else 1.5,0,base_box.position.z)
+				for band in 2:
+					var band_key := key + Vector3i.UP * band
+					if not joints.has(band_key): continue
+					if not end_facts.has(band_key): end_facts[band_key] = []
+					(end_facts[band_key] as Array).append({"back":back,"normal":pose.basis.z.normalized(),"asset":base,"depth":base_box.size.z})
+				if joints.has(key) and joints.has(key+Vector3i.UP) \
+						and (joints[key] as Vector3).is_zero_approx(): mask |= 1 << end
+			if mask != 0 and not finish.is_empty(): room.square_corner_end_masks[StringName(panel.id)] = mask
+	var keys := joints.keys()
+	keys.sort_custom(func(a:Vector3i,b:Vector3i)->bool:
+		return a.y<b.y if a.y!=b.y else a.z<b.z if a.z!=b.z else a.x<b.x)
+	var consumed: Dictionary = {}
+	for key: Vector3i in keys:
+		if consumed.has(key): continue
+		var inward: Vector3 = joints[key]
+		var height := FabricRecipe.CELL_SIZE
+		if joints.has(key+Vector3i.UP) and joints[key+Vector3i.UP] == inward:
+			height *= 2
+			consumed[key+Vector3i.UP] = true
+		var asset := SettlementFabricAssembler.TIMBER_SUPPORT
+		var source_box: AABB = asset_visual_bounds[asset]
+		var width := SettlementFabricAssembler.STONE_CAP_HALF_DEPTH * 2.0
+		var position := Vector3(key.x*FabricRecipe.CELL_SIZE*0.5,key.y*FabricRecipe.CELL_SIZE,key.z*FabricRecipe.CELL_SIZE*0.5)
+		var scale := Vector3(width/source_box.size.x,height/source_box.size.y,width/source_box.size.z)
+		var pose := Transform3D(Basis.from_scale(scale), position-Vector3(source_box.get_center().x,source_box.position.y,source_box.get_center().z)*scale)
+		if not inward.is_zero_approx():
+			var x_end: Dictionary = {}
+			var z_end: Dictionary = {}
+			for fact: Dictionary in end_facts.get(key,[]):
+				var normal: Vector3 = fact.normal
+				if normal.dot(-inward) < 0.5: continue
+				if absf(normal.x)>0.9: x_end = fact
+				if absf(normal.z)>0.9: z_end = fact
+			# A continuous panel already covers a half-module contact. Only
+			# two terminated, perpendicular runs require a separate return.
+			if x_end.is_empty() or z_end.is_empty(): continue
+			var a: Vector3 = x_end.back
+			var b: Vector3 = z_end.back
+			a.y = position.y
+			b.y = position.y
+			var tangent := (b-a).normalized()
+			var normal := tangent.cross(Vector3.UP)
+			if normal.dot(-inward)<0:
+				var swap := a
+				a = b
+				b = swap
+				tangent = -tangent
+				normal = -normal
+			asset = SettlementFabricProgram.ROCK_PLAIN if String(x_end.asset).contains(".rock.") and String(z_end.asset).contains(".rock.") else SettlementFabricProgram.WOOD_PLAIN
+			source_box = asset_visual_bounds[asset]
+			# At an angled intersection both slabs contribute half their
+			# thickness to the overlap, projected along the joining run.
+			# Ignoring the return slab leaves a view-dependent hairline.
+			var embed := maxf((float(x_end.depth)+source_box.size.z)*0.5/absf(tangent.dot(x_end.normal)),
+				(float(z_end.depth)+source_box.size.z)*0.5/absf(tangent.dot(z_end.normal)))
+			var length := a.distance_to(b)+2*embed
+			scale = Vector3(length/source_box.size.x,height/source_box.size.y,1)
+			var basis := Basis(tangent*scale.x,Vector3.UP*scale.y,normal*scale.z)
+			# The outermost authored point meets the rear reveal line. The
+			# complete wall thickness belongs behind it, inside private mass.
+			pose = Transform3D(basis,(a+b)*0.5-basis*Vector3(source_box.get_center().x,source_box.position.y,source_box.end.z))
+
+		var id := StringName("facade-joint/%d/%d/%d" % [key.x,key.y,key.z])
+		facade_corner_placements.append({"stable_id":id,"placement_id":id,"asset_id":asset,
+			"transform":pose,"bounds":pose*source_box,"collision_pieces":1})
+
+
+func _assign_facade_run_joints() -> void:
+	# Neighboring room panels can have different authored projection depths.
+	# Their inline seam has one recessed timber owner, inside the unchanged
+	# room envelope. Perpendicular corners retain their separate end contracts.
+	var ends := {}
+	for unit: FabricUnit in units:
+		var r := recipe(unit.recipe_id)
+		if not r.has_tag(&"room") or not r.has_tag(&"generated_building"): continue
+		for panel: Dictionary in r.placements:
+			if unit.suppressed_placement_ids.has(StringName(panel.id)): continue
+			var finish: Dictionary = r.facade_end_owners.get(StringName(panel.id),{})
+			var asset := StringName(finish.get("base_asset",panel.asset_id))
+			if not String(asset).begins_with("sfv.fabric.wall.wood."): continue
+			var box: AABB = asset_visual_bounds[asset]
+			if absf(box.size.x-3.0)>0.01 or absf(box.end.y-3.0)>0.001: continue
+			var pose := unit.transform()*(panel.transform as Transform3D)
+			for end in 2:
+				var point := pose*Vector3(-1.5 if end==0 else 1.5,0,box.end.z)
+				var normal := pose.basis.z.normalized()
+				var key := "%d/%d/%d/%d/%d" % [roundi(point.x*1000),roundi(point.y*1000),roundi(point.z*1000),roundi(normal.x),roundi(normal.z)]
+				if not ends.has(key): ends[key]=[]
+				ends[key].append({"point":point,"normal":normal,"tangent":pose.basis.x.normalized(),
+					"unit":unit.stable_id,"end":end,"depth":box.size.z})
+	var source_asset := SettlementFabricAssembler.TIMBER_SUPPORT
+	var source_box: AABB = asset_visual_bounds[source_asset]
+	for key: String in ends:
+		var pair: Array = ends[key]
+		if pair.size()!=2 or pair[0].unit==pair[1].unit or pair[0].end==pair[1].end: continue
+		if absf(float(pair[0].depth)-float(pair[1].depth))<0.001: continue
+		var first: Dictionary = pair[0]
+		var depth := minf(0.18,minf(pair[0].depth,pair[1].depth))
+		var basis := Basis(first.tangent*0.12/source_box.size.x,
+			Vector3.UP*3.0/source_box.size.y,first.normal*depth/source_box.size.z)
+		var pose := Transform3D(basis,first.point-first.normal*0.02-basis*
+			Vector3(source_box.get_center().x,source_box.position.y,source_box.end.z))
+		var id := StringName("facade-run-joint/%s" % key)
+		facade_corner_placements.append({"stable_id":id,"placement_id":id,"asset_id":source_asset,
+			"transform":pose,"bounds":pose*source_box,"collision_pieces":1})
+
+
+func _assign_wall_cap_owners() -> void:
+	## Surface ownership is construction data, never a town acceptance test.
+	## The upper floor owns its exact rectangle; the remaining source cap owns
+	## the exposed portion. A roof shoulder without a floor retains its full cap.
+	wall_cap_surfaces.clear()
+	var floors_by_height: Dictionary = {}
+	for bounds: AABB in floor_surface_bounds():
+		var band := roundi(bounds.end.y * 10000.0)
+		if not floors_by_height.has(band):
+			floors_by_height[band] = []
+		(floors_by_height[band] as Array).append(bounds)
+	for unit_value: FabricUnit in units:
+		unit_value.floor_owned_cap_ids.clear()
+		var unit_recipe := recipe(unit_value.recipe_id)
+		for placement: Dictionary in unit_recipe.placements:
+			var placement_id := StringName(placement.id)
+			if unit_value.suppressed_placement_ids.has(placement_id):
+				continue
+			var asset := unit_recipe.realized_facade_asset(placement,
+				unit_value.suppressed_placement_ids, false,
+				int(unit_value.square_corner_end_masks.get(placement_id, 0)))
+			if not unit_recipe.facade_top_bounds.has(asset):
+				continue
+			var cap: AABB = unit_recipe.facade_top_bounds[asset]
+			if cap.size.x <= 0.0 or cap.size.z <= 0.0:
+				continue
+			var pose := unit_value.transform() * (placement.transform as Transform3D)
+			cap = pose * cap
+			var covered: Array[Rect2] = []
+			var cap_rect := Rect2(Vector2(cap.position.x, cap.position.z),
+				Vector2(cap.size.x, cap.size.z))
+			for floor_bounds: AABB in floors_by_height.get(
+					roundi((pose * Vector3(0,3.0,0)).y * 10000.0), []):
+				var floor_rect := Rect2(Vector2(floor_bounds.position.x, floor_bounds.position.z),
+					Vector2(floor_bounds.size.x, floor_bounds.size.z))
+				if cap_rect.intersects(floor_rect): covered.append(floor_rect)
+			if covered.is_empty(): continue
+			unit_value.floor_owned_cap_ids.append(placement_id)
+			for source: Dictionary in unit_recipe.facade_top_surfaces[asset]:
+				var mesh := FabricSurfaceOwnership.uncovered_surface(source, pose, covered, asset,
+					StringName("%s/%s/cap.%d" % [unit_value.stable_id, placement_id,
+						int(source.material_surface)]))
+				if not (mesh.vertices as PackedVector3Array).is_empty():
+					wall_cap_surfaces.append(mesh)
+
+
 func _resolve_continuous_roof_endpoint_clearance() -> void:
-	## A maximal roof run keeps its complete authored exterior gables unless one
-	## intersects unrelated finished fabric. Endpoint sections alone carry a baked
-	## flush alternative ending at the semantic building plane. Selecting that
-	## strict-subset envelope is monotone: it can remove an overlap, never create
-	## one. This pass therefore converges without mesh offsets or seed-specific
-	## repairs, while `_continuous_roof_realization_conflict` remains the final
-	## unconditional proof.
+	## Derive endpoint roles once from the complete construction envelope.
+	## Occupied exterior space requires the authored flush end; open space gets
+	## the full eave. Both sides of a shared envelope decide simultaneously from
+	## the original layout. There is no trial placement, recheck, or retry.
+	## Tests independently prove the finished geometry after these choices.
 	if continuous_roof_plan == null:
 		return
 	var realized := continuous_roof_plan.synthetic_placements
+	var flush_ids: Dictionary = {}
 	for synthetic: Dictionary in realized:
-		var alternative := synthetic.get("flush_alternative", {}) as Dictionary
-		if alternative.is_empty():
+		if (synthetic.get("flush_alternative", {}) as Dictionary).is_empty():
 			continue
-		var current_bounds := synthetic.get("bounds", AABB()) as AABB
-		var alternative_bounds := alternative.get("bounds", AABB()) as AABB
-		if _continuous_roof_section_conflicts_with_finished_fabric(
-				synthetic, current_bounds) \
-				and not _continuous_roof_section_conflicts_with_finished_fabric(
-					synthetic, alternative_bounds):
+		var bounds := synthetic.get("bounds", AABB()) as AABB
+		if _continuous_roof_section_conflicts_with_finished_fabric(synthetic, bounds):
+			flush_ids[synthetic.stable_id] = true
+		for neighbor: Dictionary in realized:
+			if neighbor.stable_id == synthetic.stable_id:
+				continue
+			var neighbor_bounds := neighbor.get("bounds", AABB()) as AABB
+			if _aabb_overlaps_volume(bounds, neighbor_bounds) \
+					and not _continuous_components_have_measured_roof_junction(
+						synthetic, bounds, neighbor, neighbor_bounds):
+				flush_ids[synthetic.stable_id] = true
+	for synthetic: Dictionary in realized:
+		if flush_ids.has(synthetic.stable_id):
 			continuous_roof_plan.select_flush_alternative(synthetic)
-	# Endpoint alternatives are strict subsets, so resolving one synthetic pair
-	# cannot invalidate a pair already visited. Restart after each selection only
-	# to keep the preference for a complete eave deterministic.
-	var changed := true
-	while changed:
-		changed = false
-		for left_index in realized.size():
-			var left := realized[left_index] as Dictionary
-			var left_bounds := left.get("bounds", AABB()) as AABB
-			for right_index in range(left_index + 1, realized.size()):
-				var right := realized[right_index] as Dictionary
-				var right_bounds := right.get("bounds", AABB()) as AABB
-				if not _aabb_overlaps_volume(left_bounds, right_bounds) \
-						or _continuous_components_have_measured_roof_junction(
-							left, left_bounds, right, right_bounds):
-					continue
-				var left_alternative := left.get(
-					"flush_alternative", {}) as Dictionary
-				var right_alternative := right.get(
-					"flush_alternative", {}) as Dictionary
-				var left_alt_bounds := left_alternative.get(
-					"bounds", AABB()) as AABB
-				var right_alt_bounds := right_alternative.get(
-					"bounds", AABB()) as AABB
-				if left_alt_bounds.has_volume() \
-						and not _continuous_roof_section_conflicts_with_finished_fabric(
-							left, left_alt_bounds) \
-						and not _aabb_overlaps_volume(left_alt_bounds, right_bounds):
-					continuous_roof_plan.select_flush_alternative(left)
-					changed = true
-					break
-				if right_alt_bounds.has_volume() \
-						and not _continuous_roof_section_conflicts_with_finished_fabric(
-							right, right_alt_bounds) \
-						and not _aabb_overlaps_volume(left_bounds, right_alt_bounds):
-					continuous_roof_plan.select_flush_alternative(right)
-					changed = true
-					break
-				if left_alt_bounds.has_volume() and right_alt_bounds.has_volume() \
-						and not _continuous_roof_section_conflicts_with_finished_fabric(
-							left, left_alt_bounds) \
-						and not _continuous_roof_section_conflicts_with_finished_fabric(
-							right, right_alt_bounds) \
-						and not _aabb_overlaps_volume(
-							left_alt_bounds, right_alt_bounds):
-					continuous_roof_plan.select_flush_alternative(left)
-					continuous_roof_plan.select_flush_alternative(right)
-					changed = true
-					break
-			if changed:
-				break
 
 
 func _continuous_roof_section_conflicts_with_finished_fabric(
@@ -481,7 +703,7 @@ func _continuous_roof_section_conflicts_with_finished_fabric(
 			if _aabb_overlaps_volume(roof_bounds, other_bounds) \
 					and not _continuous_component_has_measured_roof_junction(
 						component_members, roof_bounds, unit_value,
-						unit_recipe, other_bounds):
+						unit_recipe, other_bounds, StringName(placement.id)):
 				return true
 	return false
 
@@ -568,7 +790,7 @@ func _continuous_roof_realization_conflict() -> String:
 					# undeclared neighbors remain unconditional hard conflicts.
 					if _continuous_component_has_measured_roof_junction(
 							component_members, roof_bounds, unit_value,
-							unit_recipe, other_bounds):
+							unit_recipe, other_bounds, StringName(placement.id)):
 						continue
 					return "%s overlaps %s" % [
 						StringName(synthetic.stable_id), stable_placement_id]
@@ -590,8 +812,9 @@ func _continuous_roof_realization_conflict() -> String:
 func _continuous_component_has_measured_roof_junction(
 		component_members: Dictionary, realized_bounds: AABB,
 		other: FabricUnit, other_recipe: FabricRecipe,
-		other_bounds: AABB) -> bool:
-	if not _contains_pitched_roof(other_recipe):
+		other_bounds: AABB, other_placement_id: StringName = &"") -> bool:
+	if not _contains_pitched_roof(other_recipe) \
+			and not other_recipe.roof_flashing_placement_ids.has(other_placement_id):
 		return false
 	for member_id_value: Variant in component_members.keys():
 		var member_id := StringName(member_id_value)
@@ -692,12 +915,16 @@ func validate() -> bool:
 				continue
 			if _units_declare_connection(left, right):
 				if _connected_roof_seam_is_measured(left, left_recipe,
-						left_clearance, right, right_recipe, right_clearance):
+						left_clearance, right, right_recipe, right_clearance) \
+						or _connected_parts_have_measured_seams(
+							left, left_recipe, right, right_recipe):
 					continue
 				last_rejection = ("connected roof envelopes intersect past " \
 					+ "their measured seam: %s and %s") % [left.stable_id,
 						right.stable_id]
 				return false
+			if not _visual_placements_overlap(left, left_recipe, right, right_recipe):
+				continue
 			if DIAGNOSTIC_ALLOW_CORNER_ENVELOPE_OVERLAP \
 					and _is_corner_nick(left_clearance, right_clearance):
 				continue
@@ -755,7 +982,12 @@ func asset_ids() -> Array[StringName]:
 			if unit_value.suppressed_placement_ids.has(
 					StringName(placement.id)):
 				continue
-			unique[StringName(placement.asset_id)] = true
+			unique[unit_recipe.realized_facade_asset(placement,
+				unit_value.suppressed_placement_ids,
+				unit_value.floor_owned_cap_ids.has(StringName(placement.id)),
+					int(unit_value.square_corner_end_masks.get(StringName(placement.id), 0)))] = true
+	for placement: Dictionary in facade_corner_placements:
+		unique[StringName(placement.asset_id)] = true
 	if continuous_roof_plan != null:
 		for asset_value: Variant in continuous_roof_plan.asset_overrides.values():
 			unique[StringName(asset_value)] = true
@@ -796,20 +1028,26 @@ func expanded_placements() -> Array[Dictionary]:
 			if unit_value.suppressed_placement_ids.has(
 					StringName(placement.id)):
 				continue
+			var finish: Dictionary = unit_recipe.facade_end_owners.get(StringName(placement.id), {})
 			out.append({
 				"stable_id": StringName("%s/%s" % [unit_value.stable_id,
 					StringName(placement.id)]),
 				"placement_id": StringName(placement.id),
-				"asset_id": StringName(placement.asset_id),
+				"asset_id": unit_recipe.realized_facade_asset(placement,
+					unit_value.suppressed_placement_ids,
+					unit_value.floor_owned_cap_ids.has(StringName(placement.id)),
+					int(unit_value.square_corner_end_masks.get(StringName(placement.id), 0))),
 				"transform": unit_transform *
 					(placement.transform as Transform3D),
-				"bounds": unit_transform * unit_recipe.placement_bounds[index] \
+				"bounds": unit_transform * (finish.bounds as AABB) if not finish.is_empty() \
+					else unit_transform * unit_recipe.placement_bounds[index] \
 					if index < unit_recipe.placement_bounds.size() else AABB(),
 				"collision_pieces": \
 					unit_recipe.placement_collision_pieces[index] \
 					if index < unit_recipe.placement_collision_pieces.size() \
 					else 0,
 			})
+	out.append_array(facade_corner_placements)
 	if continuous_roof_plan != null:
 		return continuous_roof_plan.apply_to(out)
 	return out
@@ -908,9 +1146,52 @@ func visual_envelope_conflicts() -> Array[Dictionary]:
 					or _units_declare_connection(left, right):
 				continue
 			var right_bounds := right.transform() * right_recipe.local_clearance_bounds
-			if _aabb_overlaps_volume(left_bounds, right_bounds):
+			if _aabb_overlaps_volume(left_bounds, right_bounds) \
+					and _visual_placements_overlap(left, left_recipe, right, right_recipe):
 				conflicts.append({"left": left.stable_id, "right": right.stable_id})
 	return conflicts
+
+
+static func _construction_parts(unit: FabricUnit, recipe: FabricRecipe) -> Array[AABB]:
+	var bounds: Array[AABB] = []
+	var pose := unit.transform()
+	for i in recipe.placements.size():
+		var id := StringName(recipe.placements[i].id)
+		if unit.suppressed_placement_ids.has(id):
+			continue
+		var finish: Dictionary = recipe.facade_end_owners.get(id, {})
+		bounds.append(pose * (finish.bounds as AABB
+			if not finish.is_empty() else recipe.placement_bounds[i]))
+	return bounds
+
+
+static func _visual_placements_overlap(left: FabricUnit, left_recipe: FabricRecipe,
+		right: FabricUnit, right_recipe: FabricRecipe) -> bool:
+	# The combined envelope includes empty space. Detailed construction owns
+	# actual unsuppressed modules. Joined roof profiles retain their separate
+	# conservative construction reservation.
+	var left_parts := _construction_parts(left, left_recipe)
+	var right_parts := _construction_parts(right, right_recipe)
+	for left_bounds: AABB in left_parts:
+		for right_bounds: AABB in right_parts:
+			if _aabb_overlaps_volume(left_bounds, right_bounds):
+				return true
+	return false
+
+
+func _connected_parts_have_measured_seams(left: FabricUnit,
+		left_recipe: FabricRecipe, right: FabricUnit, right_recipe: FabricRecipe) -> bool:
+	# Apply the unchanged seam contract to each occupied module, rather than
+	# counting empty space between a wall, window and eave as solid material.
+	var left_parts := _construction_parts(left, left_recipe)
+	var right_parts := _construction_parts(right, right_recipe)
+	for left_bounds: AABB in left_parts:
+		for right_bounds: AABB in right_parts:
+			if _aabb_overlaps_volume(left_bounds, right_bounds) \
+					and not _connected_roof_seam_is_measured(left, left_recipe,
+						left_bounds, right, right_recipe, right_bounds):
+				return false
+	return true
 
 
 func connected_visual_envelope_conflicts() -> Array[Dictionary]:
@@ -937,46 +1218,52 @@ func connected_visual_envelope_conflicts() -> Array[Dictionary]:
 				right_recipe.local_clearance_bounds
 			if not _aabb_overlaps_volume(left_bounds, right_bounds):
 				continue
-			var overlap := _overlap_size(left_bounds, right_bounds)
-			var direct_bearing := left.parent_ids.has(right.stable_id) \
-				or right.parent_ids.has(left.stable_id)
-			var lateral_seam := left.visual_seam_ids.has(right.stable_id) \
-				or right.visual_seam_ids.has(left.stable_id) \
-				or _has_direct_socket_target(left, right.stable_id) \
-				or _has_direct_socket_target(right, left.stable_id)
-			var bearing_seam_ok := direct_bearing and overlap.y <= 0.50
-			var lateral_seam_ok := lateral_seam \
-				and minf(overlap.x, overlap.z) <= 0.50
-			var typed_flashing_ok := lateral_seam \
-				and (left_recipe.has_tag(&"thin_roof_face") \
-					or right_recipe.has_tag(&"thin_roof_face")) \
-				and overlap.y <= TYPED_FLASHING_MAX_HEIGHT_M \
-				and minf(overlap.x, overlap.z) \
-					<= TYPED_FLASHING_MAX_HORIZONTAL_M
-			var left_shed := left_recipe.has_tag(&"setback_shed")
-			var right_shed := right_recipe.has_tag(&"setback_shed")
-			var typed_shed_ok := lateral_seam and (
-				(left_shed and _is_typed_shed_roof_contact(left_bounds,
-					right_bounds) if right_recipe.has_tag(&"roof")
-					else left_shed and _is_typed_shed_wall_contact(left_bounds,
-						right_bounds))
-				or (right_shed and _is_typed_shed_roof_contact(left_bounds,
-					right_bounds) if left_recipe.has_tag(&"roof")
-					else right_shed and _is_typed_shed_wall_contact(left_bounds,
-						right_bounds)))
-			if bearing_seam_ok or lateral_seam_ok or typed_flashing_ok \
-					or typed_shed_ok:
-				continue
-			conflicts.append({
-				"left": left.stable_id,
-				"left_recipe": left.recipe_id,
-				"right": right.stable_id,
-				"right_recipe": right.recipe_id,
-				"overlap_m": overlap,
-				"direct_bearing": direct_bearing,
-				"lateral_seam": lateral_seam,
-				"transitive_only": not direct_bearing and not lateral_seam,
-			})
+			# Empty space inside a combined room/window/roof envelope is not
+			# material. Report the actual unsuppressed part intersections.
+			for left_part_bounds: AABB in _construction_parts(left, left_recipe):
+				for right_part_bounds: AABB in _construction_parts(right, right_recipe):
+					if not _aabb_overlaps_volume(left_part_bounds, right_part_bounds):
+						continue
+					var overlap := _overlap_size(left_part_bounds, right_part_bounds)
+					var direct_bearing := left.parent_ids.has(right.stable_id) \
+						or right.parent_ids.has(left.stable_id)
+					var lateral_seam := left.visual_seam_ids.has(right.stable_id) \
+						or right.visual_seam_ids.has(left.stable_id) \
+						or _has_direct_socket_target(left, right.stable_id) \
+						or _has_direct_socket_target(right, left.stable_id)
+					var bearing_seam_ok := direct_bearing and overlap.y <= 0.50
+					var lateral_seam_ok := lateral_seam \
+						and minf(overlap.x, overlap.z) <= 0.50
+					var typed_flashing_ok := lateral_seam \
+						and (left_recipe.has_tag(&"thin_roof_face") \
+							or right_recipe.has_tag(&"thin_roof_face")) \
+						and overlap.y <= TYPED_FLASHING_MAX_HEIGHT_M \
+						and minf(overlap.x, overlap.z) \
+							<= TYPED_FLASHING_MAX_HORIZONTAL_M
+					var left_shed := left_recipe.has_tag(&"setback_shed")
+					var right_shed := right_recipe.has_tag(&"setback_shed")
+					var typed_shed_ok := lateral_seam and (
+						(left_shed and _is_typed_shed_roof_contact(left_part_bounds,
+							right_part_bounds) if right_recipe.has_tag(&"roof")
+							else left_shed and _is_typed_shed_wall_contact(left_part_bounds,
+								right_part_bounds))
+						or (right_shed and _is_typed_shed_roof_contact(left_part_bounds,
+							right_part_bounds) if left_recipe.has_tag(&"roof")
+							else right_shed and _is_typed_shed_wall_contact(left_part_bounds,
+								right_part_bounds)))
+					if bearing_seam_ok or lateral_seam_ok or typed_flashing_ok \
+							or typed_shed_ok:
+						continue
+					conflicts.append({
+						"left": left.stable_id,
+						"left_recipe": left.recipe_id,
+						"right": right.stable_id,
+						"right_recipe": right.recipe_id,
+						"overlap_m": overlap,
+						"direct_bearing": direct_bearing,
+						"lateral_seam": lateral_seam,
+						"transitive_only": not direct_bearing and not lateral_seam,
+					})
 	return conflicts
 
 
@@ -1295,13 +1582,15 @@ static func _aabb_overlaps_volume(left: AABB, right: AABB,
 
 
 func transformed_cells(layer: StringName,
-		required_tag: StringName = &"") -> Dictionary:
+		required_tag: StringName = &"", excluded_tag: StringName = &"") -> Dictionary:
 	## Returns world-lattice cells owned by recipes in one semantic layer. The
 	## value is the owning unit id; callers never need to inspect render assets.
 	var out: Dictionary = {}
 	for unit_value: FabricUnit in units:
 		var unit_recipe := _recipes[unit_value.recipe_id] as FabricRecipe
 		if not required_tag.is_empty() and not unit_recipe.has_tag(required_tag):
+			continue
+		if not excluded_tag.is_empty() and unit_recipe.has_tag(excluded_tag):
 			continue
 		var local_cells: Array[Vector3i] = []
 		match layer:
@@ -1577,12 +1866,19 @@ static func _pitched_roof_alignment_holds(recipe_value: FabricRecipe) -> bool:
 	## over the footprint and its lowest visual point must sit on the wall-top
 	## band centre. This rejects floating/offset roofs before any unit can enter a
 	## plan; render-time offsets are neither needed nor permitted.
-	if recipe_value == null or recipe_value.solid_cells.is_empty() \
-			or not recipe_value.local_bounds.has_volume():
+	if recipe_value == null or not recipe_value.local_bounds.has_volume():
+		return false
+	var footprint := recipe_value.solid_cells
+	var high_edge := recipe_value.roof_high_edge
+	if high_edge != Vector3i.ZERO:
+		if high_edge.y != 0 or absi(high_edge.x) + absi(high_edge.z) != 1:
+			return false
+		footprint = recipe_value.occluder_cells
+	if footprint.is_empty():
 		return false
 	var local_min := Vector3(INF, INF, INF)
 	var local_max := Vector3(-INF, -INF, -INF)
-	for cell: Vector3i in recipe_value.solid_cells:
+	for cell: Vector3i in footprint:
 		var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
 		local_min = local_min.min(centre - Vector3.ONE \
 			* FabricRecipe.CELL_SIZE * 0.5)
@@ -1590,9 +1886,21 @@ static func _pitched_roof_alignment_holds(recipe_value: FabricRecipe) -> bool:
 			* FabricRecipe.CELL_SIZE * 0.5)
 	var logical_centre := (local_min + local_max) * 0.5
 	var visual_centre := recipe_value.local_bounds.get_center()
+	var bearing_y := local_min.y + FabricRecipe.CELL_SIZE * 0.5
+	if high_edge != Vector3i.ZERO:
+		# A shed's low eave extends beyond its narrow footprint; its high
+		# edge belongs to the continuing wall, rather than to a symmetric gable.
+		var axis := 0 if high_edge.x != 0 else 2
+		var transverse := 2 if axis == 0 else 0
+		var edge_yaw := high_edge[axis]
+		var logical_edge := local_max[axis] if edge_yaw > 0 else local_min[axis]
+		var visual_edge := recipe_value.local_bounds.end[axis] if edge_yaw > 0 \
+			else recipe_value.local_bounds.position[axis]
+		return absf(visual_centre[transverse] - logical_centre[transverse]) <= 0.01 \
+			and absf(visual_edge - logical_edge) <= 0.01 \
+			and absf(recipe_value.local_bounds.position.y - bearing_y) <= 0.01
 	var horizontal_offset := Vector2(visual_centre.x, visual_centre.z) \
 		.distance_to(Vector2(logical_centre.x, logical_centre.z))
-	var bearing_y := local_min.y + FabricRecipe.CELL_SIZE * 0.5
 	return horizontal_offset <= 0.01 \
 		and absf(recipe_value.local_bounds.position.y - bearing_y) <= 0.01
 

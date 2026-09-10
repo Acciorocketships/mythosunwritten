@@ -14,3 +14,20 @@ tests/artifacts/village_review_runs/
 /.artifacts/
 /artifacts/
 /renders/
+
+# September manual-review render sequences remain local QA artifacts. Keep
+# reports, numeric evidence, fixtures and harnesses versioned; retain the small
+# atmosphere/water reference galleries. See docs/branch-consolidation-2026-09-10.md.
+/docs/qa/2026-09-06-terrain/*.png
+/docs/qa/2026-09-07-manual/**/*.png
+/docs/qa/2026-09-07-manual/*.png
+/docs/qa/2026-09-07-manual/**/*.gif
+/docs/qa/2026-09-07-manual/*.gif
+/docs/qa/2026-09-07-manual/**/*.log
+/docs/qa/2026-09-07-manual/*.log
+/docs/qa/2026-09-08-manual/**/*.png
+/docs/qa/2026-09-08-manual/*.png
+/docs/qa/2026-09-08-manual/**/*.gif
+/docs/qa/2026-09-08-manual/*.gif
+/docs/qa/2026-09-08-manual/**/*.log
+/docs/qa/2026-09-08-manual/*.log

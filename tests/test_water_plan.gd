@@ -372,7 +372,7 @@ func test_bodies_near_covers_carved_cells_when_window_straddles_super_cells() ->
 				if not covered:
 					for river in bodies.rivers:
 						for i in river.points.size():
-							if p.distance_to(river.points[i]) <= river.widths[i] + WaterPlan.FEATHER:
+							if p.distance_to(river.points[i]) <= river.widths[i] + WaterPlan.BANK_FEATHER:
 								covered = true
 								break
 						if covered:
@@ -463,16 +463,22 @@ func _carve_reference(w: WaterPlan, cx: int, cz: int) -> float:
 				var nearest: Vector2 = a + ab * along
 				var width: float = lerpf(t.widths[si], t.widths[si + 1], along)
 				var d: float = p.distance_to(nearest)
-				var infl: float = width + WaterPlan.FEATHER
+				var infl: float = width + WaterPlan.BANK_FEATHER
 				if d >= infl:
 					continue
-				var wgt: float = SlopeProfile.smootherstep(
-					clampf((infl - d) / WaterPlan.FEATHER, 0.0, 1.0))
 				var grade: float = absf(t.beds[si + 1] - t.beds[si]) \
 					/ maxf(sqrt(len2), 0.001)
 				var extra: float = WaterPlan.CARVE_BED_EXTRA \
 					if grade < WaterPlan.CARVE_EXTRA_MAX_GRADE else 0.0
 				var bed: float = lerpf(t.beds[si], t.beds[si + 1], along)
 				var carve_bed: float = maxf(bed - extra, WaterPlan.BED_MIN)
-				best = maxf(best, maxf(0.0, ground - carve_bed) * wgt)
+				var target := carve_bed if d <= width else lerpf(
+					bed + WaterField.SURFACE_RIDE + 0.5, ground,
+					(d - width) / WaterPlan.BANK_FEATHER)
+				var weights := w.bank_strengths(t)
+				var strength := lerpf(weights[si], weights[si+1], along)
+				var original_weight := SlopeProfile.smootherstep(clampf(
+					(width+WaterPlan.FEATHER-d)/WaterPlan.FEATHER,0,1))
+				var original_carve := maxf(0.0,ground-carve_bed)*original_weight
+				best = maxf(best,lerpf(original_carve,maxf(0.0,ground-target),strength))
 	return best

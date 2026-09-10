@@ -77,7 +77,8 @@ static func envelope_from_massif(massif: WarrenMassif) -> WarrenVolumeEnvelope:
 
 static func to_volume_plan(massif: WarrenMassif,
 		excavation: WarrenExcavation,
-		typed_market_cells: Array[Vector3i] = []) -> WarrenVolumePlan:
+		typed_market_cells: Array[Vector3i] = [],
+		validate_result: bool = true) -> WarrenVolumePlan:
 	last_failure = ""
 	if massif == null or not massif.is_sealed():
 		last_failure = "massif missing or unsealed"
@@ -148,12 +149,23 @@ static func to_volume_plan(massif: WarrenMassif,
 		if not plan.mark_market_square_cell(cell):
 			last_failure = "market square cell %s is not a walk node" % cell
 			return null
+	for lane: Dictionary in excavation.lanes:
+		if lane.get("feature_kind", &"") != &"terminal_lookout": continue
+		var terrace: Array[Vector3i] = [lane.anchor]
+		terrace.append_array(lane.cells)
+		for cell: Vector3i in terrace:
+			if not plan.mark_terminal_lookout_cell(cell):
+				last_failure = "terminal terrace cell is not a walk node: %s" % cell
+				return null
 	if not _close_landing_turns(plan):
 		return null
 	plan.mass_context = {&"massif": massif, &"excavation": excavation}
-	if not plan.seal(excavation.portals[0]):
-		last_failure = "plan seal rejected: %s" % plan.last_rejection
-		return null
+	if validate_result:
+		if not plan.seal(excavation.portals[0]):
+			last_failure = "plan seal rejected: %s" % plan.last_rejection
+			return null
+	else:
+		plan.finish_construction(excavation.portals[0])
 	return plan
 
 

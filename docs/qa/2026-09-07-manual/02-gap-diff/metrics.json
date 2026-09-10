@@ -1,0 +1,98 @@
+{
+  "01_upper_door_gap": {
+    "size": [
+      1718,
+      1034
+    ],
+    "roi": [
+      533,
+      16,
+      842,
+      476
+    ],
+    "changed_over_20_fraction": 0.027646176675230744,
+    "roi_changed_over_20_fraction": 0.26703953848318557,
+    "roi_mean_abs_rgb": 17.46431687069087,
+    "roi_max_abs_rgb": 165
+  },
+  "02_gallery_gaps_flicker": {
+    "size": [
+      1718,
+      1034
+    ],
+    "roi": [
+      395,
+      21,
+      1100,
+      569
+    ],
+    "changed_over_20_fraction": 0.17616746565548982,
+    "roi_changed_over_20_fraction": 0.3762256043899156,
+    "roi_mean_abs_rgb": 22.731570637262514,
+    "roi_max_abs_rgb": 147
+  },
+  "03_parallel_paths": {
+    "size": [
+      1718,
+      1034
+    ],
+    "roi": [
+      567,
+      134,
+      1151,
+      548
+    ],
+    "changed_over_20_fraction": 2.870955611648649e-05,
+    "roi_changed_over_20_fraction": 0.00013235391436701742,
+    "roi_mean_abs_rgb": 0.28112247148876096,
+    "roi_max_abs_rgb": 133
+  },
+  "04_garden_wall": {
+    "size": [
+      1718,
+      1034
+    ],
+    "roi": [
+      653,
+      527,
+      1237,
+      910
+    ],
+    "changed_over_20_fraction": 0.0009378454998052254,
+    "roi_changed_over_20_fraction": 4.4708322901391324e-06,
+    "roi_mean_abs_rgb": 0.3469216829404962,
+    "roi_max_abs_rgb": 61
+  },
+  "05_ground_gaps": {
+    "size": [
+      1718,
+      1034
+    ],
+    "roi": [
+      34,
+      10,
+      1306,
+      589
+    ],
+    "changed_over_20_fraction": 0.008697869638349662,
+    "roi_changed_over_20_fraction": 0.02097929633612496,
+    "roi_mean_abs_rgb": 1.2376635238229725,
+    "roi_max_abs_rgb": 199
+  },
+  "06_town_slopes": {
+    "size": [
+      1718,
+      1034
+    ],
+    "roi": [
+      464,
+      93,
+      1340,
+      486
+    ],
+    "changed_over_20_fraction": 0.005935559993965364,
+    "roi_changed_over_20_fraction": 0.02301404719578933,
+    "roi_mean_abs_rgb": 2.2046864651957194,
+    "roi_max_abs_rgb": 216
+  }
+}

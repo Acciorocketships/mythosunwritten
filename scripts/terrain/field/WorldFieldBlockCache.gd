@@ -16,6 +16,9 @@ var water_build_count := 0
 var region_hit_count := 0
 var water_hit_count := 0
 var eviction_count := 0
+# Miss-only timings reveal field work hidden inside feature/route queries.
+var region_build_usec := 0
+var water_build_usec := 0
 
 func _init(plan: HeightfieldPlan, water_plan: WaterPlan, query_margin: float,
 		shore_limit: float, capacity := PathProgram.FIELD_CACHE_CAP) -> void:
@@ -70,8 +73,10 @@ func region(key: Vector2i) -> HeightfieldRegion:
 		return entry.region
 	var centre := key * TerrainChunkMesher.CELLS_PER_CHUNK \
 		+ Vector2i.ONE * (TerrainChunkMesher.CELLS_PER_CHUNK / 2)
+	var started := Time.get_ticks_usec()
 	entry.region = _plan.compute_region(centre.x, centre.y,
 		TerrainChunkMesher.CELLS_PER_CHUNK)
+	region_build_usec += Time.get_ticks_usec() - started
 	region_build_count += 1
 	_touch(key, entry)
 	return entry.region
@@ -85,8 +90,10 @@ func water(key: Vector2i) -> WaterFieldContext:
 	var block_region := region(key)
 	entry = _entries[key]
 	var core := Rect2(Vector2(key) * BLOCK_WORLD, Vector2.ONE * BLOCK_WORLD)
+	var started := Time.get_ticks_usec()
 	entry.water = WaterFieldContext.build(_water_plan, core.grow(_query_margin),
 		block_region, _shore_limit)
+	water_build_usec += Time.get_ticks_usec() - started
 	water_build_count += 1
 	_touch(key, entry)
 	return entry.water
@@ -103,7 +110,8 @@ func size() -> int:
 func stats() -> Dictionary:
 	return {"region_builds": region_build_count, "water_builds": water_build_count,
 		"region_hits": region_hit_count, "water_hits": water_hit_count,
-		"evictions": eviction_count, "entries": _entries.size()}
+		"evictions": eviction_count, "entries": _entries.size(),
+		"region_build_usec": region_build_usec, "water_build_usec": water_build_usec}
 
 func clear() -> void:
 	_entries.clear()

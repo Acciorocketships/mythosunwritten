@@ -1,0 +1,68 @@
+{
+  "10_river_bank_exact": {
+    "roi": [
+      38,
+      86,
+      1882,
+      702
+    ],
+    "mean_abs_rgb": 19.76608989197531,
+    "roi_mean_abs_rgb": 17.79565350593008,
+    "roi_changed_over_20_fraction": 0.40155153956672396
+  },
+  "10_river_bank_gameplay_camera": {
+    "roi": [
+      38,
+      86,
+      1882,
+      702
+    ],
+    "mean_abs_rgb": 19.626150655864198,
+    "roi_mean_abs_rgb": 17.779885448066032,
+    "roi_changed_over_20_fraction": 0.403175796546187
+  },
+  "10_river_bank_jitter_0": {
+    "roi": [
+      38,
+      86,
+      1882,
+      702
+    ],
+    "mean_abs_rgb": 19.73744470164609,
+    "roi_mean_abs_rgb": 17.81281546093097,
+    "roi_changed_over_20_fraction": 0.4034478265768938
+  },
+  "10_river_bank_jitter_1": {
+    "roi": [
+      38,
+      86,
+      1882,
+      702
+    ],
+    "mean_abs_rgb": 19.671067226080247,
+    "roi_mean_abs_rgb": 17.81611973077537,
+    "roi_changed_over_20_fraction": 0.40415035073386485
+  },
+  "10_river_bank_near_left": {
+    "roi": [
+      38,
+      86,
+      1882,
+      702
+    ],
+    "mean_abs_rgb": 20.100592046039093,
+    "roi_mean_abs_rgb": 18.71396937299866,
+    "roi_changed_over_20_fraction": 0.43424708426064174
+  },
+  "10_river_bank_near_right": {
+    "roi": [
+      38,
+      86,
+      1882,
+      702
+    ],
+    "mean_abs_rgb": 18.83465100951646,
+    "roi_mean_abs_rgb": 16.102326428994,
+    "roi_changed_over_20_fraction": 0.3502294207961236
+  }
+}

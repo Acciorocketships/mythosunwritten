@@ -77,8 +77,10 @@ var raycast: RayCast3D
 var on_ground: bool = true
 var was_on_ground: bool = false
 var step_visual_offset_y: float = 0.0
+var _step_visual_velocity := 0.0
 var body_model_base_pos: Vector3 = Vector3.ZERO
 var prev_body_global_y: float = 0.0
+var _ground_snap_grace := 0.0
 var in_water: bool = false
 var water_current := Vector2.ZERO
 # wading: true whenever the probe is in water at all — the >=0.05m shallow
@@ -93,6 +95,7 @@ func _ready() -> void:
 	_bind_all_attachments()
 	body_model_base_pos = body_model_root.position
 	prev_body_global_y = global_position.y
+	floor_snap_length = MAX_STEP_HEIGHT + 0.01
 
 # --------------------------------------------
 # Movement
@@ -105,11 +108,13 @@ func _physics_process(delta: float) -> void:
 	var wants_jump := controller.wants_jump(self, delta)
 
 	_update_in_water()
+	_ground_snap_grace = 0.08 if is_on_floor() else maxf(0.0, _ground_snap_grace - delta)
 
 	# gravity + jump (or buoyancy while swimming)
 	on_ground = is_on_floor() or _get_ground_dist() < 0.2
-	var started_animation: bool = !on_ground and was_on_ground and not in_water
-	was_on_ground = on_ground
+	var animation_grounded := on_ground or (_ground_snap_grace > 0.0 and velocity.y <= 0.0)
+	var started_animation: bool = !animation_grounded and was_on_ground and not in_water
+	was_on_ground = animation_grounded
 	
 	jump_animation(started_animation)
 	if in_water:
@@ -155,6 +160,13 @@ func _physics_process(delta: float) -> void:
 	var did_step: bool = _try_step_up(delta)
 	if not did_step:
 		move_and_slide()
+		# A capsule can touch the steep arc of a tread nose for one tick. Keep
+		# the previous floor witness briefly so the next walkable tread can snap
+		# within the same step limit. Jumps and real ledges still become airborne.
+		if not is_on_floor() and _ground_snap_grace > 0.0 \
+				and velocity.y <= 0.0 and not in_water:
+			apply_floor_snap()
+			if is_on_floor(): velocity.y = 0.0
 	_update_step_visual_smoothing(delta)
 	movement_animation(target_speed)
 
@@ -314,6 +326,12 @@ func _swell_offset(p: Vector2, t: float) -> float:
 
 
 func jump_animation(started_animation: bool):
+	# Water entry ends the airborne overlay even over a deep channel where
+	# the landing ray never finds a floor. Otherwise JumpIdle remains latched
+	# indefinitely and holds the arms out while the body is swimming.
+	if in_water:
+		anim_tree.set("parameters/BlendTree/OneShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
+		return
 	var vertical_vel: float = velocity.y
 	var is_near_ground: bool = raycast.is_colliding()
 	var state_machine = anim_tree.get("parameters/BlendTree/OneShots/playback")
@@ -408,7 +426,6 @@ func _get_ground_dist() -> float:
 func _try_step_up(delta: float) -> bool:
 	var step_clearance: float = 0.05
 	var step_down_extra: float = 0.1
-	var forward_probe_extra: float = 0.45
 	var step_height_epsilon: float = 0.01
 	var min_step_height: float = 0.005
 	var horizontal_motion: Vector3 = Vector3(velocity.x, 0.0, velocity.z) * delta
@@ -416,15 +433,13 @@ func _try_step_up(delta: float) -> bool:
 	var has_motion: bool = horizontal_motion.length() >= 0.001
 	var on_floor_now: bool = on_ground
 	var moving_down_or_flat: bool = velocity.y <= 0.0
+	# The landing must support the actual destination. A longer forward probe
+	# borrowed a future tread's height while leaving the body behind its edge.
 	var probe_motion: Vector3 = horizontal_motion
-	if has_motion:
-		probe_motion = horizontal_motion + horizontal_motion.normalized() * forward_probe_extra
 
 	var blocked_short: bool = false
-	var blocked_long: bool = false
 	if on_floor_now and moving_down_or_flat and has_motion:
 		blocked_short = test_move(current_tf, horizontal_motion)
-		blocked_long = test_move(current_tf, probe_motion)
 
 	var raise_amount: float = MAX_STEP_HEIGHT + step_clearance
 	var raised_tf: Transform3D = current_tf.translated(Vector3.UP * raise_amount)
@@ -432,9 +447,11 @@ func _try_step_up(delta: float) -> bool:
 		on_floor_now
 		and moving_down_or_flat
 		and has_motion
-		and (blocked_short or blocked_long)
+		and blocked_short
 	)
 	if not can_step:
+		return false
+	if test_move(current_tf, Vector3.UP * raise_amount):
 		return false
 
 	if test_move(raised_tf, probe_motion):
@@ -448,7 +465,16 @@ func _try_step_up(delta: float) -> bool:
 
 	var floor_angle: float = down_collision.get_normal().angle_to(Vector3.UP)
 	if floor_angle > floor_max_angle:
-		return false
+		# At a tread nose the capsule's contact normal follows its round base,
+		# even though the supporting triangle is horizontal. Inspect that actual
+		# contact's top surface; never borrow the height of a later tread.
+		var contact := down_collision.get_position() + horizontal_motion.normalized() * 0.01
+		var query := PhysicsRayQueryParameters3D.create(contact + Vector3.UP * 0.02,
+			contact - Vector3.UP * 0.02, collision_mask, [get_rid()])
+		var top := get_world_3d().direct_space_state.intersect_ray(query)
+		if top.is_empty() or (top.normal as Vector3).angle_to(Vector3.UP) > floor_max_angle \
+				or (top.position as Vector3).y - current_tf.origin.y > MAX_STEP_HEIGHT + step_height_epsilon:
+			return false
 
 	var probe_origin: Vector3 = raised_forward_tf.origin + down_collision.get_travel()
 	var new_origin: Vector3 = current_tf.origin + horizontal_motion
@@ -465,12 +491,23 @@ func _try_step_up(delta: float) -> bool:
 	return true
 
 func _update_step_visual_smoothing(delta: float) -> void:
-	var visual_comp_threshold: float = 0.2
-	var smooth_speed: float = 8.0
 	var body_delta_y: float = global_position.y - prev_body_global_y
-	if body_delta_y > visual_comp_threshold:
-		step_visual_offset_y -= body_delta_y * 0.35
-		step_visual_offset_y = max(step_visual_offset_y, -MAX_STEP_HEIGHT * 0.16)
+	if absf(body_delta_y) > MAX_STEP_HEIGHT + 0.05:
+		# Teleports are new locations, not steps to ease across.
+		step_visual_offset_y = 0.0
+		_step_visual_velocity = 0.0
+	elif not in_water and velocity.y <= 0.0 and (on_ground or is_on_floor()):
+		step_visual_offset_y -= body_delta_y
 	prev_body_global_y = global_position.y
-	step_visual_offset_y = lerp(step_visual_offset_y, 0.0, clamp(smooth_speed * delta, 0.0, 1.0))
+	# Exact critically damped spring: position and velocity ease through each
+	# discrete support change, independently of the physics frame rate.
+	var frequency := 32.0
+	var decay := exp(-frequency * delta)
+	var travel := (_step_visual_velocity + frequency * step_visual_offset_y) * delta
+	step_visual_offset_y = (step_visual_offset_y + travel) * decay
+	_step_visual_velocity = (_step_visual_velocity - frequency * travel) * decay
 	body_model_root.position = body_model_base_pos + Vector3(0.0, step_visual_offset_y, 0.0)
+
+
+func camera_follow_position() -> Vector3:
+	return global_position + Vector3.UP * step_visual_offset_y

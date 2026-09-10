@@ -20,6 +20,7 @@ var joined_run_count := 0
 var internal_gable_count := 0
 var normalized_repeat_count := 0
 var flush_endpoint_count := 0
+var tight_cross_component_count := 0
 var last_rejection := ""
 var _valid := false
 
@@ -42,6 +43,7 @@ func audit() -> Dictionary:
 		"continuous_roof_internal_gable_count": internal_gable_count,
 		"continuous_roof_normalized_repeat_count": normalized_repeat_count,
 		"continuous_roof_flush_endpoint_count": flush_endpoint_count,
+		"continuous_roof_tight_cross_component_count": tight_cross_component_count,
 	}
 
 
@@ -166,7 +168,7 @@ func _compile(plan: SettlementFabricPlan) -> void:
 		var canonical_material: StringName
 		if StringName(component_runs[0].kind) == &"compact_gable":
 			canonical_material = _realize_compact_component(component_runs,
-				component_joins, components.size())
+				component_joins, components.size(), plan)
 			if canonical_material.is_empty():
 				continue
 		else:
@@ -396,7 +398,8 @@ func _realize_modular_component(component_runs: Array[Dictionary],
 
 
 func _realize_compact_component(component_runs: Array[Dictionary],
-		component_joins: Array[Dictionary], component_index: int) -> StringName:
+		component_joins: Array[Dictionary], component_index: int,
+		plan: SettlementFabricPlan) -> StringName:
 	var length_by_family: Dictionary = {}
 	var common_families: Dictionary = {}
 	var first := true
@@ -439,6 +442,12 @@ func _realize_compact_component(component_runs: Array[Dictionary],
 		return left > right if not is_equal_approx(left, right) \
 			else String(a) < String(b))
 	var canonical := StringName(families[0])
+	var profile := canonical
+	var tight_profile := StringName("%s.tight" % canonical)
+	if common_families.has(tight_profile) and _cross_eave_space_is_occupied(
+			component_runs, canonical, component_unit_ids, component_bearing_ids, plan):
+		profile = tight_profile
+		tight_cross_component_count += 1
 	bays.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return (a.centre as Vector3).x < (b.centre as Vector3).x \
 			if bool(component_runs[0].axis_x) \
@@ -484,15 +493,15 @@ func _realize_compact_component(component_runs: Array[Dictionary],
 			> PROFILE_EPSILON:
 		return &""
 	var sections: Array[Dictionary] = [{
-		"variant": (((first_bay.variants as Dictionary)[canonical] \
+		"variant": (((first_bay.variants as Dictionary)[profile] \
 			as Dictionary)[&"start"]) as Dictionary,
-		"flush_variant": (((first_bay.variants as Dictionary)[canonical] \
+		"flush_variant": (((first_bay.variants as Dictionary)[profile] \
 			as Dictionary)[&"start_flush"]) as Dictionary,
 		"offset": first_shift,
 	}]
-	var middle_variant := (((first_bay.variants as Dictionary)[canonical] \
+	var middle_variant := (((first_bay.variants as Dictionary)[profile] \
 		as Dictionary)[&"middle"]) as Dictionary
-	var mirrored_middle_variant := (((first_bay.variants as Dictionary)[canonical] \
+	var mirrored_middle_variant := (((first_bay.variants as Dictionary)[profile] \
 		as Dictionary)[&"middle_mirror"]) as Dictionary
 	for middle_index in middle_count:
 		sections.append({
@@ -504,9 +513,9 @@ func _realize_compact_component(component_runs: Array[Dictionary],
 			"offset": first_shift + axis * section_pitch * float(middle_index),
 		})
 	sections.append({
-		"variant": (((last_bay.variants as Dictionary)[canonical] \
+		"variant": (((last_bay.variants as Dictionary)[profile] \
 			as Dictionary)[&"end"]) as Dictionary,
-		"flush_variant": (((last_bay.variants as Dictionary)[canonical] \
+		"flush_variant": (((last_bay.variants as Dictionary)[profile] \
 			as Dictionary)[&"end_flush"]) as Dictionary,
 		"offset": last_shift,
 	})
@@ -550,6 +559,45 @@ func _realize_compact_component(component_runs: Array[Dictionary],
 			}
 		synthetic_placements.append(synthetic)
 	return canonical
+
+
+func _cross_eave_space_is_occupied(runs: Array[Dictionary], family: StringName,
+		members: Array[StringName], bearers: Array[StringName],
+		plan: SettlementFabricPlan) -> bool:
+	# Select the complete chain's transverse profile from allocated space before
+	# emitting sections. The ordinary and tight profiles are both authored finite
+	# choices. No completed roof is tested, discarded, or rebuilt here.
+	var run := runs[0]
+	var axis_x := bool(run.axis_x)
+	var start := run.start as Vector3
+	var end := (runs[-1] as Dictionary).end as Vector3
+	var roles := (((run.bays as Array)[0] as Dictionary).variants as Dictionary)[family] as Dictionary
+	var bounds := (roles[&"middle"] as Dictionary).bounds as AABB
+	var cross_low := bounds.position.z if axis_x else bounds.position.x
+	var cross_high := bounds.end.z if axis_x else bounds.end.x
+	var belts: Array[AABB] = []
+	for span: Vector2 in [Vector2(cross_low, float(run.cross_min)),
+			Vector2(float(run.cross_max), cross_high)]:
+		if span.y <= span.x + PROFILE_EPSILON:
+			continue
+		var low := Vector3(start.x, float(run.base_y), span.x) if axis_x \
+			else Vector3(span.x, float(run.base_y), start.z)
+		var high := Vector3(end.x, float(run.peak_y), span.y) if axis_x \
+			else Vector3(span.y, float(run.peak_y), end.z)
+		belts.append(AABB(low, high - low))
+	for unit: FabricUnit in plan.units:
+		if members.has(unit.stable_id) or bearers.has(unit.stable_id):
+			continue
+		var recipe := plan.recipe(unit.recipe_id)
+		var pose := unit.transform()
+		for index in recipe.placements.size():
+			if unit.suppressed_placement_ids.has(StringName(recipe.placements[index].id)):
+				continue
+			var occupied := pose * recipe.placement_bounds[index]
+			for belt: AABB in belts:
+				if SettlementFabricPlan._aabb_overlaps_volume(belt, occupied):
+					return true
+	return false
 
 
 func select_flush_alternative(synthetic: Dictionary) -> bool:

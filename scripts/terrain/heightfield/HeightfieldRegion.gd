@@ -20,6 +20,11 @@ func with_terrain_grades(grades: Array[TerrainGradePatch]) -> HeightfieldRegion:
 	result.terrain_grades.assign(grades)
 	return result
 
+func without_terrain_grades() -> HeightfieldRegion:
+	return self if terrain_grades.is_empty() else HeightfieldRegion.new(
+		_storeys, _levels, _carved, plan)
+
+
 func graded_height(x: float, z: float, natural_height: float) -> float:
 	var height := natural_height
 	for grade: TerrainGradePatch in terrain_grades:
@@ -31,6 +36,24 @@ func has_grade_in(area: Rect2) -> bool:
 		if grade.bounds.intersects(area, true):
 			return true
 	return false
+
+# A region's grade patches are immutable. Clip sampling revisits the same
+# finite authored-piece bounds for thousands of surface vertices.
+var _grade_effect_cache: Dictionary = {}
+
+func has_grade_effect_in(area: Rect2) -> bool:
+	if terrain_grades.is_empty(): return false
+	if _grade_effect_cache.has(area): return _grade_effect_cache[area]
+	var affected := false
+	for grade: TerrainGradePatch in terrain_grades:
+		if not grade.bounds.intersects(area, true): continue
+		var local := Rect2(area.position - grade._origin, area.size)
+		if grade._weight_bounds(local).y > 0.000001:
+			affected = true
+			break
+	_grade_effect_cache[area] = affected
+	return affected
+
 
 func graded_height_bounds(area: Rect2, natural: Vector2) -> Vector2:
 	var interval := natural
@@ -63,8 +86,7 @@ func storey_at(cx: int, cz: int) -> int:
 
 
 ## Whether the water carve lowered this cell — a water basin/channel cell.
-## Dry banks one storey above a carved cell render as vertical dressed walls
-## (crisp shorelines) instead of bare ramps dipping into the water.
+## Retained for water-aware cliff dressing; this tag does not create a wall.
 func is_carved(cx: int, cz: int) -> bool:
 	return _carved.has(Vector2i(cx, cz))
 

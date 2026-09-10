@@ -164,7 +164,8 @@ func test_timber_boxes_use_baked_handed_panels_on_both_side_faces() -> void:
 				or placement_id.begins_with("west") \
 				or placement_id.begins_with("east")
 			var asset_text := String(placement.asset_id)
-			assert_eq(asset_text.ends_with(".mirror_x"), side,
+			# End cuts and door returns are baked after the handed source choice.
+			assert_eq(asset_text.contains(".mirror_x"), side,
 				"%s/%s violates clockwise post ownership" % [recipe_id,
 					placement_id])
 			var pose := placement.transform as Transform3D

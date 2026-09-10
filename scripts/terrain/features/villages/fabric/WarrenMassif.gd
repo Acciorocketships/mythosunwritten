@@ -84,6 +84,19 @@ static func with_columns(p_world_seed: int, p_columns: Dictionary,
 
 
 func seal() -> bool:
+	if not validate_construction():
+		return false
+	return finish_construction()
+
+
+func finish_construction() -> bool:
+	## Production freezes the already-authored field without a quality gate.
+	_sealed = true
+	return true
+
+
+func validate_construction() -> bool:
+	## Read-only connectivity inspection for tests and edited review fixtures.
 	if columns.is_empty():
 		last_rejection = "empty massif"
 		return false
@@ -94,7 +107,6 @@ func seal() -> bool:
 	if hole != null:
 		last_rejection = "interior hole at column %s" % str(hole)
 		return false
-	_sealed = true
 	return true
 
 

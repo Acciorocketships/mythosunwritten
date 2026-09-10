@@ -16,6 +16,14 @@ const CELL_SIZE := 1.5
 var recipe_id: StringName
 var role_tags: Array[StringName] = []
 var placements: Array[Dictionary] = []
+## Finite facade end choices tied to the exact perpendicular placement that
+## closes each cut. A suppressed party wall withdraws its corner cut too.
+var facade_end_owners: Dictionary = {}
+## Finite alternatives for interfaces actually owned by another floor. Their
+## source cap bounds are compiled offline; an exposed course retains its cap.
+var facade_top_assets: Dictionary = {}
+var facade_top_bounds: Dictionary = {}
+var facade_top_surfaces: Dictionary = {}
 ## Multi-placement construction records whose internal seams must remain one
 ## authored run. Roof material phase and end caps therefore cannot drift through
 ## independent placement or later decoration.
@@ -27,6 +35,12 @@ var construction_runs: Array[Dictionary] = []
 ## Final fabric sealing may therefore compose adjacent units into one roof
 ## without inferring mesh pivots, moving rooms, or searching by proximity.
 var compact_roof_runs: Array[Dictionary] = []
+## Named skins that can receive a roof flashing seam through an explicit
+## unit connection. Other placements in the same recipe keep ordinary clearance.
+var roof_flashing_placement_ids: Array[StringName] = []
+## A one-sided weather skin bears on its occluder footprint and meets this
+## cardinal wall edge. Complete crowns keep ZERO and use their solid volume.
+var roof_high_edge := Vector3i.ZERO
 var solid_cells: Array[Vector3i] = []
 var walk_cells: Array[Vector3i] = []
 var headroom_cells: Array[Vector3i] = []
@@ -508,6 +522,14 @@ func socket(socket_id: StringName) -> Dictionary:
 
 func asset_ids() -> Array[StringName]:
 	var unique: Dictionary = {}
+	for finish: Dictionary in facade_end_owners.values():
+		unique[finish.base_asset] = true
+		if finish.has("alternatives"):
+			for asset_id: StringName in finish.alternatives.values(): unique[asset_id]=true
+			continue
+		for mask in range(1,4):
+			if mask & int(finish.mask) == mask:
+				unique[StringName("%s.miter%d" % [finish.base_asset,mask])] = true
 	for placement: Dictionary in placements:
 		unique[StringName(placement.asset_id)] = true
 	for run: Dictionary in compact_roof_runs:
@@ -518,10 +540,40 @@ func asset_ids() -> Array[StringName]:
 				for variant_value: Variant in (roles_value as Dictionary).values():
 					unique[StringName((variant_value as Dictionary).asset_id)] = true
 	var out: Array[StringName] = []
-	out.assign(unique.keys())
+	for asset_id: StringName in unique:
+		out.append(asset_id)
+		if facade_top_assets.has(asset_id):
+			out.append(facade_top_assets[asset_id])
 	out.sort_custom(func(a: StringName, b: StringName) -> bool:
 		return String(a) < String(b))
 	return out
+
+
+func realized_facade_asset(placement: Dictionary,
+		suppressed: Array[StringName], floor_owned: bool = false, square_ends: int = 0) -> StringName:
+	var asset_id := _facade_end_asset(placement, suppressed, square_ends)
+	return facade_top_assets.get(asset_id, asset_id) if floor_owned else asset_id
+
+
+func _facade_end_asset(placement: Dictionary,
+		suppressed: Array[StringName], square_ends: int = 0) -> StringName:
+	var finish: Dictionary = facade_end_owners.get(StringName(placement.id), {})
+	if finish.is_empty():
+		return StringName(placement.asset_id)
+	var mask := 0
+	for end in 2:
+		var owner := StringName(finish.owners[end])
+		# A shared timber corner withdraws a miter. A deep door still owns
+		# its measured return plane, or the complete side slab projects through
+		# the door's finished end. Suppressing the door itself withdraws both.
+		var depths: Vector2 = finish.get("door_return_depths",Vector2.ZERO)
+		if not owner.is_empty() and not suppressed.has(owner) \
+				and (depths[end]>0.0 or not square_ends & (1 << end)):
+			mask |= 1 << end
+	if finish.has("alternatives"):
+		return finish.alternatives[mask]
+	return StringName("%s.miter%d" % [finish.base_asset,mask]) if mask != 0 \
+		else StringName(finish.base_asset)
 
 
 static func lattice_transform(origin: Vector3i, yaw_quarters: int) -> Transform3D:

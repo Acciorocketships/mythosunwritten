@@ -1,0 +1,200 @@
+{
+  "01_garden_trim_exact": {
+    "roi": [
+      480,
+      410,
+      1306,
+      713
+    ],
+    "mean_abs_rgb": 11.319343814300412,
+    "roi_mean_abs_rgb": 3.0674822930234913,
+    "roi_changed_over_20_fraction": 0.05005234179592293
+  },
+  "01_garden_trim_gameplay_camera": {
+    "roi": [
+      480,
+      410,
+      1306,
+      713
+    ],
+    "mean_abs_rgb": 11.295046778549382,
+    "roi_mean_abs_rgb": 3.3642895766574235,
+    "roi_changed_over_20_fraction": 0.054123814318477854
+  },
+  "01_garden_trim_jitter_0": {
+    "roi": [
+      480,
+      410,
+      1306,
+      713
+    ],
+    "mean_abs_rgb": 11.356112397119341,
+    "roi_mean_abs_rgb": 3.4732990248177362,
+    "roi_changed_over_20_fraction": 0.05501881907319061
+  },
+  "01_garden_trim_jitter_1": {
+    "roi": [
+      480,
+      410,
+      1306,
+      713
+    ],
+    "mean_abs_rgb": 11.311811342592593,
+    "roi_mean_abs_rgb": 3.413335038104295,
+    "roi_changed_over_20_fraction": 0.05551027257689449
+  },
+  "01_garden_trim_near_left": {
+    "roi": [
+      480,
+      410,
+      1306,
+      713
+    ],
+    "mean_abs_rgb": 12.211998456790123,
+    "roi_mean_abs_rgb": 3.8617497342954636,
+    "roi_changed_over_20_fraction": 0.06694156098418559
+  },
+  "01_garden_trim_near_right": {
+    "roi": [
+      480,
+      410,
+      1306,
+      713
+    ],
+    "mean_abs_rgb": 9.914221965020577,
+    "roi_mean_abs_rgb": 3.601259399547703,
+    "roi_changed_over_20_fraction": 0.059098282709626894
+  },
+  "02_town_slope_exact": {
+    "roi": [
+      806,
+      184,
+      1536,
+      821
+    ],
+    "mean_abs_rgb": 3.2958920074588476,
+    "roi_mean_abs_rgb": 2.0350229027332745,
+    "roi_changed_over_20_fraction": 0.027984344422700588
+  },
+  "02_town_slope_gameplay_camera": {
+    "roi": [
+      806,
+      184,
+      1536,
+      821
+    ],
+    "mean_abs_rgb": 3.3492705118312758,
+    "roi_mean_abs_rgb": 2.442396220869802,
+    "roi_changed_over_20_fraction": 0.0332853056923507
+  },
+  "02_town_slope_jitter_0": {
+    "roi": [
+      806,
+      184,
+      1536,
+      821
+    ],
+    "mean_abs_rgb": 3.3847035751028804,
+    "roi_mean_abs_rgb": 2.378538812785388,
+    "roi_changed_over_20_fraction": 0.03267886712113718
+  },
+  "02_town_slope_jitter_1": {
+    "roi": [
+      806,
+      184,
+      1536,
+      821
+    ],
+    "mean_abs_rgb": 3.38248247813786,
+    "roi_mean_abs_rgb": 2.428375733855186,
+    "roi_changed_over_20_fraction": 0.032541235672351135
+  },
+  "02_town_slope_near_left": {
+    "roi": [
+      806,
+      184,
+      1536,
+      821
+    ],
+    "mean_abs_rgb": 2.1738453253600825,
+    "roi_mean_abs_rgb": 2.3603478061403695,
+    "roi_changed_over_20_fraction": 0.031465989978710134
+  },
+  "02_town_slope_near_right": {
+    "roi": [
+      806,
+      184,
+      1536,
+      821
+    ],
+    "mean_abs_rgb": 3.6180549125514405,
+    "roi_mean_abs_rgb": 2.1757983699275285,
+    "roi_changed_over_20_fraction": 0.03236489537859401
+  },
+  "12_floor_overlap_exact": {
+    "roi": [
+      595,
+      475,
+      1190,
+      864
+    ],
+    "mean_abs_rgb": 2.31998922968107,
+    "roi_mean_abs_rgb": 1.3167555968402784,
+    "roi_changed_over_20_fraction": 0.015670432697500594
+  },
+  "12_floor_overlap_gameplay_camera": {
+    "roi": [
+      595,
+      475,
+      1190,
+      864
+    ],
+    "mean_abs_rgb": 2.2669302983539095,
+    "roi_mean_abs_rgb": 1.2606525386504217,
+    "roi_changed_over_20_fraction": 0.01675919725216565
+  },
+  "12_floor_overlap_jitter_0": {
+    "roi": [
+      595,
+      475,
+      1190,
+      864
+    ],
+    "mean_abs_rgb": 2.3039149305555555,
+    "roi_mean_abs_rgb": 1.328210667300339,
+    "roi_changed_over_20_fraction": 0.01669438983819749
+  },
+  "12_floor_overlap_jitter_1": {
+    "roi": [
+      595,
+      475,
+      1190,
+      864
+    ],
+    "mean_abs_rgb": 2.250217817644033,
+    "roi_mean_abs_rgb": 1.098680089002182,
+    "roi_changed_over_20_fraction": 0.015471689961331577
+  },
+  "12_floor_overlap_near_left": {
+    "roi": [
+      595,
+      475,
+      1190,
+      864
+    ],
+    "mean_abs_rgb": 1.947673611111111,
+    "roi_mean_abs_rgb": 1.4028688081916572,
+    "roi_changed_over_20_fraction": 0.01651724957335119
+  },
+  "12_floor_overlap_near_right": {
+    "roi": [
+      595,
+      475,
+      1190,
+      864
+    ],
+    "mean_abs_rgb": 2.4451435506687242,
+    "roi_mean_abs_rgb": 1.0461227164387605,
+    "roi_changed_over_20_fraction": 0.01522974228251712
+  }
+}

@@ -11,12 +11,16 @@ const FLOOR_THICKNESS := PublicRealmSurfacePlan.FLOOR_THICKNESS
 const GUARD_HEIGHT := PublicRealmSurfacePlan.GUARD_HEIGHT
 const GUARD_BEAM := PublicRealmSurfacePlan.GUARD_BEAM
 const STAIR_STEP_RUN := 0.5
+const MAX_STAIR_RISE := (TraversalEnvelope.MAX_PLANNED_STEP \
+	- VillageWorldScale.GROUND_DATUM_GUARD) / VillageWorldScale.PRODUCTION_UNIFORM_SCALE
 const POST_SPACING := 1.5
+const END_POST_WIDTH := 0.22
+const END_POST_HEADROOM := 0.20
 
 
 static func build(stable_id: StringName,
 		transition: WarrenVolumeTransition,
-		claim_cells: Array[Vector3i]) -> Dictionary:
+		claim_cells: Array[Vector3i], wall_boxes: Array[AABB] = [], defer_guards := false) -> Dictionary:
 	if stable_id.is_empty() or transition == null \
 			or not transition.is_sealed() or not transition.is_vertical() \
 			or claim_cells.is_empty():
@@ -33,7 +37,10 @@ static func build(stable_id: StringName,
 		_append_ramp(payload, start, end, lateral)
 	else:
 		_append_stairs(payload, start, end, direction, lateral)
-	_append_side_guards(payload, start, end, lateral)
+	if defer_guards:
+		payload["pending_guard_span"] = {"start": start, "end": end, "lateral": lateral}
+	else:
+		_append_side_guards(payload, start, end, lateral, true, wall_boxes)
 	return payload
 
 
@@ -54,6 +61,25 @@ static func _span_endpoints(transition: WarrenVolumeTransition) -> Dictionary:
 		"start": from_center + direction * MACRO_SIZE * 0.5,
 		"end": to_center - direction * MACRO_SIZE * 0.5,
 	}
+
+
+## A topology-declared exterior gate uses the same tread and guard construction
+## as an internal flight, followed by a full ground landing.
+static func build_gate_approach(stable_id: StringName, geometry: Dictionary) -> Dictionary:
+	var payload := _empty_payload(stable_id,[] as Array[Vector3i])
+	var start: Vector3 = geometry.inner_centre
+	var end: Vector3 = geometry.stair_end
+	var outer: Vector3 = geometry.outer_centre
+	var direction := ((end-start)*Vector3(1,0,1)).normalized()
+	var lateral := Vector3(-direction.z,0,direction.x)
+	payload["run_direction"] = Vector3i(direction)
+	_append_stairs(payload,start,end,direction,lateral)
+	# The upper landing owns the attachment posts. Each new span owns its end
+	# posts, so the flight/landing seam cannot emit two coincident timber posts.
+	_append_side_guards(payload,start,end,lateral,false)
+	_append_ramp(payload,end,outer,lateral)
+	_append_side_guards(payload,end,outer,lateral,false)
+	return payload
 
 
 static func _empty_payload(stable_id: StringName,
@@ -99,7 +125,10 @@ static func _append_stairs(payload: Dictionary, start: Vector3, end: Vector3,
 		direction: Vector3, lateral: Vector3) -> void:
 	var horizontal_length := Vector2(end.x - start.x,
 		end.z - start.z).length()
-	var step_count := maxi(2, roundi(horizontal_length / STAIR_STEP_RUN))
+	# Run length alone formerly made 0.5 m world risers. The ground approach
+	# adds the frame guard, making the first one 0.58 m and blocking walking.
+	var step_count := maxi(ceili(absf(end.y-start.y)/MAX_STAIR_RISE),
+		maxi(2, roundi(horizontal_length / STAIR_STEP_RUN)))
 	var step_run := horizontal_length / float(step_count)
 	var rise := end.y - start.y
 	var half_width := MACRO_SIZE * 0.5
@@ -161,7 +190,8 @@ static func _append_stairs(payload: Dictionary, start: Vector3, end: Vector3,
 
 
 static func _append_side_guards(payload: Dictionary, start: Vector3,
-		end: Vector3, lateral: Vector3) -> void:
+		end: Vector3, lateral: Vector3, owns_start_posts := true,
+		wall_boxes: Array[AABB] = []) -> void:
 	var horizontal_length := Vector2(end.x - start.x,
 		end.z - start.z).length()
 	var post_intervals := maxi(1, ceili(horizontal_length / POST_SPACING))
@@ -169,13 +199,57 @@ static func _append_side_guards(payload: Dictionary, start: Vector3,
 		var side := float(side_value)
 		var side_offset: Vector3 = lateral * MACRO_SIZE * 0.5 * side
 		for height in [GUARD_HEIGHT * 0.52, GUARD_HEIGHT]:
-			_append_beam(payload, start + side_offset + Vector3.UP * height,
-				end + side_offset + Vector3.UP * height, GUARD_BEAM)
-		for post_index in range(post_intervals + 1):
+			_append_exposed_guard(payload, start + side_offset + Vector3.UP * height,
+				end + side_offset + Vector3.UP * height, wall_boxes)
+		for post_index in range(0 if owns_start_posts else 1,post_intervals + 1):
 			var ratio := float(post_index) / float(post_intervals)
 			var foot: Vector3 = start.lerp(end, ratio) + side_offset
-			_append_box(payload, foot + Vector3.UP * GUARD_HEIGHT * 0.5,
-				Vector3(GUARD_BEAM, GUARD_HEIGHT, GUARD_BEAM), Basis.IDENTITY)
+			# A free beam end is housed inside a visibly wider post. Its head
+			# stands above the rail instead of ending at the rail centreline.
+			var endpoint := post_index == 0 or post_index == post_intervals
+			var height := GUARD_HEIGHT + (END_POST_HEADROOM if endpoint else 0.0)
+			var width := END_POST_WIDTH if endpoint else GUARD_BEAM
+			_append_exposed_guard(payload, foot, foot + Vector3.UP * height, wall_boxes, width)
+
+
+## Subtract the sealed mass union from each guard member's centre line. This
+## leaves guards on exposed spans, including partial walls and parapets, while
+## visual and collision geometry retain the same ownership at wall sockets.
+static func _append_exposed_guard(payload: Dictionary, a: Vector3, b: Vector3,
+		wall_boxes: Array[AABB], thickness := GUARD_BEAM) -> void:
+	var intervals: Array[Vector2] = [Vector2(0, 1)]
+	for box: AABB in wall_boxes:
+		var cut := _line_box_interval(a, b, box)
+		if cut.x >= cut.y: continue
+		var remaining: Array[Vector2] = []
+		for span: Vector2 in intervals:
+			if cut.y <= span.x or cut.x >= span.y:
+				remaining.append(span)
+				continue
+			if cut.x > span.x: remaining.append(Vector2(span.x, cut.x))
+			if cut.y < span.y: remaining.append(Vector2(cut.y, span.y))
+		intervals = remaining
+		if intervals.is_empty(): return
+	for span: Vector2 in intervals:
+		if (span.y - span.x) * a.distance_to(b) < 0.00001: continue
+		_append_beam(payload, a.lerp(b, span.x), a.lerp(b, span.y), thickness)
+
+
+static func _line_box_interval(a: Vector3, b: Vector3, box: AABB) -> Vector2:
+	var lo := 0.0
+	var hi := 1.0
+	var direction := b - a
+	for axis in 3:
+		if absf(direction[axis]) < 0.000001:
+			if a[axis] < box.position[axis] - 0.00001 or a[axis] > box.end[axis] + 0.00001:
+				return Vector2.ZERO
+			continue
+		var t0 := (box.position[axis] - a[axis]) / direction[axis]
+		var t1 := (box.end[axis] - a[axis]) / direction[axis]
+		lo = maxf(lo, minf(t0, t1))
+		hi = minf(hi, maxf(t0, t1))
+		if lo >= hi: return Vector2.ZERO
+	return Vector2(lo, hi)
 
 
 static func _append_beam(payload: Dictionary, a: Vector3, b: Vector3,
@@ -216,12 +290,12 @@ static func _append_box(payload: Dictionary, center: Vector3, size: Vector3,
 		var normal := ((face[1] as Vector3) - (face[0] as Vector3)).cross(
 			(face[2] as Vector3) - (face[0] as Vector3)).normalized()
 		_append_quad(payload, face[0] as Vector3, face[1] as Vector3,
-			face[2] as Vector3, face[3] as Vector3, normal, true)
+			face[2] as Vector3, face[3] as Vector3, normal, true, true)
 
 
 static func _append_quad(payload: Dictionary, a: Vector3, b: Vector3,
 		c: Vector3, d: Vector3, normal: Vector3,
-		include_collision: bool) -> void:
+		include_collision: bool, face_uv := false) -> void:
 	var vertices := payload.vertices as PackedVector3Array
 	var normals := payload.normals as PackedVector3Array
 	var uvs := payload.uvs as PackedVector2Array
@@ -230,12 +304,20 @@ static func _append_quad(payload: Dictionary, a: Vector3, b: Vector3,
 	vertices.append_array(PackedVector3Array([a, b, c, d]))
 	for _index in 4:
 		normals.append(normal)
-	uvs.append_array(PackedVector2Array([
-		Vector2(a.x, a.z) / 3.0,
-		Vector2(b.x, b.z) / 3.0,
-		Vector2(c.x, c.z) / 3.0,
-		Vector2(d.x, d.z) / 3.0,
-	]))
+	if face_uv:
+		# X/Z projection collapses vertical post and beam-end faces to a line.
+		# A metric face basis keeps grain readable on every side and end.
+		var u_axis := (b-a).normalized()
+		var v_axis := normal.cross(u_axis).normalized()
+		for point: Vector3 in [a,b,c,d]:
+			uvs.append(Vector2((point-a).dot(u_axis),(point-a).dot(v_axis))/3.0)
+	else:
+		uvs.append_array(PackedVector2Array([
+			Vector2(a.x, a.z) / 3.0,
+			Vector2(b.x, b.z) / 3.0,
+			Vector2(c.x, c.z) / 3.0,
+			Vector2(d.x, d.z) / 3.0,
+		]))
 	# Reversed fan, matching PublicRealmSurfacePlan: tops must be front faces
 	# when seen from above so lit materials shade them as walk surfaces.
 	indices.append_array(PackedInt32Array([

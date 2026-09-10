@@ -73,6 +73,10 @@ static func solve(terrain: VillageTerrainView, settlement_id: StringName,
 	plan.route_exit_count = contacts.size() if volumetric else 0
 	var branches := _outskirts_branches(terrain, arrival, primary_axis,
 		contacts, inner_radius, urban, volumetric)
+	if volumetric:
+		_construct_gate_connections(plan, terrain, settlement_id, arrival,
+			primary_axis, contacts, urban)
+		occupancy.index_constructed(plan.volumes)
 	var target := program.outskirts_program.target_houses(tier,
 		plan.route_exit_count)
 	var used_branches: Dictionary = {}
@@ -340,10 +344,63 @@ static func solve(terrain: VillageTerrainView, settlement_id: StringName,
 	return plan
 
 
+static func _construct_gate_connections(plan: VillageOutskirtsPlan,
+		terrain: VillageTerrainView, settlement_id: StringName, arrival: Vector2,
+		axis: Vector2, contacts: Array[VillageCirculationNode],
+		urban: VillageUrbanFabricPlan, shared_grid: Dictionary = {}) -> void:
+	## Streets are part of the town's public graph, independently of edge-house
+	## placement. Every declared gate joins the same exterior component once.
+	var grid := shared_grid if not shared_grid.is_empty() else _urban_perimeter_grid(urban, arrival, axis)
+	var side := Vector2(-axis.y, axis.x)
+	var root := contacts[0]
+	var root_cell := _nearest_perimeter_cell(grid.perimeter,
+		_grid_local(root.point, arrival, axis),
+		Vector2(root.outward.dot(axis), root.outward.dot(side)))
+	var shapes: Array[FeatureGroundShape] = []
+	shapes.assign(grid.shapes)
+	var graph := _perimeter_component(root_cell, grid.walkable, shapes, arrival, axis, grid.edge_cache)
+	var owner := StringName("%s.gate-streets" % settlement_id)
+	var volume_ids: Dictionary = {}
+	for contact: VillageCirculationNode in contacts:
+		var end_cell := _nearest_perimeter_cell(grid.perimeter,
+			_grid_local(contact.point, arrival, axis),
+			Vector2(contact.outward.dot(axis), contact.outward.dot(side)))
+		var points: Array[Vector2] = [root.point]
+		for cell: Vector2i in _perimeter_path(end_cell, root_cell, graph.parents):
+			var point := _grid_world(Vector2(cell) * OUTSKIRTS_GRID_STEP, arrival, axis)
+			if points[-1].distance_to(point) > 0.001:
+				points.append(point)
+		if points[-1].distance_to(contact.point) > 0.001:
+			points.append(contact.point)
+		var street_id := StringName("%s.%s" % [owner,contact.stable_key])
+		plan.street_paths.append({"points":points,"owner":street_id})
+		plan.surfaces.append_array(PathProgram.filleted_path_shapes(points,
+			PATH_HALF_WIDTH, FeatureGroundField.WORN_PATH,
+			VillagePlan.SURFACE_PRIORITY, street_id))
+		plan.clearances.append_array(PathProgram.filleted_path_shapes(points,
+			PATH_CLEARANCE, FeatureGroundField.NATURAL, 0,
+			StringName("%s.clearance" % street_id)))
+		for index in range(1,points.size()):
+			var a := points[index-1]
+			var b := points[index]
+			if a.distance_to(b) < 0.001: continue
+			var key := "%s/%s" % [a,b] if a.x < b.x or (a.x==b.x and a.y<b.y) \
+				else "%s/%s" % [b,a]
+			if volume_ids.has(key): continue
+			volume_ids[key] = true
+			var ay := terrain.surface_y(a)
+			var by := terrain.surface_y(b)
+			plan.volumes.append(VillageOccupancyVolume.new(
+				VillageOccupancy.Role.HEADROOM,(a+b)*0.5,
+				Vector2(a.distance_to(b)*0.5,PATH_HALF_WIDTH),(b-a).angle(),
+				minf(ay,by),maxf(ay,by)+TraversalEnvelope.MIN_HEADROOM,
+				StringName("%s.%s" % [owner,key]),owner,urban.public_walk_network_id))
+
+
 static func _outskirts_branches(terrain: VillageTerrainView,
 		arrival: Vector2, primary_axis: Vector2,
 		contacts: Array[VillageCirculationNode], inner_radius: float,
-		urban: VillageUrbanFabricPlan, volumetric: bool) -> Array[Dictionary]:
+		urban: VillageUrbanFabricPlan, volumetric: bool, shared_grid: Dictionary = {}) -> Array[Dictionary]:
 	## Convert sealed public exits into a small street graph before parcels are
 	## considered. Every sealed exit joins a tight, grid-aligned distributor
 	## around the exact urban silhouette. Houses are lots outside that shared
@@ -352,13 +409,14 @@ static func _outskirts_branches(terrain: VillageTerrainView,
 	if contacts.is_empty():
 		return out
 	if volumetric:
+		if shared_grid.is_empty(): shared_grid = _urban_perimeter_grid(urban, arrival, primary_axis)
 		# Local gates choose nearby frontage opportunities on the same contour.
 		# Deduplicate their lots before rooting the finished street network below.
 		var by_root: Dictionary = {}
 		var root_order: Array[String] = []
 		for source: VillageCirculationNode in contacts:
 			for branch: Dictionary in _grid_edge_branches(terrain, arrival,
-					primary_axis, source, urban):
+					primary_axis, source, urban, shared_grid):
 				var node := branch.node as VillageCirculationNode
 				var local := _grid_local(node.point, arrival, primary_axis) \
 					/ OUTSKIRTS_GRID_STEP
@@ -386,7 +444,7 @@ static func _outskirts_branches(terrain: VillageTerrainView,
 		# separate shortest paths to separate gates otherwise paint disconnected
 		# fragments. This is a tree of demanded streets, not a full ring road.
 		return _root_exterior_streets(terrain, arrival, primary_axis,
-			contacts[0], urban, out)
+			contacts[0], urban, out, shared_grid)
 	for contact_index in contacts.size():
 		var source := contacts[contact_index]
 		var outward := source.outward
@@ -423,8 +481,8 @@ static func _outskirts_branches(terrain: VillageTerrainView,
 
 static func _root_exterior_streets(terrain: VillageTerrainView,
 		arrival: Vector2, primary_axis: Vector2, root: VillageCirculationNode,
-		urban: VillageUrbanFabricPlan, branches: Array[Dictionary]) -> Array[Dictionary]:
-	var grid := _urban_perimeter_grid(urban, arrival, primary_axis)
+		urban: VillageUrbanFabricPlan, branches: Array[Dictionary], shared_grid: Dictionary = {}) -> Array[Dictionary]:
+	var grid := shared_grid if not shared_grid.is_empty() else _urban_perimeter_grid(urban, arrival, primary_axis)
 	var side := Vector2(-primary_axis.y, primary_axis.x)
 	var entry := _nearest_perimeter_cell(grid.perimeter,
 		_grid_local(root.point, arrival, primary_axis),
@@ -432,7 +490,7 @@ static func _root_exterior_streets(terrain: VillageTerrainView,
 	var shapes: Array[FeatureGroundShape] = []
 	shapes.assign(grid.shapes)
 	var graph := _perimeter_component(entry, grid.walkable, shapes,
-		arrival, primary_axis)
+		arrival, primary_axis, grid.edge_cache)
 	var out: Array[Dictionary] = []
 	for branch: Dictionary in branches:
 		var local := _grid_local(branch.node.point, arrival, primary_axis) \
@@ -467,8 +525,8 @@ static func _network_length(nodes: Array[VillageCirculationNode]) -> float:
 
 static func _grid_edge_branches(terrain: VillageTerrainView,
 		arrival: Vector2, primary_axis: Vector2,
-		source: VillageCirculationNode, urban: VillageUrbanFabricPlan
-		) -> Array[Dictionary]:
+		source: VillageCirculationNode, urban: VillageUrbanFabricPlan,
+		shared_grid: Dictionary = {}) -> Array[Dictionary]:
 	## The city and its edge district share one orthogonal world-fine lattice. Rasterize
 	## the exact sealed structural/public union, take the one-cell exterior contour,
 	## and retain only the bounded component around the real public exit. Lots
@@ -493,7 +551,7 @@ static func _grid_edge_branches(terrain: VillageTerrainView,
 		if alignment > best_dot:
 			best_dot = alignment
 			entry_side = direction_index
-	var grid := _urban_perimeter_grid(urban, arrival, primary_axis)
+	var grid := shared_grid if not shared_grid.is_empty() else _urban_perimeter_grid(urban, arrival, primary_axis)
 	var perimeter := grid.perimeter as Dictionary
 	var blocked := grid.blocked as Dictionary
 	var stall_cells := grid.get("stall_cells", {}) as Dictionary
@@ -507,7 +565,7 @@ static func _grid_edge_branches(terrain: VillageTerrainView,
 	var entry_cell := _nearest_perimeter_cell(perimeter, source_local,
 		outward_local)
 	var graph := _perimeter_component(entry_cell, grid.walkable, shapes,
-		arrival, primary_axis)
+		arrival, primary_axis, grid.edge_cache)
 	var component := graph.component as Dictionary
 	var parents := graph.parents as Dictionary
 	var distances := graph.distances as Dictionary
@@ -674,6 +732,22 @@ static func _urban_perimeter_grid(urban: VillageUrbanFabricPlan,
 			minimum.y = minf(minimum.y, local.y)
 			maximum.x = maxf(maximum.x, local.x)
 			maximum.y = maxf(maximum.y, local.y)
+	# The exterior distributor follows the constructed ground as well as its
+	# buildings. A lower ground claim beside a raised portal is already owned;
+	# routing across it would force a sideways drop immediately after the gate.
+	# The collar is deliberately excluded: only actual construction cells count.
+	if urban.terrain_grade != null:
+		var grade := urban.terrain_grade
+		var pitch := VillageWorldScale.WORLD_FINE_CELL_M
+		for cell: Vector2i in grade._claims:
+			var centre := grade._origin + Vector2(cell) * pitch
+			shapes.append(FeatureGroundShape.axis_rect(Rect2(
+				centre - Vector2.ONE * pitch * 0.5, Vector2.ONE * pitch)))
+			for corner: Vector2 in [centre - Vector2.ONE * pitch * 0.5,
+					centre + Vector2.ONE * pitch * 0.5]:
+				var local := _grid_local(corner, arrival, primary_axis)
+				minimum = minimum.min(local)
+				maximum = maximum.max(local)
 	# The town's perimeter stalls lean on its outward wall. They are dressing,
 	# not occupancy, but the lane must run in FRONT of them, so they block the
 	# contour like mass and are remembered separately: a root facing one is a
@@ -744,7 +818,8 @@ static func _urban_perimeter_grid(urban: VillageUrbanFabricPlan,
 					break
 	return {"blocked": blocked, "perimeter": perimeter,
 		"shapes": shapes, "centre": (minimum + maximum) * 0.5,
-		"stall_cells": stall_cells, "walkable": walkable}
+		"envelope": Rect2(minimum, maximum - minimum),
+		"stall_cells": stall_cells, "walkable": walkable, "edge_cache": {}}
 
 
 static func _nearest_perimeter_cell(perimeter: Dictionary,
@@ -769,7 +844,7 @@ static func _nearest_perimeter_cell(perimeter: Dictionary,
 
 static func _perimeter_component(entry: Vector2i, perimeter: Dictionary,
 		shapes: Array[FeatureGroundShape], arrival: Vector2,
-		primary_axis: Vector2) -> Dictionary:
+		primary_axis: Vector2, edge_cache: Dictionary = {}) -> Dictionary:
 	## A state includes arrival direction: a cell-only BFS cannot minimize turns.
 	## Search the bounded exterior band, not just its jagged innermost contour;
 	## lots remain on that contour but streets can bridge its little recesses.
@@ -780,7 +855,6 @@ static func _perimeter_component(entry: Vector2i, perimeter: Dictionary,
 	var costs: Dictionary = {initial: 0}
 	var steps: Dictionary = {initial: 0}
 	var settled: Dictionary = {}
-	var edge_cache: Dictionary = {}
 	var queue := PriorityQueue.new()
 	queue.push(initial, 0.0)
 	var directions: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.DOWN,

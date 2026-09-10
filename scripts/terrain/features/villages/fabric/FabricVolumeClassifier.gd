@@ -7,6 +7,17 @@ static var last_failure := ""
 static var last_diagnostic: Dictionary = {}
 
 
+static func construct(stable_id: StringName, realm: SectionalPublicRealmPlan,
+		fabric_plan: SettlementFabricPlan) -> FabricVolumePlan:
+	var result := FabricVolumePlan.new(stable_id)
+	var air_claims := realm.air_claims()
+	var solids := fabric_plan.transformed_cells(&"solid")
+	_reconcile_measured_roof_air(air_claims, solids, realm, fabric_plan)
+	result.construct(air_claims, realm.landing_air_cells(), solids,
+		fabric_plan.transformed_cells(&"inhabited"))
+	return result
+
+
 static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 		fabric_plan: SettlementFabricPlan) -> FabricVolumePlan:
 	last_failure = ""

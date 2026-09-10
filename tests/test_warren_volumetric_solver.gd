@@ -1,5 +1,7 @@
 extends GutTest
 
+const LegacyRoomRepair = preload("res://tests/fixtures/legacy_room_repair.gd")
+
 static var _program_cache: SettlementFabricProgram
 
 
@@ -185,26 +187,18 @@ func test_balcony_doorway_preserves_an_unrelated_required_roof() -> void:
 	var portal_bit := WarrenSpatialFabricCompiler._portal_bit_for_facing(facing)
 	var portal_id := WarrenSpatialFabricCompiler._room_recipe_id(room, 7,
 		false, portal_bit)
-	var ordinary_id := WarrenSpatialFabricCompiler._room_recipe_id(room, 7,
-		false)
 	var portal_recipe := program.recipe(portal_id)
-	var ordinary_recipe := program.recipe(ordinary_id)
 	assert_not_null(portal_recipe)
-	assert_not_null(ordinary_recipe)
 	var transform := FabricRecipe.lattice_transform(room.lattice_origin,
 		room.yaw_quarters)
 	var portal_bounds := transform * portal_recipe.local_clearance_bounds
-	var ordinary_bounds := transform * ordinary_recipe.local_clearance_bounds
-	# Reserve a thin exact gable edge reached by the portal's projecting jamb but
-	# not by the closed facade. This is the general geometry that falsified the
-	# former deck-only balcony preflight.
+	# The current closed doorway and ordinary wall have the same conservative
+	# footprint. Reserve a gable edge inside the actual doorway envelope; the
+	# former difference-of-bounds fixture now made a zero-depth box.
 	var roof_bounds := AABB(Vector3(portal_bounds.position.x + 0.5,
 		portal_bounds.position.y + 0.5, portal_bounds.position.z),
-		Vector3(1.0, 1.0, ordinary_bounds.position.z \
-			- portal_bounds.position.z + 0.05))
+		Vector3(1.0, 1.0, 0.2))
 	assert_true(SettlementFabricPlan._aabb_overlaps_volume(portal_bounds,
-		roof_bounds))
-	assert_false(SettlementFabricPlan._aabb_overlaps_volume(ordinary_bounds,
 		roof_bounds))
 	var closure: Dictionary = {
 		"owner_room_id": &"unrelated.roof.owner",
@@ -220,6 +214,11 @@ func test_balcony_doorway_preserves_an_unrelated_required_roof() -> void:
 		._balcony_portal_required_roof_conflict(room, facing, 7, program,
 			[closure] as Array[Dictionary]), &"unrelated.roof.owner/roof.partial.gable.blue.2.negative",
 		"balcony admission must include its mandatory parent-wall doorway")
+	closure.options[0].bounds = AABB(roof_bounds.position + Vector3.RIGHT * 100.0,
+		roof_bounds.size)
+	assert_eq(WarrenSpatialFeatureSolver._balcony_portal_required_roof_conflict(
+		room, facing, 7, program, [closure] as Array[Dictionary]), &"",
+		"an unrelated distant roof leaves the doorway clear")
 
 
 func test_optional_facade_bay_preserves_one_finite_gable_option() -> void:
@@ -843,7 +842,7 @@ func test_one_storey_composition_records_truncate_only_unrequired_tower_crown() 
 			"required_through_block": 1, "paired_primary": false,
 			"paired_secondary": false},
 	}
-	assert_eq(WarrenRoomCompositionPlanner._truncate_unpaired_towers(
+	assert_eq(LegacyRoomRepair._truncate_unpaired_towers(
 		second_storey_required), 1)
 	assert_eq((((second_storey_required[&"lineage"] as Dictionary).blocks) \
 		as Array).size(), 2,
@@ -854,7 +853,7 @@ func test_one_storey_composition_records_truncate_only_unrequired_tower_crown() 
 			"required_through_block": 2, "paired_primary": false,
 			"paired_secondary": false},
 	}
-	assert_eq(WarrenRoomCompositionPlanner._truncate_unpaired_towers(
+	assert_eq(LegacyRoomRepair._truncate_unpaired_towers(
 		third_storey_required), 0)
 	assert_eq((((third_storey_required[&"lineage"] as Dictionary).blocks) \
 		as Array).size(), 3,
@@ -871,7 +870,7 @@ func test_registered_optional_crown_terminates_above_a_complete_house() \
 		&"shaft": {"blocks": blocks, "required_through_block": -1,
 			"paired_primary": false, "paired_secondary": false},
 	}
-	var result := WarrenRoomCompositionPlanner \
+	var result := LegacyRoomRepair \
 		._truncate_registered_crowns(lineages)
 	assert_eq(int(result.lineage_count), 1)
 	assert_eq(int(result.storey_count), 2)
@@ -891,7 +890,7 @@ func test_registered_crown_keeps_required_interface_and_bearer() -> void:
 		&"required": {"blocks": required_blocks, "required_through_block": 2,
 			"paired_primary": false, "paired_secondary": false},
 	}
-	var required_result := WarrenRoomCompositionPlanner \
+	var required_result := LegacyRoomRepair \
 		._truncate_registered_crowns(required_lineages)
 	assert_eq(int(required_result.storey_count), 0)
 	assert_eq((((required_lineages[&"required"] as Dictionary).blocks) \
@@ -912,7 +911,7 @@ func test_registered_crown_keeps_required_interface_and_bearer() -> void:
 		&"child": {"blocks": [child], "required_through_block": 0,
 			"paired_primary": false, "paired_secondary": true},
 	}
-	var bearing_result := WarrenRoomCompositionPlanner \
+	var bearing_result := LegacyRoomRepair \
 		._truncate_registered_crowns(bearing_lineages)
 	assert_eq(int(bearing_result.storey_count), 0)
 	assert_eq((((bearing_lineages[&"bearing"] as Dictionary).blocks) \
@@ -934,7 +933,7 @@ func test_registered_crown_keeps_required_interface_and_bearer() -> void:
 			"required_through_block": 0, "paired_primary": false,
 			"paired_secondary": true},
 	}
-	var implicit_result := WarrenRoomCompositionPlanner \
+	var implicit_result := LegacyRoomRepair \
 		._truncate_registered_crowns(implicit_lineages)
 	assert_eq(int(implicit_result.storey_count), 0)
 	assert_eq((((implicit_lineages[&"bearing"] as Dictionary).blocks) \
@@ -1003,7 +1002,7 @@ func test_paired_registration_relief_repartitions_two_locked_upper_rooms() \
 		+ WarrenRoomCompositionPlanner._registered_facade_plane_count(
 			right_lower.columns as Dictionary,
 			right_upper.columns as Dictionary)
-	var relieved := WarrenRoomCompositionPlanner \
+	var relieved := LegacyRoomRepair \
 		._relieve_paired_registered_lineages(lineages, grid, {}, 73)
 	assert_gt(relieved, 0,
 		"a party-wall pair must be able to trade its upper occupied volume")
@@ -1056,7 +1055,7 @@ func test_paired_registration_relief_sees_half_storey_phase_overlap() -> void:
 			"required_through_block": -1, "paired_primary": false,
 			"paired_secondary": false},
 	}
-	var relieved := WarrenRoomCompositionPlanner \
+	var relieved := LegacyRoomRepair \
 		._relieve_paired_registered_lineages(lineages, grid, {}, 91)
 	assert_gt(relieved, 0,
 		"rooms sharing only one fine Y slice still need one atomic 3D repair")
@@ -1104,14 +1103,14 @@ func test_cantilever_support_assignment_can_revise_an_earlier_course() -> void:
 		{"key": "later", "options": [later]},
 	]
 	var state := {"visited_node_count": 0, "peak_assigned_count": 0}
-	var assignments := WarrenSpatialFeatureSolver \
+	var assignments := preload("res://tests/fixtures/legacy_cantilever_search.gd") \
 		._assign_cantilever_supports(entries, state)
 	assert_eq(assignments.size(), 2,
 		"mandatory support courses must be chosen as one compatible transaction")
 	assert_eq(int((assignments.early as Dictionary).diagonal_count), 0,
 		"the solver must revise an earlier diagonal when a later support needs it")
 	assert_lte(int(state.visited_node_count),
-		WarrenSpatialFeatureSolver.MAX_CANTILEVER_SUPPORT_ASSIGNMENT_NODES)
+		preload("res://tests/fixtures/legacy_cantilever_search.gd").MAX_CANTILEVER_SUPPORT_ASSIGNMENT_NODES)
 
 
 func test_collinear_cantilever_courses_share_one_structural_frame() -> void:
@@ -1126,7 +1125,7 @@ func test_collinear_cantilever_courses_share_one_structural_frame() -> void:
 			0.0), Vector3(2.0, 3.5, 2.0))], "records": [upper_record]}]},
 	]
 	var state := {"visited_node_count": 0, "peak_assigned_count": 0}
-	var assignments := WarrenSpatialFeatureSolver \
+	var assignments := preload("res://tests/fixtures/legacy_cantilever_search.gd") \
 		._assign_cantilever_supports(entries, state)
 	assert_eq(assignments.size(), 2,
 		"adjacent same-plane courses should form one continuous timber frame")

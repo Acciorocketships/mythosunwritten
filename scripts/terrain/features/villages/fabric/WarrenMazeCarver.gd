@@ -6,14 +6,11 @@ extends RefCounted
 ## then extend that same connected public graph. There is no attempt index,
 ## survivor ranking, or complete-plan alternative.
 const MIN_HOUSE_BANDS := WarrenMazeSourcePlan.MIN_HOUSE_BANDS
-const FRONTAGE_FLOOR := WarrenMazeSourcePlan.FRONTAGE_FLOOR
-const FRONTAGE_BUFFER_TARGET := 0.92
 const MAX_SPINE_STRAIGHT_RUN := WarrenMazeSourcePlan.MAX_SPINE_STRAIGHT_RUN
 const MAX_ALLEY_STRAIGHT_RUN := WarrenMazeSourcePlan.MAX_ALLEY_STRAIGHT_RUN
 const MIN_ALLEY_CELLS := 3
 const MAX_ALLEY_CELLS := 8
 const SPINE_VISIT_BUDGET := 40000
-const MAX_DERIVED_ALLEY_CELLS := 320
 ## Controller ruling (2026-08-22, task-2 follow-up): a passage cell now
 ## opens to sky by default -- the block-thickness heuristic that used to
 ## gate this was starving bridge-span eligibility, since "would-be-open"
@@ -82,7 +79,8 @@ static var last_diagnostic: Dictionary = {}
 
 static func carve(world_seed: int, massif: WarrenMassif,
 		scale_profile: WarrenVillageScaleProfile = null,
-		seal_plan: bool = true) -> WarrenMazeSourcePlan:
+		seal_plan: bool = true,
+		collect_diagnostics: bool = true) -> WarrenMazeSourcePlan:
 	last_failure = ""
 	last_diagnostic = {}
 	var profile := scale_profile if scale_profile != null \
@@ -146,9 +144,10 @@ static func carve(world_seed: int, massif: WarrenMassif,
 			"frontage": _frontage_audit(massif, excavation),
 			"market_approach": excavation.route.slice(0, market_cells)}
 		return null
-	var before_frontage := _frontage_audit(massif, excavation)
+	var before_frontage := _frontage_audit(massif, excavation) \
+		if collect_diagnostics else {}
 	_carve_alleys(world_seed, massif, excavation, thickness,
-		market_cells, market_square, profile, int(descent.cells))
+		market_cells, profile)
 	var loop_target := MAX_LOOP_JOINS if profile.scale_id in [
 		WarrenVillageScaleProfile.LARGE,
 		WarrenVillageScaleProfile.GRAND] else MIN_LOOP_JOINS
@@ -161,7 +160,9 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	# not facade holes inferred by the renderer.
 	var secondary_gates := _carve_secondary_gate_lanes(world_seed, massif,
 		excavation, portal, profile)
-	var after_frontage := _frontage_audit(massif, excavation)
+	var terminal_lookout := _stamp_terminal_lookout(massif, excavation)
+	var after_frontage := _frontage_audit(massif, excavation) \
+		if collect_diagnostics else {}
 	# TASK D1 FIX 1, controller ruling: ADVISORY. FRONTAGE_FLOOR is the
 	# growth POLICY both ratchets steer by, not a verdict on the town. It is
 	# not one of the four hard runtime rules (street connectivity,
@@ -177,23 +178,22 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	# the plot layer's coverage pins (every street-fronting slot filled,
 	# buildable coverage >= 0.91). The diagnostic is kept whether or not
 	# the town clears the floor, so the sweep can still read the stage.
-	last_diagnostic = {"stage": &"alleys", "before": before_frontage,
-		"after": after_frontage, "lane_count": excavation.lanes.size(),
-		"lane_cells": excavation.lane_cells().size()}
+	if collect_diagnostics:
+		last_diagnostic = {"stage": &"alleys", "before": before_frontage,
+			"after": after_frontage, "lane_count": excavation.lanes.size(),
+			"lane_cells": excavation.lane_cells().size()}
 	var forced_open: Array[Vector3i] = []
 	forced_open.assign(excavation.route.slice(0, market_cells))
 	for cell: Vector3i in market_square:
 		if cell not in forced_open:
 			forced_open.append(cell)
-	for cell: Vector3i in secondary_gates:
+	for cell: Vector3i in secondary_gates + terminal_lookout:
 		if cell not in forced_open:
 			forced_open.append(cell)
 	_open_passages_to_air(world_seed, massif, excavation, forced_open,
 		profile)
 	_finalize_excavation(massif, excavation)
-	if not excavation.seal():
-		last_failure = "maze excavation rejected: %s" % excavation.last_rejection
-		return null
+	excavation.finish_construction()
 	var plan := WarrenMazeSourcePlan.new(world_seed, profile, massif, excavation)
 	for cell: Vector3i in excavation.route:
 		plan.mark_passage(cell, WarrenMazeSourcePlan.PASSAGE_SPINE)
@@ -204,17 +204,17 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	plan.market_square_cells.assign(market_square)
 	plan.feature_stamps.append({"kind": &"market_square",
 		"cells": market_square.duplicate(), "adaptation": &"fit"})
+	if not terminal_lookout.is_empty():
+		plan.feature_stamps.append({"kind": &"terminal_lookout",
+			"cells": terminal_lookout.duplicate(), "adaptation": &"reserved"})
 	# TASK E2. The summit is where the CLIMB arrived, which is no longer the
 	# spine's last cell. It stays the town's crown for every reader that means
 	# the crown — the landmark and deck quotas key their rolls off it.
 	plan.summit_cell = summit
 	plan.block_thickness = thickness
 	if seal_plan:
-		if not plan.seal():
-			last_failure = "maze source plan rejected: %s" % plan.last_rejection
-			last_diagnostic = {"stage": &"source_seal", "audit": plan.audit,
-				"lane_count": excavation.lanes.size()}
-			return null
+		plan.finish_construction(collect_diagnostics)
+	if seal_plan and collect_diagnostics:
 		last_diagnostic = plan.audit.duplicate(true)
 		last_diagnostic["spine_visits"] = context.visits
 		last_diagnostic["lane_count"] = excavation.lanes.size()
@@ -222,6 +222,103 @@ static func carve(world_seed: int, massif: WarrenMassif,
 		last_diagnostic["descent_cells"] = int(descent.cells)
 		last_diagnostic["descent_bands"] = int(descent.bands)
 	return plan
+
+
+static func _stamp_terminal_lookout(massif: WarrenMassif,
+		excavation: WarrenExcavation) -> Array[Vector3i]:
+	# Reserve a broad destination in the source transaction, before houses and
+	# bridge compounds claim its air. Descending termini need destinations too.
+	if excavation.transitions.is_empty(): return [] as Array[Vector3i]
+	var last: Dictionary = excavation.transitions.back()
+	var end: Vector3i = last.to
+	if int(last.kind) != WarrenVolumeTransition.Kind.STAIR:
+		return [] as Array[Vector3i]
+	for lane: Dictionary in excavation.lanes:
+		if lane.anchor == end: return [] as Array[Vector3i]
+	var forward := Vector3i(end.x - last.from.x, 0, end.z - last.from.z).sign()
+	var footprints: Array[Dictionary] = []
+	for sx in [-1, 1]:
+		for sz in [-1, 1]:
+			var side_x := end + Vector3i(sx, 0, 0)
+			var side_z := end + Vector3i(0, 0, sz)
+			var diagonal := end + Vector3i(sx, 0, sz)
+			var cells: Array[Vector3i] = [end]
+			for cell: Vector3i in [side_x, side_z, diagonal]:
+				if _terminal_lookout_slot(massif, excavation, cell): cells.append(cell)
+			# Reserve a full square. A strip or an L is still a walkway,
+			# rather than a destination substantially wider than its approach.
+			if cells.size() != 4: continue
+			var bridged := 0
+			for cell: Vector3i in cells:
+				if excavation.carved.has(cell-Vector3i.UP): bridged += 1
+			footprints.append({"cells": cells, "bridged": bridged,
+				"ahead": sx * forward.x + sz * forward.z})
+	if footprints.is_empty(): return [] as Array[Vector3i]
+	footprints.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if a.bridged != b.bridged: return a.bridged < b.bridged
+		if a.ahead != b.ahead: return a.ahead > b.ahead
+		return _cell_less(a.cells[1], b.cells[1]))
+	var cells: Array[Vector3i] = footprints[0].cells
+	var joined: Array[Vector3i] = [end]
+	var tree_edges: Dictionary = {}
+	# Each new cell joins an already connected neighbour. The declaration order
+	# is independent of which corner the flight reaches.
+	while joined.size() < cells.size():
+		for cell: Vector3i in cells:
+			if cell in joined: continue
+			for anchor: Vector3i in joined:
+				if absi(cell.x-anchor.x) + absi(cell.z-anchor.z) != 1: continue
+				var lane_cells: Array[Vector3i] = []
+				WarrenPassageLatticeRules.carve_lane_stride(excavation, {}, lane_cells,
+					[cell] as Array[Vector3i], 0, 1)
+				excavation.lanes.append({"anchor": anchor, "cells": lane_cells,
+					"feature_kind": &"terminal_lookout", "transitions": [
+						{"from": anchor, "to": cell, "kind": WarrenVolumeTransition.Kind.LEVEL}
+					] as Array[Dictionary]})
+				tree_edges[[anchor, cell]] = true
+				joined.append(cell)
+				break
+	for i in cells.size():
+		for j in range(i + 1, cells.size()):
+			var a := cells[i]
+			var b := cells[j]
+			if absi(a.x-b.x) + absi(a.z-b.z) != 1: continue
+			if tree_edges.has([a,b]) or tree_edges.has([b,a]): continue
+			excavation.loop_edges.append({"from": a, "to": b,
+				"kind": WarrenVolumeTransition.Kind.LEVEL})
+	for cell: Vector3i in cells:
+		for band in range(cell.y, maxi(cell.y + WarrenExcavation.HEADROOM_BANDS,
+				massif.top_at(Vector2i(cell.x, cell.z)))):
+			excavation.carved[Vector3i(cell.x, band, cell.z)] = true
+	return cells
+
+
+static func _terminal_lookout_slot(massif: WarrenMassif,
+		excavation: WarrenExcavation, cell: Vector3i) -> bool:
+	var column := Vector2i(cell.x, cell.z)
+	if not massif.has_column(column) or cell.y < massif.base_at(column): return false
+	# A terrace may stand one band above an existing shoulder. Unlike a tunnel,
+	# its open headroom need not fit below the unbuilt mountain's old ceiling.
+	if massif.top_at(column) < cell.y - 1: return false
+	# A plank terrace may bridge a lower street. The bore reserves an extra
+	# band for rock roofs, but that is not the standing clearance required by
+	# the public-volume contract. Measure against each complete swept flight,
+	# conservatively using its high and low endpoints throughout its run.
+	var spans: Array[Dictionary] = excavation.transitions.duplicate()
+	for lane: Dictionary in excavation.lanes: spans.append_array(lane.transitions)
+	spans.append_array(excavation.loop_edges)
+	for span: Dictionary in spans:
+		var a: Vector3i = span.from
+		var b: Vector3i = span.to
+		if cell.x < mini(a.x,b.x) or cell.x > maxi(a.x,b.x) \
+				or cell.z < mini(a.z,b.z) or cell.z > maxi(a.z,b.z): continue
+		var low := mini(a.y,b.y)
+		var high := maxi(a.y,b.y)
+		if cell.y < low and low-cell.y >= WarrenVolumePlan.HEADROOM_BANDS: continue
+		if cell.y > high and cell.y-high >= WarrenVolumePlan.HEADROOM_BANDS: continue
+		return false
+
+	return true
 
 
 static func _stamp_market_square(world_seed: int, massif: WarrenMassif,
@@ -724,9 +821,7 @@ static func _descent_candidates(context: Dictionary, current: Vector3i,
 
 static func _carve_alleys(world_seed: int, massif: WarrenMassif,
 		excavation: WarrenExcavation, thickness: Dictionary,
-		market_cell_count: int, market_square: Array[Vector3i],
-		profile: WarrenVillageScaleProfile,
-		descent_cells: int) -> void:
+		market_cell_count: int, profile: WarrenVillageScaleProfile) -> void:
 	var public_set: Dictionary = {}
 	for cell: Vector3i in excavation.route:
 		public_set[cell] = true
@@ -738,82 +833,25 @@ static func _carve_alleys(world_seed: int, massif: WarrenMassif,
 			public_set[cell] = true
 			if StringName(lane.get("feature_kind", &"")) == &"market_square":
 				market_set[cell] = true
-	var capable := _house_capable_column_count(massif, excavation)
-	# Existing lane budgets were tuned for the retired one-canyon skin. The maze
-	# derives the minimum public-cell supply needed to plausibly front the whole
-	# mass, while retaining the profile value as a hard lower bound.
-	# A winding passage fronts fewer than two new columns per cell because turns,
-	# stairs, and already-addressed junction shoulders overlap. The measured
-	# source corpus needs roughly one passage cell per capable column to reach
-	# the profile's addressed-column target; the independent source seal still
-	# requires 0.90 of passage cells to retain an inhabitable facade.
-	var target_public_cells := int(ceil(float(capable) * 1.10))
-	# TASK E2. The spine's supply is its CLIMB, not its whole length. The 1.10
-	# estimate above says how many public cells it takes to front the mass, and
-	# it was calibrated against a spine that ran once from the mouth to the
-	# crown. The post-summit descent comes back down beside ground the climb
-	# already addressed, so charging its cells against the alley allowance buys
-	# almost no new frontage and costs a great deal: measured on large/43,
-	# the descent took the alley supply from 65 cells to 52 and the
-	# addressed-column ratio from 0.676 to 0.575 even WITH this line, and to
-	# 0.440 without it under the rejected unconditional-budget descent that
-	# `_extend_spine_descent` documents. The allowance is therefore
-	# what it always was, and the descent is street the town gains on top.
-	# This is a cap, not a quota -- the ratchet below stops the moment the
-	# column target is met -- so a town that was never budget-bound does not
-	# grow one cell because of this line.
-	var spine_supply := maxi(0, excavation.route.size() - descent_cells)
-	var cell_budget := clampi(maxi(profile.lane_cell_budget,
-		target_public_cells - spine_supply),
-		profile.lane_cell_budget, MAX_DERIVED_ALLEY_CELLS)
-	var lane_budget := maxi(profile.lane_budget,
-		int(ceil(float(cell_budget) / 4.0)))
-	var tried: Dictionary = {}
+	# The size profile authors the street allowance before construction. The
+	# former derived maximum relied on whole-town audits to stop it early;
+	# spending that maximum unconditionally excavated most of the building mass.
+	var cell_budget := profile.lane_cell_budget
+	var lane_budget := profile.lane_budget
+	var visited_anchors: Dictionary = {}
 	var used_cells := excavation.lane_cells().size()
 	while excavation.lanes.size() < lane_budget and used_cells < cell_budget:
-		var audit := _frontage_audit(massif, excavation)
-		if excavation.lane_cells().size() >= profile.lane_cell_budget \
-				and float(audit.column_ratio) \
-					>= _column_frontage_target(profile) \
-				and float(audit.ratio) >= FRONTAGE_BUFFER_TARGET:
-			break
 		var anchor := _next_alley_anchor(world_seed, excavation,
-			market_set, tried)
+			market_set, visited_anchors)
 		if anchor == Vector3i(2147483647, 2147483647, 2147483647):
 			break
-		tried[anchor] = true
-		var ratio_before := float(audit.column_ratio)
-		# TASK D1. The passage-frontage guard is RATCHET, not floor: no lane
-		# may take the ratio below where this loop found it, and once at or
-		# above FRONTAGE_FLOOR none may take it below that. Written as the bare
-		# floor, it read "no lane at all" for a town that arrived here already
-		# short -- every candidate, including one that would have climbed back
-		# toward the floor, was rolled back, so the town died with `before ==
-		# after` and ZERO alleys. Measured: that is EVERY frontage rejection in
-		# the corpus, on all four ground fixtures (flat 7/compact 0.850,
-		# and 16 sloped towns at 0.632-0.875), each with one lane -- the market
-		# square's own -- and no alley ever grown. A town whose spine already
-		# clears the floor is unaffected, since the ratchet is then exactly the
-		# floor, which is why every other flat town is untouched.
-		var passage_before := float(audit.ratio)
+		visited_anchors[anchor] = true
 		var lane := _grow_alley(world_seed, massif, excavation, public_set,
 			thickness, anchor, cell_budget - used_cells)
 		if lane.is_empty():
 			continue
-		excavation.lanes.append(lane)
-		var after_lane := _frontage_audit(massif, excavation)
-		var ratio_after := float(after_lane.column_ratio)
-		if ratio_after <= ratio_before \
-				or float(after_lane.ratio) < minf(FRONTAGE_FLOOR,
-					passage_before) \
-				or not _public_candidate_preserves_volume_contract(massif,
-					excavation, market_square):
-			excavation.lanes.pop_back()
-			WarrenPassageLatticeRules.rollback(excavation, public_set,
-				lane.cells as Array[Vector3i],
-				lane.get("_carved", []) as Array[Vector3i])
-			continue
 		lane.erase("_carved")
+		excavation.lanes.append(lane)
 		used_cells += (lane.cells as Array[Vector3i]).size()
 
 
@@ -907,90 +945,28 @@ static func _carve_loop_joins(world_seed: int, massif: WarrenMassif,
 			return _cell_less(a.cell as Vector3i, b.cell as Vector3i))
 		if candidates.is_empty():
 			break
-		# TASK D1 FIX 1. The same RATCHET `_carve_alleys` needed, and for the
-		# same reason: written as `>= FRONTAGE_FLOOR` this commits a loop join
-		# only when it REACHES the floor, so a town that arrives short rolls
-		# back every connector -- including one that carries the ratio part of
-		# the way there -- and closes its street graph with nothing. Measured
-		# once per iteration, before any candidate is tried, so a join may
-		# never lower the ratio and, once at or above the floor, may never
-		# take it below that. A town whose alleys already cleared the floor is
-		# unaffected: the ratchet is then exactly the floor.
-		var frontage_before := float(_frontage_audit(massif,
-			excavation).ratio)
-		var committed := false
-		for candidate: Dictionary in candidates:
-			var cells := candidate.cells as Array[Vector3i]
-			# Loop joins are alley episodes too.  Their bounded connector search
-			# used to enforce total length but not the source plan's alley
-			# straight-run contract, so a perfectly legal carve could be rejected
-			# only when the finished source re-measured it.  Admit the connector on
-			# the same walk (anchor + new cells) the sealed audit reads.
-			var lane_walk: Array[Vector3i] = [
-				candidate.anchor as Vector3i]
-			lane_walk.append_array(cells)
-			if WarrenMazeSourcePlan._max_straight_run(lane_walk) \
-					> MAX_ALLEY_STRAIGHT_RUN:
-				continue
-			var carved: Array[Vector3i] = []
-			var transitions: Array[Dictionary] = []
-			var previous := candidate.anchor as Vector3i
-			for cell: Vector3i in cells:
-				for band in range(cell.y, cell.y \
-						+ WarrenPassageLatticeRules.HEADROOM_BANDS):
-					var air := Vector3i(cell.x, band, cell.z)
-					excavation.carved[air] = true
-					carved.append(air)
-				transitions.append({"from": previous, "to": cell,
-					"kind": WarrenVolumeTransition.Kind.LEVEL})
-				previous = cell
-			var lane := {"anchor": candidate.anchor,
-				"cells": cells, "transitions": transitions,
-				"feature_kind": &"loop_join"}
-			var edge := {"from": cells.back(), "to": candidate.target,
-				"kind": WarrenVolumeTransition.Kind.LEVEL}
-			excavation.lanes.append(lane)
-			excavation.loop_edges.append(edge)
-			var audit := _frontage_audit(massif, excavation)
-			if float(audit.ratio) >= minf(FRONTAGE_FLOOR, frontage_before) \
-					and _public_candidate_preserves_volume_contract(massif,
-						excavation, market_square):
-				for cell: Vector3i in cells:
-					loop_cells[cell] = true
-				committed = true
-				break
-			excavation.loop_edges.pop_back()
-			excavation.lanes.pop_back()
-			for air: Vector3i in carved:
-				excavation.carved.erase(air)
-		if not committed:
-			break
+		# The legal connector domain already owns headroom and its endpoints.
+		# Emit the selected connection once; finished-town audits run in tests.
+		var candidate: Dictionary = candidates[0]
+		var cells := candidate.cells as Array[Vector3i]
+		var transitions: Array[Dictionary] = []
+		var previous := candidate.anchor as Vector3i
+		for cell: Vector3i in cells:
+			for band in WarrenPassageLatticeRules.HEADROOM_BANDS:
+				excavation.carved[cell + Vector3i.UP * band] = true
+			transitions.append({"from": previous, "to": cell,
+				"kind": WarrenVolumeTransition.Kind.LEVEL})
+			previous = cell
+			loop_cells[cell] = true
+		excavation.lanes.append({"anchor": candidate.anchor,
+			"cells": cells, "transitions": transitions, "feature_kind": &"loop_join"})
+		excavation.loop_edges.append({"from": cells.back(), "to": candidate.target,
+			"kind": WarrenVolumeTransition.Kind.LEVEL})
+		for cell: Vector3i in cells:
+			_reserve_frontage(world_seed, massif, excavation, cell,
+				excavation.frontage_reservations)
 
 
-static func _public_candidate_preserves_volume_contract(massif: WarrenMassif,
-		excavation: WarrenExcavation,
-		market_square: Array[Vector3i]) -> bool:
-	## Loop growth is the final topology mutation before the excavation becomes
-	## a WarrenVolumePlan.  The volume owns exact 1.5 m tread expansion, landing
-	## geometry, and the local/whole-network breadth proof; reconstructing only a
-	## subset of those rules here allowed a locally narrow connector to make the
-	## complete public realm fail one stage later.  Preview the still-reversible
-	## candidate through that canonical adapter instead.  The clone is pure data,
-	## so sealing it cannot freeze or otherwise alter the live excavation that the
-	## caller may still roll back.
-	var preview := WarrenExcavation.new(excavation.world_seed)
-	preview.route.assign(excavation.route)
-	preview.lanes.assign(excavation.lanes)
-	preview.loop_edges.assign(excavation.loop_edges)
-	preview.bridge_spans.assign(excavation.bridge_spans)
-	preview.bridge_span_audit = excavation.bridge_span_audit.duplicate(true)
-	preview.carved = excavation.carved.duplicate()
-	preview.transitions.assign(excavation.transitions)
-	_finalize_excavation(massif, preview)
-	if not preview.seal():
-		return false
-	return WarrenExcavationVolumeAdapter.to_volume_plan(massif, preview,
-		market_square) != null
 static func _manhattan_connector_paths(anchor: Vector3i,
 		target: Vector3i) -> Array:
 	var out: Array = []
@@ -1141,9 +1117,16 @@ static func _loop_connector_is_legal(massif: WarrenMassif,
 		cells: Array[Vector3i]) -> bool:
 	if cells.is_empty() or cells.size() > MAX_LOOP_CONNECTOR_CELLS:
 		return false
+	var lane_walk: Array[Vector3i] = [anchor]
+	lane_walk.append_array(cells)
+	if WarrenMazeSourcePlan._max_straight_run(lane_walk) > MAX_ALLEY_STRAIGHT_RUN:
+		return false
 	var simulated_walk := walk_set.duplicate()
 	for index in cells.size():
 		var cell := cells[index]
+		for band in WarrenPassageLatticeRules.HEADROOM_BANDS:
+			if excavation.frontage_reservations.has(cell + Vector3i.UP * band):
+				return false
 		if public_set.has(cell) or market_set.has(cell) \
 				or loop_cells.has(cell) \
 				or int(thickness.get(Vector2i(cell.x, cell.z), 0)) < 1 \
@@ -1195,11 +1178,15 @@ static func _grow_alley(world_seed: int, massif: WarrenMassif,
 	var target := mini(budget, MIN_ALLEY_CELLS + posmod(
 		WarrenPassageLatticeRules.hash_key(world_seed, 0xB4A, anchor),
 		MAX_ALLEY_CELLS - MIN_ALLEY_CELLS + 1))
-	if target < MIN_ALLEY_CELLS:
+	if target <= 0:
 		return {}
 	var lane_cells: Array[Vector3i] = []
 	var transitions: Array[Dictionary] = []
 	var all_carved: Array[Vector3i] = []
+	var reserved_frontage := excavation.frontage_reservations
+	if reserved_frontage.is_empty():
+		for cell: Vector3i in excavation.public_cells():
+			_reserve_frontage(world_seed, massif, excavation, cell, reserved_frontage)
 	var local_set: Dictionary = {anchor: true}
 	var current := anchor
 	var previous_direction_index := -1
@@ -1208,7 +1195,7 @@ static func _grow_alley(world_seed: int, massif: WarrenMassif,
 		var candidates := _alley_candidates(world_seed, massif, excavation,
 			public_set, local_set, thickness, anchor, current,
 			previous_direction_index, straight, target - lane_cells.size(),
-			lane_cells.size())
+			lane_cells.size(), reserved_frontage)
 		if candidates.is_empty():
 			break
 		var selected := candidates[0]
@@ -1220,14 +1207,16 @@ static func _grow_alley(world_seed: int, massif: WarrenMassif,
 		all_carved.append_array(carved)
 		for cell: Vector3i in stride:
 			local_set[cell] = true
+			_reserve_frontage(world_seed, massif, excavation, cell, reserved_frontage)
 		straight = straight + int(selected.run) \
 			if int(selected.direction_index) == previous_direction_index \
 			else int(selected.run)
 		previous_direction_index = int(selected.direction_index)
 		current = stride.back()
-	if lane_cells.size() < MIN_ALLEY_CELLS:
-		WarrenPassageLatticeRules.rollback(excavation, public_set,
-			lane_cells, all_carved)
+	# Every emitted stride already owns its walk and headroom. A short branch
+	# is a useful doorway approach; reaching a wall does not undo its legal
+	# cells merely because a preferred alley length was not available.
+	if lane_cells.is_empty():
 		return {}
 	return {"anchor": anchor, "cells": lane_cells,
 		"transitions": transitions, "_carved": all_carved}
@@ -1237,7 +1226,7 @@ static func _alley_candidates(world_seed: int, massif: WarrenMassif,
 		excavation: WarrenExcavation, public_set: Dictionary,
 		local_set: Dictionary, thickness: Dictionary, anchor: Vector3i,
 		current: Vector3i, previous_direction_index: int, straight_run: int,
-		budget: int, move_index: int) -> Array[Dictionary]:
+		budget: int, move_index: int, reserved_frontage: Dictionary = {}) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var already_fronted := _fronted_columns(massif, excavation)
 	for direction_index in WarrenPassageLatticeRules.DIRECTIONS.size():
@@ -1261,6 +1250,11 @@ static func _alley_candidates(world_seed: int, massif: WarrenMassif,
 					excavation, public_set, local_set, thickness, anchor,
 					current, stride):
 				continue
+			var reserved := false
+			for cell: Vector3i in stride:
+				for band in WarrenPassageLatticeRules.HEADROOM_BANDS:
+					reserved = reserved or reserved_frontage.has(cell + Vector3i.UP * band)
+			if reserved: continue
 			var new_frontage: Dictionary = {}
 			var sides := 0
 			for cell: Vector3i in stride:
@@ -1289,6 +1283,21 @@ static func _alley_candidates(world_seed: int, massif: WarrenMassif,
 			return float(a.score) < float(b.score)
 		return int(a.tie) < int(b.tie))
 	return out
+
+
+static func _reserve_frontage(world_seed: int, massif: WarrenMassif,
+		excavation: WarrenExcavation, walk: Vector3i, reserved: Dictionary) -> void:
+	## A street claims one inhabited wall beside it before a later street is
+	## carved. Future walks use the remaining space; no finished lane is erased
+	## because it consumed the last house that faced an earlier passage.
+	var phase := posmod(WarrenPassageLatticeRules.hash_key(world_seed, 0xFAC3, walk), 4)
+	for offset in 4:
+		var direction := WarrenPassageLatticeRules.DIRECTIONS[(phase + offset) % 4]
+		var column := Vector2i(walk.x + direction.x, walk.z + direction.y)
+		if not _column_carries_house_at(massif, excavation, column, walk.y): continue
+		for band in range(walk.y, walk.y + MIN_HOUSE_BANDS):
+			reserved[Vector3i(column.x, band, column.y)] = true
+		return
 
 
 static func _alley_stride_is_legal(massif: WarrenMassif,
@@ -1972,10 +1981,12 @@ static func _finished_public_portals(massif: WarrenMassif,
 	## holes cut into an unrelated facade.
 	var primary := excavation.route[0]
 	var candidates: Array[Vector3i] = []
-	for cell: Vector3i in excavation.public_cells():
+	# Only landing squares own a two-lane gate. An intermediate stair macro
+	# cell has two different tread heights and cannot supply that boundary.
+	for cell: Vector3i in _walk_nodes(excavation):
 		var base := massif.base_at(Vector2i(cell.x, cell.z))
 		if cell == primary or cell.y > base + 1 \
-				or not WarrenPassageLatticeRules.opens_to_exterior(massif, cell):
+				or not WarrenPassageLatticeRules.has_clear_exterior_approach(massif, cell):
 			continue
 		candidates.append(cell)
 	candidates.sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
@@ -2033,18 +2044,6 @@ static func _carve_secondary_gate_lanes(world_seed: int, massif: WarrenMassif,
 		var cells := connection.cells as Array[Vector3i]
 		var walk: Array[Vector3i] = [anchor]
 		walk.append_array(cells)
-		if WarrenMazeSourcePlan._max_straight_run(walk) \
-				> WarrenMazeSourcePlan.MAX_ALLEY_STRAIGHT_RUN:
-			continue
-		var trial := occupied.duplicate()
-		var broad := false
-		for cell: Vector3i in cells:
-			if WarrenPassageLatticeRules.completes_public_square(trial, cell):
-				broad = true
-				break
-			trial[cell] = true
-		if broad:
-			continue
 		var transitions: Array[Dictionary] = []
 		for index in range(1, walk.size()):
 			transitions.append({"from": walk[index - 1], "to": walk[index],
@@ -2067,39 +2066,47 @@ static func _carve_secondary_gate_lanes(world_seed: int, massif: WarrenMassif,
 
 static func _level_gate_connection(massif: WarrenMassif,
 		excavation: WarrenExcavation, public: Dictionary,
-		walk_nodes: Dictionary,
-		candidate: Vector3i) -> Dictionary:
-	## Breadth-first search from a boundary mouth through borable columns on the
-	## same terrain band. Parents point back toward the mouth, so the returned
-	## cells naturally run from their public anchor to the exterior endpoint.
-	var parents: Dictionary = {candidate: candidate}
-	var queue: Array[Vector3i] = [candidate]
+		walk_nodes: Dictionary, candidate: Vector3i) -> Dictionary:
+	# Search the legal route domain, including turn length and width. No
+	# completed connection is built and discarded by a later shape audit.
+	if WarrenPassageLatticeRules.completes_public_square(public, candidate):
+		return {}
+	var queue: Array[Dictionary] = [{"cell": candidate, "path": [candidate], "dir": -1, "run": 0}]
+	var visited: Dictionary = {}
 	var cursor := 0
-	while cursor < queue.size() and cursor < 256:
-		var cell := queue[cursor]
+	while cursor < queue.size():
+		var state := queue[cursor]
 		cursor += 1
-		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+		var cell := state.cell as Vector3i
+		var path: Array = state.path
+		var occupied := public.duplicate()
+		for member: Vector3i in path:
+			occupied[member] = true
+		for direction_index in WarrenPassageLatticeRules.DIRECTIONS.size():
+			var direction := WarrenPassageLatticeRules.DIRECTIONS[direction_index]
 			var next := cell + Vector3i(direction.x, 0, direction.y)
+			var run := int(state.run) + 1 if direction_index == int(state.dir) else 1
+			if run > WarrenMazeSourcePlan.MAX_ALLEY_STRAIGHT_RUN:
+				continue
 			if public.has(next):
-				# Public stride intermediates already carry their transition's
-				# complete tread surface.  They may look like a valid junction in a
-				# cell union, but making one a lane anchor would introduce a second
-				# surface owner and a non-node graph endpoint downstream.
 				if not walk_nodes.has(next):
 					continue
-				var cells: Array[Vector3i] = [cell]
-				while cells[-1] != candidate:
-					cells.append(parents[cells[-1]] as Vector3i)
+				var cells: Array[Vector3i] = []
+				cells.assign(path)
+				cells.reverse()
 				return {"anchor": next, "cells": cells}
-			if parents.has(next) or not massif.has_column(
-					Vector2i(next.x, next.z)) \
-					or massif.base_at(Vector2i(next.x, next.z)) != candidate.y \
-					or not WarrenPassageLatticeRules.slot_is_borable(massif,
-						excavation, next,
-						WarrenPassageLatticeRules.HEADROOM_BANDS):
+			var key := Vector4i(next.x, next.z, direction_index, run)
+			if visited.has(key) or path.has(next) or not massif.has_column(Vector2i(next.x, next.z)):
 				continue
-			parents[next] = cell
-			queue.append(next)
+			if massif.base_at(Vector2i(next.x, next.z)) != candidate.y \
+					or not WarrenPassageLatticeRules.slot_is_borable(massif, excavation, next,
+						WarrenPassageLatticeRules.HEADROOM_BANDS) \
+					or WarrenPassageLatticeRules.completes_public_square(occupied, next):
+				continue
+			visited[key] = true
+			var extended := path.duplicate()
+			extended.append(next)
+			queue.append({"cell": next, "path": extended, "dir": direction_index, "run": run})
 	return {}
 
 
@@ -2218,19 +2225,6 @@ static func _frontage_audit(massif: WarrenMassif,
 	return {"capable": capable, "fronted": fronted_columns,
 		"ratio": float(fronted_passages) / float(maxi(1, public.size())),
 		"column_ratio": float(fronted_columns) / float(maxi(1, capable))}
-
-
-static func _column_frontage_target(
-		profile: WarrenVillageScaleProfile) -> float:
-	match profile.scale_id:
-		WarrenVillageScaleProfile.COMPACT:
-			return 0.50
-		WarrenVillageScaleProfile.STANDARD:
-			return 0.52
-		WarrenVillageScaleProfile.LARGE:
-			return 0.58
-		_:
-			return 0.68
 
 
 static func _house_capable_column_count(massif: WarrenMassif,

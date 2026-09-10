@@ -37,9 +37,8 @@ static var _regions: Dictionary = {}
 
 static func _water(seed_v: int) -> WaterPlan:
 	if not _waters.has(seed_v):
-		var plan := HeightfieldPlan.new(seed_v, 22.0, 8, "mean", 3)
 		var water := preload("res://tests/fixtures/ReportedWaterPlan.gd").new(seed_v)
-		plan.set_water_plan(water)
+		var plan := water.make_heightfield()
 		_plans[seed_v] = plan
 		_waters[seed_v] = water
 	return _waters[seed_v]
@@ -132,8 +131,8 @@ func test_triggers_match_skin_tile_coverage_and_clearance() -> void:
 		var bottom: float = area.position.y - shape.size.y * 0.5
 		assert_almost_eq(top, float(trig.top), 0.001, "top matches skin trigger at %s" % rect.position)
 		assert_almost_eq(bottom, float(trig.bottom), 0.001, "bottom matches skin trigger at %s" % rect.position)
-		assert_almost_eq(shape.size.x, rect.size.x, 0.001, "box width matches tile width at %s" % rect.position)
-		assert_almost_eq(shape.size.z, rect.size.y, 0.001, "box depth matches tile depth at %s" % rect.position)
+		assert_almost_eq(shape.size.x, rect.size.x + 0.002, 0.0001, "box width matches tile width at %s" % rect.position)
+		assert_almost_eq(shape.size.z, rect.size.y + 0.002, 0.0001, "box depth matches tile depth at %s" % rect.position)
 		assert_almost_eq(area.position.x, rect.position.x + rect.size.x * 0.5, 0.001,
 			"box centred on tile x at %s" % rect.position)
 		assert_almost_eq(area.position.z, rect.position.y + rect.size.y * 0.5, 0.001,

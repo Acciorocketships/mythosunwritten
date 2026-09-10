@@ -171,3 +171,22 @@ static func hash_key(world_seed: int, salt: int, cell: Vector3i,
 	return posmod(Helper._mix64(world_seed ^ salt
 		^ cell.x * 73856093 ^ cell.y * 19349663
 		^ cell.z * 83492791 ^ extra * 50331653), 2147483647)
+
+
+static func exterior_approach_is_clear(massif: WarrenMassif, portal: Vector3i,
+		outward: Vector2i) -> bool:
+	## A missing adjacent column may be a notch with masonry on its far bank.
+	## Each band of descent takes one macro of run; the lower half-macro
+	## landing occupies the next column. Qualify the whole route to open ground.
+	var rise := absi(portal.y-massif.base_at(Vector2i(portal.x,portal.z)))
+	for step in range(1,rise+2):
+		if massif.has_column(Vector2i(portal.x,portal.z)+outward*step):
+			return false
+	return true
+
+
+static func has_clear_exterior_approach(massif: WarrenMassif, portal: Vector3i) -> bool:
+	for direction: Vector2i in DIRECTIONS:
+		if exterior_approach_is_clear(massif,portal,direction):
+			return true
+	return false

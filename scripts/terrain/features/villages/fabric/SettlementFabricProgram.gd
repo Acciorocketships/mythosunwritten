@@ -578,6 +578,7 @@ var referenced_asset_ids: Array[StringName] = []
 ## layout and payload assembly receive only plain AABBs and never reopen a
 ## resource to decide whether optional dressing fits the finished town.
 var asset_visual_bounds: Dictionary = {}
+var asset_wall_interfaces: Dictionary = {}
 var module_program: FabricModuleProgram
 var _recipes: Dictionary = {}
 
@@ -1152,6 +1153,10 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 			Transform3D(Basis.from_scale(Vector3(0.28 / post_bounds.size.x,
 				float(bands) * CELL / post_bounds.size.y, 0.28 / post_bounds.size.z)),
 				Vector3(0.61, -0.1611, 0.61)))
+		# A frame can land on a room ceiling through that room's roof. Only
+		# its measured narrow post participates, and the unit must name the
+		# actual bearer's roof; unrelated construction receives no seam.
+		ground_post.roof_flashing_placement_ids.append(&"post")
 		candidates.append(ground_post)
 	_append_address_door_phase_vocabulary(candidates)
 	_append_feature_portal_vocabulary(candidates, modules)
@@ -1188,6 +1193,8 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		if compiled:
 			compiled = _preserve_lpfv_prefab_clearance(candidate, modules)
 			modules.finish_facade_corners(candidate)
+			modules.finish_door_returns(candidate)
+			compiled = compiled and modules.finish_wall_top_ownership(candidate)
 		if not compiled or not candidate.seal(catalog) \
 				or not program._add_recipe(candidate):
 			push_error("Could not compile settlement fabric recipe %s: %s" % [
@@ -1229,6 +1236,8 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	#   centre features would not, and a village green whose well never streamed
 	#   is the blank-town failure this list exists to stop.
 	var adapter_assets: Array[StringName] = [
+		WOOD_PLAIN,
+		ROCK_PLAIN,
 		RAILING_MEDIUM,
 		SettlementFabricAssembler.MAZE_STONE_MODULE,
 		SettlementFabricAssembler.TERRAIN_GREEN_CAP,
@@ -1252,12 +1261,22 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 		for asset_id: StringName in pool:
 			if not adapter_assets.has(asset_id):
 				adapter_assets.append(asset_id)
+	for pool: Array[StringName] in [WOOD_CELL_FACADE_BLUE,WOOD_CELL_FACADE_ORANGE,WOOD_CELL_FACADE_AMBER]:
+		for base: StringName in pool:
+			for end_mask in [1,2]:
+				var joined := StringName("%s.outcrop_end%d" % [base,end_mask])
+				if not adapter_assets.has(joined): adapter_assets.append(joined)
+			for mask in range(1,4):
+				var asset := StringName("%s.retaining_miter%d" % [base,mask])
+				if not adapter_assets.has(asset): adapter_assets.append(asset)
 	for adapter_asset: StringName in adapter_assets:
 		if catalog.descriptor(adapter_asset) == null:
 			push_error("Fabric adapter asset is not in the catalog: %s" \
 				% adapter_asset)
 			return null
 		unique_assets[adapter_asset] = true
+		var open_asset := StringName("%s.course_open" % adapter_asset)
+		if catalog.has(open_asset): unique_assets[open_asset] = true
 	program.referenced_asset_ids.assign(unique_assets.keys())
 	program.referenced_asset_ids.sort_custom(func(a: StringName,
 			b: StringName) -> bool: return String(a) < String(b))
@@ -1268,7 +1287,48 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 				% asset_id)
 			return null
 		program.asset_visual_bounds[asset_id] = descriptor.measured_aabb
+		var open_asset := StringName("%s.course_open" % asset_id)
+		if catalog.has(open_asset):
+			var opened := catalog.descriptor(open_asset)
+			program.asset_wall_interfaces[asset_id] = {"open_asset":open_asset,
+				"bounds":opened.omitted_face_bounds,"surfaces":opened.omitted_face_surfaces,
+				"visual_bounds":descriptor.measured_aabb}
+		if asset_id in [SettlementFabricAssembler.MAZE_STONE_MODULE,
+				SettlementFabricAssembler.PLANK_SINGLE, SettlementFabricAssembler.PLANK_GALLERY]:
+			var interface: Dictionary = program.asset_wall_interfaces.get(asset_id,{})
+			interface["visual_bounds"] = descriptor.measured_aabb
+			interface["complete_surfaces"] = _compile_visual_surfaces(descriptor.visual_path)
+			program.asset_wall_interfaces[asset_id] = interface
+
 	return program
+
+
+static func _compile_visual_surfaces(path: String) -> Array[Dictionary]:
+	# Main-thread preparation extracts plain source attributes once. Rotated
+	# masonry caps can then use the same exact surface subtraction as wall tops
+	# on the worker, without loading a mesh or retaining render resources there.
+	assert(OS.get_thread_caller_id() == OS.get_main_thread_id())
+	var visual: EnvironmentVisual = load(path)
+	var out: Array[Dictionary] = []
+	for piece_index in visual.pieces.size():
+		var piece: EnvironmentVisualPiece = visual.pieces[piece_index]
+		var normal_basis := piece.local_transform.basis.inverse().transposed()
+		for surface in piece.mesh.get_surface_count():
+			var arrays := piece.mesh.surface_get_arrays(surface)
+			var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+			var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+			var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+			var colors: PackedColorArray = arrays[Mesh.ARRAY_COLOR] if arrays[Mesh.ARRAY_COLOR]!=null else PackedColorArray()
+			var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX]!=null else PackedInt32Array()
+			if indices.is_empty():
+				for index in vertices.size(): indices.append(index)
+			var triangles: Array[Dictionary] = []
+			for index: int in indices:
+				triangles.append({"position":piece.local_transform*vertices[index],
+					"normal":(normal_basis*normals[index]).normalized(),"uv":uvs[index],
+					"color":colors[index] if not colors.is_empty() else Color.WHITE})
+			out.append({"material_piece":piece_index,"material_surface":surface,"triangles":triangles})
+	return out
 
 
 static func _preserve_lpfv_prefab_clearance(recipe_value: FabricRecipe,
@@ -1383,6 +1443,11 @@ static func _compile_module_program(catalog: EnvironmentCatalog) \
 				var miter := StringName("%s.miter%d" % [mirrored_asset, mask])
 				if catalog.has(miter) and not modules.add_generic(miter):
 					return null
+	for asset_id: StringName in catalog.ids():
+		if (".doorreturn." in String(asset_id) \
+				or String(asset_id).ends_with(".course_open")) \
+				and not modules.add_generic(asset_id):
+			return null
 	# Preset 003 shares preset 004's stair/landing datum; its complete handrails
 	# extend above the walking plane. Keep the real upper tread in the contract so
 	# every use meets its destination platform instead of aligning by the post top.
@@ -2670,6 +2735,10 @@ static func _compact_roof_variants(centre: Vector3, yaw: float,
 					_pose(centre, yaw), bearing_y),
 			}
 		out[family] = roles
+	if not tight_cross_eaves:
+		var inset := _compact_roof_variants(centre, yaw, bearing_y, modules, true)
+		for family: StringName in inset:
+			out[StringName("%s.tight" % family)] = inset[family]
 	return out
 
 
@@ -3064,16 +3133,21 @@ static func _flat_roof_micro_garden_recipe(recipe_id: StringName,
 		minimum: Vector3i, size: Vector3i, family: StringName,
 		offset_xz: Vector2 = Vector2.ZERO) -> FabricRecipe:
 	## Last complete accent in the flat-roof rule table. A neighboring eave can
-	## block the planter's broad measured box while leaving enough central roof for
-	## one authored flower clump. This remains a real asset with measured bounds,
-	## never an overlap exception or a bare procedural plate.
+	## block the large planter while leaving space for a flower in a small bucket.
+	## The complete container and plant share this measured recipe: bare stems
+	## are never a separate fallback on the wooden roof.
 	var recipe_value := FabricRecipe.new(recipe_id, [
 		&"roof", &"roof_decoration", &"flat_roof_garden",
 		&"micro_roof_garden", family,
 	], 1)
 	var centre := FabricModuleProgram.footprint_centre(minimum, size)
+	var anchor := centre + Vector3(offset_xz.x,0.0,offset_xz.y)
+	# The authored bucket foot is 1.207 mm below its pivot. Stand that foot on
+	# the roof; the unchanged stem roots lie inside the container above it.
+	recipe_value.add_placement(&"garden.container", TERRACE_BUCKET,
+		_pose(anchor + Vector3.UP*0.001207025,0.0))
 	recipe_value.add_placement(&"garden.flower", ROOF_FLOWER_SMALL,
-		_pose(centre + Vector3(offset_xz.x, 0.05, offset_xz.y), 0.0))
+		_pose(anchor + Vector3.UP*0.05, 0.0))
 	recipe_value.add_socket(&"bearing.bottom",
 		FabricRecipe.SocketKind.BEARING, Vector3i.UP, Vector3i.DOWN)
 	return recipe_value
@@ -3399,9 +3473,10 @@ static func _setback_shed_roof_recipe(recipe_id: StringName,
 	assert(contract_value != null \
 		and contract_value.kind == FabricModuleContract.Kind.ROOF_SHED)
 	var high_direction := Vector3i(0, 0, -eave_side)
+	recipe_value.roof_high_edge = high_direction
 	var high_boundary := -float(eave_side) * CELL * 0.5
 	for run_index in length_cells / 2:
-		var target := Vector3((float(run_index) * 2.0 + 1.0) * CELL,
+		var target := Vector3((float(run_index) * 2.0 + 0.5) * CELL,
 			0.0, 0.0)
 		var pose := modules.shed_roof_aligned_transform(roof_asset, target, 0.0,
 			high_direction, high_boundary)
@@ -3666,6 +3741,7 @@ static func _roof_seam_recipe(recipe_id: StringName, width_m: float,
 	for index in repeat_count:
 		recipe_value.add_placement(StringName("seam.%02d" % index), ROOF_SEAM,
 			_pose(Vector3(eave_x, 0.05, start_z + float(index) * 3.0), 0.0))
+		recipe_value.roof_flashing_placement_ids.append(StringName("seam.%02d" % index))
 	var width_cells := roundi(width_m / CELL)
 	var depth_cells := roundi(owner_run_m / CELL)
 	var minimum := Vector3i(-width_cells / 2, 0, -depth_cells / 2)
@@ -3818,21 +3894,9 @@ static func _feature_portal_variant(base: FabricRecipe, portal_mask: int,
 			variant.add_placement(placement_id,
 				StringName(placement.asset_id),
 				placement.transform as Transform3D)
-	# The portal is a complete architectural joint, not merely a wall texture
-	# swap. Give every opened face two matching jambs that hide the repeat-module
-	# seam. The adjoining balcony/skywalk recipe owns its walk surface; putting a
-	# one-cell threshold in this room recipe would incorrectly enlarge the room's
-	# visual envelope into neighboring roofs before the related feature is bound.
-	for bit_value: Variant in portal_by_placement.values():
-		var portal_spec := bit_value as Dictionary
-		var outward := portal_spec.outward as Vector3i
-		var wall_pose := portal_spec.pose as Transform3D
-		var tangent := Vector3(float(outward.z), 0.0, float(-outward.x))
-		for side in [-1, 1]:
-			variant.add_placement(StringName("portal.jamb.%d.%s" % [
-				_portal_bit_for_outward(outward), "left" if side < 0 else "right"]),
-				PORTAL_JAMB, _pose(wall_pose.origin + tangent * (CELL - 0.12) \
-					* float(side), 0.0))
+	# The closed door already includes its complete frame. Its finite corner
+	# ends share ownership with the perpendicular facade, exactly like a window.
+	# Additional jamb posts would duplicate the panel's exterior planes.
 	for run: Dictionary in base.construction_runs:
 		var placement_ids: Array[StringName] = []
 		placement_ids.assign(run.placement_ids as Array)
@@ -5153,6 +5217,7 @@ static func _covered_market_recipe(recipe_id: StringName,
 		Vector3i(-2, 0, -1), Vector3i(4, 1, 2))
 	recipe_value.add_placement(&"canopy", canopy_asset_id,
 		_pose(centre + Vector3(-0.25, 0.0, 0.0), 0.0))
+	recipe_value.roof_flashing_placement_ids.append(&"canopy")
 	# The table's rotated 1.41 m depth fits the x=-2 structural column. Its east
 	# edge is x=-2.24 m, outside the x=-1 aisle cell whose west seam is -2.25 m.
 	recipe_value.add_placement(&"stocked.counter", table_asset_id,

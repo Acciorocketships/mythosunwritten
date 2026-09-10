@@ -1,6 +1,9 @@
 extends GutTest
 
+const FrozenSource = preload("res://tests/fixtures/frozen_maze_source.gd")
+
 var _record: VillageRecord
+var _historical_urban: VillageUrbanFabricPlan
 var _catalog: EnvironmentCatalog
 var _fields: WorldFieldBlockCache
 
@@ -13,19 +16,30 @@ func before_all() -> void:
 	var heightfield := TerrainWorldTuning.make_heightfield(2697992464, water)
 	var fields := WorldFieldBlockCache.new(heightfield, water,
 		program.query_margin, program.shore_distance_limit, program.field_cache_cap)
-	var world := WorldFeaturePlan.new(2697992464, water, fields, program,
-		SettlementPlan.new(2697992464, water))
-	var frame := world.frame_for(Vector2i.ZERO)
-	assert_not_null(frame)
-	if frame == null:
-		return
-	var record := world.village_plan().record_for(frame)
+	# Pin the photographed town identity. Site selection follows the current
+	# world geography, which changed in the atmosphere rebuild; choosing the
+	# current origin district would silently test a different building layout.
+	var cell := Vector2i(11, 12)
+	var centre := Vector2(cell) * TerrainSurfaceField.TILE
+	var frame := VillageFrame.from_mask({"id": &"reported-september4-town",
+		"cell": cell}, 4, fields.region_at(centre), fields.water_at(centre))
+	var villages := VillagePlan.new(2697992464, program.villages, fields)
+	var record := villages.record_for(frame)
 	assert_not_null(record)
 	if record == null:
 		return
 	_record = record
 	_catalog = catalog
 	_fields = fields
+	# Keep the original source facts for the two specific building regressions.
+	# The current generated town above still exercises terrain integration.
+	var source := FrozenSource.read("res://tests/fixtures/reported-september4-source.txt")
+	var spatial := FrozenSource.spatial(source, program.villages.settlement_fabric_program)
+	var terrain := VillageTerrainView.from_fields(fields)
+	var placement := VillageWarrenFabricSolver._placement(terrain, spatial, centre, Vector2.DOWN)
+	placement["local_bounds"] = VillageWarrenFabricSolver._local_bounds(spatial.compiled_fabric_cache())
+	_historical_urban = VillageWarrenFabricSolver._materialize(terrain, &"reported-fixture",
+		spatial, spatial.compiled_fabric_cache(), placement, program.villages, 2697992464)
 
 
 func test_reported_city_edits_ground_instead_of_emitting_ramp_sheets() -> void:
@@ -57,13 +71,13 @@ func test_reported_city_edits_ground_instead_of_emitting_ramp_sheets() -> void:
 
 func test_reported_stair_blocked_door_is_a_closed_facade() -> void:
 	var found := false
-	for entry: Dictionary in _record.urban_fabric.entries:
+	for entry: Dictionary in _historical_urban.entries:
 		if String(entry.stable_id).ends_with("maze.house.007.part00.room00/south"):
 			found = true
 			assert_false("door" in String(entry.asset_id),
 				"the annotated side-of-stair facade must not advertise a door")
 	assert_true(found, "retain the house rather than deleting it to remove its door")
-	var surface := _record.urban_fabric.fabric_plan.surface_plan
+	var surface := _historical_urban.fabric_plan.surface_plan
 	assert_gt(surface.entrance_records.size(), 0, "keep reachable exterior doors")
 	for entrance: Dictionary in surface.entrance_records:
 		for cell: Vector3i in entrance.guard_opening_cells:
@@ -89,7 +103,7 @@ func test_foundation_courses_cannot_float_below_upper_rooms() -> void:
 
 
 func test_reported_elevated_lawn_has_no_hanging_courses_or_grass_curtain() -> void:
-	var urban := _record.urban_fabric
+	var urban := _historical_urban
 	var fabric := urban.fabric_plan
 	var transaction := SettlementFabricAssembler.maze_ground_skin_transaction(fabric)
 	var suspended := transaction.suspended_plaza as Dictionary

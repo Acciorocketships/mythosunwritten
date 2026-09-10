@@ -69,7 +69,7 @@ func test_record_is_deterministic_sealed_and_reserves_each_accepted_lot() -> voi
 		"the town landing must meet the world path without an inferred stair")
 	assert_gte(a.urban_fabric.buildings.size(),
 		7)
-	var audit := a.urban_fabric.fabric_audit
+	var audit := a.urban_fabric.construction_diagnostics(program)
 	assert_gt(int(audit.terrain_street_cell_count), 0)
 	assert_gte(int(audit.vertical_span_cells), 3)
 	assert_gt(int(audit.stair_count), 0)
@@ -125,9 +125,13 @@ func test_record_is_deterministic_sealed_and_reserves_each_accepted_lot() -> voi
 				world_aabb.end.x, world_aabb.end.z)),
 				"sealed bounds include complete composite geometry, not only anchors")
 
-func test_dormant_frame_never_materializes_village_content() -> void:
+func test_a_town_without_a_road_still_materializes_village_content() -> void:
 	var program := VillageProgram.compile({}, EnvironmentCatalog.load_default())
-	assert_null(VillagePlan.new(91, program).record_for(_frame(0)))
+	var record := VillagePlan.new(91, program).record_for(_frame(0))
+	assert_not_null(record, "road connectivity cannot erase a settlement")
+	if record != null:
+		assert_gt(record.payload.instance_count, 0)
+		assert_true(record.validate(program))
 
 func test_reported_seed_builds_an_inhabited_dense_multilevel_village() -> void:
 	var seed_value := 2697992464
@@ -154,7 +158,7 @@ func test_reported_seed_builds_an_inhabited_dense_multilevel_village() -> void:
 		return
 	assert_eq(record.urban_fabric.generation_kind,
 		VillageUrbanFabricPlan.GenerationKind.VOLUMETRIC_WARREN)
-	var audit := record.urban_fabric.fabric_audit
+	var audit := record.urban_fabric.construction_diagnostics(feature_program.villages)
 	assert_gte(int(audit.building_stack_count), 7)
 	assert_gte(int(audit.vertical_span_cells), 3)
 	assert_gt(int(audit.stair_count), 0)

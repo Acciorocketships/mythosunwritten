@@ -1,0 +1,1472 @@
+{
+"excavation": {
+"bridge_span_audit": {
+"refused": Array[Dictionary]([{
+"cells": Array[Vector3i]([Vector3i(1, 0, 1)]),
+"endpoint_foundation_floor": 0,
+"endpoint_foundation_groups": [Array[Vector2i]([Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 2)])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(1, 0)]), Array[Vector2i]([Vector2i(1, 2)])],
+"endpoint_support_modes": Array[StringName]([&"terrain_arcade", &"terrain_arcade"]),
+"flanks": Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 2)]),
+"floor": 4,
+"reason": "bridge lacks two ground-borne endpoint houses",
+"room_flanks": Array[Vector2i]([Vector2i(1, 0), Vector2i(1, 2)]),
+"top": 6
+}, {
+"cells": Array[Vector3i]([Vector3i(1, 0, 2)]),
+"endpoint_foundation_floor": 0,
+"endpoint_foundation_groups": [Array[Vector2i]([]), Array[Vector2i]([])],
+"endpoint_groups": [Array[Vector2i]([]), Array[Vector2i]([Vector2i(0, 2)])],
+"endpoint_support_modes": Array[StringName]([]),
+"flanks": Array[Vector2i]([Vector2i(2, 2), Vector2i(0, 2)]),
+"floor": 5,
+"reason": "bridge storey [5, 7) has endpoint coverage 0/1 on one side and 1/1 on the other",
+"room_flanks": Array[Vector2i]([Vector2i(0, 2)]),
+"top": 7
+}, {
+"cells": Array[Vector3i]([Vector3i(1, 1, 3)]),
+"endpoint_foundation_floor": 1,
+"endpoint_foundation_groups": [Array[Vector2i]([]), Array[Vector2i]([])],
+"endpoint_groups": [Array[Vector2i]([]), Array[Vector2i]([Vector2i(0, 3)])],
+"endpoint_support_modes": Array[StringName]([]),
+"flanks": Array[Vector2i]([Vector2i(2, 3), Vector2i(0, 3)]),
+"floor": 5,
+"reason": "bridge storey [5, 7) has endpoint coverage 0/1 on one side and 1/1 on the other",
+"room_flanks": Array[Vector2i]([Vector2i(0, 3)]),
+"top": 7
+}, {
+"cells": Array[Vector3i]([Vector3i(-1, 2, 3)]),
+"endpoint_foundation_floor": 2,
+"endpoint_foundation_groups": [Array[Vector2i]([Vector2i(-1, 4), Vector2i(-1, 5)]), Array[Vector2i]([Vector2i(-1, 2)])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(-1, 4)]), Array[Vector2i]([Vector2i(-1, 2)])],
+"endpoint_support_modes": Array[StringName]([&"direct_house_wide", &"terrain_arcade"]),
+"flanks": Array[Vector2i]([Vector2i(-1, 4), Vector2i(-1, 2)]),
+"floor": 6,
+"reason": "bridge lacks two ground-borne endpoint houses",
+"room_flanks": Array[Vector2i]([Vector2i(-1, 4), Vector2i(-1, 2)]),
+"top": 8
+}, {
+"cells": Array[Vector3i]([Vector3i(-1, 3, 1)]),
+"endpoint_foundation_floor": 3,
+"endpoint_foundation_groups": [Array[Vector2i]([]), Array[Vector2i]([])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(-2, 1)]), Array[Vector2i]([])],
+"endpoint_support_modes": Array[StringName]([]),
+"flanks": Array[Vector2i]([Vector2i(-2, 1), Vector2i(0, 1)]),
+"floor": 7,
+"reason": "bridge storey [7, 9) has endpoint coverage 1/1 on one side and 0/1 on the other",
+"room_flanks": Array[Vector2i]([Vector2i(-2, 1)]),
+"top": 9
+}, {
+"cells": Array[Vector3i]([Vector3i(-1, 3, 0)]),
+"endpoint_foundation_floor": 3,
+"endpoint_foundation_groups": [Array[Vector2i]([Vector2i(-2, 0)]), Array[Vector2i]([Vector2i(0, 0)])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(-2, 0)]), Array[Vector2i]([Vector2i(0, 0)])],
+"endpoint_support_modes": Array[StringName]([&"terrain_arcade", &"terrain_arcade"]),
+"flanks": Array[Vector2i]([Vector2i(-2, 0), Vector2i(0, 0)]),
+"floor": 8,
+"reason": "bridge lacks two ground-borne endpoint houses",
+"room_flanks": Array[Vector2i]([Vector2i(-2, 0), Vector2i(0, 0)]),
+"top": 10
+}, {
+"cells": Array[Vector3i]([Vector3i(-1, 4, -1)]),
+"endpoint_foundation_floor": 4,
+"endpoint_foundation_groups": [Array[Vector2i]([Vector2i(-2, -1)]), Array[Vector2i]([Vector2i(0, -1)])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(-2, -1)]), Array[Vector2i]([Vector2i(0, -1)])],
+"endpoint_support_modes": Array[StringName]([&"terrain_arcade", &"terrain_arcade"]),
+"flanks": Array[Vector2i]([Vector2i(-2, -1), Vector2i(0, -1)]),
+"floor": 8,
+"reason": "bridge lacks two ground-borne endpoint houses",
+"room_flanks": Array[Vector2i]([Vector2i(-2, -1), Vector2i(0, -1)]),
+"top": 10
+}, {
+"cells": Array[Vector3i]([Vector3i(0, 4, -1)]),
+"endpoint_foundation_floor": 4,
+"endpoint_foundation_groups": [Array[Vector2i]([Vector2i(0, -2)]), Array[Vector2i]([Vector2i(0, 0)])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(0, -2)]), Array[Vector2i]([Vector2i(0, 0)])],
+"endpoint_support_modes": Array[StringName]([&"direct_house_narrow", &"terrain_arcade"]),
+"flanks": Array[Vector2i]([Vector2i(0, -2), Vector2i(0, 0)]),
+"floor": 8,
+"reason": "bridge lacks two ground-borne endpoint houses",
+"room_flanks": Array[Vector2i]([Vector2i(0, -2), Vector2i(0, 0)]),
+"top": 10
+}, {
+"cells": Array[Vector3i]([Vector3i(0, 4, 0)]),
+"endpoint_foundation_floor": 4,
+"endpoint_foundation_groups": [Array[Vector2i]([Vector2i(1, 0), Vector2i(2, 0)]), Array[Vector2i]([Vector2i(-1, 0)])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(1, 0)]), Array[Vector2i]([Vector2i(-1, 0)])],
+"endpoint_support_modes": Array[StringName]([&"direct_house_wide", &"terrain_arcade"]),
+"flanks": Array[Vector2i]([Vector2i(1, 0), Vector2i(-1, 0)]),
+"floor": 9,
+"reason": "bridge lacks two ground-borne endpoint houses",
+"room_flanks": Array[Vector2i]([Vector2i(1, 0), Vector2i(-1, 0)]),
+"top": 11
+}, {
+"cells": Array[Vector3i]([Vector3i(0, 5, 1)]),
+"endpoint_foundation_floor": 5,
+"endpoint_foundation_groups": [Array[Vector2i]([Vector2i(1, 1)]), Array[Vector2i]([Vector2i(-1, 1)])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(1, 1)]), Array[Vector2i]([Vector2i(-1, 1)])],
+"endpoint_support_modes": Array[StringName]([&"direct_house_narrow", &"terrain_arcade"]),
+"flanks": Array[Vector2i]([Vector2i(1, 1), Vector2i(-1, 1)]),
+"floor": 9,
+"reason": "bridge lacks two ground-borne endpoint houses",
+"room_flanks": Array[Vector2i]([Vector2i(1, 1), Vector2i(-1, 1)]),
+"top": 11
+}, {
+"cells": Array[Vector3i]([Vector3i(2, 0, 1)]),
+"endpoint_foundation_floor": 0,
+"endpoint_foundation_groups": [Array[Vector2i]([]), Array[Vector2i]([])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(2, 0)]), Array[Vector2i]([])],
+"endpoint_support_modes": Array[StringName]([]),
+"flanks": Array[Vector2i]([Vector2i(2, 0), Vector2i(2, 2)]),
+"floor": 4,
+"reason": "bridge storey [4, 6) has endpoint coverage 1/1 on one side and 0/1 on the other",
+"room_flanks": Array[Vector2i]([Vector2i(2, 0)]),
+"top": 6
+}, {
+"cells": Array[Vector3i]([Vector3i(2, 0, 0)]),
+"endpoint_foundation_floor": 0,
+"endpoint_foundation_groups": [Array[Vector2i]([Vector2i(1, 0)]), Array[Vector2i]([Vector2i(3, 0)])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(1, 0)]), Array[Vector2i]([Vector2i(3, 0)])],
+"endpoint_support_modes": Array[StringName]([&"terrain_arcade", &"terrain_arcade"]),
+"flanks": Array[Vector2i]([Vector2i(1, 0), Vector2i(3, 0)]),
+"floor": 4,
+"reason": "bridge lacks two ground-borne endpoint houses",
+"room_flanks": Array[Vector2i]([Vector2i(1, 0), Vector2i(3, 0)]),
+"top": 6
+}, {
+"cells": Array[Vector3i]([Vector3i(3, 0, 0)]),
+"endpoint_foundation_floor": 0,
+"endpoint_foundation_groups": [Array[Vector2i]([Vector2i(3, -1)]), Array[Vector2i]([Vector2i(3, 1)])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(3, -1)]), Array[Vector2i]([Vector2i(3, 1)])],
+"endpoint_support_modes": Array[StringName]([&"terrain_arcade", &"terrain_arcade"]),
+"flanks": Array[Vector2i]([Vector2i(3, -1), Vector2i(3, 1)]),
+"floor": 4,
+"reason": "bridge lacks two ground-borne endpoint houses",
+"room_flanks": Array[Vector2i]([Vector2i(3, -1), Vector2i(3, 1)]),
+"top": 6
+}, {
+"cells": Array[Vector3i]([Vector3i(3, 0, -1)]),
+"endpoint_foundation_floor": 0,
+"endpoint_foundation_groups": [Array[Vector2i]([Vector2i(2, -1)]), Array[Vector2i]([Vector2i(4, -1)])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(2, -1)]), Array[Vector2i]([Vector2i(4, -1)])],
+"endpoint_support_modes": Array[StringName]([&"terrain_arcade", &"terrain_arcade"]),
+"flanks": Array[Vector2i]([Vector2i(2, -1), Vector2i(4, -1)]),
+"floor": 4,
+"reason": "bridge lacks two ground-borne endpoint houses",
+"room_flanks": Array[Vector2i]([Vector2i(2, -1), Vector2i(4, -1)]),
+"top": 6
+}, {
+"cells": Array[Vector3i]([Vector3i(4, 0, -1)]),
+"endpoint_foundation_floor": 0,
+"endpoint_foundation_groups": [Array[Vector2i]([Vector2i(4, -2)]), Array[Vector2i]([Vector2i(4, 0)])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(4, -2)]), Array[Vector2i]([Vector2i(4, 0)])],
+"endpoint_support_modes": Array[StringName]([&"terrain_arcade", &"terrain_arcade"]),
+"flanks": Array[Vector2i]([Vector2i(4, -2), Vector2i(4, 0)]),
+"floor": 4,
+"reason": "bridge lacks two ground-borne endpoint houses",
+"room_flanks": Array[Vector2i]([Vector2i(4, -2), Vector2i(4, 0)]),
+"top": 6
+}, {
+"cells": Array[Vector3i]([Vector3i(-1, 0, -1)]),
+"endpoint_foundation_floor": 0,
+"endpoint_foundation_groups": [Array[Vector2i]([]), Array[Vector2i]([])],
+"endpoint_groups": [Array[Vector2i]([]), Array[Vector2i]([])],
+"endpoint_support_modes": Array[StringName]([]),
+"flanks": Array[Vector2i]([]),
+"floor": 4,
+"reason": "span column (-1, -1) has carved air at band 4 inside the occupied bridge clearance [4, 8)",
+"room_flanks": Array[Vector2i]([]),
+"top": 6
+}, {
+"cells": Array[Vector3i]([Vector3i(-2, 0, -1)]),
+"endpoint_foundation_floor": 0,
+"endpoint_foundation_groups": [Array[Vector2i]([]), Array[Vector2i]([])],
+"endpoint_groups": [Array[Vector2i]([]), Array[Vector2i]([])],
+"endpoint_support_modes": Array[StringName]([]),
+"flanks": Array[Vector2i]([]),
+"floor": 4,
+"reason": "span column (-2, -1) has carved air at band 4 inside the occupied bridge clearance [4, 8)",
+"room_flanks": Array[Vector2i]([]),
+"top": 6
+}]),
+"seeded": Array[Dictionary]([{
+"cells": Array[Vector3i]([Vector3i(-2, 4, -1)]),
+"endpoint_foundation_floor": 4,
+"endpoint_foundation_groups": [Array[Vector2i]([Vector2i(-2, 0), Vector2i(-2, 1)]), Array[Vector2i]([Vector2i(-2, -2), Vector2i(-2, -3)])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(-2, 0)]), Array[Vector2i]([Vector2i(-2, -2)])],
+"endpoint_support_modes": Array[StringName]([&"direct_house_wide", &"direct_house_wide"]),
+"exterior_depth_cells": 1,
+"flanks": Array[Vector2i]([Vector2i(-2, 0), Vector2i(-2, -2)]),
+"floor": 8,
+"reason": "",
+"room_flanks": Array[Vector2i]([Vector2i(-2, 0), Vector2i(-2, -2)]),
+"top": 10
+}, {
+"cells": Array[Vector3i]([Vector3i(-1, 2, 2)]),
+"endpoint_foundation_floor": 2,
+"endpoint_foundation_groups": [Array[Vector2i]([Vector2i(-2, 2)]), Array[Vector2i]([Vector2i(0, 2)])],
+"endpoint_groups": [Array[Vector2i]([Vector2i(-2, 2)]), Array[Vector2i]([Vector2i(0, 2)])],
+"endpoint_support_modes": Array[StringName]([&"direct_house_narrow", &"direct_house_narrow"]),
+"exterior_depth_cells": 1,
+"flanks": Array[Vector2i]([Vector2i(-2, 2), Vector2i(0, 2)]),
+"floor": 7,
+"reason": "",
+"room_flanks": Array[Vector2i]([Vector2i(-2, 2), Vector2i(0, 2)]),
+"top": 9
+}])
+},
+"bridge_spans": Array[Array]([Array[Vector3i]([Vector3i(-2, 4, -1)]), Array[Vector3i]([Vector3i(-1, 2, 2)])]),
+"carved": {
+Vector3i(-2, 0, -1): true,
+Vector3i(-2, 0, 0): true,
+Vector3i(-2, 1, -1): true,
+Vector3i(-2, 1, 0): true,
+Vector3i(-2, 2, -1): true,
+Vector3i(-2, 2, 0): true,
+Vector3i(-2, 3, -1): true,
+Vector3i(-2, 4, -1): true,
+Vector3i(-2, 5, -1): true,
+Vector3i(-2, 6, -1): true,
+Vector3i(-2, 7, -1): true,
+Vector3i(-1, 0, -1): true,
+Vector3i(-1, 1, -1): true,
+Vector3i(-1, 2, -1): true,
+Vector3i(-1, 2, 2): true,
+Vector3i(-1, 2, 3): true,
+Vector3i(-1, 3, -1): true,
+Vector3i(-1, 3, 0): true,
+Vector3i(-1, 3, 1): true,
+Vector3i(-1, 3, 2): true,
+Vector3i(-1, 3, 3): true,
+Vector3i(-1, 4, -1): true,
+Vector3i(-1, 4, 0): true,
+Vector3i(-1, 4, 1): true,
+Vector3i(-1, 4, 2): true,
+Vector3i(-1, 4, 3): true,
+Vector3i(-1, 5, -1): true,
+Vector3i(-1, 5, 0): true,
+Vector3i(-1, 5, 1): true,
+Vector3i(-1, 5, 2): true,
+Vector3i(-1, 5, 3): true,
+Vector3i(-1, 6, -1): true,
+Vector3i(-1, 6, 0): true,
+Vector3i(-1, 6, 1): true,
+Vector3i(-1, 6, 2): true,
+Vector3i(-1, 7, -1): true,
+Vector3i(-1, 7, 0): true,
+Vector3i(-1, 7, 1): true,
+Vector3i(0, 0, -2): true,
+Vector3i(0, 0, -1): true,
+Vector3i(0, 0, 0): true,
+Vector3i(0, 0, 1): true,
+Vector3i(0, 1, -2): true,
+Vector3i(0, 1, -1): true,
+Vector3i(0, 1, 0): true,
+Vector3i(0, 1, 1): true,
+Vector3i(0, 1, 3): true,
+Vector3i(0, 2, -2): true,
+Vector3i(0, 2, -1): true,
+Vector3i(0, 2, 0): true,
+Vector3i(0, 2, 1): true,
+Vector3i(0, 2, 3): true,
+Vector3i(0, 3, 3): true,
+Vector3i(0, 4, -1): true,
+Vector3i(0, 4, 0): true,
+Vector3i(0, 4, 3): true,
+Vector3i(0, 5, -1): true,
+Vector3i(0, 5, 0): true,
+Vector3i(0, 5, 1): true,
+Vector3i(0, 5, 3): true,
+Vector3i(0, 6, -1): true,
+Vector3i(0, 6, 0): true,
+Vector3i(0, 6, 1): true,
+Vector3i(0, 7, -1): true,
+Vector3i(0, 7, 0): true,
+Vector3i(0, 7, 1): true,
+Vector3i(0, 8, 0): true,
+Vector3i(0, 8, 1): true,
+Vector3i(0, 9, 0): true,
+Vector3i(0, 9, 1): true,
+Vector3i(0, 10, 0): true,
+Vector3i(0, 11, 0): true,
+Vector3i(1, 0, -2): true,
+Vector3i(1, 0, -1): true,
+Vector3i(1, 0, 1): true,
+Vector3i(1, 0, 2): true,
+Vector3i(1, 1, -2): true,
+Vector3i(1, 1, -1): true,
+Vector3i(1, 1, 1): true,
+Vector3i(1, 1, 2): true,
+Vector3i(1, 1, 3): true,
+Vector3i(1, 2, -2): true,
+Vector3i(1, 2, -1): true,
+Vector3i(1, 2, 1): true,
+Vector3i(1, 2, 2): true,
+Vector3i(1, 2, 3): true,
+Vector3i(1, 3, 1): true,
+Vector3i(1, 3, 2): true,
+Vector3i(1, 3, 3): true,
+Vector3i(1, 4, 1): true,
+Vector3i(1, 5, 1): true,
+Vector3i(1, 6, 1): true,
+Vector3i(1, 7, 1): true,
+Vector3i(2, 0, 0): true,
+Vector3i(2, 0, 1): true,
+Vector3i(2, 1, 0): true,
+Vector3i(2, 1, 1): true,
+Vector3i(2, 2, 0): true,
+Vector3i(2, 2, 1): true,
+Vector3i(2, 3, 0): true,
+Vector3i(2, 3, 1): true,
+Vector3i(2, 4, 0): true,
+Vector3i(2, 5, 0): true,
+Vector3i(2, 6, 0): true,
+Vector3i(2, 7, 0): true,
+Vector3i(3, 0, -1): true,
+Vector3i(3, 0, 0): true,
+Vector3i(3, 1, -1): true,
+Vector3i(3, 1, 0): true,
+Vector3i(3, 2, -1): true,
+Vector3i(3, 2, 0): true,
+Vector3i(3, 3, -1): true,
+Vector3i(3, 3, 0): true,
+Vector3i(4, 0, -1): true,
+Vector3i(4, 1, -1): true,
+Vector3i(4, 2, -1): true,
+Vector3i(4, 3, -1): true
+},
+"covered": {
+Vector3i(-2, 0, -1): false,
+Vector3i(-2, 0, 0): true,
+Vector3i(-2, 4, -1): true,
+Vector3i(-1, 0, -1): false,
+Vector3i(-1, 2, 2): true,
+Vector3i(-1, 2, 3): false,
+Vector3i(-1, 3, 0): false,
+Vector3i(-1, 3, 1): false,
+Vector3i(-1, 4, -1): false,
+Vector3i(0, 0, -2): true,
+Vector3i(0, 0, -1): true,
+Vector3i(0, 0, 0): true,
+Vector3i(0, 0, 1): true,
+Vector3i(0, 1, 3): false,
+Vector3i(0, 4, -1): false,
+Vector3i(0, 4, 0): false,
+Vector3i(0, 5, 1): false,
+Vector3i(1, 0, -2): true,
+Vector3i(1, 0, -1): true,
+Vector3i(1, 0, 1): false,
+Vector3i(1, 0, 2): false,
+Vector3i(1, 1, 3): false,
+Vector3i(2, 0, 0): false,
+Vector3i(2, 0, 1): false,
+Vector3i(3, 0, -1): false,
+Vector3i(3, 0, 0): false,
+Vector3i(4, 0, -1): false
+},
+"frontage_reservations": {
+Vector3i(-2, 4, -2): true,
+Vector3i(-2, 5, -2): true,
+Vector3i(-2, 6, -2): true,
+Vector3i(-2, 7, -2): true,
+Vector3i(-1, 0, -2): true,
+Vector3i(-1, 0, -1): true,
+Vector3i(-1, 1, -2): true,
+Vector3i(-1, 1, -1): true,
+Vector3i(-1, 2, -2): true,
+Vector3i(-1, 2, -1): true,
+Vector3i(-1, 3, -2): true,
+Vector3i(-1, 3, -1): true,
+Vector3i(-1, 4, -2): true,
+Vector3i(-1, 5, -2): true,
+Vector3i(-1, 6, -2): true,
+Vector3i(-1, 7, -2): true,
+Vector3i(0, 0, 2): true,
+Vector3i(0, 1, 2): true,
+Vector3i(0, 2, 2): true,
+Vector3i(0, 3, 2): true,
+Vector3i(0, 4, 2): true,
+Vector3i(0, 5, 2): true,
+Vector3i(1, 0, 0): true,
+Vector3i(1, 1, 0): true,
+Vector3i(1, 2, 0): true,
+Vector3i(1, 3, 0): true,
+Vector3i(1, 4, -1): true,
+Vector3i(1, 4, 0): true,
+Vector3i(1, 5, -1): true,
+Vector3i(1, 5, 0): true,
+Vector3i(1, 6, -1): true,
+Vector3i(1, 6, 0): true,
+Vector3i(1, 7, -1): true,
+Vector3i(1, 7, 0): true,
+Vector3i(2, 0, -2): true,
+Vector3i(2, 0, -1): true,
+Vector3i(2, 1, -2): true,
+Vector3i(2, 1, -1): true,
+Vector3i(2, 2, -2): true,
+Vector3i(2, 2, -1): true,
+Vector3i(2, 3, -2): true,
+Vector3i(2, 3, -1): true,
+Vector3i(3, 0, 1): true,
+Vector3i(3, 1, 1): true,
+Vector3i(3, 2, 1): true,
+Vector3i(3, 3, 1): true,
+Vector3i(4, 0, -2): true,
+Vector3i(4, 0, 0): true,
+Vector3i(4, 1, -2): true,
+Vector3i(4, 1, 0): true,
+Vector3i(4, 2, -2): true,
+Vector3i(4, 2, 0): true,
+Vector3i(4, 3, -2): true,
+Vector3i(4, 3, 0): true
+},
+"lanes": Array[Dictionary]([{
+"anchor": Vector3i(0, 0, -2),
+"cells": Array[Vector3i]([Vector3i(1, 0, -2), Vector3i(1, 0, -1)]),
+"feature_kind": &"market_square",
+"transitions": Array[Dictionary]([{
+"from": Vector3i(0, 0, -2),
+"kind": 0,
+"to": Vector3i(1, 0, -2)
+}, {
+"from": Vector3i(1, 0, -2),
+"kind": 0,
+"to": Vector3i(1, 0, -1)
+}])
+}, {
+"anchor": Vector3i(1, 0, 1),
+"cells": Array[Vector3i]([Vector3i(2, 0, 1), Vector3i(2, 0, 0), Vector3i(3, 0, 0), Vector3i(3, 0, -1), Vector3i(4, 0, -1)]),
+"transitions": Array[Dictionary]([{
+"from": Vector3i(1, 0, 1),
+"kind": 0,
+"to": Vector3i(2, 0, 1)
+}, {
+"from": Vector3i(2, 0, 1),
+"kind": 0,
+"to": Vector3i(2, 0, 0)
+}, {
+"from": Vector3i(2, 0, 0),
+"kind": 0,
+"to": Vector3i(3, 0, 0)
+}, {
+"from": Vector3i(3, 0, 0),
+"kind": 0,
+"to": Vector3i(3, 0, -1)
+}, {
+"from": Vector3i(3, 0, -1),
+"kind": 0,
+"to": Vector3i(4, 0, -1)
+}])
+}, {
+"anchor": Vector3i(-1, 4, -1),
+"cells": Array[Vector3i]([Vector3i(-2, 4, -1)]),
+"transitions": Array[Dictionary]([{
+"from": Vector3i(-1, 4, -1),
+"kind": 0,
+"to": Vector3i(-2, 4, -1)
+}])
+}, {
+"anchor": Vector3i(0, 0, -1),
+"cells": Array[Vector3i]([Vector3i(-1, 0, -1), Vector3i(-2, 0, -1), Vector3i(-2, 0, 0)]),
+"feature_kind": &"secondary_gate",
+"transitions": Array[Dictionary]([{
+"from": Vector3i(0, 0, -1),
+"kind": 0,
+"to": Vector3i(-1, 0, -1)
+}, {
+"from": Vector3i(-1, 0, -1),
+"kind": 0,
+"to": Vector3i(-2, 0, -1)
+}, {
+"from": Vector3i(-2, 0, -1),
+"kind": 0,
+"to": Vector3i(-2, 0, 0)
+}])
+}]),
+"loop_edges": Array[Dictionary]([{
+"from": Vector3i(1, 0, -1),
+"kind": 0,
+"to": Vector3i(0, 0, -1)
+}]),
+"portals": Array[Vector3i]([Vector3i(0, 0, -2), Vector3i(1, 1, 3), Vector3i(-2, 0, 0)]),
+"route": Array[Vector3i]([Vector3i(0, 0, -2), Vector3i(0, 0, -1), Vector3i(0, 0, 0), Vector3i(0, 0, 1), Vector3i(1, 0, 1), Vector3i(1, 0, 2), Vector3i(1, 1, 3), Vector3i(0, 1, 3), Vector3i(-1, 2, 3), Vector3i(-1, 2, 2), Vector3i(-1, 3, 1), Vector3i(-1, 3, 0), Vector3i(-1, 4, -1), Vector3i(0, 4, -1), Vector3i(0, 4, 0), Vector3i(0, 5, 1)]),
+"transitions": Array[Dictionary]([{
+"from": Vector3i(0, 0, -2),
+"kind": 0,
+"to": Vector3i(0, 0, -1)
+}, {
+"from": Vector3i(0, 0, -1),
+"kind": 0,
+"to": Vector3i(0, 0, 0)
+}, {
+"from": Vector3i(0, 0, 0),
+"kind": 0,
+"to": Vector3i(0, 0, 1)
+}, {
+"from": Vector3i(0, 0, 1),
+"kind": 0,
+"to": Vector3i(1, 0, 1)
+}, {
+"from": Vector3i(1, 0, 1),
+"kind": 2,
+"to": Vector3i(1, 1, 3)
+}, {
+"from": Vector3i(1, 1, 3),
+"kind": 2,
+"to": Vector3i(-1, 2, 3)
+}, {
+"from": Vector3i(-1, 2, 3),
+"kind": 2,
+"to": Vector3i(-1, 3, 1)
+}, {
+"from": Vector3i(-1, 3, 1),
+"kind": 2,
+"to": Vector3i(-1, 4, -1)
+}, {
+"from": Vector3i(-1, 4, -1),
+"kind": 0,
+"to": Vector3i(0, 4, -1)
+}, {
+"from": Vector3i(0, 4, -1),
+"kind": 2,
+"to": Vector3i(0, 5, 1)
+}])
+},
+"massif_columns": {
+Vector2i(-4, -3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-4, -2): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-3, -3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-3, -2): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-3, -1): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-2, -3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-2, -2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-2, -1): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-2, 0): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-2, 1): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-2, 2): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-2, 3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-2, 4): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-1, -3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-1, -2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-1, -1): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-1, 0): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-1, 1): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-1, 2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(-1, 3): {
+"base": 0,
+"terrace": 6,
+"top": 6
+},
+Vector2i(-1, 4): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(-1, 5): {
+"base": 0,
+"terrace": 2,
+"top": 2
+},
+Vector2i(0, -2): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(0, -1): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(0, 0): {
+"base": 0,
+"terrace": 12,
+"top": 12
+},
+Vector2i(0, 1): {
+"base": 0,
+"terrace": 10,
+"top": 10
+},
+Vector2i(0, 2): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(0, 3): {
+"base": 0,
+"terrace": 6,
+"top": 6
+},
+Vector2i(0, 4): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(1, -2): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(1, -1): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(1, 0): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(1, 1): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(1, 2): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(1, 3): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(2, -2): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(2, -1): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(2, 0): {
+"base": 0,
+"terrace": 8,
+"top": 8
+},
+Vector2i(2, 1): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(3, -2): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(3, -1): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(3, 0): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(3, 1): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(4, -2): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(4, -1): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(4, 0): {
+"base": 0,
+"terrace": 4,
+"top": 4
+},
+Vector2i(5, -1): {
+"base": 0,
+"terrace": 4,
+"top": 4
+}
+},
+"massif_core": 12,
+"profile": &"compact",
+"source": {
+"audit": {
+"plot_outcomes": {
+"asset_clearance_reservations": Array[Dictionary]([]),
+"assets": Array[Dictionary]([{
+"kind_id": &"",
+"mirror": {
+"bearing_off_ground": 0,
+"body_outside_plot": 0,
+"no_frontage": 0,
+"realisable": 0,
+"street_over_top": 0,
+"tested": 0
+},
+"realisable": false,
+"reason": "no street-fronting supportable site remains",
+"site": null
+}, {
+"kind_id": &"",
+"mirror": {
+"bearing_off_ground": 0,
+"body_outside_plot": 0,
+"no_frontage": 0,
+"realisable": 0,
+"street_over_top": 0,
+"tested": 0
+},
+"realisable": false,
+"reason": "no street-fronting supportable site remains",
+"site": null
+}, {
+"kind_id": &"",
+"mirror": {
+"bearing_off_ground": 0,
+"body_outside_plot": 0,
+"no_frontage": 0,
+"realisable": 0,
+"street_over_top": 0,
+"tested": 0
+},
+"realisable": false,
+"reason": "no street-fronting supportable site remains",
+"site": null
+}, {
+"kind_id": &"",
+"mirror": {
+"bearing_off_ground": 0,
+"body_outside_plot": 0,
+"no_frontage": 0,
+"realisable": 0,
+"street_over_top": 0,
+"tested": 0
+},
+"realisable": false,
+"reason": "no street-fronting supportable site remains",
+"site": null
+}]),
+"bridges": Array[Dictionary]([{
+"building_id": &"bridge.00",
+"cells": 1,
+"columns": Array[Vector2i]([Vector2i(-2, -1)]),
+"door_walk": Vector3i(-2, 4, -1),
+"floor": 8,
+"id": &"bridge.00",
+"reason": "",
+"span": 0,
+"top": 10
+}, {
+"building_id": &"bridge.01",
+"cells": 1,
+"columns": Array[Vector2i]([Vector2i(-1, 2)]),
+"door_walk": Vector3i(-1, 2, 2),
+"floor": 7,
+"id": &"bridge.01",
+"reason": "",
+"span": 1,
+"top": 9
+}]),
+"buildings": Array[Dictionary]([{
+"cells": 2,
+"floor": 0,
+"id": &"house.000",
+"reason": "",
+"skyline_peak": false,
+"tiered": true,
+"top": 4
+}, {
+"cells": 1,
+"floor": 0,
+"id": &"house.001",
+"reason": "",
+"skyline_peak": false,
+"tiered": true,
+"top": 4
+}, {
+"cells": 1,
+"floor": 0,
+"id": &"house.008",
+"reason": "",
+"skyline_peak": false,
+"tiered": false,
+"top": 4
+}, {
+"cells": 1,
+"floor": 0,
+"id": &"house.009",
+"reason": "",
+"skyline_peak": false,
+"tiered": false,
+"top": 4
+}, {
+"cells": 2,
+"floor": 0,
+"id": &"house.010",
+"reason": "",
+"skyline_peak": false,
+"tiered": false,
+"top": 4
+}, {
+"cells": 1,
+"floor": 0,
+"id": &"house.011",
+"reason": "",
+"skyline_peak": true,
+"tiered": false,
+"top": 8
+}, {
+"cells": 4,
+"floor": 0,
+"id": &"house.014",
+"reason": "",
+"skyline_peak": false,
+"tiered": true,
+"top": 4
+}, {
+"cells": 1,
+"floor": 1,
+"id": &"house.002",
+"reason": "",
+"skyline_peak": true,
+"tiered": false,
+"top": 7
+}, {
+"cells": 2,
+"floor": 2,
+"id": &"house.003",
+"reason": "",
+"skyline_peak": false,
+"tiered": false,
+"top": 6
+}, {
+"cells": 2,
+"floor": 2,
+"id": &"house.004",
+"reason": "",
+"skyline_peak": true,
+"tiered": false,
+"top": 10
+}, {
+"cells": 3,
+"floor": 4,
+"id": &"house.005",
+"reason": "",
+"skyline_peak": false,
+"tiered": false,
+"top": 8
+}, {
+"cells": 1,
+"floor": 4,
+"id": &"house.007",
+"reason": "",
+"skyline_peak": false,
+"tiered": false,
+"top": 10
+}, {
+"cells": 5,
+"floor": 4,
+"id": &"house.013",
+"reason": "",
+"skyline_peak": false,
+"tiered": false,
+"top": 8
+}]),
+"decks": Array[Dictionary]([]),
+"decks_short": 0,
+"leftover_columns": 16,
+"orphan_sweep_joined": 1,
+"plaza": {
+"anchor": Vector2i(1, -2),
+"cost": 8,
+"datum": 4,
+"depth": 2,
+"id": &"plaza.00",
+"reason": "",
+"size": 4,
+"width": 2
+},
+"seed_refusals": Array[Dictionary]([{
+"band": 0,
+"column": Vector2i(1, -2),
+"reason": "column already spoken for"
+}, {
+"band": 0,
+"column": Vector2i(0, -1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 0,
+"column": Vector2i(0, -3),
+"reason": "column already spoken for"
+}, {
+"band": 0,
+"column": Vector2i(1, -1),
+"reason": "column already spoken for"
+}, {
+"band": 0,
+"column": Vector2i(0, 0),
+"reason": "support rule refuses this floor"
+}, {
+"band": 0,
+"column": Vector2i(-1, -1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 0,
+"column": Vector2i(0, -2),
+"reason": "support rule refuses this floor"
+}, {
+"band": 0,
+"column": Vector2i(0, 1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 0,
+"column": Vector2i(-1, 0),
+"reason": "support rule refuses this floor"
+}, {
+"band": 0,
+"column": Vector2i(1, 1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 0,
+"column": Vector2i(0, 2),
+"reason": "column already spoken for"
+}, {
+"band": 0,
+"column": Vector2i(-1, 1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 0,
+"column": Vector2i(2, 1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 0,
+"column": Vector2i(1, 2),
+"reason": "support rule refuses this floor"
+}, {
+"band": 0,
+"column": Vector2i(2, 2),
+"reason": "column already spoken for"
+}, {
+"band": 0,
+"column": Vector2i(1, 3),
+"reason": "support rule refuses this floor"
+}, {
+"band": 1,
+"column": Vector2i(2, 3),
+"reason": "column already spoken for"
+}, {
+"band": 1,
+"column": Vector2i(1, 4),
+"reason": "column already spoken for"
+}, {
+"band": 1,
+"column": Vector2i(0, 3),
+"reason": "support rule refuses this floor"
+}, {
+"band": 1,
+"column": Vector2i(1, 2),
+"reason": "support rule refuses this floor"
+}, {
+"band": 1,
+"column": Vector2i(1, 3),
+"reason": "support rule refuses this floor"
+}, {
+"band": 1,
+"column": Vector2i(-1, 3),
+"reason": "support rule refuses this floor"
+}, {
+"band": 1,
+"column": Vector2i(0, 2),
+"reason": "column already spoken for"
+}, {
+"band": 2,
+"column": Vector2i(0, 3),
+"reason": "support rule refuses this floor"
+}, {
+"band": 2,
+"column": Vector2i(-1, 2),
+"reason": "column already spoken for"
+}, {
+"band": 2,
+"column": Vector2i(0, 2),
+"reason": "column already spoken for"
+}, {
+"band": 2,
+"column": Vector2i(-1, 3),
+"reason": "support rule refuses this floor"
+}, {
+"band": 2,
+"column": Vector2i(-2, 2),
+"reason": "column already spoken for"
+}, {
+"band": 2,
+"column": Vector2i(-1, 1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 3,
+"column": Vector2i(0, 1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 3,
+"column": Vector2i(-1, 2),
+"reason": "column already spoken for"
+}, {
+"band": 3,
+"column": Vector2i(-2, 1),
+"reason": "column already spoken for"
+}, {
+"band": 3,
+"column": Vector2i(-1, 0),
+"reason": "support rule refuses this floor"
+}, {
+"band": 3,
+"column": Vector2i(0, 0),
+"reason": "support rule refuses this floor"
+}, {
+"band": 3,
+"column": Vector2i(-1, 1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 3,
+"column": Vector2i(-2, 0),
+"reason": "column already spoken for"
+}, {
+"band": 3,
+"column": Vector2i(-1, -1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 4,
+"column": Vector2i(0, -1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 4,
+"column": Vector2i(-1, 0),
+"reason": "support rule refuses this floor"
+}, {
+"band": 4,
+"column": Vector2i(-2, -1),
+"reason": "column already spoken for"
+}, {
+"band": 4,
+"column": Vector2i(1, -1),
+"reason": "column already spoken for"
+}, {
+"band": 4,
+"column": Vector2i(0, 0),
+"reason": "support rule refuses this floor"
+}, {
+"band": 4,
+"column": Vector2i(-1, -1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 4,
+"column": Vector2i(0, 1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 5,
+"column": Vector2i(1, 1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 5,
+"column": Vector2i(0, 2),
+"reason": "column already spoken for"
+}, {
+"band": 5,
+"column": Vector2i(-1, 1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 5,
+"column": Vector2i(0, 0),
+"reason": "support rule refuses this floor"
+}, {
+"band": 0,
+"column": Vector2i(2, -2),
+"reason": "column already spoken for"
+}, {
+"band": 0,
+"column": Vector2i(1, -3),
+"reason": "column already spoken for"
+}, {
+"band": 0,
+"column": Vector2i(2, -1),
+"reason": "column already spoken for"
+}, {
+"band": 0,
+"column": Vector2i(2, 0),
+"reason": "support rule refuses this floor"
+}, {
+"band": 0,
+"column": Vector2i(3, 0),
+"reason": "support rule refuses this floor"
+}, {
+"band": 0,
+"column": Vector2i(3, -1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 0,
+"column": Vector2i(4, -1),
+"reason": "support rule refuses this floor"
+}, {
+"band": 4,
+"column": Vector2i(-2, 0),
+"reason": "column already spoken for"
+}, {
+"band": 4,
+"column": Vector2i(-2, -2),
+"reason": "column already spoken for"
+}, {
+"band": 0,
+"column": Vector2i(-2, -1),
+"reason": "column already spoken for"
+}, {
+"band": 0,
+"column": Vector2i(-2, 0),
+"reason": "column already spoken for"
+}, {
+"band": 0,
+"column": Vector2i(-2, -2),
+"reason": "column already spoken for"
+}, {
+"band": 0,
+"column": Vector2i(-2, 1),
+"reason": "column already spoken for"
+}, {
+"band": 0,
+"column": Vector2i(-3, 0),
+"reason": "column already spoken for"
+}]),
+"street_floor_gaps": 2
+}
+},
+"block_thickness": {
+Vector2i(-4, -3): 2,
+Vector2i(-4, -2): 2,
+Vector2i(-3, -3): 2,
+Vector2i(-3, -2): 2,
+Vector2i(-3, -1): 2,
+Vector2i(-2, -3): 2,
+Vector2i(-2, -2): 2,
+Vector2i(-2, -1): 2,
+Vector2i(-2, 0): 3,
+Vector2i(-2, 1): 3,
+Vector2i(-2, 2): 3,
+Vector2i(-2, 3): 2,
+Vector2i(-2, 4): 2,
+Vector2i(-1, -3): 2,
+Vector2i(-1, -2): 2,
+Vector2i(-1, -1): 3,
+Vector2i(-1, 0): 3,
+Vector2i(-1, 1): 3,
+Vector2i(-1, 2): 3,
+Vector2i(-1, 3): 3,
+Vector2i(-1, 4): 2,
+Vector2i(-1, 5): 2,
+Vector2i(0, -2): 2,
+Vector2i(0, -1): 3,
+Vector2i(0, 0): 3,
+Vector2i(0, 1): 4,
+Vector2i(0, 2): 3,
+Vector2i(0, 3): 3,
+Vector2i(0, 4): 2,
+Vector2i(1, -2): 2,
+Vector2i(1, -1): 3,
+Vector2i(1, 0): 3,
+Vector2i(1, 1): 3,
+Vector2i(1, 2): 3,
+Vector2i(1, 3): 3,
+Vector2i(2, -2): 2,
+Vector2i(2, -1): 2,
+Vector2i(2, 0): 3,
+Vector2i(2, 1): 3,
+Vector2i(3, -2): 2,
+Vector2i(3, -1): 2,
+Vector2i(3, 0): 2,
+Vector2i(3, 1): 2,
+Vector2i(4, -2): 2,
+Vector2i(4, -1): 2,
+Vector2i(4, 0): 2,
+Vector2i(5, -1): 2
+},
+"feature_stamps": Array[Dictionary]([{
+"adaptation": &"fit",
+"cells": Array[Vector3i]([Vector3i(0, 0, -2), Vector3i(1, 0, -2), Vector3i(0, 0, -1), Vector3i(1, 0, -1)]),
+"kind": &"market_square"
+}]),
+"market_square_cells": Array[Vector3i]([Vector3i(0, 0, -2), Vector3i(1, 0, -2), Vector3i(0, 0, -1), Vector3i(1, 0, -1)]),
+"market_zone": Array[Vector3i]([Vector3i(0, 0, -2), Vector3i(0, 0, -1), Vector3i(0, 0, 0), Vector3i(0, 0, 1)]),
+"passage_kinds": {
+Vector3i(-2, 0, -1): &"alley",
+Vector3i(-2, 0, 0): &"alley",
+Vector3i(-2, 4, -1): &"alley",
+Vector3i(-1, 0, -1): &"alley",
+Vector3i(-1, 2, 2): &"spine",
+Vector3i(-1, 2, 3): &"spine",
+Vector3i(-1, 3, 0): &"spine",
+Vector3i(-1, 3, 1): &"spine",
+Vector3i(-1, 4, -1): &"spine",
+Vector3i(0, 0, -2): &"spine",
+Vector3i(0, 0, -1): &"spine",
+Vector3i(0, 0, 0): &"spine",
+Vector3i(0, 0, 1): &"spine",
+Vector3i(0, 1, 3): &"spine",
+Vector3i(0, 4, -1): &"spine",
+Vector3i(0, 4, 0): &"spine",
+Vector3i(0, 5, 1): &"spine",
+Vector3i(1, 0, -2): &"market",
+Vector3i(1, 0, -1): &"market",
+Vector3i(1, 0, 1): &"spine",
+Vector3i(1, 0, 2): &"spine",
+Vector3i(1, 1, 3): &"spine",
+Vector3i(2, 0, 0): &"alley",
+Vector3i(2, 0, 1): &"alley",
+Vector3i(3, 0, -1): &"alley",
+Vector3i(3, 0, 0): &"alley",
+Vector3i(4, 0, -1): &"alley"
+},
+"plots": Array[Dictionary]([{
+"building_id": &"plaza.00",
+"cells": Array[Vector2i]([Vector2i(1, -2), Vector2i(2, -2), Vector2i(1, -1), Vector2i(2, -1)]),
+"door_walk": Vector3i(0, 4, -1),
+"floor": 4,
+"id": &"plaza.00",
+"kind": &"deck",
+"top": 4
+}, {
+"building_id": &"house.000",
+"cells": Array[Vector2i]([Vector2i(-1, -3), Vector2i(-1, -2)]),
+"door_walk": Vector3i(0, 0, -2),
+"floor": 0,
+"id": &"house.000",
+"kind": &"house",
+"top": 4
+}, {
+"building_id": &"house.001",
+"cells": Array[Vector2i]([Vector2i(1, 0)]),
+"door_walk": Vector3i(0, 0, 0),
+"floor": 0,
+"id": &"house.001",
+"kind": &"house",
+"top": 4
+}, {
+"building_id": &"house.008",
+"cells": Array[Vector2i]([Vector2i(3, 1)]),
+"door_walk": Vector3i(2, 0, 1),
+"floor": 0,
+"id": &"house.008",
+"kind": &"house",
+"top": 4
+}, {
+"building_id": &"house.009",
+"cells": Array[Vector2i]([Vector2i(4, 0)]),
+"door_walk": Vector3i(3, 0, 0),
+"floor": 0,
+"id": &"house.009",
+"kind": &"house",
+"top": 4
+}, {
+"building_id": &"house.010",
+"cells": Array[Vector2i]([Vector2i(3, -2), Vector2i(4, -2)]),
+"door_walk": Vector3i(3, 0, -1),
+"floor": 0,
+"id": &"house.010",
+"kind": &"house",
+"top": 4
+}, {
+"building_id": &"house.011",
+"cells": Array[Vector2i]([Vector2i(5, -1)]),
+"door_walk": Vector3i(4, 0, -1),
+"floor": 0,
+"id": &"house.011",
+"kind": &"house",
+"top": 8
+}, {
+"building_id": &"house.014",
+"cells": Array[Vector2i]([Vector2i(-4, -3), Vector2i(-3, -3), Vector2i(-3, -2), Vector2i(-3, -1)]),
+"door_walk": Vector3i(-2, 0, -1),
+"floor": 0,
+"id": &"house.014",
+"kind": &"house",
+"top": 4
+}, {
+"building_id": &"house.002",
+"cells": Array[Vector2i]([Vector2i(0, 4)]),
+"door_walk": Vector3i(0, 1, 3),
+"floor": 1,
+"id": &"house.002",
+"kind": &"house",
+"top": 7
+}, {
+"building_id": &"house.003",
+"cells": Array[Vector2i]([Vector2i(-1, 4), Vector2i(-1, 5)]),
+"door_walk": Vector3i(-1, 2, 3),
+"floor": 2,
+"id": &"house.003",
+"kind": &"house",
+"top": 6
+}, {
+"building_id": &"house.004",
+"cells": Array[Vector2i]([Vector2i(-2, 3), Vector2i(-2, 4)]),
+"door_walk": Vector3i(-1, 2, 3),
+"floor": 2,
+"id": &"house.004",
+"kind": &"house",
+"top": 10
+}, {
+"building_id": &"house.005",
+"cells": Array[Vector2i]([Vector2i(-1, -3), Vector2i(-1, -2), Vector2i(0, -2)]),
+"door_walk": Vector3i(-1, 4, -1),
+"floor": 4,
+"id": &"house.005",
+"kind": &"house",
+"top": 8
+}, {
+"building_id": &"house.007",
+"cells": Array[Vector2i]([Vector2i(1, 0)]),
+"door_walk": Vector3i(0, 4, 0),
+"floor": 4,
+"id": &"house.007",
+"kind": &"house",
+"top": 10
+}, {
+"building_id": &"house.013",
+"cells": Array[Vector2i]([Vector2i(-4, -3), Vector2i(-3, -3), Vector2i(-4, -2), Vector2i(-3, -2), Vector2i(-3, -1)]),
+"door_walk": Vector3i(-2, 4, -1),
+"floor": 4,
+"id": &"house.013",
+"kind": &"house",
+"top": 8
+}, {
+"building_id": &"bridge.00.end.0",
+"cells": Array[Vector2i]([Vector2i(-2, 0), Vector2i(-2, 1)]),
+"door_walk": Vector3i(-2, 4, -1),
+"floor": 4,
+"id": &"bridge.00.end.0.lower",
+"kind": &"house",
+"top": 8
+}, {
+"building_id": &"bridge.00.end.1",
+"cells": Array[Vector2i]([Vector2i(-2, -2), Vector2i(-2, -3)]),
+"door_walk": Vector3i(-2, 4, -1),
+"floor": 4,
+"id": &"bridge.00.end.1.lower",
+"kind": &"house",
+"top": 8
+}, {
+"building_id": &"bridge.00",
+"cells": Array[Vector2i]([Vector2i(-2, -1)]),
+"door_walk": Vector3i(-2, 4, -1),
+"floor": 8,
+"id": &"bridge.00",
+"kind": &"bridge",
+"top": 10
+}, {
+"building_id": &"bridge.01.end.0",
+"cells": Array[Vector2i]([Vector2i(-2, 2)]),
+"door_walk": Vector3i(-1, 2, 2),
+"floor": 2,
+"id": &"bridge.01.end.0.lower",
+"kind": &"house",
+"top": 7
+}, {
+"building_id": &"bridge.01.end.1",
+"cells": Array[Vector2i]([Vector2i(0, 2)]),
+"door_walk": Vector3i(-1, 2, 2),
+"floor": 2,
+"id": &"bridge.01.end.1.lower",
+"kind": &"house",
+"top": 7
+}, {
+"building_id": &"bridge.01",
+"cells": Array[Vector2i]([Vector2i(-1, 2)]),
+"door_walk": Vector3i(-1, 2, 2),
+"floor": 7,
+"id": &"bridge.01",
+"kind": &"bridge",
+"top": 9
+}]),
+"summit_cell": Vector3i(0, 5, 1)
+},
+"world_seed": 166029932451774690
+}

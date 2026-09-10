@@ -7,23 +7,23 @@
 [sub_resource type="Resource" id="C1"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.mushroom.01"
-biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2}
+biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2, &"amber_heath": 0.5, &"jade_wetlands": 1.2}
 
 [sub_resource type="Resource" id="C4"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.mushroom.04"
-biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2}
+biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2, &"amber_heath": 0.5, &"jade_wetlands": 1.2}
 
 [sub_resource type="Resource" id="C7"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.mushroom.07"
-biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2}
+biome_affinity = {&"meadow": 0.5, &"deep_forest": 1.2, &"highland": 0.2, &"blossom_grove": 1.0, &"twilight_marsh": 1.2, &"amber_heath": 0.5, &"jade_wetlands": 1.2}
 
 [sub_resource type="Resource" id="Canopy"]
 script = ExtResource("3_habitat")
 channel = &"woodland_canopy"
 scale = 132.0
-coverage = {&"meadow": 0.22, &"deep_forest": 0.82, &"highland": 0.14, &"blossom_grove": 0.72, &"twilight_marsh": 0.42}
+coverage = {&"meadow": 0.22, &"deep_forest": 0.82, &"highland": 0.14, &"blossom_grove": 0.72, &"twilight_marsh": 0.42, &"amber_heath": 0.22, &"jade_wetlands": 0.42}
 edge_softness = 0.075
 
 [sub_resource type="Resource" id="OutsideColony"]
@@ -31,7 +31,7 @@ script = ExtResource("3_habitat")
 channel = &"fungal_colonies"
 scale = 18.0
 preference = 2
-coverage = {&"meadow": 0.12, &"deep_forest": 0.38, &"highland": 0.08, &"blossom_grove": 0.3, &"twilight_marsh": 0.42}
+coverage = {&"meadow": 0.12, &"deep_forest": 0.38, &"highland": 0.08, &"blossom_grove": 0.3, &"twilight_marsh": 0.42, &"amber_heath": 0.12, &"jade_wetlands": 0.42}
 edge_softness = 0.045
 
 [resource]
@@ -39,7 +39,7 @@ script = ExtResource("2_set")
 id = &"ambient.mushroom.single"
 feature_clearance = 0.3
 choices = Array[ExtResource("1_choice")]([SubResource("C1"), SubResource("C4"), SubResource("C7")])
-fill_per_cell = {&"meadow": 0.18, &"deep_forest": 0.45, &"highland": 0.12, &"blossom_grove": 0.35, &"twilight_marsh": 0.42}
+fill_per_cell = {&"meadow": 0.18, &"deep_forest": 0.45, &"highland": 0.12, &"blossom_grove": 0.35, &"twilight_marsh": 0.42, &"amber_heath": 0.18, &"jade_wetlands": 0.42}
 habitat_layers = Array[ExtResource("3_habitat")]([SubResource("Canopy"), SubResource("OutsideColony")])
 community_channel = &"mushroom_colony_species"
 community_scale = 14.0

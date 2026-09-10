@@ -1,0 +1,25 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+=== terrain profile, seed 3046246887 ===
+resource preparation: 8394.8 ms  memory: 98.6 MiB -> 1917.5 MiB (+1818.8 MiB)
+program: 10 sets, 865 active assets, margin 26.0m, estimated 3200 proposals/chunk
+
+=== cold sweep: 49 chunks (radius 3) ===
+worker TOTAL: 389277.3 ms  avg: 7944.4 ms  worst: 80688.7 ms at (-3, -3)
+  heightfield region: 398.6 ms
+  shared water context: 4060.4 ms
+  FeatureContext (planning/routes/features): 125625.1 ms
+  terrain mesh payload: 235861.7 ms
+  water skin payload: 14835.1 ms
+  DressingField: 8496.1 ms  (5250 instances)
+commit TOTAL: 4841.2 ms
+  terrain commit: 4574.0 ms
+  water commit: 5.0 ms
+  dressing collision commit: 12.2 ms  (1434 shapes)
+  dressing commit: 13.3 ms  (909 MultiMesh batches)
+  feature commit: 236.7 ms  (3181 instances, 3558 shapes, 543 batches)
+  field cache: { "region_builds": 104, "water_builds": 90, "region_hits": 17949, "water_hits": 10107, "evictions": 0, "entries": 104 }
+  world feature plan: { "paths": { "node_queries": 682, "node_builds": 17, "route_queries": 186, "route_solves": 10, "route_exact_failures": 0, "bridge_profiles": 29, "context_builds": 49, "evictions": 0, "node_cache": 17, "route_cache": 10, "bridge_raw_cache": 29, "bridge_resolved_cache": 20, "context_cache": 49, "planning_point_cache": 2409 }, "villages": { "queries": 18, "builds": 4, "evictions": 0, "urban_usec": 1346315, "materialize_usec": 1494, "outskirts_usec": 5399195, "cache": 4 }, "frame_cache": 4, "context_cache": 49 }
+static memory: 1917.5 MiB -> 2319.5 MiB  process peak: 2932.6 MiB
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

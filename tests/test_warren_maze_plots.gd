@@ -191,7 +191,10 @@ func test_add_plot_enforces_support_and_headroom() -> void:
 
 
 func test_solid_at_derives_rock_under_plots_and_air_above() -> void:
-	var plan := _unsealed_fixture()
+	# Preserve the original street/plot shoulder relationship. A changed street
+	# at the summit may legitimately require all sixteen support bands there.
+	var plan := preload("res://tests/fixtures/frozen_maze_source.gd").read(
+		"res://tests/fixtures/maze-plot-shoulder-source.txt", false)
 	assert_not_null(plan, WarrenMazeCarver.last_failure)
 	var columns := _clean_columns(plan, 1, 9)
 	assert_eq(columns.size(), 1, "the compact fixture keeps a deep clean column")

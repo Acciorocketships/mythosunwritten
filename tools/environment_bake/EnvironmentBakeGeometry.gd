@@ -6,6 +6,32 @@ extends RefCounted
 ## runner makes material grouping and collision fitting directly testable on
 ## synthetic meshes without importing or writing an environment pack.
 
+static func pose_meshes(source_root: Node, poses: Array) -> bool:
+	## Authored source-space hinges, applied before both visual and collision bake.
+	## Resolve every declaration first so an invalid manifest cannot partly pose a source.
+	var resolved: Array[Dictionary] = []
+	var seen: Dictionary = {}
+	for value: Variant in poses:
+		if not value is Dictionary: return false
+		var pose: Dictionary = value
+		var path := String(pose.get("path", ""))
+		var pivot_values: Variant = pose.get("pivot", [])
+		var yaw := float(pose.get("yaw_degrees", NAN))
+		if path.is_empty() or seen.has(path) or not pivot_values is Array \
+				or pivot_values.size()!=3 or not is_finite(yaw): return false
+		var pivot := Vector3(float(pivot_values[0]),float(pivot_values[1]),float(pivot_values[2]))
+		var node := source_root.get_node_or_null(NodePath(path)) as MeshInstance3D
+		if node==null or node.mesh==null or not pivot.is_finite(): return false
+		var rotation := Basis(Vector3.UP,deg_to_rad(yaw))
+		var pose_transform := Transform3D(rotation,pivot-rotation*pivot)
+		var parent_transform := relative_transform(node.get_parent() as Node3D,source_root)
+		resolved.append({"node":node,"transform":parent_transform.affine_inverse()*pose_transform*relative_transform(node,source_root)})
+		seen[path]=true
+	for item: Dictionary in resolved:
+		(item.node as Node3D).transform=item.transform
+	return true
+
+
 static func merge_pieces(source_root: Node,
 		correction: Transform3D,
 		excluded_paths: Array[String] = []) -> ArrayMesh:
@@ -37,8 +63,23 @@ static func merge_pieces(source_root: Node,
 		surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 		surface.set_material(group.material as Material)
 		for source: Dictionary in group.sources:
-			surface.append_from(source.mesh as Mesh, int(source.surface),
-				source.transform as Transform3D)
+			var mesh := source.mesh as Mesh
+			var source_surface := int(source.surface)
+			var arrays := mesh.surface_get_arrays(source_surface)
+			var indices := arrays[Mesh.ARRAY_INDEX] as PackedInt32Array \
+				if arrays[Mesh.ARRAY_INDEX] is PackedInt32Array else PackedInt32Array()
+			# append_from does not reference an unindexed source once the
+			# destination has indices. Normalize each input so later caps survive.
+			if indices.is_empty():
+				indices = PackedInt32Array()
+				indices.resize((arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size())
+				for index in indices.size(): indices[index] = index
+				arrays[Mesh.ARRAY_INDEX] = indices
+				var indexed := ArrayMesh.new()
+				indexed.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+				mesh = indexed
+				source_surface = 0
+			surface.append_from(mesh, source_surface, source.transform as Transform3D)
 		surface.index()
 		surface.commit(merged)
 	return merged
@@ -109,6 +150,91 @@ static func mirror_axis(source: ArrayMesh, axis: int) -> ArrayMesh:
 		mirrored.surface_set_name(output_index,
 			source.surface_get_name(surface_index))
 	return mirrored if mirrored.get_surface_count() > 0 else null
+
+
+static func coplanar_face_bounds(source: ArrayMesh, plane: Plane,
+		tolerance: float = 0.00001) -> AABB:
+	var bounds := AABB()
+	var initialized := false
+	var faces := source.get_faces()
+	for offset in range(0, faces.size(), 3):
+		if absf(plane.distance_to(faces[offset])) > tolerance \
+				or absf(plane.distance_to(faces[offset + 1])) > tolerance \
+				or absf(plane.distance_to(faces[offset + 2])) > tolerance:
+			continue
+		for corner in 3:
+			if not initialized:
+				bounds = AABB(faces[offset + corner], Vector3.ZERO)
+				initialized = true
+			else:
+				bounds = bounds.expand(faces[offset + corner])
+	return bounds
+
+
+static func coplanar_face_surfaces(source: ArrayMesh, plane: Plane,
+		tolerance: float = 0.00001) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for surface in source.get_surface_count():
+		var arrays := source.surface_get_arrays(surface)
+		var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+		if indices.is_empty():
+			indices.resize(vertices.size())
+			for index in vertices.size(): indices[index] = index
+		var triangles: Array[Dictionary] = []
+		for offset in range(0, indices.size(), 3):
+			if absf(plane.distance_to(vertices[indices[offset]])) > tolerance \
+					or absf(plane.distance_to(vertices[indices[offset + 1]])) > tolerance \
+					or absf(plane.distance_to(vertices[indices[offset + 2]])) > tolerance:
+				continue
+			for corner in 3:
+				var vertex := _mesh_vertex(arrays, indices[offset + corner])
+				triangles.append({"position": vertex.position,
+					"normal": vertex.normal if vertex.has_normal else Vector3.UP,
+					"uv": vertex.uv if vertex.has_uv else Vector2.ZERO,
+					"color": vertex.color if vertex.has_color else Color.WHITE})
+		if not triangles.is_empty():
+			result.append({"material_surface": surface, "triangles": triangles})
+	return result
+
+
+static func omit_coplanar_faces(source: ArrayMesh, plane: Plane,
+		tolerance: float = 0.00001) -> ArrayMesh:
+	## A declared neighboring construction surface owns this interface. Remove
+	## only triangles lying wholly on its plane; retain positions, UVs, normals,
+	## materials and every vertical or sloping face. This is an offline asset
+	## operation, not a runtime offset or a proximity-based mesh repair.
+	if source == null or source.get_blend_shape_count() > 0:
+		return null
+	var result := ArrayMesh.new()
+	for surface in source.get_surface_count():
+		if source.surface_get_primitive_type(surface) != Mesh.PRIMITIVE_TRIANGLES:
+			return null
+		var arrays := source.surface_get_arrays(surface)
+		var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var indices := arrays[Mesh.ARRAY_INDEX] as PackedInt32Array \
+			if arrays[Mesh.ARRAY_INDEX] is PackedInt32Array else PackedInt32Array()
+		if indices.is_empty():
+			indices.resize(vertices.size())
+			for index in vertices.size():
+				indices[index] = index
+		var kept := PackedInt32Array()
+		for offset in range(0, indices.size(), 3):
+			var lies_on_plane := true
+			for corner in 3:
+				lies_on_plane = lies_on_plane and absf(plane.distance_to(
+					vertices[indices[offset + corner]])) <= tolerance
+			if not lies_on_plane:
+				kept.append_array(indices.slice(offset, offset + 3))
+		if kept.is_empty():
+			continue
+		arrays[Mesh.ARRAY_INDEX] = kept
+		result.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		result.surface_set_material(result.get_surface_count() - 1,
+			source.surface_get_material(surface))
+		result.surface_set_name(result.get_surface_count() - 1,
+			source.surface_get_name(surface))
+	return result if result.get_surface_count() > 0 else null
 
 
 static func clip_axis_range(source: ArrayMesh, axis: int, minimum: float,
@@ -204,6 +330,78 @@ static func transform_mesh(source: ArrayMesh, pose: Transform3D) -> ArrayMesh:
 		surface.append_from(source, index, pose)
 		surface.commit(out)
 	return out
+
+
+static func finish_facade_sides(source: ArrayMesh, side: ArrayMesh,
+		thickness: float) -> ArrayMesh:
+	# Replace the raw cut ends with the authored wall's actual relief and UVs.
+	# Both returned sides live inside the original doorway envelope. The body
+	# ends inside their backing, so no old end face competes with the new skin.
+	var box := source.get_aabb()
+	var stock := side.get_aabb()
+	assert(thickness > 0.0 and thickness * 2.0 < box.size.x)
+	var assembly := Node3D.new()
+	var body := MeshInstance3D.new()
+	body.mesh = clip_axis_range(source, Vector3.AXIS_X,
+		box.position.x + thickness * 0.88, box.end.x - thickness * 0.88)
+	assembly.add_child(body)
+	for sign_value in [-1.0, 1.0]:
+		var normal := Vector3.RIGHT * float(sign_value)
+		var basis := Basis(Vector3.UP.cross(normal) * box.size.z / stock.size.x,
+			Vector3.UP * 3.0 / stock.size.y, normal * thickness / stock.size.z)
+		var anchor := Vector3(box.end.x if sign_value > 0.0 else box.position.x,
+			0.0, box.get_center().z)
+		var piece := MeshInstance3D.new()
+		piece.mesh = side
+		piece.transform = Transform3D(basis, anchor - basis * Vector3(
+			stock.get_center().x, stock.position.y, stock.end.z))
+		assembly.add_child(piece)
+	var result := merge_pieces(assembly, Transform3D.IDENTITY)
+	assembly.free()
+	return result
+
+
+static func closed_facade_miter(source: ArrayMesh, plane: Plane,
+		material: Material, uv: Vector2) -> ArrayMesh:
+	# A wall end is a solid timber joint. Preserve its outside triangles and
+	# close the cut through the stock; an open cut exposes the plaster backing
+	# when neighboring panels have different ornament projection depths.
+	var clipped := clip_half_space(source, plane)
+	var normal := plane.normal.normalized()
+	var tangent := Vector3.UP.cross(normal).normalized()
+	var origin := normal * plane.d / plane.normal.length()
+	var points := PackedVector2Array()
+	var vertices := triangle_faces(source)
+	for offset in range(0, vertices.size(), 3):
+		for edge in 3:
+			var a := vertices[offset + edge]
+			var b := vertices[offset + (edge + 1) % 3]
+			var da := normal.dot(a - origin)
+			var db := normal.dot(b - origin)
+			if da * db >= 0.0: continue
+			var point := a.lerp(b, da / (da - db)) - origin
+			points.append(Vector2(point.dot(tangent), point.y))
+	if points.size() < 3: return clipped
+	var hull := Geometry2D.convex_hull(points)
+	if hull.size() < 4: return clipped
+	var cap := SurfaceTool.new()
+	cap.begin(Mesh.PRIMITIVE_TRIANGLES)
+	cap.set_material(material)
+	for index in range(1, hull.size() - 2):
+		# Godot's front faces use clockwise winding.
+		for point: Vector2 in [hull[0], hull[index + 1], hull[index]]:
+			cap.set_normal(normal)
+			cap.set_uv(uv)
+			cap.add_vertex(origin + tangent * point.x + Vector3.UP * point.y)
+	var cap_mesh := cap.commit()
+	var assembly := Node3D.new()
+	for mesh: ArrayMesh in [clipped, cap_mesh]:
+		var piece := MeshInstance3D.new()
+		piece.mesh = mesh
+		assembly.add_child(piece)
+	var result := merge_pieces(assembly, Transform3D.IDENTITY)
+	assembly.free()
+	return result
 
 
 static func _mesh_vertex(arrays: Array, index: int) -> Dictionary:

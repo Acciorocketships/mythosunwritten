@@ -1,0 +1,66 @@
+[
+  {
+    "name": "Cherryveil",
+    "pos": [
+      672,
+      32,
+      96
+    ]
+  },
+  {
+    "name": "Lanternwood",
+    "pos": [
+      -480,
+      32,
+      384
+    ]
+  },
+  {
+    "name": "Amber Heath",
+    "pos": [
+      -480,
+      32,
+      -384
+    ]
+  },
+  {
+    "name": "Opal Highlands",
+    "pos": [
+      384,
+      32,
+      672
+    ]
+  },
+  {
+    "name": "Jade Estuary",
+    "pos": [
+      -1632,
+      32,
+      480
+    ]
+  },
+  {
+    "name": "Sunwash Meadows",
+    "pos": [
+      192,
+      32,
+      576
+    ]
+  },
+  {
+    "name": "Sunwash / Lanternwood boundary",
+    "pos": [
+      -240,
+      32,
+      672
+    ]
+  },
+  {
+    "name": "Moonfen",
+    "pos": [
+      -192,
+      32,
+      -240
+    ]
+  }
+]

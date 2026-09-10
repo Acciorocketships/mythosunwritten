@@ -1083,9 +1083,6 @@
       "source": "res://assets/FantasyVillageFBX/FBX/Buildings/Buildings/SFV_Building_Interior_Blue_001.fbx",
       "merge_pieces": true,
       "derive_ground_contacts": true,
-      "exclude_mesh_paths": [
-        "SFV_Building_Interior_Blue_001/SFV_Building_Interior_Blue_001_001/SFV_Building_Interior_Blue_001_001_001/SFV_Building_Interior_Blue_001_001_001_002/SFV_Building_Interior_Blue_001_001_001_002_001"
-      ],
       "exclude_collision_mesh_paths": [
         "SFV_Building_Interior_Blue_001/SFV_Building_Interior_Blue_001_001/SFV_Building_Interior_Blue_001_001_001/SFV_Building_Interior_Blue_001_001_001_002",
         "SFV_Building_Interior_Blue_001/SFV_Building_Interior_Blue_001_001/SFV_Building_Interior_Blue_001_001_001/SFV_Building_Interior_Blue_001_001_001_049",
@@ -1104,7 +1101,18 @@
       "max_visual_triangles": 40000,
       "max_collision_triangles": 40000,
       "max_surfaces": 4,
-      "max_collision_pieces": 4
+      "max_collision_pieces": 4,
+      "mesh_poses": [
+        {
+          "path": "SFV_Building_Interior_Blue_001/SFV_Building_Interior_Blue_001_001/SFV_Building_Interior_Blue_001_001_001/SFV_Building_Interior_Blue_001_001_001_002/SFV_Building_Interior_Blue_001_001_001_002_001",
+          "pivot": [
+            0.749022424221039,
+            0.519000172615051,
+            5.98281002044678
+          ],
+          "yaw_degrees": 100
+        }
+      ]
     },
     {
       "id": "sfv.building.interior.blue.002",
@@ -1192,9 +1200,6 @@
       "fallback_albedo_textures": {
         "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
       },
-      "exclude_mesh_paths": [
-        "SFV_Building_Interior_Orange_001/SFV_Building_Interior_Orange_001_001/SFV_Building_Interior_Orange_007_001/SFV_Building_Interior_Orange_007_001_002/SFV_Building_Interior_Orange_007_001_002_001"
-      ],
       "exclude_collision_mesh_paths": [
         "SFV_Building_Interior_Orange_001/SFV_Building_Interior_Orange_001_001/SFV_Building_Interior_Orange_007_001/SFV_Building_Interior_Orange_007_001_002",
         "SFV_Building_Interior_Orange_001/SFV_Building_Interior_Orange_001_001/SFV_Building_Interior_Orange_007_001/SFV_Building_Interior_Orange_007_001_049",
@@ -1213,7 +1218,18 @@
       "max_visual_triangles": 40000,
       "max_collision_triangles": 40000,
       "max_surfaces": 5,
-      "max_collision_pieces": 4
+      "max_collision_pieces": 4,
+      "mesh_poses": [
+        {
+          "path": "SFV_Building_Interior_Orange_001/SFV_Building_Interior_Orange_001_001/SFV_Building_Interior_Orange_007_001/SFV_Building_Interior_Orange_007_001_002/SFV_Building_Interior_Orange_007_001_002_001",
+          "pivot": [
+            0.749022424221039,
+            0.522999942302704,
+            5.98280811309814
+          ],
+          "yaw_degrees": 100
+        }
+      ]
     },
     {
       "id": "sfv.building.interior.orange.002",

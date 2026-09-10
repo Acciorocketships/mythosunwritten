@@ -81,6 +81,22 @@ zoom_out={
 
 [shader_globals]
 
+biome_ground_a={
+"type": "sampler2D",
+"value": "res://terrain/materials/empty_biome_map.tres"
+}
+biome_ground_b={
+"type": "sampler2D",
+"value": "res://terrain/materials/empty_biome_map.tres"
+}
+biome_ground_color={
+"type": "sampler2D",
+"value": "res://terrain/materials/empty_biome_map.tres"
+}
+biome_ground_origin={
+"type": "vec2",
+"value": Vector2(0, 0)
+}
 grass_lod_origin={
 "type": "vec2",
 "value": Vector2(0, 0)

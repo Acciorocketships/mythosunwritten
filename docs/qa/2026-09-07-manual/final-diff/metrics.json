@@ -1,0 +1,114 @@
+{
+  "01_upper_door_gap": {
+    "size": [
+      1718,
+      1034
+    ],
+    "roi": [
+      533,
+      16,
+      842,
+      476
+    ],
+    "changed_over_20_fraction": 0.03896168231243653,
+    "roi_changed_over_20_fraction": 0.26845363725904037,
+    "roi_mean_abs_rgb": 17.490807185404062,
+    "roi_max_abs_rgb": 165
+  },
+  "02_gallery_gaps_flicker": {
+    "size": [
+      1718,
+      1034
+    ],
+    "roi": [
+      395,
+      21,
+      1100,
+      569
+    ],
+    "changed_over_20_fraction": 0.33737556377687156,
+    "roi_changed_over_20_fraction": 0.7557695294300357,
+    "roi_mean_abs_rgb": 44.63311159427793,
+    "roi_max_abs_rgb": 158
+  },
+  "03_parallel_paths": {
+    "size": [
+      1718,
+      1034
+    ],
+    "roi": [
+      567,
+      134,
+      1151,
+      548
+    ],
+    "changed_over_20_fraction": 0.06474455250246001,
+    "roi_changed_over_20_fraction": 0.1523972602739726,
+    "roi_mean_abs_rgb": 7.926050007720645,
+    "roi_max_abs_rgb": 156
+  },
+  "04_garden_wall": {
+    "size": [
+      1718,
+      1034
+    ],
+    "roi": [
+      653,
+      527,
+      1237,
+      910
+    ],
+    "changed_over_20_fraction": 0.0342724548134104,
+    "roi_changed_over_20_fraction": 0.19700722486498087,
+    "roi_mean_abs_rgb": 9.888254527462832,
+    "roi_max_abs_rgb": 155
+  },
+  "05_ground_gaps": {
+    "size": [
+      1718,
+      1034
+    ],
+    "roi": [
+      34,
+      10,
+      1306,
+      589
+    ],
+    "changed_over_20_fraction": 0.10557348182741391,
+    "roi_changed_over_20_fraction": 0.2428321982164,
+    "roi_mean_abs_rgb": 10.065821846384463,
+    "roi_max_abs_rgb": 200
+  },
+  "06_town_slopes": {
+    "size": [
+      1718,
+      1034
+    ],
+    "roi": [
+      464,
+      93,
+      1340,
+      486
+    ],
+    "changed_over_20_fraction": 0.04729702343825644,
+    "roi_changed_over_20_fraction": 0.19494695992656882,
+    "roi_mean_abs_rgb": 11.348174484219658,
+    "roi_max_abs_rgb": 216
+  },
+  "02_gallery_floor": {
+    "size": [
+      1718,
+      1034
+    ],
+    "roi": [
+      26,
+      455,
+      550,
+      693
+    ],
+    "changed_over_20_fraction": 0.33737556377687156,
+    "roi_changed_over_20_fraction": 0.053852075181217526,
+    "roi_mean_abs_rgb": 1.9748433724634893,
+    "roi_max_abs_rgb": 128
+  }
+}

@@ -134,7 +134,10 @@ func commit_chunk(skin: Dictionary) -> Node3D:
 		var rect: Rect2 = trig.rect
 		var top: float = trig.top
 		var bottom: float = trig.bottom
-		box.size = Vector3(rect.size.x, top - bottom, rect.size.y)
+		# Physics point queries exclude an exact box face. Adjacent tile boxes
+		# therefore need a small shared margin; the frozen sampler retains the
+		# exact wet footprint and rejects every dry point in that margin.
+		box.size = Vector3(rect.size.x + 0.002, top - bottom, rect.size.y + 0.002)
 		shape.shape = box
 		area.add_child(shape)
 		area.position = Vector3(rect.position.x + rect.size.x * 0.5,

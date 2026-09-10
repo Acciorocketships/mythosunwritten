@@ -5,12 +5,12 @@
       "id": "aws.building.003",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 74698,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 74698.0,
         "measured_aabb": {
           "position": [
             -7.29756116867065,
-            -0.000000571529596982145,
+            -5.7152959698e-07,
             -6.99103116989136
           ],
           "size": [
@@ -19,10 +19,10 @@
             14.7899017333984
           ]
         },
-        "mesh_bytes": 8720507,
-        "surface_count": 5,
-        "visual_piece_count": 1,
-        "visual_triangles": 74698
+        "mesh_bytes": 8720507.0,
+        "surface_count": 5.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 74698.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -49,6 +49,7 @@
       },
       "source": "res://assets/AlchemyPackFBX/FBX/Building and Attachables/AWS_Building_003.fbx",
       "source_sha256": "c5c241cadf0a861a24067aa9b941fa9fd0b84f8a31da28a4fffdfe357461243a",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/aws_building_003.tres"
     },
     {
@@ -56,8 +57,8 @@
       "id": "sfbp.campfire.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 6,
-        "collision_triangles": 0,
+        "collision_piece_count": 6.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -1.37152814865112,
@@ -70,10 +71,10 @@
             1.17236018180847
           ]
         },
-        "mesh_bytes": 533868,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 4676
+        "mesh_bytes": 533868.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 4676.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -95,6 +96,7 @@
       },
       "source": "res://assets/BattlePackFBX/FBX/General Props/Campfire/SFBP_Campfire_001.fbx",
       "source_sha256": "763ad86d640cdb1a9a14434dc4b81a0f6fbce901e23550464a9f380eb65dc9b4",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfbp_campfire_001.tres"
     },
     {
@@ -102,8 +104,8 @@
       "id": "sfbp.tent.armory.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 62797,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 62797.0,
         "measured_aabb": {
           "position": [
             -3.8158917427063,
@@ -116,10 +118,10 @@
             7.77062892913818
           ]
         },
-        "mesh_bytes": 6712966,
-        "surface_count": 4,
-        "visual_piece_count": 1,
-        "visual_triangles": 62797
+        "mesh_bytes": 6712966.0,
+        "surface_count": 4.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 62797.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -141,6 +143,7 @@
       },
       "source": "res://assets/BattlePackFBX/FBX/Tents/Themed Tents/SFBP_Tent_Armory_001.fbx",
       "source_sha256": "9d5960f48177eadfb4f3a4d022a1bcbdf00ca3729f7e3096e177b9ee20df01ad",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfbp_tent_armory_001.tres"
     },
     {
@@ -148,8 +151,8 @@
       "id": "sfbp.tent.deposit.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 25770,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 25770.0,
         "measured_aabb": {
           "position": [
             -4.47370576858521,
@@ -162,10 +165,10 @@
             6.22232532501221
           ]
         },
-        "mesh_bytes": 2735694,
-        "surface_count": 2,
-        "visual_piece_count": 1,
-        "visual_triangles": 25770
+        "mesh_bytes": 2735694.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 25770.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -187,6 +190,7 @@
       },
       "source": "res://assets/BattlePackFBX/FBX/Tents/Themed Tents/SFBP_Tent_Deposit_001.fbx",
       "source_sha256": "dd1acf057725c326fdd5c003f027d4503e992d34d697ecb64b092952ac0c6415",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfbp_tent_deposit_001.tres"
     },
     {
@@ -194,8 +198,8 @@
       "id": "sfbp.tent.dormitory1.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 4,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 4.0,
         "measured_aabb": {
           "position": [
             -3.01976346969604,
@@ -208,10 +212,10 @@
             7.26398038864136
           ]
         },
-        "mesh_bytes": 2232585,
-        "surface_count": 3,
-        "visual_piece_count": 1,
-        "visual_triangles": 25028
+        "mesh_bytes": 2232585.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 25028.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -233,6 +237,7 @@
       },
       "source": "res://assets/BattlePackFBX/FBX/Tents/Themed Tents/SFBP_Tent_Dormitory1_001.fbx",
       "source_sha256": "7663fbb421851c2839feece60057083b3a8d82dfaa8b0635099ff05e716c823a",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfbp_tent_dormitory1_001.tres"
     },
     {
@@ -240,8 +245,8 @@
       "id": "sfbp.tent.dormitory2.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 23499,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 23499.0,
         "measured_aabb": {
           "position": [
             -3.81940412521362,
@@ -254,10 +259,10 @@
             6.06807422637939
           ]
         },
-        "mesh_bytes": 2143393,
-        "surface_count": 3,
-        "visual_piece_count": 1,
-        "visual_triangles": 23499
+        "mesh_bytes": 2143393.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 23499.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -279,6 +284,7 @@
       },
       "source": "res://assets/BattlePackFBX/FBX/Tents/Themed Tents/SFBP_Tent_Dormitory2_001.fbx",
       "source_sha256": "a983e701e922fbcade86b504436b0c393705e3efe4f90630a1bdcd0e99d679ef",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfbp_tent_dormitory2_001.tres"
     },
     {
@@ -286,8 +292,8 @@
       "id": "sfbp.tent.forge.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 47796,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 47796.0,
         "measured_aabb": {
           "position": [
             -3.81940460205078,
@@ -300,10 +306,10 @@
             6.20172595977783
           ]
         },
-        "mesh_bytes": 4572118,
-        "surface_count": 4,
-        "visual_piece_count": 1,
-        "visual_triangles": 47796
+        "mesh_bytes": 4572118.0,
+        "surface_count": 4.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 47796.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -325,6 +331,7 @@
       },
       "source": "res://assets/BattlePackFBX/FBX/Tents/Themed Tents/SFBP_Tent_Forge_001.fbx",
       "source_sha256": "bfc4d58d5dd88148fe98e91eb98cc73f486e80487b04c36b5092eb77f37443a6",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfbp_tent_forge_001.tres"
     },
     {
@@ -332,8 +339,8 @@
       "id": "sfbp.tent1.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 4,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 4.0,
         "measured_aabb": {
           "position": [
             -3.01974582672119,
@@ -346,10 +353,10 @@
             7.26398324966431
           ]
         },
-        "mesh_bytes": 584184,
-        "surface_count": 2,
-        "visual_piece_count": 1,
-        "visual_triangles": 6484
+        "mesh_bytes": 584184.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 6484.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -371,6 +378,7 @@
       },
       "source": "res://assets/BattlePackFBX/FBX/Tents/Empty Tents/SFBP_Tent1_001.fbx",
       "source_sha256": "7995a25cce9b32c7091a779f80071ba52042d9085f2e08b5403aac36c9da8c7b",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfbp_tent1_001.tres"
     },
     {
@@ -378,8 +386,8 @@
       "id": "sfbp.tent2.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 4662,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 4662.0,
         "measured_aabb": {
           "position": [
             -3.81588864326477,
@@ -392,10 +400,10 @@
             6.22233152389526
           ]
         },
-        "mesh_bytes": 456432,
-        "surface_count": 2,
-        "visual_piece_count": 1,
-        "visual_triangles": 4662
+        "mesh_bytes": 456432.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 4662.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -417,6 +425,7 @@
       },
       "source": "res://assets/BattlePackFBX/FBX/Tents/Empty Tents/SFBP_Tent2_001.fbx",
       "source_sha256": "2e2d19d19f5ea1ff1bf57ff3a1763a11d52c5edb6376464de3302d4aa04e1d24",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfbp_tent2_001.tres"
     },
     {
@@ -424,8 +433,8 @@
       "id": "sfbp.tent3.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 4880,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 4880.0,
         "measured_aabb": {
           "position": [
             -3.8193953037262,
@@ -438,10 +447,10 @@
             6.06807899475098
           ]
         },
-        "mesh_bytes": 483032,
-        "surface_count": 2,
-        "visual_piece_count": 1,
-        "visual_triangles": 4880
+        "mesh_bytes": 483032.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 4880.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -463,6 +472,7 @@
       },
       "source": "res://assets/BattlePackFBX/FBX/Tents/Empty Tents/SFBP_Tent3_001.fbx",
       "source_sha256": "808eaf35f20e541e7f28e6b90689375ab35f6485add9ae7498347eea500fd45a",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfbp_tent3_001.tres"
     },
     {
@@ -470,8 +480,8 @@
       "id": "sfbp.tent4.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 7484,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 7484.0,
         "measured_aabb": {
           "position": [
             -3.81941056251526,
@@ -484,10 +494,10 @@
             6.06806373596191
           ]
         },
-        "mesh_bytes": 717392,
-        "surface_count": 2,
-        "visual_piece_count": 1,
-        "visual_triangles": 7484
+        "mesh_bytes": 717392.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 7484.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -509,6 +519,7 @@
       },
       "source": "res://assets/BattlePackFBX/FBX/Tents/Empty Tents/SFBP_Tent4_001.fbx",
       "source_sha256": "032852cea3cc3c82e0d4d0d045caf3b10b5a1b09c65f0e3d4fb3daef9e1bce0e",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfbp_tent4_001.tres"
     },
     {
@@ -516,8 +527,8 @@
       "id": "sfbp.tent5.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 6342,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 6342.0,
         "measured_aabb": {
           "position": [
             -3.81587338447571,
@@ -530,10 +541,10 @@
             6.22233152389526
           ]
         },
-        "mesh_bytes": 607632,
-        "surface_count": 2,
-        "visual_piece_count": 1,
-        "visual_triangles": 6342
+        "mesh_bytes": 607632.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 6342.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -555,6 +566,7 @@
       },
       "source": "res://assets/BattlePackFBX/FBX/Tents/Empty Tents/SFBP_Tent5_001.fbx",
       "source_sha256": "aa82d543cf4a6712b93fc61b156c257d9db537b7bca48a42aff8325768dfa03d",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfbp_tent5_001.tres"
     },
     {
@@ -562,8 +574,8 @@
       "id": "sfbp.tent6.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 4,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 4.0,
         "measured_aabb": {
           "position": [
             -3.01976108551025,
@@ -576,10 +588,10 @@
             7.26397562026978
           ]
         },
-        "mesh_bytes": 390504,
-        "surface_count": 2,
-        "visual_piece_count": 1,
-        "visual_triangles": 4332
+        "mesh_bytes": 390504.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 4332.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -601,6 +613,7 @@
       },
       "source": "res://assets/BattlePackFBX/FBX/Tents/Empty Tents/SFBP_Tent6_001.fbx",
       "source_sha256": "96702647149c7e973524fb12702eceac43a42f1ca60ab0dd9dc305f500bdc0b0",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfbp_tent6_001.tres"
     },
     {
@@ -608,12 +621,12 @@
       "id": "sfm.stall.alchemy.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 3884,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 3884.0,
         "measured_aabb": {
           "position": [
             -3.58997201919556,
-            -0.000000270341729446955,
+            -2.7034172944e-07,
             -3.09113478660583
           ],
           "size": [
@@ -622,10 +635,10 @@
             6.18226957321167
           ]
         },
-        "mesh_bytes": 346728,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3884
+        "mesh_bytes": 346728.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3884.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -649,6 +662,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Alchemy Stall/Stall/SFM_Alchemy_Stall_001.fbx",
       "source_sha256": "24a05002171ebbe910e3247c11ad07619be9b9a47f661b757e79c4e288d2c7cc",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_alchemy_001.tres"
     },
     {
@@ -656,12 +670,12 @@
       "id": "sfm.stall.alchemy.002",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 40858,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 40858.0,
         "measured_aabb": {
           "position": [
             -3.58996772766113,
-            -0.000000270341729446955,
+            -2.7034172944e-07,
             -3.09113430976868
           ],
           "size": [
@@ -670,10 +684,10 @@
             6.18226909637451
           ]
         },
-        "mesh_bytes": 4888210,
-        "surface_count": 4,
-        "visual_piece_count": 1,
-        "visual_triangles": 40858
+        "mesh_bytes": 4888210.0,
+        "surface_count": 4.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 40858.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -697,6 +711,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Alchemy Stall/Stall/SFM_Alchemy_Stall_002.fbx",
       "source_sha256": "b5f50bd6aee0d86d5fd5471f40f238a861ff03e8e513f5f2d0ca713b04268884",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_alchemy_002.tres"
     },
     {
@@ -704,8 +719,8 @@
       "id": "sfm.stall.armory.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 70315,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 70315.0,
         "measured_aabb": {
           "position": [
             -3.30972647666931,
@@ -718,10 +733,10 @@
             7.1563720703125
           ]
         },
-        "mesh_bytes": 6740481,
-        "surface_count": 3,
-        "visual_piece_count": 1,
-        "visual_triangles": 70315
+        "mesh_bytes": 6740481.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 70315.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -745,6 +760,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Armory Stall/Stall/SFM_Armory_Stall_001.fbx",
       "source_sha256": "ba561dd91c21fc96cfde4a3be9e28dcc188d82ce7b5f344cd931989b52b78295",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_armory_001.tres"
     },
     {
@@ -752,12 +768,12 @@
       "id": "sfm.stall.armory.002",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 7474,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 7474.0,
         "measured_aabb": {
           "position": [
             -3.22920513153076,
-            -0.0000000179489809681854,
+            -1.794898096e-08,
             -2.75052332878113
           ],
           "size": [
@@ -766,10 +782,10 @@
             7.1563720703125
           ]
         },
-        "mesh_bytes": 673467,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 7474
+        "mesh_bytes": 673467.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 7474.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -793,6 +809,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Armory Stall/Stall/SFM_Armory_Stall_002.fbx",
       "source_sha256": "673bbc5464b9d8bbdbeb2872bb3b4e4793d4026588383aba8afa40c9d217632c",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_armory_002.tres"
     },
     {
@@ -800,12 +817,12 @@
       "id": "sfm.stall.bakery.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 3756,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 3756.0,
         "measured_aabb": {
           "position": [
             -2.23680901527405,
-            -0.00000016837911687162,
+            -1.6837911687e-07,
             -1.59946775436401
           ],
           "size": [
@@ -814,10 +831,10 @@
             3.19893550872803
           ]
         },
-        "mesh_bytes": 338847,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3756
+        "mesh_bytes": 338847.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3756.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -841,6 +858,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Bakery Stall/Stall/SFM_Bakery_Stall_001.fbx",
       "source_sha256": "4a4aa0bd461801cf7d4d361dabc11f8622099a89687a7943906357e37e8690cf",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_bakery_001.tres"
     },
     {
@@ -848,8 +866,8 @@
       "id": "sfm.stall.bakery.002",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 53737,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 53737.0,
         "measured_aabb": {
           "position": [
             -3.09077334403992,
@@ -862,10 +880,10 @@
             5.01236057281494
           ]
         },
-        "mesh_bytes": 6437404,
-        "surface_count": 2,
-        "visual_piece_count": 1,
-        "visual_triangles": 53737
+        "mesh_bytes": 6437404.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 53737.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -889,6 +907,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Bakery Stall/Stall/SFM_Bakery_Stall_002.fbx",
       "source_sha256": "d9143c732b968a6674bce2a00b9575a59752295c298ba8004e31371bedd6253e",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_bakery_002.tres"
     },
     {
@@ -896,12 +915,12 @@
       "id": "sfm.stall.blue.007",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -2.66495013237,
-            -0.000000168546463896746,
+            -1.6854646389e-07,
             -1.75213181972504
           ],
           "size": [
@@ -910,10 +929,10 @@
             3.50426363945007
           ]
         },
-        "mesh_bytes": 275018,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3046
+        "mesh_bytes": 275018.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3046.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -934,6 +953,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_007.fbx",
       "source_sha256": "1daf98048d59ea3df4a95f7f7b4ddbaeeac9b6d47cc9c66d8c64168fa521d647",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_blue_007.tres"
     },
     {
@@ -941,12 +961,12 @@
       "id": "sfm.stall.butcher.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -2.66494989395142,
-            -0.0000000976566667532097,
+            -9.765666675e-08,
             -1.75213181972504
           ],
           "size": [
@@ -955,10 +975,10 @@
             3.50426363945007
           ]
         },
-        "mesh_bytes": 307966,
-        "surface_count": 2,
-        "visual_piece_count": 2,
-        "visual_triangles": 3402
+        "mesh_bytes": 307966.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 2.0,
+        "visual_triangles": 3402.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -979,6 +999,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Butcher Stall/Stall/SFM_Butcher_Stall_001.fbx",
       "source_sha256": "9fd0af83a2ddba1526dbfb820aafc3901f4628c5944443dd98a2f85934ae8e9f",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_butcher_001.tres"
     },
     {
@@ -986,8 +1007,8 @@
       "id": "sfm.stall.butcher.002",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 41100,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 41100.0,
         "measured_aabb": {
           "position": [
             -2.66494989395142,
@@ -1000,10 +1021,10 @@
             4.6118426322937
           ]
         },
-        "mesh_bytes": 4927386,
-        "surface_count": 2,
-        "visual_piece_count": 1,
-        "visual_triangles": 41100
+        "mesh_bytes": 4927386.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 41100.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1027,6 +1048,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Butcher Stall/Stall/SFM_Butcher_Stall_002.fbx",
       "source_sha256": "d89d6aee7ae794df2a5820441af416281127931a0b811021abe1d182a1599587",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_butcher_002.tres"
     },
     {
@@ -1034,12 +1056,12 @@
       "id": "sfm.stall.butcher.003",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -2.66495013237,
-            -0.000000168546463896746,
+            -1.6854646389e-07,
             -1.75213181972504
           ],
           "size": [
@@ -1048,10 +1070,10 @@
             3.50426363945007
           ]
         },
-        "mesh_bytes": 275029,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3046
+        "mesh_bytes": 275029.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3046.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1072,6 +1094,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Butcher Stall/Stall/SFM_Butcher_Stall_003.fbx",
       "source_sha256": "124c12499f01b83434d2cf6c4a38a3fd06787a3d79fef123cc6e2740aa0194a9",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_butcher_003.tres"
     },
     {
@@ -1079,8 +1102,8 @@
       "id": "sfm.stall.butcher_attach.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -1.61854243278503,
@@ -1093,10 +1116,10 @@
             0.15284463763237
           ]
         },
-        "mesh_bytes": 32855,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 356
+        "mesh_bytes": 32855.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 356.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1117,6 +1140,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Butcher Stall/Stall/SFM_Butcher_Stall_Attachable_001.fbx",
       "source_sha256": "096cb9930c7b2056b31aebe2d3544bd7420f390b98b253e4768d8627394bc737",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_butcher_attach_001.tres"
     },
     {
@@ -1124,12 +1148,12 @@
       "id": "sfm.stall.fabric.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 75982,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 75982.0,
         "measured_aabb": {
           "position": [
             -3.81243062019348,
-            -0.000000824832454782154,
+            -8.2483245478e-07,
             -2.98605823516846
           ],
           "size": [
@@ -1138,10 +1162,10 @@
             7.26430749893188
           ]
         },
-        "mesh_bytes": 7289148,
-        "surface_count": 2,
-        "visual_piece_count": 1,
-        "visual_triangles": 75982
+        "mesh_bytes": 7289148.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 75982.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1165,6 +1189,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Fabric Stall/Stall/SFM_Fabric_Stall_001.001.fbx",
       "source_sha256": "6a36ebc62da2ec79407c9b460982e7908066ed51a40323b48bb9b8ae128b3945",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_fabric_001.tres"
     },
     {
@@ -1172,12 +1197,12 @@
       "id": "sfm.stall.fabric.002",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 4634,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 4634.0,
         "measured_aabb": {
           "position": [
             -3.81243062019348,
-            -0.000000287830488332474,
+            -2.8783048833e-07,
             -2.98605823516846
           ],
           "size": [
@@ -1186,10 +1211,10 @@
             5.97211647033691
           ]
         },
-        "mesh_bytes": 417867,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 4634
+        "mesh_bytes": 417867.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 4634.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1213,6 +1238,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Fabric Stall/Stall/SFM_Fabric_Stall_002.fbx",
       "source_sha256": "a870a2907c6b2e9abcefeda1c319652ce3fa1e83724105f9b40f9eeb3bc640f1",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_fabric_002.tres"
     },
     {
@@ -1220,8 +1246,8 @@
       "id": "sfm.stall.fish.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 45478,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 45478.0,
         "measured_aabb": {
           "position": [
             -2.71794390678406,
@@ -1234,10 +1260,10 @@
             3.41507291793823
           ]
         },
-        "mesh_bytes": 5447627,
-        "surface_count": 3,
-        "visual_piece_count": 1,
-        "visual_triangles": 45478
+        "mesh_bytes": 5447627.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 45478.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1261,6 +1287,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Fishmonger Stall/Stall/SFM_Fishmonger_Stall_001.fbx",
       "source_sha256": "91b82986581f3bbe24ada58c74572a0ede0ab043d293428d819db0b869cc33e7",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_fish_001.tres"
     },
     {
@@ -1268,12 +1295,12 @@
       "id": "sfm.stall.fish.002",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 2790,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2790.0,
         "measured_aabb": {
           "position": [
             -2.09224653244019,
-            -0.00000013087748129692,
+            -1.3087748129e-07,
             -1.37814688682556
           ],
           "size": [
@@ -1282,10 +1309,10 @@
             2.75629377365112
           ]
         },
-        "mesh_bytes": 248321,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 2790
+        "mesh_bytes": 248321.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2790.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1309,6 +1336,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Fishmonger Stall/Stall/SFM_Fishmonger_Stall_002.fbx",
       "source_sha256": "2a6be590132ca6c8f4e5e1347ec5c36bf502ddad0190bb7d3b1414d5d332c75d",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_fish_002.tres"
     },
     {
@@ -1316,12 +1344,12 @@
       "id": "sfm.stall.forge.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 3964,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 3964.0,
         "measured_aabb": {
           "position": [
             -1.88455319404602,
-            -0.000000196202620372787,
+            -1.9620262037e-07,
             -3.37611055374146
           ],
           "size": [
@@ -1330,10 +1358,10 @@
             6.75222015380859
           ]
         },
-        "mesh_bytes": 357566,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3964
+        "mesh_bytes": 357566.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3964.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1357,6 +1385,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Forge Stall/Stall/SFM_Forge_Stall_001.fbx",
       "source_sha256": "d0357ccf64522990fa115a7b9f93ec67c6cc291329a23b6bbde0076701e25ebe",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_forge_001.tres"
     },
     {
@@ -1364,8 +1393,8 @@
       "id": "sfm.stall.forge.002",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 37369,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 37369.0,
         "measured_aabb": {
           "position": [
             -2.21571612358093,
@@ -1378,10 +1407,10 @@
             6.75222015380859
           ]
         },
-        "mesh_bytes": 4461274,
-        "surface_count": 3,
-        "visual_piece_count": 1,
-        "visual_triangles": 37369
+        "mesh_bytes": 4461274.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 37369.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1405,6 +1434,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Forge Stall/Stall/SFM_Forge_Stall_002.fbx",
       "source_sha256": "a1aa0b9c8101e831afe97ab8c9c0e2fb39c1e58f8486af7b61a88290032005cc",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_forge_002.tres"
     },
     {
@@ -1412,12 +1442,12 @@
       "id": "sfm.stall.forge.003",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 4090,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 4090.0,
         "measured_aabb": {
           "position": [
             -1.88455319404602,
-            -0.000000196202620372787,
+            -1.9620262037e-07,
             -3.37611055374146
           ],
           "size": [
@@ -1426,10 +1456,10 @@
             6.75222015380859
           ]
         },
-        "mesh_bytes": 368906,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 4090
+        "mesh_bytes": 368906.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 4090.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1453,6 +1483,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Forge Stall/Stall/SFM_Forge_Stall_003.fbx",
       "source_sha256": "32353f11ebf343eba0cf13cb39aae2dbafc8ee3f13f9492d4e810bbc0a7f5584",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_forge_003.tres"
     },
     {
@@ -1460,8 +1491,8 @@
       "id": "sfm.stall.forge_chimney.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.289686590433121,
@@ -1474,10 +1505,10 @@
             0.61735075712204
           ]
         },
-        "mesh_bytes": 27722,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 317
+        "mesh_bytes": 27722.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 317.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1498,6 +1529,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Forge Stall/Stall/SFM_Stall_Chemney_001.fbx",
       "source_sha256": "22c2a8839e0cc884d89bd77c79f07b074696b37f3d37d473994051317b873370",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_forge_chimney_001.tres"
     },
     {
@@ -1505,12 +1537,12 @@
       "id": "sfm.stall.neutral.009",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -2.66495013237,
-            -0.000000168546463896746,
+            -1.6854646389e-07,
             -1.75213181972504
           ],
           "size": [
@@ -1519,10 +1551,10 @@
             3.50426363945007
           ]
         },
-        "mesh_bytes": 275021,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3046
+        "mesh_bytes": 275021.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3046.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1543,6 +1575,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_009.fbx",
       "source_sha256": "ae9a0de225003da7c671cec61c5b0a541c3c60368874acb87f5020944148a677",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_neutral_009.tres"
     },
     {
@@ -1550,12 +1583,12 @@
       "id": "sfm.stall.orange.006",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -2.66495013237,
-            -0.000000168546463896746,
+            -1.6854646389e-07,
             -1.75213181972504
           ],
           "size": [
@@ -1564,10 +1597,10 @@
             3.50426363945007
           ]
         },
-        "mesh_bytes": 275020,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3046
+        "mesh_bytes": 275020.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3046.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1588,6 +1621,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_006.fbx",
       "source_sha256": "e2b8d8a28cad9ee5f749a5dc7f6f7e356e5003c7b7eae6cd9108a643992e4b40",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_orange_006.tres"
     },
     {
@@ -1595,8 +1629,8 @@
       "id": "sfm.stall.support.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 0,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.0964161083102226,
@@ -1609,10 +1643,10 @@
             3.20333027839661
           ]
         },
-        "mesh_bytes": 4588,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 42
+        "mesh_bytes": 4588.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 42.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1635,6 +1669,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Forge Stall/Stall/SFM_Stall_Support_001.fbx",
       "source_sha256": "58b66c5cc301c8033780ac4d798a8a124af58f9c11cad344cf90ef9f4b500eec",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_support_001.tres"
     },
     {
@@ -1642,12 +1677,12 @@
       "id": "sfm.stall.tavern.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 40538,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 40538.0,
         "measured_aabb": {
           "position": [
             -3.71616458892822,
-            -0.00000705607772033545,
+            -7.05607772033e-06,
             -3.06445455551147
           ],
           "size": [
@@ -1656,10 +1691,10 @@
             5.48854398727417
           ]
         },
-        "mesh_bytes": 3885028,
-        "surface_count": 2,
-        "visual_piece_count": 1,
-        "visual_triangles": 40538
+        "mesh_bytes": 3885028.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 40538.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1683,6 +1718,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Tavern Stall/Stall/SFM_Tavern_Stall_001.fbx",
       "source_sha256": "a9a891124ec8978c964e091639930f5661bdc2a2fba412adc6a241f8759db929",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_tavern_001.tres"
     },
     {
@@ -1690,12 +1726,12 @@
       "id": "sfm.stall.tavern.002",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 6847,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 6847.0,
         "measured_aabb": {
           "position": [
             -3.71616506576538,
-            -0.000000249031188559456,
+            -2.4903118855e-07,
             -2.42409110069275
           ],
           "size": [
@@ -1704,10 +1740,10 @@
             4.84818267822266
           ]
         },
-        "mesh_bytes": 617039,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 6847
+        "mesh_bytes": 617039.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 6847.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1731,6 +1767,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Tavern Stall/Stall/SFM_Tavern_Stall_002.fbx",
       "source_sha256": "139464219e56f6ed170358d8f67e245165c01d694a37b4ff4d81267a33506a03",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_tavern_002.tres"
     },
     {
@@ -1738,12 +1775,12 @@
       "id": "sfm.stall.tavern.003",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 24934,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 24934.0,
         "measured_aabb": {
           "position": [
             -3.71616458892822,
-            -0.000000150787855091039,
+            -1.5078785509e-07,
             -2.42409110069275
           ],
           "size": [
@@ -1752,10 +1789,10 @@
             4.84818267822266
           ]
         },
-        "mesh_bytes": 2388708,
-        "surface_count": 2,
-        "visual_piece_count": 1,
-        "visual_triangles": 24934
+        "mesh_bytes": 2388708.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 24934.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1779,6 +1816,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Tavern Stall/Stall/SFM_Tavern_Stall_003.fbx",
       "source_sha256": "84329db431832edede9dc4277bb76407608e3a29099cd24e0129f68c2d4a7978",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_tavern_003.tres"
     },
     {
@@ -1786,12 +1824,12 @@
       "id": "sfm.stall.teal.008",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -2.66495013237,
-            -0.000000168546463896746,
+            -1.6854646389e-07,
             -1.75213181972504
           ],
           "size": [
@@ -1800,10 +1838,10 @@
             3.50426363945007
           ]
         },
-        "mesh_bytes": 275018,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3046
+        "mesh_bytes": 275018.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3046.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1824,6 +1862,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_008.fbx",
       "source_sha256": "d7d6db4b1adf1d6b8a2222b555fb16a3fab87ebf0417a09f6301445e44fce410",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_teal_008.tres"
     },
     {
@@ -1831,12 +1870,12 @@
       "id": "sfm.stall.variant.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -2.23680901527405,
-            -0.00000016837911687162,
+            -1.6837911687e-07,
             -1.59946775436401
           ],
           "size": [
@@ -1845,10 +1884,10 @@
             3.19893550872803
           ]
         },
-        "mesh_bytes": 338921,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3756
+        "mesh_bytes": 338921.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3756.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1869,6 +1908,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_001.fbx",
       "source_sha256": "9c0e41f4d97cbb1d416dd685622e2d0280fd5136b771b82400e49a2d2f163fa2",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_variant_001.tres"
     },
     {
@@ -1876,12 +1916,12 @@
       "id": "sfm.stall.variant.002",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -3.58997201919556,
-            -0.000000270341729446955,
+            -2.7034172944e-07,
             -3.09113478660583
           ],
           "size": [
@@ -1890,10 +1930,10 @@
             6.18226957321167
           ]
         },
-        "mesh_bytes": 347025,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3884
+        "mesh_bytes": 347025.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3884.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1914,6 +1954,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_002.fbx",
       "source_sha256": "6d5cacf26b0d57c1a93b1c315febc5bda0303c8a4fdff264a19a28a8c12833c7",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_variant_002.tres"
     },
     {
@@ -1921,12 +1962,12 @@
       "id": "sfm.stall.variant.003",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -3.58997201919556,
-            -0.000000270341729446955,
+            -2.7034172944e-07,
             -3.09113478660583
           ],
           "size": [
@@ -1935,10 +1976,10 @@
             6.18226957321167
           ]
         },
-        "mesh_bytes": 347025,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3884
+        "mesh_bytes": 347025.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3884.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -1959,6 +2000,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_003.fbx",
       "source_sha256": "ae00a5d3dac6f07b8052b5b97ec5cc9d48ef012baa1687d0c3f3d9d7a39641e9",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_variant_003.tres"
     },
     {
@@ -1966,12 +2008,12 @@
       "id": "sfm.stall.variant.004",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -3.58997201919556,
-            -0.000000270341729446955,
+            -2.7034172944e-07,
             -3.09113478660583
           ],
           "size": [
@@ -1980,10 +2022,10 @@
             6.18226957321167
           ]
         },
-        "mesh_bytes": 347025,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3884
+        "mesh_bytes": 347025.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3884.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2004,6 +2046,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_004.fbx",
       "source_sha256": "a5a1027736598253135a165ad7dedb5be3e07f5d468e8d36651d70205b07ba82",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_variant_004.tres"
     },
     {
@@ -2011,12 +2054,12 @@
       "id": "sfm.stall.variant.005",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -3.58997201919556,
-            -0.000000270341729446955,
+            -2.7034172944e-07,
             -3.09113478660583
           ],
           "size": [
@@ -2025,10 +2068,10 @@
             6.18226957321167
           ]
         },
-        "mesh_bytes": 347025,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3884
+        "mesh_bytes": 347025.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3884.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2049,6 +2092,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_005.fbx",
       "source_sha256": "29da526bed238c3eb89c243f6137ad2cc40be5e762848983b49d6ca4b459aeeb",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_variant_005.tres"
     },
     {
@@ -2056,12 +2100,12 @@
       "id": "sfm.stall.variant.010",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -3.22920513153076,
-            -0.0000000179489809681854,
+            -1.794898096e-08,
             -2.75052332878113
           ],
           "size": [
@@ -2070,10 +2114,10 @@
             7.1563720703125
           ]
         },
-        "mesh_bytes": 673541,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 7474
+        "mesh_bytes": 673541.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 7474.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2094,6 +2138,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_010.fbx",
       "source_sha256": "e0032a588cca63add8224c7a05963e3e8844eb1f457fe297f05196d61790327c",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_variant_010.tres"
     },
     {
@@ -2101,12 +2146,12 @@
       "id": "sfm.stall.variant.011",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -3.22920513153076,
-            -0.0000000179489809681854,
+            -1.794898096e-08,
             -2.75052332878113
           ],
           "size": [
@@ -2115,10 +2160,10 @@
             7.1563720703125
           ]
         },
-        "mesh_bytes": 673541,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 7474
+        "mesh_bytes": 673541.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 7474.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2139,6 +2184,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_011.fbx",
       "source_sha256": "0998c2a271392959d9e025c804bf5b03c0a7b1443ee77a81988bde1b9fd4e336",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_variant_011.tres"
     },
     {
@@ -2146,12 +2192,12 @@
       "id": "sfm.stall.variant.012",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -2.23680901527405,
-            -0.00000016837911687162,
+            -1.6837911687e-07,
             -1.59946775436401
           ],
           "size": [
@@ -2160,10 +2206,10 @@
             3.19893550872803
           ]
         },
-        "mesh_bytes": 338921,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3756
+        "mesh_bytes": 338921.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3756.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2184,6 +2230,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_012.fbx",
       "source_sha256": "ae708f82ee27102c4734917963af005a8d76ad399957fceeae4372e644cb9ac4",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_variant_012.tres"
     },
     {
@@ -2191,12 +2238,12 @@
       "id": "sfm.stall.variant.013",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -2.23680901527405,
-            -0.00000016837911687162,
+            -1.6837911687e-07,
             -1.59946775436401
           ],
           "size": [
@@ -2205,10 +2252,10 @@
             3.19893550872803
           ]
         },
-        "mesh_bytes": 338921,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3756
+        "mesh_bytes": 338921.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3756.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2229,6 +2276,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_013.fbx",
       "source_sha256": "12d2ab2a2128d4da38db0c98edf4aff241133cb06d0fc7fa8b13844f54e482f1",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_variant_013.tres"
     },
     {
@@ -2236,12 +2284,12 @@
       "id": "sfm.stall.variant.015",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -3.81243062019348,
-            -0.000000287830488332474,
+            -2.8783048833e-07,
             -2.98605823516846
           ],
           "size": [
@@ -2250,10 +2298,10 @@
             5.97211647033691
           ]
         },
-        "mesh_bytes": 417941,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 4634
+        "mesh_bytes": 417941.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 4634.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2274,6 +2322,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_015.fbx",
       "source_sha256": "e57cec52a886eae867f09f73d16ef4271f6123a180c4adf0e5111d79bb8650db",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_variant_015.tres"
     },
     {
@@ -2281,12 +2330,12 @@
       "id": "sfm.stall.variant.016",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -3.81243062019348,
-            -0.000000287830488332474,
+            -2.8783048833e-07,
             -2.98605823516846
           ],
           "size": [
@@ -2295,10 +2344,10 @@
             5.97211647033691
           ]
         },
-        "mesh_bytes": 417941,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 4634
+        "mesh_bytes": 417941.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 4634.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2319,6 +2368,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_016.fbx",
       "source_sha256": "0311f63c295b74307abb32aeda047670a61c2b07207e2d728b7da431ff4b2ebb",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_variant_016.tres"
     },
     {
@@ -2326,12 +2376,12 @@
       "id": "sfm.stall.variant.017",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -3.81243062019348,
-            -0.000000287830488332474,
+            -2.8783048833e-07,
             -2.98605823516846
           ],
           "size": [
@@ -2340,10 +2390,10 @@
             5.97211647033691
           ]
         },
-        "mesh_bytes": 417941,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 4634
+        "mesh_bytes": 417941.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 4634.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2364,6 +2414,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_017.fbx",
       "source_sha256": "c387f1b1917bc4ef315eb567686021b41f77fff701545b3c8e2a59a303b68ba9",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_variant_017.tres"
     },
     {
@@ -2371,12 +2422,12 @@
       "id": "sfm.stall.variant.018",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 7,
-        "collision_triangles": 0,
+        "collision_piece_count": 7.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -3.81243062019348,
-            -0.000000287830488332474,
+            -2.8783048833e-07,
             -2.98605823516846
           ],
           "size": [
@@ -2385,10 +2436,10 @@
             5.97211647033691
           ]
         },
-        "mesh_bytes": 417941,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 4634
+        "mesh_bytes": 417941.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 4634.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2409,6 +2460,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Stall Color Variations/SFM_Stall_018.fbx",
       "source_sha256": "99b3781b97f6ce1c1b865cd962935b087aac1b663b2add3fc30461ddd74cf487",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_variant_018.tres"
     },
     {
@@ -2416,8 +2468,8 @@
       "id": "sfm.stall.veg.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 47217,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 47217.0,
         "measured_aabb": {
           "position": [
             -3.9299840927124,
@@ -2430,10 +2482,10 @@
             4.31868457794189
           ]
         },
-        "mesh_bytes": 4521348,
-        "surface_count": 3,
-        "visual_piece_count": 1,
-        "visual_triangles": 47217
+        "mesh_bytes": 4521348.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 47217.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2457,6 +2509,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Fruits Stall/Stall/SFM_Veg_Stall_001.fbx",
       "source_sha256": "e5e62918673158e69f53a238d79064d87c90d5d321a30d9ea2b39e4ecfb5050a",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_veg_001.tres"
     },
     {
@@ -2464,8 +2517,8 @@
       "id": "sfm.stall.veg.002",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 62082,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 62082.0,
         "measured_aabb": {
           "position": [
             -3.9299840927124,
@@ -2478,10 +2531,10 @@
             4.31868410110474
           ]
         },
-        "mesh_bytes": 5948388,
-        "surface_count": 3,
-        "visual_piece_count": 1,
-        "visual_triangles": 62082
+        "mesh_bytes": 5948388.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 62082.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2505,6 +2558,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Fruits Stall/Stall/SFM_Veg_Stall_002.fbx",
       "source_sha256": "c3298b338a0e563e1d11b15f04b0bc7756117826b604f79e2824e85c64821887",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_veg_002.tres"
     },
     {
@@ -2512,8 +2566,8 @@
       "id": "sfm.stall.veg.003",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 9734,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 9734.0,
         "measured_aabb": {
           "position": [
             -3.9299840927124,
@@ -2526,10 +2580,10 @@
             3.74347972869873
           ]
         },
-        "mesh_bytes": 873196,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 9734
+        "mesh_bytes": 873196.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 9734.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2553,6 +2607,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Fruits Stall/Stall/SFM_Veg_Stall_003.fbx",
       "source_sha256": "1406d6d3e7e3a1c09546d4a5370379e29fb33d37708bbf47fe98a0652c4164a1",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_veg_003.tres"
     },
     {
@@ -2560,8 +2615,8 @@
       "id": "sfm.stall.veg.004",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 11974,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 11974.0,
         "measured_aabb": {
           "position": [
             -3.9299840927124,
@@ -2574,10 +2629,10 @@
             3.74347972869873
           ]
         },
-        "mesh_bytes": 1073054,
-        "surface_count": 2,
-        "visual_piece_count": 1,
-        "visual_triangles": 11974
+        "mesh_bytes": 1073054.0,
+        "surface_count": 2.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 11974.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2601,6 +2656,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Fruits Stall/Stall/SFM_Veg_Stall_004.fbx",
       "source_sha256": "3f093ed0bcf98993ea5ce36c2e38e0a0b3310b926be494e78a47157af0dec266",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_veg_004.tres"
     },
     {
@@ -2608,12 +2664,12 @@
       "id": "sfm.stall.veg_stand.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -1.1292622089386,
-            -0.000000075326319404212,
+            -7.53263194e-08,
             -1.19810461997986
           ],
           "size": [
@@ -2622,10 +2678,10 @@
             1.81740546226501
           ]
         },
-        "mesh_bytes": 108786,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1224
+        "mesh_bytes": 108786.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1224.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2646,6 +2702,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Fruits Stall/Stall/SFM_Veg_Stall_Stand_001.fbx",
       "source_sha256": "7171ed8eae3b51a1041f62a2437bce80ee1927a3633d86e4e07e77ac21b324c0",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_veg_stand_001.tres"
     },
     {
@@ -2653,8 +2710,8 @@
       "id": "sfm.stall.veg_string.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -1.66710948944092,
@@ -2667,10 +2724,10 @@
             0.109240345656872
           ]
         },
-        "mesh_bytes": 16651,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 176
+        "mesh_bytes": 16651.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 176.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2691,6 +2748,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Fruits Stall/Stall/SFM_Veg_Stall_String_001.fbx",
       "source_sha256": "4bcda1ad11f5d1983bfa03be386bc04d042ac828663ec8a09460f4693a8baa7a",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_veg_string_001.tres"
     },
     {
@@ -2698,8 +2756,8 @@
       "id": "sfm.stall.veg_wheel.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.665343105792999,
@@ -2712,10 +2770,10 @@
             0.28394740819931
           ]
         },
-        "mesh_bytes": 79470,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 874
+        "mesh_bytes": 79470.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 874.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2736,6 +2794,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Fruits Stall/Stall/SFM_Veg_Stall_Wheel_001.fbx",
       "source_sha256": "de6e8fcbc75856375a9acf2ccb7db69ae01414040630295a315518fd9c384d5d",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_stall_veg_wheel_001.tres"
     },
     {
@@ -2743,12 +2802,12 @@
       "id": "sfm.table.fishmonger.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 5,
-        "collision_triangles": 0,
+        "collision_piece_count": 5.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.980451166629791,
-            -0.0000000388143703844435,
+            -3.881437038e-08,
             -0.809082329273224
           ],
           "size": [
@@ -2757,10 +2816,10 @@
             1.40580189228058
           ]
         },
-        "mesh_bytes": 902071,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 7908
+        "mesh_bytes": 902071.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 7908.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2782,6 +2841,7 @@
       },
       "source": "res://assets/FantasyMarketFBX/FBX/Fishmonger Stall/Table/SFM_Table_001.fbx",
       "source_sha256": "a22b134f40e8c0c0511437a6addd2048f726d317360e624923076a618c819681",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfm_table_fishmonger_001.tres"
     },
     {
@@ -2789,8 +2849,8 @@
       "id": "sft.building.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 58860,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 58860.0,
         "measured_aabb": {
           "position": [
             -23.5988483428955,
@@ -2803,10 +2863,10 @@
             34.7091102600098
           ]
         },
-        "mesh_bytes": 5307949,
-        "surface_count": 3,
-        "visual_piece_count": 1,
-        "visual_triangles": 58860
+        "mesh_bytes": 5307949.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 58860.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2838,6 +2898,7 @@
       },
       "source": "res://assets/TavernandKitchenFBX/FBX/Building/SFT_Building_001.fbx",
       "source_sha256": "ca120b746ea9724add44e57514917989f7d9fc7464886240fd96f04d68bdc23f",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sft_building_001.tres"
     },
     {
@@ -2845,8 +2906,8 @@
       "id": "sfv.building.interior.blue.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 4,
-        "collision_triangles": 33532,
+        "collision_piece_count": 4.0,
+        "collision_triangles": 34674.0,
         "measured_aabb": {
           "position": [
             -5.68895721435547,
@@ -2859,10 +2920,10 @@
             16.2636566162109
           ]
         },
-        "mesh_bytes": 3076187,
-        "surface_count": 3,
-        "visual_piece_count": 1,
-        "visual_triangles": 34432
+        "mesh_bytes": 3185819.0,
+        "surface_count": 3.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 35574.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -2875,9 +2936,6 @@
           "SFV_Building_Interior_Blue_001/SFV_Building_Interior_Blue_001_001/SFV_Building_Interior_Blue_001_001_001/SFV_Building_Interior_Blue_001_001_001_050",
           "SFV_Building_Interior_Blue_001/SFV_Building_Interior_Blue_001_001/SFV_Building_Interior_Blue_001_001_001/SFV_Building_Interior_Blue_001_001_001_112"
         ],
-        "exclude_mesh_paths": [
-          "SFV_Building_Interior_Blue_001/SFV_Building_Interior_Blue_001_001/SFV_Building_Interior_Blue_001_001_001/SFV_Building_Interior_Blue_001_001_001_002/SFV_Building_Interior_Blue_001_001_001_002_001"
-        ],
         "id": "sfv.building.interior.blue.001",
         "max_collision_pieces": 4.0,
         "max_collision_triangles": 40000.0,
@@ -2885,6 +2943,17 @@
         "max_surfaces": 4.0,
         "max_visual_triangles": 40000.0,
         "merge_pieces": true,
+        "mesh_poses": [
+          {
+            "path": "SFV_Building_Interior_Blue_001/SFV_Building_Interior_Blue_001_001/SFV_Building_Interior_Blue_001_001_001/SFV_Building_Interior_Blue_001_001_001_002/SFV_Building_Interior_Blue_001_001_001_002_001",
+            "pivot": [
+              0.749022424221039,
+              0.519000172615051,
+              5.98281002044678
+            ],
+            "yaw_degrees": 100.0
+          }
+        ],
         "source": "res://assets/FantasyVillageFBX/FBX/Buildings/Buildings/SFV_Building_Interior_Blue_001.fbx",
         "supports_instance_color": true,
         "tags": [
@@ -2895,6 +2964,7 @@
       },
       "source": "res://assets/FantasyVillageFBX/FBX/Buildings/Buildings/SFV_Building_Interior_Blue_001.fbx",
       "source_sha256": "df7eb0e5fab1ae8519e2ea7749aeaf1aee0d0e7af180168af10a6dae566a0907",
+      "tool_version": 30.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfv_building_interior_blue_001.tres"
     },
     {
@@ -3067,8 +3137,8 @@
       "id": "sfv.building.interior.orange.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 4,
-        "collision_triangles": 33544,
+        "collision_piece_count": 4.0,
+        "collision_triangles": 34686.0,
         "measured_aabb": {
           "position": [
             -5.68895721435547,
@@ -3081,10 +3151,10 @@
             16.2636566162109
           ]
         },
-        "mesh_bytes": 2871262,
-        "surface_count": 4,
-        "visual_piece_count": 1,
-        "visual_triangles": 34444
+        "mesh_bytes": 2974042.0,
+        "surface_count": 4.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 35586.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -3097,9 +3167,6 @@
           "SFV_Building_Interior_Orange_001/SFV_Building_Interior_Orange_001_001/SFV_Building_Interior_Orange_007_001/SFV_Building_Interior_Orange_007_001_050",
           "SFV_Building_Interior_Orange_001/SFV_Building_Interior_Orange_001_001/SFV_Building_Interior_Orange_007_001/SFV_Building_Interior_Orange_007_001_112"
         ],
-        "exclude_mesh_paths": [
-          "SFV_Building_Interior_Orange_001/SFV_Building_Interior_Orange_001_001/SFV_Building_Interior_Orange_007_001/SFV_Building_Interior_Orange_007_001_002/SFV_Building_Interior_Orange_007_001_002_001"
-        ],
         "fallback_albedo_textures": {
           "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
         },
@@ -3110,6 +3177,17 @@
         "max_surfaces": 5.0,
         "max_visual_triangles": 40000.0,
         "merge_pieces": true,
+        "mesh_poses": [
+          {
+            "path": "SFV_Building_Interior_Orange_001/SFV_Building_Interior_Orange_001_001/SFV_Building_Interior_Orange_007_001/SFV_Building_Interior_Orange_007_001_002/SFV_Building_Interior_Orange_007_001_002_001",
+            "pivot": [
+              0.749022424221039,
+              0.522999942302704,
+              5.98280811309814
+            ],
+            "yaw_degrees": 100.0
+          }
+        ],
         "source": "res://assets/FantasyVillageFBX/FBX/Buildings/Buildings/SFV_Building_Interior_Orange_001.fbx",
         "supports_instance_color": true,
         "tags": [
@@ -3120,6 +3198,7 @@
       },
       "source": "res://assets/FantasyVillageFBX/FBX/Buildings/Buildings/SFV_Building_Interior_Orange_001.fbx",
       "source_sha256": "c8dae8614c7a51546624432dfd7e2b9e014d3bb7bd772af8e3ffd5623c70a7d2",
+      "tool_version": 30.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfv_building_interior_orange_001.tres"
     },
     {
@@ -3301,12 +3380,12 @@
       "id": "sfv.deck.floor.s.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 0,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -1.50324630737305,
-            -0.000000113491935849197,
+            -1.1349193584e-07,
             -0.75
           ],
           "size": [
@@ -3315,10 +3394,10 @@
             1.5
           ]
         },
-        "mesh_bytes": 11295,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 124
+        "mesh_bytes": 11295.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 124.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -3342,6 +3421,7 @@
       },
       "source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Floor/SFV_Floor_S_001.fbx",
       "source_sha256": "91e50d090dc425bc27fee47eceffd24804a8aa4ef73409c082700f76177a3e2c",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfv_deck_floor_s_001.tres"
     },
     {
@@ -3349,12 +3429,12 @@
       "id": "sfv.deck.pillar.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 0,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.140682935714722,
-            -0.000000010621247881204,
+            -1.062124788e-08,
             -0.295427113771439
           ],
           "size": [
@@ -3363,10 +3443,10 @@
             0.590854227542877
           ]
         },
-        "mesh_bytes": 5374,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 52
+        "mesh_bytes": 5374.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 52.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -3389,6 +3469,7 @@
       },
       "source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx",
       "source_sha256": "f32518267bda705a4e028e4f4e7b3a338d31f7037f5062f8a59899625c8c7df3",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfv_deck_pillar_001.tres"
     },
     {
@@ -3396,12 +3477,12 @@
       "id": "sfv.deck.railing.m.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 4,
-        "collision_triangles": 0,
+        "collision_piece_count": 4.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -1.49999988079071,
-            -0.0000000824894357265293,
+            -8.248943572e-08,
             -0.0673595070838928
           ],
           "size": [
@@ -3410,10 +3491,10 @@
             0.134718924760818
           ]
         },
-        "mesh_bytes": 31409,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 340
+        "mesh_bytes": 31409.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 340.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -3441,6 +3522,7 @@
       },
       "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Fence/SFV_Fence_001.fbx",
       "source_sha256": "19a9a007c834e1aa8156a2df1f95fc4f1a8a3a73e0f6da0df2927e31cf1fba3e",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfv_deck_railing_m_001.tres"
     },
     {
@@ -3448,12 +3530,12 @@
       "id": "sfv.deck.railing.s.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 4,
-        "collision_triangles": 0,
+        "collision_piece_count": 4.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.749999940395355,
-            -0.0000000824894357265293,
+            -8.248943572e-08,
             -0.0673595070838928
           ],
           "size": [
@@ -3462,10 +3544,10 @@
             0.134718924760818
           ]
         },
-        "mesh_bytes": 31409,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 340
+        "mesh_bytes": 31409.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 340.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -3493,6 +3575,7 @@
       },
       "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Fence/SFV_Fence_001.fbx",
       "source_sha256": "19a9a007c834e1aa8156a2df1f95fc4f1a8a3a73e0f6da0df2927e31cf1fba3e",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfv_deck_railing_s_001.tres"
     },
     {
@@ -3500,12 +3583,12 @@
       "id": "sfv.fence.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 4,
-        "collision_triangles": 0,
+        "collision_piece_count": 4.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -1.10919010639191,
-            -0.0000000824894357265293,
+            -8.248943572e-08,
             -0.0673595070838928
           ],
           "size": [
@@ -3514,10 +3597,10 @@
             0.134718924760818
           ]
         },
-        "mesh_bytes": 31400,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 340
+        "mesh_bytes": 31400.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 340.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -3540,6 +3623,7 @@
       },
       "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Fence/SFV_Fence_001.fbx",
       "source_sha256": "19a9a007c834e1aa8156a2df1f95fc4f1a8a3a73e0f6da0df2927e31cf1fba3e",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfv_fence_001.tres"
     },
     {
@@ -3547,12 +3631,12 @@
       "id": "sfv.foundation.rock.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 0,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.881077587604523,
-            0.0000000348834703345346,
+            3.488347033e-08,
             -0.331943690776825
           ],
           "size": [
@@ -3561,10 +3645,10 @@
             0.663887143135071
           ]
         },
-        "mesh_bytes": 52538,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 576
+        "mesh_bytes": 52538.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 576.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -3588,6 +3672,7 @@
       },
       "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Walls/SFV_Wall_Rock_001.fbx",
       "source_sha256": "8c72e304e739e844cb6c269ddc630e217b7b0fa2bbf5e907bf8c35f37aca261c",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfv_foundation_rock_001.tres"
     },
     {
@@ -3595,12 +3680,12 @@
       "id": "sfv.quest_board.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 4,
-        "collision_triangles": 0,
+        "collision_piece_count": 4.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -1.11020922660828,
-            0.0000000635470129850546,
+            6.354701298e-08,
             -0.257579356431961
           ],
           "size": [
@@ -3609,10 +3694,10 @@
             0.515158653259277
           ]
         },
-        "mesh_bytes": 126626,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1398
+        "mesh_bytes": 126626.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1398.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -3634,6 +3719,7 @@
       },
       "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Quest Board/SFV_Quest_Board_001.fbx",
       "source_sha256": "92504b105a32f1bfc46cb4dcfa6382bb53e9901c88f286f692d955de8377bdf8",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfv_quest_board_001.tres"
     },
     {
@@ -3641,12 +3727,12 @@
       "id": "sfv.stair.s.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 0,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
-            0.000000174659419371892,
-            0.000000000000027000152669752,
+            1.7465941937e-07,
+            2.7e-14,
             -1.50394523143768
           ],
           "size": [
@@ -3655,10 +3741,10 @@
             1.50394988059998
           ]
         },
-        "mesh_bytes": 26978,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 312
+        "mesh_bytes": 26978.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 312.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -3685,6 +3771,7 @@
       },
       "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stair_S_001.fbx",
       "source_sha256": "c972b8217a77b7ee7309d9e84e71568bc135d282f220883886e0322d1310a434",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfv_stair_s_001.tres"
     },
     {
@@ -3692,12 +3779,12 @@
       "id": "sfv.well.001",
       "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
       "metrics": {
-        "collision_piece_count": 12,
-        "collision_triangles": 0,
+        "collision_piece_count": 12.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -2.15839076042175,
-            -0.00000011572358715739,
+            -1.1572358715e-07,
             -1.65177547931671
           ],
           "size": [
@@ -3706,10 +3793,10 @@
             3.30355072021484
           ]
         },
-        "mesh_bytes": 528355,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 5914
+        "mesh_bytes": 528355.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 5914.0
       },
       "pack": "fantasy_village_structures",
       "parameters": {
@@ -3731,10 +3818,11 @@
       },
       "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Water Well/SFV_Well_001.fbx",
       "source_sha256": "5fc551cf237e4c79e8b178b019f8535a097666721e173844820cc9c94c3043a6",
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/fantasy_village_structures/sfv_well_001.tres"
     }
   ],
   "license": "Fantasy Village, Tavern and Kitchen, Forge, Alchemy Workshop, and Battle Pack source-pack licenses",
   "pack": "fantasy_village_structures",
-  "tool_version": 22
+  "tool_version": 30
 }

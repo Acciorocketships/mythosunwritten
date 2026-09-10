@@ -3,14 +3,16 @@ extends SceneTree
 
 ## Deterministic editor-side importer for source-pack visuals. Runtime code is
 ## intentionally unaware of every source path named by the manifests.
-const TOOL_VERSION := 23
+const TOOL_VERSION := 31
 const DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
 const INDEX_PATH := "res://terrain/environment/catalog/index.tres"
 const MANIFEST_DIR := "res://tools/environment_bake/manifests"
 const RIGID_NATURE_TAGS: Array[String] = ["tree", "rock", "deadwood"]
 
 var _texture_cache: Dictionary = {}
+var _canopy_assets: Dictionary = {}
 var _failed := false
+var _provenance_by_pack: Dictionary = {}
 
 func _init() -> void:
 	call_deferred("_run")
@@ -72,7 +74,14 @@ func _bake_manifest(path: String) -> void:
 		return
 	entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.get("id", "")) < String(b.get("id", "")))
-	var provenance: Array = []
+	var provenance_path := "res://tools/environment_bake/provenance/%s.json" % _slug(pack)
+	var provenance: Array = _provenance_by_pack.get(pack, [])
+	if not _provenance_by_pack.has(pack) and OS.get_cmdline_user_args().has("--keep-existing") \
+			and FileAccess.file_exists(provenance_path):
+		var previous: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(provenance_path))
+		provenance = previous.get("assets", [])
+		for record: Dictionary in provenance:
+			if not record.has("tool_version"): record["tool_version"] = previous.get("tool_version", 0)
 	for value in entries:
 		if not value is Dictionary:
 			_fail("Manifest %s contains a non-dictionary asset" % path)
@@ -81,8 +90,11 @@ func _bake_manifest(path: String) -> void:
 		var record := _bake_asset(pack, license_label, entry, default_scale)
 		if _failed:
 			return
+		record["tool_version"] = TOOL_VERSION
+		provenance = provenance.filter(func(old: Dictionary) -> bool: return old.id != record.id)
 		provenance.append(record)
-	var provenance_path := "res://tools/environment_bake/provenance/%s.json" % _slug(pack)
+	provenance.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return String(a.id) < String(b.id))
+	_provenance_by_pack[pack] = provenance
 	var file := FileAccess.open(provenance_path, FileAccess.WRITE)
 	if file == null:
 		_fail("Cannot write provenance: %s" % provenance_path)
@@ -178,6 +190,8 @@ func _expanded_manifest_entries(manifest: Dictionary, path: String) -> Array:
 func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		default_scale: Variant) -> Dictionary:
 	var asset_id := String(entry.get("id", ""))
+	var omitted_face_bounds := AABB()
+	var omitted_face_surfaces: Array[Dictionary] = []
 	var source_path := String(entry.get("source", ""))
 	if asset_id.is_empty() or not source_path.begins_with("res://"):
 		_fail("Bake entry requires a stable id and res:// source path")
@@ -208,6 +222,7 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 	var pivot := _vector3(entry.get("pivot", [0.0, 0.0, 0.0]), Vector3.ZERO)
 	var correction := Transform3D(Basis.IDENTITY.scaled(scale), -pivot)
 	var supports_color := bool(entry.get("supports_instance_color", false))
+	_canopy_assets[asset_id] = bool(entry.get("biome_canopy", false))
 	var material_tint := _color(entry.get("material_tint", [1.0, 1.0, 1.0, 1.0]))
 	var fallback_albedo: Texture2D = null
 	var fallback_albedo_path := String(entry.get("fallback_albedo_texture", ""))
@@ -300,6 +315,12 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		_fail("Asset %s cannot combine merge_pieces with ribbon simplifiers" % asset_id)
 		root.free()
 		return {}
+	if entry.has("mesh_poses"):
+		var poses: Variant = entry.mesh_poses
+		if not poses is Array or not EnvironmentBakeGeometry.pose_meshes(visual_root,poses):
+			_fail("Invalid authored mesh poses: %s" % asset_id)
+			root.free()
+			return {}
 	var stack: Array[Node] = [visual_root]
 	var piece_index := 0
 	var collision_mesh_override: ArrayMesh = null
@@ -315,24 +336,120 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 			_fail("Could not merge structural visual pieces: %s" % asset_id)
 			root.free()
 			return {}
+		if entry.has("facade_side_source"):
+			var side_scene := load(String(entry.facade_side_source)) as PackedScene
+			if side_scene == null:
+				_fail("Cannot load facade end stock: %s" % asset_id)
+				root.free()
+				return {}
+			var side_root := side_scene.instantiate()
+			var side_mesh := EnvironmentBakeGeometry.merge_pieces(side_root, correction)
+			side_root.free()
+			merged = EnvironmentBakeGeometry.finish_facade_sides(merged, side_mesh,
+				float(entry.facade_side_thickness))
 		merged = _clip_merged_asset(merged, entry, asset_id)
 		if merged == null:
 			root.free()
 			return {}
+		if entry.has("fit_visual_bounds"):
+			var declared: Array = entry.fit_visual_bounds
+			if declared.size() != 6:
+				_fail("fit_visual_bounds requires six coordinates: %s" % asset_id)
+				root.free()
+				return {}
+			var target := AABB(Vector3(declared[0], declared[1], declared[2]),
+				Vector3(declared[3], declared[4], declared[5]))
+			var measured := merged.get_aabb()
+			if not target.position.is_finite() or not target.size.is_finite() \
+					or not target.has_volume() or not measured.has_volume():
+				_fail("fit_visual_bounds requires finite solid stock: %s" % asset_id)
+				root.free()
+				return {}
+			# Cropping decorative stock retains its declared joining envelope.
+			var fit_scale := target.size / measured.size
+			merged = EnvironmentBakeGeometry.transform_mesh(merged,
+				Transform3D(Basis.from_scale(fit_scale),
+					target.position - measured.position * fit_scale))
 		merged = _mirror_merged_asset(merged, mirror_axis_name, asset_id)
 		if merged == null:
 			root.free()
 			return {}
+		if bool(entry.get("facade_return_fit_panel", false)) and entry.has("facade_return_depths"):
+			var depths: Array = entry.facade_return_depths
+			if depths.size() != 2 or float(depths[0]) < 0.0 or float(depths[1]) < 0.0 \
+					or not is_finite(float(depths[0]) + float(depths[1])) \
+					or float(depths[0]) + float(depths[1]) >= 3.0:
+				_fail("Invalid fitted facade return depths: %s" % asset_id)
+				root.free()
+				return {}
+			# This authored window occupies the complete panel. Fit its aperture,
+			# leadwork and frame together before constructing either end joint.
+			# Y, relief depth, native UVs and the reserved return plane stay fixed.
+			var span := 3.0 - float(depths[0]) - float(depths[1])
+			merged = EnvironmentBakeGeometry.transform_mesh(merged,
+				Transform3D(Basis.from_scale(Vector3(span / 3.0, 1.0, 1.0)),
+					Vector3((float(depths[0]) - float(depths[1])) * 0.5, 0.0, 0.0)))
 		var miter_mask := int(entry.get("facade_miter_ends", 0))
 		if miter_mask != 0:
-			var front := merged.get_aabb().end.z
+			var front := float(entry.get("facade_join_front", merged.get_aabb().end.z))
+			var half_width := float(entry.get("facade_join_half_width", 1.5))
+			var cap_material: Material = null
+			var cap_uv := Vector2.ZERO
+			if entry.has("facade_miter_cap_source"):
+				var cap_root := (load(String(entry.facade_miter_cap_source)) as PackedScene).instantiate()
+				var stock := EnvironmentBakeGeometry.merge_pieces(cap_root, correction)
+				cap_root.free()
+				cap_material = stock.surface_get_material(0).duplicate(true)
+				(cap_material as BaseMaterial3D).cull_mode = BaseMaterial3D.CULL_BACK
+				cap_uv = (stock.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV] as PackedVector2Array)[0]
 			for end in 2:
 				if miter_mask & (1 << end):
-					merged = EnvironmentBakeGeometry.clip_half_space(merged,
-						Plane(Vector3(-1.0 if end == 0 else 1.0, 0.0, -1.0),
-							1.5 - front))
+					var plane := Plane(Vector3(-1.0 if end == 0 else 1.0, 0.0, -1.0), half_width - front)
+					merged = EnvironmentBakeGeometry.clip_half_space(merged, plane) if cap_material == null \
+						else EnvironmentBakeGeometry.closed_facade_miter(merged, plane, cap_material, cap_uv)
 			if merged == null:
 				_fail("Could not miter facade %s" % asset_id)
+				root.free()
+				return {}
+		var end_owner_mask := int(entry.get("facade_end_owner_mask", 0))
+		for end in 2:
+			if end_owner_mask & (1 << end):
+				# A shallow jetty's solid corner stock owns the matching end face.
+				# Keep the panel's front, relief and bounds; omit only the shared cap.
+				merged = EnvironmentBakeGeometry.omit_coplanar_faces(merged,
+					Plane(Vector3.RIGHT, -0.75 if end == 0 else 0.75), 0.002)
+		if entry.has("facade_return_depths"):
+			var depths: Array = entry.facade_return_depths
+			if depths.size() != 2 or float(depths[0]) < 0.0 or float(depths[1]) < 0.0 \
+					or float(depths[0]) + float(depths[1]) >= 3.0:
+				_fail("Invalid measured facade return depths: %s" % asset_id)
+				root.free()
+				return {}
+			var minimum := -1.5 + float(depths[0]) if float(depths[0]) > 0.0 \
+				else merged.get_aabb().position.x - 1.0
+			var maximum := 1.5 - float(depths[1]) if float(depths[1]) > 0.0 \
+				else merged.get_aabb().end.x + 1.0
+			merged = EnvironmentBakeGeometry.clip_axis_range(merged,Vector3.AXIS_X,minimum,maximum)
+			if merged == null:
+				_fail("Could not construct facade return: %s" % asset_id)
+				root.free()
+				return {}
+		if entry.has("omit_coplanar_y"):
+			var tolerance := float(entry.get("omit_coplanar_tolerance",0.00001))
+			if not is_finite(tolerance) or tolerance<=0.0 or tolerance>0.001:
+				_fail("Invalid authored wall interface tolerance: %s" % asset_id)
+				root.free()
+				return {}
+			omitted_face_surfaces = EnvironmentBakeGeometry.coplanar_face_surfaces(merged,
+				Plane(Vector3.UP, float(entry.omit_coplanar_y)),tolerance)
+			for surface: Dictionary in omitted_face_surfaces:
+				surface["material_piece"] = piece_index
+			omitted_face_bounds = EnvironmentBakeGeometry.coplanar_face_bounds(merged,
+				Plane(Vector3.UP, float(entry.omit_coplanar_y)),tolerance)
+			merged = EnvironmentBakeGeometry.omit_coplanar_faces(merged,
+				Plane(Vector3.UP, float(entry.omit_coplanar_y)),tolerance)
+			if merged == null:
+				_fail("Could not omit the owned horizontal interface: %s" % asset_id)
 				root.free()
 				return {}
 		var baked_mesh := _bake_mesh(merged, pack, asset_id, piece_index,
@@ -452,6 +569,8 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		descriptor.tags.append(StringName(String(tag_value)))
 	descriptor.tags.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 	descriptor.measured_aabb = bounds
+	descriptor.omitted_face_bounds = omitted_face_bounds
+	descriptor.omitted_face_surfaces = omitted_face_surfaces
 	if bool(entry.get("derive_ground_contacts", false)):
 		var contact_band := float(entry.get("ground_contact_band", 0.35))
 		var contact_pitch := float(entry.get("ground_contact_pitch", 0.75))
@@ -2013,6 +2132,16 @@ func _bake_material(source: Material, pack: String, asset_id: String, piece_inde
 		variant.set_shader_parameter("albedo_texture", standard.albedo_texture)
 		variant.set_shader_parameter("green_target", Color.from_hsv(green_hue, 0.72, 1.0))
 		material = variant
+	if _canopy_assets.get(asset_id, false):
+		var standard := material as StandardMaterial3D
+		if standard == null or standard.albedo_texture == null or not supports_color:
+			_fail("Biome canopy requires a textured, instance-coloured material: %s" % asset_id)
+			return null
+		var canopy := ShaderMaterial.new()
+		canopy.shader = load("res://terrain/environment/materials/biome_canopy.gdshader")
+		canopy.set_shader_parameter("albedo_texture", standard.albedo_texture)
+		canopy.set_shader_parameter("base_color", standard.albedo_color)
+		material = canopy
 	var material_path := "res://terrain/environment/materials/%s/%s_piece_%02d_surface_%02d.tres" % [
 		_slug(pack), _slug(asset_id), piece_index, surface_index]
 	_ensure_parent(material_path)

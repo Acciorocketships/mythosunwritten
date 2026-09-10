@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3 uid="uid://cr0wtnt7rj1vn"]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
 
-[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_sksum"]
-[ext_resource type="Shape3D" uid="uid://46lwvk3mmnvl" path="res://terrain/environment/collisions/fantasy_village_fabric/sfv_fabric_chimney_005_piece_00.res" id="2_q7m66"]
-[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_4a48p"]
-[ext_resource type="ArrayMesh" uid="uid://bk3g767hiredt" path="res://terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_chimney_005_piece_00.res" id="4_pqi57"]
-[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_vvrlo"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_sksum"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_fabric/sfv_fabric_chimney_005_piece_00.res" id="2_q7m66"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_4a48p"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_chimney_005_piece_00.res" id="4_pqi57"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_vvrlo"]
 
 [sub_resource type="Resource" id="Resource_iy6me"]
 script = ExtResource("1_sksum")

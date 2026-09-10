@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_4a7vk"]
+
+[resource]
+script = ExtResource("1_4a7vk")
+id = &"sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.back1070859.back1070858"
+visual_path = "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_wood_window_058_mirror_x_doorreturn_back1070859_back1070858.tres"
+tags = Array[StringName]([&"building", &"fabric_wall", &"village"])
+measured_aabb = AABB(-0.42914104, -1.8758351e-08, -0.30675882, 0.85828304, 3, 0.76548874)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_fabric:sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.back1070859.back1070858"

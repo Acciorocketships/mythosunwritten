@@ -12,7 +12,8 @@ extends RefCounted
 ## Every massif-relative invariant -- that the removed slot stayed inside the
 ## solid, that a cover flag is backed by mass actually left overhead, that a
 ## walk cell is flanked -- is therefore the carver's to enforce and the
-## tests' to re-derive independently; seal() can only validate the walk.
+## tests' to re-derive independently. Construction freezes the authored walk;
+## validate_construction() inspects it without withdrawing or repairing it.
 const HEADROOM_BANDS := 3
 
 var world_seed: int
@@ -52,6 +53,9 @@ var bridge_spans: Array[Array] = []
 ## ._select_bridge_spans`; another producer leaves it empty.
 var bridge_span_audit: Dictionary = {}
 var carved: Dictionary = {}
+## Housing beside an authored street is reserved before later streets grow.
+## These cells define the remaining construction domain, not an audit result.
+var frontage_reservations: Dictionary = {}
 var covered: Dictionary = {}
 var transitions: Array[Dictionary] = []
 var portals: Array[Vector3i] = []
@@ -64,10 +68,20 @@ func _init(p_world_seed: int) -> void:
 
 
 func seal() -> bool:
-	## Mirrors WarrenMassif.seal(): "sealed" names an invariant that was
-	## actually checked, not a convention. A walk that teleports, folds back
-	## onto a cell it already occupies, or claims headroom it never removed
-	## must fail here rather than reach a consumer as a plausible street.
+	## Checked fixture/import adapter. The procedural carver uses the explicit
+	## finish operation and the source corpus runs this inspection separately.
+	if not validate_construction():
+		return false
+	finish_construction()
+	return true
+
+
+func finish_construction() -> void:
+	_sealed = true
+
+
+func validate_construction() -> bool:
+	last_rejection = ""
 	if route.size() < 2:
 		last_rejection = "a route of %d cells is not a walk" % route.size()
 		return false
@@ -109,7 +123,6 @@ func seal() -> bool:
 		return false
 	if not _bridge_spans_are_legal(seen):
 		return false
-	_sealed = true
 	return true
 
 

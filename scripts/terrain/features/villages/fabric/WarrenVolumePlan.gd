@@ -79,6 +79,8 @@ var courtyard_cells: Array[Vector3i] = []
 ## One explicitly authored ground-level 2x2 market square. Generic route
 ## growth remains narrow; only a source-stamped square receives this exception.
 var market_square_cells: Array[Vector3i] = []
+## One explicitly reserved square terrace at a terminal flight.
+var terminal_lookout_cells: Array[Vector3i] = []
 var public_air_cells: Array[Vector3i] = []
 var daylight_void_cells: Array[Vector3i] = []
 var landing_cells: Array[Vector3i] = []
@@ -120,6 +122,7 @@ var _void_set: Dictionary = {}
 var _landing_set: Dictionary = {}
 var _courtyard_set: Dictionary = {}
 var _market_square_set: Dictionary = {}
+var _terminal_lookout_set: Dictionary = {}
 ## Cached fine-lattice floor ownership for public addresses.  A walk endpoint
 ## owns its complete 2x2 square; a stair/ramp intermediate owns only the exact
 ## two-lane treads from WarrenVolumeTransition.surface_cells().  Keeping this
@@ -193,6 +196,14 @@ func mark_market_square_cell(cell: Vector3i) -> bool:
 	return add_landing(cell)
 
 
+func mark_terminal_lookout_cell(cell: Vector3i) -> bool:
+	if _sealed or not _walk_set.has(cell): return false
+	if not _terminal_lookout_set.has(cell):
+		_terminal_lookout_set[cell] = true
+		terminal_lookout_cells.append(cell)
+	return add_landing(cell)
+
+
 func add_public_air(cell: Vector3i) -> void:
 	assert(not _sealed)
 	if not _air_set.has(cell):
@@ -227,12 +238,46 @@ func add_transition(value: WarrenVolumeTransition) -> bool:
 
 
 func seal(p_entry_cell: Vector3i) -> bool:
-	last_rejection = ""
-	if _sealed or stable_id.is_empty() or envelope == null \
-			or not envelope.is_sealed() or walk_cells.size() < 2 \
-			or transitions.size() < 1 or p_entry_cell != primary_itinerary[0]:
-		return _reject("missing envelope, entry, walk, or transitions")
+	## Checked fixture/legacy adapter. Procedural projection derives the same
+	## data through finish_construction; corpus tests inspect the result.
+	if _sealed:
+		return _reject("volume is already sealed")
+	_derive_construction(p_entry_cell)
+	if not validate_construction():
+		return false
+	_sealed = true
+	return true
+
+
+func finish_construction(p_entry_cell: Vector3i,
+		collect_diagnostics: bool = false) -> void:
+	_derive_construction(p_entry_cell)
+	if collect_diagnostics:
+		collect_construction_diagnostics()
+	_sealed = true
+
+
+func _derive_construction(p_entry_cell: Vector3i) -> void:
 	entry_cell = p_entry_cell
+	_exact_route_surface_set = _exact_route_surface_cells()
+	mass_cells = envelope.mass_cells.duplicate() if envelope != null else {}
+	for cell: Vector3i in public_air_cells:
+		mass_cells.erase(cell)
+	for cell: Vector3i in daylight_void_cells:
+		mass_cells.erase(cell)
+
+
+func collect_construction_diagnostics() -> void:
+	audit.merge(_build_audit(), true)
+
+
+func validate_construction() -> bool:
+	last_rejection = ""
+	if stable_id.is_empty() or envelope == null \
+			or not envelope.is_sealed() or walk_cells.size() < 2 \
+			or transitions.size() < 1 or primary_itinerary.is_empty() \
+			or entry_cell != primary_itinerary[0]:
+		return _reject("missing envelope, entry, walk, or transitions")
 	for cell: Vector3i in walk_cells:
 		if not envelope.contains_air_column(cell, HEADROOM_BANDS):
 			return _reject("walk cell leaves the envelope at %s" % cell)
@@ -248,29 +293,25 @@ func seal(p_entry_cell: Vector3i) -> bool:
 	for cell: Vector3i in daylight_void_cells:
 		if _walk_set.has(cell) or _air_set.has(cell):
 			return _reject("daylight void overlaps walk or public air at %s" % cell)
+	if not terminal_lookout_cells.is_empty() and not _has_one_terminal_lookout():
+		return _reject("terminal lookout is not a broad connected 2x2 footprint")
 	if not courtyard_cells.is_empty() and not _has_one_typed_courtyard():
 		return _reject("typed courtyard is not one 2x2 elevated square")
 	if not market_square_cells.is_empty() and not _has_one_typed_market_square():
 		return _reject("typed market is not one 2x2 ground square")
-	_exact_route_surface_set = _exact_route_surface_cells()
-	mass_cells = envelope.mass_cells.duplicate()
-	for cell: Vector3i in public_air_cells:
-		mass_cells.erase(cell)
-	for cell: Vector3i in daylight_void_cells:
-		mass_cells.erase(cell)
-	audit = _build_audit()
-	if int(audit.landing_turn_violation_count) != 0:
+	var facts := _build_audit()
+	audit.merge(facts, true)
+	if int(facts.landing_turn_violation_count) != 0:
 		return _reject("vertical turns do not own square landings")
-	if int(audit.max_transition_rise_bands) > 1:
+	if int(facts.max_transition_rise_bands) > 1:
 		return _reject("transition rises more than one band")
-	if int(audit.same_datum_public_square_count) != 0:
+	if int(facts.same_datum_public_square_count) != 0:
 		return _reject("public route contains a broad same-datum 2x2 block")
-	if int(audit.exact_route_interior_cell_count) \
+	if int(facts.exact_route_interior_cell_count) \
 			> interior_breadth_allowance(walk_cells.size()) \
-			or int(audit.max_exact_route_interior_component_size) \
+			or int(facts.max_exact_route_interior_component_size) \
 			> MAX_EXACT_ROUTE_INTERIOR_COMPONENT_SIZE:
 		return _reject("exact public route expands into a broad floor slab")
-	_sealed = true
 	return true
 
 
@@ -355,8 +396,12 @@ func deterministic_signature() -> String:
 		",".join(gallery_parts)]
 	# Preserve every legacy route signature byte-for-byte. The typed square is a
 	# maze-only addition and extends the signature only when it actually exists.
-	return signature if market_parts.is_empty() else "%s|market=%s" % [
-		signature, ",".join(market_parts)]
+	if not market_parts.is_empty(): signature += "|market=" + ",".join(market_parts)
+	var lookout_parts := PackedStringArray()
+	for cell: Vector3i in terminal_lookout_cells: lookout_parts.append(_cell_key(cell))
+	lookout_parts.sort()
+	if not lookout_parts.is_empty(): signature += "|lookout=" + ",".join(lookout_parts)
+	return signature
 
 
 func canonical_deterministic_signature() -> String:
@@ -761,8 +806,18 @@ func _same_datum_public_square_count() -> int:
 				and _market_square_set.has(back) \
 				and _market_square_set.has(diagonal):
 			continue
+		if _terminal_lookout_set.has(cell) and _terminal_lookout_set.has(right) \
+				and _terminal_lookout_set.has(back) and _terminal_lookout_set.has(diagonal):
+			continue
 		result += 1
 	return result
+
+
+func _has_one_terminal_lookout() -> bool:
+	if terminal_lookout_cells.size() != 4: return false
+	var bounds := AABB(Vector3(terminal_lookout_cells[0]), Vector3.ZERO)
+	for cell: Vector3i in terminal_lookout_cells: bounds = bounds.expand(Vector3(cell))
+	return bounds.size == Vector3(1, 0, 1)
 
 
 func _has_one_typed_courtyard() -> bool:
@@ -915,6 +970,15 @@ func _exact_route_interior_cells(
 		_remove_typed_square_interior(result, _courtyard_macro_origin())
 	if market_square_cells.size() == 4:
 		_remove_typed_square_interior(result, _market_macro_origin())
+	var terrace: Dictionary = {}
+	for macro: Vector3i in terminal_lookout_cells:
+		for dx in [0, 1]:
+			for dz in [0, 1]:
+				terrace[Vector3i(macro.x * 2 + dx, macro.y, macro.z * 2 + dz)] = true
+	for fine: Vector3i in terrace:
+		if terrace.has(fine + Vector3i.LEFT) and terrace.has(fine + Vector3i.RIGHT) \
+				and terrace.has(fine + Vector3i.FORWARD) and terrace.has(fine + Vector3i.BACK):
+			result.erase(_cell_key(fine))
 	return result
 
 

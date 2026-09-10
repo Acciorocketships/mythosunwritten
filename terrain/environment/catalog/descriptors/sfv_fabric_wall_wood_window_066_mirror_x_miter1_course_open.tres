@@ -1,0 +1,126 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_abw7k"]
+
+[resource]
+script = ExtResource("1_abw7k")
+id = &"sfv.fabric.wall.wood.window.066.mirror_x.miter1.course_open"
+visual_path = "res://terrain/environment/visuals/fantasy_village_wall_interfaces/sfv_fabric_wall_wood_window_066_mirror_x_miter1_course_open.tres"
+tags = Array[StringName]([&"building", &"fabric_wall", &"village"])
+measured_aabb = AABB(-1.4354215, -1.1324685e-07, -0.2989092, 2.9354217, 3, 0.5978184)
+omitted_face_bounds = AABB(-1.4354, 3, -0.23429999, 2.9354, 0, 0.46859998)
+omitted_face_surfaces = Array[Dictionary]([{
+"material_piece": 0,
+"material_surface": 0,
+"triangles": Array[Dictionary]([{
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.3210808, 3, 0.11998987),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.2633429, 3, 0.2343306),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.4354215, 3, 0.23433053),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(-1.3210808, 3, 0.11998987),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(-0.96676046, 3, -0.23433048),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(2.5331974e-07, 3, -0.23433049),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(-1.3210808, 3, 0.11998987),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(2.5331974e-07, 3, -0.23433049),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(-1.2633429, 3, 0.2343306),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(1.2633433, 3, 0.23433048),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(2.5331974e-07, 3, -0.23433049),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(1.5000002, 3, -0.23433048),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(-1.2633429, 3, 0.2343306),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(2.5331974e-07, 3, -0.23433049),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(2.0861626e-07, 3, 0.153572),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(2.0861626e-07, 3, 0.153572),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(2.5331974e-07, 3, -0.23433049),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5260186e-05, 1, 7.630093e-05),
+"position": Vector3(1.2633433, 3, 0.23433048),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(1.2633433, 3, 0.23433048),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(1.5000002, 3, -0.23433048),
+"uv": Vector2(0.40311444, 0.23957539)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(1.5000002, 3, 0.23433048),
+"uv": Vector2(0.40311444, 0.23957539)
+}])
+}])
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_wall_interfaces:sfv.fabric.wall.wood.window.066.mirror_x.miter1.course_open"

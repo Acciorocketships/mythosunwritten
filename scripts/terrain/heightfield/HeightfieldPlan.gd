@@ -134,7 +134,8 @@ static func height01(pos: Vector3, p_world_seed: int, include_detail: bool = tru
 		var n: float = Helper._value_noise01(pos, p_world_seed + 17, 190.0)
 		var ridge: float = 1.0 - absf(2.0 * n - 1.0)
 		h += ridge * ridge * (rocky - 0.5) * 0.9
-	var falloff: float = clampf((Vector2(pos.x, pos.z).length() - 60.0) / 120.0, 0.0, 1.0)
+	h = lerpf(h, LandformField.height01(pos, p_world_seed), 0.7)
+	var falloff: float = SlopeProfile.smootherstep(clampf((Vector2(pos.x, pos.z).length() - 60.0) / 180.0, 0.0, 1.0))
 	return clampf(h * falloff, 0.0, 1.0)
 
 
@@ -425,13 +426,9 @@ func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldR
 
 	var cliff_field: Dictionary = _cliff_distance_field(storeys, _CLIFF_SEARCH_MAX)
 	var l0: Dictionary = {}
-	# Mark WATER cells (carved down toward the bed) so the surface field can wall
-	# dry banks against them. The threshold matters: the carve FEATHER grazes bank
-	# cells by a metre or two, and flagging those as water disqualified them from
-	# the bank-wall rule — leaving bare, undressed ledges right at shorelines
-	# (owner's collinear step-down notch). Only a near-bed carve (most of a storey)
-	# makes a cell "water". Folded into the level loop so the memoized carve amount
-	# is reused rather than re-sampled in a third pass.
+	# Retain substantial water-carve provenance for cliff-dressing corner
+	# ownership. This flag never forces a vertical bank: the ordinary surface
+	# classifier owns slopes and cliffs. Reuse the memoized amount here.
 	var carved: Dictionary = {}
 	for dz in range(-level_r, level_r + 1):
 		for dx in range(-level_r, level_r + 1):

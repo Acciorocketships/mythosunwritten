@@ -18,7 +18,8 @@ static var last_failure := ""
 
 static func plan(world_seed: int, ground_bands: Dictionary,
 		profile: WarrenVillageScaleProfile,
-		stop_after: StringName = &"") -> WarrenMazeSourcePlan:
+		stop_after: StringName = &"",
+		collect_diagnostics: bool = true) -> WarrenMazeSourcePlan:
 	last_failure = ""
 	if stop_after != &"" and stop_after not in STOP_AFTER_STAGES:
 		last_failure = "unknown stop_after stage %s" % String(stop_after)
@@ -30,7 +31,7 @@ static func plan(world_seed: int, ground_bands: Dictionary,
 		return null
 
 	var source_plan := WarrenMazeCarver.carve(world_seed, massif, profile,
-		false)
+		false, collect_diagnostics)
 	if source_plan == null:
 		last_failure = "carve: %s" % WarrenMazeCarver.last_failure
 		return null
@@ -47,7 +48,5 @@ static func plan(world_seed: int, ground_bands: Dictionary,
 	if stop_after == &"partition":
 		return source_plan
 
-	if not source_plan.seal():
-		last_failure = "seal: %s" % source_plan.last_rejection
-		return null
+	source_plan.finish_construction(collect_diagnostics)
 	return source_plan

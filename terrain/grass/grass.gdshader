@@ -1,5 +1,7 @@
 shader_type spatial;
 render_mode cull_disabled;
+#include "res://terrain/materials/ground_style.gdshaderinc"
+varying vec2 ground_style_position;
 
 global uniform vec2 grass_lod_origin;
 global uniform vec2 wind_direction;
@@ -103,6 +105,7 @@ void vertex() {
 	vec3 blade_root_world = (MODEL_MATRIX
 		* vec4(UV2.x, local_base_y, UV2.y, 1.0)).xyz;
 	vec2 trample_xz = blade_root_world.xz;
+	ground_style_position = blade_root_world.xz;
 	float inside = step(grass_trample_origin.x, trample_xz.x)
 		* step(grass_trample_origin.y, trample_xz.y)
 		* step(trample_xz.x, grass_trample_origin.x + grass_trample_size)
@@ -207,7 +210,7 @@ void fragment() {
 	height_tint = mix(height_tint, vec3(1.0), root_match);
 	vec3 ground_base = textureLod(ground_palette_texture,
 		ground_palette_uv, 0.0).rgb;
-	ALBEDO = ground_base * COLOR.rgb * height_tint * blade_value;
+	ALBEDO = ground_style(ground_style_position, ground_base * COLOR.rgb) * height_tint * blade_value;
 	ROUGHNESS = 1.0;
 	SPECULAR = 0.0;
 }

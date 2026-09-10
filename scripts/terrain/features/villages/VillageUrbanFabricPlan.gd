@@ -234,6 +234,15 @@ static func _quota_count_is_measured(measured: int) -> bool:
 	return measured >= 0
 
 
+func construction_diagnostics(program: VillageProgram) -> Dictionary:
+	## Explicit test/review API. Production records carry construction facts;
+	## inspecting them must measure the built plan rather than request runtime audits.
+	if volumetric_spatial != null:
+		return WarrenSpatialFabricCompiler.construction_diagnostics(
+			volumetric_spatial, fabric_plan, program.settlement_fabric_program)
+	return SettlementFabricSolver.audit_plan(fabric_plan, fabric_audit)
+
+
 func _validate_compiled_fabric(program: VillageProgram) -> bool:
 	if program == null or program.settlement_fabric_program == null \
 			or reason != &"accepted" or fabric_plan == null \
@@ -245,16 +254,17 @@ func _validate_compiled_fabric(program: VillageProgram) -> bool:
 	if terrain_entrance_lift_m < 0.0 \
 			or terrain_entrance_lift_m > TraversalEnvelope.MAX_PLANNED_STEP \
 			or terrain_relief_m < 0.0 \
-			or terrain_relief_m > MAX_FABRIC_TERRAIN_RELIEF:
+			or terrain_relief_m > MAX_FABRIC_TERRAIN_RELIEF * VillageWorldScale.PRODUCTION_UNIFORM_SCALE:
 		return false
+	var inspection := SettlementFabricSolver.audit_plan(fabric_plan, fabric_audit)
 	if not _fabric_audit_matches_plan() \
-			or int(fabric_audit.get("walk_surface_component_count", 1)) != 1 \
+			or int(inspection.get("walk_surface_component_count", -1)) != 1 \
 			or int(fabric_audit.get("detached_building_stack_count", -1)) != 0 \
-			or int(fabric_audit.get("stair_endpoint_gap_count", -1)) != 0 \
-			or int(fabric_audit.get(
+			or int(inspection.get("stair_endpoint_gap_count", -1)) != 0 \
+			or int(inspection.get(
 				"stair_endpoint_missing_landing_count", -1)) != 0 \
-			or int(fabric_audit.get("stair_to_stair_edge_count", -1)) != 0 \
-			or int(fabric_audit.get("unserved_entrance_count", -1)) != 0:
+			or int(inspection.get("stair_to_stair_edge_count", -1)) != 0 \
+			or int(inspection.get("unserved_entrance_count", -1)) != 0:
 		return false
 	var allowed: Dictionary = {}
 	for asset_id: StringName in program.referenced_asset_ids:

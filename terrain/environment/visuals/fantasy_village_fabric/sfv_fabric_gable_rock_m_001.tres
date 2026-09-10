@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3 uid="uid://dci7cvj8dcy5j"]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
 
-[ext_resource type="Script" uid="uid://camt41jgcwvtj" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_yjhbr"]
-[ext_resource type="Shape3D" uid="uid://duhb3ag1tn1gq" path="res://terrain/environment/collisions/fantasy_village_fabric/sfv_fabric_gable_rock_m_001_piece_00.res" id="2_2qrmp"]
-[ext_resource type="Script" uid="uid://cnclg6ri5afbe" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_pdtxn"]
-[ext_resource type="ArrayMesh" uid="uid://buvoiu1t5r4rq" path="res://terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_gable_rock_m_001_piece_00.res" id="4_csq3q"]
-[ext_resource type="Script" uid="uid://dm72bncnoday5" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_1u6gs"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_yjhbr"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_fabric/sfv_fabric_gable_rock_m_001_piece_00.res" id="2_2qrmp"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_pdtxn"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_gable_rock_m_001_piece_00.res" id="4_csq3q"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_1u6gs"]
 
 [sub_resource type="Resource" id="Resource_mh2ud"]
 script = ExtResource("1_yjhbr")

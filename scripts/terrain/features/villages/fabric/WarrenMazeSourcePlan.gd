@@ -146,8 +146,31 @@ func passage_headroom_top(cell: Vector3i) -> int:
 
 
 func seal() -> bool:
+	if _sealed or not validate_construction():
+		return false
+	return finish_construction()
+
+
+func finish_construction(collect_diagnostics: bool = true) -> bool:
+	## Freeze authored facts. Corpus validation is a separate read of the result.
+	_rebuild_plot_columns()
+	_rebuild_rock_shoulders()
+	if collect_diagnostics:
+		collect_construction_diagnostics()
+	_sealed = true
+	return true
+
+
+func collect_construction_diagnostics() -> void:
+	audit.merge(_build_audit(), true)
+	audit["street_floor_gaps"] = _street_floor_gaps()
+	audit["exterior_rock_ratio"] = exterior_rock_ratio()
+	audit["exterior_stone_band_profile"] = exterior_stone_band_profile()
+
+
+func validate_construction() -> bool:
 	last_rejection = ""
-	if _sealed or scale_profile == null or not scale_profile.validate() \
+	if scale_profile == null or not scale_profile.validate() \
 			or massif == null or not massif.is_sealed() or excavation == null \
 			or not excavation.is_sealed():
 		return _reject("missing sealed profile, massif, or excavation")
@@ -224,16 +247,6 @@ func seal() -> bool:
 	if plot_failure != "":
 		_rock_shoulders.clear()
 		return _reject(plot_failure)
-	# Rules become repairs: a street whose own floor is not solid is an audit
-	# fact here, never a rejection. Both facts are measured AFTER the plot
-	# checks, which is what builds the sealed rock shoulders they read.
-	audit["street_floor_gaps"] = _street_floor_gaps()
-	audit["exterior_rock_ratio"] = exterior_rock_ratio()
-	# TASK E4 ruling 1. The flat ratio above stays an audit fact; THIS is the
-	# pinned exit metric, and the only one of the two that can see where the
-	# stone stands.
-	audit["exterior_stone_band_profile"] = exterior_stone_band_profile()
-	_sealed = true
 	return true
 
 

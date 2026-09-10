@@ -261,14 +261,14 @@ func _drain_mesh_visuals(max_batches: int, started: int, max_usec: int) -> int:
 		var meshes: Array = job.meshes
 		while int(job.mesh_index) < meshes.size() and built < max_batches \
 				and not _time_exhausted(started, max_usec):
-			_commit_mesh_visual(block, meshes[int(job.mesh_index)] as Dictionary)
+			commit_mesh_visual(block, meshes[int(job.mesh_index)] as Dictionary)
 			job.mesh_index = int(job.mesh_index) + 1
 			built += 1
 		if int(job.mesh_index) >= meshes.size():
 			_mesh_visual_jobs.remove_at(index)
 	return built
 
-func _commit_mesh_visual(block: Node3D, mesh: Dictionary) -> void:
+func commit_mesh_visual(block: Node3D, mesh: Dictionary) -> void:
 	var container := block.get_node_or_null("Visuals") as Node3D
 	if container == null:
 		container = Node3D.new()
@@ -297,9 +297,15 @@ func _commit_mesh_visual(block: Node3D, mesh: Dictionary) -> void:
 	arrays[Mesh.ARRAY_INDEX] = mesh.indices as PackedInt32Array
 	var array_mesh := ArrayMesh.new()
 	array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	array_mesh.surface_set_material(0, CliffDressing.shared_material() \
+	var material: Material = CliffDressing.shared_material() \
 		if bool(mesh.get("terrain_ground", false)) \
-		else _shared_surface_mesh_material())
+		else _shared_surface_mesh_material()
+	if mesh.has("material_asset_id"):
+		var visual := _render_cache.visual(StringName(mesh.material_asset_id))
+		var piece := visual.pieces[int(mesh.get("material_piece", 0))]
+		material = piece.material_override if piece.material_override != null \
+			else piece.mesh.surface_get_material(int(mesh.get("material_surface", 0)))
+	array_mesh.surface_set_material(0, material)
 	var instance := MeshInstance3D.new()
 	instance.name = String(StringName(mesh.stable_id)).replace("/", "_")
 	instance.mesh = array_mesh

@@ -142,7 +142,7 @@ func test_collision_primitives_preserve_walkable_openings() -> void:
 	var cache := EnvironmentRenderCache.new(catalog)
 	assert_true(cache.prepare(PathProgram.ASSET_IDS))
 	var bridge := cache.visual(&"sfv.bridge.001")
-	assert_eq(bridge.collisions.size(), 5)
+	assert_eq(bridge.collisions.size(), 3, "one continuous arched deck and two side rails")
 	for collision: EnvironmentCollisionPiece in bridge.collisions:
 		var bounds := collision.local_transform * collision.shape.get_debug_mesh().get_aabb()
 		assert_gte(bounds.position.y, -0.05,

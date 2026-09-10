@@ -1,0 +1,308 @@
+{
+  "before": [
+    {
+      "id": "volume.transition.04",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.47840815782546847,
+      "body_reverse_max": 0.08378911018371005,
+      "visual_step_max": 0.31919646263122003,
+      "camera_step_max": 0.3494143486022905,
+      "airborne_ticks": 4
+    },
+    {
+      "id": "volume.transition.04",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.16500006616115603,
+      "camera_step_max": 0.16499996185303,
+      "airborne_ticks": 34
+    },
+    {
+      "id": "volume.transition.05",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.4706442356109881,
+      "body_reverse_max": 0.08378911018371982,
+      "visual_step_max": 0.31919622421265004,
+      "camera_step_max": 0.34941387176514027,
+      "airborne_ticks": 4
+    },
+    {
+      "id": "volume.transition.05",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.16499996185303,
+      "camera_step_max": 0.16499996185302912,
+      "airborne_ticks": 34
+    },
+    {
+      "id": "volume.transition.06",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.4734282493591184,
+      "body_reverse_max": 0.08437538146973012,
+      "visual_step_max": 0.31919622421265004,
+      "camera_step_max": 0.3494148254394993,
+      "airborne_ticks": 4
+    },
+    {
+      "id": "volume.transition.06",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.16499996185303,
+      "camera_step_max": 0.16500091552729934,
+      "airborne_ticks": 34
+    },
+    {
+      "id": "volume.transition.07",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.4706935882568395,
+      "body_reverse_max": 0.08378887176514027,
+      "visual_step_max": 0.31919670104979936,
+      "camera_step_max": 0.3494138717651012,
+      "airborne_ticks": 4
+    },
+    {
+      "id": "volume.transition.07",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.16499996185302912,
+      "camera_step_max": 0.16499996185299892,
+      "airborne_ticks": 34
+    },
+    {
+      "id": "volume.transition.09",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.47469806671140446,
+      "body_reverse_max": 0.0849609375,
+      "visual_step_max": 0.31919670104979936,
+      "camera_step_max": 0.34941482543939983,
+      "airborne_ticks": 4
+    },
+    {
+      "id": "volume.transition.09",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.1649999618530007,
+      "camera_step_max": 0.16500091552739704,
+      "airborne_ticks": 34
+    }
+  ],
+  "final": [
+    {
+      "id": "volume.transition.04",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.010956972837460055,
+      "body_reverse_max": 0.003486275672919925,
+      "visual_step_max": 0.09550929069518999,
+      "camera_step_max": 0.09550952911376953,
+      "airborne_ticks": 0
+    },
+    {
+      "id": "volume.transition.04",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.10465902090072599,
+      "camera_step_max": 0.10465860366821023,
+      "airborne_ticks": 4
+    },
+    {
+      "id": "volume.transition.05",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.011703968048091262,
+      "body_reverse_max": 0.0034861564636203823,
+      "visual_step_max": 0.0955109596252397,
+      "camera_step_max": 0.09551048278810015,
+      "airborne_ticks": 0
+    },
+    {
+      "id": "volume.transition.05",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.1046051979064897,
+      "camera_step_max": 0.10460567474364879,
+      "airborne_ticks": 4
+    },
+    {
+      "id": "volume.transition.06",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.011703968048100144,
+      "body_reverse_max": 0.0034866333007794736,
+      "visual_step_max": 0.09551143646240057,
+      "camera_step_max": 0.09551143646240057,
+      "airborne_ticks": 0
+    },
+    {
+      "id": "volume.transition.06",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.1046171188354501,
+      "camera_step_max": 0.10461616516119854,
+      "airborne_ticks": 4
+    },
+    {
+      "id": "volume.transition.07",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.01170444488526634,
+      "body_reverse_max": 0.0034866333007990136,
+      "visual_step_max": 0.09551143646240057,
+      "camera_step_max": 0.09551048278810015,
+      "airborne_ticks": 0
+    },
+    {
+      "id": "volume.transition.07",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.10460758209229937,
+      "camera_step_max": 0.10460758209229937,
+      "airborne_ticks": 4
+    },
+    {
+      "id": "volume.transition.09",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.019424438476702832,
+      "body_reverse_max": 0.004233360290600174,
+      "visual_step_max": 0.09574890136720171,
+      "camera_step_max": 0.09574890136720171,
+      "airborne_ticks": 0
+    },
+    {
+      "id": "volume.transition.09",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.10465908050539952,
+      "camera_step_max": 0.10466003417969816,
+      "airborne_ticks": 4
+    }
+  ],
+  "slow-side-final": [
+    {
+      "id": "volume.transition.04",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.007968872785564851,
+      "body_reverse_max": 0.002739310264589845,
+      "visual_step_max": 0.05547702312469993,
+      "camera_step_max": 0.055476665496829725,
+      "airborne_ticks": 0
+    },
+    {
+      "id": "volume.transition.04",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.06355071067809992,
+      "camera_step_max": 0.06355094909667969,
+      "airborne_ticks": 16
+    },
+    {
+      "id": "volume.transition.05",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.011206150054920094,
+      "body_reverse_max": 0.007968902587889737,
+      "visual_step_max": 0.055199623107910156,
+      "camera_step_max": 0.05520057678218926,
+      "airborne_ticks": 0
+    },
+    {
+      "id": "volume.transition.05",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.06384515762329013,
+      "camera_step_max": 0.06384563446044922,
+      "airborne_ticks": 16
+    },
+    {
+      "id": "volume.transition.06",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.005976676940909975,
+      "body_reverse_max": 0.0027394294738698477,
+      "visual_step_max": 0.05545234680176048,
+      "camera_step_max": 0.05545234680169919,
+      "airborne_ticks": 0
+    },
+    {
+      "id": "volume.transition.06",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.06380701065063032,
+      "camera_step_max": 0.06380748748780007,
+      "airborne_ticks": 16
+    },
+    {
+      "id": "volume.transition.07",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.010709762573300807,
+      "body_reverse_max": 0.00348663330080079,
+      "visual_step_max": 0.055429458618100114,
+      "camera_step_max": 0.055429458618100114,
+      "airborne_ticks": 0
+    },
+    {
+      "id": "volume.transition.07",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.0636701583861985,
+      "camera_step_max": 0.0636701583861985,
+      "airborne_ticks": 16
+    },
+    {
+      "id": "volume.transition.09",
+      "descent": false,
+      "passed": true,
+      "body_reverse_total": 0.007222175598199598,
+      "body_reverse_max": 0.00273895263669921,
+      "visual_step_max": 0.05543613433829897,
+      "camera_step_max": 0.055435180664002104,
+      "airborne_ticks": 0
+    },
+    {
+      "id": "volume.transition.09",
+      "descent": true,
+      "passed": true,
+      "body_reverse_total": 0,
+      "body_reverse_max": 0,
+      "visual_step_max": 0.06384563446049896,
+      "camera_step_max": 0.06384658813480115,
+      "airborne_ticks": 16
+    }
+  ]
+}

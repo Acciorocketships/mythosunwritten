@@ -1,13 +1,13 @@
-[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://bsigqrye8ehha"]
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
 
-[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ahcs8"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ahcs8"]
 
 [resource]
 script = ExtResource("1_ahcs8")
 id = &"sfv.fabric.wall.rock.door.closed.005.mirror_x"
 visual_path = "res://terrain/environment/visuals/fantasy_village_fabric/sfv_fabric_wall_rock_door_closed_005_mirror_x.tres"
 tags = Array[StringName]([&"building", &"fabric_wall", &"mirrored_variant", &"village"])
-measured_aabb = AABB(-1.5517143, -0.0021185214, -0.5567697, 3.1034288, 3.0421374, 1.1135395)
+measured_aabb = AABB(-1.5517142, -0.0021185214, -0.5567697, 3.1034286, 3.0421374, 1.1135395)
 ground_contact_points = PackedVector2Array()
 collision_piece_count = 1
 tint_group = &"identity"

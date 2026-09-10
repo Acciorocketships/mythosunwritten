@@ -118,10 +118,29 @@ func test_terrain_corner_backing_keeps_rock_uv_at_commit() -> void:
 		EnvironmentCatalog.load_default()))
 	var block := Node3D.new()
 	add_child_autofree(block)
-	queue._commit_mesh_visual(block, mesh)
+	queue.commit_mesh_visual(block, mesh)
 	var visual := block.get_node("Visuals").get_child(0) as MeshInstance3D
 	var uvs: PackedVector2Array = visual.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
 	for index in uvs.size():
 		assert_eq(uvs[index], SlopeAtlas.cliff_uv() if index < 3
 			else CliffDressing.ground_uv(),
 			"the commit adapter must not repaint tucked rock as bright grass")
+
+
+func test_partitioned_cap_keeps_the_authored_material() -> void:
+	var cache := EnvironmentRenderCache.new(EnvironmentCatalog.load_default())
+	var asset := SettlementFabricProgram.FLOOR
+	var visual := cache.visual(asset)
+	var mesh := TerrainChunkMesher.flat_ground_surface({Vector3i.ZERO: true},
+		1.5, 0.0, &"test-authored-cap")
+	mesh.erase("terrain_ground")
+	mesh["material_asset_id"] = asset
+	mesh["material_piece"] = 0
+	mesh["material_surface"] = 0
+	mesh["visual_only"] = true
+	var block := Node3D.new()
+	add_child_autofree(block)
+	FeatureCommitQueue.new(cache).commit_mesh_visual(block, mesh)
+	var committed := block.get_node("Visuals").get_child(0) as MeshInstance3D
+	assert_eq(committed.mesh.surface_get_material(0), visual.pieces[0].mesh.surface_get_material(0),
+		"a retained cap uses its source atlas and shading, never the generic plank material")

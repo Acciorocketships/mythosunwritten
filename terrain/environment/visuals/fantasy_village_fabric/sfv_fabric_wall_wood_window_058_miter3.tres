@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_ilqyv"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/fantasy_village_fabric/sfv_fabric_wall_wood_window_058_miter3_piece_00.res" id="2_ja8ne"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_3fqtw"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_wall_wood_window_058_miter3_piece_00.res" id="4_xfjw5"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_x8k4i"]
+
+[sub_resource type="Resource" id="Resource_smxah"]
+script = ExtResource("1_ilqyv")
+shape = ExtResource("2_ja8ne")
+
+[sub_resource type="Resource" id="Resource_vkooy"]
+script = ExtResource("3_3fqtw")
+mesh = ExtResource("4_xfjw5")
+
+[resource]
+script = ExtResource("5_x8k4i")
+pieces = Array[ExtResource("3_3fqtw")]([SubResource("Resource_vkooy")])
+collisions = Array[ExtResource("1_ilqyv")]([SubResource("Resource_smxah")])

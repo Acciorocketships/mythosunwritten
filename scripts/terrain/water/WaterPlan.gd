@@ -84,6 +84,9 @@ const BED_MIN := -1.0
 # partial-carve band can't dither cells across the storey-rounding threshold
 # (alternating poke/submerge plates along the channel edges).
 const FEATHER := 8.0
+# The hydraulic containment survey and route spacing retain FEATHER. Terrain
+# banks occupy a wider, finite collar so normal ground slopes can reach water.
+const BANK_FEATHER := 96.0
 # Spring-pool radius. SMALL on purpose: the pool level clamps to the minimum
 # ground under footprint∪ring, so a wide pool on a peaked summit reads that
 # minimum far downhill and carves a crater lake into the mountain instead of
@@ -113,7 +116,7 @@ const _PATH_INSIDE_EPS := 0.0001
 # displacement + the largest pond bound + carve feather of its source's JITTER
 # point ⇒ a fixed super-cell ring.
 const REACH := ASCEND_MAX_STEPS * ASCEND_STEP + TRACE_REACH \
-	+ POND_R_MAX * (1.0 + PondStamp.WOBBLE) + FEATHER
+	+ POND_R_MAX * (1.0 + PondStamp.WOBBLE) + BANK_FEATHER
 const REACH_SUPERS := int(ceil(REACH / SUPER))   # = 4
 
 var world_seed: int
@@ -310,13 +313,24 @@ func _make_pool(p: Vector2) -> PondStamp:
 		_pond_level(p, SOURCE_POOL_R), POOL_DEPTH)
 
 
-func _make_pond(p: Vector2, arc: float) -> PondStamp:
+func _make_pond(p: Vector2, arc: float, incoming_bed := INF) -> PondStamp:
 	var shape_seed := _hash_cell(Vector2i(roundi(p.x), roundi(p.y)), 8)
 	var maturity := clampf(arc / (MAX_STEPS * TRACE_STEP), 0.0, 1.0)
 	var size_roll := Helper._hash01(Helper._mix64(shape_seed + 19))
 	var r := lerpf(POND_R_MIN, POND_R_MAX, maturity * (0.35 + 0.65 * size_roll))
 	var pond := PondStamp.new(p, r, shape_seed, _pond_level(p, r), POND_DEPTH)
+	# A contour trace may excavate through naturally higher land after its bed
+	# has descended. The receiving lake cannot lift that entire river back up.
+	# PondStamp applies this same datum to the terrain carve and water surface.
+	pond.surface_ceiling = incoming_bed + WaterField.SURFACE_RIDE
 	pond.aspect_ratio = lerpf(0.5, 0.9, Helper._hash01(Helper._mix64(shape_seed + 23)))
+	if r >= 85.0:
+		var geology := Helper._hash01(Helper._mix64(shape_seed + 29))
+		if geology < 0.65:
+			pond.island_radius = maxf(24.0, r * 0.24)
+			var angle := Helper._hash01(Helper._mix64(shape_seed + 31)) * TAU
+			pond.island_offset = Vector2.from_angle(angle) * r * 0.24
+			pond.peninsula = geology < 0.25
 	return pond
 
 
@@ -387,7 +401,7 @@ func _trace(sc: Vector2i, depth: int,
 		p = next
 		arc += TRACE_STEP
 		bed = _contained_bed(bed, p, dir, lerpf(W_MIN, W_MAX, arc / (MAX_STEPS * TRACE_STEP)))
-	t.pond = _make_pond(p, arc)
+	t.pond = _make_pond(p, arc, t.beds[-1])
 	return t
 
 
@@ -598,7 +612,7 @@ func _region_for(rc: Vector2i) -> Dictionary:
 	if _region_cache.has(rc):
 		return _region_cache[rc]
 	var region_rect: Rect2 = Rect2(
-		Vector2(float(rc.x), float(rc.y)) * SUPER, Vector2(SUPER, SUPER)).grow(FEATHER + W_MAX)
+		Vector2(float(rc.x), float(rc.y)) * SUPER, Vector2(SUPER, SUPER)).grow(BANK_FEATHER + W_MAX)
 	var rivers: Array = []
 	var buckets: Dictionary = {}
 	# +1 ring: a source within REACH of a cell inside this super-cell can sit
@@ -617,15 +631,15 @@ func _region_for(rc: Vector2i) -> Dictionary:
 			# Junctions only shorten this immutable route. Reject its raw bounds
 			# before expanding neighbour dependencies for a distant source.
 			var raw := river_for(sc, 0)
-			if raw == null or not raw.bounds().grow(FEATHER).intersects(region_rect):
+			if raw == null or not raw.bounds().grow(BANK_FEATHER).intersects(region_rect):
 				_report_planning_progress(candidate_end)
 				continue
 			var t: RiverTrace = river_for(sc, JOIN_DEPTH, candidate_start, candidate_end)
-			if not t.bounds().grow(FEATHER).intersects(region_rect):
+			if not t.bounds().grow(BANK_FEATHER).intersects(region_rect):
 				continue
 			rivers.append(t)
 			for i in t.points.size():
-				var infl: float = t.widths[i] + FEATHER
+				var infl: float = t.widths[i] + BANK_FEATHER
 				var lo_x: int = int(floor((t.points[i].x - infl) / TILE + 0.5))
 				var hi_x: int = int(floor((t.points[i].x + infl) / TILE + 0.5))
 				var lo_z: int = int(floor((t.points[i].y - infl) / TILE + 0.5))
@@ -759,6 +773,35 @@ static func _append_planning_interval(out: Array[Vector2], interval: Vector2,
 		out.append(interval)
 
 
+# Keep waterfalls and their abutments on the established narrow channel
+# profile. Only reaches separated from a steep descent receive broad banks;
+# the transition is continuous and determined before any chunk is meshed.
+const BANK_GENTLE_GRADE := 0.05
+const BANK_PROFILE_CACHE_LIMIT := 64
+var _bank_strength_cache: Dictionary = {}
+
+func bank_strengths(trace: RiverTrace) -> PackedFloat64Array:
+	var key := trace.get_instance_id()
+	if _bank_strength_cache.has(key): return _bank_strength_cache[key]
+	var steep: Array[Vector2i] = []
+	for i in range(trace.points.size()-1):
+		if absf(trace.beds[i+1]-trace.beds[i]) / maxf(trace.points[i].distance_to(trace.points[i+1]),0.001) > BANK_GENTLE_GRADE:
+			steep.append(Vector2i(i,i+1))
+	var weights := PackedFloat64Array()
+	for point: Vector2 in trace.points:
+		var distance := INF
+		for edge: Vector2i in steep:
+			var a := trace.points[edge.x]
+			var ab := trace.points[edge.y]-a
+			var t := clampf((point-a).dot(ab)/maxf(ab.length_squared(),0.000001),0,1)
+			distance = minf(distance,point.distance_to(a+ab*t))
+		weights.append(smoothstep(BANK_FEATHER,BANK_FEATHER*2,distance))
+	if _bank_strength_cache.size() >= BANK_PROFILE_CACHE_LIMIT:
+		_bank_strength_cache.erase(_bank_strength_cache.keys()[0])
+	_bank_strength_cache[key] = weights
+	return weights
+
+
 ## Metres to subtract from the raw noise height at tile cell (cx, cz).
 ## Max over every pond bowl and channel segment that reaches the cell — pure
 ## function of (world_seed, cell); the caches never change the value.
@@ -808,24 +851,29 @@ func carve_at_cell(cx: int, cz: int) -> float:
 				var nearest: Vector2 = a + ab * along
 				var half_width: float = lerpf(t.widths[si], t.widths[si + 1], along)
 				var d: float = p.distance_to(nearest)
-				var infl: float = half_width + FEATHER
+				var infl: float = half_width + BANK_FEATHER
 				if d >= infl:
 					continue
 				if ground == -INF:
 					ground = noise_h(p)
-				# Full carve below the longitudinally interpolated hydraulic bed
-				# inside the width; smootherstep feather out.  WaterField seeds the
-				# same segment projection, so carved bed and rendered water can no
-				# longer disagree in the 12m gaps between trace samples.
-				var w: float = SlopeProfile.smootherstep(
-					clampf((infl - d) / FEATHER, 0.0, 1.0))
+				# The channel keeps its complete hydraulic footprint. Beyond it,
+				# bank controls rise from dry shore toward natural ground. The
+				# ordinary terrain kernel reconstructs the actual walkable slopes.
 				var grade: float = absf(t.beds[si + 1] - t.beds[si]) \
 					/ maxf(sqrt(len2), 0.001)
 				var extra: float = CARVE_BED_EXTRA \
 					if grade < CARVE_EXTRA_MAX_GRADE else 0.0
 				var bed: float = lerpf(t.beds[si], t.beds[si + 1], along)
 				var carve_bed: float = maxf(bed - extra, BED_MIN)
-				best = maxf(best, maxf(0.0, ground - carve_bed) * w)
+				var target := carve_bed
+				if d > half_width:
+					var shore := bed + WaterField.SURFACE_RIDE + 0.5
+					target = lerpf(shore, ground, (d - half_width) / BANK_FEATHER)
+				var weights := bank_strengths(t)
+				var strength := lerpf(weights[si], weights[si+1], along)
+				var original_weight := SlopeProfile.smootherstep(clampf((half_width+FEATHER-d)/FEATHER,0,1))
+				var original_carve := maxf(0.0,ground-carve_bed)*original_weight
+				best = maxf(best,lerpf(original_carve,maxf(0.0,ground-target),strength))
 	return best
 
 ## Water bodies overlapping a cell window (for surface meshing + volumes).
@@ -838,15 +886,19 @@ func bodies_near(center_cell: Vector2i, radius_cells: int) -> Dictionary:
 	assert(world_r * 2.0 <= SUPER, "bodies_near window exceeds one super-cell — widen the union first")
 	var centre: Vector2 = Vector2(float(center_cell.x), float(center_cell.y)) * TILE
 	var window: Rect2 = Rect2(centre - Vector2.ONE * world_r, Vector2.ONE * world_r * 2.0)
-	var corners: Array = [
-		window.position,
-		window.position + Vector2(window.size.x, 0.0),
-		window.position + Vector2(0.0, window.size.y),
-		window.position + window.size,
-	]
+	return bodies_in_rect(window)
+
+
+## Complete carving-source inventory for a finite hydraulic solve. Sources
+## are discovered over the solve's entire terrain extent, not just its output
+## chunk: a distant crossing river may have opened a lower outlet there.
+func bodies_in_rect(window: Rect2) -> Dictionary:
+	var lo := Vector2i((window.position / SUPER).floor())
+	var hi := Vector2i((window.end / SUPER).floor())
 	var super_cells: Dictionary = {}
-	for corner in corners:
-		super_cells[Vector2i(int(floor(corner.x / SUPER)), int(floor(corner.y / SUPER)))] = true
+	for z in range(lo.y, hi.y + 1):
+		for x in range(lo.x, hi.x + 1):
+			super_cells[Vector2i(x, z)] = true
 	var seen: Dictionary = {}
 	var ponds: Array = []
 	var rivers: Array = []
@@ -854,7 +906,7 @@ func bodies_near(center_cell: Vector2i, radius_cells: int) -> Dictionary:
 		for t in _region_for(rc).rivers:
 			if seen.has(t.source_cell):
 				continue
-			if not t.bounds().grow(FEATHER).intersects(window):
+			if not t.bounds().grow(W_MAX + BANK_FEATHER).intersects(window):
 				continue
 			seen[t.source_cell] = true
 			rivers.append(t)

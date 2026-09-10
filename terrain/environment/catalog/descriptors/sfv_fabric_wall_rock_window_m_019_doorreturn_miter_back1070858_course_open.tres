@@ -1,0 +1,576 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_k77ah"]
+
+[resource]
+script = ExtResource("1_k77ah")
+id = &"sfv.fabric.wall.rock.window.m.019.doorreturn.miter.back1070858.course_open"
+visual_path = "res://terrain/environment/visuals/fantasy_village_wall_interfaces/sfv_fabric_wall_rock_window_m_019_doorreturn_miter_back1070858_course_open.tres"
+tags = Array[StringName]([&"building", &"fabric_wall", &"village"])
+measured_aabb = AABB(-1.4286025, -1.8758394e-08, -0.33194345, 1.8577445, 3.000001, 0.7352849)
+omitted_face_bounds = AABB(-1.2307999, 3, -0.17809999, 1.6599, 0, 0.35619998)
+omitted_face_surfaces = Array[Dictionary]([{
+"material_piece": 0,
+"material_surface": 0,
+"triangles": Array[Dictionary]([{
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.9714881, 3.000001, 0.17322814),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.2308114, 3.000001, 0.13415283),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.2038484, 3.000001, 0.107189775),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.9714881, 3.000001, 0.17322814),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.2038484, 3.000001, 0.107189775),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.60756755, 3.000001, 0.13444634),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.60756755, 3.000001, 0.13444634),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.2038484, 3.000001, 0.107189775),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.1853656, 3.000001, 0.08870697),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.60756755, 3.000001, 0.13444634),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.1853656, 3.000001, 0.08870697),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, 0.079152554),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.1853656, 3.000001, 0.08870697),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.1605957, 3.000001, 0.06393713),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, 0.079152554),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.12429029),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.2580936, 3.000001, 0.07674081),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.0865262),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.07110348),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.0865262),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.2580936, 3.000001, 0.07674081),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.48734015, 3.000001, 0.080445156),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.2580936, 3.000001, 0.07674081),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.013313748, 3.000001, 0.17810273),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.2580936, 3.000001, 0.07674081),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.48734015, 3.000001, 0.080445156),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, 0.079152554),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.07110348),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.2580936, 3.000001, 0.07674081),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, 0.079152554),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.07110348),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, 0.079152554),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.063415855),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, 0.079152554),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.1605957, 3.000001, 0.06393707),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.1523726, 3.000001, 0.05571401),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.063415855),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, 0.079152554),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.1523726, 3.000001, 0.05571401),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.063415855),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.1523726, 3.000001, 0.05571401),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.056356747),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.054649983),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.05635673),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.1523726, 3.000001, 0.05571395),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.054649983),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.1523726, 3.000001, 0.05571395),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.144592, 3.000001, 0.04793346),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.054649983),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.144592, 3.000001, 0.04793346),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.011874609),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.011874597),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.144592, 3.000001, 0.0479334),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.0976057, 3.000001, 0.0009471178),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.011874597),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.0976057, 3.000001, 0.0009471178),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.0015675458),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.00061814045),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.0879221, 3.000001, -0.008736551),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.04576001),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.0879221, 3.000001, -0.008736551),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.0006181402),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.0015675726),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.0879221, 3.000001, -0.008736551),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, 0.0015675726),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.0976058, 3.000001, 0.000947237),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.0408893, 3.000001, -0.055769354),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.056367084),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.04576002),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.0408893, 3.000001, -0.055769354),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.04576002),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.087922, 3.000001, -0.00873661),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.0408893, 3.000001, -0.055769295),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.029258, 3.000001, -0.067400515),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, -0.07916263),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.056367073),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.0408893, 3.000001, -0.055769295),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, -0.07916263),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.056367073),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, -0.07916263),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.063426174),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.063426174),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, -0.07916263),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.2580936, 3.000001, -0.07675112),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.063426174),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.2580936, 3.000001, -0.07675112),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.07111383),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.48734015, 3.000001, -0.08045523),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.2580936, 3.000001, -0.07675112),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, -0.07916263),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.2580936, 3.000001, -0.07675112),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.48734015, 3.000001, -0.08045523),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.013313755, 3.000001, -0.17811301),
+"uv": Vector2(0.8107892, 0.46991628)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.9791895, 3.000001, -0.1174691),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.92804956, 3.000001, -0.16860905),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(-1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.60756755, 3.000001, -0.13445641),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.9791895, 3.000001, -0.1174691),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.60756755, 3.000001, -0.13445641),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, -0.07916263),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.9791895, 3.000001, -0.1174691),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, -0.07916263),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.010707, 3.000001, -0.08595154),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.010707, 3.000001, -0.08595154),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-0.5819198, 3.000001, -0.07916263),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(-1.0292581, 3.000001, -0.067400455),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.08653656),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.2580936, 3.000001, -0.07675112),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.12430063),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.08653656),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.429142, 3.000001, -0.07111383),
+"uv": Vector2(0.81098855, 0.47225183)
+}, {
+"color": Color(1, 1, 1, 1),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
+"position": Vector3(0.2580936, 3.000001, -0.07675112),
+"uv": Vector2(0.81098855, 0.47225183)
+}])
+}])
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"fantasy_village_wall_interfaces:sfv.fabric.wall.rock.window.m.019.doorreturn.miter.back1070858.course_open"

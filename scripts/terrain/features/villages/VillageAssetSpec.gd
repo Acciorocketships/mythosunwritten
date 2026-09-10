@@ -48,6 +48,9 @@ var lot_local_rect: Rect2
 var ground_contact_local_rect: Rect2
 var interior_local_rect: Rect2
 var entrance_local: Vector2
+## Optional measured toe of an authored porch/stair, where terrain paint ends.
+## A support rectangle can extend past the walkable porch and is not this point.
+var ground_entrance_local := Vector2(INF, INF)
 var entrance_outward: Vector2
 var entrance_floor_local_y: float
 var permitted_tiers: Array[StringName] = []
@@ -136,6 +139,11 @@ static func compile(data: Dictionary, catalog: EnvironmentCatalog) -> VillageAss
 		return null
 	spec.entrance_local = _vector2(data.get("entrance_local", null))
 	spec.entrance_outward = _vector2(data.get("entrance_outward", null))
+	if data.has("ground_entrance_local"):
+		spec.ground_entrance_local = _vector2(data.ground_entrance_local)
+		if not spec.ground_entrance_local.is_finite():
+			push_error("Authored ground entrance must be finite: %s" % spec.asset_id)
+			return null
 	spec.entrance_floor_local_y = float(data.get("entrance_floor_y",
 		spec.measured_aabb.position.y))
 	if not spec.entrance_local.is_finite() \

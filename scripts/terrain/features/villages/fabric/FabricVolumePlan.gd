@@ -11,6 +11,7 @@ var unreachable_air_cells: Array[Vector3i] = []
 var occupied_air_overlaps: Array[Vector3i] = []
 var _air_set: Dictionary = {}
 var _occupied_set: Dictionary = {}
+var _landing_cells: Array[Vector3i] = []
 var _sealed := false
 var last_rejection := ""
 
@@ -19,30 +20,45 @@ func _init(p_stable_id: StringName) -> void:
 	stable_id = p_stable_id
 
 
+func construct(air_claims: Dictionary, landing_air_cells: Array[Vector3i],
+		structural_solids: Dictionary, inhabited_volume: Dictionary) -> void:
+	## Store construction facts. Connectivity and overlap audits run in tests.
+	_air_set = air_claims.duplicate()
+	_occupied_set = structural_solids.duplicate()
+	_occupied_set.merge(inhabited_volume, true)
+	_landing_cells.assign(landing_air_cells)
+	exterior_air_cells.assign(_air_set.keys())
+	exterior_air_cells.sort_custom(_cell_less)
+	_sealed = true
+
+
 func seal(air_claims: Dictionary, landing_air_cells: Array[Vector3i],
 		structural_solids: Dictionary, inhabited_volume: Dictionary) -> bool:
+	if _sealed:
+		return false
+	construct(air_claims, landing_air_cells, structural_solids, inhabited_volume)
+	var valid := validate()
+	_sealed = valid
+	return valid
+
+
+func validate() -> bool:
 	last_rejection = ""
-	if _sealed or stable_id.is_empty() or air_claims.is_empty() \
-			or landing_air_cells.is_empty():
+	unreachable_air_cells.clear()
+	occupied_air_overlaps.clear()
+	if not _sealed or stable_id.is_empty() or _air_set.is_empty() or _landing_cells.is_empty():
 		last_rejection = "missing volume id, exterior air, or landing-air seed"
 		return false
-	for cell_value: Variant in structural_solids:
-		_occupied_set[cell_value as Vector3i] = true
-	for cell_value: Variant in inhabited_volume:
-		_occupied_set[cell_value as Vector3i] = true
-	for cell_value: Variant in air_claims:
-		var cell := cell_value as Vector3i
+	for cell: Vector3i in _air_set:
 		if _occupied_set.has(cell):
 			occupied_air_overlaps.append(cell)
-		_air_set[cell] = true
 	if not occupied_air_overlaps.is_empty():
 		occupied_air_overlaps.sort_custom(_cell_less)
-		last_rejection = "%d public-air cells overlap occupied volume" % \
-			occupied_air_overlaps.size()
+		last_rejection = "%d public-air cells overlap occupied volume" % occupied_air_overlaps.size()
 		return false
 	var reached: Dictionary = {}
 	var pending: Array[Vector3i] = []
-	for cell: Vector3i in landing_air_cells:
+	for cell: Vector3i in _landing_cells:
 		if _air_set.has(cell) and not reached.has(cell):
 			reached[cell] = true
 			pending.append(cell)
@@ -69,17 +85,7 @@ func seal(air_claims: Dictionary, landing_air_cells: Array[Vector3i],
 		last_rejection = "%d public-air cells are cut off from the route landing" % \
 			unreachable_air_cells.size()
 		return false
-	exterior_air_cells.assign(_air_set.keys())
-	exterior_air_cells.sort_custom(_cell_less)
-	_sealed = true
 	return true
-
-
-func validate() -> bool:
-	return _sealed and not stable_id.is_empty() \
-		and not exterior_air_cells.is_empty() \
-		and unreachable_air_cells.is_empty() \
-		and occupied_air_overlaps.is_empty()
 
 
 func is_sealed() -> bool:

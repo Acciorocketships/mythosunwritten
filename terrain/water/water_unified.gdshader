@@ -105,9 +105,12 @@ float water_dynamic_height(vec2 world_xz) {
 }
 
 
+varying vec3 biome_water_tint;
+
 void vertex() {
 	vec3 base_world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	surface_scale = COLOR.r;
+	biome_water_tint = COLOR.gba;
 	flow_compression = CUSTOM1.w;
 	float dynamic_height = water_dynamic_height(base_world.xz) * surface_scale;
 	VERTEX += NORMAL * dynamic_height;
@@ -180,7 +183,8 @@ void fragment() {
 
 	vec3 transmittance = exp(-absorption * depth);
 	vec3 body = scene * transmittance
-		+ scatter_color * (vec3(1.0) - transmittance) * scatter_strength;
+		+ mix(scatter_color, biome_water_tint, 0.55) * (vec3(1.0) - transmittance) * scatter_strength;
+	body = mix(body, biome_water_tint, (1.0 - exp(-depth * 0.045)) * 0.22);
 
 	// Broad sky reflection. Dynamic detail enters only through the physical
 	// surface normal, matching the reference's calm painterly sheen instead of

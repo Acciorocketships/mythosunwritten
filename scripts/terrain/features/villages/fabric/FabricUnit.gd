@@ -18,6 +18,10 @@ var visual_seam_ids: Array[StringName] = []
 ## seam. This is exact macro-composition data, not a renderer-side proximity
 ## test: partial wall contacts may never suppress a placement.
 var suppressed_placement_ids: Array[StringName] = []
+## Wall caps partitioned against actual upper floors in the final plan.
+## SettlementFabricPlan retains each uncovered portion as source triangles.
+var square_corner_end_masks: Dictionary = {}
+var floor_owned_cap_ids: Array[StringName] = []
 var public_node_id: StringName
 var bounds := AABB()
 

@@ -66,6 +66,7 @@ const OFFSETS := [-10.5, -7.5, -4.5, -1.5, 1.5, 4.5, 7.5, 10.5]
 const CARDINALS := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 const CORNERS := [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
 
+static var _cpu_pieces: Dictionary = {}
 static var _pieces: Dictionary = {}   # name -> [mesh, local_transform]
 static var _shared_mat: Material = null
 static var _ground_uv := Vector2.ZERO
@@ -110,14 +111,17 @@ static func shared_material() -> Material:
 	assert(mat != null and mat.albedo_texture != null)
 	assert(mat.vertex_color_use_as_albedo and is_equal_approx(mat.roughness, 1.0)
 		and is_zero_approx(mat.metallic_specular))
-	_shared_mat = mat
+	var surface := ShaderMaterial.new()
+	surface.shader = load("res://terrain/materials/ground_surface.gdshader")
+	surface.set_shader_parameter("ground_palette_texture", mat.albedo_texture)
+	_shared_mat = surface
 	return _shared_mat
 
 ## The one palette binding consumed by the terrain sheet and dense grass.
 ## Both the texture object and its grass-island UV come from the same lip mesh,
 ## so changing the shared atlas can never leave grass with a copied swatch.
 static func ground_texture() -> Texture2D:
-	var material := shared_material() as StandardMaterial3D
+	var material := load(GROUND_PALETTE) as StandardMaterial3D
 	assert(material != null and material.albedo_texture != null)
 	return material.albedo_texture
 
@@ -129,9 +133,16 @@ static func ground_uv() -> Vector2:
 # Returns {wall, lip, outer_wall, outer_lip, inner_wall, inner_lip} -> Array[Transform3D].
 static func compute(region, lo_cx: int, lo_cz: int, cells: int) -> Dictionary:
 	var out := {"wall": [], "lip": [], "outer_wall": [], "outer_lip": [], "inner_wall": [], "inner_lip": []}
+	var natural = region.without_terrain_grades() if region.has_method("without_terrain_grades") else region
 	for cz in range(lo_cz, lo_cz + cells):
 		for cx in range(lo_cx, lo_cx + cells):
-			_cell(region, cx, cz, out)
+			_cell(natural, cx, cz, out)
+	# Rigid authored pieces belong to the unchanged natural cliff. Graded
+	# spans are reconstructed by the continuous ground and rock backing mesh.
+	if region.has_method("has_grade_effect_in"):
+		for key: String in out:
+			out[key] = (out[key] as Array).filter(func(transform: Transform3D) -> bool:
+				return not grade_affects_piece(region, Vector2(transform.origin.x, transform.origin.z)))
 	return out
 
 # Per-instance biome tint, sampled at each piece's own origin — the SAME field
@@ -199,6 +210,9 @@ static func _ghost_mode(region, cx: int, cz: int, cdir: Vector2i) -> int:
 	if not TerrainSurfaceField.is_higher_flat(region, cx, cz, ca):
 		return 0
 	if not TerrainSurfaceField.is_higher_flat(region, cx, cz, cb):
+		return 0
+	if not TerrainSurfaceField.own_edge_flat(region, cx + ca.x, cz + ca.y, -ca) \
+			or not TerrainSurfaceField.own_edge_flat(region, cx + cb.x, cz + cb.y, -cb):
 		return 0
 	if TerrainSurfaceField._is_inner_corner(region, cx + cdir.x, cz + cdir.y, Vector2i(-cdir.x, -cdir.y)):
 		return 0
@@ -438,11 +452,19 @@ static func _diagonal_owns_pocket_corner(region, cx: int, cz: int, cdir: Vector2
 
 # Standalone corner_map for callers that don't already hold the exposure data (the mesher's
 # sheet clip). Empty for non-flat cells (they carry no dressing).
+static func grade_affects_piece(region, centre: Vector2) -> bool:
+	return region.has_method("has_grade_effect_in") and region.has_grade_effect_in(
+		Rect2(centre - Vector2.ONE * 2.0, Vector2.ONE * 4.0))
+
 static func corner_flags(region, cx: int, cz: int) -> Dictionary:
 	if not TerrainSurfaceField.is_flat_cell(region, cx, cz):
 		return {}
 	var e := _exposure(region, cx, cz)
-	return corner_map(region, cx, cz, e[0], e[1])
+	var corners := corner_map(region, cx, cz, e[0], e[1])
+	for direction: Vector2i in corners.keys():
+		if grade_affects_piece(region, Vector2(cx, cz) * TILE + Vector2(direction) * PLACE):
+			corners.erase(direction)
+	return corners
 
 static func _cell(region, cx: int, cz: int, out: Dictionary) -> void:
 	# Ghost inner corners first: they belong to pocket cells of ANY type (see above).
@@ -689,6 +711,73 @@ static func _finish_piece_setup() -> void:
 			for key in ["lip", "outer_lip", "inner_lip"]:
 				_pieces[key][0] = _retexel_grass_region(_pieces[key][0], luvs[i])
 			break
+	# Main-thread warm-up copies resource arrays once. Worker deformation below
+	# reads only these packed CPU values and never touches the Mesh resources.
+	for key: String in _pieces:
+		var arrays := (_pieces[key][0] as Mesh).surface_get_arrays(0)
+		_cpu_pieces[key] = {"vertices": arrays[Mesh.ARRAY_VERTEX],
+			"uv": arrays[Mesh.ARRAY_TEX_UV], "indices": arrays[Mesh.ARRAY_INDEX],
+			"local": _pieces[key][1]}
+
+
+static func compute_graded_faces(region: HeightfieldRegion, lo_cx: int,
+		lo_cz: int, cells: int, world_seed: int) -> Array:
+	if region.terrain_grades.is_empty(): return []
+	var natural := region.without_terrain_grades()
+	var placements := {"wall": [], "lip": [], "outer_wall": [],
+		"outer_lip": [], "inner_wall": [], "inner_lip": []}
+	for z in range(lo_cz, lo_cz + cells):
+		for x in range(lo_cx, lo_cx + cells): _cell(natural, x, z, placements)
+	var vertices := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var uvs := PackedVector2Array()
+	var colours := PackedColorArray()
+	for key: String in ["wall", "outer_wall", "inner_wall"]:
+		if not _cpu_pieces.has(key): continue
+		var source: Dictionary = _cpu_pieces[key]
+		var source_vertices := source.vertices as PackedVector3Array
+		var source_uv := source.uv as PackedVector2Array
+		var indices := source.indices as PackedInt32Array
+		for placement: Transform3D in placements[key]:
+			if not grade_affects_piece(region, Vector2(placement.origin.x, placement.origin.z)): continue
+			var transform := placement * (source.local as Transform3D)
+			var tint := Color.WHITE if world_seed == 0 else tint_at(placement, world_seed)
+			var points := PackedVector3Array()
+			var retained: Array[bool] = []
+			for vertex: Vector3 in source_vertices:
+				var point := transform * vertex
+				# A fully filled/cut column has no remaining cliff. Do not turn
+				# its collapsed triangles into coplanar rock paint on the lawn.
+				retained.append(region.graded_height(point.x, point.z, 1.0)
+					- region.graded_height(point.x, point.z, 0.0) > 0.001)
+				point.y = region.graded_height(point.x, point.z, point.y)
+				points.append(point)
+			var count := indices.size() if not indices.is_empty() else points.size()
+			for triangle in range(0, count, 3):
+				var ids: Array[int] = []
+				for corner in 3:
+					ids.append(indices[triangle + corner] if not indices.is_empty() else triangle + corner)
+				if not retained[ids[0]] and not retained[ids[1]] and not retained[ids[2]]: continue
+				var a := points[ids[0]]
+				var b := points[ids[1]]
+				var c := points[ids[2]]
+				var normal := (c - a).cross(b - a)
+				if normal.length_squared() < 0.00000001: continue
+				normal = normal.normalized()
+				for index: int in ids:
+					vertices.append(points[index])
+					normals.append(normal)
+					uvs.append(source_uv[index])
+					colours.append(tint)
+	if vertices.is_empty(): return []
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_COLOR] = colours
+	return arrays
+
 
 static func _vertical_seam_v(mesh: Mesh) -> float:
 	if mesh.get_surface_count() != 1:

@@ -63,6 +63,9 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 		# Measured from the authored jambs after the closed leaf is excluded
 		# during bake; the opening is centred between x=-0.803 and x=1.247.
 		"entrance_local": Vector2(0.222, 6.17),
+		# The coarse foundation rectangle extends beyond the actual doorstep.
+		# Ground paint must meet the measured native floor edge, not that reservation.
+		"ground_entrance_local": Vector2(0.222, 6.0),
 		"entrance_outward": Vector2.DOWN,
 		"entrance_floor_y": 0.522,
 		# Foundation-bearing contacts are authored on the fixed 1.5 m module
@@ -84,9 +87,10 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
 		"vertical_policy": VillageAssetSpec.VerticalPolicy.STACKABLE,
 		"enclosed_interior": true,
-		# The two authored front leaves are bake-excluded. This point is centred
-		# in the resulting opening and the floor sits on the reviewed threshold.
+		# The legacy entry datum locates the building. Its native porch owns
+		# the walk inward from the separately measured ground-level toe.
 		"entrance_local": Vector2(0.019, 7.55),
+		"ground_entrance_local": Vector2(0.019, 5.70),
 		"entrance_outward": Vector2.DOWN,
 		"entrance_floor_y": 0.0,
 		"ground_contact_rect": Rect2(-4.635, -3.968, 10.5, 10.5),
@@ -105,6 +109,7 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
 		"enclosed_interior": true,
 		"entrance_local": Vector2(0.024, 5.85),
+		"ground_entrance_local": Vector2(0.024, 4.30),
 		"entrance_outward": Vector2.DOWN,
 		"entrance_floor_y": 0.0,
 		"ground_contact_rect": Rect2(-2.267, -1.93, 7.5, 7.5),
@@ -123,6 +128,7 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
 		"enclosed_interior": true,
 		"entrance_local": Vector2(-0.65, 8.528),
+		"ground_entrance_local": Vector2(-0.65, 5.50),
 		"entrance_outward": Vector2.DOWN,
 		"entrance_floor_y": 0.0,
 		"ground_contact_rect": Rect2(-5.15, -5.72, 15.0, 13.5),
@@ -137,6 +143,8 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 	# their whole shell and roof, so they add a second architectural vocabulary
 	# without pretending to interlock with the sectional core. Their authored
 	# jamb opening receives the matching closed leaf as one contained component.
+	# The leaf origin is its right hinge (x=1.311); its measured center is
+	# x=0.7643. Foot traffic addresses that center, while attachments keep the hinge.
 	{
 		"id": &"lpfv.building.house.01",
 		"role": VillageAssetSpec.Role.HOUSE,
@@ -144,7 +152,7 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
 		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
 		"enclosed_interior": true,
-		"entrance_local": Vector2(1.311, 2.869),
+		"entrance_local": Vector2(0.7643, 2.869),
 		"entrance_outward": Vector2.DOWN,
 		"entrance_floor_y": 0.0,
 		"ground_contact_rect": Rect2(-2.25, -2.25, 4.5, 4.5),
@@ -163,7 +171,7 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
 		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
 		"enclosed_interior": true,
-		"entrance_local": Vector2(1.311, 2.869),
+		"entrance_local": Vector2(0.7643, 2.869),
 		"entrance_outward": Vector2.DOWN,
 		"entrance_floor_y": 0.0,
 		"ground_contact_rect": Rect2(-2.25, -2.25, 4.5, 4.5),
@@ -189,7 +197,7 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
 		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
 		"enclosed_interior": true,
-		"entrance_local": Vector2(1.311, 2.869),
+		"entrance_local": Vector2(0.7643, 2.869),
 		"entrance_outward": Vector2.DOWN,
 		"entrance_floor_y": 0.0,
 		"ground_contact_rect": Rect2(-5.25, -2.25, 7.5, 4.5),
@@ -208,7 +216,7 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
 		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
 		"enclosed_interior": true,
-		"entrance_local": Vector2(1.311, 2.869),
+		"entrance_local": Vector2(0.7643, 2.869),
 		"entrance_outward": Vector2.DOWN,
 		"entrance_floor_y": 0.0,
 		"ground_contact_rect": Rect2(-5.25, -2.25, 7.5, 4.5),
@@ -227,7 +235,7 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
 		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
 		"enclosed_interior": true,
-		"entrance_local": Vector2(1.311, 2.869),
+		"entrance_local": Vector2(0.7643, 2.869),
 		"entrance_outward": Vector2.DOWN,
 		"entrance_floor_y": 0.0,
 		"ground_contact_rect": Rect2(-5.25, -2.25, 7.5, 4.5),
@@ -246,7 +254,7 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
 		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
 		"enclosed_interior": true,
-		"entrance_local": Vector2(1.311, 2.869),
+		"entrance_local": Vector2(0.7643, 2.869),
 		"entrance_outward": Vector2.DOWN,
 		"entrance_floor_y": 0.0,
 		"ground_contact_rect": Rect2(-5.25, -2.25, 7.5, 4.5),
@@ -265,7 +273,7 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 		"foundation_kind": VillageAssetSpec.FoundationKind.PERIMETER,
 		"vertical_policy": VillageAssetSpec.VerticalPolicy.GROUND_ONLY,
 		"enclosed_interior": true,
-		"entrance_local": Vector2(1.311, 2.869),
+		"entrance_local": Vector2(0.7643, 2.869),
 		"entrance_outward": Vector2.DOWN,
 		"entrance_floor_y": 0.0,
 		"ground_contact_rect": Rect2(-2.25, -2.25, 4.5, 4.5),

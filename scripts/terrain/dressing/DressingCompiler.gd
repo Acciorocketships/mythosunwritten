@@ -183,7 +183,7 @@ static func _compile_set(source: DressingSet,
 			return {}
 		var choice_spacing := maxf(source.spacing_radius, choice_resource.spacing_radius)
 		compiled_spacing_radius = maxf(compiled_spacing_radius, choice_spacing)
-		var support_points := _ground_support_points(descriptor, support_cache)
+		var support_points := _ground_support_points(descriptor, support_cache, source.visual_ground_support)
 		var ground_radius := _maximum_radius(support_points)
 		var feature_centre := Vector2(
 			descriptor.measured_aabb.get_center().x,
@@ -264,13 +264,13 @@ static func _compile_set(source: DressingSet,
 		"slot_count": slot_count,
 	}
 
-## Compile-time only: reduce each collidable visual to the radial extrema of
+## Compile-time only: reduce each supported visual to the radial extrema of
 ## its actual near-ground vertices. Trees therefore include authored roots,
 ## rocks include their visible base, and the worker receives only Vector2 data.
 ## Foliage high above the ground cannot inflate this footprint.
 static func _ground_support_points(descriptor: EnvironmentAssetDescriptor,
-		cache: Dictionary) -> PackedVector2Array:
-	if descriptor.collision_piece_count <= 0:
+		cache: Dictionary, require_visual_support: bool = false) -> PackedVector2Array:
+	if descriptor.collision_piece_count <= 0 and not require_visual_support:
 		return PackedVector2Array()
 	if cache.has(descriptor.id):
 		return cache[descriptor.id]

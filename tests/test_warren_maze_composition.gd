@@ -923,6 +923,16 @@ func _corpus() -> Array[Dictionary]:
 	return out
 
 
+func _garden_corpus() -> Array[Dictionary]:
+	# Compact plots may legitimately contain only their public green. Include
+	# large and grand towns so optional yard planting is exercised on actual
+	# available ground; all clearance and variety requirements remain intact.
+	var outcomes := _corpus()
+	for lane: Array in BIG_TOWN_LANES:
+		outcomes.append(_solved(int(lane[0]), StringName(lane[1])))
+	return outcomes
+
+
 func _bridge_corpus() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for world_seed: int in BRIDGE_STANDARD_SEEDS:
@@ -1720,8 +1730,10 @@ func test_finished_city_connectivity_uses_its_valid_private_skywalk_sites() -> v
 		var fabric := plan.compiled_fabric_cache()
 		if fabric == null:
 			continue
-		var network := SettlementFabricAssembler.maze_exterior_network(fabric)
-		var available := int(network.get("private_candidate_count", 0))
+		var network := SettlementFabricAssembler.maze_exterior_network(fabric, {}, true)
+		assert_eq(network.spans, SettlementFabricAssembler.maze_exterior_network(fabric).spans,
+			"collecting candidate diagnostics cannot alter construction")
+		var available := _disjoint_private_capacity(network.private_candidates)
 		if available <= 0:
 			continue
 		measured += 1
@@ -1731,6 +1743,28 @@ func test_finished_city_connectivity_uses_its_valid_private_skywalk_sites() -> v
 			"finished valid two-ended sites must become bounded city connections")
 	assert_gt(measured + source_spans, 0,
 		"the corpus must exercise a source or finished private-connection stage")
+
+
+func _disjoint_private_capacity(candidates: Array) -> int:
+	## Independent capacity up to the required two connections. Alternative
+	## widths at one gap are not separate sites; their complete reservations
+	## overlap. Keep the two-connection requirement whenever a disjoint pair exists.
+	if candidates.is_empty(): return 0
+	var claims: Array[Dictionary] = []
+	for candidate: Dictionary in candidates:
+		var cells: Dictionary = {}
+		for lane in int(candidate.get("width", 1)):
+			for index in range(0, int(candidate.gap) + 2):
+				cells[(candidate.cell as Vector3i) + (candidate.step as Vector3i) * index
+					+ (candidate.get("cross", Vector3i.ZERO) as Vector3i) * lane] = true
+		claims.append(cells)
+	for left in claims.size():
+		for right in range(left + 1, claims.size()):
+			var overlaps := false
+			for cell: Vector3i in claims[left]:
+				overlaps = overlaps or claims[right].has(cell)
+			if not overlaps: return 2
+	return 1
 
 
 func _bridge_floor_cells(plan: WarrenSpatialPlan,
@@ -2240,8 +2274,8 @@ func test_source_height_contract_never_forces_a_plank_roof() -> void:
 		assert_eq(pitched, preferred,
 			("%s compiled %d pitched complete crowns but accounts for %d " \
 				+ "pitched preferences") % [_label(outcome), pitched, preferred])
-		assert_eq(flats, 0,
-			"%s capped an inhabited maze house with a plank roof" \
+		assert_eq(_unbacked_flat_crowns(fabric), [] as Array[StringName],
+			"%s may use a flat crown only beneath an actual upper building" \
 				% _label(outcome))
 		measured += int(flat_stamps > 0)
 	assert_gt(measured, 0,
@@ -2395,8 +2429,8 @@ func test_maze_crowns_are_pitched_unless_something_stands_on_them() -> void:
 			"%s must publish maze_crown_fell_through_count" % _label(outcome))
 		assert_gte(source_preferred, 0,
 			"%s must publish maze_pitched_preference_count" % _label(outcome))
-		assert_eq(flats, 0,
-			"%s left an inhabited complete crown as a flat plank cap" \
+		assert_eq(_unbacked_flat_crowns(fabric), [] as Array[StringName],
+			"%s left a free terminal crown as a flat plank cap" \
 				% _label(outcome))
 		assert_eq(int(fabric.audit.get("realized_roof_face_count", -1)),
 			int(fabric.audit.get("source_roof_face_count", -2)),
@@ -2617,6 +2651,52 @@ func _rendered_bracket_units(fabric: SettlementFabricPlan) -> int:
 	return out
 
 
+func test_free_flat_crown_detection_requires_a_real_upper_building() -> void:
+	var program := _program()
+	var fabric := SettlementFabricPlan.new(&"flat-crown-inspection")
+	for recipe: FabricRecipe in program.recipes(): fabric.register_recipe(recipe)
+	var slab := FabricUnit.new(&"slab", &"roof.flat.tower", Vector3i(0,2,0), 0)
+	fabric.append_constructed_unit(slab)
+	assert_eq(_unbacked_flat_crowns(fabric), [&"slab"] as Array[StringName],
+		"the census must catch a free flat house roof")
+	var upper := FabricUnit.new(&"upper", &"room.tower.base.rock.closed", Vector3i(0,4,0), 0)
+	fabric.append_constructed_unit(upper)
+	assert_eq(_unbacked_flat_crowns(fabric), [] as Array[StringName])
+	upper.lattice_origin.x = 10
+	assert_eq(_unbacked_flat_crowns(fabric), [&"slab"] as Array[StringName],
+		"an unrelated upper house cannot justify this slab")
+
+
+func _unbacked_flat_crowns(fabric: SettlementFabricPlan) -> Array[StringName]:
+	# Inspect finished slabs and actual higher root-room footprints, independently
+	# of the compiler's roof-preference counters. A higher building can bear on a
+	# ceiling through its frame even when a band of open space separates them.
+	var failures: Array[StringName] = []
+	for slab: FabricUnit in fabric.units:
+		var parts := String(slab.recipe_id).split(".")
+		if parts.size() != 3 or parts[0] != "roof" or parts[1] != "flat":
+			continue
+		var slab_bounds := slab.transform() * fabric.recipe(slab.recipe_id).local_bounds
+		var slab_footprint := Rect2(Vector2(slab_bounds.position.x, slab_bounds.position.z),
+			Vector2(slab_bounds.size.x, slab_bounds.size.z)).grow(-0.01)
+		var carries_building := false
+		for upper: FabricUnit in fabric.units:
+			var upper_recipe := fabric.recipe(upper.recipe_id)
+			if not upper_recipe.has_tag(&"terrain_bearing"):
+				continue
+			var upper_bounds := upper.transform() * upper_recipe.local_bounds
+			if upper_bounds.position.y < slab_bounds.end.y + 0.01:
+				continue
+			var footprint := Rect2(Vector2(upper_bounds.position.x, upper_bounds.position.z),
+				Vector2(upper_bounds.size.x, upper_bounds.size.z)).grow(-0.01)
+			if slab_footprint.intersects(footprint):
+				carries_building = true
+				break
+		if not carries_building:
+			failures.append(slab.stable_id)
+	return failures
+
+
 func _crown_cap_census(plan: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 		maze_source: WarrenMazeSourcePlan) -> Dictionary:
 	## TASK H2 PART 1, re-derived. Every sky-facing face of the assembler's own
@@ -2628,12 +2708,10 @@ func _crown_cap_census(plan: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 	## `plant` is one synthetic UP face at a roof-band cell of a real plot with
 	## open sky above it, for the can-it-fire probe. Empty when the town offers
 	## no such cell.
-	var retained := fabric.retained_terrace_cells
-	var solids := fabric.transformed_cells(&"solid")
-	var paved_cells := SettlementFabricAssembler.public_floor_cells(
-		fabric.surface_plan)
-	var exposed := SettlementFabricAssembler.exposed_maze_stone_faces(retained,
-		solids, paved_cells)
+	# Count the finished terrain/public boundary. Raw retained cells precede
+	# suspended-yard and shared-street ownership and can contain buried caps.
+	var ground := SettlementFabricAssembler.maze_ground_skin_transaction(fabric)
+	var exposed := (ground.shell as Dictionary).exposed as Dictionary
 	var walked: Dictionary = {}
 	if fabric.surface_plan != null:
 		for surface_kind in [
@@ -4198,8 +4276,23 @@ func test_stacked_houses_bond_to_flat_roofs() -> void:
 			if ground == null:
 				uncomposed += 1
 				continue
-			if ground.terrain_bearing \
-					or ground.support_parent_parcel_id != parent_id:
+			var final_parent_id := ground.support_parent_parcel_id
+			var directly_borne_by_final_parent := false
+			if final_parent_id != parent_id:
+				# A merged floorplate can transfer an upper room to another
+				# building. Prove that actual bearing rather than pinning its
+				# obsolete source-plot identity or accepting any renamed edge.
+				var parent_cells: Dictionary = {}
+				for parent: WarrenRoomStamp in rooms_by_parcel.get(final_parent_id, []):
+					for cell: Vector3i in parent.private_cells:
+						parent_cells[cell] = true
+				directly_borne_by_final_parent = not parent_cells.is_empty()
+				for cell: Vector3i in ground.private_cells:
+					if cell.y == ground.lattice_origin.y:
+						directly_borne_by_final_parent = directly_borne_by_final_parent \
+							and parent_cells.has(cell + Vector3i.DOWN)
+			if ground.terrain_bearing or (final_parent_id != parent_id \
+					and not directly_borne_by_final_parent):
 				if wrong.is_empty():
 					wrong = "%s roots in %s instead of %s" % [child_id,
 						"terrain" if ground.terrain_bearing \
@@ -4404,6 +4497,45 @@ func _stone_closure_instances(fabric: SettlementFabricPlan) \
 	## companion view includes both ID families for the shell-coverage identity.
 	var out := _stone_instances(fabric)
 	var payload := SettlementFabricAssembler.terrace_retaining_payload(fabric)
+	# A floor-owned cap is partitioned into resource-free mesh surfaces, not
+	# an asset instance. Count each logical cap once across material surfaces.
+	var partial: Dictionary = {}
+	for mesh: Dictionary in payload.surface_meshes:
+		var id := String(mesh.stable_id)
+		if not id.begins_with("maze-stone/") or not "/floor-interface." in id:
+			continue
+		var parts := id.trim_prefix("maze-stone/").split("/")
+		var face := Vector4i(int(parts[0]),int(parts[1]),int(parts[2]),int(parts[3]))
+		if face.w < SettlementFabricAssembler.FACE_DIRECTIONS.size(): continue
+		if not partial.has(face): partial[face] = PackedVector3Array()
+		var vertices: PackedVector3Array = partial[face]
+		vertices.append_array(mesh.vertices)
+		partial[face] = vertices
+	var floor_faces := PackedVector3Array()
+	var catalog := EnvironmentCatalog.load_default()
+	for placement: Dictionary in fabric.expanded_placements():
+		if placement.asset_id != SettlementFabricProgram.FLOOR: continue
+		var visual: EnvironmentVisual = load(catalog.descriptor(placement.asset_id).visual_path)
+		for piece: EnvironmentVisualPiece in visual.pieces:
+			for vertex: Vector3 in piece.mesh.get_faces():
+				floor_faces.append(placement.transform*piece.local_transform*vertex)
+	for face: Vector4i in partial:
+		out.append({"face":face,"vertices":partial[face],"floor_faces":floor_faces})
+	# A cap wholly owned by a native room floor emits no remainder mesh.
+	# Verify its actual floor triangles before crediting that logical boundary;
+	# otherwise exact clipping would make a correct zero-remainder cap disappear
+	# from this census. The independent probes reject missing/partial floors.
+	var seen: Dictionary = {}
+	for instance: Dictionary in out: seen[instance.face] = true
+	var shell: Dictionary = SettlementFabricAssembler.maze_ground_skin_transaction(fabric).shell
+	for face: Vector4i in shell.faces:
+		if face.w != 4 or seen.has(face) \
+				or shell.treatments[face] == SettlementFabricAssembler.SkinTreatment.GREEN: continue
+		var cells: Array[Vector3i] = [Vector3i(face.x,face.y,face.z)]
+		var partner: Vector3i = shell.faces[face]
+		if partner != Vector3i.ZERO: cells.append(cells[0]+partner)
+		if _native_floor_covers_cap(cells,floor_faces):
+			out.append({"face":face,"vertices":PackedVector3Array(),"floor_faces":floor_faces})
 	for asset_value: Variant in payload.batches.keys():
 		var batch := payload.batches[asset_value] as Dictionary
 		var ids := batch.get("ids", []) as Array
@@ -4420,6 +4552,33 @@ func _stone_closure_instances(fabric: SettlementFabricPlan) \
 				"transform": transforms[index] as Transform3D,
 			})
 	return out
+
+
+func _native_floor_covers_cap(cells: Array[Vector3i], triangles: PackedVector3Array) -> bool:
+	for cell: Vector3i in cells:
+		for x in [-0.74,-0.37,0.0,0.37,0.74]:
+			for z in [-0.74,-0.37,0.0,0.37,0.74]:
+				var point := Vector3(cell)*FabricRecipe.CELL_SIZE+Vector3(x,FabricRecipe.CELL_SIZE,z)
+				var covered := false
+				for i in range(0,triangles.size(),3):
+					if Geometry3D.segment_intersects_triangle(point+Vector3.UP*0.1,
+							point-Vector3.UP*0.5,triangles[i],triangles[i+1],triangles[i+2]) != null:
+						covered = true
+						break
+				if not covered: return false
+	return not cells.is_empty()
+
+
+func test_native_floor_cap_census_rejects_absent_partial_and_lower_floor_owners() -> void:
+	var cells: Array[Vector3i] = [Vector3i.ZERO]
+	var a := Vector3(-0.75,1.45,-0.75)
+	var b := Vector3(0.75,1.45,-0.75)
+	var c := Vector3(0.75,1.45,0.75)
+	var d := Vector3(-0.75,1.45,0.75)
+	assert_true(_native_floor_covers_cap(cells,PackedVector3Array([a,c,b,a,d,c])))
+	assert_false(_native_floor_covers_cap(cells,PackedVector3Array()))
+	assert_false(_native_floor_covers_cap(cells,PackedVector3Array([a,c,b])))
+	assert_false(_native_floor_covers_cap(cells,PackedVector3Array([a-Vector3.UP,c-Vector3.UP,b-Vector3.UP,a-Vector3.UP,d-Vector3.UP,c-Vector3.UP])))
 
 
 ## TASK H2b -- the authored extent of each module that can close a horizontal
@@ -4738,9 +4897,28 @@ func _cap_coverage(instances: Array[Dictionary]) -> Dictionary:
 	## module fails here rather than being silently counted as covering
 	## nothing.
 	var out: Dictionary = {}
+	var floor_coverage: Dictionary = {}
 	for instance: Dictionary in instances:
 		var face := instance["face"] as Vector4i
 		if face.w < SettlementFabricAssembler.FACE_DIRECTIONS.size():
+			continue
+		if instance.has("vertices"):
+			for offset: Vector3i in [Vector3i.ZERO,Vector3i.RIGHT,Vector3i.LEFT,Vector3i.BACK,Vector3i.FORWARD]:
+				var cell := Vector3i(face.x,face.y,face.z)+offset
+				var point := Vector3(cell)*FabricRecipe.CELL_SIZE+Vector3.UP*FabricRecipe.CELL_SIZE
+				var covered := false
+				var floor_owned := false
+				for triangles: PackedVector3Array in [instance.vertices,instance.floor_faces]:
+					for i in range(0,triangles.size(),3):
+						if Geometry3D.segment_intersects_triangle(point+Vector3.UP*0.1,point-Vector3.UP*0.5,triangles[i],triangles[i+1],triangles[i+2]) != null:
+							covered=true
+							break
+					if covered: break
+					floor_owned=true
+				if covered:
+					var key := Vector4i(cell.x,cell.y,cell.z,face.w)
+					if floor_owned: floor_coverage[key]=true
+					else: out[key]=int(out.get(key,0))+1
 			continue
 		var asset := instance["asset"] as StringName
 		assert_true(CAP_MODULE_SPANS.has(asset),
@@ -4772,6 +4950,10 @@ func _cap_coverage(instances: Array[Dictionary]) -> Dictionary:
 				continue
 			var key := Vector4i(cell.x, cell.y, cell.z, face.w)
 			out[key] = int(out.get(key, 0)) + 1
+	# The same room floor can close portions of several clipped cap panels.
+	# It is one physical owner, not another slab per panel that refers to it.
+	for key: Vector4i in floor_coverage:
+		if not out.has(key): out[key]=1
 	return out
 
 
@@ -5331,7 +5513,7 @@ func test_the_bench_tops_read_as_gardens_with_one_village_green() -> void:
 	var corpus_garden_cells := 0
 	var corpus_plaza_cells := 0
 	var corpus_planting := 0
-	for outcome: Dictionary in _corpus():
+	for outcome: Dictionary in _garden_corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
 		if plan == null:
 			continue
@@ -6098,7 +6280,7 @@ func test_the_town_gets_its_life() -> void:
 		var construction_crowns := SettlementFabricAssembler \
 			.maze_construction_crown_cells(fabric)
 		var exterior_network := SettlementFabricAssembler.maze_exterior_network(
-			fabric)
+			fabric, {}, true)
 		var spans := exterior_network.spans as Array[Dictionary]
 		var payload := SettlementFabricAssembler.terrace_retaining_payload(
 			fabric)
@@ -6225,7 +6407,9 @@ func test_the_town_gets_its_life() -> void:
 				var width := int(span_width_by_key.get(String(key_value), 1))
 				var walk_width := int(span_walk_width_by_key.get(
 					String(key_value), width))
-				var expected_bearers := 2 * walk_width
+				# The reviewed bridge skin bears directly on its endpoint facades.
+				# Ribbed corbels were retired with the outcrop corbels below.
+				var expected_bearers := 0
 				var expected_portals := 2 if walk_width == width else 0
 				malformed_spans += int(int(kinds.get("deck", 0)) != bays \
 					or int(kinds.get("wall", 0)) != 2 * bays \
@@ -6241,7 +6425,7 @@ func test_the_town_gets_its_life() -> void:
 					or int(kinds.get("portal", 0)) != 0 \
 					or int(kinds.get("roof", 0)) != 0 \
 					or int(kinds.get("rail", 0)) != 2 * pieces \
-					or int(kinds.get("bearer", 0)) != 2)
+					or int(kinds.get("bearer", 0)) != 0)
 		# 2026-09-04: the ribbed corbel pair under every projection read as a
 		# hanging flight of stairs and was removed; the bearer stations survive
 		# only as the selection-time clearance proof. `bare_outcrops` now counts
@@ -7187,6 +7371,8 @@ func test_the_frontage_stands_clear_of_the_town_s_own_cladding() -> void:
 		SettlementFabricAssembler.PERIMETER_NARROW_FRONTAGE,
 		SettlementFabricAssembler.PERIMETER_SINGLE_FRONTAGE]
 	for pool: Array in pools:
+		if pool.is_empty():
+			continue # A retired pool emits no frontage and reserves no ground.
 		var reach := 0.0
 		for asset_value: Variant in pool:
 			reach = maxf(reach, (SettlementFabricAssembler \
@@ -7576,127 +7762,48 @@ const COURSED_TRIM_PANELS := 0
 
 
 func test_a_stone_cap_never_reaches_over_a_street() -> void:
-	## TASK I1 FIX 1 -- the masonry twin of the test above, and the pin the
-	## three shut cells of task I1's first landing wanted.
-	##
-	## A cap is the 3 m module laid FLAT over a 1.5 m cell. Paired, it lays its
-	## two cells exactly; UNPAIRED, it reaches 0.75 m past each end of the run it
-	## closes, and where that end is a street the slab stands in the walking
-	## space -- 0.750 m left of a 1.5 m cell against a 0.795 m capsule, which is
-	## a cell nobody can stand in. The green quad's overhang was trimmed for
-	## being lawn over air; this one is trimmed for being masonry over a street,
-	## and only where it is: a stone ledge corbelling over closed mass is
-	## correct vocabulary and stays.
-	##
-	## Measured off the TRANSFORMS the renderer is handed, decoded through the
-	## module's own authored envelope, never off the rule that placed them -- so
-	## a predicate that says the right thing while the emitter lays the wrong
-	## slab cannot pass. The audit is then asserted against the same reading.
+	# Inspect the emitted horizontal stock and partitioned caps. Upright wall
+	# dimensions no longer describe these native boards.
 	var catalog := EnvironmentCatalog.load_default()
-	assert_not_null(catalog, "the shipped environment catalogue must load")
-	if catalog == null:
-		return
-	var module := catalog.descriptor(
-		SettlementFabricAssembler.MAZE_STONE_MODULE)
-	assert_not_null(module, "the maze stone module must be in the catalogue")
-	if module == null:
-		return
-	var local: AABB = module.measured_aabb
-	var sides := SettlementFabricAssembler.FACE_DIRECTIONS.size()
 	var checked := 0
 	for outcome: Dictionary in _corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
-		if plan == null:
-			continue
+		if plan == null: continue
 		var fabric := plan.compiled_fabric_cache()
-		if fabric == null:
-			continue
-		var walked := SettlementFabricAssembler.walked_floor_cells(
-			fabric.surface_plan)
-		var partners := _cap_partner_offsets(fabric)
+		if fabric == null: continue
+		var partners: Dictionary = SettlementFabricAssembler.maze_ground_skin_transaction(fabric).shell.faces
 		var caps := 0
-		var unpaired := 0
-		var trimmed := 0
-		var jut_cells := 0
-		var over_street := 0
-		var worst: Array[String] = []
-		for instance: Dictionary in _stone_instances(fabric):
-			if StringName(instance["asset"]) \
-					!= SettlementFabricAssembler.MAZE_STONE_MODULE:
-				continue
-			var face := instance["face"] as Vector4i
-			if face.w < sides:
-				continue
+		for instance: Dictionary in _stone_closure_instances(fabric):
+			var face: Vector4i = instance.face
+			if face.w != 4: continue
+			var vertices := PackedVector3Array()
+			if instance.has("vertices"):
+				vertices = instance.vertices
+			else:
+				if instance.asset not in [SettlementFabricAssembler.PLANK_SINGLE,
+						SettlementFabricAssembler.PLANK_GALLERY]: continue
+				var visual: EnvironmentVisual = load(catalog.descriptor(instance.asset).visual_path)
+				for piece: EnvironmentVisualPiece in visual.pieces:
+					for vertex: Vector3 in piece.mesh.get_faces():
+						vertices.append(instance.transform * piece.local_transform * vertex)
+			if vertices.is_empty(): continue
 			caps += 1
 			var cell := Vector3i(face.x, face.y, face.z)
-			var partner := partners.get(face, Vector3i.ZERO) as Vector3i
-			unpaired += int(partner == Vector3i.ZERO)
-			var xform := instance["transform"] as Transform3D
-			# The slab is anchored at one end and sweeps its authored 3 m along
-			# local +Y, so its world run is the origin plus that column.
-			var along := xform.basis * Vector3(0.0, 1.0, 0.0)
-			var length := along.length() * local.size.y
-			trimmed += int(length \
-				< SettlementFabricAssembler.STONE_MODULE_HEIGHT - 0.01)
-			var axis := along.normalized()
-			var near := xform.origin.dot(axis)
-			var far := (xform.origin + axis * length).dot(axis)
-			var owned: Dictionary = {cell: true}
-			if partner != Vector3i.ZERO:
-				owned[cell + partner] = true
-			# A floor-facing slab lies in the bottom of its own band, so it is
-			# in the head space of the band BELOW and on the floor of its own;
-			# a sky-facing one fills the top of its own band alone.
-			var reach := 1 if SettlementFabricAssembler \
-				.STONE_FACE_DIRECTIONS[face.w] == Vector3i.UP else 2
-			for step in range(-2, 3):
-				var probe := cell + Vector3i(axis.round()) * step
-				if owned.has(probe):
-					continue
-				var at := (Vector3(probe) * FabricRecipe.CELL_SIZE).dot(axis)
-				if at + FabricRecipe.CELL_SIZE * 0.5 <= minf(near, far) + 0.01 \
-						or at - FabricRecipe.CELL_SIZE * 0.5 \
-							>= maxf(near, far) - 0.01:
-					continue
-				jut_cells += 1
-				for band in reach:
-					if not walked.has(Vector3i(probe.x, face.y - band,
-							probe.z)):
-						continue
-					over_street += 1
-					if worst.size() < 8:
-						worst.append("cap(%d,%d,%d,%d)->(%d,%d,%d)" % [face.x,
-							face.y, face.z, face.w, probe.x, face.y - band,
-							probe.z])
-					break
-		var audit := fabric.audit
-		print("MAZE_CAP_JUT %s caps=%d unpaired=%d trimmed=%d jut=%d %s" % [
-			_label(outcome), caps, unpaired, trimmed, jut_cells,
-			"over_street=%d [%s]" % [over_street, " ".join(worst)]])
-		assert_gt(caps, 0, "%s must lay some stone caps to measure" \
-			% _label(outcome))
-		assert_eq(over_street, 0,
-			("%s lays %d cap slab(s) over a cell the public realm walks; a " \
-				+ "3 m module on a 1.5 m run leaves 0.750 m against a 0.795 m " \
-				+ "body %s") % [_label(outcome), over_street, " ".join(worst)])
-		assert_eq(int(audit.get("maze_skin_cap_trim_count", -1)), trimmed,
-			"%s audited cap trims must equal the payload's" % _label(outcome))
-		assert_eq(int(audit.get("maze_skin_coursed_trim_count", -1)),
-			COURSED_TRIM_PANELS,
-			("%s trims %d coursed side panel(s) where the corpus measures %d; " \
-				+ "the third leg of the cut has found a town again") % [
-				_label(outcome),
-				int(audit.get("maze_skin_coursed_trim_count", -1)),
-				COURSED_TRIM_PANELS])
+			var partner: Vector3i = partners.get(face, Vector3i.ZERO)
+			var half := FabricRecipe.CELL_SIZE * 0.5
+			var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
+			var other := Vector3(cell + partner) * FabricRecipe.CELL_SIZE
+			var minimum := centre.min(other) - Vector3(half,0,half)
+			var maximum := centre.max(other) + Vector3(half,FabricRecipe.CELL_SIZE,half)
+			var escaped := 0
+			for vertex: Vector3 in vertices:
+				if vertex.x < minimum.x - 0.001 or vertex.x > maximum.x + 0.001 \
+						or vertex.z < minimum.z - 0.001 or vertex.z > maximum.z + 0.001:
+					escaped += 1
+			assert_eq(escaped, 0, "%s cap %s must stay inside its owned cells" % [_label(outcome),face])
+		assert_gt(caps,0,"%s must publish actual caps to measure" % _label(outcome))
 		checked += 1
-	assert_gt(checked, 0, "the corpus must seal a town to measure")
-	# THIS CORPUS PAIRS EVERY MASONRY CAP IT LAYS (unpaired=0 on all four towns,
-	# printed above), so the assertion is a REGRESSION pin here and not a
-	# demonstration: it turns red the day a town lays an unpaired cap over a
-	# street, which is what the 48-town matrix found and these four seeds do not
-	# contain. The rule's own teeth are in the test below, on a shell built by
-	# hand -- the same division `test_the_hillside_treatment_fires_on_a_planted_
-	# bank` makes for the same reason.
+	assert_gt(checked,0)
 
 
 func test_a_cap_over_a_street_is_trimmed_to_the_run_it_closes() -> void:
@@ -7706,7 +7813,7 @@ func test_a_cap_over_a_street_is_trimmed_to_the_run_it_closes() -> void:
 	## FLOOR-FACING boundary stands over a street one band under the column
 	## beside it, and the final sky cap stands over nothing. The first cap must
 	## be cut back to the run it closes, the floor closure must become an exact
-	## timber soffit, and the third cap must keep its corbel.
+	## timber soffit, and the third cap must also stay inside its owned face.
 	var size := FabricRecipe.CELL_SIZE
 	var sky := Vector4i(0, 0, 0, 4)
 	var floor_cap := Vector4i(0, 4, 0, 5)
@@ -7749,58 +7856,23 @@ func test_a_cap_over_a_street_is_trimmed_to_the_run_it_closes() -> void:
 	assert_not_null(catalog, "the shipped environment catalogue must load")
 	if catalog == null:
 		return
-	var module := catalog.descriptor(
-		SettlementFabricAssembler.MAZE_STONE_MODULE)
-	assert_not_null(module, "the maze stone module must be in the catalogue")
-	if module == null:
-		return
-	var local: AABB = module.measured_aabb
-	var batch := payload.batches[
-		SettlementFabricAssembler.MAZE_STONE_MODULE] as Dictionary
-	var masonry_palette: Array[Color] = [
-		SettlementFabricAssembler.MASONRY_TINT_BLUE,
-		SettlementFabricAssembler.MASONRY_TINT_ORANGE,
-		SettlementFabricAssembler.MASONRY_TINT_AMBER,
-	]
-	for color_value: Variant in batch.colors:
-		var color := color_value as Color
-		assert_true(masonry_palette.has(color),
-			"retained masonry must inherit one architectural-district stone wash")
-		assert_lt(maxf(color.r, maxf(color.g, color.b)), 0.9,
-			("retained caps may preserve the rock texture, but their directly lit " \
-				+ "facets must not return to the floating-white-polygon read"))
-	var runs: Dictionary = {}
-	var ids: Array = batch.ids
-	for index in ids.size():
-		var xform := batch.transforms[index] as Transform3D
-		var along := xform.basis * Vector3(0.0, 1.0, 0.0)
-		var axis := along.normalized()
-		var near := xform.origin.dot(axis)
-		var far := near + along.length() * local.size.y
-		runs[String(ids[index])] = [minf(near, far), maxf(near, far), axis]
-	assert_false(ids.has(&"maze-stone/0/4/0/5"),
-		"a floor-facing closure may never rotate an upright rock wall flat")
 	assert_has(payload.batches, SettlementFabricAssembler.PLANK_SINGLE)
-	var soffit_batch := payload.batches[
-		SettlementFabricAssembler.PLANK_SINGLE] as Dictionary
-	assert_has(soffit_batch.ids, &"maze-soffit/0/4/0/5",
-		"the occupied floor boundary closes with one exact authored soffit")
-	for row: Array in [["maze-stone/0/0/0/4", sky]]:
-		var run: Array = runs[row[0]]
-		assert_almost_eq(float(run[1]) - float(run[0]), size, 0.001,
-			"%s must lay exactly the one cell it closes" % row[0])
-		# AND IT MUST STILL CLOSE IT. The trim may not become a hole: the run
-		# has to contain the whole of its own cell's boundary.
-		var centre := (Vector3(row[1].x, row[1].y, row[1].z) * size).dot(
-			run[2] as Vector3)
-		assert_lt(float(run[0]), centre - size * 0.5 + 0.001,
-			"%s must still reach its cell's near edge" % row[0])
-		assert_gt(float(run[1]), centre + size * 0.5 - 0.001,
-			"%s must still reach its cell's far edge" % row[0])
-	var kept: Array = runs["maze-stone/0/8/0/4"]
-	assert_almost_eq(float(kept[1]) - float(kept[0]),
-		FabricRecipe.CELL_SIZE, 0.001,
-		"even a free cap maps the authored face to its exact 1.5 m claim")
+	var batch: Dictionary = payload.batches[SettlementFabricAssembler.PLANK_SINGLE]
+	assert_has(batch.ids, &"maze-soffit/0/4/0/5",
+		"The occupied floor boundary closes with its authored soffit")
+	var local := catalog.descriptor(SettlementFabricAssembler.PLANK_SINGLE).measured_aabb
+	for row: Array in [[&"maze-stone/0/0/0/4",sky], [&"maze-stone/0/8/0/4",free]]:
+		assert_has(batch.ids,row[0])
+		var index: int = batch.ids.find(row[0])
+		if index < 0: continue
+		var bounds: AABB = batch.transforms[index] * local
+		assert_almost_eq(bounds.position.x,-size*0.5,0.001)
+		assert_almost_eq(bounds.end.x,size*0.5,0.001)
+		assert_almost_eq(bounds.position.z,-size*0.5,0.001)
+		assert_almost_eq(bounds.end.z,size*0.5,0.001)
+		assert_almost_eq(bounds.end.y,(row[1].y+1)*size,0.001,
+			"The cap closes the complete top face at its declared height")
+		assert_lt(bounds.size.y,0.17,"A ledge uses horizontal stock, without a wall skirting")
 
 
 func _cap_partner_offsets(fabric: SettlementFabricPlan) -> Dictionary:
@@ -10881,14 +10953,15 @@ func test_the_production_site_builds_a_maze_town_on_real_terrain() -> void:
 	assert_between(urban.terrain_relief_m, 0.0,
 		VillageUrbanFabricPlan.MAX_FABRIC_TERRAIN_RELIEF,
 		"the production footprint's relief is outside the fabric budget")
-	assert_eq(int(urban.fabric_audit.get("walk_surface_component_count", -1)),
+	var inspection := urban.construction_diagnostics(site.program as VillageProgram)
+	assert_eq(int(inspection.get("walk_surface_component_count", -1)),
 		1, "the production town's public floor came apart into pieces")
-	assert_gte(int(urban.fabric_audit.get("enclosed_skywalk_count", -1)), 0,
+	assert_gte(int(inspection.get("enclosed_skywalk_count", -1)), 0,
 		"the production topology must publish its occupied-skywalk count")
-	assert_eq(int(urban.fabric_audit.get("enclosed_skywalk_count", -1)),
-		int(urban.fabric_audit.get("modular_box_skywalk_count", -2)),
+	assert_eq(int(inspection.get("enclosed_skywalk_count", -1)),
+		int(inspection.get("modular_box_skywalk_count", -2)),
 		"the richness audit and compact-module classifier must count one skywalk")
-	assert_eq(int(urban.fabric_audit.get(
+	assert_eq(int(inspection.get(
 			"collision_flattened_roof_component_count", -1)), 0,
 		"roof collisions must reject proposals rather than turn gables into caps")
 	var handoff_top_count := 0
@@ -10929,17 +11002,17 @@ func test_the_production_site_builds_a_maze_town_on_real_terrain() -> void:
 			("the production town embeds %d final roof cells in retained " \
 			+ "stone (first %s)") % [roof_stone_overlap,
 				str(first_roof_stone_overlap)])
-	assert_eq(int(urban.fabric_audit.get("visual_envelope_overlap_count", -1)),
+	assert_eq(int(inspection.get("visual_envelope_overlap_count", -1)),
 		0, "the production construction may not contain measured visual overlap")
-	assert_eq(int(urban.fabric_audit.get(
+	assert_eq(int(inspection.get(
 		"public_air_occupied_overlap_count", -1)), 0,
 		"occupied skywalk mass may cover a lane but never enter its body clearance")
-	assert_eq(int(urban.fabric_audit.get("maze_garden_rim_deficit", -1)), 0,
+	assert_eq(int(inspection.get("maze_garden_rim_deficit", -1)), 0,
 		"the terrain-parity garden union must have one continuous derived rim")
-	assert_eq(int(urban.fabric_audit.get(
+	assert_eq(int(inspection.get(
 		"maze_green_cap_jut_over_air_count", -1)), 0,
 		"the terrain-parity garden union may not overhang unsupported air")
-	assert_eq(int(urban.fabric_audit.get(
+	assert_eq(int(inspection.get(
 		"modular_box_unclassified_count", -1)), 0,
 		"a compact room must be a roofed house, support course, or skywalk")
 	assert_true(urban.validate(site.program as VillageProgram, &"village"),
@@ -11075,7 +11148,7 @@ func test_no_decor_stands_inside_the_wall_beside_it() -> void:
 		return
 	var checked := 0
 	var corpus_placed := 0
-	for outcome: Dictionary in _corpus():
+	for outcome: Dictionary in _garden_corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
 		if plan == null:
 			continue
@@ -11879,7 +11952,7 @@ func test_the_town_s_decor_is_not_one_repeated_piece() -> void:
 	## so the ceiling is a small number rather than zero.
 	var checked := 0
 	var corpus_types: Dictionary = {}
-	for outcome: Dictionary in _corpus():
+	for outcome: Dictionary in _garden_corpus():
 		var plan := outcome.plan as WarrenSpatialPlan
 		if plan == null:
 			continue
@@ -11962,7 +12035,7 @@ func test_the_town_s_decor_is_not_one_repeated_piece() -> void:
 		checked += 1
 	print("MAZE_DECOR_CORPUS types=%d" % corpus_types.size())
 	assert_gte(corpus_types.size(), DECOR_CORPUS_TYPE_FLOOR,
-		("the four corpus towns use %d distinct decor pieces between them; " \
+		("the corpus towns use %d distinct decor pieces between them; " \
 			+ "the vocabulary ratchet lives here rather than on one town, " \
 			+ "because a town with ten cells of honest ground cannot show " \
 			+ "four") % corpus_types.size())

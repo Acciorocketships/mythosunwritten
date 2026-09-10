@@ -52,9 +52,12 @@ func _physics_process(delta: float) -> void:
 
 	# --- sample and smooth target velocity ---
 	var pos := target.global_position
+	if target.has_method("camera_follow_position"):
+		pos = target.camera_follow_position()
 	var v: Vector3 = Vector3.ZERO
 	if _have_prev:
 		v = (pos - _prev_pos) / max(delta, 1e-6)
+		v.y = 0.0
 		_v_ema = (1-ema_alpha) * _v_ema + ema_alpha * v
 	else:
 		_have_prev = true

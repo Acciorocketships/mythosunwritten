@@ -251,6 +251,7 @@ func finish_facade_corners(recipe: FabricRecipe) -> void:
 			continue
 		var pose := panel.transform as Transform3D
 		var mask := 0
+		var owners: Array[StringName] = [&"", &""]
 		for end in 2:
 			var point := pose * Vector3(-1.5 if end == 0 else 1.5, 0,
 				base.visual_bounds.end.z)
@@ -268,9 +269,93 @@ func finish_facade_corners(recipe: FabricRecipe) -> void:
 						and local.x >= other_bounds.position.x - 0.05 \
 						and local.x <= other_bounds.end.x + 0.05:
 					mask |= 1 << end
+					owners[end] = StringName(other.id)
 					break
 		if mask != 0:
+			recipe.facade_end_owners[StringName(panel.id)] = {
+				"base_asset":asset_id, "owners":owners, "mask":mask,
+				"bounds":pose * base.visual_bounds}
 			recipe.placements[index].asset_id = StringName("%s.miter%d" % [asset_id, mask])
+
+func finish_door_returns(recipe: FabricRecipe) -> Array[Dictionary]:
+	## A deep doorway owns the complete corner. Its perpendicular return ends
+	## at the measured back plane, so a shallow wall cannot leave an open miter
+	## beside the door. Every selected mesh remains inside its original envelope.
+	var variants: Array[Dictionary] = []
+	var by_id: Dictionary = {}
+	for placement: Dictionary in recipe.placements: by_id[StringName(placement.id)]=placement
+	var original := recipe.facade_end_owners.duplicate(true)
+	for panel_id: StringName in original:
+		var finish: Dictionary = original[panel_id].duplicate(true)
+		var base: StringName = finish.base_asset
+		if ".door.closed." in String(base):
+			finish.mask=0
+			finish.owners=[&"",&""] as Array[StringName]
+			finish["alternatives"]={0:base}
+			finish["door_return_depths"]=Vector2.ZERO
+		else:
+			var depths := Vector2.ZERO
+			for end in 2:
+				var owner: StringName = finish.owners[end]
+				if not original.has(owner): continue
+				var owner_asset: StringName = original[owner].base_asset
+				if not ".door.closed." in String(owner_asset): continue
+				var pose: Transform3D = by_id[panel_id].transform
+				var other_pose: Transform3D = by_id[owner].transform
+				var back := pose.affine_inverse()*(other_pose*Vector3(0,0,contract(owner_asset).visual_bounds.position.z))
+				depths[end]=ceilf((1.5+back.x if end==0 else 1.5-back.x)*1000000.0)/1000000.0
+			if depths.is_zero_approx(): continue
+			finish["door_return_depths"]=depths
+			var alternatives: Dictionary = {0:base}
+			for mask in range(1,4):
+				if mask & int(finish.mask) != mask: continue
+				var miter_mask := 0
+				var selected_depths := Vector2.ZERO
+				var codes := PackedStringArray(["square","square"])
+				for end in 2:
+					if not mask & (1<<end): continue
+					if depths[end]>0.0:
+						selected_depths[end]=depths[end]
+						codes[end]="back%d" % roundi(depths[end]*1000000.0)
+					else:
+						miter_mask |= 1<<end
+						codes[end]="miter"
+				if selected_depths.is_zero_approx():
+					alternatives[mask]=StringName("%s.miter%d" % [base,miter_mask])
+				else:
+					var id := StringName("%s.doorreturn.%s.%s" % [base,codes[0],codes[1]])
+					alternatives[mask]=id
+					variants.append({"id":String(id),"base_asset":String(base),
+						"facade_miter_ends":miter_mask,
+						"facade_return_depths":[selected_depths.x,selected_depths.y]})
+			finish["alternatives"]=alternatives
+		recipe.facade_end_owners[panel_id]=finish
+		(by_id[panel_id] as Dictionary).asset_id=finish.alternatives[int(finish.mask)]
+	return variants
+
+
+func finish_wall_top_ownership(recipe: FabricRecipe) -> bool:
+	## Compile available interface choices, without assuming any upper floor
+	## exists. Final construction assigns the owner from its actual floorplate.
+	if not recipe.has_tag(&"room") or not recipe.has_tag(&"generated_building"):
+		return true
+	for asset_id: StringName in recipe.asset_ids():
+		if not String(asset_id).begins_with("sfv.fabric.wall."):
+			continue
+		var value := contract(asset_id)
+		# Course ownership follows the top plane. Imported doorway feet can
+		# extend a few millimetres below their nominal base without changing it.
+		if value == null or absf(value.visual_bounds.end.y - 3.0) > 0.001 \
+				or absf(value.visual_bounds.position.y) > 0.005:
+			continue
+		var alternate := StringName("%s.course_open" % asset_id)
+		if contract(alternate) == null:
+			recipe.last_rejection = "missing baked wall interface %s" % alternate
+			return false
+		recipe.facade_top_assets[asset_id] = alternate
+		recipe.facade_top_bounds[asset_id] = _catalog.descriptor(alternate).omitted_face_bounds
+		recipe.facade_top_surfaces[asset_id] = _catalog.descriptor(alternate).omitted_face_surfaces
+	return true
 
 
 func roof_bearing_aligned_transform(asset_id: StringName, pose: Transform3D,

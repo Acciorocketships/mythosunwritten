@@ -1,0 +1,68 @@
+{
+  "02_town_slope_exact": {
+    "roi": [
+      806,
+      184,
+      1536,
+      821
+    ],
+    "mean_abs_rgb": 24.26325970936214,
+    "roi_mean_abs_rgb": 27.761785051217537,
+    "roi_changed_over_20_fraction": 0.697346293628094
+  },
+  "02_town_slope_gameplay_camera": {
+    "roi": [
+      806,
+      184,
+      1536,
+      821
+    ],
+    "mean_abs_rgb": 24.28192885159465,
+    "roi_mean_abs_rgb": 27.76047181781037,
+    "roi_changed_over_20_fraction": 0.6967377045654932
+  },
+  "02_town_slope_jitter_0": {
+    "roi": [
+      806,
+      184,
+      1536,
+      821
+    ],
+    "mean_abs_rgb": 24.238851916152264,
+    "roi_mean_abs_rgb": 27.73408170433611,
+    "roi_changed_over_20_fraction": 0.6962968538311004
+  },
+  "02_town_slope_jitter_1": {
+    "roi": [
+      806,
+      184,
+      1536,
+      821
+    ],
+    "mean_abs_rgb": 24.28490017361111,
+    "roi_mean_abs_rgb": 27.734837243643504,
+    "roi_changed_over_20_fraction": 0.6958301972000602
+  },
+  "02_town_slope_near_left": {
+    "roi": [
+      806,
+      184,
+      1536,
+      821
+    ],
+    "mean_abs_rgb": 22.457959908693415,
+    "roi_mean_abs_rgb": 26.397222281958094,
+    "roi_changed_over_20_fraction": 0.683802498870992
+  },
+  "02_town_slope_near_right": {
+    "roi": [
+      806,
+      184,
+      1536,
+      821
+    ],
+    "mean_abs_rgb": 26.135494952417694,
+    "roi_mean_abs_rgb": 28.582087840404867,
+    "roi_changed_over_20_fraction": 0.7064966344809789
+  }
+}

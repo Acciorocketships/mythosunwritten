@@ -34,7 +34,7 @@ func _solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 		failure_reason = "missing program, stable id, unit specs, or sealed public realm"
 		return null
 	var plan := SettlementFabricPlan.new(stable_id)
-	if not plan.set_asset_visual_bounds(_program.asset_visual_bounds):
+	if not plan.set_asset_visual_bounds(_program.asset_visual_bounds, _program.asset_wall_interfaces):
 		failure_reason = "could not attach measured fabric asset contracts"
 		return null
 	if embedding != null and not plan.set_embedding_plan(embedding):

@@ -58,6 +58,68 @@ func surface_at_cell(world_xz: Vector2, cell: Vector2i) -> int:
 			best_priority = shape.priority
 	return best_surface
 
+## Exact point sampler restricted to a known closed domain. Mesh clipping
+## queries many points in the same small rectangle; collect its possible shape
+## owners once instead of rescanning the entire 24 m bucket for every crossing.
+func surface_sampler_in(area: Rect2) -> Callable:
+	area = _conservative_query_bounds(area)
+	var selected: Array[FeatureGroundShape] = []
+	var seen: Dictionary = {}
+	var lo := _bucket_of(area.position)
+	var hi := _bucket_of(area.end)
+	for z in range(lo.y,hi.y+1):
+		for x in range(lo.x,hi.x+1):
+			for shape: FeatureGroundShape in _surface_buckets.get(Vector2i(x,z),[]):
+				var id := shape.get_instance_id()
+				if seen.has(id): continue
+				seen[id]=true
+				if shape.bounds().intersects(area,true): selected.append(shape)
+	return func(point: Vector2) -> int:
+		var cell := Vector2i(roundi(point.x/TerrainSurfaceField.TILE),
+			roundi(point.y/TerrainSurfaceField.TILE))
+		var best_surface := WORN_PATH if _path_at_cell(point,cell) else NATURAL
+		var best_priority := _path_priority if best_surface == WORN_PATH else -2147483648
+		for shape: FeatureGroundShape in selected:
+			if shape.priority < best_priority: continue
+			if shape.priority == best_priority and shape.surface_id <= best_surface: continue
+			if not shape.contains(point): continue
+			best_surface=shape.surface_id
+			best_priority=shape.priority
+		return best_surface
+
+## Conservative broad phase for surface meshing. False certifies that no
+## point in the closed rectangle can be a path; true still needs exact queries.
+func may_have_path_in(area: Rect2) -> bool:
+	area = _conservative_query_bounds(area)
+	var tile := TerrainSurfaceField.TILE
+	var cell_lo := Vector2i(floori(area.position.x / tile - 0.5),
+		floori(area.position.y / tile - 0.5))
+	var cell_hi := Vector2i(ceili(area.end.x / tile + 0.5),
+		ceili(area.end.y / tile + 0.5))
+	for z in range(cell_lo.y, cell_hi.y + 1):
+		for x in range(cell_lo.x, cell_hi.x + 1):
+			var cell := Vector2i(x,z)
+			if not _connection_masks.has(cell) and not _node_cells.has(cell):
+				continue
+			if Rect2(Vector2(cell)*tile-Vector2.ONE*tile*0.5,
+					Vector2.ONE*tile).intersects(area,true):
+				return true
+	var lo := _bucket_of(area.position)
+	var hi := _bucket_of(area.end)
+	for z in range(lo.y,hi.y+1):
+		for x in range(lo.x,hi.x+1):
+			for shape: FeatureGroundShape in _surface_buckets.get(Vector2i(x,z),[]):
+				if shape.surface_id == WORN_PATH and shape.bounds().intersects(area,true):
+					return true
+	return false
+
+static func _conservative_query_bounds(area: Rect2) -> Rect2:
+	# Vector2 stores float32 coordinates. Allow several rounding units when
+	# transformed shape bounds meet a query, including far from world origin.
+	var scale := maxf(maxf(absf(area.position.x),absf(area.position.y)),
+		maxf(absf(area.end.x),absf(area.end.y)))
+	return area.grow(0.00001+scale*0.000001)
+
 func has_modified_surface() -> bool:
 	return not _connection_masks.is_empty() or not _node_cells.is_empty() \
 		or not _surface_shapes.is_empty()
@@ -176,3 +238,33 @@ static func _insert_shape(buckets: Dictionary, shape: FeatureGroundShape,
 			if not buckets.has(key):
 				buckets[key] = []
 			buckets[key].append(shape)
+
+
+func construction_clearance_bounds() -> Array[Rect2]:
+	## Finite conservative domains for construction beside this field. Roads
+	## stored in the lattice layer own clearance just like explicit primitives.
+	## Consumers must not inspect only _clearance_shapes and lose world roads.
+	var out: Array[Rect2] = []
+	for shape: FeatureGroundShape in _clearance_shapes: out.append(shape.bounds())
+	var half := PathProgram.PATH_HALF_WIDTH
+	for cell: Vector2i in _node_cells:
+		out.append(Rect2(Vector2(cell)*TerrainSurfaceField.TILE-Vector2.ONE*half,
+			Vector2.ONE*half*2.0))
+	for cell: Vector2i in _connection_masks:
+		var centre := Vector2(cell)*TerrainSurfaceField.TILE
+		var mask := int(_connection_masks[cell])
+		var directions: Array[Vector2] = []
+		for item: Array in [[1,Vector2.RIGHT],[2,Vector2.LEFT],[4,Vector2.DOWN],[8,Vector2.UP]]:
+			if (mask & int(item[0]))==0: continue
+			var direction: Vector2 = item[1]
+			directions.append(direction)
+			var end := centre+direction*TerrainSurfaceField.HALF
+			out.append(FeatureGroundShape.oriented_rect((centre+end)*0.5,
+				Vector2(TerrainSurfaceField.HALF*0.5,half),direction.angle()).bounds())
+		if _node_cells.has(cell): continue
+		for i in directions.size():
+			for j in range(i+1,directions.size()):
+				if absf(directions[i].dot(directions[j]))>0.001: continue
+				var far := centre+(directions[i]+directions[j])*PathProgram.CORNER_OUTER_RADIUS
+				out.append(Rect2(centre.min(far),(far-centre).abs()))
+	return out

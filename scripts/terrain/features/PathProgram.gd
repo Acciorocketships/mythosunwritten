@@ -46,11 +46,15 @@ static func filleted_path_shapes(points: Array[Vector2], half_width: float,
 				var radius := minf(CORNER_RADIUS, minf(
 					line[index].distance_to(line[index - 1]) * 0.5,
 					line[index + 1].distance_to(line[index]) * 0.5))
-				end -= incoming * radius
-				var centre := end + outgoing * radius
-				for step in range(33):
-					arc.append(centre + (end - centre).rotated(
-						incoming.cross(outgoing) * PI * 0.5 * float(step) / 32.0))
+				# A bend shorter than its half-width would carry its capsule
+				# beyond the finite doorway endpoint. Short landings keep their
+				# square butt joint; a curve never paints inside the house.
+				if radius >= half_width:
+					end -= incoming * radius
+					var centre := end + outgoing * radius
+					for step in range(33):
+						arc.append(centre + (end - centre).rotated(
+							incoming.cross(outgoing) * PI * 0.5 * float(step) / 32.0))
 		if start.distance_to(end) > 0.001:
 			out.append(FeatureGroundShape.oriented_rect((start + end) * 0.5,
 				Vector2(start.distance_to(end) * 0.5, half_width),
@@ -62,6 +66,55 @@ static func filleted_path_shapes(points: Array[Vector2], half_width: float,
 				StringName("%s.bend.%d.%d" % [stable_id, index, step])))
 		start = arc[-1] if not arc.is_empty() else end
 	return out
+
+static func shared_junction_shapes(paths: Array[Dictionary], half_width: float,
+		surface: int, priority: int, stable_id: StringName) -> Array[FeatureGroundShape]:
+	## A T/X junction belongs to the complete street graph. Independent route
+	## polylines alone round only the turn that happened to be declared first.
+	var runs: Array[Dictionary] = []
+	var vertices: Dictionary = {}
+	for path: Dictionary in paths:
+		var line: Array[Vector2] = []
+		for point: Vector2 in path.points:
+			if not line.is_empty() and point.distance_to(line[-1])<0.001: continue
+			if line.size()>1 and (line[-1]-line[-2]).normalized().dot((point-line[-1]).normalized())>0.9999:
+				line[-1]=point
+			else: line.append(point)
+		for index in range(1,line.size()):
+			runs.append({"a":line[index-1],"b":line[index]})
+			vertices[line[index-1].snapped(Vector2.ONE*0.0001)]=true
+			vertices[line[index].snapped(Vector2.ONE*0.0001)]=true
+	for i in runs.size():
+		for j in range(i+1,runs.size()):
+			var intersection: Variant = Geometry2D.segment_intersects_segment(runs[i].a,runs[i].b,runs[j].a,runs[j].b)
+			if intersection != null: vertices[(intersection as Vector2).snapped(Vector2.ONE*0.0001)]=true
+	var out: Array[FeatureGroundShape] = []
+	var ordered := vertices.keys()
+	ordered.sort_custom(func(a:Vector2,b:Vector2)->bool:return a.x<b.x if a.x!=b.x else a.y<b.y)
+	for point: Vector2 in ordered:
+		var arms: Dictionary = {}
+		for run: Dictionary in runs:
+			if Geometry2D.get_closest_point_to_segment(point,run.a,run.b).distance_to(point)>0.001: continue
+			for end: Vector2 in [run.a,run.b]:
+				var distance := point.distance_to(end)
+				if distance<0.001: continue
+				var direction := ((end-point)/distance).snapped(Vector2.ONE*0.0001)
+				arms[direction]=maxf(float(arms.get(direction,0.0)),distance)
+		if arms.size()<3: continue
+		var radius := CORNER_RADIUS
+		for distance: float in arms.values(): radius=minf(radius,distance*0.5)
+		if radius < half_width: continue
+		var directions := arms.keys()
+		directions.sort_custom(func(a:Vector2,b:Vector2)->bool:return a.angle()<b.angle())
+		for i in directions.size():
+			for j in range(i+1,directions.size()):
+				var a: Vector2 = directions[i]
+				var b: Vector2 = directions[j]
+				if absf(a.dot(b))>0.001: continue
+				out.append_array(filleted_path_shapes([point+a*radius*2.0,point,point+b*radius*2.0] as Array[Vector2],
+					half_width,surface,priority,StringName("%s.%s.%d.%d" % [stable_id,point,i,j])))
+	return out
+
 const SUPER_CELLS := SettlementPlan.SUPER_CELLS
 const NODE_MAX_SUPPORT_SPAN := 1.0
 const ROUTE_VERTICAL_BUDGET_UNITS := 28
@@ -209,6 +262,7 @@ static func _authored_metrics() -> Dictionary:
 			&"sfv.light_pole.001": {
 				"footprint": Rect2(Vector2(-0.36, -1.36), Vector2(0.72, 2.72)),
 				"arm_direction": Vector2.DOWN,
+				"ground_contact": Vector3.ZERO,
 			},
 			&"sfv.arch.001": {
 				"footprint": Rect2(Vector2(-10.56, -3.86), Vector2(21.12, 7.72)),
@@ -261,6 +315,9 @@ static func _validate_arch(metrics: Dictionary) -> bool:
 	return legs.size() == 2 or _fail_bool("Arch requires exactly two leg centres")
 
 static func _validate_lamp(metrics: Dictionary) -> bool:
+	var contact: Variant = metrics.get("ground_contact")
+	if not contact is Vector3 or not (contact as Vector3).is_finite():
+		return _fail_bool("Lamp requires a finite ground contact")
 	if not _valid_footprint(metrics.get("footprint")):
 		return _fail_bool("Lamp footprint is invalid")
 	var arm: Vector2 = metrics.get("arm_direction", Vector2.ZERO)

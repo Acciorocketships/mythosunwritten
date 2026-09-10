@@ -63,8 +63,17 @@ func context_for(block: Vector2i) -> FeatureContext:
 		if WorldFieldBlockCache.key_of(record.centre) == block:
 			village_payload.append_from(record.payload)
 	var context := path_context.extended(surface_shapes, clearance_shapes,
-		village_payload, Rect2())
+		EnvironmentInstancePayload.new(), Rect2())
 	context.terrain_grades = grades
+	# Path reservations are solved on natural terrain. Ground-mounted props
+	# receive their final vertical attachment after the town's grade is sealed.
+	# Do this before adding village placements: terrace props already have an
+	# authored structural attachment and must retain that elevation.
+	_seat_ground_assets(context.placements(), _program.paths.assets,
+		func(point: Vector2) -> float:
+			var region := context.graded_region(_fields.region_at(point))
+			return TerrainSurfaceField.surface_y(region, point.x, point.y))
+	context.placements().append_from(village_payload)
 	_contexts[block] = context
 	return context
 
@@ -93,8 +102,8 @@ func frame_for(super_cell: Vector2i) -> VillageFrame:
 		return null
 	var node := _paths.node_for(super_cell)
 	if node.is_empty():
-		_frames[super_cell] = null
-		return null
+		# A road's support constraints do not decide whether the town exists.
+		node = site
 	var point := Vector2(node.cell) * TerrainSurfaceField.TILE
 	var block := WorldFieldBlockCache.key_of(point)
 	var frame := VillageFrame.build(node, _paths.context_for(block),
@@ -130,7 +139,7 @@ func _records_affecting(core: Rect2) -> Array[VillageRecord]:
 					_program.maximum_clearance), true):
 				continue
 			var frame := frame_for(super_cell)
-			if frame == null or frame.is_dormant():
+			if frame == null:
 				continue
 			var conservative := _village_program.record_bound(frame.centre)
 			if not conservative.intersects(core.grow(
@@ -143,3 +152,17 @@ func _records_affecting(core: Rect2) -> Array[VillageRecord]:
 	out.sort_custom(func(a: VillageRecord, b: VillageRecord) -> bool:
 		return String(a.stable_id) < String(b.stable_id))
 	return out
+
+static func _seat_ground_assets(payload: EnvironmentInstancePayload,
+		asset_metrics: Dictionary, surface_height: Callable) -> void:
+	for asset_id: StringName in payload.asset_ids():
+		var metrics: Dictionary = asset_metrics.get(asset_id, {})
+		if not metrics.has("ground_contact"): continue
+		var contact := metrics.ground_contact as Vector3
+		var batch: Dictionary = payload.batches[asset_id]
+		for index in batch.transforms.size():
+			var transform: Transform3D = batch.transforms[index]
+			var world_contact := transform * contact
+			var ground: float = surface_height.call(Vector2(world_contact.x, world_contact.z))
+			transform.origin.y += ground - world_contact.y
+			batch.transforms[index] = transform

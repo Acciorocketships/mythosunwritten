@@ -1,0 +1,70 @@
+{
+  "11-river-before-terrain": [
+    {
+      "x": -528.0,
+      "returning": false,
+      "passed": true,
+      "largest_frame_height_change": 0.325000047683716,
+      "frames": 409,
+      "airborne_frames": 66
+    },
+    {
+      "x": -528.0,
+      "returning": true,
+      "passed": false,
+      "largest_frame_height_change": 0.334999918937683,
+      "frames": 1000,
+      "airborne_frames": 999
+    },
+    {
+      "x": -518.4,
+      "returning": false,
+      "passed": true,
+      "largest_frame_height_change": 0.325000047683716,
+      "frames": 409,
+      "airborne_frames": 66
+    },
+    {
+      "x": -518.4,
+      "returning": true,
+      "passed": false,
+      "largest_frame_height_change": 0.334999918937683,
+      "frames": 1000,
+      "airborne_frames": 999
+    }
+  ],
+  "11-river-reviewed": [
+    {
+      "x": -528.0,
+      "returning": false,
+      "passed": true,
+      "largest_frame_height_change": 0.0976172089576721,
+      "frames": 318,
+      "airborne_frames": 0
+    },
+    {
+      "x": -528.0,
+      "returning": true,
+      "passed": true,
+      "largest_frame_height_change": 0.0980472564697266,
+      "frames": 319,
+      "airborne_frames": 0
+    },
+    {
+      "x": -518.4,
+      "returning": false,
+      "passed": true,
+      "largest_frame_height_change": 0.0976171493530273,
+      "frames": 318,
+      "airborne_frames": 0
+    },
+    {
+      "x": -518.4,
+      "returning": true,
+      "passed": true,
+      "largest_frame_height_change": 0.0980472564697266,
+      "frames": 319,
+      "airborne_frames": 0
+    }
+  ]
+}

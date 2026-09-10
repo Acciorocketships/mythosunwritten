@@ -19,6 +19,8 @@ enum WaterMode { LAND, SHORE, SHALLOW, EMERGENT, FLOATING }
 @export var water_mode: WaterMode = WaterMode.LAND
 @export var depth_range: Vector2 = Vector2.ZERO
 @export var shore_distance_range: Vector2 = Vector2.ZERO
+## Qualify the actual near-ground visual footprint even without physics collision.
+@export var visual_ground_support: bool = false
 @export var support_radius: float = 0.0
 @export var max_support_height_span: float = 0.0
 @export var max_grade: float = 1.0

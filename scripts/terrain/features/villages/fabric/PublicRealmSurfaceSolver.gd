@@ -49,6 +49,18 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 	for cell_value: Variant in fabric_plan.transformed_cells(&"solid"):
 		var cell := cell_value as Vector3i
 		structural_solids[_cell_key(cell)] = true
+	# Built rooms and retained masonry are both authored fall barriers.
+	var guard_solids := structural_solids.duplicate()
+	var guard_boxes: Array[AABB] = []
+	for cell: Vector3i in fabric_plan.retained_terrace_cells:
+		guard_solids[_cell_key(cell)] = true
+	for key: String in guard_solids:
+		var xyz := key.split(":")
+		var base := Vector3(float(xyz[0]), float(xyz[1]), float(xyz[2])) * FabricRecipe.CELL_SIZE
+		guard_boxes.append(AABB(base - Vector3(0.75, 0, 0.75), Vector3.ONE * FabricRecipe.CELL_SIZE))
+	var inhabited: Dictionary = {}
+	for cell: Vector3i in fabric_plan.transformed_cells(&"inhabited"):
+		inhabited[_cell_key(cell)] = true
 	var daylight_void_set: Dictionary = {}
 	if realm != null:
 		for cell: Vector3i in realm.daylight_void_cells:
@@ -67,7 +79,7 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 				return null
 			var payload := WarrenTransitionSurfaceBuilder.build(
 				StringName("%s.mesh" % node_id), transition,
-				transition_node.surface_cells)
+				transition_node.surface_cells, [], true)
 			if payload.is_empty() \
 					or not result.add_transition_mesh_payload(payload):
 				return null
@@ -77,7 +89,7 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 		# derived. The source claims are snapshotted, so closure cannot grow or
 		# cascade across unrelated empty space.
 		if not _close_borne_court_corners(result, structural_solids,
-				daylight_void_set, fabric_plan.retained_terrace_cells):
+				daylight_void_set, fabric_plan.retained_terrace_cells, inhabited):
 			return null
 		# Structural platforms descend to the terrain below their own fine-grid
 		# column, never to an implicit global band zero.  The renderer formerly
@@ -131,6 +143,14 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 		for edge_value: PublicRealmEdge in realm.edges:
 			for seam: Dictionary in edge_value.seams:
 				transition_seams.append(seam.duplicate())
+	if volume != null:
+		var source := volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+		var public: Dictionary = {}
+		for kind in PublicRealmSurfacePlan.SurfaceKind.size():
+			for cell: Vector3i in result.cells_for_kind(kind): public[cell] = true
+		for spec: Dictionary in VillageWarrenFabricSolver._explicit_maze_contact_specs(source,public):
+			for cell: Vector3i in spec.cells:
+				transition_seams.append({"from_cell":cell,"to_cell":cell+(spec.outward as Vector3i)})
 	# TASK I4 ROUND 4. THE VILLAGE GREEN'S OWN MOUTHS, which only this call site
 	# can name. The guard rule fences a court boundary whose far side carries no
 	# CLAIM, and a lawn is not a claim -- it is a green cap on retained mass one
@@ -139,7 +159,15 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 	# `result` exactly as it reads it off a sealed plan, and the fabric plan
 	# carries the retained mass and the built solids the garden is derived from.
 	# A plan with no square names nothing and every guard stands where it did.
-	if not result.seal(required, other_classified, structural_solids, entrances,
+	guard_boxes.append_array(SettlementFabricAssembler.maze_guard_wall_boxes(fabric_plan,result))
+	var module_walls: Array[AABB] = []
+	var footprints := SettlementFabricAssembler.maze_module_footprints(fabric_plan)
+	for index in (footprints.boxes as Array).size():
+		var asset := String(footprints.assets[index])
+		if asset.begins_with("sfv.fabric.wall.") and not ".door." in asset:
+			module_walls.append(footprints.boxes[index])
+	if not result.finish_transition_guards(guard_boxes,module_walls): return null
+	if not result.seal(required, other_classified, guard_solids, entrances,
 			daylight_voids, transition_seams,
 			SettlementFabricAssembler.maze_plaza_threshold_openings(fabric_plan,
 				result)):
@@ -148,7 +176,7 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 
 static func _close_borne_court_corners(result: PublicRealmSurfacePlan,
 		structural_solids: Dictionary, daylight_voids: Dictionary,
-		retained: Dictionary) -> bool:
+		retained: Dictionary, inhabited: Dictionary = {}) -> bool:
 	var original_courts: Dictionary = {}
 	for cell: Vector3i in result.cells_for_kind(
 			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT):
@@ -167,6 +195,8 @@ static func _close_borne_court_corners(result: PublicRealmSurfacePlan,
 		if result.has_cell(candidate) \
 				or structural_solids.has(_cell_key(candidate)) \
 				or structural_solids.has(_cell_key(candidate + Vector3i.UP)) \
+				or inhabited.has(_cell_key(candidate)) \
+				or inhabited.has(_cell_key(candidate + Vector3i.UP)) \
 				or daylight_voids.has(_cell_key(candidate)) \
 				or not retained.has(candidate + Vector3i.DOWN):
 			continue

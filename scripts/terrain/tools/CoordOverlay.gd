@@ -66,7 +66,7 @@ func _process(_dt: float) -> void:
 					dominant = k
 				if w5[k] >= 0.05:
 					parts.append("%s %.2f" % [k, w5[k]])
-			lines.append("biome %s   (%s)" % [dominant, ", ".join(parts)])
+			lines.append("biome %s   (%s)" % [BiomeRegistry.profile(dominant).display_name, ", ".join(parts)])
 	# Raycast from screen centre onto the terrain.
 	var vp := get_viewport().get_visible_rect().size
 	var centre := vp * 0.5

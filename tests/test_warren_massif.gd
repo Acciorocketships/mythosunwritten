@@ -462,6 +462,11 @@ const WIDEST_TERRACE_GUARD := 3
 ## it fell roughly with the town; nothing fused and nothing thinned. The maze
 ## plateau cap the BUILDER enforces is unchanged and still above every one of
 ## them.
+## September 7 single-field construction replaces phase selection. Re-measured
+## widths are 6 / 8 / 8 / 11, with mean region sizes 2.89 / 3.60 / 4.00 / 3.88.
+## The 9/standard town was rendered from opposing overview cameras; its stepped
+## inhabited silhouette remains intact. Keep the same two-sided guard and the
+## independent clustering, riser, core-height and maximum-region requirements.
 const PLANNER_WIDEST_TERRACE: Dictionary = {
 	"12/compact": Vector2i(8 - WIDEST_TERRACE_GUARD,
 		8 + WIDEST_TERRACE_GUARD),
@@ -469,8 +474,8 @@ const PLANNER_WIDEST_TERRACE: Dictionary = {
 		11 + WIDEST_TERRACE_GUARD),
 	"3/standard": Vector2i(11 - WIDEST_TERRACE_GUARD,
 		11 + WIDEST_TERRACE_GUARD),
-	"9/standard": Vector2i(15 - WIDEST_TERRACE_GUARD,
-		15 + WIDEST_TERRACE_GUARD),
+	"9/standard": Vector2i(11 - WIDEST_TERRACE_GUARD,
+		11 + WIDEST_TERRACE_GUARD),
 }
 
 const TERRACE_CLUSTER_COUNT_FLOOR := 2

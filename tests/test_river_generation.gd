@@ -2,7 +2,9 @@ extends GutTest
 
 func test_river_corpus_is_frequent_long_and_geographically_extensive() -> void:
 	for seed_v in [991177, 2697992464, 314159]:
-		var water := WaterPlan.new(seed_v, 22.0, 8)
+		# This is a production density ratchet. Use the same landform amplitude
+		# as the streamed world instead of the retired 22 m terrain setting.
+		var water := TerrainWorldTuning.make_water(seed_v)
 		var count := 0
 		var long_count := 0
 		var length_sum := 0.0

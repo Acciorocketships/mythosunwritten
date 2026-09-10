@@ -54,16 +54,9 @@ const _DIAGONALS := [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(
 # to meet the flat cliff top — see surface_y.
 static func _is_cliff_top(region, cx: int, cz: int) -> bool:
 	var s: int = region.storey_at(cx, cz)
-	var dry_bank: bool = region.has_method("is_carved") and not region.is_carved(cx, cz)
 	for d in (_CARDINALS + _DIAGONALS):
 		var nb_s: int = int(region.storey_at(cx + d.x, cz + d.y))
 		if s - nb_s >= 2:
-			return true
-		# A DRY cell overlooking a water-CARVED cell walls even a 1-storey
-		# drop: shorelines read as crisp dressed banks, not bare ramps dipping
-		# into the water (the shingle plates / extraneous-corner mess around
-		# carved channels). Inert without a water plan (carved map empty).
-		if s - nb_s >= 1 and dry_bank and region.is_carved(cx + d.x, cz + d.y):
 			return true
 	return false
 
@@ -99,39 +92,10 @@ static func _is_inner_corner(region, cx: int, cz: int, cdir: Vector2i) -> bool:
 		return false
 	return true
 
-# Does the arm cell wall the storey drop toward `d`? It does when it renders FLAT: a cliff top,
-# or a cell held flat by an inner-corner pocket of its own — checked with CLIFF-TOP-ONLY arms
-# (first order) so this never recurses through has_inner_corner. Owner round 12 (seed 613274262,
-# corner (-156,-228)): an arm flat only via its own inner corner failed the old cliff-top-only
-# check, so the classic corner never fired while the slope pocket's unregistered GHOST did — and
-# the arms' held-nowhere sheet clips draped a notch into the plateau around the piece.
+# A corner in another quadrant does not make this arm flat. Only the
+# cliff-top rule holds its descending cardinal edge at the upper height.
 static func _arm_walls(region, ax: int, az: int, d: Vector2i) -> bool:
-	if int(region.storey_at(ax, az)) - int(region.storey_at(ax + d.x, az + d.y)) < 1:
-		return false
-	if _is_cliff_top(region, ax, az):
-		return true
-	for dd in _DIAGONALS:
-		if _is_inner_corner_strict(region, ax, az, dd):
-			return true
-	return false
-
-# The pre-round-12 inner-corner rule (arms must be CLIFF TOPS) — the terminal, non-recursive
-# form _arm_walls falls back on.
-static func _is_inner_corner_strict(region, cx: int, cz: int, cdir: Vector2i) -> bool:
-	var s := int(region.storey_at(cx, cz))
-	if int(region.storey_at(cx + cdir.x, cz + cdir.y)) >= s:
-		return false
-	var ax := Vector2i(cdir.x, 0)
-	var az := Vector2i(0, cdir.y)
-	if int(region.storey_at(cx + ax.x, cz + ax.y)) != s:
-		return false
-	if int(region.storey_at(cx + az.x, cz + az.y)) != s:
-		return false
-	if not _is_wall_edge(region, cx + ax.x, cz + ax.y, az):
-		return false
-	if not _is_wall_edge(region, cx + az.x, cz + az.y, ax):
-		return false
-	return true
+	return _is_wall_edge(region, ax, az, d)
 
 # Whether the cell is the high corner of any inner-corner pocket (so it must stay flat + be dressed).
 static func has_inner_corner(region, cx: int, cz: int) -> bool:
@@ -311,25 +275,25 @@ static func _natural_height_bounds(region, footprint: Rect2) -> Vector2:
 	assert(minimum != INF and maximum != -INF)
 	return Vector2(minimum, maximum)
 
-# Height of the shared corner control in one cell quadrant. Normally this is
-# simply the minimum of the four centres meeting there: the no-up-ramp rule in
-# a symmetric form, so every owner gets the same value. Two deliberate cliff
-# configurations keep the current cell's corner flat instead:
-#   * a classic inner corner, whose vertical pocket is dressed; and
-#   * the historical higher-cardinal guard, where dipping toward a lower
-#     diagonal would cut a crack beside a higher flat cliff arm.
-# The guard only applies when neither cardinal edge is already descending.
+# Shared four-cell minimum, except an explicitly dressed inner corner.
+# A higher cardinal by itself cannot hold this corner up: the ordinary slope
+# across the other edge still uses the minimum and would leave a vertical hole.
 static func _quadrant_corner_height(region, cx: int, cz: int,
 		dx_sign: int, dz_sign: int, h: float, edge_x: float, edge_z: float) -> float:
 	var diag: float = region.surface_height(cx + dx_sign, cz + dz_sign)
 	var corner := minf(minf(h, edge_x), minf(edge_z, diag))
 	if corner >= h - 0.0001 or edge_x < h - 0.0001 or edge_z < h - 0.0001:
 		return corner
-	var s_here := int(region.storey_at(cx, cz))
-	var arms_share_storey := int(region.storey_at(cx + dx_sign, cz)) == s_here \
-		and int(region.storey_at(cx, cz + dz_sign)) == s_here
-	if not arms_share_storey \
-		or _is_inner_corner(region, cx, cz, Vector2i(dx_sign, dz_sign)):
+	# A same-height cliff arm owns an actually flat boundary. Preserve that
+	# contact only when neither of this quadrant's edges needs to descend.
+	if (is_equal_approx(region.surface_height(cx + dx_sign, cz), h) \
+			and _is_cliff_top(region, cx + dx_sign, cz) \
+			and region.surface_height(cx, cz + dz_sign) > h + 0.0001) \
+			or (is_equal_approx(region.surface_height(cx, cz + dz_sign), h) \
+			and _is_cliff_top(region, cx, cz + dz_sign) \
+			and region.surface_height(cx + dx_sign, cz) > h + 0.0001):
+		return h
+	if _is_inner_corner(region, cx, cz, Vector2i(dx_sign, dz_sign)):
 		return h
 	return corner
 

@@ -7,18 +7,18 @@
 [sub_resource type="Resource" id="Choice_1"]
 script = ExtResource("1_choice")
 asset_id = &"kaykit.rock.01"
-biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0}
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0, &"amber_heath": 1.0, &"jade_wetlands": 1.0}
 
 [sub_resource type="Resource" id="Choice_2"]
 script = ExtResource("1_choice")
 asset_id = &"kaykit.rock.02"
-biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0}
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0, &"amber_heath": 1.0, &"jade_wetlands": 1.0}
 
 [sub_resource type="Resource" id="Exposure"]
 script = ExtResource("3_habitat")
 channel = &"rocky_exposure"
 scale = 110.0
-coverage = {&"meadow": 0.24, &"deep_forest": 0.28, &"highland": 0.82, &"blossom_grove": 0.18, &"twilight_marsh": 0.58}
+coverage = {&"meadow": 0.24, &"deep_forest": 0.28, &"highland": 0.82, &"blossom_grove": 0.18, &"twilight_marsh": 0.58, &"amber_heath": 0.24, &"jade_wetlands": 0.58}
 edge_softness = 0.1
 
 [resource]
@@ -26,7 +26,7 @@ script = ExtResource("2_set")
 id = &"ambient.rock"
 feature_clearance = 2.0
 choices = Array[ExtResource("1_choice")]([SubResource("Choice_1"), SubResource("Choice_2")])
-fill_per_cell = {&"meadow": 0.2, &"deep_forest": 0.18, &"highland": 0.75, &"blossom_grove": 0.12, &"twilight_marsh": 0.25}
+fill_per_cell = {&"meadow": 0.2, &"deep_forest": 0.18, &"highland": 0.75, &"blossom_grove": 0.12, &"twilight_marsh": 0.25, &"amber_heath": 0.2, &"jade_wetlands": 0.25}
 habitat_layers = Array[ExtResource("3_habitat")]([SubResource("Exposure")])
 community_channel = &"stone_species"
 community_scale = 36.0

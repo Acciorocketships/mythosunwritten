@@ -45,6 +45,7 @@ var _transition_claim_owners: Dictionary = {}
 var _support_base_bands: Dictionary = {}
 var _sealed := false
 var _omitted_guard_post_count := 0
+var _guard_wall_boxes: Array[AABB] = []
 var last_rejection := ""
 
 
@@ -108,6 +109,20 @@ func add_transition_mesh_payload(payload: Dictionary) -> bool:
 		_transition_claim_owners[_cell_key(cell)] = StringName(
 			payload.get("stable_id", ""))
 	_transition_mesh_payloads.append(payload.duplicate(true))
+	return true
+
+
+func finish_transition_guards(wall_boxes: Array[AABB],
+		flat_wall_boxes: Array[AABB] = []) -> bool:
+	if _sealed: return false
+	_guard_wall_boxes.assign(wall_boxes)
+	_guard_wall_boxes.append_array(flat_wall_boxes)
+	for payload: Dictionary in _transition_mesh_payloads:
+		if not payload.has("pending_guard_span"): continue
+		var span: Dictionary = payload.pending_guard_span
+		WarrenTransitionSurfaceBuilder._append_side_guards(payload,
+			span.start, span.end, span.lateral, true, wall_boxes)
+		payload.erase("pending_guard_span")
 	return true
 
 
@@ -857,7 +872,7 @@ func _build_guards(structural_solid_cells: Dictionary,
 			var segment := _guard_segment(cell, direction,
 				&"daylight_void" if daylight_void_set.has(_cell_key(neighbor)) \
 				else &"exposed_edge")
-			guard_segments.append(segment)
+			if not _guard_is_backed_by_wall(segment): guard_segments.append(segment)
 	guard_segments.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.stable_key) < String(b.stable_key))
 	if guard_segments.is_empty():
@@ -934,6 +949,27 @@ func _has_public_transition(cell: Vector3i, direction: Vector3i) -> bool:
 	# floors at another level do not silently become a stair connection.
 	return _claims.has(_cell_key(cell + direction)) \
 		or _public_openings.has(_transition_key(cell, direction))
+
+
+func _guard_is_backed_by_wall(segment: Dictionary) -> bool:
+	# A room module can span two vertical bands while its occupied-cell record
+	# names only one. Use the retained/module wall extents for the actual edge.
+	# Both rail heights must be enclosed over the complete span: a parapet or
+	# a partly open side still needs its guard.
+	for height in [0.2, GUARD_HEIGHT]:
+		var a: Vector3 = segment.a + Vector3.UP * height
+		var b: Vector3 = segment.b + Vector3.UP * height
+		var intervals: Array[Vector2] = []
+		for box: AABB in _guard_wall_boxes:
+			var interval := WarrenTransitionSurfaceBuilder._line_box_interval(a,b,box.grow(0.04))
+			if interval.y > interval.x: intervals.append(interval)
+		intervals.sort_custom(func(x: Vector2, y: Vector2) -> bool: return x.x < y.x)
+		var covered := 0.0
+		for interval: Vector2 in intervals:
+			if interval.x > covered + 0.00001: break
+			covered = maxf(covered,interval.y)
+		if covered < 0.99999: return false
+	return true
 
 
 static func _guard_segment(cell: Vector3i, direction: Vector3i,

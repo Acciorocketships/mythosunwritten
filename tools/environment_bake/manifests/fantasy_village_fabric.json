@@ -2,14 +2,17 @@
  "pack": "fantasy_village_fabric",
  "license": "Fantasy Village source-pack license",
  "facade_miter_prefixes": [
+  "sfv.fabric.wall.wood.door.",
+  "sfv.fabric.wall.wood.window.",
+  "sfv.fabric.wall.wood.plain.",
   "sfv.fabric.wall.rock.door.",
   "sfv.fabric.wall.rock.window.",
   "sfv.fabric.wall.rock.plain."
  ],
  "default_scale": [
   1.0,
- 1.0,
- 1.0
+  1.0,
+  1.0
  ],
  "mirror_variants": [
   {
@@ -1193,7 +1196,9 @@
    "max_visual_triangles": 5000,
    "max_collision_triangles": 5000,
    "max_surfaces": 4,
-   "max_collision_pieces": 1
+   "max_collision_pieces": 1,
+   "facade_side_source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Walls/SFV_Wall_Rock_001.fbx",
+   "facade_side_thickness": 0.25
   },
   {
    "id": "sfv.fabric.wall.rock.door.006",
@@ -1588,8 +1593,9 @@
    "max_mesh_bytes": 2097152,
    "max_visual_triangles": 3000,
    "max_collision_triangles": 3000,
-   "max_surfaces": 2,
-   "max_collision_pieces": 1
+   "max_surfaces": 3,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.door.002",
@@ -1606,8 +1612,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.door.003",
@@ -1624,8 +1631,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.door.004",
@@ -1642,8 +1650,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.door.open.001",
@@ -1660,8 +1669,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.door.closed.001",
@@ -1678,8 +1688,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.plain.001",
@@ -1696,8 +1707,9 @@
    "max_mesh_bytes": 2097152,
    "max_visual_triangles": 2000,
    "max_collision_triangles": 2000,
-   "max_surfaces": 2,
-   "max_collision_pieces": 1
+   "max_surfaces": 3,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.plain.003",
@@ -1714,8 +1726,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.plain.005",
@@ -1732,8 +1745,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.plain.007",
@@ -1750,8 +1764,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.plain.009",
@@ -1768,8 +1783,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.plain.011",
@@ -1786,8 +1802,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.plain.013",
@@ -1804,8 +1821,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.plain.015",
@@ -1822,8 +1840,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.s.001",
@@ -1966,8 +1985,9 @@
    "max_mesh_bytes": 2097152,
    "max_visual_triangles": 3000,
    "max_collision_triangles": 3000,
-   "max_surfaces": 2,
-   "max_collision_pieces": 1
+   "max_surfaces": 3,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.004",
@@ -1984,8 +2004,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.008",
@@ -2002,8 +2023,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.010",
@@ -2020,8 +2042,10 @@
    "max_mesh_bytes": 2097152,
    "max_visual_triangles": 3000,
    "max_collision_triangles": 3000,
-   "max_surfaces": 2,
-   "max_collision_pieces": 1
+   "max_surfaces": 3,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx",
+   "facade_return_fit_panel": true
   },
   {
    "id": "sfv.fabric.wall.wood.window.013",
@@ -2038,8 +2062,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.017",
@@ -2056,8 +2081,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.020",
@@ -2074,8 +2100,9 @@
    "max_mesh_bytes": 2097152,
    "max_visual_triangles": 3000,
    "max_collision_triangles": 3000,
-   "max_surfaces": 2,
-   "max_collision_pieces": 1
+   "max_surfaces": 3,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.024",
@@ -2092,8 +2119,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.028",
@@ -2110,8 +2138,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.033",
@@ -2128,8 +2157,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.037",
@@ -2146,8 +2176,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.040",
@@ -2164,8 +2195,9 @@
    "max_mesh_bytes": 2097152,
    "max_visual_triangles": 3000,
    "max_collision_triangles": 3000,
-   "max_surfaces": 2,
-   "max_collision_pieces": 1
+   "max_surfaces": 3,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.044",
@@ -2182,8 +2214,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.048",
@@ -2200,8 +2233,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.052",
@@ -2218,8 +2252,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.056",
@@ -2236,8 +2271,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.058",
@@ -2254,8 +2290,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.060",
@@ -2272,8 +2309,9 @@
    "max_mesh_bytes": 2097152,
    "max_visual_triangles": 3000,
    "max_collision_triangles": 3000,
-   "max_surfaces": 2,
-   "max_collision_pieces": 1
+   "max_surfaces": 3,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.064",
@@ -2290,8 +2328,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.066",
@@ -2308,8 +2347,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.069",
@@ -2326,8 +2366,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.071",
@@ -2344,8 +2385,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.074",
@@ -2362,8 +2404,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.076",
@@ -2380,8 +2423,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.078",
@@ -2398,11 +2442,12 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
+   "max_surfaces": 4,
    "max_collision_pieces": 1,
    "fallback_albedo_textures": {
     "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
-   }
+   },
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.081",
@@ -2419,11 +2464,12 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
+   "max_surfaces": 4,
    "max_collision_pieces": 1,
    "fallback_albedo_textures": {
     "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
-   }
+   },
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.083",
@@ -2440,11 +2486,12 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
+   "max_surfaces": 4,
    "max_collision_pieces": 1,
    "fallback_albedo_textures": {
     "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
-   }
+   },
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.roof.001",
@@ -2462,11 +2509,12 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
+   "max_surfaces": 4,
    "max_collision_pieces": 1,
    "fallback_albedo_textures": {
     "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
-   }
+   },
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.roof.002",
@@ -2484,8 +2532,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.roof.003",
@@ -2503,11 +2552,12 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
+   "max_surfaces": 4,
    "max_collision_pieces": 1,
    "fallback_albedo_textures": {
     "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
-   }
+   },
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.roof.004",
@@ -2525,8 +2575,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.s.002",
@@ -2543,8 +2594,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.s.004",
@@ -2561,8 +2613,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.s.006",
@@ -2579,8 +2632,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.s.008",
@@ -2597,8 +2651,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.s.010",
@@ -2615,8 +2670,9 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
   },
   {
    "id": "sfv.fabric.wall.wood.window.s.012",
@@ -2633,8 +2689,51 @@
    "max_mesh_bytes": 4194304,
    "max_visual_triangles": 6000,
    "max_collision_triangles": 6000,
-   "max_surfaces": 3,
-   "max_collision_pieces": 1
+   "max_surfaces": 4,
+   "max_collision_pieces": 1,
+   "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx"
+  },
+  {
+   "id": "sfv.fabric.wall.rock.retaining.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Walls/Rock/Walls/SFV_Wall_Rock_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_wall",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 2000,
+   "max_collision_triangles": 2000,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1,
+   "scale": [
+    1,
+    1.3215859030837005,
+    1.2965336027144498
+   ],
+   "pivot": [
+    0,
+    0.9647577092511013,
+    0
+   ],
+   "clip_axis": "y",
+   "clip_range": [
+    0,
+    3.001
+   ],
+   "description": "Continuous masonry stock from the authored stone body; room skirting is not part of a retaining bank.",
+   "fit_visual_bounds": [
+    -0.8810776,
+    3.488347e-08,
+    -0.3319437,
+    1.7701733,
+    3.0001225,
+    0.66388714
+   ]
   }
  ]
 }

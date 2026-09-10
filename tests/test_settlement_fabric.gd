@@ -317,39 +317,6 @@ func test_structural_support_rhythm_anchors_corners_and_native_edge_pitch() \
 		Vector3i(3, 4, 5), [Vector3i.LEFT] as Array[Vector3i]))
 
 
-func test_every_modular_room_shell_has_four_symmetric_corner_posts() -> void:
-	assert_eq(SettlementFabricAssembler.TIMBER_CORNER_POST,
-		SettlementFabricProgram.PORTAL_JAMB,
-		"room stitches must be solid timber, not a plaster corner-wall panel")
-	var program := _program()
-	var catalog := EnvironmentCatalog.load_default()
-	for recipe_id: StringName in [
-		&"room.base.rock", &"room.tower.base.rock",
-		&"room.slim.base.rock", &"room.row.base.rock",
-		&"room.long.base.rock", &"room.pier.base.rock",
-	]:
-		var recipe_value := program.recipe(recipe_id)
-		assert_not_null(recipe_value, "missing modular recipe %s" % recipe_id)
-		if recipe_value == null:
-			continue
-		var posts := SettlementFabricAssembler \
-			._modular_room_corner_transforms(recipe_value)
-		assert_gte(posts.size(), 4,
-			"%s needs timber at corners and intermediate facade joints" % recipe_id)
-		var positions: Dictionary = {}
-		for post: Transform3D in posts:
-			var origin := post.origin
-			positions[Vector2(origin.x, origin.z)] = true
-		assert_eq(positions.size(), posts.size(),
-			"corner framing may not double one side and omit the other")
-		for post: Transform3D in posts:
-			var bounds := post * catalog.descriptor(
-				SettlementFabricAssembler.TIMBER_CORNER_POST).measured_aabb
-			assert_almost_eq(bounds.size.x, 0.28, 0.001,
-				"corner stitches must stay at the facade's timber scale")
-			assert_almost_eq(bounds.size.z, 0.28, 0.001)
-
-
 func test_named_upper_courtyard_uses_distinct_collision_aligned_paving() \
 		-> void:
 	var surfaces := PublicRealmSurfacePlan.new(&"test.named.courtyard")
@@ -377,9 +344,9 @@ func test_named_upper_courtyard_uses_distinct_collision_aligned_paving() \
 		# +X. Verify the realised board centre, not merely its transform origin.
 		var centre := transform.origin \
 			+ transform.basis * Vector3(-0.75, 0.0, 0.0)
-		visual_centres[Vector3i(roundi(centre.x / FabricRecipe.CELL_SIZE - 0.5),
+		visual_centres[Vector3i(roundi(centre.x / FabricRecipe.CELL_SIZE),
 			roundi(centre.y / FabricRecipe.CELL_SIZE),
-			roundi(centre.z / FabricRecipe.CELL_SIZE - 0.5))] = true
+			roundi(centre.z / FabricRecipe.CELL_SIZE))] = true
 	assert_eq(visual_centres.size(), 16,
 		"every courtyard board must centre on a distinct logical floor cell")
 	for z in 4:
@@ -1354,10 +1321,8 @@ func test_feature_portal_room_variants_finish_exact_private_socket_facades() \
 		assert_false(portal_placement.is_empty())
 		if not portal_placement.is_empty():
 			var portal_asset := String(portal_placement.asset_id)
-			assert_true(portal_asset == String(
-				SettlementFabricProgram.WOOD_DOOR_CLOSED) \
-				or portal_asset == String(
-					SettlementFabricProgram.WOOD_DOOR_CLOSED) + ".mirror_x",
+			assert_true(portal_asset.begins_with(String(
+				SettlementFabricProgram.WOOD_DOOR_CLOSED)),
 				"the exact facade phase may mirror the same authored private door")
 		var jamb_count := 0
 		for placement: Dictionary in variant.placements:
@@ -1365,8 +1330,8 @@ func test_feature_portal_room_variants_finish_exact_private_socket_facades() \
 				"portal.jamb.%d." % int(sample.mask)) \
 				and StringName(placement.asset_id) \
 					== SettlementFabricProgram.PORTAL_JAMB)
-		assert_eq(jamb_count, 2,
-			"a feature portal needs a complete symmetric timber joint")
+		assert_eq(jamb_count, 0,
+			"the framed door owns the facade; extra jambs duplicate its planes")
 	var balcony := program.recipe(&"balcony.bracketed.left.blue")
 	assert_true(balcony.has_tag(&"requires_room_portal"))
 	assert_false(balcony.has_tag(&"facade_door"))

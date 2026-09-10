@@ -303,7 +303,10 @@ static func build(water: WaterPlan, chunk: Vector2i, region,
 	var span: float = WaterField.TILE * 8.0
 	var rect := Rect2(Vector2(chunk) * span, Vector2.ONE * span)
 	var curves: Array = WaterContour.curves(ctx, rect)
-	if curves.is_empty():
+	# No shoreline can also mean this entire chunk is submerged. Its interior
+	# still belongs to the shared water field; dropping it leaves a rectangular
+	# hole beside the shoreline chunks. Dry chunks retain the cheap exit.
+	if curves.is_empty() and not WaterField.wet(ctx, region, rect.get_center()):
 		return {}
 
 	var buckets: Dictionary = _build_buckets(curves)
@@ -524,6 +527,7 @@ static func _vertex_payload(st: Dictionary, current: Dictionary) -> Dictionary:
 	cust.resize(st.verts.size() * 4)
 	cust1.resize(st.verts.size() * 4)
 	colors.resize(st.verts.size())
+	var water_tints: Dictionary = {}
 	for vi in st.verts.size():
 		var v: Vector3 = st.verts[vi]
 		var p := Vector2(v.x, v.z)
@@ -538,7 +542,20 @@ static func _vertex_payload(st: Dictionary, current: Dictionary) -> Dictionary:
 		cust1[vi * 4 + 2] = flow.vorticity
 		cust1[vi * 4 + 3] = flow.compression
 		var scale: float = _swell_scale(st, p, v.y, frame.shore_dist)
-		colors[vi] = Color(scale, 1.0, 1.0, 1.0)
+		# A shared 24m colour lattice keeps this inexpensive and continuous;
+		# GBA are free (R remains the authoritative displacement scale).
+		var q := p / 24.0
+		var cell := Vector2i(floori(q.x), floori(q.y))
+		var fraction := q - Vector2(cell)
+		var tint := Color(0, 0, 0, 0)
+		for dz in 2:
+			for dx in 2:
+				var owner := cell + Vector2i(dx, dz)
+				if not water_tints.has(owner):
+					water_tints[owner] = BiomeRegistry.water_tint_at(Vector3(owner.x * 24.0, 0, owner.y * 24.0), st.ctx.water.world_seed)
+				var weight := (fraction.x if dx == 1 else 1.0 - fraction.x) * (fraction.y if dz == 1 else 1.0 - fraction.y)
+				tint += water_tints[owner] * weight
+		colors[vi] = Color(scale, tint.r, tint.g, tint.b)
 	return {"custom0": cust, "custom1": cust1, "colors": colors}
 
 

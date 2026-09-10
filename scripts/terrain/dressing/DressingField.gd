@@ -141,9 +141,9 @@ static func _qualify(set_data: Dictionary, anchor: Vector2,
 			Vector2(1, 1).normalized(), Vector2(1, -1).normalized(),
 			Vector2(-1, 1).normalized(), Vector2(-1, -1).normalized()]:
 			points.append(anchor + direction * radius)
-	# Collidable dressing uses its visible, yawed and scaled near-ground mesh
+	# Supported dressing uses its visible, yawed and scaled near-ground mesh
 	# footprint in every set. This is the global overhang guard: an asset cannot
-	# balance from its origin while roots, rock base, or a log cross a drop.
+	# balance from its origin while roots, a bush base, rock, or a log cross a drop.
 	for local_point: Vector2 in choice.get("support_points", PackedVector2Array()):
 		var offset := basis * Vector3(local_point.x, 0.0, local_point.y)
 		points.append(anchor + Vector2(offset.x, offset.z))

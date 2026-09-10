@@ -1,5 +1,42 @@
 extends GutTest
 
+func test_owned_horizontal_interface_retains_wall_sides_and_authored_channels() -> void:
+	var root := Node3D.new()
+	var material := StandardMaterial3D.new()
+	root.add_child(_box_instance("Wall", Vector3(0, 1.5, 0),
+		Vector3(3, 3, 0.6), material))
+	var original := EnvironmentBakeGeometry.merge_pieces(root, Transform3D.IDENTITY)
+	var result := EnvironmentBakeGeometry.omit_coplanar_faces(original,
+		Plane(Vector3.UP, 3.0))
+	assert_not_null(result)
+	assert_eq(result.get_aabb(), original.get_aabb())
+	assert_eq(result.surface_get_material(0), material)
+	var before := original.surface_get_arrays(0)
+	var after := result.surface_get_arrays(0)
+	for channel in [Mesh.ARRAY_VERTEX, Mesh.ARRAY_NORMAL, Mesh.ARRAY_TEX_UV]:
+		assert_eq(after[channel], before[channel])
+	assert_eq((after[Mesh.ARRAY_INDEX] as PackedInt32Array).size(), 30,
+		"only the two top triangles are removed from the twelve-triangle box")
+	for face: Vector3 in EnvironmentBakeGeometry.triangle_faces(result):
+		assert_true(original.get_aabb().grow(0.00001).has_point(face))
+	root.free()
+
+func test_declared_wall_interface_tolerance_preserves_imported_source_coordinates() -> void:
+	var root := Node3D.new()
+	root.add_child(_box_instance("QuantizedWall",Vector3(0,1.500061,0),
+		Vector3(3,3.000122,0.6),StandardMaterial3D.new()))
+	var original := EnvironmentBakeGeometry.merge_pieces(root,Transform3D.IDENTITY)
+	var source := EnvironmentBakeGeometry.coplanar_face_surfaces(original,Plane(Vector3.UP,3.0),0.001)
+	assert_gt(source.size(),0)
+	assert_gt((source[0].triangles[0].position as Vector3).y,3.00001,
+		"published remainder keeps the actual imported plane rather than snapping it")
+	var opened := EnvironmentBakeGeometry.omit_coplanar_faces(original,Plane(Vector3.UP,3.0),0.001)
+	assert_eq((opened.surface_get_arrays(0)[Mesh.ARRAY_INDEX] as PackedInt32Array).size(),30,
+		"remove the quantized top, retain all vertical and bottom faces")
+	assert_eq(opened.surface_get_arrays(0)[Mesh.ARRAY_VERTEX],original.surface_get_arrays(0)[Mesh.ARRAY_VERTEX])
+	root.free()
+
+
 func test_diagonal_corner_cut_preserves_channels_and_stays_inside_source() -> void:
 	var source_root := Node3D.new()
 	var material := StandardMaterial3D.new()
@@ -234,3 +271,44 @@ func test_resource_gates_report_the_exact_exceeded_metric() -> void:
 	assert_eq(EnvironmentBakeBudget.validate(metrics, {
 		"max_surfaces": -1,
 	}), "max_surfaces must be a non-negative integer")
+
+func test_merge_preserves_unindexed_cap_after_indexed_surface_with_same_material() -> void:
+	var root := Node3D.new()
+	var material := StandardMaterial3D.new()
+	for side in 2:
+		var arrays := []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array([Vector3(side*3,0,0),Vector3(side*3+1,0,0),Vector3(side*3,1,0)])
+		if side == 0: arrays[Mesh.ARRAY_INDEX] = PackedInt32Array([0,1,2])
+		var mesh := ArrayMesh.new()
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+		mesh.surface_set_material(0,material)
+		var instance := MeshInstance3D.new()
+		instance.name = "A" if side == 0 else "B"
+		instance.mesh = mesh
+		root.add_child(instance)
+	var merged := EnvironmentBakeGeometry.merge_pieces(root,Transform3D.IDENTITY)
+	var faces := EnvironmentBakeGeometry.triangle_faces(merged)
+	assert_eq(faces.size(),6,"The second cap must have referenced triangles, not just orphaned vertices")
+	assert_true(faces.has(Vector3(4,0,0)),"The second source's triangle must survive the shared-material merge")
+	root.free()
+
+func test_declared_hinge_pose_preserves_native_mesh_and_parent_transform() -> void:
+	var root := Node3D.new()
+	var parent := Node3D.new()
+	parent.name="Assembly"
+	parent.transform=Transform3D(Basis(Vector3.UP,0.3).scaled(Vector3.ONE*0.5),Vector3(2,1,3))
+	root.add_child(parent)
+	var leaf := _box_instance("Leaf",Vector3(1,2,0),Vector3(2,4,0.2),StandardMaterial3D.new())
+	parent.add_child(leaf)
+	var original_mesh := leaf.mesh
+	var before := EnvironmentBakeGeometry.relative_transform(leaf,root)
+	var pivot := Vector3(1,0,3)
+	var rotation := Basis(Vector3.UP,PI/2)
+	assert_true(EnvironmentBakeGeometry.pose_meshes(root,[{"path":"Assembly/Leaf","pivot":[1,0,3],"yaw_degrees":90}]))
+	assert_true(EnvironmentBakeGeometry.relative_transform(leaf,root).is_equal_approx(Transform3D(rotation,pivot-rotation*pivot)*before))
+	assert_eq(leaf.mesh,original_mesh,"UVs, material and native shape remain intact")
+	var after := leaf.transform
+	assert_false(EnvironmentBakeGeometry.pose_meshes(root,[{"path":"Assembly/Leaf","pivot":[1,0,3],"yaw_degrees":90},{"path":"Missing","pivot":[0,0,0],"yaw_degrees":90}]))
+	assert_eq(leaf.transform,after,"Invalid declarations make no partial edits")
+	root.free()

@@ -12,13 +12,14 @@ const Plan := preload("res://scripts/terrain/heightfield/HeightfieldPlan.gd")
 const OWNER_SEED := 2697992464
 
 
-func test_shared_material_reads_vertex_colour() -> void:
-	var mat := Dress.shared_material() as StandardMaterial3D
-	assert_not_null(mat, "shared material is the KayKit standard material")
-	assert_eq(mat.resource_path, Dress.GROUND_PALETTE,
+func test_shared_material_uses_the_editable_ground_palette() -> void:
+	var mat := Dress.shared_material() as ShaderMaterial
+	var palette := load(Dress.GROUND_PALETTE) as StandardMaterial3D
+	assert_not_null(mat, "terrain and lips use the shared ground shader")
+	assert_eq(palette.resource_path, Dress.GROUND_PALETTE,
 		"global ground colour has one stable runtime editing point")
-	assert_true(mat.vertex_color_use_as_albedo,
-		"shared material must modulate by COLOR so vertex/instance tints apply")
+	assert_same(mat.get_shader_parameter(&"ground_palette_texture"), palette.albedo_texture,
+		"the ground shader binds the editable atlas object")
 
 
 func test_sheet_and_dressing_share_one_material_instance() -> void:
@@ -67,8 +68,8 @@ func test_ground_patch_field_is_subtle_continuous_and_not_biome_locked() -> void
 
 
 func test_dense_grass_and_terrain_expose_one_live_palette_binding() -> void:
-	var material := Dress.shared_material() as StandardMaterial3D
-	assert_same(Dress.ground_texture(), material.albedo_texture,
+	var material := Dress.shared_material() as ShaderMaterial
+	assert_same(Dress.ground_texture(), material.get_shader_parameter(&"ground_palette_texture"),
 		"the ground palette is one texture object, not copied colours")
 	assert_true(Dress.ground_uv().x >= 0.0 and Dress.ground_uv().x <= 1.0)
 	assert_true(Dress.ground_uv().y >= 0.0 and Dress.ground_uv().y <= 1.0)
@@ -105,11 +106,12 @@ func test_seed_zero_keeps_dressing_untinted_white() -> void:
 
 
 func test_built_dressing_multimeshes_carry_instance_colours() -> void:
-	# A marsh chunk with cliffs (cell -1,-33 -> chunk -1,-5; probe-verified
-	# relief 3) builds with per-instance colours enabled on every piece MultiMesh.
+	# Pin the cliff topology independently of seed geography; the real biome
+	# field still supplies every committed instance's tint.
 	var plan := Plan.new(OWNER_SEED, 22.0, 8, "mean", 3)
-	plan.set_water_plan(WaterPlan.new(OWNER_SEED, 22.0, 8))
-	var region = plan.compute_region(-4, -36, 8)
+	plan.set_raw_height_override(func(cx: int, _cz: int) -> float:
+		return 12.0 if cx <= -4 else 0.0)
+	var region = plan.compute_region(-4, -36, 12)
 	var dressing := Dress.build(region, -8, -40, 8, OWNER_SEED)
 	var any := false
 	for child in dressing.get_children():
@@ -118,5 +120,5 @@ func test_built_dressing_multimeshes_carry_instance_colours() -> void:
 			continue
 		assert_true(mm.use_colors, "%s must use per-instance colours" % child.name)
 		any = true
-	assert_true(any, "the marsh chunk should place at least one dressing piece")
+	assert_true(any, "the pinned cliff must place dressing pieces")
 	dressing.free()

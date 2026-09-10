@@ -105,54 +105,14 @@ const DESCENT_CLAMP := 0.10
 # than inventing an unrelated new one.
 const DESCENT_POOL_GAP := 24.0
 
-# Fill lattice: chunk span (TILE*8 = 192m) plus a margin on every side so a
-# basin whose flood extends past the chunk's own border is fully resolved
-# inside BOTH of two neighbouring chunks' windows (window determinism —
-# test_fill_is_deterministic_across_chunks). Margin is 30m world-space each
-# side (matching the brief's "concretely: fill over lattice indices covering
-# chunk cells ±10 cells at 3 m step" — 10 lattice cells at the ORIGINAL 3m
-# step = 30m; kept as a fixed WORLD-SPACE margin, not a fixed lattice-cell
-# count, so the perf-driven coarsening below doesn't silently shrink the
-# safety margin). The fill's own lower-level-wins relaxation converges to a
-# unique fixpoint regardless of BFS/seed order (Phase 0 controller ruling,
-# mitigation (a)); the margin exists only so a basin isn't clipped
-# differently by two neighbours' windows (mitigation (b)) — see the
-# WaterField section of the Phase 1 report for the derivation.
-#
-# I-1 (final-review-run2.md): the plan also specifies the fill as "unlimited
-# distance, no depth cap," which is in tension with ANY fixed window — a
-# flood reaching >30m past a chunk border from its own seeds (a pond near
-# POND_R_MAX=140m, or a long still-water flood over storey-flat ground)
-# could in principle leave its own seeds outside a neighbouring chunk's
-# window, so that chunk would mesh the flooded ground dry: a hard wet/dry
-# crack at the border. MEASURED, not assumed: tests/test_water_field.gd's
-# test_wet_agreement_across_all_chunk_borders walks all four borders of
-# several chunks (including a pond at bound_radius=139.0, right at
-# POND_R_MAX's own ceiling) on two independently-generated seeds (the pinned
-# 2697992464 plus 991177), comparing wet() between neighbouring chunks at
-# every 3m step across the FULL 0-30m margin on both sides of each shared
-# border — 8712 points checked, ZERO mismatches. The margin is therefore
-# promoted from "the brief said so" to measured-adequate on the seeds this
-# suite exercises; it remains a WINDOWING HAZARD in principle (a pond whose
-# true reach exceeds this margin, or a still-water flood over unusually flat
-# terrain, could still crack on some future seed) — named as a known
-# limitation in .superpowers/sdd/progress.md's own running ledger. This
-# finite-window risk is distinct from the now-fixed 6m topology blind spot:
-# the reported (-17,-20) inner corner proved a real submerged 3m passage can
-# lie between two dry 6m endpoints, so `_build_sub_lattice_rescue` handles
-# that case adaptively. The border oracle above remains the window regression gate: if
-# a future seed/site DOES trip it, the fix is a seed-aware adaptive window
-# (extend the margin to cover any in-ctx body's own footprint + slack)
-# rather than a blind margin bump.
-#
-# PERF (Phase 1 report): the 3m lattice (85x85=7225 samples) measured a
-# median 59.8ms per ctx() on this machine — ~4x over the 15ms budget (the
-# brief's own escape hatch: "if the 3m lattice fill exceeds budget, fill at
-# 6m and bilinear down"). Coarsened to 6m (43x43=1849 samples, ~3.9x fewer);
-# level_at's existing bilinear (_fill_bilinear) already interpolates at
-# whatever FILL_STEP is configured, so no other code changed — only these
-# constants. Both timings are in the Phase 1 report.
-const FILL_STEP := 6.0        # coarsened from 3.0 (the mesh's own lattice step) — see PERF above
+# Projection lattice: 192m chunk plus 42m for the local surface relaxation
+# and shoreline interpolation. It is NOT the hydraulic solve boundary.
+# _source_fill includes each in-context river/lake's entire bounds plus three
+# terrain cells, caches that source-owned solve, then projects its labels here.
+# The old per-chunk solve lost downstream seeds outside this small window and
+# disagreed by up to 11m at the September 7 production borders. Full source
+# extent is necessary even when all local channel samples already agree.
+const FILL_STEP := 6.0
 ## Sparse topology-only refinement used at coarse wet/dry boundaries. The
 ## 6m fill remains the canonical surface/performance lattice; mixed cells
 ## seed a 3m flood only into points the coarse signed-depth field calls dry.
@@ -291,6 +251,71 @@ static func ctx(water: WaterPlan, chunk: Vector2i, region = null) -> Dictionary:
 ##     is exactly Dijkstra's greedy invariant with level standing in for
 ##     distance and same-level propagation standing in for zero-cost edges.
 ## Returns {"levels": PackedFloat32Array((FILL_M+1)^2, -INF where dry)}.
+# A chunk is a projection of a source-owned hydraulic solve. Solving only its
+# 42m halo lets a downstream seed disappear from its neighbour's solve, changing
+# both wetness and level at the same world coordinate. Keep the full source
+# extent in the solve; the normal small halo remains sufficient for smoothing.
+const BASIN_CACHE_LIMIT := 16
+static var _basin_cache: Dictionary = {}
+static var _basin_lock := Mutex.new()
+
+static func _source_fill(c: Dictionary, region) -> Dictionary:
+	var ids: Array[int] = []
+	var bounds := Rect2()
+	var has_bounds := false
+	for river: RiverTrace in c.rivers:
+		ids.append(river.get_instance_id())
+		bounds = bounds.merge(river.bounds()) if has_bounds else river.bounds()
+		has_bounds = true
+	for pond: PondStamp in c.ponds:
+		ids.append(pond.get_instance_id())
+		var pb := Rect2(pond.center - Vector2.ONE * pond.bound_radius(), Vector2.ONE * pond.bound_radius() * 2.0)
+		bounds = bounds.merge(pb) if has_bounds else pb
+		has_bounds = true
+	if not has_bounds: return {}
+	ids.sort()
+	var key := [region.plan.get_instance_id(), ids]
+	_basin_lock.lock()
+	if _basin_cache.has(key):
+		var cached: Dictionary = _basin_cache[key]
+		_basin_cache.erase(key)
+		_basin_cache[key] = cached
+		_basin_lock.unlock()
+		return cached
+	bounds = bounds.grow(maxf(TILE * 3.0, WaterPlan.W_MAX + WaterPlan.BANK_FEATHER))
+	var base := (bounds.position / FILL_STEP).floor() * FILL_STEP
+	var m1 := ceili(maxf(bounds.end.x - base.x, bounds.end.y - base.y) / FILL_STEP) + 1
+	var centre := base + Vector2.ONE * float(m1 - 1) * FILL_STEP * 0.5
+	var owned: HeightfieldRegion = region.plan.compute_region(roundi(centre.x / TILE), roundi(centre.y / TILE),
+		ceili(float(m1 - 1) * FILL_STEP * 0.5 / TILE) + 2)
+	# Terrain carving sees all intersecting rivers. The hydraulic solve must
+	# seed those same rivers, including crossings far from the output chunk;
+	# otherwise their carved channels become unseeded drains for high pools.
+	var contributors: Dictionary = c.water.bodies_in_rect(
+		Rect2(base, Vector2.ONE * float(m1 - 1) * FILL_STEP))
+	var source_context := c.duplicate()
+	source_context.rivers = contributors.rivers
+	source_context.ponds = contributors.ponds
+	var levels := PackedFloat32Array(); levels.resize(m1 * m1); levels.fill(-INF)
+	var ground := PackedFloat32Array(); ground.resize(m1 * m1); ground.fill(INF)
+	var rivers := PackedFloat32Array(); rivers.resize(m1 * m1); rivers.fill(-INF)
+	var queue := PriorityQueue.new()
+	_seed_rivers(source_context, owned, base, m1, levels, ground, rivers, queue)
+	_seed_ponds(source_context, owned, base, m1, levels, ground, queue)
+	_relax_fill(owned, base, m1, levels, ground, rivers, queue)
+	queue.free()
+	var boundary_wet := 0
+	for i in m1:
+		for index in [i, (m1 - 1) * m1 + i, i * m1, i * m1 + m1 - 1]:
+			if is_finite(levels[index]): boundary_wet += 1
+	var result := {"base": base, "size": m1, "levels": levels, "rivers": rivers,
+		"boundary_wet": boundary_wet}
+	if _basin_cache.size() >= BASIN_CACHE_LIMIT: _basin_cache.erase(_basin_cache.keys()[0])
+	_basin_cache[key] = result
+	_basin_lock.unlock()
+	return result
+
+
 static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
 	var m1 := FILL_M + 1
 	var levels := PackedFloat32Array()
@@ -322,13 +347,30 @@ static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
 	# build), so leaving this unfreed leaks one Object per chunk over a play
 	# session. free() explicitly once relaxation is done.
 	var pq := PriorityQueue.new()
-	_seed_rivers(c, region, base, m1, levels, gnd, river_levels, pq)
-	_seed_ponds(c, region, base, m1, levels, gnd, pq)
-	_relax_fill(region, base, m1, levels, gnd, river_levels, pq)
+	if region.plan != null:
+		var source := _source_fill(c, region)
+		if not source.is_empty():
+			var offset := Vector2i(((base - source.base) / FILL_STEP).round())
+			for j in m1:
+				for i in m1:
+					var x := i + offset.x
+					var z := j + offset.y
+					if x < 0 or z < 0 or x >= int(source.size) or z >= int(source.size): continue
+					levels[j * m1 + i] = source.levels[z * int(source.size) + x]
+					river_levels[j * m1 + i] = source.rivers[z * int(source.size) + x]
+	else:
+		_seed_rivers(c, region, base, m1, levels, gnd, river_levels, pq)
+		_seed_ponds(c, region, base, m1, levels, gnd, pq)
+		_relax_fill(region, base, m1, levels, gnd, river_levels, pq)
 	_smooth_fill_surface(region, base, m1, levels, gnd, river_levels)
 	pq.free()
+	# The coarse flowing surface already owns wet points. Rescue needs only
+	# the dry bank constraints, so it cannot import a high pool across them.
+	var dry_bank_levels := river_levels.duplicate()
+	for idx in levels.size():
+		if is_finite(levels[idx]): dry_bank_levels[idx] = -INF
 	var sub_fill: Dictionary = _build_sub_lattice_rescue(
-		region, base, levels)
+		region, base, levels, dry_bank_levels)
 	return {"levels": levels,
 		"sub_levels": sub_fill.levels,
 		"sub_ground": sub_fill.ground}
@@ -407,7 +449,8 @@ static func _ground_at(region, base: Vector2, m1: int, gnd: PackedFloat32Array,
 ## one-ring so WaterSampler can freeze the identical signed-depth evaluation
 ## without retaining the terrain region.
 static func _build_sub_lattice_rescue(region, base: Vector2,
-		coarse_levels: PackedFloat32Array) -> Dictionary:
+		coarse_levels: PackedFloat32Array,
+		river_levels: PackedFloat32Array = PackedFloat32Array()) -> Dictionary:
 	var coarse_n := FILL_M + 1
 	var sub_n := FILL_SUB_M + 1
 	var sub_levels := PackedFloat32Array()
@@ -416,7 +459,10 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 	var sub_ground := PackedFloat32Array()
 	sub_ground.resize(sub_n * sub_n)
 	sub_ground.fill(INF)
-	var settled := PackedFloat32Array()
+	# Queue levels interpolate in 64-bit floats. Keep the settled labels at
+	# that precision: rounding one upward to float32 makes the identical
+	# queued level appear lower forever when a bank can be revisited.
+	var settled := PackedFloat64Array()
 	settled.resize(sub_n * sub_n)
 	settled.fill(-INF)
 	var queued := PackedByteArray()
@@ -451,13 +497,18 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 					sub_ground[sidx] = ground
 					if lvl == -INF or lvl <= ground + EPS:
 						continue
+					# The signed-depth shoreline value locates the old boundary;
+					# it is not a new hydraulic datum for a connected pocket.
+					var head := _fill_untapered_level(coarse_ctx, p)
 					queued[sidx] = 1
-					pq.push([sidx, lvl], lvl)
+					pq.push([sidx, head], head)
 	while not pq.is_empty():
 		var entry: Array = pq.pop()
 		var idx: int = entry[0]
 		var lvl: float = entry[1]
-		if settled[idx] != -INF:
+		var ceiling := _sub_river_ceiling(river_levels, idx % sub_n, idx / sub_n)
+		lvl = minf(lvl, ceiling)
+		if settled[idx] != -INF and settled[idx] <= lvl:
 			continue
 		settled[idx] = lvl
 		var si: int = idx % sub_n
@@ -467,6 +518,9 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 		if own_ground == INF:
 			own_ground = TerrainSurfaceField.surface_y(region, p.x, p.y)
 			sub_ground[idx] = own_ground
+		if own_ground >= lvl - EPS:
+			sub_levels[idx] = -INF
+			continue
 		var own_coarse_level: float = _fill_bilinear_coarse(coarse_ctx, p)
 		if (own_coarse_level == -INF or own_coarse_level <= own_ground + EPS) \
 				and own_ground < lvl - EPS:
@@ -478,8 +532,6 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 			if ni < 0 or ni > FILL_SUB_M or nj < 0 or nj > FILL_SUB_M:
 				continue
 			var nidx: int = nj * sub_n + ni
-			if settled[nidx] != -INF:
-				continue
 			var q: Vector2 = base + Vector2(ni, nj) * FILL_SUB_STEP
 			var coarse_level: float = _fill_bilinear_coarse(coarse_ctx, q)
 			var ground: float = sub_ground[nidx]
@@ -491,10 +543,35 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 			# branch rather than re-settling the canonical surface.
 			if coarse_level != -INF and coarse_level > ground + EPS:
 				continue
-			if ground >= lvl - EPS:
+			var next_level := minf(lvl, _sub_river_ceiling(river_levels, ni, nj))
+			if settled[nidx] != -INF and settled[nidx] <= next_level:
 				continue
-			pq.push([nidx, lvl], lvl)
+			if ground >= next_level - EPS:
+				continue
+			pq.push([nidx, next_level], next_level)
 	pq.free()
+	# The former shoreline becomes interior water beside a rescued pocket.
+	# Restore its seeded corner heads in one fixed ring; retaining their old
+	# taper would leave a narrow trough between the river and the new water.
+	var rescued_indices: Array[int] = []
+	for idx in sub_levels.size():
+		if sub_levels[idx] != -INF:
+			rescued_indices.append(idx)
+	for idx: int in rescued_indices:
+		var si := idx % sub_n
+		var sj := idx / sub_n
+		for dz in range(-1, 2):
+			for dx in range(-1, 2):
+				var ni := si + dx
+				var nj := sj + dz
+				if ni < 0 or nj < 0 or ni >= sub_n or nj >= sub_n:
+					continue
+				var nidx := nj * sub_n + ni
+				if queued[nidx] != 1 or sub_levels[nidx] != -INF:
+					continue
+				var q := base + Vector2(ni, nj) * FILL_SUB_STEP
+				sub_levels[nidx] = minf(_fill_untapered_level(coarse_ctx, q),
+					_sub_river_ceiling(river_levels, ni, nj))
 	# A rescued vertex can affect any of four adjacent 3m interpolation
 	# cells. Freeze terrain for their complete corner one-ring now.
 	for idx in sub_levels.size():
@@ -515,6 +592,26 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 				sub_ground[nidx] = TerrainSurfaceField.surface_y(
 					region, q.x, q.y)
 	return {"levels": sub_levels, "ground": sub_ground}
+
+
+static func _sub_river_ceiling(river_levels: PackedFloat32Array, si: int, sj: int) -> float:
+	## Topology rescue shares the coarse channel/bank datum. A higher shoreline
+	## elsewhere in the chunk cannot pour a second level across its dry bank.
+	if river_levels.is_empty(): return INF
+	var ci := mini(si / 2, FILL_M - 1)
+	var cj := mini(sj / 2, FILL_M - 1)
+	var tx := float(si) * 0.5 - ci
+	var tz := float(sj) * 0.5 - cj
+	var value := 0.0
+	var total := 0.0
+	for dz in 2:
+		for dx in 2:
+			var level := river_levels[(cj + dz) * (FILL_M + 1) + ci + dx]
+			if level == -INF: continue
+			var weight := (tx if dx else 1.0-tx) * (tz if dz else 1.0-tz)
+			value += level * weight
+			total += weight
+	return value / total if total > 0.000001 else INF
 
 
 ## Rasterizes the flowing channel as variable-width SEGMENT CAPSULES, not
@@ -556,6 +653,7 @@ static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
 	margins.resize(m1 * m1)
 	margins.fill(INF)
 	for tr: RiverTrace in c.rivers:
+		var bank_weights: PackedFloat64Array = c.water.bank_strengths(tr)
 		var prof: Dictionary = profile(tr, region)
 		var descents: Array = prof.get("descents", [])
 		var in_span := PackedByteArray() # one flag per ORIGINAL trace segment
@@ -568,17 +666,18 @@ static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
 			var dlvl: PackedFloat32Array = d.lvl
 			for k in range(dpos.size() - 1):
 				_claim_river_segment(base, m1, margins, river_levels,
-					dpos[k], dpos[k + 1], dw[k], dw[k + 1], dlvl[k], dlvl[k + 1])
+					dpos[k], dpos[k + 1], dw[k], dw[k + 1], dlvl[k], dlvl[k + 1], 0.0)
 		for si in range(tr.points.size() - 1):
 			if in_span[si] == 1:
 				continue
 			_claim_river_segment(base, m1, margins, river_levels,
 				tr.points[si], tr.points[si + 1], tr.widths[si], tr.widths[si + 1],
-				prof.levels[si], prof.levels[si + 1])
+				prof.levels[si], prof.levels[si + 1], WaterPlan.BANK_FEATHER * minf(bank_weights[si],bank_weights[si+1]),
+				tr.pond)
 		if tr.points.size() == 1:
 			_claim_river_segment(base, m1, margins, river_levels,
 				tr.points[0], tr.points[0], tr.widths[0], tr.widths[0],
-				prof.levels[0], prof.levels[0])
+				prof.levels[0], prof.levels[0], WaterPlan.BANK_FEATHER * bank_weights[0])
 	# Ground containment is evaluated once after every trace has offered its
 	# geometry.  Every accepted river node queues exactly its own projected
 	# level; _relax_fill treats river_levels as authoritative if a lower
@@ -587,7 +686,15 @@ static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
 		for i in m1:
 			var idx: int = j * m1 + i
 			var lvl: float = river_levels[idx]
-			if lvl == -INF:
+			if lvl == -INF: continue
+			if margins[idx] > 0.0:
+				# Broad banks constrain incoming water, but are never seeds.
+				# A pond retains ownership of its own footprint.
+				var point := base + Vector2(i,j) * FILL_STEP
+				for pond: PondStamp in c.ponds:
+					if pond.footprint_t(point) < 1.0:
+						river_levels[idx] = -INF
+						break
 				continue
 			if _ground_at(region, base, m1, gnd, i, j) >= lvl - EPS:
 				river_levels[idx] = -INF
@@ -602,12 +709,13 @@ static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
 ## tie-break at a true overlap.
 static func _claim_river_segment(base: Vector2, m1: int,
 		margins: PackedFloat32Array, river_levels: PackedFloat32Array,
-		a: Vector2, b: Vector2, wa: float, wb: float, la: float, lb: float) -> void:
-	var reach: float = maxf(wa, wb)
+		a: Vector2, b: Vector2, wa: float, wb: float, la: float, lb: float,
+		bank_width: float = 0.0, terminal: PondStamp = null) -> void:
+	var reach: float = maxf(wa, wb) + bank_width
 	var lo_i: int = maxi(0, int(floor((minf(a.x, b.x) - reach - base.x) / FILL_STEP)))
-	var hi_i: int = mini(FILL_M, int(ceil((maxf(a.x, b.x) + reach - base.x) / FILL_STEP)))
+	var hi_i: int = mini(m1 - 1, int(ceil((maxf(a.x, b.x) + reach - base.x) / FILL_STEP)))
 	var lo_j: int = maxi(0, int(floor((minf(a.y, b.y) - reach - base.y) / FILL_STEP)))
-	var hi_j: int = mini(FILL_M, int(ceil((maxf(a.y, b.y) + reach - base.y) / FILL_STEP)))
+	var hi_j: int = mini(m1 - 1, int(ceil((maxf(a.y, b.y) + reach - base.y) / FILL_STEP)))
 	var ab: Vector2 = b - a
 	var len2: float = ab.length_squared()
 	for j in range(lo_j, hi_j + 1):
@@ -617,10 +725,15 @@ static func _claim_river_segment(base: Vector2, m1: int,
 			var nearest: Vector2 = a + ab * t
 			var width: float = lerpf(wa, wb, t)
 			var margin: float = q.distance_to(nearest) - width
-			if margin > 0.0:
+			if margin > bank_width:
 				continue
 			var idx: int = j * m1 + i
 			var lvl: float = lerpf(la, lb, t)
+			# A terminal lake owns its approach when its level reaches this
+			# river datum. Its finite bank collar must remain flood-connected.
+			if margin > 0.0 and terminal != null and terminal.surface_y() >= lvl - EPS \
+					and q.distance_to(terminal.center) <= terminal.bound_radius() + WaterPlan.BANK_FEATHER:
+				continue
 			if margin < margins[idx] - 0.0001 \
 					or (absf(margin - margins[idx]) <= 0.0001 and lvl < river_levels[idx]):
 				margins[idx] = margin
@@ -650,9 +763,9 @@ static func _seed_ponds(c: Dictionary, region, base: Vector2, m1: int,
 	for pond: PondStamp in c.ponds:
 		var lvl: float = pond.surface_y()
 		var lo_i: int = maxi(0, int(floor((pond.center.x - pond.bound_radius() - base.x) / FILL_STEP)))
-		var hi_i: int = mini(FILL_M, int(ceil((pond.center.x + pond.bound_radius() - base.x) / FILL_STEP)))
+		var hi_i: int = mini(m1 - 1, int(ceil((pond.center.x + pond.bound_radius() - base.x) / FILL_STEP)))
 		var lo_j: int = maxi(0, int(floor((pond.center.y - pond.bound_radius() - base.y) / FILL_STEP)))
-		var hi_j: int = mini(FILL_M, int(ceil((pond.center.y + pond.bound_radius() - base.y) / FILL_STEP)))
+		var hi_j: int = mini(m1 - 1, int(ceil((pond.center.y + pond.bound_radius() - base.y) / FILL_STEP)))
 		for j in range(lo_j, hi_j + 1):
 			for i in range(lo_i, hi_i + 1):
 				var p: Vector2 = base + Vector2(i, j) * FILL_STEP
@@ -694,13 +807,15 @@ static func _relax_fill(region, base: Vector2, m1: int,
 			continue   # a lower level already settled this index — stale
 		if river_levels[idx] != -INF:
 			lvl = river_levels[idx] # flowing channel owns its longitudinal level
+			if _ground_at(region, base, m1, gnd, idx % m1, idx / m1) >= lvl - EPS:
+				continue # an unrelated pool cannot seed this river's dry bank
 		levels[idx] = lvl
 		var i: int = idx % m1
 		var j: int = idx / m1
 		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 			var ni: int = i + d.x
 			var nj: int = j + d.y
-			if ni < 0 or ni > FILL_M or nj < 0 or nj > FILL_M:
+			if ni < 0 or ni >= m1 or nj < 0 or nj >= m1:
 				continue
 			var nidx: int = nj * m1 + ni
 			if levels[nidx] != -INF:
@@ -1440,6 +1555,25 @@ static func _fill_bilinear(c: Dictionary, p: Vector2) -> float:
 	if not touched:
 		return coarse
 	return _fill_bilinear_sub(c, p, i0, j0, fx, fz)
+
+
+## Wet-only interpolation of the hydraulic head before dry-corner taper.
+static func _fill_untapered_level(c: Dictionary, p: Vector2) -> float:
+	var local := (p - (c.fill_base as Vector2)) / FILL_STEP
+	var i := clampi(floori(local.x), 0, FILL_M - 1)
+	var j := clampi(floori(local.y), 0, FILL_M - 1)
+	var t := (local - Vector2(i, j)).clamp(Vector2.ZERO, Vector2.ONE)
+	var total := 0.0
+	var value := 0.0
+	for dz in 2:
+		for dx in 2:
+			var level: float = c.fill.levels[(j + dz) * (FILL_M + 1) + i + dx]
+			if level == -INF:
+				continue
+			var weight := (t.x if dx else 1.0 - t.x) * (t.y if dz else 1.0 - t.y)
+			value += level * weight
+			total += weight
+	return value / total if total > 0.0 else -INF
 
 
 ## Original 6m signed-depth surface. Kept separate so the sparse 3m rescue

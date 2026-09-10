@@ -101,7 +101,7 @@ static func blended_environment_tint(w: Dictionary, tint_group: StringName) -> C
 static func _ensure() -> void:
 	if not _profiles.is_empty():
 		return
-	for p: BiomeProfile in [_meadow(), _deep_forest(), _highland(), _blossom_grove(), _twilight_marsh()]:
+	for p: BiomeProfile in [_meadow(), _deep_forest(), _highland(), _blossom_grove(), _twilight_marsh(), _amber_heath(), _jade_wetlands()]:
 		_profiles[p.biome_name] = p
 
 static func _make(name: StringName) -> BiomeProfile:
@@ -109,94 +109,90 @@ static func _make(name: StringName) -> BiomeProfile:
 	p.biome_name = name
 	return p
 
-# The five profiles trade on DISTINCT hue + clarity, not just light-vs-dark, so
-# each reads as a different place: bright-clear warm meadow, dark hazy green
-# forest, cool crisp grey highland, dreamy PINK blossom, dark teal marsh.
-# foliage_tints omit tags they don't tint — blended_foliage_tint falls back to
-# white (identity), so only deliberate tints are listed.
+# Stable IDs retain save/content compatibility; these are rebuilt art directions.
+static func _art(id: StringName, title: String, ground: Color, tree: Color,
+		fog: Color, density: float, foliage: float, water: Color, particles: Dictionary) -> BiomeProfile:
+	var p := _make(id)
+	p.display_name = title
+	p.ground_tint = ground
+	# Bush hue replacement consumes an absolute colour, not the source-atlas
+	# multiplier used by ground_tint (which can exceed 1 and shift the hue).
+	var bush_ground: Color = SUBSTRATES[id]
+	p.foliage_tints = {"tree": tree, "bush": tree.lerp(bush_ground, 0.35),
+		"grass": ground.lerp(Color.WHITE, 0.35), "rock": ground.lerp(Color.WHITE, 0.7)}
+	p.fog_color = fog
+	p.fog_density = density
+	p.pocket_fog_density = density
+	p.sky_top = Color("718fab")
+	p.sky_horizon = Color("efdbc2")
+	p.ambient_color = Color("c2d5e4")
+	p.ambient_energy = 0.7
+	p.foliage_density = foliage
+	p.water_tint = water
+	p.particles = particles
+	return p
 
 static func _meadow() -> BiomeProfile:
-	# Bright warm clear day — NO fog (owner: some biomes must be fog-free),
-	# saturated warm green. fog_color stays: it still tints blends with foggy
-	# neighbours at borders.
-	var p := _make(&"meadow")
-	p.fog_color = Color("d2ead9")
-	p.fog_density = 0.0
-	p.sky_top = Color("5cb3ea")            # bright saturated blue
-	p.sky_horizon = Color("cdeaf6")
-	p.ambient_color = Color(0.80, 0.76, 0.62)
-	p.ambient_energy = 1.05
-	# The atlas grass swatch is already strongly green. Keep meadow below 1.0
-	# in value and lift its blue relative to green; the former >1 boost clipped
-	# into a flat neon field under the clear biome's bright daylight.
-	p.ground_tint = Color(0.72, 0.66, 1.0)
-	p.foliage_tints = {"grass": Color(1.1, 1.05, 0.75), "tree": Color(1.02, 1.0, 0.9)}
-	p.foliage_density = 0.8
-	p.particles = {&"motes": 0.3}
-	return p
+	return _art(&"meadow", "Sunwash Meadows", Color(0.82, 0.72, 1.04),
+		Color(0.63, 0.78, 0.34), Color("d9debe"), 0.0, 0.8,
+		Color("88cabb"), {&"motes": 0.45})
 
 static func _deep_forest() -> BiomeProfile:
-	# Dark shaded woods — dense teal-green haze, saturated dark green.
-	var p := _make(&"deep_forest")
-	p.fog_color = Color("3d6b50")
-	p.fog_density = 0.006
-	p.pocket_fog_density = 0.02
-	p.sky_top = Color("4f7a6a")            # muted green-grey, low
-	p.sky_horizon = Color("7ba28d")
-	p.ambient_color = Color(0.38, 0.50, 0.40)
-	p.ambient_energy = 0.62
-	p.ground_tint = Color(0.48, 0.72, 0.46)   # deep saturated green
-	p.foliage_tints = {"grass": Color(0.55, 0.78, 0.52), "bush": Color(0.5, 0.72, 0.5),
-			"tree": Color(0.55, 0.78, 0.58), "rock": Color(0.8, 0.88, 0.82)}
-	p.foliage_density = 1.9
-	p.particles = {&"fireflies": 0.4}
-	return p
+	return _art(&"deep_forest", "Lanternwood", Color(0.34, 0.48, 0.70),
+		Color(0.16, 0.36, 0.38), Color("477c80"), 0.012, 1.9,
+		Color("528c9c"), {&"fireflies": 1.2, &"orbs": 0.25})
 
 static func _highland() -> BiomeProfile:
-	# Cold windswept rock — crisp and truly fog-free, cool blue-grey, desaturated.
-	var p := _make(&"highland")
-	p.fog_color = Color("b6c6d6")
-	p.fog_density = 0.0
-	p.sky_top = Color("6f9cc6")            # cool clear blue-grey
-	p.sky_horizon = Color("c2d6e6")
-	p.ambient_color = Color(0.62, 0.67, 0.74)   # cool
-	p.ambient_energy = 1.0
-	p.ground_tint = Color(0.80, 0.86, 0.86)     # desaturated cool grey-green
-	p.foliage_tints = {"grass": Color(0.82, 0.88, 0.8), "bush": Color(0.78, 0.84, 0.78),
-			"tree": Color(0.78, 0.86, 0.82)}
-	p.foliage_density = 1.2
-	p.particles = {&"motes": 0.2}
-	return p
+	return _art(&"highland", "Opal Highlands", Color(1.10, 0.77, 1.95),
+		Color(0.48, 0.62, 0.68), Color("a8baca"), 0.0, 0.9,
+		Color("91c6d6"), {&"motes": 0.25})
 
 static func _blossom_grove() -> BiomeProfile:
-	# Dreamy pink pocket — pink sky + fog (NOT blue), soft haze, pink canopies.
-	var p := _make(&"blossom_grove")
-	p.fog_color = Color("f4c9dd")
-	p.fog_density = 0.0022
-	p.sky_top = Color("e2add2")            # pink-lavender, not blue
-	p.sky_horizon = Color("f9d8ea")
-	p.ambient_color = Color(0.84, 0.66, 0.74)   # pink-warm
-	p.ambient_energy = 0.95
-	p.ground_tint = Color(1.08, 0.9, 0.94)      # pinkish
-	p.foliage_tints = {"grass": Color(1.02, 0.92, 0.86), "bush": Color(1.1, 0.8, 0.95),
-			"tree": Color(1.45, 0.78, 1.05)}     # strongly pink canopies
-	p.foliage_density = 1.1
-	p.particles = {&"petals": 0.6}
-	return p
+	return _art(&"blossom_grove", "Cherryveil", Color(0.98, 0.68, 1.65),
+		Color(1.0, 0.53, 0.72), Color("ddb3c9"), 0.004, 1.25,
+		Color("94cbd2"), {&"petals": 1.6, &"motes": 0.3})
 
 static func _twilight_marsh() -> BiomeProfile:
-	# Dark eerie hollow — dense dark teal fog, indigo sky, glowing orbs.
-	var p := _make(&"twilight_marsh")
-	p.fog_color = Color("1f4a58")
-	p.fog_density = 0.014
-	p.pocket_fog_density = 0.06
-	p.sky_top = Color("232d52")
-	p.sky_horizon = Color("1f4a58")
-	p.ambient_color = Color(0.28, 0.34, 0.45)
-	p.ambient_energy = 0.5
-	p.ground_tint = Color(0.42, 0.58, 0.55)
-	p.foliage_tints = {"grass": Color(0.38, 0.58, 0.53), "bush": Color(0.33, 0.53, 0.48),
-			"tree": Color(0.38, 0.53, 0.48), "rock": Color(0.65, 0.78, 0.78)}
-	p.foliage_density = 0.9
-	p.particles = {&"orbs": 0.5, &"fireflies": 0.8}
-	return p
+	return _art(&"twilight_marsh", "Moonfen", Color(0.40, 0.46, 1.28),
+		Color(0.20, 0.31, 0.48), Color("365569"), 0.018, 0.95,
+		Color("597eaa"), {&"orbs": 0.75, &"fireflies": 1.5})
+
+static func _amber_heath() -> BiomeProfile:
+	return _art(&"amber_heath", "Amber Heath", Color(1.30, 0.70, 0.90),
+		Color(1.0, 0.54, 0.19), Color("cdb295"), 0.001, 0.8,
+		Color("83b6ad"), {&"leaves": 0.9, &"motes": 0.45})
+
+static func _jade_wetlands() -> BiomeProfile:
+	return _art(&"jade_wetlands", "Jade Estuary", Color(0.61, 0.77, 1.05),
+		Color(0.33, 0.70, 0.55), Color("8abfb8"), 0.006, 1.1,
+		Color("65bbae"), {&"fireflies": 0.6, &"motes": 0.25})
+
+static func local_atmosphere(pos: Vector3, world_seed: int) -> Color:
+	# RGB is scattering colour, alpha is extinction per metre. No observer input.
+	var w := Helper.biome_weights5(pos, world_seed)
+	var blend := blend_atmosphere(w)
+	var fog: Color = blend[&"fog_color"]
+	fog.a = blend[&"fog_density"]
+	return fog
+
+static func water_tint_at(pos: Vector3, world_seed: int) -> Color:
+	_ensure()
+	var tint := Color(0, 0, 0, 0)
+	var weights := Helper.biome_weights5(pos, world_seed)
+	for id: StringName in weights:
+		tint += (_profiles[id] as BiomeProfile).water_tint.srgb_to_linear() * weights[id]
+	return tint
+
+# Actual substrate colours (sRGB), independent of the source atlas hue. All
+# ground and grass renderers sample this one field through BiomeGroundMap.
+const SUBSTRATES := {
+	&"meadow": Color("899e59"), &"deep_forest": Color("456a63"),
+	&"highland": Color("a7aaa9"), &"blossom_grove": Color("99907f"),
+	&"twilight_marsh": Color("4c647a"), &"amber_heath": Color("b69859"),
+	&"jade_wetlands": Color("678e82"),
+}
+static func substrate_color(weights: Dictionary) -> Color:
+	var color := Color(0, 0, 0, 0)
+	for id: StringName in weights:
+		color += (SUBSTRATES[id] as Color).srgb_to_linear() * weights[id]
+	return color

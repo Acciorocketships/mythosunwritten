@@ -1,9 +1,8 @@
-[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://dctr38nx5134w"]
+[gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://dctr38nx5134w"]
 
-[ext_resource type="Texture2D" uid="uid://draiu2ne7xtom" path="res://terrain/environment/textures/kaykit/db6c409d41d895cfc2ac.res" id="1_w0k0t"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/kaykit/db6c409d41d895cfc2ac.res" id="1_w0k0t"]
+[ext_resource type="Shader" path="res://terrain/environment/materials/biome_canopy.gdshader" id="2_canopy"]
 
 [resource]
-resource_name = "forest"
-vertex_color_use_as_albedo = true
-albedo_texture = ExtResource("1_w0k0t")
-roughness = 0.6
+shader = ExtResource("2_canopy")
+shader_parameter/albedo_texture = ExtResource("1_w0k0t")

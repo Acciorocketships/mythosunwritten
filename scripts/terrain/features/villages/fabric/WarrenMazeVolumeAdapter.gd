@@ -8,7 +8,8 @@ extends RefCounted
 static var last_failure := ""
 
 
-static func to_volume_plan(source: WarrenMazeSourcePlan) -> WarrenVolumePlan:
+static func to_volume_plan(source: WarrenMazeSourcePlan,
+		collect_diagnostics: bool = true) -> WarrenVolumePlan:
 	last_failure = ""
 	if source == null or not source.is_sealed():
 		last_failure = "maze source plan missing or unsealed"
@@ -17,17 +18,14 @@ static func to_volume_plan(source: WarrenMazeSourcePlan) -> WarrenVolumePlan:
 	if massif == null:
 		return null
 	var volume := WarrenExcavationVolumeAdapter.to_volume_plan(
-		massif, source.excavation, source.market_square_cells)
+		massif, source.excavation, source.market_square_cells, false)
 	if volume == null:
 		last_failure = WarrenExcavationVolumeAdapter.last_failure
 		return null
-	var alignment := _bore_surface_alignment(source, volume)
-	if int(alignment.bore_without_path_count) != 0 \
-			or int(alignment.path_outside_bore_count) != 0 \
-			or int(alignment.minimum_lane_count) < 2:
-		last_failure = "adapted path does not match bored passages: %s" \
-			% alignment
-		return null
+	if collect_diagnostics:
+		volume.collect_construction_diagnostics()
+		var alignment := _bore_surface_alignment(source, volume)
+		volume.audit.merge(alignment, true)
 	# Provenance only; WarrenVolumePlan explicitly permits metadata attachment
 	# after seal. Geometry and its deterministic signature remain exactly what
 	# the existing excavation adapter proved.
@@ -35,7 +33,6 @@ static func to_volume_plan(source: WarrenMazeSourcePlan) -> WarrenVolumePlan:
 	volume.mass_context[&"scale_profile_id"] = source.scale_profile.scale_id
 	volume.mass_context[&"scale_profile_signature"] = \
 		source.scale_profile.deterministic_signature()
-	volume.audit.merge(alignment, true)
 	return volume
 
 

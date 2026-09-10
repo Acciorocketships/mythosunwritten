@@ -184,8 +184,15 @@ func test_canonical_context_is_memoized_and_resource_free_on_flat_dry_fields() -
 			node_map[Vector2i(x, z)] = node
 			if not node.is_empty():
 				node_count += 1
+	# This regression needs one visible route to exercise the canonical cache.
+	# Exhaustive network coverage belongs to the route corpus; materializing
+	# a context for every route here repeatedly rebuilds unrelated neighborhoods.
 	for sc: Vector2i in node_map:
+		if feasible_count > 0 and visible_cells > 0:
+			break
 		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN]:
+			if feasible_count > 0 and visible_cells > 0:
+				break
 			if not node_map[sc].is_empty() and node_map.has(sc + direction) \
 					and not node_map[sc + direction].is_empty():
 				var route := plan.route_for(node_map[sc], node_map[sc + direction])

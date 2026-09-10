@@ -10,6 +10,9 @@ extends RefCounted
 const AUTHORED_FINE_CELL_M := FabricRecipe.CELL_SIZE
 const AUTHORED_MACRO_CELL_M := WarrenVolumePlan.HORIZONTAL_CELL_SIZE_M
 const PRODUCTION_UNIFORM_SCALE := 2.0
+## Structural surfaces sit above the finished ground by this world-space guard.
+## A stair's first riser must include that approach difference in its budget.
+const GROUND_DATUM_GUARD := 0.08
 const WORLD_FINE_CELL_M := AUTHORED_FINE_CELL_M * PRODUCTION_UNIFORM_SCALE
 const WORLD_MACRO_CELL_M := AUTHORED_MACRO_CELL_M * PRODUCTION_UNIFORM_SCALE
 const TERRAIN_FIELD_CELL_M := HeightfieldPlan.TILE
