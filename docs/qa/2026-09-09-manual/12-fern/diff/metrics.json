@@ -1,0 +1,68 @@
+{
+  "11_fern_exact": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 4.596837708069224,
+    "roi_mean_abs_rgb": 4.596837708069224,
+    "roi_changed_over_20_fraction": 0.055354838854950315
+  },
+  "11_fern_gameplay_camera": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 4.828263375838488,
+    "roi_mean_abs_rgb": 4.828263375838488,
+    "roi_changed_over_20_fraction": 0.05802088704647345
+  },
+  "11_fern_jitter_0": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 4.799467128121179,
+    "roi_mean_abs_rgb": 4.799467128121179,
+    "roi_changed_over_20_fraction": 0.058506697770562235
+  },
+  "11_fern_jitter_1": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 4.833450798576006,
+    "roi_mean_abs_rgb": 4.833450798576006,
+    "roi_changed_over_20_fraction": 0.05805410006237292
+  },
+  "11_fern_near_left": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 4.432494451362259,
+    "roi_mean_abs_rgb": 4.432494451362259,
+    "roi_changed_over_20_fraction": 0.05577534941218591
+  },
+  "11_fern_near_right": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 4.702103641122292,
+    "roi_mean_abs_rgb": 4.702103641122292,
+    "roi_changed_over_20_fraction": 0.056219503133282146
+  }
+}

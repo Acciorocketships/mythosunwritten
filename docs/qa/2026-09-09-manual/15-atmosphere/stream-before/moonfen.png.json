@@ -1,0 +1,19 @@
+{
+  "batches": 168,
+  "camera": "[X: (0.77193, 0.0, -0.635707), Y: (-0.251798, 0.918211, -0.305755), Z: (0.583714, 0.396091, 0.708795), O: (-164.0, 41.00121, -206.0)]",
+  "collision_shapes": 268,
+  "instances": 853,
+  "lights": 28,
+  "player": "(-192.0, 20.00121, -240.0)",
+  "ready": true,
+  "startup_ms": 216088,
+  "weights": {
+    "amber_heath": 0.0297651576589323,
+    "blossom_grove": 0.00710298188939053,
+    "deep_forest": 0.0,
+    "highland": 0.0,
+    "jade_wetlands": 0.0,
+    "meadow": 0.00329344195345671,
+    "twilight_marsh": 0.95983841849822
+  }
+}

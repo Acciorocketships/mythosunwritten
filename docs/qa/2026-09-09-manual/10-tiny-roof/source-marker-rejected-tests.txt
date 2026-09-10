@@ -1,0 +1,31 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_covered_crown.gd
+* test_photographed_house_fills_its_reserved_space_beneath_the_public_deck
+* test_public_ceiling_requires_complete_same_height_coverage_in_four_orientations
+2/2 passed.
+
+
+res://tests/test_roof_construction_reservations.gd
+* test_roof_gardens_respect_reserved_ground_frame_columns
+* test_interstitial_infill_leaves_the_required_roof_space_open
+    [Failed]:  Expected [<null>] to be anything but NULL:  maze composition rejected: maze block partition: 1 of 19 plots did not translate (generator bug): house.000: none of 1 rectangles sealed on either door phase (floor 0, top 4, flat_roof true); largest: 1 columns at (0, -1): footprint has no mass, no bearing, or an illegal height here
+      at line 18
+* test_connected_roof_retains_its_declared_eave_flashing
+* test_compound_roof_plate_with_a_square_return_gets_complete_roofing
+* test_joined_roof_preserves_only_the_named_market_canopy_seam
+* test_connected_roof_uses_actual_component_clearance
+    [Failed]:  Expected [<null>] to be anything but NULL:  maze composition rejected: maze block partition: 2 of 42 plots did not translate (generator bug): house.003: none of 1 rectangles sealed on either door phase (floor 0, top 6, flat_roof true); largest: 1 columns at (-1, -1): footprint has no mass, no bearing, or an illegal height here; house.006: none of 1 rectangles sealed on either door phase (floor 0, top 4, flat_roof true); largest: 1 columns at (2, 1): footprint has no mass, no bearing, or an illegal height here
+      at line 90
+* test_roofs_leave_space_for_ground_bearing_frames
+    [Failed]:  Expected [<null>] to be anything but NULL:  maze composition rejected: maze block partition: 1 of 44 plots did not translate (generator bug): house.004: none of 1 rectangles sealed on either door phase (floor 0, top 6, flat_roof true); largest: 1 columns at (0, 1): footprint has no mass, no bearing, or an illegal height here
+      at line 100
+* test_joined_bridge_crown_uses_the_free_transverse_eave_space

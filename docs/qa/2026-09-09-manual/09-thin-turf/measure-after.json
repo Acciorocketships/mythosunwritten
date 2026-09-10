@@ -1,0 +1,9 @@
+{
+  "border_meshes": 1,
+  "border_vertices": 384,
+  "collision_sha256": "4338096b7c2db1e52f340dc127e369d555af88b60237de8ab6a6f5a8df810385",
+  "ground_sha256": "0764b4010afa40852cbe443abda368d744f7ea86f395d19fd9f47579d848b664",
+  "soil_meshes": 1,
+  "soil_vertices": 960,
+  "suspended_cells": 16
+}

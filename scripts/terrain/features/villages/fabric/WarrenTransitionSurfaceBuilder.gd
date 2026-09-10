@@ -16,6 +16,11 @@ const MAX_STAIR_RISE := (TraversalEnvelope.MAX_PLANNED_STEP \
 const POST_SPACING := 1.5
 const END_POST_WIDTH := 0.22
 const END_POST_HEADROOM := 0.20
+## sfv.deck.railing.s.001 ends have post centres 0.074 m inside their
+## 1.5 m span and solid timber through y=0.80 (pointed head ends at 0.93).
+## Public native fences sit 0.025 m above the logical landing datum.
+const LANDING_POST_INSET := 0.074
+const LANDING_RAIL_HEIGHT := 0.825
 
 
 static func build(stable_id: StringName,
@@ -76,7 +81,8 @@ static func build_gate_approach(stable_id: StringName, geometry: Dictionary) -> 
 	_append_stairs(payload,start,end,direction,lateral)
 	# The upper landing owns the attachment posts. Each new span owns its end
 	# posts, so the flight/landing seam cannot emit two coincident timber posts.
-	_append_side_guards(payload,start,end,lateral,false)
+	_append_side_guards(payload,start,end,lateral,false,[],LANDING_RAIL_HEIGHT,
+		LANDING_POST_INSET)
 	_append_ramp(payload,end,outer,lateral)
 	_append_side_guards(payload,end,outer,lateral,false)
 	return payload
@@ -191,16 +197,19 @@ static func _append_stairs(payload: Dictionary, start: Vector3, end: Vector3,
 
 static func _append_side_guards(payload: Dictionary, start: Vector3,
 		end: Vector3, lateral: Vector3, owns_start_posts := true,
-		wall_boxes: Array[AABB] = []) -> void:
+		wall_boxes: Array[AABB] = [], start_rail_height := GUARD_HEIGHT,
+		start_inset := 0.0) -> void:
 	var horizontal_length := Vector2(end.x - start.x,
 		end.z - start.z).length()
 	var post_intervals := maxi(1, ceili(horizontal_length / POST_SPACING))
 	for side_value: Variant in [-1.0, 1.0]:
 		var side := float(side_value)
 		var side_offset: Vector3 = lateral * MACRO_SIZE * 0.5 * side
-		for height in [GUARD_HEIGHT * 0.52, GUARD_HEIGHT]:
-			_append_exposed_guard(payload, start + side_offset + Vector3.UP * height,
-				end + side_offset + Vector3.UP * height, wall_boxes)
+		var inset := ((end-start)*Vector3(1,0,1)).normalized()*start_inset
+		for fraction in [0.52, 1.0]:
+			_append_exposed_guard(payload,
+				start + side_offset - inset + Vector3.UP * start_rail_height * fraction,
+				end + side_offset + Vector3.UP * GUARD_HEIGHT * fraction, wall_boxes)
 		for post_index in range(0 if owns_start_posts else 1,post_intervals + 1):
 			var ratio := float(post_index) / float(post_intervals)
 			var foot: Vector3 = start.lerp(end, ratio) + side_offset

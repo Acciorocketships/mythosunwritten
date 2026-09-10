@@ -11,8 +11,8 @@ void fog() {
 	// Slow crossed waves are world-space, so neighbouring volumes have no seam.
 	float drift = 0.78 + 0.12 * sin(WORLD_POSITION.x * 0.045 + TIME * 0.035)
 		+ 0.10 * sin(WORLD_POSITION.z * 0.067 - TIME * 0.025);
-	float layer = exp(-height * 0.18);
-	DENSITY = atmosphere.a * 0.38 * layer * drift;
+	float layer = exp(-height * 0.22) + 0.16 * exp(-height * 0.045);
+	DENSITY = atmosphere.a * 0.55 * layer * drift;
 	ALBEDO = atmosphere.rgb;
 	// Clear air cannot emit light merely because a fog volume contains it.
 	EMISSION = atmosphere.rgb * DENSITY * 0.6;

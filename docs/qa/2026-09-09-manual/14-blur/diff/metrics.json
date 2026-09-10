@@ -1,0 +1,35 @@
+{
+  "near_orb_00": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 0.48941840277777776,
+    "roi_mean_abs_rgb": 0.48941840277777776,
+    "roi_changed_over_20_fraction": 0.006031901041666667
+  },
+  "pinned_00": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 0.08703233506944444,
+    "roi_mean_abs_rgb": 0.08703233506944444,
+    "roi_changed_over_20_fraction": 0.0019086371527777778
+  },
+  "second_orb_00": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 0.2590903501157407,
+    "roi_mean_abs_rgb": 0.2590903501157407,
+    "roi_changed_over_20_fraction": 0.0031564670138888888
+  }
+}

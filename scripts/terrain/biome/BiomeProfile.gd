@@ -16,6 +16,9 @@ extends Resource
 @export var sky_horizon: Color
 @export var ambient_color: Color
 @export var ambient_energy: float = 1.0
+@export var sun_color: Color = Color.WHITE
+@export var sun_energy: float = 1.2
+@export var glow_intensity: float = 0.8
 # palette — MULTIPLIERS over the shared KayKit grass texel, not absolute colors
 @export var ground_tint: Color
 @export var foliage_tints: Dictionary = {}    # tag (String) → Color multiplier

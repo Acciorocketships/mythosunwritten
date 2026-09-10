@@ -1,0 +1,40 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_covered_crown.gd
+* test_photographed_house_fills_its_reserved_space_beneath_the_public_deck
+    [Failed]:  [0] expected to equal [8]:  The complete room continues to the existing public ceiling; no little gable sits underneath
+      at line 12
+0/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september9_covered_crown.gd
+- test_photographed_house_fills_its_reserved_space_beneath_the_public_deck
+    [Failed]:  [0] expected to equal [8]:  The complete room continues to the existing public ceiling; no little gable sits underneath
+          at line 12
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             8/9
+Time              8.564s
+
+
+---- 1 failing tests ----
+

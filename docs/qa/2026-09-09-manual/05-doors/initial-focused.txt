@@ -1,0 +1,34 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_door_ownership.gd
+* test_connected_native_party_openings_share_one_entry_in_four_orientations
+* test_partial_walls_gaps_and_staggered_floors_keep_separate_access
+* test_photographed_frontage_keeps_its_central_door_and_corner_entrance
+3/3 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               1
+Tests                 3
+Passing Tests         3
+Asserts             265
+Time              6.614s
+
+
+---- All tests passed! ----
+

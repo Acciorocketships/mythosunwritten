@@ -1,0 +1,22 @@
+{
+  "contexts": 30,
+  "before_ms": 166092.361,
+  "after_ms": 150238.811,
+  "identical": [
+    "complete fill",
+    "coarse levels",
+    "fine levels"
+  ],
+  "differences": [],
+  "source_phase_totals_ms": {
+    "natural_ms": 2124.242,
+    "flow_ms": 4304.187,
+    "cap_ms": 1765.628,
+    "fine_ms": 41865.691
+  },
+  "source_hashes": {
+    "scripts/terrain/water/WaterField.gd": "70cb6864f5e2358a0ee93f9e04c80a242ca44f6738a0eb3e19946572380b9f56",
+    "scripts/terrain/heightfield/HeightfieldPlan.gd": "32a7153272e66b53bdf422c1b9efc79364a84c2f87d9244448f609e317c7aab9"
+  },
+  "note": "Feature benchmark does not request contours."
+}

@@ -1,0 +1,44 @@
+{
+  "adapter": "Apple M1 Pro (Apple7)",
+  "distance": 821.971397444606,
+  "frames": {
+    "south_walk": {
+      "frames": 11053,
+      "max_ms": 272.002,
+      "mean_ms": 10.8625155161495,
+      "p50_ms": 9.388,
+      "p95_ms": 20.328,
+      "p99_ms": 25.16
+    },
+    "startup": {
+      "frames": 8785,
+      "max_ms": 5495.008,
+      "mean_ms": 34.0335273762095,
+      "p50_ms": 33.331,
+      "p95_ms": 35.003,
+      "p99_ms": 35.275
+    }
+  },
+  "frozen_seconds": 0.0,
+  "headless": false,
+  "mode": "south_walk",
+  "render_only": false,
+  "resolution": "(1280.0, 720.0)",
+  "seed": 2697992464,
+  "status": "complete",
+  "startup_ms": 298923,
+  "crossing": {
+    "camera": "[X: (0.928477, 0.0, -0.371391), Y: (-0.238144, 0.767354, -0.595361), Z: (0.284988, 0.641223, 0.71247), O: (291.4, 14.0, -1334.0)]",
+    "camera_kind": "inferred",
+    "crossed_position": "(287.4, 4.991061, -1356.056)",
+    "crossed_seconds": 12.258,
+    "end": "(286.9179, 0.16548, -2049.409)",
+    "final_max_fps": 0,
+    "frozen_seconds": 0.0,
+    "frozen_seconds_at_crossing": 0.0,
+    "grounded": true,
+    "pin": "(287.4, 5.0, -1344.0)",
+    "start": "(287.4, 31.925, -1238.07)"
+  },
+  "exit_code": 0
+}

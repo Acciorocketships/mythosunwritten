@@ -1,0 +1,17 @@
+{
+  "pinned": {
+    "mean_absolute_rgb": 7.941501736111111,
+    "pixels_over_8": 608305,
+    "max_channel_difference": 85
+  },
+  "left": {
+    "mean_absolute_rgb": 8.450447410300926,
+    "pixels_over_8": 668316,
+    "max_channel_difference": 31
+  },
+  "right": {
+    "mean_absolute_rgb": 7.452660590277778,
+    "pixels_over_8": 579092,
+    "max_channel_difference": 84
+  }
+}

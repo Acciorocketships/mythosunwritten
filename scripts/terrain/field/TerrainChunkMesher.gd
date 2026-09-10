@@ -694,6 +694,19 @@ func _emit_path_surface(st: SurfaceTool, region: HeightfieldRegion,
 			colours[index]=_quad_tint(Vector2(x,z),x0,z0,quad_tints)
 			inner[index]=1 if _inner_corner_vertex(region,clip_cache,qkey.x,qkey.y,clipped[index]) else 0
 	if profile_enabled: _fine_vertices_usec += Time.get_ticks_usec()-vertices_started
+	# Flat graded squares have the same physical surface at every fine-grid
+	# vertex. Keep their exact outer corners and winding without submitting
+	# 128 coplanar triangles to the physics server. Any height difference,
+	# however small, retains the complete existing collision grid.
+	var flat_collision := graded
+	if flat_collision:
+		for point: Vector3 in raw:
+			if point.y != raw[0].y:
+				flat_collision = false
+				break
+	if flat_collision:
+		graded_collision.append_array([raw[0],raw[width-1],raw[width*width-1],
+			raw[0],raw[width*width-1],raw[width*(width-1)]])
 	var paint_started := Time.get_ticks_usec() if profile_enabled else 0
 	var paint_bounds := Rect2(Vector2(clipped[0].x,clipped[0].z),Vector2.ZERO)
 	for point: Vector3 in clipped:
@@ -709,7 +722,7 @@ func _emit_path_surface(st: SurfaceTool, region: HeightfieldRegion,
 			var b := a+1
 			var c := b+width
 			var d := a+width
-			if graded:
+			if graded and not flat_collision:
 				graded_collision.append_array([raw[a],raw[b],raw[c],raw[a],raw[c],raw[d]])
 			if not possible_path:
 				_tri_tinted(st,[clipped[a],clipped[b],clipped[c]],

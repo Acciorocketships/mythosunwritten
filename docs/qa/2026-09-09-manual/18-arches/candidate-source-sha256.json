@@ -1,0 +1,12 @@
+{
+  "scripts/terrain/features/villages/fabric/WarrenTunnelArches.gd": "d45b84eb675f6ed1142dfb2673aa37c1ac6cc749b702026318c6edb1f57d9515",
+  "scripts/terrain/features/villages/fabric/SettlementFabricPlan.gd": "26b17ba334e66502c7d96abb88b3b6cc75214a71b13822e6086fa40e3bc247f9",
+  "scripts/terrain/features/villages/fabric/WarrenSpatialFabricCompiler.gd": "39eef2c35b5eefb9fb0de047f6fc610db1639f8135bfbd10c892b362d034706d",
+  "scripts/terrain/features/villages/fabric/SettlementFabricProgram.gd": "4c3f72a5f164a09c15241efe994070b698a1eca8666aa236813f58300125216a",
+  "scripts/terrain/features/PathPlan.gd": "705351503fe2002138f79ad4d97909fbd6f0bd04c984d3927e27d737136f2f18",
+  "scripts/terrain/features/PathProgram.gd": "c6cdccd5d82ad987ec5009a78719d3be0ae022f91537feeaaf362bbd56737f8b",
+  "tools/environment_bake/manifests/fantasy_village_tunnel.json": "fda1cb2581c7a9d227c496c5092c8c9ae811b6d9ec1a1950cb603b8246af2061",
+  "tools/environment_bake/provenance/fantasy_village_tunnel.json": "91fa35a5ee5e72f1433d1b3eb0b1310e3c42255713c7a78dcc6b17aabfc7be34",
+  "terrain/environment/catalog/descriptors/sfv_fabric_tunnel_arch_001.tres": "03deedb820adbb8c7e37407f7df9541a61b0fdddd230da26624c6ffb65c1c7ef",
+  "terrain/environment/visuals/fantasy_village_tunnel/sfv_fabric_tunnel_arch_001.tres": "d32254c97d466a4728f6cda8f852e5a4c5e734afe9b4ddc489b3f8e395d78957"
+}

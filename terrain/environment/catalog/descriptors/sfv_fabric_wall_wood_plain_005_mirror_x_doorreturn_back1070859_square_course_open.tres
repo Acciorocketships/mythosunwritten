@@ -29,107 +29,107 @@ omitted_face_surfaces = Array[Dictionary]([{
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(1.0608699, 3, 0.23433043),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(0.50000024, 3, -0.23433037),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(1.5000002, 3, -0.23433033),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(0.50000024, 3, -0.23433037),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(1.0608699, 3, 0.23433043),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(0.50000024, 3, 0.1762943),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.02809191, 3, -0.23433039),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(0.50000024, 3, 0.1762943),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.060869414, 3, 0.23433039),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.42914104, 3, -0.122005135),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.42914104, 3, -0.19713844),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.02809191, 3, -0.23433039),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.42914104, 3, -0.122005135),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.02809191, 3, -0.23433039),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.060869414, 3, 0.23433039),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.42914104, 3, -0.122005135),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.060869414, 3, 0.23433039),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.42914104, 3, 0.23433037),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(0.50000024, 3, 0.1762943),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.02809191, 3, -0.23433039),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(0.50000024, 3, -0.23433037),
 "uv": Vector2(0.40311444, 0.23957539)
 }])

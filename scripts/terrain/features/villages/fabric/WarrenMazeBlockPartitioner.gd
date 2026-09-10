@@ -242,17 +242,31 @@ static func partition(source: WarrenMazeSourcePlan,
 ## by-design roof band apart from a building the composition never roomed
 ## before it may call a stone face either.
 static func plot_roof_band_span(source: WarrenMazeSourcePlan,
-		plot: Dictionary) -> Vector2i:
+		plot: Dictionary, volume: WarrenVolumePlan = null) -> Vector2i:
 	if source == null or plot.is_empty() \
 			or StringName(plot.get("kind", &"")) \
 				!= WarrenMazeSourcePlan.PLOT_HOUSE:
 		return Vector2i.ZERO
 	var floor_band := int(plot["floor"])
 	var top_band := int(plot["top"])
+	if plot_has_public_ceiling(source,plot,volume): return Vector2i(top_band,top_band)
 	var roof_base := WarrenBuildingParcel.flat_roof_base_band(floor_band,
 		top_band) if plot_is_flat_roofed(source, plot) \
 		else top_band - WarrenBuildingParcel.ROOF_RESERVATION_BANDS
 	return Vector2i(maxi(floor_band, roof_base), top_band)
+
+
+static func plot_has_public_ceiling(source: WarrenMazeSourcePlan,
+		plot: Dictionary, volume: WarrenVolumePlan = null) -> bool:
+	if source == null or StringName(plot.get("kind",&"")) != WarrenMazeSourcePlan.PLOT_HOUSE:
+		return false
+	var top := int(plot["top"])
+	var height := top-int(plot["floor"])
+	if height < WarrenBuildingParcel.STOREY_BANDS or posmod(height,WarrenBuildingParcel.STOREY_BANDS)!=0:
+		return false
+	var cells: Array[Vector2i] = []
+	cells.assign(plot["cells"])
+	return WarrenBuildingParcel.has_complete_public_ceiling(volume,cells,top)
 
 
 static func plot_is_flat_roofed(source: WarrenMazeSourcePlan,
@@ -545,6 +559,7 @@ static func _parcel_for_plot(source: WarrenMazeSourcePlan,
 				candidate["footprint"] as Array[Vector2i], floor_band,
 				top_band, door_walk, candidate["threshold"] as Vector2i,
 				candidate["frontage"] as Vector2i, door_phase, flat_roof)
+			parcel.public_ceiling = plot_has_public_ceiling(source,plot,volume)
 			# The seam is declared BEFORE the seal: it decides the support
 			# mode, and `WarrenParcelConstruction._support_base_band` reads it
 			# to keep the room stack at this plot's own floor instead of

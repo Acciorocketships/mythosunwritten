@@ -1,0 +1,13 @@
+{
+  "moonfen": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 79.86453414351851,
+    "roi_mean_abs_rgb": 79.86453414351851,
+    "roi_changed_over_20_fraction": 0.9998832947530865
+  }
+}

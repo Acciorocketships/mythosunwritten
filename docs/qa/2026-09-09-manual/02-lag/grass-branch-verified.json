@@ -1,0 +1,128 @@
+{
+  "camera": "[X: (0.928477, 0.0, -0.371391), Y: (-0.238144, 0.767354, -0.595361), Z: (0.284988, 0.641223, 0.71247), O: (291.4, 14.0, -1334.0)]",
+  "fixture": "/Users/ryko/story/.artifacts/september9-render-fixture/world-v2.res",
+  "fixture_sha256": "32ac7509b5e679b75bb09ecf88a1778db35dd1e4b0ac174fdbd10a76125724be",
+  "rows": [
+    {
+      "draw_calls": 690.0,
+      "frames": {
+        "frames": 285,
+        "max_ms": 42.696,
+        "mean_ms": 35.1484526315789,
+        "p50_ms": 35.425,
+        "p95_ms": 41.346,
+        "p99_ms": 41.721
+      },
+      "grass_batches": 52,
+      "grass_shader_hash": "b1d5206bbf98b53ecb74aceac2e2976c9c901d3e3696b6d4d879d87c4a59e9d3",
+      "primitives": 10559868.0,
+      "shadow_blur": 1.0,
+      "sun_angular_distance": 2.5,
+      "variant": "before"
+    },
+    {
+      "draw_calls": 690.0,
+      "frames": {
+        "frames": 292,
+        "max_ms": 41.257,
+        "mean_ms": 34.3165479452055,
+        "p50_ms": 34.162,
+        "p95_ms": 38.198,
+        "p99_ms": 40.528
+      },
+      "grass_batches": 52,
+      "grass_shader_hash": "3a19ecbb4ad7c3fa2ab4e301fe39075d89410f177d4f71214d964320372bd8a1",
+      "primitives": 10559868.0,
+      "shadow_blur": 1.0,
+      "sun_angular_distance": 2.5,
+      "variant": "candidate"
+    },
+    {
+      "draw_calls": 690.0,
+      "frames": {
+        "frames": 288,
+        "max_ms": 43.712,
+        "mean_ms": 34.7698194444444,
+        "p50_ms": 34.571,
+        "p95_ms": 38.926,
+        "p99_ms": 41.779
+      },
+      "grass_batches": 52,
+      "grass_shader_hash": "b1d5206bbf98b53ecb74aceac2e2976c9c901d3e3696b6d4d879d87c4a59e9d3",
+      "primitives": 10559868.0,
+      "shadow_blur": 1.0,
+      "sun_angular_distance": 2.5,
+      "variant": "before_repeat"
+    },
+    {
+      "draw_calls": 690.0,
+      "frames": {
+        "frames": 290,
+        "max_ms": 42.842,
+        "mean_ms": 34.5486931034483,
+        "p50_ms": 34.298,
+        "p95_ms": 40.202,
+        "p99_ms": 41.675
+      },
+      "grass_batches": 52,
+      "grass_shader_hash": "3a19ecbb4ad7c3fa2ab4e301fe39075d89410f177d4f71214d964320372bd8a1",
+      "primitives": 10559868.0,
+      "shadow_blur": 1.0,
+      "sun_angular_distance": 2.5,
+      "variant": "candidate_repeat"
+    },
+    {
+      "draw_calls": 563.0,
+      "frames": {
+        "frames": 492,
+        "max_ms": 27.894,
+        "mean_ms": 20.3744308943089,
+        "p50_ms": 20.476,
+        "p95_ms": 23.853,
+        "p99_ms": 25.378
+      },
+      "grass_batches": 52,
+      "grass_shader_hash": "b1d5206bbf98b53ecb74aceac2e2976c9c901d3e3696b6d4d879d87c4a59e9d3",
+      "primitives": 10451260.0,
+      "shadow_blur": 1.0,
+      "sun_angular_distance": 0.0,
+      "variant": "pcf_before"
+    },
+    {
+      "draw_calls": 563.0,
+      "frames": {
+        "frames": 503,
+        "max_ms": 26.078,
+        "mean_ms": 19.8935924453281,
+        "p50_ms": 19.949,
+        "p95_ms": 23.311,
+        "p99_ms": 25.067
+      },
+      "grass_batches": 52,
+      "grass_shader_hash": "3a19ecbb4ad7c3fa2ab4e301fe39075d89410f177d4f71214d964320372bd8a1",
+      "primitives": 10451260.0,
+      "shadow_blur": 1.0,
+      "sun_angular_distance": 0.0,
+      "variant": "pcf_candidate"
+    },
+    {
+      "draw_calls": 563.0,
+      "frames": {
+        "frames": 492,
+        "max_ms": 29.329,
+        "mean_ms": 20.3641707317073,
+        "p50_ms": 20.461,
+        "p95_ms": 24.893,
+        "p99_ms": 26.79
+      },
+      "grass_batches": 52,
+      "grass_shader_hash": "b1d5206bbf98b53ecb74aceac2e2976c9c901d3e3696b6d4d879d87c4a59e9d3",
+      "primitives": 10451260.0,
+      "shadow_blur": 1.0,
+      "sun_angular_distance": 0.0,
+      "variant": "pcf_before_repeat"
+    }
+  ],
+  "shadow_filter_quality": 2,
+  "sun_angular_distance": 2.5
+}

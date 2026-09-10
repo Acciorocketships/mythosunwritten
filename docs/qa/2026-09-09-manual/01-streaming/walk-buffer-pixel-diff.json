@@ -1,0 +1,24 @@
+[
+  {
+    "view": "15s_inferred",
+    "before": "walk-before_15s_inferred.png",
+    "after": "walk-buffer-candidate_15s_inferred.png",
+    "diff": "walk-buffer-15s_inferred-diff-x5.png",
+    "pixels": 921600,
+    "changed_max_channel_over_8": 764916,
+    "mean_absolute_rgb": 41.60445131655093,
+    "camera": "identical inferred transform; original photo has no crosshair hit",
+    "judgment": "Before: missing ground half-plane. After: continuous terrain and vegetation beyond boundary."
+  },
+  {
+    "view": "crossing_inferred",
+    "before": "walk-before_crossing_inferred.png",
+    "after": "walk-buffer-candidate_crossing_inferred.png",
+    "diff": "walk-buffer-crossing_inferred-diff-x5.png",
+    "pixels": 921600,
+    "changed_max_channel_over_8": 756456,
+    "mean_absolute_rgb": 41.43911783854167,
+    "camera": "identical inferred transform; original photo has no crosshair hit",
+    "judgment": "Before: missing ground half-plane. After: continuous terrain and vegetation beyond boundary."
+  }
+]

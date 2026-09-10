@@ -1,0 +1,22 @@
+{
+  "before__candidate": {
+    "mean_absolute_rgb": 0.18592990451388888,
+    "pixels_over_8": 227,
+    "max_channel_difference": 85
+  },
+  "before__before_repeat": {
+    "mean_absolute_rgb": 0.31802445023148146,
+    "pixels_over_8": 179,
+    "max_channel_difference": 86
+  },
+  "pcf_before__pcf_candidate": {
+    "mean_absolute_rgb": 0.18358036747685186,
+    "pixels_over_8": 155,
+    "max_channel_difference": 83
+  },
+  "pcf_before__pcf_before_repeat": {
+    "mean_absolute_rgb": 0.24051106770833333,
+    "pixels_over_8": 215,
+    "max_channel_difference": 82
+  }
+}

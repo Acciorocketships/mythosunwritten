@@ -1,3 +1,207 @@
+> September 9 tunnel arches (accepted): native timber frames belong to the
+> transition from open public air into a complete three-band warren bore.
+> Two walking cells, two solid jamb columns and real lower bearings precede
+> placement. The native-scale 540-triangle asset retains full mesh collision
+> and fits below the bore ceiling without blocking the walking aperture.
+> Fabric asset preparation, payload and construction signature own the frame.
+> Detached road gateways and their clearance footprints are removed; this can
+> change deterministic outskirts lot allocation. Biome markers remain separate.
+> Six live traversals, unchanged 100-cell / 140-crossing clearance, sixteen
+> matched visual pairs and frontage regressions verify the photographed town.
+> The full September 9 focused run passes 95 tests / 78,973 assertions; six
+> additional frontage tests pass. Documented broad baseline failures remain.
+
+> September 9 city furnishings (accepted): private garden
+> edges may reserve compact crate/sack stores or a two-cell bench/bucket group
+> after lamp stations and before incidental planting. Complete native bounds
+> remain inside their supported cells and clear the final wall envelope. The
+> sack uses a measured lid/base contact; public turf and entrances stay empty.
+> Eleven matched render pairs/differences, 543 focused assertions, six-town
+> decor clearance and unchanged physical walking samples verify these groups.
+
+> September 9 city lantern placement (accepted): realized
+> closed door panels carry one native wall bracket at a measured surface point,
+> contained in the panel's original envelope and withdrawn with its owner.
+> Supported garden edges beside walks reserve at most four spaced two-cell
+> lamp stations before incidental planting. Public turf, entrances and occupied
+> air remain excluded. Expansion uses resource-free attachment coordinates.
+> Nine matched render pairs, actual native triangle contacts, 582 focused
+> assertions and unchanged 124-cell / 179-crossing clearance verify placement.
+
+> September 9 atmosphere review: the owner's
+> request for biome lighting and twilight supersedes the earlier fixed-world
+> lighting policy. Seven profiles blend sky, sun colour/energy, ambient and
+> restrained bloom through a three-second exponential response; the sun angle
+> stays fixed. Ground-following mist retains spatial biome ownership. Native
+> lantern batches emit one shadow-free, distance-faded warm point per placement
+> at the measured pane centre; only the LPFV atlas's private glass swatch emits.
+> Wider spirit-light ranges keep the existing light count. Camera blur stays off.
+
+> September 9 camera review: AtmosphereDirector leaves camera attributes null.
+> Near and far depth-of-field blur are removed pending the camera redesign;
+> bloom remains enabled. Three matched game comparisons verify sharp foreground
+> and distant edges, with the existing director regressions passing.
+
+> September 9 spirit-orb review: unshaded additive orb sprites output glow
+> radiance through ALBEDO; the former emission-only shader was invisible.
+> The larger 3.2m halo, 1.5m slow horizontal amplitudes and gentle 0.4m bob share
+> one parent with the light. Twelve timed real-world replay comparisons and
+> rendered-centroid checks verify the visible motion; 17 related tests pass.
+
+> September 9 broadleaf habitat: the four LPFV broadleaf plant variants belong
+> to Jade Estuary and its continuous biome blend. Their pure-Jade distribution
+> is unchanged; other biomes select the existing flowers. Restricting only the
+> photographed variant was visually insufficient because a similar variant
+> replaced it. Photo 11 and five nearby/camera comparisons pass after the
+> family restriction, alongside 16 habitat/dressing tests with 660 assertions.
+
+> September 9 doorway-return closure: baker version 32 uses the
+> declared native timber cut stock for nonzero doorway-return cuts as well as
+> miters. The wall's return plane, relief, UVs and surviving source faces stay
+> fixed; its exposed end thickness is closed before floor-cap subtraction.
+> Both window hands and floor-owned variants pass native-triangle checks in
+> four orientations. Photo 13 and five matched views/differences pass, alongside
+> identical 132-cell / 188-crossing clearance. All 674 variants retain actual
+> vertices inside their native stock and declared return planes.
+
+> September 9 roof-end review: flush continuous-roof ends fit
+> the complete authored end section longitudinally into their declared short
+> interval. Clipping at that boundary had removed the native plaster gable.
+> The inner seam, transverse section, full native height and UVs are preserved.
+> Eight finite color/end/width alternatives bake through the existing fitting
+> operation. Photo 10 and five matched views/differences pass. All 72 native
+> gable samples now close; 25 related tests and identical 132-cell / 188-crossing
+> public clearance verify the repair.
+
+> September 9 covered-crown review: a house whose complete
+> footprint meets all exact projected public-floor cells at its even top band declares
+> that public ceiling before parcel sealing. Its rooms may use the whole height
+> below the shared interface. The parcel identity, storey count and roof-band
+> ownership carry the same fact; uncovered or partly covered plots retain the
+> ordinary roof reservation. Photo 14 and five matched nearby/jitter/gameplay
+> views and differences pass. Twenty-one tests / 110 assertions and identical
+> 132-cell / 188-crossing central clearance verify the added reserved storey.
+
+> September 9 suspended-lawn review: raised turf has a closed soil bed seated
+> in the actual native deck and a timber retaining frame inside its footprint.
+> Its flat visual grass ends at the frame; ordinary grounded gardens retain
+> their native rounded lips. Public collision is unchanged. Concave corners
+> have one frame owner and outward faces. Photo 9's clear nearby views and all
+> six matched differences pass; its reconstructed exact camera remains behind
+> a merged-world awning. Sixteen tests / 7,654 assertions and identical actual
+> collision hashes verify the photographed 16-cell lawn.
+
+> September 9 road-end review: town gates connect to the shared perimeter.
+> Only actual canonical world-road crossings extend beyond it; the primary
+> gate no longer invents a house-size-dependent country spur. Handoffs reserve
+> frontage before house allocation. Photo 4 and five nearby/jitter/gameplay
+> views verify the removed north spur; the recorded south connection and
+> four-orientation topology regressions pass.
+
+> September 9 manual bay review: projecting facade bays and shallow jetties
+> have two plain native timber knees between their parent wall and bottom
+> plate. Selection checks the same complete support transforms before emission;
+> they stay in the reserved lower band. Ribbed corbels remain absent. Matched
+> photo 12 and nearby differences pass; 25 related tests (3,725 assertions)
+> and identical clearance at 100 walk cells / 140 crossings verify the change.
+
+> September 9 manual rail review: exterior stair beams attach inside the
+> measured native landing-post profile, including its inset and floor lift,
+> before reaching the ordinary guard height down the flight. The landing keeps
+> sole ownership of the shared posts; tread geometry and free-end posts remain
+> unchanged. Actual native-triangle sockets pass in four orientations. Matched
+> photo 6 and nearby differences show the joined ends; six live gate traversals
+> and 18 related tests (1,507 assertions) pass.
+
+> September 9 manual door review: coplanar room fronts at the same floor share
+> one entrance only through mutually open complete native party-wall modules.
+> Partial walls, gaps and staggered floors retain independent access. The median
+> usable doorway owns the joined frontage; other bays use complete window panels.
+> The compiler publishes that ownership without moving rooms or public routes.
+> Inline native timber joins accommodate masonry/door overhangs and continue to
+> both rear reveals inside the facade envelope. Photo 3 and five nearby views/
+> pixel differences pass, as do four new tests and unchanged public clearance.
+> The related 45/46 test result retains the documented landmark/course failure.
+
+> September 9 manual grass-lip review: opposing native lips on a narrow lawn
+> divide their flat backs at the shared cell center. The rounded source perimeter,
+> UVs and biome tint remain intact, including paired outer and inner corners.
+> Main-thread preparation exports resource-free triangles; workers apply exact
+> ownership. The turf field and collision are unchanged. Photo 2 and five nearby
+> views/pixel differences pass; 29 tests / 12,984 assertions and identical
+> 124-cell / 179-crossing surveys verify the photographed town.
+
+> September 10 water review: standing water is limited by complete-domain
+> terrain spill routes; unfilled neighbors are not outlets. Flow may occupy
+> excavated ground only below both the original rendered surface and the local
+> river's projected continuous profile. A distant high source cannot fill a
+> lower river's excavation. Unchanged plateaus receive no excavation allowance.
+> Smoothing respects physical containment while preserving flowing channel
+> joins. Coarse and fine water solve the complete rectangular source domain,
+> with all intersecting contributors, before chunk projection. Fine expansion
+> cannot cross a point that must remain dry and seed a disconnected pocket.
+> Reverse minimax queries memoize proven escape heights; the frozen full-domain
+> heap and dense outlet initialization remain independent test references.
+> Fine spill initialization reuses its already enumerated real anchors plus
+> the outer domain boundary. Ground uses ordinary baked cell controls locally.
+> The bounded terrain sample cache retains the exact original input beside
+> its carved value; the uncarved compiler reuses it without recomputing noise
+> or adding back a rounded subtraction. No extra terrain region is retained.
+> Graphical startup temporarily limits redraws to 30 FPS, preserving a lower
+> existing limit and restoring the previous setting on completion or exit.
+> A later explicit frame limit takes precedence; headless limits are unchanged.
+> Photos 5/7/8 and six nearby comparisons remove the reported shelves, mound
+> and folded water edge while retaining lower lakes. All 26 final focused
+> tests pass with 1,337 assertions. The final 120-second walk travels 822 m
+> with zero frozen time; startup takes 298.923 s and remains expensive. Eight
+> historical contour/skin failures remain identical to baseline. Acceptance
+> is limited to the reported sites and measured route, not a green water suite.
+> See `docs/qa/2026-09-09-manual/03-water/result.md`.
+
+> September 9 manual review (in progress September 10): terrain requests retain
+> ownership for an unchanged desired chunk footprint; movement rebases priorities
+> without resubmitting every halo each frame. Startup handoff and chunk crossings
+> publish new footprints. WaterPlan's regional carve buckets store only the
+> half-open super-cell's owned terrain cells; complete river/pond discovery and
+> hydraulic solve extents are unchanged. Focused red/green regressions pass;
+> reported-route acceptance is limited as recorded below. See
+> `docs/qa/2026-09-09-manual/review.md`.
+> The rectangular heightfield compiler now uses contiguous integer arrays and
+> separable cardinal clamps, checked against the original complete maps. River
+> bank ownership skips detailed pond shapes outside their conservative bounds.
+> Flat graded squares use two collision triangles only when every fine-grid
+> height is identical; curved collision and all visual vertices remain intact.
+> Requested character motion supplies bounded forward streaming deadlines before
+> acceleration and while waiting; every intervening chunk participates. Exact
+> noise corners use a bounded synchronized cache. Height samples evict one oldest
+> entry at capacity instead of dropping the entire warm field. Source changes
+> still invalidate the sample cache. Constant hydraulic targets skip redundant
+> shaping; real terminal drops retain their canonical terrain region.
+> Complete water solves share cache entries by their actual aligned domain and
+> terrain/water owners, independent of the initiating local source subset.
+> Initial loading now prepares the surrounding terrain ring, supplying at least
+> one full chunk of travel in every direction. Startup duration and subsequent
+> frozen time are reported separately. The reported 120-second walk now travels
+> 820.5 m with zero frozen time; matched inferred-camera images show loaded ground.
+> All 105 related tests pass their assertions, followed by the documented native
+> shutdown failure. This accepts the reported route, not universal streaming or
+> full-suite health. Long-session performance is summarized below.
+> During that review, completed hydraulic profiles now release their canonical
+> construction regions and retain bounded compact arrays (1,024 individually
+> evicted entries). Terrain remains canonical when a profile is recomputed.
+> Weak-reference, eviction and river regressions pass; production performance
+> and visual acceptance are recorded below.
+> Water planning also bounds individual region, source and trace memo entries;
+> eviction preserves deterministic recomputation and never clears a whole cache.
+> Dense grass skips deformation for dropped patches and untrampled far blades
+> whose detail is exactly zero. The sun uses widened PCF contact shadows instead
+> of angular PCSS; fixed-scene timing and image comparisons accompany the change.
+> The 2.4 km out-and-back residency comparison ends with identical 56 terrain
+> chunks and 11,541 nodes: static memory falls by 186 MB and peak by 212 MB.
+> Three matched render views improve from 33.7–34.9 to 18.9–19.9 ms/frame.
+> The 40 related tests pass with a clean exit. This accepts the measured retention
+> and rendering fixes; progressive headless CPU slowdown was not reproduced.
+
 > September 10 repository consolidation: `main` continues the September 5 evening
 > village-review branch and its September 5–9 working implementation. The atmosphere
 > and water/travel histories are integrated without replacing that later work.
@@ -2094,11 +2298,16 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   colours. Broad moss, chalk, silt, petal and earth patterns remain world-aligned.
   Rock and path texels retain their authored palette. Change the shared field
   once; never give a ground consumer its own copied colour.
-- **Global lighting and local atmosphere**: `AtmosphereDirector` owns one fixed
-  warm sun (energy 1.2, shadow opacity 0.65), cool ambient fill, restrained glow,
-  matte contact shading and adjustable camera focus. It updates only the
-  deterministic ground lookup as the player travels; a biome boundary can never
-  change distant lighting. World mist supplies regional depth and colour.
+- **Global lighting and local atmosphere**: `AtmosphereDirector` blends seven
+  lighting profiles from the player's continuous biome weights with a three-second
+  exponential response. The owner requested this on September 9, superseding the
+  former fixed-global-lighting policy. Sun direction and shadow opacity stay fixed;
+  sky, sun colour/energy, ambient and bloom vary. World-space terrain-following
+  mist still supplies local depth and colour. Camera attributes remain null.
+  `EnvironmentLanternLights` supplies one shadow-free warm light per native lamp,
+  attached once to the first mesh batch and freed with that batch's container.
+  The two LPFV lamp families use their private atlas pane swatch for emission;
+  timber, chains and metal retain their native shading.
 
 ## Character & camera
 

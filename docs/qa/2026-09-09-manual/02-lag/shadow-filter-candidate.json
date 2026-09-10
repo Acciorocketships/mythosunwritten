@@ -1,0 +1,77 @@
+{
+  "camera": "[X: (0.928477, 0.0, -0.371391), Y: (-0.238144, 0.767354, -0.595361), Z: (0.284988, 0.641223, 0.71247), O: (291.4, 14.0, -1334.0)]",
+  "fixture": "/Users/ryko/story/.artifacts/september9-render-fixture/world-v2.res",
+  "fixture_sha256": "32ac7509b5e679b75bb09ecf88a1778db35dd1e4b0ac174fdbd10a76125724be",
+  "rows": [
+    {
+      "draw_calls": 690.0,
+      "frames": {
+        "frames": 286,
+        "max_ms": 42.088,
+        "mean_ms": 35.0037167832168,
+        "p50_ms": 35.007,
+        "p95_ms": 39.139,
+        "p99_ms": 40.579
+      },
+      "grass_batches": 52,
+      "grass_shader_hash": "9102e671ec3f10af977481470f81aa909c1b7f2881a13407e9ec395563d3a88a",
+      "primitives": 10559868.0,
+      "shadow_blur": 1.0,
+      "sun_angular_distance": 2.5,
+      "variant": "soft_before"
+    },
+    {
+      "draw_calls": 563.0,
+      "frames": {
+        "frames": 493,
+        "max_ms": 27.672,
+        "mean_ms": 20.2995679513185,
+        "p50_ms": 20.38,
+        "p95_ms": 24.85,
+        "p99_ms": 26.304
+      },
+      "grass_batches": 52,
+      "grass_shader_hash": "9102e671ec3f10af977481470f81aa909c1b7f2881a13407e9ec395563d3a88a",
+      "primitives": 10451260.0,
+      "shadow_blur": 2.0,
+      "sun_angular_distance": 0.0,
+      "variant": "pcf_blur2"
+    },
+    {
+      "draw_calls": 563.0,
+      "frames": {
+        "frames": 492,
+        "max_ms": 29.37,
+        "mean_ms": 20.3547743902439,
+        "p50_ms": 20.484,
+        "p95_ms": 24.786,
+        "p99_ms": 25.9
+      },
+      "grass_batches": 52,
+      "grass_shader_hash": "9102e671ec3f10af977481470f81aa909c1b7f2881a13407e9ec395563d3a88a",
+      "primitives": 10451260.0,
+      "shadow_blur": 4.0,
+      "sun_angular_distance": 0.0,
+      "variant": "pcf_blur4"
+    },
+    {
+      "draw_calls": 690.0,
+      "frames": {
+        "frames": 287,
+        "max_ms": 42.616,
+        "mean_ms": 34.9762717770035,
+        "p50_ms": 35.01,
+        "p95_ms": 41.161,
+        "p99_ms": 41.931
+      },
+      "grass_batches": 52,
+      "grass_shader_hash": "9102e671ec3f10af977481470f81aa909c1b7f2881a13407e9ec395563d3a88a",
+      "primitives": 10559868.0,
+      "shadow_blur": 1.0,
+      "sun_angular_distance": 2.5,
+      "variant": "soft_repeat"
+    }
+  ],
+  "shadow_filter_quality": 2,
+  "sun_angular_distance": 2.5
+}

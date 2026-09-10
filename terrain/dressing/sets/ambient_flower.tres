@@ -27,19 +27,19 @@ biome_affinity = {&"meadow": 1.2, &"deep_forest": 0.4, &"highland": 0.4, &"bloss
 [sub_resource type="Resource" id="P1"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.plant.01"
-biome_affinity = {&"meadow": 0.9, &"deep_forest": 1.0, &"highland": 0.5, &"blossom_grove": 0.8, &"twilight_marsh": 1.0, &"amber_heath": 0.9, &"jade_wetlands": 1.0}
+biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 1.0}
 [sub_resource type="Resource" id="P2"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.plant.02"
-biome_affinity = {&"meadow": 0.9, &"deep_forest": 1.0, &"highland": 0.5, &"blossom_grove": 0.8, &"twilight_marsh": 1.0, &"amber_heath": 0.9, &"jade_wetlands": 1.0}
+biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 1.0}
 [sub_resource type="Resource" id="P3"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.plant.03"
-biome_affinity = {&"meadow": 0.9, &"deep_forest": 1.0, &"highland": 0.5, &"blossom_grove": 0.8, &"twilight_marsh": 1.0, &"amber_heath": 0.9, &"jade_wetlands": 1.0}
+biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 1.0}
 [sub_resource type="Resource" id="P4"]
 script = ExtResource("1_choice")
 asset_id = &"lpfv.plant.04"
-biome_affinity = {&"meadow": 0.9, &"deep_forest": 1.0, &"highland": 0.5, &"blossom_grove": 0.8, &"twilight_marsh": 1.0, &"amber_heath": 0.9, &"jade_wetlands": 1.0}
+biome_affinity = {&"meadow": 0.0, &"deep_forest": 0.0, &"highland": 0.0, &"blossom_grove": 0.0, &"twilight_marsh": 0.0, &"amber_heath": 0.0, &"jade_wetlands": 1.0}
 
 [sub_resource type="Resource" id="CanopyOpening"]
 script = ExtResource("3_habitat")

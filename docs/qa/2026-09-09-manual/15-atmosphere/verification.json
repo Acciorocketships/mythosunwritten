@@ -1,0 +1,23 @@
+{
+  "accepted": true,
+  "tests": {
+    "tests": 40,
+    "assertions": 1379,
+    "seconds": 11.214,
+    "exit": 0
+  },
+  "fixture_sha256": "32ac7509b5e679b75bb09ecf88a1778db35dd1e4b0ac174fdbd10a76125724be",
+  "controlled_pairs": 14,
+  "lantern_pairs": 6,
+  "production_streamed_pairs": 1,
+  "all_camera_pairs_identical": true,
+  "all_pairs_and_diffs_visually_inspected": true,
+  "frame_median_delta_ms_mean": 0.4375000000000001,
+  "frame_median_delta_ms_max": 0.6359999999999992,
+  "gpu_timer_unavailable": true,
+  "notes": [
+    "Frame times are 60 uncapped frame samples per camera/profile on M1 Pro, isolated from generation; GPU timer reports zero, so no GPU-only result is claimed.",
+    "Replay has three known absolute AnimationPlayer target errors and resource teardown warnings, exit 0. Native gallery and production-streamed runs exit 0 without those fixture errors.",
+    "Moonfen current production preserves camera, player, 168 batches, 853 dressing instances and 268 collision shapes. New lights are attached to 24 existing native lamps."
+  ]
+}

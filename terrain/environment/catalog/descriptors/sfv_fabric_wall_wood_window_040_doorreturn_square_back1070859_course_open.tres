@@ -7,7 +7,7 @@ script = ExtResource("1_cras7")
 id = &"sfv.fabric.wall.wood.window.040.doorreturn.square.back1070859.course_open"
 visual_path = "res://terrain/environment/visuals/fantasy_village_wall_interfaces/sfv_fabric_wall_wood_window_040_doorreturn_square_back1070859_course_open.tres"
 tags = Array[StringName]([&"building", &"fabric_wall", &"village"])
-measured_aabb = AABB(-1.5000002, -1.1324685e-07, -0.30675882, 1.9291413, 3, 0.5959178)
+measured_aabb = AABB(-1.5000002, -1.1324685e-07, -0.30675882, 1.9291513, 3, 0.5959178)
 omitted_face_bounds = AABB(-1.5, 3, -0.23429999, 1.9291, 0, 0.46860003)
 omitted_face_surfaces = Array[Dictionary]([{
 "material_piece": 0,
@@ -74,32 +74,32 @@ omitted_face_surfaces = Array[Dictionary]([{
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(-3.0518975e-05, 1, -1.5259488e-05),
 "position": Vector3(-0.7444456, 3, -0.23433036),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(-3.0518975e-05, 1, -1.5259488e-05),
 "position": Vector3(-2.162508e-07, 3, 0.23433039),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(-3.0518975e-05, 1, -1.5259488e-05),
 "position": Vector3(-1.5000002, 3, 0.23433045),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(-3.0518975e-05, 1, -1.5259488e-05),
 "position": Vector3(-1.5000002, 3, 0.23433045),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(-3.0518975e-05, 1, -1.5259488e-05),
 "position": Vector3(-1.5000002, 3, -0.23433033),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(-3.0518975e-05, 1, -1.5259488e-05),
 "position": Vector3(-0.7444456, 3, -0.23433036),
 "uv": Vector2(0.40311444, 0.23957539)
 }])

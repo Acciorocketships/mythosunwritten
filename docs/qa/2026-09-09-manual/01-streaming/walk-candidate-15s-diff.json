@@ -1,0 +1,8 @@
+{
+  "camera_identical": true,
+  "camera_kind": "inferred (photo 1 lacks crosshair hit)",
+  "pixels": 921600,
+  "changed_pixels_gt_8": 2186,
+  "mean_abs_rgb": 0.3986501736111111,
+  "judgement": "FAIL: both 15-second captures retain the unloaded half-plane. Candidate later crosses, but only after 33.146 seconds frozen. Pixel differences mainly reflect character pose/position and time-dependent rendering."
+}

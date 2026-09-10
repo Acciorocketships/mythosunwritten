@@ -1,0 +1,49 @@
+{
+  "status": "accepted_depth_of_field_removed",
+  "tests": 2,
+  "assertions": 12,
+  "seconds": 0.373,
+  "test_exit": 0,
+  "render_exits": [
+    0,
+    0
+  ],
+  "paired_cameras_and_orb_positions_identical": true,
+  "comparisons_inspected": 3,
+  "pixel_metrics": {
+    "near_orb_00": {
+      "roi": [
+        0,
+        0,
+        1280,
+        720
+      ],
+      "mean_abs_rgb": 0.48941840277777776,
+      "roi_mean_abs_rgb": 0.48941840277777776,
+      "roi_changed_over_20_fraction": 0.006031901041666667
+    },
+    "pinned_00": {
+      "roi": [
+        0,
+        0,
+        1280,
+        720
+      ],
+      "mean_abs_rgb": 0.08703233506944444,
+      "roi_mean_abs_rgb": 0.08703233506944444,
+      "roi_changed_over_20_fraction": 0.0019086371527777778
+    },
+    "second_orb_00": {
+      "roi": [
+        0,
+        0,
+        1280,
+        720
+      ],
+      "mean_abs_rgb": 0.2590903501157407,
+      "roi_mean_abs_rgb": 0.2590903501157407,
+      "roi_changed_over_20_fraction": 0.0031564670138888888
+    }
+  },
+  "fixture_limit": "Same frozen real-world geometry as issue 13; three known instantiation AnimationPlayer path errors and teardown warnings."
+}

@@ -100,6 +100,19 @@ func _ready() -> void:
 # --------------------------------------------
 # Movement
 # --------------------------------------------
+## Streaming needs the requested travel direction before acceleration (and
+## while terrain readiness pauses physics). This query never advances motion
+## or consumes jump input; the ordinary controller still owns both.
+func streaming_velocity() -> Vector3:
+	if controller != null:
+		var requested := controller.get_move_vector(self,0.0)
+		if requested.length_squared()>0.000001:
+			var speed := MAX_SPEED*SWIM_SPEED_FACTOR if in_water else MAX_SPEED
+			requested=requested.limit_length(1.0)*speed
+			return Vector3(requested.x,0,requested.y)
+	return Vector3(velocity.x,0,velocity.z)
+
+
 func _physics_process(delta: float) -> void:
 	assert(controller, "Assign a controller")
 

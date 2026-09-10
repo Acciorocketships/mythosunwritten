@@ -1,0 +1,59 @@
+[
+  {
+    "contacts": [
+      {
+        "geometry": "{ \"street_centre\": (0.75, 0.0, -6.0), \"inner_centre\": (0.75, 0.0, -6.75), \"stair_end\": (0.75, 0.0, -6.75), \"has_stairs\": false, \"outer_centre\": (0.75, 0.0, -8.25), \"half_width\": 1.5 }",
+        "spec": "{ \"cells\": [(0, 0, -4), (1, 0, -4)], \"outward\": (0, 0, -1), \"lateral\": (1, 0, 0), \"stable_suffix\": \"entry\", \"source_portal\": (0, 0, -2), \"ground_band\": 0 }"
+      },
+      {
+        "geometry": "{ \"street_centre\": (4.5, 1.5, 9.75), \"inner_centre\": (5.25, 1.5, 9.75), \"stair_end\": (8.25, 0.0, 9.75), \"has_stairs\": true, \"outer_centre\": (9.75, 0.0, 9.75), \"half_width\": 1.5 }",
+        "spec": "{ \"cells\": [(3, 1, 6), (3, 1, 7)], \"outward\": (1, 0, 0), \"lateral\": (0, 0, 1), \"stable_suffix\": \"gate.01\", \"source_portal\": (1, 1, 3), \"ground_band\": 0 }"
+      },
+      {
+        "geometry": "{ \"street_centre\": (-6.0, 0.0, 0.75), \"inner_centre\": (-6.75, 0.0, 0.75), \"stair_end\": (-6.75, 0.0, 0.75), \"has_stairs\": false, \"outer_centre\": (-8.25, 0.0, 0.75), \"half_width\": 1.5 }",
+        "spec": "{ \"cells\": [(-4, 0, 0), (-4, 0, 1)], \"outward\": (-1, 0, 0), \"lateral\": (0, 0, 1), \"stable_suffix\": \"gate.02\", \"source_portal\": (-2, 0, 0), \"ground_band\": 0 }"
+      }
+    ],
+    "kinds": "{ (-2, 0, -1): &\"alley\", (-2, 0, 0): &\"alley\", (-2, 4, -1): &\"alley\", (-1, 0, -1): &\"alley\", (-1, 2, 2): &\"spine\", (-1, 2, 3): &\"spine\", (-1, 3, 0): &\"spine\", (-1, 3, 1): &\"spine\", (-1, 4, -1): &\"spine\", (0, 0, -2): &\"spine\", (0, 0, -1): &\"spine\", (0, 0, 0): &\"spine\", (0, 0, 1): &\"spine\", (0, 1, 3): &\"spine\", (0, 4, -1): &\"spine\", (0, 4, 0): &\"spine\", (0, 5, 1): &\"spine\", (1, 0, -2): &\"market\", (1, 0, -1): &\"market\", (1, 0, 1): &\"spine\", (1, 0, 2): &\"spine\", (1, 1, 3): &\"spine\", (2, 0, 0): &\"alley\", (2, 0, 1): &\"alley\", (3, 0, -1): &\"alley\", (3, 0, 0): &\"alley\", (4, 0, -1): &\"alley\" }",
+    "source": "east",
+    "tunnels": []
+  },
+  {
+    "contacts": [
+      {
+        "geometry": "{ \"street_centre\": (-6.0, 0.0, 0.75), \"inner_centre\": (-6.75, 0.0, 0.75), \"stair_end\": (-6.75, 0.0, 0.75), \"has_stairs\": false, \"outer_centre\": (-8.25, 0.0, 0.75), \"half_width\": 1.5 }",
+        "spec": "{ \"cells\": [(-4, 0, 0), (-4, 0, 1)], \"outward\": (-1, 0, 0), \"lateral\": (0, 0, 1), \"stable_suffix\": \"entry\", \"source_portal\": (-2, 0, 0), \"ground_band\": 0 }"
+      },
+      {
+        "geometry": "{ \"street_centre\": (9.75, 1.5, 4.5), \"inner_centre\": (9.75, 1.5, 5.25), \"stair_end\": (9.75, 0.0, 8.25), \"has_stairs\": true, \"outer_centre\": (9.75, 0.0, 9.75), \"half_width\": 1.5 }",
+        "spec": "{ \"cells\": [(6, 1, 3), (7, 1, 3)], \"outward\": (0, 0, 1), \"lateral\": (1, 0, 0), \"stable_suffix\": \"gate.01\", \"source_portal\": (3, 1, 1), \"ground_band\": 0 }"
+      },
+      {
+        "geometry": "{ \"street_centre\": (3.75, 0.0, -6.0), \"inner_centre\": (3.75, 0.0, -6.75), \"stair_end\": (3.75, 0.0, -6.75), \"has_stairs\": false, \"outer_centre\": (3.75, 0.0, -8.25), \"half_width\": 1.5 }",
+        "spec": "{ \"cells\": [(2, 0, -4), (3, 0, -4)], \"outward\": (0, 0, -1), \"lateral\": (1, 0, 0), \"stable_suffix\": \"gate.02\", \"source_portal\": (1, 0, -2), \"ground_band\": 0 }"
+      }
+    ],
+    "kinds": "{ (-2, 0, -1): &\"market\", (-2, 0, 0): &\"spine\", (-2, 4, 3): &\"alley\", (-2, 4, 4): &\"alley\", (-1, 0, -2): &\"alley\", (-1, 0, -1): &\"market\", (-1, 0, 0): &\"spine\", (-1, 4, -1): &\"spine\", (-1, 4, 0): &\"spine\", (-1, 4, 2): &\"spine\", (-1, 4, 3): &\"spine\", (-1, 4, 4): &\"alley\", (-1, 5, 1): &\"spine\", (0, 0, -2): &\"alley\", (0, 0, 0): &\"spine\", (0, 3, -1): &\"spine\", (1, 0, -2): &\"alley\", (1, 0, 0): &\"spine\", (1, 0, 1): &\"spine\", (1, 3, -1): &\"spine\", (2, 0, 1): &\"spine\", (2, 2, -1): &\"spine\", (3, 1, 0): &\"spine\", (3, 1, 1): &\"spine\", (3, 2, -1): &\"spine\" }",
+    "source": "offset",
+    "tunnels": []
+  },
+  {
+    "contacts": [
+      {
+        "geometry": "{ \"street_centre\": (0.75, 0.0, 7.5), \"inner_centre\": (0.75, 0.0, 8.25), \"stair_end\": (0.75, 0.0, 8.25), \"has_stairs\": false, \"outer_centre\": (0.75, 0.0, 9.75), \"half_width\": 1.5 }",
+        "spec": "{ \"cells\": [(0, 0, 5), (1, 0, 5)], \"outward\": (0, 0, 1), \"lateral\": (1, 0, 0), \"stable_suffix\": \"entry\", \"source_portal\": (0, 0, 2), \"ground_band\": 0 }"
+      },
+      {
+        "geometry": "{ \"street_centre\": (-3.0, 0.0, -11.25), \"inner_centre\": (-3.75, 0.0, -11.25), \"stair_end\": (-3.75, 0.0, -11.25), \"has_stairs\": false, \"outer_centre\": (-5.25, 0.0, -11.25), \"half_width\": 1.5 }",
+        "spec": "{ \"cells\": [(-2, 0, -8), (-2, 0, -7)], \"outward\": (-1, 0, 0), \"lateral\": (0, 0, 1), \"stable_suffix\": \"gate.01\", \"source_portal\": (-1, 0, -4), \"ground_band\": 0 }"
+      },
+      {
+        "geometry": "{ \"street_centre\": (6.75, 1.5, -9.0), \"inner_centre\": (6.75, 1.5, -9.75), \"stair_end\": (6.75, 0.0, -12.75), \"has_stairs\": true, \"outer_centre\": (6.75, 0.0, -14.25), \"half_width\": 1.5 }",
+        "spec": "{ \"cells\": [(4, 1, -6), (5, 1, -6)], \"outward\": (0, 0, -1), \"lateral\": (1, 0, 0), \"stable_suffix\": \"gate.02\", \"source_portal\": (2, 1, -3), \"ground_band\": 0 }"
+      }
+    ],
+    "kinds": "{ (-2, 0, -1): &\"alley\", (-1, 0, -4): &\"alley\", (-1, 0, -1): &\"alley\", (-1, 0, 1): &\"market\", (-1, 0, 2): &\"market\", (-1, 4, -2): &\"spine\", (-1, 4, -1): &\"spine\", (-1, 5, 0): &\"spine\", (0, 0, -4): &\"alley\", (0, 0, -3): &\"alley\", (0, 0, -2): &\"spine\", (0, 0, -1): &\"spine\", (0, 0, 0): &\"spine\", (0, 0, 1): &\"spine\", (0, 0, 2): &\"spine\", (0, 4, -2): &\"spine\", (0, 4, 0): &\"spine\", (1, 0, -2): &\"spine\", (1, 3, 1): &\"spine\", (1, 3, 2): &\"spine\", (1, 4, 0): &\"spine\", (2, 1, -3): &\"alley\", (2, 1, -2): &\"spine\", (2, 1, -1): &\"spine\", (2, 1, 0): &\"spine\", (2, 2, 2): &\"spine\", (3, 1, 0): &\"spine\", (3, 1, 1): &\"spine\", (3, 2, 2): &\"spine\" }",
+    "source": "thin-turf",
+    "tunnels": []
+  }
+]

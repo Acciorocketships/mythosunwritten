@@ -1,0 +1,33 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_road_exit.gd
+* test_primary_gate_does_not_invent_a_country_road_in_four_orientations
+* test_photographed_north_spur_disappears_and_south_road_stays_connected
+2/2 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         2
+Asserts             116
+Time              17.538s
+
+
+---- All tests passed! ----
+

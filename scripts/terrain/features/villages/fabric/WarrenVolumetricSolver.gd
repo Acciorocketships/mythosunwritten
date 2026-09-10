@@ -1140,8 +1140,7 @@ static func _maze_flat_slab_cells(volume: WarrenVolumePlan) -> Dictionary:
 		if not WarrenMazeBlockPartitioner.plot_is_flat_roofed(source, plot):
 			continue
 		var top_band := int(plot["top"])
-		var roof_base := WarrenBuildingParcel.flat_roof_base_band(
-			int(plot["floor"]), top_band)
+		var roof_base := WarrenMazeBlockPartitioner.plot_roof_band_span(source,plot,volume).x
 		for band in range(roof_base, top_band):
 			for cell_value: Variant in plot["cells"] as Array:
 				var column := cell_value as Vector2i
@@ -1855,8 +1854,7 @@ static func _maze_released_parapet_cells(grid: WarrenSpatialGrid,
 					plot):
 			continue
 		var top_band := int(plot["top"])
-		var roof_base := WarrenBuildingParcel.flat_roof_base_band(
-			int(plot["floor"]), top_band)
+		var roof_base := WarrenMazeBlockPartitioner.plot_roof_band_span(source,plot,volume).x
 		if roof_base >= top_band:
 			continue
 		for cell_value: Variant in plot["cells"] as Array:
@@ -2040,7 +2038,7 @@ static func _maze_plot_roof_cells(volume: WarrenVolumePlan) -> Dictionary:
 	## to stand here now lives inside it.
 	for plot: Dictionary in source.plots:
 		var span := WarrenMazeBlockPartitioner.plot_roof_band_span(source,
-			plot)
+			plot,volume)
 		for band in range(span.x, span.y):
 			for cell_value: Variant in plot["cells"] as Array:
 				var column := cell_value as Vector2i

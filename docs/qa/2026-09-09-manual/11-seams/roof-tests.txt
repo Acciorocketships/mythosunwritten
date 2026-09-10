@@ -1,0 +1,33 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september9_roof_end.gd
+[0m* test_flush_roof_ends_retain_the_actual_native_gable_wall
+* test_fitted_end_preserves_native_cross_section_and_texture_channels
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         2
+Asserts           55048
+Time              2.714s
+
+
+[32m---- All tests passed! ----
+[0m

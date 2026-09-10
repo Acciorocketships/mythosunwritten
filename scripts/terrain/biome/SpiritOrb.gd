@@ -8,5 +8,5 @@ var elapsed := 0.0
 
 func _process(dt: float) -> void:
 	elapsed += dt
-	position = anchor + Vector3(sin(elapsed * 0.23 + phase) * 0.6,
-		sin(elapsed * 0.65 + phase) * 0.35, cos(elapsed * 0.19 + phase) * 0.6)
+	position = anchor + Vector3(sin(elapsed * 0.12 + phase) * 1.5,
+		sin(elapsed * 0.25 + phase) * 0.4, cos(elapsed * 0.09 + phase) * 1.5)

@@ -1,0 +1,127 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+SCRIPT ERROR: Parse Error: Cannot infer the type of "before" variable because the value doesn't have a set type.
+          at: GDScript::reload (res://tests/test_september9_door_ownership.gd:41)
+          GDScript backtrace (most recent call first):
+              [0] load_script_using_custom_warnings (res://addons/gut/warnings_manager.gd:159)
+              [1] _parse_script (res://addons/gut/test_collector.gd:76)
+              [2] add_script (res://addons/gut/test_collector.gd:127)
+              [3] add_script (res://addons/gut/gut.gd:1050)
+              [4] _apply_options (res://addons/gut/gut_config.gd:139)
+              [5] apply_options (res://addons/gut/gut_config.gd:207)
+              [6] run_tests (res://addons/gut/gui/GutRunner.gd:191)
+              [7] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [8] main (res://addons/gut/cli/gut_cli.gd:284)
+              [9] _init (res://addons/gut/gut_cmdln.gd:39)
+ERROR: Failed to load script "res://tests/test_september9_door_ownership.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:3041)
+   GDScript backtrace (most recent call first):
+       [0] load_script_using_custom_warnings (res://addons/gut/warnings_manager.gd:159)
+       [1] _parse_script (res://addons/gut/test_collector.gd:76)
+       [2] add_script (res://addons/gut/test_collector.gd:127)
+       [3] add_script (res://addons/gut/gut.gd:1050)
+       [4] _apply_options (res://addons/gut/gut_config.gd:139)
+       [5] apply_options (res://addons/gut/gut_config.gd:207)
+       [6] run_tests (res://addons/gut/gui/GutRunner.gd:191)
+       [7] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+       [8] main (res://addons/gut/cli/gut_cli.gd:284)
+       [9] _init (res://addons/gut/gut_cmdln.gd:39)
+[WARNING]:  Ignoring script res://tests/test_september9_door_ownership.gd because it does not extend GutTest
+
+
+res://tests/test_warren_spatial_fabric_compiler.gd
+* test_arcade_overhang_adapter_binds_foundation_to_both_room_plates
+* test_roof_gate_checks_measured_volume_against_exact_finished_headroom
+* test_roof_gate_protects_the_body_lane_but_keeps_a_shallow_eave
+* test_future_roof_domain_rejects_semantic_overlap_before_commit
+* test_compound_roof_partition_replaces_cells_with_complete_house_crowns
+* test_setback_gable_does_not_exempt_neighboring_room_collisions
+* test_complete_room_roof_never_uses_a_shallow_seam_piece
+* test_rotated_even_cell_roof_preserves_the_room_plate_centre
+* test_terminal_setback_names_only_the_neighboring_roof_seam
+* test_setback_wall_seam_comes_from_the_exact_cap_perimeter
+* test_flashing_allows_a_thin_subcell_join_not_a_deep_overlap
+* test_one_parent_shoulder_never_becomes_a_pile_of_sibling_gables
+* test_spatial_roofs_admit_only_complete_atomic_t_valleys
+* test_rowhouse_roof_axis_and_join_follow_the_broad_frontage_contract
+* test_measured_room_units_preserve_every_spatial_stamp
+    [Failed]:  [0] expected to be >= than [1]:  the source bridge may not displace the large blue-roof landmark
+      at line 369
+    one-pass town: markets=0 market_units=0 shortfall=0
+    one-pass town: market candidates=0 open_max=<no candidate> limit=4 ray=10
+    one-pass town: landmarks=0
+    one-pass town: dormered=1 rejected_pitched=0 setback_units=0 pitched=14
+    one-pass town: setback_shed=0 setback_plain_cap=0 setback_terrace=0
+    one-pass town: cap_recipe_units=2 of 32 roofs (vocabulary=0 tiling=2 other=0) partial_gables=6 setback_units=0 dormered_units=1
+    [Failed]:  [7] expected to equal [0]:  tall faces must alternate authored stone and facade courses
+      at line 805
+* test_typed_balcony_endpoint_drives_the_exact_room_portal_mask
+15/16 passed.
+
+
+res://tests/test_warren_facade_variety.gd
+* test_every_timber_facade_module_is_exactly_one_bay_wide
+* test_every_rock_facade_module_stays_within_the_shipped_width
+* test_the_frozen_phases_still_name_the_pre_wave_modules
+* test_each_timber_family_offers_at_least_eight_distinct_modules
+* test_a_third_upper_facade_family_carries_its_own_modules
+* test_a_square_room_draws_a_different_module_on_each_face
+* test_timber_boxes_use_baked_handed_panels_on_both_side_faces
+* test_mirrored_facades_preserve_the_source_envelope
+* test_widening_the_pools_left_every_room_envelope_where_it_was
+* test_the_stone_shells_that_moved_stay_inside_the_overlap_tolerance
+* test_every_reserved_shell_contains_the_shell_the_town_wears
+* test_the_amber_family_compiles_a_complete_recipe_set
+* test_every_segmented_footprint_has_three_exact_building_styles
+* test_phase_b_facades_use_multiple_measured_detail_families
+* test_addressed_facades_never_place_soft_props_across_the_door
+* test_the_market_pool_is_the_reviewed_stocked_seven
+* test_every_market_stall_is_a_reviewed_stall_prefab
+* test_the_chimney_pool_offers_more_than_one_stack
+* test_a_placement_offers_no_more_stall_families_than_the_pre_wave_pool
+* test_the_bounded_family_walk_still_reaches_every_stall_in_the_pool
+* test_the_style_invariant_envelope_union_repeats_no_box
+* test_the_style_invariant_envelope_union_still_covers_every_style
+22/22 passed.
+
+
+res://tests/test_september8_facade_ends.gd
+* test_photographed_retaining_remnant_is_not_a_single_panel_house_facade
+* test_facade_continuity_uses_aligned_complete_bank_courses
+* test_shared_corner_does_not_cancel_a_deep_door_return
+3/3 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_warren_spatial_fabric_compiler.gd
+- test_measured_room_units_preserve_every_spatial_stamp
+    [Failed]:  [0] expected to be >= than [1]:  the source bridge may not displace the large blue-roof landmark
+          at line 369
+    [Failed]:  [7] expected to equal [0]:  tall faces must alternate authored stone and facade courses
+          at line 805
+
+Totals
+------
+Warnings              1
+
+Scripts               3
+Tests                41
+Passing Tests        40
+Failing Tests         1
+Asserts           57279/57281
+Time              38.357s
+
+
+---- 1 failing tests ----
+

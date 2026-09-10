@@ -1236,6 +1236,7 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	#   centre features would not, and a village green whose well never streamed
 	#   is the blank-town failure this list exists to stop.
 	var adapter_assets: Array[StringName] = [
+		&"sfv.fabric.tunnel_arch.001",
 		WOOD_PLAIN,
 		ROCK_PLAIN,
 		RAILING_MEDIUM,
@@ -1294,7 +1295,10 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 				"bounds":opened.omitted_face_bounds,"surfaces":opened.omitted_face_surfaces,
 				"visual_bounds":descriptor.measured_aabb}
 		if asset_id in [SettlementFabricAssembler.MAZE_STONE_MODULE,
-				SettlementFabricAssembler.PLANK_SINGLE, SettlementFabricAssembler.PLANK_GALLERY]:
+				SettlementFabricAssembler.PLANK_SINGLE, SettlementFabricAssembler.PLANK_GALLERY,
+				SettlementFabricAssembler.GREEN_RIM_EDGE,
+				SettlementFabricAssembler.GREEN_RIM_OUTER_CORNER,
+				SettlementFabricAssembler.GREEN_RIM_INNER_CORNER]:
 			var interface: Dictionary = program.asset_wall_interfaces.get(asset_id,{})
 			interface["visual_bounds"] = descriptor.measured_aabb
 			interface["complete_surfaces"] = _compile_visual_surfaces(descriptor.visual_path)

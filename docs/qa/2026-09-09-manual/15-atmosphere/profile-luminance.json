@@ -1,0 +1,114 @@
+[
+  {
+    "name": "meadow_landscape",
+    "before_luma": 113.73837893077257,
+    "after_luma": 116.75482822092015,
+    "before_frame_median_ms": 15.367,
+    "after_frame_median_ms": 15.873,
+    "delta_frame_median_ms": 0.5059999999999985
+  },
+  {
+    "name": "meadow_town",
+    "before_luma": 149.51659055859375,
+    "after_luma": 157.87186664822045,
+    "before_frame_median_ms": 17.836,
+    "after_frame_median_ms": 18.321,
+    "delta_frame_median_ms": 0.485000000000003
+  },
+  {
+    "name": "deep_forest_landscape",
+    "before_luma": 113.8724759296875,
+    "after_luma": 58.967573501736105,
+    "before_frame_median_ms": 15.327,
+    "after_frame_median_ms": 15.807,
+    "delta_frame_median_ms": 0.4800000000000004
+  },
+  {
+    "name": "deep_forest_town",
+    "before_luma": 149.5741617706163,
+    "after_luma": 91.80330057335068,
+    "before_frame_median_ms": 17.839,
+    "after_frame_median_ms": 17.98,
+    "delta_frame_median_ms": 0.1410000000000018
+  },
+  {
+    "name": "highland_landscape",
+    "before_luma": 113.87833822005209,
+    "after_luma": 118.94938017013888,
+    "before_frame_median_ms": 15.208,
+    "after_frame_median_ms": 15.826,
+    "delta_frame_median_ms": 0.6180000000000003
+  },
+  {
+    "name": "highland_town",
+    "before_luma": 149.49982368012152,
+    "after_luma": 158.21531035286458,
+    "before_frame_median_ms": 17.707,
+    "after_frame_median_ms": 18.128,
+    "delta_frame_median_ms": 0.4209999999999994
+  },
+  {
+    "name": "blossom_grove_landscape",
+    "before_luma": 113.70277181336805,
+    "after_luma": 89.83729402907987,
+    "before_frame_median_ms": 15.247,
+    "after_frame_median_ms": 15.69,
+    "delta_frame_median_ms": 0.4429999999999996
+  },
+  {
+    "name": "blossom_grove_town",
+    "before_luma": 149.52672936979167,
+    "after_luma": 129.36409985438368,
+    "before_frame_median_ms": 17.788,
+    "after_frame_median_ms": 18.096,
+    "delta_frame_median_ms": 0.30799999999999983
+  },
+  {
+    "name": "twilight_marsh_landscape",
+    "before_luma": 113.80072332921004,
+    "after_luma": 34.175860025824655,
+    "before_frame_median_ms": 15.251,
+    "after_frame_median_ms": 15.651,
+    "delta_frame_median_ms": 0.40000000000000036
+  },
+  {
+    "name": "twilight_marsh_town",
+    "before_luma": 149.53000323350693,
+    "after_luma": 64.62362390581598,
+    "before_frame_median_ms": 17.689,
+    "after_frame_median_ms": 18.325,
+    "delta_frame_median_ms": 0.6359999999999992
+  },
+  {
+    "name": "amber_heath_landscape",
+    "before_luma": 113.5514930143229,
+    "after_luma": 93.38274232443575,
+    "before_frame_median_ms": 15.284,
+    "after_frame_median_ms": 15.68,
+    "delta_frame_median_ms": 0.395999999999999
+  },
+  {
+    "name": "amber_heath_town",
+    "before_luma": 149.3968652161458,
+    "after_luma": 133.54674082964408,
+    "before_frame_median_ms": 17.781,
+    "after_frame_median_ms": 18.093,
+    "delta_frame_median_ms": 0.31200000000000117
+  },
+  {
+    "name": "jade_wetlands_landscape",
+    "before_luma": 113.5891063795573,
+    "after_luma": 86.70495169487846,
+    "before_frame_median_ms": 15.199,
+    "after_frame_median_ms": 15.76,
+    "delta_frame_median_ms": 0.5609999999999999
+  },
+  {
+    "name": "jade_wetlands_town",
+    "before_luma": 149.40557953298614,
+    "after_luma": 123.92892024978299,
+    "before_frame_median_ms": 17.799,
+    "after_frame_median_ms": 18.217,
+    "delta_frame_median_ms": 0.41799999999999926
+  }
+]

@@ -3,6 +3,8 @@ extends RefCounted
 
 ## Main-thread visual queue. Each item creates one (asset, visual-piece)
 ## MultiMesh batch; generation checks discard stale work.
+const LANTERN_LIGHTS := preload("res://scripts/terrain/environment/EnvironmentLanternLights.gd")
+
 var _render_cache: EnvironmentRenderCache
 var _container_name: StringName
 var _items: Array[Dictionary] = []
@@ -94,5 +96,7 @@ func _commit_batch(parent: Node3D, item: Dictionary) -> void:
 	var instance := MultiMeshInstance3D.new()
 	instance.name = "%s_%02d" % [String(item.asset_id).replace(".", "_"), item.piece_index]
 	instance.multimesh = multimesh
-	instance.material_override = piece.material_override
+	instance.material_override = LANTERN_LIGHTS.glass_material(item.asset_id, piece)
 	container.add_child(instance)
+	if int(item.piece_index) == 0:
+		LANTERN_LIGHTS.attach(container,item.asset_id,transforms)

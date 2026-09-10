@@ -1,0 +1,15 @@
+[
+  {
+    "chunk": "(1, -7)",
+    "coarse_level_hash": "bb7f68c5720012ffa117655783acb4cadca998e96fc18af5ff21740f5e10d7a0",
+    "contour_hash": "24b622edac8a21781259f0fc8d4312dfb3d3792d4195c64b093d4182b8dd1fe9",
+    "contours_ms": 0.015,
+    "fill_hash": "657add8ca9a239270710fa918d8652d81819a689c3c470fcdcbd184252666add",
+    "fill_ms": 19254.411,
+    "fine_level_hash": "87f6a8455fde09374138e92aa9dded5c810a6cf60b64638e33189325d71cb348",
+    "memory_bytes": 1077143134.0,
+    "ponds": 3,
+    "region_ms": 21245.402,
+    "rivers": 2
+  }
+]

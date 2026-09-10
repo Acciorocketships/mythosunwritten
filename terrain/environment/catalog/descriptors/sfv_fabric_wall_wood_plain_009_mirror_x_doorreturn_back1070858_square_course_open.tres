@@ -29,32 +29,32 @@ omitted_face_surfaces = Array[Dictionary]([{
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(1.1492906, 3.0000002, 0.23433043),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(0.50000024, 3.0000002, -0.23433037),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(1.5000002, 3.0000002, -0.23433033),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(0.50000024, 3.0000002, -0.23433037),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(1.1492906, 3.0000002, 0.23433043),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(0.50000024, 3.0000002, 0.1936571),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
@@ -119,17 +119,17 @@ omitted_face_surfaces = Array[Dictionary]([{
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.429142, 3.0000002, -0.093418464),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.14928965, 3.0000002, 0.23433039),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.429142, 3.0000002, 0.23433037),
 "uv": Vector2(0.40311444, 0.23957539)
 }])

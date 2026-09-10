@@ -1,0 +1,68 @@
+{
+  "lpfv_fabric_prop_lantern_post_02_close": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 20.240537109375,
+    "roi_mean_abs_rgb": 20.240537109375,
+    "roi_changed_over_20_fraction": 0.4859711371527778
+  },
+  "lpfv_fabric_prop_lantern_post_02_wide": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 4.968621238425926,
+    "roi_mean_abs_rgb": 4.968621238425926,
+    "roi_changed_over_20_fraction": 0.0858984375
+  },
+  "lpfv_fabric_prop_lantern_table_01_close": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 15.855756655092593,
+    "roi_mean_abs_rgb": 15.855756655092593,
+    "roi_changed_over_20_fraction": 0.45446940104166667
+  },
+  "lpfv_fabric_prop_lantern_table_01_wide": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 0.38890950520833334,
+    "roi_mean_abs_rgb": 0.38890950520833334,
+    "roi_changed_over_20_fraction": 0.004629991319444445
+  },
+  "sfv_light_pole_001_close": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 7.331501012731482,
+    "roi_mean_abs_rgb": 7.331501012731482,
+    "roi_changed_over_20_fraction": 0.23838541666666666
+  },
+  "sfv_light_pole_001_wide": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 6.168484519675926,
+    "roi_mean_abs_rgb": 6.168484519675926,
+    "roi_changed_over_20_fraction": 0.19668402777777777
+  }
+}

@@ -1,0 +1,218 @@
+[
+  {
+    "garden_cells": 6,
+    "lamps": [
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00/south/lantern",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-6.35, 8.3, -0.267466)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.000.part00.room00/front.0/lantern",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-1.232534, 2.3, -6.35)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.001.part00.room00/south/lantern",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (2.616181, 2.3, 1.85)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.003.part00.room00/south/lantern",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-3.35, 5.3, 11.73253)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.004.part00.room00/front.0/lantern",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.116181, 5.3, 8.65)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.005.part00.room00/south/lantern",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-1.15, 8.3, -4.116181)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.008.part00.room00/south/lantern",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (8.61618, 2.3, 4.85)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.009.part00.room00/south/lantern",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (11.73253, 2.3, 1.85)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.010.part00.room00/front.0/lantern",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (10.85, 2.3, -4.232534)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/south/lantern",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (14.73253, 2.3, -1.15)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.013.part00.room00/front.0/lantern",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-7.232534, 8.3, -3.35)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.014.part00.room00/front.0/lantern",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-7.232534, 2.3, -3.35)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.011.part01.room00/west.1/lantern",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (16.76747, 5.3, -4.15)]"
+      }
+    ],
+    "public_cells": 124,
+    "source": "east"
+  },
+  {
+    "garden_cells": 37,
+    "lamps": [
+      {
+        "asset": "lpfv.fabric.prop.lantern.post.02",
+        "id": "maze-garden/-2/3/-5/0/1",
+        "transform": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-3.2815, 6.005, -6.75)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "maze-garden/-2/3/-6",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-3.2815, 6.005, -9.0)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "maze-garden/-7/3/-5",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-10.5, 6.005, -7.7815)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "maze-garden/-5/3/-4",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-7.5, 6.005, -6.2815)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.maze_back.06.room00/south/lantern",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-7.116181, 8.3, 11.65)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.001.part00.room00/south/lantern",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-3.35, 2.3, 2.616181)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.003.part00.room00/front.0/lantern",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (2.65, 2.3, 5.616181)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.004.part00.room00/south/lantern",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (11.73253, 3.8, 4.85)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.005.part00.room00/south/lantern",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (11.73253, 5.3, -1.15)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.008.part00.room00/south/lantern",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.232534, 8.3, -3.35)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.009.part00.room00/south/lantern",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-0.267466, 9.8, 4.85)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.013.part00.room00/south/lantern",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-7.232534, 2.3, -3.35)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.014.part00.room00/south/lantern",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (1.85, 2.3, -7.232534)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.016.part00.room00/south/lantern",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-0.267466, 8.3, 13.85)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.017.part00.room00/front.0/lantern",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-3.35, 8.3, 14.73253)]"
+      }
+    ],
+    "public_cells": 100,
+    "source": "offset"
+  },
+  {
+    "garden_cells": 0,
+    "lamps": [
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.000.part00.room00/south/lantern",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (2.732534, 2.3, 1.85)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.001.part00.room00/south/lantern",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-1.232534, 2.3, -0.35)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/lantern",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-1.232534, 2.3, -6.35)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.005.part00.room00/front.0/lantern",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (11.73253, 5.3, 7.85)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.006.part00.room00/front.0/lantern",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (8.65, 5.3, 8.732533)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.007.part00.room00/south/lantern",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (2.65, 6.8, 8.732534)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.010.part00.room00/south/lantern",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-1.15, 8.3, -7.232534)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/south/lantern",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.232534, 2.3, 5.65)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.015.part00.room00/south/lantern",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (1.85, 2.3, -13.23253)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part01.room00/west.1/lantern",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (4.767466, 11.3, -4.15)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "spatial.fabric.spatial.parcel.maze.house.004.part02.room00/back.1/lantern",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (13.76747, 9.8, -0.35)]"
+      }
+    ],
+    "public_cells": 132,
+    "source": "thin-turf"
+  }
+]

@@ -1,0 +1,255 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_biome_mood.gd
+* test_biomes_have_distinct_light_levels_and_a_twilight_endpoint
+1/1 passed.
+
+
+res://tests/test_september9_city_lanterns.gd
+* test_long_shared_walk_has_supported_lamps_before_random_planting
+* test_lights_cannot_consume_a_public_square_or_occupied_air
+* test_every_realized_closed_door_has_one_contained_native_wall_lamp
+3/3 passed.
+
+
+res://tests/test_september9_city_props.gd
+* test_private_garden_edge_has_a_supported_storage_pair
+* test_public_ground_entries_and_occupied_air_cannot_gain_furniture
+* test_frozen_towns_add_furniture_without_reusing_public_or_lamp_cells
+* test_sack_resting_height_uses_the_native_lid_not_the_crate_bounds
+4/4 passed.
+
+
+res://tests/test_september9_covered_crown.gd
+* test_photographed_house_fills_its_reserved_space_beneath_the_public_deck
+* test_public_ceiling_requires_complete_same_height_coverage_in_four_orientations
+2/2 passed.
+
+
+res://tests/test_september9_dense_region.gd
+* test_complete_region_arrays_match_original_including_margins
+* test_carve_provenance_and_real_seed_keep_complete_original_arrays
+2/2 passed.
+
+
+res://tests/test_september9_door_ownership.gd
+* test_connected_native_party_openings_share_one_entry_in_four_orientations
+* test_partial_walls_gaps_and_staggered_floors_keep_separate_access
+* test_photographed_frontage_keeps_its_central_door_and_corner_entrance
+* test_replacement_window_closes_into_the_deep_door_reveal_in_four_orientations
+4/4 passed.
+
+
+res://tests/test_september9_door_return_cap.gd
+* test_photographed_window_return_closes_its_native_cut_face
+* test_both_window_hands_and_floor_owned_variants_have_closed_returns
+* test_closed_return_vertices_stay_inside_the_declared_cut_planes
+3/3 passed.
+
+
+res://tests/test_september9_fern_habitat.gd
+* test_broadleaf_species_is_confined_to_jade_estuary_and_its_blend
+* test_reported_moonfen_highland_community_cannot_choose_the_broadleaf
+2/2 passed.
+
+
+res://tests/test_september9_flat_collision.gd
+* test_constant_pad_keeps_exact_extent_and_height_with_two_collision_triangles
+* test_curved_grade_collar_retains_every_fine_collision_triangle
+2/2 passed.
+
+
+res://tests/test_september9_flat_water_profile.gd
+* test_equal_river_targets_do_not_sample_ground
+* test_flat_trace_does_not_build_a_kilometre_terrain_region
+* test_steep_terminal_pond_still_requests_canonical_ground
+3/3 passed.
+
+
+res://tests/test_september9_grass_lip.gd
+* test_reported_narrow_strip_and_end_keep_a_closed_rolled_edge_in_four_orientations
+* test_native_lip_collision_and_world_tint_contract_survive_surface_ownership
+2/2 passed.
+
+
+res://tests/test_september9_height_sample_eviction.gd
+* test_one_new_cell_does_not_discard_the_whole_warm_height_field
+* test_original_height_reuses_the_exact_input_before_carve_subtraction
+* test_uncarved_region_matches_independent_original_terrain
+3/3 passed.
+
+
+res://tests/test_september9_lantern_lights.gd
+* test_native_lantern_batches_emit_one_warm_light_per_placement
+* test_native_pane_centres_anchor_the_lights_under_scaled_rotation
+2/2 passed.
+
+
+res://tests/test_september9_noise_corners.gd
+* test_value_noise_retains_full_seed_precision_and_cell_boundary_values
+* test_cold_values_survive_cache_pressure_and_reversed_query_order
+* test_concurrent_eviction_retains_exact_corner_values
+3/3 passed.
+
+
+res://tests/test_september9_offset_support.gd
+* test_native_knees_reach_the_wall_and_bottom_plate_in_four_orientations
+* test_photographed_bays_emit_two_visible_supports_each
+2/2 passed.
+
+
+res://tests/test_september9_pond_seed_queries.gd
+* test_bank_seed_queries_do_not_evaluate_distant_pond_shapes
+1/1 passed.
+
+
+res://tests/test_september9_rail_attachment.gd
+* test_gate_rails_enter_actual_native_landing_posts_in_four_orientations
+* test_attachment_keeps_the_reserved_treads_and_lower_landing
+2/2 passed.
+
+
+res://tests/test_september9_road_exit.gd
+* test_primary_gate_does_not_invent_a_country_road_in_four_orientations
+* test_photographed_north_spur_disappears_and_south_road_stays_connected
+2/2 passed.
+
+
+res://tests/test_september9_roof_end.gd
+* test_flush_roof_ends_retain_the_actual_native_gable_wall
+* test_fitted_end_preserves_native_cross_section_and_texture_channels
+2/2 passed.
+
+
+res://tests/test_september9_source_domain_cache.gd
+* test_same_solve_domain_reuses_complete_inventory_across_local_source_lists
+1/1 passed.
+
+
+res://tests/test_september9_spirit_orbs.gd
+* test_orb_motion_is_slow_bounded_and_keeps_its_light_attached
+1/1 passed.
+
+
+res://tests/test_september9_startup_runway.gd
+* test_startup_has_ground_for_the_first_chunk_of_travel_in_any_direction
+1/1 passed.
+
+
+res://tests/test_september9_stream_requests.gd
+* test_stationary_frames_keep_request_ownership_without_resubmission
+* test_crossing_a_chunk_boundary_requests_the_new_frontier
+* test_startup_handoff_requests_normal_radius_without_player_motion
+3/3 passed.
+
+
+res://tests/test_september9_travel_deadlines.gd
+* test_queue_diagnostics_do_not_publish_temporary_sort_metrics
+* test_forward_ground_precedes_closer_side_ground_while_running
+* test_long_lookahead_cannot_skip_the_intervening_chunk
+3/3 passed.
+
+
+res://tests/test_september9_travel_intent.gd
+* test_streaming_can_see_acceleration_intent_before_the_first_movement_tick
+1/1 passed.
+
+
+res://tests/test_september9_tunnel_arches.gd
+* test_frozen_covered_passage_receives_one_native_arch_at_its_mouth
+* test_native_collision_matches_the_frame_and_leaves_full_walking_headroom
+TUNNEL_NATIVE vertex_deviation=0.00007979211659 header=2.81519985198975 triangles=540
+* test_missing_jamb_or_ceiling_does_not_create_a_floating_arch
+* test_four_rotations_require_both_jambs_the_roof_and_real_bearings
+4/4 passed.
+
+
+res://tests/test_september9_turf_depth.gd
+* test_soil_follows_a_clipped_union_without_internal_walls
+* test_photographed_lawn_has_a_closed_bed_seated_in_the_actual_deck
+* test_inset_closes_concave_and_disconnected_lawns_without_degenerate_faces
+* test_border_closes_the_deck_to_lawn_layer_inside_the_existing_footprint
+4/4 passed.
+
+
+res://tests/test_september9_water_buckets.gd
+* test_regional_carve_index_only_stores_its_owned_cells
+1/1 passed.
+
+
+res://tests/test_september9_water_containment.gd
+* test_baked_water_lattice_keeps_the_exact_natural_surface_samples
+* test_priority_flood_matches_the_full_heap_reference
+* test_lazy_fine_ground_preserves_a_real_connected_pocket
+* test_rectangular_spill_matches_an_identical_domain_with_high_padding
+* test_an_unbounded_flat_has_no_hydrostatic_lake_above_it
+* test_a_real_bowl_keeps_water_below_its_rim
+* test_a_bowl_with_a_low_outlet_cannot_hold_the_upstream_head
+* test_unfilled_ground_inside_a_closed_basin_is_not_an_outlet
+* test_reported_plateaus_and_lower_channel_banks_do_not_hold_high_water
+* test_surface_smoothing_cannot_raise_a_retained_spill_level
+* test_a_carved_flowing_channel_can_descend_to_its_open_lower_end
+* test_pre_carve_ground_does_not_license_water_on_unchanged_land
+* test_excavation_ceiling_allows_a_smooth_river_join_without_lifting_a_lake
+* test_a_distant_high_source_cannot_fill_a_lower_rivers_excavation
+* test_fine_rescue_cannot_spread_a_high_shoreline_over_an_open_flat
+* test_enclosing_rim_is_independent_of_extra_dry_domain
+* test_photographed_water_neighborhoods_agree_across_chunk_borders
+* test_sparse_spill_outlets_match_dense_preparation_including_boundary_anchors
+18/18 passed.
+
+
+res://tests/test_september9_water_plan_retention.gd
+* test_regional_indexes_are_bounded_and_rebuild_identical_source_ownership
+* test_source_and_trace_memos_are_bounded_without_losing_recent_entries
+2/2 passed.
+
+
+res://tests/test_september9_water_profile_retention.gd
+* test_completed_profile_keeps_its_values_without_retaining_construction_terrain
+* test_long_travel_bounds_profiles_and_recomputes_evicted_values_exactly
+2/2 passed.
+
+
+res://tests/test_path_features.gd
+* test_lamps_have_hard_spacing_and_alternate_observed_sides
+* test_village_approaches_do_not_receive_detached_road_gates
+* test_turning_approach_does_not_receive_a_detached_gate
+* test_split_approaches_do_not_multiply_detached_gates
+* test_small_arch_is_owned_by_the_exact_biome_crossing
+* test_biome_gates_stay_clear_of_villages_and_each_other
+6/6 passed.
+
+
+res://tests/test_atmosphere_director.gd
+* test_apply_grade_sets_render_stack
+* test_biome_lighting_changes_gradually_without_rotating_shadows
+* test_mood_response_is_independent_of_frame_partition
+3/3 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts              33
+Tests                95
+Passing Tests        95
+Asserts           78973
+Time              252.7s
+
+
+---- All tests passed! ----
+

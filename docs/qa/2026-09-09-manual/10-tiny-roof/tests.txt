@@ -1,0 +1,70 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_covered_crown.gd
+* test_photographed_house_fills_its_reserved_space_beneath_the_public_deck
+* test_public_ceiling_requires_complete_same_height_coverage_in_four_orientations
+2/2 passed.
+
+
+res://tests/test_roof_construction_reservations.gd
+* test_roof_gardens_respect_reserved_ground_frame_columns
+* test_interstitial_infill_leaves_the_required_roof_space_open
+* test_connected_roof_retains_its_declared_eave_flashing
+* test_compound_roof_plate_with_a_square_return_gets_complete_roofing
+* test_joined_roof_preserves_only_the_named_market_canopy_seam
+* test_connected_roof_uses_actual_component_clearance
+* test_roofs_leave_space_for_ground_bearing_frames
+* test_joined_bridge_crown_uses_the_free_transverse_eave_space
+* test_bridge_crown_role_cannot_be_overridden_by_neighbor_silhouette
+* test_slim_bridge_endpoint_keeps_its_finite_party_profile
+* test_prospective_party_contacts_do_not_depend_on_emitted_grid_faces
+* test_terminal_roof_domain_starts_with_the_house_crown
+* test_terminal_roof_domain_preserves_the_bridge_seam_role
+13/13 passed.
+
+
+res://tests/test_room_composition_diagnostics.gd
+* test_upper_room_contacts_reserve_bearing_across_parcel_ids
+* test_inspection_reports_a_floating_room_without_rebuilding_it
+* test_exposed_roof_space_belongs_to_its_building_before_upper_rooms_are_selected
+* test_diagnostics_preserve_complete_optional_and_required_crowns
+* test_upper_room_underside_owns_only_unoccupied_interface_cells
+* test_inspection_reports_overlapping_rooms_without_selecting_a_survivor
+6/6 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               3
+Tests                21
+Passing Tests        21
+Asserts             110
+Time              112.28s
+
+
+---- All tests passed! ----
+
+ERROR: 2 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+ERROR: 3 RID allocations of type 'PN18TextServerAdvanced12FontAdvancedE' were leaked at exit.
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+     at: cleanup (core/object/object.cpp:2514)
+ERROR: 75 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:795)
+ERROR: Pages in use exist at exit in PagedAllocator: N7Variant5Pools12BucketMediumE
+   at: ~PagedAllocator (./core/templates/paged_allocator.h:169)
+ERROR: Pages in use exist at exit in PagedAllocator: N7Variant5Pools11BucketSmallE
+   at: ~PagedAllocator (./core/templates/paged_allocator.h:169)

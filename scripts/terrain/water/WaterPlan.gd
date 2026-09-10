@@ -123,6 +123,9 @@ var world_seed: int
 var amplitude: float
 var max_storeys: int
 
+const SOURCE_MEMO_LIMIT := 8192
+const CARVE_REGION_CACHE_LIMIT := 256
+
 var _trace_cache: Dictionary = {}    # Vector3i(sc.x, sc.y, depth) -> RiverTrace | null
 var _source_pos_cache: Dictionary = {}   # Vector2i -> Vector2 (summit-ascended)
 var _has_source_cache: Dictionary = {}   # Vector2i -> bool
@@ -131,6 +134,14 @@ var _has_source_cache: Dictionary = {}   # Vector2i -> bool
 ## source-candidate sweep; it never changes planning output or cache order.
 var _planning_progress_callback := Callable()
 var _planning_progress_last := -1.0
+
+
+static func _memo_insert(cache: Dictionary, key: Variant, value: Variant, limit: int) -> void:
+	# Individual FIFO eviction leaves the rest of the warm working set intact.
+	# These records are deterministic; live callers retain their own references.
+	if cache.size() >= limit:
+		cache.erase(cache.keys()[0])
+	cache[key] = value
 
 
 func _init(p_world_seed: int, p_amplitude: float, p_max_storeys: int) -> void:
@@ -252,7 +263,7 @@ func source_pos(sc: Vector2i) -> Vector2:
 	if _source_pos_cache.has(sc):
 		return _source_pos_cache[sc]
 	var p: Vector2 = _ascend(_jitter_pos(sc))
-	_source_pos_cache[sc] = p
+	_memo_insert(_source_pos_cache, sc, p, SOURCE_MEMO_LIMIT)
 	return p
 
 
@@ -265,7 +276,7 @@ func has_source(sc: Vector2i) -> bool:
 	if _has_source_cache.has(sc):
 		return _has_source_cache[sc]
 	var ok: bool = _has_source_uncached(sc)
-	_has_source_cache[sc] = ok
+	_memo_insert(_has_source_cache, sc, ok, SOURCE_MEMO_LIMIT)
 	return ok
 
 
@@ -302,7 +313,7 @@ func river_for(sc: Vector2i, depth: int = JOIN_DEPTH,
 			_report_planning_progress(progress_end)
 		return _trace_cache[key]
 	var t: RiverTrace = _trace(sc, depth, progress_start, progress_end)
-	_trace_cache[key] = t
+	_memo_insert(_trace_cache, key, t, SOURCE_MEMO_LIMIT)
 	if progress_start >= 0.0:
 		_report_planning_progress(progress_end)
 	return t
@@ -615,6 +626,11 @@ func _region_for(rc: Vector2i) -> Dictionary:
 		Vector2(float(rc.x), float(rc.y)) * SUPER, Vector2(SUPER, SUPER)).grow(BANK_FEATHER + W_MAX)
 	var rivers: Array = []
 	var buckets: Dictionary = {}
+	# carve_at_cell chooses exactly one half-open super-cell owner before
+	# querying this index. Keep complete river records for discovery, but
+	# index only the terrain cells this owner can ever be asked to carve.
+	var first_cell := rc * int(SUPER / TILE)
+	var last_cell := first_cell + Vector2i.ONE * (int(SUPER / TILE) - 1)
 	# +1 ring: a source within REACH of a cell inside this super-cell can sit
 	# up to REACH + SUPER·√2 from the super-cell's own corner.
 	var candidate_side := (REACH_SUPERS + 1) * 2 + 1
@@ -640,10 +656,10 @@ func _region_for(rc: Vector2i) -> Dictionary:
 			rivers.append(t)
 			for i in t.points.size():
 				var infl: float = t.widths[i] + BANK_FEATHER
-				var lo_x: int = int(floor((t.points[i].x - infl) / TILE + 0.5))
-				var hi_x: int = int(floor((t.points[i].x + infl) / TILE + 0.5))
-				var lo_z: int = int(floor((t.points[i].y - infl) / TILE + 0.5))
-				var hi_z: int = int(floor((t.points[i].y + infl) / TILE + 0.5))
+				var lo_x := maxi(first_cell.x, floori((t.points[i].x - infl) / TILE + 0.5))
+				var hi_x := mini(last_cell.x, floori((t.points[i].x + infl) / TILE + 0.5))
+				var lo_z := maxi(first_cell.y, floori((t.points[i].y - infl) / TILE + 0.5))
+				var hi_z := mini(last_cell.y, floori((t.points[i].y + infl) / TILE + 0.5))
 				for bz in range(lo_z, hi_z + 1):
 					for bx in range(lo_x, hi_x + 1):
 						var key: Vector2i = Vector2i(bx, bz)
@@ -659,7 +675,7 @@ func _region_for(rc: Vector2i) -> Dictionary:
 		if t.pond != null:
 			ponds.append(t.pond)
 	var out: Dictionary = {"rivers": rivers, "buckets": buckets, "ponds": ponds}
-	_region_cache[rc] = out
+	_memo_insert(_region_cache, rc, out, CARVE_REGION_CACHE_LIMIT)
 	_report_planning_progress(1.0, true)
 	return out
 

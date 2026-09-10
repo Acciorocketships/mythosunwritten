@@ -1,0 +1,35 @@
+{
+  "garden_across": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 13.236350549768519,
+    "roi_mean_abs_rgb": 13.236350549768519,
+    "roi_changed_over_20_fraction": 0.36338216145833335
+  },
+  "garden_close": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 10.624020543981482,
+    "roi_mean_abs_rgb": 10.624020543981482,
+    "roi_changed_over_20_fraction": 0.29824761284722223
+  },
+  "garden_overview": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 1.0078280526620371,
+    "roi_mean_abs_rgb": 1.0078280526620371,
+    "roi_changed_over_20_fraction": 0.020728081597222222
+  }
+}

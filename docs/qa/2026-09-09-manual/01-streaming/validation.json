@@ -1,0 +1,20 @@
+{
+  "suite": "24 scripts: September 9 streaming candidates plus related queue, terrain, noise, river bank, and water seam regressions",
+  "tests": 105,
+  "passed": 105,
+  "assertions": 18372,
+  "seconds": 237.778,
+  "process_exit": 134,
+  "limitation": "All GUT assertions passed; native teardown failed after totals. Baseline already records this shutdown failure category.",
+  "log": "/private/tmp/september9-streaming-regressions.log",
+  "walk_seconds": 120.061,
+  "walk_distance_m": 820.534079298377,
+  "frozen_seconds": 0,
+  "startup_seconds": 207.592,
+  "original_graphical_startup_seconds": 248.369,
+  "crossing_seconds": 12.385,
+  "crossing_grounded": true,
+  "camera": "inferred, identically pinned; original photograph has no crosshair hit",
+  "field_parity": "31/31 original production water-fill and contour hashes match",
+  "acceptance": "reported route and images pass; not a globally green test suite or universal travel guarantee"
+}

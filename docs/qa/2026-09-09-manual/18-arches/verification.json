@@ -1,0 +1,216 @@
+{
+  "accepted": true,
+  "targeted_tests": {
+    "tests": 10,
+    "assertions": 55,
+    "seconds": 20.876
+  },
+  "frontage_tests": {
+    "tests": 6,
+    "assertions": 5266,
+    "seconds": 33.139
+  },
+  "physical": {
+    "identical": true,
+    "walk_cells": 100,
+    "crossings": 140
+  },
+  "walking": {
+    "before": {
+      "passed": 6,
+      "ticks": 294,
+      "grounded_ticks": 294
+    },
+    "after": {
+      "passed": 6,
+      "ticks": 294,
+      "grounded_ticks": 294
+    }
+  },
+  "game_cameras_identical": true,
+  "game_pairs_judged": 11,
+  "gallery_pairs_judged": 5,
+  "game_pixel_metrics": {
+    "12_offset_room_exact": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.25130881799942806,
+      "roi_mean_abs_rgb": 0.25130881799942806,
+      "roi_changed_over_20_fraction": 0.002753865657291214
+    },
+    "12_offset_room_gameplay_camera": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.23135736529588857,
+      "roi_mean_abs_rgb": 0.23135736529588857,
+      "roi_changed_over_20_fraction": 0.0027161491816087707
+    },
+    "12_offset_room_jitter_0": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.24611951882033373,
+      "roi_mean_abs_rgb": 0.24611951882033373,
+      "roi_changed_over_20_fraction": 0.0027032017347327084
+    },
+    "12_offset_room_jitter_1": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.24462981185295604,
+      "roi_mean_abs_rgb": 0.24462981185295604,
+      "roi_changed_over_20_fraction": 0.002731911290849195
+    },
+    "12_offset_room_near_left": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.2058362587057507,
+      "roi_mean_abs_rgb": 0.2058362587057507,
+      "roi_changed_over_20_fraction": 0.0022539816213806257
+    },
+    "12_offset_room_near_right": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.2677244918408567,
+      "roi_mean_abs_rgb": 0.2677244918408567,
+      "roi_changed_over_20_fraction": 0.0034265699623735935
+    },
+    "tunnel_front": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 2.5603780729545473,
+      "roi_mean_abs_rgb": 2.5603780729545473,
+      "roi_changed_over_20_fraction": 0.09293789954132262
+    },
+    "tunnel_inside": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 2.0061100690605556,
+      "roi_mean_abs_rgb": 2.0061100690605556,
+      "roi_changed_over_20_fraction": 0.056219503133282146
+    },
+    "tunnel_left": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 3.6887848464582915,
+      "roi_mean_abs_rgb": 3.6887848464582915,
+      "roi_changed_over_20_fraction": 0.12871619871966639
+    },
+    "tunnel_overview": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 3.3399342795102336,
+      "roi_mean_abs_rgb": 3.3399342795102336,
+      "roi_changed_over_20_fraction": 0.11515008905591721
+    },
+    "tunnel_right": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 2.713983205097316,
+      "roi_mean_abs_rgb": 2.713983205097316,
+      "roi_changed_over_20_fraction": 0.0998400145912097
+    }
+  },
+  "outskirts": {
+    "before_houses": 9,
+    "after_houses": 9,
+    "changed_lots": [
+      {
+        "id": "settlement.15289ce93c11a72d.outskirts.house.02",
+        "before": {
+          "asset": "sfv.building.interior.orange.001",
+          "id": "settlement.15289ce93c11a72d.outskirts.house.02",
+          "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (266.378, 5.006, -1209.917)]"
+        },
+        "after": {
+          "asset": "sfv.building.interior.orange.001",
+          "id": "settlement.15289ce93c11a72d.outskirts.house.02",
+          "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (309.622, 5.006, -1094.083)]"
+        }
+      },
+      {
+        "id": "settlement.15289ce93c11a72d.outskirts.house.03",
+        "before": {
+          "asset": "lpfv.building.house.02",
+          "id": "settlement.15289ce93c11a72d.outskirts.house.03",
+          "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (314.8564, 6.05, -1104.1)]"
+        },
+        "after": {
+          "asset": "lpfv.building.house.01",
+          "id": "settlement.15289ce93c11a72d.outskirts.house.03",
+          "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (260.8691, 6.05, -1199.9)]"
+        }
+      },
+      {
+        "id": "settlement.15289ce93c11a72d.outskirts.house.04",
+        "before": {
+          "asset": "lpfv.building.house.07",
+          "id": "settlement.15289ce93c11a72d.outskirts.house.04",
+          "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (302.5937, 6.05, -1104.1)]"
+        },
+        "after": {
+          "asset": "lpfv.building.house.07",
+          "id": "settlement.15289ce93c11a72d.outskirts.house.04",
+          "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (279.8809, 6.05, -1104.1)]"
+        }
+      },
+      {
+        "id": "settlement.15289ce93c11a72d.outskirts.house.06",
+        "before": {
+          "asset": "lpfv.building.house.01",
+          "id": "settlement.15289ce93c11a72d.outskirts.house.06",
+          "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (284.3551, 6.05, -1199.9)]"
+        },
+        "after": {
+          "asset": "lpfv.building.house.01",
+          "id": "settlement.15289ce93c11a72d.outskirts.house.06",
+          "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (272.8573, 6.05, -1199.9)]"
+        }
+      }
+    ],
+    "cause": "Detached road-gate footprints no longer enter PathPlan clearance_shapes; VillageOutskirtsConstruction subtracts these before deterministic frontage allocation. Settlement seed is unchanged."
+  },
+  "capture_correction": "Final game-before/game-after keep the player at photo 12 and wait for its complete streaming footprint. Earlier moving-footprint images are superseded; their six walking traces remain valid."
+}

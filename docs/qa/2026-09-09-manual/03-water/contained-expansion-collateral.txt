@@ -1,0 +1,288 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_water_field.gd
+* test_profiles_monotone_and_continuous
+* test_descent_is_smooth_pool_to_pool
+MEAS test_descent_is_smooth_pool_to_pool: span[1,8] anchor_start=15.0000 anchor_end=1.2000 span_len=84.00 KNOTS (2):
+  k=0 arc=0.00 pos=(46.02,-1048.46) curve_val=15.0000 ground=8.0000 depth=7.0000  <-- anchor
+  k=22 arc=84.00 pos=(52.74,-1129.81) curve_val=1.2000 ground=0.0000 depth=1.2000  <-- anchor
+MEAS test_descent_is_smooth_pool_to_pool: span[1,8] sill-ride: 23/23 dense samples clear ground+DESCENT_CLAMP
+MEAS test_descent_is_smooth_pool_to_pool: 1 span(s) checked, 23 dense samples, max |second_diff|=0.156 (bound 0.5, openly relaxed near sill knots)
+* test_reported_rendered_field_follows_one_continuous_descent
+MEAS reported rendered descent: samples=23 max_field_curve_err=0.179 max_second=0.473 offenders=[]
+* test_reported_terminal_chute_is_one_smooth_surface
+MEAS exact terminal chute: checked=1202 max_first=1.539 at (45.0, -1070.0) max_second=1.598 at (47.0, -1070.0)
+MEAS exact terminal chute lattice p=(36.0, -1092.0) fill=3.000 channel=-inf ground=0.000
+MEAS exact terminal chute lattice p=(36.0, -1086.0) fill=3.000 channel=-inf ground=2.000
+MEAS exact terminal chute lattice p=(36.0, -1080.0) fill=-inf channel=15.000 ground=4.000
+MEAS exact terminal chute lattice p=(36.0, -1074.0) fill=-inf channel=15.000 ground=4.000
+    [Failed]:  the terminal river-to-pool join has no one-metre cliff (1.539m at (45.0, -1070.0))
+      at line 333
+    [Failed]:  the terminal river-to-pool join has no angular grade break (1.598m at (47.0, -1070.0))
+      at line 335
+* test_profile_without_region_is_still_monotone
+* test_level_at_known_water_and_dry_land
+* test_level_continuous_along_the_site_channel
+* test_level_continuous_without_region_keeps_old_jumps
+* test_reported_site_continuous_bathymetry_has_no_false_fall_span
+* test_steep_spans_finds_a_real_hand_built_cliff
+* test_profile_is_independent_of_which_region_first_computed_it
+* test_steep_scan_flat_ground_finds_nothing
+* test_steep_scan_gentle_ramp_finds_nothing
+* test_steep_scan_finds_a_sharp_step
+* test_steep_scan_two_separate_cliffs_stay_separate
+* test_steep_scan_short_array_returns_empty
+* test_flow_and_grade
+* test_no_dry_holes_inside_water
+    [Failed]:  [12] expected to equal [0]:  12 dry lattice samples are holes bordered by higher water (e.g. ["S=(42.0, -1080.0) (ground=4.00) neighbour=(45.0, -1080.0) wet at level=7.14", "S=(42.0, -1077.0) (ground=4.00) neighbour=(45.0, -1077.0) wet at level=7.47", "S=(42.0, -1074.0) (ground=4.00) neighbour=(45.0, -1074.0) wet at level=7.79", "S=(42.0, -1071.0) (ground=4.00) neighbour=(45.0, -1071.0) wet at level=8.07", "S=(39.0, -1068.0) (ground=4.00) neighbour=(39.0, -1065.0) wet at level=6.75"])
+      at line 740
+* test_reported_inner_corner_has_no_false_dry_sub_lattice_passage
+MEAS 2026-07-21 inner false-dry start=(-401.0702, -489.276) level=3.000 target=(-402.0981, -489.6676) ground=2.061 field=3.0 rescued=0/8649
+* test_water_never_stands_above_its_source
+* test_waterline_is_a_terrain_contour
+MEAS test_waterline_is_a_terrain_contour: 8 checked, 0 violations
+* test_no_steep_span_without_terrain_drop
+* test_shoreline_hugs_terrain_contour
+test_shoreline_hugs_terrain_contour: 344 crossings found, 0 violations
+* test_fill_is_deterministic_across_chunks
+* test_wet_agreement_across_all_chunk_borders
+test_wet_agreement_across_all_chunk_borders: 8712 points checked across all borders/seeds, 0 mismatches
+23/25 passed.
+
+
+res://tests/test_water_field_context.gd
+* test_context_matches_water_field_and_has_canonical_dry_nan
+1/1 passed.
+
+
+res://tests/test_water_contour.gd
+* test_pond_yields_smooth_closed_curve
+MEAS test_pond_yields_smooth_closed_curve: 3 curves total, 2 closed
+MEAS test_pond_yields_smooth_closed_curve: closed curve n=93 spacing=[1.371,1.496] max_turn=58.8 max_turn_nonwall=0.0 wall=93 nonwall=0
+MEAS test_pond_yields_smooth_closed_curve: closed curve n=141 spacing=[1.376,1.500] max_turn=81.1 max_turn_nonwall=24.4 wall=119 nonwall=22
+MEAS test_pond_yields_smooth_closed_curve: max_turn_deg (raw) = 81.10, (non-wall) = 24.39
+MEAS test_pond_yields_smooth_closed_curve: wall fraction = 212/234 = 0.906, validated corner bridges=0 invalid=0
+    [Failed]:  pinned pond exercises the short rounded-wall-corner bridge path
+      at line 271
+* test_border_curves_weld
+MEAS test_border_curves_weld: seed=2697992464 (-1, -7)|(0, -7) coord=0.0 a=(0.000000000, -1219.500000000) b=(0.000000000, -1219.500000000) dist=0.000000000 a_arc=131.6 b_arc=267.5 mid_arc=true
+MEAS test_border_curves_weld: seed=2697992464 (-1, -7)|(-1, -6) coord=-1152.0 a=(-67.500000000, -1152.000000000) b=(-67.500000000, -1152.000000000) dist=0.000000000 a_arc=131.6 b_arc=98.3 mid_arc=true
+MEAS test_border_curves_weld: seed=2697992464 (0, -7)|(1, -7) coord=192.0 a=(192.000000000, -1171.616577148) b=(192.000000000, -1171.616699219) dist=0.000122070 a_arc=267.5 b_arc=248.0 mid_arc=true
+    [Failed]:  (0, -7)|(1, -7) (seed 2697992464): border point (192.0, -1171.617) matches the neighbour within 1e-4 (dist 0.000122070)
+      at line 401
+MEAS test_border_curves_weld: seed=2697992464 (0, -7)|(0, -6) coord=-1152.0 a=(67.500000000, -1152.000000000) b=(67.500000000, -1152.000000000) dist=0.000000000 a_arc=62.1 b_arc=346.4 mid_arc=true
+MEAS test_border_curves_weld: seed=2697992464 (0, -7)|(0, -6) coord=-1152.0 a=(76.500000000, -1152.000000000) b=(76.500000000, -1152.000000000) dist=0.000000000 a_arc=62.1 b_arc=145.6 mid_arc=true
+MEAS test_border_curves_weld: seed=2697992464 (1, -7)|(2, -7) coord=384.0 a=(384.000000000, -1195.500000000) b=(384.000000000, -1195.500000000) dist=0.000000000 a_arc=248.0 b_arc=78.2 mid_arc=true
+MEAS test_border_curves_weld: seed=2697992464 (2, -7)|(2, -6) coord=-1152.0 a=(427.500000000, -1152.000000000) b=(427.500000000, -1152.000000000) dist=0.000000000 a_arc=78.2 b_arc=320.3 mid_arc=true
+MEAS test_border_curves_weld: seed=2697992464 (-1, -6)|(0, -6) coord=0.0 a=(0.000000000, -1116.000000000) b=(0.000000000, -1116.000000000) dist=0.000000000 a_arc=98.3 b_arc=346.4 mid_arc=true
+MEAS test_border_curves_weld: seed=2697992464 (0, -6)|(1, -6) coord=192.0 a=(192.000000000, -1116.000000000) b=(192.000000000, -1116.000000000) dist=0.000000000 a_arc=145.6 b_arc=361.9 mid_arc=true
+MEAS test_border_curves_weld: seed=2697992464 (1, -6)|(2, -6) coord=384.0 a=(384.000000000, -964.500000000) b=(384.000000000, -964.500000000) dist=0.000000000 a_arc=361.9 b_arc=320.3 mid_arc=true
+MEAS test_border_curves_weld: seed=991177 (-8, 6)|(-8, 7) coord=1344.0 a=(-1500.000000000, 1344.000000000) b=(-1500.000000000, 1344.000000000) dist=0.000000000 a_arc=225.9 b_arc=53.5 mid_arc=true
+MEAS test_border_curves_weld: 11 total crossings (11 mid-arc), worst distance 0.000122070
+* test_wall_stays_straight
+MEAS test_wall_stays_straight: 16 wall-flagged points in the I4 reach
+MEAS test_wall_stays_straight: max x deviation = 0.3610 m (threshold 0.75)
+* test_curve_levels_match_field
+MEAS test_curve_levels_match_field: checked 662 points, max_err=0.00000 (threshold 0.05)
+* test_saddle_cells_connect_the_wedge
+* test_reported_saddle_outward_frame_does_not_reverse
+MEAS 2026-07-21 saddle frame checked=0 worst_dot=1.000 offenders=[]
+    [Failed]:  reported saddle exercises several adjacent contour frames
+      at line 530
+* test_outward_frame_points_to_the_drier_side
+MEAS pond outward-frame p=(-633.9844, -3394.641) n=(-0.640042, -0.76834) out_depth=-inf in_depth=3.000 curve=1 index=0
+4/7 passed.
+
+
+res://tests/test_water_skin.gd
+* test_render_lattice_is_dense_enough_for_geometric_wavelets
+* test_free_meniscus_has_no_concave_inflection
+MEAS free meniscus profile=[(0.0, 0.0), (0.12, 0.04), (0.3, -0.06), (0.48, -0.28), (0.6, -0.55), (0.64, -0.65)] concave inflections=[]
+* test_reported_inner_corner_minus17_keeps_level_contact
+MEAS 2026-07-21 inner-corner p=(-401.5849, -488.5688) ground=1.741 field=3.000 skin=3.000 contour=(-403.5, -489.0512) normal=(-1.0, 0.0) level=3.000 dist=1.975 side=-1.915 wall=0 contact=0 reach=-1.000
+MEAS 2026-07-21 inner-corner p=(-401.037, -486.5928) ground=1.408 field=3.000 skin=3.000 contour=(-403.5, -486.0512) normal=(-1.0, 0.0) level=3.000 dist=2.522 side=-2.463 wall=0 contact=0 reach=-1.000
+MEAS 2026-07-21 inner-corner p=(-399.6116, -485.2105) ground=0.657 field=3.000 skin=3.000 contour=(-403.5, -484.5512) normal=(-1.0, 0.0) level=3.000 dist=3.944 side=-3.888 wall=0 contact=0 reach=-1.000
+* test_reported_cliff_shore_minus9_has_level_tip_coverage
+MEAS 2026-07-21 cliff-tip p=(-227.8, -755.56) ground=0.000 field=3.000 skin=3.000 contour=(-259.8672, -766.5309) normal=(-0.969906, -0.243478) level=3.000 dist=33.892 side=-33.773 wall=0 contact=0 reach=-1.000
+MEAS 2026-07-21 cliff-tip p=(-228.04, -755.63) ground=0.000 field=3.000 skin=3.000 contour=(-259.8672, -766.5309) normal=(-0.969906, -0.243478) level=3.000 dist=33.642 side=-33.524 wall=0 contact=0 reach=-1.000
+MEAS 2026-07-21 cliff-tip p=(-228.28, -755.7) ground=0.000 field=3.000 skin=3.000 contour=(-260.3211, -765.1034) normal=(-0.831035, -0.556221) level=3.000 dist=33.392 side=-31.858 wall=0 contact=0 reach=-1.000
+* test_reported_saddle_minus11_is_wet_and_level_covered
+MEAS 2026-07-21 saddle p=(-250.4063, -754.8383) ground=0.000 field=3.000 skin=3.000 contour=(-260.3211, -765.1034) normal=(-0.831035, -0.556221) level=3.000 dist=14.272 side=-13.949
+MEAS 2026-07-21 saddle p=(-250.9008, -754.5195) ground=0.000 field=3.000 skin=3.000 contour=(-260.3211, -765.1034) normal=(-0.831035, -0.556221) level=3.000 dist=14.169 side=-13.716
+* test_reported_corner_sites_have_no_nonlocal_water_triangles
+MEAS reported corner triangle maximum XZ edge: 3.141m; offenders=[]
+* test_reported_chute_faces_never_bridge_dry_ground_or_underrun_the_bed
+MEAS exact chute face samples checked=1116 invalid=0 []
+* test_reported_exact_bank_rim_reaches_recessed_cliff_face
+    [Failed]:  a contour sample exists at the exact long-bank wall (nearest 7.53m)
+      at line 700
+* test_reported_exact_corner_wet_region_has_connected_skin_coverage
+MEAS exact corner wet samples=1845 uncovered/under-bed=0 []
+MEAS exact corner low screen probe p=(131.1227, -1161.356) ground=0.000 level=3.000 skin=3.000
+    [Failed]:  exact upper corner probe remains dry cliff top instead of being flooded
+      at line 778
+    [Failed]:  a contour sample exists beside the exact dry corner tip
+      at line 781
+* test_reported_corner_181_inner_apron_stays_water_covered
+MEAS exact corner-181 apron p=(178.8354, -1186.913) ground=0.000 field=3.000 skin=3.000 nearest=(179.9292, -1195.415) n=(0.117349, -0.993091) level=3.000 dist=8.572
+* test_reported_corner_chunk_has_no_visible_free_edge_holes
+MEAS reported corner chunk free edges: 240 checked, 0 visible-hole offenders: []
+* test_reported_normal_corner_rim_reaches_recessed_turn
+MEAS exact normal-corner shelf p=(154.2844, -1212.0) ground=0.000 field=3.000 skin=3.000 nearest=(154.5447, -1219.5) n=(0.016524, -0.999863) dist=7.505 along=-7.503 cross=0.136
+MEAS exact normal-corner shelf p=(154.5, -1213.5) ground=0.064 field=3.000 skin=3.000 nearest=(154.5447, -1219.5) n=(0.016524, -0.999863) dist=6.000 along=-6.000 cross=0.054
+* test_reported_seed_has_no_unbounded_false_dry_shore
+MEAS reported-corpus first-dry contacts=1311 worst unsupported drop={ "drop": 0.89865134483573, "point": (37.87405, -1066.285), "normal": (-0.629645, -0.776883), "level": 4.90732049942017, "wet_reach": 1.1, "chunk": (0, -6) }
+    [Failed]:  reported water never terminates over connected low ground; worst dry contact may be at most 10cm below its level: { "drop": 0.89865134483573, "point": (37.87405, -1066.285), "normal": (-0.629645, -0.776883), "level": 4.90732049942017, "wet_reach": 1.1, "chunk": (0, -6) }
+      at line 933
+* test_reported_bank_sites_have_no_vertical_repair_skirt_seam
+MEAS bank pin (61.5, -1118.1) -> contour (61.14004, -1116.0) (dist 2.13), normal=(0.302187, 0.953249), level=3.000, bank contact=0.020m
+MEAS bank pin (34.0, -1108.9) -> contour (36.0, -1108.531) (dist 2.03), normal=(-1.0, 0.0), level=3.000, bank contact=0.020m
+MEAS vertical repair-skirt seams near reported pins: 0
+* test_reported_green_wedge_is_wet_and_skin_covered
+MEAS reported green wedge p=(49.91661, -1106.483) ground=0.000 field=3.659 depth=3.659 skin=3.659
+MEAS reported green wedge p=(56.12246, -1106.213) ground=0.000 field=3.851 depth=3.851 skin=3.851
+* test_reported_shallow_water_cannot_dry_at_swell_trough
+MEAS reported swell clearance: checked=6895 constrained=2302 baked_scale=true offenders=[]
+* test_skin_builds_on_site_chunk
+MEAS test_skin_builds_on_site_chunk: skin=7603 tris (4040 verts, 1001.79ms)
+* test_current_field_is_bit_identical_across_chunk_border
+* test_free_edges_only_buried_rim_or_border
+MEAS test_free_edges_only_buried_rim_or_border: 337 non-border-pair free edges checked, 0 offenders
+* test_rim_outer_row_is_buried_or_rounded_over_drop
+MEAS rim outer row: 335 verts checked, 1 rounded drop lobes, 1 offenders
+    [Failed]:  every rim outer edge is buried by bank terrain or is a finite rounded drop lobe: ["(38.87355, 3.933211, -1067.707) buried=0.067 ground=4.001 nearest={ \"dist\": 0.70002031326294, \"level\": 4.58321142196655 } rel_y=-0.650"]
+      at line 1247
+* test_rim_welds_to_strip
+MEAS test_rim_welds_to_strip: 332 curve points checked, 0 offenders
+* test_interior_rides_field
+MEAS test_interior_rides_field: 1852/4040 verts classified interior
+MEAS test_interior_rides_field: checked 50, max_err=0.00000 (threshold 0.03)
+* test_skin_handles_closed_and_border_exit_curves
+MEAS test_skin_handles_closed_and_border_exit_curves: 368 free edges checked, 10 offenders
+    [Failed]:  closed + border-exit curves stitch watertight: ["(-688.0, 11.0, -3344.0) near={ \"dist\": 3.4720139503479, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3342.0) near={ \"dist\": 3.51516532897949, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3324.0) near={ \"dist\": 3.41262364387512, \"level\": 10.9308757781982 } ok=false - (-688.0, 10.9, -3322.0) near={ \"dist\": 2.88365125656128, \"level\": 10.831467628479 } ok=false", "(-686.0, 11.0, -3324.0) near={ \"dist\": 3.6591854095459, \"level\": 11.0 } ok=false - (-686.0, 10.95, -3322.0) near={ \"dist\": 2.66304063796997, \"level\": 11.0 } ok=false", "(-688.0, 10.9, -3322.0) near={ \"dist\": 2.88365125656128, \"level\": 10.831467628479 } ok=false - (-688.0, 11.0, -3324.5) near={ \"dist\": 3.45135307312012, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3327.0) near={ \"dist\": 3.51500725746155, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3324.5) near={ \"dist\": 3.45135307312012, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3327.0) near={ \"dist\": 3.51500725746155, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3329.5) near={ \"dist\": 3.56455039978027, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3332.0) near={ \"dist\": 3.50437474250793, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3329.5) near={ \"dist\": 3.56455039978027, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3332.0) near={ \"dist\": 3.50437474250793, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3334.5) near={ \"dist\": 3.51507496833801, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3337.0) near={ \"dist\": 3.56441187858582, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3334.5) near={ \"dist\": 3.51507496833801, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3337.0) near={ \"dist\": 3.56441187858582, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3339.5) near={ \"dist\": 3.5043261051178, \"level\": 11.0 } ok=false"]
+      at line 1401
+* test_dry_chunk_builds_nothing
+* test_s_is_continuous_along_river
+    [Failed]:  pts[0] sits within the brief's own river gate (site precondition)
+      at line 1512
+    [Failed]:  pts[1] sits within the brief's own river gate (site precondition)
+      at line 1512
+MEAS test_s_is_continuous_along_river[bend pts[0..30]]: 30 steps checked, worst |Δs-step|=112.9591, 7 offenders
+    [Failed]:  bend pts[0..30]: s strictly increases and tracks the real spatial step along the river: ["bend pts[0..30] k=1 |Δs(0.6738) - step(1.4242)|=0.7504 >= 0.5", "bend pts[0..30] k=2 s not strictly increasing: 81.1915 -> 80.9896", "bend pts[0..30] k=3 s not strictly increasing: 80.9896 -> 80.7878", "bend pts[0..30] k=4 s not strictly increasing: 80.7878 -> 80.5863", "bend pts[0..30] k=5 s not strictly increasing: 80.5863 -> 80.4984", "bend pts[0..30] k=28 s not strictly increasing: 111.4591 -> 0.0000", "bend pts[0..30] k=29 s not strictly increasing: 0.0000 -> 0.0000"]
+      at line 1514
+MEAS test_s_is_continuous_along_river[clean pts[6..36]]: 30 steps checked, worst |Δs-step|=1.7019, 5 offenders
+    [Failed]:  clean pts[6..36]: s strictly increases and tracks the real spatial step along the river: ["clean pts[6..36] k=7 |Δs(0.6738) - step(1.4242)|=0.7504 >= 0.5", "clean pts[6..36] k=8 s not strictly increasing: 81.1915 -> 80.9896", "clean pts[6..36] k=9 s not strictly increasing: 80.9896 -> 80.7878", "clean pts[6..36] k=10 s not strictly increasing: 80.7878 -> 80.5863", "clean pts[6..36] k=11 s not strictly increasing: 80.5863 -> 80.4984"]
+      at line 1515
+* test_slope_is_continuous
+MEAS test_slope_is_continuous: 30 adjacent pairs checked, 0 offenders
+* test_pond_frames_are_calm
+MEAS test_pond_frames_are_calm: 19 calm-window curve points checked, 0 offenders
+* test_rim_normals_curl_outward
+MEAS test_rim_normals_curl_outward: synthetic free pt=(0.0, 0.0) row0.normal=(0.0, 1.0, 0.0) (dot_up=1.0000) row2.normal=(0.642788, 0.766044, 0.0) (outward_comp=0.6428)
+MEAS test_rim_normals_curl_outward: interior sloped verts found=28, sample: (46.0, 3.228636, -1108.0) slope_mag=0.1236 normal=(-0.056727, 0.992445, -0.108785) dot_up=0.9924
+* test_wall_rim_reaches_the_face
+    [Failed]:  the nearest wall point sits close to the R5-B frame's own wall reach (dist=28.87)
+      at line 1791
+MEAS test_wall_rim_reaches_the_face: wall pt=(148.5653, -1116.733) nrm=(-0.891447, 0.453124) level=3.000 ground@1m=3.315
+MEAS test_wall_rim_reaches_the_face: max outward reach=2.3000 (visible face inset=1.5000)
+MEAS test_wall_rim_reaches_the_face: free-edge invariant re-check: 337 checked, 0 offenders
+* test_drop_rim_is_a_compact_rounded_lobe
+MEAS test_drop_rim_is_a_compact_rounded_lobe: row2=(0.3, 2.94, 0.0) reach=0.300 rel_y=-0.060 row5=(0.64, 2.35, 0.0) reach=0.640 rel_y=-0.650
+* test_no_waterfall_nodes
+* test_no_trigger_where_unswimmably_steep
+MEAS test_no_trigger_where_unswimmably_steep: 1 tiles emitted (of 2 candidate tiles)
+MEAS test_no_trigger_where_unswimmably_steep: site chunk emits 25 tiles; film covered=true, pool centre covered=true
+MEAS test_no_trigger_where_unswimmably_steep: I1 film phantom-depth pin: sampler=8.7463 field=8.7463 |diff|=0.0000 (bound 0.3)
+MEAS test_no_trigger_where_unswimmably_steep: I1 film character-math: depth=5.5371 in_water=true wading=true
+* test_legal_sloped_reach_keeps_its_trigger
+MEAS test_legal_sloped_reach_keeps_its_trigger: 1 trigger(s) emitted (expect 1 — whole-tile coverage, no sub-tile splitting left to reconcile)
+MEAS test_legal_sloped_reach_keeps_its_trigger: 61 points walked along the reach, 0 offenders
+* test_reported_diagonal_contact_has_level_surface_normals
+27/34 passed.
+
+
+res://tests/test_september8_river_banks.gd
+* test_water_tag_cannot_turn_an_ordinary_slope_into_a_wall
+* test_photographed_bank_has_a_continuous_walk_to_shallow_water
+* test_bank_and_water_agree_across_the_streamed_chunk_border
+3/3 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_water_field.gd
+- test_reported_terminal_chute_is_one_smooth_surface
+    [Failed]:  the terminal river-to-pool join has no one-metre cliff (1.539m at (45.0, -1070.0))
+          at line 333
+    [Failed]:  the terminal river-to-pool join has no angular grade break (1.598m at (47.0, -1070.0))
+          at line 335
+- test_no_dry_holes_inside_water
+    [Failed]:  [12] expected to equal [0]:  12 dry lattice samples are holes bordered by higher water (e.g. ["S=(42.0, -1080.0) (ground=4.00) neighbour=(45.0, -1080.0) wet at level=7.14", "S=(42.0, -1077.0) (ground=4.00) neighbour=(45.0, -1077.0) wet at level=7.47", "S=(42.0, -1074.0) (ground=4.00) neighbour=(45.0, -1074.0) wet at level=7.79", "S=(42.0, -1071.0) (ground=4.00) neighbour=(45.0, -1071.0) wet at level=8.07", "S=(39.0, -1068.0) (ground=4.00) neighbour=(39.0, -1065.0) wet at level=6.75"])
+          at line 740
+
+res://tests/test_water_contour.gd
+- test_pond_yields_smooth_closed_curve
+    [Failed]:  pinned pond exercises the short rounded-wall-corner bridge path
+          at line 271
+- test_border_curves_weld
+    [Failed]:  (0, -7)|(1, -7) (seed 2697992464): border point (192.0, -1171.617) matches the neighbour within 1e-4 (dist 0.000122070)
+          at line 401
+- test_reported_saddle_outward_frame_does_not_reverse
+    [Failed]:  reported saddle exercises several adjacent contour frames
+          at line 530
+
+res://tests/test_water_skin.gd
+- test_reported_exact_bank_rim_reaches_recessed_cliff_face
+    [Failed]:  a contour sample exists at the exact long-bank wall (nearest 7.53m)
+          at line 700
+- test_reported_exact_corner_wet_region_has_connected_skin_coverage
+    [Failed]:  exact upper corner probe remains dry cliff top instead of being flooded
+          at line 778
+    [Failed]:  a contour sample exists beside the exact dry corner tip
+          at line 781
+- test_reported_seed_has_no_unbounded_false_dry_shore
+    [Failed]:  reported water never terminates over connected low ground; worst dry contact may be at most 10cm below its level: { "drop": 0.89865134483573, "point": (37.87405, -1066.285), "normal": (-0.629645, -0.776883), "level": 4.90732049942017, "wet_reach": 1.1, "chunk": (0, -6) }
+          at line 933
+- test_rim_outer_row_is_buried_or_rounded_over_drop
+    [Failed]:  every rim outer edge is buried by bank terrain or is a finite rounded drop lobe: ["(38.87355, 3.933211, -1067.707) buried=0.067 ground=4.001 nearest={ \"dist\": 0.70002031326294, \"level\": 4.58321142196655 } rel_y=-0.650"]
+          at line 1247
+- test_skin_handles_closed_and_border_exit_curves
+    [Failed]:  closed + border-exit curves stitch watertight: ["(-688.0, 11.0, -3344.0) near={ \"dist\": 3.4720139503479, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3342.0) near={ \"dist\": 3.51516532897949, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3324.0) near={ \"dist\": 3.41262364387512, \"level\": 10.9308757781982 } ok=false - (-688.0, 10.9, -3322.0) near={ \"dist\": 2.88365125656128, \"level\": 10.831467628479 } ok=false", "(-686.0, 11.0, -3324.0) near={ \"dist\": 3.6591854095459, \"level\": 11.0 } ok=false - (-686.0, 10.95, -3322.0) near={ \"dist\": 2.66304063796997, \"level\": 11.0 } ok=false", "(-688.0, 10.9, -3322.0) near={ \"dist\": 2.88365125656128, \"level\": 10.831467628479 } ok=false - (-688.0, 11.0, -3324.5) near={ \"dist\": 3.45135307312012, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3327.0) near={ \"dist\": 3.51500725746155, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3324.5) near={ \"dist\": 3.45135307312012, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3327.0) near={ \"dist\": 3.51500725746155, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3329.5) near={ \"dist\": 3.56455039978027, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3332.0) near={ \"dist\": 3.50437474250793, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3329.5) near={ \"dist\": 3.56455039978027, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3332.0) near={ \"dist\": 3.50437474250793, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3334.5) near={ \"dist\": 3.51507496833801, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3337.0) near={ \"dist\": 3.56441187858582, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3334.5) near={ \"dist\": 3.51507496833801, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3337.0) near={ \"dist\": 3.56441187858582, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3339.5) near={ \"dist\": 3.5043261051178, \"level\": 11.0 } ok=false"]
+          at line 1401
+- test_s_is_continuous_along_river
+    [Failed]:  pts[0] sits within the brief's own river gate (site precondition)
+          at line 1512
+    [Failed]:  pts[1] sits within the brief's own river gate (site precondition)
+          at line 1512
+    [Failed]:  bend pts[0..30]: s strictly increases and tracks the real spatial step along the river: ["bend pts[0..30] k=1 |Δs(0.6738) - step(1.4242)|=0.7504 >= 0.5", "bend pts[0..30] k=2 s not strictly increasing: 81.1915 -> 80.9896", "bend pts[0..30] k=3 s not strictly increasing: 80.9896 -> 80.7878", "bend pts[0..30] k=4 s not strictly increasing: 80.7878 -> 80.5863", "bend pts[0..30] k=5 s not strictly increasing: 80.5863 -> 80.4984", "bend pts[0..30] k=28 s not strictly increasing: 111.4591 -> 0.0000", "bend pts[0..30] k=29 s not strictly increasing: 0.0000 -> 0.0000"]
+          at line 1514
+    [Failed]:  clean pts[6..36]: s strictly increases and tracks the real spatial step along the river: ["clean pts[6..36] k=7 |Δs(0.6738) - step(1.4242)|=0.7504 >= 0.5", "clean pts[6..36] k=8 s not strictly increasing: 81.1915 -> 80.9896", "clean pts[6..36] k=9 s not strictly increasing: 80.9896 -> 80.7878", "clean pts[6..36] k=10 s not strictly increasing: 80.7878 -> 80.5863", "clean pts[6..36] k=11 s not strictly increasing: 80.5863 -> 80.4984"]
+          at line 1515
+- test_wall_rim_reaches_the_face
+    [Failed]:  the nearest wall point sits close to the R5-B frame's own wall reach (dist=28.87)
+          at line 1791
+
+Totals
+------
+Scripts               5
+Tests                70
+Passing Tests        58
+Failing Tests        12
+Asserts           25976/25993
+Time              296.192s
+
+
+---- 12 failing tests ----
+

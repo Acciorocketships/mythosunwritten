@@ -8,6 +8,12 @@ func _run() -> void:
 	var frozen := preload("res://tests/fixtures/frozen_maze_source.gd")
 	var fixture := "res://tests/fixtures/september8-west-source.txt" \
 		if OS.get_cmdline_user_args().has("--west") else "res://tests/fixtures/september7-manual-source.txt"
+	if OS.get_cmdline_user_args().has("--september9-east"):
+		fixture = "res://tests/fixtures/september9-east-source.txt"
+	if OS.get_cmdline_user_args().has("--september9-offset"):
+		fixture = "res://tests/fixtures/september9-offset-source.txt"
+	if OS.get_cmdline_user_args().has("--september9-turf"):
+		fixture = "res://tests/fixtures/september9-thin-turf-source.txt"
 	var source := frozen.read(fixture)
 	if OS.get_cmdline_user_args().has("--current-source"):
 		source = WarrenMazeCarver.carve(source.world_seed,source.massif,source.scale_profile,false,false)

@@ -29,8 +29,7 @@ func test_apply_grade_sets_render_stack() -> void:
 	assert_true(env.fog_enabled, "classic fog on (for the per-biome blend)")
 	assert_true(env.volumetric_fog_enabled, "volumetric fog on (pockets supply density)")
 	assert_eq(env.ambient_light_source, Environment.AMBIENT_SOURCE_COLOR, "ambient is a fixed colour")
-	assert_true(d.camera.attributes is CameraAttributesPractical, "tilt-shift DoF attributes set")
-	assert_true((d.camera.attributes as CameraAttributesPractical).dof_blur_far_enabled, "far DoF on")
+	assert_null(d.camera.attributes, "Depth of field is removed until the camera redesign")
 	assert_eq(d.sun.light_color, AtmosphereDirector.SUN_COLOR, "warm key light")
 	assert_almost_eq(d.sun.light_energy, AtmosphereDirector.SUN_ENERGY, 0.000001,
 		"key light remains restrained enough for the shared ground palette")
@@ -38,26 +37,33 @@ func test_apply_grade_sets_render_stack() -> void:
 		"low sun keeps readable but non-dominating terrain shadows")
 	_free_director(d)
 
-func test_moving_between_biomes_cannot_relight_the_world() -> void:
+func test_biome_lighting_changes_gradually_without_rotating_shadows() -> void:
 	var d := _mock_director()
 	d._apply_grade()
-	var s := FieldTerrainStreamer.new()
-	s.world_seed = 2697992464
-	d.streamer = s
-	var p := Node3D.new()
-	add_child_autofree(p)
-	d.player = p
-	var env := d.environment_node.environment
-	var before := [env.fog_density, env.fog_light_color,
-		env.ambient_light_color, env.ambient_light_energy,
-		(env.sky.sky_material as ProceduralSkyMaterial).sky_top_color]
-	for point: Vector3 in [Vector3(48, 0, -1500), Vector3(1200, 0, -900), Vector3.ZERO]:
-		p.position = point
-		for frame in 30:
-			d._process(0.1)
-		assert_eq([env.fog_density, env.fog_light_color,
-			env.ambient_light_color, env.ambient_light_energy,
-			(env.sky.sky_material as ProceduralSkyMaterial).sky_top_color], before,
-			"world light and distant biomes must be independent of the observer")
-	s.free()
+	var meadow := {&"meadow":1.0}
+	var moonfen := {&"twilight_marsh":1.0}
+	d._update_mood(0.0,meadow)
+	var before := d.sun.light_energy
+	var direction := d.sun.rotation
+	d._update_mood(1.0/60.0,moonfen)
+	assert_lt(d.sun.light_energy,before)
+	assert_gt(d.sun.light_energy,before*0.99,"A single frame cannot abruptly relight the scene")
+	for i in 600: d._update_mood(0.05,moonfen)
+	assert_almost_eq(d.sun.light_energy,BiomeRegistry.profile(&"twilight_marsh").sun_energy,0.0001)
+	assert_eq(d.sun.rotation,direction,"Biome mood does not swing shadow direction")
+	assert_null(d.camera.attributes,"Mood changes cannot restore camera blur")
 	_free_director(d)
+
+func test_mood_response_is_independent_of_frame_partition() -> void:
+	var a := _mock_director()
+	var b := _mock_director()
+	a._apply_grade()
+	b._apply_grade()
+	a._update_mood(0.0,{&"meadow":1.0})
+	b._update_mood(0.0,{&"meadow":1.0})
+	a._update_mood(3.0,{&"twilight_marsh":1.0})
+	for i in 180: b._update_mood(1.0/60.0,{&"twilight_marsh":1.0})
+	assert_almost_eq(a.sun.light_energy,b.sun.light_energy,0.00001)
+	assert_almost_eq(a.environment_node.environment.ambient_light_energy,b.environment_node.environment.ambient_light_energy,0.00001)
+	_free_director(a)
+	_free_director(b)

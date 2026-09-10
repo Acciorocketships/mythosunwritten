@@ -1,0 +1,5 @@
+{
+  "scripts/terrain/biome/SpiritOrb.gd": "6d942f40ebd5219c92201fde93c9c837eb4e64dfcc10c77027943ee8f439978d",
+  "scripts/terrain/biome/BiomeChunkFx.gd": "22426ba3dc3dfb8017119b6b0daad6b6c26e670f12c1198d96120e4a48832c0a",
+  "terrain/materials/spirit_orb.gdshader": "33ba23da06588469f2db381def2c8042e4f4bd28cfbad62d87fd73d393953e94"
+}

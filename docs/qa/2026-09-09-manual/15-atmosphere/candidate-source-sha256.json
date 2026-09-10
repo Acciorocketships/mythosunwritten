@@ -1,0 +1,10 @@
+{
+  "scripts/terrain/biome/BiomeProfile.gd": "7d51a69fb2db68425eb93a7f1475f4a73bb7a0caa1a70cf2888c8bcd8b3337a7",
+  "scripts/terrain/biome/BiomeRegistry.gd": "9791efc04b1bbed68713397a22ea3b8b99321ae5b0a9ed63cab62fd518eca332",
+  "scripts/terrain/biome/AtmosphereDirector.gd": "da04b063139d532f81540ff11e814b2f746ac9f3c23ca0172d1fc06d25a3ad54",
+  "scripts/terrain/biome/BiomeChunkFx.gd": "09ea9aefff5cac78055a6d946ce3a15f84f5c5dcda9e56679d710c418440b9bd",
+  "scripts/terrain/environment/EnvironmentLanternLights.gd": "6b76da000a37321e38ee6418cb0e4250c381d682f0ec079be12e66eca7f94c91",
+  "scripts/terrain/environment/EnvironmentCommitQueue.gd": "e545dedc796c4d5b8a9b893ca4fd72d31508d430d5d2351fb009973f4df4946f",
+  "terrain/materials/biome_mist.gdshader": "d1dc02c069f7d739f2b39a05ea4b5a29516b2572bbb2ebcfb426a80807aaa552",
+  "terrain/materials/lantern_glass.gdshader": "2f00a710d66db39b1517db10a66b7277969d02a1a414e4cd305befe4ff0ea21e"
+}

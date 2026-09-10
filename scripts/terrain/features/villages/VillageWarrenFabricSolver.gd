@@ -368,6 +368,14 @@ static func _world_surface_mesh(mesh: Dictionary, world_frame: Transform3D,
 			colors[index] = BiomeRegistry.ground_tint_at(vertices[index], world_seed) \
 				if world_seed != 0 else Color.WHITE
 		out["colors"] = colors
+	elif CliffDressing.is_terrain_skin_asset(StringName(mesh.get("material_asset_id", ""))):
+		# A clipped native lip keeps the same instance tint and atlas UVs as its
+		# complete counterpart; it is not a new procedural ground material.
+		var tint := CliffDressing.tint_at(world_frame * Transform3D(Basis.IDENTITY,
+			mesh.get("anchor", Vector3.ZERO)), world_seed)
+		var colors: PackedColorArray = mesh.colors.duplicate()
+		for index in colors.size(): colors[index] *= tint
+		out["colors"] = colors
 	out["anchor"] = world_frame * (mesh.get("anchor", Vector3.ZERO) as Vector3)
 	out["stable_id"] = StringName("%s/%s" % [stable_id,
 		StringName(mesh.get("stable_id", ""))])

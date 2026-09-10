@@ -408,19 +408,41 @@
     {
       "id": "lpfv.fabric.roof.compact.orange.03.run.start.flush",
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
-      "pivot": [0.0, 2.672677, 0.0],
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
       "merge_pieces": true,
       "clip_axis": "z",
-      "clip_range": [-1.5, -0.75],
+      "clip_range": [
+        -2.1,
+        -0.75
+      ],
       "collision_profile": "building_trimesh",
-      "tags": ["building", "compact_roof", "continuous_roof_start", "flush_endpoint", "fabric_roof", "village"],
+      "tags": [
+        "building",
+        "compact_roof",
+        "continuous_roof_start",
+        "flush_endpoint",
+        "fabric_roof",
+        "village"
+      ],
       "tint_group": "identity",
       "supports_instance_color": true,
       "max_mesh_bytes": 2097152,
       "max_visual_triangles": 3000,
       "max_collision_triangles": 3000,
       "max_surfaces": 2,
-      "max_collision_pieces": 1
+      "max_collision_pieces": 1,
+      "fit_visual_bounds": [
+        -1.8227121,
+        5.453201e-07,
+        -1.5,
+        3.645424,
+        2.1728582,
+        0.75
+      ]
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.03.run.middle",
@@ -459,19 +481,41 @@
     {
       "id": "lpfv.fabric.roof.compact.orange.03.run.end.flush",
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
-      "pivot": [0.0, 2.672677, 0.0],
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
       "merge_pieces": true,
       "clip_axis": "z",
-      "clip_range": [0.75, 1.5],
+      "clip_range": [
+        0.75,
+        2.1
+      ],
       "collision_profile": "building_trimesh",
-      "tags": ["building", "compact_roof", "continuous_roof_end", "flush_endpoint", "fabric_roof", "village"],
+      "tags": [
+        "building",
+        "compact_roof",
+        "continuous_roof_end",
+        "flush_endpoint",
+        "fabric_roof",
+        "village"
+      ],
       "tint_group": "identity",
       "supports_instance_color": true,
       "max_mesh_bytes": 2097152,
       "max_visual_triangles": 3000,
       "max_collision_triangles": 3000,
       "max_surfaces": 2,
-      "max_collision_pieces": 1
+      "max_collision_pieces": 1,
+      "fit_visual_bounds": [
+        -1.8227117,
+        0.0,
+        0.75,
+        3.6454237,
+        2.1728568,
+        0.75
+      ]
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.03.run.start.tight",
@@ -492,18 +536,47 @@
     {
       "id": "lpfv.fabric.roof.compact.orange.03.run.start.tight.flush",
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
-      "pivot": [0.0, 2.672677, 0.0],
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
       "merge_pieces": true,
-      "clip_ranges": {"x": [-1.5, 1.5], "z": [-1.5, -0.75]},
+      "clip_ranges": {
+        "x": [
+          -1.5,
+          1.5
+        ],
+        "z": [
+          -2.1,
+          -0.75
+        ]
+      },
       "collision_profile": "building_trimesh",
-      "tags": ["building", "compact_roof", "continuous_roof_start", "exact_footprint_eave", "flush_endpoint", "fabric_roof", "village"],
+      "tags": [
+        "building",
+        "compact_roof",
+        "continuous_roof_start",
+        "exact_footprint_eave",
+        "flush_endpoint",
+        "fabric_roof",
+        "village"
+      ],
       "tint_group": "identity",
       "supports_instance_color": true,
       "max_mesh_bytes": 2097152,
       "max_visual_triangles": 3000,
       "max_collision_triangles": 3000,
       "max_surfaces": 2,
-      "max_collision_pieces": 1
+      "max_collision_pieces": 1,
+      "fit_visual_bounds": [
+        -1.5,
+        0.027698994,
+        -1.5,
+        3.0,
+        2.1451597,
+        0.75
+      ]
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
@@ -540,18 +613,47 @@
     {
       "id": "lpfv.fabric.roof.compact.orange.03.run.end.tight.flush",
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
-      "pivot": [0.0, 2.672677, 0.0],
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
       "merge_pieces": true,
-      "clip_ranges": {"x": [-1.5, 1.5], "z": [0.75, 1.5]},
+      "clip_ranges": {
+        "x": [
+          -1.5,
+          1.5
+        ],
+        "z": [
+          0.75,
+          2.1
+        ]
+      },
       "collision_profile": "building_trimesh",
-      "tags": ["building", "compact_roof", "continuous_roof_end", "exact_footprint_eave", "flush_endpoint", "fabric_roof", "village"],
+      "tags": [
+        "building",
+        "compact_roof",
+        "continuous_roof_end",
+        "exact_footprint_eave",
+        "flush_endpoint",
+        "fabric_roof",
+        "village"
+      ],
       "tint_group": "identity",
       "supports_instance_color": true,
       "max_mesh_bytes": 2097152,
       "max_visual_triangles": 3000,
       "max_collision_triangles": 3000,
       "max_surfaces": 2,
-      "max_collision_pieces": 1
+      "max_collision_pieces": 1,
+      "fit_visual_bounds": [
+        -1.5,
+        0.02769947,
+        0.75,
+        3.0,
+        2.1451573,
+        0.75
+      ]
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.03",
@@ -794,21 +896,44 @@
     {
       "id": "lpfv.fabric.roof.compact.slate.03.run.start.flush",
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
-      "pivot": [0.0, 2.672677, 0.0],
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
       "merge_pieces": true,
       "clip_axis": "z",
-      "clip_range": [-1.5, -0.75],
+      "clip_range": [
+        -2.1,
+        -0.75
+      ],
       "collision_profile": "building_trimesh",
       "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
       "use_instance_color": false,
-      "tags": ["building", "compact_roof", "continuous_roof_start", "flush_endpoint", "fabric_roof", "palette_variant", "village"],
+      "tags": [
+        "building",
+        "compact_roof",
+        "continuous_roof_start",
+        "flush_endpoint",
+        "fabric_roof",
+        "palette_variant",
+        "village"
+      ],
       "tint_group": "identity",
       "supports_instance_color": false,
       "max_mesh_bytes": 2097152,
       "max_visual_triangles": 3000,
       "max_collision_triangles": 3000,
       "max_surfaces": 2,
-      "max_collision_pieces": 1
+      "max_collision_pieces": 1,
+      "fit_visual_bounds": [
+        -1.8227121,
+        5.453201e-07,
+        -1.5,
+        3.645424,
+        2.1728582,
+        0.75
+      ]
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.03.run.middle",
@@ -851,21 +976,44 @@
     {
       "id": "lpfv.fabric.roof.compact.slate.03.run.end.flush",
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
-      "pivot": [0.0, 2.672677, 0.0],
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
       "merge_pieces": true,
       "clip_axis": "z",
-      "clip_range": [0.75, 1.5],
+      "clip_range": [
+        0.75,
+        2.1
+      ],
       "collision_profile": "building_trimesh",
       "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
       "use_instance_color": false,
-      "tags": ["building", "compact_roof", "continuous_roof_end", "flush_endpoint", "fabric_roof", "palette_variant", "village"],
+      "tags": [
+        "building",
+        "compact_roof",
+        "continuous_roof_end",
+        "flush_endpoint",
+        "fabric_roof",
+        "palette_variant",
+        "village"
+      ],
       "tint_group": "identity",
       "supports_instance_color": false,
       "max_mesh_bytes": 2097152,
       "max_visual_triangles": 3000,
       "max_collision_triangles": 3000,
       "max_surfaces": 2,
-      "max_collision_pieces": 1
+      "max_collision_pieces": 1,
+      "fit_visual_bounds": [
+        -1.8227117,
+        0.0,
+        0.75,
+        3.6454237,
+        2.1728568,
+        0.75
+      ]
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.03.run.start.tight",
@@ -888,20 +1036,50 @@
     {
       "id": "lpfv.fabric.roof.compact.slate.03.run.start.tight.flush",
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
-      "pivot": [0.0, 2.672677, 0.0],
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
       "merge_pieces": true,
-      "clip_ranges": {"x": [-1.5, 1.5], "z": [-1.5, -0.75]},
+      "clip_ranges": {
+        "x": [
+          -1.5,
+          1.5
+        ],
+        "z": [
+          -2.1,
+          -0.75
+        ]
+      },
       "collision_profile": "building_trimesh",
       "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
       "use_instance_color": false,
-      "tags": ["building", "compact_roof", "continuous_roof_start", "exact_footprint_eave", "flush_endpoint", "fabric_roof", "palette_variant", "village"],
+      "tags": [
+        "building",
+        "compact_roof",
+        "continuous_roof_start",
+        "exact_footprint_eave",
+        "flush_endpoint",
+        "fabric_roof",
+        "palette_variant",
+        "village"
+      ],
       "tint_group": "identity",
       "supports_instance_color": false,
       "max_mesh_bytes": 2097152,
       "max_visual_triangles": 3000,
       "max_collision_triangles": 3000,
       "max_surfaces": 2,
-      "max_collision_pieces": 1
+      "max_collision_pieces": 1,
+      "fit_visual_bounds": [
+        -1.5,
+        0.027698994,
+        -1.5,
+        3.0,
+        2.1451597,
+        0.75
+      ]
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.03.run.middle.tight",
@@ -942,20 +1120,50 @@
     {
       "id": "lpfv.fabric.roof.compact.slate.03.run.end.tight.flush",
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
-      "pivot": [0.0, 2.672677, 0.0],
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
       "merge_pieces": true,
-      "clip_ranges": {"x": [-1.5, 1.5], "z": [0.75, 1.5]},
+      "clip_ranges": {
+        "x": [
+          -1.5,
+          1.5
+        ],
+        "z": [
+          0.75,
+          2.1
+        ]
+      },
       "collision_profile": "building_trimesh",
       "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
       "use_instance_color": false,
-      "tags": ["building", "compact_roof", "continuous_roof_end", "exact_footprint_eave", "flush_endpoint", "fabric_roof", "palette_variant", "village"],
+      "tags": [
+        "building",
+        "compact_roof",
+        "continuous_roof_end",
+        "exact_footprint_eave",
+        "flush_endpoint",
+        "fabric_roof",
+        "palette_variant",
+        "village"
+      ],
       "tint_group": "identity",
       "supports_instance_color": false,
       "max_mesh_bytes": 2097152,
       "max_visual_triangles": 3000,
       "max_collision_triangles": 3000,
       "max_surfaces": 2,
-      "max_collision_pieces": 1
+      "max_collision_pieces": 1,
+      "fit_visual_bounds": [
+        -1.5,
+        0.02769947,
+        0.75,
+        3.0,
+        2.1451573,
+        0.75
+      ]
     },
     {
       "id": "lpfv.fabric.chimney.orange.01",

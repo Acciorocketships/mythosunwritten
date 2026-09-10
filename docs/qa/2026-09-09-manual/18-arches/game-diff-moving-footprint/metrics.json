@@ -1,0 +1,123 @@
+{
+  "12_offset_room_exact": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.188226980377675,
+    "roi_mean_abs_rgb": 1.188226980377675,
+    "roi_changed_over_20_fraction": 0.01611844549575211
+  },
+  "12_offset_room_gameplay_camera": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.2115717900276888,
+    "roi_mean_abs_rgb": 1.2115717900276888,
+    "roi_changed_over_20_fraction": 0.016193315514644126
+  },
+  "12_offset_room_jitter_0": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.1324750864851922,
+    "roi_mean_abs_rgb": 1.1324750864851922,
+    "roi_changed_over_20_fraction": 0.015691179748842047
+  },
+  "12_offset_room_jitter_1": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.1725247296235333,
+    "roi_mean_abs_rgb": 1.1725247296235333,
+    "roi_changed_over_20_fraction": 0.015936618307014365
+  },
+  "12_offset_room_near_left": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.329509708333427,
+    "roi_mean_abs_rgb": 1.329509708333427,
+    "roi_changed_over_20_fraction": 0.017955857087207247
+  },
+  "12_offset_room_near_right": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.1900234855427683,
+    "roi_mean_abs_rgb": 1.1900234855427683,
+    "roi_changed_over_20_fraction": 0.013832939655890638
+  },
+  "tunnel_front": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 2.800019177232909,
+    "roi_mean_abs_rgb": 2.800019177232909,
+    "roi_changed_over_20_fraction": 0.09299644451850134
+  },
+  "tunnel_inside": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 2.0340073136186874,
+    "roi_mean_abs_rgb": 2.0340073136186874,
+    "roi_changed_over_20_fraction": 0.05724910662616555
+  },
+  "tunnel_left": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 3.7200842672383057,
+    "roi_mean_abs_rgb": 3.7200842672383057,
+    "roi_changed_over_20_fraction": 0.1290612763255371
+  },
+  "tunnel_overview": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 3.304140781155122,
+    "roi_mean_abs_rgb": 3.304140781155122,
+    "roi_changed_over_20_fraction": 0.1150994251333587
+  },
+  "tunnel_right": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 2.891020213779236,
+    "roi_mean_abs_rgb": 2.891020213779236,
+    "roi_changed_over_20_fraction": 0.10160818548850153
+  }
+}

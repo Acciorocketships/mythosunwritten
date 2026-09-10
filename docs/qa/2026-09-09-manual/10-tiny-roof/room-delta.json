@@ -1,0 +1,9 @@
+{
+  "before_rooms": 37,
+  "after_rooms": 38,
+  "added": [
+    "spatial.parcel.maze.house.000.part01.room00"
+  ],
+  "removed": [],
+  "existing_private_cells_unchanged": true
+}

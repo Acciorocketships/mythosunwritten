@@ -3,13 +3,12 @@
 # same monotone profile, not a discrete cut object. Ponds are flat; river
 # reaches slope monotonically between their anchors, hugging the RENDERED
 # terrain wherever the ground itself demands descent (see profile()). Static
-# wetness is a HYDROSTATIC FILL (see _build_fill): water seeded in the
-# channel/pond footprints spreads outward over any ground that sits below
-# its level, stopping only where the ground itself rises to meet it — the
-# field's own claim geometry (nearest-sample margins, flood-extension gates)
-# is gone; every wet sample's level is either a channel/pond seed or
-# reachable-by-relaxation from one. This file is pure and deterministic — no
-# rendering, no nodes.
+# wetness is a source-connected hydrostatic fill bounded by the actual
+# terrain's spill outlets. The complete source solve supplies the coarse
+# field; fine shoreline rescue applies the same containment rule to new
+# pockets. River profiles retain their downhill levels. Smoothing may lower
+# a retained pool but cannot lift it above its spill limit. This file is pure
+# and deterministic — no rendering, no nodes.
 class_name WaterField
 extends Object
 
@@ -126,63 +125,25 @@ const FILL_M := FILL_N + 2 * FILL_MARGIN      # window lattice cells per side
 const FILL_SUB_M := FILL_M * 2
 const FILL_SURFACE_PASSES := 5
 
-static var _profiles: Dictionary = {}   # trace.source_cell -> profile dict
+const PROFILE_CACHE_LIMIT := 1024
+static var _profiles: Dictionary = {}   # immutable trace/terrain owner -> compact profile
 # The streamer calls build_chunk (and therefore profile()) from a worker
 # thread, and teleports can trigger a main-thread build concurrently — the
 # same lazily-filled-static-Dictionary race that has crashed this codebase
 # before (the foliage-cache incident). Guard every check-compute-store access.
 static var _profiles_lock := Mutex.new()
 
-# C1 fix (final-review-run2.md Critical 1): a TRACE-OWNED canonical ground
-# source, memoized per source_cell exactly like _profiles itself, so
-# profile()'s terrain hug is a pure function of (trace, plan) instead of
-# whichever caller's chunk-window happened to reach it first. Guarded by the
-# SAME _profiles_lock — both caches are populated together inside profile()'s
-# one critical section, so a second lock would only add contention without
-# adding safety (see profile()'s own comment on why the lock spans the
-# compute, not just the dict ops).
-static var _trace_regions: Dictionary = {}   # trace.source_cell -> HeightfieldRegion
-# Radius (in HeightfieldPlan tile-cells) around a trace's own bbox centre
-# passed to compute_region when building its canonical region. compute_region
-# ALREADY pads any requested radius by a fixed ~17-cell margin internally
-# (LEVELS_PER_STOREY + _CLIFF_SEARCH_MAX + max_storeys, independent of the
-# requested radius — see HeightfieldPlan.compute_region), and that margin
-# alone comfortably covers everything ONE _DESCENT_STEP-spaced segment walk
-# needs (a 12m TRACE_STEP segment plus TerrainSurfaceField's own 1-cell
-# cardinal/diagonal neighbour reads). This constant only needs to cover the
-# WORST-CASE segment's own extent — a small, fixed value — never the whole
-# trace: see _trace_owned_region's own docstring for why one region per
-# trace, sized to the trace's bbox (not one per segment), is the right unit.
+# A descent samples terrain in its own canonical domain, independent of the
+# requesting chunk. The construction region is scratch data: retain at most
+# one during construction, then release it when the compact profile is ready.
+# The same _profiles_lock protects both dictionaries during profile().
+static var _trace_regions: Dictionary = {}
 const _TRACE_REGION_MARGIN_CELLS := 4
 
 
-## Trace-owned canonical HeightfieldRegion, built once per source_cell (and
-## reused by every caller thereafter — hand in hand with _profiles' own
-## per-source_cell memoization) from the trace's OWN world-space bbox
-## (RiverTrace.bounds(), which already folds in source_pool/pond extents),
-## not from any caller's chunk. This is what makes profile()'s cache key
-## sound again: every plan-backed caller for a given source_cell computes
-## (or reuses) the exact SAME region, so the terrain hug can no longer
-## depend on caller order.
-##
-## COST: compute_region always pays a ~17-cell FIXED internal margin
-## (LEVELS_PER_STOREY + _CLIFF_SEARCH_MAX + max_storeys), so that fixed work
-## dominates small requested radii. A single
-## region sized to cover a trace's full bbox (up to ~2640m/110 tile-cells
-## for the longest legal trace) would need radius~110-135 and cost
-## 2-3 SECONDS (quadratic in radius: ~27-32us/cell, confirmed by direct
-## measurement) — real, but this is a ONE-TIME cost per trace, paid once
-## ever and cached forever after in _trace_regions/_profiles, exactly like
-## the existing "whole-session static cache" design this fix restores the
-## soundness of (see _profiles' own comment) — not a per-chunk-build cost.
-## It is comparable in order of magnitude to the codebase's OTHER existing
-## one-time cold cost (FieldTerrainStreamer._ready's own comment: "the first
-## build pays the whole cold water-trace cache (~10s)" for WaterPlan's trace
-## generation alone). It does NOT run on the steady-state per-chunk path
-## profile()'s own PERF comments budget against (~9ms/chunk fill) — that
-## budget is for the FILL, which reads the trace's already-computed,
-## already-cached profile.levels; this cost is paid once per trace, the
-## first time ANY chunk anywhere touches it, not once per chunk.
+## Build the trace's own bounds plus the ordinary heightfield clamp margin.
+## Profile arrays retain the final hydraulic values; they do not retain this
+## region or its thousands of cell dictionaries across an endless journey.
 static func _trace_owned_region(trace: RiverTrace, plan: HeightfieldPlan) -> HeightfieldRegion:
 	var key := [trace.get_instance_id(), plan.get_instance_id()]
 	if _trace_regions.has(key):
@@ -194,6 +155,7 @@ static func _trace_owned_region(trace: RiverTrace, plan: HeightfieldPlan) -> Hei
 	var cx: int = int(roundf(centre.x / TILE))
 	var cz: int = int(roundf(centre.y / TILE))
 	var region: HeightfieldRegion = plan.compute_region(cx, cz, radius)
+	_trace_regions.clear()
 	_trace_regions[key] = region
 	return region
 
@@ -258,23 +220,37 @@ static func ctx(water: WaterPlan, chunk: Vector2i, region = null) -> Dictionary:
 const BASIN_CACHE_LIMIT := 16
 static var _basin_cache: Dictionary = {}
 static var _basin_lock := Mutex.new()
+## Offline phase profiler only. It prints one row per cold source solve and
+## does not change cache identity, hydraulic labels or the returned payload.
+static var profile_source_cost := OS.get_environment("PROFILE_WATER_COST") == "1"
+
+static func cache_counts() -> Dictionary:
+	_profiles_lock.lock()
+	var counts := {"hydraulic_profiles":_profiles.size(),"trace_regions":_trace_regions.size()}
+	_profiles_lock.unlock()
+	_basin_lock.lock()
+	counts["source_solves"] = _basin_cache.size()
+	_basin_lock.unlock()
+	return counts
 
 static func _source_fill(c: Dictionary, region) -> Dictionary:
-	var ids: Array[int] = []
 	var bounds := Rect2()
 	var has_bounds := false
 	for river: RiverTrace in c.rivers:
-		ids.append(river.get_instance_id())
 		bounds = bounds.merge(river.bounds()) if has_bounds else river.bounds()
 		has_bounds = true
 	for pond: PondStamp in c.ponds:
-		ids.append(pond.get_instance_id())
 		var pb := Rect2(pond.center - Vector2.ONE * pond.bound_radius(), Vector2.ONE * pond.bound_radius() * 2.0)
 		bounds = bounds.merge(pb) if has_bounds else pb
 		has_bounds = true
 	if not has_bounds: return {}
-	ids.sort()
-	var key := [region.plan.get_instance_id(), ids]
+	bounds = bounds.grow(maxf(TILE * 3.0, WaterPlan.W_MAX + WaterPlan.BANK_FEATHER))
+	var base := (bounds.position / FILL_STEP).floor() * FILL_STEP
+	var m1 := ceili((bounds.end.x - base.x) / FILL_STEP) + 1
+	var rows := ceili((bounds.end.y - base.y) / FILL_STEP) + 1
+	# The solve rediscovers every contributor in this exact domain. Different
+	# initiating subsets with the same domain therefore share the same result.
+	var key := [region.plan.get_instance_id(), c.water.get_instance_id(), base, m1, rows]
 	_basin_lock.lock()
 	if _basin_cache.has(key):
 		var cached: Dictionary = _basin_cache[key]
@@ -282,34 +258,85 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 		_basin_cache[key] = cached
 		_basin_lock.unlock()
 		return cached
-	bounds = bounds.grow(maxf(TILE * 3.0, WaterPlan.W_MAX + WaterPlan.BANK_FEATHER))
-	var base := (bounds.position / FILL_STEP).floor() * FILL_STEP
-	var m1 := ceili(maxf(bounds.end.x - base.x, bounds.end.y - base.y) / FILL_STEP) + 1
-	var centre := base + Vector2.ONE * float(m1 - 1) * FILL_STEP * 0.5
+	var cost_started := Time.get_ticks_usec() if profile_source_cost else 0
+	var centre := base + Vector2(m1 - 1, rows - 1) * FILL_STEP * 0.5
 	var owned: HeightfieldRegion = region.plan.compute_region(roundi(centre.x / TILE), roundi(centre.y / TILE),
-		ceili(float(m1 - 1) * FILL_STEP * 0.5 / TILE) + 2)
+		ceili(float(maxi(m1, rows) - 1) * FILL_STEP * 0.5 / TILE) + 2)
+	var region_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	# Terrain carving sees all intersecting rivers. The hydraulic solve must
 	# seed those same rivers, including crossings far from the output chunk;
 	# otherwise their carved channels become unseeded drains for high pools.
 	var contributors: Dictionary = c.water.bodies_in_rect(
-		Rect2(base, Vector2.ONE * float(m1 - 1) * FILL_STEP))
+		Rect2(base, Vector2(m1 - 1, rows - 1) * FILL_STEP))
+	var inventory_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	var source_context := c.duplicate()
 	source_context.rivers = contributors.rivers
 	source_context.ponds = contributors.ponds
-	var levels := PackedFloat32Array(); levels.resize(m1 * m1); levels.fill(-INF)
-	var ground := PackedFloat32Array(); ground.resize(m1 * m1); ground.fill(INF)
-	var rivers := PackedFloat32Array(); rivers.resize(m1 * m1); rivers.fill(-INF)
+	var levels := PackedFloat32Array(); levels.resize(m1 * rows); levels.fill(-INF)
+	var ground := PackedFloat32Array(); ground.resize(m1 * rows); ground.fill(INF)
+	var rivers := PackedFloat32Array(); rivers.resize(m1 * rows); rivers.fill(-INF)
+	# The 6m hydraulic solve needs its complete terrain domain. Fine rescue
+	# samples only the shore/pocket vertices it visits; unrelated dry terrain
+	# does not need a second, denser ground array prepared in advance.
+	ground = _sample_ground_lattice(owned, base, m1, FILL_STEP, rows)
+	var ground_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	var queue := PriorityQueue.new()
 	_seed_rivers(source_context, owned, base, m1, levels, ground, rivers, queue)
 	_seed_ponds(source_context, owned, base, m1, levels, ground, queue)
+	var seeds_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	_relax_fill(owned, base, m1, levels, ground, rivers, queue)
+	var relax_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	# A flowing trench can drain downhill without being a static basin. Its
+	# lateral water must still fit inside the volume removed from the original
+	# rendered terrain. Recompile that same field without the carve; raw noise
+	# alone would disagree with its quantized cliffs and clamped slopes.
+	var natural_plan := HeightfieldPlan.new(owned.plan.world_seed, owned.plan.height_amplitude,
+		owned.plan.max_storeys, owned.plan.aggregation, owned.plan.max_step)
+	# The owned region already sampled this exact raw domain. Reuse its
+	# original inputs, not a rounded add-back of the subtracted carve.
+	natural_plan.set_raw_height_override(owned.plan.uncarved_height)
+	var natural := natural_plan.compute_region(roundi(centre.x / TILE), roundi(centre.y / TILE),
+		ceili(float(maxi(m1, rows) - 1) * FILL_STEP * 0.5 / TILE) + 2)
+	var natural_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	# Fixed river anchors are never capped. Only hydrostatic candidates
+	# need a second projected flow ceiling beside those anchors.
+	var flow_candidates := levels.duplicate()
+	for index in rivers.size():
+		if is_finite(rivers[index]): flow_candidates[index] = -INF
+	var flow_ceilings := _carved_flow_ceilings(source_context, owned, base, m1, flow_candidates)
+	var flow_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	var water_ceilings := _cap_hydrostatic_fill(owned, base, m1, levels, ground, rivers, FILL_STEP, null, natural, flow_ceilings)
+	var spill_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	_smooth_fill_surface(owned, base, m1, levels, ground, rivers, water_ceilings)
+	var smooth_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	var dry_banks := rivers.duplicate()
+	for index in levels.size():
+		if is_finite(levels[index]): dry_banks[index] = -INF
+	var refined := _build_sub_lattice_rescue(owned, base, levels, dry_banks, m1)
+	if profile_source_cost:
+		print("WATER_SOURCE_COST ", JSON.stringify({"side": m1, "rows": rows, "base": str(base),
+			"rivers": contributors.rivers.size(), "ponds": contributors.ponds.size(),
+			"region_ms": (region_finished-cost_started)/1000.0,
+			"inventory_ms": (inventory_finished-region_finished)/1000.0,
+			"ground_ms": (ground_finished-inventory_finished)/1000.0,
+			"seeds_ms": (seeds_finished-ground_finished)/1000.0,
+			"relax_ms": (relax_finished-seeds_finished)/1000.0,
+			"natural_ms": (natural_finished-relax_finished)/1000.0,
+			"flow_ms": (flow_finished-natural_finished)/1000.0,
+			"cap_ms": (spill_finished-flow_finished)/1000.0,
+			"spill_ms": (spill_finished-relax_finished)/1000.0,
+			"smooth_ms": (smooth_finished-spill_finished)/1000.0,
+			"fine_ms": (Time.get_ticks_usec()-smooth_finished)/1000.0}))
 	queue.free()
 	var boundary_wet := 0
 	for i in m1:
-		for index in [i, (m1 - 1) * m1 + i, i * m1, i * m1 + m1 - 1]:
+		for index in [i, (rows - 1) * m1 + i]:
 			if is_finite(levels[index]): boundary_wet += 1
-	var result := {"base": base, "size": m1, "levels": levels, "rivers": rivers,
-		"boundary_wet": boundary_wet}
+	for j in rows:
+		for index in [j * m1, j * m1 + m1 - 1]:
+			if is_finite(levels[index]): boundary_wet += 1
+	var result := {"base": base, "size": m1, "rows": rows, "levels": levels, "rivers": rivers,
+		"boundary_wet": boundary_wet, "sub_levels": refined.levels, "sub_ground": refined.ground}
 	if _basin_cache.size() >= BASIN_CACHE_LIMIT: _basin_cache.erase(_basin_cache.keys()[0])
 	_basin_cache[key] = result
 	_basin_lock.unlock()
@@ -355,9 +382,22 @@ static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
 				for i in m1:
 					var x := i + offset.x
 					var z := j + offset.y
-					if x < 0 or z < 0 or x >= int(source.size) or z >= int(source.size): continue
+					if x < 0 or z < 0 or x >= int(source.size) or z >= int(source.rows): continue
 					levels[j * m1 + i] = source.levels[z * int(source.size) + x]
 					river_levels[j * m1 + i] = source.rivers[z * int(source.size) + x]
+			var sub_n := FILL_SUB_M + 1
+			var source_sub_n := (int(source.size) - 1) * 2 + 1
+			var sub_levels := PackedFloat32Array(); sub_levels.resize(sub_n * sub_n); sub_levels.fill(-INF)
+			var sub_ground := PackedFloat32Array(); sub_ground.resize(sub_n * sub_n); sub_ground.fill(INF)
+			for j in sub_n:
+				for i in sub_n:
+					var x := i + offset.x * 2
+					var z := j + offset.y * 2
+					if x < 0 or z < 0 or x >= source_sub_n or z >= (int(source.rows) - 1) * 2 + 1: continue
+					sub_levels[j * sub_n + i] = source.sub_levels[z * source_sub_n + x]
+					sub_ground[j * sub_n + i] = source.sub_ground[z * source_sub_n + x]
+			pq.free()
+			return {"levels": levels, "sub_levels": sub_levels, "sub_ground": sub_ground}
 	else:
 		_seed_rivers(c, region, base, m1, levels, gnd, river_levels, pq)
 		_seed_ponds(c, region, base, m1, levels, gnd, pq)
@@ -388,7 +428,8 @@ static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
 ## small, fixed Jacobi relaxation.  Flowing-channel nodes are Dirichlet
 ## anchors at their projected continuous profile levels; every other wet node
 ## averages its wet cardinal neighbourhood, retaining a tiny clearance over
-## its own ground.  Uniform ponds remain exactly uniform, while river/pond
+## its own ground and never exceeding its physical containment ceiling.
+## Uniform ponds remain exactly uniform, while river/pond
 ## joins spread over a 30m band instead of inheriting the flood queue's source
 ## boundary.  Five passes are intentionally finite and local (not a
 ## convergence loop): output at a point depends on at most 30m of input, less
@@ -396,10 +437,12 @@ static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
 ## values without order dependence or scene state.
 static func _smooth_fill_surface(region, base: Vector2, m1: int,
 		levels: PackedFloat32Array, gnd: PackedFloat32Array,
-		river_levels: PackedFloat32Array) -> void:
+		river_levels: PackedFloat32Array, physical_ceilings: PackedFloat32Array = PackedFloat32Array()) -> void:
+	var rows := int(levels.size() / m1)
+	var ceilings := levels.duplicate() if physical_ceilings.is_empty() else physical_ceilings
 	for _pass in FILL_SURFACE_PASSES:
 		var previous: PackedFloat32Array = levels.duplicate()
-		for j in m1:
+		for j in rows:
 			for i in m1:
 				var idx: int = j * m1 + i
 				if previous[idx] == -INF or river_levels[idx] != -INF:
@@ -410,7 +453,7 @@ static func _smooth_fill_surface(region, base: Vector2, m1: int,
 						Vector2i(0, 1), Vector2i(0, -1)]:
 					var ni: int = i + d.x
 					var nj: int = j + d.y
-					if ni < 0 or ni >= m1 or nj < 0 or nj >= m1:
+					if ni < 0 or ni >= m1 or nj < 0 or nj >= rows:
 						continue
 					var neighbour: float = previous[nj * m1 + ni]
 					if neighbour == -INF:
@@ -418,20 +461,52 @@ static func _smooth_fill_surface(region, base: Vector2, m1: int,
 					acc += neighbour
 					weight += 1.0
 				var ground: float = _ground_at(region, base, m1, gnd, i, j)
-				levels[idx] = maxf(acc / weight, ground + EPS + 0.01)
+				levels[idx] = minf(ceilings[idx], maxf(acc / weight, ground + EPS + 0.01))
 
 
 ## Ground height at lattice index (i,j), memoized in `gnd` (INF = uncomputed
 ## — see _build_fill's own comment on why INF is a safe sentinel here).
 static func _ground_at(region, base: Vector2, m1: int, gnd: PackedFloat32Array,
-		i: int, j: int) -> float:
+		i: int, j: int, step: float = FILL_STEP, bakes = null) -> float:
 	var idx: int = j * m1 + i
 	var g: float = gnd[idx]
 	if g == INF:
-		var p: Vector2 = base + Vector2(i, j) * FILL_STEP
-		g = TerrainSurfaceField.surface_y(region, p.x, p.y)
+		var p: Vector2 = base + Vector2(i, j) * step
+		if bakes != null and region.terrain_grades.is_empty():
+			var cell := Vector2i(roundi(p.x / TILE), roundi(p.y / TILE))
+			if not bakes.has(cell): bakes[cell] = TerrainSurfaceField.bake_cell(region, cell.x, cell.y)
+			g = TerrainSurfaceField.sample_baked(bakes[cell], cell.x, cell.y, p.x, p.y)
+		else:
+			g = TerrainSurfaceField.surface_y(region, p.x, p.y)
 		gnd[idx] = g
-	return g
+	return gnd[idx]
+
+
+## Source-owned natural ground has no construction grades. Reuse the ordinary
+## terrain kernel's baked cell controls across this dense water lattice. Cell
+## ownership still uses roundf, including negative half-cell boundaries.
+static func _sample_ground_lattice(region: HeightfieldRegion, base: Vector2,
+		side: int, step: float, rows: int = 0) -> PackedFloat32Array:
+	if rows == 0: rows = side
+	assert(region.terrain_grades.is_empty())
+	var out := PackedFloat32Array(); out.resize(side * rows)
+	var first_x := roundi(base.x / TILE)
+	var last_x := roundi((base.x + (side - 1) * step) / TILE)
+	var previous_z := 2147483647
+	var cells: Array[PackedFloat32Array] = []
+	for j in rows:
+		var z := base.y + j * step
+		var cz := roundi(z / TILE)
+		if cz != previous_z:
+			cells.clear()
+			for cx in range(first_x, last_x + 1):
+				cells.append(TerrainSurfaceField.bake_cell(region, cx, cz))
+			previous_z = cz
+		for i in side:
+			var x := base.x + i * step
+			var cx := roundi(x / TILE)
+			out[j * side + i] = TerrainSurfaceField.sample_baked(cells[cx - first_x], cx, cz, x, z)
+	return out
 
 
 ## Repairs only TOPOLOGY the 6m lattice demonstrably cannot see. Every
@@ -450,25 +525,36 @@ static func _ground_at(region, base: Vector2, m1: int, gnd: PackedFloat32Array,
 ## without retaining the terrain region.
 static func _build_sub_lattice_rescue(region, base: Vector2,
 		coarse_levels: PackedFloat32Array,
-		river_levels: PackedFloat32Array = PackedFloat32Array()) -> Dictionary:
-	var coarse_n := FILL_M + 1
-	var sub_n := FILL_SUB_M + 1
+		river_levels: PackedFloat32Array = PackedFloat32Array(),
+		coarse_n: int = FILL_M + 1,
+		ground_samples: PackedFloat32Array = PackedFloat32Array()) -> Dictionary:
+	var ground_bakes: Dictionary = {}
+	var profile_started := Time.get_ticks_usec() if profile_source_cost else 0
+	var coarse_rows := int(coarse_levels.size() / coarse_n)
+	var sub_rows := (coarse_rows - 1) * 2 + 1
+	var sub_n := (coarse_n - 1) * 2 + 1
 	var sub_levels := PackedFloat32Array()
-	sub_levels.resize(sub_n * sub_n)
+	sub_levels.resize(sub_n * sub_rows)
 	sub_levels.fill(-INF)
-	var sub_ground := PackedFloat32Array()
-	sub_ground.resize(sub_n * sub_n)
-	sub_ground.fill(INF)
+	var sub_ground := ground_samples
+	if sub_ground.is_empty():
+		sub_ground.resize(sub_n * sub_rows)
+		sub_ground.fill(INF)
 	# Queue levels interpolate in 64-bit floats. Keep the settled labels at
 	# that precision: rounding one upward to float32 makes the identical
 	# queued level appear lower forever when a bank can be revisited.
 	var settled := PackedFloat64Array()
-	settled.resize(sub_n * sub_n)
+	settled.resize(sub_n * sub_rows)
 	settled.fill(-INF)
 	var queued := PackedByteArray()
-	queued.resize(sub_n * sub_n)
+	queued.resize(sub_n * sub_rows)
+	var surface_samples := PackedFloat64Array(); surface_samples.resize(sub_levels.size()); surface_samples.fill(INF)
+	var dry_ground := PackedFloat64Array(); dry_ground.resize(coarse_levels.size()); dry_ground.fill(INF)
 	var coarse_ctx := {
 		"fill_base": base,
+		"fill_size": coarse_n,
+		"surface_samples": surface_samples,
+		"dry_ground": dry_ground,
 		"fill": {"levels": coarse_levels},
 		"region": region,
 	}
@@ -476,14 +562,14 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 	# Only mixed coarse cells own a shoreline. Seed every 3m point in those
 	# cells that the existing field itself already considers wet. Neighbouring
 	# mixed cells duplicate candidates harmlessly; `queued` keeps one offer.
-	for cj in FILL_M:
-		for ci in FILL_M:
-			var wet_corners := 0
-			for d: Vector2i in [Vector2i(0, 0), Vector2i(1, 0),
-					Vector2i(0, 1), Vector2i(1, 1)]:
-				if coarse_levels[(cj + d.y) * coarse_n + ci + d.x] != -INF:
-					wet_corners += 1
-			if wet_corners == 0 or wet_corners == 4:
+	for cj in coarse_rows - 1:
+		for ci in coarse_n - 1:
+			var corner := cj * coarse_n + ci
+			var nw := coarse_levels[corner] != -INF
+			var ne := coarse_levels[corner + 1] != -INF
+			var sw := coarse_levels[corner + coarse_n] != -INF
+			var se := coarse_levels[corner + coarse_n + 1] != -INF
+			if (not nw and not ne and not sw and not se) or (nw and ne and sw and se):
 				continue
 			for sj in range(cj * 2, cj * 2 + 3):
 				for si in range(ci * 2, ci * 2 + 3):
@@ -491,9 +577,8 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 					if queued[sidx] == 1:
 						continue
 					var p: Vector2 = base + Vector2(si, sj) * FILL_SUB_STEP
-					var lvl: float = _fill_bilinear_coarse(coarse_ctx, p)
-					var ground: float = TerrainSurfaceField.surface_y(
-						region, p.x, p.y)
+					var lvl: float = _rescue_coarse_level(coarse_ctx, p)
+					var ground: float = _ground_at(region, base, sub_n, sub_ground, si, sj, FILL_SUB_STEP, ground_bakes)
 					sub_ground[sidx] = ground
 					if lvl == -INF or lvl <= ground + EPS:
 						continue
@@ -502,12 +587,46 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 					var head := _fill_untapered_level(coarse_ctx, p)
 					queued[sidx] = 1
 					pq.push([sidx, head], head)
+	var seed_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	if pq.is_empty():
+		pq.free()
+		return {"levels": sub_levels, "ground": sub_ground}
+	var fine_anchor_indices := PackedInt32Array()
+	var fine_anchors := PackedFloat32Array()
+	fine_anchors.resize(sub_levels.size())
+	fine_anchors.fill(-INF)
+	var anchor_seen := PackedByteArray(); anchor_seen.resize(sub_levels.size())
+	# Only a 3m vertex adjacent to an originally wet 6m node can have a
+	# coarse hydraulic head. Visit that exact support instead of interpolating
+	# every dry vertex across kilometres of source terrain.
+	for coarse_index in coarse_levels.size():
+		if not is_finite(coarse_levels[coarse_index]): continue
+		var cx := coarse_index % coarse_n
+		var cz := int(coarse_index / coarse_n)
+		for sj in range(maxi(0, cz * 2 - 1), mini(sub_rows, cz * 2 + 2)):
+			for si in range(maxi(0, cx * 2 - 1), mini(sub_n, cx * 2 + 2)):
+				var idx := sj * sub_n + si
+				if anchor_seen[idx] == 1: continue
+				anchor_seen[idx] = 1
+				var p := base + Vector2(si, sj) * FILL_SUB_STEP
+				var level := _rescue_coarse_level(coarse_ctx, p)
+				if not is_finite(level): continue
+				var ground := _ground_at(region, base, sub_n, sub_ground, si, sj, FILL_SUB_STEP, ground_bakes)
+				if level <= ground + EPS: continue
+				var head := _fill_untapered_level(coarse_ctx, p)
+				fine_anchors[idx] = head
+				fine_anchor_indices.append(idx)
+	var anchor_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	# Establish physical outlets before expansion. A rejected high head must
+	# not travel across a dry saddle to seed a disconnected pocket beyond it.
+	var spill := SpillSearch.new(region, base, sub_n, fine_anchors, sub_ground, fine_anchors, FILL_SUB_STEP, ground_bakes, fine_anchor_indices)
+
 	while not pq.is_empty():
 		var entry: Array = pq.pop()
 		var idx: int = entry[0]
 		var lvl: float = entry[1]
-		var ceiling := _sub_river_ceiling(river_levels, idx % sub_n, idx / sub_n)
-		lvl = minf(lvl, ceiling)
+		var ceiling := _sub_river_ceiling(river_levels, idx % sub_n, idx / sub_n, coarse_n)
+		lvl = minf(minf(lvl, ceiling), spill.height_at(idx) - EPS)
 		if settled[idx] != -INF and settled[idx] <= lvl:
 			continue
 		settled[idx] = lvl
@@ -516,12 +635,13 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 		var p: Vector2 = base + Vector2(si, sj) * FILL_SUB_STEP
 		var own_ground: float = sub_ground[idx]
 		if own_ground == INF:
-			own_ground = TerrainSurfaceField.surface_y(region, p.x, p.y)
+			own_ground = _ground_at(region, base, sub_n, sub_ground, si, sj, FILL_SUB_STEP, ground_bakes)
 			sub_ground[idx] = own_ground
+			own_ground = sub_ground[idx]
 		if own_ground >= lvl - EPS:
 			sub_levels[idx] = -INF
 			continue
-		var own_coarse_level: float = _fill_bilinear_coarse(coarse_ctx, p)
+		var own_coarse_level: float = _rescue_coarse_level(coarse_ctx, p)
 		if (own_coarse_level == -INF or own_coarse_level <= own_ground + EPS) \
 				and own_ground < lvl - EPS:
 			sub_levels[idx] = lvl
@@ -529,27 +649,38 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 				Vector2i(0, 1), Vector2i(0, -1)]:
 			var ni: int = si + d.x
 			var nj: int = sj + d.y
-			if ni < 0 or ni > FILL_SUB_M or nj < 0 or nj > FILL_SUB_M:
+			if ni < 0 or ni >= sub_n or nj < 0 or nj >= sub_rows:
 				continue
 			var nidx: int = nj * sub_n + ni
 			var q: Vector2 = base + Vector2(ni, nj) * FILL_SUB_STEP
-			var coarse_level: float = _fill_bilinear_coarse(coarse_ctx, q)
+			var coarse_level: float = _rescue_coarse_level(coarse_ctx, q)
 			var ground: float = sub_ground[nidx]
 			if ground == INF:
-				ground = TerrainSurfaceField.surface_y(region, q.x, q.y)
+				ground = _ground_at(region, base, sub_n, sub_ground, ni, nj, FILL_SUB_STEP, ground_bakes)
 				sub_ground[nidx] = ground
+				ground = sub_ground[nidx]
 			# Existing coarse-wet territory needs no rescue and every shoreline
 			# point in a mixed cell was independently seeded above. Stop this
 			# branch rather than re-settling the canonical surface.
 			if coarse_level != -INF and coarse_level > ground + EPS:
 				continue
-			var next_level := minf(lvl, _sub_river_ceiling(river_levels, ni, nj))
+			var next_level := minf(minf(lvl, _sub_river_ceiling(river_levels, ni, nj, coarse_n)), spill.height_at(nidx) - EPS)
 			if settled[nidx] != -INF and settled[nidx] <= next_level:
 				continue
 			if ground >= next_level - EPS:
 				continue
 			pq.push([nidx, next_level], next_level)
+	var flood_finished := Time.get_ticks_usec() if profile_source_cost else 0
+	spill.close()
 	pq.free()
+	var has_rescue := false
+	for level: float in sub_levels:
+		if is_finite(level):
+			has_rescue = true
+			break
+	if not has_rescue:
+		return {"levels": sub_levels, "ground": sub_ground}
+
 	# The former shoreline becomes interior water beside a rescued pocket.
 	# Restore its seeded corner heads in one fixed ring; retaining their old
 	# taper would leave a narrow trough between the river and the new water.
@@ -564,14 +695,14 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 			for dx in range(-1, 2):
 				var ni := si + dx
 				var nj := sj + dz
-				if ni < 0 or nj < 0 or ni >= sub_n or nj >= sub_n:
+				if ni < 0 or nj < 0 or ni >= sub_n or nj >= sub_rows:
 					continue
 				var nidx := nj * sub_n + ni
 				if queued[nidx] != 1 or sub_levels[nidx] != -INF:
 					continue
 				var q := base + Vector2(ni, nj) * FILL_SUB_STEP
 				sub_levels[nidx] = minf(_fill_untapered_level(coarse_ctx, q),
-					_sub_river_ceiling(river_levels, ni, nj))
+					_sub_river_ceiling(river_levels, ni, nj, coarse_n))
 	# A rescued vertex can affect any of four adjacent 3m interpolation
 	# cells. Freeze terrain for their complete corner one-ring now.
 	for idx in sub_levels.size():
@@ -583,30 +714,47 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 			for dx in range(-1, 2):
 				var ni: int = si + dx
 				var nj: int = sj + dz
-				if ni < 0 or ni > FILL_SUB_M or nj < 0 or nj > FILL_SUB_M:
+				if ni < 0 or ni >= sub_n or nj < 0 or nj >= sub_rows:
 					continue
 				var nidx: int = nj * sub_n + ni
 				if sub_ground[nidx] != INF:
 					continue
 				var q: Vector2 = base + Vector2(ni, nj) * FILL_SUB_STEP
-				sub_ground[nidx] = TerrainSurfaceField.surface_y(
-					region, q.x, q.y)
+				sub_ground[nidx] = _ground_at(region, base, sub_n, sub_ground, ni, nj, FILL_SUB_STEP, ground_bakes)
+	if profile_source_cost:
+		print("WATER_FINE_COST ",JSON.stringify({"side":sub_n,
+			"seed_ms":(seed_finished-profile_started)/1000.0,
+			"flood_and_spill_ms":(flood_finished-anchor_finished)/1000.0,
+			"anchors_ms":(anchor_finished-seed_finished)/1000.0,
+			"finish_ms":(Time.get_ticks_usec()-flood_finished)/1000.0}))
 	return {"levels": sub_levels, "ground": sub_ground}
 
 
-static func _sub_river_ceiling(river_levels: PackedFloat32Array, si: int, sj: int) -> float:
+## Fine rescue repeatedly visits the same lattice vertices. Cache only these
+## exact 3m samples, with 64-bit storage so the interpolation is unchanged.
+static func _rescue_coarse_level(c: Dictionary, p: Vector2) -> float:
+	var lattice := Vector2i(((p - (c.fill_base as Vector2)) / FILL_SUB_STEP).round())
+	var width: int = (int(c.fill_size) - 1) * 2 + 1
+	var index := lattice.y * width + lattice.x
+	var samples: PackedFloat64Array = c.surface_samples
+	if samples[index] == INF:
+		samples[index] = _fill_bilinear_coarse(c, p)
+	return samples[index]
+
+
+static func _sub_river_ceiling(river_levels: PackedFloat32Array, si: int, sj: int, coarse_n: int = FILL_M + 1) -> float:
 	## Topology rescue shares the coarse channel/bank datum. A higher shoreline
 	## elsewhere in the chunk cannot pour a second level across its dry bank.
 	if river_levels.is_empty(): return INF
-	var ci := mini(si / 2, FILL_M - 1)
-	var cj := mini(sj / 2, FILL_M - 1)
+	var ci := mini(si / 2, coarse_n - 2)
+	var cj := mini(sj / 2, int(river_levels.size() / coarse_n) - 2)
 	var tx := float(si) * 0.5 - ci
 	var tz := float(sj) * 0.5 - cj
 	var value := 0.0
 	var total := 0.0
 	for dz in 2:
 		for dx in 2:
-			var level := river_levels[(cj + dz) * (FILL_M + 1) + ci + dx]
+			var level := river_levels[(cj + dz) * coarse_n + ci + dx]
 			if level == -INF: continue
 			var weight := (tx if dx else 1.0-tx) * (tz if dz else 1.0-tz)
 			value += level * weight
@@ -649,12 +797,22 @@ static func _sub_river_ceiling(river_levels: PackedFloat32Array, si: int, sj: in
 static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
 		levels: PackedFloat32Array, gnd: PackedFloat32Array,
 		river_levels: PackedFloat32Array, pq: PriorityQueue) -> void:
+	var profile_usec := 0
+	var claim_usec := 0
+	var seed_started := Time.get_ticks_usec() if profile_source_cost else 0
 	var margins := PackedFloat32Array()
-	margins.resize(m1 * m1)
+	margins.resize(levels.size())
 	margins.fill(INF)
+	var pond_bounds_squared := PackedFloat64Array()
+	for pond: PondStamp in c.ponds:
+		var bound := pond.bound_radius()
+		pond_bounds_squared.append(bound * bound)
 	for tr: RiverTrace in c.rivers:
+		var profile_started := Time.get_ticks_usec() if profile_source_cost else 0
 		var bank_weights: PackedFloat64Array = c.water.bank_strengths(tr)
 		var prof: Dictionary = profile(tr, region)
+		var claim_started := Time.get_ticks_usec() if profile_source_cost else 0
+		profile_usec += claim_started-profile_started
 		var descents: Array = prof.get("descents", [])
 		var in_span := PackedByteArray() # one flag per ORIGINAL trace segment
 		in_span.resize(maxi(0, tr.points.size() - 1))
@@ -678,11 +836,12 @@ static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
 			_claim_river_segment(base, m1, margins, river_levels,
 				tr.points[0], tr.points[0], tr.widths[0], tr.widths[0],
 				prof.levels[0], prof.levels[0], WaterPlan.BANK_FEATHER * bank_weights[0])
+		if profile_source_cost: claim_usec += Time.get_ticks_usec()-claim_started
 	# Ground containment is evaluated once after every trace has offered its
 	# geometry.  Every accepted river node queues exactly its own projected
 	# level; _relax_fill treats river_levels as authoritative if a lower
 	# hydrostatic entry happens to reach the same index first.
-	for j in m1:
+	for j in int(levels.size() / m1):
 		for i in m1:
 			var idx: int = j * m1 + i
 			var lvl: float = river_levels[idx]
@@ -691,7 +850,13 @@ static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
 				# Broad banks constrain incoming water, but are never seeds.
 				# A pond retains ownership of its own footprint.
 				var point := base + Vector2(i,j) * FILL_STEP
-				for pond: PondStamp in c.ponds:
+				for pond_index in c.ponds.size():
+					var pond: PondStamp = c.ponds[pond_index]
+					# The complete source inventory spans kilometres. A bank
+					# point needs the detailed shape only inside its conservative
+					# outer circle; distant ponds cannot withdraw this constraint.
+					if point.distance_squared_to(pond.center) > pond_bounds_squared[pond_index]:
+						continue
 					if pond.footprint_t(point) < 1.0:
 						river_levels[idx] = -INF
 						break
@@ -700,6 +865,9 @@ static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
 				river_levels[idx] = -INF
 				continue
 			_settle(m1, levels, pq, i, j, lvl)
+	if profile_source_cost:
+		print("WATER_SEED_COST ",JSON.stringify({"side":m1,"profile_ms":profile_usec/1000.0,
+			"claim_ms":claim_usec/1000.0,"containment_ms":(Time.get_ticks_usec()-seed_started-profile_usec-claim_usec)/1000.0}))
 
 
 ## Offers every fill-lattice point inside one variable-width segment
@@ -710,16 +878,19 @@ static func _seed_rivers(c: Dictionary, region, base: Vector2, m1: int,
 static func _claim_river_segment(base: Vector2, m1: int,
 		margins: PackedFloat32Array, river_levels: PackedFloat32Array,
 		a: Vector2, b: Vector2, wa: float, wb: float, la: float, lb: float,
-		bank_width: float = 0.0, terminal: PondStamp = null) -> void:
+		bank_width: float = 0.0, terminal: PondStamp = null,
+		eligible: PackedFloat32Array = PackedFloat32Array()) -> void:
 	var reach: float = maxf(wa, wb) + bank_width
 	var lo_i: int = maxi(0, int(floor((minf(a.x, b.x) - reach - base.x) / FILL_STEP)))
 	var hi_i: int = mini(m1 - 1, int(ceil((maxf(a.x, b.x) + reach - base.x) / FILL_STEP)))
 	var lo_j: int = maxi(0, int(floor((minf(a.y, b.y) - reach - base.y) / FILL_STEP)))
-	var hi_j: int = mini(m1 - 1, int(ceil((maxf(a.y, b.y) + reach - base.y) / FILL_STEP)))
+	var hi_j: int = mini(int(river_levels.size() / m1) - 1, int(ceil((maxf(a.y, b.y) + reach - base.y) / FILL_STEP)))
 	var ab: Vector2 = b - a
 	var len2: float = ab.length_squared()
 	for j in range(lo_j, hi_j + 1):
 		for i in range(lo_i, hi_i + 1):
+			var idx: int = j * m1 + i
+			if not eligible.is_empty() and not is_finite(eligible[idx]): continue
 			var q: Vector2 = base + Vector2(i, j) * FILL_STEP
 			var t: float = clampf((q - a).dot(ab) / len2, 0.0, 1.0) if len2 > 0.000001 else 0.0
 			var nearest: Vector2 = a + ab * t
@@ -727,7 +898,6 @@ static func _claim_river_segment(base: Vector2, m1: int,
 			var margin: float = q.distance_to(nearest) - width
 			if margin > bank_width:
 				continue
-			var idx: int = j * m1 + i
 			var lvl: float = lerpf(la, lb, t)
 			# A terminal lake owns its approach when its level reaches this
 			# river datum. Its finite bank collar must remain flood-connected.
@@ -738,6 +908,29 @@ static func _claim_river_segment(base: Vector2, m1: int,
 					or (absf(margin - margins[idx]) <= 0.0001 and lvl < river_levels[idx]):
 				margins[idx] = margin
 				river_levels[idx] = lvl
+
+
+## An excavation allowance still belongs to the local flowing river. A high
+## distant source cannot fill another river's lower bank excavation. These
+## projected heads only constrain already reachable wet points; the bank
+## collar never becomes a seed. Use the same dense descent as channel seeds.
+static func _carved_flow_ceilings(c: Dictionary, region, base: Vector2,
+		side: int, eligible: PackedFloat32Array) -> PackedFloat32Array:
+	var heads := eligible.duplicate(); heads.fill(-INF)
+	var margins := eligible.duplicate(); margins.fill(INF)
+	for trace: RiverTrace in c.rivers:
+		var prof := profile(trace, region)
+		var in_span := PackedByteArray(); in_span.resize(maxi(0, trace.points.size() - 1))
+		for descent: Dictionary in prof.get("descents", []):
+			for i in range(int(descent.lo), int(descent.hi)): in_span[i] = 1
+			for i in range(descent.pos.size() - 1):
+				_claim_river_segment(base, side, margins, heads, descent.pos[i], descent.pos[i+1],
+					descent.w[i], descent.w[i+1], descent.lvl[i], descent.lvl[i+1], WaterPlan.BANK_FEATHER, null, eligible)
+		for i in range(trace.points.size() - 1):
+			if in_span[i] == 1: continue
+			_claim_river_segment(base, side, margins, heads, trace.points[i], trace.points[i+1],
+				trace.widths[i], trace.widths[i+1], prof.levels[i], prof.levels[i+1], WaterPlan.BANK_FEATHER, null, eligible)
+	return heads
 
 
 ## Marks every lattice sample inside a pond's wobbled footprint AND below the
@@ -765,7 +958,7 @@ static func _seed_ponds(c: Dictionary, region, base: Vector2, m1: int,
 		var lo_i: int = maxi(0, int(floor((pond.center.x - pond.bound_radius() - base.x) / FILL_STEP)))
 		var hi_i: int = mini(m1 - 1, int(ceil((pond.center.x + pond.bound_radius() - base.x) / FILL_STEP)))
 		var lo_j: int = maxi(0, int(floor((pond.center.y - pond.bound_radius() - base.y) / FILL_STEP)))
-		var hi_j: int = mini(m1 - 1, int(ceil((pond.center.y + pond.bound_radius() - base.y) / FILL_STEP)))
+		var hi_j: int = mini(int(levels.size() / m1) - 1, int(ceil((pond.center.y + pond.bound_radius() - base.y) / FILL_STEP)))
 		for j in range(lo_j, hi_j + 1):
 			for i in range(lo_i, hi_i + 1):
 				var p: Vector2 = base + Vector2(i, j) * FILL_STEP
@@ -815,7 +1008,7 @@ static func _relax_fill(region, base: Vector2, m1: int,
 		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 			var ni: int = i + d.x
 			var nj: int = j + d.y
-			if ni < 0 or ni >= m1 or nj < 0 or nj >= m1:
+			if ni < 0 or ni >= m1 or nj < 0 or nj >= int(levels.size() / m1):
 				continue
 			var nidx: int = nj * m1 + ni
 			if levels[nidx] != -INF:
@@ -824,6 +1017,132 @@ static func _relax_fill(region, base: Vector2, m1: int,
 				continue # its own authoritative seed is already queued
 			if _ground_at(region, base, m1, gnd, ni, nj) < lvl - EPS:
 				pq.push([nidx, lvl], lvl)
+
+
+## A source head does not supply a dam. Resolve only the escape heights
+## needed by hydrostatic water in the complete source domain. Each
+## reverse minimax search stops at a physical outlet or an already-proven
+## escape height. Nodes reached strictly below that saddle share its exact
+## outlet; memoizing those nodes avoids searching the same depression again.
+class SpillSearch extends RefCounted:
+	var region
+	var base: Vector2
+	var side: int
+	var rows: int
+	var step: float
+	var ground: PackedFloat32Array
+	var ground_bakes
+	var escape: PackedFloat64Array
+	var marks: PackedInt32Array
+	var distance: PackedFloat64Array
+	var generation := 0
+	var queue := PriorityQueue.new()
+	var directions := [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]
+
+	func _init(p_region, p_base: Vector2, p_side: int,
+			levels: PackedFloat32Array, p_ground: PackedFloat32Array,
+			anchors: PackedFloat32Array, p_step: float, p_bakes = null, anchor_indices = null) -> void:
+		region = p_region
+		base = p_base
+		side = p_side
+		ground = p_ground
+		step = p_step
+		ground_bakes = p_bakes
+		rows = int(levels.size() / side)
+		escape = PackedFloat64Array(); escape.resize(levels.size()); escape.fill(INF)
+		marks = PackedInt32Array(); marks.resize(levels.size())
+		distance = PackedFloat64Array(); distance.resize(levels.size())
+		# The fine solver already enumerated every real anchor. Reuse that
+		# exact list rather than inspecting millions of dry interior nodes.
+		# Callers without a list retain the complete scan.
+		if anchor_indices == null:
+			for index in levels.size():
+				if is_finite(levels[index]) and is_finite(anchors[index]):
+					escape[index] = maxf(anchors[index] + EPS, WaterField._ground_at(region, base, side, ground, index % side, int(index / side), step, ground_bakes))
+		else:
+			for index: int in anchor_indices:
+				escape[index] = maxf(anchors[index] + EPS, WaterField._ground_at(region, base, side, ground, index % side, int(index / side), step, ground_bakes))
+		for x in side:
+			_set_boundary(x)
+			_set_boundary((rows - 1) * side + x)
+		for z in range(1, rows - 1):
+			_set_boundary(z * side)
+			_set_boundary(z * side + side - 1)
+
+	func _set_boundary(index: int) -> void:
+		if not is_finite(escape[index]):
+			escape[index] = WaterField._ground_at(region, base, side, ground, index % side, int(index / side), step, ground_bakes)
+
+
+	func height_at(target: int) -> float:
+		if not is_finite(escape[target]):
+			generation += 1
+			var reached: Array[int] = []
+			var start := WaterField._ground_at(region, base, side, ground, target % side, int(target / side), step, ground_bakes)
+			marks[target] = generation
+			distance[target] = start
+			queue.push(target, start)
+			var outlet := INF
+			while not queue.is_empty():
+				var index: int = queue.pop()
+				var height: float = distance[index]
+				if is_finite(escape[index]):
+					outlet = height
+					break
+				reached.append(index)
+				var x := index % side
+				var z := int(index / side)
+				for direction: Vector2i in directions:
+					var nx := x + direction.x
+					var nz := z + direction.y
+					if nx < 0 or nz < 0 or nx >= side or nz >= rows: continue
+					var next := nz * side + nx
+					if marks[next] == generation: continue
+					var cost := maxf(height, WaterField._ground_at(region, base, side, ground, nx, nz, step, ground_bakes))
+					if is_finite(escape[next]): cost = maxf(cost, escape[next])
+					marks[next] = generation
+					distance[next] = cost
+					queue.push(next, cost)
+			# Pending entries belong only to this query. Reuse proven escape
+			# values, never its incomplete frontier or scene-owned state.
+			queue.heap.clear()
+			escape[target] = outlet
+			for index: int in reached:
+				if distance[index] < outlet or ground[index] >= outlet:
+					escape[index] = outlet
+		return escape[target]
+
+	func close() -> void:
+		queue.free()
+
+
+static func _cap_hydrostatic_fill(region, base: Vector2, side: int,
+		levels: PackedFloat32Array, ground: PackedFloat32Array,
+		anchors: PackedFloat32Array, step: float = FILL_STEP, ground_bakes = null,
+		natural: HeightfieldRegion = null,
+		flow_ceilings: PackedFloat32Array = PackedFloat32Array()) -> PackedFloat32Array:
+	var search := SpillSearch.new(region, base, side, levels, ground, anchors, step, ground_bakes)
+	var ceilings := levels.duplicate()
+	var natural_ground := PackedFloat32Array()
+	var natural_bakes: Dictionary = {}
+	if natural != null:
+		natural_ground.resize(levels.size()); natural_ground.fill(INF)
+	for index in levels.size():
+		if not is_finite(levels[index]) or is_finite(anchors[index]): continue
+		var ceiling := search.height_at(index) - EPS
+		if natural != null and not flow_ceilings.is_empty() and is_finite(flow_ceilings[index]):
+			var uncarved := _ground_at(natural, base, side, natural_ground,
+				index % side, int(index / side), step, natural_bakes)
+			if uncarved > ground[index] + EPS:
+				ceiling = maxf(ceiling, minf(uncarved - EPS, flow_ceilings[index]))
+		# Keep the physical ceiling separate from the initial flood value.
+		# Smoothing may remove a step inside the cut channel, while standing
+		# water beside it remains bounded by its actual spill height.
+		ceilings[index] = ceiling
+		var level := minf(levels[index], ceiling)
+		levels[index] = level if level > ground[index] + EPS else -INF
+	search.close()
+	return ceilings
 
 
 ## Continuous, monotone level per trace sample. NO cuts array (Phase 2a):
@@ -882,10 +1201,10 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 	_profiles_lock.lock()
 	if _profiles.has(cache_key):
 		var cached: Dictionary = _profiles[cache_key]
+		_profiles.erase(cache_key)
+		_profiles[cache_key] = cached
 		_profiles_lock.unlock()
 		return cached
-	if plan_backed:
-		region = _trace_owned_region(trace, region.plan)
 	var n: int = trace.points.size()
 	var levels := PackedFloat32Array()
 	levels.resize(n)
@@ -923,31 +1242,46 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 		raw[0] = levels[0]
 		for i in range(1, n):
 			raw[i] = minf(raw[i - 1], trace.beds[i] + SURFACE_RIDE)
-		var arclen := PackedFloat32Array()
-		arclen.resize(n)
-		for i in range(1, n):
-			arclen[i] = arclen[i - 1] + trace.points[i - 1].distance_to(trace.points[i])
-		var spans: Array = _find_descent_spans(raw, arclen)
-		var i: int = 1
-		var span_idx: int = 0
-		while i < n:
-			if span_idx < spans.size() and int(spans[span_idx].lo) == i - 1:
-				var lo: int = spans[span_idx].lo
-				var hi: int = spans[span_idx].hi
-				var shaped: Dictionary = _shape_descent_span(
-					region, trace, lo, hi, levels[lo], raw[hi], arclen)
-				var samples: PackedFloat32Array = shaped.samples
-				for k in range(lo + 1, hi + 1):
-					levels[k] = samples[k - lo]
-				var walk: Dictionary = _dense_span_points(trace, lo, hi, arclen)
-				descents.append({"lo": lo, "hi": hi, "pos": walk.pos,
-					"w": walk.w, "lvl": shaped.dense})
-				i = hi + 1
-				span_idx += 1
-			else:
-				var target: float = minf(levels[i - 1], trace.beds[i] + SURFACE_RIDE)
-				levels[i] = _descend_segment(region, trace.points[i - 1], trace.points[i], levels[i - 1], target)
-				i += 1
+		var varies := false
+		for value: float in raw:
+			if value != raw[0]:
+				varies = true
+				break
+		var terminal_drop := trace.pond != null and n >= 2 \
+			and raw[-1]-trace.pond.surface_y() > FALL_DROP_MIN+0.01
+		# A flat packed target cannot be lowered by the min-held terrain hug:
+		# its result lies between targets that round to the same stored level.
+		# Only an actual descent (including the terminal pond) needs ground.
+		if plan_backed and (varies or terminal_drop):
+			region = _trace_owned_region(trace, region.plan)
+		if not varies:
+			levels = raw
+		else:
+			var arclen := PackedFloat32Array()
+			arclen.resize(n)
+			for i in range(1, n):
+				arclen[i] = arclen[i - 1] + trace.points[i - 1].distance_to(trace.points[i])
+			var spans: Array = _find_descent_spans(raw, arclen)
+			var i: int = 1
+			var span_idx: int = 0
+			while i < n:
+				if span_idx < spans.size() and int(spans[span_idx].lo) == i - 1:
+					var lo: int = spans[span_idx].lo
+					var hi: int = spans[span_idx].hi
+					var shaped: Dictionary = _shape_descent_span(
+						region, trace, lo, hi, levels[lo], raw[hi], arclen)
+					var samples: PackedFloat32Array = shaped.samples
+					for k in range(lo + 1, hi + 1):
+						levels[k] = samples[k - lo]
+					var walk: Dictionary = _dense_span_points(trace, lo, hi, arclen)
+					descents.append({"lo": lo, "hi": hi, "pos": walk.pos,
+						"w": walk.w, "lvl": shaped.dense})
+					i = hi + 1
+					span_idx += 1
+				else:
+					var target: float = minf(levels[i - 1], trace.beds[i] + SURFACE_RIDE)
+					levels[i] = _descend_segment(region, trace.points[i - 1], trace.points[i], levels[i - 1], target)
+					i += 1
 	if trace.pond != null:
 		var ps: float = trace.pond.surface_y()
 		if levels[n - 1] - ps <= FALL_DROP_MIN + 0.01:
@@ -1005,6 +1339,10 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 						dl[dl.size() - 1] = minf(dl[dl.size() - 1], levels[n - 1])
 						d["lvl"] = dl
 	var out := {"levels": levels, "descents": descents}
+	if plan_backed:
+		_trace_regions.erase([trace.get_instance_id(),cache_key[1]])
+	if _profiles.size() >= PROFILE_CACHE_LIMIT:
+		_profiles.erase(_profiles.keys()[0])
 	_profiles[cache_key] = out
 	_profiles_lock.unlock()
 	return out
@@ -1057,6 +1395,8 @@ static func profile(trace: RiverTrace, region = null) -> Dictionary:
 ## endpoints reset the curve flat at every trace sample). This function's
 ## own code is otherwise unchanged.
 static func _descend_segment(region, a: Vector2, b: Vector2, start_lvl: float, end_target: float) -> float:
+	if start_lvl == end_target:
+		return start_lvl
 	if region == null:
 		return end_target
 	var seg_len: float = a.distance_to(b)
@@ -1559,15 +1899,16 @@ static func _fill_bilinear(c: Dictionary, p: Vector2) -> float:
 
 ## Wet-only interpolation of the hydraulic head before dry-corner taper.
 static func _fill_untapered_level(c: Dictionary, p: Vector2) -> float:
+	var coarse_n: int = c.get("fill_size", FILL_M + 1)
 	var local := (p - (c.fill_base as Vector2)) / FILL_STEP
-	var i := clampi(floori(local.x), 0, FILL_M - 1)
-	var j := clampi(floori(local.y), 0, FILL_M - 1)
+	var i := clampi(floori(local.x), 0, coarse_n - 2)
+	var j := clampi(floori(local.y), 0, int(c.fill.levels.size() / coarse_n) - 2)
 	var t := (local - Vector2(i, j)).clamp(Vector2.ZERO, Vector2.ONE)
 	var total := 0.0
 	var value := 0.0
 	for dz in 2:
 		for dx in 2:
-			var level: float = c.fill.levels[(j + dz) * (FILL_M + 1) + i + dx]
+			var level: float = c.fill.levels[(j + dz) * coarse_n + i + dx]
 			if level == -INF:
 				continue
 			var weight := (t.x if dx else 1.0 - t.x) * (t.y if dz else 1.0 - t.y)
@@ -1582,11 +1923,11 @@ static func _fill_untapered_level(c: Dictionary, p: Vector2) -> float:
 static func _fill_bilinear_coarse(c: Dictionary, p: Vector2) -> float:
 	var base: Vector2 = c.fill_base
 	var levels: PackedFloat32Array = c.fill.levels
-	var m1 := FILL_M + 1
+	var m1: int = c.get("fill_size", FILL_M + 1)
 	var lf: float = (p.x - base.x) / FILL_STEP
 	var jf: float = (p.y - base.y) / FILL_STEP
-	var i0: int = clampi(int(floor(lf)), 0, FILL_M - 1)
-	var j0: int = clampi(int(floor(jf)), 0, FILL_M - 1)
+	var i0: int = clampi(int(floor(lf)), 0, m1 - 2)
+	var j0: int = clampi(int(floor(jf)), 0, int(levels.size() / m1) - 2)
 	var tx: float = clampf(lf - float(i0), 0.0, 1.0)
 	var tz: float = clampf(jf - float(j0), 0.0, 1.0)
 	var corners := [
@@ -1613,7 +1954,14 @@ static func _fill_bilinear_coarse(c: Dictionary, p: Vector2) -> float:
 		var lvl: float = levels[cnr[1] * m1 + cnr[0]]
 		if lvl == -INF:
 			var q: Vector2 = base + Vector2(cnr[0], cnr[1]) * FILL_STEP
-			var ground: float = TerrainSurfaceField.surface_y(c.region, q.x, q.y)
+			var ground: float
+			if c.has("dry_ground"):
+				var memo: PackedFloat64Array = c.dry_ground
+				var index: int = cnr[1] * m1 + cnr[0]
+				if memo[index] == INF: memo[index] = TerrainSurfaceField.surface_y(c.region, q.x, q.y)
+				ground = memo[index]
+			else:
+				ground = TerrainSurfaceField.surface_y(c.region, q.x, q.y)
 			lvl = minf(wet_ref, ground + EPS - SHORE_DRY_DEPTH)
 		acc += lvl * cnr[2]
 	return acc

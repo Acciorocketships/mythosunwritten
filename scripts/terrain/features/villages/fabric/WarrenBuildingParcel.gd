@@ -47,6 +47,9 @@ var address_door_phase: int
 ## proposal key on the legacy path; the name is deliberate and stays, because
 ## they mean the same thing about a building.
 var flat_roof := false
+## A complete public floor owns the ceiling at top_band. The rooms use the
+## whole height below that interface; no separate gable/slab band is needed.
+var public_ceiling := false
 ## Additive (Task C5d, controller ruling 2; WIDENED BY TASK H2): what the plot
 ## model would RATHER see on this building's crown. Empty on every parcel the
 ## route-first and mass-first partitioners build. On a maze house it is
@@ -106,6 +109,9 @@ func seal(volume: WarrenVolumePlan) -> bool:
 			or not support_parent_parcel_id.is_empty() \
 				and support_parent_parcel_id == stable_id:
 		return false
+	if public_ceiling:
+		if not has_complete_public_ceiling(volume, footprint, top_band):
+			return false
 	var unique: Dictionary = {}
 	var minimum := Vector2i(2147483647, 2147483647)
 	var maximum := Vector2i(-2147483648, -2147483648)
@@ -165,6 +171,9 @@ func seal(volume: WarrenVolumePlan) -> bool:
 ## or upper building's own and owes the storey grid nothing. A flat-roofed
 ## parcel still has to be a building: one storey and one band of slab.
 func _height_is_legal() -> bool:
+	if public_ceiling:
+		return flat_roof and height_bands() >= STOREY_BANDS \
+			and posmod(height_bands(),STOREY_BANDS)==0
 	if flat_roof:
 		return top_band - base_band >= STOREY_BANDS + 1
 	return top_band - base_band >= STOREY_BANDS + ROOF_RESERVATION_BANDS \
@@ -193,7 +202,19 @@ func height_bands() -> int:
 ## nothing more -- instead of the authored pitched roof's own
 ## ROOF_RESERVATION_BANDS, and the integer division leaves any odd remainder
 ## with that slab rather than crediting it as habitable storey.
+static func has_complete_public_ceiling(volume: WarrenVolumePlan,
+		columns: Array[Vector2i], ceiling_band: int) -> bool:
+	if volume == null or columns.is_empty(): return false
+	for column: Vector2i in columns:
+		for z in 2:
+			for x in 2:
+				if not volume.has_exact_route_surface(Vector3i(column.x*2+x,ceiling_band,column.y*2+z)):
+					return false
+	return true
+
+
 func storey_count() -> int:
+	if public_ceiling: return height_bands()/STOREY_BANDS
 	if flat_roof:
 		return flat_storey_count(height_bands())
 	return (height_bands() - ROOF_RESERVATION_BANDS) / STOREY_BANDS
@@ -249,7 +270,7 @@ func deterministic_signature() -> String:
 		int(has_occupied_overpass), String(support_parent_parcel_id),
 		support_parent_storey_index, int(flat_roof),
 		"" if roof_preference.is_empty() \
-			else "/RP%s" % String(roof_preference)]
+			else "/RP%s" % String(roof_preference)] + ("/PC" if public_ceiling else "")
 
 
 func slot_signature() -> String:

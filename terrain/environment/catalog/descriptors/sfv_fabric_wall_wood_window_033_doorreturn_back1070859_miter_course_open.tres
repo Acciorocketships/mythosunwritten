@@ -153,17 +153,17 @@ omitted_face_surfaces = Array[Dictionary]([{
 "material_surface": 2,
 "triangles": Array[Dictionary]([{
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0.70711756, 0, -0.707096),
+"normal": Vector3(0.70713913, -4.315969e-05, -0.7070744),
 "position": Vector3(1.4354215, 3, 0.23433053),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0.70711756, 0, -0.707096),
+"normal": Vector3(0.70713913, -4.315969e-05, -0.7070744),
 "position": Vector3(0.96719736, 3, -0.23389357),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0.70711756, 0, -0.707096),
+"normal": Vector3(0.70713913, -4.315969e-05, -0.7070744),
 "position": Vector3(0.9667605, 2.9995227, -0.23433039),
 "uv": Vector2(0.40311444, 0.23957539)
 }])

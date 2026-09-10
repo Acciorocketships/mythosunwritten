@@ -1,0 +1,50 @@
+[
+  {
+    "hash": "1ad07e67bf17ca9ff69e9303a26fa6d45f87a295d0ddadd67cb1b567153bb7db",
+    "ms": 188.81,
+    "pass": 0,
+    "variant": "production"
+  },
+  {
+    "hash": "1ad07e67bf17ca9ff69e9303a26fa6d45f87a295d0ddadd67cb1b567153bb7db",
+    "ms": 358.953,
+    "pass": 0,
+    "variant": "dictionary"
+  },
+  {
+    "hash": "1ad07e67bf17ca9ff69e9303a26fa6d45f87a295d0ddadd67cb1b567153bb7db",
+    "ms": 353.829,
+    "pass": 1,
+    "variant": "dictionary"
+  },
+  {
+    "hash": "1ad07e67bf17ca9ff69e9303a26fa6d45f87a295d0ddadd67cb1b567153bb7db",
+    "ms": 176.083,
+    "pass": 1,
+    "variant": "production"
+  },
+  {
+    "hash": "1ad07e67bf17ca9ff69e9303a26fa6d45f87a295d0ddadd67cb1b567153bb7db",
+    "ms": 164.4,
+    "pass": 2,
+    "variant": "production"
+  },
+  {
+    "hash": "1ad07e67bf17ca9ff69e9303a26fa6d45f87a295d0ddadd67cb1b567153bb7db",
+    "ms": 358.51,
+    "pass": 2,
+    "variant": "dictionary"
+  },
+  {
+    "hash": "1ad07e67bf17ca9ff69e9303a26fa6d45f87a295d0ddadd67cb1b567153bb7db",
+    "ms": 343.68,
+    "pass": 3,
+    "variant": "dictionary"
+  },
+  {
+    "hash": "1ad07e67bf17ca9ff69e9303a26fa6d45f87a295d0ddadd67cb1b567153bb7db",
+    "ms": 173.847,
+    "pass": 3,
+    "variant": "production"
+  }
+]

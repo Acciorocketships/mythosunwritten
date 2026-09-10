@@ -1,0 +1,24 @@
+[
+  {
+    "variant": "before",
+    "distance_m": 1194.53637695312,
+    "unready_seconds": 99.310475333329,
+    "chunk_requests": 3413066,
+    "duplicate_job_starts": 0,
+    "terrain_commit_max_ms": 1181.347,
+    "terrain_commit_total_ms": 1990.869,
+    "worker_feature_context_ms": 278868.0,
+    "peak_static_bytes": 6162399546.0
+  },
+  {
+    "variant": "after-candidate",
+    "distance_m": 1198.35009765625,
+    "unready_seconds": 103.324203666666,
+    "chunk_requests": 3371,
+    "duplicate_job_starts": 0,
+    "terrain_commit_max_ms": 406.99,
+    "terrain_commit_total_ms": 733.016,
+    "worker_feature_context_ms": 281690.0,
+    "peak_static_bytes": 2618735610.0
+  }
+]

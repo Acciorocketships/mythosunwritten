@@ -7,7 +7,7 @@ script = ExtResource("1_cew2h")
 id = &"sfv.fabric.wall.wood.window.060.doorreturn.square.back1070859.course_open"
 visual_path = "res://terrain/environment/visuals/fantasy_village_wall_interfaces/sfv_fabric_wall_wood_window_060_doorreturn_square_back1070859_course_open.tres"
 tags = Array[StringName]([&"building", &"fabric_wall", &"village"])
-measured_aabb = AABB(-1.5, -1.8758351e-08, -0.30675882, 1.929141, 3, 0.7854854)
+measured_aabb = AABB(-1.5, -1.8758351e-08, -0.30675882, 1.929151, 3, 0.7854854)
 omitted_face_bounds = AABB(-1.5, 3, -0.23429999, 1.9291, 0, 0.46859998)
 omitted_face_surfaces = Array[Dictionary]([{
 "material_piece": 0,
@@ -89,17 +89,17 @@ omitted_face_surfaces = Array[Dictionary]([{
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(-3.0518975e-05, 1, -1.5259488e-05),
 "position": Vector3(-1.2633429, 3, 0.23433053),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(-3.0518975e-05, 1, -1.5259488e-05),
 "position": Vector3(-1.4999999, 3, 0.23433053),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(-3.0518975e-05, 1, -1.5259488e-05),
 "position": Vector3(-1.4999999, 3, -0.23433042),
 "uv": Vector2(0.40311444, 0.23957539)
 }])

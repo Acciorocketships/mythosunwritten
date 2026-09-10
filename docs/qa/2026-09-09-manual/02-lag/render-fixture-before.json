@@ -1,0 +1,100 @@
+{
+  "camera": "[X: (0.928477, 0.0, -0.371391), Y: (-0.238144, 0.767354, -0.595361), Z: (0.284988, 0.641223, 0.71247), O: (291.4, 14.0, -1334.0)]",
+  "fixture": "/Users/ryko/story/.artifacts/september9-render-fixture/world-v2.res",
+  "fixture_sha256": "32ac7509b5e679b75bb09ecf88a1778db35dd1e4b0ac174fdbd10a76125724be",
+  "rows": [
+    {
+      "draw_calls": 690.0,
+      "frames": {
+        "frames": 269,
+        "max_ms": 46.609,
+        "mean_ms": 37.3452044609665,
+        "p50_ms": 37.68,
+        "p95_ms": 43.757,
+        "p99_ms": 46.066
+      },
+      "primitives": 10559868.0,
+      "variant": "full"
+    },
+    {
+      "draw_calls": 664.0,
+      "frames": {
+        "frames": 635,
+        "max_ms": 24.967,
+        "mean_ms": 15.7649968503937,
+        "p50_ms": 15.621,
+        "p95_ms": 18.62,
+        "p99_ms": 20.196
+      },
+      "primitives": 4073652.0,
+      "variant": "no_grass"
+    },
+    {
+      "draw_calls": 183.0,
+      "frames": {
+        "frames": 565,
+        "max_ms": 24.551,
+        "mean_ms": 17.7049415929204,
+        "p50_ms": 17.662,
+        "p95_ms": 21.187,
+        "p99_ms": 22.532
+      },
+      "primitives": 7510770.0,
+      "variant": "no_shadows"
+    },
+    {
+      "draw_calls": 157.0,
+      "frames": {
+        "frames": 1791,
+        "max_ms": 14.113,
+        "mean_ms": 5.5805884980458,
+        "p50_ms": 5.589,
+        "p95_ms": 7.189,
+        "p99_ms": 8.104
+      },
+      "primitives": 1024554.0,
+      "variant": "neither"
+    },
+    {
+      "draw_calls": 563.0,
+      "frames": {
+        "frames": 491,
+        "max_ms": 26.986,
+        "mean_ms": 20.3697963340122,
+        "p50_ms": 20.395,
+        "p95_ms": 24.192,
+        "p99_ms": 25.311
+      },
+      "primitives": 10451260.0,
+      "variant": "pcf_sun"
+    },
+    {
+      "draw_calls": 690.0,
+      "frames": {
+        "frames": 374,
+        "max_ms": 35.506,
+        "mean_ms": 26.7892593582888,
+        "p50_ms": 26.73,
+        "p95_ms": 31.859,
+        "p99_ms": 34.075
+      },
+      "primitives": 10559868.0,
+      "variant": "very_low_pcss"
+    },
+    {
+      "draw_calls": 690.0,
+      "frames": {
+        "frames": 287,
+        "max_ms": 44.472,
+        "mean_ms": 34.9285958188153,
+        "p50_ms": 34.731,
+        "p95_ms": 40.782,
+        "p99_ms": 42.872
+      },
+      "primitives": 10559868.0,
+      "variant": "full_repeat"
+    }
+  ],
+  "shadow_filter_quality": 2,
+  "sun_angular_distance": 2.5
+}

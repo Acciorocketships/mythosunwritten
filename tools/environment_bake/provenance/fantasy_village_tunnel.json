@@ -1,0 +1,48 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/sfv_fabric_tunnel_arch_001.tres",
+      "id": "sfv.fabric.tunnel_arch.001",
+      "license": "FantasyVillageFBX source-pack license",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 540,
+        "measured_aabb": {
+          "position": [
+            -1.93546485900879,
+            0.000000135712411974964,
+            -0.125402092933655
+          ],
+          "size": [
+            3.87092971801758,
+            4.19507503509521,
+            0.250804096460342
+          ]
+        },
+        "mesh_bytes": 49409,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 540
+      },
+      "pack": "fantasy_village_tunnel",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "sfv.fabric.tunnel_arch.001",
+        "merge_pieces": true,
+        "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Arch/SFV_Entrance_Arch_001.fbx",
+        "tags": [
+          "building",
+          "arch",
+          "tunnel"
+        ]
+      },
+      "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Arch/SFV_Entrance_Arch_001.fbx",
+      "source_sha256": "45659184bbe53d79022372cd9dadef975e9df3109aa310728a2681c6b82b1d47",
+      "tool_version": 32,
+      "visual": "res://terrain/environment/visuals/fantasy_village_tunnel/sfv_fabric_tunnel_arch_001.tres"
+    }
+  ],
+  "license": "FantasyVillageFBX source-pack license",
+  "pack": "fantasy_village_tunnel",
+  "tool_version": 32
+}

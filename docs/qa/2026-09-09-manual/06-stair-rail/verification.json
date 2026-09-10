@@ -1,0 +1,24 @@
+{
+  "accepted": true,
+  "tests": 18,
+  "passed": 18,
+  "assertions": 1507,
+  "test_seconds": 68.88,
+  "exit_code": 0,
+  "matched_camera_json_identical": true,
+  "views_visually_reviewed": [
+    "exact",
+    "near_left",
+    "near_right",
+    "jitter_0",
+    "jitter_1",
+    "gameplay_camera"
+  ],
+  "walking_traversals": 6,
+  "walking_passed": 6,
+  "physical_cells": 124,
+  "physical_crossings": 179,
+  "clearance_identical": true,
+  "original_camera_precision_recoverable": false,
+  "pixel_difference_limit": "Avatar orientation differs after live walking; rails and their shadows are the intended geometric changes. Small ambient animation differences remain."
+}

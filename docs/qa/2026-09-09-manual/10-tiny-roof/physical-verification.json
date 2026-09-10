@@ -1,0 +1,18 @@
+{
+  "same_cells_and_crossings": true,
+  "cells": 132,
+  "crossings": 188,
+  "cell_clearance_counts": {
+    "0": 132
+  },
+  "crossing_clearance_counts": {
+    "0": 188
+  },
+  "meaning": {
+    "-1": "blocked",
+    "0": "center passage clear",
+    "1": "lateral solution needed"
+  },
+  "before_exit": 0,
+  "after_exit": 0
+}

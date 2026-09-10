@@ -1,0 +1,170 @@
+{
+  "before": {
+    "lpfv.flower.01": {
+      "meadow": 1.2,
+      "deep_forest": 0.4,
+      "highland": 0.4,
+      "blossom_grove": 1.5,
+      "twilight_marsh": 0.2,
+      "amber_heath": 1.2,
+      "jade_wetlands": 0.2
+    },
+    "lpfv.flower.02": {
+      "meadow": 1.2,
+      "deep_forest": 0.4,
+      "highland": 0.4,
+      "blossom_grove": 1.5,
+      "twilight_marsh": 0.2,
+      "amber_heath": 1.2,
+      "jade_wetlands": 0.2
+    },
+    "lpfv.flower.03": {
+      "meadow": 1.2,
+      "deep_forest": 0.4,
+      "highland": 0.4,
+      "blossom_grove": 1.5,
+      "twilight_marsh": 0.2,
+      "amber_heath": 1.2,
+      "jade_wetlands": 0.2
+    },
+    "lpfv.flower.04": {
+      "meadow": 1.2,
+      "deep_forest": 0.4,
+      "highland": 0.4,
+      "blossom_grove": 1.5,
+      "twilight_marsh": 0.2,
+      "amber_heath": 1.2,
+      "jade_wetlands": 0.2
+    },
+    "lpfv.flower.05": {
+      "meadow": 1.2,
+      "deep_forest": 0.4,
+      "highland": 0.4,
+      "blossom_grove": 1.5,
+      "twilight_marsh": 0.2,
+      "amber_heath": 1.2,
+      "jade_wetlands": 0.2
+    },
+    "lpfv.plant.01": {
+      "meadow": 0.9,
+      "deep_forest": 1.0,
+      "highland": 0.5,
+      "blossom_grove": 0.8,
+      "twilight_marsh": 1.0,
+      "amber_heath": 0.9,
+      "jade_wetlands": 1.0
+    },
+    "lpfv.plant.02": {
+      "meadow": 0.9,
+      "deep_forest": 1.0,
+      "highland": 0.5,
+      "blossom_grove": 0.8,
+      "twilight_marsh": 1.0,
+      "amber_heath": 0.9,
+      "jade_wetlands": 1.0
+    },
+    "lpfv.plant.03": {
+      "meadow": 0.9,
+      "deep_forest": 1.0,
+      "highland": 0.5,
+      "blossom_grove": 0.8,
+      "twilight_marsh": 1.0,
+      "amber_heath": 0.9,
+      "jade_wetlands": 1.0
+    },
+    "lpfv.plant.04": {
+      "meadow": 0.9,
+      "deep_forest": 1.0,
+      "highland": 0.5,
+      "blossom_grove": 0.8,
+      "twilight_marsh": 1.0,
+      "amber_heath": 0.9,
+      "jade_wetlands": 1.0
+    }
+  },
+  "after": {
+    "lpfv.flower.01": {
+      "meadow": 1.2,
+      "deep_forest": 0.4,
+      "highland": 0.4,
+      "blossom_grove": 1.5,
+      "twilight_marsh": 0.2,
+      "amber_heath": 1.2,
+      "jade_wetlands": 0.2
+    },
+    "lpfv.flower.02": {
+      "meadow": 1.2,
+      "deep_forest": 0.4,
+      "highland": 0.4,
+      "blossom_grove": 1.5,
+      "twilight_marsh": 0.2,
+      "amber_heath": 1.2,
+      "jade_wetlands": 0.2
+    },
+    "lpfv.flower.03": {
+      "meadow": 1.2,
+      "deep_forest": 0.4,
+      "highland": 0.4,
+      "blossom_grove": 1.5,
+      "twilight_marsh": 0.2,
+      "amber_heath": 1.2,
+      "jade_wetlands": 0.2
+    },
+    "lpfv.flower.04": {
+      "meadow": 1.2,
+      "deep_forest": 0.4,
+      "highland": 0.4,
+      "blossom_grove": 1.5,
+      "twilight_marsh": 0.2,
+      "amber_heath": 1.2,
+      "jade_wetlands": 0.2
+    },
+    "lpfv.flower.05": {
+      "meadow": 1.2,
+      "deep_forest": 0.4,
+      "highland": 0.4,
+      "blossom_grove": 1.5,
+      "twilight_marsh": 0.2,
+      "amber_heath": 1.2,
+      "jade_wetlands": 0.2
+    },
+    "lpfv.plant.01": {
+      "meadow": 0.0,
+      "deep_forest": 0.0,
+      "highland": 0.0,
+      "blossom_grove": 0.0,
+      "twilight_marsh": 0.0,
+      "amber_heath": 0.0,
+      "jade_wetlands": 1.0
+    },
+    "lpfv.plant.02": {
+      "meadow": 0.0,
+      "deep_forest": 0.0,
+      "highland": 0.0,
+      "blossom_grove": 0.0,
+      "twilight_marsh": 0.0,
+      "amber_heath": 0.0,
+      "jade_wetlands": 1.0
+    },
+    "lpfv.plant.03": {
+      "meadow": 0.0,
+      "deep_forest": 0.0,
+      "highland": 0.0,
+      "blossom_grove": 0.0,
+      "twilight_marsh": 0.0,
+      "amber_heath": 0.0,
+      "jade_wetlands": 1.0
+    },
+    "lpfv.plant.04": {
+      "meadow": 0.0,
+      "deep_forest": 0.0,
+      "highland": 0.0,
+      "blossom_grove": 0.0,
+      "twilight_marsh": 0.0,
+      "amber_heath": 0.0,
+      "jade_wetlands": 1.0
+    }
+  },
+  "pure_jade_distribution_identical": true,
+  "flower_weights_identical": true
+}

@@ -1,0 +1,79 @@
+[
+  {
+    "chunk": "(-3, -6)",
+    "contour_hash": "24b622edac8a21781259f0fc8d4312dfb3d3792d4195c64b093d4182b8dd1fe9",
+    "contours_ms": 0.01,
+    "fill_hash": "d86be6081e7e82c64f661c6866ea60ea3b9dae79582193a5ace09ab8b66897d6",
+    "fill_ms": 2.207,
+    "memory_bytes": 879378158.0,
+    "ponds": 0,
+    "region_ms": 0.002,
+    "rivers": 0
+  },
+  {
+    "chunk": "(-4, -6)",
+    "contour_hash": "24b622edac8a21781259f0fc8d4312dfb3d3792d4195c64b093d4182b8dd1fe9",
+    "contours_ms": 0.004,
+    "fill_hash": "d86be6081e7e82c64f661c6866ea60ea3b9dae79582193a5ace09ab8b66897d6",
+    "fill_ms": 2.008,
+    "memory_bytes": 879992798.0,
+    "ponds": 0,
+    "region_ms": 0.003,
+    "rivers": 0
+  },
+  {
+    "chunk": "(1, -7)",
+    "contour_hash": "24b622edac8a21781259f0fc8d4312dfb3d3792d4195c64b093d4182b8dd1fe9",
+    "contours_ms": 0.013,
+    "fill_hash": "657add8ca9a239270710fa918d8652d81819a689c3c470fcdcbd184252666add",
+    "fill_ms": 40388.587,
+    "memory_bytes": 1100211298.0,
+    "ponds": 3,
+    "region_ms": 0.004,
+    "rivers": 2
+  },
+  {
+    "chunk": "(2, -11)",
+    "contour_hash": "24b622edac8a21781259f0fc8d4312dfb3d3792d4195c64b093d4182b8dd1fe9",
+    "contours_ms": 0.019,
+    "fill_hash": "ee7445f8bd10762408024f4bc2c3adab47a29537f625ffd999b5360961d375a1",
+    "fill_ms": 119075.105,
+    "memory_bytes": 1276289994.0,
+    "ponds": 10,
+    "region_ms": 0.003,
+    "rivers": 6
+  },
+  {
+    "chunk": "(1, -2)",
+    "contour_hash": "24b622edac8a21781259f0fc8d4312dfb3d3792d4195c64b093d4182b8dd1fe9",
+    "contours_ms": 0.016,
+    "fill_hash": "5c364cd45c050e58181a5b2e0190c4274bc9f6ce4a787dce28190b1488e779ff",
+    "fill_ms": 37725.329,
+    "memory_bytes": 1297802010.0,
+    "ponds": 4,
+    "region_ms": 0.003,
+    "rivers": 2
+  },
+  {
+    "chunk": "(1, -3)",
+    "contour_hash": "24b622edac8a21781259f0fc8d4312dfb3d3792d4195c64b093d4182b8dd1fe9",
+    "contours_ms": 0.006,
+    "fill_hash": "93e938f8db8396cb0859d3dc18f4dd9334750cb9fa8534ca9828a2c943f66645",
+    "fill_ms": 3.847,
+    "memory_bytes": 1298334502.0,
+    "ponds": 4,
+    "region_ms": 0.003,
+    "rivers": 2
+  },
+  {
+    "chunk": "(5, -11)",
+    "contour_hash": "24b622edac8a21781259f0fc8d4312dfb3d3792d4195c64b093d4182b8dd1fe9",
+    "contours_ms": 0.016,
+    "fill_hash": "65b8dfa8ab5660dec4e40a6447f5d40dd157a9985a9cc18a7543328864e8da00",
+    "fill_ms": 76005.198,
+    "memory_bytes": 1340922106.0,
+    "ponds": 9,
+    "region_ms": 0.002,
+    "rivers": 5
+  }
+]

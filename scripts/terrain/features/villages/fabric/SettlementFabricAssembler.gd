@@ -436,6 +436,9 @@ const NATURAL_ROCK_CUT_MIN_RISE := FabricRecipe.CELL_SIZE \
 ## 7/large its entire green. That is a change worth its own round and its own
 ## frames, not a constant nudged here.
 const GREEN_CAP_LIFT := 0.005
+## The suspended deck top is 0.164 m below the lawn in fabric coordinates.
+## A 0.17 m soil bed seats into that timber while preserving the walking datum.
+const SUSPENDED_SOIL_DEPTH := 0.17
 ## A planned public green is a grass finish over the canonical structural-court
 ## floor rather than a retained cap. One centimetre keeps its visual quad above
 ## the plank/stone face without changing the collision or producing a perceptible
@@ -1257,6 +1260,9 @@ const FACADE_OUTCROP_POST_HALF := 0.3754524
 ## How far a bump-out pushes its face: half a cell, which is what the direction
 ## calls a bump-out and what the corner post above is measured to fill.
 const FACADE_BUMP_REACH := FabricRecipe.CELL_SIZE * 0.5
+const FACADE_JETTY_BRACE_WIDTH := 0.20
+const FACADE_JETTY_BRACE_BOUNDS := AABB(Vector3(-0.14068294,0,-0.2954271),
+	Vector3(0.28136563,3.0,0.5908542))
 ## The flat cap over a complete two-panel bay -- the same reviewed 3 m gallery
 ## module used by a paired floor run. The siting rule commits adjacent facade
 ## cells as one feature, so its lid is also one authored 3 m piece; a one-cell
@@ -1824,13 +1830,20 @@ static func terrace_retaining_payload(plan: SettlementFabricPlan,
 		&"maze-ground-turf", true, 2,
 		maze_turf_clip_cache(capped_ground_cells, terrain_region,
 			maze_green_rim_layout(shell, walked, paved,
-				footprints, capped_ground_cells, true, terrain_region)))
+				footprints, capped_ground_cells, true, terrain_region,
+				transaction.suspended_plaza)))
 	if not garden_mesh.is_empty():
+		inset_suspended_lawn(garden_mesh,transaction.suspended_plaza)
 		out.add_surface_mesh(garden_mesh)
+		var soil := suspended_soil_bed(garden_mesh, transaction.suspended_plaza)
+		if not soil.is_empty(): out.add_surface_mesh(soil)
+		var border := suspended_lawn_border(transaction.suspended_plaza)
+		if not border.is_empty(): out.add_surface_mesh(border)
 	# TASK H2b FIX 1, IMPORTANT 3. The rolled edge round every green bench,
 	# beside the shell rather than inside it -- see `maze_green_rim_walls`.
 	out.append_from(maze_green_rim_walls(retained, solids, paved, plinths,
-		walked, shell, footprints, capped_ground_cells, true, terrain_region))
+		walked, shell, footprints, capped_ground_cells, true, terrain_region,
+		plan.asset_wall_interfaces,transaction.suspended_plaza))
 	# TASK I2. What grows on those benches once they are yards rather than lime
 	# plates, and the village green among them.
 	out.append_from(maze_garden_dressing(retained, solids, paved, plinths,
@@ -3608,7 +3621,8 @@ static func maze_green_rim_walls(retained: Dictionary, solids: Dictionary,
 		walked: Dictionary = {}, shell: Dictionary = {},
 		footprints: Dictionary = {}, capped_cells: Dictionary = {},
 		use_capped_cells: bool = false,
-		terrain_region: LatticeTerrainSurfaceRegion = null) \
+		terrain_region: LatticeTerrainSurfaceRegion = null,
+		interfaces: Dictionary = {}, timber_bordered: Dictionary = {}) \
 		-> EnvironmentInstancePayload:
 	## TASK H2b FIX 1, IMPORTANT 3 -- the rolled edge round every green bench.
 	##
@@ -3653,39 +3667,240 @@ static func maze_green_rim_walls(retained: Dictionary, solids: Dictionary,
 	# prevents crossed grass sheets while keeping the exact same exposed-edge
 	# authority as the terrain field.
 	var layout := maze_green_rim_layout(derived, walked, paved, footprints,
-		capped_cells, use_capped_cells, terrain_region)
+		capped_cells, use_capped_cells, terrain_region,timber_bordered)
+	var pieces: Array[Dictionary] = []
 	for face: Vector4i in layout.faces as Array[Vector4i]:
 		var cell := Vector3i(face.x, face.y, face.z)
-		out.add(GREEN_RIM_EDGE,
-			_maze_green_rim_transform(cell, FACE_DIRECTIONS[face.w],
+		pieces.append({"cell": cell, "direction": Vector2i(FACE_DIRECTIONS[face.w].x,
+			FACE_DIRECTIONS[face.w].z), "asset": GREEN_RIM_EDGE,
+			"pose": _maze_green_rim_transform(cell, FACE_DIRECTIONS[face.w],
 				depth_scale, maze_green_rim_standoff(face, treatments)),
-			Color.WHITE,
-			StringName("maze-rim/%d/%d/%d/%d" % [cell.x, cell.y, cell.z,
-				face.w]))
-	for corner: Vector4i in layout.corners as Array[Vector4i]:
-		var cell := Vector3i(corner.x, corner.y, corner.z)
-		var cdir := Vector2i(1 if (corner.w & 1) != 0 else -1,
-			1 if (corner.w & 2) != 0 else -1)
-		out.add(GREEN_RIM_OUTER_CORNER,
-			_maze_green_rim_corner_transform(cell, cdir), Color.WHITE,
-			StringName("maze-rim-corner/%d/%d/%d/%d" % [cell.x, cell.y,
-				cell.z, corner.w]))
-	for corner: Vector4i in layout.get("inner_corners", []) as Array:
-		var cell := Vector3i(corner.x, corner.y, corner.z)
-		var cdir := Vector2i(1 if (corner.w & 1) != 0 else -1,
-			1 if (corner.w & 2) != 0 else -1)
-		out.add(GREEN_RIM_INNER_CORNER,
-			_maze_green_rim_corner_transform(cell, cdir, true), Color.WHITE,
-			StringName("maze-rim-inner/%d/%d/%d/%d" % [cell.x, cell.y,
-				cell.z, corner.w]))
+			"id": StringName("maze-rim/%d/%d/%d/%d" % [cell.x, cell.y, cell.z, face.w])})
+	for kind: String in ["corners", "inner_corners"]:
+		var inner := kind == "inner_corners"
+		for corner: Vector4i in layout.get(kind, []):
+			var cell := Vector3i(corner.x, corner.y, corner.z)
+			var cdir := Vector2i(1 if (corner.w & 1) != 0 else -1,
+				1 if (corner.w & 2) != 0 else -1)
+			pieces.append({"cell": cell, "direction": cdir,
+				"asset": GREEN_RIM_INNER_CORNER if inner else GREEN_RIM_OUTER_CORNER,
+				"pose": _maze_green_rim_corner_transform(cell, cdir, inner),
+				"id": StringName("maze-rim-%s/%d/%d/%d/%d" % ["inner" if inner else "corner",
+					cell.x, cell.y, cell.z, corner.w])})
+	for piece: Dictionary in pieces:
+		_append_owned_green_rim(out, piece, pieces, interfaces)
+
 	return out
+
+
+static func inset_suspended_lawn(mesh: Dictionary, cells: Dictionary) -> void:
+	# The suspended bed's timber owns the outer 0.25 m of its footprint. Move
+	# only its visual sheet to the same inner boundary; walking faces stay full.
+	var offsets: Dictionary = {}
+	for cell: Vector3i in cells:
+		for direction: Vector3i in FACE_DIRECTIONS:
+			if cells.has(cell+direction): continue
+			var normal := Vector2(direction.x,direction.z)
+			var tangent := Vector2(-normal.y,normal.x)
+			for along: float in [-0.75,0.0,0.75]:
+				var point := Vector2(cell.x,cell.z)*FabricRecipe.CELL_SIZE+normal*0.75+tangent*along
+				offsets[point] = (offsets.get(point,Vector2.ZERO) as Vector2)+normal
+	var vertices: PackedVector3Array = mesh.vertices
+	var logical: Array[Vector3i] = mesh.logical_cells
+	for index in logical.size():
+		if not cells.has(logical[index]): continue
+		# This mesh is generated above with two subdivisions: four quads and
+		# sixteen base vertices per logical cell. Native-corner duplicates belong
+		# only to ordinary ground, whose clip layout remains unchanged.
+		for corner in 16:
+			var vi := index*16+corner
+			var point := vertices[vi]
+			var offset: Vector2 = offsets.get(Vector2(point.x,point.z),Vector2.ZERO)
+			point.x -= signf(offset.x)*0.25
+			point.z -= signf(offset.y)*0.25
+			vertices[vi] = point
+	mesh.vertices = vertices
+
+
+static func suspended_lawn_border(cells: Dictionary) -> Dictionary:
+	if cells.is_empty(): return {}
+	var mesh := {"stable_id": &"maze-lawn-border", "anchor": Vector3(cells.keys()[0])*FabricRecipe.CELL_SIZE,
+		"vertices": PackedVector3Array(), "normals": PackedVector3Array(),
+		"uvs": PackedVector2Array(), "indices": PackedInt32Array(),
+		"collision_faces": PackedVector3Array(), "visual_only": true,
+		"lawn_border": true}
+	var width := 0.25
+	var height := 0.175
+	for cell: Vector3i in cells:
+		for direction: Vector3i in FACE_DIRECTIONS:
+			if cells.has(cell+direction): continue
+			var centre := Vector3(cell)*FabricRecipe.CELL_SIZE+Vector3(direction)*(FabricRecipe.CELL_SIZE-width)*0.5
+			centre.y = float(cell.y+1)*FabricRecipe.CELL_SIZE+GREEN_CAP_LIFT+0.002-height*0.5
+			var length := FabricRecipe.CELL_SIZE
+			# X-facing members own convex corner squares. Their perpendicular
+			# partners end at the inner face, with no overlapping top triangles.
+			if direction.z != 0:
+				for sign_value in [-1,1]:
+					if not cells.has(cell+Vector3i(sign_value,0,0)):
+						length -= width
+						centre.x -= sign_value*width*0.5
+			var size := Vector3(width,height,length) if direction.x != 0 else Vector3(length,height,width)
+			WarrenTransitionSurfaceBuilder._append_box(mesh,centre,size,Basis.IDENTITY)
+		for sx in [-1,1]:
+			for sz in [-1,1]:
+				if not cells.has(cell+Vector3i(sx,0,0)) or not cells.has(cell+Vector3i(0,0,sz)) \
+						or cells.has(cell+Vector3i(sx,0,sz)): continue
+				var centre := Vector3(cell)*FabricRecipe.CELL_SIZE+Vector3(sx,0,sz)*(FabricRecipe.CELL_SIZE-width)*0.5
+				centre.y = float(cell.y+1)*FabricRecipe.CELL_SIZE+GREEN_CAP_LIFT+0.002-height*0.5
+				WarrenTransitionSurfaceBuilder._append_box(mesh,centre,Vector3(width,height,width),Basis.IDENTITY)
+	# The frame sits below the existing native lip top; it does not redefine collision.
+	mesh.collision_faces = PackedVector3Array()
+	# The transition helper's box faces point inward. A solid retaining frame
+	# needs outward normals and the matching clockwise front-face winding.
+	var normals: PackedVector3Array = mesh.normals
+	for index in normals.size(): normals[index] = -normals[index]
+	var indices: PackedInt32Array = mesh.indices
+	for index in range(0,indices.size(),3):
+		var second := indices[index+1]
+		indices[index+1] = indices[index+2]
+		indices[index+2] = second
+	mesh.normals = normals
+	mesh.indices = indices
+	return mesh
+
+
+static func suspended_soil_bed(turf: Dictionary, suspended: Dictionary) -> Dictionary:
+	# The visible terrain sheet stops behind its broad native lips. Start from
+	# its full walking union so the soil also supports those authored panels.
+	if suspended.is_empty(): return {}
+	var cells: Dictionary = {}
+	for cell: Vector3i in suspended: cells[Vector2i(cell.x,cell.z)] = true
+	var source: PackedVector3Array = turf.get("collision_faces",PackedVector3Array())
+	if source.is_empty():
+		for index: int in turf.indices: source.append(turf.vertices[index])
+	var faces: Array[Vector3] = []
+	var boundary: Dictionary = {}
+	for index in range(0,source.size(),3):
+		var centre := (source[index]+source[index+1]+source[index+2])/3.0
+		if not cells.has(Vector2i(roundi(centre.x/FabricRecipe.CELL_SIZE),
+				roundi(centre.z/FabricRecipe.CELL_SIZE))): continue
+		for corner in 3:
+			faces.append(source[index+corner])
+			var a := source[index+corner].snapped(Vector3.ONE*0.000001)
+			var b := source[index+(corner+1)%3].snapped(Vector3.ONE*0.000001)
+			var forward := str(a)+"/"+str(b)
+			var reverse := str(b)+"/"+str(a)
+			if boundary.has(reverse): boundary.erase(reverse)
+			else: boundary[forward] = [a,b]
+	if faces.is_empty(): return {}
+	# The complete boundary supplies one inset for each shared vertex, including
+	# concave turns. 0.28 m keeps soil behind the lip's 0.25 m flat-top limit.
+	var offsets: Dictionary = {}
+	for edge: Array in boundary.values():
+		var delta: Vector3 = edge[1]-edge[0]
+		var outward := Vector3(delta.z,0,-delta.x).normalized()
+		for point: Vector3 in edge: offsets[point] = offsets.get(point,Vector3.ZERO)+outward
+	for point: Vector3 in offsets:
+		offsets[point] = -(offsets[point] as Vector3).sign()*0.28
+		var offset: Vector3 = offsets[point]
+		if offset.x == 0.0 or offset.z == 0.0: continue
+		var adjacent: Dictionary = {}
+		for x in [floori(point.x/FabricRecipe.CELL_SIZE),ceili(point.x/FabricRecipe.CELL_SIZE)]:
+			for z in [floori(point.z/FabricRecipe.CELL_SIZE),ceili(point.z/FabricRecipe.CELL_SIZE)]:
+				if cells.has(Vector2i(x,z)): adjacent[Vector2i(x,z)] = true
+		if adjacent.size() != 1: continue
+		# The native outer lip's flat quarter-circle has radius 0.5 here.
+		# Its 22.5-degree chords contain a radius 0.49039 circle. Stay inside
+		# that real polygon, not the corner of its square bounding box.
+		var cell: Vector2i = adjacent.keys()[0]
+		var centre := Vector3(cell.x*FabricRecipe.CELL_SIZE,point.y,cell.y*FabricRecipe.CELL_SIZE)
+		var relative := point+offset-centre
+		if relative.length()>0.49:
+			offsets[point] = centre+relative.normalized()*0.49-point
+	var mesh := {"stable_id": &"maze-lawn-soil", "anchor": turf.anchor,
+		"vertices": [] as Array[Vector3], "normals": [] as Array[Vector3],
+		"uvs": [] as Array[Vector2], "indices": [] as Array[int],
+		"collision_faces": PackedVector3Array(), "visual_only": true,
+		"soil_bed": true}
+	var drop := Vector3.DOWN*SUSPENDED_SOIL_DEPTH
+	for index in range(0,faces.size(),3):
+		var a := _soil_vertex(faces[index],offsets)
+		var b := _soil_vertex(faces[index+1],offsets)
+		var c := _soil_vertex(faces[index+2],offsets)
+		_soil_triangle(mesh,a,b,c)
+		_soil_triangle(mesh,c+drop,b+drop,a+drop)
+	for edge: Array in boundary.values():
+		var a := _soil_vertex(edge[0],offsets)
+		var b := _soil_vertex(edge[1],offsets)
+		_soil_triangle(mesh,a,a+drop,b+drop)
+		_soil_triangle(mesh,a,b+drop,b)
+	mesh.vertices = PackedVector3Array(mesh.vertices)
+	mesh.normals = PackedVector3Array(mesh.normals)
+	mesh.uvs = PackedVector2Array(mesh.uvs)
+	mesh.indices = PackedInt32Array(mesh.indices)
+	return mesh
+
+
+static func _soil_vertex(point: Vector3, offsets: Dictionary) -> Vector3:
+	return point+Vector3.DOWN*0.004+(offsets.get(point.snapped(Vector3.ONE*0.000001),Vector3.ZERO) as Vector3)
+
+
+static func _soil_triangle(mesh: Dictionary, a: Vector3, b: Vector3, c: Vector3) -> void:
+	var normal := -(b-a).cross(c-a).normalized()
+	for point: Vector3 in [a,b,c]:
+		mesh.indices.append(mesh.vertices.size())
+		mesh.vertices.append(point)
+		mesh.normals.append(normal)
+		mesh.uvs.append(Vector2(point.x,point.z) if absf(normal.y)>0.5
+			else Vector2(point.z,point.y) if absf(normal.x)>0.5 else Vector2(point.x,point.y))
+
+
+static func _append_owned_green_rim(out: EnvironmentInstancePayload, piece: Dictionary,
+		pieces: Array[Dictionary], interfaces: Dictionary) -> void:
+	# A native lip fills most of a cell behind its rounded nose. On narrow lawns
+	# that flat back crosses the opposite lip's nose. Opposing owners divide the
+	# cell at its center, preserving their complete authored curved perimeter.
+	var interface: Dictionary = interfaces.get(piece.asset, {})
+	var removed: Array[Rect2] = []
+	if interface.has("complete_surfaces"):
+		var bounds: AABB = (piece.pose as Transform3D) * (interface.visual_bounds as AABB)
+		var rect := Rect2(Vector2(bounds.position.x, bounds.position.z),
+			Vector2(bounds.size.x, bounds.size.z)).grow(0.001)
+		var center := Vector2(piece.pose.origin.x, piece.pose.origin.z)
+		var direction: Vector2i = piece.direction
+		for axis in 2:
+			if direction[axis] == 0: continue
+			var opposed := false
+			for other: Dictionary in pieces:
+				if other.cell == piece.cell and (other.direction as Vector2i)[axis] == -direction[axis]:
+					opposed = true
+					break
+			if not opposed: continue
+			var cut := rect
+			if direction[axis] > 0:
+				cut.size[axis] = center[axis] - cut.position[axis]
+			else:
+				cut.size[axis] = cut.end[axis] - center[axis]
+				cut.position[axis] = center[axis]
+			removed.append(cut)
+	if removed.is_empty():
+		out.add(piece.asset, piece.pose, Color.WHITE, piece.id)
+		return
+	for source: Dictionary in interface.complete_surfaces:
+		var mesh := FabricSurfaceOwnership.uncovered_surface(source, piece.pose, removed,
+			piece.asset, StringName("%s/owned.%d.%d" % [piece.id,
+				int(source.material_piece), int(source.material_surface)]))
+		if (mesh.vertices as PackedVector3Array).is_empty(): continue
+		mesh["rim_owner"] = piece.id
+		out.add_surface_mesh(mesh)
 
 
 static func maze_green_rim_layout(shell: Dictionary,
 		walked: Dictionary = {}, paved: Dictionary = {},
 		footprints: Dictionary = {}, capped_cells: Dictionary = {},
 		use_capped_cells: bool = false,
-		terrain_region: LatticeTerrainSurfaceRegion = null) -> Dictionary:
+		terrain_region: LatticeTerrainSurfaceRegion = null,
+		timber_bordered: Dictionary = {}) -> Dictionary:
 	## The scale-independent edge topology shared by rendering and audit.  A
 	## `Vector4i` corner stores x/y/z plus two sign bits in w.
 	var candidates := capped_ground_rim_faces(capped_cells, walked, paved,
@@ -3693,6 +3908,7 @@ static func maze_green_rim_layout(shell: Dictionary,
 			paved, footprints)
 	var exposed: Dictionary = {}
 	for face: Vector4i in candidates:
+		if timber_bordered.has(Vector3i(face.x,face.y,face.z)): continue
 		var direction := FACE_DIRECTIONS[face.w]
 		if terrain_region != null:
 			# The terrain field is the finished turf authority.  A lip is cliff
@@ -4825,7 +5041,8 @@ static func maze_garden_rim_face_count(shell: Dictionary,
 		walked: Dictionary = {}, paved: Dictionary = {},
 		footprints: Dictionary = {}, capped_cells: Dictionary = {},
 		use_capped_cells: bool = false,
-		terrain_region: LatticeTerrainSurfaceRegion = null) -> int:
+		terrain_region: LatticeTerrainSurfaceRegion = null,
+		timber_bordered: Dictionary = {}) -> int:
 	## TASK I4, ANNOTATION 1 -- THE CONSISTENCY ROW's left-hand side: how many
 	## turf edges a town HAS, counted off the cell sets rather than off the
 	## payload. Every lateral boundary of every cell a green cap floors where the
@@ -4856,7 +5073,7 @@ static func maze_garden_rim_face_count(shell: Dictionary,
 	## keeps the pre-round answer for a caller that does not hold the surface plan
 	## -- and the compiler, which does, passes them.
 	var layout := maze_green_rim_layout(shell, walked, paved, footprints,
-		capped_cells, use_capped_cells, terrain_region)
+		capped_cells, use_capped_cells, terrain_region,timber_bordered)
 	return (layout.faces as Array).size() + (layout.corners as Array).size() \
 		+ (layout.get("inner_corners", []) as Array).size()
 
@@ -5902,6 +6119,8 @@ static func maze_garden_decor_id(site: Dictionary) -> StringName:
 	## that wants to know what ground the piece really stands on now can.
 	var cell := site.cell as Vector3i
 	var step := site.get("step", Vector3i.ZERO) as Vector3i
+	if site.has("station_part"):
+		return StringName("maze-garden/%d/%d/%d/%d/%d/station/%s" % [cell.x,cell.y,cell.z,step.x,step.z,site.station_part])
 	if step == Vector3i.ZERO:
 		return StringName("maze-garden/%d/%d/%d" % [cell.x, cell.y, cell.z])
 	return StringName("maze-garden/%d/%d/%d/%d/%d" % [cell.x, cell.y, cell.z,
@@ -5930,6 +6149,20 @@ static func maze_garden_planting_sites(garden: Dictionary, plaza: Dictionary,
 	cells.sort_custom(_cell_before)
 	var placed: Dictionary = {}
 	var taken: Dictionary = {}
+	# Lighting claims its finite supported stations before incidental planting.
+	for station: Dictionary in maze_garden_lamp_sites(garden,entries,reserved,
+			treatments,footprints,skin,walked):
+		out.append(station)
+		for member: Vector3i in [station.cell,station.cell+station.step]:
+			placed[member]=station.asset
+			taken[member]=true
+	# Small furnished edge stations own their complete supported cells after lamps.
+	for station: Dictionary in maze_garden_furniture_sites(garden,entries,reserved,
+			treatments,footprints,skin,walked,taken):
+		out.append(station)
+		for member: Vector3i in station.members:
+			placed[member]=station.asset
+			taken[member]=true
 	for cell: Vector3i in cells:
 		# A threshold is a doorway and the centre feature's block is its
 		# clearing; neither grows anything. A cell the piece beside it already
@@ -6015,6 +6248,116 @@ static func maze_garden_planting_sites(garden: Dictionary, plaza: Dictionary,
 		# Standing on the cap's own plane, centred in the ground it really has.
 		out.append({"cell": cell, "step": step, "asset": asset, "yaw": yaw,
 			"origin": origin, "built": built, "refused": false})
+	return out
+
+
+static func maze_garden_lamp_sites(garden: Dictionary, entries: Dictionary,
+		reserved: Dictionary, treatments: Dictionary, footprints: Dictionary,
+		skin: Array[AABB], walked: Dictionary) -> Array[Dictionary]:
+	## One fixed native post per selected two-cell garden station beside a walk.
+	## These cells already own supporting ground; public floors, thresholds,
+	## centre features and occupied air never enter the available station domain.
+	## Later planting consumes the remaining cells. No building is moved or retried.
+	var cells: Array[Vector3i] = []
+	cells.assign(garden.keys())
+	cells.sort_custom(_cell_before)
+	var available: Dictionary = {}
+	for cell in cells:
+		if not entries.has(cell) and not reserved.has(cell) and not walked.has(cell+Vector3i.UP):
+			available[cell]=true
+	var out: Array[Dictionary] = []
+	var taken: Dictionary = {}
+	var asset := SettlementFabricProgram.TERRACE_LANTERN_POST
+	for cell in cells:
+		if not available.has(cell) or taken.has(cell): continue
+		for step: Vector3i in [Vector3i.RIGHT,Vector3i.BACK]:
+			var partner := cell+step
+			if not available.has(partner) or taken.has(partner): continue
+			var beside_walk := false
+			for member: Vector3i in [cell,partner]:
+				for side in FACE_DIRECTIONS:
+					if walked.has(member+side+Vector3i.UP) or entries.has(member+side):
+						beside_walk=true
+			if not beside_walk: continue
+			var free := maze_decor_free_box(cell,treatments,garden,footprints,[cell,partner])
+			var yaw := atan2(-float(step.z),float(step.x))
+			if not maze_decor_fits(free.half,asset,yaw): continue
+			var origin: Vector3 = free.centre
+			origin.y=float(cell.y+1)*FabricRecipe.CELL_SIZE+GREEN_CAP_LIFT
+			var separated := true
+			for prior in out:
+				if origin.distance_to(prior.origin)<6.0: separated=false
+			if not separated: continue
+			if not optional_dressing_is_clear(asset,Transform3D(Basis(Vector3.UP,yaw),origin),footprints,skin): continue
+			out.append({"cell":cell,"step":step,"asset":asset,"yaw":yaw,
+				"origin":origin,"built":true,"refused":false,"light_station":true})
+			taken[cell]=true
+			taken[partner]=true
+			break
+		if out.size()>=4: break
+	return out
+
+
+static func maze_garden_furniture_sites(garden: Dictionary, entries: Dictionary,
+		reserved: Dictionary, treatments: Dictionary, footprints: Dictionary,
+		skin: Array[AABB], walked: Dictionary, occupied: Dictionary) -> Array[Dictionary]:
+	## Native seating/storage belongs to supported unwalked private garden edges.
+	## Each station claims its whole rectangular footprint before later planting.
+	## Fixed local arrangements are checked together; no prop is nudged into a path.
+	var cells: Array[Vector3i] = []
+	cells.assign(garden.keys())
+	cells.sort_custom(_cell_before)
+	var taken := occupied.duplicate()
+	var out: Array[Dictionary] = []
+	var anchors: Array[Vector3] = []
+	for cell in cells:
+		if taken.has(cell) or entries.has(cell) or reserved.has(cell) or walked.has(cell+Vector3i.UP): continue
+		var on_edge := false
+		for side in FACE_DIRECTIONS:
+			if not garden.has(cell+side): on_edge=true
+		if not on_edge: continue
+		var separated := true
+		for anchor in anchors:
+			if Vector2(anchor.x,anchor.z).distance_to(Vector2(cell.x,cell.z)*FabricRecipe.CELL_SIZE)<4.5: separated=false
+		if not separated: continue
+		# A pair supports a full-size bench and a bucket; one cell supports stores.
+		# Sack rise is the measured native lid/base contact, not the crate AABB top.
+		var members: Array[Vector3i] = [cell]
+		var step := Vector3i.ZERO
+		for direction: Vector3i in [Vector3i.RIGHT,Vector3i.BACK]:
+			var partner := cell+direction
+			if garden.has(partner) and not taken.has(partner) and not entries.has(partner) and not reserved.has(partner) and not walked.has(partner+Vector3i.UP):
+				members.append(partner)
+				step=direction
+				break
+		var free := maze_decor_free_box(cell,treatments,garden,footprints,members)
+		var yaw := atan2(-float(step.z),float(step.x)) if step!=Vector3i.ZERO else 0.0
+		var basis := Basis(Vector3.UP,yaw)
+		var origin: Vector3 = free.centre
+		origin.y=float(cell.y+1)*FabricRecipe.CELL_SIZE+GREEN_CAP_LIFT
+		var parts: Array = [
+			[SettlementFabricProgram.TERRACE_CRATE,Vector3.ZERO],
+			[SettlementFabricProgram.TERRACE_BAG,Vector3(0,0.7283466,0)]]
+		if members.size()==2:
+			parts=[
+				[SettlementFabricProgram.TERRACE_BENCH,Vector3(0,0,-0.29)],
+				[SettlementFabricProgram.TERRACE_BUCKET,Vector3(0.58,0,0.40)]]
+		var clear := true
+		for part in parts:
+			var point: Vector3 = origin+basis*part[1]
+			var half: Vector2 = DECOR_CLEARANCE[part[0]]
+			var extent := Vector2(absf(basis.x.x)*half.x+absf(basis.z.x)*half.y,
+				absf(basis.x.z)*half.x+absf(basis.z.z)*half.y)
+			if absf(point.x-origin.x)+extent.x>free.half.x or absf(point.z-origin.z)+extent.y>free.half.y: clear=false
+			if not optional_dressing_is_clear(part[0],Transform3D(basis,point),footprints,skin):clear=false
+		if not clear: continue
+		for i in parts.size():
+			out.append({"cell":cell,"step":step,"members":members,"station_part":str(i),
+				"asset":parts[i][0],"yaw":yaw,"origin":origin+basis*parts[i][1],
+				"built":true,"refused":false})
+		for member in members:taken[member]=true
+		anchors.append(origin)
+		if anchors.size()>=4:break
 	return out
 
 
@@ -7443,9 +7786,12 @@ static func _maze_facade_outcrop_bearers_clear(key: Vector4i, kind: int,
 	## the proposal is refused before any geometry is emitted.
 	var body_half := NATURAL_ROCK_CUT_BODY_WIDTH * 0.5
 	var body_height := NATURAL_ROCK_CUT_BODY_HEIGHT
-	for placement: Transform3D in _maze_facade_outcrop_bearer_transforms(key,
-			kind):
-		var box := placement * SKYWALK_BEARER_LOCAL_BOUNDS
+	var boxes: Array[AABB] = []
+	for placement: Transform3D in _maze_facade_outcrop_bearer_transforms(key,kind):
+		boxes.append(placement*SKYWALK_BEARER_LOCAL_BOUNDS)
+	for placement: Transform3D in _maze_facade_jetty_braces(key,kind):
+		boxes.append(placement*FACADE_JETTY_BRACE_BOUNDS)
+	for box: AABB in boxes:
 		for cell_value: Variant in walked.keys():
 			var cell := cell_value as Vector3i
 			var centre := Vector3(cell) * FabricRecipe.CELL_SIZE
@@ -7456,6 +7802,30 @@ static func _maze_facade_outcrop_bearers_clear(key: Vector4i, kind: int,
 			if _boxes_share_volume(box, body):
 				return false
 	return true
+
+
+static func _maze_facade_jetty_braces(key: Vector4i, kind: int) -> Array[Transform3D]:
+	# Two plain timber knees connect the projecting bottom plate to the parent
+	# wall. Their complete geometry stays in the already reserved lower band;
+	# the same transforms participate in public-headroom admission above.
+	var outward := Vector3(STONE_FACE_DIRECTIONS[key.w])
+	var cross := Vector3(-outward.z,0,outward.x)
+	var boundary := Vector3(key.x,0,key.z)*FabricRecipe.CELL_SIZE \
+		+ outward*FabricRecipe.CELL_SIZE*0.5 + cross*FabricRecipe.CELL_SIZE*0.5
+	var floor_y := float(key.y+1)*FabricRecipe.CELL_SIZE-STONE_MODULE_HEIGHT
+	var reach := FabricRecipe.CELL_SIZE if kind==FacadeOutcrop.BAY else FACADE_BUMP_REACH
+	var width := FACADE_JETTY_BRACE_WIDTH
+	var result: Array[Transform3D] = []
+	for side: float in [-1.0,1.0]:
+		var station := boundary+cross*(FabricRecipe.CELL_SIZE-width)*side
+		var foot := station-outward*0.10+Vector3.UP*(floor_y-minf(reach,0.95)-PLANK_TERRACE_THICKNESS)
+		var head := station+outward*(reach-width)+Vector3.UP*(floor_y-0.10)
+		var axis := (head-foot).normalized()
+		var basis := Basis(cross*width/FACADE_JETTY_BRACE_BOUNDS.size.x,
+			(head-foot)/FACADE_JETTY_BRACE_BOUNDS.size.y,
+			cross.cross(axis)*width/FACADE_JETTY_BRACE_BOUNDS.size.z)
+		result.append(Transform3D(basis,foot))
+	return result
 
 
 static func maze_facade_outcroppings(retained: Dictionary, solids: Dictionary,
@@ -7567,12 +7937,12 @@ static func maze_facade_outcroppings(retained: Dictionary, solids: Dictionary,
 		base_basis.z *= (reach+socket)/FabricRecipe.CELL_SIZE
 		out.add(PLANK_GALLERY,Transform3D(base_basis,base_origin),Color.WHITE,
 			StringName("%s/base" % stable))
-		# NO RIBBED CORBELS UNDER THE PROJECTION. The measured 1.94 m brace laid
-		# across a face reads, from the street, as a short flight of stairs hung
-		# under the overhang (owner, 2026-09-04: "stairs randomly underneath
-		# overhangs ... lets remove them"). The projection is a jetty: its floor
-		# plate and corner posts are the visible construction, and the bearer
-		# stations remain a clearance proof only (`_maze_facade_outcrop_bearers_clear`).
+		# Use plain knees rather than the ribbed corbel asset previously removed
+		# from this facade. A plate alone makes the deep bay read as a floating box.
+		var braces := _maze_facade_jetty_braces(key,int(kinds[key]))
+		for index in braces.size():
+			out.add(TIMBER_SUPPORT,braces[index],Color.WHITE,
+				StringName("%s/brace/%d" % [stable,index]))
 	return out
 
 

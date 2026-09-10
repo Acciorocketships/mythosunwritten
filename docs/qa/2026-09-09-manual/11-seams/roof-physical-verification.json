@@ -1,0 +1,8 @@
+{
+  "same_cells_and_crossings": true,
+  "cells": 132,
+  "crossings": 188,
+  "all_center_clear": true,
+  "before": "10-tiny-roof/clearance-after.json (identical construction before asset bake)",
+  "after_exit": 0
+}

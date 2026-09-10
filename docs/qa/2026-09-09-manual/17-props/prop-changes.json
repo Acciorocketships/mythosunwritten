@@ -1,0 +1,71 @@
+[
+  {
+    "source": "east",
+    "before_props": 34,
+    "after_props": 36,
+    "added": [
+      {
+        "asset": "lpfv.fabric.prop.crate.01",
+        "id": "maze-garden/-3/0/-3/0/0/station/0",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-4.5, 1.505, -4.671)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.bag.01",
+        "id": "maze-garden/-3/0/-3/0/0/station/1",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-4.5, 2.233346, -4.671)]"
+      }
+    ],
+    "removed": []
+  },
+  {
+    "source": "offset",
+    "before_props": 40,
+    "after_props": 45,
+    "added": [
+      {
+        "asset": "lpfv.fabric.prop.crate.01",
+        "id": "maze-garden/-2/3/-6/0/0/station/0",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-3.2815, 6.005, -9.0)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.bag.01",
+        "id": "maze-garden/-2/3/-6/0/0/station/1",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-3.2815, 6.733347, -9.0)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.crate.01",
+        "id": "maze-garden/-3/3/-3/0/0/station/0",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-4.2185, 6.005, -4.5)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.bag.01",
+        "id": "maze-garden/-3/3/-3/0/0/station/1",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-4.2185, 6.733347, -4.5)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.bench.02",
+        "id": "maze-garden/-8/3/-7/1/0/station/0",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-10.9685, 6.005, -10.79)]"
+      },
+      {
+        "asset": "lpfv.fabric.prop.bucket.01",
+        "id": "maze-garden/-8/3/-7/1/0/station/1",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-10.3885, 6.005, -10.1)]"
+      }
+    ],
+    "removed": [
+      {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "id": "maze-garden/-2/3/-6",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-3.2815, 6.005, -9.0)]"
+      }
+    ]
+  },
+  {
+    "source": "thin-turf",
+    "before_props": 30,
+    "after_props": 30,
+    "added": [],
+    "removed": []
+  }
+]

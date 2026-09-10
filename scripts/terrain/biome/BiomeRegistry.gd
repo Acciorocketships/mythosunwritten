@@ -12,6 +12,18 @@ const GROUND_PATCH_WARMTH_SCALE := 156.0
 const GROUND_PATCH_VALUE_RANGE := Vector2(0.96, 1.04)
 const GROUND_PATCH_WARMTH := 0.025
 
+# Sky, horizon, ambient colour/energy, sun colour/energy, bloom strength.
+# A fixed sun direction keeps shadow orientation coherent during transitions.
+const LIGHTING := {
+	&"meadow": ["8cbedb","ffecd3","c2d5e4",0.68,"ffe5bd",1.40,0.72],
+	&"deep_forest": ["354c68","84978e","759bad",0.38,"b3c6b5",0.55,0.92],
+	&"highland": ["97bedb","e7e3e7","b8cee1",0.70,"f0edff",1.45,0.68],
+	&"blossom_grove": ["977b9e","eac0c0","c7b2d2",0.52,"ffd5c1",0.95,0.85],
+	&"twilight_marsh": ["1d2647","6f718f","7b85b1",0.28,"9dacce",0.18,1.05],
+	&"amber_heath": ["af9588","f0c090","cab6a1",0.55,"ffd091",1.18,0.80],
+	&"jade_wetlands": ["558b96","bbd5c1","8dbbb2",0.48,"d8ead1",0.78,0.90],
+}
+
 static var _profiles: Dictionary = {}
 
 static func biome_ids() -> Array[StringName]:
@@ -36,6 +48,9 @@ static func blend_atmosphere(w: Dictionary) -> Dictionary:
 	var amb := Color(0, 0, 0, 0)
 	var fd := 0.0
 	var ae := 0.0
+	var sunlight := Color(0,0,0,0)
+	var se := 0.0
+	var glow := 0.0
 	for name: StringName in w:
 		var p: BiomeProfile = _profiles[name]
 		var k: float = w[name]
@@ -45,8 +60,12 @@ static func blend_atmosphere(w: Dictionary) -> Dictionary:
 		amb += p.ambient_color * k
 		fd += p.fog_density * k
 		ae += p.ambient_energy * k
+		sunlight += p.sun_color * k
+		se += p.sun_energy * k
+		glow += p.glow_intensity * k
 	return {&"fog_color": fog, &"fog_density": fd, &"sky_top": sky_t,
-			&"sky_horizon": sky_h, &"ambient_color": amb, &"ambient_energy": ae}
+			&"sky_horizon": sky_h, &"ambient_color": amb, &"ambient_energy": ae,
+			&"sun_color": sunlight, &"sun_energy": se, &"glow_intensity": glow}
 
 static func blended_density(w: Dictionary) -> float:
 	_ensure()
@@ -123,10 +142,14 @@ static func _art(id: StringName, title: String, ground: Color, tree: Color,
 	p.fog_color = fog
 	p.fog_density = density
 	p.pocket_fog_density = density
-	p.sky_top = Color("718fab")
-	p.sky_horizon = Color("efdbc2")
-	p.ambient_color = Color("c2d5e4")
-	p.ambient_energy = 0.7
+	var lighting: Array = LIGHTING[id]
+	p.sky_top = Color(lighting[0])
+	p.sky_horizon = Color(lighting[1])
+	p.ambient_color = Color(lighting[2])
+	p.ambient_energy = lighting[3]
+	p.sun_color = Color(lighting[4])
+	p.sun_energy = lighting[5]
+	p.glow_intensity = lighting[6]
 	p.foliage_density = foliage
 	p.water_tint = water
 	p.particles = particles
@@ -139,7 +162,7 @@ static func _meadow() -> BiomeProfile:
 
 static func _deep_forest() -> BiomeProfile:
 	return _art(&"deep_forest", "Lanternwood", Color(0.34, 0.48, 0.70),
-		Color(0.16, 0.36, 0.38), Color("477c80"), 0.012, 1.9,
+		Color(0.16, 0.36, 0.38), Color("477c80"), 0.017, 1.9,
 		Color("528c9c"), {&"fireflies": 1.2, &"orbs": 0.25})
 
 static func _highland() -> BiomeProfile:
@@ -154,7 +177,7 @@ static func _blossom_grove() -> BiomeProfile:
 
 static func _twilight_marsh() -> BiomeProfile:
 	return _art(&"twilight_marsh", "Moonfen", Color(0.40, 0.46, 1.28),
-		Color(0.20, 0.31, 0.48), Color("365569"), 0.018, 0.95,
+		Color(0.20, 0.31, 0.48), Color("365569"), 0.024, 0.95,
 		Color("597eaa"), {&"orbs": 0.75, &"fireflies": 1.5})
 
 static func _amber_heath() -> BiomeProfile:
@@ -164,7 +187,7 @@ static func _amber_heath() -> BiomeProfile:
 
 static func _jade_wetlands() -> BiomeProfile:
 	return _art(&"jade_wetlands", "Jade Estuary", Color(0.61, 0.77, 1.05),
-		Color(0.33, 0.70, 0.55), Color("8abfb8"), 0.006, 1.1,
+		Color(0.33, 0.70, 0.55), Color("8abfb8"), 0.012, 1.1,
 		Color("65bbae"), {&"fireflies": 0.6, &"motes": 0.25})
 
 static func local_atmosphere(pos: Vector3, world_seed: int) -> Color:

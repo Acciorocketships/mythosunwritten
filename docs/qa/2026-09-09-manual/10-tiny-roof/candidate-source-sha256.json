@@ -1,0 +1,6 @@
+{
+  "scripts/terrain/features/villages/fabric/WarrenBuildingParcel.gd": "21cd208f755a1ce54751244a559447cecdceb56bed5dc096409660f083fca2b9",
+  "scripts/terrain/features/villages/fabric/WarrenMazeBlockPartitioner.gd": "5da3f971f64e93a5086c2b345566a63b4b4d6afcb8da776fb7a867fa1895c546",
+  "scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd": "c5b52331092e3461e0b7ef9bb34dd5dd46d60f834318d4605494778d6cad430c",
+  "scripts/terrain/features/villages/fabric/WarrenSpatialFabricCompiler.gd": "723ea3b7c910c9d0527a1b291cb941428c4f8fe51a872b507f2cd86b646261a6"
+}

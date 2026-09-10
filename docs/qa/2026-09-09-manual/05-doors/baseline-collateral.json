@@ -1,0 +1,8 @@
+{
+  "source": "/Users/ryko/Documents/Codex/2026-09-08/i-did-a-manual-judging-pass/outputs/final-validation/full-baseline.log.gz",
+  "matching_failures": [
+    "[0] expected to be >= than [1]:  the source bridge may not displace the large blue-roof landmark",
+    "[7] expected to equal [0]:  tall faces must alternate authored stone and facade courses"
+  ],
+  "new_test_script_excluded_due_to_type_annotation": true
+}

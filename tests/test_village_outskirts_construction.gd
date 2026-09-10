@@ -79,10 +79,9 @@ func test_reported_town_builds_connected_nonoverlapping_ground_houses_once() -> 
 			assert_lte(volume.y_range.x,ground+0.001)
 			assert_gte(volume.y_range.y,ground+TraversalEnvelope.MIN_HEADROOM-0.001,
 				"street headroom follows the completed graded ground")
-	var approach := FeatureGroundShape.oriented_rect(Vector2(264,244),Vector2(2,26),0)
-	for house: VillageMassingPlacement in outskirts.placements:
-		assert_false(house.solid_shape().intersects(approach),
-			"the shared incoming approach remains free of houses")
+	for street: Dictionary in outskirts.street_paths:
+		assert_false(String(street.owner).ends_with(".approach"),
+			"Without a canonical world road, the primary gate ends at the circuit")
 	for i in outskirts.placements.size():
 		var house := outskirts.placements[i]
 		# The authored porch/foundation can be inset from the visible facade.

@@ -1,0 +1,156 @@
+{
+  "amber_heath_landscape": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 23.18624782986111,
+    "roi_mean_abs_rgb": 23.18624782986111,
+    "roi_changed_over_20_fraction": 0.9688628472222223
+  },
+  "amber_heath_town": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 22.473315610532406,
+    "roi_mean_abs_rgb": 22.473315610532406,
+    "roi_changed_over_20_fraction": 0.9973567708333333
+  },
+  "blossom_grove_landscape": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 19.213121383101853,
+    "roi_mean_abs_rgb": 19.213121383101853,
+    "roi_changed_over_20_fraction": 0.9675151909722223
+  },
+  "blossom_grove_town": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 17.238340928819444,
+    "roi_mean_abs_rgb": 17.238340928819444,
+    "roi_changed_over_20_fraction": 0.8625618489583333
+  },
+  "deep_forest_landscape": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 52.65213107638889,
+    "roi_mean_abs_rgb": 52.65213107638889,
+    "roi_changed_over_20_fraction": 0.9998600260416667
+  },
+  "deep_forest_town": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 57.887589337384256,
+    "roi_mean_abs_rgb": 57.887589337384256,
+    "roi_changed_over_20_fraction": 0.9976161024305555
+  },
+  "highland_landscape": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 10.242179542824074,
+    "roi_mean_abs_rgb": 10.242179542824074,
+    "roi_changed_over_20_fraction": 0.6750944010416666
+  },
+  "highland_town": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 11.293354311342593,
+    "roi_mean_abs_rgb": 11.293354311342593,
+    "roi_changed_over_20_fraction": 0.5394574652777778
+  },
+  "jade_wetlands_landscape": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 28.782950665509258,
+    "roi_mean_abs_rgb": 28.782950665509258,
+    "roi_changed_over_20_fraction": 0.9994411892361111
+  },
+  "jade_wetlands_town": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 29.276666666666667,
+    "roi_mean_abs_rgb": 29.276666666666667,
+    "roi_changed_over_20_fraction": 0.9951844618055555
+  },
+  "meadow_landscape": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 3.432824435763889,
+    "roi_mean_abs_rgb": 3.432824435763889,
+    "roi_changed_over_20_fraction": 0.006828342013888889
+  },
+  "meadow_town": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 7.94835033275463,
+    "roi_mean_abs_rgb": 7.94835033275463,
+    "roi_changed_over_20_fraction": 0.06274739583333333
+  },
+  "twilight_marsh_landscape": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 71.72486653645834,
+    "roi_mean_abs_rgb": 71.72486653645834,
+    "roi_changed_over_20_fraction": 0.9998784722222223
+  },
+  "twilight_marsh_town": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 79.54422960069445,
+    "roi_mean_abs_rgb": 79.54422960069445,
+    "roi_changed_over_20_fraction": 0.9979720052083333
+  }
+}

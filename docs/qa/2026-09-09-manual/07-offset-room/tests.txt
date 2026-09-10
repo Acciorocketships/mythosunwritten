@@ -1,0 +1,88 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_offset_support.gd
+* test_native_knees_reach_the_wall_and_bottom_plate_in_four_orientations
+* test_photographed_bays_emit_two_visible_supports_each
+2/2 passed.
+
+
+res://tests/test_september8_garden_outcroppings.gd
+* test_continuous_garden_wall_has_one_projection_depth
+* test_cover_depth_matches_its_wall_projection
+2/2 passed.
+
+
+res://tests/test_september8_night_outcrop.gd
+* test_photographed_outcrop_has_a_bottom_plate_bearing_into_its_parent_wall
+1/1 passed.
+
+
+res://tests/test_september8_night_overlap.gd
+* test_photographed_outcrop_end_has_one_visible_surface_owner
+* test_photographed_floor_edge_has_one_visible_surface_owner
+* test_every_removed_jetty_end_is_closed_by_its_authored_corner_stock
+3/3 passed.
+
+
+res://tests/test_september8_night_rails.gd
+* test_photographed_towns_do_not_fence_retained_walls
+* test_wall_socket_preserves_exposed_guard_and_collision_in_all_directions
+* test_photo14_lower_rail_respects_full_hanging_stone_course
+3/3 passed.
+
+
+res://tests/test_september8_night_corners.gd
+* test_reported_retained_facade_panels_stay_inside_their_shared_corner
+* test_corner_ownership_rotates_and_leaves_straight_runs_unchanged
+* test_baked_corners_retain_the_original_visual_envelope
+* test_photo14_room_panels_have_referenced_faces_closing_both_miters
+* test_photo14_stone_to_room_joint_blocks_the_exposed_party_wall_sliver
+* test_material_seam_posts_stay_in_the_two_occupied_cells_in_every_orientation
+6/6 passed.
+
+
+res://tests/test_september9_grass_lip.gd
+* test_reported_narrow_strip_and_end_keep_a_closed_rolled_edge_in_four_orientations
+* test_native_lip_collision_and_world_tint_contract_survive_surface_ownership
+2/2 passed.
+
+
+res://tests/test_september9_door_ownership.gd
+* test_connected_native_party_openings_share_one_entry_in_four_orientations
+* test_partial_walls_gaps_and_staggered_floors_keep_separate_access
+* test_photographed_frontage_keeps_its_central_door_and_corner_entrance
+* test_replacement_window_closes_into_the_deep_door_reveal_in_four_orientations
+4/4 passed.
+
+
+res://tests/test_september9_rail_attachment.gd
+* test_gate_rails_enter_actual_native_landing_posts_in_four_orientations
+* test_attachment_keeps_the_reserved_treads_and_lower_landing
+2/2 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               9
+Tests                25
+Passing Tests        25
+Asserts            3725
+Time              81.802s
+
+
+---- All tests passed! ----
+

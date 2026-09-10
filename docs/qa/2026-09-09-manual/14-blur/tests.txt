@@ -1,0 +1,33 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_atmosphere_director.gd
+* test_apply_grade_sets_render_stack
+* test_moving_between_biomes_cannot_relight_the_world
+2/2 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         2
+Asserts              12
+Time              0.373s
+
+
+---- All tests passed! ----
+

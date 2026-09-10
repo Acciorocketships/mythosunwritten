@@ -1,0 +1,99 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_lantern_lights.gd
+* test_native_lantern_batches_emit_one_warm_light_per_placement
+* test_native_pane_centres_anchor_the_lights_under_scaled_rotation
+2/2 passed.
+
+
+res://tests/test_september9_biome_mood.gd
+* test_biomes_have_distinct_light_levels_and_a_twilight_endpoint
+1/1 passed.
+
+
+res://tests/test_atmosphere_director.gd
+* test_apply_grade_sets_render_stack
+* test_biome_lighting_changes_gradually_without_rotating_shadows
+* test_mood_response_is_independent_of_frame_partition
+3/3 passed.
+
+
+res://tests/test_atmosphere_field.gd
+* test_neighbouring_fog_chunks_have_identical_edges
+* test_atmosphere_is_resource_free_deterministic_and_grounded
+* test_biome_boundaries_are_continuous_at_walking_speed
+* test_landforms_have_distinct_structural_silhouettes
+* test_landform_provinces_do_not_introduce_grid_seams
+* test_islands_preserve_ground_without_raising_or_flooding_it
+* test_every_new_biome_has_a_distinct_name_and_complete_ecology
+* test_scrolling_ground_lookup_preserves_overlapping_world_samples
+* test_rivers_and_ground_share_the_new_production_height_input
+* test_wetland_particles_float_above_water_instead_of_the_lake_bed
+10/10 passed.
+
+
+res://tests/test_biome_registry.gd
+* test_all_five_profiles_load_complete
+* test_meadow_and_highland_are_fog_free
+* test_blend_atmosphere_endpoints_and_midpoint
+* test_blended_density_uses_the_profile_budget
+* test_biome_id_order_and_density_bound_are_explicit
+* test_ground_tint_combines_biome_and_shared_patch_fields
+6/6 passed.
+
+
+res://tests/test_biome_chunk_fx.gd
+* test_marsh_builds_fog_two_emitters_and_orbs
+* test_meadow_no_fog_no_orbs_one_emitter
+* test_glow_recipes_are_soft_billboards
+* test_petals_keep_alpha_but_get_the_soft_texture
+* test_emitter_aabb_contains_emission_box
+* test_emission_band_follows_surface_heights
+6/6 passed.
+
+
+res://tests/test_dressing_commit_queue.gd
+* test_one_asset_piece_commits_one_coloured_multimesh_batch
+* test_palette_piece_commits_material_without_instance_colour_channel
+* test_stale_generation_is_discarded_without_touching_the_chunk
+* test_batch_budget_is_exact
+* test_stable_ids_are_validated_and_ignored_by_render_commit
+5/5 passed.
+
+
+res://tests/test_feature_commit_queue.gd
+* test_assets_and_collision_are_staged_before_readiness
+* test_empty_blocks_become_explicit_ready_records_without_nodes
+* test_invalidation_discards_a_detached_partial_commit
+* test_collision_contract_skips_visual_instances_and_commits_boxes
+* test_box_only_payload_waits_for_collision_commit
+* test_terrain_corner_backing_keeps_rock_uv_at_commit
+* test_partitioned_cap_keeps_the_authored_material
+7/7 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               8
+Tests                40
+Passing Tests        40
+Asserts            1379
+Time              11.214s
+
+
+---- All tests passed! ----
+

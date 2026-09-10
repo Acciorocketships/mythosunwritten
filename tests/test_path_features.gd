@@ -90,7 +90,7 @@ func test_lamps_have_hard_spacing_and_alternate_observed_sides() -> void:
 		assert_gt(arm.dot(toward_path), 0.99,
 			"the authored hanging arm faces inward over the path")
 
-func test_large_gates_follow_each_real_village_approach() -> void:
+func test_village_approaches_do_not_receive_detached_road_gates() -> void:
 	var plan := _plan(991177)
 	var node := Vector2i(4, 4)
 	var routes: Array[Dictionary] = []
@@ -109,14 +109,9 @@ func test_large_gates_follow_each_real_village_approach() -> void:
 		if batch.is_empty():
 			continue
 		gate_count += batch.transforms.size()
-		for transform: Transform3D in batch.transforms:
-			var distance := Vector2(transform.origin.x, transform.origin.z).distance_to(
-				Vector2(node) * TerrainSurfaceField.TILE)
-			assert_almost_eq(distance, (PathProgram.VILLAGE_GATE_MIN_STEPS - 0.5) \
-				* TerrainSurfaceField.TILE, 0.001)
-	assert_eq(gate_count, 4, "every accepted route out of the village receives a gate")
+	assert_eq(gate_count, 0, "Tunnel frames belong to actual town passages")
 
-func test_village_gate_follows_a_route_through_an_early_turn() -> void:
+func test_turning_approach_does_not_receive_a_detached_gate() -> void:
 	var plan := _plan(991177)
 	var node := Vector2i(4, 4)
 	var cells: Array[Vector2i] = [node, node + Vector2i.RIGHT]
@@ -132,18 +127,9 @@ func test_village_gate_follows_a_route_through_an_early_turn() -> void:
 		var batch: Dictionary = payload.batches.get(asset_id, {})
 		if not batch.is_empty():
 			transforms.append_array(batch.transforms)
-	assert_eq(transforms.size(), 1)
-	var transform := transforms[0]
-	var expected := (Vector2(cells[PathProgram.VILLAGE_GATE_MIN_STEPS - 1]) \
-		+ Vector2(cells[PathProgram.VILLAGE_GATE_MIN_STEPS])) \
-		* TerrainSurfaceField.TILE * 0.5
-	assert_eq(Vector2(transform.origin.x, transform.origin.z),
-		expected)
-	var across_opening := transform.basis * Vector3.RIGHT
-	assert_gt(absf(across_opening.x), 0.99,
-		"the arch aligns to the local vertical road segment after the turn")
+	assert_eq(transforms.size(), 0, "A route bend is not a tunnel entrance")
 
-func test_routes_that_split_near_a_village_each_receive_a_gate() -> void:
+func test_split_approaches_do_not_multiply_detached_gates() -> void:
 	var plan := _plan(991177)
 	var node := Vector2i(4, 4)
 	var routes: Array[Dictionary] = [
@@ -160,8 +146,8 @@ func test_routes_that_split_near_a_village_each_receive_a_gate() -> void:
 	var gate_count := 0
 	for asset_id: StringName in [&"sfv.arch.001", &"sfv.arch.002"]:
 		gate_count += payload.batches.get(asset_id, {}).get("transforms", []).size()
-	assert_eq(gate_count, 3,
-		"a branch before the gate distance creates one gate on each physical exit")
+	assert_eq(gate_count, 0,
+		"A road fork does not manufacture additional town entrances")
 
 func test_small_arch_is_owned_by_the_exact_biome_crossing() -> void:
 	var base := _plan()

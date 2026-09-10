@@ -30,24 +30,26 @@ func test_chunk_of_world_pos():
 
 func test_startup_environment_resolves_visible_chunk_seams() -> void:
 	assert_eq(Streamer.support_chunks_at(Vector3.ZERO), [
-		Vector2i(-1, -1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i.ZERO,
+		Vector2i(-1,-1),Vector2i(-1,0),Vector2i(-1,1),
+		Vector2i(0,-1),Vector2i.ZERO,Vector2i(0,1),
+		Vector2i(1,-1),Vector2i(1,0),Vector2i(1,1),
 	])
 	assert_eq(Streamer.support_chunks_at(Streamer.DEFAULT_SPAWN_POSITION),
-		[Vector2i(-1, -1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i.ZERO],
+		Streamer.support_chunks_at(Vector3.ZERO),
 		"the production camera cannot reveal an unbuilt origin quadrant")
-	assert_eq(Streamer.support_chunks_at(Vector3(96.0, 0.0, 96.0)), [Vector2i.ZERO],
-		"a spawn more than one terrain cell from a seam needs one chunk")
+	assert_eq(Streamer.support_chunks_at(Vector3(96.0, 0.0, 96.0)).size(),9,
+		"even a centred spawn needs the surrounding travel buffer")
 
 func test_startup_progress_counts_only_integrated_support_chunks() -> void:
 	var s := Streamer.new()
 	s._startup_support_chunks = Streamer.support_chunks_at(Vector3.ZERO)
 	assert_eq(s.startup_loading_progress(), 0.0)
 	assert_false(s.startup_loading_complete())
-	for index in 3:
+	for index in s._startup_support_chunks.size()-1:
 		s._built[s._startup_support_chunks[index]] = true
-	assert_eq(s.startup_loading_progress(), 0.75)
+	assert_almost_eq(s.startup_loading_progress(), 8.0/9.0,0.000001)
 	assert_false(s.startup_loading_complete())
-	s._built[s._startup_support_chunks[3]] = true
+	s._built[s._startup_support_chunks[-1]] = true
 	assert_eq(s.startup_loading_progress(), 1.0)
 	assert_true(s.startup_loading_complete())
 	s.free()

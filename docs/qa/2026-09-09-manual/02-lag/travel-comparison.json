@@ -1,0 +1,180 @@
+{
+  "before": {
+    "distance": 2399.9599609375,
+    "final_memory_bytes": 3071808866.0,
+    "peak_memory_bytes": 3264838338.0,
+    "built": 56,
+    "nodes": 11541.0,
+    "queued": 0,
+    "active": {},
+    "fields": {
+      "entries": 192,
+      "evictions": 62,
+      "features": {
+        "context_cache": 37,
+        "frame_cache": 10,
+        "paths": {
+          "bridge_profiles": 94,
+          "bridge_raw_cache": 94,
+          "bridge_resolved_cache": 75,
+          "context_builds": 118,
+          "context_cache": 96,
+          "evictions": 22,
+          "node_builds": 36,
+          "node_cache": 36,
+          "node_queries": 2570,
+          "planning_point_cache": 6678,
+          "route_cache": 33,
+          "route_exact_failures": 2,
+          "route_queries": 1295,
+          "route_solves": 33
+        },
+        "villages": {
+          "builds": 10,
+          "cache": 10,
+          "evictions": 0,
+          "materialize_usec": 1684,
+          "outskirts_usec": 199153,
+          "queries": 37,
+          "urban_usec": 1377251
+        }
+      },
+      "height_samples": 200000,
+      "hydraulic_profiles": 79,
+      "region_build_usec": 8087572,
+      "region_builds": 254,
+      "region_hits": 32449,
+      "source_solves": 16,
+      "trace_regions": 77,
+      "water_build_usec": 229295881,
+      "water_builds": 190,
+      "water_hits": 21639,
+      "water_regions": 271,
+      "water_traces": 1714
+    },
+    "frames": {
+      "outbound": {
+        "frames": 7181,
+        "max_ms": 318.23,
+        "mean_ms": 16.7204758390196,
+        "p50_ms": 16.545,
+        "p95_ms": 22.94,
+        "p99_ms": 24.356
+      },
+      "return": {
+        "frames": 7152,
+        "max_ms": 263.675,
+        "mean_ms": 16.7766505872483,
+        "p50_ms": 16.568,
+        "p95_ms": 22.867,
+        "p99_ms": 24.444
+      },
+      "returned_settling": {
+        "frames": 7187,
+        "max_ms": 110.391,
+        "mean_ms": 16.7141128426325,
+        "p50_ms": 16.61,
+        "p95_ms": 23.178,
+        "p99_ms": 25.083
+      },
+      "startup": {
+        "frames": 10539,
+        "max_ms": 5209.773,
+        "mean_ms": 17.2328202865548,
+        "p50_ms": 16.647,
+        "p95_ms": 21.462,
+        "p99_ms": 23.559
+      }
+    },
+    "startup_first_sample_ms": 181776
+  },
+  "after": {
+    "distance": 2399.89990234375,
+    "final_memory_bytes": 2885599258.0,
+    "peak_memory_bytes": 3052399642.0,
+    "built": 56,
+    "nodes": 11541.0,
+    "queued": 0,
+    "active": {},
+    "fields": {
+      "entries": 192,
+      "evictions": 62,
+      "features": {
+        "context_cache": 37,
+        "frame_cache": 10,
+        "paths": {
+          "bridge_profiles": 94,
+          "bridge_raw_cache": 94,
+          "bridge_resolved_cache": 75,
+          "context_builds": 118,
+          "context_cache": 96,
+          "evictions": 22,
+          "node_builds": 36,
+          "node_cache": 36,
+          "node_queries": 2570,
+          "planning_point_cache": 6678,
+          "route_cache": 33,
+          "route_exact_failures": 2,
+          "route_queries": 1295,
+          "route_solves": 33
+        },
+        "villages": {
+          "builds": 10,
+          "cache": 10,
+          "evictions": 0,
+          "materialize_usec": 1918,
+          "outskirts_usec": 196962,
+          "queries": 37,
+          "urban_usec": 1352346
+        }
+      },
+      "height_samples": 200000,
+      "hydraulic_profiles": 79,
+      "region_build_usec": 8136803,
+      "region_builds": 254,
+      "region_hits": 32450,
+      "source_solves": 16,
+      "trace_regions": 0,
+      "water_build_usec": 226846366,
+      "water_builds": 190,
+      "water_hits": 21640,
+      "water_regions": 256,
+      "water_traces": 1714
+    },
+    "frames": {
+      "outbound": {
+        "frames": 7177,
+        "max_ms": 324.72,
+        "mean_ms": 16.7185385258465,
+        "p50_ms": 16.416,
+        "p95_ms": 23.849,
+        "p99_ms": 24.596
+      },
+      "return": {
+        "frames": 7160,
+        "max_ms": 264.35,
+        "mean_ms": 16.7603695530727,
+        "p50_ms": 16.626,
+        "p95_ms": 21.834,
+        "p99_ms": 24.193
+      },
+      "returned_settling": {
+        "frames": 7176,
+        "max_ms": 111.967,
+        "mean_ms": 16.7306963489409,
+        "p50_ms": 16.61,
+        "p95_ms": 23.633,
+        "p99_ms": 24.991
+      },
+      "startup": {
+        "frames": 10396,
+        "max_ms": 5135.805,
+        "mean_ms": 17.2289570026933,
+        "p50_ms": 16.622,
+        "p95_ms": 23.261,
+        "p99_ms": 24.508
+      }
+    },
+    "startup_first_sample_ms": 179569
+  }
+}

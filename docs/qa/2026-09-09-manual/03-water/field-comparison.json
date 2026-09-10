@@ -1,0 +1,129 @@
+{
+  "elapsed_ms": 237741,
+  "sites": [
+    {
+      "photo": "05",
+      "samples": 1681,
+      "max_terrain_difference": 0.0,
+      "max_natural_difference": 0.0,
+      "before": {
+        "wet_samples": 622,
+        "above_natural_plus_0_3": 141,
+        "min_level": 1.62500002384186,
+        "max_level": 12.1711406707764
+      },
+      "after": {
+        "wet_samples": 468,
+        "above_natural_plus_0_3": 0,
+        "min_level": 1.62500002384186,
+        "max_level": 4.84868812561035
+      },
+      "pins": [
+        {
+          "x": 48,
+          "z": -1569,
+          "before": [
+            8.0,
+            8.0,
+            12.1711406707764,
+            12.1711406707764
+          ],
+          "after": [
+            8.0,
+            8.0,
+            null,
+            4.84868812561035
+          ]
+        }
+      ]
+    },
+    {
+      "photo": "07",
+      "samples": 1681,
+      "max_terrain_difference": 0.0,
+      "max_natural_difference": 0.0,
+      "before": {
+        "wet_samples": 777,
+        "above_natural_plus_0_3": 775,
+        "min_level": 8.2557014465332,
+        "max_level": 21.2436428070068
+      },
+      "after": {
+        "wet_samples": 0,
+        "above_natural_plus_0_3": 0,
+        "min_level": null,
+        "max_level": null
+      },
+      "pins": [
+        {
+          "x": 132,
+          "z": -1710,
+          "before": [
+            12.0,
+            12.0,
+            21.2436428070068,
+            21.2436428070068
+          ],
+          "after": [
+            12.0,
+            12.0,
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "photo": "08",
+      "samples": 1681,
+      "max_terrain_difference": 0.0,
+      "max_natural_difference": 0.0,
+      "before": {
+        "wet_samples": 666,
+        "above_natural_plus_0_3": 288,
+        "min_level": 1.20000004768372,
+        "max_level": 21.2436428070068
+      },
+      "after": {
+        "wet_samples": 337,
+        "above_natural_plus_0_3": 0,
+        "min_level": 1.20000004768372,
+        "max_level": 1.20000004768372
+      },
+      "pins": [
+        {
+          "x": 114,
+          "z": -1854,
+          "before": [
+            16.0,
+            16.0,
+            21.2436428070068,
+            21.2436428070068
+          ],
+          "after": [
+            16.0,
+            16.0,
+            null,
+            null
+          ]
+        },
+        {
+          "x": 180,
+          "z": -1830,
+          "before": [
+            4.0,
+            16.0,
+            21.1324672698975,
+            21.1324672698975
+          ],
+          "after": [
+            4.0,
+            16.0,
+            null,
+            null
+          ]
+        }
+      ]
+    }
+  ]
+}

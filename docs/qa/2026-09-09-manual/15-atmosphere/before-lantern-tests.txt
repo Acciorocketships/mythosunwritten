@@ -1,0 +1,40 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_lantern_lights.gd
+* test_native_lantern_batches_emit_one_warm_light_per_placement
+    [Failed]:  [0] expected to equal [12]:  Multiple native mesh pieces must not duplicate the same lamp's light
+      at line 17
+0/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september9_lantern_lights.gd
+- test_native_lantern_batches_emit_one_warm_light_per_placement
+    [Failed]:  [0] expected to equal [12]:  Multiple native mesh pieces must not duplicate the same lamp's light
+          at line 17
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             0/1
+Time              1.399s
+
+
+---- 1 failing tests ----
+

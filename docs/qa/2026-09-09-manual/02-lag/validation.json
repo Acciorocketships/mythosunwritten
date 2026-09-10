@@ -1,0 +1,25 @@
+{
+  "status": "accepted_measured_retention_and_rendering_fixes",
+  "tests": {
+    "scripts": 6,
+    "tests": 40,
+    "assertions": 435,
+    "seconds": 13.81,
+    "exit_code": 0,
+    "log": "/private/tmp/september9-lag-regressions.log"
+  },
+  "water_field_parity": {
+    "contexts": 31,
+    "fill_and_contour_hashes_equal": true,
+    "report": "water-retention-cost.json"
+  },
+  "travel": "travel-comparison.json",
+  "rendering": "production-comparison.json",
+  "pixel_differences": "production-pixel-diff.json",
+  "limitations": [
+    "Headless 60 fps-capped experiment did not reproduce progressive CPU slowdown.",
+    "Camera is inferred; photo 1 has no crosshair terrain hit.",
+    "Render-only fixture emits separately recorded native resource teardown warnings.",
+    "No universal frame-rate floor or globally green baseline claim."
+  ]
+}

@@ -27,6 +27,8 @@ tests/artifacts/village_review_runs/
 /docs/qa/2026-09-07-manual/*.log
 /docs/qa/2026-09-08-manual/**/*.png
 /docs/qa/2026-09-08-manual/*.png
+/docs/qa/2026-09-09-manual/**/*.png
+/docs/qa/2026-09-09-manual/*.png
 /docs/qa/2026-09-08-manual/**/*.gif
 /docs/qa/2026-09-08-manual/*.gif
 /docs/qa/2026-09-08-manual/**/*.log

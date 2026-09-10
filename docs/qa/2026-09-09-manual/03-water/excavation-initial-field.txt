@@ -1,0 +1,83 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_water_field.gd
+* test_profiles_monotone_and_continuous
+* test_descent_is_smooth_pool_to_pool
+MEAS test_descent_is_smooth_pool_to_pool: span[1,8] anchor_start=15.0000 anchor_end=1.2000 span_len=84.00 KNOTS (2):
+  k=0 arc=0.00 pos=(46.02,-1048.46) curve_val=15.0000 ground=8.0000 depth=7.0000  <-- anchor
+  k=22 arc=84.00 pos=(52.74,-1129.81) curve_val=1.2000 ground=0.0000 depth=1.2000  <-- anchor
+MEAS test_descent_is_smooth_pool_to_pool: span[1,8] sill-ride: 23/23 dense samples clear ground+DESCENT_CLAMP
+MEAS test_descent_is_smooth_pool_to_pool: 1 span(s) checked, 23 dense samples, max |second_diff|=0.156 (bound 0.5, openly relaxed near sill knots)
+* test_reported_rendered_field_follows_one_continuous_descent
+MEAS reported rendered descent: samples=23 max_field_curve_err=0.179 max_second=0.473 offenders=[]
+* test_reported_terminal_chute_is_one_smooth_surface
+MEAS exact terminal chute: checked=1426 max_first=1.290 at (48.0, -1082.0) max_second=1.290 at (48.0, -1087.0)
+MEAS exact terminal chute lattice p=(36.0, -1092.0) fill=3.000 channel=-inf ground=0.000
+MEAS exact terminal chute lattice p=(36.0, -1086.0) fill=3.000 channel=-inf ground=2.000
+MEAS exact terminal chute lattice p=(36.0, -1080.0) fill=6.919 channel=15.000 ground=4.000
+MEAS exact terminal chute lattice p=(36.0, -1074.0) fill=9.369 channel=15.000 ground=4.000
+    [Failed]:  the terminal river-to-pool join has no one-metre cliff (1.290m at (48.0, -1082.0))
+      at line 333
+    [Failed]:  the terminal river-to-pool join has no angular grade break (1.290m at (48.0, -1087.0))
+      at line 335
+* test_profile_without_region_is_still_monotone
+* test_level_at_known_water_and_dry_land
+* test_level_continuous_along_the_site_channel
+* test_level_continuous_without_region_keeps_old_jumps
+* test_reported_site_continuous_bathymetry_has_no_false_fall_span
+* test_steep_spans_finds_a_real_hand_built_cliff
+* test_profile_is_independent_of_which_region_first_computed_it
+* test_steep_scan_flat_ground_finds_nothing
+* test_steep_scan_gentle_ramp_finds_nothing
+* test_steep_scan_finds_a_sharp_step
+* test_steep_scan_two_separate_cliffs_stay_separate
+* test_steep_scan_short_array_returns_empty
+* test_flow_and_grade
+* test_no_dry_holes_inside_water
+* test_reported_inner_corner_has_no_false_dry_sub_lattice_passage
+MEAS 2026-07-21 inner false-dry start=(-401.0702, -489.276) level=3.000 target=(-402.0981, -489.6676) ground=2.061 field=3.0 rescued=0/8649
+* test_water_never_stands_above_its_source
+* test_waterline_is_a_terrain_contour
+MEAS test_waterline_is_a_terrain_contour: 0 checked, 0 violations
+* test_no_steep_span_without_terrain_drop
+* test_shoreline_hugs_terrain_contour
+test_shoreline_hugs_terrain_contour: 334 crossings found, 0 violations
+* test_fill_is_deterministic_across_chunks
+* test_wet_agreement_across_all_chunk_borders
+test_wet_agreement_across_all_chunk_borders: 8712 points checked across all borders/seeds, 0 mismatches
+24/25 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_water_field.gd
+- test_reported_terminal_chute_is_one_smooth_surface
+    [Failed]:  the terminal river-to-pool join has no one-metre cliff (1.290m at (48.0, -1082.0))
+          at line 333
+    [Failed]:  the terminal river-to-pool join has no angular grade break (1.290m at (48.0, -1087.0))
+          at line 335
+
+Totals
+------
+Scripts               1
+Tests                25
+Passing Tests        24
+Failing Tests         1
+Asserts           847/849
+Time              210.979s
+
+
+---- 1 failing tests ----
+

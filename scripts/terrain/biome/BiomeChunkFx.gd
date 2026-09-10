@@ -242,11 +242,11 @@ static func build_field(data: Dictionary) -> Node3D:
 		orb.phase = fposmod(point.x * 0.37 + point.z * 0.71, TAU)
 		var sprite := MeshInstance3D.new()
 		var mesh := QuadMesh.new()
-		mesh.size = Vector2(2.2, 2.2)
+		mesh.size = Vector2(3.2, 3.2)
 		var material := ShaderMaterial.new()
 		material.shader = load("res://terrain/materials/spirit_orb.gdshader")
 		material.set_shader_parameter("phase", orb.phase)
-		var color := Color("80e8df").lerp(Color("ffce83"), (sin(orb.phase) + 1.0) * 0.5)
+		var color := Color("ffbf73").lerp(Color("ffe0a3"), (sin(orb.phase) + 1.0) * 0.5)
 		material.set_shader_parameter("glow_color", color)
 		mesh.material = material
 		sprite.mesh = mesh
@@ -254,8 +254,8 @@ static func build_field(data: Dictionary) -> Node3D:
 		orb.add_child(sprite)
 		var light := OmniLight3D.new()
 		light.light_color = color
-		light.light_energy = 0.8
-		light.omni_range = 8.0
+		light.light_energy = 1.3
+		light.omni_range = 18.0
 		light.light_volumetric_fog_energy = 0.45
 		light.distance_fade_enabled = true
 		light.distance_fade_begin = 65.0

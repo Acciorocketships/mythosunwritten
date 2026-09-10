@@ -1,0 +1,66 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_fern_habitat.gd
+* test_broadleaf_species_is_confined_to_jade_estuary_and_its_blend
+    [Failed]:  [94] expected to equal [0]:  The broadleaf must not colonize meadow
+      at line 20
+    [Failed]:  [167] expected to equal [0]:  The broadleaf must not colonize deep_forest
+      at line 20
+    [Failed]:  [125] expected to equal [0]:  The broadleaf must not colonize highland
+      at line 20
+    [Failed]:  [74] expected to equal [0]:  The broadleaf must not colonize blossom_grove
+      at line 20
+    [Failed]:  [200] expected to equal [0]:  The broadleaf must not colonize twilight_marsh
+      at line 20
+    [Failed]:  [94] expected to equal [0]:  The broadleaf must not colonize amber_heath
+      at line 20
+* test_reported_moonfen_highland_community_cannot_choose_the_broadleaf
+    [Failed]:  [STRING_NAME(lpfv.plant.02)] expected to not equal [STRING_NAME(lpfv.plant.02)]:  The photographed proposal uses an appropriate remaining species
+      at line 26
+0/2 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september9_fern_habitat.gd
+- test_broadleaf_species_is_confined_to_jade_estuary_and_its_blend
+    [Failed]:  [94] expected to equal [0]:  The broadleaf must not colonize meadow
+          at line 20
+    [Failed]:  [167] expected to equal [0]:  The broadleaf must not colonize deep_forest
+          at line 20
+    [Failed]:  [125] expected to equal [0]:  The broadleaf must not colonize highland
+          at line 20
+    [Failed]:  [74] expected to equal [0]:  The broadleaf must not colonize blossom_grove
+          at line 20
+    [Failed]:  [200] expected to equal [0]:  The broadleaf must not colonize twilight_marsh
+          at line 20
+    [Failed]:  [94] expected to equal [0]:  The broadleaf must not colonize amber_heath
+          at line 20
+- test_reported_moonfen_highland_community_cannot_choose_the_broadleaf
+    [Failed]:  [STRING_NAME(lpfv.plant.02)] expected to not equal [STRING_NAME(lpfv.plant.02)]:  The photographed proposal uses an appropriate remaining species
+          at line 26
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests      none
+Failing Tests         2
+Asserts             2/9
+Time              2.676s
+
+
+---- 2 failing tests ----
+

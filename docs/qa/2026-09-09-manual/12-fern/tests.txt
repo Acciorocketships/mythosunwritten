@@ -1,0 +1,55 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_fern_habitat.gd
+* test_broadleaf_species_is_confined_to_jade_estuary_and_its_blend
+* test_reported_moonfen_highland_community_cannot_choose_the_broadleaf
+2/2 passed.
+
+
+res://tests/test_dressing_field.gd
+* test_compiler_produces_resource_free_bounded_program
+* test_visible_support_stencil_rejects_a_collidable_asset_across_a_cliff
+* test_full_visual_footprint_rejects_canopy_over_authored_space
+* test_path_reservation_rejects_every_population_including_zero_margin
+* test_field_is_deterministic_grounded_and_half_open
+* test_shifted_chunk_windows_produce_the_same_border_decisions
+* test_tree_spacing_is_enforced_across_visual_variants
+7/7 passed.
+
+
+res://tests/test_dressing_ecology.gd
+* test_habitat_coverage_has_true_empty_and_filled_extremes
+* test_shared_habitat_channel_is_correlated_without_set_order
+* test_patch_field_produces_both_dense_habitat_and_real_clearings
+* test_community_roll_is_spatial_and_seed_stable
+* test_shared_land_mask_contains_broad_clearings_and_connected_path_bands
+* test_tree_stature_and_mushroom_colonies_are_explicit_content_data
+* test_compiled_sets_expose_direct_biome_fill_and_habitat_layers
+7/7 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               3
+Tests                16
+Passing Tests        16
+Asserts             660
+Time              63.228s
+
+
+---- All tests passed! ----
+

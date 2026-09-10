@@ -1,0 +1,13 @@
+[
+  {
+    "chunk": "(1, -7)",
+    "contour_hash": "24b622edac8a21781259f0fc8d4312dfb3d3792d4195c64b093d4182b8dd1fe9",
+    "contours_ms": 0.053,
+    "fill_hash": "d86be6081e7e82c64f661c6866ea60ea3b9dae79582193a5ace09ab8b66897d6",
+    "fill_ms": 26366.73,
+    "memory_bytes": 3200449386.0,
+    "ponds": 3,
+    "region_ms": 32713.605,
+    "rivers": 2
+  }
+]

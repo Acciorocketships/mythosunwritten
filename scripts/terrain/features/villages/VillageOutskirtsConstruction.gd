@@ -16,12 +16,8 @@ static func generate(terrain: VillageTerrainView, settlement_id: StringName,
 	var contacts := VillageOutskirtsSolver._ground_contacts(terrain, arrival, axis, urban)
 	var street_grid := VillageOutskirtsSolver._urban_perimeter_grid(urban, arrival, axis)
 	var datum := urban.world_transform.origin.y - VillageWarrenFabricSolver.DATUM_GUARD
-	var approach_length := PITCH
-	for spec: VillageAssetSpec in program.outskirts_program.house_specs:
-		approach_length = maxf(approach_length,spec.solid_local_rect.size.length()
-			* VillageWorldScale.PRODUCTION_UNIFORM_SCALE + PathProgram.PATH_WIDTH)
 	var topology := _perimeter_streets(terrain, settlement_id, arrival, axis,
-		contacts, street_grid, datum,approach_length)
+		contacts, street_grid, datum)
 	var branches: Array[Dictionary] = topology.branches
 	var planned_streets: Array[Dictionary] = topology.paths
 	# The town owns its street network inside the circuit. Country roads meet
@@ -287,7 +283,7 @@ static func _frontage_path(existing: Array[Dictionary], branch: Array[Vector2],
 
 static func _perimeter_streets(terrain: VillageTerrainView, settlement_id: StringName,
 		arrival: Vector2, axis: Vector2, contacts: Array[VillageCirculationNode],
-		grid: Dictionary, datum: float, approach_length: float) -> Dictionary:
+		grid: Dictionary, datum: float) -> Dictionary:
 	# One four-sided circuit owns all outskirts frontage. Its straight sides
 	# are shared by both directions at the approach; independent gate routes
 	# cannot choose staggered parallel distributors.
@@ -334,10 +330,8 @@ static func _perimeter_streets(terrain: VillageTerrainView, settlement_id: Strin
 			VillageOutskirtsSolver._grid_world(target,arrival,axis)]
 		paths.append({"points":points,
 			"owner":StringName("%s.gate.%s" % [settlement_id,contact.stable_key])})
-		if contact == contacts[0]:
-			var mouth := VillageOutskirtsSolver._grid_world(target,arrival,axis)
-			paths.append({"points":[mouth,mouth+contact.outward*approach_length] as Array[Vector2],
-				"owner":StringName("%s.approach" % settlement_id)})
+		# A gate addresses the circuit. Only actual world-road boundary handoffs
+		# extend beyond it; the primary gate cannot invent a dead-end country spur.
 	var domain := FeatureGroundShape.oriented_rect(
 		VillageOutskirtsSolver._grid_world((lo+hi)*0.5,arrival,axis),
 		(hi-lo)*0.5,axis.angle(),FeatureGroundField.NATURAL,

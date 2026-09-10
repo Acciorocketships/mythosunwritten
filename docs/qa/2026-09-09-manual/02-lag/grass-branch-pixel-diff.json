@@ -1,0 +1,18 @@
+{
+  "candidate": {
+    "mean_absolute_rgb": 2.9277976707175926,
+    "pixels_over_8": 149087,
+    "max_channel_difference": 183
+  },
+  "before_repeat": {
+    "mean_absolute_rgb": 3.122199074074074,
+    "pixels_over_8": 155519,
+    "max_channel_difference": 186
+  },
+  "candidate_repeat": {
+    "mean_absolute_rgb": 2.8796632667824076,
+    "pixels_over_8": 138982,
+    "max_channel_difference": 182
+  },
+  "validation_status": "invalid_shader_override_did_not_reach_nested_batches"
+}

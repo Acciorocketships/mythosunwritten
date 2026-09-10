@@ -1,0 +1,45 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september9_tunnel_arches.gd
+[0m* test_frozen_covered_passage_receives_one_native_arch_at_its_mouth
+* test_native_collision_matches_the_frame_and_leaves_full_walking_headroom
+* test_missing_jamb_or_ceiling_does_not_create_a_floating_arch
+* test_four_rotations_require_both_jambs_the_roof_and_real_bearings
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_path_features.gd
+[0m* test_lamps_have_hard_spacing_and_alternate_observed_sides
+* test_village_approaches_do_not_receive_detached_road_gates
+* test_turning_approach_does_not_receive_a_detached_gate
+* test_split_approaches_do_not_multiply_detached_gates
+* test_small_arch_is_owned_by_the_exact_biome_crossing
+* test_biome_gates_stay_clear_of_villages_and_each_other
+[1m6/6 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                10
+Passing Tests        10
+Asserts              55
+Time              20.876s
+
+
+[32m---- All tests passed! ----
+[0m

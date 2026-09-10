@@ -1,0 +1,57 @@
+{
+  "garden_bench_across": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 0.508916015625,
+    "roi_mean_abs_rgb": 0.508916015625,
+    "roi_changed_over_20_fraction": 0.0092578125
+  },
+  "garden_bench_close": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 0.26088577835648147,
+    "roi_mean_abs_rgb": 0.26088577835648147,
+    "roi_changed_over_20_fraction": 0.006319444444444444
+  },
+  "garden_overview": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 0.13128544560185185,
+    "roi_mean_abs_rgb": 0.13128544560185185,
+    "roi_changed_over_20_fraction": 0.0028081597222222223
+  },
+  "garden_stores_close": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 1.6788404224537037,
+    "roi_mean_abs_rgb": 1.6788404224537037,
+    "roi_changed_over_20_fraction": 0.025288628472222224
+  },
+  "garden_stores_other": {
+    "roi": [
+      0,
+      0,
+      1280,
+      720
+    ],
+    "mean_abs_rgb": 1.7714127604166667,
+    "roi_mean_abs_rgb": 1.7714127604166667,
+    "roi_changed_over_20_fraction": 0.028668619791666666
+  }
+}

@@ -89,17 +89,17 @@ omitted_face_surfaces = Array[Dictionary]([{
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.42914104, 3, -0.03583242),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-2.162508e-07, 3, 0.23433039),
 "uv": Vector2(0.40311444, 0.23957539)
 }, {
 "color": Color(1, 1, 1, 1),
-"normal": Vector3(0, 1, -1.5259022e-05),
+"normal": Vector3(1.5259255e-05, 1, 1.5259255e-05),
 "position": Vector3(-0.42914104, 3, 0.2343304),
 "uv": Vector2(0.40311444, 0.23957539)
 }])

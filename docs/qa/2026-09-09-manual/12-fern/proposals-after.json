@@ -1,0 +1,92 @@
+[
+  {
+    "anchor": "(77.59009, -2434.973)",
+    "asset": "lpfv.flower.03",
+    "distance": 3.03128957748413,
+    "roll": 0.568943541520275,
+    "weights": {
+      "amber_heath": 0.0,
+      "blossom_grove": 0.0,
+      "deep_forest": 0.0,
+      "highland": 0.428569481862725,
+      "jade_wetlands": 0.0,
+      "meadow": 0.0701354336007773,
+      "twilight_marsh": 0.501295084536498
+    }
+  },
+  {
+    "anchor": "(71.62601, -2428.16)",
+    "asset": "lpfv.flower.03",
+    "distance": 11.0285110473633,
+    "roll": 0.522160366387106,
+    "weights": {
+      "amber_heath": 0.0,
+      "blossom_grove": 0.0,
+      "deep_forest": 0.0,
+      "highland": 0.426438514380729,
+      "jade_wetlands": 0.0,
+      "meadow": 0.0622195924139362,
+      "twilight_marsh": 0.511341893205335
+    }
+  },
+  {
+    "anchor": "(67.36444, -2428.487)",
+    "asset": "lpfv.flower.01",
+    "distance": 13.3280162811279,
+    "roll": 0.131648527830839,
+    "weights": {
+      "amber_heath": 0.0,
+      "blossom_grove": 0.0,
+      "deep_forest": 0.0,
+      "highland": 0.416145268560149,
+      "jade_wetlands": 0.0,
+      "meadow": 0.0607755744638223,
+      "twilight_marsh": 0.523079156976029
+    }
+  },
+  {
+    "anchor": "(69.27476, -2423.998)",
+    "asset": "lpfv.flower.03",
+    "distance": 15.8077230453491,
+    "roll": 0.579219540022314,
+    "weights": {
+      "amber_heath": 0.0,
+      "blossom_grove": 0.0,
+      "deep_forest": 0.0,
+      "highland": 0.428452874617776,
+      "jade_wetlands": 0.0,
+      "meadow": 0.0578724793019532,
+      "twilight_marsh": 0.513674646080271
+    }
+  },
+  {
+    "anchor": "(89.48981, -2448.675)",
+    "asset": "lpfv.flower.04",
+    "distance": 16.6473693847656,
+    "roll": 0.665492114215158,
+    "weights": {
+      "amber_heath": 0.0,
+      "blossom_grove": 0.0,
+      "deep_forest": 0.0,
+      "highland": 0.4352153797899,
+      "jade_wetlands": 0.0,
+      "meadow": 0.0854741922797344,
+      "twilight_marsh": 0.479310427930365
+    }
+  },
+  {
+    "anchor": "(95.385, -2443.056)",
+    "asset": "lpfv.flower.01",
+    "distance": 19.2870197296143,
+    "roll": 0.115075269457884,
+    "weights": {
+      "amber_heath": 0.0,
+      "blossom_grove": 0.0,
+      "deep_forest": 0.0,
+      "highland": 0.462188845787836,
+      "jade_wetlands": 0.0,
+      "meadow": 0.0848820873214382,
+      "twilight_marsh": 0.452929066890726
+    }
+  }
+]

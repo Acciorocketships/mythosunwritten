@@ -20,6 +20,7 @@ var _ready_events: Array[Dictionary] = []
 ## reviewed SFV plank palette so streamed stairs read as the same timber as the
 ## plank modules beside them.
 static var _surface_mesh_material: StandardMaterial3D
+static var _soil_bed_material: StandardMaterial3D
 
 func _init(render_cache: EnvironmentRenderCache) -> void:
 	assert(render_cache != null)
@@ -300,6 +301,12 @@ func commit_mesh_visual(block: Node3D, mesh: Dictionary) -> void:
 	var material: Material = CliffDressing.shared_material() \
 		if bool(mesh.get("terrain_ground", false)) \
 		else _shared_surface_mesh_material()
+	if bool(mesh.get("soil_bed", false)):
+		if _soil_bed_material == null:
+			_soil_bed_material = StandardMaterial3D.new()
+			_soil_bed_material.albedo_color = Color("584332")
+			_soil_bed_material.roughness = 1.0
+		material = _soil_bed_material
 	if mesh.has("material_asset_id"):
 		var visual := _render_cache.visual(StringName(mesh.material_asset_id))
 		var piece := visual.pieces[int(mesh.get("material_piece", 0))]

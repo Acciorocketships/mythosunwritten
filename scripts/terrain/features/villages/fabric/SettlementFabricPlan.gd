@@ -9,6 +9,8 @@ var units: Array[FabricUnit] = []
 var public_realm: SectionalPublicRealmPlan
 var surface_plan: PublicRealmSurfacePlan
 var facade_corner_placements: Array[Dictionary] = []
+## Native frames owned by complete supported tunnel mouths.
+var tunnel_arch_placements: Array[Dictionary] = []
 var wall_cap_surfaces: Array[Dictionary] = []
 var volume_plan: FabricVolumePlan
 var solid_void_plan: FabricSolidVoidPlan
@@ -557,9 +559,12 @@ func _assign_facade_run_joints() -> void:
 			if unit.suppressed_placement_ids.has(StringName(panel.id)): continue
 			var finish: Dictionary = r.facade_end_owners.get(StringName(panel.id),{})
 			var asset := StringName(finish.get("base_asset",panel.asset_id))
-			if not String(asset).begins_with("sfv.fabric.wall.wood."): continue
+			if not String(asset).begins_with("sfv.fabric.wall."): continue
 			var box: AABB = asset_visual_bounds[asset]
-			if absf(box.size.x-3.0)>0.01 or absf(box.end.y-3.0)>0.001: continue
+			# Door feet, caps and masonry relief may extend beyond the nominal
+			# 3 m panel. Their joining planes remain at x = +/-1.5 like timber.
+			if absf(box.position.x+1.5)>0.06 or absf(box.end.x-1.5)>0.06 \
+					or absf(box.end.y-3.0)>0.05: continue
 			var pose := unit.transform()*(panel.transform as Transform3D)
 			for end in 2:
 				var point := pose*Vector3(-1.5 if end==0 else 1.5,0,box.end.z)
@@ -575,7 +580,9 @@ func _assign_facade_run_joints() -> void:
 		if pair.size()!=2 or pair[0].unit==pair[1].unit or pair[0].end==pair[1].end: continue
 		if absf(float(pair[0].depth)-float(pair[1].depth))<0.001: continue
 		var first: Dictionary = pair[0]
-		var depth := minf(0.18,minf(pair[0].depth,pair[1].depth))
+		# Continue through both rear reveals. A shallow front-only post
+		# leaves a visible slot behind it beside a deep doorway return.
+		var depth := maxf(pair[0].depth,pair[1].depth)
 		var basis := Basis(first.tangent*0.12/source_box.size.x,
 			Vector3.UP*3.0/source_box.size.y,first.normal*depth/source_box.size.z)
 		var pose := Transform3D(basis,first.point-first.normal*0.02-basis*
@@ -974,6 +981,8 @@ func unit(stable_unit_id: StringName) -> FabricUnit:
 	return _by_id.get(stable_unit_id) as FabricUnit
 
 
+const DOOR_LANTERNS := preload("res://scripts/terrain/features/villages/fabric/WarrenDoorLanterns.gd")
+
 func asset_ids() -> Array[StringName]:
 	var unique: Dictionary = {}
 	for unit_value: FabricUnit in units:
@@ -993,6 +1002,9 @@ func asset_ids() -> Array[StringName]:
 			unique[StringName(asset_value)] = true
 		for placement: Dictionary in continuous_roof_plan.synthetic_placements:
 			unique[StringName(placement.asset_id)] = true
+	for asset: StringName in unique.keys():
+		if DOOR_LANTERNS.supports(asset): unique[DOOR_LANTERNS.ASSET]=true
+	for arch in tunnel_arch_placements: unique[arch.asset_id]=true
 	var out: Array[StringName] = []
 	out.assign(unique.keys())
 	out.sort_custom(func(a: StringName, b: StringName) -> bool:
@@ -1047,7 +1059,15 @@ func expanded_placements() -> Array[Dictionary]:
 					if index < unit_recipe.placement_collision_pieces.size() \
 					else 0,
 			})
+	# Only realized unsuppressed doorway panels carry an attached lantern.
+	# Its measured geometry stays inside the panel's already owned bounds.
+	var lamps: Array[Dictionary] = []
+	for panel in out:
+		var lamp := DOOR_LANTERNS.attachment(panel)
+		if not lamp.is_empty(): lamps.append(lamp)
+	out.append_array(lamps)
 	out.append_array(facade_corner_placements)
+	out.append_array(tunnel_arch_placements)
 	if continuous_roof_plan != null:
 		return continuous_roof_plan.apply_to(out)
 	return out
@@ -1725,6 +1745,8 @@ func construction_signature() -> String:
 			unit_value.stable_id, unit_value.recipe_id, origin.x, origin.y,
 			origin.z, unit_value.yaw_quarters, ",".join(parent_ids),
 			",".join(bond_records), suppression_suffix])
+	for arch in tunnel_arch_placements:
+		records.append("%s:%s@%s" % [arch.stable_id,arch.asset_id,str(arch.transform)])
 	records.sort()
 	return "|".join(records).sha256_text()
 

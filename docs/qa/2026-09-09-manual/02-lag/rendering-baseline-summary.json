@@ -1,0 +1,136 @@
+{
+  "source": "stationary-before.json",
+  "scene": "fixed photo-1 location; generation stopped before variants",
+  "frames": {
+    "full": {
+      "frames": 220,
+      "max_ms": 44.49,
+      "mean_ms": 36.5772909090909,
+      "p50_ms": 37.001,
+      "p95_ms": 41.886,
+      "p99_ms": 42.981
+    },
+    "full_final": {
+      "frames": 217,
+      "max_ms": 45.805,
+      "mean_ms": 36.9919907834101,
+      "p50_ms": 37.577,
+      "p95_ms": 42.401,
+      "p99_ms": 43.825
+    },
+    "full_repeat": {
+      "frames": 221,
+      "max_ms": 47.751,
+      "mean_ms": 36.3028597285068,
+      "p50_ms": 36.56,
+      "p95_ms": 42.081,
+      "p99_ms": 43.277
+    },
+    "half_resolution": {
+      "frames": 359,
+      "max_ms": 28.157,
+      "mean_ms": 22.320651810585,
+      "p50_ms": 22.308,
+      "p95_ms": 25.916,
+      "p99_ms": 27.279
+    },
+    "no_atmosphere": {
+      "frames": 237,
+      "max_ms": 42.721,
+      "mean_ms": 33.802970464135,
+      "p50_ms": 33.723,
+      "p95_ms": 39.776,
+      "p99_ms": 41.344
+    },
+    "no_grass": {
+      "frames": 472,
+      "max_ms": 32.618,
+      "mean_ms": 16.9596737288136,
+      "p50_ms": 16.814,
+      "p95_ms": 19.191,
+      "p99_ms": 19.994
+    },
+    "no_nature": {
+      "frames": 215,
+      "max_ms": 45.728,
+      "mean_ms": 37.3116279069767,
+      "p50_ms": 37.746,
+      "p95_ms": 42.89,
+      "p99_ms": 43.731
+    },
+    "no_shadows": {
+      "frames": 428,
+      "max_ms": 24.551,
+      "mean_ms": 18.7259158878505,
+      "p50_ms": 18.795,
+      "p95_ms": 21.585,
+      "p99_ms": 23.043
+    },
+    "no_water": {
+      "frames": 224,
+      "max_ms": 44.283,
+      "mean_ms": 35.8066071428571,
+      "p50_ms": 36.139,
+      "p95_ms": 41.997,
+      "p99_ms": 43.422
+    }
+  },
+  "final_grass": {
+    "batches": 52,
+    "buffer_bytes": 944640,
+    "commit_max_usec": 224,
+    "committed_instances": 11808,
+    "lod_update_max_usec": 27,
+    "tiles": 52,
+    "visible_instances": 9425,
+    "worker_average_usec": 40580.3269230769,
+    "worker_max_usec": 62436,
+    "worker_results": 52
+  },
+  "final_cache": {
+    "entries": 151,
+    "evictions": 0,
+    "features": {
+      "context_cache": 57,
+      "frame_cache": 3,
+      "paths": {
+        "bridge_profiles": 55,
+        "bridge_raw_cache": 55,
+        "bridge_resolved_cache": 45,
+        "context_builds": 58,
+        "context_cache": 58,
+        "evictions": 0,
+        "node_builds": 30,
+        "node_cache": 30,
+        "node_queries": 1112,
+        "planning_point_cache": 4319,
+        "route_cache": 24,
+        "route_exact_failures": 0,
+        "route_queries": 484,
+        "route_solves": 24
+      },
+      "villages": {
+        "builds": 3,
+        "cache": 3,
+        "evictions": 0,
+        "materialize_usec": 1651,
+        "outskirts_usec": 188767,
+        "queries": 10,
+        "urban_usec": 1658511
+      }
+    },
+    "height_samples": 200000,
+    "hydraulic_profiles": 73,
+    "region_build_usec": 8998735,
+    "region_builds": 151,
+    "region_hits": 17162,
+    "source_solves": 16,
+    "trace_regions": 71,
+    "water_build_usec": 179974703,
+    "water_builds": 106,
+    "water_hits": 13934,
+    "water_regions": 263,
+    "water_traces": 1702
+  },
+  "status": "Measured bottlenecks only; no graphics candidate accepted."
+}

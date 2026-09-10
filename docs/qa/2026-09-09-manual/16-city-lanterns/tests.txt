@@ -1,0 +1,48 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_city_lanterns.gd
+* test_long_shared_walk_has_supported_lamps_before_random_planting
+* test_lights_cannot_consume_a_public_square_or_occupied_air
+* test_every_realized_closed_door_has_one_contained_native_wall_lamp
+3/3 passed.
+
+
+res://tests/test_september9_door_ownership.gd
+* test_connected_native_party_openings_share_one_entry_in_four_orientations
+* test_partial_walls_gaps_and_staggered_floors_keep_separate_access
+* test_photographed_frontage_keeps_its_central_door_and_corner_entrance
+* test_replacement_window_closes_into_the_deep_door_reveal_in_four_orientations
+4/4 passed.
+
+
+res://tests/test_september9_lantern_lights.gd
+* test_native_lantern_batches_emit_one_warm_light_per_placement
+* test_native_pane_centres_anchor_the_lights_under_scaled_rotation
+2/2 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               3
+Tests                 9
+Passing Tests         9
+Asserts             582
+Time              22.924s
+
+
+---- All tests passed! ----
+

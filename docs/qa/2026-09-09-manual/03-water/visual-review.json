@@ -1,0 +1,75 @@
+{
+  "candidate": "final optimized local river ceiling and physical spill",
+  "render_exit_code": 0,
+  "ready": true,
+  "photos": [
+    {
+      "key": "05_water_edge",
+      "camera_json_identical": true,
+      "exact_metrics": {
+        "roi": [
+          0,
+          0,
+          1718,
+          1034
+        ],
+        "mean_abs_rgb": 8.389727533177364,
+        "roi_mean_abs_rgb": 8.389727533177364,
+        "roi_changed_over_20_fraction": 0.12586944920435125
+      },
+      "nearby_compared": [
+        "left",
+        "right"
+      ],
+      "amplified_diff_viewed": true
+    },
+    {
+      "key": "07_water_mound",
+      "camera_json_identical": true,
+      "exact_metrics": {
+        "roi": [
+          0,
+          0,
+          1718,
+          1034
+        ],
+        "mean_abs_rgb": 10.20323870063176,
+        "roi_mean_abs_rgb": 10.20323870063176,
+        "roi_changed_over_20_fraction": 0.13306091154529467
+      },
+      "nearby_compared": [
+        "left",
+        "right"
+      ],
+      "amplified_diff_viewed": true
+    },
+    {
+      "key": "08_water_crease",
+      "camera_json_identical": true,
+      "exact_metrics": {
+        "roi": [
+          0,
+          0,
+          1718,
+          1034
+        ],
+        "mean_abs_rgb": 10.578052088517003,
+        "roi_mean_abs_rgb": 10.578052088517003,
+        "roi_changed_over_20_fraction": 0.13624879813917043
+      },
+      "nearby_compared": [
+        "left",
+        "right"
+      ],
+      "amplified_diff_viewed": true
+    }
+  ],
+  "judgment": "Accepted for the three reported water defects: final exact reconstructions, six nearby paired comparisons and amplified differences show removed shelves/mound/folded edge with lower lakes retained. Final focused tests and ordinary travel pass; historical baseline failures and slow startup remain documented.",
+  "limits": [
+    "Original coordinates rounded to 0.1 m; pair cameras match but original full-precision camera is not recoverable.",
+    "Photo 7 reconstructed camera includes a foreground tree absent from the source photo.",
+    "Animation pose was not recorded; paired renders use the same default pose.",
+    "Moving grass, water and orbs create small temporal differences."
+  ],
+  "final_render_startup_ms": 267880
+}

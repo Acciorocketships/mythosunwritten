@@ -1,0 +1,99 @@
+{
+  "status": "accepted_photo_13",
+  "related_tests": 14,
+  "related_assertions": 661,
+  "related_seconds": 52.22,
+  "targeted_tests": 3,
+  "targeted_assertions": 1131,
+  "targeted_seconds": 25.427,
+  "test_exits": [
+    0,
+    0
+  ],
+  "before_failing_cut_samples": 15,
+  "after_failing_cut_samples": 0,
+  "contained_variants": 674,
+  "walk_cells": 132,
+  "crossings": 188,
+  "physical_census_identical": true,
+  "camera_json_identical": true,
+  "original_precision_recoverable": false,
+  "all_six_comparisons_inspected": true,
+  "render_exits": [
+    0,
+    0
+  ],
+  "render_ready": true,
+  "startup_ms": [
+    459707,
+    462659
+  ],
+  "pixel_metrics": {
+    "13_wall_seam_exact": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.6657173748732463,
+      "roi_mean_abs_rgb": 0.6657173748732463,
+      "roi_changed_over_20_fraction": 0.007381733516774262
+    },
+    "13_wall_seam_gameplay_camera": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.8385171908318566,
+      "roi_mean_abs_rgb": 0.8385171908318566,
+      "roi_changed_over_20_fraction": 0.007631675534729556
+    },
+    "13_wall_seam_jitter_0": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.8132124379554593,
+      "roi_mean_abs_rgb": 0.8132124379554593,
+      "roi_changed_over_20_fraction": 0.007777475045203478
+    },
+    "13_wall_seam_jitter_1": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.752164475358194,
+      "roi_mean_abs_rgb": 0.752164475358194,
+      "roi_changed_over_20_fraction": 0.007497697606185952
+    },
+    "13_wall_seam_near_left": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 1.0221846058234239,
+      "roi_mean_abs_rgb": 1.0221846058234239,
+      "roi_changed_over_20_fraction": 0.010561176123556922
+    },
+    "13_wall_seam_near_right": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.5500886055712301,
+      "roi_mean_abs_rgb": 0.5500886055712301,
+      "roi_changed_over_20_fraction": 0.0051007311366957665
+    }
+  }
+}

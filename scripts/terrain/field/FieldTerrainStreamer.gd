@@ -4,20 +4,19 @@
 # collision faces, transforms, and sampler data only; the main thread commits
 # those payloads into render/physics resources and nodes, budgeted per frame. Evicts
 # beyond a keep radius. At startup the player is held until every chunk within
-# one terrain cell of spawn exists, so the camera cannot reveal an unbuilt
-# quadrant; later, their current chunk alone gates movement.
+# one terrain chunk of spawn exists, providing the first travel buffer;
+# later, their current chunk alone gates movement.
 class_name FieldTerrainStreamer
 extends Node3D
 
 const CHUNK_WORLD := 192.0   # TerrainChunkMesher.CHUNK_WORLD
-## The initial camera boom is 8 m. Requiring the chunks touched by one complete
-## logical terrain cell around spawn guarantees the visible ground is present
-## even when spawn is close to a chunk seam. This is a readiness boundary, not
-## extra generated terrain: the ordinary radius would request these chunks a
-## few frames later anyway.
-const STARTUP_SUPPORT_HALF_EXTENT := TerrainChunkMesher.TILE
+## A camera-sized loading boundary can release the runner seconds before an
+## unbuilt seam. The surrounding ring supplies at least 192 m of initial
+## travel in every direction while the worker prepares the next crossings.
+## These chunks already belong to the ordinary streaming footprint.
+const STARTUP_SUPPORT_HALF_EXTENT := CHUNK_WORLD
 const TERRAIN_PREFETCH_RADIUS := CHUNK_WORLD * 0.5
-const PREFETCH_SECONDS := 12.0
+const PREFETCH_SECONDS := 30.0
 const PRIORITY_FOCUS_STEP := TerrainChunkMesher.TILE / 3.0
 ## Keep the production spawn just inside one chunk instead of exactly on the
 ## four-way world-origin seam so the player capsule has one collision owner.
@@ -67,6 +66,8 @@ var _profile_player_chunk := Vector2i.ZERO
 var _queue_lod_origin := Vector2.ZERO
 var _queue_travel_offset := Vector2.ZERO
 var _queue_heading := Vector2i.ZERO
+var _requested_centre := Vector2i(2147483647, 2147483647)
+var _requested_startup := true
 
 # Worker-thread pipeline instances. Their internal caches (plan sample memo,
 # water trace/region caches) are touched ONLY by the worker thread — that
@@ -116,6 +117,7 @@ var _startup_cold_plan_progress := 0.0
 var _startup_ready_count: int = -1
 var _startup_emitted_progress: float = -1.0
 var _startup_completion_emitted: bool = false
+var _startup_previous_max_fps := -1
 ## Worker state mirrored through _mutex for the main-thread diagnostic heartbeat.
 ## These values are observability only and never participate in build output.
 var _worker_phase: StringName = &"idle"
@@ -139,13 +141,13 @@ static func chunk_of(pos: Vector3) -> Vector2i:
 	return Vector2i(int(floor(pos.x / CHUNK_WORLD)), int(floor(pos.z / CHUNK_WORLD)))
 
 static func support_chunks_at(pos: Vector3) -> Array[Vector2i]:
-	var unique: Dictionary = {}
-	for dz: float in [-STARTUP_SUPPORT_HALF_EXTENT, STARTUP_SUPPORT_HALF_EXTENT]:
-		for dx: float in [-STARTUP_SUPPORT_HALF_EXTENT, STARTUP_SUPPORT_HALF_EXTENT]:
-			unique[chunk_of(pos + Vector3(dx, 0.0, dz))] = true
+	var extent:=Vector3(STARTUP_SUPPORT_HALF_EXTENT,0,STARTUP_SUPPORT_HALF_EXTENT)
+	var lo:=chunk_of(pos-extent)
+	var hi:=chunk_of(pos+extent)
 	var chunks: Array[Vector2i] = []
-	chunks.assign(unique.keys())
-	chunks.sort_custom(_key_less)
+	for x in range(lo.x,hi.x+1):
+		for z in range(lo.y,hi.y+1):
+			chunks.append(Vector2i(x,z))
 	return chunks
 
 func desired_chunks(centre: Vector2i, radius: int) -> Array:
@@ -158,6 +160,11 @@ func desired_chunks(centre: Vector2i, radius: int) -> Array:
 func _ready() -> void:
 	if terrain_parent == null:
 		return   # bare instance (unit test)
+	# The loading overlay does not need hundreds of redraws per second while
+	# generation owns the CPU. Restore the caller's limit before gameplay.
+	if not Helper.is_headless() and (Engine.max_fps == 0 or Engine.max_fps > 30):
+		_startup_previous_max_fps = Engine.max_fps
+		Engine.max_fps = 30
 	_telemetry.enabled = PROFILE_STREAMING
 	_startup_support_chunks = support_chunks_at(player.global_position)
 	world_seed = SEED_OVERRIDE if SEED_OVERRIDE != 0 else randi()
@@ -335,9 +342,16 @@ func _emit_startup_loading_progress() -> void:
 	startup_loading_progress_changed.emit(progress, ready, total)
 	if ready == total and not _startup_completion_emitted:
 		_startup_completion_emitted = true
+		_restore_startup_render_limit()
 		print("[terrain-streamer] startup_complete seed=%d elapsed_ms=%d chunks=%d" % [
 			world_seed, Time.get_ticks_msec() - _diagnostic_started_msec, total])
 		startup_loading_completed.emit()
+
+func _restore_startup_render_limit() -> void:
+	if _startup_previous_max_fps < 0: return
+	# A later explicit setting takes precedence over the temporary limit.
+	if Engine.max_fps == 30: Engine.max_fps = _startup_previous_max_fps
+	_startup_previous_max_fps = -1
 
 func _startup_ready_chunks_count() -> int:
 	var ready := 0
@@ -506,7 +520,14 @@ func _worker() -> void:
 				_begin_worker_phase(c, &"biome_fx")
 				result["fx"] = _biome_fx_data(c, region, water_context)
 				_set_startup_worker_progress(c, 1.0)
-		_telemetry.cache_stats(_fields.stats())
+		if PROFILE_STREAMING:
+			var field_counts := _fields.stats()
+			field_counts.merge(WaterField.cache_counts())
+			field_counts["height_samples"] = _plan._samples.size()
+			field_counts["water_regions"] = _water._region_cache.size()
+			field_counts["water_traces"] = _water._trace_cache.size()
+			field_counts["features"] = _features.stats()
+			_telemetry.cache_stats(field_counts)
 		_finish_worker_job(c)
 		_mutex.lock()
 		_done.append(result)
@@ -638,8 +659,9 @@ func _process(_delta: float) -> void:
 	_queue_lod_origin = Vector2(player.global_position.x, player.global_position.z)
 	_queue_travel_offset = Vector2.ZERO
 	if player is CharacterBody3D:
-		_queue_travel_offset = (Vector2(player.velocity.x, player.velocity.z)
-			* PREFETCH_SECONDS).limit_length(CHUNK_WORLD * 0.75)
+		var travel:Vector3 = player.streaming_velocity() if player.has_method("streaming_velocity") else player.velocity
+		_queue_travel_offset = (Vector2(travel.x, travel.z)
+			* PREFETCH_SECONDS).limit_length(CHUNK_WORLD * mini(CHUNK_RADIUS,KEEP_RADIUS))
 	var heading := Vector2i((_queue_travel_offset / PRIORITY_FOCUS_STEP).round())
 	_mutex.unlock()
 	var lod_origin := Vector2(player.global_position.x, player.global_position.z)
@@ -675,6 +697,49 @@ func _process(_delta: float) -> void:
 	var current_chunk_ready := _built.has(centre) and _feature_square_ready(centre)
 	_freeze_player(not current_chunk_ready or not startup_loading_complete())
 	var startup_pending := not startup_loading_complete()
+	_request_neighborhood(centre, lod_origin, startup_pending)
+	if _grass_runtime_enabled:
+		_queue_grass_jobs(lod_origin)
+	# Evict chunks beyond keep radius (Chebyshev).
+	for c: Vector2i in _built.keys():
+		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
+			_dressing_queue.invalidate_chunk(c)
+			_telemetry.count(&"terrain_evictions")
+			_built[c].queue_free()
+			_built.erase(c)
+			_storey_snapshots.erase(c)
+			if _dressing_trample_by_chunk.erase(c):
+				_static_trample_dirty = true
+			_terrain_generation[c] = int(_terrain_generation.get(c, 0)) + 1
+	var feature_keep := KEEP_RADIUS + _feature_program.geometry_halo
+	for c: Vector2i in _feature_ready.keys():
+		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > feature_keep:
+			_feature_queue.invalidate_chunk(c)
+			if _feature_nodes.has(c):
+				_feature_nodes[c].queue_free()
+				_feature_nodes.erase(c)
+			_feature_ready.erase(c)
+			_feature_generation[c] = int(_feature_generation.get(c, 0)) + 1
+	for c: Vector2i in _feature_queue.pending_chunks():
+		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > feature_keep:
+			_feature_queue.invalidate_chunk(c)
+			_feature_generation[c] = int(_feature_generation.get(c, 0)) + 1
+	if _grass_runtime_enabled and _static_trample_dirty:
+		var static_started := Time.get_ticks_usec()
+		_refresh_static_dressing()
+		_telemetry.timing(&"main/static_dressing", Time.get_ticks_usec() - static_started)
+	_telemetry.timing(&"main/streamer", Time.get_ticks_usec() - profile_started)
+
+
+func _request_neighborhood(centre: Vector2i, lod_origin: Vector2,
+		startup_pending: bool) -> void:
+	# Requests retain ownership through queued, active, handoff and pending
+	# states. Only a new desired footprint needs new requests; position and
+	# velocity changes within it already rebase the existing queue above.
+	if centre == _requested_centre and startup_pending == _requested_startup:
+		return
+	_requested_centre = centre
+	_requested_startup = startup_pending
 	# Queue the spawn environment boundary ahead of the normal radius so the
 	# loading screen cannot clear while the camera can still see missing ground.
 	if startup_pending:
@@ -711,37 +776,6 @@ func _process(_delta: float) -> void:
 			_mutex.unlock()
 		for _i in requested:
 			_sem.post()
-	if _grass_runtime_enabled:
-		_queue_grass_jobs(lod_origin)
-	# Evict chunks beyond keep radius (Chebyshev).
-	for c: Vector2i in _built.keys():
-		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > KEEP_RADIUS:
-			_dressing_queue.invalidate_chunk(c)
-			_telemetry.count(&"terrain_evictions")
-			_built[c].queue_free()
-			_built.erase(c)
-			_storey_snapshots.erase(c)
-			if _dressing_trample_by_chunk.erase(c):
-				_static_trample_dirty = true
-			_terrain_generation[c] = int(_terrain_generation.get(c, 0)) + 1
-	var feature_keep := KEEP_RADIUS + _feature_program.geometry_halo
-	for c: Vector2i in _feature_ready.keys():
-		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > feature_keep:
-			_feature_queue.invalidate_chunk(c)
-			if _feature_nodes.has(c):
-				_feature_nodes[c].queue_free()
-				_feature_nodes.erase(c)
-			_feature_ready.erase(c)
-			_feature_generation[c] = int(_feature_generation.get(c, 0)) + 1
-	for c: Vector2i in _feature_queue.pending_chunks():
-		if maxi(absi(c.x - centre.x), absi(c.y - centre.y)) > feature_keep:
-			_feature_queue.invalidate_chunk(c)
-			_feature_generation[c] = int(_feature_generation.get(c, 0)) + 1
-	if _grass_runtime_enabled and _static_trample_dirty:
-		var static_started := Time.get_ticks_usec()
-		_refresh_static_dressing()
-		_telemetry.timing(&"main/static_dressing", Time.get_ticks_usec() - static_started)
-	_telemetry.timing(&"main/streamer", Time.get_ticks_usec() - profile_started)
 
 
 ## Main-thread durable heartbeat. During startup it proves that the window is
@@ -999,9 +1033,32 @@ func _terrain_priority_tier(chunk: Vector2i, centre: Vector2i,
 	if chunk == centre:
 		return 0
 	if distance_to_chunk(lod_origin, chunk) < TERRAIN_PREFETCH_RADIUS \
-			or distance_to_chunk(lod_origin+_queue_travel_offset,chunk) < STARTUP_SUPPORT_HALF_EXTENT:
+			or is_finite(_travel_entry_distance(chunk,lod_origin)):
 		return 1
 	return 3
+
+
+## First entry into a chunk along the bounded travel segment.
+## Testing the entire segment preserves intervening ground when preparation
+## takes longer than one chunk crossing; an endpoint-only probe skips it.
+func _travel_entry_distance(chunk:Vector2i,origin:Vector2)->float:
+	var length := _queue_travel_offset.length()
+	if length<0.001: return INF
+	var low := Vector2(chunk)*CHUNK_WORLD
+	var high := low+Vector2.ONE*CHUNK_WORLD
+	var enter := 0.0
+	var leave := 1.0
+	for axis in 2:
+		var motion := _queue_travel_offset[axis]
+		if absf(motion)<0.000001:
+			if origin[axis]<low[axis] or origin[axis]>high[axis]: return INF
+			continue
+		var first := (low[axis]-origin[axis])/motion
+		var last := (high[axis]-origin[axis])/motion
+		enter=maxf(enter,minf(first,last))
+		leave=minf(leave,maxf(first,last))
+		if enter>leave: return INF
+	return enter*length
 
 func _queue_grass_jobs(lod_origin: Vector2) -> void:
 	var wakes := 0
@@ -1213,23 +1270,49 @@ func _job_ground_distance(job: Dictionary) -> float:
 				distance = minf(distance,_ground_distance(parent))
 	return distance
 
+func _job_travel_distance(job:Dictionary)->float:
+	var distance := _travel_entry_distance(job.chunk,_queue_lod_origin)
+	if not bool(job.get("build_features",false)): return distance
+	var halo := _feature_program.geometry_halo if _feature_program != null else 0
+	for z in range(-halo,halo+1):
+		for x in range(-halo,halo+1):
+			var parent:Vector2i=job.chunk+Vector2i(x,z)
+			if _terrain_feature_parents.has(parent):
+				distance=minf(distance,_travel_entry_distance(parent,_queue_lod_origin))
+	return distance
+
 func _sort_jobs_locked() -> void:
 	var started := Time.get_ticks_usec() if PROFILE_STREAMING else 0
+	# Queue geometry is unchanged throughout a sort. Compute its two metrics
+	# once per job instead of rescanning feature parents in every comparison.
+	for job:Dictionary in _jobs:
+		if job.get("kind",&"chunk")==&"chunk":
+			job._sort_ground=_job_ground_distance(job)
+			job._sort_travel=_job_travel_distance(job)
 	_jobs.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		if int(a.priority_tier) != int(b.priority_tier):
 			return int(a.priority_tier) < int(b.priority_tier)
+		if a.get("kind",&"chunk")==&"chunk" and b.get("kind",&"chunk")==&"chunk":
+			# While moving, prepare upcoming crossings before surrounding
+			# background terrain. Feature owners inherit the same deadline.
+			if a._sort_travel!=b._sort_travel: return a._sort_travel<b._sort_travel
 		if int(a.priority_distance) != int(b.priority_distance):
 			return int(a.priority_distance) < int(b.priority_distance)
 		# Equal Chebyshev rings may be a few metres ahead or almost a full
 		# chunk behind. Resolve their tie using the distance to actual ground.
 		if a.get("kind", &"chunk") == &"chunk" and b.get("kind", &"chunk") == &"chunk":
-			var ad := _job_ground_distance(a)
-			var bd := _job_ground_distance(b)
+			var ad:float = a._sort_ground
+			var bd:float = b._sort_ground
 			if ad != bd: return ad < bd
 		if bool(a.get("build_features", false)) \
 				!= bool(b.get("build_features", false)):
 			return bool(a.get("build_features", false))
 		return _key_less(_job_key(a), _job_key(b)))
+	# Jobs and queue snapshots contain persistent facts only. In particular,
+	# an absent travel intersection is INF, which is not a JSON number.
+	for job:Dictionary in _jobs:
+		job.erase("_sort_ground")
+		job.erase("_sort_travel")
 	_telemetry.timing(&"queue/sort", Time.get_ticks_usec() - started)
 
 static func _job_key(job: Dictionary) -> Vector2i:
@@ -1240,6 +1323,7 @@ static func _key_less(a: Vector2i, b: Vector2i) -> bool:
 	return a.x < b.x or (a.x == b.x and a.y < b.y)
 
 func _exit_tree() -> void:
+	_restore_startup_render_limit()
 	if not _thread.is_started():
 		return
 	# Stop queuing work at a dead worker: after this point _process must not run.

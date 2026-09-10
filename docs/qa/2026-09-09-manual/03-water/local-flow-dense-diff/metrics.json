@@ -1,0 +1,200 @@
+{
+  "05_water_edge_exact": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 7.955457405151508,
+    "roi_mean_abs_rgb": 7.955457405151508,
+    "roi_changed_over_20_fraction": 0.12525979333623055
+  },
+  "05_water_edge_gameplay_camera": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 8.0669433667415,
+    "roi_mean_abs_rgb": 8.0669433667415,
+    "roi_changed_over_20_fraction": 0.1251410145844545
+  },
+  "05_water_edge_jitter_0": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 8.018657270948406,
+    "roi_mean_abs_rgb": 8.018657270948406,
+    "roi_changed_over_20_fraction": 0.12497213484259283
+  },
+  "05_water_edge_jitter_1": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 7.983036592862467,
+    "roi_mean_abs_rgb": 7.983036592862467,
+    "roi_changed_over_20_fraction": 0.1241581344868195
+  },
+  "05_water_edge_near_left": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 8.327461759997117,
+    "roi_mean_abs_rgb": 8.327461759997117,
+    "roi_changed_over_20_fraction": 0.13499683631950246
+  },
+  "05_water_edge_near_right": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 6.899628952442714,
+    "roi_mean_abs_rgb": 6.899628952442714,
+    "roi_changed_over_20_fraction": 0.11008707439490388
+  },
+  "07_water_mound_exact": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 10.238400964040624,
+    "roi_mean_abs_rgb": 10.238400964040624,
+    "roi_changed_over_20_fraction": 0.13346509706081697
+  },
+  "07_water_mound_gameplay_camera": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 10.41400643544403,
+    "roi_mean_abs_rgb": 10.41400643544403,
+    "roi_changed_over_20_fraction": 0.1338625273866648
+  },
+  "07_water_mound_jitter_0": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 10.253646864203425,
+    "roi_mean_abs_rgb": 10.253646864203425,
+    "roi_changed_over_20_fraction": 0.13309637629108562
+  },
+  "07_water_mound_jitter_1": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 8.705986561676008,
+    "roi_mean_abs_rgb": 8.705986561676008,
+    "roi_changed_over_20_fraction": 0.11503975429123424
+  },
+  "07_water_mound_near_left": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 10.31041109832629,
+    "roi_mean_abs_rgb": 10.31041109832629,
+    "roi_changed_over_20_fraction": 0.13762404217039742
+  },
+  "07_water_mound_near_right": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 9.596805996206585,
+    "roi_mean_abs_rgb": 9.596805996206585,
+    "roi_changed_over_20_fraction": 0.1260124340524608
+  },
+  "08_water_crease_exact": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 11.036055637243312,
+    "roi_mean_abs_rgb": 11.036055637243312,
+    "roi_changed_over_20_fraction": 0.13801640610398938
+  },
+  "08_water_crease_gameplay_camera": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 11.03297958656738,
+    "roi_mean_abs_rgb": 11.03297958656738,
+    "roi_changed_over_20_fraction": 0.13711289948502936
+  },
+  "08_water_crease_jitter_0": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 11.094320836983012,
+    "roi_mean_abs_rgb": 11.094320836983012,
+    "roi_changed_over_20_fraction": 0.13763755254974636
+  },
+  "08_water_crease_jitter_1": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 11.035248767365529,
+    "roi_mean_abs_rgb": 11.035248767365529,
+    "roi_changed_over_20_fraction": 0.1371973393559602
+  },
+  "08_water_crease_near_left": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 9.725929570392454,
+    "roi_mean_abs_rgb": 9.725929570392454,
+    "roi_changed_over_20_fraction": 0.13123926206307995
+  },
+  "08_water_crease_near_right": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 11.756557037444017,
+    "roi_mean_abs_rgb": 11.756557037444017,
+    "roi_changed_over_20_fraction": 0.14416306577528187
+  }
+}

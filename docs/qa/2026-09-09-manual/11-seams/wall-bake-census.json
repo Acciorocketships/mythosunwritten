@@ -1,0 +1,4772 @@
+{
+  "fantasy_village_fabric": {
+    "entries": 337,
+    "bounds_over_10_micrometres": [
+      [
+        "sfv.fabric.wall.wood.plain.003.doorreturn.square.back1070858",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.003.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.005.doorreturn.square.back1070858",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.005.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.007.doorreturn.square.back1070858",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.007.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.square.back1070858",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.square.back1070858",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.001.doorreturn.square.back1070858",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.001.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.001.mirror_x.doorreturn.square.back1070858",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.001.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.004.doorreturn.square.back1070858",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.004.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.008.doorreturn.square.back1070858",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.008.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.013.doorreturn.square.back1070858",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.013.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.square.back1070858",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.020.doorreturn.square.back1070858",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.020.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.020.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.020.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.024.doorreturn.square.back1070858",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.024.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.square.back1070858",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.033.doorreturn.square.back1070858",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.033.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.037.doorreturn.square.back1070858",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.037.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.040.doorreturn.square.back1070858",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.040.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.040.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.040.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.044.doorreturn.square.back1070858",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.044.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.048.doorreturn.square.back1070858",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.048.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.048.mirror_x.doorreturn.square.back1070858",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.048.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.052.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.square.back1070858",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.056.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.square.back1070858",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.058.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.058.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.square.back1070858",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.060.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.060.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.060.mirror_x.doorreturn.square.back1070858",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.060.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.064.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.square.back1070858",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.066.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.066.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.069.mirror_x.doorreturn.square.back1070858",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.069.mirror_x.doorreturn.square.back1070859",
+        1.0013580319823134e-05
+      ]
+    ],
+    "changes": [
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 5.189003244218649e-18,
+        "triangles_added": 6.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 9.154970321940893e-19,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 6.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 5.189003244218649e-18,
+        "triangles_added": 16.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 15.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 6.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 6.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 6.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 6.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 4.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 4.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 4.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 17.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 6.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 6.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 6.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 15.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 14.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 5.189003244218649e-18,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 9.154970321940893e-19,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 19.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 19.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 4.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 4.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 4.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 4.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 9.633001306657738e-18,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 4.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 9.633001306657738e-18,
+        "triangles_added": 4.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 13.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 3.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 26.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 1.3838003729073106e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 6.5384987827621604e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 9.269700272901998e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 20.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.579961888935712e-19,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 19.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 20.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 5.579961888935712e-19,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 24.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.579961888935712e-19,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 24.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 22.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 5.579961888935712e-19,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 7.047995717980523e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 8.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 2,
+        "surfaces_added": 1
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 2,
+        "surfaces_added": 1
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 3,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 2,
+        "surfaces_added": 1
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 3,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 0,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 0,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 0,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 9.953975677046145e-06,
+        "triangles_added": 2,
+        "surfaces_added": 1
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 9.89437103304791e-06,
+        "triangles_added": 2,
+        "surfaces_added": 1
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 3,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 0,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 2,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 3,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 9.7751617498254e-06,
+        "triangles_added": 2,
+        "surfaces_added": 1
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 9.775161739833393e-06,
+        "triangles_added": 2,
+        "surfaces_added": 1
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 22.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 6.584000333897477e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 8.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 26.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 27.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 7.065988550664776e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 25.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 6.079446630019732e-20,
+        "triangles_added": 13.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 13.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 9.373994513255134e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 13.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 14.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 22.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 7.921002136468988e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 21.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 22.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 7.921002136468988e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 24.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 24.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 3.0920011297232174e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 5.960464399823451e-08,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 19.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 5.960464399823451e-08,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 2.5319932375799173e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 18.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 19.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 2.5319932375799173e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 8.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 5.960464399823451e-08,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 23.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 5.960464399823451e-08,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 2.5319932375799173e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 23.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 21.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 2.5319932375799173e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 7.047995717980523e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 7.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 29.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 1.3519969327158718e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 30.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 1.3519969327158718e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 29.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 27.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 1.3519969327158718e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 7.047995717980523e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 28.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 1.3519969327158718e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 4.2298707803511623e-20,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 9.354701352647947e-18,
+        "triangles_added": 29.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 1.9769021069976323e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 4.2298707803511623e-20,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.7115001499438944e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 5.5619988347535104e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 9.354701352647947e-18,
+        "triangles_added": 28.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 9.354701352647947e-18,
+        "triangles_added": 28.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 5.7115001499438944e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 9.354701352647947e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 1.9769021069976323e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 1.9769021069976323e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 7.393194731211152e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 3.06240129868362e-18,
+        "triangles_added": 26.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 3.456701753075397e-18,
+        "triangles_added": 14.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 7.393194731211152e-18,
+        "triangles_added": 13.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 5.626499070197945e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 3.06240129868362e-18,
+        "triangles_added": 25.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 3.06240129868362e-18,
+        "triangles_added": 25.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 3.06240129868362e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 3.456701753075397e-18,
+        "triangles_added": 13.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 3.456701753075397e-18,
+        "triangles_added": 14.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 13.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 13.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 7.393194731211152e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 28.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 3.9005006953223475e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 7.393194731211152e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 9.269700272901998e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 28.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 28.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 3.9005006953223475e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 3.9005006953223475e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 7.393194731211152e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 25.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 7.505201603595732e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 7.393194731211152e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 3.06240129868362e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 6.5384987827621604e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 27.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 5.4407970226797906e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 6.5384987827621604e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 9.269700272901998e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.back1070859.back1070858",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 23.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.back1070859.back1070859",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 24.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.back1070859.miter",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.back1070859.square",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.miter.back1070858",
+        "bounds_max_abs_delta": 5.4407970226797906e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.miter.back1070859",
+        "bounds_max_abs_delta": 5.4407970226797906e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.066.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.066.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 7.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.066.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 8.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.069.mirror_x.doorreturn.back1070858.square",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.069.mirror_x.doorreturn.square.back1070858",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.069.mirror_x.doorreturn.square.back1070859",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      }
+    ]
+  },
+  "fantasy_village_wall_interfaces": {
+    "entries": 337,
+    "bounds_over_10_micrometres": [
+      [
+        "sfv.fabric.wall.wood.plain.003.doorreturn.square.back1070858.course_open",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.003.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.005.doorreturn.square.back1070858.course_open",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.005.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.007.doorreturn.square.back1070858.course_open",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.007.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.001.doorreturn.square.back1070858.course_open",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.001.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.001.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.001.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.004.doorreturn.square.back1070858.course_open",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.004.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.008.doorreturn.square.back1070858.course_open",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.008.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.013.doorreturn.square.back1070858.course_open",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.013.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.020.doorreturn.square.back1070858.course_open",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.020.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.020.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.020.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.024.doorreturn.square.back1070858.course_open",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.024.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.033.doorreturn.square.back1070858.course_open",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.033.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.037.doorreturn.square.back1070858.course_open",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.037.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.040.doorreturn.square.back1070858.course_open",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.040.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.040.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.040.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.044.doorreturn.square.back1070858.course_open",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.044.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.048.doorreturn.square.back1070858.course_open",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.048.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.048.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.048.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.052.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.056.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.058.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.058.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.060.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.060.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.060.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580320045179e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.060.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.064.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580330037186e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.066.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.066.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.069.mirror_x.doorreturn.square.back1070858.course_open",
+        1.0013580319823134e-05
+      ],
+      [
+        "sfv.fabric.wall.wood.window.069.mirror_x.doorreturn.square.back1070859.course_open",
+        1.0013580319823134e-05
+      ]
+    ],
+    "changes": [
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 5.189003244218649e-18,
+        "triangles_added": 6.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 9.154970321940893e-19,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 6.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 5.189003244218649e-18,
+        "triangles_added": 15.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 14.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 6.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 6.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.003.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 6.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 6.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 4.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 4.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.005.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 4.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 17.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 6.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 6.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 6.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 15.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 14.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 5.189003244218649e-18,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 9.154970321940893e-19,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.007.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 19.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 19.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 4.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 4.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.009.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 4.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 4.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 9.633001306657738e-18,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 4.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 9.633001306657738e-18,
+        "triangles_added": 4.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.013.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 13.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 5.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 3.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.plain.015.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 3.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 26.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 1.3838003729073106e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 6.5384987827621604e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 9.269700272901998e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.001.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 20.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.579961888935712e-19,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 19.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 20.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 5.579961888935712e-19,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 24.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.579961888935712e-19,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 24.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 22.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 5.579961888935712e-19,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 7.047995717980523e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.008.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 8.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 2,
+        "surfaces_added": 1
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 2,
+        "surfaces_added": 1
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 3,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 2,
+        "surfaces_added": 1
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 3,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 0,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 0,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 0,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 9.953975677046145e-06,
+        "triangles_added": 2,
+        "surfaces_added": 1
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 9.89437103304791e-06,
+        "triangles_added": 2,
+        "surfaces_added": 1
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 3,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 0,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 2,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 0.0,
+        "triangles_added": 3,
+        "surfaces_added": 0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 9.7751617498254e-06,
+        "triangles_added": 2,
+        "surfaces_added": 1
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 9.775161739833393e-06,
+        "triangles_added": 2,
+        "surfaces_added": 1
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 22.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 6.584000333897477e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 8.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 26.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 27.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 7.065988550664776e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 25.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 6.079446630019732e-20,
+        "triangles_added": 13.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 13.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 9.373994513255134e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 13.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.020.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 14.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 22.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 7.921002136468988e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 21.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 22.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 7.921002136468988e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 24.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 24.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 3.0920011297232174e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.028.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 5.960464399823451e-08,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 19.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 5.960464399823451e-08,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 2.5319932375799173e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 18.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 19.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 2.5319932375799173e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 8.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.033.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 5.960464399823451e-08,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 23.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 5.960464399823451e-08,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 2.5319932375799173e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 23.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 21.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 2.5319932375799173e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 7.047995717980523e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 7.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.037.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 7.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 29.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 1.3519969327158718e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.040.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 30.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 1.3519969327158718e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 29.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 27.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 1.3519969327158718e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 7.047995717980523e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 2.7744034791722574e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.044.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 9.761697375081188e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 28.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 5.488098518828023e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 1.3519969327158718e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 8.779006807368192e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.048.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 4.2298707803511623e-20,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 9.354701352647947e-18,
+        "triangles_added": 29.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 1.9769021069976323e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 4.2298707803511623e-20,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.7115001499438944e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 5.5619988347535104e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 9.354701352647947e-18,
+        "triangles_added": 28.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 9.354701352647947e-18,
+        "triangles_added": 28.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 5.7115001499438944e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 9.354701352647947e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 1.9769021069976323e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 1.9769021069976323e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.052.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 7.393194731211152e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 3.06240129868362e-18,
+        "triangles_added": 26.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 3.456701753075397e-18,
+        "triangles_added": 14.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 7.393194731211152e-18,
+        "triangles_added": 13.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 5.626499070197945e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 3.06240129868362e-18,
+        "triangles_added": 25.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 3.06240129868362e-18,
+        "triangles_added": 25.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 3.06240129868362e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 3.456701753075397e-18,
+        "triangles_added": 13.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 3.456701753075397e-18,
+        "triangles_added": 14.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 13.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.056.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 13.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 7.393194731211152e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 28.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 3.9005006953223475e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 7.393194731211152e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 9.269700272901998e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 28.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 28.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 3.9005006953223475e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 3.9005006953223475e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.058.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 7.393194731211152e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 25.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 7.505201603595732e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 7.393194731211152e-18,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 3.06240129868362e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580320045179e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.060.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 6.5384987827621604e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 27.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 5.4407970226797906e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 6.5384987827621604e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 12.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 9.269700272901998e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.back1070859.back1070858.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 23.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.back1070859.back1070859.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 24.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.back1070859.miter.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.back1070859.square.course_open",
+        "bounds_max_abs_delta": 6.705599192665223e-18,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.miter.back1070858.course_open",
+        "bounds_max_abs_delta": 5.4407970226797906e-18,
+        "triangles_added": 10.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.miter.back1070859.course_open",
+        "bounds_max_abs_delta": 5.4407970226797906e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 0.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580330037186e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.064.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.066.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 8.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.066.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 7.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.066.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 8.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.069.mirror_x.doorreturn.back1070858.square.course_open",
+        "bounds_max_abs_delta": 3.3509946882360206e-18,
+        "triangles_added": 9.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.069.mirror_x.doorreturn.square.back1070858.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 10.0,
+        "surfaces_added": 1.0
+      },
+      {
+        "id": "sfv.fabric.wall.wood.window.069.mirror_x.doorreturn.square.back1070859.course_open",
+        "bounds_max_abs_delta": 1.0013580319823134e-05,
+        "triangles_added": 11.0,
+        "surfaces_added": 1.0
+      }
+    ]
+  }
+}

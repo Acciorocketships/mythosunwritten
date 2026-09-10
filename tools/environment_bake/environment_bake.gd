@@ -3,7 +3,7 @@ extends SceneTree
 
 ## Deterministic editor-side importer for source-pack visuals. Runtime code is
 ## intentionally unaware of every source path named by the manifests.
-const TOOL_VERSION := 31
+const TOOL_VERSION := 32
 const DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
 const INDEX_PATH := "res://terrain/environment/catalog/index.tres"
 const MANIFEST_DIR := "res://tools/environment_bake/manifests"
@@ -390,18 +390,19 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 				Transform3D(Basis.from_scale(Vector3(span / 3.0, 1.0, 1.0)),
 					Vector3((float(depths[0]) - float(depths[1])) * 0.5, 0.0, 0.0)))
 		var miter_mask := int(entry.get("facade_miter_ends", 0))
+		var cap_material: Material = null
+		var cap_uv := Vector2.ZERO
+		if entry.has("facade_miter_cap_source") \
+				and (miter_mask != 0 or entry.has("facade_return_depths")):
+			var cap_root := (load(String(entry.facade_miter_cap_source)) as PackedScene).instantiate()
+			var stock := EnvironmentBakeGeometry.merge_pieces(cap_root, correction)
+			cap_root.free()
+			cap_material = stock.surface_get_material(0).duplicate(true)
+			(cap_material as BaseMaterial3D).cull_mode = BaseMaterial3D.CULL_BACK
+			cap_uv = (stock.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV] as PackedVector2Array)[0]
 		if miter_mask != 0:
 			var front := float(entry.get("facade_join_front", merged.get_aabb().end.z))
 			var half_width := float(entry.get("facade_join_half_width", 1.5))
-			var cap_material: Material = null
-			var cap_uv := Vector2.ZERO
-			if entry.has("facade_miter_cap_source"):
-				var cap_root := (load(String(entry.facade_miter_cap_source)) as PackedScene).instantiate()
-				var stock := EnvironmentBakeGeometry.merge_pieces(cap_root, correction)
-				cap_root.free()
-				cap_material = stock.surface_get_material(0).duplicate(true)
-				(cap_material as BaseMaterial3D).cull_mode = BaseMaterial3D.CULL_BACK
-				cap_uv = (stock.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV] as PackedVector2Array)[0]
 			for end in 2:
 				if miter_mask & (1 << end):
 					var plane := Plane(Vector3(-1.0 if end == 0 else 1.0, 0.0, -1.0), half_width - front)
@@ -429,7 +430,18 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 				else merged.get_aabb().position.x - 1.0
 			var maximum := 1.5 - float(depths[1]) if float(depths[1]) > 0.0 \
 				else merged.get_aabb().end.x + 1.0
-			merged = EnvironmentBakeGeometry.clip_axis_range(merged,Vector3.AXIS_X,minimum,maximum)
+			if cap_material == null:
+				merged = EnvironmentBakeGeometry.clip_axis_range(merged,Vector3.AXIS_X,minimum,maximum)
+			else:
+				# A doorway owns the return boundary, but does not fill the side
+				# panel's exposed thickness. Close each real cut with its declared
+				# native timber stock, as for a miter. Uncut ends remain untouched.
+				if float(depths[0]) > 0.0:
+					merged = EnvironmentBakeGeometry.closed_facade_miter(merged,
+						Plane(Vector3.LEFT,-minimum),cap_material,cap_uv)
+				if float(depths[1]) > 0.0:
+					merged = EnvironmentBakeGeometry.closed_facade_miter(merged,
+						Plane(Vector3.RIGHT,maximum),cap_material,cap_uv)
 			if merged == null:
 				_fail("Could not construct facade return: %s" % asset_id)
 				root.free()

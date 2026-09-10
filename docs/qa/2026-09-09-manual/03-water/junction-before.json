@@ -1,0 +1,1886 @@
+{
+  "coarse": "9.04325580596924",
+  "cross_sections": [
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(18.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(19.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(20.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(21.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(22.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(23.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(24.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(25.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(26.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(27.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(28.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(29.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(30.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "8.33545017242432",
+      "ground": 16.0,
+      "level": "8.33545017242432",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(31.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "8.33545017242432",
+      "ground": 16.0,
+      "level": "8.33545017242432",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(32.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "8.33545017242432",
+      "ground": 16.0,
+      "level": "8.33545017242432",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(33.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "8.33545017242432",
+      "ground": 16.0,
+      "level": "8.33545017242432",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(34.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "8.33545017242432",
+      "ground": 16.0,
+      "level": "8.33545017242432",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(35.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "8.33545017242432",
+      "ground": 4.0,
+      "level": "8.33545017242432",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(36.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "15.0",
+      "coarse": "8.45341777801514",
+      "ground": 4.0,
+      "level": "8.45341777801514",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(37.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "15.0",
+      "coarse": "8.57138538360596",
+      "ground": 4.0,
+      "level": "8.57138538360596",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(38.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "15.0",
+      "coarse": "8.68935298919678",
+      "ground": 4.0,
+      "level": "8.68935298919678",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(39.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "15.0",
+      "coarse": "8.8073205947876",
+      "ground": 4.0,
+      "level": "8.8073205947876",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(40.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "15.0",
+      "coarse": "8.92528820037842",
+      "ground": 4.0,
+      "level": "8.92528820037842",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(41.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "11.3418783233889",
+      "coarse": "9.04325580596924",
+      "ground": 4.0,
+      "level": "9.04325580596924",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(42.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "11.2856563959391",
+      "coarse": "9.3259744644165",
+      "ground": 4.0,
+      "level": "9.3259744644165",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(43.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "11.2294344684892",
+      "coarse": "9.60869312286377",
+      "ground": 4.0,
+      "level": "9.60869312286377",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(44.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "9.89141178131104",
+      "ground": 4.0,
+      "level": "9.89141178131104",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(45.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "10.1741304397583",
+      "ground": 4.0,
+      "level": "10.1741304397583",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(46.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "10.4568490982056",
+      "ground": 4.0,
+      "level": "10.4568490982056",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(47.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "10.7395677566528",
+      "ground": 4.0,
+      "level": "10.7395677566528",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(48.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "10.6770358085632",
+      "ground": 4.0,
+      "level": "10.6770358085632",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(49.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "10.6145038604736",
+      "ground": 4.0,
+      "level": "10.6145038604736",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(50.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "10.551971912384",
+      "ground": 4.0,
+      "level": "10.551971912384",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(51.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "10.4894399642944",
+      "ground": 4.0,
+      "level": "10.4894399642944",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(52.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "10.4269080162048",
+      "ground": 4.0,
+      "level": "10.4269080162048",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(53.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "10.3643760681152",
+      "ground": 4.0,
+      "level": "10.3643760681152",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(54.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "10.3643760681152",
+      "ground": 4.0,
+      "level": "10.3643760681152",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(55.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "10.3643760681152",
+      "ground": 4.0,
+      "level": "10.3643760681152",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(56.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "10.3643760681152",
+      "ground": 4.0,
+      "level": "10.3643760681152",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(57.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "10.3643760681152",
+      "ground": 4.0,
+      "level": "10.3643760681152",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(58.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "10.3643760681152",
+      "ground": 4.0,
+      "level": "10.3643760681152",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(59.0, -1080.0)",
+      "wet": true
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(60.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(61.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(62.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(63.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(64.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(65.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(66.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(67.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(68.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(69.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(70.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(71.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(72.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(73.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "9.96107292175293",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(74.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(75.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(76.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(77.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(78.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(79.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(80.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(81.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(82.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(83.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 20.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 20.0,
+      "p": "(84.0, -1080.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(18.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(19.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(20.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(21.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(22.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(23.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(24.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(25.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(26.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(27.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(28.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(29.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(30.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "11.3062613805135",
+      "ground": 16.0,
+      "level": "11.3062613805135",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(31.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "11.3062613805135",
+      "ground": 16.0,
+      "level": "11.3062613805135",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(32.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "11.3062613805135",
+      "ground": 16.0,
+      "level": "11.3062613805135",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(33.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "11.3062613805135",
+      "ground": 16.0,
+      "level": "11.3062613805135",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(34.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "11.3062613805135",
+      "ground": 16.0,
+      "level": "11.3062613805135",
+      "natural": 20.0,
+      "owned_ground": 16.0,
+      "p": "(35.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "15.0",
+      "coarse": "11.3062613805135",
+      "ground": 4.0,
+      "level": "11.3062613805135",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(36.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "15.0",
+      "coarse": "11.4178302552965",
+      "ground": 4.0,
+      "level": "11.4178302552965",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(37.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "15.0",
+      "coarse": "11.5293991300795",
+      "ground": 4.0,
+      "level": "11.5293991300795",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(38.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "15.0",
+      "coarse": "11.6409680048625",
+      "ground": 4.0,
+      "level": "11.6409680048625",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(39.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "15.0",
+      "coarse": "11.7525368796455",
+      "ground": 4.0,
+      "level": "11.7525368796455",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(40.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "15.0",
+      "coarse": "11.8641057544284",
+      "ground": 4.0,
+      "level": "11.8641057544284",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(41.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "15.0",
+      "coarse": "11.9756746292114",
+      "ground": 4.0,
+      "level": "11.9756746292114",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(42.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "15.0",
+      "coarse": "12.110746383667",
+      "ground": 4.0,
+      "level": "12.110746383667",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(43.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "15.0",
+      "coarse": "12.2458181381226",
+      "ground": 4.0,
+      "level": "12.2458181381226",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(44.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "15.0",
+      "coarse": "12.3808898925781",
+      "ground": 4.0,
+      "level": "12.3808898925781",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(45.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.4805355072021",
+      "coarse": "12.5159616470337",
+      "ground": 4.0,
+      "level": "12.5159616470337",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(46.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.4805355072021",
+      "coarse": "12.6510334014893",
+      "ground": 4.0,
+      "level": "12.6510334014893",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(47.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.4805355072021",
+      "coarse": "12.7861051559448",
+      "ground": 4.0,
+      "level": "12.7861051559448",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(48.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.4805355072021",
+      "coarse": "12.7272849082947",
+      "ground": 4.0,
+      "level": "12.7272849082947",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(49.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.4805355072021",
+      "coarse": "12.6684646606445",
+      "ground": 4.0,
+      "level": "12.6684646606445",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(50.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.4805355072021",
+      "coarse": "12.6096444129944",
+      "ground": 4.0,
+      "level": "12.6096444129944",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(51.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.4805355072021",
+      "coarse": "12.5508241653442",
+      "ground": 4.0,
+      "level": "12.5508241653442",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(52.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.4805355072021",
+      "coarse": "12.4920039176941",
+      "ground": 4.0,
+      "level": "12.4920039176941",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(53.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.4805355072021",
+      "coarse": "12.4331836700439",
+      "ground": 4.0,
+      "level": "12.4331836700439",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(54.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.4805355072021",
+      "coarse": "12.4331836700439",
+      "ground": 4.0,
+      "level": "12.4331836700439",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(55.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.4805355072021",
+      "coarse": "12.4331836700439",
+      "ground": 4.0,
+      "level": "12.4331836700439",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(56.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.4805355072021",
+      "coarse": "12.4331836700439",
+      "ground": 4.0,
+      "level": "12.4331836700439",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(57.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.4652035011395",
+      "coarse": "12.4331836700439",
+      "ground": 4.0,
+      "level": "12.4331836700439",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(58.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.4089816404326",
+      "coarse": "12.4331836700439",
+      "ground": 4.0,
+      "level": "12.4331836700439",
+      "natural": 24.0,
+      "owned_ground": 4.0,
+      "p": "(59.0, -1070.0)",
+      "wet": true
+    },
+    {
+      "channel": "12.3527597630399",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(60.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "12.296537902333",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(61.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "12.240316041626",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(62.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "12.1840941642334",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(63.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "12.1278723035264",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(64.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "12.0716504428195",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(65.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "12.0154285821125",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(66.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "11.9592067214056",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(67.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "11.9029848606986",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(68.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "11.8467629999917",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(69.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "11.7905411392848",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(70.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "11.7343192785778",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(71.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(72.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(73.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(74.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(75.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(76.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(77.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(78.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(79.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(80.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(81.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(82.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 16.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 16.0,
+      "p": "(83.0, -1070.0)",
+      "wet": false
+    },
+    {
+      "channel": "-inf",
+      "coarse": "-inf",
+      "ground": 20.0,
+      "level": "-inf",
+      "natural": 24.0,
+      "owned_ground": 20.0,
+      "p": "(84.0, -1070.0)",
+      "wet": false
+    }
+  ],
+  "domain": {
+    "base": "(-564.0, -1338.0)",
+    "rows": 199,
+    "size": 199
+  },
+  "ground": 4.0,
+  "level": "9.04325580596924",
+  "neighbours": [
+    {
+      "final": "-inf",
+      "ground": 8.0,
+      "p": "(30.0, -1092.0)",
+      "river": "-inf",
+      "source": "-inf"
+    },
+    {
+      "final": "4.49475479125977",
+      "ground": 0.0,
+      "p": "(36.0, -1092.0)",
+      "river": "-inf",
+      "source": "3.0"
+    },
+    {
+      "final": "4.87383651733398",
+      "ground": 0.0,
+      "p": "(42.0, -1092.0)",
+      "river": "-inf",
+      "source": "3.0"
+    },
+    {
+      "final": "5.92148971557617",
+      "ground": 0.0,
+      "p": "(48.0, -1092.0)",
+      "river": "-inf",
+      "source": "3.0"
+    },
+    {
+      "final": "7.34383153915405",
+      "ground": 0.0,
+      "p": "(54.0, -1092.0)",
+      "river": "7.34383153915405",
+      "source": "7.34383153915405"
+    },
+    {
+      "final": "-inf",
+      "ground": 16.0,
+      "p": "(30.0, -1086.0)",
+      "river": "-inf",
+      "source": "-inf"
+    },
+    {
+      "final": "6.188720703125",
+      "ground": 2.0,
+      "p": "(36.0, -1086.0)",
+      "river": "-inf",
+      "source": "3.0"
+    },
+    {
+      "final": "6.67414474487305",
+      "ground": 2.0,
+      "p": "(42.0, -1086.0)",
+      "river": "-inf",
+      "source": "3.0"
+    },
+    {
+      "final": "7.84010457992554",
+      "ground": 2.0,
+      "p": "(48.0, -1086.0)",
+      "river": "-inf",
+      "source": "3.0"
+    },
+    {
+      "final": "8.80971050262451",
+      "ground": 2.0,
+      "p": "(54.0, -1086.0)",
+      "river": "8.80971050262451",
+      "source": "8.80971050262451"
+    },
+    {
+      "final": "-inf",
+      "ground": 16.0,
+      "p": "(30.0, -1080.0)",
+      "river": "-inf",
+      "source": "-inf"
+    },
+    {
+      "final": "8.33545017242432",
+      "ground": 4.0,
+      "p": "(36.0, -1080.0)",
+      "river": "-inf",
+      "source": "10.7395677566528"
+    },
+    {
+      "final": "9.04325580596924",
+      "ground": 4.0,
+      "p": "(42.0, -1080.0)",
+      "river": "-inf",
+      "source": "10.7395677566528"
+    },
+    {
+      "final": "10.7395677566528",
+      "ground": 4.0,
+      "p": "(48.0, -1080.0)",
+      "river": "10.7395677566528",
+      "source": "10.7395677566528"
+    },
+    {
+      "final": "10.3643760681152",
+      "ground": 4.0,
+      "p": "(54.0, -1080.0)",
+      "river": "10.3643760681152",
+      "source": "10.3643760681152"
+    },
+    {
+      "final": "-inf",
+      "ground": 16.0,
+      "p": "(30.0, -1074.0)",
+      "river": "-inf",
+      "source": "-inf"
+    },
+    {
+      "final": "10.2630853652954",
+      "ground": 4.0,
+      "p": "(36.0, -1074.0)",
+      "river": "-inf",
+      "source": "10.7395677566528"
+    },
+    {
+      "final": "10.9050951004028",
+      "ground": 4.0,
+      "p": "(42.0, -1074.0)",
+      "river": "-inf",
+      "source": "10.7395677566528"
+    },
+    {
+      "final": "12.0226678848267",
+      "ground": 4.0,
+      "p": "(48.0, -1074.0)",
+      "river": "12.0226678848267",
+      "source": "12.0226678848267"
+    },
+    {
+      "final": "11.6693000793457",
+      "ground": 4.0,
+      "p": "(54.0, -1074.0)",
+      "river": "11.6693000793457",
+      "source": "11.6693000793457"
+    },
+    {
+      "final": "-inf",
+      "ground": 16.0,
+      "p": "(30.0, -1068.0)",
+      "river": "-inf",
+      "source": "-inf"
+    },
+    {
+      "final": "11.8278493881226",
+      "ground": 4.0,
+      "p": "(36.0, -1068.0)",
+      "river": "-inf",
+      "source": "10.7395677566528"
+    },
+    {
+      "final": "12.5109643936157",
+      "ground": 4.0,
+      "p": "(42.0, -1068.0)",
+      "river": "-inf",
+      "source": "10.7395677566528"
+    },
+    {
+      "final": "13.1678237915039",
+      "ground": 4.0,
+      "p": "(48.0, -1068.0)",
+      "river": "13.1678237915039",
+      "source": "13.1678237915039"
+    },
+    {
+      "final": "12.8151254653931",
+      "ground": 4.0,
+      "p": "(54.0, -1068.0)",
+      "river": "12.8151254653931",
+      "source": "12.8151254653931"
+    }
+  ],
+  "point": "(42.0, -1080.0)",
+  "traces": [
+    {
+      "near": [],
+      "source": "(-1, -2)"
+    },
+    {
+      "near": [
+        {
+          "a": "(40.51675, -1037.793)",
+          "b": "(46.02181, -1048.456)",
+          "bed": 15.5,
+          "distance": 31.7996616363525,
+          "level": 15.0,
+          "width": 9.0
+        },
+        {
+          "a": "(46.02181, -1048.456)",
+          "b": "(50.63377, -1059.534)",
+          "bed": 15.5,
+          "distance": 22.2125377655029,
+          "level": 15.0,
+          "width": 9.03181838989258
+        },
+        {
+          "a": "(50.63377, -1059.534)",
+          "b": "(54.45385, -1070.91)",
+          "bed": 11.5,
+          "distance": 15.4185047149658,
+          "level": 14.3001470565796,
+          "width": 9.06363677978516
+        },
+        {
+          "a": "(54.45385, -1070.91)",
+          "b": "(57.66722, -1082.472)",
+          "bed": 11.5,
+          "distance": 14.4332304000854,
+          "level": 12.4805355072021,
+          "width": 9.09545421600342
+        },
+        {
+          "a": "(57.66722, -1082.472)",
+          "b": "(58.9623, -1094.401)",
+          "bed": 7.5,
+          "distance": 15.8609676361084,
+          "level": 9.96107292175293,
+          "width": 9.127272605896
+        },
+        {
+          "a": "(58.9623, -1094.401)",
+          "b": "(56.02789, -1106.037)",
+          "bed": 3.5,
+          "distance": 22.251350402832,
+          "level": 7.16166877746582,
+          "width": 9.15909099578857
+        },
+        {
+          "a": "(56.02789, -1106.037)",
+          "b": "(54.43875, -1117.932)",
+          "bed": 3.5,
+          "distance": 29.5756511688232,
+          "level": 4.50223159790039,
+          "width": 9.19090938568115
+        },
+        {
+          "a": "(54.43875, -1117.932)",
+          "b": "(52.73623, -1129.81)",
+          "bed": 0.594769835472107,
+          "distance": 39.9189491271973,
+          "level": 3.0,
+          "width": 9.22272682189941
+        },
+        {
+          "a": "(52.73623, -1129.81)",
+          "b": "(50.89373, -1141.668)",
+          "bed": -1.0,
+          "distance": 50.9541053771973,
+          "level": 3.0,
+          "width": 9.25454521179199
+        },
+        {
+          "a": "(50.89373, -1141.668)",
+          "b": "(47.77748, -1153.256)",
+          "bed": -1.0,
+          "distance": 62.3058738708496,
+          "level": 3.0,
+          "width": 9.28636360168457
+        },
+        {
+          "a": "(47.77748, -1153.256)",
+          "b": "(43.93822, -1164.625)",
+          "bed": -1.0,
+          "distance": 73.4835739135742,
+          "level": 3.0,
+          "width": 9.31818199157715
+        },
+        {
+          "a": "(43.93822, -1164.625)",
+          "b": "(39.03578, -1175.578)",
+          "bed": -1.0,
+          "distance": 84.6475601196289,
+          "level": 3.0,
+          "width": 9.35000038146973
+        },
+        {
+          "a": "(39.03578, -1175.578)",
+          "b": "(32.08387, -1185.359)",
+          "bed": -1.0,
+          "distance": 95.6241989135742,
+          "level": 3.0,
+          "width": 9.38181781768799
+        },
+        {
+          "a": "(-37.99943, -1141.976)",
+          "b": "(-26.16812, -1139.971)",
+          "bed": -1.0,
+          "distance": 90.79296875,
+          "level": 3.0,
+          "width": 9.79545497894287
+        },
+        {
+          "a": "(-26.16812, -1139.971)",
+          "b": "(-14.28819, -1141.664)",
+          "bed": -1.0,
+          "distance": 83.4913330078125,
+          "level": 3.0,
+          "width": 9.82727241516113
+        },
+        {
+          "a": "(-14.28819, -1141.664)",
+          "b": "(-2.891129, -1145.42)",
+          "bed": -1.0,
+          "distance": 79.3408050537109,
+          "level": 3.0,
+          "width": 9.85909080505371
+        },
+        {
+          "a": "(-2.891129, -1145.42)",
+          "b": "(6.725801, -1152.597)",
+          "bed": -1.0,
+          "distance": 79.3408050537109,
+          "level": 3.0,
+          "width": 9.89090919494629
+        },
+        {
+          "a": "(6.725801, -1152.597)",
+          "b": "(10.65439, -1163.936)",
+          "bed": -1.0,
+          "distance": 80.7131805419922,
+          "level": 3.0,
+          "width": 9.92272758483887
+        },
+        {
+          "a": "(10.65439, -1163.936)",
+          "b": "(8.66647, -1175.77)",
+          "bed": -1.0,
+          "distance": 89.5979080200195,
+          "level": 3.0,
+          "width": 9.95454502105713
+        },
+        {
+          "a": "(-27.46749, -1157.761)",
+          "b": "(-25.73243, -1145.888)",
+          "bed": -1.0,
+          "distance": 94.4926223754883,
+          "level": 3.0,
+          "width": 10.1454544067383
+        },
+        {
+          "a": "(-25.73243, -1145.888)",
+          "b": "(-21.54507, -1134.642)",
+          "bed": -1.0,
+          "distance": 83.8075561523438,
+          "level": 3.0,
+          "width": 10.1772727966309
+        },
+        {
+          "a": "(-21.54507, -1134.642)",
+          "b": "(-17.69525, -1123.276)",
+          "bed": -1.0,
+          "distance": 73.731575012207,
+          "level": 3.0,
+          "width": 10.2090911865234
+        },
+        {
+          "a": "(-17.69525, -1123.276)",
+          "b": "(-13.18252, -1134.395)",
+          "bed": -1.0,
+          "distance": 73.731575012207,
+          "level": 3.0,
+          "width": 10.2409086227417
+        },
+        {
+          "a": "(-13.18252, -1134.395)",
+          "b": "(-3.752191, -1141.816)",
+          "bed": -1.0,
+          "distance": 76.8721771240234,
+          "level": 3.0,
+          "width": 10.2727270126343
+        },
+        {
+          "a": "(-3.752191, -1141.816)",
+          "b": "(8.186952, -1143.023)",
+          "bed": -1.0,
+          "distance": 71.5209426879883,
+          "level": 3.0,
+          "width": 10.3045454025269
+        },
+        {
+          "a": "(8.186952, -1143.023)",
+          "b": "(19.74885, -1139.81)",
+          "bed": -1.0,
+          "distance": 63.8152503967285,
+          "level": 3.0,
+          "width": 10.3363637924194
+        },
+        {
+          "a": "(19.74885, -1139.81)",
+          "b": "(29.33368, -1132.59)",
+          "bed": -1.0,
+          "distance": 54.0939292907715,
+          "level": 3.0,
+          "width": 10.368182182312
+        },
+        {
+          "a": "(29.33368, -1132.59)",
+          "b": "(37.99158, -1124.281)",
+          "bed": -1.0,
+          "distance": 44.4620628356934,
+          "level": 3.0,
+          "width": 10.3999996185303
+        },
+        {
+          "a": "(37.99158, -1124.281)",
+          "b": "(32.13452, -1134.755)",
+          "bed": -1.0,
+          "distance": 44.4620628356934,
+          "level": 3.0,
+          "width": 10.4318180084229
+        },
+        {
+          "a": "(32.13452, -1134.755)",
+          "b": "(24.31146, -1143.854)",
+          "bed": -1.0,
+          "distance": 55.6361808776855,
+          "level": 3.0,
+          "width": 10.4636363983154
+        },
+        {
+          "a": "(24.31146, -1143.854)",
+          "b": "(13.26498, -1148.542)",
+          "bed": -1.0,
+          "distance": 66.2587203979492,
+          "level": 3.0,
+          "width": 10.495454788208
+        },
+        {
+          "a": "(13.26498, -1148.542)",
+          "b": "(1.521952, -1146.072)",
+          "bed": -1.0,
+          "distance": 74.3214111328125,
+          "level": 3.0,
+          "width": 10.5272731781006
+        },
+        {
+          "a": "(1.521952, -1146.072)",
+          "b": "(-8.131083, -1138.943)",
+          "bed": -1.0,
+          "distance": 77.1957702636719,
+          "level": 3.0,
+          "width": 10.5590906143188
+        },
+        {
+          "a": "(-8.131083, -1138.943)",
+          "b": "(-12.40139, -1127.728)",
+          "bed": -1.0,
+          "distance": 72.3706512451172,
+          "level": 3.0,
+          "width": 10.5909090042114
+        },
+        {
+          "a": "(-12.40139, -1127.728)",
+          "b": "(-8.325109, -1139.015)",
+          "bed": -1.0,
+          "distance": 72.3706512451172,
+          "level": 3.0,
+          "width": 10.622727394104
+        },
+        {
+          "a": "(-8.325109, -1139.015)",
+          "b": "(0.310976, -1147.347)",
+          "bed": -1.0,
+          "distance": 77.5588455200195,
+          "level": 3.0,
+          "width": 10.6545457839966
+        },
+        {
+          "a": "(0.310976, -1147.347)",
+          "b": "(9.455074, -1155.117)",
+          "bed": -1.0,
+          "distance": 79.2057418823242,
+          "level": 3.0,
+          "width": 10.6863632202148
+        },
+        {
+          "a": "(9.455074, -1155.117)",
+          "b": "(18.38764, -1163.13)",
+          "bed": -1.0,
+          "distance": 81.8645248413086,
+          "level": 3.0,
+          "width": 10.7181816101074
+        },
+        {
+          "a": "(18.38764, -1163.13)",
+          "b": "(26.37872, -1172.083)",
+          "bed": -1.0,
+          "distance": 86.4188766479492,
+          "level": 3.0,
+          "width": 10.75
+        },
+        {
+          "a": "(26.37872, -1172.083)",
+          "b": "(34.52395, -1180.895)",
+          "bed": -1.0,
+          "distance": 93.3983917236328,
+          "level": 3.0,
+          "width": 10.7818183898926
+        },
+        {
+          "a": "(118.4492, -1151.493)",
+          "b": "(106.4677, -1150.826)",
+          "bed": -1.0,
+          "distance": 95.7729263305664,
+          "level": 3.0,
+          "width": 11.2590913772583
+        },
+        {
+          "a": "(106.4677, -1150.826)",
+          "b": "(97.43957, -1158.731)",
+          "bed": -1.0,
+          "distance": 95.7552032470703,
+          "level": 3.0,
+          "width": 11.2909088134766
+        },
+        {
+          "a": "(97.43957, -1158.731)",
+          "b": "(92.63489, -1169.728)",
+          "bed": -1.0,
+          "distance": 96.2921905517578,
+          "level": 3.0,
+          "width": 11.3227272033691
+        }
+      ],
+      "source": "(0, -2)"
+    }
+  ],
+  "untapered": "9.04325580596924"
+}

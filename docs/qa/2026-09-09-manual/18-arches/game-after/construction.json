@@ -1,0 +1,109 @@
+{
+  "arches": [
+    {
+      "id": "tunnel-mouth/0/0/0/-1/0",
+      "transform": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-0.65, 0.0, 0.75)]"
+    }
+  ],
+  "cameras": [
+    {
+      "transform": "[X: (-1.0, 0.0, -0.0), Y: (0.0, 0.999496, -0.03173), Z: (0.0, -0.03173, -0.999496), O: (288.0, 9.68, -1165.1)]",
+      "view": "front"
+    },
+    {
+      "transform": "[X: (-0.937082, 0.0, -0.34911), Y: (0.02559, 0.99731, -0.068688), Z: (0.34817, -0.073299, -0.934561), O: (289.9, 9.48, -1163.9)]",
+      "view": "left"
+    },
+    {
+      "transform": "[X: (-0.937082, 0.0, 0.34911), Y: (-0.02559, 0.99731, -0.068688), Z: (-0.34817, -0.073299, -0.934561), O: (286.1, 9.48, -1163.9)]",
+      "view": "right"
+    },
+    {
+      "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 0.999289, 0.037709), Z: (0.0, -0.037709, 0.999289), O: (288.0, 9.68, -1153.5)]",
+      "view": "inside"
+    },
+    {
+      "transform": "[X: (-1.0, 0.0, -0.0), Y: (-0.0, 0.978549, 0.206012), Z: (0.0, 0.206012, -0.978549), O: (288.0, 11.08, -1164.5)]",
+      "view": "overview"
+    }
+  ],
+  "outskirts": [
+    {
+      "asset": "sfv.building.interior.orange.006",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.00",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (229.5806, 6.05, -1131.176)]"
+    },
+    {
+      "asset": "sfv.building.interior.orange.001",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.01",
+      "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (345.9175, 5.006, -1173.622)]"
+    },
+    {
+      "asset": "sfv.building.interior.orange.001",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.02",
+      "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (309.622, 5.006, -1094.083)]"
+    },
+    {
+      "asset": "lpfv.building.house.01",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.03",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (260.8691, 6.05, -1199.9)]"
+    },
+    {
+      "asset": "lpfv.fabric.door.closed.01",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.03.component.closed_door",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (263.4911, 6.05, -1194.162)]"
+    },
+    {
+      "asset": "lpfv.building.house.07",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.04",
+      "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (279.8809, 6.05, -1104.1)]"
+    },
+    {
+      "asset": "lpfv.fabric.door.closed.01",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.04.component.closed_door",
+      "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (277.2589, 6.05, -1109.838)]"
+    },
+    {
+      "asset": "lpfv.building.house.07",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.05",
+      "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (335.9001, 6.05, -1155.645)]"
+    },
+    {
+      "asset": "lpfv.fabric.door.closed.01",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.05.component.closed_door",
+      "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (330.1621, 6.05, -1153.023)]"
+    },
+    {
+      "asset": "lpfv.building.house.01",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.06",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (272.8573, 6.05, -1199.9)]"
+    },
+    {
+      "asset": "lpfv.fabric.door.closed.01",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.06.component.closed_door",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (275.4793, 6.05, -1194.162)]"
+    },
+    {
+      "asset": "lpfv.building.house.07",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.07",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (240.0999, 6.05, -1153.82)]"
+    },
+    {
+      "asset": "lpfv.fabric.door.closed.01",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.07.component.closed_door",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (245.8379, 6.05, -1156.442)]"
+    },
+    {
+      "asset": "lpfv.building.house.01",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.08",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (240.0999, 6.05, -1165.808)]"
+    },
+    {
+      "asset": "lpfv.fabric.door.closed.01",
+      "id": "settlement.15289ce93c11a72d.outskirts.house.08.component.closed_door",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (245.8379, 6.05, -1168.43)]"
+    }
+  ],
+  "player": "(255.7, 10.5, -1139.2)",
+  "world_transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (289.5, 6.08, -1157.5)]"
+}

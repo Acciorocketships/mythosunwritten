@@ -2620,7 +2620,7 @@ func test_the_roofscape_is_a_village_not_a_fortress() -> void:
 		# 2 -- and the detector can fire, on this very town's own plot model.
 		if not caps.plant.is_empty():
 			var planted := WarrenSpatialFabricCompiler.maze_stone_band_profile(
-				caps.plant as Dictionary, maze_source, plan.grid, {})
+				caps.plant as Dictionary, maze_source, plan.grid, {},plan.source_volume)
 			assert_eq(int(planted.get("maze_rubble_crown_cap_count", -1)), 1,
 				("%s: a face planted in a real roof band with open sky above " \
 					+ "it does not register as a rubble crown cap") \
@@ -2733,7 +2733,7 @@ func _crown_cap_census(plan: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_HOUSE:
 			continue
 		var span := WarrenMazeBlockPartitioner.plot_roof_band_span(maze_source,
-			plot)
+			plot,plan.source_volume)
 		var is_parent := stack_parents.has(StringName(plot["id"]))
 		for cell_value: Variant in plot["cells"] as Array:
 			var column := cell_value as Vector2i
@@ -8394,7 +8394,7 @@ func test_retained_stone_concentrates_in_the_bottom_storeys() -> void:
 					# never roomed". Re-derived from the partitioner's own
 					# span rather than read back out of the audit.
 					var roof := WarrenMazeBlockPartitioner \
-						.plot_roof_band_span(maze_source, plot)
+						.plot_roof_band_span(maze_source, plot,plan.source_volume)
 					roofed = key.y >= roof.x and key.y < roof.y
 					break
 			faces += 1

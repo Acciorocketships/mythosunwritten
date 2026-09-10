@@ -1,0 +1,68 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_grass_lip.gd
+* test_reported_narrow_strip_and_end_keep_a_closed_rolled_edge_in_four_orientations
+* test_native_lip_collision_and_world_tint_contract_survive_surface_ownership
+2/2 passed.
+
+
+res://tests/test_fabric_surface_ownership.gd
+* test_partial_floor_preserves_exposed_cap_and_source_attributes
+* test_overlapping_floor_owners_form_a_union_without_duplicate_cap_fragments
+* test_full_coverage_emits_no_cap_and_absent_floor_preserves_all_source_area
+* test_floor_owns_vertical_skin_exactly_on_its_rectangle_boundary
+4/4 passed.
+
+
+res://tests/test_terrain_surface_field.gd
+* test_flat_at_cell_centre
+* test_height_bounds_are_exact_on_a_flat_footprint
+* test_height_bounds_contain_dense_samples_across_cell_boundaries
+* test_slope_ramps_over_full_half_cell
+* test_ramps_down_to_lower_cardinal
+* test_lower_cell_flat_toward_higher_neighbour
+* test_shared_edge_agrees_from_both_cells
+* test_level_t_junction_has_one_shared_seam_profile
+* test_level_surfaces_agree_across_every_non_cliff_edge_at_reported_seed
+* test_every_ordinary_edge_is_single_valued_across_varied_fields
+* test_convex_corner_reaches_floor_at_vertex
+* test_convex_corner_edges_still_mate
+* test_concave_corner_only_far_vertex_dips
+* test_cliff_top_is_flat_to_edge
+* test_one_storey_neighbour_still_ramps
+* test_walkability_is_derived_from_the_rendered_boundary
+* test_cardinal_strip_proves_every_rendered_boundary_crossing
+* test_walkability_matches_exposed_edges_across_varied_fields
+* test_inner_corner_stays_flat_not_a_slope
+* test_no_slope_dip_when_a_cardinal_arm_is_higher
+* test_cell_below_a_cliff_stays_flat_and_the_cliff_walls_down
+* test_no_mound_where_a_cell_sits_below_a_diagonal_cliff
+* test_baked_sampler_matches_surface_y_in_cell
+23/23 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               3
+Tests                29
+Passing Tests        29
+Asserts           12984
+Time              7.945s
+
+
+---- All tests passed! ----
+

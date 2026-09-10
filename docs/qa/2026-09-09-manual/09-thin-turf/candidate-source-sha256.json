@@ -1,0 +1,5 @@
+{
+  "scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd": "19f4148492bf8bd9163ab48c71713f2c8a72df73030ced57440ccd4141b3c9d0",
+  "scripts/terrain/features/FeatureCommitQueue.gd": "eeb91a642892fa5df946224806f19aac9fc362fcd0df6e76118c143cfd108f96",
+  "scripts/terrain/features/villages/fabric/WarrenSpatialFabricCompiler.gd": "7c9568c1ea3a92e08796456227783c59775b8587fe60f2a857b74a53ff5087c3"
+}

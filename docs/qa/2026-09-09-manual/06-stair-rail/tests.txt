@@ -1,0 +1,77 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_rail_attachment.gd
+* test_gate_rails_enter_actual_native_landing_posts_in_four_orientations
+* test_attachment_keeps_the_reserved_treads_and_lower_landing
+2/2 passed.
+
+
+res://tests/test_september8_night_posts.gd
+* test_free_stair_ends_have_posts_above_and_wider_than_the_rail
+* test_every_guard_face_has_noncollapsed_texture_coordinates
+2/2 passed.
+
+
+res://tests/test_september8_gate_ground.gd
+* test_raised_exit_does_not_force_a_three_metre_spike_into_ground
+* test_gate_flight_lands_on_ground_with_shared_step_limits_and_unique_posts
+2/2 passed.
+
+
+res://tests/test_september8_gate_paint.gd
+* test_level_gate_paint_keeps_the_connecting_road_width_in_every_orientation
+1/1 passed.
+
+
+res://tests/test_september8_night_stair_clearance.gd
+* test_exterior_stair_approach_is_free_of_overhead_terrace_posts
+* test_gate_checks_the_lower_landing_beyond_the_first_exterior_cell
+* test_raised_gate_checks_full_run_in_all_directions_but_level_gate_needs_only_landing
+3/3 passed.
+
+
+res://tests/test_september7_stair_walk.gd
+* test_scaled_stair_risers_reserve_the_ground_approach_clearance
+* test_real_player_walks_from_ground_to_upper_landing_without_jump
+2/2 passed.
+
+
+res://tests/test_september8_stair_motion.gd
+* test_stair_ascent_and_descent_have_no_body_reversals_or_visual_jumps
+* test_slow_stair_motion_keeps_the_same_access_and_smoothness
+* test_ground_snap_preserves_jumps_ledges_and_obstacle_limits
+* test_scaled_stair_risers_reserve_the_ground_approach_clearance
+* test_real_player_walks_from_ground_to_upper_landing_without_jump
+5/5 passed.
+
+
+res://tests/test_village_gate_handoffs.gd
+* test_reported_town_gate_handoffs_are_painted_and_graded_to_the_street
+1/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               8
+Tests                18
+Passing Tests        18
+Asserts            1507
+Time              68.88s
+
+
+---- All tests passed! ----
+

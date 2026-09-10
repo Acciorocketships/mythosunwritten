@@ -1,0 +1,24 @@
+{
+  "accepted": true,
+  "matched_camera_json_identical": true,
+  "views_visually_reviewed": [
+    "exact",
+    "near_left",
+    "near_right",
+    "jitter_0",
+    "jitter_1",
+    "gameplay_camera"
+  ],
+  "judgment": "Opposing native lip backs no longer project beyond the rounded perimeter. No new holes, texture seams or nearby geometry changes observed. Animated orb explains the other localized pixel difference.",
+  "tests": 29,
+  "assertions": 12984,
+  "test_seconds": 7.945,
+  "test_exit_code": 0,
+  "physical_cells": 124,
+  "physical_crossings": 179,
+  "clearance_identical": true,
+  "blocked_cells": 0,
+  "blocked_crossings": 0,
+  "crossings_requiring_lateral_offset": 4,
+  "original_camera_precision_recoverable": false
+}

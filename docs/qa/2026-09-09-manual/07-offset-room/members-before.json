@@ -1,0 +1,72 @@
+{
+  "maze-outcrop/-1/3/11/3": {
+    "braces": 0,
+    "pieces": [
+      {
+        "asset": "sfv.fabric.gallery.floor.m.001",
+        "id": "maze-outcrop/-1/3/11/3/cap",
+        "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 6.0, 18.0)]"
+      },
+      {
+        "asset": "sfv.fabric.gallery.floor.m.001",
+        "id": "maze-outcrop/-1/3/11/3/base",
+        "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.184388), O: (-2.25, 2.838948, 17.86171)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.s.002",
+        "id": "maze-outcrop/-1/3/11/3/cheek/0",
+        "pose": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-3.473418, 3.0, 18.0)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.s.002",
+        "id": "maze-outcrop/-1/3/11/3/cheek/1",
+        "pose": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-1.026582, 3.0, 18.0)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.window.s.004",
+        "id": "maze-outcrop/-1/3/11/3/face/0",
+        "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-1.5, 3.0, 18.47342)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.window.s.004",
+        "id": "maze-outcrop/-1/3/11/3/face/1",
+        "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-3.0, 3.0, 18.47342)]"
+      }
+    ]
+  },
+  "maze-outcrop/-3/3/11/3": {
+    "braces": 0,
+    "pieces": [
+      {
+        "asset": "sfv.fabric.gallery.floor.m.001",
+        "id": "maze-outcrop/-3/3/11/3/cap",
+        "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 6.0, 18.0)]"
+      },
+      {
+        "asset": "sfv.fabric.gallery.floor.m.001",
+        "id": "maze-outcrop/-3/3/11/3/base",
+        "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.184388), O: (-5.25, 2.838948, 17.86171)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.s.002",
+        "id": "maze-outcrop/-3/3/11/3/cheek/0",
+        "pose": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-6.473418, 3.0, 18.0)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.s.002",
+        "id": "maze-outcrop/-3/3/11/3/cheek/1",
+        "pose": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.026582, 3.0, 18.0)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.window.s.004",
+        "id": "maze-outcrop/-3/3/11/3/face/0",
+        "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-4.5, 3.0, 18.47342)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.window.s.004",
+        "id": "maze-outcrop/-3/3/11/3/face/1",
+        "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-6.0, 3.0, 18.47342)]"
+      }
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "contexts": 30,
+  "before_ms": 166092.361,
+  "after_ms": 162425.615,
+  "fill_hashes_identical": true,
+  "coarse_hashes_identical": true,
+  "fine_hashes_identical": true,
+  "note": "Contours are not requested by this feature benchmark."
+}

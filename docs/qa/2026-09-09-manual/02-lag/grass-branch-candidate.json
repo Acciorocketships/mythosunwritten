@@ -1,0 +1,62 @@
+{
+  "camera": "[X: (0.928477, 0.0, -0.371391), Y: (-0.238144, 0.767354, -0.595361), Z: (0.284988, 0.641223, 0.71247), O: (291.4, 14.0, -1334.0)]",
+  "fixture": "/Users/ryko/story/.artifacts/september9-render-fixture/world-v2.res",
+  "fixture_sha256": "32ac7509b5e679b75bb09ecf88a1778db35dd1e4b0ac174fdbd10a76125724be",
+  "rows": [
+    {
+      "draw_calls": 690.0,
+      "frames": {
+        "frames": 291,
+        "max_ms": 41.41,
+        "mean_ms": 34.4278281786942,
+        "p50_ms": 34.286,
+        "p95_ms": 38.229,
+        "p99_ms": 40.252
+      },
+      "primitives": 10559868.0,
+      "variant": "before"
+    },
+    {
+      "draw_calls": 690.0,
+      "frames": {
+        "frames": 288,
+        "max_ms": 43.62,
+        "mean_ms": 34.7528472222222,
+        "p50_ms": 34.839,
+        "p95_ms": 40.438,
+        "p99_ms": 41.549
+      },
+      "primitives": 10559868.0,
+      "variant": "candidate"
+    },
+    {
+      "draw_calls": 690.0,
+      "frames": {
+        "frames": 289,
+        "max_ms": 42.862,
+        "mean_ms": 34.6496020761246,
+        "p50_ms": 35.361,
+        "p95_ms": 40.951,
+        "p99_ms": 42.408
+      },
+      "primitives": 10559868.0,
+      "variant": "before_repeat"
+    },
+    {
+      "draw_calls": 690.0,
+      "frames": {
+        "frames": 291,
+        "max_ms": 44.599,
+        "mean_ms": 34.3815635738831,
+        "p50_ms": 34.602,
+        "p95_ms": 40.275,
+        "p99_ms": 41.902
+      },
+      "primitives": 10559868.0,
+      "variant": "candidate_repeat"
+    }
+  ],
+  "shadow_filter_quality": 2,
+  "sun_angular_distance": 2.5,
+  "validation_status": "invalid_shader_override_did_not_reach_nested_batches"
+}

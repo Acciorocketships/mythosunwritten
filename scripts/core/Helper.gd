@@ -75,6 +75,35 @@ static func macro_density01(pos: Vector3, world_seed: int) -> float:
 	return value * origin_falloff
 
 
+# Nearby continuous samples reuse the same four immutable lattice corners.
+# The key retains the full 64-bit seed. A fixed FIFO ring bounds storage and
+# evicts in O(1); the shared main/worker cache never changes sampling results.
+const _NOISE_CORNER_CACHE_LIMIT := 16384
+static var _noise_corner_cache: Dictionary = {}
+static var _noise_corner_keys: Array = []
+static var _noise_corner_cursor := 0
+static var _noise_corner_mutex := Mutex.new()
+
+static func _value_noise_corners(world_seed: int, cx: int, cz: int) -> PackedFloat64Array:
+	var key := [world_seed,cx,cz]
+	_noise_corner_mutex.lock()
+	var cached = _noise_corner_cache.get(key)
+	if cached != null:
+		_noise_corner_mutex.unlock()
+		return cached
+	var corners := PackedFloat64Array([_cell_hash01(world_seed,cx,cz),
+		_cell_hash01(world_seed,cx+1,cz),_cell_hash01(world_seed,cx,cz+1),
+		_cell_hash01(world_seed,cx+1,cz+1)])
+	if _noise_corner_keys.is_empty(): _noise_corner_keys.resize(_NOISE_CORNER_CACHE_LIMIT)
+	var old_key = _noise_corner_keys[_noise_corner_cursor]
+	if old_key != null: _noise_corner_cache.erase(old_key)
+	_noise_corner_keys[_noise_corner_cursor] = key
+	_noise_corner_cursor = (_noise_corner_cursor+1)%_NOISE_CORNER_CACHE_LIMIT
+	_noise_corner_cache[key] = corners
+	_noise_corner_mutex.unlock()
+	return corners
+
+
 static func _value_noise01(pos: Vector3, world_seed: int, scale: float) -> float:
 	var x: float = pos.x / scale
 	var z: float = pos.z / scale
@@ -82,11 +111,8 @@ static func _value_noise01(pos: Vector3, world_seed: int, scale: float) -> float
 	var cz: int = floori(z)
 	var fx: float = smoothstep(0.0, 1.0, x - float(cx))
 	var fz: float = smoothstep(0.0, 1.0, z - float(cz))
-	var h00: float = _cell_hash01(world_seed, cx, cz)
-	var h10: float = _cell_hash01(world_seed, cx + 1, cz)
-	var h01: float = _cell_hash01(world_seed, cx, cz + 1)
-	var h11: float = _cell_hash01(world_seed, cx + 1, cz + 1)
-	return lerpf(lerpf(h00, h10, fx), lerpf(h01, h11, fx), fz)
+	var corners := _value_noise_corners(world_seed,cx,cz)
+	return lerpf(lerpf(corners[0], corners[1], fx), lerpf(corners[2], corners[3], fx), fz)
 
 
 # ------------------------------------------------------------

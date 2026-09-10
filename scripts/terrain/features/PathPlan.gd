@@ -673,51 +673,8 @@ func _project_context(core: Rect2, routes: Array[Dictionary]) -> FeatureContext:
 func _place_arches(core: Rect2, routes: Array[Dictionary], masks: Dictionary,
 		nodes: Dictionary, bridge_cells: Dictionary, reservations: Array[Rect2],
 		occupied: Array[Rect2], payload: EnvironmentInstancePayload) -> void:
-	# Place from the route endpoint, not the merged mask. Two routes may share
-	# their first arm and split before the gate distance; a mask walk sees that
-	# branch and used to abandon the exit entirely. Endpoint walks instead put
-	# one gate on every resulting physical road, while a shared segment key
-	# collapses routes that are still the same road at the chosen distance.
-	var exits: Array[Dictionary] = []
-	for route: Dictionary in routes:
-		var forward := _ordered_route_cells(route)
-		if forward.size() <= PathProgram.VILLAGE_GATE_MIN_STEPS:
-			continue
-		exits.append({"node": forward[0], "cells": forward,
-			"key": "%s:a" % route.key})
-		var reverse: Array[Vector2i] = forward.duplicate()
-		reverse.reverse()
-		exits.append({"node": reverse[0], "cells": reverse,
-			"key": "%s:b" % route.key})
-	exits.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return _cell_less(a.node, b.node) if a.node != b.node \
-			else String(a.key) < String(b.key))
-	var claimed_segments: Dictionary = {}
-	var large_gate_points: Array[Vector2] = []
-	for exit: Dictionary in exits:
-		var cells: Array[Vector2i] = exit.cells
-		var final_step := mini(PathProgram.VILLAGE_GATE_SEARCH_STEPS,
-			cells.size() - 1)
-		for step in range(PathProgram.VILLAGE_GATE_MIN_STEPS, final_step + 1):
-			var a: Vector2i = cells[step - 1]
-			var b: Vector2i = cells[step]
-			var direction := b - a
-			if absi(direction.x) + absi(direction.y) != 1 \
-					or bridge_cells.has(a) or bridge_cells.has(b):
-				continue
-			var segment_key := _connection_key(a, b)
-			if claimed_segments.has(segment_key):
-				break
-			var offset := Vector2(direction) * TerrainSurfaceField.HALF
-			var anchor := Vector2(a) * TerrainSurfaceField.TILE + offset
-			var asset: StringName = &"sfv.arch.001" if _roll(_hash(
-				PathProgram.SALT_ARCH, [a.x, a.y, b.x, b.y, 1])) < 0.5 \
-				else &"sfv.arch.002"
-			if _try_prop(core, asset, a, direction, false, "village_gate",
-					reservations, occupied, payload, offset):
-				claimed_segments[segment_key] = true
-				large_gate_points.append(anchor)
-				break
+	# Town entrance frames belong to the warren's real covered passages.
+	# Road endpoints and forks cannot manufacture detached village gates.
 
 	# The small arch marks a fuzzy dominant-biome threshold, not every local
 	# flip inside an ecotone. Build all crossings first, suppress the village
@@ -773,7 +730,7 @@ func _place_arches(core: Rect2, routes: Array[Dictionary], masks: Dictionary,
 		if a.cell != b.cell:
 			return _cell_less(a.cell, b.cell)
 		return _dir_index(a.direction) < _dir_index(b.direction))
-	var accepted_points: Array[Vector2] = large_gate_points.duplicate()
+	var accepted_points: Array[Vector2] = []
 	for candidate: Dictionary in candidates:
 		var point: Vector2 = candidate.point
 		var too_close := false
@@ -1047,7 +1004,7 @@ func _stable_id(kind: String, values: Array) -> StringName:
 	match kind:
 		"bridge": salt = PathProgram.SALT_BRIDGE
 		"lamp": salt = PathProgram.SALT_LAMP
-		"village_gate", "biome_gate": salt = PathProgram.SALT_ARCH
+		"biome_gate": salt = PathProgram.SALT_ARCH
 	return StringName("path.%s.%016x" % [kind, _hash(salt, values) & 0x7FFFFFFFFFFFFFFF])
 
 static func _site_values(bridge: Dictionary) -> Array:

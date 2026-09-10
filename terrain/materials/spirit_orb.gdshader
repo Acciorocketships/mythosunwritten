@@ -9,9 +9,9 @@ void vertex() {
 void fragment() {
 	float r = length(UV - vec2(0.5)) * 2.0;
 	float halo = exp(-r * r * 5.5) * (1.0 - smoothstep(0.65, 1.0, r));
-	float core = exp(-r * r * 95.0);
-	float pulse = 0.88 + 0.12 * sin(TIME * 1.3 + phase);
-	ALBEDO = vec3(0.0);
-	EMISSION = (glow_color * halo * 1.3 + mix(glow_color, vec3(1.0), 0.75) * core * 5.0) * pulse;
+	float core = exp(-r * r * 65.0);
+	float pulse = 0.88 + 0.12 * sin(TIME * 0.45 + phase);
+	// Unshaded additive sprites output their radiance through ALBEDO.
+	ALBEDO = (glow_color * halo * 1.3 + mix(glow_color, vec3(1.0), 0.75) * core * 5.0) * pulse;
 	ALPHA = halo;
 }

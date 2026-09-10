@@ -34,14 +34,16 @@ var _raw_override: Callable = Callable()
 # class-resolution cycle; duck-typed: needs carve_at_cell(cx, cz) -> float).
 var _water_plan = null
 
-# Per-cell sample memo: Vector2i(cx,cz) -> [height_after_carve: float, carve: float].
+# Per-cell sample memo: Vector2i(cx,cz) -> [height_after_carve, carve, original_height].
 # Purely a performance cache — raw_height is a pure function of (seed, cell) —
 # persisted across compute_region calls so the ~77%-overlapping windows of
 # neighbouring chunks are sampled once. The raw carve amount is cached too so
 # compute_region can apply the water threshold without a third carve sweep.
-# Capped so an endless walk can't grow it forever (a full clear is always safe).
+# Evict one oldest sample at capacity, preserving the overlapping warm windows.
 const _SAMPLE_CACHE_MAX := 200_000
 var _samples: Dictionary = {}
+var _sample_keys: Array[Vector2i] = []
+var _sample_cursor: int = 0
 
 
 func _sample(cx: int, cz: int) -> Array:
@@ -56,11 +58,21 @@ func _sample(cx: int, cz: int) -> Array:
 		var carve: float = 0.0
 		if _water_plan != null:
 			carve = _water_plan.carve_at_cell(cx, cz)
-		s = [h - carve, carve]
+		s = [h - carve, carve, h]
 		if _samples.size() >= _SAMPLE_CACHE_MAX:
-			_samples.clear()
+			_samples.erase(_sample_keys[_sample_cursor])
+			_sample_keys[_sample_cursor] = key
+			_sample_cursor = (_sample_cursor + 1) % _SAMPLE_CACHE_MAX
+		else:
+			_sample_keys.append(key)
 		_samples[key] = s
 	return s
+
+
+func _clear_samples() -> void:
+	_samples.clear()
+	_sample_keys.clear()
+	_sample_cursor = 0
 
 
 func _init(
@@ -91,7 +103,7 @@ func _init(
 ## two must never disagree about what the ground is.
 func set_raw_height_override(fn: Callable) -> void:
 	_raw_override = fn
-	_samples.clear()
+	_clear_samples()
 
 
 ## Attach the water network: raw_height subtracts its carve BEFORE storey
@@ -99,12 +111,19 @@ func set_raw_height_override(fn: Callable) -> void:
 ## clamp + surface-field machinery with no downstream changes.
 func set_water_plan(p_water_plan) -> void:
 	_water_plan = p_water_plan
-	_samples.clear()
+	_clear_samples()
 
 
 ## Continuous height (metres) at a tile cell, after the water carve. Memoized.
 func raw_height(cx: int, cz: int) -> float:
 	return _sample(cx, cz)[0]
+
+
+## Original terrain input before subtraction, with its exact floating-point
+## value retained. Reusing a prepared cell avoids a second noise/carve query;
+## adding the carve back to a rounded subtraction could lose low bits.
+func uncarved_height(cx: int, cz: int) -> float:
+	return _sample(cx, cz)[2]
 
 
 ## Layered terrain height in [0, 1]: broad landforms + rolling hills + fine
@@ -412,37 +431,100 @@ static func _cliff_distance_field(storeys: Dictionary, max_r: int) -> Dictionary
 ## Cliff distances use one BFS field. Returns values equal to the per-cell
 ## reference.
 func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldRegion:
-	var place_r: int = radius + 1
-	var level_r: int = place_r + LEVELS_PER_STOREY
-	var storey_final_r: int = level_r + _CLIFF_SEARCH_MAX
-	var storey_outer: int = storey_final_r + max_storeys
-
-	var targets: Dictionary = {}
-	for dz in range(-storey_outer, storey_outer + 1):
-		for dx in range(-storey_outer, storey_outer + 1):
-			var cell: Vector2i = Vector2i(center_cx + dx, center_cz + dz)
-			targets[cell] = quantize_storey(_sample(cell.x, cell.y)[0])
-	var storeys: Dictionary = clamp_field(targets, max_step)
-
-	var cliff_field: Dictionary = _cliff_distance_field(storeys, _CLIFF_SEARCH_MAX)
-	var l0: Dictionary = {}
-	# Retain substantial water-carve provenance for cliff-dressing corner
-	# ownership. This flag never forces a vertical bank: the ordinary surface
-	# classifier owns slopes and cliffs. Reuse the memoized amount here.
+	var level_r := radius + 1 + LEVELS_PER_STOREY
+	var outer := level_r + _CLIFF_SEARCH_MAX + max_storeys
+	var width := outer * 2 + 1
+	var count := width * width
+	var lo := Vector2i(center_cx - outer, center_cz - outer)
+	var storeys := PackedInt32Array()
+	storeys.resize(count)
+	for z in width:
+		for x in width:
+			storeys[z*width+x] = quantize_storey(_sample(lo.x+x,lo.y+z)[0])
+	# The rectangular cardinal clamp is the minimum of target(q) plus
+	# max_step * ManhattanDistance(p,q). Its two separable distance transforms
+	# reach exactly the old monotone fixpoint, including finite outer edges.
+	for z in width:
+		var row := z*width
+		for x in range(1,width):
+			storeys[row+x] = mini(storeys[row+x],storeys[row+x-1]+max_step)
+		for x in range(width-2,-1,-1):
+			storeys[row+x] = mini(storeys[row+x],storeys[row+x+1]+max_step)
+	for z in range(1,width):
+		for x in width:
+			var idx := z*width+x
+			storeys[idx] = mini(storeys[idx],storeys[idx-width]+max_step)
+	for z in range(width-2,-1,-1):
+		for x in width:
+			var idx := z*width+x
+			storeys[idx] = mini(storeys[idx],storeys[idx+width]+max_step)
+	var distances := PackedInt32Array()
+	distances.resize(count)
+	distances.fill(_NO_CLIFF)
+	var queue := PackedInt32Array()
+	for z in width:
+		for x in width:
+			var idx := z*width+x
+			var here := storeys[idx]
+			if (x>0 and storeys[idx-1]!=here) or (x+1<width and storeys[idx+1]!=here) \
+					or (z>0 and storeys[idx-width]!=here) or (z+1<width and storeys[idx+width]!=here):
+				distances[idx]=1
+				queue.append(idx)
+	var head := 0
+	var offsets: Array[int] = [1,-1,width,-width]
+	while head<queue.size():
+		var idx := queue[head]
+		head+=1
+		if distances[idx]>=_CLIFF_SEARCH_MAX: continue
+		for offset in offsets:
+			var nb := idx+offset
+			if nb<0 or nb>=count: continue
+			if offset==1 and idx%width==width-1: continue
+			if offset==-1 and idx%width==0: continue
+			if storeys[nb]==storeys[idx] and distances[nb]==_NO_CLIFF:
+				distances[nb]=distances[idx]+1
+				queue.append(nb)
+	var levels := PackedInt32Array()
+	levels.resize(count)
+	levels.fill(-1) # the original level map excludes the outer storey margin
+	var inset := outer-level_r
+	var end := width-inset
 	var carved: Dictionary = {}
-	for dz in range(-level_r, level_r + 1):
-		for dx in range(-level_r, level_r + 1):
-			var cell: Vector2i = Vector2i(center_cx + dx, center_cz + dz)
-			var s: int = int(storeys[cell])
-			var smp: Array = _sample(cell.x, cell.y)
-			var residual: float = smp[0] - float(s) * STOREY_HEIGHT
-			var detail: int = clampi(_round_mode(residual / LEVEL_HEIGHT), 0, LEVELS_PER_STOREY - 1)
-			var cliff_cap: int = int(cliff_field.get(cell, _NO_CLIFF)) - 1
-			if _has_diagonal_cliff(storeys, cell):
-				cliff_cap = 0
-			l0[cell] = clampi(mini(detail, cliff_cap), 0, LEVELS_PER_STOREY - 1)
-			if smp[1] > 3.0:
-				carved[cell] = true
-
-	var levels: Dictionary = _clamp_levels(l0, storeys)
-	return HeightfieldRegion.new(storeys, levels, carved, self)
+	for z in range(inset,end):
+		for x in range(inset,end):
+			var idx := z*width+x
+			var here := storeys[idx]
+			var smp := _sample(lo.x+x,lo.y+z)
+			var residual: float = smp[0]-float(here)*STOREY_HEIGHT
+			var detail := clampi(_round_mode(residual/LEVEL_HEIGHT),0,LEVELS_PER_STOREY-1)
+			var cap := distances[idx]-1
+			if storeys[idx-width-1]!=here or storeys[idx-width+1]!=here \
+					or storeys[idx+width-1]!=here or storeys[idx+width+1]!=here:
+				cap=0
+			levels[idx]=clampi(mini(detail,cap),0,LEVELS_PER_STOREY-1)
+			if smp[1]>3.0: carved[Vector2i(lo.x+x,lo.y+z)]=true
+	# Terrace relaxation remains masked by storey; use the same row order and
+	# cardinal neighbors as the dictionary reference, with contiguous storage.
+	var changed := true
+	while changed:
+		changed=false
+		for z in range(inset,end):
+			for x in range(inset,end):
+				var idx := z*width+x
+				var here := levels[idx]
+				for offset in offsets:
+					var nb := idx+offset
+					if levels[nb]<0 or storeys[nb]!=storeys[idx]: continue
+					if here>levels[nb]+1:
+						here=levels[nb]+1
+						changed=true
+				levels[idx]=here
+	var storey_map: Dictionary = {}
+	var level_map: Dictionary = {}
+	for z in width:
+		for x in width:
+			storey_map[Vector2i(lo.x+x,lo.y+z)]=storeys[z*width+x]
+	for z in range(inset,end):
+		for x in range(inset,end):
+			level_map[Vector2i(lo.x+x,lo.y+z)]=levels[z*width+x]
+	return HeightfieldRegion.new(storey_map,level_map,carved,self)

@@ -1,0 +1,63 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_turf_depth.gd
+* test_soil_follows_a_clipped_union_without_internal_walls
+* test_photographed_lawn_has_a_closed_bed_seated_in_the_actual_deck
+* test_inset_closes_concave_and_disconnected_lawns_without_degenerate_faces
+* test_border_closes_the_deck_to_lawn_layer_inside_the_existing_footprint
+4/4 passed.
+
+
+res://tests/test_village_turf_seams.gd
+* test_finished_turf_cannot_follow_an_unexposed_structural_block
+* test_two_real_turf_levels_still_use_the_shared_slope
+* test_straight_and_corner_lips_use_the_same_uniform_scale
+* test_planned_lawn_does_not_invent_equal_height_neighbours
+* test_turf_retaining_corner_uses_the_matching_terrain_wall
+* test_suspended_plaza_is_a_connected_floor_not_hanging_stone
+6/6 passed.
+
+
+res://tests/test_september9_grass_lip.gd
+* test_reported_narrow_strip_and_end_keep_a_closed_rolled_edge_in_four_orientations
+* test_native_lip_collision_and_world_tint_contract_survive_surface_ownership
+2/2 passed.
+
+
+res://tests/test_september8_garden_outcroppings.gd
+* test_continuous_garden_wall_has_one_projection_depth
+* test_cover_depth_matches_its_wall_projection
+2/2 passed.
+
+
+res://tests/test_september7_garden_wall.gd
+* test_roof_clearance_and_wall_enclosure_remain_separate_in_every_direction
+* test_reported_garden_wall_closes_air_above_neighbor_roof
+2/2 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               5
+Tests                16
+Passing Tests        16
+Asserts            6950
+Time              20.968s
+
+
+---- All tests passed! ----
+

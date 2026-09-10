@@ -1,0 +1,44 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_spirit_orbs.gd
+* test_orb_motion_is_slow_bounded_and_keeps_its_light_attached
+    [Failed]:  [2.20000004768372] expected to be > than [3.0]:  The luminous sprite must be larger than the former 2.2m quad
+      at line 13
+    [Failed]:  [1.19999599456787] expected to be > than [2.0]:  Drift travels visibly beyond the old 1.2m envelope
+      at line 25
+0/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september9_spirit_orbs.gd
+- test_orb_motion_is_slow_bounded_and_keeps_its_light_attached
+    [Failed]:  [2.20000004768372] expected to be > than [3.0]:  The luminous sprite must be larger than the former 2.2m quad
+          at line 13
+    [Failed]:  [1.19999599456787] expected to be > than [2.0]:  Drift travels visibly beyond the old 1.2m envelope
+          at line 25
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             4/6
+Time              0.422s
+
+
+---- 1 failing tests ----
+

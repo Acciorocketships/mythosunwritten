@@ -46,6 +46,8 @@ var _camera: Camera3D
 func _spots() -> Array:
 	return SPOTS
 
+func _grass_enabled() -> bool:
+	return false
 
 func _ready() -> void:
 	Engine.max_fps = 30
@@ -60,7 +62,7 @@ func _ready() -> void:
 	_streamer.SEED_OVERRIDE = WORLD_SEED
 	_streamer.CHUNK_RADIUS = 1
 	_streamer.KEEP_RADIUS = 2
-	_streamer.GRASS_ENABLED = false
+	_streamer.GRASS_ENABLED = _grass_enabled()
 	_character.position = Vector3(_spot[2]) + Vector3.UP * 4.0
 	_character.velocity = Vector3.ZERO
 	_character.set_physics_process(false)

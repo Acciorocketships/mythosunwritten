@@ -1,0 +1,184 @@
+{
+  "accepted": true,
+  "tests": {
+    "tests": 7,
+    "assertions": 543,
+    "seconds": 26.351
+  },
+  "collateral": {
+    "tests": 1,
+    "assertions": 39,
+    "seconds": 26.159
+  },
+  "physical": {
+    "identical": true,
+    "walk_cells": 124,
+    "crossings": 179
+  },
+  "game_cameras_identical": true,
+  "gallery_cameras_identical": true,
+  "game_pixel_metrics": {
+    "02_grass_lip_exact": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.8063045059366859,
+      "roi_mean_abs_rgb": 0.8063045059366859,
+      "roi_changed_over_20_fraction": 0.009100929288926217
+    },
+    "02_grass_lip_gameplay_camera": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 1.0670668365972158,
+      "roi_mean_abs_rgb": 1.0670668365972158,
+      "roi_changed_over_20_fraction": 0.01005284810055325
+    },
+    "02_grass_lip_jitter_0": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.7937738167347065,
+      "roi_mean_abs_rgb": 0.7937738167347065,
+      "roi_changed_over_20_fraction": 0.009102055153871962
+    },
+    "02_grass_lip_jitter_1": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.8027310105988926,
+      "roi_mean_abs_rgb": 0.8027310105988926,
+      "roi_changed_over_20_fraction": 0.009819794056784124
+    },
+    "02_grass_lip_near_left": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.850583648387874,
+      "roi_mean_abs_rgb": 0.850583648387874,
+      "roi_changed_over_20_fraction": 0.009168481185670891
+    },
+    "02_grass_lip_near_right": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.7858342171373157,
+      "roi_mean_abs_rgb": 0.7858342171373157,
+      "roi_changed_over_20_fraction": 0.00877386552218742
+    }
+  },
+  "gallery_pixel_metrics": {
+    "garden_bench_across": {
+      "roi": [
+        0,
+        0,
+        1280,
+        720
+      ],
+      "mean_abs_rgb": 0.508916015625,
+      "roi_mean_abs_rgb": 0.508916015625,
+      "roi_changed_over_20_fraction": 0.0092578125
+    },
+    "garden_bench_close": {
+      "roi": [
+        0,
+        0,
+        1280,
+        720
+      ],
+      "mean_abs_rgb": 0.26088577835648147,
+      "roi_mean_abs_rgb": 0.26088577835648147,
+      "roi_changed_over_20_fraction": 0.006319444444444444
+    },
+    "garden_overview": {
+      "roi": [
+        0,
+        0,
+        1280,
+        720
+      ],
+      "mean_abs_rgb": 0.13128544560185185,
+      "roi_mean_abs_rgb": 0.13128544560185185,
+      "roi_changed_over_20_fraction": 0.0028081597222222223
+    },
+    "garden_stores_close": {
+      "roi": [
+        0,
+        0,
+        1280,
+        720
+      ],
+      "mean_abs_rgb": 1.6788404224537037,
+      "roi_mean_abs_rgb": 1.6788404224537037,
+      "roi_changed_over_20_fraction": 0.025288628472222224
+    },
+    "garden_stores_other": {
+      "roi": [
+        0,
+        0,
+        1280,
+        720
+      ],
+      "mean_abs_rgb": 1.7714127604166667,
+      "roi_mean_abs_rgb": 1.7714127604166667,
+      "roi_changed_over_20_fraction": 0.028668619791666666
+    }
+  },
+  "gallery_frames": [
+    {
+      "view": "overview",
+      "before_ms": 2.753,
+      "after_ms": 2.752,
+      "before_lights": 15,
+      "after_lights": 14
+    },
+    {
+      "view": "bench_close",
+      "before_ms": 2.903,
+      "after_ms": 2.909,
+      "before_lights": 15,
+      "after_lights": 14
+    },
+    {
+      "view": "bench_across",
+      "before_ms": 2.476,
+      "after_ms": 2.445,
+      "before_lights": 15,
+      "after_lights": 14
+    },
+    {
+      "view": "stores_close",
+      "before_ms": 3.046,
+      "after_ms": 2.962,
+      "before_lights": 15,
+      "after_lights": 14
+    },
+    {
+      "view": "stores_other",
+      "before_ms": 2.755,
+      "after_ms": 2.663,
+      "before_lights": 15,
+      "after_lights": 14
+    }
+  ],
+  "visual_pairs_judged": 11,
+  "harness_correction": "Duplicate support/garden and wall-cap submission removed from supplementary gallery. Re-rendered and rejudged all five pairs. Production captures unaffected."
+}

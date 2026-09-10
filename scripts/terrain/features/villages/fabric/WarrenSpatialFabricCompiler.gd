@@ -216,7 +216,7 @@ static func construction_diagnostics(source: WarrenSpatialPlan,
 	facts.merge(_modular_box_use_audit(source, program, rooms, roofs), true)
 	facts.merge(_foundation_shell_audit(_retained_foundation_cells(source, plan), plan), true)
 	var crowns: Array = facts.get("maze_construction_crown_unit_ids", [])
-	facts.merge(_maze_stone_skin_audit(plan, source_plan, source.grid, crowns), true)
+	facts.merge(_maze_stone_skin_audit(plan, source_plan, source.grid, crowns, source.source_volume), true)
 	facts.merge(exterior_wall_material_profile(source, rooms, source_plan), true)
 	facts.merge(_maze_terrace_audit(plan, crowns), true)
 	facts.merge(plan.volume_plan.audit(), true)
@@ -359,7 +359,7 @@ static func generate(source: WarrenSpatialPlan,
 	# outcroppings are measured against, so deriving them here costs one units
 	# scan rather than a second shell.
 	var stone_audit := _maze_stone_skin_audit(result, maze_source,
-		source.grid, roof_audit.get("maze_construction_crown_unit_ids", []) as Array) \
+		source.grid, roof_audit.get("maze_construction_crown_unit_ids", []) as Array, source.source_volume) \
 		if collect_diagnostics else {}
 	stage_ms = _trace_stage("stone_skin", stage_ms)
 	var solid_void := FabricSolidVoidClassifier.solve(
@@ -369,6 +369,7 @@ static func generate(source: WarrenSpatialPlan,
 			FabricSolidVoidClassifier.last_failure
 		return null
 	stage_ms = _trace_stage("solid_void", stage_ms)
+	result.tunnel_arch_placements = preload("res://scripts/terrain/features/villages/fabric/WarrenTunnelArches.gd").placements(source)
 	var lineage := source.audit.duplicate(true)
 	lineage.merge(source.construction_plan.audit, true)
 	lineage.merge(room_audit, true)
@@ -1389,7 +1390,7 @@ static func _maze_terrace_audit(plan: SettlementFabricPlan,
 static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		maze_source: WarrenMazeSourcePlan = null,
 		grid: WarrenSpatialGrid = null,
-		crown_unit_ids: Array = []) -> Dictionary:
+		crown_unit_ids: Array = [], volume: WarrenVolumePlan = null) -> Dictionary:
 	## TASK C5b RULING 2 -- the skin is an IDENTITY, not a hope. The face rule
 	## and the payload are both the assembler's, so this audit states that the
 	## panels it emitted really COVER the shell it derived: every exposed face
@@ -1813,7 +1814,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		var datum := key.y
 		if maze_source != null and maze_source.massif != null \
 				and maze_source.massif.has_column(macro):
-			var source_bands := _plot_bands_at(maze_source, macro)
+			var source_bands := _plot_bands_at(maze_source, macro, volume)
 			if source_bands.has(key.y):
 				source_kind = &"plot_roof" if bool(source_bands[key.y]) \
 					else &"unroomed_plot"
@@ -1952,10 +1953,14 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	var terrain_region := SettlementFabricAssembler.maze_terrain_surface_region(
 		capped_ground, terrain_controls)
 	var rim_faces := SettlementFabricAssembler.maze_garden_rim_face_count(shell,
-		walked, paved, footprints, capped_ground, true, terrain_region)
-	var rim_instances := SettlementFabricAssembler.maze_green_rim_walls(retained,
+		walked, paved, footprints, capped_ground, true, terrain_region,ground_skin.suspended_plaza)
+	var rim_payload := SettlementFabricAssembler.maze_green_rim_walls(retained,
 		solids, paved, plinths, walked, shell, footprints, capped_ground,
-		true, terrain_region).instance_count
+		true, terrain_region, plan.asset_wall_interfaces,ground_skin.suspended_plaza)
+	var rim_owners: Dictionary = {}
+	for mesh: Dictionary in rim_payload.surface_meshes:
+		if mesh.has("rim_owner"): rim_owners[mesh.rim_owner] = true
+	var rim_instances := rim_payload.instance_count + rim_owners.size()
 	# TASK I4, ANNOTATIONS 3 and 6. The two new dressing channels, counted off
 	# the same rules the payload places them with.
 	# TASK I4 ROUND 5, ITEM 3. The headroom gate reads the capped stances too.
@@ -2123,7 +2128,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		"maze_stone_faces_suppressed_by_paving": suppressed_by_paving,
 		"maze_stone_faces_deferred_to_plinth": deferred_to_plinth,
 	}
-	out.merge(maze_stone_band_profile(exposed, maze_source, grid, walked),
+	out.merge(maze_stone_band_profile(exposed, maze_source, grid, walked, volume),
 		true)
 	return out
 
@@ -2172,7 +2177,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 static func maze_stone_band_profile(exposed: Dictionary,
 		maze_source: WarrenMazeSourcePlan,
 		grid: WarrenSpatialGrid = null,
-		walked: Dictionary = {}) -> Dictionary:
+		walked: Dictionary = {}, volume: WarrenVolumePlan = null) -> Dictionary:
 	var faces := 0
 	var high_faces := 0
 	var plot_mass_faces := 0
@@ -2200,7 +2205,7 @@ static func maze_stone_band_profile(exposed: Dictionary,
 		# the one crown lid H2 could not retire: the whole plate has to be
 		# structure before the composition runs, and narrowing it to the
 		# child's own footprint costs a corpus town its seal.
-		var bearing_bands_by_column := _maze_parent_crown_bands(maze_source)
+		var bearing_bands_by_column := _maze_parent_crown_bands(maze_source,volume)
 		var raised: Dictionary = {}
 		for column: Vector2i in maze_source.raised_shoulder_columns():
 			raised[column] = true
@@ -2216,7 +2221,7 @@ static func maze_stone_band_profile(exposed: Dictionary,
 				candidates_by_column[column] = \
 					maze_source.public_datum_candidates(column)
 				plot_bands_by_column[column] = _plot_bands_at(maze_source,
-					column)
+					column,volume)
 			var offset := key.y - WarrenMazeSourcePlan.nearest_datum_band(
 				candidates_by_column[column] as Dictionary, key.y,
 				maze_source.massif.base_at(column))
@@ -2329,7 +2334,7 @@ static func _macro_of(fine: int) -> int:
 
 
 static func _maze_parent_crown_bands(
-		maze_source: WarrenMazeSourcePlan) -> Dictionary:
+		maze_source: WarrenMazeSourcePlan, volume: WarrenVolumePlan = null) -> Dictionary:
 	## `{column: {band: true}}` for every flat-roofed STACK PARENT's crown span
 	## -- the plate `WarrenVolumetricSolver._retain_maze_slab_courses` reserves
 	## as structure before the composition runs, and the one place a masonry
@@ -2354,8 +2359,7 @@ static func _maze_parent_crown_bands(
 					maze_source, plot):
 			continue
 		var top_band := int(plot["top"])
-		var roof_base := WarrenBuildingParcel.flat_roof_base_band(
-			int(plot["floor"]), top_band)
+		var roof_base := WarrenMazeBlockPartitioner.plot_roof_band_span(maze_source,plot,volume).x
 		for cell_value: Variant in plot["cells"] as Array:
 			var column := cell_value as Vector2i
 			if not out.has(column):
@@ -2366,7 +2370,7 @@ static func _maze_parent_crown_bands(
 
 
 static func _plot_bands_at(maze_source: WarrenMazeSourcePlan,
-		column: Vector2i) -> Dictionary:
+		column: Vector2i, volume: WarrenVolumePlan = null) -> Dictionary:
 	## `{band: is_roof_band}` for every band some plot claims on this column.
 	## Retained stone standing in one of them is a plot's own mass rather than
 	## the mountain -- and the VALUE says which kind (fix 1, IMPORTANT 1): a
@@ -2379,7 +2383,7 @@ static func _plot_bands_at(maze_source: WarrenMazeSourcePlan,
 		if not (plot["cells"] as Array).has(column):
 			continue
 		var roof := WarrenMazeBlockPartitioner.plot_roof_band_span(maze_source,
-			plot)
+			plot,volume)
 		for band in range(int(plot["floor"]), int(plot["top"])):
 			out[band] = band >= roof.x and band < roof.y
 	return out
@@ -2835,6 +2839,8 @@ static func compile_room_units(source: WarrenSpatialPlan,
 	var retained_stone_bearing_count := 0
 	var suppressed_party_wall_module_count := 0
 	var stair_blocked_door_ids: Array[StringName] = []
+	var facade_entrance_owners := shared_facade_entrance_owners(source, program, rooms)
+	var shared_entrance_room_ids: Array[StringName] = []
 	var facade_family_counts: Dictionary = {}
 	var facade_style_counts: Dictionary = {}
 	var building_variant_counts: Dictionary = {}
@@ -2851,6 +2857,10 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		var stair_blocked_door := _door_approach_uses_stairs(room, source.source_volume)
 		if stair_blocked_door:
 			stair_blocked_door_ids.append(room.stable_id)
+		var shared_entrance: bool = facade_entrance_owners.has(room.stable_id) \
+			and facade_entrance_owners[room.stable_id] != room.stable_id
+		if shared_entrance: shared_entrance_room_ids.append(room.stable_id)
+		var suppress_exterior_door := stair_blocked_door or shared_entrance
 		var on_retained_stone := _room_bears_on_retained_stone(source, program,
 			room, feature_portal_mask)
 		retained_stone_bearing_count += int(on_retained_stone)
@@ -2860,7 +2870,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		# the wider masonry shell.
 		var recipe_id := _room_recipe_id(room, source.world_seed, true,
 			feature_portal_mask, on_retained_stone, true, low_base_lineages,
-			stone_base_lineages, stair_blocked_door)
+			stone_base_lineages, suppress_exterior_door)
 		var desired_phase_b := _is_phase_b_recipe(recipe_id)
 		desired_phase_b_count += int(desired_phase_b)
 		var recipe := program.recipe(recipe_id)
@@ -2868,7 +2878,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			last_failure = "measured recipe %s changes room stamp %s" % [
 				recipe_id, room.stable_id]
 			return [] as Array[FabricUnit]
-		if not _entrance_matches(recipe, room, stair_blocked_door):
+		if not _entrance_matches(recipe, room, suppress_exterior_door):
 			var entrance := (recipe.entrances[0] as Dictionary) \
 				if recipe != null and recipe.entrances.size() == 1 else {}
 			var actual_cell := FabricRecipe.transform_cell(
@@ -2952,7 +2962,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		# a change of material.
 		var fallback_id := _room_recipe_id(room, source.world_seed, false,
 			feature_portal_mask, on_retained_stone, true, low_base_lineages,
-			stone_base_lineages, stair_blocked_door)
+			stone_base_lineages, suppress_exterior_door)
 		var fallback_recipe := program.recipe(fallback_id)
 		var feature_conflict := _room_feature_envelope_conflict(source,
 			program, room, recipe)
@@ -3042,6 +3052,8 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		"suppressed_party_wall_module_count": \
 			suppressed_party_wall_module_count,
 		"stair_blocked_door_ids": stair_blocked_door_ids,
+		"shared_entrance_room_ids": shared_entrance_room_ids,
+		"facade_entrance_owners": facade_entrance_owners,
 		"feature_portal_room_count": feature_portal_masks.size(),
 		"feature_portal_opening_count": feature_portal_opening_count,
 		"facade_family_counts": facade_family_counts,
@@ -9552,6 +9564,104 @@ static func _suppressed_party_wall_placements(grid: WarrenSpatialGrid,
 	## across both 1.5 m height bands, meet private volume through the same typed
 	## seam. This keeps partial contacts visible and closes the old loophole where
 	## two composable rooms still rendered coincident timber/stone skins.
+	var available: Dictionary = {}
+	for placement: Dictionary in recipe.placements:
+		available[StringName(placement.id)] = true
+	var suppressed: Dictionary = {}
+	var front_ids: Array[StringName] = []
+	for segment: Dictionary in _room_wall_segments(room):
+		if segment.direction == Vector3i.BACK: front_ids.append(segment.id)
+		var columns: Array[Vector3i] = []
+		columns.assign(segment.columns)
+		_suppress_complete_party_wall_segment(grid, room, available,
+			suppressed, segment.id, segment.direction, columns)
+	var complete_front_is_hidden := not front_ids.is_empty()
+	for placement_id: StringName in front_ids:
+		complete_front_is_hidden = complete_front_is_hidden \
+			and suppressed.has(placement_id)
+	if complete_front_is_hidden:
+		for placement: Dictionary in recipe.placements:
+			var placement_id := StringName(placement.id)
+			if String(placement_id).begins_with("facade."):
+				suppressed[placement_id] = true
+	var out: Array[StringName] = []
+	out.assign(suppressed.keys())
+	out.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return String(a) < String(b))
+	return out
+
+
+static func shared_facade_entrance_owners(source: WarrenSpatialPlan,
+		program: SettlementFabricProgram, rooms: Array[WarrenRoomStamp]) -> Dictionary:
+	# A continuous facade whose rooms already share complete open party-wall
+	# modules is one entrance domain. Mere touching bounds, diagonal contacts,
+	# staggered floors and sealed partial walls cannot join that domain.
+	var by_id: Dictionary = {}
+	var face_key: Dictionary = {}
+	var open_faces: Dictionary = {}
+	var neighbors: Dictionary = {}
+	for room: WarrenRoomStamp in rooms:
+		if room.frontage_direction == Vector3i.ZERO: continue
+		var normal := room.frontage_direction
+		var plane := -2147483648
+		for cell: Vector3i in room.private_cells:
+			plane = maxi(plane, cell.x * normal.x + cell.z * normal.z)
+		by_id[room.stable_id] = room
+		face_key[room.stable_id] = Vector4i(normal.x, normal.z, room.lattice_origin.y, plane)
+		neighbors[room.stable_id] = {}
+		var recipe := program.recipe(_room_recipe_id(room, source.world_seed, false))
+		if recipe == null: continue
+		var suppressed := _suppressed_party_wall_placements(source.grid, room, recipe)
+		for segment: Dictionary in _room_wall_segments(room):
+			if not suppressed.has(segment.id): continue
+			var direction := FabricRecipe.transform_direction(segment.direction, room.yaw_quarters)
+			for column: Vector3i in segment.columns:
+				var cell := FabricRecipe.transform_cell(column, room.lattice_origin, room.yaw_quarters)
+				open_faces[Vector4i(cell.x, cell.y, cell.z,
+					SettlementFabricAssembler.FACE_DIRECTIONS.find(direction))] = room.stable_id
+	for face: Vector4i in open_faces:
+		var direction: Vector3i = SettlementFabricAssembler.FACE_DIRECTIONS[face.w]
+		var beside := Vector3i(face.x, face.y, face.z) + direction
+		var other_face := Vector4i(beside.x, beside.y, beside.z,
+			SettlementFabricAssembler.FACE_DIRECTIONS.find(-direction))
+		if not open_faces.has(other_face): continue
+		var own: StringName = open_faces[face]
+		var other: StringName = open_faces[other_face]
+		if own != other and face_key[own] == face_key[other]:
+			neighbors[own][other] = true
+	var owners: Dictionary = {}
+	var visited: Dictionary = {}
+	var ordered: Array = by_id.keys()
+	ordered.sort()
+	for first: StringName in ordered:
+		if visited.has(first): continue
+		var component: Array[StringName] = [first]
+		visited[first] = true
+		var cursor := 0
+		while cursor < component.size():
+			for neighbor: StringName in neighbors[component[cursor]]:
+				if not visited.has(neighbor):
+					visited[neighbor] = true
+					component.append(neighbor)
+			cursor += 1
+		var candidates: Array[WarrenRoomStamp] = []
+		for id: StringName in component:
+			var room: WarrenRoomStamp = by_id[id]
+			if room.addressed and not _door_approach_uses_stairs(room, source.source_volume):
+				candidates.append(room)
+		if candidates.size() < 2: continue
+		var normal: Vector3i = candidates[0].frontage_direction
+		var along := Vector3i(normal.z, 0, -normal.x)
+		candidates.sort_custom(func(a: WarrenRoomStamp, b: WarrenRoomStamp) -> bool:
+			var ax := a.threshold_cell.x * along.x + a.threshold_cell.z * along.z
+			var bx := b.threshold_cell.x * along.x + b.threshold_cell.z * along.z
+			return ax < bx if ax != bx else String(a.stable_id) < String(b.stable_id))
+		var owner: StringName = candidates[(candidates.size()-1)/2].stable_id
+		for room: WarrenRoomStamp in candidates: owners[room.stable_id] = owner
+	return owners
+
+
+static func _room_wall_segments(room: WarrenRoomStamp) -> Array[Dictionary]:
 	var minimum := Vector2i.ZERO
 	var maximum := Vector2i.ZERO
 	match room.kind:
@@ -9571,12 +9681,8 @@ static func _suppressed_party_wall_placements(grid: WarrenSpatialGrid,
 			minimum = Vector2i(-2, -3)
 			maximum = Vector2i(1, 2)
 		_:
-			return [] as Array[StringName]
-	var available: Dictionary = {}
-	for placement: Dictionary in recipe.placements:
-		available[StringName(placement.id)] = true
-	var suppressed: Dictionary = {}
-	var front_ids: Array[StringName] = []
+			return [] as Array[Dictionary]
+	var segments: Array[Dictionary] = []
 	var x_segments := int((maximum.x - minimum.x + 1) / 2)
 	for index in x_segments:
 		var x0 := minimum.x + index * 2
@@ -9584,17 +9690,14 @@ static func _suppressed_party_wall_placements(grid: WarrenSpatialGrid,
 			else StringName("front.%d" % index)
 		var back_id := StringName("north") if room.kind in [&"tower", &"slim"] \
 			else StringName("back.%d" % index)
-		front_ids.append(front_id)
-		_suppress_complete_party_wall_segment(grid, room, available,
-			suppressed, front_id, Vector3i.BACK, [
+		segments.append({"id": front_id, "direction": Vector3i.BACK, "columns": [
 				Vector3i(x0, 0, maximum.y),
 				Vector3i(x0 + 1, 0, maximum.y),
-			])
-		_suppress_complete_party_wall_segment(grid, room, available,
-			suppressed, back_id, Vector3i.FORWARD, [
+			]})
+		segments.append({"id": back_id, "direction": Vector3i.FORWARD, "columns": [
 				Vector3i(x0, 0, minimum.y),
 				Vector3i(x0 + 1, 0, minimum.y),
-			])
+			]})
 	var z_segments := int((maximum.y - minimum.y + 1) / 2)
 	for index in z_segments:
 		var z0 := minimum.y + index * 2
@@ -9604,30 +9707,15 @@ static func _suppressed_party_wall_placements(grid: WarrenSpatialGrid,
 		var east_id := StringName("east") if room.kind == &"tower" \
 			else StringName("right.%d" % index) if room.kind == &"building" \
 			else StringName("east.%d" % index)
-		_suppress_complete_party_wall_segment(grid, room, available,
-			suppressed, west_id, Vector3i.LEFT, [
+		segments.append({"id": west_id, "direction": Vector3i.LEFT, "columns": [
 				Vector3i(minimum.x, 0, z0),
 				Vector3i(minimum.x, 0, z0 + 1),
-			])
-		_suppress_complete_party_wall_segment(grid, room, available,
-			suppressed, east_id, Vector3i.RIGHT, [
+			]})
+		segments.append({"id": east_id, "direction": Vector3i.RIGHT, "columns": [
 				Vector3i(maximum.x, 0, z0),
 				Vector3i(maximum.x, 0, z0 + 1),
-			])
-	var complete_front_is_hidden := not front_ids.is_empty()
-	for placement_id: StringName in front_ids:
-		complete_front_is_hidden = complete_front_is_hidden \
-			and suppressed.has(placement_id)
-	if complete_front_is_hidden:
-		for placement: Dictionary in recipe.placements:
-			var placement_id := StringName(placement.id)
-			if String(placement_id).begins_with("facade."):
-				suppressed[placement_id] = true
-	var out: Array[StringName] = []
-	out.assign(suppressed.keys())
-	out.sort_custom(func(a: StringName, b: StringName) -> bool:
-		return String(a) < String(b))
-	return out
+			]})
+	return segments
 
 
 static func _suppress_complete_party_wall_segment(grid: WarrenSpatialGrid,

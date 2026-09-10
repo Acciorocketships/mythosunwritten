@@ -1,0 +1,218 @@
+[
+  {
+    "candidate": "original",
+    "tests": 4,
+    "passed": 1,
+    "assertions_passed": 3,
+    "assertions_total": 8,
+    "seconds": 42.038,
+    "status": "reproduced open-flat/lower-outlet and all three photo failures"
+  },
+  {
+    "candidate": "coarse wet-domain spill",
+    "tests": 4,
+    "passed": 3,
+    "assertions_passed": 7,
+    "assertions_total": 8,
+    "seconds": 42.903,
+    "status": "rejected: fine rescue reinstates photo 5 sheet",
+    "census": "field-spill-candidate.json"
+  },
+  {
+    "candidate": "coarse and fine wet-domain spill",
+    "tests": 4,
+    "passed": 4,
+    "assertions_passed": 8,
+    "assertions_total": 8,
+    "seconds": 42.758,
+    "status": "not accepted: rendered photos improve but collateral exposes false drains",
+    "renders": "spill-candidate",
+    "pixel_diff": "spill-diff/metrics.json"
+  },
+  {
+    "candidate": "wet-domain spill collateral",
+    "tests": 17,
+    "passed": 16,
+    "assertions_passed": 1228,
+    "assertions_total": 1252,
+    "seconds": 166.219,
+    "status": "open-flat fixture revised into negative case and enclosed positive pocket"
+  },
+  {
+    "candidate": "fine hydraulic anchors",
+    "tests": 15,
+    "passed": 14,
+    "assertions_passed": 537,
+    "assertions_total": 540,
+    "seconds": 94.67,
+    "status": "rejected: treating dry neighbors as outlets drains a real historical basin",
+    "evidence": [
+      "historical-point-before.json",
+      "historical-point-candidate.json",
+      "historical-escape-before.json"
+    ]
+  },
+  {
+    "candidate": "full terrain spill search",
+    "status": "under test: only source-domain boundaries and actual flowing rivers are outlets; traverse dry terrain to establish real enclosing saddles"
+  },
+  {
+    "candidate": "shared complete-source fine solve",
+    "tests": 16,
+    "passed": 16,
+    "assertions": 523,
+    "seconds": 183.708,
+    "status": "correctness candidate; substantial performance regression",
+    "profile": "water-shared-cost.json",
+    "profile_complete": false,
+    "profile_exit": 143,
+    "profile_stop": "Terminated deliberately after multiple complete large-source measurements; fine stages reached 21.27 s at side 471 and 84.63 s at side 921."
+  },
+  {
+    "candidate": "priority-flood optimization",
+    "reference_cases": 40,
+    "passed": 40,
+    "seconds": 0.443,
+    "status": "production measurement pending",
+    "reference_source": "/private/tmp/september9-water-spill-reference/scripts/terrain/water/WaterField.gd",
+    "reference_sha256": "04023a2197aa97138c54f2523c495de84eeac4a17a4d808b85568fb40637491b"
+  },
+  {
+    "candidate": "priority flood plus baked ground, shared square fine solve",
+    "one_source_fill_ms": 26951.324,
+    "one_source_total_ms": 48180.567,
+    "reference_fill_ms": 40371.842,
+    "reference_total_ms": 61536.424,
+    "exact_output_parity": [
+      "coarse levels",
+      "fine levels",
+      "fill arrays",
+      "contours"
+    ],
+    "walk_report": "walk-shared-fine.json",
+    "status": "rejected: graphical route cannot start within 300 seconds; first feature context takes 370649 ms and no travel occurs"
+  },
+  {
+    "candidate": "rectangular complete source grids",
+    "status": "under test; retains complete initiating river and pond extents plus halo, rediscovers all contributors in actual rectangle; rectangular topology and physical regressions required"
+  },
+  {
+    "candidate": "rectangular source plus interpolation memo",
+    "feature_context_ms": 274518.729,
+    "profile": "water-memo-full.json",
+    "status": "still too slow"
+  },
+  {
+    "candidate": "target-reachable spill and sparse hydraulic anchors",
+    "feature_context_ms": 235839.749,
+    "profile": "water-target-full.json",
+    "context_count": 27,
+    "differences_from_rectangular_memo": [],
+    "reference_checks": 80,
+    "status": "exact output parity in full 27-context workload; further optimization under test"
+  },
+  {
+    "candidate": "memoized reverse pocket spill",
+    "feature_context_ms": 178084.256,
+    "profile": "water-reverse-full.json",
+    "context_count": 27,
+    "differences_from_full_reference_production_run": [],
+    "reference_checks": 120,
+    "status": "full workload output parity; lazy fine sampling and physical regressions next"
+  },
+  {
+    "candidate": "lazy fine terrain",
+    "feature_context_ms": 181887.193,
+    "profile": "water-final-cost.json",
+    "context_count": 27,
+    "hydraulic_or_contour_differences": [],
+    "unused_ground_arrays_changed": 25,
+    "tests": 19,
+    "assertions": 928,
+    "test_seconds": 110.896,
+    "status": "correct but direct terrain sampling spends its preparation savings; baked cell reuse next"
+  },
+  {
+    "candidate": "baked lazy ground and shared reverse spill solver",
+    "feature_context_ms": 151763.997,
+    "profile": "water-baked-lazy-cost.json",
+    "context_count": 27,
+    "differences_from_lazy_fine_candidate": [],
+    "status": "live travel and final collateral/visual acceptance pending",
+    "contour_limit": "The feature workload does not request shore curves; contour hashes here are empty. Dedicated contour tests and actual rendering remain necessary."
+  },
+  {
+    "candidate": "baked lazy ground, spill after fine expansion",
+    "walk": "walk-final.json",
+    "status": "rejected: startup_timeout at 300 seconds, zero travel",
+    "first_feature_context_ms": 176471,
+    "required_later_feature_context_ms": 65318
+  },
+  {
+    "candidate": "contain fine expansion at each reached vertex",
+    "tests": 21,
+    "passed": 21,
+    "assertions": 856,
+    "seconds": 100.013,
+    "status": "physical and source-cache regressions pass; live walk with temporary startup redraw limit underway",
+    "walk": "walk-contained.json"
+  },
+  {
+    "candidate": "contained fine expansion and 30 FPS startup redraws",
+    "walk": "walk-contained.json",
+    "status": "live travel passes; final visual/collateral review pending",
+    "startup_ms": 288712,
+    "distance_m": 821.18159743771,
+    "frozen_seconds": 0.0,
+    "crossing_seconds": 12.249,
+    "crossing_grounded": true,
+    "restored_max_fps": 0,
+    "seconds": 120
+  },
+  {
+    "candidate": "contained-expansion collateral rejection",
+    "tests": 70,
+    "passed": 58,
+    "failed": 12,
+    "new_failed_tests": 4,
+    "seconds": 296.192,
+    "status": "rejected: drains a historical river side strip and creates a discontinuous terminal join",
+    "evidence": "contained-expansion-collateral.txt"
+  },
+  {
+    "candidate": "excavated-volume allowance with initial-level smoothing cap",
+    "tests": 25,
+    "passed": 24,
+    "failed": 1,
+    "seconds": 210.979,
+    "status": "rejected: side strip restored but smoothing retains a 1.290 m step",
+    "evidence": "excavation-initial-field.txt"
+  },
+  {
+    "candidate": "excavation and spill ceilings shared with surface smoothing",
+    "tests": 94,
+    "passed": 86,
+    "failed": 8,
+    "new_failed_tests": 0,
+    "assertions_passed": 26281,
+    "assertions_total": 26293,
+    "seconds": 403.378,
+    "status": "numerical checks pass relative to the identical eight baseline failures; renders, census and travel pending",
+    "evidence": "excavation-collateral.json"
+  },
+  {
+    "candidate": "blanket excavation ceilings visual review",
+    "status": "rejected: photo 8 still shows a folded mound despite zero census samples above original ground",
+    "evidence": "field-excavation-blanket.json",
+    "images": "excavation-blanket"
+  },
+  {
+    "candidate": "local river profile bounds excavation allowance",
+    "tests": 25,
+    "passed": 25,
+    "assertions_passed": 883,
+    "seconds": 103.707,
+    "status": "focused tests pass including missed photo 8 point; renders and collateral pending",
+    "evidence": "local-flow-focused.txt"
+  }
+]

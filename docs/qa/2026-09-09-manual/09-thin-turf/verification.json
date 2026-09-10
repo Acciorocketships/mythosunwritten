@@ -1,0 +1,93 @@
+{
+  "status": "accepted",
+  "tests": 16,
+  "assertions": 7654,
+  "test_seconds": 24.955,
+  "test_exit": 0,
+  "render_exit": 0,
+  "render_ready": true,
+  "after_startup_ms": 460875,
+  "camera_json_identical": true,
+  "original_precision_recoverable": false,
+  "collision_sha256": "4338096b7c2db1e52f340dc127e369d555af88b60237de8ab6a6f5a8df810385",
+  "suspended_cells": 16,
+  "all_six_comparisons_inspected": true,
+  "clear_edge_views": [
+    "near_left",
+    "near_right"
+  ],
+  "occluded_views": [
+    "exact",
+    "gameplay_camera",
+    "jitter_0",
+    "jitter_1"
+  ],
+  "pixel_metrics": {
+    "09_thin_turf_exact": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.15655790060714145,
+      "roi_mean_abs_rgb": 0.15655790060714145,
+      "roi_changed_over_20_fraction": 0.0010808303479147856
+    },
+    "09_thin_turf_gameplay_camera": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.202066299934925,
+      "roi_mean_abs_rgb": 0.202066299934925,
+      "roi_changed_over_20_fraction": 0.0010690087659844677
+    },
+    "09_thin_turf_jitter_0": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.1842611211062899,
+      "roi_mean_abs_rgb": 0.1842611211062899,
+      "roi_changed_over_20_fraction": 0.0010949036597365925
+    },
+    "09_thin_turf_jitter_1": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 0.20828576553937564,
+      "roi_mean_abs_rgb": 0.20828576553937564,
+      "roi_changed_over_20_fraction": 0.0007470113915015211
+    },
+    "09_thin_turf_near_left": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 1.3564242604380816,
+      "roi_mean_abs_rgb": 1.3564242604380816,
+      "roi_changed_over_20_fraction": 0.018997282162020974
+    },
+    "09_thin_turf_near_right": {
+      "roi": [
+        0,
+        0,
+        1718,
+        1034
+      ],
+      "mean_abs_rgb": 1.0945989256246111,
+      "roi_mean_abs_rgb": 1.0945989256246111,
+      "roi_changed_over_20_fraction": 0.015700749600880876
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "all_cameras_identical": true,
+  "rows": [
+    {
+      "frame": "second_orb_00.png",
+      "new_bright_core_pixels": 1043,
+      "projected_center": [
+        653.7105,
+        371.4301
+      ],
+      "rendered_center": [
+        653.228187919463,
+        371.4429530201342
+      ],
+      "error_pixels": 0.48248330868382006
+    },
+    {
+      "frame": "second_orb_05.png",
+      "new_bright_core_pixels": 1007,
+      "projected_center": [
+        683.5773,
+        364.1522
+      ],
+      "rendered_center": [
+        683.8043694141013,
+        364.5551142005958
+      ],
+      "error_pixels": 0.46249364521263336
+    },
+    {
+      "frame": "second_orb_10.png",
+      "new_bright_core_pixels": 899,
+      "projected_center": [
+        692.9119,
+        371.4797
+      ],
+      "rendered_center": [
+        693.0088987764183,
+        371.28698553948834
+      ],
+      "error_pixels": 0.2157489882176629
+    },
+    {
+      "frame": "second_orb_20.png",
+      "new_bright_core_pixels": 572,
+      "projected_center": [
+        664.2307,
+        352.534
+      ],
+      "rendered_center": [
+        663.7272727272727,
+        352.0192307692308
+      ],
+      "error_pixels": 0.7200183191227064
+    }
+  ]
+}

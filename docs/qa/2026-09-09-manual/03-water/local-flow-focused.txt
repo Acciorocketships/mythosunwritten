@@ -1,0 +1,72 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_water_containment.gd
+* test_baked_water_lattice_keeps_the_exact_natural_surface_samples
+* test_priority_flood_matches_the_full_heap_reference
+* test_lazy_fine_ground_preserves_a_real_connected_pocket
+* test_rectangular_spill_matches_an_identical_domain_with_high_padding
+* test_an_unbounded_flat_has_no_hydrostatic_lake_above_it
+* test_a_real_bowl_keeps_water_below_its_rim
+* test_a_bowl_with_a_low_outlet_cannot_hold_the_upstream_head
+* test_unfilled_ground_inside_a_closed_basin_is_not_an_outlet
+* test_reported_plateaus_and_lower_channel_banks_do_not_hold_high_water
+* test_surface_smoothing_cannot_raise_a_retained_spill_level
+* test_a_carved_flowing_channel_can_descend_to_its_open_lower_end
+* test_pre_carve_ground_does_not_license_water_on_unchanged_land
+* test_excavation_ceiling_allows_a_smooth_river_join_without_lifting_a_lake
+* test_a_distant_high_source_cannot_fill_a_lower_rivers_excavation
+* test_fine_rescue_cannot_spread_a_high_shoreline_over_an_open_flat
+* test_enclosing_rim_is_independent_of_extra_dry_domain
+* test_photographed_water_neighborhoods_agree_across_chunk_borders
+17/17 passed.
+
+
+res://tests/test_water_swim_volumes.gd
+* test_triggers_match_skin_tile_coverage_and_clearance
+MEAS test_triggers_match_skin_tile_coverage_and_clearance: 25 entries matched (all full-tile, no sub-tile splitting)
+* test_triggers_carry_a_shared_sampler
+* test_sampler_level_at_tracks_the_field
+MEAS test_sampler_level_at_tracks_the_field: 331 probes agree with the field, 294 returned NAN (field-dry part of the tile), 0 offenders
+* test_sampler_preserves_reported_sub_lattice_rescue
+* test_sampler_covers_the_shoreline_band
+MEAS test_sampler_covers_the_shoreline_band: 264 band points checked, 0 NaN, 0 total offenders
+* test_sampler_matches_the_field_at_the_chute
+MEAS test_sampler_matches_the_field_at_the_chute: 8 wet chute points checked, 0 offenders
+6/6 passed.
+
+
+res://tests/test_september8_night_water_divot.gd
+* test_connected_rescue_pocket_inherits_water_head_not_shoreline_taper
+1/1 passed.
+
+
+res://tests/test_september9_source_domain_cache.gd
+* test_same_solve_domain_reuses_complete_inventory_across_local_source_lists
+1/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               4
+Tests                25
+Passing Tests        25
+Asserts             883
+Time              103.707s
+
+
+---- All tests passed! ----
+

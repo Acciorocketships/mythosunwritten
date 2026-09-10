@@ -1,0 +1,45 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_warren_maze_composition.gd
+* test_no_decor_stands_inside_the_wall_beside_it
+MAZE_DECOR_FIT seed 12/compact placed=0 spans=0 over_reach=0 uncatalogued=0 intersecting=0 worst=0.0000
+MAZE_DECOR_CHANNELS seed 12/compact pieces={ "maze-stall-goods/": 14, "maze-frontage/": 5 } in_module=0 in_skin=0 ruled=0/0 in_module_by={  } in_skin_by={  } first=
+MAZE_DECOR_FIT seed 9/compact placed=0 spans=0 over_reach=0 uncatalogued=0 intersecting=0 worst=0.0000
+MAZE_DECOR_CHANNELS seed 9/compact pieces={ "maze-stall-goods/": 17, "maze-frontage/": 7 } in_module=0 in_skin=0 ruled=0/0 in_module_by={  } in_skin_by={  } first=
+MAZE_DECOR_FIT seed 3/standard placed=1 spans=0 over_reach=0 uncatalogued=0 intersecting=0 worst=0.0000
+MAZE_DECOR_CHANNELS seed 3/standard pieces={ "maze-garden/": 1, "maze-stall-goods/": 32, "maze-frontage/": 9, "courtyard-planter/": 2 } in_module=0 in_skin=0 ruled=0/0 in_module_by={  } in_skin_by={  } first=
+MAZE_DECOR_FIT seed 9/standard placed=0 spans=0 over_reach=0 uncatalogued=0 intersecting=0 worst=0.0000
+MAZE_DECOR_CHANNELS seed 9/standard pieces={ "maze-stall-goods/": 35, "maze-frontage/": 10, "courtyard-planter/": 2 } in_module=0 in_skin=0 ruled=0/0 in_module_by={  } in_skin_by={  } first=
+MAZE_DECOR_FIT seed 1/large placed=1 spans=0 over_reach=0 uncatalogued=0 intersecting=0 worst=0.0000
+MAZE_DECOR_CHANNELS seed 1/large pieces={ "maze-garden/": 1, "maze-stall-goods/": 27, "maze-frontage/": 11, "courtyard-planter/": 2 } in_module=0 in_skin=0 ruled=0/0 in_module_by={  } in_skin_by={  } first=
+MAZE_DECOR_FIT seed 9/grand placed=14 spans=6 over_reach=0 uncatalogued=0 intersecting=0 worst=0.0000
+MAZE_DECOR_CHANNELS seed 9/grand pieces={ "maze-garden/": 14, "maze-stall-goods/": 28, "maze-plaza-centre/": 1, "maze-frontage/": 12 } in_module=0 in_skin=0 ruled=0/0 in_module_by={  } in_skin_by={  } first=
+1/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests         1
+Asserts              39
+Time              27.663s
+
+
+Ran Tests matching "no_decor_stands_inside"
+---- All tests passed! ----
+
