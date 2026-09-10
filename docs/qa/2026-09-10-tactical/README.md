@@ -1,5 +1,8 @@
 # Tactical camera and directional movement
 
+Latest: [terrain, foot direction and mouse-turn follow-up](follow-up.md).
+That report supersedes the original directional-blend and cylindrical-fade findings below.
+
 Feature branch: `codex/tactical-camera-controls`, based on `f3203d96`.
 Merged into `main` at `6f6076e8`; the testing follow-up below restores movement
 speed and adds a reversible view comparison.

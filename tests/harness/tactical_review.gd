@@ -8,6 +8,8 @@ var out := "res://.artifacts/tactical"
 
 func _ready() -> void:
 	get_window().size = Vector2i(1280, 800)
+	if OS.get_cmdline_user_args().has("--retargeted"): out += "-retargeted"
+	if OS.get_cmdline_user_args().has("--full-speed"): out += "-full-speed"
 	if OS.get_cmdline_user_args().has("--views"): out += "-views"
 	if OS.get_cmdline_user_args().has("--unaligned"): out += "-unaligned"
 	DirAccess.make_dir_recursive_absolute(out)
@@ -105,6 +107,7 @@ func _gaits() -> void:
 		var angle := float(i) * TAU / 8.0
 		var direction := Vector3(-sin(angle),0,cos(angle))
 		actor.velocity = direction * DirectionalLocomotion.stride_length(direction, Basis.IDENTITY) * DirectionalLocomotion.RUN_CADENCE
+		if OS.get_cmdline_user_args().has("--full-speed"): actor.velocity = direction * 10.0
 		_label(names[i], pos + Vector3(0,0.3,1.4))
 	camera.position = Vector3(1.5,7,20)
 	camera.look_at(Vector3(0,0.6,2.5))

@@ -1,0 +1,40 @@
+{
+  "roi": [
+    820,
+    650,
+    1130,
+    830
+  ],
+  "comparisons": {
+    "0.0": {
+      "before": {
+        "mean_absolute_channel_difference": 12.772652329749103,
+        "pixels_changed_over_10": 26944
+      },
+      "after": {
+        "mean_absolute_channel_difference": 1.1601612903225806,
+        "pixels_changed_over_10": 0
+      }
+    },
+    "-0.14": {
+      "before": {
+        "mean_absolute_channel_difference": 12.094551971326165,
+        "pixels_changed_over_10": 28391
+      },
+      "after": {
+        "mean_absolute_channel_difference": 0.02406810035842294,
+        "pixels_changed_over_10": 0
+      }
+    },
+    "0.14": {
+      "before": {
+        "mean_absolute_channel_difference": 13.517562724014336,
+        "pixels_changed_over_10": 24940
+      },
+      "after": {
+        "mean_absolute_channel_difference": 0.09887096774193549,
+        "pixels_changed_over_10": 0
+      }
+    }
+  }
+}

@@ -87,7 +87,7 @@ func test_edge_capture_tracks_raw_motion_and_releases_on_return_toggle_and_focus
 	assert_eq(camera._mouse_orbit, 0.0)
 	_motion(camera, size / 2, Vector2(40,0))
 	_motion(camera, size / 2, Vector2(60,0))
-	var expected := 100 * CameraScript.drag_radians_per_pixel(size, camera.fov)
+	var expected := -100 * CameraScript.drag_radians_per_pixel(size, camera.fov)
 	assert_almost_eq(camera._mouse_orbit, expected, 0.00001)
 	assert_eq(camera.pointing_position(), edge, "Aim stays at the drawn cursor while OS input is captured")
 	var click := InputEventMouseButton.new()
@@ -116,6 +116,7 @@ func test_edge_capture_tracks_raw_motion_and_releases_on_return_toggle_and_focus
 	assert_almost_eq(camera._mouse_orbit, expected, 0.00001, "Returning before the physics tick keeps the completed drag")
 	camera._physics_process(0.0)
 	assert_almost_eq(camera._yaw, expected, 0.00001)
+	assert_gt((-camera.global_basis.z).x, 0.0, "Dragging right turns the viewing direction right")
 	_motion(camera, edge, Vector2(5,0))
 	assert_true(camera._edge_captured)
 	camera.toggle_view()
@@ -168,9 +169,8 @@ func test_directional_blend_addresses_model_right_and_adjacent_diagonals() -> vo
 	assert_eq(DirectionalLocomotion.blend_direction(Vector3(-10,0,0), Basis.IDENTITY), Vector2.RIGHT)
 	assert_eq(DirectionalLocomotion.blend_direction(Vector3(10,0,0), Basis.IDENTITY), Vector2.LEFT)
 	var diagonal := DirectionalLocomotion.blend_direction(Vector3(-10,0,10), Basis.IDENTITY)
-	assert_almost_eq(diagonal.x * DirectionalLocomotion.STRAFE_STRIDE,
-		-diagonal.y * DirectionalLocomotion.RUN_STRIDE, 0.0001,
-		"The blended planted-foot displacement follows the requested diagonal")
+	assert_gt(diagonal.x, 0.0)
+	assert_lt(diagonal.y, 0.0)
 	assert_almost_eq(absf(diagonal.x) + absf(diagonal.y), 1.0, 0.0001)
 
 class AimController extends CharacterController:

@@ -14,12 +14,22 @@ float tactical_coverage(vec3 point) {
 	vec3 offset = point - focus;
 	float along = dot(offset, axis);
 	float radial = length(offset - axis * along);
-	float side = 1.0 - smoothstep(tactical_radius * 0.72, tactical_radius, radial);
-	// Keep the floor and everything behind the character intact.
+	// A finite view cone: the neighbourhood is widest at the character and
+	// narrows to the camera. A cylinder also catches unrelated foreground.
+	float depth_fraction = clamp(1.0 - along / max(boom_length, 0.001), 0.0, 1.0);
+	float radius = max(tactical_radius * depth_fraction, 0.001);
+	float side = 1.0 - smoothstep(radius * 0.72, radius, radial);
+	// Protect the floor in projection, including terrain rising toward the eye.
+	// World height alone incorrectly fades a slope just above the player's feet.
+	vec3 physical_feet = vec3(tactical_feet.x, tactical_floor_y, tactical_feet.z);
+	vec3 ground_ray = normalize(physical_feet - tactical_eye);
+	vec3 ground_up = normalize(vec3(0.0, 1.0, 0.0) - ground_ray * ground_ray.y);
+	float projected_height = dot(point - physical_feet, ground_up) / max(depth_fraction, 0.001);
+	float above_projected_feet = smoothstep(0.08, 0.35, projected_height);
 	float front = smoothstep(-0.25, 0.5, along);
 	float above_floor = smoothstep(0.12, 0.5, point.y - tactical_floor_y);
 	float before_eye = 1.0 - smoothstep(boom_length, boom_length + 0.5, along);
-	return side * front * above_floor * before_eye;
+	return side * front * above_floor * above_projected_feet * before_eye;
 }
 
 void tactical_cutout(vec3 view_position, vec2 pixel, mat4 inverse_view) {

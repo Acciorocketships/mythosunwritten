@@ -2496,3 +2496,11 @@ projections along one garden edge. Shallow covering boards fit their own
 projection depth and retain the wall-top bearing plane. The matched September 8
 photo 1 and nearby views, actual board bounds, and identical west-town clearance
 across 140 cells and 205 crossings verify the change.
+
+> September 10 tactical follow-up: visibility uses a finite camera-apex cone
+> and projected-foot protection, preserving the reported rising foreground.
+> Strafe copies retarget leg branches into a shared root frame while preserving
+> the authored head pose; measured contact sweeps calibrate diagonal weights.
+> AnimationTree rebinds after its private library changes. Mouse rightward edge
+> drag turns the viewing direction right. See `docs/qa/2026-09-10-tactical/follow-up.md`
+> for matched terrain renders, gait checks and validation limits.

@@ -1,6 +1,48 @@
 extends GutTest
 const CHARACTER := preload("res://characters/character.tscn")
 
+func test_planted_feet_sweep_opposite_actual_travel_in_all_directions() -> void:
+	var actor := _character()
+	for gait in [0.0, 0.25, 0.5, 0.75, 1.0]:
+		_check_contact_directions(actor, gait)
+
+func _check_contact_directions(actor: CharacterBody3D, gait: float) -> void:
+	for i in 16:
+		var angle := float(i) * TAU / 16
+		var travel := Vector3(sin(angle), 0, cos(angle))
+		actor.anim_tree.set("parameters/BlendTree/Direction/blend_position",
+			DirectionalLocomotion.blend_direction(travel, Basis.IDENTITY,
+				lerpf(DirectionalLocomotion.WALK_STRIDE, DirectionalLocomotion.RUN_STRIDE, gait)))
+		actor.anim_tree.set("parameters/BlendTree/IdleMotion/blend_amount", 1.0)
+		actor.anim_tree.set("parameters/BlendTree/Direction/0/blend_position", gait)
+		actor.anim_tree.set("parameters/BlendTree/RunSpeed/scale", 1.0)
+		var observed := stance_travel(actor)
+		var error := absf(rad_to_deg(Vector2(observed.x,observed.z).angle_to(Vector2(travel.x,travel.z))))
+		assert_lt(error, 6.0, "Foot contact sweep must follow travel at yaw %.1f / gait %.2f; error %.1f" % [rad_to_deg(angle),gait,error])
+
+func stance_travel(actor: CharacterBody3D) -> Vector3:
+	var sk: Skeleton3D = actor.skeleton
+	var samples: Array = [[], []]
+	for frame in 121:
+		actor.anim_tree.advance(1.0/120)
+		sk.force_update_all_bone_transforms()
+		for i in 2:
+			samples[i].append(sk.get_bone_global_pose(sk.find_bone("foot.l" if i == 0 else "foot.r")).origin)
+	var x: Array[float] = []
+	var z: Array[float] = []
+	for foot: Array in samples:
+		var heights: Array[float] = []
+		for point: Vector3 in foot: heights.append(point.y)
+		heights.sort()
+		for frame in 120:
+			if foot[frame].y > heights[24]: continue
+			var velocity: Vector3 = (foot[frame + 1] - foot[frame]) * 120
+			x.append(-velocity.x)
+			z.append(-velocity.z)
+	x.sort()
+	z.sort()
+	return Vector3(x[x.size()/2], 0, z[z.size()/2])
+
 func _character() -> CharacterBody3D:
 	var actor := CHARACTER.instantiate() as CharacterBody3D
 	add_child_autofree(actor)
@@ -8,6 +50,39 @@ func _character() -> CharacterBody3D:
 	actor.anim_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
 	actor.anim_tree.advance(0.01)
 	return actor
+
+func test_retargeted_legs_preserve_the_authored_head_pose() -> void:
+	var actor := _character()
+	var original := load("res://characters/animations/CharacterAnimationLibrary.tres") as AnimationLibrary
+	var corrected: AnimationLibrary = actor.anim_player.get_animation_library("CharacterAnimationLibrary")
+	var sk: Skeleton3D = actor.skeleton
+	var head := sk.find_bone("head")
+	for clip in ["Running_Strafe_Left", "Running_Strafe_Right"]:
+		var worst_angle := 0.0
+		var worst_position := 0.0
+		for frame in 60:
+			var poses: Array[Transform3D] = []
+			for library in [original, corrected]:
+				var animation: Animation = library.get_animation(clip)
+				_apply_pose(sk, animation, animation.length * frame / 60.0)
+				poses.append(sk.get_bone_global_pose(head))
+			worst_angle = maxf(worst_angle, poses[0].basis.get_rotation_quaternion().angle_to(poses[1].basis.get_rotation_quaternion()))
+			worst_position = maxf(worst_position, poses[0].origin.distance_to(poses[1].origin))
+		assert_lt(rad_to_deg(worst_angle), 0.1, "Leg correction retains source head orientation")
+		assert_lt(worst_position, 0.001, "Leg correction retains source head position")
+
+func _apply_pose(sk: Skeleton3D, animation: Animation, time: float) -> void:
+	sk.reset_bone_poses()
+	for track in animation.get_track_count():
+		var path := animation.track_get_path(track)
+		if path.get_subname_count() == 0: continue
+		var bone := sk.find_bone(path.get_subname(0))
+		if bone < 0: continue
+		match animation.track_get_type(track):
+			Animation.TYPE_POSITION_3D: sk.set_bone_pose_position(bone, animation.position_track_interpolate(track,time))
+			Animation.TYPE_ROTATION_3D: sk.set_bone_pose_rotation(bone, animation.rotation_track_interpolate(track,time))
+			Animation.TYPE_SCALE_3D: sk.set_bone_pose_scale(bone, animation.scale_track_interpolate(track,time))
+	sk.force_update_all_bone_transforms()
 
 func test_actual_tree_keeps_diagonal_gaits_lifted_and_loop_seams_continuous() -> void:
 	var actor := _character()

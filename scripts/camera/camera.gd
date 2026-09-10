@@ -123,7 +123,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_edge_cursor.position = _pointer
 			_edge_cursor.scale.x = -1.0 if _pointer.x >= size.x - 1.0 else 1.0
 			_edge_cursor.show()
-		_mouse_orbit += _edge_pixels * drag_radians_per_pixel(size, camera.fov,
+		# Positive boom yaw looks left; outward right drag must turn the view right.
+		_mouse_orbit -= _edge_pixels * drag_radians_per_pixel(size, camera.fov,
 			camera.keep_aspect == Camera3D.KEEP_WIDTH) * mouse_sensitivity
 
 ## Only the part of this motion beyond the actual last viewport pixel rotates.

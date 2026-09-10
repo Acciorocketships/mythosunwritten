@@ -38,13 +38,15 @@ const STEEP_ATTR_THRESHOLD := 0.35
 
 ## The orbit-camera position whose centre ray (toward the player origin)
 ## passes closest to the crosshair hit point.
-static func solve_cam(player: Vector3, crosshair: Vector3) -> Vector3:
-	var best_cam: Vector3 = player + Vector3(DIST, HEIGHT, 0.0)
+static func solve_cam(player: Vector3, crosshair: Vector3, distance: float = DIST,
+		height: float = HEIGHT, look_height: float = 0.0) -> Vector3:
+	var focus := player + Vector3.UP * look_height
+	var best_cam: Vector3 = player + Vector3(distance, height, 0.0)
 	var best_d: float = INF
 	var th: float = 0.0
 	while th < TAU:
-		var cam: Vector3 = player + Vector3(cos(th) * DIST, HEIGHT, sin(th) * DIST)
-		var dir: Vector3 = (player - cam).normalized()
+		var cam: Vector3 = player + Vector3(cos(th) * distance, height, sin(th) * distance)
+		var dir: Vector3 = (focus - cam).normalized()
 		var t: float = (crosshair - cam).dot(dir)
 		var d: float = (cam + dir * maxf(t, 0.0)).distance_to(crosshair)
 		if d < best_d:
