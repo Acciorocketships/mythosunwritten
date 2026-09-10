@@ -30,7 +30,7 @@ func _check_stair_motion(speed:float) -> void:
 	var camera := Camera3D.new()
 	camera.set_script(load("res://scripts/camera/camera.gd"))
 	camera.target=player
-	camera.collision_enabled=false
+	camera.visibility_bubble_enabled=false
 	stage.add_child(camera)
 	camera.set_physics_process(false)
 	for descent:bool in [false,true]:
@@ -38,7 +38,7 @@ func _check_stair_motion(speed:float) -> void:
 		player.velocity=Vector3.ZERO
 		controller.direction=Vector2.ZERO
 		camera.position=player.position+Vector3(0,5,-8)
-		camera._have_prev=false
+		camera.reset_orbit()
 		for tick in 60:
 			await get_tree().physics_frame
 			player._physics_process(1.0/60)

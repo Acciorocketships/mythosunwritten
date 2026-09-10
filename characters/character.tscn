@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3 uid="uid://1isaxxqlfqe8"]
+[gd_scene load_steps=12 format=3 uid="uid://1isaxxqlfqe8"]
 
 [ext_resource type="Script" uid="uid://bhux0txcw1afy" path="res://characters/character.gd" id="1_qqr4u"]
 [ext_resource type="PackedScene" uid="uid://dawmb1kfgp2h2" path="res://characters/models/knight.tscn" id="2_3fwhk"]
@@ -8,6 +8,8 @@
 [ext_resource type="PackedScene" uid="uid://cubdm0f3gvl64" path="res://characters/models/ranger.tscn" id="3_ke030"]
 [ext_resource type="PackedScene" uid="uid://bq3445iqj0ne3" path="res://characters/models/mage.tscn" id="4_b1u1o"]
 
+[ext_resource type="AnimationNodeStateMachine" path="res://characters/animations/DirectionalAnimationTree.tres" id="8_directional"]
+
 [sub_resource type="Resource" id="Resource_b1u1o"]
 script = ExtResource("2_mdkfl")
 metadata/_custom_type_script = "uid://bb8ia06ag8nwf"
@@ -15,101 +17,6 @@ metadata/_custom_type_script = "uid://bb8ia06ag8nwf"
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_3fwhk"]
 radius = 0.39746094
 height = 2.244
-
-[sub_resource type="AnimationNodeOneShot" id="AnimationNodeOneShot_f0775"]
-fadeout_time = 0.2
-
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_qulg7"]
-animation = &"CharacterAnimationLibrary/Jump_Idle"
-
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_4kffy"]
-animation = &"CharacterAnimationLibrary/Jump_Land"
-
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_bnq0n"]
-animation = &"CharacterAnimationLibrary/Jump_Start"
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_hgjqb"]
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_3h56x"]
-switch_mode = 2
-advance_mode = 2
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_i1355"]
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_jfi6v"]
-xfade_time = 0.2
-switch_mode = 2
-advance_mode = 2
-
-[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_qnu6j"]
-states/End/position = Vector2(963, 100.625)
-states/JumpIdle/node = SubResource("AnimationNodeAnimation_qulg7")
-states/JumpIdle/position = Vector2(563, -18)
-states/JumpLand/node = SubResource("AnimationNodeAnimation_4kffy")
-states/JumpLand/position = Vector2(773.675, -17.75)
-states/JumpStart/node = SubResource("AnimationNodeAnimation_bnq0n")
-states/JumpStart/position = Vector2(373, -17.5)
-transitions = ["Start", "JumpStart", SubResource("AnimationNodeStateMachineTransition_hgjqb"), "JumpStart", "JumpIdle", SubResource("AnimationNodeStateMachineTransition_3h56x"), "JumpIdle", "JumpLand", SubResource("AnimationNodeStateMachineTransition_i1355"), "JumpLand", "End", SubResource("AnimationNodeStateMachineTransition_jfi6v")]
-graph_offset = Vector2(56.219753, -35.055103)
-
-[sub_resource type="AnimationNodeTimeScale" id="AnimationNodeTimeScale_e3kty"]
-
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_jfi6v"]
-animation = &"CharacterAnimationLibrary/Idle_A"
-use_custom_timeline = true
-timeline_length = 1.0
-stretch_time_scale = true
-start_offset = 0.0
-loop_mode = 1
-
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_f0775"]
-animation = &"CharacterAnimationLibrary/Walking_A"
-use_custom_timeline = true
-timeline_length = 1.0
-stretch_time_scale = true
-start_offset = 0.0
-loop_mode = 1
-
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_vliyq"]
-animation = &"CharacterAnimationLibrary/Running_A"
-use_custom_timeline = true
-timeline_length = 1.0
-stretch_time_scale = true
-start_offset = 0.0
-loop_mode = 1
-
-[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_qulg7"]
-blend_point_0/node = SubResource("AnimationNodeAnimation_jfi6v")
-blend_point_0/pos = 0.0
-blend_point_1/node = SubResource("AnimationNodeAnimation_f0775")
-blend_point_1/pos = 0.5
-blend_point_2/node = SubResource("AnimationNodeAnimation_vliyq")
-blend_point_2/pos = 1.0
-min_space = 0.0
-sync = true
-
-[sub_resource type="AnimationNodeBlendTree" id="AnimationNodeBlendTree_4kffy"]
-graph_offset = Vector2(-99.99327, 121.63611)
-nodes/output/position = Vector2(960, 160)
-nodes/WalkRun/node = SubResource("AnimationNodeBlendSpace1D_qulg7")
-nodes/WalkRun/position = Vector2(210, 210)
-nodes/OneShot/node = SubResource("AnimationNodeOneShot_f0775")
-nodes/OneShot/position = Vector2(760, 150)
-nodes/RunSpeed/node = SubResource("AnimationNodeTimeScale_e3kty")
-nodes/RunSpeed/position = Vector2(410, 180)
-nodes/OneShots/node = SubResource("AnimationNodeStateMachine_qnu6j")
-nodes/OneShots/position = Vector2(400, 380)
-node_connections = [&"output", 0, &"OneShot", &"OneShot", 0, &"RunSpeed", &"OneShot", 1, &"OneShots", &"RunSpeed", 0, &"WalkRun"]
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_bnq0n"]
-advance_mode = 2
-
-[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_hgjqb"]
-states/BlendTree/node = SubResource("AnimationNodeBlendTree_4kffy")
-states/BlendTree/position = Vector2(373.5, 99.875)
-states/Start/position = Vector2(190.5, 99.5)
-transitions = ["Start", "BlendTree", SubResource("AnimationNodeStateMachineTransition_bnq0n")]
-graph_offset = Vector2(77.17497, 24.262499)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_mdkfl"]
 radius = 0.39013672
@@ -148,9 +55,11 @@ libraries = {
 
 [node name="AnimationTree" type="AnimationTree" parent="."]
 root_node = NodePath("../Body/Mage")
-tree_root = SubResource("AnimationNodeStateMachine_hgjqb")
+tree_root = ExtResource("8_directional")
 anim_player = NodePath("../AnimationPlayer")
-parameters/BlendTree/WalkRun/blend_position = 0.0
+parameters/BlendTree/Direction/blend_position = Vector2(0, -1)
+parameters/BlendTree/Direction/0/blend_position = 1.0
+parameters/BlendTree/IdleMotion/blend_amount = 0.0
 parameters/BlendTree/OneShot/active = false
 parameters/BlendTree/OneShot/internal_active = false
 parameters/BlendTree/OneShot/request = 0

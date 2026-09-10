@@ -202,6 +202,35 @@
 > The 40 related tests pass with a clean exit. This accepts the measured retention
 > and rendering fixes; progressive headless CPU slowdown was not reproduced.
 
+> September 10 tactical-camera feature (isolated branch): the player uses a
+> fixed elevated orbit (14 m horizontal, 16 m high, 50-degree FOV), independent
+> of movement. Outward mouse motion outside the central 55% rotates yaw;
+> returning toward the centre preserves yaw so clicks never unwind the view.
+> The centre remains available for clicks and a stationary mouse never rotates.
+> Q/E remains available. Mouse aim projects onto the player's foot-height plane;
+> camera-relative WASD and world-space facing are independent. AI controllers
+> keep movement-facing unless they publish a separate aim vector.
+>
+> DirectionalLocomotion installs the editor-authored DirectionalAnimationTree
+> with its synchronized 2D directional blend and separate idle transition. Forward walking offsets its normalized phase by 1/6 cycle;
+> backward walking offsets by 3/4. Strafe/run phases already agree. Private
+> animation-library copies enable actual loop interpolation. Measured stride
+> lengths set player travel limits and directional weights; AI/test speed caps
+> retain their existing values. The character and camera share step smoothing.
+>
+> CameraVisibilityBubble queries rendered bounds on the main thread and adds
+> a reversible material fade across a 3.8 m foreground corridor. Coverage is
+> per fragment, so separate components and large MultiMesh batches share the
+> same bubble without fading distant instances. It preserves the ground below
+> the physical character floor independently of visual step smoothing, and
+> preserves shadow rendering. Live source material uniforms remain synchronized.
+> It uses dithered pixel coverage to retain
+> opaque depth ordering. Custom spatial shaders retain their code; native PBR
+> materials use the shared adapter. Physics and source assets are unchanged.
+> CameraObstructionSolver remains available for historical review fixtures;
+> the tactical camera does not shorten its boom when a roof intervenes.
+> Evidence and validation limits: docs/qa/2026-09-10-tactical/README.md.
+
 > September 10 repository consolidation: `main` continues the September 5 evening
 > village-review branch and its September 5–9 working implementation. The atmosphere
 > and water/travel histories are integrated without replacing that later work.
@@ -2321,11 +2350,13 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   by `tests/harness/swim_harness.tscn`.
 - **`scripts/controllers/`** — a pluggable `CharacterController` resource: `PlayerController`
   (keyboard, camera-relative) and `TestController` (steers toward a target node, for harnesses).
-- **`scripts/camera/camera.gd`** — orbit camera (Q/E orbit) following the character. The general
-  `CameraObstructionSolver` sweeps one sphere upward to lower the framing pivot beneath ceilings
-  and outward to shorten the boom against world collision. It excludes the player body, snaps
-  inward for safety, and releases pivot/boom length smoothly even while the player is stationary;
-  buildings, cliffs, decks, and future dungeons need no camera-specific hooks.
+- **`scripts/camera/camera.gd`** — elevated tactical camera with a fixed world yaw,
+  mouse-edge drag and Q/E orbit. `CameraVisibilityBubble` reveals foreground surfaces
+  around the player through a material corridor; it never contracts the boom.
+  `CameraObstructionSolver` remains an independent utility for historical review cameras.
+- **`DirectionalLocomotion`** — synchronized, phase-aligned forward/backward/strafe
+  blending, independent of facing. PlayerController uses measured gait stride limits;
+  the base CharacterController can publish a separate facing vector for other actors.
 
 ## Startup loading screen
 

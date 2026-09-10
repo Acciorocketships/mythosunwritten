@@ -10,3 +10,7 @@ func wants_jump(_character: CharacterBody3D, _delta: float) -> bool:
 # Held (not edge-triggered) jump input: used for buoyancy while swimming.
 func jump_held(_character: CharacterBody3D, _delta: float) -> bool:
 	return false
+
+# Zero preserves movement-facing for AI/test controllers.
+func get_facing_vector(_character: CharacterBody3D, _delta: float) -> Vector2:
+	return Vector2.ZERO

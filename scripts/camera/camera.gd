@@ -1,138 +1,69 @@
 extends Node
+## Elevated tactical orbit. Yaw is independent of travel and cursor-facing.
 
 @export var camera: Camera3D
 @export var target: Node3D
+@export var distance := 14.0
+@export var height := 16.0
+@export var look_height := 1.0
+@export var orbit_speed_rad := 2.0
+@export var act_orbit_left := "camera_left"
+@export var act_orbit_right := "camera_right"
+## Centre fraction reserved for pointing/clicking. Motion, not dwell, rotates.
+@export_range(0.0, 0.95) var mouse_dead_zone := 0.55
+@export var mouse_sensitivity := 0.006
+@export var visibility_bubble_enabled := true
+@export var visibility_radius := 3.8
+@export_range(0.0, 1.0) var obstruction_opacity := 0.12
 
-# Framing
-@export var distance: float = 8.0
-@export var height: float = 5.0
-
-# Orbit (Q/E)
-@export var orbit_speed_rad: float = 2          # radians per second
-@export var act_orbit_left := "camera_left"       # bind to E
-@export var act_orbit_right := "camera_right"     # bind to Q
-
-# Follow behavior
-@export var ema_alpha: float = 0.1 # when strafe ratio is close to 0, increasing this makes it "snappier"
-@export var strafe_ratio: float = 0.8 	# if 0, camera moves behind direction of motion. if 1, camera moves to keep same angle
-@export var follow_gain: float = 1.0 # how much to follow the player. if 0, it stays in the same place
-@export var max_speed: float = 15.0 
-
-# General world obstruction. The target body is excluded; terrain, structures,
-# dressing collision, cliffs, and later dungeon geometry all use this path.
-@export var collision_enabled := true
-@export_flags_3d_physics var collision_mask: int = 1
-@export var camera_radius := 0.28
-@export var collision_margin := 0.02
-@export var collision_skin := 0.05
-@export var minimum_pivot_height := 1.35
-@export var pivot_release_speed := 4.0
-@export var boom_release_speed := 6.0
-
-var _prev_pos: Vector3
-var _have_prev := false
-var _v_ema := Vector3.ZERO
-var _last_back_dir := Vector3.ZERO
-var _obstruction: CameraObstructionSolver
-var _pivot_height := -1.0
-var _boom_was_obstructed := false
+var _yaw := 0.0
+var _mouse_orbit := 0.0
+var _visibility: CameraVisibilityBubble
 
 func _ready() -> void:
 	if camera == null:
-		camera = get_node_or_null(".") as Camera3D
-	assert(height >= minimum_pivot_height)
-	assert(pivot_release_speed > 0.0 and boom_release_speed > 0.0)
-	if collision_enabled:
-		_obstruction = CameraObstructionSolver.new(camera_radius,
-			collision_mask, collision_margin, collision_skin)
+		camera = get_node(".") as Camera3D
+	if camera != null and target != null:
+		reset_orbit()
+		camera.fov = 50.0
+	_visibility = CameraVisibilityBubble.new()
+	add_child(_visibility)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		var width := get_viewport().get_visible_rect().size.x
+		_mouse_orbit += edge_drag(motion.position.x - motion.relative.x,
+			motion.position.x, width, mouse_dead_zone) * mouse_sensitivity
+
+## Integrate outward motion beyond either edge of the centre. Returning to the
+## click area must not unwind the orbit; another outward gesture can continue it.
+## A boundary-crossing event behaves exactly like smaller events along that drag.
+static func edge_drag(from_x: float, to_x: float, width: float, dead_zone: float) -> float:
+	var left := width * (1.0 - dead_zone) * 0.5
+	var right := width - left
+	if to_x > from_x:
+		return maxf(to_x - right, 0.0) - maxf(from_x - right, 0.0)
+	return minf(to_x - left, 0.0) - minf(from_x - left, 0.0)
 
 func _physics_process(delta: float) -> void:
-	if camera == null or target == null:
+	if not is_instance_valid(camera) or not is_instance_valid(target):
+		if _visibility != null: _visibility.clear()
 		return
-
-	# --- sample and smooth target velocity ---
+	_yaw += _mouse_orbit + Input.get_axis(act_orbit_left, act_orbit_right) * orbit_speed_rad * delta
+	_mouse_orbit = 0.0
 	var pos := target.global_position
 	if target.has_method("camera_follow_position"):
 		pos = target.camera_follow_position()
-	var v: Vector3 = Vector3.ZERO
-	if _have_prev:
-		v = (pos - _prev_pos) / max(delta, 1e-6)
-		v.y = 0.0
-		_v_ema = (1-ema_alpha) * _v_ema + ema_alpha * v
+	camera.global_position = pos + Vector3(sin(_yaw) * distance, height, cos(_yaw) * distance)
+	camera.look_at(pos + Vector3.UP * look_height, Vector3.UP)
+	if visibility_bubble_enabled and camera.is_current():
+		_visibility.update_bubble(camera, target, pos, visibility_radius, obstruction_opacity, delta)
 	else:
-		_have_prev = true
-	var prev_dir: Vector3 = (camera.global_position - pos)
-	prev_dir.y = 0.0
-	if prev_dir.length_squared() > 1e-9:
-		prev_dir = prev_dir.normalized()
-	else:
-		prev_dir = Vector3.BACK
-	_prev_pos = pos
-	var speed : float = max(_v_ema.length(), v.length())
+		_visibility.clear()
 
-	# --- determine "behind" direction based on smoothed velocity ---
-	var back_dir: Vector3
-	if _last_back_dir.length() == 0:
-		_last_back_dir = camera.global_position - target.global_position
-		_last_back_dir.y = 0
-		_last_back_dir = _last_back_dir.normalized()
-	if speed > 1e-4:
-		back_dir = (-_v_ema / speed)
-		_last_back_dir = back_dir
-	else:
-		back_dir = _last_back_dir.normalized()
-
-	# --- resolve the framing pivot below ceilings ---
-	var resolved_pivot_height := height
-	var space := camera.get_world_3d().direct_space_state
-	var excluded: Array[RID] = []
-	if target is CollisionObject3D:
-		excluded.append((target as CollisionObject3D).get_rid())
-	if _obstruction != null and space != null:
-		var safe_pivot := _obstruction.resolve_ceiling(space, pos,
-			minimum_pivot_height, height, excluded)
-		resolved_pivot_height = safe_pivot.y - pos.y
-	if _pivot_height < 0.0 or resolved_pivot_height < _pivot_height:
-		_pivot_height = resolved_pivot_height
-	else:
-		_pivot_height = move_toward(_pivot_height, resolved_pivot_height,
-			pivot_release_speed * delta)
-	var center := pos + Vector3.UP * _pivot_height
-
-	# --- base desired position directly behind the target ---
-	var disp = (strafe_ratio * prev_dir + (1-strafe_ratio) * back_dir).normalized() * distance
-	var desired : Vector3 = center + disp
-
-	# --- smooth movement (only when moving) ---
-	var new_pos := camera.global_position
-	var gain := follow_gain * speed
-	var alpha := 1.0 - exp(-gain * delta)
-	if _boom_was_obstructed:
-		alpha = maxf(alpha, 1.0 - exp(-boom_release_speed * delta))
-	var lerped := camera.global_position.lerp(desired, alpha)
-	var step := lerped - camera.global_position
-	var max_step := max_speed * delta
-	new_pos = camera.global_position + step.limit_length(max_step) if step.length() > max_step else lerped
-
-	# --- snap to circle (radius & height) ---
-	var radial := new_pos - center
-	radial.y = 0.0
-	if radial.length_squared() > 1e-9:
-		radial = radial.lerp(radial.normalized() * distance, alpha)
-		
-	# --- apply manual orbit (Q/E) *after* smoothing ---
-	var yaw_dir := Input.get_axis(act_orbit_left, act_orbit_right)
-	if absf(yaw_dir) > 1e-6:
-		var rot_amount := orbit_speed_rad * yaw_dir * delta
-		radial = radial.rotated(Vector3.UP, rot_amount)
-
-	var unconstrained := center + radial
-	var resolved := unconstrained
-	if _obstruction != null and space != null:
-		resolved = _obstruction.resolve_boom(space, center, unconstrained,
-			excluded)
-	_boom_was_obstructed = resolved.distance_squared_to(unconstrained) > 0.000001
-	camera.global_position = resolved
-
-	# --- always look at the target ---
-	camera.look_at(pos, Vector3.UP)
+func reset_orbit() -> void:
+	if camera == null or target == null: return
+	var offset := camera.global_position - target.global_position
+	_yaw = atan2(offset.x, offset.z)
+	_mouse_orbit = 0.0

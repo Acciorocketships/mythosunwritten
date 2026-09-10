@@ -84,7 +84,7 @@ func _run() -> void:
 			player.velocity=Vector3.ZERO
 			controller.direction=Vector2.ZERO
 			camera.global_position=start-direction*8+Vector3.UP*5
-			camera._have_prev=false
+			camera.reset_orbit()
 			for tick in 30:
 				await physics_frame
 				player._physics_process(1.0/60)

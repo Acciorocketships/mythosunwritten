@@ -58,11 +58,10 @@ func test_excluded_body_cannot_collapse_its_own_camera_boom() -> void:
 		world.get_world_3d().direct_space_state,
 		Vector3(0.0, 2.0, 0.0), desired, excluded), desired)
 
-func test_world_camera_enables_the_general_collision_contract() -> void:
+func test_world_camera_uses_visibility_bubble_without_collapsing_tactical_orbit() -> void:
 	var world := load("res://scenes/world.tscn").instantiate() as Node3D
 	var camera := world.get_node("Camera3D") as Camera3D
-	assert_true(bool(camera.get("collision_enabled")))
-	assert_eq(int(camera.get("collision_mask")), 1)
-	assert_lt(float(camera.get("minimum_pivot_height")),
-		TraversalEnvelope.MIN_HEADROOM)
+	assert_true(bool(camera.get("visibility_bubble_enabled")))
+	assert_gte(float(camera.get("height")), 14.0)
+	assert_gte(float(camera.get("distance")), 12.0)
 	world.free()

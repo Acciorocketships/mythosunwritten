@@ -1,0 +1,42 @@
+{
+  "Running_A": {
+    "after_squared_error": 0.0,
+    "before_squared_error": 0.0,
+    "best_measured_offset_cycles": 0.0,
+    "chosen_offset_cycles": 0.0,
+    "original_loop_mode": 0,
+    "source_duration_seconds": 0.800000011920929
+  },
+  "Running_Strafe_Left": {
+    "after_squared_error": 0.122271659564764,
+    "before_squared_error": 0.122271659564764,
+    "best_measured_offset_cycles": 0.991666666666667,
+    "chosen_offset_cycles": 0.0,
+    "original_loop_mode": 0,
+    "source_duration_seconds": 0.800000011920929
+  },
+  "Running_Strafe_Right": {
+    "after_squared_error": 0.116425692480769,
+    "before_squared_error": 0.116425692480769,
+    "best_measured_offset_cycles": 0.991666666666667,
+    "chosen_offset_cycles": 0.0,
+    "original_loop_mode": 0,
+    "source_duration_seconds": 0.800000011920929
+  },
+  "Walking_A": {
+    "after_squared_error": 0.0281629546559793,
+    "before_squared_error": 1.0175164098966,
+    "best_measured_offset_cycles": 0.166666666666667,
+    "chosen_offset_cycles": 0.166666666666667,
+    "original_loop_mode": 0,
+    "source_duration_seconds": 1.06666672229767
+  },
+  "Walking_Backwards": {
+    "after_squared_error": 0.0142621819620465,
+    "before_squared_error": 2.05061083993848,
+    "best_measured_offset_cycles": 0.75,
+    "chosen_offset_cycles": 0.75,
+    "original_loop_mode": 0,
+    "source_duration_seconds": 1.06666672229767
+  }
+}

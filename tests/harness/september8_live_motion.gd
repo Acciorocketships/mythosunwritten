@@ -37,10 +37,7 @@ func _run() -> void:
 			_character.velocity=Vector3.ZERO
 			controller.direction=Vector2.ZERO
 			_camera.global_position=start-direction*8+Vector3.UP*5
-			_camera._have_prev=false
-			_camera._last_back_dir=Vector3.ZERO
-			_camera._v_ema=Vector3.ZERO
-			_camera._pivot_height=-1
+			_camera.reset_orbit()
 			for tick in 30:
 				await get_tree().physics_frame
 				_character._physics_process(1.0/60)
