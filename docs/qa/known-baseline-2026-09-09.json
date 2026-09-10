@@ -1,0 +1,63 @@
+{
+  "source": "/Users/ryko/Documents/Codex/2026-09-08/i-did-a-manual-judging-pass/outputs/final-validation/results.json",
+  "summary": {
+    "scripts": 154,
+    "tests": 1195,
+    "passed": 1164,
+    "failed": 30,
+    "pending": 1
+  },
+  "failed_tests": {
+    "res://tests/test_cliff_dressing.gd": [
+      "test_carved_pocket_with_unequal_arms_and_continuing_wall_gets_seam_walls",
+      "test_carved_pocket_level_diagonal_gets_a_pocket_cap",
+      "test_carved_flush_step_cap_sits_at_the_very_end"
+    ],
+    "res://tests/test_field_streamer.gd": [
+      "test_background_builds_populate_radius"
+    ],
+    "res://tests/test_warren_maze_carver.gd": [
+      "test_production_seed_corpus_seals_without_attempt_search"
+    ],
+    "res://tests/test_warren_maze_composition.gd": [
+      "test_bridges_become_rooms_decks_or_audited_releases",
+      "test_the_rock_reads_as_hillside_not_masonry",
+      "test_the_bench_tops_read_as_gardens_with_one_village_green",
+      "test_the_plaza_deck_opens_the_square",
+      "test_every_garden_edge_turns_the_rim",
+      "test_the_hillside_pushes_back",
+      "test_assets_land",
+      "test_large_and_grand_towns_exist",
+      "test_the_big_towns_carry_the_round_s_own_zeroes",
+      "test_sloped_ground_composes",
+      "test_the_town_s_decor_is_not_one_repeated_piece"
+    ],
+    "res://tests/test_warren_maze_plots.gd": [
+      "test_stack_invariant_rejects_a_floating_plot_at_seal",
+      "test_the_plaza_deck_is_a_room_not_a_lane",
+      "test_streets_keep_their_floor",
+      "test_ownership_is_pinned_on_the_planner_seeds",
+      "test_sloped_ground_seals_and_translates"
+    ],
+    "res://tests/test_warren_spatial_fabric_compiler.gd": [
+      "test_measured_room_units_preserve_every_spatial_stamp"
+    ],
+    "res://tests/test_water_contour.gd": [
+      "test_pond_yields_smooth_closed_curve",
+      "test_border_curves_weld",
+      "test_reported_saddle_outward_frame_does_not_reverse"
+    ],
+    "res://tests/test_water_skin.gd": [
+      "test_reported_exact_bank_rim_reaches_recessed_cliff_face",
+      "test_reported_exact_corner_wet_region_has_connected_skin_coverage",
+      "test_skin_handles_closed_and_border_exit_curves",
+      "test_s_is_continuous_along_river",
+      "test_wall_rim_reaches_the_face"
+    ]
+  },
+  "pending_tests": {
+    "res://tests/test_warren_maze_composition.gd": [
+      "test_corpus_composes"
+    ]
+  }
+}

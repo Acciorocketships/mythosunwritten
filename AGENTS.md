@@ -1,3 +1,12 @@
+> September 10 repository consolidation: `main` continues the September 5 evening
+> village-review branch and its September 5–9 working implementation. The atmosphere
+> and water/travel histories are integrated without replacing that later work.
+> Bulk manual render sequences remain ignored local QA artifacts; reports, numeric
+> evidence, fixtures and harnesses are versioned. See
+> `docs/branch-consolidation-2026-09-10.md` for branch decisions, recovery paths and
+> validation limits. Consolidation does not resolve the documented baseline
+> cliff, cold-start, composition and historical-water failures.
+
 > September 8 night manual review (completed September 9): all 18 reported
 > issues plus photo 19's window/pillar detail were handled individually with
 > before/after game renders, nearby views, pixel differences and relevant
