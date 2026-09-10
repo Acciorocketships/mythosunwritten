@@ -1,11 +1,13 @@
 extends Node
 ## Elevated tactical orbit. Yaw is independent of travel and cursor-facing.
+const LEGACY_VIEW := preload("res://scripts/camera/legacy_camera_view.gd")
 
 @export var camera: Camera3D
 @export var target: Node3D
-@export var distance := 14.0
+@export var distance := 26.0
 @export var height := 16.0
 @export var look_height := 1.0
+@export var tactical_view := true
 @export var orbit_speed_rad := 2.0
 @export var act_orbit_left := "camera_left"
 @export var act_orbit_right := "camera_right"
@@ -19,6 +21,7 @@ extends Node
 var _yaw := 0.0
 var _mouse_orbit := 0.0
 var _visibility: CameraVisibilityBubble
+var _legacy: Node
 
 func _ready() -> void:
 	if camera == null:
@@ -28,9 +31,18 @@ func _ready() -> void:
 		camera.fov = 50.0
 	_visibility = CameraVisibilityBubble.new()
 	add_child(_visibility)
+	_legacy = LEGACY_VIEW.new()
+	_legacy.camera = camera
+	_legacy.target = target
+	add_child(_legacy)
+	_apply_view()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion:
+	if camera == null or not camera.is_current(): return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F7:
+		toggle_view()
+		get_viewport().set_input_as_handled()
+	elif tactical_view and event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion
 		var width := get_viewport().get_visible_rect().size.x
 		_mouse_orbit += edge_drag(motion.position.x - motion.relative.x,
@@ -50,6 +62,12 @@ func _physics_process(delta: float) -> void:
 	if not is_instance_valid(camera) or not is_instance_valid(target):
 		if _visibility != null: _visibility.clear()
 		return
+	if not tactical_view:
+		_visibility.clear()
+		_legacy.camera = camera
+		_legacy.target = target
+		_legacy.update_view(delta)
+		return
 	_yaw += _mouse_orbit + Input.get_axis(act_orbit_left, act_orbit_right) * orbit_speed_rad * delta
 	_mouse_orbit = 0.0
 	var pos := target.global_position
@@ -62,8 +80,27 @@ func _physics_process(delta: float) -> void:
 	else:
 		_visibility.clear()
 
+func toggle_view() -> void:
+	tactical_view = not tactical_view
+	_apply_view()
+
+func _apply_view() -> void:
+	if not is_instance_valid(camera) or not is_instance_valid(target): return
+	reset_orbit()
+	if tactical_view:
+		camera.fov = 50.0
+	else:
+		_visibility.clear()
+		camera.fov = 75.0
+		var pos := target.global_position
+		if target.has_method("camera_follow_position"): pos = target.camera_follow_position()
+		camera.global_position = pos + Vector3(sin(_yaw) * _legacy.distance,
+			_legacy.height, cos(_yaw) * _legacy.distance)
+	_physics_process(0.0)
+
 func reset_orbit() -> void:
 	if camera == null or target == null: return
 	var offset := camera.global_position - target.global_position
 	_yaw = atan2(offset.x, offset.z)
 	_mouse_orbit = 0.0
+	if _legacy != null: _legacy.reset_follow()

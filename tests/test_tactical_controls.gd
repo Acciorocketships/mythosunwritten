@@ -1,6 +1,26 @@
 extends GutTest
 const CameraScript = preload("res://scripts/camera/camera.gd")
 
+func test_player_input_preserves_original_speed_independent_of_facing() -> void:
+	var world := Node3D.new()
+	add_child_autofree(world)
+	var camera := Camera3D.new()
+	world.add_child(camera)
+	camera.make_current()
+	var actor := (load("res://characters/character.tscn") as PackedScene).instantiate() as CharacterBody3D
+	world.add_child(actor)
+	actor.set_physics_process(false)
+	actor.controller = PlayerController.new()
+	for yaw in [0.0, PI / 2, PI]:
+		camera.rotation = Vector3(-0.52, yaw, 0)
+		actor.rotation.y = yaw + PI / 2
+		for actions in [["forward"], ["backward"], ["left"], ["right"], ["forward", "right"]]:
+			for action in actions: Input.action_press(action)
+			assert_almost_eq(actor.controller.get_move_vector(actor, 1.0 / 60).length(), 1.0, 0.0001)
+			assert_almost_eq(actor.streaming_velocity().length(), 10.0, 0.001,
+				"Player speed and streaming intent retain the original 10 m/s cap")
+			for action in actions: Input.action_release(action)
+
 func test_drag_reserves_centre_and_is_proportional_to_motion() -> void:
 	assert_eq(CameraScript.edge_drag(400, 600, 1000, 0.6), 0.0)
 	assert_eq(CameraScript.edge_drag(850, 890, 1000, 0.6), 40.0)

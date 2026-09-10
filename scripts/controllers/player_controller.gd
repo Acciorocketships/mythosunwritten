@@ -14,11 +14,7 @@ func get_move_vector(character: CharacterBody3D, _dt: float) -> Vector2:
 	camera = character.get_viewport().get_camera_3d()
 	var raw := Input.get_vector(left_action, right_action, forward_action, backward_action)
 	if camera == null: return raw
-	var movement := camera_relative(raw, camera.global_basis)
-	var direction := Vector3(movement.x, 0.0, movement.y)
-	var max_speed := float(character.get("MAX_SPEED"))
-	var gait_speed := DirectionalLocomotion.RUN_CADENCE * DirectionalLocomotion.stride_length(direction, character.global_basis)
-	return movement * minf(1.0, gait_speed / max_speed)
+	return camera_relative(raw, camera.global_basis)
 
 static func camera_relative(raw: Vector2, camera_basis: Basis) -> Vector2:
 	var right := Vector3(camera_basis.x.x, 0.0, camera_basis.x.z).normalized()

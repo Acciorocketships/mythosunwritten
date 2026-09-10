@@ -1,5 +1,41 @@
 extends GutTest
 
+func test_f7_switches_original_and_wider_tactical_views_without_key_repeat() -> void:
+	var world := Node3D.new()
+	add_child_autofree(world)
+	var target := Node3D.new()
+	world.add_child(target)
+	var camera := Camera3D.new()
+	camera.set_script(load("res://scripts/camera/camera.gd"))
+	camera.target = target
+	camera.visibility_bubble_enabled = false
+	camera.position = Vector3(0, 5, 8)
+	world.add_child(camera)
+	camera.make_current()
+	camera.set_physics_process(false)
+	assert_almost_eq(camera.position, Vector3(0,16,26), Vector3.ONE * 0.001)
+	assert_almost_eq(rad_to_deg(-camera.rotation.x), 30.0, 0.1)
+	var key := InputEventKey.new()
+	key.keycode = KEY_F7
+	key.pressed = true
+	key.echo = true
+	camera._unhandled_input(key)
+	assert_true(camera.tactical_view)
+	key.echo = false
+	camera._unhandled_input(key)
+	assert_false(camera.tactical_view)
+	assert_eq(camera.fov, 75.0)
+	assert_almost_eq(camera.position, Vector3(0,5,8), Vector3.ONE * 0.001)
+	# The old camera still resolves its boom against real collision.
+	_box(world, Vector3(0,5,4), Vector3(6,6,0.5))
+	await get_tree().physics_frame
+	camera._physics_process(1.0 / 60)
+	assert_lt(camera.position.z, 3.5)
+	camera._unhandled_input(key)
+	assert_true(camera.tactical_view)
+	assert_eq(camera.fov, 50.0)
+	assert_almost_eq(camera.position, Vector3(0,16,26), Vector3.ONE * 0.001)
+
 func _box(parent: Node3D, position: Vector3, size: Vector3) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.position = position

@@ -1,12 +1,18 @@
 # Tactical camera and directional movement
 
 Feature branch: `codex/tactical-camera-controls`, based on `f3203d96`.
-This work is isolated from the concurrently active main checkout.
+Merged into `main` at `6f6076e8`; the testing follow-up below restores movement
+speed and adds a reversible view comparison.
 
 ## Controls and framing
 
-- Camera: 14 m horizontal distance, 16 m above the player's feet, looks at 1 m
-  above the feet, 50-degree perspective FOV. Approximately 47 degrees downward.
+- Camera: 26 m horizontal distance, 16 m above the player's feet, looks at 1 m
+  above the feet, 50-degree perspective FOV. Approximately 30 degrees downward.
+- F7 switches between this view and the original 8 m / 5 m, 75-degree FOV
+  camera, including its original follow and collision response. Switching
+  retains the current yaw and resets follow history. The old view restores
+  opaque materials; the tactical view enables the visibility bubble. Both
+  views keep mouse-facing and camera-relative movement. Key repeat is ignored.
 - WASD moves relative to the current camera. Mouse aim controls facing even
   while stationary, airborne, or travelling sideways/backwards.
 - Outward horizontal mouse motion in the outer 22.5% on either side rotates the camera
@@ -16,10 +22,13 @@ This work is isolated from the concurrently active main checkout.
   Q/E still works.
 - The aim ray meets a plane at the player's feet, so foreground roofs cannot
   steal aim. A 25 cm zone at the player's feet holds the last facing direction.
-- Physics speed caps for AI/test controllers remain unchanged. Player movement
-  follows the measured clips at two gait cycles per second: approximately
-  4.2 m/s forward, 4.66 m/s sideways and 1.6 m/s backward. Diagonal weights and
-  travel speed follow the blended stride rather than cancelling or sliding feet.
+- Player movement again reaches the original 10 m/s land speed in all directions;
+  diagonal input is normalized. The initial feature's stride-based travel limits
+  (4.2 m/s forward, 4.66 sideways, 1.6 backward) have been removed at the owner's
+  request. Swimming keeps its existing 4.5 m/s cap. Measured strides still set
+  animation blend weights and cadence, capped at 2.5 cycles per second. The
+  available short backward walking clip cannot match 10 m/s without foot sliding;
+  animation phase alignment is preserved, while travel speed takes precedence.
 
 ## Animation evidence
 
@@ -96,6 +105,7 @@ Run with the Godot 4.5.1 executable and this worktree as `--path`:
 --headless -s res://tests/harness/gait_phase_report.gd
 res://tests/harness/tactical_review.tscn
 res://tests/harness/tactical_review.tscn -- --gaits
+res://tests/harness/tactical_review.tscn -- --views
 res://tests/harness/tactical_world_review.tscn -- --all --output <output-directory>
 ```
 
@@ -108,6 +118,24 @@ at zero fade differs by at most 2/255 per channel from Godot's generated shader.
 That small difference is a renderer/material-adapter limit, not a geometry change.
 
 ## Validation
+
+### View and speed follow-up
+
+The `--views` harness renders the production camera controller in both modes
+and after returning to tactical mode. Captures in `.artifacts/tactical-views/`
+verify the wider framing at 29.982 degrees downward, original framing at
+32.005 degrees downward, and a pixel-identical restored tactical frame. These are synthetic
+framing checks; the town measurements below predate this follow-up and used
+the initial 14 m / 16 m tactical camera.
+
+The follow-up passes 31 tests / 286 assertions across controls, camera collision,
+streaming intent, directional animation, visibility, stairs and swimming. The new
+regressions exercise actual player inputs in all directions and camera quadrants,
+the 10 m/s streaming intent, F7 repeat suppression, both camera poses/FOVs, and
+the original view's collision response. Both test runs and the graphical capture
+exit successfully. The repository-wide suite was not repeated for this follow-up.
+
+### Original feature validation
 
 Final focused controls, animation, camera, visibility, stair and swim checks pass:
 28 tests, 241 assertions. The additional GPU checks also exercise actual MultiMesh

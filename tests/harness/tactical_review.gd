@@ -8,6 +8,7 @@ var out := "res://.artifacts/tactical"
 
 func _ready() -> void:
 	get_window().size = Vector2i(1280, 800)
+	if OS.get_cmdline_user_args().has("--views"): out += "-views"
 	if OS.get_cmdline_user_args().has("--unaligned"): out += "-unaligned"
 	DirAccess.make_dir_recursive_absolute(out)
 	var environment := WorldEnvironment.new()
@@ -27,11 +28,35 @@ func _ready() -> void:
 	camera.current = true
 	camera.fov = 45
 	_box(Vector3(0,-0.15,0), Vector3(45,0.3,40), Color("718779"))
-	if OS.get_cmdline_user_args().has("--gaits"):
+	if OS.get_cmdline_user_args().has("--views"):
+		await _view_review()
+	elif OS.get_cmdline_user_args().has("--gaits"):
 		await _gaits()
 	else:
 		await _bubble_review()
 	get_tree().quit()
+
+func _view_review() -> void:
+	var actor := _actor(Vector3.ZERO)
+	actor.movement_animation(0.0)
+	actor.anim_tree.advance(0.01)
+	for z in [-15, -10, -5, 0, 5, 10, 15]:
+		_box(Vector3(0,0.01,z), Vector3(40,0.02,0.06), Color("b0b7a0"))
+		for x in [-15, -10, -5, 5, 10, 15]:
+			_box(Vector3(x,0.4,z), Vector3(0.5,0.8,0.5), Color("b78353"))
+	camera.position = Vector3(0,5,8)
+	var controller := preload("res://scripts/camera/camera.gd").new()
+	controller.camera = camera
+	controller.target = actor
+	add_child(controller)
+	controller.set_physics_process(false)
+	for mode in ["tactical", "legacy", "tactical_return"]:
+		for frame in 10:
+			controller._physics_process(1.0 / 60)
+			await get_tree().process_frame
+		await _shot("view_" + mode)
+		print("VIEW ", mode, " position=", camera.position, " pitch=", camera.rotation_degrees.x, " fov=", camera.fov)
+		controller.toggle_view()
 
 func _actor(pos: Vector3) -> CharacterBody3D:
 	var actor := CHARACTER.instantiate() as CharacterBody3D

@@ -202,12 +202,14 @@
 > The 40 related tests pass with a clean exit. This accepts the measured retention
 > and rendering fixes; progressive headless CPU slowdown was not reproduced.
 
-> September 10 tactical-camera feature (isolated branch): the player uses a
-> fixed elevated orbit (14 m horizontal, 16 m high, 50-degree FOV), independent
+> September 10 tactical-camera feature (merged, testing follow-up): the player uses a
+> fixed elevated orbit (26 m horizontal, 16 m high, 50-degree FOV), independent
 > of movement. Outward mouse motion outside the central 55% rotates yaw;
 > returning toward the centre preserves yaw so clicks never unwind the view.
 > The centre remains available for clicks and a stationary mouse never rotates.
-> Q/E remains available. Mouse aim projects onto the player's foot-height plane;
+> F7 switches to the original 8 m / 5 m follow/collision camera and back,
+> preserving yaw and keeping the new controls in both views. Q/E remains available.
+> Mouse aim projects onto the player's foot-height plane;
 > camera-relative WASD and world-space facing are independent. AI controllers
 > keep movement-facing unless they publish a separate aim vector.
 >
@@ -215,8 +217,9 @@
 > with its synchronized 2D directional blend and separate idle transition. Forward walking offsets its normalized phase by 1/6 cycle;
 > backward walking offsets by 3/4. Strafe/run phases already agree. Private
 > animation-library copies enable actual loop interpolation. Measured stride
-> lengths set player travel limits and directional weights; AI/test speed caps
-> retain their existing values. The character and camera share step smoothing.
+> lengths set directional weights and cadence. Player travel again reaches the
+> original 10 m/s in all directions; short backward strides may slide at that speed.
+> The character and camera share step smoothing.
 >
 > CameraVisibilityBubble queries rendered bounds on the main thread and adds
 > a reversible material fade across a 3.8 m foreground corridor. Coverage is
@@ -227,7 +230,7 @@
 > It uses dithered pixel coverage to retain
 > opaque depth ordering. Custom spatial shaders retain their code; native PBR
 > materials use the shared adapter. Physics and source assets are unchanged.
-> CameraObstructionSolver remains available for historical review fixtures;
+> CameraObstructionSolver also supplies the F7 original view and review fixtures;
 > the tactical camera does not shorten its boom when a roof intervenes.
 > Evidence and validation limits: docs/qa/2026-09-10-tactical/README.md.
 
@@ -2353,9 +2356,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
 - **`scripts/camera/camera.gd`** — elevated tactical camera with a fixed world yaw,
   mouse-edge drag and Q/E orbit. `CameraVisibilityBubble` reveals foreground surfaces
   around the player through a material corridor; it never contracts the boom.
-  `CameraObstructionSolver` remains an independent utility for historical review cameras.
+  F7 switches to the original follow camera with `CameraObstructionSolver` collision.
 - **`DirectionalLocomotion`** — synchronized, phase-aligned forward/backward/strafe
-  blending, independent of facing. PlayerController uses measured gait stride limits;
+  blending, independent of facing. PlayerController retains the original 10 m/s speed;
   the base CharacterController can publish a separate facing vector for other actors.
 
 ## Startup loading screen
