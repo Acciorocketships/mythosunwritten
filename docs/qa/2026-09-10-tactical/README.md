@@ -1,3 +1,5 @@
+Latest: [continuous cursor and full-stride correction](continuous-input-and-stride.md).
+
 # Tactical camera and directional movement
 
 Latest: [embedded input and moving-aim follow-up](embedded-input.md).

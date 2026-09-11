@@ -1,0 +1,36 @@
+{
+  "standalone_input": "owner confirmed rotation and WASD work",
+  "embedded_input": "owner confirmed rotation and WASD work",
+  "embedded_stride": "owner confirmed feet follow travel with diagonal forward aim and S",
+  "embedded_button_free_turn_samples": 178,
+  "embedded_both_yaw_signs_observed": true,
+  "full_stride_before_error_degrees": [
+    32.16143,
+    31.96923,
+    30.55995,
+    32.94839
+  ],
+  "full_stride_after_error_degrees": [
+    0.000148,
+    9e-06,
+    8e-06,
+    9.1e-05
+  ],
+  "focused_tests": {
+    "tests": 33,
+    "assertions": 399,
+    "exit_code": 0
+  },
+  "corrected_pose_tests": {
+    "tests": 10,
+    "assertions": 147,
+    "exit_code": 0
+  },
+  "normal_game": "loaded through normal project entry; awaiting owner confirmation",
+  "native_tests": {
+    "tests": 9,
+    "assertions": 96,
+    "exit_code": 0
+  },
+  "normal_game_startup_seconds": 230.079
+}

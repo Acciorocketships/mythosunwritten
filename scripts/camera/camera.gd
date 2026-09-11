@@ -29,8 +29,6 @@ var _edge_enabled := true
 var _previous_mouse_mode := Input.MOUSE_MODE_VISIBLE
 var _edge_cursor: Control
 var _forwarding_pointer := false
-var _pointer_confined := false
-var _free_mouse_mode := Input.MOUSE_MODE_VISIBLE
 
 class EdgeCursor extends Control:
 	func _draw() -> void:
@@ -75,19 +73,13 @@ func _input(event: InputEvent) -> void:
 			event.position = _pointer
 			event.global_position = _pointer
 			_edge_cursor.position = _pointer
-			if _pointer.x > 0.0 and _pointer.x < limit.x:
-				_release_edge(true, false)
 		else:
 			_pointer = event.position.clamp(Vector2.ZERO, limit)
-		_edge_pixels = edge_drag(start.x, event.relative.x, size.x, pixel.x)
-		if _pointer.x > 0.0 and _pointer.x < limit.x:
-			_edge_pixels = 0.0
+		_edge_pixels = edge_drag(start.x, event.relative.x, size.x, pixel.x) if was_captured else 0.0
 		_have_pointer = true
-		if not _edge_captured:
-			if event.position.y <= 0.0 or event.position.y >= limit.y:
-				_release_edge()
-			elif Rect2(Vector2.ZERO, size).has_point(event.position):
-				_confine_pointer()
+		if not _edge_captured and _edge_enabled and event.button_mask == 0:
+			if Rect2(Vector2.ZERO, size).has_point(event.position):
+				_begin_edge_capture()
 		if was_captured: _forward_pointer_event(event)
 	elif event is InputEventMouseButton:
 		if _edge_captured:
@@ -116,42 +108,30 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F7:
 		toggle_view()
 		get_viewport().set_input_as_handled()
-	elif event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE and (_edge_captured or _pointer_confined):
+	elif event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE and _edge_captured:
 		_release_edge(true)
 		_edge_enabled = false
 		get_viewport().set_input_as_handled()
 	elif tactical_view and event is InputEventMouseMotion:
 		if not _edge_enabled: return
 		var size := get_viewport().get_visible_rect().size
-		if event.position.y <= 0.0 or event.position.y >= size.y - _pointer_pixel_size().y: return
-		var right := maxf(size.x - _pointer_pixel_size().x, 0.0)
-		var outward: bool = (_pointer.x <= 0.0 and event.relative.x < 0.0) or (
-			_pointer.x >= right and event.relative.x > 0.0)
-		if outward and not _edge_captured and Input.mouse_mode in [Input.MOUSE_MODE_VISIBLE, Input.MOUSE_MODE_CONFINED]:
-			_begin_edge_capture()
 		# Positive boom yaw looks left; outward right drag must turn the view right.
 		_mouse_orbit -= _edge_pixels * drag_radians_per_pixel(size, camera.fov,
 			camera.keep_aspect == Camera3D.KEEP_WIDTH) * mouse_sensitivity
 
 func _begin_edge_capture() -> void:
+	if _edge_captured: return
+	if DisplayServer.get_name() != "headless" and not get_window().has_focus(): return
+	if Input.mouse_mode not in [Input.MOUSE_MODE_VISIBLE, Input.MOUSE_MODE_CONFINED]: return
+	# Keep raw input for the entire focused interaction. Waiting until the OS
+	# pointer exits loses unpressed events and keyboard focus in embedded games.
+	# The virtual pointer moves freely; only its outward overflow turns the view.
 	_previous_mouse_mode = Input.mouse_mode
 	_edge_captured = true
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_edge_cursor.position = _pointer
-	_edge_cursor.scale.x = -1.0 if _pointer.x > 0.0 else 1.0
+	_edge_cursor.scale.x = 1.0
 	_edge_cursor.show()
-
-func _confine_pointer() -> void:
-	if not _edge_enabled or _pointer_confined: return
-	if DisplayServer.get_name() != "headless" and not get_window().has_focus(): return
-	if Input.mouse_mode != Input.MOUSE_MODE_VISIBLE: return
-	# macOS stops delivering unpressed motion on exit, before a final edge
-	# sample. Native confinement guarantees that sample without a screen-origin
-	# estimate. Switch to raw capture at the edge before confinement clips any
-	# subsequent outward deltas. The centre retains native hover and picking.
-	_free_mouse_mode = Input.mouse_mode
-	_pointer_confined = true
-	Input.mouse_mode = Input.MOUSE_MODE_CONFINED
 
 ## Only the part of this motion beyond the actual last viewport pixel rotates.
 ## Start at the clamped pointer, so moving inward never repays previous overflow.
@@ -181,10 +161,6 @@ func _release_edge(warp_back := false, discard_motion := true) -> void:
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = _previous_mouse_mode
 			if warp_back: get_viewport().warp_mouse(_pointer)
-	if _pointer_confined:
-		_pointer_confined = false
-		if Input.mouse_mode == Input.MOUSE_MODE_CONFINED:
-			Input.mouse_mode = _free_mouse_mode
 	if _edge_cursor != null: _edge_cursor.hide()
 	_have_pointer = false
 	_edge_pixels = 0.0
@@ -198,10 +174,10 @@ func _exit_tree() -> void:
 	_release_edge()
 
 func _physics_process(delta: float) -> void:
-	if (_edge_captured or _pointer_confined) and (not tactical_view or not is_instance_valid(target)
+	if _edge_captured and (not tactical_view or not is_instance_valid(target)
 			or not is_instance_valid(camera) or not camera.is_current()
 			or (DisplayServer.get_name() != "headless"
-				and Input.mouse_mode not in [Input.MOUSE_MODE_CAPTURED, Input.MOUSE_MODE_CONFINED])):
+				and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED)):
 		_release_edge()
 	if not is_instance_valid(camera) or not is_instance_valid(target):
 		if _visibility != null: _visibility.clear()

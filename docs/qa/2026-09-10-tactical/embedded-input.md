@@ -1,5 +1,9 @@
 # Embedded input and moving-aim follow-up
 
+**Rejected in the owner’s subsequent normal-game test.** Confinement did not
+produce working rotation and movement stopped on the first exit. The replacement
+and confirmed tests are in [continuous input and full stride](continuous-input-and-stride.md).
+
 The separate-window cube demonstration missed the reported embedded-game failure.
 The earlier follow-up's native input tests did not establish embedded acceptance.
 

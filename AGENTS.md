@@ -2515,3 +2515,17 @@ across 140 cells and 205 crossings verify the change.
 > pass. Button-free embedded acceptance remains pending the owner's live check;
 > earlier demo and exit-handler passes did not establish it. See
 > `docs/qa/2026-09-10-tactical/embedded-input.md`.
+
+> September 10 continuous-input correction: the owner rejected the confinement
+> attempt above. Tactical input now keeps raw capture throughout focused play,
+> draws a freely moving virtual cursor and turns only on side overflow. Returning
+> inward never changes native capture. Escape, clicks, focus loss and F7 retain
+> their tested release behavior. The owner confirms rotation and WASD in both
+> separate and embedded cube tests loaded through the production transition.
+> Full foot trajectories exposed 31–33° errors missed by contact-only checks.
+> A post-animation two-bone correction constrains each foot's horizontal swing
+> to its travel plane, preserving height, leg lengths and head pose. The owner
+> confirms the reported diagonal-aim/backward case in the embedded test. Focused
+> checks pass 33 tests / 399 assertions; corrected-pose locomotion passes 10 /
+> 147 and native input passes 9 / 96. Normal-game acceptance is recorded in
+> `docs/qa/2026-09-10-tactical/continuous-input-and-stride.md`.

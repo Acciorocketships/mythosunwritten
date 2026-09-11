@@ -29,6 +29,7 @@ func stance_samples(actor: CharacterBody3D) -> Array:
 	var samples: Array = [[], []]
 	for frame in 121:
 		actor.anim_tree.advance(1.0/120)
+		actor.stride_modifier._process_modification()
 		sk.force_update_all_bone_transforms()
 		for i in 2:
 			samples[i].append(sk.get_bone_global_pose(sk.find_bone("foot.l" if i == 0 else "foot.r")).origin)
@@ -71,6 +72,7 @@ func test_each_foot_follows_backward_diagonal_travel() -> void:
 
 func test_feet_keep_world_travel_direction_while_aim_turns_through_back_diagonals() -> void:
 	var actor := _character()
+	actor.on_ground = true
 	actor.velocity = Vector3.BACK * 10.0
 	actor.anim_tree.set("parameters/BlendTree/IdleMotion/blend_amount", 1.0)
 	for tick in 60:
@@ -82,10 +84,82 @@ func test_feet_keep_world_travel_direction_while_aim_turns_through_back_diagonal
 		var error := absf(rad_to_deg(Vector2(observed.x,observed.z).angle_to(Vector2.DOWN)))
 		assert_lt(error, 10.0, "Foot motion must remain aligned with world travel while the character aims through yaw %s" % rad_to_deg(actor.rotation.y))
 
+func test_full_foot_stride_tracks_camera_backward_with_diagonal_aim() -> void:
+	var actor := _character()
+	for aim_degrees in [135.0, 225.0]:
+		actor.rotation.y = deg_to_rad(aim_degrees)
+		actor.on_ground = true
+		actor.velocity = Vector3.BACK * 10.0
+		for tick in 120:
+			actor.movement_animation(10.0, 1.0/60)
+			actor.anim_tree.advance(1.0/60)
+		for foot_name in ["foot.l", "foot.r"]:
+			var samples: Array[Vector2] = []
+			var mean := Vector2.ZERO
+			for frame in 240:
+				actor.anim_tree.advance(1.0/240)
+				actor.stride_modifier._process_modification()
+				actor.skeleton.force_update_all_bone_transforms()
+				var point: Vector3 = actor.skeleton.global_basis * actor.skeleton.get_bone_global_pose(actor.skeleton.find_bone(foot_name)).origin
+				var flat := Vector2(point.x,point.z)
+				samples.append(flat)
+				mean += flat / 240.0
+			var xx := 0.0
+			var zz := 0.0
+			var xz := 0.0
+			for point in samples:
+				var centred := point - mean
+				xx += centred.x * centred.x
+				zz += centred.y * centred.y
+				xz += centred.x * centred.y
+			var axis := 0.5 * atan2(2.0*xz,xx-zz)
+			var error := absf(rad_to_deg(Vector2(cos(axis),sin(axis)).angle_to(Vector2.DOWN)))
+			error = minf(error, 180.0-error)
+			print("FULL_STRIDE aim=",aim_degrees," foot=",foot_name," error=",error)
+			assert_lt(error,10.0,"The entire visible foot stride must track camera-backward travel, not only planted contact")
+
+func test_runtime_stride_modifier_preserves_head_height_and_leg_lengths() -> void:
+	var actor := _character()
+	actor.rotation.y = deg_to_rad(225)
+	actor.on_ground = true
+	actor.velocity = Vector3.BACK * 10
+	for frame in 90:
+		actor.movement_animation(10,1.0/60)
+		actor.anim_tree.advance(1.0/60)
+	var sk: Skeleton3D = actor.skeleton
+	var head := sk.find_bone("head")
+	var before_head := sk.get_bone_global_pose(head)
+	var before := []
+	for side in ["l","r"]:
+		before.append([sk.get_bone_global_pose(sk.find_bone("upperleg."+side)).origin,
+			sk.get_bone_global_pose(sk.find_bone("lowerleg."+side)).origin,
+			sk.get_bone_global_pose(sk.find_bone("foot."+side)).origin])
+	var observations := []
+	actor.stride_modifier.modification_processed.connect(func():
+		var feet := []
+		for side in ["l","r"]:
+			feet.append([sk.get_bone_global_pose(sk.find_bone("upperleg."+side)).origin,
+				sk.get_bone_global_pose(sk.find_bone("lowerleg."+side)).origin,
+				sk.get_bone_global_pose(sk.find_bone("foot."+side)).origin])
+		observations.append([sk.get_bone_global_pose(head),feet]))
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert_gt(observations.size(),0,"The production SkeletonModifier callback must run automatically")
+	if observations.is_empty(): return
+	var result: Array = observations[-1]
+	assert_almost_eq(result[0].origin,before_head.origin,Vector3.ONE*0.00001)
+	assert_lt(result[0].basis.get_rotation_quaternion().angle_to(before_head.basis.get_rotation_quaternion()),0.0001)
+	for i in 2:
+		var after: Array = result[1][i]
+		assert_almost_eq(after[2].y,before[i][2].y,0.005,"Foot lift is preserved")
+		assert_almost_eq(after[0].distance_to(after[1]),before[i][0].distance_to(before[i][1]),0.0001)
+		assert_almost_eq(after[1].distance_to(after[2]),before[i][1].distance_to(before[i][2]),0.0001)
+
 func _character() -> CharacterBody3D:
 	var actor := CHARACTER.instantiate() as CharacterBody3D
 	add_child_autofree(actor)
 	actor.set_physics_process(false)
+	actor.on_ground = true
 	actor.anim_tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
 	actor.anim_tree.advance(0.01)
 	return actor
@@ -222,6 +296,7 @@ func test_reversals_and_strafing_changes_blend_without_pose_teleports() -> void:
 		for tick in 60:
 			actor.movement_animation(actor.velocity.length(), 1.0/60)
 			actor.anim_tree.advance(1.0/60)
+			actor.stride_modifier._process_modification()
 			sk.force_update_all_bone_transforms()
 			var point := sk.get_bone_global_pose(foot).origin
 			if ticks > 60: worst = maxf(worst, point.distance_to(previous))

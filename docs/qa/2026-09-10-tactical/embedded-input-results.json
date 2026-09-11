@@ -16,5 +16,5 @@
   ],
   "moving_aim_after_limit_degrees": 10,
   "mouse_sensitivity": 1.6,
-  "embedded_game_acceptance": "pending manual verification; prior exit-coordinate implementation rejected"
+  "embedded_game_acceptance": "rejected by owner: no rotation, movement stopped on first native edge exit"
 }

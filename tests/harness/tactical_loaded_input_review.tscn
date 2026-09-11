@@ -1,0 +1,4 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="PackedScene" path="res://ui/loading_screens/mythos_loading_screen.tscn" id="1"]
+[node name="MythosLoadingScreen" instance=ExtResource("1")]
+target_scene_path = "res://tests/harness/tactical_input_review.tscn"

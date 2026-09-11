@@ -90,6 +90,8 @@ var wading: bool = false
 var _locomotion_amount := 0.0
 var _animation_direction := Vector2.UP
 var _animation_facing_basis := Basis.IDENTITY
+var _animation_forward_stride := DirectionalLocomotion.RUN_STRIDE
+var stride_modifier: SkeletonModifier3D
 var _animation_rate := 0.6
 var _movement_input := Vector2.ZERO
 
@@ -375,6 +377,7 @@ func movement_animation(speed: float, delta: float = 1.0 / 60.0) -> void:
 		anim_tree.set("parameters/BlendTree/OneShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FADE_OUT)
 	var run_blend := clampf((amount - 0.4) / 0.6, 0.0, 1.0)
 	var forward_stride := lerpf(DirectionalLocomotion.WALK_STRIDE, DirectionalLocomotion.RUN_STRIDE, run_blend)
+	_animation_forward_stride = forward_stride
 	var direction := DirectionalLocomotion.blend_direction(flat_velocity, global_basis, forward_stride)
 	if direction != Vector2.ZERO:
 		# Carry the previous gait through the body's aim turn before smoothing
@@ -421,6 +424,10 @@ func _wire_animations() -> void:
 		DirectionalLocomotion.install(anim_tree, anim_player)
 		anim_tree.set_meta("directional_locomotion", true)
 	anim_tree.active = true
+	if not is_instance_valid(stride_modifier) or stride_modifier.get_parent() != skeleton:
+		stride_modifier = preload("res://scripts/controllers/DirectionalStride.gd").new()
+		stride_modifier.actor = self
+		skeleton.add_child(stride_modifier)
 
 func _bind_all_attachments() -> void:
 	_bind_attachment(left_hand, LEFT_HAND_BONE)

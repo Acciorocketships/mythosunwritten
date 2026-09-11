@@ -29,6 +29,7 @@ class TracedCamera extends "res://scripts/camera/camera.gd":
 		super._notification(what)
 
 func _ready() -> void:
+	get_window().title = "Tactical input test - continuous cursor"
 	var actor := load("res://characters/character.tscn").instantiate() as CharacterBody3D
 	add_child(actor)
 	actor.controller = PlayerController.new()
@@ -60,4 +61,4 @@ func _ready() -> void:
 	label.position = Vector2(20,20)
 	add_child(label)
 	get_tree().process_frame.connect(func():
-		label.text = "Drag beyond either edge. WASD moves. F7 toggles. Escape releases.\nYaw %.2f° | pointer %s | captured %s | player %s" % [rad_to_deg(camera._yaw),camera.pointing_position(),camera._edge_captured,actor.position])
+		label.text = "CONTINUOUS CURSOR TEST: move the drawn cursor to either side, then outward.\nWASD moves. F7 toggles. Escape releases; click to resume.\nYaw %.2f° | pointer %s | captured %s | player %s" % [rad_to_deg(camera._yaw),camera.pointing_position(),camera._edge_captured,actor.position])
