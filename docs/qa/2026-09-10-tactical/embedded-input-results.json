@@ -1,0 +1,20 @@
+{
+  "headless": {
+    "tests": 31,
+    "assertions": 402,
+    "exit_code": 0
+  },
+  "native_windows": {
+    "tests": 9,
+    "assertions": 113,
+    "exit_code": 0
+  },
+  "moving_aim_before_error_degrees": [
+    10.867,
+    14.691,
+    12.927
+  ],
+  "moving_aim_after_limit_degrees": 10,
+  "mouse_sensitivity": 1.6,
+  "embedded_game_acceptance": "pending manual verification; prior exit-coordinate implementation rejected"
+}

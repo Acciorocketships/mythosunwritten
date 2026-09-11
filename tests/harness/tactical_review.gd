@@ -10,6 +10,8 @@ func _ready() -> void:
 	get_window().size = Vector2i(1280, 800)
 	if OS.get_cmdline_user_args().has("--retargeted"): out += "-retargeted"
 	if OS.get_cmdline_user_args().has("--full-speed"): out += "-full-speed"
+	if OS.get_cmdline_user_args().has("--turning"): out += "-turning"
+	if OS.get_cmdline_user_args().has("--unrebased"): out += "-unrebased"
 	if OS.get_cmdline_user_args().has("--views"): out += "-views"
 	if OS.get_cmdline_user_args().has("--unaligned"): out += "-unaligned"
 	DirAccess.make_dir_recursive_absolute(out)
@@ -113,6 +115,10 @@ func _gaits() -> void:
 	camera.look_at(Vector3(0,0.6,2.5))
 	for frame in 120:
 		for actor in actors:
+			if OS.get_cmdline_user_args().has("--turning") and frame >= 60:
+				actor.rotation.y = deg_to_rad((frame-60) * 3.0)
+				if OS.get_cmdline_user_args().has("--unrebased"):
+					actor._animation_facing_basis = actor.global_basis
 			actor.movement_animation(actor.velocity.length(), 1.0 / 60)
 			actor.anim_tree.advance(1.0 / 60)
 		await get_tree().process_frame

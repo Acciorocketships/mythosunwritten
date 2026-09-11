@@ -89,6 +89,7 @@ var water_current := Vector2.ZERO
 var wading: bool = false
 var _locomotion_amount := 0.0
 var _animation_direction := Vector2.UP
+var _animation_facing_basis := Basis.IDENTITY
 var _animation_rate := 0.6
 var _movement_input := Vector2.ZERO
 
@@ -376,8 +377,14 @@ func movement_animation(speed: float, delta: float = 1.0 / 60.0) -> void:
 	var forward_stride := lerpf(DirectionalLocomotion.WALK_STRIDE, DirectionalLocomotion.RUN_STRIDE, run_blend)
 	var direction := DirectionalLocomotion.blend_direction(flat_velocity, global_basis, forward_stride)
 	if direction != Vector2.ZERO:
+		# Carry the previous gait through the body's aim turn before smoothing
+		# travel changes. Otherwise the legs keep the previous facing frame.
+		if not global_basis.is_equal_approx(_animation_facing_basis):
+			var previous_travel := _animation_facing_basis * DirectionalLocomotion.travel_direction(_animation_direction, forward_stride)
+			_animation_direction = DirectionalLocomotion.blend_direction(previous_travel, global_basis, forward_stride)
 		_animation_direction = _animation_direction.lerp(direction, 1.0 - exp(-14.0 * delta))
 		anim_tree.set("parameters/BlendTree/Direction/blend_position", _animation_direction)
+	_animation_facing_basis = global_basis
 	_locomotion_amount = move_toward(_locomotion_amount, clampf(amount * 5.0, 0.0, 1.0), delta * 8.0)
 	anim_tree.set("parameters/BlendTree/IdleMotion/blend_amount", _locomotion_amount)
 	anim_tree.set("parameters/BlendTree/Direction/0/blend_position", run_blend)

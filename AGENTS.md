@@ -2504,3 +2504,14 @@ across 140 cells and 205 crossings verify the change.
 > AnimationTree rebinds after its private library changes. Mouse rightward edge
 > drag turns the viewing direction right. See `docs/qa/2026-09-10-tactical/follow-up.md`
 > for matched terrain renders, gait checks and validation limits.
+
+> September 10 embedded input follow-up: native visible confinement supplies
+> the final side-edge mouse sample before switching to raw capture. Do not infer
+> an embedded window's screen origin from buffered input events and a current OS
+> cursor query; the reported origin drifts during fast motion. Escape releases
+> centre confinement as well as edge capture. Previous locomotion blend weights
+> are carried into the new body-facing frame before smoothing travel changes.
+> The focused 31-test / 402-assertion run and native 9-test / 113-assertion run
+> pass. Button-free embedded acceptance remains pending the owner's live check;
+> earlier demo and exit-handler passes did not establish it. See
+> `docs/qa/2026-09-10-tactical/embedded-input.md`.

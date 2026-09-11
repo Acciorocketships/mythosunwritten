@@ -48,6 +48,67 @@ func _motion(camera: Camera3D, position: Vector2, relative: Vector2) -> void:
 	event.relative = relative
 	camera.get_viewport().push_input(event, true)
 
+class RetinaCamera extends "res://scripts/camera/camera.gd":
+	func _pointer_pixel_size() -> Vector2: return Vector2(2,2)
+
+func test_retina_last_reachable_pixel_captures_without_releasing_movement() -> void:
+	var previous_mode := Input.mouse_mode
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	var viewport
+	if DisplayServer.get_name() == "headless":
+		viewport = SubViewport.new()
+	else:
+		viewport = Window.new()
+		viewport.hide()
+		viewport.force_native = true
+	viewport.size = Vector2i(1920,1080)
+	viewport.own_world_3d = true
+	add_child_autofree(viewport)
+	if viewport is Window: viewport.show()
+	var target := Node3D.new()
+	viewport.add_child(target)
+	var camera := Camera3D.new()
+	camera.set_script(RetinaCamera)
+	camera.target = target
+	camera.visibility_bubble_enabled = false
+	viewport.add_child(camera)
+	camera.make_current()
+	camera.set_physics_process(false)
+	if viewport is Window: viewport.grab_focus()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	Input.action_press("forward")
+	_motion(camera, Vector2(1908,540), Vector2(10,0))
+	assert_false(camera._edge_captured)
+	assert_true(camera._pointer_confined, "Button-free motion must request native confinement")
+	if DisplayServer.get_name() != "headless":
+		assert_eq(Input.mouse_mode, Input.MOUSE_MODE_CONFINED)
+	_motion(camera, Vector2(1918,540), Vector2(10,0))
+	assert_true(camera._edge_captured, "The final Retina cursor point is width minus two, not minus one")
+	assert_eq(camera._mouse_orbit, 0.0, "Reaching the final point alone does not turn")
+	_motion(camera, Vector2(960,540), Vector2(40,0))
+	assert_lt(camera._mouse_orbit, 0.0, "Continued outward raw motion turns right")
+	assert_true(Input.is_action_pressed("forward"), "Capturing must retain held movement")
+	camera._release_edge()
+	_motion(camera, Vector2(1900,540), Vector2(10,0))
+	assert_false(camera._edge_captured, "Interior motion still does not capture")
+	assert_true(camera._pointer_confined)
+	if DisplayServer.get_name() != "headless":
+		assert_eq(Input.mouse_mode, Input.MOUSE_MODE_CONFINED)
+	# Confinement supplies the final point without depending on an exit signal
+	# or mixing a delayed event with the current global OS cursor position.
+	_motion(camera, Vector2(1918,540), Vector2(18,0))
+	assert_true(camera._edge_captured)
+	assert_eq(camera._mouse_orbit, 0.0)
+	_motion(camera, Vector2(960,540), Vector2(60,0))
+	assert_almost_eq(camera._mouse_orbit,
+		-60 * CameraScript.drag_radians_per_pixel(Vector2(1920,1080),50) * camera.mouse_sensitivity, 0.00001)
+	assert_true(Input.is_action_pressed("forward"))
+	Input.action_release("forward")
+	assert_false(Input.is_action_pressed("forward"))
+	camera._release_edge()
+	Input.mouse_mode = previous_mode
+
 func test_edge_capture_tracks_raw_motion_and_releases_on_return_toggle_and_focus_loss() -> void:
 	var previous_mode := Input.mouse_mode
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -78,7 +139,7 @@ func test_edge_capture_tracks_raw_motion_and_releases_on_return_toggle_and_focus
 	await get_tree().process_frame
 	await get_tree().process_frame
 	var size: Vector2 = viewport.get_visible_rect().size
-	var edge := Vector2(size.x - 1, size.y / 2)
+	var edge := Vector2(size.x - camera._pointer_pixel_size().x, size.y / 2)
 	_motion(camera, edge - Vector2(50,0), Vector2(10,0))
 	assert_false(camera._edge_captured)
 	assert_eq(camera._mouse_orbit, 0.0)
@@ -87,7 +148,7 @@ func test_edge_capture_tracks_raw_motion_and_releases_on_return_toggle_and_focus
 	assert_eq(camera._mouse_orbit, 0.0)
 	_motion(camera, size / 2, Vector2(40,0))
 	_motion(camera, size / 2, Vector2(60,0))
-	var expected := -100 * CameraScript.drag_radians_per_pixel(size, camera.fov)
+	var expected: float = -100 * CameraScript.drag_radians_per_pixel(size, camera.fov) * camera.mouse_sensitivity
 	assert_almost_eq(camera._mouse_orbit, expected, 0.00001)
 	assert_eq(camera.pointing_position(), edge, "Aim stays at the drawn cursor while OS input is captured")
 	var click := InputEventMouseButton.new()
@@ -112,7 +173,9 @@ func test_edge_capture_tracks_raw_motion_and_releases_on_return_toggle_and_focus
 	_motion(camera, edge, Vector2(1,0))
 	_motion(camera, size / 2, Vector2(-5,0))
 	assert_false(camera._edge_captured)
-	assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE)
+	assert_true(camera._pointer_confined)
+	if DisplayServer.get_name() != "headless":
+		assert_eq(Input.mouse_mode, Input.MOUSE_MODE_CONFINED)
 	assert_almost_eq(camera._mouse_orbit, expected, 0.00001, "Returning before the physics tick keeps the completed drag")
 	camera._physics_process(0.0)
 	assert_almost_eq(camera._yaw, expected, 0.00001)
@@ -136,6 +199,26 @@ func test_edge_capture_tracks_raw_motion_and_releases_on_return_toggle_and_focus
 	assert_false(camera._edge_captured)
 	_motion(camera, edge, Vector2(20,0))
 	assert_false(camera._edge_captured, "Escape releases the pointer until the next game click")
+	assert_eq(camera._mouse_orbit, 0.0)
+	assert_false(camera._pointer_confined)
+	click = InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	click.position = size / 2
+	viewport.push_input(click, true)
+	click = click.duplicate()
+	click.pressed = false
+	viewport.push_input(click, true)
+	_motion(camera, size / 2, Vector2(5,0))
+	assert_true(camera._pointer_confined, "A game click restores confinement in the centre")
+	assert_false(camera._edge_captured)
+	viewport.push_input(escape, true)
+	assert_false(camera._pointer_confined, "Escape must also release the ordinary centre cursor")
+	assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE)
+	camera._edge_enabled = true
+	_motion(camera, size / 2, Vector2(5,0))
+	_motion(camera, Vector2(size.x / 2,0), Vector2(0,-size.y / 2))
+	assert_false(camera._pointer_confined, "The top edge lets the cursor reach the editor toolbar")
 	assert_eq(camera._mouse_orbit, 0.0)
 	Input.mouse_mode = previous_mode
 

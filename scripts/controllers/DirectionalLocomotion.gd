@@ -104,6 +104,22 @@ static func _weight_for_angle(angle: float, lower: Array, upper: Array, gait: fl
 		previous = next
 	return 1.0
 
+## Inverse of the contact-angle calibration, used to carry a blended gait
+## between old and new character-facing frames without adding aim lag.
+static func travel_direction(blend: Vector2, forward_stride: float = RUN_STRIDE) -> Vector3:
+	var total := absf(blend.x) + absf(blend.y)
+	if total < 0.000001: return Vector3.ZERO
+	var weight := (blend.y if blend.y > 0.0 else absf(blend.x)) / total
+	var gait := clampf((forward_stride-WALK_STRIDE)/(RUN_STRIDE-WALK_STRIDE), 0.0, 1.0)
+	var lower: Array = CALIBRATION.BACK if blend.y > 0.0 else (CALIBRATION.WALK if gait < 0.5 else CALIBRATION.MIXED)
+	var upper: Array = CALIBRATION.BACK if blend.y > 0.0 else (CALIBRATION.MIXED if gait < 0.5 else CALIBRATION.RUN)
+	var mix := gait*2 if gait < 0.5 else (gait-0.5)*2
+	var index := weight * (lower.size()-1)
+	var lo := mini(int(index),lower.size()-1)
+	var hi := mini(lo+1,lower.size()-1)
+	var angle := deg_to_rad(lerpf(lerpf(lower[lo],upper[lo],mix),lerpf(lower[hi],upper[hi],mix),index-lo))
+	return Vector3(-signf(blend.x) * sin(angle),0,cos(angle))
+
 static func stride_length(world_direction: Vector3, facing_basis: Basis, forward_stride: float = RUN_STRIDE) -> float:
 	var local := facing_basis.inverse() * world_direction.normalized()
 	var reciprocal := absf(local.x) / STRAFE_STRIDE 		+ absf(local.z) / (forward_stride if local.z >= 0.0 else BACKWARD_STRIDE)

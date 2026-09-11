@@ -21,6 +21,10 @@ func _check_contact_directions(actor: CharacterBody3D, gait: float) -> void:
 		assert_lt(error, 6.0, "Foot contact sweep must follow travel at yaw %.1f / gait %.2f; error %.1f" % [rad_to_deg(angle),gait,error])
 
 func stance_travel(actor: CharacterBody3D) -> Vector3:
+	var samples := stance_samples(actor)
+	return median_travel(samples[0] + samples[1])
+
+func stance_samples(actor: CharacterBody3D) -> Array:
 	var sk: Skeleton3D = actor.skeleton
 	var samples: Array = [[], []]
 	for frame in 121:
@@ -28,20 +32,55 @@ func stance_travel(actor: CharacterBody3D) -> Vector3:
 		sk.force_update_all_bone_transforms()
 		for i in 2:
 			samples[i].append(sk.get_bone_global_pose(sk.find_bone("foot.l" if i == 0 else "foot.r")).origin)
-	var x: Array[float] = []
-	var z: Array[float] = []
+	var velocities := []
 	for foot: Array in samples:
+		var planted := []
 		var heights: Array[float] = []
 		for point: Vector3 in foot: heights.append(point.y)
 		heights.sort()
 		for frame in 120:
 			if foot[frame].y > heights[24]: continue
 			var velocity: Vector3 = (foot[frame + 1] - foot[frame]) * 120
-			x.append(-velocity.x)
-			z.append(-velocity.z)
+			planted.append(-velocity)
+		velocities.append(planted)
+	return velocities
+
+func median_travel(velocities: Array) -> Vector3:
+	var x: Array[float] = []
+	var z: Array[float] = []
+	for velocity: Vector3 in velocities:
+		x.append(velocity.x)
+		z.append(velocity.z)
 	x.sort()
 	z.sort()
 	return Vector3(x[x.size()/2], 0, z[z.size()/2])
+
+func test_each_foot_follows_backward_diagonal_travel() -> void:
+	var actor := _character()
+	for degrees in [110.0,135.0,160.0,200.0,225.0,250.0]:
+		var angle := deg_to_rad(degrees)
+		var travel := Vector3(sin(angle),0,cos(angle))
+		actor.anim_tree.set("parameters/BlendTree/Direction/blend_position", DirectionalLocomotion.blend_direction(travel, Basis.IDENTITY))
+		actor.anim_tree.set("parameters/BlendTree/IdleMotion/blend_amount", 1.0)
+		actor.anim_tree.set("parameters/BlendTree/Direction/0/blend_position", 1.0)
+		actor.anim_tree.set("parameters/BlendTree/RunSpeed/scale", 1.0)
+		for samples: Array in stance_samples(actor):
+			var observed := median_travel(samples)
+			var error := absf(rad_to_deg(Vector2(observed.x,observed.z).angle_to(Vector2(travel.x,travel.z))))
+			assert_lt(error, 10.0, "Each planted foot must follow the backward diagonal independently")
+
+func test_feet_keep_world_travel_direction_while_aim_turns_through_back_diagonals() -> void:
+	var actor := _character()
+	actor.velocity = Vector3.BACK * 10.0
+	actor.anim_tree.set("parameters/BlendTree/IdleMotion/blend_amount", 1.0)
+	for tick in 60:
+		actor.rotation.y = deg_to_rad((tick + 1) * 3.0)
+		actor.movement_animation(10.0, 1.0/60)
+		if tick not in [29,44,54]: continue
+		actor.anim_tree.set("parameters/BlendTree/RunSpeed/scale", 1.0)
+		var observed := actor.global_basis * stance_travel(actor)
+		var error := absf(rad_to_deg(Vector2(observed.x,observed.z).angle_to(Vector2.DOWN)))
+		assert_lt(error, 10.0, "Foot motion must remain aligned with world travel while the character aims through yaw %s" % rad_to_deg(actor.rotation.y))
 
 func _character() -> CharacterBody3D:
 	var actor := CHARACTER.instantiate() as CharacterBody3D
