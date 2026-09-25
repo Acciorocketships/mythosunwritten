@@ -31,10 +31,10 @@ func _render_probe()->void:
 		_phase="settling"
 		_player.process_mode=Node.PROCESS_MODE_DISABLED
 		_streamer.set_process(false)
+		if _streamer._grass_work != null: _streamer._grass_work.stop()
 		_streamer._mutex.lock()
 		_streamer._jobs.clear()
 		_streamer._queued.clear()
-		_streamer._grass_queued.clear()
 		_streamer._followups.clear()
 		_streamer._mutex.unlock()
 		while not _streamer.streaming_profile_snapshot().active_job.is_empty():
