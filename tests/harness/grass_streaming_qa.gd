@@ -177,5 +177,4 @@ func _grass_ready(player: Node3D, streamer: FieldTerrainStreamer) -> bool:
 	for tile: Vector2i in GrassStreamer.desired_tiles(origin):
 		all_desired_built = all_desired_built \
 			and streamer._grass_streamer._built.has(tile)
-	return all_desired_built and streamer._grass_streamer.pending_count() == 0 \
-		and streamer._grass_queued.is_empty()
+	return all_desired_built and streamer._grass_streamer.pending_count() == 0

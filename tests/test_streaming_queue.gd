@@ -51,13 +51,12 @@ func test_near_feature_dependency_does_not_wait_for_far_terrain() -> void:
 	assert_eq(s._followups[Vector2i(2, 0)].priority_distance, 2)
 	s.free()
 
-func test_widening_chunk_work_preserves_grass_with_the_same_parent() -> void:
+func test_widening_chunk_work_has_one_shared_terrain_owner() -> void:
 	var s := FieldTerrainStreamer.new()
 	s._request_job_locked(Vector2i.ZERO, true, false, 4, 3)
-	s._request_grass_job_locked(Vector2i.ZERO, 1, 4000)
 	s._request_job_locked(Vector2i.ZERO, false, true, 1, 3)
-	assert_eq(s._jobs.filter(func(job): return job.kind == &"grass").size(), 1)
-	assert_eq(s._jobs.filter(func(job): return job.kind == &"chunk").size(), 1)
+	assert_eq(s._jobs.size(), 1)
+	assert_true(s._queued[Vector2i.ZERO].build_terrain)
 	assert_true(s._queued[Vector2i.ZERO].build_features)
 	s.free()
 

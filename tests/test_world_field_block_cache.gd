@@ -61,3 +61,18 @@ func test_reverse_query_order_has_identical_values() -> void:
 			expected[key], 0.0001)
 	assert_lte(forward.size(), 2)
 	assert_lte(reverse.size(), 2)
+
+func test_miss_observer_identifies_hidden_field_work_without_rebuilding_hits() -> void:
+	var cache := _cache()
+	var events: Array = []
+	cache.profile_callback = func(stage: StringName, kind: StringName, key: Vector2i, elapsed: int):
+		events.append([stage, kind, key, elapsed])
+	var first := cache.water(Vector2i(-1, 2))
+	assert_same(cache.water(Vector2i(-1, 2)), first)
+	assert_eq(events.size(), 4)
+	assert_eq(events[0].slice(0, 3), [&"begin", &"region", Vector2i(-1, 2)])
+	assert_eq(events[1].slice(0, 3), [&"end", &"region", Vector2i(-1, 2)])
+	assert_eq(events[2].slice(0, 3), [&"begin", &"water", Vector2i(-1, 2)])
+	assert_eq(events[3].slice(0, 3), [&"end", &"water", Vector2i(-1, 2)])
+	assert_gte(events[1][3], 0)
+	assert_gte(events[3][3], 0)

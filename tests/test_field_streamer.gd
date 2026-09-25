@@ -187,36 +187,22 @@ func test_queued_feature_request_widens_existing_terrain_job() -> void:
 	assert_eq(s._jobs[0].priority_distance, 1)
 	s.free()
 
-func test_typed_worker_priorities_protect_ground_without_starving_grass() -> void:
+func test_worker_priorities_protect_current_and_upcoming_ground() -> void:
 	var s := Streamer.new()
 	assert_true(s._request_job_locked(Vector2i(8, 8), true, true, 1, 3))
-	assert_true(s._request_grass_job_locked(Vector2i(2, 2), 1, 1000))
 	assert_true(s._request_job_locked(Vector2i(1, 0), true, true, 1, 1))
 	assert_true(s._request_job_locked(Vector2i.ZERO, true, true, 0, 0))
 	assert_eq(s._jobs.map(func(job: Dictionary) -> int:
-		return int(job.priority_tier)), [0, 1, 2, 3])
-	assert_eq(s._jobs[0].kind, &"chunk")
-	assert_eq(s._jobs[2].kind, &"grass")
+		return int(job.priority_tier)), [0, 1, 3])
 	s.free()
 
-func test_grass_jobs_wait_for_their_committed_parent_terrain() -> void:
-	var settings := load("res://terrain/grass/settings.tres") as GrassSettings
-	var catalog := EnvironmentCatalog.load_default()
-	var cache := EnvironmentRenderCache.new(catalog)
-	var program := GrassProgram.compile(settings, catalog, cache)
+func test_grass_requests_wait_for_their_committed_parent_terrain() -> void:
+	var cache := EnvironmentRenderCache.new(EnvironmentCatalog.load_default())
 	var s := Streamer.new()
-	s._grass_runtime_enabled = true
-	s._grass_streamer = GrassStreamer.new(program, cache)
-	s._queue_grass_jobs(Vector2(96.0, 96.0))
-	assert_true(s._jobs.is_empty(), "grass cannot be queued over missing ground")
-	s._built[Vector2i.ZERO] = true
-	s._queue_grass_jobs(Vector2(96.0, 96.0))
-	assert_gt(s._jobs.size(), 0)
-	var every_parent_is_committed := true
-	for job: Dictionary in s._jobs:
-		every_parent_is_committed = every_parent_is_committed \
-			and job.kind == &"grass" and s._built.has(job.chunk)
-	assert_true(every_parent_is_committed)
+	s._grass_streamer = GrassStreamer.new(GrassProgram.new(),cache)
+	s._grass_streamer.begin_frame(Vector2(96,96))
+	s._queue_grass_jobs(Vector2(96,96))
+	assert_true(s._grass_streamer._requested.is_empty(),"missing ground cannot submit visual sampling work")
 	s.free()
 
 func test_collidable_dressing_becomes_shape_accurate_static_trample_stamps() -> void:

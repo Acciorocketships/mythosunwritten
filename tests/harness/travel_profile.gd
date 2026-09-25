@@ -140,6 +140,7 @@ func _render_probe() -> void:
 	# End generation for this diagnostic scene, then wait for its one active
 	# job to finish. No frame-rate comparison overlaps background generation.
 	_streamer.set_process(false)
+	if _streamer._grass_work != null: _streamer._grass_work.stop()
 	if _render_only:
 		_phase = "worker_active"
 		await get_tree().create_timer(10.0).timeout
@@ -147,7 +148,6 @@ func _render_probe() -> void:
 	_streamer._mutex.lock()
 	_streamer._jobs.clear()
 	_streamer._queued.clear()
-	_streamer._grass_queued.clear()
 	_streamer._followups.clear()
 	_streamer._mutex.unlock()
 	var wait_start := Time.get_ticks_msec()
