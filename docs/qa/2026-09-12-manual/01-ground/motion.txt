@@ -1,0 +1,58 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+ERROR: Parent node is busy adding/removing children, `remove_child()` can't be called at this time. Consider using `remove_child.call_deferred(child)` instead.
+   at: remove_child (scene/main/node.cpp:1718)
+   GDScript backtrace (most recent call first):
+       [0] clear (res://scripts/camera/OccludedActor.gd:83)
+       [1] _exit_tree (res://scripts/camera/OccludedActor.gd:90)
+       [2] _run (res://tests/harness/september12_marker_motion.gd:10)
+ERROR: Condition "data.parent" is true.
+   at: ~Node (scene/main/node.cpp:4089)
+   GDScript backtrace (most recent call first):
+       [0] clear (res://scripts/camera/OccludedActor.gd:83)
+       [1] _exit_tree (res://scripts/camera/OccludedActor.gd:90)
+       [2] _run (res://tests/harness/september12_marker_motion.gd:10)
+
+================================================================
+handle_crash: Program crashed with signal 11
+Engine version: Godot Engine v4.5.1.stable.official (f62fdbde15035c5576dad93e586201f4d41ef0cb)
+Dumping the backtrace. Please include this when reporting the bug on: https://github.com/godotengine/godot/issues
+[1] 1   libsystem_platform.dylib            0x00000001920456a4 _sigtramp + 56
+[2] Node::_propagate_after_exit_tree() (in Godot) + 120
+[3] Node::_propagate_after_exit_tree() (in Godot) + 120
+[4] Node::_propagate_after_exit_tree() (in Godot) + 120
+[5] Node::reparent(Node*, bool) (in Godot) + 176
+[6] Node3D::reparent(Node*, bool) (in Godot) + 128
+[7] Node::has_connections(StringName const&) const
+[8] Node::has_connections(StringName const&) const
+[9] GDScriptFunction::call(GDScriptInstance*, Variant const**, int, Callable::CallError&, GDScriptFunction::CallState*) (in Godot) + 43264
+[10] GDScriptFunctionState::resume(Variant const&) (in Godot) + 444
+[11] GDScriptFunctionState::_signal_callback(Variant const**, int, Callable::CallError&) (in Godot) + 292
+[12] GDScriptFunctionState::~GDScriptFunctionState()
+[13] Object::callp(StringName const&, Variant const**, int, Callable::CallError&) (in Godot) + 368
+[14] Callable::callp(Variant const**, int, Variant&, Callable::CallError&) const (in Godot) + 224
+[15] CallableCustomBind::call(Variant const**, int, Variant&, Callable::CallError&) const (in Godot) + 392
+[16] Object::emit_signalp(StringName const&, Variant const**, int) (in Godot) + 1008
+[17] SceneTree::process_timers(double, bool) (in Godot) + 276
+[18] SceneTree::process(double) (in Godot) + 356
+[19] Main::iteration() (in Godot) + 1024
+[20] OS_MacOS_NSApp::start_main()
+[21] 21  CoreFoundation                      0x00000001920f5ed8 __CFRUNLOOP_IS_CALLING_OUT_TO_AN_OBSERVER_CALLBACK_FUNCTION__ + 36
+[22] 22  CoreFoundation                      0x00000001920f5dc0 __CFRunLoopDoObservers + 536
+[23] 23  CoreFoundation                      0x00000001920f54d0 __CFRunLoopRun + 944
+[24] 24  CoreFoundation                      0x00000001920f4a98 CFRunLoopRunSpecific + 572
+[25] 25  HIToolbox                           0x000000019db9727c RunCurrentEventLoopInMode + 324
+[26] 26  HIToolbox                           0x000000019db9a4e8 ReceiveNextEventCommon + 676
+[27] 27  HIToolbox                           0x000000019dd25484 _BlockUntilNextEventMatchingListInModeWithFilter + 76
+[28] 28  AppKit                              0x0000000196019a34 _DPSNextEvent + 684
+[29] 29  AppKit                              0x00000001969b8940 -[NSApplication(NSEventRouting) _nextEventMatchingEventMask:untilDate:inMode:dequeue:] + 688
+[30] 30  AppKit                              0x000000019600cbe4 -[NSApplication run] + 480
+[31] main (in Godot) + 908
+[32] 32  dyld                                0x0000000191c6ab98 start + 6076
+-- END OF C++ BACKTRACE --
+================================================================
+GDScript backtrace (most recent call first):
+    [0] _run (res://tests/harness/september12_marker_motion.gd:10)
+-- END OF GDSCRIPT BACKTRACE --
+================================================================

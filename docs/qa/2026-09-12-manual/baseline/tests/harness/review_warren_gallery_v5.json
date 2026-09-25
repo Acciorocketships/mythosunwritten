@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "review_contract": {
+    "intent": "falsification",
+    "success_definition": "finding_a_real_issue",
+    "full_resolution_reviewed": true,
+    "independent_reviewer": false
+  },
+  "capture_root": "/tmp/warren-gallery-review",
+  "world_seed": 6046713720826375059,
+  "closing_candidate": false,
+  "captures": [
+    {"screenshot_id":"overview-ne","disposition":"pass","finding_ids":[],"notes":"The compact silhouette is built from fourteen connected narrow/deep stacks. Structural surfaces show the authored light plank meshes; the former dark generated skins are absent."},
+    {"screenshot_id":"overview-sw","disposition":"pass","finding_ids":[],"notes":"The reverse overview shows staggered rooflines and supported intermediate floors. No room has an open top and no broad central lawn or raw cavity remains."},
+    {"screenshot_id":"section-east","disposition":"pass","finding_ids":[],"notes":"The side section confirms complete pitched caps, retained half-level terraces, and multiple public layers crossing one another."},
+    {"screenshot_id":"entry","disposition":"finding","finding_ids":["WGV5-003"],"notes":"The stocked market establishes the intended lower bazaar, but canopy foreground occupies too much of this verification frame."},
+    {"screenshot_id":"ground-reverse","disposition":"pass","finding_ids":[],"notes":"The lower reverse route reads as a bounded exterior canyon beneath occupied mass and connected upper galleries. Its adversarial chord is visually blocked."},
+    {"screenshot_id":"ground-cross","disposition":"finding","finding_ids":["WGV5-001"],"notes":"A second lower-route chord still has an uninterrupted view through the market to the outside horizon. This fails the horizontal maze test despite the corrected vertical coverage."},
+    {"screenshot_id":"upper-route","disposition":"finding","finding_ids":["WGV5-004"],"notes":"The public route is connected and guarded, but a lower blue roof crowds the foreground enough that the level relationship needs a tighter alignment review."},
+    {"screenshot_id":"skywalk-side","disposition":"finding","finding_ids":["WGV5-002"],"notes":"Only one third of the required target samples are visible; nearby roofs and facade mass prevent this named view from proving the complete occupied link."},
+    {"screenshot_id":"skywalk-beneath","disposition":"pass","finding_ids":[],"notes":"The exterior-air view beneath the selected link is collision-clear and shows inhabited mass above the lower realm without exposing a broad central shaft."},
+    {"screenshot_id":"roofline","disposition":"pass","finding_ids":[],"notes":"Every visible room, shallow bay, corner overlap, and straight occupied link terminates in a measured pitched roof with sealed ends."},
+    {"screenshot_id":"network-above","disposition":"pass","finding_ids":[],"notes":"Connected upper galleries now cover lower-route columns and leave only four isolated guarded lightwells plus one uncovered macro column. The former large see-through-to-ground area is absent."}
+  ],
+  "findings": [
+    {
+      "id": "WGV5-001",
+      "severity": "P1",
+      "settlement_id": "volumetric-warren-6046713720826375059",
+      "recipe": "ground-cross",
+      "screenshot_ids": ["ground-cross"],
+      "evidence": "The route-derived adversarial chord has full target visibility and the captured frame sees directly through the town to the exterior horizon.",
+      "invariant": "A core lower route must turn or be visually terminated before it becomes a boundary-to-boundary sightline.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WGV5-002",
+      "severity": "P2",
+      "settlement_id": "volumetric-warren-6046713720826375059",
+      "recipe": "skywalk-side",
+      "screenshot_ids": ["skywalk-side"],
+      "evidence": "The manifest reports only 0.333 target visibility for a view whose required threshold is not met.",
+      "invariant": "A named hostile capture must visibly prove the complete relationship it is intended to audit.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WGV5-003",
+      "severity": "P2",
+      "settlement_id": "volumetric-warren-6046713720826375059",
+      "recipe": "entry",
+      "screenshot_ids": ["entry"],
+      "evidence": "Although collision clearance and target visibility pass, a nearby canopy dominates the frame and makes enclosure harder to judge.",
+      "invariant": "A verification camera should present the route composition, not merely remain collision-free.",
+      "confidence": "medium",
+      "status": "open"
+    },
+    {
+      "id": "WGV5-004",
+      "severity": "P2",
+      "settlement_id": "volumetric-warren-6046713720826375059",
+      "recipe": "upper-route",
+      "screenshot_ids": ["upper-route"],
+      "evidence": "A blue lower roof intrudes immediately beside the upper public surface; the frame cannot distinguish intentional tight overlap from poor visual clearance.",
+      "invariant": "Adjacent roof and route envelopes must read as deliberate layered construction with unambiguous player clearance.",
+      "confidence": "medium",
+      "status": "open"
+    }
+  ],
+  "structural_evidence": {
+    "parcel_count": 14,
+    "connected_building_stack_count": 14,
+    "detached_building_stack_count": 0,
+    "visually_short_parcel_count": 0,
+    "stair_endpoint_gap_count": 0,
+    "unsupported_platform_count": 0,
+    "visual_envelope_conflict_count": 0,
+    "public_air_occupied_overlap_count": 0,
+    "max_raw_daylight_void_component_size": 2,
+    "infill_platform_patch_count": 5,
+    "over_route_platform_patch_count": 2,
+    "infill_lightwell_count": 4,
+    "max_uncovered_core_component_size": 1,
+    "composed_walk_enclosure_ratio": 0.72,
+    "overhead_route_ratio": 0.303571428571429
+  }
+}

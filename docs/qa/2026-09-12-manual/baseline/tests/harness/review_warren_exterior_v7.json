@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "review_contract": {
+    "intent": "falsification",
+    "success_definition": "finding_a_real_issue",
+    "full_resolution_reviewed": true,
+    "independent_reviewer": false
+  },
+  "closing_candidate": false,
+  "captures": [
+    {"screenshot_id":"warren-market_entry","disposition":"finding","finding_ids":["WEX7-001","WEX7-002"],"notes":"The overhang and facade are useful, but the route opens to lawn and horizon immediately beyond them; the dark street patch also stops reading as part of the buildings."},
+    {"screenshot_id":"warren-market_turn","disposition":"finding","finding_ids":["WEX7-001","WEX7-002"],"notes":"A wide lawn separates the market turn, prefab, and central mass. There is no barrier-defined bend or bounded alley."},
+    {"screenshot_id":"warren-tunnel_underpass","disposition":"finding","finding_ids":["WEX7-001","WEX7-005"],"notes":"An occupied link is visible high above, but the route below and the endpoint buildings remain exposed to open sky and separated ground."},
+    {"screenshot_id":"warren-middle_alley","disposition":"finding","finding_ids":["WEX7-001"],"notes":"The external stair is visible, but one whole side of the path is open to the horizon; it is a facade stair beside a perch, not a winding stair canyon between occupied masses."},
+    {"screenshot_id":"warren-exterior_facade_stair","disposition":"finding","finding_ids":["WEX7-003"],"notes":"The named exterior-stair view resolves underneath a roof between facades and does not show the stair flight or both of its landings. The recipe cannot be verified from this camera."},
+    {"screenshot_id":"warren-upper_court","disposition":"finding","finding_ids":["WEX7-003","WEX7-004"],"notes":"A synthetic rock support fills the frame. The ray audit also reports the target obscured, so the image proves neither court surface nor onward exterior route."},
+    {"screenshot_id":"warren-court_bearing","disposition":"finding","finding_ids":["WEX7-003","WEX7-004"],"notes":"The occupied overhead link is legible, but the reviewed court is obscured and the composition relies on tall rectangular rock stacks rather than terrain-derived bands."},
+    {"screenshot_id":"warren-court_guard","disposition":"finding","finding_ids":["WEX7-003"],"notes":"The frame is almost entirely the underside of the court floor. It cannot verify the guard edge, its openings, or the adjacent walk surface."},
+    {"screenshot_id":"warren-court_descent","disposition":"finding","finding_ids":["WEX7-001"],"notes":"The guarded platform is present, but it terminates visually against open horizon and only a fragment of the descending stair can be seen."},
+    {"screenshot_id":"warren-lower_exterior_return","disposition":"finding","finding_ids":["WEX7-001","WEX7-002"],"notes":"The lower return is an isolated dark rectangle on lawn beside a detached rock tower; nearby building mass does not bound or lead the route."},
+    {"screenshot_id":"warren-half_rise","disposition":"finding","finding_ids":["WEX7-001","WEX7-004"],"notes":"The stair itself is readable, but it rises through a broad open gap between uniform rectangular perches and does not form a maze-like vertical street."},
+    {"screenshot_id":"warren-upper_switchback","disposition":"finding","finding_ids":["WEX7-003"],"notes":"The camera is underneath or inside private building mass and shows windows and roof boards instead of an external switchback and its next route choice."},
+    {"screenshot_id":"warren-entry_overhang","disposition":"finding","finding_ids":["WEX7-003"],"notes":"The camera is pressed against a window and does not show the inhabited overhang, its underside, or the public path passing below."},
+    {"screenshot_id":"warren-valley_skywalk","disposition":"finding","finding_ids":["WEX7-001","WEX7-005"],"notes":"The occupied link joins two nearly symmetric houses on separate block perches, with lawn on every side. It reads as a detached exhibit rather than part of a compact warren."},
+    {"screenshot_id":"warren-roofline","disposition":"finding","finding_ids":["WEX7-001","WEX7-004","WEX7-005"],"notes":"The roof closures are mostly present, but the high view exposes large gaps, isolated rock towers, route slabs on grass, and separate clusters rather than one interlocked mass."},
+    {"screenshot_id":"warren-sectional_profile","disposition":"finding","finding_ids":["WEX7-001","WEX7-003","WEX7-004"],"notes":"One dense vertical stack exists, but the ray audit reports this view obscured and the rest of the town remains detached. Uniform rock columns create artificial floors instead of staggered terrain bands."},
+    {"screenshot_id":"warren-network_overview","disposition":"finding","finding_ids":["WEX7-001","WEX7-002","WEX7-004","WEX7-005"],"notes":"The overview confirms disconnected islands, broad empty lawn, dark route strips, uniform tower bases, and two long occupied links that do not close the public maze."}
+  ],
+  "findings": [
+    {
+      "id": "WEX7-001",
+      "severity": "P1",
+      "seed": 0,
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "staggered_solid_void_embedding",
+      "screenshot_ids": ["warren-market_entry","warren-market_turn","warren-tunnel_underpass","warren-middle_alley","warren-court_descent","warren-lower_exterior_return","warren-half_rise","warren-valley_skywalk","warren-roofline","warren-sectional_profile","warren-network_overview"],
+      "evidence": "The audit reports frontage_ratio=0.0326, overhead_route_ratio=0.0612, through_sightline_count=1356, and max_sightline_m=48.375. Eye-level and overview images agree: public routes are bordered by lawn or horizon rather than co-solved occupied barriers.",
+      "invariant": "The public route must be the continuous exterior void left between compact inhabited masses, with staggered vertical bands and no through-core sightline.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WEX7-002",
+      "severity": "P1",
+      "seed": 0,
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "public_realm_surface_closure",
+      "screenshot_ids": ["warren-market_entry","warren-market_turn","warren-lower_exterior_return","warren-network_overview"],
+      "evidence": "Dark surface patches appear as separate rectangles and turns on uncovered lawn. The topology is connected in data, but the rendered route does not read as a continuous external city surface between nearby facades.",
+      "invariant": "Street, court, stair, landing, gallery, and bridge surfaces must materialize as one readable continuous exterior route derived from the same union.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WEX7-003",
+      "severity": "P1",
+      "seed": 0,
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "review_camera_set",
+      "screenshot_ids": ["warren-exterior_facade_stair","warren-upper_court","warren-court_bearing","warren-court_guard","warren-upper_switchback","warren-entry_overhang","warren-sectional_profile"],
+      "evidence": "Named views show a roofed facade bay, a rock wall, the underside of a platform, or a close window instead of their requested targets. The strengthened audit now independently flags upper_court, court_bearing, and sectional_profile as target-obscured.",
+      "invariant": "Every capture recipe must visibly expose the geometry named by the camera while remaining outside both physics collision and semantic occupied volume.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WEX7-004",
+      "severity": "P2",
+      "seed": 0,
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "review_support_heightfield",
+      "screenshot_ids": ["warren-upper_court","warren-court_bearing","warren-half_rise","warren-roofline","warren-sectional_profile","warren-network_overview"],
+      "evidence": "The harness builds tall rectangular rock columns beneath terrain-bearing footprints. They create repeated towers and occasionally obscure intended public space instead of demonstrating natural staggered terrain support.",
+      "invariant": "The fixed proof must use the exact uneven runtime terrain payload or a pinned equivalent; synthetic rectangular support towers cannot stand in for terrain-derived bands.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WEX7-005",
+      "severity": "P1",
+      "seed": 0,
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "occupied_skywalk_adjacency",
+      "screenshot_ids": ["warren-tunnel_underpass","warren-valley_skywalk","warren-roofline","warren-network_overview"],
+      "evidence": "The occupied overhead links are now correctly private mass, but their endpoint houses remain separate islands. The links span exposed gaps instead of joining neighboring barriers over a bounded exterior route.",
+      "invariant": "An occupied skywalk must close adjacency between nearby inhabited masses above the public maze; it cannot be a detached long-span object connecting isolated perches.",
+      "confidence": "high",
+      "status": "open"
+    }
+  ]
+}

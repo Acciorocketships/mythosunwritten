@@ -1,0 +1,14 @@
+{
+  "pack": "fantasy_village_tunnel",
+  "license": "FantasyVillageFBX source-pack license",
+  "default_scale": [1, 1, 1],
+  "assets": [
+    {
+      "id": "sfv.fabric.tunnel_arch.001",
+      "source": "res://assets/FantasyVillageFBX/FBX/Exterior Props/Arch/SFV_Entrance_Arch_001.fbx",
+      "merge_pieces": true,
+      "collision_profile": "building_trimesh",
+      "tags": ["building", "arch", "tunnel"]
+    }
+  ]
+}

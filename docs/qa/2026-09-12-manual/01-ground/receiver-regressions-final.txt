@@ -1,0 +1,94 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_visibility_bubble.gd
+* test_generic_material_adapter_restores_shared_resources_and_batch
+* test_corridor_selects_neighbours_but_excludes_floor_and_distant_objects
+* test_shader_adapter_preserves_existing_vertex_fragment_and_light_code
+* test_comments_and_early_returns_cannot_bypass_the_bubble
+* test_step_smoothed_focus_never_lowers_the_protected_physical_floor
+* test_faded_materials_follow_live_source_uniforms_and_resets
+6/6 passed.
+
+
+res://tests/test_visibility_projection.gd
+* test_actual_shader_protects_rising_ground_and_tapers_toward_the_camera
+1/1 passed.
+
+
+res://tests/test_september11_bubble_shape.gd
+* test_actual_coverage_has_no_lower_horizontal_cutoff
+* test_radius_projects_to_half_the_viewport_width_in_both_camera_aspect_modes
+2/2 passed.
+
+
+res://tests/test_september11_visibility_render.gd
+* test_shared_render_mesh_fades_only_selected_geometry_and_restores_pixels
+1/1 passed.
+
+
+res://tests/test_september11_visibility_work.gd
+* test_shared_source_is_sampled_once_when_installing_multiple_components
+* test_shared_material_keeps_independent_geometry_fades_and_restores_overrides
+* test_turning_away_and_back_reuses_the_same_compiled_shader
+* test_shader_history_is_bounded_and_does_not_retain_source_materials
+* test_single_surface_batch_fades_without_copying_its_instance_buffer
+* test_multiple_surfaces_keep_distinct_materials_and_restore_the_source
+6/6 passed.
+
+
+res://tests/test_september12_ground_visibility.gd
+* test_terrain_sheet_and_slopes_stay_opaque_beyond_old_five_metre_radius
+* test_ground_cover_stays_opaque_with_its_terrain
+* test_only_real_ground_backed_pixels_reveal_context
+* test_native_house_shell_clears_to_real_ground_without_exposing_its_interior
+* test_receiver_world_tracks_actual_mesh_owners_and_releases_evicted_sources
+5/5 passed.
+
+
+res://tests/test_september11_camera_roles.gd
+* test_tactical_left_right_motion_turns_the_orbit_and_idle_does_not
+* test_close_view_mouse_look_crosshair_and_release
+* test_close_view_travel_does_not_override_mouse_heading
+* test_tactical_heading_matches_original_close_follow_at_multiple_tick_rates
+* test_close_pitch_limits_and_above_horizon_facing_remain_finite
+* test_heading_survives_switches_and_focus_pause_release
+* test_mouse_boom_resolves_walls_and_ground_in_four_orientations
+* test_reset_uses_explicitly_relocated_eye
+* test_close_crosshair_clears_avatar_hat_in_initial_framing
+9/9 passed.
+
+
+res://tests/test_camera_obstruction.gd
+* test_f7_switches_original_and_wider_tactical_views_without_key_repeat
+* test_unobstructed_boom_reaches_the_requested_pose
+* test_swept_sphere_stops_the_boom_before_a_wall
+* test_ceiling_probe_lowers_the_pivot_but_preserves_head_level
+* test_excluded_body_cannot_collapse_its_own_camera_boom
+* test_world_camera_uses_visibility_bubble_without_collapsing_tactical_orbit
+6/6 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               8
+Tests                36
+Passing Tests        36
+Asserts             275
+Time              8.431s
+
+
+---- All tests passed! ----
+

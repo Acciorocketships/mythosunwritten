@@ -1,0 +1,20 @@
+{
+  "23_town_0": {
+    "no_receiver_pixels": 2731,
+    "changed_no_receiver": 281,
+    "changed_no_receiver_over_20": 0,
+    "no_receiver_max_difference": 1
+  },
+  "23_town_-8": {
+    "no_receiver_pixels": 7195,
+    "changed_no_receiver": 0,
+    "changed_no_receiver_over_20": 0,
+    "no_receiver_max_difference": 0
+  },
+  "23_town_8": {
+    "no_receiver_pixels": 2482,
+    "changed_no_receiver": 923,
+    "changed_no_receiver_over_20": 0,
+    "no_receiver_max_difference": 1
+  }
+}

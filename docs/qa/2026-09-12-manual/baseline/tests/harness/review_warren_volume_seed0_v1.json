@@ -1,0 +1,71 @@
+{
+  "review_id": "warren-volume-seed0-v1",
+  "world_seed": 0,
+  "review_instruction": "Finding a real issue is a successful review.",
+  "generation_signature_source": "/tmp/warren-volume-review/seed-0/manifest-000.json",
+  "overall_disposition": "REJECTED_WITH_USEFUL_FINDINGS",
+  "captures": [
+    {
+      "screenshot_id": "overview-ne",
+      "disposition": "FAIL",
+      "findings": [
+        "The town separates into an upper cluster and a sparse lower row instead of reading as one interlocked mass.",
+        "Large temporary bearing columns dominate the silhouette.",
+        "Ground-route slabs remain exposed to open grass on long edges."
+      ]
+    },
+    {
+      "screenshot_id": "overview-sw",
+      "disposition": "FAIL",
+      "findings": [
+        "Upper circulation is continuous but resembles one fenced rooftop deck rather than a path threaded between facades.",
+        "Several lower buildings read as visual islands despite graph-connected addresses."
+      ]
+    },
+    {
+      "screenshot_id": "section-east",
+      "disposition": "FAIL",
+      "findings": [
+        "The sectional silhouette exposes tall empty support shafts instead of inhabited or terrain-borne lower mass.",
+        "The city can still be read through vertically in the core."
+      ]
+    },
+    {
+      "screenshot_id": "entry",
+      "disposition": "FAIL",
+      "findings": [
+        "The entrance is not visually framed as the mouth of a winding alley.",
+        "The review camera also needs a route-tangent-derived target that proves the named circulation segment."
+      ]
+    },
+    {
+      "screenshot_id": "upper-route",
+      "disposition": "FAIL",
+      "findings": [
+        "A broad fenced platform dominates the view; adjacent building entrances and the continuing route are not legible."
+      ]
+    },
+    {
+      "screenshot_id": "skywalk-side",
+      "disposition": "FAIL",
+      "findings": [
+        "The camera does not isolate the occupied skywalk well enough to prove both facade joins."
+      ]
+    },
+    {
+      "screenshot_id": "skywalk-beneath",
+      "disposition": "PARTIAL_PASS",
+      "findings": [
+        "The occupied overhead volume and external stairs create the intended buried-in-city effect locally.",
+        "The surrounding route still opens directly to grass and does not sustain that effect beyond the motif."
+      ]
+    },
+    {
+      "screenshot_id": "roofline",
+      "disposition": "FAIL",
+      "findings": [
+        "Roof closure is substantially improved, but the plan remains visibly split into disconnected-looking islands and exposed route slabs."
+      ]
+    }
+  ]
+}

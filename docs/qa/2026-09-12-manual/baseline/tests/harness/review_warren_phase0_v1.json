@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "review_contract": {
+    "intent": "falsification",
+    "success_definition": "finding_a_real_issue",
+    "full_resolution_reviewed": true,
+    "independent_reviewer": false
+  },
+  "closing_candidate": false,
+  "captures": [
+    {"screenshot_id":"phase0-approach_west","disposition":"finding","finding_ids":["WPF-001"],"notes":"The street composition is legible, but the 9 m opening weakens the intended market-canyon enclosure."},
+    {"screenshot_id":"phase0-canyon_west_to_east","disposition":"finding","finding_ids":["WPF-001"],"notes":"The market edges work, but excessive clear width makes the row walls feel farther apart than the reference target."},
+    {"screenshot_id":"phase0-canyon_east_to_west","disposition":"finding","finding_ids":["WPF-004"],"notes":"The terraced east stalls inherit the 1.5 m building base and are visibly suspended above street level."},
+    {"screenshot_id":"phase0-market_north","disposition":"clear","finding_ids":[],"notes":"The covered table line is grounded, human-scaled, and visibly belongs beneath the facade gallery."},
+    {"screenshot_id":"phase0-market_south","disposition":"clear","finding_ids":[],"notes":"The opposing covered-market frontage has credible headroom and keeps the street centre traversable."},
+    {"screenshot_id":"phase0-gallery_level","disposition":"finding","finding_ids":["WPF-003"],"notes":"The camera begins too close to the gallery and bridge railing to evaluate the full circulation relationship."},
+    {"screenshot_id":"phase0-bridge_underside","disposition":"finding","finding_ids":["WPF-003"],"notes":"The view is nearly inside the bridge slab, hiding its endpoint support and usable clearance."},
+    {"screenshot_id":"phase0-court_stair","disposition":"suspicion","finding_ids":[],"notes":"The stair is present, but the tight view makes its ground-to-gallery landing relationship harder to judge."},
+    {"screenshot_id":"phase0-roofline","disposition":"finding","finding_ids":["WPF-002","WPF-005"],"notes":"Orange roofs render white and the unfenestrated upper side walls read as repeated blank panels."},
+    {"screenshot_id":"phase0-side_elevation","disposition":"finding","finding_ids":["WPF-005"],"notes":"Long upper elevations use blank wall modules, exposing the kit repetition before the town silhouette."},
+    {"screenshot_id":"phase0-overview","disposition":"finding","finding_ids":["WPF-002","WPF-005"],"notes":"The missing orange atlas is obvious and the aligned upper shells do not yet produce facade overhang depth."}
+  ],
+  "findings": [
+    {"id":"WPF-001","severity":"P2","screenshot_ids":["phase0-approach_west","phase0-canyon_west_to_east"],"evidence":"The 9 m street plus shallow edge occupation leaves an over-broad centre band.","invariant":"The market street must read as a dense facade canyon at eye level.","confidence":"high","status":"fixed"},
+    {"id":"WPF-002","severity":"P1","screenshot_ids":["phase0-roofline","phase0-overview"],"evidence":"Every orange roof surface is untextured white while blue roof surfaces retain their atlas.","invariant":"Every baked structural material must be self-contained and preserve its authored palette.","confidence":"high","status":"fixed"},
+    {"id":"WPF-003","severity":"P2","screenshot_ids":["phase0-gallery_level","phase0-bridge_underside"],"evidence":"The cameras intersect or nearly intersect the reviewed gallery and bridge subjects.","invariant":"Each named review view must frame the complete structural relationship it claims to inspect.","confidence":"high","status":"fixed"},
+    {"id":"WPF-004","severity":"P1","screenshot_ids":["phase0-canyon_east_to_west"],"evidence":"Market-stall feet on half-storey blocks begin 1.5 m above the street.","invariant":"Street markets remain grounded even when the inhabited shell sits on a terrace.","confidence":"high","status":"fixed"},
+    {"id":"WPF-005","severity":"P2","screenshot_ids":["phase0-roofline","phase0-side_elevation","phase0-overview"],"evidence":"Blank upper side panels and vertically aligned shells expose the repeated module grid.","invariant":"The continuous row should read as accumulated town fabric before it reads as repeated kit pieces.","confidence":"high","status":"fixed"}
+  ]
+}

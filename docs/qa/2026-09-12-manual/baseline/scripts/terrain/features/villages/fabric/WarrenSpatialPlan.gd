@@ -1,0 +1,415 @@
+class_name WarrenSpatialPlan
+extends RefCounted
+
+## Sealed source of truth for the fine-grid volumetric town.  Compatibility
+## adapters may project this plan into the existing public-realm and FabricUnit
+## layers, but they may never re-infer or mutate its topology.
+var stable_id: StringName
+var world_seed: int
+var grid: WarrenSpatialGrid
+## Optional immutable lineage for the first migration adapter. Geometry is
+## never read back from this after seal; it only preserves the exact macro
+## route identity while the production assembler learns the fine plan.
+var source_volume: WarrenVolumePlan
+var entry_floor_cell: Vector3i
+var route_floor_cells: Array[Vector3i] = []
+var buildings: Array[WarrenBuildingVolume] = []
+var features: Array[WarrenFeatureReservation] = []
+var support_graph: WarrenSupportGraph
+## Phase-7 lossless merge of every exact grid face. Asset realization consumes
+## these regions; it may not rebuild a shell from a 2D building footprint.
+var construction_plan: WarrenConstructionRegionPlan
+var audit: Dictionary = {}
+var last_rejection := ""
+## Output-pure derived cache populated only after the exact production compiler
+## accepts this sealed topology. It is excluded from the deterministic signature
+## and lets the village adapter reuse the proof the selector just paid for.
+var _compiled_fabric_cache: SettlementFabricPlan
+var _compiled_room_units_cache: Array[FabricUnit] = []
+var _compiled_room_units_ready := false
+var _compiled_room_audit_cache: Dictionary = {}
+var _route_set: Dictionary = {}
+var _building_by_id: Dictionary = {}
+var _feature_by_id: Dictionary = {}
+var _sealed := false
+
+
+func _init(p_stable_id: StringName, p_world_seed: int,
+		p_grid: WarrenSpatialGrid) -> void:
+	stable_id = p_stable_id
+	world_seed = p_world_seed
+	grid = p_grid
+
+
+func add_route_floor(cell: Vector3i) -> bool:
+	if _sealed or grid == null or not grid.contains(cell) or _route_set.has(cell):
+		return false
+	_route_set[cell] = true
+	route_floor_cells.append(cell)
+	return true
+
+
+func add_building(building: WarrenBuildingVolume) -> bool:
+	if _sealed or building == null or not building.is_sealed() \
+			or _building_by_id.has(building.stable_id):
+		return false
+	_building_by_id[building.stable_id] = building
+	buildings.append(building)
+	return true
+
+
+func add_feature(feature: WarrenFeatureReservation) -> bool:
+	if _sealed or feature == null or not feature.is_sealed():
+		return false
+	if _feature_by_id.has(feature.stable_id) \
+			or _building_by_id.has(feature.stable_id):
+		return false
+	_feature_by_id[feature.stable_id] = feature
+	features.append(feature)
+	return true
+
+
+func set_support_graph(value: WarrenSupportGraph) -> bool:
+	if _sealed or support_graph != null or value == null or not value.is_sealed():
+		return false
+	support_graph = value
+	return true
+
+
+func seal(p_entry_floor_cell: Vector3i) -> bool:
+	entry_floor_cell = p_entry_floor_cell
+	if _sealed or not validate_construction():
+		return false
+	return finish_construction(p_entry_floor_cell)
+
+
+func finish_construction(p_entry_floor_cell: Vector3i) -> bool:
+	entry_floor_cell = p_entry_floor_cell
+	construction_plan = WarrenConstructionRegionPlan.derive(
+		StringName("%s.construction" % stable_id), grid)
+	if construction_plan == null:
+		return _reject("construction interfaces could not be derived")
+	audit = {
+		"public_route_floor_count": route_floor_cells.size(),
+		"public_air_cell_count": grid.count_use(
+			WarrenSpatialGrid.Use.PUBLIC_AIR),
+		"private_volume_cell_count": grid.count_use(
+			WarrenSpatialGrid.Use.PRIVATE_VOLUME),
+		"structural_volume_cell_count": grid.count_use(
+			WarrenSpatialGrid.Use.STRUCTURAL_VOLUME),
+		"daylight_air_cell_count": grid.count_use(
+			WarrenSpatialGrid.Use.DAYLIGHT_AIR),
+		"allocatable_cell_count": grid.count_use(WarrenSpatialGrid.Use.ALLOCATABLE),
+		"building_count": buildings.size(),
+		"feature_count": features.size(),
+	}
+	audit.merge(_source_route_lineage_audit(), true)
+	audit.merge(_interface_audit(), true)
+	audit.merge(_building_access_audit(), true)
+	audit.merge(construction_plan.audit, true)
+	if not grid.seal():
+		return _reject("fine grid could not seal")
+	_sealed = true
+	return true
+
+
+func validate_construction() -> bool:
+	last_rejection = ""
+	var native_building_count := 0
+	for feature: WarrenFeatureReservation in features:
+		if feature.kind == &"prefab_landmark": native_building_count += 1
+	if stable_id.is_empty() or grid == null or not grid.is_valid() \
+			or route_floor_cells.size() < 2 \
+			or (buildings.is_empty() and native_building_count == 0) or support_graph == null \
+			or not support_graph.is_sealed() or not _route_set.has(
+				entry_floor_cell):
+		return _reject("missing grid, route, entry, buildings, or support graph")
+	if not _validate_route():
+		return false
+	var lineage_audit := _source_route_lineage_audit()
+	if int(lineage_audit.get("missing_source_route_floor_count", 0)) != 0:
+		return _reject("town path drops a bored route floor")
+	if not _validate_building_ownership():
+		return false
+	var access_audit := _building_access_audit()
+	if int(access_audit.spatial_missing_private_parent_count) != 0:
+		return _reject("private building access names a missing parent")
+	if int(access_audit.detached_building_stack_count) != 0:
+		return _reject("inhabited building access does not reach a public threshold")
+	var allocatable_count := grid.count_use(WarrenSpatialGrid.Use.ALLOCATABLE)
+	if allocatable_count != 0:
+		return _reject("allocatable mass survives final classification")
+	for building: WarrenBuildingVolume in buildings:
+		if not support_graph.reaches_terrain(building.stable_id):
+			return _reject("building support does not reach terrain: %s" \
+				% building.stable_id)
+	for feature: WarrenFeatureReservation in features:
+		if feature.kind == &"prefab_landmark" \
+				and not support_graph.reaches_terrain(feature.stable_id):
+			return _reject("native building support does not reach terrain: %s" % feature.stable_id)
+	var interface_audit := _interface_audit()
+	if int(interface_audit.unclassified_public_private_face_count) != 0:
+		return _reject("public/private interface is unclassified")
+	if int(interface_audit.missing_roof_face_count) != 0:
+		return _reject("private volume terminates without a roof interface")
+	if int(interface_audit.threshold_face_mismatch_count) != 0:
+		return _reject("building threshold is not a door interface")
+	return true
+
+
+func is_sealed() -> bool:
+	return _sealed
+
+
+func cache_compiled_fabric(value: SettlementFabricPlan) -> bool:
+	if not _sealed or value == null or not value.is_sealed() \
+			or _compiled_fabric_cache != null:
+		return false
+	_compiled_fabric_cache = value
+	return true
+
+
+func compiled_fabric_cache() -> SettlementFabricPlan:
+	return _compiled_fabric_cache
+
+
+func cache_compiled_room_units(values: Array[FabricUnit],
+		room_audit: Dictionary) -> bool:
+	if not _sealed or (values.is_empty() and not buildings.is_empty()) \
+			or _compiled_room_units_ready:
+		return false
+	_compiled_room_units_cache.assign(values)
+	_compiled_room_audit_cache = room_audit.duplicate(true)
+	_compiled_room_units_ready = true
+	return true
+
+
+func has_compiled_room_units() -> bool:
+	return _compiled_room_units_ready
+
+
+func compiled_room_units_cache() -> Array[FabricUnit]:
+	var out: Array[FabricUnit] = []
+	if not _compiled_room_units_cache.is_empty():
+		out.assign(_compiled_room_units_cache)
+	return out
+
+
+func compiled_room_audit_cache() -> Dictionary:
+	return _compiled_room_audit_cache.duplicate(true)
+
+
+func deterministic_signature() -> String:
+	var building_parts := PackedStringArray()
+	for building: WarrenBuildingVolume in buildings:
+		building_parts.append(building.deterministic_signature())
+	building_parts.sort()
+	var feature_parts := PackedStringArray()
+	for feature: WarrenFeatureReservation in features:
+		feature_parts.append(feature.deterministic_signature())
+	feature_parts.sort()
+	var routes := PackedStringArray()
+	for cell: Vector3i in route_floor_cells:
+		routes.append("%d:%d:%d" % [cell.x, cell.y, cell.z])
+	routes.sort()
+	return "%s/%d|grid=%s|route=%s|buildings=%s|features=%s|support=%s|construction=%s" % [
+		String(stable_id), world_seed, grid.deterministic_signature(),
+		",".join(routes), "|".join(building_parts),
+		"|".join(feature_parts), support_graph.deterministic_signature(),
+		construction_plan.deterministic_signature()]
+
+
+func _validate_route() -> bool:
+	for cell: Vector3i in route_floor_cells:
+		if grid.use_at(cell) != WarrenSpatialGrid.Use.PUBLIC_AIR \
+				or grid.use_at(cell + Vector3i.UP) \
+					!= WarrenSpatialGrid.Use.PUBLIC_AIR:
+			return _reject("public route lacks full swept headroom at %s" % cell)
+		var floor := grid.face_claim(cell, Vector3i.DOWN)
+		if floor.is_empty() or int(floor.kind) \
+				!= WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR:
+			return _reject("public route lacks a classified floor at %s" % cell)
+	var seen: Dictionary = {route_floor_cells[0]: true}
+	var frontier: Array[Vector3i] = [route_floor_cells[0]]
+	while not frontier.is_empty():
+		var cell: Vector3i = frontier.pop_back()
+		for candidate: Vector3i in route_floor_cells:
+			if seen.has(candidate) or not _route_neighbors(cell, candidate):
+				continue
+			seen[candidate] = true
+			frontier.append(candidate)
+	if seen.size() != route_floor_cells.size():
+		return _reject("public route graph is disconnected")
+	return true
+
+
+func _source_route_lineage_audit() -> Dictionary:
+	## Late market aisles may deliberately extend the final public realm, but the
+	## town may never replace or omit any floor already sealed by the bore. This
+	## subset proof complements _validate_route(): one proves provenance, the
+	## other proves that the complete final network is still connected.
+	if source_volume == null or not source_volume.is_sealed():
+		return {
+			"source_route_floor_count": 0,
+			"missing_source_route_floor_count": 0,
+			"supplemental_route_floor_count": route_floor_cells.size(),
+		}
+	var source_cells := source_volume.exact_route_surface_cells()
+	var source_set: Dictionary = {}
+	var missing := 0
+	for cell: Vector3i in source_cells:
+		source_set[cell] = true
+		missing += int(not _route_set.has(cell))
+	var supplemental := 0
+	for cell: Vector3i in route_floor_cells:
+		supplemental += int(not source_set.has(cell))
+	return {
+		"source_route_floor_count": source_cells.size(),
+		"missing_source_route_floor_count": missing,
+		"supplemental_route_floor_count": supplemental,
+	}
+
+
+func _validate_building_ownership() -> bool:
+	var claimed: Dictionary = {}
+	for building: WarrenBuildingVolume in buildings:
+		for cell: Vector3i in building.private_cells:
+			if claimed.has(cell):
+				return _reject("building volumes overlap at %s" % cell)
+			claimed[cell] = building.stable_id
+	for cell: Vector3i in grid.cells_with_use(
+			WarrenSpatialGrid.Use.PRIVATE_VOLUME):
+		var owner_id := grid.owner_name_at(cell)
+		if _building_by_id.has(owner_id):
+			if not (_building_by_id[owner_id] as WarrenBuildingVolume) \
+					.has_private_cell(cell) or claimed.get(cell, &"") != owner_id:
+				return _reject("private cell differs from building owner at %s" % cell)
+			continue
+		var feature := _feature_by_id.get(owner_id) as WarrenFeatureReservation
+		# Feature ownership is a volumetric fact, not a closed list of visual
+		# feature names.  A sealed feature is the exact owner when both the grid
+		# owner and its immutable reservation name this cell.  Keeping a kind
+		# whitelist here made every new occupied composition feature fail only at
+		# final plan seal despite already passing its atomic reservation proof.
+		if feature == null or not feature.reserved_cells.has(cell):
+			return _reject("private cell has no exact building/feature owner at %s" \
+				% cell)
+	for cell: Vector3i in grid.cells_with_use(
+			WarrenSpatialGrid.Use.STRUCTURAL_VOLUME):
+		var owner_id := grid.owner_name_at(cell)
+		var feature := _feature_by_id.get(owner_id) as WarrenFeatureReservation
+		if feature == null or not feature.reserved_cells.has(cell):
+			return _reject("structural cell has no exact feature owner at %s" % cell)
+	return true
+
+
+func _building_access_audit() -> Dictionary:
+	## The fine plan already owns exact inhabited components and their private
+	## access ancestry. Legacy FabricUnit IDs split every recomposed room segment
+	## into a different apparent stack, so grouping those strings cannot prove
+	## access for this generation mode. Follow the sealed source facts instead:
+	## public thresholds are roots and private_parent_ids are inhabited links.
+	var reached: Dictionary = {}
+	var missing_parents := 0
+	var private_edges := 0
+	var addressed := 0
+	for building: WarrenBuildingVolume in buildings:
+		if not building.thresholds.is_empty():
+			reached[building.stable_id] = true
+			addressed += 1
+		for parent_id: StringName in building.private_parent_ids:
+			private_edges += 1
+			missing_parents += int(not _building_by_id.has(parent_id))
+	var changed := true
+	while changed:
+		changed = false
+		for building: WarrenBuildingVolume in buildings:
+			if reached.has(building.stable_id):
+				continue
+			for parent_id: StringName in building.private_parent_ids:
+				if reached.has(parent_id):
+					reached[building.stable_id] = true
+					changed = true
+					break
+	var detached_buildings := buildings.size() - reached.size()
+	var landmarks := 0
+	var connected_landmarks := 0
+	for feature: WarrenFeatureReservation in features:
+		if feature.kind != &"prefab_landmark":
+			continue
+		landmarks += 1
+		connected_landmarks += int(
+			bool(feature.audit.get("landmark_publicly_addressed", false)) \
+			and bool(feature.audit.get("landmark_terrain_rooted", false)) \
+			and not feature.endpoints.is_empty())
+	var total := buildings.size() + landmarks
+	var detached := detached_buildings + landmarks - connected_landmarks
+	return {
+		"spatial_building_volume_count": buildings.size(),
+		"spatial_addressed_building_volume_count": addressed,
+		"spatial_private_access_edge_count": private_edges,
+		"spatial_missing_private_parent_count": missing_parents,
+		"spatial_detached_building_volume_count": detached_buildings,
+		"spatial_prefab_landmark_building_count": landmarks,
+		"building_stack_count": total,
+		"connected_building_stack_count": total - detached,
+		"detached_building_stack_count": detached,
+	}
+
+
+func _interface_audit() -> Dictionary:
+	var unclassified := 0
+	var missing_roofs := 0
+	var threshold_mismatch := 0
+	var allowed_public_faces: Dictionary = {
+		WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR: true,
+		WarrenSpatialGrid.FaceKind.FACADE: true,
+		WarrenSpatialGrid.FaceKind.DOOR: true,
+		WarrenSpatialGrid.FaceKind.SOFFIT: true,
+		WarrenSpatialGrid.FaceKind.ROOF: true,
+		WarrenSpatialGrid.FaceKind.CONSTRUCTION_JOINT: true,
+	}
+	for building: WarrenBuildingVolume in buildings:
+		for cell: Vector3i in building.private_cells:
+			for direction: Vector3i in [Vector3i.LEFT, Vector3i.RIGHT,
+					Vector3i.UP, Vector3i.DOWN, Vector3i.FORWARD,
+					Vector3i.BACK]:
+				var neighbor: Vector3i = cell + direction
+				if grid.use_at(neighbor) != WarrenSpatialGrid.Use.PUBLIC_AIR:
+					continue
+				var face := grid.face_claim(cell, direction)
+				unclassified += int(face.is_empty() \
+					or not allowed_public_faces.has(int(face.get("kind", -1))))
+			var above: Vector3i = cell + Vector3i.UP
+			if building.has_private_cell(above) \
+					or grid.use_at(above) == WarrenSpatialGrid.Use.PRIVATE_VOLUME:
+				continue
+			var roof := grid.face_claim(cell, Vector3i.UP)
+			var roof_kind := int(roof.get("kind", -1))
+			var carries_public_floor := grid.use_at(above) \
+				== WarrenSpatialGrid.Use.PUBLIC_AIR and roof_kind \
+				== WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR
+			missing_roofs += int(roof.is_empty() or roof_kind \
+				!= WarrenSpatialGrid.FaceKind.ROOF and not carries_public_floor)
+		for threshold: Dictionary in building.thresholds:
+			var private_cell := threshold.private_cell as Vector3i
+			var public_cell := threshold.public_cell as Vector3i
+			var face := grid.face_claim(private_cell,
+				public_cell - private_cell)
+			threshold_mismatch += int(face.is_empty() \
+				or int(face.get("kind", -1)) != WarrenSpatialGrid.FaceKind.DOOR)
+	return {
+		"unclassified_public_private_face_count": unclassified,
+		"missing_roof_face_count": missing_roofs,
+		"threshold_face_mismatch_count": threshold_mismatch,
+	}
+
+
+static func _route_neighbors(left: Vector3i, right: Vector3i) -> bool:
+	var delta := right - left
+	return absi(delta.x) + absi(delta.z) == 1 and absi(delta.y) <= 1
+
+
+func _reject(reason: String) -> bool:
+	last_rejection = reason
+	return false

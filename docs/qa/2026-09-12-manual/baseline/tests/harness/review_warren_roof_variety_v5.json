@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "review_contract": {
+    "intent": "falsification",
+    "success_definition": "finding_a_real_issue",
+    "full_resolution_reviewed": true,
+    "independent_reviewer": false
+  },
+  "capture_root": "/private/tmp/warren-chaos-v4-cap5-gui",
+  "world_seed": 6046713720826375059,
+  "route_attempt": 186,
+  "closing_candidate": false,
+  "captures": [
+    {"screenshot_id":"overview-ne","disposition":"finding","finding_ids":["WRV5-01","WRV5-03"],"notes":"The mass is compact and visibly staggered, but the pale upper public surface still joins into a broad central patch and the upper orange compact gables repeat too often."},
+    {"screenshot_id":"overview-sw","disposition":"finding","finding_ids":["WRV5-01","WRV5-02","WRV5-03"],"notes":"The reverse overview confirms real roof and footprint variety, while also exposing the wide upper deck and two unbounded market approaches at the perimeter."},
+    {"screenshot_id":"section-east","disposition":"clear","finding_ids":[],"notes":"This section is the strongest result: terrain-grounded and elevated bases step across the silhouette, blue and orange complete roofs vary, and roofed shallow bays interrupt the taller facades."},
+    {"screenshot_id":"entry","disposition":"finding","finding_ids":["WRV5-02"],"notes":"The stocked market is valid, but the public approach remains a straight exposed ramp before it reaches the first enclosing turn."},
+    {"screenshot_id":"ground-reverse","disposition":"finding","finding_ids":["WRV5-02"],"notes":"Several offset facades and roofed projections make a convincing street wall, yet the outside ground remains visible along the approach side rather than closing quickly around the player."},
+    {"screenshot_id":"ground-cross","disposition":"clear","finding_ids":[],"notes":"The hostile cross view reads as a true undercroft: multiple exterior ramps cross at different heights, buildings bound the path, and no long ground chord exits the opposite side."},
+    {"screenshot_id":"upper-route","disposition":"finding","finding_ids":["WRV5-01"],"notes":"The upper route is connected and passes addressed facades, but adjacent lanes merge into a court wider than the intended narrow negative-space path."},
+    {"screenshot_id":"skywalk-side","disposition":"finding","finding_ids":["WRV5-01"],"notes":"The occupied bridge and roof-level path are connected, though their neighboring landings merge into the same broad upper surface instead of a short bridge between distinct alleys."},
+    {"screenshot_id":"skywalk-beneath","disposition":"clear","finding_ids":[],"notes":"The underside shows genuine inhabited and public overhangs with structural supports; route surfaces meet their seams and the lower passage remains exterior."},
+    {"screenshot_id":"roofline","disposition":"finding","finding_ids":["WRV5-03"],"notes":"The roofline includes blue long roofs and multiple pitches, but repeated orange compact gables still dominate the middle-distance silhouette."},
+    {"screenshot_id":"network-above","disposition":"finding","finding_ids":["WRV5-01","WRV5-03"],"notes":"The overhead falsification view most clearly exposes the central contiguous deck and the repeated compact-roof cluster, despite the valid guarded lightwells and complete outer roofs."}
+  ],
+  "findings": [
+    {
+      "id": "WRV5-01",
+      "severity": "P1",
+      "evidence": "overview-ne, overview-sw, upper-route, skywalk-side, and network-above show adjacent public lanes coalescing into one broad pale upper deck.",
+      "invariant": "Inside the core, public circulation must remain a winding player-width negative-space network; a wide court is permitted only as a small explicit episode divided by buildings, occupied links, or guarded lightwells.",
+      "confidence": "high",
+      "status": "open",
+      "screenshot_ids": ["overview-ne","overview-sw","upper-route","skywalk-side","network-above"]
+    },
+    {
+      "id": "WRV5-02",
+      "severity": "P2",
+      "evidence": "entry and ground-reverse retain a straight exposed approach with the outside terrain visible beside the first route segment.",
+      "invariant": "After the perimeter landing, the market approach should turn into a facade-bounded alley promptly; sparse exterior stalls may not substitute for the city wall.",
+      "confidence": "high",
+      "status": "open",
+      "screenshot_ids": ["overview-sw","entry","ground-reverse"]
+    },
+    {
+      "id": "WRV5-03",
+      "severity": "P2",
+      "evidence": "overview-ne, overview-sw, roofline, and network-above show several adjacent orange compact gables with closely repeated silhouettes.",
+      "invariant": "A local roof cluster must mix footprint, pitch, material, feature, and base-height families; graph-colour labels count only when the selected baked mesh is visibly different.",
+      "confidence": "high",
+      "status": "open",
+      "screenshot_ids": ["overview-ne","overview-sw","roofline","network-above"]
+    }
+  ],
+  "fixed_during_review": [
+    {
+      "id": "WRV5-FIX-DORMER-001",
+      "issue": "The focused roof-vocabulary capture exposed an untextured white construction wedge on roof-window module 001.",
+      "fix": "Production now compiles both dormer orientations from the complete reviewed roof-window 003 module, and the broken 001/orange-dormer recipes are ineligible.",
+      "regression_evidence": "/private/tmp/warren-roof-vocabulary-v4.png records the failed source; /private/tmp/warren-roof-vocabulary-v5.png shows both production blue-dormer orientations with no white construction wedge."
+    }
+  ],
+  "structural_evidence": {
+    "connected_building_stack_count": 11,
+    "parcel_footprint_cell_count": 27,
+    "footprint_family_count": 4,
+    "building_base_band_count": 6,
+    "building_roof_band_count": 8,
+    "joined_roof_count": 7,
+    "stair_endpoint_gap_count": 0,
+    "unsupported_platform_count": 0,
+    "visual_envelope_conflict_count": 0,
+    "public_air_occupied_overlap_count": 0,
+    "visual_quality_target_met": false
+  }
+}

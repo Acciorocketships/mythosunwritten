@@ -1,0 +1,35 @@
+{
+  "14_town_-8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 7.617081154835269,
+    "roi_mean_abs_rgb": 7.617081154835269,
+    "roi_changed_over_20_fraction": 0.14729994110439415
+  },
+  "14_town_0": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 7.115790791976658,
+    "roi_mean_abs_rgb": 7.115790791976658,
+    "roi_changed_over_20_fraction": 0.1353944538842893
+  },
+  "14_town_8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 6.67630283022345,
+    "roi_mean_abs_rgb": 6.67630283022345,
+    "roi_changed_over_20_fraction": 0.12709265565025488
+  }
+}

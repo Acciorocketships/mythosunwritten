@@ -1,0 +1,19 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+MARKER_PERF { "trial": 0, "marker": false, "frame_ms_median": 15.046, "frame_ms_p95": 17.066, "cpu_ms_p95": 0.001 }
+MARKER_PERF { "trial": 1, "marker": true, "frame_ms_median": 15.861, "frame_ms_p95": 18.6, "cpu_ms_p95": 0.041 }
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/motion/solid-ground/frame_000.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/motion/solid-ground/frame_025.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/motion/solid-ground/frame_050.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/motion/solid-ground/frame_075.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/motion/solid-ground/frame_100.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/motion/solid-ground/frame_125.png
+MARKER_PERF { "trial": 2, "marker": false, "frame_ms_median": 14.884, "frame_ms_p95": 17.826, "cpu_ms_p95": 0.001 }
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/motion/marker/frame_000.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/motion/marker/frame_025.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/motion/marker/frame_050.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/motion/marker/frame_075.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/motion/marker/frame_100.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/motion/marker/frame_125.png
+MARKER_PERF { "trial": 3, "marker": true, "frame_ms_median": 16.011, "frame_ms_p95": 18.713, "cpu_ms_p95": 0.041 }

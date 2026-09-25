@@ -1,0 +1,18 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+GROUND_CAMERA 30_heath focus=(-419.6, 22.9, -660.4) eye=(-434.8168, 37.9, -639.3181) hit={ "position": (-419.8887, 23.18462, -660.0), "normal": (0.0, 0.0, -1.0), "face_index": 2300, "collider_id": 237850599318, "collider": @StaticBody3D@3359:<StaticBody3D#237850599318>, "shape": 0, "rid": RID(19172734011475) }
+GROUND_SAMPLE 0.0 line=(-419.6, 22.9, -660.4) floor=(-419.6, 21.87999, -660.4) normal=(0.0, 1.0, 0.0)
+GROUND_SAMPLE 0.1 line=(-421.1217, 24.4, -658.2918) floor=(-421.1217, 27.99998, -658.2918) normal=(0.0, 1.0, 0.0)
+GROUND_SAMPLE 0.25 line=(-423.4042, 26.65, -655.1295) floor=(-423.4042, 28.0, -655.1295) normal=(0.0, 1.0, 0.0)
+GROUND_SAMPLE 0.5 line=(-427.2084, 30.4, -649.859) floor=(-427.2084, 27.99998, -649.859) normal=(0.0, 1.0, 0.0)
+GROUND_SAMPLE 0.75 line=(-431.0126, 34.15, -644.5886) floor=(-431.0126, 28.0, -644.5886) normal=(0.0, 1.0, 0.0)
+GROUND_SAMPLE 1.0 line=(-434.8168, 37.9, -639.3181) floor=(-434.8168, 28.0, -639.3181) normal=(0.0, 1.0, 0.0)
+GROUND_CAMERA 28_heath focus=(805.8, 25.0, -1860.4) eye=(784.633, 40.0, -1845.302) hit={ "position": (805.2392, 25.39742, -1860.0), "normal": (0.0, 0.0, -1.0), "face_index": 537, "collider_id": 326451074482, "collider": @StaticBody3D@4511:<StaticBody3D#326451074482>, "shape": 0, "rid": RID(28419798598116) }
+GROUND_SAMPLE 0.0 line=(805.8, 25.0, -1860.4) floor=(805.8, 24.0, -1860.4) normal=(0.0, 1.0, 0.0)
+GROUND_SAMPLE 0.1 line=(803.6833, 26.5, -1858.89) floor=(803.6833, 32.0, -1858.89) normal=(0.0, 1.0, 0.0)
+GROUND_SAMPLE 0.25 line=(800.5082, 28.75, -1856.625) floor=(800.5082, 32.0, -1856.625) normal=(0.0, 1.0, 0.0)
+GROUND_SAMPLE 0.5 line=(795.2165, 32.5, -1852.851) floor=(795.2165, 32.0, -1852.851) normal=(0.0, 1.0, 0.0)
+GROUND_SAMPLE 0.75 line=(789.9247, 36.25, -1849.076) floor=(789.9247, 32.0, -1849.076) normal=(0.0, 1.0, 0.0)
+GROUND_SAMPLE 1.0 line=(784.633, 40.0, -1845.302) floor=(784.633, 31.99998, -1845.302) normal=(0.0, 1.0, 0.0)

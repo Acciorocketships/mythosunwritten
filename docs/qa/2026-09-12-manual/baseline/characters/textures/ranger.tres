@@ -1,0 +1,9 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://be0xu6udgvaem"]
+
+[ext_resource type="Texture2D" uid="uid://4nrohlb3up66" path="res://assets/KayKitAdventurers/Characters/gltf/Ranger_ranger_texture.png" id="1_bg6n4"]
+
+[resource]
+resource_name = "ranger"
+cull_mode = 2
+albedo_texture = ExtResource("1_bg6n4")
+roughness = 0.5

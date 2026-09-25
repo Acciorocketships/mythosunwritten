@@ -1,0 +1,16 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+SEPT12_WAIT 30_heath
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/silhouette/30_heath/before/30_heath_0.png
+SEPT12_SHOT 30_heath 0.0 before
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/silhouette/30_heath/after/30_heath_0.png
+SEPT12_SHOT 30_heath 0.0 after
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/silhouette/30_heath/before/30_heath_-8.png
+SEPT12_SHOT 30_heath -8.0 before
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/silhouette/30_heath/after/30_heath_-8.png
+SEPT12_SHOT 30_heath -8.0 after
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/silhouette/30_heath/before/30_heath_8.png
+SEPT12_SHOT 30_heath 8.0 before
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/silhouette/30_heath/after/30_heath_8.png
+SEPT12_SHOT 30_heath 8.0 after

@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "review_contract": {
+    "intent": "falsification",
+    "success_definition": "finding_a_real_issue",
+    "full_resolution_reviewed": true,
+    "independent_reviewer": false
+  },
+  "capture_root": "/tmp/mythos-warren-aligned-v19",
+  "closing_candidate": false,
+  "captures": [
+    {"screenshot_id":"warren-market_entry","disposition":"finding","finding_ids":["WAL8-001"],"notes":"The occupied overhang reads clearly, but the route still opens directly onto lawn and horizon."},
+    {"screenshot_id":"warren-market_turn","disposition":"finding","finding_ids":["WAL8-001","WAL8-003"],"notes":"The market assets are strong, but broad green perches and exterior lawn keep the turn from reading as a bounded city canyon."},
+    {"screenshot_id":"warren-tunnel_underpass","disposition":"pass","finding_ids":[],"notes":"This local episode successfully reads as a market route under occupied overhead mass."},
+    {"screenshot_id":"warren-middle_alley","disposition":"finding","finding_ids":["WAL8-001","WAL8-003"],"notes":"The path and building edge are aligned, but one side remains open and the terrain-support proxy reads as an exposed green ledge."},
+    {"screenshot_id":"warren-exterior_facade_stair","disposition":"pass","finding_ids":[],"notes":"The revised view exposes a genuinely external stair between occupied facades; both the route audit and image show it outside the room shell."},
+    {"screenshot_id":"warren-upper_court","disposition":"pass","finding_ids":[],"notes":"The upper court now reads as local ground with planked structure, surrounding mass, and an onward external route."},
+    {"screenshot_id":"warren-court_bearing","disposition":"pass","finding_ids":[],"notes":"The court is visibly carried by occupied room stacks rather than an empty suspended deck."},
+    {"screenshot_id":"warren-platform_planks","disposition":"pass","finding_ids":[],"notes":"The floor is continuously tiled with authored board geometry and reaches the addressed facade."},
+    {"screenshot_id":"warren-court_guard","disposition":"pass","finding_ids":[],"notes":"The daylight opening has a complete perimeter guard while the addressed path remains open."},
+    {"screenshot_id":"warren-court_lightwell","disposition":"pass","finding_ids":[],"notes":"The oblique overhead view verifies that the deliberate floor omission remains open to lower space and is fenced on all four sides."},
+    {"screenshot_id":"warren-court_address","disposition":"pass","finding_ids":[],"notes":"The platform meets the visible doorway threshold exactly and no railing crosses the entrance."},
+    {"screenshot_id":"warren-court_descent","disposition":"pass","finding_ids":[],"notes":"The court edge, guard opening, and external descent form one continuous local circulation episode."},
+    {"screenshot_id":"warren-lower_exterior_return","disposition":"finding","finding_ids":["WAL8-002","WAL8-003"],"notes":"The lower return is connected in topology, but the synthetic rock terrain proxy dominates the view and weakens visual continuity between stair and landing."},
+    {"screenshot_id":"warren-half_rise","disposition":"finding","finding_ids":["WAL8-002"],"notes":"A usable half-rise exists, but the surrounding market episode does not yet reconnect into a level-changing loop."},
+    {"screenshot_id":"warren-upper_switchback","disposition":"pass","finding_ids":[],"notes":"This is a convincing local upper route bounded by buildings, with visible overhang and guarded edge."},
+    {"screenshot_id":"warren-entry_overhang","disposition":"finding","finding_ids":["WAL8-001"],"notes":"The overhang is real occupied mass, but it does not yet close the broad route opening beyond it."},
+    {"screenshot_id":"warren-valley_skywalk","disposition":"finding","finding_ids":["WAL8-001","WAL8-002"],"notes":"The occupied link is structurally valid, but its endpoint masses still frame a long open gap instead of a compact maze junction."},
+    {"screenshot_id":"warren-roofline","disposition":"finding","finding_ids":["WAL8-001","WAL8-003"],"notes":"The stacked roof silhouette has improved, while the high view still reveals detached edge masses and large exterior gaps."},
+    {"screenshot_id":"warren-sectional_profile","disposition":"obscured","finding_ids":["WAL8-004"],"notes":"The image usefully shows staggered vertical massing, but an intervening roof blocks the exact named target and the harness reports that honestly."},
+    {"screenshot_id":"warren-network_overview","disposition":"finding","finding_ids":["WAL8-001","WAL8-002","WAL8-003"],"notes":"The overview confirms a dense central stack but also a 30 by 36-cell envelope, open perimeter gaps, and no reconnecting elevated loop."}
+  ],
+  "findings": [
+    {
+      "id": "WAL8-001",
+      "severity": "P1",
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "staggered_solid_void_embedding",
+      "screenshot_ids": ["warren-market_entry","warren-market_turn","warren-middle_alley","warren-entry_overhang","warren-valley_skywalk","warren-roofline","warren-network_overview"],
+      "evidence": "The deterministic audit reports frontage_ratio=0.2916667, solid_void_frontage_ratio=0.4014085, 85 unbounded route sides, 91 through-core sightlines, max_sightline_m=42.75, and overhead_route_ratio=0.2553191. The eye-level images visibly open onto lawn or horizon.",
+      "invariant": "The exterior route must be the compact continuous void left between occupied masses, with no through-core chord and 45-65% meaningful overhead cover.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WAL8-002",
+      "severity": "P1",
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "sectional_public_realm",
+      "screenshot_ids": ["warren-lower_exterior_return","warren-half_rise","warren-valley_skywalk","warren-network_overview"],
+      "evidence": "All seven stair nodes have exact two-lane endpoint seams and one connected exterior component, but level_changing_loop_count remains 0 and max_constant_elevation_run_m is 14.8057 against the 12 m limit.",
+      "invariant": "The route must include a level-changing reconnecting loop and cannot rely on one long primary chain as its only traversal choice.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WAL8-003",
+      "severity": "P2",
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "review_support_heightfield",
+      "screenshot_ids": ["warren-market_turn","warren-middle_alley","warren-lower_exterior_return","warren-roofline","warren-network_overview"],
+      "evidence": "The fixed harness still represents surveyed terrain perches with stacked rectangular rock cells and exposed green tops. They are aligned mathematically but read as artificial ledges and towers in several views.",
+      "invariant": "Final visual review must use the exact runtime terrain payload or a pinned equivalent; a block proxy cannot establish the quality of building-to-terrain alignment.",
+      "confidence": "high",
+      "status": "open"
+    },
+    {
+      "id": "WAL8-004",
+      "severity": "P2",
+      "settlement_id": "warren.folded.proof.v2",
+      "recipe": "review_camera_set",
+      "screenshot_ids": ["warren-sectional_profile"],
+      "evidence": "All 20 camera positions are collision-clear and 19 target rays pass. The sectional profile is retained as useful overview evidence but is explicitly classified target-obscured.",
+      "invariant": "A closing review requires every named target to be visible from a collision-clear exterior camera.",
+      "confidence": "high",
+      "status": "open"
+    }
+  ],
+  "verified_alignment": {
+    "audited_stair_count": 7,
+    "aligned_stair_count": 7,
+    "stair_endpoint_gap_count": 0,
+    "audited_platform_count": 1,
+    "platform_dead_end_count": 0,
+    "platform_connection_seam_count": 4,
+    "continuous_sectional_path_count": 1,
+    "entrance_count": 6,
+    "served_entrance_count": 6,
+    "unserved_entrance_count": 0,
+    "served_structural_entrance_count": 2,
+    "entrance_guard_conflict_count": 0,
+    "daylight_void_cell_count": 1,
+    "daylight_void_guard_segment_count": 4,
+    "unsupported_platform_count": 0,
+    "unsupported_stair_count": 0,
+    "platform_bearing_parent_count": 2
+  }
+}

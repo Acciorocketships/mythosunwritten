@@ -1,0 +1,19 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+CONTEXT_PERF { "trial": 0, "candidate": false, "frame_ms_median": 26.497, "frame_ms_p95": 28.782, "cpu_ms_p95": 2.485 }
+CONTEXT_PERF { "trial": 1, "candidate": true, "frame_ms_median": 32.141, "frame_ms_p95": 34.767, "cpu_ms_p95": 3.395 }
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/receiver-motion-final/before/frame_000.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/receiver-motion-final/before/frame_025.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/receiver-motion-final/before/frame_050.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/receiver-motion-final/before/frame_075.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/receiver-motion-final/before/frame_100.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/receiver-motion-final/before/frame_125.png
+CONTEXT_PERF { "trial": 2, "candidate": false, "frame_ms_median": 26.491, "frame_ms_p95": 28.753, "cpu_ms_p95": 0.436 }
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/receiver-motion-final/after/frame_000.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/receiver-motion-final/after/frame_025.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/receiver-motion-final/after/frame_050.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/receiver-motion-final/after/frame_075.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/receiver-motion-final/after/frame_100.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/receiver-motion-final/after/frame_125.png
+CONTEXT_PERF { "trial": 3, "candidate": true, "frame_ms_median": 32.304, "frame_ms_p95": 35.291, "cpu_ms_p95": 1.057 }

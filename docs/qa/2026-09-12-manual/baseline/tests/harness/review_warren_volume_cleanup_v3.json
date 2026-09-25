@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "review_contract": {
+    "intent": "falsification",
+    "success_definition": "finding_a_real_issue",
+    "full_resolution_reviewed": true,
+    "independent_reviewer": false
+  },
+  "capture_root": "/tmp/warren-cleanup-final2-review",
+  "world_seed": 166029932451774690,
+  "closing_candidate": false,
+  "captures": [
+    {"screenshot_id":"overview-ne","disposition":"pass","finding_ids":[],"notes":"Fourteen connected narrow/tall stacks form a compact stepped mass. Authored light boards cover the structural courts; no dark duplicate surface is visible."},
+    {"screenshot_id":"overview-sw","disposition":"pass","finding_ids":[],"notes":"The reverse overview shows extensive intermediate floors and overhangs. Only isolated guarded lightwells remain; there is no broad contiguous core shaft to grass."},
+    {"screenshot_id":"section-east","disposition":"pass","finding_ids":[],"notes":"The section confirms staggered rooflines, complete pitched caps, supported overhangs, and no visually one-storey wide building."},
+    {"screenshot_id":"entry","disposition":"pass","finding_ids":[],"notes":"After strengthening camera clearance to a player-sized bubble, the entry reads as a stocked market alley bounded by facades and overhead construction rather than a frame buried in a stall post."},
+    {"screenshot_id":"upper-route","disposition":"pass","finding_ids":[],"notes":"The addressed upper route is continuously planked and guarded. Platform render material remains light and collision geometry does not bleed through it."},
+    {"screenshot_id":"skywalk-side","disposition":"finding","finding_ids":["WVC3-001"],"notes":"The dimension-aware camera exposes more of the link than the diagonal recipe, but dense endpoint towers still make the complete occupied-link silhouette difficult to judge in this frame."},
+    {"screenshot_id":"skywalk-beneath","disposition":"pass","finding_ids":[],"notes":"The underside view verifies occupied horizontal mass and a second public layer above an exterior undercroft. The open grass is at the perimeter/undercroft edge, not a multi-column central shaft."},
+    {"screenshot_id":"roofline","disposition":"pass","finding_ids":[],"notes":"Every visible inhabited stack and outcropping terminates in a pitched roof; no flat open room shell or missing gable side is visible."}
+  ],
+  "findings": [
+    {
+      "id": "WVC3-001",
+      "severity": "P2",
+      "settlement_id": "volumetric-warren-166029932451774690",
+      "recipe": "skywalk-side",
+      "screenshot_ids": ["skywalk-side"],
+      "evidence": "The target is collision-clear and visible, and the new camera is aligned across the measured short axis, but adjacent towers still occupy most of the frame and prevent an unambiguous whole-link silhouette review.",
+      "invariant": "A named hostile capture must communicate the whole construction relationship, not merely reach a target face.",
+      "confidence": "high",
+      "status": "open"
+    }
+  ],
+  "fixed_during_review": [
+    {
+      "id": "WVC3-FIX-001",
+      "issue": "The original entry camera accepted a point close enough to a stall post for the post and canopies to obscure most of the frame.",
+      "fix": "Camera acceptance now reserves a 0.65 m physics sphere and a 0.55 m visual-clearance margin.",
+      "regression_evidence": "The recaptured entry remains collision-clear with 0.78 target visibility and presents a legible market alley."
+    }
+  ],
+  "structural_evidence": {
+    "parcel_count": 14,
+    "connected_building_stack_count": 14,
+    "served_entrance_count": 14,
+    "aligned_stair_count": 14,
+    "stair_endpoint_gap_count": 0,
+    "visually_short_parcel_count": 0,
+    "unsupported_platform_count": 0,
+    "visual_envelope_conflict_count": 0,
+    "public_air_occupied_overlap_count": 0,
+    "infill_platform_patch_count": 20,
+    "infill_lightwell_count": 2,
+    "max_uncovered_core_component_size": 1,
+    "composed_walk_enclosure_ratio": 0.862068965517241
+  }
+}

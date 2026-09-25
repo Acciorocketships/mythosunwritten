@@ -1,0 +1,18 @@
+{
+  "scripts/camera/CameraVisibilityBubble.gd": "88a56cccc50d4176ac6d7afabf386fcba46cb38c201de7872ab6ae962c7e48b7",
+  "scripts/camera/VisibilityGroundDepth.gd": "4cbb3c8c721b7d805415d3ea1da1f43339d3f83f5e9b5db7de87bd5b0efdc9e8",
+  "scripts/camera/ground_receiver_depth.gdshader": "113976ee56f62bb189f0a3add70094b321931179a8542e07e5019dff1275b7da",
+  "scripts/camera/visibility_bubble.gdshaderinc": "26b212d9188e8dfde4d4328748f75db072cf51c95eae153903ed0c899c5c889b",
+  "scripts/terrain/environment/EnvironmentCommitQueue.gd": "bf634a016a336b74d2b32911e6d11600f8765fd73486ce3bd1a7cf38bb743d0e",
+  "scripts/terrain/environment/EnvironmentRenderCache.gd": "551a2f5f6dd226fcef8c4bbeb50315556083c5b4a5c187d6d53addc11b57dc67",
+  "scripts/terrain/features/FeatureCommitQueue.gd": "287349f8b46e6bdfd1507ae2d2eafc948ff68dbbee5ec0a36477f44fe0759cec",
+  "scripts/terrain/field/CliffDressing.gd": "6c60716d91280833a41147f293d1c84813ebc27e065476f5a2bdaf0316bbac5b",
+  "scripts/terrain/field/TerrainChunkMesher.gd": "caf2c57c4dee071e3eeaf969688d043981c6ca458d5adb37c770604d53e30aa9",
+  "terrain/grass/grass.gdshader": "ad124e994a61a6e022b5bb27830e6237aed6447557caa0c6a0766a84b1ab5d0e",
+  "terrain/materials/ground_style.gdshaderinc": "5679dda30c2db47ae679e10b78a037181c13a71afb52de726ae1e95e831ecb39",
+  "tests/harness/september12_context_motion.gd": "f0fb8837a237aa2ecc34bd9ec821f07f10896a183967b73bb4153ceaac0a7efc",
+  "tests/harness/september12_ground_qa.gd": "a27a2755a9cc0a82afaef25c545525fdd2a49af946fca0ee5cf84f8e78b0b3c9",
+  "tests/harness/september12_visibility_diff.py": "0e3a82f2c9a6984a85b8a7797f989e9519ab9651ceeb3654176bc71fb62f34f9",
+  "tests/test_september11_visibility_render.gd": "9e9ca3ed3cdd349c61f68023ffed364622be2dc1f11eedf49ace975f3ae8f1c2",
+  "tests/test_september12_ground_visibility.gd": "26733c17e76061f896f426873747144f791483eb2f9bb0aed66bb36129aada92"
+}

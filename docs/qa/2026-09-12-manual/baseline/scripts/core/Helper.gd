@@ -1,0 +1,405 @@
+class_name Helper
+extends RefCounted
+
+const SNAP_POS: float = 0.01
+const SOCKET_ROTATION_90: Dictionary = {
+	"frontright": "backright",
+	"backright": "backleft",
+	"backleft": "frontleft",
+	"frontleft": "frontright",
+	"front": "right",
+	"right": "back",
+	"back": "left",
+	"left": "front"
+}
+
+# Node3D -> transform relative to a given root (no scene tree needed)
+static func to_root_tf(n: Node3D, root: Node3D) -> Transform3D:
+	var tf := n.transform
+	var p := n.get_parent()
+	while p != null and p != root:
+		if p is Node3D:
+			tf = (p as Node3D).transform * tf
+		p = p.get_parent()
+	return tf
+
+
+# Socket world position given a piece/world transform and socket node
+static func socket_world_pos(piece_tf: Transform3D, socket_node: Node3D, root: Node3D) -> Vector3:
+	return snap_vec3((piece_tf * to_root_tf(socket_node, root)).origin)
+
+static func snap_vec3(v: Vector3, snap: float = SNAP_POS) -> Vector3:
+	var new_pos = Vector3(
+		snappedf(v.x, snap),
+		snappedf(v.y, snap),
+		snappedf(v.z, snap)
+	)
+	return new_pos
+
+static func snap_transform_origin(tf: Transform3D, snap: float = SNAP_POS) -> Transform3D:
+	var out := tf
+	out.origin = snap_vec3(tf.origin, snap)
+	return out
+
+
+# Deterministic per-position pseudo-random value in [0, 1). The same world
+# position (snapped to a 0.5 grid — socket y positions sit on half-units)
+# always yields the same value for a given seed, so probability rolls keyed on
+# position survive piece retiles/replaces without granting fresh rolls.
+static func position_hash01(pos: Vector3, world_seed: int) -> float:
+	var key: Vector3i = Vector3i(roundi(pos.x * 2.0), roundi(pos.y * 2.0), roundi(pos.z * 2.0))
+	return _hash01(_mix64(world_seed ^ _mix64(key.x ^ _mix64(key.y ^ _mix64(key.z)))))
+
+
+# Smooth value-noise density field over XZ in [0, 1] with ~MACRO_SCALE-unit
+# features. Used to modulate fill probabilities so terrain features cluster
+# into coherent regions (mountain ranges, groves, open meadows) instead of
+# being uniformly scattered. Deterministic per seed — infinite-terrain safe.
+# The field fades to 0 within SPAWN_CLEAR_RADIUS of the world origin so the
+# player always spawns in an open meadow rather than walled in by a mountain.
+const MACRO_SCALE: float = 144.0
+const SPAWN_CLEAR_RADIUS: float = 60.0
+const SPAWN_CLEAR_FADE: float = 120.0
+
+static func macro_density01(pos: Vector3, world_seed: int) -> float:
+	# Two octaves: large cores (mountain ranges) plus smaller secondary
+	# features between them, so any render-range-sized area reliably contains
+	# some features regardless of where the big cores landed for this seed.
+	var value: float = (
+		0.65 * _value_noise01(pos, world_seed, MACRO_SCALE)
+		+ 0.35 * _value_noise01(pos, world_seed + 1, MACRO_SCALE * 0.4)
+	)
+	var origin_falloff: float = clampf(
+		(Vector2(pos.x, pos.z).length() - SPAWN_CLEAR_RADIUS) / SPAWN_CLEAR_FADE, 0.0, 1.0
+	)
+	return value * origin_falloff
+
+
+# Nearby continuous samples reuse the same four immutable lattice corners.
+# The key retains the full 64-bit seed. A fixed FIFO ring bounds storage and
+# evicts in O(1); the shared main/worker cache never changes sampling results.
+const _NOISE_CORNER_CACHE_LIMIT := 16384
+static var _noise_corner_cache: Dictionary = {}
+static var _noise_corner_keys: Array = []
+static var _noise_corner_cursor := 0
+static var _noise_corner_mutex := Mutex.new()
+
+static func _value_noise_corners(world_seed: int, cx: int, cz: int) -> PackedFloat64Array:
+	var key := [world_seed,cx,cz]
+	_noise_corner_mutex.lock()
+	var cached = _noise_corner_cache.get(key)
+	if cached != null:
+		_noise_corner_mutex.unlock()
+		return cached
+	var corners := PackedFloat64Array([_cell_hash01(world_seed,cx,cz),
+		_cell_hash01(world_seed,cx+1,cz),_cell_hash01(world_seed,cx,cz+1),
+		_cell_hash01(world_seed,cx+1,cz+1)])
+	if _noise_corner_keys.is_empty(): _noise_corner_keys.resize(_NOISE_CORNER_CACHE_LIMIT)
+	var old_key = _noise_corner_keys[_noise_corner_cursor]
+	if old_key != null: _noise_corner_cache.erase(old_key)
+	_noise_corner_keys[_noise_corner_cursor] = key
+	_noise_corner_cursor = (_noise_corner_cursor+1)%_NOISE_CORNER_CACHE_LIMIT
+	_noise_corner_cache[key] = corners
+	_noise_corner_mutex.unlock()
+	return corners
+
+
+static func _value_noise01(pos: Vector3, world_seed: int, scale: float) -> float:
+	var x: float = pos.x / scale
+	var z: float = pos.z / scale
+	var cx: int = floori(x)
+	var cz: int = floori(z)
+	var fx: float = smoothstep(0.0, 1.0, x - float(cx))
+	var fz: float = smoothstep(0.0, 1.0, z - float(cz))
+	var corners := _value_noise_corners(world_seed,cx,cz)
+	return lerpf(lerpf(corners[0], corners[1], fx), lerpf(corners[2], corners[3], fx), fz)
+
+
+# ------------------------------------------------------------
+# Biome fields
+# ------------------------------------------------------------
+# Two independent low-frequency value noises define continuous biomes:
+#   forest01 — woodland cores (dense trees, lush undergrowth)
+#   rocky01  — rocky highlands (rocks, hills, extra cliff seeding)
+# Where both are low the terrain reads as open meadow (grass-dominated).
+# Continuous fields (not discrete IDs) give smooth biome borders for free and
+# stay deterministic per seed — infinite-terrain safe. The smoothstep remaps
+# carve distinct cores out of the noise so each biome covers a meaningful
+# share of the map instead of everything being a 50/50 blend.
+const BIOME_FOREST_SCALE: float = 480.0
+# Broad rocky provinces now share the walking-scale biome transition width.
+# Their landforms and river gradients also read the new geological province field.
+const BIOME_ROCKY_SCALE: float = 420.0
+
+static func biome_forest01(pos: Vector3, world_seed: int) -> float:
+	# Lower, narrower ramp => forest cores saturate to 1.0 over more of their
+	# area => denser groves (vs a gradual fade that thins trees everywhere).
+	return smoothstep(0.42, 0.64, _value_noise01(pos, world_seed + 31, BIOME_FOREST_SCALE))
+
+
+static func biome_rocky01(pos: Vector3, world_seed: int) -> float:
+	return smoothstep(0.5, 0.8, _value_noise01(pos, world_seed + 37, BIOME_ROCKY_SCALE))
+
+
+# Render-only systems (atmosphere director, chunk FX) disable themselves headless.
+static func is_headless() -> bool:
+	return DisplayServer.get_name() == "headless"
+
+
+const BIOME_MOISTURE_SCALE: float = 575.0
+const BIOME_BLOSSOM_SCALE: float = 650.0
+const BIOME_MARSH_SCALE: float = 750.0
+# Canonical biome order, consumed by BiomeRegistry for lookups/UI.
+const BIOME_NAMES: Array[StringName] = [
+	&"meadow", &"deep_forest", &"highland", &"blossom_grove", &"twilight_marsh", &"amber_heath", &"jade_wetlands",
+]
+
+# Moisture/mood axis (master §11.2): wet side boosts marsh; later gates reeds
+# and decorative meadow ponds.
+static func biome_moisture01(pos: Vector3, world_seed: int) -> float:
+	return _value_noise01(pos, world_seed + 41, BIOME_MOISTURE_SCALE)
+
+# Sparse pocket fields: high smoothstep thresholds carve isolated cores.
+static func biome_blossom_pocket01(pos: Vector3, world_seed: int) -> float:
+	return smoothstep(0.66, 0.88, _value_noise01(pos, world_seed + 43, BIOME_BLOSSOM_SCALE))
+
+static func biome_marsh_pocket01(pos: Vector3, world_seed: int) -> float:
+	var n := _value_noise01(pos, world_seed + 47, BIOME_MARSH_SCALE)
+	return smoothstep(0.74, 0.96, n + 0.15 * biome_moisture01(pos, world_seed))
+
+# Seven normalized biome weights (legacy function name retained for callers). Pockets claim their share first (their cores
+# saturate and suppress the rest); forest/rocky split what remains; meadow is
+# the leftover baseline — ≥ 0 by construction, so weights always sum to 1.
+static func biome_weights5(pos: Vector3, world_seed: int) -> Dictionary[StringName, float]:
+	var marsh := biome_marsh_pocket01(pos, world_seed)
+	var blossom := biome_blossom_pocket01(pos, world_seed) * (1.0 - marsh)
+	var remaining := 1.0 - marsh - blossom
+	var amber := smoothstep(0.58, 0.86, _value_noise01(pos, world_seed + 53, 720.0)) * remaining
+	var jade := smoothstep(0.64, 0.88, biome_moisture01(pos, world_seed)) * (remaining - amber)
+	var rest := remaining - amber - jade
+	var f01 := biome_forest01(pos, world_seed)
+	var r01 := biome_rocky01(pos, world_seed)
+	var forest := f01 * rest
+	var highland := r01 * (1.0 - f01) * rest
+	var meadow := rest - forest - highland
+	var spawn_blend := smoothstep(100.0, 280.0, Vector2(pos.x, pos.z).length())
+	marsh *= spawn_blend
+	blossom *= spawn_blend
+	forest *= spawn_blend
+	highland *= spawn_blend
+	amber *= spawn_blend
+	jade *= spawn_blend
+	meadow = 1.0 - (1.0 - meadow) * spawn_blend
+	return {
+		&"meadow": meadow, &"deep_forest": forest, &"highland": highland,
+		&"blossom_grove": blossom, &"twilight_marsh": marsh,
+		&"amber_heath": amber, &"jade_wetlands": jade,
+	}
+
+# Dominant biome is for labels only; scenery and atmosphere use the full blend.
+static func biome_at(pos: Vector3, world_seed: int) -> StringName:
+	var w := biome_weights5(pos, world_seed)
+	var best: StringName = &"meadow"
+	var best_w := -1.0
+	for k: StringName in w:
+		if w[k] > best_w:
+			best_w = w[k]
+			best = k
+	return best
+
+
+static func _cell_hash01(world_seed: int, cx: int, cz: int) -> float:
+	return _hash01(_mix64(world_seed ^ _mix64(cx ^ _mix64(cz))))
+
+
+# splitmix64-style avalanche mix. Godot's built-in hash() of small integer
+# tuples is correlated along diagonals, which shows up as straight stripes of
+# placements across the map; this mixing removes that structure.
+static func _mix64(value: int) -> int:
+	var x: int = value + -7046029254386353131  # 0x9E3779B97F4A7C15
+	x = (x ^ (x >> 30)) * -4658895280553007687  # 0xBF58476D1CE4E5B9
+	x = (x ^ (x >> 27)) * -7723592293110705685  # 0x94D049BB133111EB
+	return x ^ (x >> 31)
+
+
+static func _hash01(h: int) -> float:
+	return float(h & 0x7FFFFFFF) / float(0x80000000)
+
+
+# ------------------------------------------------------------
+# Mesh AABB helpers
+# ------------------------------------------------------------
+
+static func merge_aabb(a: AABB, b: AABB) -> AABB:
+	# Union of two AABBs (min/max). We avoid relying on AABB.merge() semantics.
+	var a_min: Vector3 = a.position
+	var a_max: Vector3 = a.position + a.size
+	var b_min: Vector3 = b.position
+	var b_max: Vector3 = b.position + b.size
+
+	var mn: Vector3 = Vector3(
+		min(a_min.x, b_min.x),
+		min(a_min.y, b_min.y),
+		min(a_min.z, b_min.z)
+	)
+	var mx: Vector3 = Vector3(
+		max(a_max.x, b_max.x),
+		max(a_max.y, b_max.y),
+		max(a_max.z, b_max.z)
+	)
+	return AABB(mn, mx - mn)
+
+
+static func compute_local_mesh_aabb(root_node: Node3D) -> AABB:
+	# Collect the root-space AABB of every CollisionShape3D under this root,
+	# then merge them into one local-space bounds.
+	if root_node == null:
+		return AABB()
+
+	var have_any: bool = false
+	var merged: AABB = AABB()
+
+	var to_visit: Array[Node] = [root_node]
+	while not to_visit.is_empty():
+		var node: Node = to_visit.pop_back()
+		for child in node.get_children():
+			to_visit.append(child)
+
+		var collision_shape: CollisionShape3D = node as CollisionShape3D
+		# everything that isn't a collision shape will be skipped
+		if collision_shape == null:
+			continue
+
+		# Try to get debug mesh from collision shape
+		var debug_mesh: Mesh = collision_shape.shape.get_debug_mesh()
+		if debug_mesh == null:
+			continue
+
+		var tf_to_root: Transform3D = to_root_tf(collision_shape, root_node)
+		var mesh_aabb_in_root: AABB = tf_to_root * debug_mesh.get_aabb()
+		if not have_any:
+			merged = mesh_aabb_in_root
+			have_any = true
+		else:
+			merged = merge_aabb(merged, mesh_aabb_in_root)
+
+	# If no collision shapes found, fall back to visual meshes
+	if not have_any:
+		to_visit = [root_node]
+		while not to_visit.is_empty():
+			var node: Node = to_visit.pop_back()
+			for child in node.get_children():
+				to_visit.append(child)
+
+			var mesh_instance: MeshInstance3D = node as MeshInstance3D
+			if mesh_instance == null or mesh_instance.mesh == null:
+				continue
+
+			var tf_to_root: Transform3D = to_root_tf(mesh_instance, root_node)
+			var mesh_aabb_in_root: AABB = tf_to_root * mesh_instance.mesh.get_aabb()
+			if not have_any:
+				merged = mesh_aabb_in_root
+				have_any = true
+			else:
+				merged = merge_aabb(merged, mesh_aabb_in_root)
+
+	if not have_any:
+		push_error("[Helper.compute_local_mesh_aabb] No CollisionShape3D or MeshInstance3D with valid mesh found to compute AABB.")
+		return AABB()
+	return merged
+
+
+static func compute_scene_mesh_aabb(scene: PackedScene) -> AABB:
+	if scene == null:
+		return AABB()
+	if not scene.can_instantiate():
+		return AABB()
+	var root: Node = scene.instantiate()
+	var root3: Node3D = root as Node3D
+	if root3 == null:
+		root.free()
+		return AABB()
+
+	var out: AABB = compute_local_mesh_aabb(root3)
+	root.free()
+	return out
+
+
+# ------------------------------------------------------------
+# Collision helpers
+# ------------------------------------------------------------
+
+static func scene_has_collision(scene: PackedScene) -> bool:
+	if scene == null:
+		return false
+	if not scene.can_instantiate():
+		return false
+	var root: Node = scene.instantiate()
+	if root == null:
+		return false
+	var out: bool = node_has_collision(root)
+	root.free()
+	return out
+
+
+static func node_has_collision(root: Node) -> bool:
+	if root == null:
+		return false
+	var to_visit: Array[Node] = [root]
+	while not to_visit.is_empty():
+		var node: Node = to_visit.pop_back()
+		for child in node.get_children():
+			to_visit.append(child)
+		# Be permissive: support both collision nodes used in Godot 4.
+		if node is CollisionShape3D or node is CollisionPolygon3D:
+			return true
+	return false
+
+
+# ------------------------------------------------------------
+# Terrain generation utilities
+# ------------------------------------------------------------
+
+static func get_attachment_socket_name(expansion_socket_name: String) -> String:
+	# Determine which socket on the new piece should attach based on the expansion socket
+	if "top" in expansion_socket_name:
+		return "bottom"
+
+	# Map cardinal directions to their opposites
+	match expansion_socket_name:
+		"front":
+			return "back"
+		"back":
+			return "front"
+		"left":
+			return "right"
+		"right":
+			return "left"
+		"frontright":
+			return "backleft"
+		"backright":
+			return "frontleft"
+		"backleft":
+			return "frontright"
+		"frontleft":
+			return "backright"
+		"bottom":
+			return "topcenter"
+		_:
+			print("[Helper.get_attachment_socket_name] Unknown expansion socket name: ", expansion_socket_name)
+			return "bottom"
+
+
+static func rotate_socket_name(socket_name: String) -> String:
+	return rotate_name_with_map(socket_name, SOCKET_ROTATION_90)
+
+
+static func rotate_name_with_map(socket_name: String, rotation_map: Dictionary) -> String:
+	var rotated_name: String = socket_name
+	var sorted_keys: Array = rotation_map.keys()
+	sorted_keys.sort_custom(func(a, b): return String(a).length() > String(b).length())
+	for original in sorted_keys:
+		if original in rotated_name:
+			rotated_name = rotated_name.replace(original, rotation_map.get(original, original))
+			break
+	return rotated_name

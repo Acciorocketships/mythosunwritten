@@ -1,0 +1,20 @@
+{
+  "28_heath_0": {
+    "no_receiver_pixels": 215835,
+    "changed_no_receiver": 30094,
+    "changed_no_receiver_over_20": 0,
+    "no_receiver_max_difference": 8
+  },
+  "28_heath_-8": {
+    "no_receiver_pixels": 210166,
+    "changed_no_receiver": 26334,
+    "changed_no_receiver_over_20": 0,
+    "no_receiver_max_difference": 5
+  },
+  "28_heath_8": {
+    "no_receiver_pixels": 222952,
+    "changed_no_receiver": 36978,
+    "changed_no_receiver_over_20": 0,
+    "no_receiver_max_difference": 5
+  }
+}

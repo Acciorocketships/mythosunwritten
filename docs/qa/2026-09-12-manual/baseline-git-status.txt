@@ -1,0 +1,437 @@
+ M .gitignore
+ M AGENTS.md
+ M scripts/camera/CameraVisibilityBubble.gd
+ M scripts/camera/camera.gd
+ M scripts/camera/visibility_bubble.gdshaderinc
+ M scripts/controllers/player_controller.gd
+ M scripts/terrain/TerrainWorldTuning.gd
+ M scripts/terrain/biome/BiomeChunkFx.gd
+ M scripts/terrain/biome/SpiritOrb.gd
+ M scripts/terrain/diagnostics/TerrainStreamingTelemetry.gd
+ M scripts/terrain/features/PathPlan.gd
+ M scripts/terrain/features/WorldFeaturePlan.gd
+ M scripts/terrain/features/villages/VillageFrontageDomain.gd
+ M scripts/terrain/features/villages/VillageMassingProgram.gd
+ M scripts/terrain/features/villages/VillageOutskirtsConstruction.gd
+ M scripts/terrain/features/villages/VillageOutskirtsPlan.gd
+ M scripts/terrain/features/villages/VillageOutskirtsProgram.gd
+ M scripts/terrain/features/villages/VillagePlan.gd
+ M scripts/terrain/features/villages/VillageProgram.gd
+ M scripts/terrain/features/villages/VillageUrbanFabricPlan.gd
+ M scripts/terrain/features/villages/VillageWarrenFabricSolver.gd
+ M scripts/terrain/features/villages/fabric/FabricContinuousRoofPlan.gd
+ M scripts/terrain/features/villages/fabric/FabricModuleProgram.gd
+ M scripts/terrain/features/villages/fabric/PublicRealmSurfaceSolver.gd
+ M scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd
+ M scripts/terrain/features/villages/fabric/SettlementFabricPlan.gd
+ M scripts/terrain/features/villages/fabric/SettlementFabricProgram.gd
+ M scripts/terrain/features/villages/fabric/WarrenMassif.gd
+ M scripts/terrain/features/villages/fabric/WarrenMassifBuilder.gd
+ M scripts/terrain/features/villages/fabric/WarrenMazeBlockPartitioner.gd
+ M scripts/terrain/features/villages/fabric/WarrenMazeCarver.gd
+ M scripts/terrain/features/villages/fabric/WarrenMazeSourcePlan.gd
+ M scripts/terrain/features/villages/fabric/WarrenMazeVolumeAdapter.gd
+ M scripts/terrain/features/villages/fabric/WarrenParcelPlan.gd
+ M scripts/terrain/features/villages/fabric/WarrenPassageLatticeRules.gd
+ M scripts/terrain/features/villages/fabric/WarrenPlotPlanner.gd
+ M scripts/terrain/features/villages/fabric/WarrenPlotReservations.gd
+ M scripts/terrain/features/villages/fabric/WarrenRoomCompositionPlanner.gd
+ M scripts/terrain/features/villages/fabric/WarrenSpatialFabricCompiler.gd
+ M scripts/terrain/features/villages/fabric/WarrenSpatialFeatureSolver.gd
+ M scripts/terrain/features/villages/fabric/WarrenSpatialPlan.gd
+ M scripts/terrain/features/villages/fabric/WarrenTransitionSurfaceBuilder.gd
+ M scripts/terrain/features/villages/fabric/WarrenVillageScaleProfile.gd
+ M scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd
+ M scripts/terrain/field/FieldTerrainStreamer.gd
+ M scripts/terrain/field/TerrainChunkMesher.gd
+ M scripts/terrain/heightfield/HeightfieldPlan.gd
+ M scripts/terrain/heightfield/LandformField.gd
+ M scripts/terrain/water/PondStamp.gd
+ M scripts/terrain/water/RiverTrace.gd
+ M scripts/terrain/water/WaterField.gd
+ M scripts/terrain/water/WaterPlan.gd
+ M scripts/terrain/water/WaterSkin.gd
+ M terrain/environment/catalog/descriptors/lpfv_fabric_prop_bench_01.tres
+ M terrain/environment/catalog/descriptors/lpfv_fabric_prop_bench_02.tres
+ M terrain/environment/catalog/descriptors/lpfv_fabric_roof_compact_orange_03_rear_end_tight.tres
+ M terrain/environment/catalog/descriptors/lpfv_fabric_roof_compact_orange_03_rear_tight.tres
+ M terrain/environment/catalog/descriptors/lpfv_fabric_roof_compact_orange_03_run_start_tight_flush.tres
+ M terrain/environment/catalog/descriptors/lpfv_fabric_roof_compact_orange_06_front_end_tight.tres
+ M terrain/environment/catalog/descriptors/lpfv_fabric_roof_compact_orange_06_front_tight.tres
+ M terrain/environment/catalog/descriptors/lpfv_fabric_roof_compact_slate_03_front_end_tight.tres
+ M terrain/environment/catalog/descriptors/lpfv_fabric_roof_compact_slate_03_front_tight.tres
+ M terrain/environment/catalog/descriptors/lpfv_fabric_roof_compact_slate_03_run_start_tight_flush.tres
+ M terrain/environment/catalog/descriptors/lpfv_fabric_roof_compact_slate_06_rear_end_tight.tres
+ M terrain/environment/catalog/descriptors/lpfv_fabric_roof_compact_slate_06_rear_tight.tres
+ M terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_door_closed_001.tres
+ M terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_door_closed_001_course_open.tres
+ M terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_door_closed_001_mirror_x.tres
+ M terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_door_closed_001_mirror_x_course_open.tres
+ M terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_door_closed_001_mirror_x_miter1.tres
+ M terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_door_closed_001_mirror_x_miter2.tres
+ M terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_door_closed_001_mirror_x_miter3.tres
+ M terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_door_closed_001_miter1.tres
+ M terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_door_closed_001_miter2.tres
+ M terrain/environment/catalog/descriptors/sfv_fabric_wall_wood_door_closed_001_miter3.tres
+ M terrain/environment/catalog/index.tres
+ M terrain/environment/collisions/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_mirror_x_miter1_piece_00.res
+ M terrain/environment/collisions/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_mirror_x_miter2_piece_00.res
+ M terrain/environment/collisions/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_mirror_x_miter3_piece_00.res
+ M terrain/environment/collisions/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_mirror_x_piece_00.res
+ M terrain/environment/collisions/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_miter1_piece_00.res
+ M terrain/environment/collisions/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_miter2_piece_00.res
+ M terrain/environment/collisions/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_miter3_piece_00.res
+ M terrain/environment/collisions/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_piece_00.res
+ M terrain/environment/collisions/fantasy_village_wall_interfaces/sfv_fabric_wall_wood_door_closed_001_course_open_piece_00.res
+ M terrain/environment/collisions/fantasy_village_wall_interfaces/sfv_fabric_wall_wood_door_closed_001_mirror_x_course_open_piece_00.res
+ M terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_rear_end_tight_piece_00.res
+ M terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_rear_tight_piece_00.res
+ M terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_end_tight_flush_piece_00.res
+ M terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_start_tight_flush_piece_00.res
+ M terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_06_front_end_tight_piece_00.res
+ M terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_06_front_tight_piece_00.res
+ M terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_front_end_tight_piece_00.res
+ M terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_front_tight_piece_00.res
+ M terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_end_tight_flush_piece_00.res
+ M terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_start_tight_flush_piece_00.res
+ M terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06_rear_end_tight_piece_00.res
+ M terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06_rear_tight_piece_00.res
+ M terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_mirror_x_miter1_piece_00.res
+ M terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_mirror_x_miter2_piece_00.res
+ M terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_mirror_x_miter3_piece_00.res
+ M terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_mirror_x_piece_00.res
+ M terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_miter1_piece_00.res
+ M terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_miter2_piece_00.res
+ M terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_miter3_piece_00.res
+ M terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_piece_00.res
+ M terrain/environment/meshes/fantasy_village_wall_interfaces/sfv_fabric_wall_wood_door_closed_001_course_open_piece_00.res
+ M terrain/environment/meshes/fantasy_village_wall_interfaces/sfv_fabric_wall_wood_door_closed_001_mirror_x_course_open_piece_00.res
+ M terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_rear_end_tight_piece_00.res
+ M terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_rear_tight_piece_00.res
+ M terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_end_tight_flush_piece_00.res
+ M terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_start_tight_flush_piece_00.res
+ M terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_06_front_end_tight_piece_00.res
+ M terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_06_front_tight_piece_00.res
+ M terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_front_end_tight_piece_00.res
+ M terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_front_tight_piece_00.res
+ M terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_end_tight_flush_piece_00.res
+ M terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_start_tight_flush_piece_00.res
+ M terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06_rear_end_tight_piece_00.res
+ M terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06_rear_tight_piece_00.res
+ M terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bench_01.tres
+ M terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bench_02.tres
+ M terrain/materials/spirit_orb.gdshader
+ M terrain/water/water_unified.gdshader
+ M tests/fixtures/legacy_room_repair.gd
+ M tests/harness/grass_streaming_qa.gd
+ M tests/harness/roof_junction_review.gd
+ M tests/harness/september9_lag_probe.gd
+ M tests/harness/travel_profile.gd
+ M tests/harness/village_reported_qa.gd
+ M tests/harness/warren_maze_mode_sweep.gd
+ M tests/harness/warren_maze_stage_probe.gd
+ M tests/test_field_streamer.gd
+ M tests/test_september8_night_rails.gd
+ M tests/test_september9_door_return_cap.gd
+ M tests/test_september9_roof_end.gd
+ M tests/test_september9_spirit_orbs.gd
+ M tests/test_september9_water_containment.gd
+ M tests/test_settlement_fabric.gd
+ M tests/test_streaming_queue.gd
+ M tests/test_village_outskirts_construction.gd
+ M tests/test_village_turf_seams.gd
+ M tests/test_visibility_bubble.gd
+ M tests/test_visibility_projection.gd
+ M tests/test_warren_architectural_districts.gd
+ M tests/test_warren_maze_composition.gd
+ M tests/test_warren_outcrops.gd
+ M tests/test_warren_village_scale_profile.gd
+ M tests/test_water_plan.gd
+ M tools/environment_bake/EnvironmentBakeGeometry.gd
+ M tools/environment_bake/environment_bake.gd
+ M tools/environment_bake/manifests/fantasy_village_fabric.json
+ M tools/environment_bake/manifests/fantasy_village_wall_interfaces.json
+ M tools/environment_bake/manifests/low_poly_fantasy_village_fabric.json
+ M tools/environment_bake/provenance/fantasy_village_fabric.json
+ M tools/environment_bake/provenance/fantasy_village_wall_interfaces.json
+ M tools/environment_bake/provenance/low_poly_fantasy_village_fabric.json
+?? docs/qa/.gdignore
+?? docs/qa/2026-09-10-manual/
+?? docs/qa/2026-09-11-manual/
+?? docs/qa/2026-09-12-manual/
+?? scripts/camera/CameraMouseView.gd
+?? scripts/camera/CameraMovementFollow.gd
+?? scripts/terrain/biome/SmallSpiritOrbs.gd
+?? scripts/terrain/features/villages/VillageHamletConstruction.gd
+?? scripts/terrain/features/villages/VillageWarrenRoadConnections.gd
+?? scripts/terrain/field/CliffTerraces.gd
+?? scripts/terrain/field/NaturalArches.gd
+?? scripts/terrain/grass/GrassSamplingContext.gd
+?? scripts/terrain/grass/GrassWorkQueue.gd
+?? terrain/environment/catalog/descriptors/kaykit_terrace_2x2x2.tres
+?? terrain/environment/catalog/descriptors/kaykit_terrace_2x2x4.tres
+?? terrain/environment/catalog/descriptors/kaykit_terrace_2x2x8.tres
+?? terrain/environment/catalog/descriptors/kaykit_terrace_4x2x2.tres
+?? terrain/environment/catalog/descriptors/kaykit_terrace_4x2x4.tres
+?? terrain/environment/catalog/descriptors/kaykit_terrace_4x2x8.tres
+?? terrain/environment/catalog/descriptors/kaykit_terrace_4x4x2.tres
+?? terrain/environment/catalog/descriptors/kaykit_terrace_4x4x4.tres
+?? terrain/environment/catalog/descriptors/kaykit_terrace_8x4x4.tres
+?? terrain/environment/catalog/descriptors/sfv_fabric_roof_valley_negative_s_blue_002.tres
+?? terrain/environment/catalog/descriptors/sfv_fabric_roof_valley_negative_s_orange_002.tres
+?? terrain/environment/catalog/descriptors/sfv_fabric_roof_valley_positive_s_blue_002.tres
+?? terrain/environment/catalog/descriptors/sfv_fabric_roof_valley_positive_s_orange_002.tres
+?? terrain/environment/collisions/fantasy_village_roof_valleys/
+?? terrain/environment/collisions/kaykit_terraces/
+?? terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bench_01_piece_00.res
+?? terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bench_02_piece_00.res
+?? terrain/environment/materials/fantasy_village_roof_valleys/
+?? terrain/environment/materials/kaykit_terraces/
+?? terrain/environment/meshes/fantasy_village_roof_valleys/
+?? terrain/environment/meshes/kaykit_terraces/
+?? terrain/environment/textures/fantasy_village_roof_valleys/
+?? terrain/environment/textures/kaykit_terraces/
+?? terrain/environment/visuals/fantasy_village_roof_valleys/
+?? terrain/environment/visuals/kaykit_terraces/
+?? terrain/materials/spirit_orb_core.gdshader
+?? tests/fixtures/September10ExhaustivePathContext.gd
+?? tests/fixtures/September10SurfaceReconciliationReference.gd
+?? tests/fixtures/September10WaterFields.gd
+?? tests/fixtures/september10-ceiling-source.txt
+?? tests/fixtures/september10-prefab-base-source.txt
+?? tests/fixtures/september10-skywalk-source.txt
+?? tests/fixtures/september10-stone-source.txt
+?? tests/fixtures/september10-wall-source.txt
+?? tests/fixtures/september10_orb_before.gdshader
+?? tests/fixtures/september10_rail_builder_before.gd
+?? tests/fixtures/september10_roofability_reference.gd
+?? tests/fixtures/september11-floating-source.txt
+?? tests/fixtures/september11-unified-roof-source.txt
+?? tests/fixtures/september11/
+?? tests/harness/september10_bench_walk.gd
+?? tests/harness/september10_bench_walk.tscn
+?? tests/harness/september10_ceiling_isolated.gd
+?? tests/harness/september10_ceiling_probe.gd
+?? tests/harness/september10_ceiling_qa.gd
+?? tests/harness/september10_ceiling_qa.tscn
+?? tests/harness/september10_ceiling_skin_probe.gd
+?? tests/harness/september10_city_compare.py
+?? tests/harness/september10_city_compile_probe.gd
+?? tests/harness/september10_city_complete_qa.gd
+?? tests/harness/september10_city_complete_qa.tscn
+?? tests/harness/september10_city_final_compare.py
+?? tests/harness/september10_city_form_qa.gd
+?? tests/harness/september10_city_form_qa.tscn
+?? tests/harness/september10_city_frontage_probe.gd
+?? tests/harness/september10_city_source_probe.gd
+?? tests/harness/september10_door_section.gd
+?? tests/harness/september10_grass_compare.py
+?? tests/harness/september10_grass_latency.gd
+?? tests/harness/september10_grass_latency.tscn
+?? tests/harness/september10_grass_long_walk.gd
+?? tests/harness/september10_grass_long_walk.tscn
+?? tests/harness/september10_guard_isolated.gd
+?? tests/harness/september10_guard_probe.gd
+?? tests/harness/september10_hamlet_asset_probe.gd
+?? tests/harness/september10_hamlet_qa.gd
+?? tests/harness/september10_hamlet_qa.tscn
+?? tests/harness/september10_hamlet_walk.gd
+?? tests/harness/september10_hamlet_walk.tscn
+?? tests/harness/september10_orb_fixture.gd
+?? tests/harness/september10_orb_fixture.tscn
+?? tests/harness/september10_orb_performance.gd
+?? tests/harness/september10_orb_performance.tscn
+?? tests/harness/september10_orb_replay.gd
+?? tests/harness/september10_orb_replay.tscn
+?? tests/harness/september10_overhang_isolated.gd
+?? tests/harness/september10_overhang_probe.gd
+?? tests/harness/september10_path_context_comparison.gd
+?? tests/harness/september10_pixel_diff.py
+?? tests/harness/september10_prefab_base_isolated.gd
+?? tests/harness/september10_prefab_base_probe.gd
+?? tests/harness/september10_prefab_clearance.gd
+?? tests/harness/september10_prefab_isolated.gd
+?? tests/harness/september10_prefab_probe.gd
+?? tests/harness/september10_prefab_templates.gd
+?? tests/harness/september10_rail_geometry.gd
+?? tests/harness/september10_rail_isolated.gd
+?? tests/harness/september10_rail_legacy_probe.gd
+?? tests/harness/september10_rail_qa.gd
+?? tests/harness/september10_rail_qa.tscn
+?? tests/harness/september10_reported_qa.gd
+?? tests/harness/september10_reported_qa.tscn
+?? tests/harness/september10_roof_flush_probe.gd
+?? tests/harness/september10_roof_isolated.gd
+?? tests/harness/september10_roof_native_arrays.gd
+?? tests/harness/september10_roof_preservation.gd
+?? tests/harness/september10_roof_probe.gd
+?? tests/harness/september10_roof_sections.gd
+?? tests/harness/september10_roof_valley_probe.gd
+?? tests/harness/september10_skywalk_isolated.gd
+?? tests/harness/september10_skywalk_turf_probe.gd
+?? tests/harness/september10_stone_isolated.gd
+?? tests/harness/september10_stone_probe.gd
+?? tests/harness/september10_stream_compare.py
+?? tests/harness/september10_stream_return_qa.gd
+?? tests/harness/september10_stream_return_qa.tscn
+?? tests/harness/september10_stream_teleports.gd
+?? tests/harness/september10_stream_teleports.tscn
+?? tests/harness/september10_turf_isolated.gd
+?? tests/harness/september10_turf_probe.gd
+?? tests/harness/september10_turf_qa.gd
+?? tests/harness/september10_turf_qa.tscn
+?? tests/harness/september10_wall_isolated.gd
+?? tests/harness/september10_wall_probe.gd
+?? tests/harness/september10_water_field_probe.gd
+?? tests/harness/september10_water_ledge_probe.gd
+?? tests/harness/september10_water_mesh_seam.gd
+?? tests/harness/september10_water_old_chute.gd
+?? tests/harness/september10_water_pixel_probe.gd
+?? tests/harness/september10_water_probe.gd
+?? tests/harness/september10_water_qa.gd
+?? tests/harness/september10_water_qa.tscn
+?? tests/harness/september10_water_relaxation_benchmark.gd
+?? tests/harness/september10_water_rim_probe.gd
+?? tests/harness/september10_water_seams.gd
+?? tests/harness/september10_water_sections.gd
+?? tests/harness/september10_water_shore_scan.gd
+?? tests/harness/september10_water_walk.gd
+?? tests/harness/september10_water_walk.tscn
+?? tests/harness/september10_world_town_probe.gd
+?? tests/harness/september11_alluvial_qa.gd
+?? tests/harness/september11_arch_qa.gd
+?? tests/harness/september11_arch_survey.gd
+?? tests/harness/september11_arch_traversal.gd
+?? tests/harness/september11_arch_world.gd
+?? tests/harness/september11_arch_world.tscn
+?? tests/harness/september11_bar_physical_census.gd
+?? tests/harness/september11_black_gate.py
+?? tests/harness/september11_black_gpu.gd
+?? tests/harness/september11_black_gpu_check.gd
+?? tests/harness/september11_black_qa.gd
+?? tests/harness/september11_black_qa.tscn
+?? tests/harness/september11_black_report.py
+?? tests/harness/september11_bubble_qa.gd
+?? tests/harness/september11_bubble_qa.tscn
+?? tests/harness/september11_cliff_census.gd
+?? tests/harness/september11_cliff_evidence.gd
+?? tests/harness/september11_cliff_qa.gd
+?? tests/harness/september11_cliff_world.gd
+?? tests/harness/september11_controls_qa.gd
+?? tests/harness/september11_controls_qa.tscn
+?? tests/harness/september11_controls_report.py
+?? tests/harness/september11_current_town_world.gd
+?? tests/harness/september11_current_town_world.tscn
+?? tests/harness/september11_delta_world.gd
+?? tests/harness/september11_delta_world.tscn
+?? tests/harness/september11_fall_material_probe.gd
+?? tests/harness/september11_fine_replay.gd
+?? tests/harness/september11_floating_clearance.gd
+?? tests/harness/september11_floating_composition_probe.gd
+?? tests/harness/september11_floating_native.gd
+?? tests/harness/september11_floating_payload.gd
+?? tests/harness/september11_floating_probe.gd
+?? tests/harness/september11_floating_qa.gd
+?? tests/harness/september11_floating_qa.tscn
+?? tests/harness/september11_floating_world_qa.gd
+?? tests/harness/september11_floating_world_qa.tscn
+?? tests/harness/september11_gorge_mesh_survey.gd
+?? tests/harness/september11_lake_ground_probe.gd
+?? tests/harness/september11_lake_physical_census.gd
+?? tests/harness/september11_landform_path_profile.gd
+?? tests/harness/september11_landform_qa.gd
+?? tests/harness/september11_landform_snapshot_views.gd
+?? tests/harness/september11_landform_survey.gd
+?? tests/harness/september11_landform_village_probe.gd
+?? tests/harness/september11_landform_world_records.gd
+?? tests/harness/september11_landmark_survey.gd
+?? tests/harness/september11_movement_qa.gd
+?? tests/harness/september11_movement_qa.tscn
+?? tests/harness/september11_movement_report.py
+?? tests/harness/september11_native_only_clearance.gd
+?? tests/harness/september11_peninsula_connections.gd
+?? tests/harness/september11_prefab_clearance.gd
+?? tests/harness/september11_prefab_details.gd
+?? tests/harness/september11_prefab_inventory.gd
+?? tests/harness/september11_prefab_native.gd
+?? tests/harness/september11_prefab_only_views.gd
+?? tests/harness/september11_prefab_probe.gd
+?? tests/harness/september11_prefab_sites.gd
+?? tests/harness/september11_river_landform_survey.gd
+?? tests/harness/september11_roofless_native.gd
+?? tests/harness/september11_roofless_probe.gd
+?? tests/harness/september11_skywalk_clearance.gd
+?? tests/harness/september11_skywalk_details.gd
+?? tests/harness/september11_skywalk_diagnostic.gd
+?? tests/harness/september11_skywalk_native.gd
+?? tests/harness/september11_skywalk_neighborhood_probe.gd
+?? tests/harness/september11_skywalk_probe.gd
+?? tests/harness/september11_snapshot.gd
+?? tests/harness/september11_source_survey.gd
+?? tests/harness/september11_unified_clearance.gd
+?? tests/harness/september11_unified_followup_probe.gd
+?? tests/harness/september11_unified_native.gd
+?? tests/harness/september11_unified_probe.gd
+?? tests/harness/september11_unified_roof_native.gd
+?? tests/harness/september11_unified_roof_probe.gd
+?? tests/harness/september11_unified_source_experiment.gd
+?? tests/harness/september11_unified_surface_probe.gd
+?? tests/harness/september11_unified_world_overview.gd
+?? tests/harness/september11_unified_world_probe.gd
+?? tests/harness/september11_variety_clearance.gd
+?? tests/harness/september11_variety_details.gd
+?? tests/harness/september11_variety_native.gd
+?? tests/harness/september11_variety_probe.gd
+?? tests/harness/september11_water_feature_world.gd
+?? tests/harness/september11_water_feature_world.tscn
+?? tests/harness/september11_water_landmark_final.gd
+?? tests/harness/september11_water_landmark_views.gd
+?? tests/test_september10_bench_collision.gd
+?? tests/test_september10_ceiling_courses.gd
+?? tests/test_september10_city_form.gd
+?? tests/test_september10_grass_latency.gd
+?? tests/test_september10_grass_sampling.gd
+?? tests/test_september10_hamlets.gd
+?? tests/test_september10_orbs.gd
+?? tests/test_september10_overhang.gd
+?? tests/test_september10_path_decision_work.gd
+?? tests/test_september10_platform_guards.gd
+?? tests/test_september10_prefab_floor.gd
+?? tests/test_september10_rail_shading.gd
+?? tests/test_september10_roof_alignment.gd
+?? tests/test_september10_roof_valley.gd
+?? tests/test_september10_roofability_work.gd
+?? tests/test_september10_skywalk_bearing.gd
+?? tests/test_september10_stream_cancellation.gd
+?? tests/test_september10_turf_depth.gd
+?? tests/test_september10_wall_returns.gd
+?? tests/test_september10_water_relaxation_work.gd
+?? tests/test_september10_water_shore.gd
+?? tests/test_september10_water_surface.gd
+?? tests/test_september11_alluvium.gd
+?? tests/test_september11_architectural_variety.gd
+?? tests/test_september11_bubble_shape.gd
+?? tests/test_september11_camera_roles.gd
+?? tests/test_september11_cliff_terraces.gd
+?? tests/test_september11_floating_support.gd
+?? tests/test_september11_height_dependency.gd
+?? tests/test_september11_lake_land.gd
+?? tests/test_september11_landforms.gd
+?? tests/test_september11_natural_arches.gd
+?? tests/test_september11_prefab_integration.gd
+?? tests/test_september11_prefab_only_settlement.gd
+?? tests/test_september11_retained_earth_support.gd
+?? tests/test_september11_roof_domain.gd
+?? tests/test_september11_roofless_cells.gd
+?? tests/test_september11_room_projection.gd
+?? tests/test_september11_skywalk_integration.gd
+?? tests/test_september11_skywalk_neighborhood.gd
+?? tests/test_september11_unified_city.gd
+?? tests/test_september11_visibility_render.gd
+?? tests/test_september11_visibility_work.gd
+?? tests/test_september11_water_rounding.gd
+?? tests/test_september11_water_trigger_depth.gd
+?? tools/environment_bake/manifests/fantasy_village_roof_valleys.json
+?? tools/environment_bake/manifests/kaykit_terraces.json
+?? tools/environment_bake/provenance/fantasy_village_roof_valleys.json
+?? tools/environment_bake/provenance/kaykit_terraces.json

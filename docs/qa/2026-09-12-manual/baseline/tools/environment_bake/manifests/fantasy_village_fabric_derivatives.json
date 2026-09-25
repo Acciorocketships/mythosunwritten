@@ -1,0 +1,112 @@
+{
+  "pack": "fantasy_village_fabric_derivatives",
+  "license": "Fantasy Village source-pack license",
+  "default_scale": [1.0, 1.0, 1.0],
+  "assets": [
+    {
+      "id": "sfv.fabric.wall.wood.window.roof.001.trimmed",
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_Roof_001.fbx",
+      "merge_pieces": true,
+      "clip_axis": "x",
+      "clip_range": [-1.25, 1.25],
+      "collision_profile": "building_trimesh",
+      "tags": ["bay_roof", "building", "fabric_wall", "trimmed_eave", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 6000,
+      "max_collision_triangles": 6000,
+      "max_surfaces": 3,
+      "max_collision_pieces": 1,
+      "fallback_albedo_textures": {
+        "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
+      }
+    },
+    {
+      "id": "sfv.fabric.wall.wood.window.roof.001.party.left",
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_Roof_001.fbx",
+      "merge_pieces": true,
+      "clip_axis": "x",
+      "clip_range": [-1.61, 0.0],
+      "collision_profile": "building_trimesh",
+      "tags": ["bay_roof", "building", "fabric_wall", "party_seam_end", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 6000,
+      "max_collision_triangles": 6000,
+      "max_surfaces": 3,
+      "max_collision_pieces": 1,
+      "fallback_albedo_textures": {
+        "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
+      }
+    },
+    {
+      "id": "sfv.fabric.wall.wood.window.roof.001.party.right",
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_Roof_001.fbx",
+      "merge_pieces": true,
+      "clip_axis": "x",
+      "clip_range": [0.0, 1.47],
+      "collision_profile": "building_trimesh",
+      "tags": ["bay_roof", "building", "fabric_wall", "party_seam_end", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 6000,
+      "max_collision_triangles": 6000,
+      "max_surfaces": 3,
+      "max_collision_pieces": 1,
+      "fallback_albedo_textures": {
+        "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
+      }
+    },
+    {
+      "id": "sfv.fabric.wall.wood.window.roof.004.trimmed",
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_Roof_004.fbx",
+      "merge_pieces": true,
+      "clip_axis": "x",
+      "clip_range": [-1.25, 1.25],
+      "collision_profile": "building_trimesh",
+      "tags": ["bay_roof", "building", "fabric_wall", "trimmed_eave", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 6000,
+      "max_collision_triangles": 6000,
+      "max_surfaces": 3,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "sfv.fabric.wall.wood.window.roof.004.party.left",
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_Roof_004.fbx",
+      "merge_pieces": true,
+      "clip_axis": "x",
+      "clip_range": [-1.61, 0.0],
+      "collision_profile": "building_trimesh",
+      "tags": ["bay_roof", "building", "fabric_wall", "party_seam_end", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 6000,
+      "max_collision_triangles": 6000,
+      "max_surfaces": 3,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "sfv.fabric.wall.wood.window.roof.004.party.right",
+      "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Windows/SFV_Wall_Wooden_Window_Roof_004.fbx",
+      "merge_pieces": true,
+      "clip_axis": "x",
+      "clip_range": [0.0, 1.47],
+      "collision_profile": "building_trimesh",
+      "tags": ["bay_roof", "building", "fabric_wall", "party_seam_end", "village"],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 6000,
+      "max_collision_triangles": 6000,
+      "max_surfaces": 3,
+      "max_collision_pieces": 1
+    }
+  ]
+}

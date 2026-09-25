@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://tests/harness/loading_screen_preview.gd" id="1_harness"]
+[ext_resource type="PackedScene" path="res://ui/loading_screens/mythos_loading_screen.tscn" id="2_loading"]
+
+[node name="LoadingScreenPreview" type="Node"]
+script = ExtResource("1_harness")
+
+[node name="MythosLoadingScreen" parent="." instance=ExtResource("2_loading")]
+auto_start = false
+preview_progress = true

@@ -1,0 +1,52 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september12_ground_visibility.gd
+[0m* test_terrain_sheet_and_slopes_stay_opaque_beyond_old_five_metre_radius
+* test_ground_cover_stays_opaque_with_its_terrain
+[31m    [Failed]:  [0mGround stays pixel-identical with cutaway enabled at slope 0.0
+      at line -1
+[31m    [Failed]:  [0mGround stays pixel-identical with cutaway enabled at slope 12.0
+      at line -1
+[31m    [Failed]:  [0mGround stays pixel-identical with cutaway enabled at slope -12.0
+      at line -1
+[31m    [Failed]:  [0mGround stays pixel-identical with cutaway enabled at slope 35.0
+      at line -1
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september12_ground_visibility.gd
+[0m- test_ground_cover_stays_opaque_with_its_terrain
+[31m    [Failed]:  [0mGround stays pixel-identical with cutaway enabled at slope 0.0
+          at line -1
+[31m    [Failed]:  [0mGround stays pixel-identical with cutaway enabled at slope 12.0
+          at line -1
+[31m    [Failed]:  [0mGround stays pixel-identical with cutaway enabled at slope -12.0
+          at line -1
+[31m    [Failed]:  [0mGround stays pixel-identical with cutaway enabled at slope 35.0
+          at line -1
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts             4/8
+Time              1.832s
+
+
+[31m---- 1 failing tests ----
+[0m

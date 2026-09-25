@@ -1,0 +1,35 @@
+{
+  "28_heath_-8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 4.746078891529037,
+    "roi_mean_abs_rgb": 4.746078891529037,
+    "roi_changed_over_20_fraction": 0.1294349406643695
+  },
+  "28_heath_0": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 4.914292790139838,
+    "roi_mean_abs_rgb": 4.914292790139838,
+    "roi_changed_over_20_fraction": 0.127208303152156
+  },
+  "28_heath_8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 4.823345902242321,
+    "roi_mean_abs_rgb": 4.823345902242321,
+    "roi_changed_over_20_fraction": 0.12278661964044345
+  }
+}

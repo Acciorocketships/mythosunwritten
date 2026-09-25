@@ -1,0 +1,9 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://do23fex5tmv4x"]
+
+[ext_resource type="Texture2D" uid="uid://d3mapsga3ap51" path="res://assets/KayKitAdventurers/Characters/gltf/Rogue_Hooded_rogue_texture.png" id="1_dqyp6"]
+
+[resource]
+resource_name = "rogue"
+cull_mode = 2
+albedo_texture = ExtResource("1_dqyp6")
+roughness = 0.5

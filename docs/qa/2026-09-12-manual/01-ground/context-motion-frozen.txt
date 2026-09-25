@@ -1,0 +1,19 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+CONTEXT_PERF { "trial": 0, "candidate": false, "frame_ms_median": 14.451, "frame_ms_p95": 15.463, "cpu_ms_p95": 0.728 }
+CONTEXT_PERF { "trial": 1, "candidate": true, "frame_ms_median": 15.381, "frame_ms_p95": 16.751, "cpu_ms_p95": 0.781 }
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/context-motion-frozen/before/frame_000.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/context-motion-frozen/before/frame_025.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/context-motion-frozen/before/frame_050.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/context-motion-frozen/before/frame_075.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/context-motion-frozen/before/frame_100.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/context-motion-frozen/before/frame_125.png
+CONTEXT_PERF { "trial": 2, "candidate": false, "frame_ms_median": 14.453, "frame_ms_p95": 15.613, "cpu_ms_p95": 0.383 }
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/context-motion-frozen/after/frame_000.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/context-motion-frozen/after/frame_025.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/context-motion-frozen/after/frame_050.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/context-motion-frozen/after/frame_075.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/context-motion-frozen/after/frame_100.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-12-manual/01-ground/context-motion-frozen/after/frame_125.png
+CONTEXT_PERF { "trial": 3, "candidate": true, "frame_ms_median": 15.244, "frame_ms_p95": 16.778, "cpu_ms_p95": 0.452 }

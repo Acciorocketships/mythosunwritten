@@ -1,0 +1,63 @@
+class_name GrassSamplingContext
+extends RefCounted
+
+## Private sampling state for the grass worker. Completed field arrays retain
+## exact values, but no canonical plan or mutable grade/water memo is shared.
+class WaterSamples extends WaterFieldContext:
+	var source_present := false
+	func has_sources() -> bool:
+		return source_present
+
+var region: HeightfieldRegion
+var water: WaterFieldContext
+var features: FeatureContext
+
+static func detached(source_region: HeightfieldRegion, source_water: WaterFieldContext,
+		source_features: FeatureContext = null) -> GrassSamplingContext:
+	var result := GrassSamplingContext.new()
+	var grades: Dictionary = {}
+	result.region = _copy_region(source_region,grades)
+	result.water = WaterSamples.new()
+	(result.water as WaterSamples).source_present = source_water.has_sources()
+	result.water._region = _copy_region(source_water._region,grades)
+	result.water._coverage = source_water._coverage
+	result.water._shore_limit = source_water._shore_limit
+	result.water._shore_curves = source_water._shore_curves.duplicate(true)
+	result.water._shore_curves_ready = source_water._shore_curves_ready
+	# Grass only queries the completed fill inside its declared coverage.
+	# Do not retain source traces, profiles, plans or lazy dry-ground memo state.
+	result.water._ctx = {"ponds":[],"rivers":[],"buckets":{},"region":result.water._region}
+	if source_water._ctx.has("fill"):
+		result.water._ctx["fill"] = source_water._ctx.fill.duplicate(true)
+		result.water._ctx["fill_base"] = source_water._ctx.fill_base
+		result.water._ctx["fill_size"] = source_water._ctx.get("fill_size",WaterField.FILL_M+1)
+		var fill_rect := Rect2(source_water._ctx.fill_base,
+			Vector2.ONE*WaterField.FILL_M*WaterField.FILL_STEP)
+		assert(fill_rect.encloses(source_water.coverage()))
+	else:
+		assert(not source_water.has_sources(),"a populated grass sampler requires a completed water fill")
+	if source_features != null:
+		# FeatureGroundField and its shapes are sealed immutable query data;
+		# omit the unrelated instance payload and full feature-plan ownership.
+		result.features = FeatureContext.new(source_features.coverage(),
+			source_features.ground_field(),EnvironmentInstancePayload.new())
+	return result
+
+static func _copy_region(source: HeightfieldRegion, grades: Dictionary) -> HeightfieldRegion:
+	var result := HeightfieldRegion.new(source._storeys.duplicate(),
+		source._levels.duplicate(),source._carved.duplicate())
+	for grade: TerrainGradePatch in source.terrain_grades:
+		result.terrain_grades.append(_copy_grade(grade,grades))
+	return result
+
+static func _copy_grade(source: TerrainGradePatch, grades: Dictionary) -> TerrainGradePatch:
+	var id := source.get_instance_id()
+	if grades.has(id): return grades[id]
+	var result := TerrainGradePatch.new(source.stable_id,source._claims.duplicate(),
+		source._origin,source._targets.pitch)
+	grades[id] = result
+	result._continuous_cells = source._continuous_cells.duplicate()
+	result._continuous_datum = source._continuous_datum
+	if source._continuous_source != null:
+		result._continuous_source = _copy_grade(source._continuous_source,grades)
+	return result

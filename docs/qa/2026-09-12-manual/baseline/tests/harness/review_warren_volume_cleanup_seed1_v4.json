@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "review_contract": {
+    "intent": "falsification",
+    "success_definition": "finding_a_real_issue",
+    "full_resolution_reviewed": true,
+    "independent_reviewer": false
+  },
+  "capture_root": "/tmp/warren-final-seed1",
+  "world_seed": 1,
+  "route_attempt": 58,
+  "closing_candidate": false,
+  "captures": [
+    {"screenshot_id":"overview-ne","disposition":"clear","finding_ids":[],"notes":"This seed produces a different taller construction signature with thirteen connected stacks. Light planks, pitched caps, and staggered masses remain consistent without looking like palette-only variation."},
+    {"screenshot_id":"overview-sw","disposition":"clear","finding_ids":[],"notes":"The reverse overview shows a tightly interlocked roofline and several distinct base heights; visible terrain is confined to the outer edge rather than forming a central vertical hole."},
+    {"screenshot_id":"section-east","disposition":"clear","finding_ids":[],"notes":"The east section verifies roof closure on the long and tower families, no frontage-wider-than-depth hut, and structural surfaces supported to their declared datum."},
+    {"screenshot_id":"entry","disposition":"clear","finding_ids":[],"notes":"The entrance is a furnished market alley bounded by stalls and inhabited facades. Its two-turn shape prevents a sightline through to the opposite side."},
+    {"screenshot_id":"ground-reverse","disposition":"clear","finding_ids":[],"notes":"Although this seed has the corpus's lowest overhead ratio, the hostile reverse route is still visually enclosed by nearby facades, stocked market pieces, and a turning public surface."},
+    {"screenshot_id":"ground-cross","disposition":"clear","finding_ids":[],"notes":"The cross-route view terminates in built mass and a change of direction instead of exposing a lawn corridor through the city."},
+    {"screenshot_id":"upper-route","disposition":"clear","finding_ids":[],"notes":"The elevated route is continuous at doors and transitions, uses authored light boards, and derives its guard openings from the same threshold and stair seams."},
+    {"screenshot_id":"skywalk-side","disposition":"clear","finding_ids":[],"notes":"The roofed occupied connection is visibly attached to both endpoint buildings; surrounding roof mass creates intentional compression without hiding an open seam."},
+    {"screenshot_id":"skywalk-beneath","disposition":"clear","finding_ids":[],"notes":"The underside view confirms exterior air below inhabited mass and a bounded passage rather than an unsupported dark platform."},
+    {"screenshot_id":"roofline","disposition":"clear","finding_ids":[],"notes":"The complete skyline has pitched repeat runs and sealed ends on rooms, bays, and links; no room wall rises into an absent roof."},
+    {"screenshot_id":"network-above","disposition":"clear","finding_ids":[],"notes":"The network view shows a different maze and parcel arrangement from seed 0, one bounded lightwell, and no large uncovered core component."}
+  ],
+  "findings": [],
+  "fixed_during_review": [],
+  "structural_evidence": {
+    "connected_building_stack_count": 13,
+    "placement_count": 263,
+    "infill_platform_patch_count": 14,
+    "infill_lightwell_count": 1,
+    "composed_walk_enclosure_ratio": 0.681818181818182,
+    "overhead_route_ratio": 0.231481481481481,
+    "through_sightline_count": 107,
+    "skywalk_count": 3,
+    "recipe_family_count": 3,
+    "stair_endpoint_gap_count": 0,
+    "visually_short_parcel_count": 0,
+    "visual_envelope_conflict_count": 0,
+    "public_air_occupied_overlap_count": 0
+  }
+}

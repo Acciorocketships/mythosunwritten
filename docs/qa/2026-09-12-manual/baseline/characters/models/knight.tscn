@@ -1,0 +1,28 @@
+[gd_scene load_steps=2 format=3 uid="uid://dawmb1kfgp2h2"]
+
+[ext_resource type="PackedScene" uid="uid://fbfr42g3pbmn" path="res://assets/KayKitAdventurers/Characters/gltf/Knight.glb" id="1_1auyl"]
+
+[node name="Knight" instance=ExtResource("1_1auyl")]
+
+[node name="Skeleton3D" parent="Rig_Medium" index="0"]
+bones/4/rotation = Quaternion(-0.5141216, -0.48546767, -0.48546773, 0.5141217)
+bones/5/rotation = Quaternion(1.4942605e-09, -6.228117e-08, -0.055285532, 0.99847066)
+bones/5/scale = Vector3(1.0000001, 0.9999998, 0.99999994)
+bones/6/rotation = Quaternion(5.1184355e-11, -3.077425e-10, 0.026658095, 0.99964464)
+bones/7/rotation = Quaternion(1.2001637e-09, 1.3589292e-07, -5.4551956e-06, 1)
+bones/8/rotation = Quaternion(1.6806122e-09, 1.680612e-09, -0.7071068, 0.7071067)
+bones/9/rotation = Quaternion(-0.51412165, 0.48546773, 0.48546776, 0.5141218)
+bones/9/scale = Vector3(0.99999934, 0.99999934, 0.99999976)
+bones/10/rotation = Quaternion(1.49426e-09, 6.228117e-08, 0.055285532, 0.99847066)
+bones/10/scale = Vector3(1.0000001, 0.9999998, 0.99999994)
+bones/11/rotation = Quaternion(5.1184217e-11, 3.0773717e-10, -0.026658095, 0.99964464)
+bones/12/rotation = Quaternion(1.1999162e-09, -9.210969e-08, 5.4551956e-06, 1)
+bones/13/rotation = Quaternion(1.6805921e-09, -1.6805919e-09, 0.7071068, 0.7071067)
+bones/15/rotation = Quaternion(0.9998491, 7.426558e-08, -3.1726263e-08, 0.017373193)
+bones/16/rotation = Quaternion(0.10622513, -6.865223e-08, 7.376966e-08, 0.99434215)
+bones/17/rotation = Quaternion(-0.45523903, 1.6598169e-07, 2.2507123e-09, 0.8903693)
+bones/18/rotation = Quaternion(2.1219835e-08, 0.92035496, -0.3910841, 6.450607e-08)
+bones/19/rotation = Quaternion(0.9998491, -7.13275e-08, -1.20427455e-08, 0.017373193)
+bones/20/rotation = Quaternion(0.10622513, 6.8652206e-08, -7.376967e-08, 0.99434215)
+bones/21/rotation = Quaternion(-0.45523903, 1.619773e-08, -3.435674e-08, 0.8903693)
+bones/22/rotation = Quaternion(4.775981e-08, 0.92035496, -0.3910841, 5.8015768e-08)

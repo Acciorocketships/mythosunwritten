@@ -1,0 +1,30 @@
+[
+  {
+    "cpu_ms_p95": 0.001,
+    "frame_ms_median": 15.046,
+    "frame_ms_p95": 17.066,
+    "marker": false,
+    "trial": 0
+  },
+  {
+    "cpu_ms_p95": 0.041,
+    "frame_ms_median": 15.861,
+    "frame_ms_p95": 18.6,
+    "marker": true,
+    "trial": 1
+  },
+  {
+    "cpu_ms_p95": 0.001,
+    "frame_ms_median": 14.884,
+    "frame_ms_p95": 17.826,
+    "marker": false,
+    "trial": 2
+  },
+  {
+    "cpu_ms_p95": 0.041,
+    "frame_ms_median": 16.011,
+    "frame_ms_p95": 18.713,
+    "marker": true,
+    "trial": 3
+  }
+]

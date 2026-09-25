@@ -1,0 +1,18 @@
+{
+  "pack": "stylized_grass",
+  "license": "User-provided grass source",
+  "default_scale": [1.0, 1.0, 1.0],
+  "assets": [
+    {
+      "id": "stylized_grass.collection_05",
+      "source": "res://assets/Grass/uploads_files_4153833_Grass+Collections.fbx",
+      "source_root": "Grass_Type_4_grassOrnament1MeshGroup/Grass_Type_4_grassOrnament1Main4",
+      "scale": [520.0, 520.0, 520.0],
+      "component_ribbon_rows": 3,
+      "component_root_spread": 1.25,
+      "tags": ["grass", "nature"],
+      "tint_group": "ground",
+      "supports_instance_color": true
+    }
+  ]
+}

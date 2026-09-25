@@ -1,0 +1,70 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september12_ground_visibility.gd
+* test_terrain_sheet_and_slopes_stay_opaque_beyond_old_five_metre_radius
+* test_ground_cover_stays_opaque_with_its_terrain
+* test_only_real_ground_backed_pixels_reveal_context
+* test_native_house_shell_clears_to_real_ground_without_exposing_its_interior
+    [Failed]:  [136] expected to equal [0]:  No native inner wall, floor, rear face or roof remains over the ground receiver in orientation 0
+      at line 234
+    [Failed]:  No receiver leaves the complete house unchanged
+      at line 247
+    [Failed]:  [143] expected to equal [0]:  No native inner wall, floor, rear face or roof remains over the ground receiver in orientation 1
+      at line 234
+    [Failed]:  No receiver leaves the complete house unchanged
+      at line 247
+    [Failed]:  [127] expected to equal [0]:  No native inner wall, floor, rear face or roof remains over the ground receiver in orientation 2
+      at line 234
+    [Failed]:  No receiver leaves the complete house unchanged
+      at line 247
+    [Failed]:  [140] expected to equal [0]:  No native inner wall, floor, rear face or roof remains over the ground receiver in orientation 3
+      at line 234
+    [Failed]:  No receiver leaves the complete house unchanged
+      at line 247
+3/4 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september12_ground_visibility.gd
+- test_native_house_shell_clears_to_real_ground_without_exposing_its_interior
+    [Failed]:  [136] expected to equal [0]:  No native inner wall, floor, rear face or roof remains over the ground receiver in orientation 0
+          at line 234
+    [Failed]:  No receiver leaves the complete house unchanged
+          at line 247
+    [Failed]:  [143] expected to equal [0]:  No native inner wall, floor, rear face or roof remains over the ground receiver in orientation 1
+          at line 234
+    [Failed]:  No receiver leaves the complete house unchanged
+          at line 247
+    [Failed]:  [127] expected to equal [0]:  No native inner wall, floor, rear face or roof remains over the ground receiver in orientation 2
+          at line 234
+    [Failed]:  No receiver leaves the complete house unchanged
+          at line 247
+    [Failed]:  [140] expected to equal [0]:  No native inner wall, floor, rear face or roof remains over the ground receiver in orientation 3
+          at line 234
+    [Failed]:  No receiver leaves the complete house unchanged
+          at line 247
+
+Totals
+------
+Scripts               1
+Tests                 4
+Passing Tests         3
+Failing Tests         1
+Asserts           16/24
+Time              11.178s
+
+
+---- 1 failing tests ----
+

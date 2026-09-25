@@ -1,0 +1,664 @@
+class_name WarrenParcelConstruction
+extends RefCounted
+
+## Pure geometry contract shared by parcel planning, surface entrances, and the
+## asset compiler. Footprint, local phase, yaw, and door threshold are decided
+## once; palette and prefab choices cannot move them afterward. A parcel
+## addressed from an upper route becomes one continuous inhabited stack rooted
+## at the highest compatible natural-ground phase. It is never a short house on
+## an abstract proof column.
+
+
+static func proposal(parcel: WarrenBuildingParcel) -> Dictionary:
+	var profile := profile_for(parcel)
+	if profile.is_empty():
+		return {}
+	var yaw := _yaw_for_frontage(parcel.frontage_direction)
+	if yaw < 0:
+		return {}
+	var origin := _matching_origin(parcel, profile, yaw)
+	if origin.x == 2147483647:
+		return {}
+	var support_base := _support_base_band(parcel)
+	if support_base > parcel.base_band \
+			or posmod(parcel.base_band - support_base,
+				WarrenBuildingParcel.STOREY_BANDS) != 0:
+		return {}
+	origin.y = support_base
+	var lower_storeys := (parcel.base_band - support_base) \
+		/ WarrenBuildingParcel.STOREY_BANDS
+	var result := {
+		"stable_id": parcel.stable_id,
+		"kind": profile.kind,
+		"origin": origin,
+		"yaw_quarters": yaw,
+		"storeys": parcel.storey_count() + lower_storeys,
+		"route_y": parcel.base_band,
+		"roof_feature": _roof_feature(parcel, profile),
+		# The parcel's own roof contract, carried to composition (Task C5
+		# ruling 1, widened by Task C5d ruling 1). A flat-roofed parcel's crown
+		# is a SLAB rather than a pitched shell; in the plot model that is
+		# every house, because the tiered hill town's vernacular is the flat
+		# roof, and `roof_preference` below is the only thing that can ask for
+		# a pitched shell back. FALSE on every parcel the route-first and
+		# mass-first partitioners build, and the legacy staggered compiler
+		# still OVERWRITES this key with its own pairwise flattening verdict
+		# (`WarrenAssetCompiler` :951/:987), so seeding it here changes no
+		# legacy proposal.
+		"flat_roof": parcel.flat_roof,
+		# The parcel's roof PREFERENCE beside its roof contract (Task C5d
+		# ruling 2, widened by Task H2). Empty on every legacy proposal;
+		# `&"pitched"` names a crown the roof compiler should try the authored
+		# pitched shell on before falling back to the slab, which since H2 is
+		# every maze house whose crown nothing stands on. It is carried down
+		# EVERY storey of the lineage, so a house with an exposed lower
+		# shoulder offers the compiler more than one crown -- which is why
+		# `maze_pitched_preferred_room_count` and the parcel-level
+		# `maze_pitched_preference_count` are different numbers.
+		"roof_preference": parcel.roof_preference,
+	}
+	result["occupied_cells"] = \
+		StaggeredFabricCompiler.proposal_occupied_cells(result)
+	return result
+
+
+static func _roof_feature(parcel: WarrenBuildingParcel,
+		profile: Dictionary) -> int:
+	## Feature selection happens before measured-envelope qualification.  A
+	## dormer therefore participates in the same broad phase as its roof and can
+	## never appear later inside a neighbor.  Only the nine-metre longhouse has
+	## enough uninterrupted authored slope for the initial reviewed vocabulary.
+	var kind := StringName(profile.get("kind", ""))
+	var seed := int(parcel.source.world_seed) if parcel.source != null else 0
+	var value := seed ^ parcel.threshold_column.x * 73856093 \
+		^ parcel.threshold_column.y * 19349663 ^ parcel.base_band * 83492791
+	return roof_feature_for_phase(kind, posmod(value, ROOF_FEATURE_PHASES))
+
+
+## TASK I3. ONE roofscape table, and this is its modulus. Both passes that
+## build a room -- the parcel proposal here and `WarrenVolumetricSolver
+## ._residual_roof_feature` -- used to carry their own copy of it, and the two
+## copies DISAGREED: the residual table ran mod 6 and this one ran mod 7 or 8
+## per kind, and worst of all this one had no `row` branch at all, so a ROW
+## house built from a parcel proposal could never take the `roof.row.*.dormer.*`
+## recipes the vocabulary ships while the identical house built as a residual
+## always could. Measured over the four planner towns before the change:
+## 1-6 dormered roof units against 6-10 pitched roofs, i.e. barely half the
+## pitches carried one, which is what the direction ("dormers ... rate up")
+## names. One table, one modulus, and the seed material each pass draws its
+## phase from is deliberately left alone -- a parcel keys on its threshold
+## column and a residual on its origin, and unifying THAT would re-roll every
+## roof in the corpus for no gain.
+const ROOF_FEATURE_PHASES := 6
+
+
+static func roof_feature_for_phase(kind: StringName, phase: int) -> int:
+	## The roofscape cadence, by footprint kind, over `ROOF_FEATURE_PHASES`:
+	## 1/2 are the handed integrated dormers, 4/5 the two-dormer long recipes,
+	## 3 the chimney and 0 the quiet roof.
+	##
+	## Every longhouse receives a dormer: plain long runs already exist in the
+	## square/slim/tower vocabulary, and the long facade is the only reviewed
+	## slope large enough for a pair of integrated attic projections. Side and
+	## count stay seed-dependent so the feature cannot become a repeated stamp.
+	## Most complete square roofs receive one, split across both eaves, with one
+	## phase kept for a chimney and one quiet, so a roofscape gains readable
+	## cadence instead of either uniform repetition or confetti.
+	##
+	## TASK I4 ROUND 3 -- THE TOWER ARM JOINS THE SLIM ONE, and that is the whole
+	## of this round's dormer change. The direction asks for MOST pitched roofs
+	## to carry a dormer; round 2 measured the landed rate at 44.0 % by units and
+	## 37.0 % by roofs and localised the shortfall here: the corpus is
+	## tower-heavy and the tower was the sparsest arm in the table at two phases
+	## of six. Its stated reason -- "its authored slope is the shortest" -- was
+	## an assertion about the recipe rather than a measurement, and the
+	## measurement contradicts it: `roof.tower.{blue,orange}.dormer.{left,right}`
+	## are real reviewed recipes, they pass measured-envelope qualification on
+	## this corpus's tower crowns, and round 2's own conflict census photographed
+	## one standing (`roof.tower.blue.dormer.right` on 4/compact). So the tower
+	## takes the same cadence a slim house takes -- four dormered phases, one
+	## chimney, one quiet -- and the two kinds are one branch, because they now
+	## say the same thing and two copies of one cadence is how the pre-I3 table
+	## drifted apart.
+	if kind == &"long":
+		return [1, 2, 4, 5, 1, 2][posmod(phase, ROOF_FEATURE_PHASES)]
+	if kind == &"building":
+		return 1 if phase in [0, 1, 2] else 2 if phase in [3, 4] \
+			else 3 if phase == 5 else 0
+	if kind == &"tower" or kind == &"slim" or kind == &"row":
+		return 1 if phase in [0, 1] else 2 if phase in [2, 3] \
+			else 3 if phase == 4 else 0
+	return 0
+
+
+static func retained_terrace_cells(parcel: WarrenBuildingParcel) \
+		-> Array[Vector3i]:
+	## The hill a raised house stands on, at construction resolution: source
+	## mass between each footprint column's natural ground and the band the
+	## stack actually stops descending at.
+	##
+	## Empty whenever the two coincide -- every route-first parcel, and every
+	## mass-first house whose terrace IS its ground -- so declaring it costs
+	## nothing where there is no hill. Deliberately NOT occupancy: it claims no
+	## socket, collides with no recipe and never enters the visual-envelope
+	## test. SettlementFabricAssembler renders it as retained stone, because
+	## nothing else renders unbuilt massif mass and a house resting on an
+	## unrendered terrace floats.
+	var out: Array[Vector3i] = []
+	if parcel == null or parcel.source == null or not parcel.is_sealed():
+		return out
+	var construction := proposal(parcel)
+	if construction.is_empty():
+		return out
+	var support := (construction.origin as Vector3i).y
+	for column: Vector2i in parcel.footprint:
+		# From the column's own STAMPED GROUND, not from the declared bottom of
+		# the solid: since the undercroft wave `ground_at` may sit below the
+		# surface where a street tunnels under the column, and a plinth measured
+		# from there would fill the tunnel with foundation stone. `bearing_at`
+		# is the surface, which is where a plinth starts and where a house
+		# grounds. The two are equal on every column no tunnel passes under, and
+		# on every route-first parcel.
+		for band in range(parcel.source.envelope.bearing_at(column), support):
+			# Only mass is hill. A street cut through the gap -- the bore under
+			# a plinth, or a secondary lane tunnelling beneath a terrace -- is
+			# void the plan already removed, and declaring it as retained stone
+			# would fill the passage in with rock. A footprint may legally span
+			# such a column, since WarrenBuildingParcel requires continuous
+			# bearing under only half of one.
+			if not parcel.source.has_mass(Vector3i(column.x, band, column.y)):
+				continue
+			for x_offset in 2:
+				for z_offset in 2:
+					out.append(Vector3i(column.x * 2 + x_offset, band,
+						column.y * 2 + z_offset))
+	return out
+
+
+static func threshold_cell(parcel: WarrenBuildingParcel) -> Vector3i:
+	var profile := profile_for(parcel)
+	var construction := proposal(parcel)
+	if profile.is_empty() or construction.is_empty():
+		return Vector3i(2147483647, 2147483647, 2147483647)
+	var addressed_door := profile.door_cell as Vector3i
+	addressed_door.y += parcel.base_band \
+		- (construction.origin as Vector3i).y
+	return FabricRecipe.transform_cell(addressed_door,
+		construction.origin as Vector3i, int(construction.yaw_quarters))
+
+
+static func address_door_phase_for_room(kind: StringName, origin: Vector3i,
+		yaw_quarters: int, threshold: Vector3i,
+		frontage: Vector3i) -> int:
+	## Recomposition may move or reshape one complete room block while preserving
+	## the parcel's exact world-space threshold. The original parcel phase is no
+	## longer meaningful after that move; derive the finite authored door variant
+	## from the final room geometry so the visual aperture and topology cannot
+	## diverge by one 1.5 m half-cell.
+	if FabricRecipe.transform_direction(Vector3i.BACK, yaw_quarters) != frontage:
+		return -1
+	var phase_zero := Vector3i.ZERO
+	match kind:
+		&"tower":
+			phase_zero = Vector3i(0, 0, 0)
+		&"slim":
+			phase_zero = Vector3i(0, 0, 1)
+		&"row":
+			phase_zero = Vector3i(-1, 0, 0)
+		&"building":
+			phase_zero = Vector3i(-1, 0, 1)
+		&"long":
+			phase_zero = Vector3i(-1, 0, 2)
+		_:
+			return -1
+	for phase in 2:
+		var local_door := phase_zero + Vector3i.LEFT * phase
+		if FabricRecipe.transform_cell(local_door, origin, yaw_quarters) \
+				== threshold:
+			return phase
+	return -1
+
+
+static func addressed_unit_id(parcel: WarrenBuildingParcel) -> StringName:
+	if parcel == null:
+		return &""
+	var construction := proposal(parcel)
+	if construction.is_empty():
+		return &""
+	var addressed_level := (parcel.base_band \
+		- (construction.origin as Vector3i).y) \
+		/ WarrenBuildingParcel.STOREY_BANDS
+	var role := "base" if addressed_level == 0 else "upper.%02d" % \
+		addressed_level
+	return StringName("volume.%s.%s" % [parcel.stable_id, role])
+
+
+static func door_serves_address(parcel: WarrenBuildingParcel) -> bool:
+	## A wide facade can have more than one macro cell, but the reviewed recipe
+	## owns one exact doorway. The parcel address is valid only when that real
+	## transformed threshold opens directly onto its claimed walk square.
+	if parcel == null or not parcel.is_sealed():
+		return false
+	var threshold := threshold_cell(parcel)
+	if threshold.x == 2147483647:
+		return false
+	var facing := Vector3i(parcel.frontage_direction.x, 0,
+		parcel.frontage_direction.y)
+	var landing := threshold + facing
+	var address_origin := Vector3i(parcel.address_walk_cell.x * 2,
+		parcel.address_walk_cell.y, parcel.address_walk_cell.z * 2)
+	return landing.y == address_origin.y \
+		and landing.x >= address_origin.x and landing.x <= address_origin.x + 1 \
+		and landing.z >= address_origin.z and landing.z <= address_origin.z + 1
+
+
+static func candidate_address_landing(parcel: WarrenBuildingParcel,
+		volume: WarrenVolumePlan) -> Vector3i:
+	## Preview the exact authored doorway of an unsealed partition candidate
+	## without sealing (and therefore freezing) the candidate itself.  Roof-joint
+	## repair may still step its top band down before the transaction is final.
+	## The disposable clone applies the complete downstream parcel contract, so
+	## this query cannot bless a door on a footprint the source volume rejects.
+	var invalid := Vector3i(2147483647, 2147483647, 2147483647)
+	if parcel == null or volume == null or not volume.is_sealed():
+		return invalid
+	var preview := WarrenBuildingParcel.new(parcel.stable_id,
+		parcel.footprint, parcel.base_band, parcel.top_band,
+		parcel.address_walk_cell, parcel.threshold_column,
+		parcel.frontage_direction, parcel.address_door_phase,
+		parcel.flat_roof)
+	if not parcel.support_parent_parcel_id.is_empty() \
+			and not preview.set_building_support(
+				parcel.support_parent_parcel_id,
+				parcel.support_parent_storey_index):
+		return invalid
+	if not preview.seal(volume) or not door_serves_address(preview):
+		return invalid
+	var threshold := threshold_cell(preview)
+	return threshold + Vector3i(preview.frontage_direction.x, 0,
+		preview.frontage_direction.y)
+
+
+static func profile_for(parcel: WarrenBuildingParcel) -> Dictionary:
+	if parcel == null or not parcel.is_sealed():
+		return {}
+	if parcel.width_cells == 1 and parcel.depth_cells == 1:
+		return {
+			"kind": &"tower",
+			"minimum": Vector3i(-1, 0, -1),
+			"size": Vector3i(2, 1, 2),
+			"door_cell": Vector3i(-parcel.address_door_phase, 0, 0),
+		}
+	if parcel.width_cells == 1 and parcel.depth_cells == 2:
+		return {
+			"kind": &"slim",
+			"minimum": Vector3i(-1, 0, -2),
+			"size": Vector3i(2, 1, 4),
+			"door_cell": Vector3i(-parcel.address_door_phase, 0, 1),
+		}
+	if parcel.width_cells == 2 and parcel.depth_cells == 1:
+		return {
+			"kind": &"row",
+			"minimum": Vector3i(-2, 0, -1),
+			"size": Vector3i(4, 1, 2),
+			"door_cell": Vector3i(-1 - parcel.address_door_phase, 0, 0),
+		}
+	if parcel.width_cells == 2 and parcel.depth_cells == 2:
+		return {
+			"kind": &"building",
+			"minimum": Vector3i(-2, 0, -2),
+			"size": Vector3i(4, 1, 4),
+			"door_cell": Vector3i(-1 - parcel.address_door_phase, 0, 1),
+		}
+	if parcel.width_cells == 2 and parcel.depth_cells == 3:
+		return {
+			"kind": &"long",
+			"minimum": Vector3i(-2, 0, -3),
+			"size": Vector3i(4, 1, 6),
+			"door_cell": Vector3i(-1 - parcel.address_door_phase, 0, 2),
+		}
+	return {}
+
+
+static func _support_base_band(parcel: WarrenBuildingParcel) -> int:
+	## HOW FAR A ROOM STACK DESCENDS BELOW ITS ADDRESSED LEVEL.
+	##
+	## READ THE MODE FIRST. Everything from here to "THE STOREY PARITY" is the
+	## ROUTE-FIRST and MASS-FIRST contract, where the mass under a house is
+	## unclaimed massif a stack may take. **A MAZE PARCEL NEVER DESCENDS AT
+	## ALL** -- in the plot model that mass belongs to somebody, and the plot
+	## says where the house starts -- so none of the reasoning below applies to
+	## it. That branch, and the three tasks that measured and reverted it before
+	## Task C6 shipped it, are at the foot of this doc block just above the
+	## `maze_source` test.
+	##
+	## A uniform room stack may descend only when every footprint column owns a
+	## continuous source-mass bearing path. Mixed-span parcels intentionally stay
+	## at their addressed level; a later explicit overhang/support recipe must
+	## carry them without filling a public passage below.
+	##
+	## It descends to the envelope's BEARING datum, which is natural ground
+	## unless the envelope declares a terrace above it. That distinction is the
+	## whole difference between a hill town and a tower: a street eight bands up
+	## flanked by six of mass stands on fourteen bands of solid, and descending a
+	## house through all fourteen is what a viewer counts as seven storeys. The
+	## mass below the terrace is hill, not house.
+	##
+	## PER COLUMN AND HONEST since the terrain milestone's Wave 5. The datum is
+	## the HIGHEST bearing band under the footprint -- each column's own stamped
+	## ground, sampled rather than inferred -- so the stack rests on the real
+	## surface of the highest ground it covers and never floats over it. Where a
+	## footprint straddles a terrace step, the columns below that datum are the
+	## gap `retained_terrace_cells` declares and the assembler fills with
+	## sfv.foundation.rock plinth stone: the downhill side gets the course of
+	## stone that makes the house one storey taller, which is what a plinth is
+	## FOR.
+	##
+	## THE STOREY PARITY, which is the whole of the old defect. A stack meets its
+	## address only on a whole STOREY_BANDS boundary, and a ground band of the
+	## wrong parity has to be resolved one way or the other. Resolving it DOWN --
+	## `result -= 1` -- buries the house one band under its own ground, and that
+	## single line, not hill geometry, is what put 211 of 424 mass-first houses
+	## into the earth against zero plinths (task-23-report §4). An envelope that
+	## declares a `plinth_budget_bands` resolves it UP instead, onto one band of
+	## stone, which is a thing a viewer can see and a mason would build. The
+	## budget also bounds it: a straddle whose plinth would exceed the allowance
+	## falls back to the cut rather than growing a masonry terrace.
+	##
+	## Route-first envelopes leave the budget at zero and are byte-identical.
+	if parcel != null and not parcel.support_parent_parcel_id.is_empty():
+		return parcel.base_band
+	if parcel == null or parcel.source == null \
+			or parcel.bearing_columns.size() != parcel.footprint.size():
+		return parcel.base_band if parcel != null else 0
+	# A MAZE PARCEL NEVER DESCENDS THROUGH ANOTHER PLOT (Task C5c ruling 4).
+	#
+	# Descent is a route-first idea: there, a parcel addressed from an upper
+	# street is a short house on an abstract proof column unless it is rooted
+	# at natural ground, and the mass it descends through is unclaimed massif.
+	# In MAZE mode the mass under a plot is either derived rock -- which a
+	# house may still take, and does, so a hill column becomes storeys rather
+	# than a podium -- or ANOTHER PLOT, which is somebody else's building.
+	#
+	# Descending into that other plot made two parcels claim one cell in
+	# `_partition_rooms`'s protected-owner map, and `_plate_fits` then refused
+	# BOTH of them: measured as 9 of 29, 12 of 32 and 6 of 35 parcels composing
+	# no lineage on the three sealing seeds, in mutually-blocking pairs, which
+	# was the single largest source of unroomed plot mass.
+	#
+	# `rock_shoulder` is the source's own answer for the top of derived rock on
+	# a column, and on a column carrying plots it IS that column's lowest plot
+	# floor. So a parcel whose floor stands above it on any column has a plot
+	# underneath and stays where the plot planner put it; a parcel sitting
+	# directly on the rock descends exactly as it did before, which is what
+	# keeps every rock-borne house in this corpus byte-identical.
+	#
+	# MEASURED AND REVERTED THREE TIMES: NO DESCENT AT ALL. Returning
+	# `base_band` for every maze parcel -- the plot model taken literally, so a
+	# house on a hill column becomes a short house on a tall stone base rather
+	# than storeys -- was better on C5c's number (12/compact 0.200 unroomed
+	# with 1 uncomposed parcel of 29, against 0.267 and 6) and cost 4/compact
+	# and 3/standard their towns at PITCHED roof gates. Task C5d made maze
+	# houses flat-roofed by default, removed those crowns, and re-applied it:
+	# the 24-seed maze sweep went 10/24 sealed DOWN to 9/24 and 3/standard lost
+	# its town again, at a PARTIAL PLATE -- `roof remainder for
+	# spatial.parcel.maze.house.033 ... 1-cell exposed sliver` -- which is the
+	# one roof family flat-first could not remove.
+	#
+	# TASK C5e re-applied it a THIRD time, with the partial-plate vocabulary
+	# finally in place (`WarrenSpatialFabricCompiler._tile_flat_plate`), and it
+	# is no longer a strict loss -- it is a TRADE, which is why the numbers are
+	# here in full rather than summarised:
+	#
+	# * every planner seed still seals (12/compact, 4/compact, 3/standard AND
+	#   9/standard), which is ruling 4's own gate, and the composition is far
+	#   better -- unroomed plot mass 0.226/0.211/0.281/0.260 -> 0.156/0.142/
+	#   0.224/0.176, uncomposed parcels 6/3/4/6 -> 1/1/2/1, back-room stamped
+	#   share 0.806/0.692/0.587/0.558 -> 0.838/0.700/0.739/0.585;
+	# * its ONLY cost is the CORPUS: 18/24 sealed DOWN to 16/24. It gains
+	#   6/compact and loses 1/standard, 10/standard and 11/compact, all three
+	#   at `authored room envelope gate failed: room ... failed measured phase
+	#   selection` -- the family 12/standard already dies at, not a roof gate.
+	#
+	# REVIEW FIX 1 CORRECTS THIS ENTRY. The first pass also charged relaxation
+	# 1 with dropping route-floor-on-stone to 0.968/0.950/0.979, which was
+	# wrong: that was a defect in the parapet release measured in the same run
+	# (`WarrenVolumetricSolver._maze_released_parapet_cells` was taking away
+	# the band a tiered house's own street floor stands on). With the release
+	# fixed, relaxation 1 re-measured at **1.000 on all four towns** -- it
+	# costs nothing there.
+	#
+	# TASK C6 SHIPS IT, and the condition C5e attached to it was met first.
+	# The three towns relaxation 1 used to cost -- 1/standard, 10/standard and
+	# 11/compact -- all died in the `failed measured phase selection` family,
+	# and that family was an ORDERING defect rather than a vocabulary limit:
+	# an optional phase-B facade projection hung off a house at a low band
+	# reached into the mandatory shell of a house at a higher band that had not
+	# been compiled yet (`WarrenSpatialFabricCompiler._required_room_clearance`
+	# is the fix, C6 ruling 1).
+	#
+	# MEASURED WITH THAT FIX IN PLACE, which is the only comparison that means
+	# anything now: the 24-seed corpus is 19/24 WITHOUT no-descent and 20/24
+	# WITH it. No seed is lost -- the three it used to cost all keep their
+	# towns -- and it gains 6/compact, whose diagonal-outcropping refusal goes
+	# away when its parcels stop reaching down through each other. Per planner
+	# seed (12/compact, 4/compact, 3/standard, 9/standard) it takes unroomed
+	# plot mass 0.226/0.211/0.281/0.260 -> 0.156/0.142/0.224/0.176 and
+	# uncomposed parcels 6/3/4/6 -> 1/1/2/1, with route floor on stone still
+	# 1.000 on all four.
+	#
+	# So a maze parcel now takes the plot model literally: it never descends,
+	# and a house on a hill column is a short house on a tall stone base rather
+	# than storeys of house buried in the mountain. `rock_shoulder` no longer
+	# needs asking -- the answer is the same for every column.
+	var maze_source := parcel.source.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+	if maze_source != null:
+		return parcel.base_band
+	var envelope := parcel.source.envelope
+	var highest_ground := -2147483648
+	var lowest_ground := 2147483647
+	for column: Vector2i in parcel.footprint:
+		var ground := envelope.bearing_at(column)
+		highest_ground = maxi(highest_ground, ground)
+		lowest_ground = mini(lowest_ground, ground)
+	return resolve_support_band(highest_ground, lowest_ground,
+		parcel.base_band, envelope.plinth_budget_bands)
+
+
+## Bands of apparent face a building must present before it stops reading as a
+## shed. RESTATED, not moved: the rule production has always enforced is
+## `WarrenParcelConstruction.proposal().storeys >= 2` counted from the support
+## datum, and that datum was one band UNDER the ground whenever the address
+## offset was odd -- so the old bar was six bands of face on an even offset and
+## five on an odd one, and this single number is exactly that pair
+## (`MIN_STOREYS * STOREY_BANDS + ROOF_RESERVATION_BANDS - 1`), because an even
+## offset can only ever produce an even face. The equivalence is proved by test
+## over the whole reachable input space rather than argued here.
+##
+## Why restate it at all: the storey form credited a room buried under the
+## terrain, so it could not survive honest grounding (Wave 5), while the face
+## form says the thing the reviewer actually judges -- how tall the building
+## looks from the ground it stands on -- and counts the plinth stone that makes
+## up the band an odd offset cannot buy.
+const MIN_APPARENT_FACE_BANDS := 5
+
+
+static func apparent_face_bands(parcel: WarrenBuildingParcel) -> int:
+	## Bands of this building a viewer sees standing on the ground it is cut
+	## into: its roof band minus the HIGHEST stamped ground under its own
+	## footprint. Plinth stone counts (it is visible and load-bearing); anything
+	## under the terrain does not.
+	if parcel == null or parcel.source == null:
+		return 0
+	var ground := -2147483648
+	for column: Vector2i in parcel.footprint:
+		ground = maxi(ground, parcel.source.envelope.bearing_at(column))
+	return parcel.top_band - mini(ground, parcel.base_band)
+
+
+static func touches_envelope_boundary(parcel: WarrenBuildingParcel) -> bool:
+	## Perimeter is the buildable frontier of the same tapered 3D envelope the
+	## parcel was cut from. An outer neighbor may still contain one or two low
+	## bands of authored massif; that is hillside, not enough volume for another
+	## complete roofed room at this address. Treating it as interior made the
+	## visible edge audit vacuous even though the Gaussian correctly tapered.
+	## This remains a volumetric capability test, not a radial band or a later
+	## cosmetic ring.
+	if parcel == null or parcel.source == null:
+		return false
+	var minimum_neighbor_top := parcel.base_band \
+		+ WarrenBuildingParcel.STOREY_BANDS \
+		+ WarrenBuildingParcel.ROOF_RESERVATION_BANDS
+	for column: Vector2i in parcel.footprint:
+		for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
+				Vector2i.UP, Vector2i.DOWN]:
+			var neighbor := column + direction
+			if not parcel.source.envelope.contains_column(neighbor) \
+					or parcel.source.envelope.top_at(neighbor) \
+						< minimum_neighbor_top:
+				return true
+	return false
+
+
+static func has_perimeter_grounding(parcel: WarrenBuildingParcel) -> bool:
+	## A boundary parcel either descends through its own complete room stack to
+	## terrain, or names an explicit lower building parent. A mixed-span facade
+	## hovering at an upper street datum is useful inside the maze but cannot be
+	## the town's outer silhouette.
+	if parcel == null or parcel.source == null:
+		return false
+	if not parcel.support_parent_parcel_id.is_empty():
+		return true
+	if parcel.bearing_columns.size() != parcel.footprint.size():
+		return false
+	var construction := proposal(parcel)
+	if construction.is_empty():
+		return false
+	# THE PLOT MODEL'S LOAD PATH IS THE MOUNTAIN (Task C5c ruling 4). The test
+	# below asks whether the parcel's own room stack descends to natural
+	# ground, which is the right question when the mass under a boundary house
+	# is unclaimed massif the stack may take. In MAZE mode it is not: it is the
+	# plot below, or the derived rock the source retains and Task C5 renders as
+	# stone, and `_support_base_band` deliberately refuses to descend through
+	# either. What remains to prove is the continuity of that mass, and the
+	# `bearing_columns == footprint` test above has already proved it for every
+	# column -- including a column bearing on a tunnel roof.
+	if parcel.source.mass_context.has(&"maze_source_plan"):
+		return true
+	var highest_ground := -2147483648
+	for column: Vector2i in parcel.footprint:
+		highest_ground = maxi(highest_ground,
+			parcel.source.envelope.bearing_at(column))
+	return (construction.origin as Vector3i).y - highest_ground \
+		<= parcel.source.envelope.plinth_budget_bands
+
+
+static func perimeter_gateway_support(parcel: WarrenBuildingParcel) \
+		-> Dictionary:
+	## One deliberately narrow exception to direct terrain bearing: a 3 x 6 m
+	## frontier house may cantilever its second 3 m bay over an already-authored
+	## public passage when its first bay has a complete terrain load path.  This
+	## is the hill-town gateway motif, not permission for an elevated edge row.
+	## The returned bearing seam is consumed by the fine-grid feature transaction
+	## and realized as a measured two-bracket course beneath the room.
+	if parcel == null or parcel.source == null \
+			or not touches_envelope_boundary(parcel) \
+			or parcel.support_mode != &"mixed_span" \
+			or not parcel.support_parent_parcel_id.is_empty() \
+			or parcel.width_cells != 1 or parcel.depth_cells != 2 \
+			or parcel.footprint.size() != 2 or parcel.bearing_columns.size() != 1 \
+			or not parcel.has_occupied_overpass:
+		return {}
+	var bearing := parcel.bearing_columns[0]
+	var unsupported := parcel.footprint[0] if parcel.footprint[1] == bearing \
+		else parcel.footprint[1]
+	var direction := unsupported - bearing
+	if absi(direction.x) + absi(direction.y) != 1:
+		return {}
+	# The unsupported bay must cover the real route, not merely a random hole in
+	# the source massif.  Its lower public floor and swept headroom are immutable
+	# source-plan facts, so the bracket contract can never manufacture a tunnel.
+	var route_y := -2147483648
+	for walk: Vector3i in parcel.source.walk_cells:
+		if Vector2i(walk.x, walk.z) == unsupported \
+				and parcel.base_band - walk.y >= WarrenVolumePlan.HEADROOM_BANDS:
+			route_y = maxi(route_y, walk.y)
+	if route_y == -2147483648:
+		return {}
+	return {
+		"parcel_id": parcel.stable_id,
+		"bearing_column": bearing,
+		"unsupported_column": unsupported,
+		"projection_direction": direction,
+		"base_band": parcel.base_band,
+		"route_band": route_y,
+	}
+
+
+static func has_perimeter_load_path(parcel: WarrenBuildingParcel) -> bool:
+	return has_perimeter_grounding(parcel) \
+		or not perimeter_gateway_support(parcel).is_empty()
+
+
+static func resolve_support_band(highest_ground: int, lowest_ground: int,
+		base_band: int, plinth_budget: int) -> int:
+	## The one place the support datum's storey parity is resolved. Shared
+	## rather than restated because the partition stage has to predict this
+	## answer twice -- once to size an envelope (`_minimum_bands`) and once to
+	## bucket an unowned street wall (`_wall_verdict`) -- and three copies of a
+	## `result -= 1` are how a buried house becomes invisible to the audit that
+	## exists to catch it.
+	var result := mini(highest_ground, base_band)
+	if posmod(base_band - result, WarrenBuildingParcel.STOREY_BANDS) != 0:
+		if plinth_budget > 0 and result < base_band \
+				and result + 1 - lowest_ground <= plinth_budget:
+			result += 1
+		else:
+			result -= 1
+	return mini(result, base_band)
+
+
+static func _yaw_for_frontage(frontage: Vector2i) -> int:
+	var target := Vector3i(frontage.x, 0, frontage.y)
+	for yaw in 4:
+		if FabricRecipe.transform_direction(Vector3i.BACK, yaw) == target:
+			return yaw
+	return -1
+
+
+static func _matching_origin(parcel: WarrenBuildingParcel,
+		profile: Dictionary, yaw: int) -> Vector3i:
+	var target: Dictionary = {}
+	for macro_column: Vector2i in parcel.footprint:
+		for x_offset in 2:
+			for z_offset in 2:
+				target[Vector3i(macro_column.x * 2 + x_offset,
+					parcel.base_band, macro_column.y * 2 + z_offset)] = true
+	var local_cells := FabricRecipe.box_cells(profile.minimum as Vector3i,
+		profile.size as Vector3i)
+	var target_cells: Array[Vector3i] = []
+	target_cells.assign(target.keys())
+	target_cells.sort_custom(_cell_less)
+	for target_anchor: Vector3i in target_cells:
+		for local_anchor: Vector3i in local_cells:
+			var rotated_anchor := FabricRecipe.transform_cell(local_anchor,
+				Vector3i.ZERO, yaw)
+			var origin := target_anchor - rotated_anchor
+			var matched := true
+			for local_cell: Vector3i in local_cells:
+				if not target.has(FabricRecipe.transform_cell(local_cell,
+						origin, yaw)):
+					matched = false
+					break
+			if matched:
+				return origin
+	return Vector3i(2147483647, 2147483647, 2147483647)
+
+
+static func _cell_less(a: Vector3i, b: Vector3i) -> bool:
+	if a.y != b.y:
+		return a.y < b.y
+	if a.z != b.z:
+		return a.z < b.z
+	return a.x < b.x

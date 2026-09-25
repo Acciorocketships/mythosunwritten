@@ -1,0 +1,336 @@
+{
+ "pack": "fantasy_village_stairs",
+ "license": "FantasyVillageFBX source-pack license",
+ "default_scale": [
+  1.0,
+  1.0,
+  1.0
+ ],
+ "assets": [
+  {
+   "id": "sfv.fabric.stair.preset.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Preset/SFV_Stair_Preset_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_stair",
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.stair.preset.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Preset/SFV_Stair_Preset_002.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_stair",
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.stair.preset.003",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Preset/SFV_Stair_Preset_003.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_stair",
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.stair.preset.005",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Preset/SFV_Stair_Preset_005.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_stair",
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.stair.preset.006",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Preset/SFV_Stair_Preset_006.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_stair",
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.stair.preset.007",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Preset/SFV_Stair_Preset_007.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_stair",
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.fabric.stair.preset.008",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Preset/SFV_Stair_Preset_008.fbx",
+   "merge_pieces": true,
+   "collision_profile": "building_trimesh",
+   "tags": [
+    "building",
+    "fabric_stair",
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 4194304,
+   "max_visual_triangles": 6000,
+   "max_collision_triangles": 6000,
+   "max_surfaces": 3,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.stair.base.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stair.fbx",
+   "merge_pieces": true,
+   "collision_profile": "ramp_box",
+   "collision_ramp_direction": [
+    0.0,
+    -1.0
+   ],
+   "collision_ramp_thickness": 0.24,
+   "tags": [
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1200,
+   "max_collision_triangles": 0,
+   "max_surfaces": 1,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.stair.brace.rock.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Wall_Support_Rock_Stair_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "convex",
+   "tags": [
+    "fabric_brace",
+    "support",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.stair.floor.m.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stair_Floor_M_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "flat_box",
+   "collision_footprint": 0.98,
+   "tags": [
+    "deck",
+    "slab",
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 1500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.stair.floor.s.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stair_Floor_S_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "flat_box",
+   "collision_footprint": 0.98,
+   "tags": [
+    "deck",
+    "slab",
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 2097152,
+   "max_visual_triangles": 1500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.stair.handrail.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stairs_Handrail_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "convex",
+   "tags": [
+    "railing",
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.stair.handrail.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stairs_Handrail_002.fbx",
+   "merge_pieces": true,
+   "collision_profile": "convex",
+   "tags": [
+    "railing",
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.stair.handrail.003",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stairs_Handrail_003.fbx",
+   "merge_pieces": true,
+   "collision_profile": "convex",
+   "tags": [
+    "railing",
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.stair.handrail_base.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stairs_Handrail_Base_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "convex",
+   "tags": [
+    "railing",
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.stair.handrail_base.002",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stairs_Handrail_Base_002.fbx",
+   "merge_pieces": true,
+   "collision_profile": "convex",
+   "tags": [
+    "railing",
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1500,
+   "max_collision_triangles": 0,
+   "max_surfaces": 2,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "sfv.stair.m.001",
+   "source": "res://assets/FantasyVillageFBX/FBX/Stairs/Stair Parts/SFV_Stair_M_001.fbx",
+   "merge_pieces": true,
+   "collision_profile": "ramp_box",
+   "collision_ramp_direction": [
+    0.0,
+    -1.0
+   ],
+   "collision_ramp_thickness": 0.24,
+   "tags": [
+    "stair",
+    "village"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 1048576,
+   "max_visual_triangles": 1200,
+   "max_collision_triangles": 0,
+   "max_surfaces": 1,
+   "max_collision_pieces": 1
+  }
+ ]
+}

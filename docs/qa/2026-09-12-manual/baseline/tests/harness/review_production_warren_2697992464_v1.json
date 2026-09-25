@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "review_contract": {
+    "intent": "falsification",
+    "success_definition": "finding_a_real_issue",
+    "full_resolution_reviewed": true,
+    "independent_reviewer": false
+  },
+  "capture_root": "/tmp/production-village-2697992464-captures",
+  "world_seed": 2697992464,
+  "settlement_id": "settlement.29bc5c240c52f84a",
+  "closing_candidate": false,
+  "captures": [
+    {"screenshot_id":"warren_skyline_ne","disposition":"pass","finding_ids":[],"notes":"The production-streamed town has narrow/tall roofed stacks, pale authored plank decks, staggered rooflines, and supported overhangs."},
+    {"screenshot_id":"warren_skyline_sw","disposition":"finding","finding_ids":["PW2697-002"],"notes":"The upper public realm is connected, but broad rectangular courts dominate several gaps and weaken the building-bounded maze reading."},
+    {"screenshot_id":"warren_skyline_nw","disposition":"pass","finding_ids":[],"notes":"No dark duplicate platform skin, missing roof, or visibly wider-than-deep building is present."},
+    {"screenshot_id":"warren_skyline_se","disposition":"finding","finding_ids":["PW2697-002"],"notes":"Several large deck patches separate perimeter buildings instead of making the buildings themselves close the route."},
+    {"screenshot_id":"warren_ground_entry","disposition":"finding","finding_ids":["PW2697-001"],"notes":"The stocked market and facade canyon are legible, but unclaimed grass remains visible beneath elevated construction in the inner route."},
+    {"screenshot_id":"warren_ground_reverse","disposition":"finding","finding_ids":["PW2697-001"],"notes":"A long grass-floored undercroft sightline reaches the exterior road and horizon through the town."},
+    {"screenshot_id":"warren_ground_cross_a","disposition":"pass","finding_ids":[],"notes":"This angle presents a stocked market foreground and a vertically layered building mass without a material or roof regression."},
+    {"screenshot_id":"warren_ground_cross_b","disposition":"finding","finding_ids":["PW2697-001"],"notes":"The hostile cross-axis view exposes a nearly straight tunnel through multiple raised bays, confirming that the high sightline audit is a real composition failure."},
+    {"screenshot_id":"warren_network_above","disposition":"finding","finding_ids":["PW2697-002"],"notes":"Central vertical coverage is substantially improved, but the public realm still reads as a broad platform web in places rather than narrow passages left between buildings."}
+  ],
+  "findings": [
+    {
+      "id": "PW2697-001",
+      "severity": "P1",
+      "status": "open",
+      "screenshot_ids": ["warren_ground_entry", "warren_ground_reverse", "warren_ground_cross_b"],
+      "evidence": "Full-resolution production captures show continuous grass and exterior horizon through the centre. The exact construction audit agrees: frontage_ratio=0.15 and through_sightline_count=197.",
+      "invariant": "An inner public route must be the exterior void left between ground-bearing or overhead inhabited mass; it may not become a straight lawn corridor through raised buildings.",
+      "confidence": "high"
+    },
+    {
+      "id": "PW2697-002",
+      "severity": "P2",
+      "status": "open",
+      "screenshot_ids": ["warren_skyline_sw", "warren_skyline_se", "warren_network_above"],
+      "evidence": "Several connected 6-12 m deck patches dominate the overhead plan. They close vertical shafts but do not consistently bring facades to the route edge.",
+      "invariant": "Platform infill should close dangerous vertical gaps while remaining subordinate to compact, building-bounded passages and guarded lightwells.",
+      "confidence": "high"
+    },
+    {
+      "id": "PW2697-003",
+      "severity": "P1",
+      "status": "open",
+      "screenshot_ids": [],
+      "evidence": "The production capture waited 201.2 s for the first feature context and another 75.0 s for a nearby uncached feature context before later cache hits became cheap.",
+      "invariant": "Seeded production villages must be streamable without repeating a minute-scale exact town solve for adjacent feature blocks.",
+      "confidence": "high"
+    }
+  ],
+  "verified_non_regressions": {
+    "dark_platform_skin": false,
+    "roofless_room_count": 0,
+    "visually_short_parcel_count": 0,
+    "transverse_parcel_count": 0,
+    "stair_endpoint_gap_count": 0,
+    "unsupported_platform_count": 0,
+    "visual_envelope_overlap_count": 0
+  }
+}

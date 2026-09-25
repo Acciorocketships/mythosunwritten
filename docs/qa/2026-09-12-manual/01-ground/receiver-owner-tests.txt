@@ -1,0 +1,51 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september12_ground_visibility.gd
+* test_terrain_sheet_and_slopes_stay_opaque_beyond_old_five_metre_radius
+    [Pending]:  Requires native GPU rendering
+* test_ground_cover_stays_opaque_with_its_terrain
+    [Pending]:  Requires native GPU rendering
+* test_only_real_ground_backed_pixels_reveal_context
+    [Pending]:  Requires native GPU rendering
+* test_native_house_shell_clears_to_real_ground_without_exposing_its_interior
+    [Pending]:  Requires native GPU rendering
+* test_receiver_world_tracks_actual_mesh_owners_and_releases_evicted_sources
+1/5 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september12_ground_visibility.gd
+- test_terrain_sheet_and_slopes_stay_opaque_beyond_old_five_metre_radius
+    [Pending]:  Requires native GPU rendering
+- test_ground_cover_stays_opaque_with_its_terrain
+    [Pending]:  Requires native GPU rendering
+- test_only_real_ground_backed_pixels_reveal_context
+    [Pending]:  Requires native GPU rendering
+- test_native_house_shell_clears_to_real_ground_without_exposing_its_interior
+    [Pending]:  Requires native GPU rendering
+
+Totals
+------
+Scripts               1
+Tests                 5
+Passing Tests         1
+Risky/Pending         4
+Asserts               7
+Time              0.421s
+
+
+---- 4 pending/risky tests. ----
+
