@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cliff detail comparisons</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#161917;color:#eee;font:15px system-ui,sans-serif}main{max-width:1900px;margin:auto;padding:24px}h1{font-size:25px;margin:0 0 8px}p{color:#bfc5bf;line-height:1.5;max-width:1100px;margin:8px 0 16px}.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:16px 0}button,select{font:inherit;background:#282e29;color:#eee;border:1px solid #515e52;border-radius:6px;padding:9px 12px;cursor:pointer}button[aria-pressed=true]{background:#bdd3ad;color:#16200e;border-color:#bdd3ad}label{display:flex;gap:8px;align-items:center}section{display:grid;grid-template-columns:1fr 1fr;gap:16px}figure{margin:0;min-width:0}figcaption{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}img{display:block;width:100%;height:auto;background:#252a25;border-radius:5px}a{color:#c4dcb6}#judgment{min-height:48px}small{color:#a0aa9f}.single{grid-template-columns:1fr}.single figure:first-child{display:none}@media(max-width:850px){main{padding:16px}section{grid-template-columns:1fr}h1{font-size:22px}}
+</style>
+<main>
+<h1>Cliff detail: three experiments</h1>
+<p>Same cameras and lighting. Switch between the current surface, narrower grooves, a clean surface, and extra outcroppings. These are studies; none has replaced the game’s current cliffs.</p>
+<div class="controls" aria-label="Surface versions">
+<button data-variant="grooves" aria-pressed="true">Narrow, deeper grooves</button>
+<button data-variant="outcrops" aria-pressed="false">More outcroppings</button>
+<button data-variant="clean" aria-pressed="false">No small crags</button>
+</div>
+<div class="controls">
+<label>Camera <select id="camera"></select></label>
+<button id="previous">Previous view</button><button id="next">Next view</button>
+<button id="layout" aria-pressed="false">Enlarge experiment</button>
+</div>
+<p id="judgment" aria-live="polite"></p>
+<section id="pictures">
+<figure><figcaption><strong>Current cliffs</strong><a id="before-link" target="_blank" rel="noopener">Open original</a></figcaption><img id="before-image" alt="Current cliffs at the selected camera"></figure>
+<figure><figcaption><strong id="candidate-title"></strong><a id="candidate-link" target="_blank" rel="noopener">Open experiment</a></figcaption><img id="candidate-image" alt="Cliff experiment at the selected camera"></figure>
+</section>
+<p><small>The amber scenes use a frozen game snapshot with rebuilt rocks and plants. Plant contacts can change between versions. The 16 m and 64 m studio views expose shape under neutral lighting. Shared gray colour variation remains in all versions. Each experiment passes six focused geometry tests; broader cliff composition remains unresolved.</small></p>
+</main>
+<script>
+const descriptions={
+grooves:['Narrow, deeper grooves','The clearest rock detail of these experiments: less fabric-like, with more distinct fractures. The initial long cuts were shortened and the vertical clefts reduced. This is my preferred detail direction, though smooth upright faces and thin upper ledges still need work.'],
+outcrops:['More outcroppings','Extra depth is visible in the studio views, but the masses still form too many upright columns. At the amber sites the improvement is small. This is not yet the varied terraced composition we want.'],
+clean:['No small crags','The calmest surface: removing the small crags eliminates the wrinkles. Larger bare faces are too smooth, and the existing vertical organization becomes more obvious. Useful as a control, not a finished cliff.']};
+const views=[['','P20_oblique','Amber · front / oblique'],['','P05_reported_0','Amber · close ledges'],['','P12_side','Amber · side'],['-short','oblique','16 m studio · oblique'],['-tall','oblique','64 m studio · oblique']];
+for(const size of ['-short','-tall'])for(const shot of ['front','close','wide','ledges'])views.push([size,shot,`${size==='-short'?'16':'64'} m studio · ${shot}`]);
+for(const shot of ['P12_front','P17_front','P05_vines','P05_reported_8','P05_reported_-8','P12_reported_0','P12_reported_8','P12_reported_-8','P17_reported_0','P17_reported_8','P17_reported_-8','P20_reported_0','P20_reported_8','P20_reported_-8'])views.push(['',shot,`Amber · ${shot}`]);
+let variant='grooves';const camera=document.getElementById('camera');
+views.forEach((view,index)=>camera.add(new Option(view[2],index)));
+function render(){const [suffix,shot]=views[Number(camera.value)];const baseline=`before${suffix}/${shot}.png`;const candidate=variant==='grooves'?`grooves-refined${suffix==='-short'?'-16':suffix==='-tall'?'-64':''}/${shot}.png`:`${variant}${suffix}/${shot}.png`;
+document.getElementById('before-image').src=baseline;document.getElementById('before-link').href=baseline;
+document.getElementById('candidate-image').src=candidate;document.getElementById('candidate-link').href=candidate;
+document.getElementById('candidate-title').textContent=descriptions[variant][0];document.getElementById('judgment').textContent=descriptions[variant][1];
+document.querySelectorAll('[data-variant]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.variant===variant)));}
+document.querySelectorAll('[data-variant]').forEach(button=>button.onclick=()=>{variant=button.dataset.variant;render()});camera.onchange=render;
+document.getElementById('previous').onclick=()=>{camera.selectedIndex=(camera.selectedIndex+views.length-1)%views.length;render()};
+document.getElementById('next').onclick=()=>{camera.selectedIndex=(camera.selectedIndex+1)%views.length;render()};
+document.getElementById('layout').onclick=function(){const active=this.getAttribute('aria-pressed')!=='true';this.setAttribute('aria-pressed',String(active));this.textContent=active?'Show comparison':'Enlarge experiment';document.getElementById('pictures').classList.toggle('single',active)};
+render();
+</script>
+</html>

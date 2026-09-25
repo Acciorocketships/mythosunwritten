@@ -1,0 +1,3 @@
+Frozen straight+corner baseline: original-context
+Byte-identical PNGs: []
+Different PNGs: ['P05_reported_-8.png', 'P05_reported_0.png', 'P05_reported_8.png', 'P05_vines.png', 'P12_front.png', 'P12_reported_-8.png', 'P12_reported_0.png', 'P12_reported_8.png', 'P12_side.png', 'P17_front.png', 'P17_reported_-8.png', 'P17_reported_0.png', 'P17_reported_8.png', 'P20_oblique.png', 'P20_reported_-8.png', 'P20_reported_0.png', 'P20_reported_8.png']
