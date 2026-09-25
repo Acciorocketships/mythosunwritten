@@ -7,6 +7,8 @@ static func read(path: String, finish: bool = true) -> WarrenMazeSourcePlan:
 	var data: Dictionary = str_to_var(FileAccess.get_file_as_string(path))
 	var massif := WarrenMassif.with_columns(data.world_seed,
 		data.massif_columns, data.massif_core)
+	massif.form_id = StringName(data.get("massif_form", &"hill"))
+	massif.open_court = data.get("massif_open_court", {})
 	assert(massif.seal(), massif.last_rejection)
 	var excavation := WarrenExcavation.new(data.world_seed)
 	for key: String in data.excavation:

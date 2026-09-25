@@ -1,6 +1,6 @@
 extends GutTest
 
-func test_reported_town_gate_handoffs_are_painted_and_graded_to_the_street() -> void:
+func test_reported_town_road_connected_gates_are_painted_and_graded_to_the_street() -> void:
 	var seed_value := 2697992464
 	var program := FeatureProgram.compile(EnvironmentCatalog.load_default())
 	var water := TerrainWorldTuning.make_water(seed_value)
@@ -15,6 +15,17 @@ func test_reported_town_gate_handoffs_are_painted_and_graded_to_the_street() -> 
 	var contacts := VillageWarrenFabricSolver.terrain_contact_specs(
 		urban.volumetric_spatial, urban.fabric_plan)
 	assert_gte(contacts.size(), 2)
+	# A level exit into open ground has no road stub. Exercise every actual
+	# gate with an explicit external road ending at its canonical contact.
+	var paths: Array[Dictionary] = []
+	for spec: Dictionary in contacts:
+		var contact := VillageWarrenFabricSolver.terrain_contact_local_geometry(spec)
+		var outer: Vector3 = urban.world_transform * (contact.outer_centre as Vector3)
+		var outward: Vector3 = urban.world_transform.basis * Vector3(spec.outward as Vector3i)
+		var b := Vector2(outer.x,outer.z)
+		var points: Array[Vector2] = [b+Vector2(outward.x,outward.z)*6,b]
+		paths.append({"points":points,"owner":&"test-road"})
+	VillageWarrenFabricSolver._append_terrain_handoff_paint(urban,contacts,paths,&"reported-town.warren")
 	for spec: Dictionary in contacts:
 		var geometry := VillageWarrenFabricSolver.terrain_contact_local_geometry(spec)
 		var inner: Vector3 = geometry.inner_centre

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ah0sy"]
+
+[resource]
+script = ExtResource("1_ah0sy")
+id = &"lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_positive.end_positive.middle"
+visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_compact_valleys/lpfv_fabric_roof_compact_orange_03_valley_ordinary_eave_positive_end_positive_middle.tres"
+tags = Array[StringName]([&"building", &"compact_roof", &"fabric_roof", &"native_valley", &"village"])
+measured_aabb = AABB(-1.828262, 3.1974423e-12, -0.75, 2.624651, 2.0256505, 1.5)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"low_poly_fantasy_village_compact_valleys:lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_positive.end_positive.middle"

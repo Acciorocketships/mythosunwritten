@@ -87,7 +87,10 @@ static func slot_is_borable(massif: WarrenMassif,
 	var column := Vector2i(cell.x, cell.z)
 	if massif == null or excavation == null or not massif.has_column(column):
 		return false
-	if cell.y < massif.base_at(column) or cell.y + bands > massif.top_at(column):
+	# Ground streets have open sky even when the low edge has less masonry
+	# than a complete bore. Elevated passages still need the full solid slot.
+	if cell.y < massif.base_at(column) or (cell.y != massif.base_at(column) \
+			and cell.y + bands > massif.top_at(column)):
 		return false
 	# Keep a full solid separator between vertically crossing passages.
 	for band in range(cell.y - 1, cell.y + bands + 1):
@@ -160,8 +163,7 @@ static func is_at_grade(massif: WarrenMassif, cell: Vector3i) -> bool:
 
 static func opens_to_exterior(massif: WarrenMassif, cell: Vector3i) -> bool:
 	for direction: Vector2i in DIRECTIONS:
-		if not massif.has_column(Vector2i(cell.x + direction.x,
-				cell.z + direction.y)):
+		if exterior_approach_is_clear(massif, cell, direction):
 			return true
 	return false
 
@@ -176,11 +178,13 @@ static func hash_key(world_seed: int, salt: int, cell: Vector3i,
 static func exterior_approach_is_clear(massif: WarrenMassif, portal: Vector3i,
 		outward: Vector2i) -> bool:
 	## A missing adjacent column may be a notch with masonry on its far bank.
-	## Each band of descent takes one macro of run; the lower half-macro
-	## landing occupies the next column. Qualify the whole route to open ground.
-	var rise := absi(portal.y-massif.base_at(Vector2i(portal.x,portal.z)))
-	for step in range(1,rise+2):
-		if massif.has_column(Vector2i(portal.x,portal.z)+outward*step):
+	## A world-road exit needs a clear ray through the complete footprint,
+	## including the far side of any enclosed court.
+	var origin := Vector2i(portal.x, portal.z)
+	for column: Vector2i in massif.columns:
+		var delta := column - origin
+		if delta.x * outward.x + delta.y * outward.y > 0 \
+				and delta.x * outward.y == delta.y * outward.x:
 			return false
 	return true
 

@@ -750,10 +750,9 @@ func test_program_compiles_one_common_recipe_vocabulary() -> void:
 		assert_false(String(asset_id).begins_with("sfbp.tent"), String(asset_id))
 
 
-func test_room_jetty_support_is_a_sealed_invisible_course() -> void:
-	## The compiler still proves and audits one support course per bearing edge,
-	## but the course renders nothing: the ribbed corbel it used to place read as
-	## a flight of stairs hung under the jetty.
+func test_room_jetty_support_has_plain_native_knees() -> void:
+	## Visible plain timber replaces the former empty support reservation;
+	## the rejected ribbed corbel remains absent.
 	var program := _program()
 	for recipe_id: StringName in [&"outcrop.support.bracketed.2",
 			&"outcrop.support.bracketed.1"]:
@@ -762,8 +761,8 @@ func test_room_jetty_support_is_a_sealed_invisible_course() -> void:
 		if recipe == null:
 			continue
 		assert_true(recipe.has_tag(&"cantilever_support"))
-		assert_eq(recipe.placements.size(), 0,
-			"%s renders no ribbed corbel" % recipe_id)
+		assert_eq(recipe.placements.size(), int(String(recipe_id).get_slice(".", 3)),
+			"%s renders one native knee per bearing column" % recipe_id)
 		assert_true(recipe.local_clearance_bounds.has_volume(),
 			"%s still declares the envelope its clearance proof uses" \
 				% recipe_id)
@@ -803,7 +802,7 @@ func test_dormer_styles_keep_steep_gables_and_replace_the_weak_shell_with_sheds(
 		assert_true(recipe.placements.any(func(placement: Dictionary) -> bool:
 			return String(placement.id).contains("dormer") \
 				and StringName(placement.asset_id) \
-					== SettlementFabricProgram.ROOF_WINDOW_04),
+					== SettlementFabricProgram.DORMER_SHED_ORANGE_DEEP),
 			"the weaker shallow gable is replaced by the complete shed shell")
 
 

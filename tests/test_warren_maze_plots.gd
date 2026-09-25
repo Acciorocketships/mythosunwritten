@@ -725,7 +725,12 @@ const UNPLOTTED_FRONTING_COLUMNS := 0
 ## way for the same reason. Buildable coverage over the same four towns went UP
 ## (0.965 -> 0.976), so this is footprints redistributing, not columns falling
 ## out of the partition.
-const FOOTPRINT_FLOOR := 1.5
+##
+## September 22 (L1) re-pinned 1.5 -> 1.4 on measurement: a prefab may no longer
+## stand alone on a raised level, so 12/compact's hilltop that held one raised
+## landmark now carries small tiered houses (five houses, 7 columns). The other
+## planner towns are unchanged.
+const FOOTPRINT_FLOOR := 1.4
 
 static var _sealed_plans: Dictionary = {}
 ## The site planner's own failure text at the moment each plan was built.
@@ -867,14 +872,22 @@ func _asset_sites(plan: WarrenMazeSourcePlan) -> Array[Dictionary]:
 					# accepts.
 					var doors := WarrenPlotReservations._fronting_doors(
 						footprint, streets)
+					# September 22 (L1): a raised site must also leave its level
+					# room for companion buildings, exactly as the planner asks.
+					var realisation: Dictionary = {}
 					var realisable := doors.has(datum) \
 						and WarrenPlotReservations._site_realises(plan, streets,
 							template, footprint, doors[datum] as Vector3i,
-							datum)
+							datum, {}, {}, realisation) \
+						and WarrenPlotReservations._raised_site_keeps_company(
+							plan, streets, {}, footprint, realisation, datum, {})
 					out.append({"kind_id": StringName(template["kind_id"]),
 						"orientation": orientation, "anchor": anchor,
 						"datum": datum, "cost": cost,
 						"realisable": realisable,
+						"cut_class": cost / (footprint.size() * WarrenBuildingParcel.STOREY_BANDS),
+						"variety": WarrenPassageLatticeRules.hash_key(plan.world_seed,
+							0xFABA, Vector3i(WarrenPlotReservations.ASSET_TEMPLATES.find(template), 0, 0)),
 						"cells": footprint.duplicate()})
 	return out
 
@@ -1041,12 +1054,20 @@ func test_assets_sit_at_the_minimum_modification_site() -> void:
 	# when it is not. The enumeration is this test's own, so both halves still
 	# check the planner against an independent derivation.
 	var realisable := bool((records[0] as Dictionary).get("realisable", false))
+	# September 22 (L1): the planner ranks realisable sites by average cut depth
+	# per storey, then seeded variety, then total cost (`_site_less`; reuse is
+	# zero for the first asset). With the companion rule removing the lone
+	# raised sites, the cheapest total cost no longer coincides with that order,
+	# so the oracle follows the documented ordering.
 	var best_realisable := -1
+	var best_key := []
 	for site: Dictionary in sites:
 		if not bool(site.get("realisable", false)):
 			continue
-		best_realisable = int(site["cost"]) if best_realisable < 0 \
-			else mini(best_realisable, int(site["cost"]))
+		var key := [int(site["cut_class"]), int(site["variety"]), int(site["cost"])]
+		if best_key.is_empty() or key < best_key:
+			best_key = key
+			best_realisable = int(site["cost"])
 	gut.p("asset site cost %d; cheapest %d, cheapest realisable %d (%s)" % [
 		cost, best, best_realisable,
 		"realisable" if realisable else "fallback"])

@@ -36,7 +36,7 @@ func test_wall_socket_preserves_exposed_guard_and_collision_in_all_directions() 
 		assert_gt(opposite_top,0,"The short parapet retains the upper guard")
 		assert_eq(payload.collision_faces.size(),points.size()/4*6,"Every retained guard face has collision")
 
-func test_photo14_lower_rail_respects_full_hanging_stone_course() -> void:
+func test_photo14_lower_rail_respects_the_emitted_stone_course() -> void:
 	var program:=SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
 	var frozen:=preload("res://tests/fixtures/frozen_maze_source.gd")
 	var spatial:=frozen.spatial(frozen.read("res://tests/fixtures/september8-night-center-source.txt"),program)
@@ -44,6 +44,19 @@ func test_photo14_lower_rail_respects_full_hanging_stone_course() -> void:
 	var ends:=WarrenTransitionSurfaceBuilder._span_endpoints(spatial.source_volume.transitions[8])
 	var start:Vector3=ends.start
 	var run:Vector3=(ends.end as Vector3)-start
+	# The September 10 short-course fix removed the old full-height curtain.
+	# Credit obstruction only where actual emitted native masonry still exists.
+	var payload := SettlementFabricAssembler.terrace_retaining_payload(fabric)
+	var cache := EnvironmentRenderCache.new(EnvironmentCatalog.load_default())
+	cache.prepare(payload.asset_ids())
+	var stone_boxes: Array[AABB] = []
+	for asset: StringName in payload.batches:
+		if not String(asset).begins_with("sfv.fabric.wall.rock."): continue
+		var batch: Dictionary = payload.batches[asset]
+		for pose: Transform3D in batch.transforms:
+			for piece: EnvironmentVisualPiece in cache.visual(asset).pieces:
+				stone_boxes.append((pose*piece.local_transform*piece.mesh.get_aabb()).grow(-0.0001))
+	assert_false(stone_boxes.is_empty(),"The photographed source must contain actual native masonry")
 	var violations:=0
 	for mesh:Dictionary in fabric.surface_plan.mesh_payloads:
 		if String(mesh.get("stable_id",""))!="volume.transition.08.mesh":continue
@@ -52,5 +65,7 @@ func test_photo14_lower_rail_respects_full_hanging_stone_course() -> void:
 			var p:Vector3=(points[i]+points[i+1]+points[i+2]+points[i+3])*0.25
 			var t:=Vector2(p.x-start.x,p.z-start.z).dot(Vector2(run.x,run.z))/Vector2(run.x,run.z).length_squared()
 			var floor_y:=start.y+run.y*t
-			if p.y>floor_y+0.4 and p.x>2.0 and p.x<4.0 and p.y>3.0 and p.y<4.49 and p.z>2.17 and p.z<2.33:violations+=1
-	assert_eq(violations,0,"The photographed lower rail must not cross the hanging stone course below its owning mass cell")
+			if p.y>floor_y+0.4 and p.x>2.0 and p.x<4.0 and p.y>3.0 and p.y<4.49 and p.z>2.17 and p.z<2.33:
+				for box: AABB in stone_boxes:
+					if box.has_point(p): violations+=1
+	assert_eq(violations,0,"The photographed lower rail must not cross actual emitted stone below its owning mass cell")

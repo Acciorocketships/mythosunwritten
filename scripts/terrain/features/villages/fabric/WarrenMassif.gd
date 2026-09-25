@@ -4,10 +4,8 @@ extends RefCounted
 ## Terraced solid city mass: per-column occupiable band interval. The public
 ## realm is carved FROM this object; it never grows to meet a route.
 ##
-## "Solid" is an invariant seal() actually checks, not just a naming
-## convention: a builder bug that fragments the footprint (see
-## WarrenMassifBuilder's fix-round-1 history) must fail here, not silently
-## pass through as a solid mass with holes in it.
+## Validation requires a connected footprint and rejects undeclared holes.
+## Intentional open courts are source geometry, declared before route carving.
 
 ## Inhabited bands a terrace carries: MAX_TERRACE_STOREYS storeys plus one
 ## roof reservation, in WarrenBuildingParcel's units. Written out rather than
@@ -62,6 +60,10 @@ const PLINTH_BUDGET_BANDS := WarrenBuildingParcel.STOREY_BANDS
 var world_seed: int
 var columns: Dictionary = {}
 var core_top_bands: int = 0
+var form_id: StringName = &"hill"
+## Intentional open ground, authored before streets and plots. This is distinct
+## from an accidental missing construction column.
+var open_court: Dictionary = {}
 var last_rejection := ""
 var _sealed := false
 
@@ -103,7 +105,11 @@ func validate_construction() -> bool:
 	if not _is_single_component():
 		last_rejection = "footprint is not a single connected component"
 		return false
-	var hole: Variant = _find_interior_hole()
+	for column: Vector2i in open_court:
+		if columns.has(column):
+			last_rejection = "court overlaps construction at %s" % column
+			return false
+	var hole: Variant = _find_interior_hole(true)
 	if hole != null:
 		last_rejection = "interior hole at column %s" % str(hole)
 		return false
@@ -248,7 +254,7 @@ func _is_single_component() -> bool:
 	return visited.size() == columns.size()
 
 
-func _find_interior_hole() -> Variant:
+func _find_interior_hole(exclude_declared_court: bool = false) -> Variant:
 	## A pocket of missing columns that is unreachable from outside the
 	## footprint: not the natural boundary taper, but a puncture through the
 	## middle of the solid, of ANY size or shape. A 4-neighbour-presence
@@ -297,6 +303,8 @@ func _find_interior_hole() -> Variant:
 		for x in range(min_x, max_x + 1):
 			var cell := Vector2i(x, z)
 			if columns.has(cell) or reached_from_outside.has(cell):
+				continue
+			if exclude_declared_court and open_court.has(cell):
 				continue
 			return cell
 	return null

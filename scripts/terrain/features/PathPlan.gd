@@ -61,13 +61,16 @@ func _init(world_seed: int, water_plan: WaterPlan, fields: WorldFieldBlockCache,
 	_water_plan.set_planning_progress_callback(
 		Callable(self, "_on_water_planning_progress"))
 
-func context_for(chunk: Vector2i) -> FeatureContext:
+func context_for(chunk: Vector2i, cancelled := Callable()) -> FeatureContext:
 	if _contexts.has(chunk):
 		_touch(_context_stamps, chunk)
 		_report_context_progress(chunk, 1.0)
 		return _contexts[chunk]
+	var context := _build_context(chunk, cancelled)
+	if context == null:
+		_active_progress_valid = false
+		return null
 	_evict_lru(_contexts, _context_stamps, _program.CONTEXT_CACHE_CAP)
-	var context := _build_context(chunk)
 	_contexts[chunk] = context
 	_touch(_context_stamps, chunk)
 	_stats.context_builds += 1
@@ -149,42 +152,27 @@ func accepted_mask_for_node(super_cell: Vector2i) -> int:
 			var route := route_for(node, other)
 			if route.is_empty():
 				continue
-			var backbone := _chosen_route_key(super_cell) == String(route.key) \
-				or _chosen_route_key(other_super) == String(route.key)
 			var loop := _roll(_hash(PathProgram.SALT_LOOP,
 				[route.node_a.cell.x, route.node_a.cell.y,
 				route.node_b.cell.x, route.node_b.cell.y])) \
 				< PathProgram.LOOP_EDGE_PROBABILITY
-			if backbone or loop:
-				mask |= int(_BITS[direction])
+			if loop or bool(_route_preferred_at(super_cell, route)) \
+				or bool(_route_preferred_at(other_super, route)):
+				mask |= _route_endpoint_mask(route, node.cell)
 	_accepted_masks[super_cell] = mask
 	_touch(_accepted_mask_stamps, super_cell)
 	return mask
 
-func _chosen_route_key(super_cell: Vector2i) -> String:
-	if _chosen_routes.has(super_cell):
-		_touch(_chosen_route_stamps, super_cell)
-		return String(_chosen_routes[super_cell])
-	_evict_lru(_chosen_routes, _chosen_route_stamps,
-		_program.NODE_CACHE_CAP)
-	var node := node_for(super_cell)
-	var chosen := ""
-	var chosen_rank := ""
-	if not node.is_empty():
-		for direction: Vector2i in _DIRS:
-			var other := node_for(super_cell + direction)
-			if other.is_empty():
-				continue
-			var route := route_for(node, other)
-			if route.is_empty():
-				continue
-			var rank := _route_rank(route)
-			if chosen.is_empty() or rank < chosen_rank:
-				chosen = String(route.key)
-				chosen_rank = rank
-	_chosen_routes[super_cell] = chosen
-	_touch(_chosen_route_stamps, super_cell)
-	return chosen
+
+static func _route_endpoint_mask(route: Dictionary, cell: Vector2i) -> int:
+	var mask := 0
+	for connection: Dictionary in route.connections:
+		if connection.a == cell:
+			mask |= int(_BITS[connection.b - cell])
+		elif connection.b == cell:
+			mask |= int(_BITS[connection.a - cell])
+	return mask
+
 
 func bridge_site(site_key: Variant) -> Dictionary:
 	var key := String(site_key.key) if site_key is Dictionary else String(site_key)
@@ -230,15 +218,20 @@ func _compute_node(super_cell: Vector2i) -> Dictionary:
 		return _absent_node()
 	var lo := INF
 	var hi := -INF
-	for point: Vector2 in _node_support_samples(site.cell):
+	var support := _node_support_samples(site.cell)
+	# The complete support span is a cheaper independent rejection. A steep
+	# provisional settlement cannot become a road node regardless of wetness;
+	# do not solve distant water domains merely to reach that same decision.
+	for point: Vector2 in support:
 		var height := _ground(point)
 		lo = minf(lo, height)
 		hi = maxf(hi, height)
+	if hi - lo > PathProgram.NODE_MAX_SUPPORT_SPAN:
+		return _absent_node()
+	for point: Vector2 in support:
 		var water := _fields.water_at(point)
 		if water.is_wet(point):
 			return _absent_node()
-	if hi - lo > PathProgram.NODE_MAX_SUPPORT_SPAN:
-		return _absent_node()
 	return {"id": site.id, "cell": site.cell}
 
 func _node_support_samples(cell: Vector2i) -> Array[Vector2]:
@@ -315,6 +308,24 @@ func _profile_bridge(site: Dictionary) -> Dictionary:
 	if absf(wa.y - _ground(Vector2(wa.x, wa.z))) > PathProgram.BRIDGE_END_STEP_MAX \
 		or absf(wb.y - _ground(Vector2(wb.x, wb.z))) > PathProgram.BRIDGE_END_STEP_MAX:
 		return {}
+	# Reject the complete native support and underlying terrain before
+	# constructing hydraulic domains for a bridge that cannot stand here.
+	var beneath_lo := INF
+	var beneath_hi := -INF
+	for i in 9:
+		var h := _ground(a.lerp(b, float(i) / 8.0))
+		beneath_lo = minf(beneath_lo, h)
+		beneath_hi = maxf(beneath_hi, h)
+	if beneath_hi - beneath_lo > PathProgram.BRIDGE_TERRAIN_GRADE_MAX:
+		return {}
+	var support_points: Array[Vector2] = []
+	for field: String in ["landing_samples", "support_samples"]:
+		for local: Vector3 in metrics[field]:
+			var world := transform * local
+			var p := Vector2(world.x, world.z)
+			if absf(_ground(p) - world.y) > 1.25:
+				return {}
+			support_points.append(p)
 	var wet_levels := PackedFloat32Array()
 	for offset: float in metrics.lateral_offsets:
 		var line_a := a + lateral * offset
@@ -334,14 +345,9 @@ func _profile_bridge(site: Dictionary) -> Dictionary:
 				var level := water.level_at(p)
 				if not is_nan(level):
 					wet_levels.append(level)
-	for field: String in ["landing_samples", "support_samples"]:
-		for local: Vector3 in metrics[field]:
-			var world := transform * local
-			var p := Vector2(world.x, world.z)
-			if _fields.water_at(p).is_wet(p):
-				return {}
-			if absf(_ground(p) - world.y) > 1.25:
-				return {}
+	for p: Vector2 in support_points:
+		if _fields.water_at(p).is_wet(p):
+			return {}
 	if wet_levels.is_empty():
 		return {}
 	var water_lo := wet_levels[0]
@@ -352,14 +358,6 @@ func _profile_bridge(site: Dictionary) -> Dictionary:
 	if water_hi - water_lo > PathProgram.BRIDGE_WATER_SPREAD_MAX \
 		or origin.y + float(metrics.underside_height) - water_hi \
 		< float(metrics.dynamic_clearance):
-		return {}
-	var beneath_lo := INF
-	var beneath_hi := -INF
-	for i in 9:
-		var h := _ground(a.lerp(b, float(i) / 8.0))
-		beneath_lo = minf(beneath_lo, h)
-		beneath_hi = maxf(beneath_hi, h)
-	if beneath_hi - beneath_lo > PathProgram.BRIDGE_TERRAIN_GRADE_MAX:
 		return {}
 	var footprint := _transformed_rect(metrics.footprint, transform)
 	var connections: Array[Dictionary] = []
@@ -427,6 +425,8 @@ func _compute_route(a: Dictionary, b: Dictionary, pair_key: String) -> Dictionar
 func _route_record(start_cell: Vector2i, goal_cell: Vector2i, pair_key: String) -> Dictionary:
 	var min_cell := Vector2i(mini(start_cell.x, goal_cell.x), mini(start_cell.y, goal_cell.y))
 	var max_cell := Vector2i(maxi(start_cell.x, goal_cell.x), maxi(start_cell.y, goal_cell.y))
+	min_cell -= Vector2i.ONE * PathProgram.ROUTE_DETOUR_CELLS
+	max_cell += Vector2i.ONE * PathProgram.ROUTE_DETOUR_CELLS
 	var width := max_cell.x - min_cell.x + 1
 	var height := max_cell.y - min_cell.y + 1
 	var count := width * height
@@ -444,72 +444,77 @@ func _route_record(start_cell: Vector2i, goal_cell: Vector2i, pair_key: String) 
 			cells[index] = cell
 			heights[index] = int(round(_ground(p)))
 			rocky[index] = Helper.biome_rocky01(Vector3(p.x, 0.0, p.y), _world_seed)
-	var edges: Dictionary = {}
+	var estimate := PackedFloat64Array()
+	estimate.resize(count)
 	for index in count:
-		var cell: Vector2i = cells[index]
-		var directions: Array[Vector2i] = []
-		if cell.x != goal_cell.x:
-			directions.append(Vector2i(signi(goal_cell.x - cell.x), 0))
-		if cell.y != goal_cell.y:
-			directions.append(Vector2i(0, signi(goal_cell.y - cell.y)))
-		var cell_edges: Array[Dictionary] = []
-		for direction: Vector2i in directions:
-			var next := cell + direction
-			var segment_a := Vector2(cell) * TerrainSurfaceField.TILE
-			var segment_b := Vector2(next) * TerrainSurfaceField.TILE
-			var intervals := _planning_intervals_cells(cell, next)
-			if intervals.is_empty():
-				var region := _fields.region_at((segment_a + segment_b) * 0.5)
-				if not TerrainSurfaceField.is_walkable_edge(region, cell, direction):
-					continue
-				var to := _local_index(next, min_cell, width)
-				cell_edges.append({"to": to, "dir": _dir_index(direction),
-					"variation": absi(heights[to] - heights[index]),
-					"cost": absf(float(heights[to] - heights[index])) \
-						+ float(rocky[to]) * PathProgram.ROUTE_ROCKY_COST,
-					"bridge_key": "", "connections": [{"a": cell, "b": next}]})
-				continue
-			var site := _site_from_start(cell, direction)
-			if site.is_empty():
-				continue
-			var bridge := bridge_site(site)
-			if bridge.is_empty():
-				continue
-			var far: Vector2i = bridge.b if bridge.a == cell else bridge.a
-			if _manhattan(far, goal_cell) >= _manhattan(cell, goal_cell) \
-				or far.x < min_cell.x or far.y < min_cell.y \
-				or far.x > max_cell.x or far.y > max_cell.y:
-				continue
-			var to := _local_index(far, min_cell, width)
-			var bridge_connections: Array[Dictionary] = bridge.connections.duplicate(true)
-			if bridge.a != cell:
-				bridge_connections.reverse()
-				for connection: Dictionary in bridge_connections:
-					var swap: Vector2i = connection.a
-					connection.a = connection.b
-					connection.b = swap
-			cell_edges.append({"to": to, "dir": _dir_index(direction),
-				"variation": int(bridge.variation),
-				"cost": PathProgram.ROUTE_BRIDGE_COST + float(bridge.variation),
-				"bridge_key": String(bridge.key),
-				"connections": bridge_connections})
-		if not cell_edges.is_empty():
-			edges[index] = cell_edges
-	var order: Array[int] = []
-	for i in count:
-		order.append(i)
-	order.sort_custom(func(a: int, b: int) -> bool:
-		var pa := _manhattan(cells[a], start_cell)
-		var pb := _manhattan(cells[b], start_cell)
-		return pa < pb or (pa == pb and a < b))
+		estimate[index] = float(_manhattan(cells[index], goal_cell)) * TerrainSurfaceField.TILE
+	# Edge legality may prepare exact bridge water. Only the search frontier
+	# requests it; unused detour space never materializes those water fields.
+	var provider := func(index: int) -> Array[Dictionary]:
+		return _route_edges(index, cells, min_cell, max_cell, width, heights, rocky)
 	return {"start": _local_index(start_cell, min_cell, width),
 		"goal": _local_index(goal_cell, min_cell, width), "heights": heights,
-		"edges": edges, "order": order,
-		"vertical_budget": PathProgram.ROUTE_VERTICAL_BUDGET_UNITS,
+		"edges": {}, "edge_provider": provider, "estimate": estimate,
+		"vertical_budget": PathProgram.ROUTE_VERTICAL_BUDGET_UNITS
+			+ absi(heights[_local_index(goal_cell, min_cell, width)]
+				- heights[_local_index(start_cell, min_cell, width)]),
 		"turn_cost": PathProgram.ROUTE_TURN_COST,
 		"pair_hash": _hash(PathProgram.SALT_ROUTE,
 			[start_cell.x, start_cell.y, goal_cell.x, goal_cell.y]),
 		"pair_key": pair_key}
+
+func _route_edges(index: int, cells: Array[Vector2i], min_cell: Vector2i,
+		max_cell: Vector2i, width: int, heights: PackedInt32Array,
+		rocky: PackedFloat32Array) -> Array[Dictionary]:
+	var cell: Vector2i = cells[index]
+	var directions: Array[Vector2i] = [Vector2i.RIGHT, Vector2i.DOWN,
+		Vector2i.LEFT, Vector2i.UP]
+	var cell_edges: Array[Dictionary] = []
+	for direction: Vector2i in directions:
+		var next := cell + direction
+		if next.x < min_cell.x or next.y < min_cell.y \
+			or next.x > max_cell.x or next.y > max_cell.y:
+			continue
+		var segment_a := Vector2(cell) * TerrainSurfaceField.TILE
+		var segment_b := Vector2(next) * TerrainSurfaceField.TILE
+		var intervals := _planning_intervals_cells(cell, next)
+		if intervals.is_empty():
+			var region := _fields.region_at((segment_a + segment_b) * 0.5)
+			if not TerrainSurfaceField.is_walkable_edge(region, cell, direction,
+					PathProgram.PATH_HALF_WIDTH):
+				continue
+			var to := _local_index(next, min_cell, width)
+			cell_edges.append({"to": to, "dir": _dir_index(direction),
+				"variation": absi(heights[to] - heights[index]),
+				"cost": TerrainSurfaceField.TILE + absf(float(heights[to] - heights[index])) \
+					+ float(rocky[to]) * PathProgram.ROUTE_ROCKY_COST,
+				"bridge_key": "", "connections": [{"a": cell, "b": next}]})
+			continue
+		var site := _site_from_start(cell, direction)
+		if site.is_empty():
+			continue
+		var bridge := bridge_site(site)
+		if bridge.is_empty():
+			continue
+		var far: Vector2i = bridge.b if bridge.a == cell else bridge.a
+		if far.x < min_cell.x or far.y < min_cell.y \
+			or far.x > max_cell.x or far.y > max_cell.y:
+			continue
+		var to := _local_index(far, min_cell, width)
+		var bridge_connections: Array[Dictionary] = bridge.connections.duplicate(true)
+		if bridge.a != cell:
+			bridge_connections.reverse()
+			for connection: Dictionary in bridge_connections:
+				var swap: Vector2i = connection.a
+				connection.a = connection.b
+				connection.b = swap
+		cell_edges.append({"to": to, "dir": _dir_index(direction),
+			"variation": int(bridge.variation),
+			"cost": PathProgram.ROUTE_BRIDGE_COST + float(bridge.variation)
+				+ float(_manhattan(cell, far)) * TerrainSurfaceField.TILE,
+			"bridge_key": String(bridge.key),
+			"connections": bridge_connections})
+	return cell_edges
 
 func _validate_route_exact(edges: Array[Dictionary]) -> bool:
 	for edge: Dictionary in edges:
@@ -535,17 +540,17 @@ func _validate_route_exact(edges: Array[Dictionary]) -> bool:
 # ---------------------------------------------------------------------------
 # Network projection and contextual props
 
-func _build_context(chunk: Vector2i) -> FeatureContext:
+func _build_context(chunk: Vector2i, cancelled := Callable()) -> FeatureContext:
+	if cancelled.is_valid() and cancelled.call(): return null
 	_report_context_progress(chunk, 0.01)
 	var core := Rect2(Vector2(chunk) * TerrainChunkMesher.CHUNK_WORLD,
 		Vector2.ONE * TerrainChunkMesher.CHUNK_WORLD)
 	var query := core.grow(_context_margin + _program.max_horizontal_footprint_radius)
 	var relevant_pairs := _coarse_pairs(query)
 	_report_context_progress(chunk, 0.03)
-	var materialized: Dictionary = {}
-	var relevant_keys: Dictionary = {}
-	var endpoint_nodes: Dictionary = {}
+	var relevant: Array[Dictionary] = []
 	for pair_index in relevant_pairs.size():
+		if cancelled.is_valid() and cancelled.call(): return null
 		var pair: Array = relevant_pairs[pair_index]
 		var pair_start := lerpf(0.03, 0.28,
 			float(pair_index) / maxf(float(relevant_pairs.size()), 1.0))
@@ -554,57 +559,71 @@ func _build_context(chunk: Vector2i) -> FeatureContext:
 		var pair_mid := (pair_start + pair_end) * 0.5
 		_set_water_progress_span(chunk, pair_start, pair_mid)
 		var node_a := node_for(pair[0])
-		_set_water_progress_span(chunk, pair_mid, pair_end)
-		var node_b := node_for(pair[1])
-		if node_a.is_empty() or node_b.is_empty():
+		if cancelled.is_valid() and cancelled.call(): return null
+		# A missing endpoint already rules out this pair. Its remote partner
+		# may require a complete hydraulic domain, but cannot change that fact.
+		if node_a.is_empty():
 			_report_context_progress(chunk, pair_end)
 			continue
-		var key := _pair_key(node_a, node_b)
-		relevant_keys[key] = true
-		endpoint_nodes[String(node_a.id)] = {"node": node_a, "sc": pair[0]}
-		endpoint_nodes[String(node_b.id)] = {"node": node_b, "sc": pair[1]}
-		_report_context_progress(chunk, pair_end)
-	# Complete every relevant endpoint's four-route feasibility before ranking.
-	var endpoints: Array = endpoint_nodes.values()
-	var route_steps := maxi(1, endpoints.size() * _DIRS.size())
-	var route_step := 0
-	for endpoint: Dictionary in endpoints:
-		for direction: Vector2i in _DIRS:
-			var other := node_for(endpoint.sc + direction)
-			if not other.is_empty():
-				var route := route_for(endpoint.node, other)
-				if not route.is_empty():
-					materialized[String(route.key)] = route
-			route_step += 1
-			_report_context_progress(chunk, lerpf(0.28, 0.88,
-				float(route_step) / float(route_steps)))
-	_report_context_progress(chunk, 0.90)
-	var chosen_by_node: Dictionary = {}
-	for route: Dictionary in materialized.values():
-		for node: Dictionary in [route.node_a, route.node_b]:
-			var id := String(node.id)
-			if not chosen_by_node.has(id) \
-				or _route_rank(route) < _route_rank(chosen_by_node[id]):
-				chosen_by_node[id] = route
-	var accepted: Array[Dictionary] = []
-	for key: String in relevant_keys:
-		if not materialized.has(key):
+		_set_water_progress_span(chunk, pair_mid, pair_end)
+		var node_b := node_for(pair[1])
+		if node_b.is_empty():
+			_report_context_progress(chunk, pair_end)
 			continue
-		var route: Dictionary = materialized[key]
-		var backbone: bool = chosen_by_node.get(String(route.node_a.id), {}).get("key", "") == key \
-			or chosen_by_node.get(String(route.node_b.id), {}).get("key", "") == key
-		if backbone or _roll(_hash(PathProgram.SALT_LOOP,
-				[route.node_a.cell.x, route.node_a.cell.y,
-				route.node_b.cell.x, route.node_b.cell.y])) \
-			< PathProgram.LOOP_EDGE_PROBABILITY:
-			accepted.append(route)
+		relevant.append({"a": node_a, "b": node_b, "sc_a": pair[0], "sc_b": pair[1]})
+		_report_context_progress(chunk, pair_end)
+	# Materialize the relevant route before asking whether either endpoint
+	# chooses it. A selected loop needs no ranking. A rejected backbone only
+	# needs one cheaper witness at each endpoint, not every remote route.
+	var accepted: Array[Dictionary] = []
+	for index in relevant.size():
+		if cancelled.is_valid() and cancelled.call(): return null
+		var pair: Dictionary = relevant[index]
+		var route := route_for(pair.a, pair.b)
+		if route.is_empty(): continue
+		var included := _roll(_hash(PathProgram.SALT_LOOP,
+			[route.node_a.cell.x, route.node_a.cell.y,
+				route.node_b.cell.x, route.node_b.cell.y])) < PathProgram.LOOP_EDGE_PROBABILITY
+		if not included:
+			var first: Variant = _route_preferred_at(pair.sc_a, route, cancelled)
+			if first == null: return null
+			included = bool(first)
+			if not included:
+				var second: Variant = _route_preferred_at(pair.sc_b, route, cancelled)
+				if second == null: return null
+				included = bool(second)
+		if included: accepted.append(route)
+		_report_context_progress(chunk, lerpf(0.28, 0.95,
+			float(index + 1) / float(maxi(1, relevant.size()))))
+	if cancelled.is_valid() and cancelled.call(): return null
 	accepted.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.key) < String(b.key))
-	_report_context_progress(chunk, 0.95)
 	var context := _project_context(core, accepted)
 	_report_context_progress(chunk, 1.0)
 	_active_progress_valid = false
 	return context
+
+## Exact decision with early witnesses. Null means cancellation, not rejection.
+func _route_preferred_at(super_cell: Vector2i, candidate: Dictionary,
+		cancelled := Callable()) -> Variant:
+	if _chosen_routes.has(super_cell):
+		_touch(_chosen_route_stamps, super_cell)
+		return String(_chosen_routes[super_cell]) == String(candidate.key)
+	var node: Dictionary = candidate.node_a if _super_of(candidate.node_a.cell) == super_cell else candidate.node_b
+	var other_node: Dictionary = candidate.node_b if node == candidate.node_a else candidate.node_a
+	var other_super := _super_of(other_node.cell)
+	var rank := _route_rank(candidate)
+	for direction: Vector2i in _DIRS:
+		if cancelled.is_valid() and cancelled.call(): return null
+		if super_cell + direction == other_super: continue
+		var other := node_for(super_cell + direction)
+		if other.is_empty(): continue
+		var alternative := route_for(node, other)
+		if not alternative.is_empty() and _route_rank(alternative) < rank: return false
+	_evict_lru(_chosen_routes, _chosen_route_stamps, _program.NODE_CACHE_CAP)
+	_chosen_routes[super_cell] = String(candidate.key)
+	_touch(_chosen_route_stamps, super_cell)
+	return true
 
 func _project_context(core: Rect2, routes: Array[Dictionary]) -> FeatureContext:
 	var masks: Dictionary = {}
@@ -815,11 +834,14 @@ func _try_prop(core: Rect2, asset_id: StringName, cell: Vector2i,
 			samples.append(Vector2(p3.x, p3.z))
 	var base_h := _ground(anchor)
 	for point: Vector2 in samples:
-		if _fields.water_at(point).is_wet(point) or absf(_ground(point) - base_h) > 0.5:
+		if absf(_ground(point) - base_h) > 0.5:
 			return false
 	if not allow_corridor_legs and float(metrics.get("opening", INF)) \
 		< PathProgram.PATH_WIDTH + 0.5:
 		return false
+	for point: Vector2 in samples:
+		if _fields.water_at(point).is_wet(point):
+			return false
 	reservations.append(footprint)
 	occupied.append(footprint)
 	if WorldFieldBlockCache.key_of(anchor) == WorldFieldBlockCache.key_of(core.position):
@@ -921,7 +943,8 @@ func _possible_pair_rect(sc: Vector2i, direction: Vector2i) -> Rect2:
 		* TerrainSurfaceField.TILE
 	var hi := Vector2(Vector2i(maxi(a1.x, b1.x), maxi(a1.y, b1.y))) \
 		* TerrainSurfaceField.TILE
-	return Rect2(lo, hi - lo).grow(_program.max_horizontal_footprint_radius)
+	return Rect2(lo, hi - lo).grow(_program.max_horizontal_footprint_radius
+		+ PathProgram.ROUTE_DETOUR_CELLS * TerrainSurfaceField.TILE)
 
 static func _connection_rect(centre: Vector2, direction: Vector2i) -> Rect2:
 	var half_width := PathProgram.PATH_WIDTH * 0.5

@@ -132,7 +132,7 @@ static func partition(source: WarrenMazeSourcePlan,
 		return null
 	var plan := WarrenParcelPlan.new(
 		StringName("%s.maze_parcels" % volume.stable_id), volume)
-	if not plan.seal(parcels):
+	if not plan.seal(parcels,[],assets):
 		last_failure = "maze parcel plan rejected: %s" % plan.last_rejection
 		return null
 	# WarrenParcelPlan.seal builds `audit` itself, so every plot fact lands
@@ -140,7 +140,6 @@ static func partition(source: WarrenMazeSourcePlan,
 	plan.audit["maze_back_rooms"] = back_rooms
 	plan.audit["maze_decks"] = decks
 	plan.audit["maze_bridges"] = bridges
-	plan.audit["maze_assets"] = assets
 	plan.audit["maze_buildings"] = buildings
 	plan.audit["maze_untranslated"] = untranslated
 	plan.audit["maze_shrunk_parcel_count"] = shrunk.size()

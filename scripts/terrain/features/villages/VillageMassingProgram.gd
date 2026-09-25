@@ -61,7 +61,9 @@ static func compile(assets: Dictionary) -> VillageMassingProgram:
 	if program.core_asset_id.is_empty():
 		push_error("Village massing requires a stackable core footprint")
 		return null
-	for tier: StringName in VillageProgram.PRODUCTION_TIERS:
+	# Validate this grammar's roster. Ground hamlets use their own square plan
+	# and do not inherit an elevated massing or its minimum building count.
+	for tier: StringName in program.slot_table:
 		var slots: Array[VillageMassingSlot] = []
 		slots.assign(program.slot_table.get(tier, []))
 		var keys: Dictionary = {}

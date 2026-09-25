@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_8cu4f"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/low_poly_fantasy_village_compact_valleys/lpfv_fabric_roof_compact_orange_03_valley_ordinary_eave_negative_end_positive_middle_piece_00.res" id="2_hc6o4"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_tadb1"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/low_poly_fantasy_village_compact_valleys/lpfv_fabric_roof_compact_orange_03_valley_ordinary_eave_negative_end_positive_middle_piece_00.res" id="4_xd1un"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_06oih"]
+
+[sub_resource type="Resource" id="Resource_c6p73"]
+script = ExtResource("1_8cu4f")
+shape = ExtResource("2_hc6o4")
+
+[sub_resource type="Resource" id="Resource_0cysf"]
+script = ExtResource("3_tadb1")
+mesh = ExtResource("4_xd1un")
+
+[resource]
+script = ExtResource("5_06oih")
+pieces = Array[ExtResource("3_tadb1")]([SubResource("Resource_0cysf")])
+collisions = Array[ExtResource("1_8cu4f")]([SubResource("Resource_c6p73")])

@@ -239,7 +239,8 @@ func finish_facade_corners(recipe: FabricRecipe) -> void:
 	## slabs. Straight repeats keep their uncut ends. Select a baked subset of
 	## each original panel; the already-compiled conservative envelope remains
 	## unchanged, so this finish cannot change parcel admission or public air.
-	if not recipe.has_tag(&"room") or not recipe.has_tag(&"generated_building"):
+	if not recipe.has_tag(&"grounded_masonry_course") \
+			and (not recipe.has_tag(&"room") or not recipe.has_tag(&"generated_building")):
 		return
 	var original := recipe.placements.duplicate(true)
 	for index in original.size():

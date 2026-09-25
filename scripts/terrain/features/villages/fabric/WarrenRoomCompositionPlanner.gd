@@ -82,8 +82,8 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 	_stamp_cells_cache.clear()
 	var trace_started := Time.get_ticks_msec()
 	var trace_stage := trace_started
-	if grid == null or volume == null or proposals.is_empty():
-		last_failure = "missing grid, volume, or room proposals"
+	if grid == null or volume == null:
+		last_failure = "missing grid or volume"
 		return {}
 	var court_neighbors := _courtyard_neighbor_cells(volume)
 	var market_backing := market_reservation.get("backing_cell",
@@ -164,7 +164,7 @@ static func solve(grid: WarrenSpatialGrid, volume: WarrenVolumePlan,
 			"paired_primary": false,
 			"paired_secondary": false,
 		}
-	if lineages.is_empty():
+	if lineages.is_empty() and not proposals.is_empty():
 		last_failure = "no source lineage survived exact feature reservations"
 		return {}
 	if diagnostic_trace:
@@ -2360,6 +2360,15 @@ static func _floorplate_transition_is_structurally_legible(
 	if not _public_headroom_projection_has_native_arcade(
 			unborne, upper_base_y, grid):
 		return false
+	# A timber knee can carry a shallow edge, not a complete room-sized box.
+	# Only the separately proven native arcade can carry the deeper opening.
+	var projection_depth_limit := 1
+	if grid != null:
+		for column: Vector2i in unborne:
+			var below := Vector3i(column.x, upper_base_y - 1, column.y)
+			if grid.use_at(below) == WarrenSpatialGrid.Use.PUBLIC_AIR:
+				projection_depth_limit = 2
+				break
 	for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
 			Vector2i.UP, Vector2i.DOWN]:
 		var attachments: Dictionary = {}
@@ -2367,7 +2376,7 @@ static func _floorplate_transition_is_structurally_legible(
 		for column_value: Variant in unborne.keys():
 			var column := column_value as Vector2i
 			var attached := false
-			for depth in range(1, 3):
+			for depth in range(1, projection_depth_limit + 1):
 				var inward := column - direction * depth
 				if borne.has(inward):
 					attachments[inward] = true

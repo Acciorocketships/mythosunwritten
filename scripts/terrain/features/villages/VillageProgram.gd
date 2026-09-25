@@ -12,11 +12,10 @@ const DECK_TIERS := Vector2(3.7, 4.8)
 const ALLEY_WIDTHS: Array[float] = [3.0, 4.5, 6.0]
 const THEMES: Array[StringName] = [&"blue", &"orange"]
 const TIERS: Array[StringName] = [&"hamlet", &"village", &"town"]
-## Only tiers whose grammar guarantees a dense inhabited multi-height fabric are
-## selected in production. Hamlet remains a compiled authored vocabulary so it
-## can return later without changing asset or slot contracts.
-const PRODUCTION_TIERS: Array[StringName] = [&"village", &"town"]
-const PRODUCTION_TIER_WEIGHTS: Array[float] = [0.85, 0.15]
+## Ground hamlets own a small square and complete native houses. Larger tiers
+## retain the multi-height warren; population is selected before construction.
+const PRODUCTION_TIERS: Array[StringName] = [&"hamlet", &"village", &"town"]
+const PRODUCTION_TIER_WEIGHTS: Array[float] = [0.50, 0.40, 0.10]
 
 var max_asset_reach: float
 var max_ground_shape_reach: float
@@ -162,7 +161,7 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 			"id": &"lpfv.fabric.door.closed.01",
 			"local_offset": Vector3(1.311, 0.0, 2.869),
 		}],
-		"tiers": [&"village", &"town"],
+		"tiers": [&"hamlet", &"village", &"town"],
 	},
 	{
 		"id": &"lpfv.building.house.02",
@@ -181,7 +180,7 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 			"id": &"lpfv.fabric.door.closed.02",
 			"local_offset": Vector3(1.311, 0.0, 2.869),
 		}],
-		"tiers": [&"village", &"town"],
+		"tiers": [&"hamlet", &"village", &"town"],
 	},
 	# Houses 03--06 are the source pack's broad compound silhouettes. They use
 	# the same reviewed front jamb as the compact pair, but extend three metres
@@ -207,7 +206,7 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 			"id": &"lpfv.fabric.door.closed.02",
 			"local_offset": Vector3(1.311, 0.0, 2.869),
 		}],
-		"tiers": [&"village", &"town"],
+		"tiers": [&"hamlet", &"village", &"town"],
 	},
 	{
 		"id": &"lpfv.building.house.04",
@@ -226,7 +225,7 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 			"id": &"lpfv.fabric.door.closed.01",
 			"local_offset": Vector3(1.311, 0.0, 2.869),
 		}],
-		"tiers": [&"village", &"town"],
+		"tiers": [&"hamlet", &"village", &"town"],
 	},
 	{
 		"id": &"lpfv.building.house.05",
@@ -283,7 +282,7 @@ const DEFAULT_ASSETS: Array[Dictionary] = [
 			"id": &"lpfv.fabric.door.closed.01",
 			"local_offset": Vector3(1.311, 0.0, 2.869),
 		}],
-		"tiers": [&"village", &"town"],
+		"tiers": [&"hamlet", &"village", &"town"],
 	},
 	{
 		"id": &"aws.building.003",
@@ -695,9 +694,14 @@ static func compile(authored: Dictionary = {},
 			SettlementFabricAssembler.PLANK_SINGLE,
 			SettlementFabricAssembler.PLANK_RAILING,
 			SettlementFabricAssembler.TIMBER_SUPPORT,
+			&"lpfv.tree.01",
 		]:
 			if not fabric_asset_ids.has(adapter_id):
 				fabric_asset_ids.append(adapter_id)
+		# Every building is drawn by the active building kit.
+		for kit_id: StringName in SuntailBuildingKit.create().all_asset_ids():
+			if not fabric_asset_ids.has(kit_id):
+				fabric_asset_ids.append(kit_id)
 		for runtime_id: StringName in fabric_asset_ids:
 			var descriptor := catalog.descriptor(runtime_id)
 			if descriptor == null:

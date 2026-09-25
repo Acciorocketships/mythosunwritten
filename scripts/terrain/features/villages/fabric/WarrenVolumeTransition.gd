@@ -108,6 +108,22 @@ func surface_cells() -> Array[Vector3i]:
 	return out
 
 
+func clearance_air_cells() -> Array[Vector3i]:
+	# Surface cells are rounded route addresses, not the physical tread height.
+	# A rising native ramp/stair occupies the band below its upper addresses.
+	# Reserve that entire band before allocating rooms; a complete room cannot
+	# fit in the fractional space below a flight. Keep route addresses unchanged.
+	var out: Array[Vector3i] = []
+	if not is_vertical():
+		return out
+	var low := mini(from_cell.y, to_cell.y)
+	var high := maxi(from_cell.y, to_cell.y) + WarrenVolumePlan.HEADROOM_BANDS
+	for floor_cell: Vector3i in surface_cells():
+		for band in range(low, high):
+			out.append(Vector3i(floor_cell.x, band, floor_cell.z))
+	return out
+
+
 func deterministic_signature() -> String:
 	return "%s:%d:%d:%d>%d:%d:%d:%d:%d" % [stable_id,
 		from_cell.x, from_cell.y, from_cell.z,

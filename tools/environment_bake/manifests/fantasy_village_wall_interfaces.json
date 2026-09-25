@@ -1919,6 +1919,9 @@
   {
    "collision_profile": "building_trimesh",
    "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx",
+   "facade_side_source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_M_005.fbx",
+   "facade_side_thickness": 0.4686609,
+   "facade_side_mirror_left": true,
    "id": "sfv.fabric.wall.wood.door.closed.001.course_open",
    "max_collision_pieces": 1.0,
    "max_collision_triangles": 6000.0,
@@ -1940,6 +1943,9 @@
   {
    "collision_profile": "building_trimesh",
    "facade_miter_cap_source": "res://assets/FantasyVillageFBX/FBX/Pillars and Floor/Pillars/SFV_Wall_Pillar_001.fbx",
+   "facade_side_source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_M_005.fbx",
+   "facade_side_thickness": 0.4686609,
+   "facade_side_mirror_left": true,
    "id": "sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open",
    "max_collision_pieces": 1.0,
    "max_collision_triangles": 6000.0,

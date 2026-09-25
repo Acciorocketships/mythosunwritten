@@ -32,6 +32,7 @@ var _derived_claim_cells: Dictionary = {}
 var _entrance_openings: Dictionary = {}
 var _entrance_forecourt_join_points: Dictionary = {}
 var _public_openings: Dictionary = {}
+var _exterior_bridge_openings: Dictionary = {}
 ## TASK I4 ROUND 4. The boundaries a VILLAGE GREEN is entered through -- see
 ## `_classify_green_thresholds`.
 var _green_threshold_openings: Dictionary = {}
@@ -120,10 +121,39 @@ func finish_transition_guards(wall_boxes: Array[AABB],
 	for payload: Dictionary in _transition_mesh_payloads:
 		if not payload.has("pending_guard_span"): continue
 		var span: Dictionary = payload.pending_guard_span
+		# Sloping guards share the finished native wall envelope with landing
+		# guards; coarse retained courses alone leave timber across upper rooms.
 		WarrenTransitionSurfaceBuilder._append_side_guards(payload,
-			span.start, span.end, span.lateral, true, wall_boxes)
+			span.start, span.end, span.lateral, true,
+			_guard_wall_boxes + _raised_stair_side_barriers(span))
 		payload.erase("pending_guard_span")
 	return true
+
+
+func _raised_stair_side_barriers(span: Dictionary) -> Array[AABB]:
+	# A raised court beside a flight owns a level guard. Its vertical envelope
+	# also closes the ends of any diagonal rail emerging from the retaining wall.
+	# End landings are excluded: their posts still receive the sloping handrail.
+	var out: Array[AABB] = []
+	var start: Vector3 = span.start
+	var end: Vector3 = span.end
+	var lateral: Vector3 = span.lateral
+	var run := ((end-start)*Vector3(1,0,1)).normalized()
+	var length := Vector2(end.x-start.x,end.z-start.z).length()
+	var side_distance := (WarrenTransitionSurfaceBuilder.MACRO_SIZE + CELL_SIZE)*.5
+	for claim: Dictionary in _claims.values():
+		if int(claim.kind) != SurfaceKind.STRUCTURAL_COURT: continue
+		var center := Vector3(claim.cell)*CELL_SIZE
+		if absf(absf((center-start).dot(lateral))-side_distance) > .001: continue
+		var along := (center-start).dot(run)
+		if along+CELL_SIZE*.5 <= .001 or along-CELL_SIZE*.5 >= length-.001: continue
+		var floor_y := center.y
+		var start_y := lerpf(start.y,end.y,clampf((along-CELL_SIZE*.5)/length,0,1))
+		var end_y := lerpf(start.y,end.y,clampf((along+CELL_SIZE*.5)/length,0,1))
+		if floor_y <= minf(start_y,end_y)+.025: continue
+		out.append(AABB(center-Vector3(CELL_SIZE*.5+.04,0,CELL_SIZE*.5+.04),
+			Vector3(CELL_SIZE+.08,GUARD_HEIGHT+.05,CELL_SIZE+.08)))
+	return out
 
 
 func set_support_base(cell: Vector3i, base_band: int) -> bool:
@@ -225,6 +255,24 @@ func seal(required_cells: Array[Vector3i] = [],
 	_build_guards(structural_solid_cells, daylight_void_cells)
 	_sealed = not patches.is_empty()
 	return _sealed
+
+
+func finish_exterior_bridge_guards(spans: Array[Dictionary]) -> void:
+	## Exterior bridges are selected after the public floor union is sealed.
+	## Their accepted walking lanes own only the two terminal seams. Rebuild
+	## both visible guards and their collision from that same ownership; lateral
+	## drop edges and a structural companion lane keep their existing guards.
+	assert(_sealed)
+	_exterior_bridge_openings.clear()
+	for span: Dictionary in spans:
+		var step := span.step as Vector3i
+		for lane: Vector3i in SettlementFabricAssembler._skywalk_candidate_walk_lanes(span):
+			for endpoint: Array in [[lane, step],
+					[lane + step * (int(span.gap) + 1), -step]]:
+				var cell := endpoint[0] as Vector3i
+				if has_cell(cell):
+					_exterior_bridge_openings[_transition_key(cell, endpoint[1])] = true
+	_build_guards(_structural_solid_cells, _daylight_void_cells)
 
 
 func validate() -> bool:
@@ -819,6 +867,7 @@ func _classify_public_openings(transition_seams: Array[Dictionary]) -> void:
 	for seam: Dictionary in transition_seams:
 		var from_cell := seam.get("from_cell", Vector3i()) as Vector3i
 		var to_cell := seam.get("to_cell", Vector3i()) as Vector3i
+		if not _crosses_stair_end(from_cell,to_cell): continue
 		var from_direction := Vector3i(to_cell.x - from_cell.x, 0,
 			to_cell.z - from_cell.z)
 		_public_openings[_transition_key(from_cell, from_direction)] = true
@@ -861,6 +910,7 @@ func _build_guards(structural_solid_cells: Dictionary,
 			var transition := _transition_key(cell, direction)
 			if _has_public_transition(cell, direction) \
 					or _entrance_openings.has(transition) \
+					or _exterior_bridge_openings.has(transition) \
 					or _green_threshold_openings.has(transition):
 				continue
 			var neighbor := cell + direction
@@ -947,8 +997,23 @@ func _has_public_transition(cell: Vector3i, direction: Vector3i) -> bool:
 	# Same-height union edges are continuous by construction. A vertical offset
 	# opens a guard only when the public graph names that exact seam; nearby
 	# floors at another level do not silently become a stair connection.
-	return _claims.has(_cell_key(cell + direction)) \
+	return (_claims.has(_cell_key(cell + direction)) \
+		and _crosses_stair_end(cell,cell+direction)) \
 		or _public_openings.has(_transition_key(cell, direction))
+
+
+func _crosses_stair_end(from_cell: Vector3i, to_cell: Vector3i) -> bool:
+	# Rounded stair bands are occupancy intervals, not level side exits. Only
+	# the flight's longitudinal ends can open a neighboring court boundary.
+	var direction := to_cell-from_cell
+	for cell: Vector3i in [from_cell,to_cell]:
+		var owner := transition_owner_at(cell)
+		if owner.is_empty(): continue
+		for mesh: Dictionary in _transition_mesh_payloads:
+			if StringName(mesh.stable_id) != owner: continue
+			var run := mesh.get("run_direction",Vector3i.ZERO) as Vector3i
+			if absi(run.x*direction.x+run.z*direction.z) != 1: return false
+	return true
 
 
 func _guard_is_backed_by_wall(segment: Dictionary) -> bool:

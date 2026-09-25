@@ -35,12 +35,19 @@ var construction_runs: Array[Dictionary] = []
 ## Final fabric sealing may therefore compose adjacent units into one roof
 ## without inferring mesh pivots, moving rooms, or searching by proximity.
 var compact_roof_runs: Array[Dictionary] = []
+var compact_roof_junction: Dictionary = {}
 ## Named skins that can receive a roof flashing seam through an explicit
 ## unit connection. Other placements in the same recipe keep ordinary clearance.
 var roof_flashing_placement_ids: Array[StringName] = []
 ## A one-sided weather skin bears on its occluder footprint and meets this
 ## cardinal wall edge. Complete crowns keep ZERO and use their solid volume.
 var roof_high_edge := Vector3i.ZERO
+## The finished end of a half-depth gable; its opposite end is an open party
+## cut. Complete crowns and non-roof recipes keep ZERO.
+var roof_gable_edge := Vector3i.ZERO
+## Parent-room cells that close an authored open rear wall, in recipe space.
+## These are attachment contacts outside the recipe's occupied body.
+var room_backing_cells: Array[Vector3i] = []
 var solid_cells: Array[Vector3i] = []
 var walk_cells: Array[Vector3i] = []
 var headroom_cells: Array[Vector3i] = []
@@ -213,6 +220,7 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 		last_rejection = "missing id/catalog/tags, invalid bearing count, or empty visual recipe"
 		return false
 	if not _valid_names(role_tags) or not _unique_cells(solid_cells) \
+			or not _unique_cells(room_backing_cells) \
 			or not _unique_cells(walk_cells) or not _unique_cells(headroom_cells) \
 			or not _unique_cells(public_air_cells) \
 			or not _unique_cells(daylight_void_cells) \
@@ -396,6 +404,14 @@ func seal(catalog: EnvironmentCatalog) -> bool:
 				variants[family_value] = roles
 			bay["variants"] = variants
 			bays[bay_index] = bay
+		for roles_value: Variant in (run.get("valley_assets",{}) as Dictionary).values():
+			for variant: Dictionary in (roles_value as Dictionary).values():
+				var descriptor := catalog.descriptor(StringName(variant.get("asset_id","")))
+				if descriptor==null or not descriptor.measured_aabb.has_volume():
+					last_rejection="compact valley has no prepared native asset"
+					return false
+				variant["bounds"]=descriptor.measured_aabb
+				variant["collision_pieces"]=descriptor.collision_piece_count
 		run["bays"] = bays
 		run_ids[run_id] = true
 	if not has_bounds and placements.is_empty() \
@@ -533,6 +549,9 @@ func asset_ids() -> Array[StringName]:
 	for placement: Dictionary in placements:
 		unique[StringName(placement.asset_id)] = true
 	for run: Dictionary in compact_roof_runs:
+		for roles_value: Variant in (run.get("valley_assets",{}) as Dictionary).values():
+			for variant: Dictionary in (roles_value as Dictionary).values():
+				unique[StringName(variant.asset_id)]=true
 		for bay_value: Variant in run.get("bays", []) as Array:
 			var bay := bay_value as Dictionary
 			for roles_value: Variant in (bay.get("variants", {}) \

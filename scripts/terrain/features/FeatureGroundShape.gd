@@ -14,6 +14,9 @@ var kind: Kind
 var surface_id: int
 var priority: int
 var stable_id: StringName
+## A conservative outer bound around a whole district rather than construction
+## itself. Natural terrain dressing may ignore it; placement never does.
+var envelope := false
 
 var _a: Vector2
 var _b: Vector2

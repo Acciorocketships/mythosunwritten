@@ -143,8 +143,7 @@ static func _planned_plaza_support_cells(source: WarrenSpatialPlan) \
 				!= WarrenPlotReservations.PLAZA_PLOT_ID:
 			continue
 		var floor_band := int(plot["floor"])
-		for column_value: Variant in plot["cells"] as Array:
-			var column := column_value as Vector2i
+		for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
 			var origin := Vector3i(column.x * 2, floor_band - 1,
 				column.y * 2)
 			for offset: Vector3i in [Vector3i.ZERO, Vector3i.RIGHT,
@@ -249,9 +248,9 @@ static func generate(source: WarrenSpatialPlan,
 	var stage_ms := _trace_stage("realm", solve_started_ms)
 	var rooms := source.compiled_room_units_cache()
 	var room_audit := source.compiled_room_audit_cache()
-	if rooms.is_empty():
+	if not source.has_compiled_room_units():
 		rooms = compile_room_units(source, program)
-		if rooms.is_empty():
+		if rooms.is_empty() and not source.buildings.is_empty():
 			return null
 		room_audit = last_audit.duplicate(true)
 		source.cache_compiled_room_units(rooms, room_audit)
@@ -262,7 +261,7 @@ static func generate(source: WarrenSpatialPlan,
 	var feature_audit := last_audit.duplicate(true)
 	stage_ms = _trace_stage("features", stage_ms)
 	var roofs := compile_roof_units(source, program, rooms, features)
-	if roofs.is_empty():
+	if roofs.is_empty() and not rooms.is_empty():
 		return null
 	var roof_audit := last_audit.duplicate(true)
 	stage_ms = _trace_stage("roofs", stage_ms)
@@ -304,7 +303,7 @@ static func generate(source: WarrenSpatialPlan,
 	var foundation_audit := _foundation_shell_audit(foundation_result, result) \
 		if collect_diagnostics else {}
 	stage_ms = _trace_stage("foundation", stage_ms)
-	var frame_audit := _construct_ground_bearing_frames(source, result)
+	var frame_audit := _construct_ground_bearing_frames(source, result, program)
 	# The typed green precedes the surface transaction: guard construction needs
 	# its exact mouths, so declaring it after the surface sealed made the topology
 	# and the later render audit observe different squares.
@@ -334,6 +333,7 @@ static func generate(source: WarrenSpatialPlan,
 	# as a street and cannot keep a planter in the player's lane.
 	var exterior_network := SettlementFabricAssembler.maze_exterior_network(
 		result, construction_crowns)
+	surfaces.finish_exterior_bridge_guards(exterior_network.spans)
 	var suppression_audit := _suppress_intruding_modules(result,
 		exterior_network.get("terrace_cells", {}) as Dictionary)
 	stage_ms = _trace_stage("suppress_intruding", stage_ms)
@@ -402,6 +402,7 @@ static func generate(source: WarrenSpatialPlan,
 	lineage.merge(foundation_audit, true)
 	lineage["final_ground_frame_room_ids"] = frame_audit.final_ground_frame_room_ids
 	lineage["final_ground_frame_member_count"] = frame_audit.final_ground_frame_member_count
+	lineage["final_ground_masonry_room_ids"] = frame_audit.final_ground_masonry_room_ids
 	lineage.merge(suppression_audit, true)
 	lineage.merge(stone_audit, true)
 	# TASK H1. The wall metric rides beside the rock metric, never instead of
@@ -621,14 +622,16 @@ static func _modular_box_use_audit(source: WarrenSpatialPlan,
 
 
 static func _construct_ground_bearing_frames(source: WarrenSpatialPlan,
-		plan: SettlementFabricPlan) -> Dictionary:
+		plan: SettlementFabricPlan, program: SettlementFabricProgram) -> Dictionary:
 	## Derive load paths from the retained and inhabited mass, bottom-up. Each
 	## disconnected root component receives its fixed corner frame once. Exact
 	## frame/roof space is reserved before crown selection; overlap and public
 	## clearance are checked independently by validation_errors(), only in tests.
-	var solids := plan.transformed_cells(&"solid")
+	var solids := plan.transformed_cells(&"solid", &"", &"roof")
 	var solid_owners: Dictionary = {}
 	for built: FabricUnit in plan.units:
+		if plan.recipe(built.recipe_id).has_tag(&"roof"):
+			continue
 		for local: Vector3i in plan.recipe(built.recipe_id).solid_cells:
 			solid_owners[FabricRecipe.transform_cell(local, built.lattice_origin,
 				built.yaw_quarters)] = built
@@ -646,10 +649,38 @@ static func _construct_ground_bearing_frames(source: WarrenSpatialPlan,
 			var unit_id := StringName("spatial.fabric.%s" % room.stable_id)
 			body_by_unit[unit_id] = room.private_cells
 			for cell: Vector3i in room.private_cells:
-				body_union[cell] = true
+				# A two-ended skywalk consumes support from both flanks. It
+				# cannot also return the first flank's bearing to its other end.
+				# Keep its floor available to the physical column search below,
+				# but exclude the span from the ground-connectivity proof.
+				if (room.audit.get("bridge_support_room_ids", []) as Array).size() != 2:
+					body_union[cell] = true
 				body_owner[cell] = unit_id
 	var grounded := _ground_connected_mass(source, body_union)
 	var framed_bearings: Dictionary = {}
+	var masonry_room_ids: Array[StringName] = []
+	for course: Dictionary in _ground_bearing_masonry_courses(source,program):
+		var all_bases_grounded := true
+		for cell: Vector3i in course.cells:
+			all_bases_grounded = all_bases_grounded and grounded.has(cell+Vector3i.DOWN)
+		if not all_bases_grounded:
+			continue
+		var upper := course.room as WarrenRoomStamp
+		var seams: Array[StringName] = [StringName("spatial.fabric.%s" % upper.stable_id)]
+		for base: StringName in course.bases:
+			var base_id := StringName("spatial.fabric.%s" % base)
+			seams.append(base_id)
+			for built: FabricUnit in plan.units:
+				if built.parent_ids.has(base_id) and plan.recipe(built.recipe_id).has_tag(&"roof"):
+					seams.append(built.stable_id)
+		var member := FabricUnit.new(StringName("spatial.fabric.%s/ground-masonry" % upper.stable_id),
+			(course.recipe as FabricRecipe).recipe_id,upper.lattice_origin+Vector3i.DOWN,
+			upper.yaw_quarters,[],[],&"",seams)
+		plan.append_constructed_unit(member)
+		masonry_room_ids.append(upper.stable_id)
+		for cell: Vector3i in course.cells:
+			body_union[cell] = true
+	grounded = _ground_connected_mass(source,body_union)
 	var roots := plan.units.duplicate()
 	# Transfer load upward from the lowest room first. A frame supports the
 	# complete face-connected building mass, not only the room that named it.
@@ -751,7 +782,8 @@ static func _construct_ground_bearing_frames(source: WarrenSpatialPlan,
 			framed_bearings[cell] = true
 		grounded = _ground_connected_mass(source, body_union, framed_bearings)
 	return {"final_ground_frame_room_ids":room_ids,
-		"final_ground_frame_member_count":member_count}
+		"final_ground_frame_member_count":member_count,
+		"final_ground_masonry_room_ids":masonry_room_ids}
 
 
 static func _ground_connected_mass(source: WarrenSpatialPlan,
@@ -1219,6 +1251,11 @@ static func _supported_retained_maze_cells(source: WarrenSpatialPlan,
 	# even when they are not also semantic wall solids.
 	var terrain_bearing: Dictionary = {} if plan == null \
 		else plan.transformed_cells(&"terrain_bearing")
+	# Complete prefabs reserve their whole occupied box in the solid layer.
+	# That box roots the house, but does not promise a full masonry jamb on
+	# each outer cell: native walls can be inset or interrupted by a roof.
+	var crown_bearings: Dictionary = built_solid if plan == null \
+		else plan.transformed_cells(&"solid", &"", &"prefab_anchor")
 	if plan != null:
 		for cell: Vector3i in terrain_bearing:
 			union[cell] = true
@@ -1232,9 +1269,9 @@ static func _supported_retained_maze_cells(source: WarrenSpatialPlan,
 			supported[cell] = true
 		else:
 			unsupported[cell] = true
-	# Face connectivity is enough for a tunnel crown, because its opening is a
-	# typed PUBLIC_AIR void and the neighboring stone carries it. It is not enough
-	# for a source cell above an unclaimed OUTSIDE cell: that pattern is exactly a
+	# A continuous tunnel crown needs opposing jambs across its PUBLIC_AIR void.
+	# Mere face connectivity or a distant wall beyond an uncovered gap cannot
+	# bear a source cell above released air: that pattern is exactly a
 	# leftover rock shelf after the lower source mass was released for a roof or
 	# room. Retained terrain has no cantilever vocabulary, so keep only the
 	# bottom-up prefix of each such column. This is a monotone structural closure,
@@ -1248,19 +1285,42 @@ static func _supported_retained_maze_cells(source: WarrenSpatialPlan,
 		if a.z != b.z:
 			return a.z < b.z
 		return a.x < b.x)
-	for cell: Vector3i in supported_order:
-		var macro := Vector2i(floori(float(cell.x) / 2.0),
-			floori(float(cell.z) / 2.0))
-		if not envelope.contains_column(macro) \
-				or cell.y <= envelope.bearing_at(macro):
-			continue
-		var below := cell + Vector3i.DOWN
-		if source.grid.use_at(below) != WarrenSpatialGrid.Use.OUTSIDE \
-				or supported.has(below) or built_solid.has(below) \
-				or plinth_cells.has(below) or terrain_bearing.has(below):
-			continue
-		supported.erase(cell)
-		unsupported[cell] = true
+	# Removing a jamb can invalidate a crown visited earlier in this order.
+	# Recompute both connectivity and local bearing until the retained set stops
+	# shrinking; every pass removes a cell or terminates.
+	while true:
+		var previous_size := supported.size()
+		var remaining_union := built_solid.duplicate()
+		remaining_union.merge(plinth_cells, true)
+		remaining_union.merge(terrain_bearing, true)
+		remaining_union.merge(supported, true)
+		var remaining_connected := _ground_connected_mass(source, remaining_union)
+		for cell: Vector3i in supported.keys():
+			if not remaining_connected.has(cell):
+				supported.erase(cell)
+				unsupported[cell] = true
+		for cell: Vector3i in supported_order:
+			if not supported.has(cell):
+				continue
+			var macro := Vector2i(floori(float(cell.x) / 2.0),
+				floori(float(cell.z) / 2.0))
+			if not envelope.contains_column(macro) \
+					or cell.y <= envelope.bearing_at(macro):
+				continue
+			var below := cell + Vector3i.DOWN
+			if supported.has(below) or built_solid.has(below) \
+					or plinth_cells.has(below) or terrain_bearing.has(below):
+				continue
+			if source.grid.use_at(below) == WarrenSpatialGrid.Use.PRIVATE_VOLUME:
+				continue
+			if source.grid.use_at(below) == WarrenSpatialGrid.Use.PUBLIC_AIR \
+					and _retained_tunnel_has_opposing_bearings(source.grid, below,
+						supported, crown_bearings, plinth_cells):
+				continue
+			supported.erase(cell)
+			unsupported[cell] = true
+		if supported.size() == previous_size:
+			break
 	var component_count := 0
 	var structural_contacts: Dictionary = {}
 	var unvisited := unsupported.duplicate()
@@ -1289,6 +1349,32 @@ static func _supported_retained_maze_cells(source: WarrenSpatialPlan,
 		"unsupported_structural_contact_count": structural_contacts.size(),
 		"unsupported_structural_contact_cells": \
 			_sorted_v3_keys(structural_contacts)}
+
+
+static func _retained_tunnel_has_opposing_bearings(grid: WarrenSpatialGrid,
+		air: Vector3i, retained: Dictionary, built: Dictionary,
+		plinths: Dictionary) -> bool:
+	## Public air is a walking reservation, not evidence of an enclosed tunnel.
+	## A retained roof crosses that void only between two actual opposing jambs.
+	## Open garden shelves cannot borrow support from one adjoining wall.
+	for axis: Vector3i in [Vector3i.RIGHT, Vector3i.BACK]:
+		var ends := 0
+		for sign_value: int in [-1, 1]:
+			var probe := air + axis * sign_value
+			while grid.contains(probe):
+				if retained.has(probe) or built.has(probe) or plinths.has(probe):
+					ends += 1
+					break
+				if grid.use_at(probe) != WarrenSpatialGrid.Use.PUBLIC_AIR:
+					break
+				var crown := probe + Vector3i.UP
+				if not retained.has(crown) and not built.has(crown) \
+						and not plinths.has(crown):
+					break
+				probe += axis * sign_value
+		if ends == 2:
+			return true
+	return false
 
 
 static func _actual_roof_visual_cells(plan: SettlementFabricPlan) -> Dictionary:
@@ -1566,7 +1652,11 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		missing_faces.append(key)
 	var rendered := SettlementFabricAssembler.maze_stone_walls(retained,
 		solids, paved, plinths, walked, shell, plan.world_seed,
-		ground_skin.capped_ground as Dictionary)
+		ground_skin.capped_ground as Dictionary, [], plan.asset_wall_interfaces)
+	var rounded_faces: Dictionary = {}
+	for mesh: Dictionary in rendered.surface_meshes:
+		if String(mesh.stable_id).contains("/rounded/"):
+			rounded_faces[String(mesh.stable_id).get_slice("/rounded/",0)] = true
 	var paired_corner_faces := 0
 	for batch: Dictionary in rendered.batches.values():
 		for id: StringName in batch.ids:
@@ -1660,12 +1750,6 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 	for key_value: Variant in treatments.keys():
 		var key := key_value as Vector4i
 		var treatment := int(treatments[key])
-		# Count closed logical faces: the terrain corner realizes two of them
-		# with one mesh, while its two explicit colliders keep both walls solid.
-		var is_turf_wall := key.w < sides \
-			and (ground_skin.capped_ground as Dictionary).has(
-				Vector3i(key.x, key.y, key.z)) \
-			and treatment == SettlementFabricAssembler.SkinTreatment.MASONRY
 		var is_down_soffit := key.w >= sides \
 			and SettlementFabricAssembler.STONE_FACE_DIRECTIONS[key.w] \
 				== Vector3i.DOWN
@@ -1676,9 +1760,9 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		soffit_panels += int(is_down_soffit)
 		masonry_panels += int(treatment \
 			== SettlementFabricAssembler.SkinTreatment.MASONRY \
-			and not is_down_soffit and not is_turf_wall)
+			and not is_down_soffit)
 		natural_panels += int(treatment \
-			== SettlementFabricAssembler.SkinTreatment.NATURAL or is_turf_wall)
+			== SettlementFabricAssembler.SkinTreatment.NATURAL)
 		green_panels += int(treatment \
 			== SettlementFabricAssembler.SkinTreatment.GREEN)
 		if treatment == SettlementFabricAssembler.SkinTreatment.FACADE:
@@ -2117,7 +2201,7 @@ static func _maze_stone_skin_audit(plan: SettlementFabricPlan,
 		# panel count in this shell-coverage identity without pretending they are
 		# still individual EnvironmentVisual instances.
 		"maze_stone_rendered_face_count": rendered.instance_count \
-			+ paired_corner_faces + green_panels,
+			+ paired_corner_faces + rounded_faces.size() + green_panels,
 		"maze_stone_missing_face_count": missing_face_count,
 		"maze_stone_missing_faces": missing_faces,
 		"maze_stone_doubled_cap_count": doubled_cap_count,
@@ -2854,6 +2938,10 @@ static func compile_room_units(source: WarrenSpatialPlan,
 			return [] as Array[FabricUnit]
 	for room: WarrenRoomStamp in rooms:
 		var feature_portal_mask := int(feature_portal_masks.get(room.stable_id, 0))
+		var bay_backing_phase := -1
+		for feature: WarrenFeatureReservation in source.features:
+			if StringName(feature.audit.get("annex_room_id", &"")) == room.stable_id:
+				bay_backing_phase = int(feature.audit.get("annex_backing_phase", bay_backing_phase))
 		var stair_blocked_door := _door_approach_uses_stairs(room, source.source_volume)
 		if stair_blocked_door:
 			stair_blocked_door_ids.append(room.stable_id)
@@ -2870,7 +2958,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		# the wider masonry shell.
 		var recipe_id := _room_recipe_id(room, source.world_seed, true,
 			feature_portal_mask, on_retained_stone, true, low_base_lineages,
-			stone_base_lineages, suppress_exterior_door)
+			stone_base_lineages, suppress_exterior_door, bay_backing_phase)
 		var desired_phase_b := _is_phase_b_recipe(recipe_id)
 		desired_phase_b_count += int(desired_phase_b)
 		var recipe := program.recipe(recipe_id)
@@ -2962,7 +3050,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		# a change of material.
 		var fallback_id := _room_recipe_id(room, source.world_seed, false,
 			feature_portal_mask, on_retained_stone, true, low_base_lineages,
-			stone_base_lineages, suppress_exterior_door)
+			stone_base_lineages, suppress_exterior_door, bay_backing_phase)
 		var fallback_recipe := program.recipe(fallback_id)
 		var feature_conflict := _room_feature_envelope_conflict(source,
 			program, room, recipe)
@@ -2996,6 +3084,7 @@ static func compile_room_units(source: WarrenSpatialPlan,
 		var unit := FabricUnit.new(StringName("spatial.fabric.%s" % room.stable_id),
 			recipe_id, room.lattice_origin, room.yaw_quarters, parents, bonds,
 			&"", seams, suppressed)
+		unit.visibility_enclosure_id = building_by_room[room.stable_id]
 		room_probe.append_constructed_unit(unit)
 		# Earlier facade owners have already consumed their optional depth.
 		# Publish it in the same domain used for later choices, before those
@@ -3314,6 +3403,33 @@ static func required_roof_closure_options_for_rooms(grid: WarrenSpatialGrid,
 		room_id_by_private_cell, roof_faces_by_room, world_seed)
 
 
+static func _compact_roof_pairs_for_grid(grid: WarrenSpatialGrid,
+		rooms: Array[WarrenRoomStamp], faces_by_room: Dictionary,
+		room_by_cell: Dictionary, world_seed: int) -> Array[Dictionary]:
+	var proposals: Array[Dictionary]=[]
+	var by_id:Dictionary={}
+	for room: WarrenRoomStamp in rooms:
+		by_id[room.stable_id]=room
+		var faces := faces_by_room.get(room.stable_id,[]) as Array
+		var typed_faces: Array[Vector3i]=[]
+		typed_faces.assign(faces)
+		if not _is_full_roof_plate(room,typed_faces) or _touches_public_air(grid,typed_faces): continue
+		var upper:=false
+		for face: Vector3i in typed_faces:
+			upper=upper or _supports_upper_room_floor(room_by_cell,face)
+		if upper: continue
+		proposals.append({"stable_id":room.stable_id,"kind":room.kind,
+			"origin":room.lattice_origin,"yaw_quarters":room.yaw_quarters,"storeys":1,
+			"compact_junction_excluded":room.audit.has("bridge_party_roof_yaw_quarters")
+				or bool(room.audit.get("bridge_endpoint_roof",false))
+				or not (room.audit.get("bridge_support_room_ids",[]) as Array).is_empty()})
+	var pairs:=preload("res://scripts/terrain/features/villages/fabric/FabricCompactRoofJunctionPlan.gd").build(proposals)
+	for pair: Dictionary in pairs:
+		var host:=by_id[StringName(pair.host_id)] as WarrenRoomStamp
+		pair["theme"]=&"orange" if _architectural_roof_theme(host.lattice_origin,world_seed)==&"orange" else &"blue"
+	return pairs
+
+
 static func _required_roof_clearance_for_grid(grid: WarrenSpatialGrid,
 		program: SettlementFabricProgram, rooms: Array[WarrenRoomStamp],
 		room_id_by_private_cell: Dictionary, roof_faces_by_room: Dictionary,
@@ -3441,8 +3557,7 @@ static func _required_roof_clearance_for_grid(grid: WarrenSpatialGrid,
 						"required-roof.%s.%s.r%d" % [room.stable_id,
 							reserve_id, int(cap.yaw_quarters)]), reserve_id,
 						cap.origin as Vector3i, int(cap.yaw_quarters))
-					if not _unit_public_air_conflicts(grid, reserve_probe,
-							reserve_recipe).is_empty():
+					if _unit_has_site_conflict(grid, reserve_probe, reserve_recipe):
 						continue
 					options.append({"recipe_id": reserve_id,
 						"origin": cap.origin as Vector3i,
@@ -3868,7 +3983,7 @@ static func compile_feature_units(source: WarrenSpatialPlan,
 	last_failure = ""
 	last_audit = {}
 	if source == null or not source.is_sealed() or program == null \
-			or room_units.is_empty():
+			or (room_units.is_empty() and not source.buildings.is_empty()):
 		last_failure = "missing spatial plan, vocabulary, or compiled rooms"
 		return [] as Array[FabricUnit]
 	var room_unit_by_stamp: Dictionary = {}
@@ -4413,6 +4528,12 @@ static func _compile_tower_annex_feature(feature: WarrenFeatureReservation,
 		last_failure = "%s %s lacks a one-bearing occupied recipe" \
 			% [feature.kind, feature.stable_id]
 		return [] as Array[FabricUnit]
+	if recipe.has_tag(&"embedded_oriel"):
+		var backing := WarrenSpatialFeatureSolver.embedded_bay_backing_panel(
+			program.recipe(room_unit.recipe_id), room_unit.transform(), component.transform())
+		if backing.is_empty() or room_unit.suppressed_placement_ids.has(backing):
+			last_failure = "%s lacks its complete plain parent panel" % feature.stable_id
+			return [] as Array[FabricUnit]
 	var endpoint_cell := (feature.endpoints[0] as Dictionary).cell as Vector3i
 	var matches := _matching_room_connections(component, room_unit, program,
 		endpoint_cell, true)
@@ -4883,10 +5004,16 @@ static func _ground_frame_column_space(source: WarrenSpatialPlan,
 				body[cell] = true
 	var grounded := _ground_connected_mass(source, body)
 	var out: Array[AABB] = []
+	var masonry_rooms: Dictionary = {}
+	for course: Dictionary in _ground_bearing_masonry_courses(source,program):
+		var upper := course.room as WarrenRoomStamp
+		masonry_rooms[StringName("spatial.fabric.%s" % upper.stable_id)] = true
+		out.append(FabricRecipe.lattice_transform(upper.lattice_origin+Vector3i.DOWN,
+			upper.yaw_quarters)*(course.recipe as FabricRecipe).local_bounds)
 	var envelope := source.source_volume.envelope
 	for room: FabricUnit in room_units:
 		var recipe := program.recipe(room.recipe_id)
-		if not recipe.has_tag(&"terrain_bearing"):
+		if not recipe.has_tag(&"terrain_bearing") or masonry_rooms.has(room.stable_id):
 			continue
 		var low := Vector2i(2147483647, 2147483647)
 		var high := Vector2i(-2147483647, -2147483647)
@@ -4937,7 +5064,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	last_failure = ""
 	last_audit = {}
 	if source == null or not source.is_sealed() or program == null \
-			or room_units.is_empty():
+			or (room_units.is_empty() and not source.buildings.is_empty()):
 		last_failure = "missing spatial plan, vocabulary, or compiled rooms"
 		return [] as Array[FabricUnit]
 	var roof_started_ms := Time.get_ticks_msec()
@@ -5301,6 +5428,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				if pitched_recipe == null:
 					last_failure = "missing full roof recipe %s" % pitched_id
 					return [] as Array[FabricUnit]
+				_append_measured_required_roof_seams(pitched, pitched_recipe,
+					room_id, required_future_roof_closures, unit_by_room, program, out)
 				var roof_air_conflicts := _unit_public_air_conflicts(source.grid,
 					pitched, pitched_recipe)
 				if not roof_air_conflicts.is_empty():
@@ -5459,7 +5588,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			var slab := _full_roof_unit(room_id, room, parent_unit, slab_id,
 				_roof_seams_for_candidate(room_seams, parent_unit.stable_id,
 					out, fixed_feature_units), program)
-			if _unit_touches_public_air(source.grid, slab, slab_recipe):
+			if _unit_has_site_conflict(source.grid, slab, slab_recipe):
 				attempt_failures.append(
 					"plot flat %s: exact roof volume enters public air" \
 						% slab_id)
@@ -5510,7 +5639,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 						continue
 					var dressing := _flat_roof_garden_unit(room_id, slab,
 						dressing_id)
-					if _unit_touches_public_air(source.grid, dressing,
+					if _unit_has_site_conflict(source.grid, dressing,
 							dressing_recipe):
 						attempt_failures.append(
 							"crown dressing %s: enters public air" \
@@ -5602,7 +5731,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 						terrace_id, _roof_seams_for_candidate(
 							junction_room_seams, parent_unit.stable_id, out,
 							fixed_feature_units), program)
-					if _unit_touches_public_air(source.grid, terrace,
+					if _unit_has_site_conflict(source.grid, terrace,
 							terrace_recipe):
 						attempt_failures.append(
 							"terrace %s: enters public air" % terrace_id)
@@ -5631,7 +5760,7 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			if flat_recipe == null:
 				last_failure = "missing exact flat roof recipe %s" % flat_id
 				return [] as Array[FabricUnit]
-			if _unit_touches_public_air(source.grid, flat, flat_recipe):
+			if _unit_has_site_conflict(source.grid, flat, flat_recipe):
 				rejected_flat_count += 1
 				attempt_failures.append(
 					"flat: exact roof volume enters public air")
@@ -5865,12 +5994,18 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			_append_shallow_room_seams(cap_unit, end_wall_room_ids,
 				unit_by_room, unit_by_private_cell, program)
 			var cap_recipe := program.recipe(StringName(cap.recipe_id))
-			var cap_enters_public_air := cap_recipe != null \
-				and _unit_touches_public_air(source.grid, cap_unit, cap_recipe)
-			if cap_enters_public_air or not probe.add_unit(cap_unit):
+			var cap_site_conflict := cap_recipe != null \
+				and _unit_has_site_conflict(source.grid, cap_unit, cap_recipe)
+			var cap_future_conflict := _roof_candidate_required_closure_conflict(
+				cap_unit, cap_recipe, room_id, required_future_roof_closures,
+				unbuilt_roof_room_ids, program)
+			if cap_site_conflict or not cap_future_conflict.is_empty() \
+					or not probe.add_unit(cap_unit):
 				var terrace_rejection := probe.last_rejection
-				if cap_enters_public_air:
-					terrace_rejection = "exact setback roof volume enters public air %s; cap=%s origin=%s yaw=%d faces=%s" % [
+				if not cap_future_conflict.is_empty():
+					terrace_rejection = "blocks required future roof closure %s" % cap_future_conflict
+				if cap_site_conflict:
+					terrace_rejection = "setback roof conflicts with public air or its adjoining wall: air=%s; cap=%s origin=%s yaw=%d faces=%s" % [
 						_unit_public_air_conflicts(source.grid, cap_unit, cap_recipe),
 						cap_unit.recipe_id, cap_unit.lattice_origin, cap_unit.yaw_quarters, row]
 				if macro_piece:
@@ -5918,8 +6053,12 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 								unit_by_private_cell, program)
 							var rotated_recipe := program.recipe(rotated_id)
 							if rotated_recipe != null \
-									and not _unit_touches_public_air(source.grid,
+									and not _unit_has_site_conflict(source.grid,
 										rotated_unit, rotated_recipe) \
+									and _roof_candidate_required_closure_conflict(
+										rotated_unit, rotated_recipe, room_id,
+										required_future_roof_closures, unbuilt_roof_room_ids,
+										program).is_empty() \
 									and probe.add_unit(rotated_unit):
 								cap = rotated_cap
 								cap_unit = rotated_unit
@@ -5938,8 +6077,12 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 							unit_by_room, unit_by_private_cell, program)
 						var fallback_recipe := program.recipe(fallback_id)
 						if fallback_recipe != null \
-								and not _unit_touches_public_air(source.grid,
+								and not _unit_has_site_conflict(source.grid,
 									cap_unit, fallback_recipe) \
+								and _roof_candidate_required_closure_conflict(
+									cap_unit, fallback_recipe, room_id,
+									required_future_roof_closures, unbuilt_roof_room_ids,
+									program).is_empty() \
 								and probe.add_unit(cap_unit):
 							fallback_selected = true
 							break
@@ -5955,7 +6098,8 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 						var terminal := _terminal_macro_cap_fallback(source,
 							program, probe, row, row_index, room_id, room,
 							parent_unit, seams, room_seams, unit_by_room,
-							unit_by_private_cell, out, roof_room_id_by_face)
+							unit_by_private_cell, out, roof_room_id_by_face,
+							required_future_roof_closures, unbuilt_roof_room_ids)
 						var terminal_units := terminal.get("units",
 							[] as Array[FabricUnit]) as Array[FabricUnit]
 						if terminal_units.is_empty():
@@ -6007,8 +6151,12 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 						var alternate_recipe := program.recipe(StringName(
 							alternate.recipe_id))
 						if alternate_recipe != null \
-								and not _unit_touches_public_air(source.grid,
+								and not _unit_has_site_conflict(source.grid,
 									alternate_unit, alternate_recipe) \
+								and _roof_candidate_required_closure_conflict(
+									alternate_unit, alternate_recipe, room_id,
+									required_future_roof_closures, unbuilt_roof_room_ids,
+									program).is_empty() \
 								and probe.add_unit(alternate_unit):
 							cap = alternate
 							cap_unit = alternate_unit
@@ -6036,6 +6184,12 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 				.contains(".terrace."))
 			garden_cap_count += int(String(cap_unit.recipe_id) \
 				.contains(".garden."))
+	out = _join_compact_roof_pairs(source, program, room_units, fixed_feature_units, out, room_by_id, roof_faces_by_room, room_id_by_cell)
+	probe=SettlementFabricPlan.new(&"spatial.joined-roof-selection")
+	for recipe: FabricRecipe in program.recipes(): probe.register_recipe(recipe)
+	for unit: FabricUnit in room_units: probe.append_constructed_unit(unit)
+	for unit: FabricUnit in fixed_feature_units: probe.append_constructed_unit(unit)
+	for unit: FabricUnit in out: probe.append_constructed_unit(unit)
 	var roof_unit_by_room: Dictionary = {}
 	for roof_unit: FabricUnit in out:
 		var roof_text := String(roof_unit.stable_id)
@@ -6368,6 +6522,99 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 	return out
 
 
+static func _join_compact_roof_pairs(source: WarrenSpatialPlan,
+		program: SettlementFabricProgram, room_units: Array[FabricUnit],
+		feature_units: Array[FabricUnit], roofs: Array[FabricUnit],
+		room_by_id: Dictionary, faces_by_room: Dictionary,
+		room_by_cell: Dictionary) -> Array[FabricUnit]:
+	var rooms: Array[WarrenRoomStamp]=[]
+	rooms.assign(room_by_id.values())
+	var pairs:=_compact_roof_pairs_for_grid(source.grid,rooms,faces_by_room,room_by_cell,source.world_seed)
+	if pairs.is_empty(): return roofs
+	var by_id: Dictionary={}
+	for unit: FabricUnit in room_units: by_id[unit.stable_id]=unit
+	for unit: FabricUnit in roofs: by_id[unit.stable_id]=unit
+	var original_plan:=SettlementFabricPlan.new(&"spatial.original-roof-runs")
+	for recipe: FabricRecipe in program.recipes(): original_plan.register_recipe(recipe)
+	for unit: FabricUnit in room_units: original_plan.append_constructed_unit(unit)
+	for unit: FabricUnit in feature_units: original_plan.append_constructed_unit(unit)
+	for unit: FabricUnit in roofs: original_plan.append_constructed_unit(unit)
+	var original_runs:=FabricContinuousRoofPlan.compile(original_plan,false)
+	for pair: Dictionary in pairs:
+		var host_id:=StringName("spatial.roof.%s" % pair.host_id)
+		var branch_id:=StringName("spatial.roof.%s" % pair.branch_id)
+		var host:=by_id.get(host_id) as FabricUnit
+		var branch:=by_id.get(branch_id) as FabricUnit
+		if host==null or branch==null: continue
+		var host_recipe:=program.recipe(host.recipe_id)
+		var branch_recipe:=program.recipe(branch.recipe_id)
+		if diagnostic_trace_timing: print("COMPACT_PAIR_CANDIDATE ",pair," recipes=",host.recipe_id,"/",branch.recipe_id," runs=",host_recipe.compact_roof_runs.size())
+		if host_recipe.compact_roof_runs.is_empty() \
+				or branch_recipe.compact_roof_runs.is_empty(): continue
+		# Rich roofs already carrying an authored dormer retain that complete
+		# assembly until a compatible joined variant exists.
+		if host_recipe.has_tag(&"dormer") or branch_recipe.has_tag(&"dormer"): continue
+		var theme:=_roof_recipe_family(host.recipe_id)
+		if theme not in [&"blue",&"orange"]: continue
+		var replacements: Array[FabricUnit]=[]
+		var clear:=true
+		for role: StringName in [&"host",&"branch"]:
+			var original:=host if role==&"host" else branch
+			var room_id:=StringName(pair[String(role)+"_id"])
+			var room:=room_by_id[room_id] as WarrenRoomStamp
+			var parent:=by_id[original.parent_ids[0]] as FabricUnit
+			var seams:=original.visual_seam_ids.duplicate()
+			seams.erase(branch_id)
+			seams.erase(host_id)
+			var chimney_yaw: int=-1
+			if role==&"branch":
+				for placement: Dictionary in branch_recipe.placements:
+					if placement.id==&"chimney": chimney_yaw=posmod(original.yaw_quarters-int(pair.host_yaw),4)
+			var id:=SettlementFabricProgram.compact_valley_recipe_id(role,theme,pair.eave_sign,pair.end_sign,chimney_yaw)
+			var replacement:=_full_roof_unit(room_id,room,parent,id,seams,program,
+				posmod(int(pair.host_yaw)-room.yaw_quarters,4))
+			var air_conflicts:=_unit_public_air_conflicts(source.grid,replacement,program.recipe(id))
+			if not air_conflicts.is_empty():
+				if diagnostic_trace_timing: print("COMPACT_PAIR_AIR ",id," ",air_conflicts)
+				clear=false
+			replacements.append(replacement)
+		if not clear: continue
+		if roofs.find(branch)<roofs.find(host): replacements.reverse()
+		replacements[1].visual_seam_ids.append(replacements[0].stable_id)
+		# Both alternatives are proved against the completed allocation. No
+		# provisional joined envelope can consume a later room or roof site.
+		var trial:=SettlementFabricPlan.new(&"spatial.compact-roof-pair")
+		for recipe: FabricRecipe in program.recipes(): trial.register_recipe(recipe)
+		for unit: FabricUnit in room_units: trial.append_constructed_unit(unit)
+		for unit: FabricUnit in feature_units: trial.append_constructed_unit(unit)
+		for unit: FabricUnit in roofs:
+			if unit.stable_id not in [host_id,branch_id]: trial.append_constructed_unit(unit)
+		for replacement: FabricUnit in replacements:
+			if not trial.add_unit(replacement):
+				if diagnostic_trace_timing: print("COMPACT_PAIR_REJECT ",pair," ",trial.last_rejection)
+				clear=false
+				break
+		if not clear: continue
+		var joined_runs:=FabricContinuousRoofPlan.compile(trial,false)
+		var was_continuous:=false
+		for placement: Dictionary in host_recipe.placements:
+			was_continuous=was_continuous or original_runs.suppressed_placement_ids.has(StringName("%s/%s" % [host_id,placement.id]))
+		var is_continuous:=joined_runs.suppressed_placement_ids.has(StringName("%s/roof.adjacent" % host_id))
+		# A later pair cannot dissolve an earlier junction or any unchanged run.
+		for old_id: StringName in original_runs.suppressed_placement_ids:
+			if String(old_id).begins_with(String(host_id)+"/") or String(old_id).begins_with(String(branch_id)+"/"): continue
+			if not joined_runs.suppressed_placement_ids.has(old_id): clear=false
+		if was_continuous!=is_continuous or not clear:
+			if diagnostic_trace_timing: print("COMPACT_CONTINUITY_REJECT ",host_id," was=",was_continuous," is=",is_continuous," components=",joined_runs.components)
+			continue
+		for replacement: FabricUnit in replacements:
+			for index in roofs.size():
+				if roofs[index].stable_id==replacement.stable_id: roofs[index]=replacement
+			by_id[replacement.stable_id]=replacement
+		original_runs=joined_runs
+	return roofs
+
+
 static func _roof_neighborhood_component(proposal_by_room: Dictionary,
 		start_room_id: StringName) -> Array[StringName]:
 	## Return the complete joined campaign around one measured collision.  The
@@ -6419,9 +6666,22 @@ static func _full_roof_unit(room_id: StringName, room: WarrenRoomStamp,
 			* roof_recipe.local_clearance_bounds
 		if _eave_meets_frame_column(envelope, plate, frame_column_space):
 			var family := "orange" if _roof_recipe_family(recipe_id) == &"orange" else "blue"
+			var dormer_hand := String(recipe_id).get_slice(".dormer.",1)
 			recipe_id = StringName("roof.terminal.tight.%s.%s" % [room.kind, family])
+			if room.kind in [&"tower",&"slim",&"row"] and dormer_hand in ["left","right"]:
+				recipe_id = StringName("%s.dormer.%s" % [recipe_id,dormer_hand])
 			roof_recipe = program.recipe(recipe_id)
 			roof_origin = _phase_aligned_full_roof_origin(room, roof_recipe, roof_yaw)
+	# Tightening an eave preserves its optional dormer only when the completed
+	# alternative also clears the actual column course. The ordinary native roof
+	# is still the finite fallback if the detail itself occupies that column.
+	if not frame_column_space.is_empty() and roof_recipe.has_tag(&"terminal_tight_gable") \
+			and roof_recipe.has_tag(&"dormer"):
+		var envelope := FabricRecipe.lattice_transform(roof_origin,roof_yaw)*roof_recipe.local_clearance_bounds
+		if _eave_meets_frame_column(envelope,FabricRecipe._bounds_for_cells(room.private_cells),frame_column_space):
+			recipe_id = _plain_pitched_recipe_id(recipe_id)
+			roof_recipe = program.recipe(recipe_id)
+			roof_origin = _phase_aligned_full_roof_origin(room,roof_recipe,roof_yaw)
 	var target_socket := &"bearing.top"
 	if roof_origin.x != room.lattice_origin.x \
 			or roof_origin.z != room.lattice_origin.z:
@@ -6594,11 +6854,9 @@ static func _tile_flat_plate(source: WarrenSpatialPlan,
 		return a.z < b.z if a.z != b.z else a.x < b.x)
 	var tiles: Array[FabricUnit] = []
 	var public_faces: Dictionary = {}
-	var public_face_count := 0
 	for face: Vector3i in face_cells:
 		public_faces[face] = _supports_public_floor(source.grid, face) \
 			or _supports_upper_room_floor(unit_by_private_cell, face)
-		public_face_count += int(bool(public_faces[face]))
 	# A private one-cell-deep remainder is roofed with exact 3 m x 1.5 m halves
 	# of the authored compact gable. The source plate decides the exact cells;
 	# the district decides only its palette, and both outward gable ends remain
@@ -6623,92 +6881,114 @@ static func _tile_flat_plate(source: WarrenSpatialPlan,
 					length_cells, side]))
 	for length_cells in [6, 4, 2, 1]:
 		tile_recipes.append(StringName("roof.setback.cap.%d" % length_cells))
-	for anchor: Vector3i in order:
-		if not pending.has(anchor):
+	var context := {"source":source,"program":program,"probe":probe,
+		"room_id":room_id,"room":room,"parent_unit":parent_unit,
+		"room_seams":room_seams,"prior_roofs":prior_roofs,
+		"fixed_feature_units":fixed_feature_units,"unit_by_room":unit_by_room,
+		"unit_by_private_cell":unit_by_private_cell,"order":order,
+		"public_faces":public_faces,"tile_recipes":tile_recipes,"visits":0}
+	return _tile_flat_plate_search(context, pending, tiles)
+
+
+static func _tile_flat_plate_search(context: Dictionary, pending: Dictionary,
+		tiles: Array[FabricUnit]) -> Dictionary:
+	# One bounded roof plate is an exact-cover problem. Greedily taking a long
+	# tile can strand a one-cell remainder beside a public stair, even though a
+	# different partition of the same native stock closes the whole plate.
+	# Every candidate retains the original type, bounds and collision checks.
+	context.visits += 1
+	if int(context.visits) > 4096:
+		return {"units":[] as Array[FabricUnit], "failure":"roof plate exact-cover budget"}
+	var source: WarrenSpatialPlan = context.source
+	var program: SettlementFabricProgram = context.program
+	var probe: SettlementFabricPlan = context.probe
+	var room_id: StringName = context.room_id
+	var room: WarrenRoomStamp = context.room
+	var parent_unit: FabricUnit = context.parent_unit
+	var room_seams: Array[StringName] = context.room_seams
+	var prior_roofs: Array[FabricUnit] = context.prior_roofs
+	var fixed_feature_units: Array[FabricUnit] = context.fixed_feature_units
+	var unit_by_room: Dictionary = context.unit_by_room
+	var unit_by_private_cell: Dictionary = context.unit_by_private_cell
+	var public_faces: Dictionary = context.public_faces
+	var tile_recipes: Array[StringName] = context.tile_recipes
+	if pending.is_empty():
+		var fit := _roof_units_fit_probe(program, probe.units, tiles)
+		return {"units":tiles.duplicate() if bool(fit.get("fits",false)) else [] as Array[FabricUnit],
+			"failure":String(fit.get("failure","plate tiling rejected"))}
+	var anchor := Vector3i.ZERO
+	for cell: Vector3i in context.order:
+		if pending.has(cell):
+			anchor = cell
+			break
+	for recipe_id: StringName in tile_recipes:
+		var recipe := program.recipe(recipe_id)
+		if recipe == null:
 			continue
-		var placed := false
-		for recipe_id: StringName in tile_recipes:
-			var recipe := program.recipe(recipe_id)
-			if recipe == null:
+		for yaw in 2:
+			var footprint := _tile_footprint(recipe, yaw)
+			if footprint.is_empty():
 				continue
-			for yaw in 2:
-				var footprint := _tile_footprint(recipe, yaw)
-				if footprint.is_empty():
-					continue
-				var minimum := footprint[0] as Vector3i
-				for local_cell: Vector3i in footprint:
-					minimum = Vector3i(mini(minimum.x, local_cell.x), 0,
-						mini(minimum.z, local_cell.z))
-				# The module's own cells sit one band ABOVE the faces they
-				# close, which is where every roof unit in this file stands.
-				var origin := anchor + Vector3i.UP - minimum
-				var covered: Array[Vector3i] = []
-				var fits := true
-				for local_cell: Vector3i in footprint:
-					var face := local_cell + origin + Vector3i.DOWN
-					fits = fits and pending.has(face)
-					covered.append(face)
-				var is_public_cap := String(recipe_id).begins_with(
-					"roof.setback.cap.")
-				var is_private_gable := String(recipe_id).begins_with(
-					"roof.partial.gable.")
-				for covered_face: Vector3i in covered:
-					var face_is_public := bool(public_faces.get(covered_face, false))
-					fits = fits and (face_is_public if is_public_cap \
-						else not face_is_public if is_private_gable else false)
-				if not fits:
-					continue
-				var parent_local := _inverse_cell(origin + Vector3i.DOWN,
-					room.lattice_origin, room.yaw_quarters)
-				var seam_roofs: Array[FabricUnit] = []
-				seam_roofs.assign(prior_roofs)
-				seam_roofs.append_array(tiles)
-				var tile := FabricUnit.new(
-					StringName("spatial.roof.%s.tile%02d" % [room_id,
-						tiles.size()]), recipe_id, origin, yaw,
-					[parent_unit.stable_id] as Array[StringName],
-					[FabricUnit.bond(&"bearing.bottom", parent_unit.stable_id,
-						SettlementFabricProgram._bearing_cell_socket_id(
-							&"top", parent_local.x, parent_local.z))] \
-						as Array[Dictionary], &"",
-					_roof_seams_for_candidate(room_seams,
-						parent_unit.stable_id, seam_roofs,
-						fixed_feature_units))
-				_append_shallow_prior_roof_seams(tile, room_seams, seam_roofs,
-					program)
-				_append_shallow_room_seams(tile, _setback_wall_room_ids(
-					covered, unit_by_private_cell), unit_by_room,
-					unit_by_private_cell, program)
-				var public_terrace_backing := String(recipe_id).begins_with(
-					"roof.setback.cap.")
-				if not public_terrace_backing \
-						and _unit_touches_public_air(source.grid, tile, recipe):
-					continue
-				for face: Vector3i in covered:
-					pending.erase(face)
-				tiles.append(tile)
-				placed = true
-				break
-			if placed:
-				break
-		if not placed:
-			return {"units": [] as Array[FabricUnit],
-				"failure": ("no topology-typed roof module fits the plate at %s " \
-					+ "(public faces=%d; source faces=%s; pending=%s)") % [
-					anchor, public_face_count, face_cells, pending.keys()]}
-	# The loop only ever leaves the sweep by covering the anchor or by
-	# returning, so an uncovered cell here would mean a module reported a
-	# footprint it did not claim -- the one way this could silently under-roof
-	# a crown and still satisfy the caller's face identity.
-	assert(pending.is_empty())
-	# SettlementFabricPlan admits one unit at a time and cannot roll a set
-	# back, so the whole tiling is proved on its own rebuilt probe before any
-	# of it reaches the authoritative one.
-	var fit := _roof_units_fit_probe(program, probe.units, tiles)
-	if not bool(fit.get("fits", false)):
-		return {"units": [] as Array[FabricUnit],
-			"failure": String(fit.get("failure", "plate tiling rejected"))}
-	return {"units": tiles}
+			var minimum := footprint[0] as Vector3i
+			for local_cell: Vector3i in footprint:
+				minimum = Vector3i(mini(minimum.x, local_cell.x), 0,
+					mini(minimum.z, local_cell.z))
+			# The module's own cells sit one band ABOVE the faces they
+			# close, which is where every roof unit in this file stands.
+			var origin := anchor + Vector3i.UP - minimum
+			var covered: Array[Vector3i] = []
+			var fits := true
+			for local_cell: Vector3i in footprint:
+				var face := local_cell + origin + Vector3i.DOWN
+				fits = fits and pending.has(face)
+				covered.append(face)
+			var is_public_cap := String(recipe_id).begins_with(
+				"roof.setback.cap.")
+			var is_private_gable := String(recipe_id).begins_with(
+				"roof.partial.gable.")
+			for covered_face: Vector3i in covered:
+				var face_is_public := bool(public_faces.get(covered_face, false))
+				fits = fits and (face_is_public if is_public_cap \
+					else not face_is_public if is_private_gable else false)
+			if not fits:
+				continue
+			var parent_local := _inverse_cell(origin + Vector3i.DOWN,
+				room.lattice_origin, room.yaw_quarters)
+			var seam_roofs: Array[FabricUnit] = []
+			seam_roofs.assign(prior_roofs)
+			seam_roofs.append_array(tiles)
+			var tile := FabricUnit.new(
+				StringName("spatial.roof.%s.tile%02d" % [room_id,
+					tiles.size()]), recipe_id, origin, yaw,
+				[parent_unit.stable_id] as Array[StringName],
+				[FabricUnit.bond(&"bearing.bottom", parent_unit.stable_id,
+					SettlementFabricProgram._bearing_cell_socket_id(
+						&"top", parent_local.x, parent_local.z))] \
+					as Array[Dictionary], &"",
+				_roof_seams_for_candidate(room_seams,
+					parent_unit.stable_id, seam_roofs,
+					fixed_feature_units))
+			_append_shallow_prior_roof_seams(tile, room_seams, seam_roofs,
+				program)
+			_append_shallow_room_seams(tile, _setback_wall_room_ids(
+				covered, unit_by_private_cell), unit_by_room,
+				unit_by_private_cell, program)
+			var public_terrace_backing := String(recipe_id).begins_with(
+				"roof.setback.cap.")
+			if not public_terrace_backing \
+					and _unit_has_site_conflict(source.grid, tile, recipe):
+				continue
+			for face: Vector3i in covered:
+				pending.erase(face)
+			tiles.append(tile)
+			var result := _tile_flat_plate_search(context, pending, tiles)
+			if not (result.units as Array).is_empty():
+				return result
+			tiles.pop_back()
+			for face: Vector3i in covered:
+				pending[face] = true
+	return {"units":[] as Array[FabricUnit],
+		"failure":"no complete native tiling at %s after %d states" % [anchor,context.visits]}
 
 
 static func _tile_footprint(recipe: FabricRecipe, yaw: int) -> Array[Vector3i]:
@@ -6736,7 +7016,8 @@ static func _terminal_macro_cap_fallback(source: WarrenSpatialPlan,
 		room: WarrenRoomStamp, parent_unit: FabricUnit,
 		base_seams: Array[StringName], neighbor_room_unit_ids: Array[StringName],
 		unit_by_room: Dictionary, unit_by_private_cell: Dictionary,
-		prior_roofs: Array[FabricUnit], roof_room_id_by_face: Dictionary) \
+		prior_roofs: Array[FabricUnit], roof_room_id_by_face: Dictionary,
+		required_closures: Array[Dictionary], unbuilt_roof_room_ids: Dictionary) \
 		-> Dictionary:
 	## Replace one colliding macro gable with a complete, lossless set of native
 	## exact-footprint gable halves. These are the same clipped compact tile roofs
@@ -6810,10 +7091,15 @@ static func _terminal_macro_cap_fallback(source: WarrenSpatialPlan,
 				_unique_sorted_names(shallow_room_ids),
 				unit_by_room, unit_by_private_cell, program)
 			var recipe := program.recipe(unit.recipe_id)
-			if recipe == null or _unit_touches_public_air(source.grid, unit,
+			if recipe == null or _unit_has_site_conflict(source.grid, unit,
 					recipe):
 				candidate_failure = ("terminal strip %d enters public air or " \
 					+ "lacks recipe %s") % [strip_index, unit.recipe_id]
+				break
+			var future_conflict := _roof_candidate_required_closure_conflict(unit,
+				recipe, room_id, required_closures, unbuilt_roof_room_ids, program)
+			if not future_conflict.is_empty():
+				candidate_failure = "terminal strip blocks required roof %s" % future_conflict
 				break
 			candidates.append(unit)
 		if not candidate_failure.is_empty():
@@ -7094,7 +7380,7 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 		on_retained_stone: bool = false, chosen_material: bool = false,
 		low_base_lineages: Dictionary = {},
 		stone_base_lineages: Dictionary = {},
-		suppress_exterior_door: bool = false) -> StringName:
+		suppress_exterior_door: bool = false, facade_phase_override: int = -1) -> StringName:
 	## TASK H1. `chosen_material` separates the shell a room RESERVES from the
 	## shell it WEARS, and only `compile_room_units` -- the one pass that decides
 	## what the town is built of -- passes `true`.
@@ -7205,6 +7491,8 @@ static func _room_recipe_id(room: WarrenRoomStamp, world_seed: int,
 		+ room.lattice_origin.z + world_seed, 2) == 1
 	var facade_phase := _building_style_index(room, world_seed) * 2 \
 		+ int(phase_b)
+	if facade_phase_override >= 0:
+		facade_phase = facade_phase_override
 	var base_recipe_id: StringName
 	if room.kind == &"long":
 		base_recipe_id = StringName("%s.upper%s.%s.%s" % [prefix, addressed, theme,
@@ -7358,7 +7646,7 @@ static func _full_roof_recipe_id(room: WarrenRoomStamp,
 	var orange := district_theme == &"orange"
 	var theme := "orange" if orange else "blue"
 	if room.kind == &"tower":
-		if room.source_storey_index == 0:
+		if room.source_storey_index == 0 and room.roof_feature not in [1, 2]:
 			return StringName("roof.tower.short.%s" % theme)
 		if room.roof_feature in [1, 2]:
 			return StringName("roof.tower.%s.dormer.%s" % [theme,
@@ -7366,7 +7654,7 @@ static func _full_roof_recipe_id(room: WarrenRoomStamp,
 		return StringName("roof.tower.chimney.%s" % theme) \
 			if room.roof_feature == 3 else StringName("roof.tower.%s" % theme)
 	if room.kind == &"slim":
-		if room.source_storey_index == 0:
+		if room.source_storey_index == 0 and room.roof_feature not in [1, 2]:
 			return StringName("roof.slim.short.%s" % theme)
 		if room.roof_feature in [1, 2]:
 			return StringName("roof.slim.%s.dormer.%s" % [theme,
@@ -7374,7 +7662,7 @@ static func _full_roof_recipe_id(room: WarrenRoomStamp,
 		return StringName("roof.slim.chimney.%s" % theme) \
 			if room.roof_feature == 3 else StringName("roof.slim.%s" % theme)
 	if room.kind == &"row":
-		if room.source_storey_index == 0:
+		if room.source_storey_index == 0 and room.roof_feature not in [1, 2]:
 			return StringName("roof.row.short.%s" % theme)
 		if room.roof_feature in [1, 2]:
 			return StringName("roof.row.%s.dormer.%s" % [theme,
@@ -7417,6 +7705,10 @@ static func _terminal_tight_gable_recipe_ids(room: WarrenRoomStamp,
 	var preferred := _full_roof_recipe_id(room, world_seed)
 	var family := "orange" if _roof_recipe_family(preferred) == &"orange" \
 		else "blue"
+	if room.kind in [&"tower", &"slim", &"row"] and room.roof_feature in [1,2]:
+		for hand: String in (["left","right"] if room.roof_feature == 1 else ["right","left"]):
+			out.append(StringName("roof.terminal.tight.%s.%s.dormer.%s" %
+				[room.kind,family,hand]))
 	out.append(StringName("roof.terminal.tight.%s.%s" % [room.kind, family]))
 	return out
 
@@ -7533,6 +7825,8 @@ static func _spatial_roof_neighborhood(source: WarrenSpatialPlan,
 			"theme": &"blue",
 			"ground_theme": &"blue",
 			"facade_phase": 0,
+			"compact_junction_excluded": room.audit.has("bridge_party_roof_yaw_quarters")
+				or bool(room.audit.get("bridge_endpoint_roof",false)),
 		})
 	if proposals.is_empty():
 		return {"proposal_by_room": {}, "junction_count": 0,
@@ -7674,13 +7968,15 @@ static func _pitched_roof_domain(room: WarrenRoomStamp, world_seed: int,
 		neighborhood: Dictionary, full: bool, terminal: bool) -> Array[Dictionary]:
 	if not full:
 		return _plate_roof_candidates(neighborhood)
-	# A terminal plate is a house crown. Its earlier flat marker describes the
-	# source mass, not the final roof material or a reason to skip its crown.
+	# The caller has proved this complete plate is exposed, with no upper load
+	# or public floor. A topology proposal's old flat marker cannot erase that
+	# physical roof obligation. Selection and early clearance share the same
+	# complete native tight alternatives, including non-flat residual rooms.
 	var choices := _full_roof_candidates(room, world_seed,
-		{} if terminal else neighborhood)
+		{} if terminal or bool(neighborhood.get("flat_roof", false)) else neighborhood)
 	var bridge_role := room.audit.has("bridge_party_roof_yaw_quarters") \
 		or bool(room.audit.get("bridge_endpoint_roof", false))
-	if terminal and not bridge_role:
+	if not bridge_role:
 		for recipe_id: StringName in _terminal_tight_gable_recipe_ids(room, world_seed):
 			var choice := {"recipe_id": recipe_id, "yaw_offset": 0}
 			if not choices.has(choice): choices.append(choice)
@@ -7793,6 +8089,8 @@ static func _full_roof_candidates(room: WarrenRoomStamp,
 
 static func _plain_pitched_recipe_id(recipe_id: StringName) -> StringName:
 	var id := String(recipe_id)
+	if id.begins_with("roof.terminal.tight.") and id.contains(".dormer."):
+		return StringName(id.get_slice(".dormer.",0))
 	if id.begins_with("roof.long.") and id.contains(".dormer."):
 		return StringName(id.get_slice(".dormer.", 0))
 	if id.begins_with("roof.slim.chimney."):
@@ -8187,9 +8485,38 @@ static func _supports_upper_room_floor(private_cells: Dictionary,
 	return false
 
 
+static func _unit_has_site_conflict(grid: WarrenSpatialGrid,
+		unit: FabricUnit, recipe: FabricRecipe) -> bool:
+	return _unit_touches_public_air(grid, unit, recipe) \
+		or _half_gable_faces_wall(grid, unit, recipe)
+
+
 static func _unit_touches_public_air(grid: WarrenSpatialGrid,
 		unit: FabricUnit, recipe: FabricRecipe) -> bool:
 	return not _unit_public_air_conflicts(grid, unit, recipe).is_empty()
+
+
+static func _half_gable_faces_wall(grid: WarrenSpatialGrid,
+		unit: FabricUnit, recipe: FabricRecipe) -> bool:
+	# The two finite hands share their footprint. When only one complete end
+	# meets an upper room, the native gable belongs outside and the party cut
+	# belongs against that room. Test every cell through the actual roof height;
+	# a corner touch or a lower wall cannot stand in for a complete backing.
+	if recipe.roof_gable_edge == Vector3i.ZERO:
+		return false
+	var gable_backed := true
+	var party_backed := true
+	var bands := ceili(recipe.local_bounds.end.y / FabricRecipe.CELL_SIZE)
+	for local_cell: Vector3i in recipe.occluder_cells:
+		for band in bands:
+			var base := local_cell + Vector3i.UP * band
+			var gable_cell := FabricRecipe.transform_cell(
+				base + recipe.roof_gable_edge, unit.lattice_origin, unit.yaw_quarters)
+			var party_cell := FabricRecipe.transform_cell(
+				base - recipe.roof_gable_edge, unit.lattice_origin, unit.yaw_quarters)
+			gable_backed = gable_backed and grid.use_at(gable_cell) == WarrenSpatialGrid.Use.PRIVATE_VOLUME
+			party_backed = party_backed and grid.use_at(party_cell) == WarrenSpatialGrid.Use.PRIVATE_VOLUME
+	return gable_backed and not party_backed
 
 
 static func _unit_public_air_conflicts(grid: WarrenSpatialGrid,
@@ -8325,7 +8652,31 @@ static func _cap_placement(grid: WarrenSpatialGrid,
 	return {}
 
 
+const CAP_PIECE_CACHE_LIMIT := 256
+static var _cap_piece_cache: Dictionary = {}
+static var _cap_piece_mutex := Mutex.new()
+
 static func _cap_pieces(face_cells: Array[Vector3i]) -> Array[Dictionary]:
+	# Exact resource-free inputs determine this finite native partition. Repeated
+	# room admission must not rebuild unchanged shoulders across the whole town.
+	# Keep input order in the key: it is part of the original tie-breaking order.
+	var key := var_to_bytes(face_cells)
+	_cap_piece_mutex.lock()
+	if _cap_piece_cache.has(key):
+		var cached: Array[Dictionary] = _cap_piece_cache[key].duplicate(true)
+		_cap_piece_mutex.unlock()
+		return cached
+	_cap_piece_mutex.unlock()
+	var result := _compute_cap_pieces(face_cells)
+	_cap_piece_mutex.lock()
+	if not _cap_piece_cache.has(key) and _cap_piece_cache.size() >= CAP_PIECE_CACHE_LIMIT:
+		_cap_piece_cache.erase(_cap_piece_cache.keys()[0])
+	_cap_piece_cache[key] = result.duplicate(true)
+	_cap_piece_mutex.unlock()
+	return result
+
+
+static func _compute_cap_pieces(face_cells: Array[Vector3i]) -> Array[Dictionary]:
 	## Losslessly partition an arbitrary exposed plate into the largest complete
 	## room-shaped roofs first, then finite native strips. This is the compiler's
 	## macroscopic replacement pass: a 2x2 or 2x4 cluster becomes a recognisable
@@ -8549,6 +8900,58 @@ static func _roof_seams_for_candidate(room_seams: Array[StringName],
 				out.append(prior.stable_id)
 				break
 	return _unique_sorted_names(out)
+
+
+static func _append_measured_required_roof_seams(candidate: FabricUnit,
+		recipe: FabricRecipe, room_id: StringName,
+		closures: Array[Dictionary], unit_by_room: Dictionary,
+		program: SettlementFabricProgram, prior_roofs: Array[FabricUnit] = []) -> void:
+	# Room admission already proves these exact party contacts against the roof
+	# closure domain. Carry the same measured relationship into the final unit;
+	# otherwise an admitted occupied bridge becomes an unrelated roof obstacle.
+	var allowed: Dictionary = {}
+	for closure: Dictionary in closures:
+		if StringName(closure.owner_room_id) == room_id:
+			allowed.merge(closure.allowed_room_ids as Dictionary)
+		elif (closure.allowed_room_ids as Dictionary).has(room_id):
+			allowed[StringName(closure.owner_room_id)] = true
+	var policy := SettlementFabricPlan.new(&"required-roof-final-seams")
+	var roof_bounds := candidate.transform() * recipe.local_clearance_bounds
+	for neighbor_id: StringName in allowed:
+		if neighbor_id == room_id:
+			continue
+		var neighbor := unit_by_room.get(neighbor_id) as FabricUnit
+		if neighbor == null:
+			continue
+		var neighbor_recipe := program.recipe(neighbor.recipe_id)
+		var neighbor_bounds := neighbor.transform() * neighbor_recipe.local_clearance_bounds
+		if not _aabb_overlaps_volume(roof_bounds, neighbor_bounds) \
+				or candidate.visual_seam_ids.has(neighbor.stable_id):
+			continue
+		candidate.visual_seam_ids.append(neighbor.stable_id)
+		if not policy._connected_roof_seam_is_measured(candidate, recipe,
+				roof_bounds, neighbor, neighbor_recipe, neighbor_bounds):
+			candidate.visual_seam_ids.erase(neighbor.stable_id)
+	# Earlier roof selection used these same reciprocal closure contacts. Carry
+	# a proved roof-to-roof contact forward when the second roof is committed.
+	# A room ID alone cannot identify the already-realized weather surface.
+	var parent_ids: Dictionary = {}
+	for neighbor_id: StringName in allowed:
+		var neighbor := unit_by_room.get(neighbor_id) as FabricUnit
+		if neighbor != null: parent_ids[neighbor.stable_id] = true
+	for prior: FabricUnit in prior_roofs:
+		var related := false
+		for parent_id: StringName in prior.parent_ids:
+			related = related or parent_ids.has(parent_id)
+		if not related or candidate.visual_seam_ids.has(prior.stable_id): continue
+		var prior_recipe := program.recipe(prior.recipe_id)
+		var prior_bounds := prior.transform() * prior_recipe.local_clearance_bounds
+		if not _aabb_overlaps_volume(roof_bounds, prior_bounds): continue
+		candidate.visual_seam_ids.append(prior.stable_id)
+		if not policy._connected_roof_seam_is_measured(candidate, recipe,
+				roof_bounds, prior, prior_recipe, prior_bounds):
+			candidate.visual_seam_ids.erase(prior.stable_id)
+	candidate.visual_seam_ids = _unique_sorted_names(candidate.visual_seam_ids)
 
 
 static func _append_explicit_roof_party_room_seams(candidate: FabricUnit,
@@ -9806,3 +10209,44 @@ static func _inverse_cell(world: Vector3i, origin: Vector3i,
 
 static func _source_level_key(parcel_id: StringName, level: int) -> String:
 	return "%s/%d" % [String(parcel_id), level]
+
+
+static func _ground_bearing_masonry_courses(source: WarrenSpatialPlan,
+		program: SettlementFabricProgram) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var room_by_cell: Dictionary = {}
+	for building: WarrenBuildingVolume in source.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			for cell: Vector3i in room.private_cells:
+				room_by_cell[cell] = room
+	for building: WarrenBuildingVolume in source.buildings:
+		for room: WarrenRoomStamp in building.room_records:
+			if not room.terrain_bearing:
+				continue
+			var recipe_id := StringName("foundation.masonry.course.%s" %
+				("square" if room.kind == &"building" else String(room.kind)))
+			var recipe := program.recipe(recipe_id)
+			if recipe == null: continue
+			var cells: Array[Vector3i] = []
+			var bases: Dictionary = {}
+			var eligible := true
+			for cell: Vector3i in room.private_cells:
+				if cell.y != room.lattice_origin.y: continue
+				var gap := cell+Vector3i.DOWN
+				var lower := gap+Vector3i.DOWN
+				if room_by_cell.has(gap) or not room_by_cell.has(lower) \
+						or not source.grid.contains(gap) \
+						or source.grid.use_at(gap) in [
+							WarrenSpatialGrid.Use.PUBLIC_AIR,WarrenSpatialGrid.Use.DAYLIGHT_AIR] \
+						or (source.grid.reservation_bits_at(gap) &
+							(WarrenSpatialGrid.Reservation.PUBLIC_CLEARANCE |
+							WarrenSpatialGrid.Reservation.DAYLIGHT |
+							WarrenSpatialGrid.Reservation.PRIVATE_CONNECTION |
+							WarrenSpatialGrid.Reservation.FEATURE)) != 0:
+					eligible = false
+					break
+				bases[(room_by_cell[lower] as WarrenRoomStamp).stable_id] = true
+				cells.append(gap)
+			if eligible and not cells.is_empty():
+				out.append({"room":room,"recipe":recipe,"cells":cells,"bases":bases.keys()})
+	return out

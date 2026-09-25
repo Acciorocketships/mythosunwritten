@@ -21,9 +21,21 @@ func test_reported_town_builds_connected_nonoverlapping_ground_houses_once() -> 
 	assert_gte(outskirts.placements.size(),6,"the ground-house neighborhood must remain populated")
 	assert_true(outskirts.validate(program.villages.outskirts_program,&"village"),
 		"completed geometry is audited here, not used to reject runtime houses")
+	var own_conflict := VillageOccupancy.new().first_conflict(outskirts.volumes)
+	if not own_conflict.is_empty():
+		for key: String in own_conflict:
+			var volume: VillageOccupancyVolume = own_conflict[key]
+			print("CITY_INTERNAL_CONFLICT ", key, " ", volume.stable_id,
+				" role=", volume.role, " bounds=", volume.bounds_xz(), " y=", volume.y_range)
 	var physical_urban: Array[VillageOccupancyVolume] = []
 	for volume: VillageOccupancyVolume in urban.volumes:
 		if volume.role != VillageOccupancy.Role.GROUND_EXCLUSIVE: physical_urban.append(volume)
+	var cross_conflict := VillageOccupancy.first_cross_conflict(outskirts.volumes, physical_urban)
+	if not cross_conflict.is_empty():
+		for key: String in cross_conflict:
+			var volume: VillageOccupancyVolume = cross_conflict[key]
+			print("CITY_CROSS_CONFLICT ", key, " ", volume.stable_id,
+				" role=", volume.role, " bounds=", volume.bounds_xz(), " y=", volume.y_range)
 	assert_eq(VillageOccupancy.first_cross_conflict(outskirts.volumes,physical_urban),{},
 		"all built lanes and houses must clear the urban construction")
 	var finished := terrain.with_terrain_grades([urban.terrain_grade])
@@ -94,6 +106,10 @@ func test_reported_town_builds_connected_nonoverlapping_ground_houses_once() -> 
 		for shape: FeatureGroundShape in urban.surfaces:
 			assert_false(house.support_shape().intersects(shape),"house must not overlap the town path")
 		for shape: FeatureGroundShape in outskirts.surfaces:
+			# The shared street domain suppresses competing country-road paint;
+			# inward houses may occupy its unpainted natural area.
+			if shape.surface_id == FeatureGroundField.NATURAL:
+				continue
 			assert_false(_overlaps_interior(_paint_obstacle(house,program.villages), shape),
 				"the complete painted junction must clear the house base: %s / %s" % [house.stable_key,shape.stable_id])
 		var pad_height := house.floor_y - VillageTerrainSurvey.FLOOR_GUARD
@@ -102,7 +118,9 @@ func test_reported_town_builds_connected_nonoverlapping_ground_houses_once() -> 
 				Vector2(bounds.position.x,bounds.end.y),Vector2(bounds.end.x,bounds.position.y)]:
 			assert_almost_eq(urban.terrain_grade.surface_y(point,terrain.surface_y(point)),pad_height,0.02,
 				"the entire building base must meet its constructed ground pad")
-		assert_eq(outskirts.audit[i].placement_count,1)
+	for item: Dictionary in outskirts.audit:
+		if bool(item.get("accepted", false)):
+			assert_eq(item.placement_count,1)
 
 
 func _paint_obstacle(house: VillageMassingPlacement, program: VillageProgram) -> FeatureGroundShape:

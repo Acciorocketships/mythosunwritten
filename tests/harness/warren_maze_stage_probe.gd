@@ -257,6 +257,7 @@ func _sub_stages(compose_ms: int) -> String:
 	## derivation and the seal — so the parts always add up to the whole and a
 	## missing stamp can never hide inside a plausible-looking table.
 	var stamps := WarrenVolumetricSolver.last_maze_stage_ms
+	print("STAGE_DETAIL ", JSON.stringify(stamps))
 	var ordered: Array[StringName] = [&"parcels", &"hero_beam",
 		&"room_composition", &"residual_rooms", &"feature_solver",
 		&"room_gate"]

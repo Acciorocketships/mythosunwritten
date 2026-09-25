@@ -1198,9 +1198,25 @@ func passage_cells() -> Array[Vector3i]:
 	return out
 
 
+static func deck_flat_columns(plot: Dictionary) -> Array[Vector2i]:
+	# Route paving owns both the full lower landing and the rising flight.
+	# All consumers of the remaining court/green must share this footprint.
+	var out: Array[Vector2i] = []
+	out.assign(plot.cells)
+	if plot.has("access_transition"):
+		var access: Dictionary = plot.access_transition
+		var start: Vector3i = access.from
+		var end: Vector3i = access.to
+		var column := Vector2i(start.x,start.z)
+		out.erase(column)
+		out.erase(column+Vector2i(signi(end.x-start.x),signi(end.z-start.z)))
+	return out
+
+
 func deterministic_signature() -> String:
 	var parts := PackedStringArray([
 		String(scale_profile.deterministic_signature()),
+		"form:%s" % massif.form_id,
 		"summit:%d,%d,%d" % [summit_cell.x, summit_cell.y, summit_cell.z],
 	])
 	for cell: Vector3i in passage_cells():
@@ -1261,6 +1277,10 @@ func deterministic_signature() -> String:
 	# order plots were added can never show in the signature.
 	var plot_lines := PackedStringArray()
 	for plot: Dictionary in plots:
+		if plot.has("access_transition"):
+			var access: Dictionary = plot.access_transition
+			plot_lines.append("deck-access:%s:%s>%s:%d" % [plot.id,
+				str(access.from),str(access.to),int(access.kind)])
 		var plot_cells: Array[Vector2i] = []
 		plot_cells.assign(plot["cells"])
 		plot_cells.sort_custom(Callable(WarrenMazeSourcePlan, "_column_less"))
@@ -1275,6 +1295,19 @@ func deterministic_signature() -> String:
 	plot_lines.sort()
 	for line: String in plot_lines:
 		parts.append(line)
+	# Equal reservation envelopes can now select distinct complete native
+	# buildings. Their actual source choice belongs to construction identity.
+	var asset_lines := PackedStringArray()
+	for record_value: Variant in (audit.get("plot_outcomes", {}) as Dictionary) \
+			.get("assets", []) as Array:
+		var record := record_value as Dictionary
+		var site_value: Variant = record.get("site")
+		if site_value is Dictionary:
+			var site := site_value as Dictionary
+			asset_lines.append("asset:%s:%s" % [String(site["id"]),
+				String(record["kind_id"])])
+	asset_lines.sort()
+	parts.append_array(asset_lines)
 	return "|".join(parts)
 
 

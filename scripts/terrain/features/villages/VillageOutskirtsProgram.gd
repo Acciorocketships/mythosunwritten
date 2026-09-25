@@ -17,6 +17,7 @@ const MAX_CONNECTOR_LENGTH := OUTER_RADIUS
 ## The edge district is meant to RING the dense core so the skyline steps down
 ## toward open ground (2026-09-04); a sealed exit is still worth extra houses.
 const TARGET_HOUSES := {
+	&"hamlet": 6,
 	&"village": 6,
 	&"town": 9,
 }

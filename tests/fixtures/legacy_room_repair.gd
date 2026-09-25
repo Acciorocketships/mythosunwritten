@@ -506,12 +506,12 @@ static func _relieve_paired_registered_lineages(lineages: Dictionary,
 							for trial_entry: Dictionary in [left_trial, right_trial]:
 								for trial_cell: Vector3i in trial_entry.cells:
 									joint_claims[trial_cell] = true
-							if not _floorplate_transition_is_structurally_legible(
+							if not _historical_floorplate_transition_is_structurally_legible(
 									left_variant.columns as Dictionary,
 									(left.previous as Dictionary).columns as Dictionary,
 									((left.current as Dictionary).origin as Vector3i).y,
 									joint_claims, grid) \
-								or not _floorplate_transition_is_structurally_legible(
+								or not _historical_floorplate_transition_is_structurally_legible(
 									right_variant.columns as Dictionary,
 									(right.previous as Dictionary).columns as Dictionary,
 									((right.current as Dictionary).origin as Vector3i).y,
@@ -782,3 +782,91 @@ static func _truncate_registered_crowns(lineages: Dictionary,
 		terminated_storeys += removed_storeys
 	return {"lineage_count": terminated_lineages,
 		"storey_count": terminated_storeys}
+
+
+## Freeze the retired repair algorithm's two-cell support contract. Current
+## production admits shallower timber projections and is exercised through the
+## real source-plan and construction tests, not this historical cleanup pass.
+static func _historical_floorplate_transition_is_structurally_legible(
+		candidate_columns: Dictionary, lower_columns: Dictionary,
+		upper_base_y: int, claimed_cells: Dictionary,
+		grid: WarrenSpatialGrid) -> bool:
+	## Logical ancestry is not visual bearing. Resolve the exact support under
+	## every candidate column, including neighbouring inhabited mass, then admit
+	## only a fully borne plate or one bracketable edge course. This is a cheap
+	## composition preflight only: the later feature transaction must classify the
+	## result as a measured shallow overhang/outcropping and build every support,
+	## otherwise the complete town is rejected.
+	if candidate_columns.is_empty():
+		return false
+	var borne: Dictionary = {}
+	var unborne: Dictionary = {}
+	for column_value: Variant in candidate_columns.keys():
+		var column := column_value as Vector2i
+		var below := Vector3i(column.x, upper_base_y - 1, column.y)
+		if lower_columns.has(column) or claimed_cells.has(below) \
+				or grid != null and grid.use_at(below) \
+					== WarrenSpatialGrid.Use.STRUCTURAL_VOLUME:
+			borne[column] = true
+		else:
+			unborne[column] = true
+	if unborne.is_empty():
+		return true
+	# A 3 x 3 m tower is already the smallest complete room module. Letting even
+	# one of its four columns project makes the entire volume read as a small box
+	# glued to the side of another building. Only larger plates may spend a
+	# measured shallow overhang; compact towers must sit wholly on real bearing.
+	if candidate_columns.size() <= 4:
+		return false
+	if borne.size() * 2 < candidate_columns.size() \
+			or not _column_set_is_connected(unborne):
+		return false
+	# A deep projection over the carved route is not an ordinary timber jetty.
+	# It becomes a four-sided stone arcade in the feature transaction, whose
+	# authored shell is exactly one 3 m storey high per course. Reject the room
+	# composition here unless its complete 3 x 3 m opening can descend by whole
+	# courses to one canonical public floor. Letting a half-level mismatch reach
+	# assembly produces either a floating stone base or a shell buried through
+	# the route, neither of which is a valid repair.
+	if not _public_headroom_projection_has_native_arcade(
+			unborne, upper_base_y, grid):
+		return false
+	for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
+			Vector2i.UP, Vector2i.DOWN]:
+		var attachments: Dictionary = {}
+		var valid := true
+		for column_value: Variant in unborne.keys():
+			var column := column_value as Vector2i
+			var attached := false
+			for depth in range(1, 3):
+				var inward := column - direction * depth
+				if borne.has(inward):
+					attachments[inward] = true
+					attached = true
+					break
+			if not attached:
+				valid = false
+				break
+		if valid and unborne.size() == 1 and attachments.size() == 1:
+			return true
+		if not valid or attachments.size() < 2:
+			continue
+		var span := Vector2i(-direction.y, direction.x)
+		var ordered: Array[Vector2i] = []
+		ordered.assign(attachments.keys())
+		ordered.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+			return a.x * span.x + a.y * span.y \
+				< b.x * span.x + b.y * span.y)
+		var plane := ordered[0].x * direction.x \
+			+ ordered[0].y * direction.y
+		for index in ordered.size():
+			var attachment := ordered[index]
+			if attachment.x * direction.x + attachment.y * direction.y \
+					!= plane or index > 0 \
+					and attachment != ordered[index - 1] + span:
+				valid = false
+				break
+		if valid:
+			return true
+	return false
+

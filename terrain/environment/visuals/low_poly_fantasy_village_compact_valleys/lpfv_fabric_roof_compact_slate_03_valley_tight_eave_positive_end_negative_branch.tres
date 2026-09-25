@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_mqhsf"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/low_poly_fantasy_village_compact_valleys/lpfv_fabric_roof_compact_slate_03_valley_tight_eave_positive_end_negative_branch_piece_00.res" id="2_k3x2l"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_r2dln"]
+[ext_resource type="Material" path="res://terrain/environment/materials/warren/compact_roof_slate.tres" id="4_ch57x"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/low_poly_fantasy_village_compact_valleys/lpfv_fabric_roof_compact_slate_03_valley_tight_eave_positive_end_negative_branch_piece_00.res" id="5_i7h81"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="6_6rxrx"]
+
+[sub_resource type="Resource" id="Resource_2ckut"]
+script = ExtResource("1_mqhsf")
+shape = ExtResource("2_k3x2l")
+
+[sub_resource type="Resource" id="Resource_lrp88"]
+script = ExtResource("3_r2dln")
+mesh = ExtResource("5_i7h81")
+material_override = ExtResource("4_ch57x")
+use_instance_color = false
+
+[resource]
+script = ExtResource("6_6rxrx")
+pieces = Array[ExtResource("3_r2dln")]([SubResource("Resource_lrp88")])
+collisions = Array[ExtResource("1_mqhsf")]([SubResource("Resource_2ckut")])

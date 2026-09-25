@@ -20,6 +20,7 @@ var _ready_events: Array[Dictionary] = []
 ## reviewed SFV plank palette so streamed stairs read as the same timber as the
 ## plank modules beside them.
 static var _surface_mesh_material: StandardMaterial3D
+static var _transition_material: ShaderMaterial
 static var _soil_bed_material: StandardMaterial3D
 
 func _init(render_cache: EnvironmentRenderCache) -> void:
@@ -300,6 +301,7 @@ func commit_mesh_visual(block: Node3D, mesh: Dictionary) -> void:
 	array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	var material: Material = CliffDressing.shared_material() \
 		if bool(mesh.get("terrain_ground", false)) \
+		else transition_plank_material() if bool(mesh.get("is_transition", false)) \
 		else _shared_surface_mesh_material()
 	if bool(mesh.get("soil_bed", false)):
 		if _soil_bed_material == null:
@@ -316,6 +318,20 @@ func commit_mesh_visual(block: Node3D, mesh: Dictionary) -> void:
 	var instance := MeshInstance3D.new()
 	instance.name = String(StringName(mesh.stable_id)).replace("/", "_")
 	instance.mesh = array_mesh
+	if mesh.has("visibility_owner"):
+		var owner: AABB = mesh.visibility_owner
+		instance.set_meta("tactical_owner_footprints", true)
+		instance.set_meta("tactical_owner_rect",Vector4(owner.position.x,owner.position.z,owner.end.x,owner.end.z))
+	if bool(mesh.get("terrain_ground", false)) and not bool(mesh.get("terrain_rock", false)):
+		instance.add_to_group("tactical_solid_earth", true)
+	if bool(mesh.get("structural_plank", false)) or bool(mesh.get("is_transition", false)):
+		instance.add_to_group("tactical_solid_earth", true)
+	if mesh.has("material_asset_id"):
+		var tags := _render_cache.descriptor(StringName(mesh.material_asset_id)).tags
+		if &"deck" in tags:
+			instance.add_to_group("tactical_deck_surface", true)
+		if &"building" in tags or &"deck" in tags:
+			instance.add_to_group("tactical_closed_shell", true)
 	container.add_child(instance)
 
 static func _shared_surface_mesh_material() -> StandardMaterial3D:
@@ -326,6 +342,50 @@ static func _shared_surface_mesh_material() -> StandardMaterial3D:
 		_surface_mesh_material.albedo_color = Color(0.68, 0.52, 0.34)
 		_surface_mesh_material.roughness = 1.0
 	return _surface_mesh_material
+
+static func transition_plank_material() -> ShaderMaterial:
+	## Ramps and stair flights are one continuous generated collision surface, so
+	## fixed horizontal deck meshes cannot represent them. A world-stable board
+	## pattern gives that exact sloped surface a deliberate timber finish without
+	## stretching an asset or letting render geometry redefine traversal.
+	## The swatch pair matches the SFV plank atlas, alternating per board, with a
+	## muted seam instead of a near-black groove. The constants are authored as
+	## sRGB display colours, but ALBEDO is a linear-light input: writing them raw
+	## desaturated every transition to ivory ("white walkways"), so they pass
+	## through srgb_to_linear first. Boards are lit like the plank assets around
+	## them; the old near-black lit look was the (since fixed) top-face winding.
+	if _transition_material != null:
+		return _transition_material
+	var shader := Shader.new()
+	shader.code = """
+shader_type spatial;
+render_mode cull_disabled;
+
+vec3 srgb_to_linear(vec3 srgb) {
+	return pow(srgb, vec3(2.2));
+}
+
+void fragment() {
+	// Face-metric UVs place long boards across the flight, as on the native
+	// landings. Thin filtered joins avoid a square checkerboard or distant shimmer.
+	float board_position = UV.y * 12.0;
+	float within = fract(board_position);
+	float edge_distance = min(within, 1.0 - within);
+	float filter_width = max(fwidth(board_position), 0.001);
+	float seam = 1.0 - smoothstep(0.025, 0.025 + filter_width, edge_distance);
+	float alternate = mod(floor(board_position), 2.0);
+	vec3 board_a = srgb_to_linear(vec3(0.718, 0.549, 0.361));
+	vec3 board_b = srgb_to_linear(vec3(0.647, 0.494, 0.325));
+	vec3 timber = mix(board_a, board_b, alternate);
+	ALBEDO = mix(timber, srgb_to_linear(vec3(0.51, 0.38, 0.25)), seam);
+	ROUGHNESS = 1.0;
+}
+"""
+	var material := ShaderMaterial.new()
+	material.shader = shader
+	_transition_material = material
+	return _transition_material
+
 
 func _discard_stale_jobs() -> void:
 	for index in range(_jobs.size() - 1, -1, -1):

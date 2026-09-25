@@ -50,33 +50,33 @@ const ASSET_TEMPLATES: Array[Dictionary] = [
 	{"kind_id": &"anchor.prefab.00", "width": 5, "depth": 6,
 		"height_bands": 8, "reach_forward": 11,
 		"reach_left": 4, "reach_right": 3,
-		"bearing_forward": 9, "bearing_left": 4,
+		"bearing_forward": 11, "bearing_left": 4,
 		"bearing_right": 3},
 	{"kind_id": &"anchor.prefab.01", "width": 7, "depth": 6,
 		"height_bands": 7, "reach_forward": 11,
 		"reach_left": 6, "reach_right": 5,
-		"bearing_forward": 9, "bearing_left": 4,
-		"bearing_right": 4},
+		"bearing_forward": 11, "bearing_left": 6,
+		"bearing_right": 5},
 	{"kind_id": &"anchor.prefab.02", "width": 6, "depth": 6,
 		"height_bands": 13, "reach_forward": 11,
 		"reach_left": 5, "reach_right": 4,
-		"bearing_forward": 10, "bearing_left": 5,
+		"bearing_forward": 11, "bearing_left": 5,
 		"bearing_right": 4},
 	{"kind_id": &"anchor.prefab.03", "width": 17, "depth": 12,
 		"height_bands": 23, "reach_forward": 23,
 		"reach_left": 16, "reach_right": 15,
-		"bearing_forward": 22, "bearing_left": 13,
-		"bearing_right": 12},
+		"bearing_forward": 23, "bearing_left": 16,
+		"bearing_right": 15},
 	{"kind_id": &"anchor.prefab.04", "width": 7, "depth": 5,
 		"height_bands": 12, "reach_forward": 9,
 		"reach_left": 6, "reach_right": 5,
-		"bearing_forward": 7, "bearing_left": 3,
-		"bearing_right": 2},
+		"bearing_forward": 9, "bearing_left": 6,
+		"bearing_right": 5},
 	{"kind_id": &"anchor.prefab.06", "width": 9, "depth": 7,
 		"height_bands": 11, "reach_forward": 13,
 		"reach_left": 8, "reach_right": 7,
-		"bearing_forward": 11, "bearing_left": 5,
-		"bearing_right": 5},
+		"bearing_forward": 13, "bearing_left": 8,
+		"bearing_right": 7},
 	{"kind_id": &"anchor.prefab.10", "width": 3, "depth": 3,
 		"height_bands": 4, "reach_forward": 5,
 		"reach_left": 2, "reach_right": 1,
@@ -85,59 +85,73 @@ const ASSET_TEMPLATES: Array[Dictionary] = [
 	{"kind_id": &"anchor.prefab.11", "width": 4, "depth": 3,
 		"height_bands": 4, "reach_forward": 5,
 		"reach_left": 3, "reach_right": 2,
-		"bearing_forward": 5, "bearing_left": 2,
+		"bearing_forward": 5, "bearing_left": 3,
 		"bearing_right": 2},
 	{"kind_id": &"anchor.prefab.12", "width": 5, "depth": 3,
 		"height_bands": 4, "reach_forward": 5,
 		"reach_left": 4, "reach_right": 3,
-		"bearing_forward": 5, "bearing_left": 3,
+		"bearing_forward": 5, "bearing_left": 4,
 		"bearing_right": 3},
 	{"kind_id": &"anchor.prefab.14", "width": 5, "depth": 3,
 		"height_bands": 6, "reach_forward": 5,
 		"reach_left": 4, "reach_right": 3,
-		"bearing_forward": 5, "bearing_left": 3,
+		"bearing_forward": 5, "bearing_left": 4,
 		"bearing_right": 3},
 	{"kind_id": &"anchor.prefab.17", "width": 9, "depth": 6,
 		"height_bands": 8, "reach_forward": 11,
 		"reach_left": 8, "reach_right": 7,
-		"bearing_forward": 9, "bearing_left": 5,
-		"bearing_right": 3},
+		"bearing_forward": 11, "bearing_left": 8,
+		"bearing_right": 7},
 	{"kind_id": &"anchor.prefab.19", "width": 7, "depth": 6,
 		"height_bands": 10, "reach_forward": 11,
 		"reach_left": 6, "reach_right": 5,
-		"bearing_forward": 8, "bearing_left": 4,
-		"bearing_right": 3},
+		"bearing_forward": 11, "bearing_left": 6,
+		"bearing_right": 5},
 	{"kind_id": &"anchor.prefab.21", "width": 6, "depth": 5,
 		"height_bands": 7, "reach_forward": 9,
 		"reach_left": 5, "reach_right": 4,
 		"bearing_forward": 9, "bearing_left": 5,
-		"bearing_right": 3},
+		"bearing_right": 4},
 	{"kind_id": &"anchor.prefab.22", "width": 6, "depth": 5,
 		"height_bands": 13, "reach_forward": 9,
 		"reach_left": 5, "reach_right": 4,
 		"bearing_forward": 9, "bearing_left": 5,
-		"bearing_right": 3},
+		"bearing_right": 4},
 	{"kind_id": &"anchor.prefab.23", "width": 8, "depth": 8,
 		"height_bands": 11, "reach_forward": 15,
 		"reach_left": 7, "reach_right": 6,
-		"bearing_forward": 13, "bearing_left": 6,
-		"bearing_right": 5},
-	{"kind_id": &"anchor.prefab.24", "width": 8, "depth": 8,
-		"height_bands": 11, "reach_forward": 15,
-		"reach_left": 7, "reach_right": 6,
-		"bearing_forward": 13, "bearing_left": 6,
-		"bearing_right": 4},
+		"bearing_forward": 15, "bearing_left": 7,
+		"bearing_right": 6},
 	{"kind_id": &"anchor.prefab.25", "width": 17, "depth": 13,
 		"height_bands": 28, "reach_forward": 25,
 		"reach_left": 16, "reach_right": 15,
-		"bearing_forward": 23, "bearing_left": 13,
-		"bearing_right": 12},
+		"bearing_forward": 25, "bearing_left": 16,
+		"bearing_right": 15},
 	{"kind_id": &"anchor.prefab.31", "width": 4, "depth": 5,
 		"height_bands": 9, "reach_forward": 9,
 		"reach_left": 3, "reach_right": 2,
-		"bearing_forward": 8, "bearing_left": 3,
-		"bearing_right": 1},
+		"bearing_forward": 9, "bearing_left": 3,
+		"bearing_right": 2},
 ]
+## Distinct complete native buildings with the same measured doorway-relative
+## reservation. The geometric search runs once per footprint; the source still
+## chooses the actual building before partitioning. The catalogue regression
+## derives every profile independently and requires every building exactly once.
+const ASSET_RECIPE_VARIANTS: Dictionary = {
+	&"anchor.prefab.00": [&"anchor.prefab.00", &"anchor.prefab.09"],
+	&"anchor.prefab.01": [&"anchor.prefab.01", &"anchor.prefab.08"],
+	&"anchor.prefab.03": [&"anchor.prefab.03", &"anchor.prefab.28", &"anchor.prefab.29", &"anchor.prefab.30"],
+	&"anchor.prefab.04": [&"anchor.prefab.04", &"anchor.prefab.05"],
+	&"anchor.prefab.06": [&"anchor.prefab.06", &"anchor.prefab.07"],
+	&"anchor.prefab.10": [&"anchor.prefab.10", &"anchor.prefab.16"],
+	&"anchor.prefab.12": [&"anchor.prefab.12", &"anchor.prefab.13"],
+	&"anchor.prefab.14": [&"anchor.prefab.14", &"anchor.prefab.15"],
+	&"anchor.prefab.17": [&"anchor.prefab.17", &"anchor.prefab.18"],
+	&"anchor.prefab.19": [&"anchor.prefab.19", &"anchor.prefab.20"],
+	&"anchor.prefab.23": [&"anchor.prefab.23", &"anchor.prefab.24"],
+	&"anchor.prefab.25": [&"anchor.prefab.25", &"anchor.prefab.26", &"anchor.prefab.27"],
+}
+
 ## Smallest region worth calling a courtyard: one column is a gap between
 ## houses, not a public floor, so anything smaller is discarded.
 const DECK_MIN := 2
@@ -171,6 +185,8 @@ const EAVE_HALO_CELLS := 1
 ## need no blanket extra ring (which would erase viable edge sites).
 const FUTURE_HOUSE_CLEARANCE_CELLS := 2
 
+## Free street-fronting columns a raised prefab must leave on its own level.
+const RAISED_COMPANION_COLUMNS := 2
 const ASSET_QUOTA_SALT := 0x51071
 const DECK_QUOTA_SALT := 0x4dec5
 
@@ -293,6 +309,73 @@ static func reserve(plan: WarrenMazeSourcePlan,
 	blocked = WarrenPlotPlanner.blocked_columns(plan)
 	var plaza := _place_plaza(plan, streets, blocked, outcomes)
 	_grow_decks(plan, streets, blocked, outcomes, plaza)
+	_reserve_deck_access(plan)
+
+
+static func _reserve_deck_access(plan: WarrenMazeSourcePlan) -> void:
+	# A rounded address in the middle of a flight is not a level threshold.
+	# Reserve an ordinary perpendicular flight inside the court, ending at the
+	# original upper landing. Both full passage widths then have a real turn.
+	# This runs before house allocation; the court already owns these columns.
+	var specs: Array[Dictionary] = plan.excavation.transitions.duplicate()
+	for lane: Dictionary in plan.excavation.lanes:
+		specs.append_array(lane.transitions)
+	for plot: Dictionary in plan.plots:
+		if plot.kind != WarrenMazeSourcePlan.PLOT_DECK or plot.has("access_transition"):
+			continue
+		var flat_access := false
+		for edge: Dictionary in specs:
+			for endpoint: Vector3i in [edge.from,edge.to]:
+				if endpoint.y != int(plot.floor): continue
+				for column: Vector2i in plot.cells:
+					if absi(endpoint.x-column.x)+absi(endpoint.z-column.y)==1:
+						flat_access = true
+		if flat_access: continue
+		var door: Vector3i = plot.door_walk
+		for spec: Dictionary in specs:
+			var a: Vector3i = spec.from
+			var b: Vector3i = spec.to
+			if a.y == b.y or door == a or door == b:
+				continue
+			var low := a if a.y < b.y else b
+			var high := b if a.y < b.y else a
+			if int(plot.floor) != low.y:
+				continue
+			var direction := Vector2i(signi(b.x-a.x), signi(b.z-a.z))
+			var relative := Vector2i(door.x-a.x, door.z-a.z)
+			var run := absi(b.x-a.x)+absi(b.z-a.z)
+			var along := relative.x*direction.x+relative.y*direction.y
+			if along <= 0 or along >= run or relative != direction * along:
+				continue
+			for side: Vector2i in [Vector2i(-direction.y,direction.x), Vector2i(direction.y,-direction.x)]:
+				var middle := Vector2i(high.x,high.z)+side
+				var start := middle+side
+				if not (plot.cells as Array).has(middle) or not (plot.cells as Array).has(start):
+					continue
+				if not _deck_access_column_clear(plan,plot,middle,low.y,high.y) \
+						or not _deck_access_column_clear(plan,plot,start,low.y,low.y):
+					continue
+				plot["access_transition"] = {
+					"from":Vector3i(start.x,low.y,start.y), "to":high,
+					"kind":WarrenVolumeTransition.Kind.STAIR}
+				break
+			if plot.has("access_transition"):
+				break
+
+
+static func _deck_access_column_clear(plan: WarrenMazeSourcePlan, owner: Dictionary,
+		column: Vector2i, low: int, high: int) -> bool:
+	for band in range(low,high+WarrenVolumePlan.HEADROOM_BANDS):
+		if plan.excavation.carved.has(Vector3i(column.x,band,column.y)) \
+				or WarrenPlotPlanner._asset_clearance_blocks(plan,column,band):
+			return false
+	for other: Dictionary in plan.plots:
+		if other.id == owner.id or not (other.cells as Array).has(column):
+			continue
+		if int(other.floor) < high+WarrenVolumePlan.HEADROOM_BANDS \
+				and WarrenMazeSourcePlan._plot_reserved_top(other) > low:
+			return false
+	return true
 
 
 static func _place_assets(plan: WarrenMazeSourcePlan,
@@ -305,6 +388,21 @@ static func _place_assets(plan: WarrenMazeSourcePlan,
 	## tried, so a refusal never silently costs the town a landmark.
 	var records: Array[Dictionary] = []
 	var clearance_reservations: Array[Dictionary] = []
+	var used_templates: Dictionary = {}
+	var street_volume := WarrenExcavationVolumeAdapter.to_volume_plan(
+		plan.massif, plan.excavation, plan.market_square_cells, false)
+	assert(street_volume != null, WarrenExcavationVolumeAdapter.last_failure)
+	var public_air: Dictionary = {}
+	for macro_cell: Vector3i in street_volume.public_air_cells:
+		for fine_cell: Vector3i in WarrenVolumetricSolver._fine_square(macro_cell):
+			public_air[fine_cell] = true
+	for floor_cell: Vector3i in street_volume.exact_route_surface_cells():
+		for band in WarrenVolumePlan.HEADROOM_BANDS:
+			public_air[floor_cell + Vector3i.UP * band] = true
+	for transition: WarrenVolumeTransition in street_volume.transitions:
+		for cell: Vector3i in transition.clearance_air_cells():
+			public_air[cell] = true
+	var door_access := {"volume": street_volume, "cache": {}, "air": public_air}
 	var quota := WarrenPlotPlanner.roll(plan, ASSET_QUOTA_SALT,
 		plan.summit_cell, 0, profile.landmark_range)
 	var columns: Array[Vector2i] = []
@@ -319,10 +417,14 @@ static func _place_assets(plan: WarrenMazeSourcePlan,
 			"reason": "no street-fronting supportable site remains"}
 		while true:
 			var site := _best_asset_site(plan, streets, columns, blocked,
-				refused, mirror)
+				refused, mirror, used_templates, door_access)
 			if site.is_empty():
 				break
 			var template := ASSET_TEMPLATES[int(site["template"])] as Dictionary
+			var native_choices := asset_recipe_ids(StringName(template["kind_id"]))
+			var native_roll := WarrenPassageLatticeRules.hash_key(plan.world_seed,
+				0xFAB9, Vector3i(index,0,0))
+			var native_kind := native_choices[posmod(native_roll,native_choices.size())]
 			var datum := int(site["datum"])
 			if plan.add_plot({"id": id,
 					"kind": WarrenMazeSourcePlan.PLOT_ASSET,
@@ -344,13 +446,15 @@ static func _place_assets(plan: WarrenMazeSourcePlan,
 						"support_columns": support_columns.duplicate(),
 						"floor": datum,
 						"top": datum + int(template["height_bands"])})
-				record = {"kind_id": StringName(template["kind_id"]),
+				record = {"kind_id": native_kind,
 					"site": {"id": id, "anchor": site["anchor"],
 						"datum": datum, "cost": int(site["cost"]),
 						"orientation": int(site["orientation"]),
 						"clearance_column_count": clearance_columns.size()},
 					"realisable": bool(site.get("realisable", false)),
 					"mirror": mirror, "reason": ""}
+				var kind := StringName(template["kind_id"])
+				used_templates[kind] = int(used_templates.get(kind, 0)) + 1
 				break
 			refused[_site_key(site)] = true
 			record["reason"] = plan.last_rejection
@@ -365,30 +469,20 @@ static func _place_assets(plan: WarrenMazeSourcePlan,
 
 
 static func _new_mirror_tally() -> Dictionary:
-	## Why the realisation mirror refused what it refused, over every site the
-	## quota slot enumerated. When no site is realisable the fallback is taken
-	## and `best` never advances, so in exactly the case worth explaining every
-	## site was tested and these totals are complete.
+	## Count source admission failures; an absent legal site leaves no phantom plot.
 	return {"tested": 0, "no_frontage": 0, "street_over_top": 0,
-		"body_outside_plot": 0, "bearing_off_ground": 0, "realisable": 0}
+		"body_outside_plot": 0, "bearing_off_ground": 0, "realisable": 0,
+		"lone_raised_level": 0}
 
 
 static func _best_asset_site(plan: WarrenMazeSourcePlan, streets: Dictionary,
 		columns: Array[Vector2i], blocked: Dictionary,
-		refused: Dictionary, mirror: Dictionary = {}) -> Dictionary:
-	## Minimum terrain-modification cost -- the sum over the footprint of
-	## |massif.top_at(c) - datum| -- over every legal site, with the door the
-	## winner faces. Ties break by (datum, anchor.x, anchor.z, orientation,
-	## template); the last key is there because two templates of different sizes
-	## can both cost zero on flat ground, and a total order is the whole point.
-	## Two winners are tracked, not one: `best` is the cheapest site the prefab
-	## really lands on, `fallback` the cheapest site full stop. A town with no
-	## realisable site keeps exactly the plot it placed before this rule
-	## existed -- its mass stays plot mass and `_maze_asset_landmark`'s refusal
-	## stays the audited shortfall C2 designed -- so the rule can only ever add
-	## a landmark, never take a town's asset away.
+		refused: Dictionary, mirror: Dictionary = {},
+		used_templates: Dictionary = {}, door_access: Dictionary = {}) -> Dictionary:
+	## Prefer unused native families and bounded average cut depth, with seeded
+	## architectural variety and a stable geometric tie break. Only candidates
+	## whose doorway, complete body and bearing fit become source reservations.
 	var best: Dictionary = {}
-	var fallback: Dictionary = {}
 	for template_index in ASSET_TEMPLATES.size():
 		var template := ASSET_TEMPLATES[template_index] as Dictionary
 		var height := int(template["height_bands"])
@@ -400,7 +494,7 @@ static func _best_asset_site(plan: WarrenMazeSourcePlan, streets: Dictionary,
 				var cells := _footprint(plan, anchor, width, depth, blocked)
 				if cells.is_empty():
 					continue
-				var doors := _fronting_doors(cells, streets)
+				var doors := _fronting_door_candidates(cells, streets)
 				var bands: Array = doors.keys()
 				bands.sort()
 				for datum: int in bands:
@@ -419,34 +513,77 @@ static func _best_asset_site(plan: WarrenMazeSourcePlan, streets: Dictionary,
 						cost += absi(plan.massif.top_at(member) - datum)
 					if cost < 0:
 						continue
-					var site := {"template": template_index,
-						"orientation": orientation, "anchor": anchor,
-						"datum": datum, "cost": cost, "cells": cells,
-						"door": doors[datum]}
-					if refused.has(_site_key(site)):
-						continue
-					if fallback.is_empty() or _site_less(site, fallback):
-						fallback = site
-					# The realisation mirror is the expensive test, so it runs
-					# only on a site that would otherwise become the winner.
-					var realisation: Dictionary = {}
-					if (best.is_empty() or _site_less(site, best)) \
-							and _site_realises(plan, streets, template, cells,
-								doors[datum], datum, mirror, blocked,
-								realisation):
-						site["realisable"] = true
-						site["reserved_columns"] = realisation.get(
-							"reserved_columns", [])
-						site["support_columns"] = realisation.get(
-							"support_columns", [])
-						best = site
-	return best if not best.is_empty() else fallback
+					for door: Vector3i in doors[datum]:
+						var site := {"template": template_index,
+							"orientation": orientation, "anchor": anchor,
+							"datum": datum, "cost": cost, "cells": cells,
+							"door": door}
+						# Compare average cut depth, so the sum does not automatically
+						# prefer the smallest native house. Within one storey's cut
+						# class, seed and unused families provide architectural variety.
+						site["cut_class"] = cost / (cells.size() * WarrenBuildingParcel.STOREY_BANDS)
+						site["reuse"] = int(used_templates.get(StringName(template["kind_id"]), 0))
+						site["variety"] = WarrenPassageLatticeRules.hash_key(plan.world_seed,
+							0xFABA, Vector3i(template_index, 0, 0))
+						if refused.has(_site_key(site)):
+							continue
+						# The realisation mirror is the expensive test, so it runs
+						# only on a site that would otherwise become the winner.
+						var realisation: Dictionary = {}
+						if (best.is_empty() or _site_less(site, best)) \
+								and _site_realises(plan, streets, template, cells,
+									door, datum, mirror, blocked,
+									realisation, door_access) \
+								and _raised_site_keeps_company(plan, streets,
+									blocked, cells, realisation, datum, mirror):
+							site["realisable"] = true
+							site["reserved_columns"] = realisation.get(
+								"reserved_columns", [])
+							site["support_columns"] = realisation.get(
+								"support_columns", [])
+							best = site
+	return best
+
+
+static func _raised_site_keeps_company(plan: WarrenMazeSourcePlan,
+		streets: Dictionary, blocked: Dictionary, cells: Array[Vector2i],
+		realisation: Dictionary, datum: int, mirror: Dictionary) -> bool:
+	## A raised public level exists to serve buildings. A prefab perched above
+	## the entrance level must leave that level's streets fronting room for at
+	## least RAISED_COMPANION_COLUMNS more buildings; otherwise its whole climb
+	## and platform serve one house. Ground sites are unconstrained. A refused
+	## raised site is an audited landmark shortfall, never a retry.
+	if datum <= (plan.excavation.route.front() as Vector3i).y:
+		return true
+	var taken := _footprint_columns(cells)
+	for column_value: Variant in realisation.get("reserved_columns", []) as Array:
+		taken[column_value as Vector2i] = true
+	var companions: Dictionary = {}
+	for street: Vector2i in streets:
+		if not (streets[street] as Array).has(datum):
+			continue
+		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+			var column := street + direction
+			if taken.has(column) or blocked.has(column) or streets.has(column) \
+					or not plan.massif.columns.has(column) \
+					or not plan.plot_support_ok(column, datum):
+				continue
+			companions[column] = true
+	if companions.size() >= RAISED_COMPANION_COLUMNS:
+		return true
+	return _tally(mirror, "lone_raised_level")
+
+
+static func asset_recipe_ids(template_id: StringName) -> Array[StringName]:
+	var out: Array[StringName] = []
+	out.assign(ASSET_RECIPE_VARIANTS.get(template_id,[template_id]))
+	return out
 
 
 static func _site_realises(plan: WarrenMazeSourcePlan, streets: Dictionary,
 		template: Dictionary, cells: Array[Vector2i], door: Vector3i,
 		datum: int, mirror: Dictionary = {}, blocked: Dictionary = {},
-		realisation: Dictionary = {}) -> bool:
+		realisation: Dictionary = {}, door_access: Dictionary = {}) -> bool:
 	## TASK C5b RULING 3 -- the planner's mirror of
 	## `WarrenVolumetricSolver._maze_asset_landmark`. A site is only a site if
 	## the prefab really lands on it, and the landmark builder anchors the
@@ -506,6 +643,22 @@ static func _site_realises(plan: WarrenMazeSourcePlan, streets: Dictionary,
 				door.z * 2 + z_offset) + side
 			if not columns.has(_macro_column(doorway)):
 				continue
+			if not door_access.is_empty():
+				var landing := Vector3i(doorway.x - side.x, datum, doorway.y - side.y)
+				var facing := Vector3i(-side.x, 0, -side.y)
+				var access_key := Vector4i(landing.x, landing.y, landing.z,
+					(side.x + 1) * 3 + side.y + 1)
+				var access_cache := door_access.cache as Dictionary
+				if not access_cache.has(access_key):
+					var volume := door_access.volume as WarrenVolumePlan
+					access_cache[access_key] = volume.has_exact_route_surface(landing) \
+						and not WarrenSpatialFabricCompiler.stair_blocks_doorstep(
+							volume, landing, facing)
+				if not bool(access_cache[access_key]):
+					continue
+				if not _native_body_clears_street(template, doorway, side,
+						lateral, datum, door_access.air):
+					continue
 			var reservation := _fine_box_reservation(plan, columns, blocked,
 				doorway, side, lateral,
 				int(template["reach_forward"]) + EAVE_HALO_CELLS,
@@ -532,6 +685,19 @@ static func _site_realises(plan: WarrenMazeSourcePlan, streets: Dictionary,
 				return true
 	return _tally(mirror,
 		"bearing_off_ground" if body_fits else "body_outside_plot")
+
+
+static func _native_body_clears_street(template: Dictionary, doorway: Vector2i,
+		side: Vector2i, lateral: Vector2i, datum: int, public_air: Dictionary) -> bool:
+	# A macro street address does not describe the swept air of a nearby stair.
+	# Check the complete native body box against the same fine route projection.
+	for step in range(int(template.reach_forward) + 1):
+		for across in range(-int(template.reach_right), int(template.reach_left) + 1):
+			var point := doorway + side * step + lateral * across
+			for band in range(datum, datum + int(template.height_bands)):
+				if public_air.has(Vector3i(point.x, band, point.y)):
+					return false
+	return true
 
 
 static func _footprint_columns(cells: Array[Vector2i]) -> Dictionary:
@@ -633,11 +799,10 @@ static func _fine_box_reservation(plan: WarrenMazeSourcePlan,
 			if columns.has(column):
 				continue
 			if plan.massif.has_column(column):
-				# A typed bridge/passages reservation is already unavailable to P4.
-				# Do not mistake it for a future generic house; the exact volumetric
-				# feature pass arbitrates the two authored envelopes later.
+				# Earlier bridge and house reservations already own this space.
+				# A later feature pass cannot make that competing claim disappear.
 				if blocked.has(column):
-					continue
+					return {"fits": false, "columns": [] as Array[Vector2i]}
 				reserved[column] = true
 			elif not _touches_the_massif(plan, column):
 				return {"fits": false, "columns": [] as Array[Vector2i]}
@@ -705,8 +870,8 @@ static func _no_street_left_hanging(streets: Dictionary, column: Vector2i,
 
 static func _site_key(site: Dictionary) -> String:
 	var anchor := site["anchor"] as Vector2i
-	return "%d/%d/%d,%d/%d" % [int(site["template"]), int(site["orientation"]),
-		anchor.x, anchor.y, int(site["datum"])]
+	return "%d/%d/%d,%d/%d/%s" % [int(site["template"]), int(site["orientation"]),
+		anchor.x, anchor.y, int(site["datum"]), str(site["door"])]
 
 
 static func _footprint(plan: WarrenMazeSourcePlan, anchor: Vector2i,
@@ -746,7 +911,31 @@ static func _fronting_doors(cells: Array[Vector2i],
 	return out
 
 
+static func _fronting_door_candidates(cells: Array[Vector2i],
+		streets: Dictionary) -> Dictionary:
+	var members := _footprint_columns(cells)
+	var by_band: Dictionary = {}
+	for column: Vector2i in cells:
+		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+			var next := column + direction
+			if members.has(next):
+				continue
+			for band: int in streets.get(next, []) as Array:
+				var door := Vector3i(next.x, band, next.y)
+				var candidates: Array = by_band.get(band, [])
+				if door not in candidates:
+					candidates.append(door)
+				by_band[band] = candidates
+	for band: int in by_band:
+		(by_band[band] as Array).sort_custom(func(a: Vector3i, b: Vector3i) -> bool:
+			return a.z < b.z if a.z != b.z else a.x < b.x)
+	return by_band
+
+
 static func _site_less(a: Dictionary, b: Dictionary) -> bool:
+	for key: String in ["reuse", "cut_class", "variety"]:
+		if int(a.get(key, 0)) != int(b.get(key, 0)):
+			return int(a.get(key, 0)) < int(b.get(key, 0))
 	for key: String in ["cost", "datum"]:
 		if int(a[key]) != int(b[key]):
 			return int(a[key]) < int(b[key])

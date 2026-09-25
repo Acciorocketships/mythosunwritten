@@ -22,10 +22,29 @@ func _init(p_stable_id: StringName, p_source: WarrenVolumePlan) -> void:
 
 
 func seal(p_parcels: Array[WarrenBuildingParcel],
-		p_connection_reservations: Array[Dictionary] = []) -> bool:
+		p_connection_reservations: Array[Dictionary] = [],
+		p_native_plots: Array[Dictionary] = []) -> bool:
 	if _sealed or stable_id.is_empty() or source == null \
-			or not source.is_sealed() or p_parcels.is_empty():
+			or not source.is_sealed() \
+			or (p_parcels.is_empty() and p_native_plots.is_empty()):
 		return _reject("missing source or parcels")
+	# Complete native houses participate in the same source allocation. The
+	# modular parcel subset may be empty; inventing a modular house would only
+	# displace a supported native building. Retain the source ownership proof.
+	var maze := source.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+	var native_ids: Dictionary = {}
+	for native: Dictionary in p_native_plots:
+		var matched := false
+		if maze == null or native_ids.has(native.get("id")) \
+				or StringName(native.get("kind_id",&"")).is_empty():
+			return _reject("invalid native building reservation")
+		for plot: Dictionary in maze.plots:
+			if plot.kind == WarrenMazeSourcePlan.PLOT_ASSET and plot.id == native.id \
+					and plot.cells == native.cells and plot.floor == native.floor \
+					and plot.top == native.top and plot.door_walk == native.door_walk:
+				matched = true
+		if not matched: return _reject("native building lacks its source reservation")
+		native_ids[native.id] = true
 	var ids: Dictionary = {}
 	var parcel_by_id: Dictionary = {}
 	var occupied_owners: Dictionary = {}
@@ -60,6 +79,7 @@ func seal(p_parcels: Array[WarrenBuildingParcel],
 			return _reject("invalid occupied-link reservation")
 		connection_reservations.append(reservation.duplicate(true))
 	audit = _build_audit(occupied_owners)
+	audit["maze_assets"] = p_native_plots.duplicate(true)
 	if int(audit.detached_parcel_count) != 0 \
 			or int(audit.overlapping_parcel_cell_count) != 0 \
 			or int(audit.transverse_parcel_count) != 0:
@@ -438,7 +458,7 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 		"transverse_parcel_count": transverse_count,
 		"visually_short_parcel_count": visually_short_count,
 		"grounded_parcel_count": grounded_count,
-		"grounded_parcel_ratio": float(grounded_count) / float(parcels.size()),
+		"grounded_parcel_ratio": float(grounded_count) / float(maxi(parcels.size(),1)),
 		"perimeter_parcel_count": perimeter_count,
 		"grounded_perimeter_parcel_count": grounded_perimeter_count,
 		"gateway_supported_perimeter_parcel_count":
@@ -457,11 +477,11 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 		"base_band_count": base_bands.size(),
 		"largest_base_band_count": largest_base_band_count,
 		"largest_base_band_ratio": float(largest_base_band_count) \
-			/ float(parcels.size()),
+			/ float(maxi(parcels.size(),1)),
 		"roof_band_count": roof_bands.size(),
 		"largest_roof_band_count": largest_roof_band_count,
 		"largest_roof_band_ratio": float(largest_roof_band_count) \
-			/ float(parcels.size()),
+			/ float(maxi(parcels.size(),1)),
 		"neighboring_parcel_pair_count": neighboring_pairs,
 		# A dense town is not merely a set of independently addressed houses.
 		# Face-touching footprints form the inhabited mass which makes the public
@@ -471,7 +491,7 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 		"largest_building_contact_component_count":
 			largest_contact_component_count,
 		"largest_building_contact_component_ratio":
-			float(largest_contact_component_count) / float(parcels.size()),
+			float(largest_contact_component_count) / float(maxi(parcels.size(),1)),
 		# The gate reads the CELL-weighted share, not the one above. Dividing by
 		# parcel count makes the measurement depend on how finely the same mass
 		# happens to be subdivided: splitting one wide house into two adjacent
@@ -491,7 +511,7 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 			isolated_cell_ratio(contact_components, area_by_id),
 		"isolated_building_count": isolated_building_count,
 		"contacted_building_ratio": float(parcels.size() \
-			- isolated_building_count) / float(parcels.size()),
+			- isolated_building_count) / float(maxi(parcels.size(),1)),
 		"same_base_neighbor_pair_count": same_base_neighbor_pairs,
 		"same_base_neighbor_ratio": 0.0 if neighboring_pairs == 0 else \
 			float(same_base_neighbor_pairs) / float(neighboring_pairs),
@@ -556,7 +576,7 @@ func _build_audit(occupied_owners: Dictionary) -> Dictionary:
 		"largest_footprint_family_count": _largest_count(
 			footprint_family_counts),
 		"largest_footprint_family_ratio": float(_largest_count(
-			footprint_family_counts)) / float(parcels.size()),
+			footprint_family_counts)) / float(maxi(parcels.size(),1)),
 		"stacked_parcel_column_count": stacked_columns,
 		"retained_mass_cell_count": retained_mass_cells.size(),
 		"central_column_count": central_columns,

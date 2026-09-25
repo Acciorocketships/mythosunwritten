@@ -136,8 +136,7 @@ static func carve(world_seed: int, massif: WarrenMassif,
 	# Reserve the universal square before alley growth can spend either of its
 	# two flanking cells. Alley coverage then grows around this immutable public
 	# feature and restores any frontage margin the wider floor consumes.
-	var market_square := _stamp_market_square(world_seed, massif, excavation,
-		excavation.route.slice(0, market_cells))
+	var market_square: Array[Vector3i] = context.market_square
 	if market_square.is_empty():
 		last_failure = "universal market square could not fit beside its approach"
 		last_diagnostic = {"stage": &"market_stamp",
@@ -546,6 +545,14 @@ static func _search_spine(context: Dictionary, current: Vector3i,
 			and excavation.route.size() >= int(context.market_cells) \
 			and current.y - portal.y >= profile.route_span_range.x \
 			and radius <= float(context.inner_radius):
+		# The chosen spine must leave room for its required square. Seal that
+		# local floor before descent or later alleys can consume its flank.
+		var square := _stamp_market_square(int(context.world_seed),
+			context.massif as WarrenMassif, excavation,
+			excavation.route.slice(0, int(context.market_cells)))
+		if square.is_empty():
+			return false
+		context["market_square"] = square
 		# TASK E2. The climb's arrival is the SUMMIT, and the descent starts
 		# here with the heading and the vertical tendency the climb finished
 		# on — momentum carries over the crown rather than restarting at it.
@@ -1893,6 +1900,42 @@ static func _bridge_span_is_legal(massif: WarrenMassif,
 				return false
 		(record["endpoint_support_modes"] as Array[StringName]).append(
 			&"terrain_arcade")
+	if not _bridge_has_upper_neighborhood(massif, excavation, record):
+		record["reason"] = "bridge endpoint rises above its connected neighborhood"
+		return false
+	return true
+
+
+static func _bridge_has_upper_neighborhood(massif: WarrenMassif,
+		excavation: WarrenExcavation, proof: Dictionary) -> bool:
+	## A skywalk belongs to a neighborhood at its own elevation. Foundations
+	## alone would allow two isolated pencil towers solely to hold a high span.
+	## Each endpoint needs an adjacent complete storey outside this compound.
+	## Public columns will open to sky later and cannot supply that wall now.
+	var own_columns := _bridge_proof_columns(proof)
+	var open_from: Dictionary = {}
+	for cell: Vector3i in excavation.public_cells():
+		var column := Vector2i(cell.x, cell.z)
+		open_from[column] = mini(int(open_from.get(column, cell.y)), cell.y)
+	var floor_band := int(proof.floor)
+	for group: Array in proof.endpoint_foundation_groups:
+		var joined := false
+		for column: Vector2i in group:
+			for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT,
+					Vector2i.UP, Vector2i.DOWN]:
+				var neighbor := column + direction
+				if own_columns.has(neighbor):
+					continue
+				var complete := true
+				for band in range(floor_band - WarrenBuildingParcel.STOREY_BANDS,
+						floor_band):
+					if not _column_is_solid_at(massif, excavation, neighbor, band) \
+							or int(open_from.get(neighbor, 2147483647)) <= band:
+						complete = false
+						break
+				joined = joined or complete
+		if not joined:
+			return false
 	return true
 
 
@@ -2124,12 +2167,10 @@ static func _portal_cells(massif: WarrenMassif, market_cells: int,
 	for column_value: Variant in massif.columns.keys():
 		var column := column_value as Vector2i
 		var base := massif.base_at(column)
-		if massif.top_at(column) < base \
-				+ WarrenPassageLatticeRules.HEADROOM_BANDS:
-			continue
 		var exposed := false
 		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
-			if not massif.has_column(column + direction):
+			if WarrenPassageLatticeRules.exterior_approach_is_clear(massif,
+					Vector3i(column.x, base, column.y), direction):
 				exposed = true
 				break
 		if not exposed:
@@ -2160,9 +2201,7 @@ static func _grade_component_size(massif: WarrenMassif, portal: Vector3i,
 		for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
 			var neighbor := column + direction
 			if visited.has(neighbor) or not massif.has_column(neighbor) \
-					or massif.base_at(neighbor) != portal.y \
-					or massif.top_at(neighbor) < portal.y \
-						+ WarrenPassageLatticeRules.HEADROOM_BANDS:
+					or massif.base_at(neighbor) != portal.y:
 				continue
 			visited[neighbor] = true
 			frontier.append(neighbor)

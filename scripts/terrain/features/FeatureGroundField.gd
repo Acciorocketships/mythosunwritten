@@ -135,7 +135,7 @@ func clearance_at(world_xz: Vector2) -> float:
 ## Layout producers call this before accepting a solid lot; point consumers
 ## continue using clearance_at for their inexpensive distance mask.
 func overlaps_clearance(shape: FeatureGroundShape,
-		margin: float = 0.0) -> bool:
+		margin: float = 0.0, include_envelopes: bool = true) -> bool:
 	assert(shape != null)
 	assert(is_finite(margin) and margin >= 0.0)
 	var query := shape.bounds().grow(margin)
@@ -150,6 +150,8 @@ func overlaps_clearance(shape: FeatureGroundShape,
 				if seen.has(instance_id):
 					continue
 				seen[instance_id] = true
+				if candidate.envelope and not include_envelopes:
+					continue
 				if shape.intersects(candidate, margin):
 					return true
 	return false

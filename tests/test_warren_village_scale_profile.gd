@@ -69,10 +69,12 @@ func test_scale_budgets_grow_monotonically_without_weakening_integrity() -> void
 		[4, 5],
 		"large and grand towns request an extra link; the sealed occluder "
 		+ "ranking keeps it only when it adds distinct inhabited route cover")
-	assert_eq(profiles[0].landmark_range, Vector2i(4, 4))
-	assert_eq(profiles[1].landmark_range, Vector2i(3, 4))
-	assert_eq(profiles[2].landmark_range, Vector2i(4, 5))
-	assert_eq(profiles[3].landmark_range, Vector2i(5, 6))
+	# One extra source reservation may admit another measured native building;
+	# the requested budget does not bypass site, bearing or frontage checks.
+	assert_eq(profiles[0].landmark_range, Vector2i(5, 6))
+	assert_eq(profiles[1].landmark_range, Vector2i(7, 8))
+	assert_eq(profiles[2].landmark_range, Vector2i(8, 9))
+	assert_eq(profiles[3].landmark_range, Vector2i(9, 10))
 	assert_false(profiles[0].requires_elevated_courtyard)
 	assert_false(profiles[1].requires_elevated_courtyard)
 	assert_true(profiles[2].requires_elevated_courtyard)

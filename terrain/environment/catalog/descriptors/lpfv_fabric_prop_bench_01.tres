@@ -9,6 +9,7 @@ visual_path = "res://terrain/environment/visuals/low_poly_fantasy_village_fabric
 tags = Array[StringName]([&"bench", &"fabric_dressing", &"furniture", &"prop", &"village"])
 measured_aabb = AABB(-1.1529807, -1.5737005e-08, -0.2183795, 2.2967734, 0.4990494, 0.4370973)
 ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
 tint_group = &"identity"
 supports_instance_color = true
 provenance_id = &"low_poly_fantasy_village_fabric:lpfv.fabric.prop.bench.01"

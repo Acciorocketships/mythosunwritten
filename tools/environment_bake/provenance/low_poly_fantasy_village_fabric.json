@@ -5,12 +5,12 @@
       "id": "lpfv.building.church.01",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 6818,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 6818.0,
         "measured_aabb": {
           "position": [
             -3.6984965801239,
-            -2.24256518777111e-06,
+            -0.00000224256518777,
             -4.68703603744507
           ],
           "size": [
@@ -19,10 +19,10 @@
             11.6006460189819
           ]
         },
-        "mesh_bytes": 638243,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 6818
+        "mesh_bytes": 638243.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 6818.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -48,7 +48,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Houses/Church.glb",
       "source_sha256": "f8c24d98afd6aeaeb759a440ff22822db15fc1b684debae31eee2e653e9be5fc",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_building_church_01.tres"
     },
     {
@@ -56,12 +56,12 @@
       "id": "lpfv.building.house.01",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 9815,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 9815.0,
         "measured_aabb": {
           "position": [
             -2.9345178604126,
-            -0.000360385427484289,
+            -0.00036038542748428,
             -3.32506561279297
           ],
           "size": [
@@ -70,10 +70,10 @@
             6.65013551712036
           ]
         },
-        "mesh_bytes": 906966,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 9815
+        "mesh_bytes": 906966.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 9815.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -98,7 +98,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Houses/House_01.glb",
       "source_sha256": "353b332f8a43c6e370c2637ac3cd3cba14575f0461f5728d2f1c05ea49d9f24d",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_building_house_01.tres"
     },
     {
@@ -106,12 +106,12 @@
       "id": "lpfv.building.house.02",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 7179,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 7179.0,
         "measured_aabb": {
           "position": [
             -3.0717761516571,
-            -0.000360859732609242,
+            -0.00036085973260924,
             -3.32506489753723
           ],
           "size": [
@@ -120,10 +120,10 @@
             6.65013599395752
           ]
         },
-        "mesh_bytes": 657150,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 7179
+        "mesh_bytes": 657150.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 7179.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -148,7 +148,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Houses/House_02.glb",
       "source_sha256": "ab426cd8a55e7e16ed87207bcc8477b2d7c7745f701f9244d0b4e7166ee45425",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_building_house_02.tres"
     },
     {
@@ -156,8 +156,8 @@
       "id": "lpfv.building.house.03",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 8992,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 8992.0,
         "measured_aabb": {
           "position": [
             -5.92407274246216,
@@ -170,10 +170,10 @@
             6.8836555480957
           ]
         },
-        "mesh_bytes": 883306,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 8992
+        "mesh_bytes": 883306.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 8992.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -198,7 +198,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Houses/House_03.glb",
       "source_sha256": "ca0c10af012b6e50a3c0f1bf51ae6bab638875db48e21af85da7a223521b20da",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_building_house_03.tres"
     },
     {
@@ -206,8 +206,8 @@
       "id": "lpfv.building.house.04",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 5838,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 5838.0,
         "measured_aabb": {
           "position": [
             -5.93028783798218,
@@ -220,10 +220,10 @@
             6.8836555480957
           ]
         },
-        "mesh_bytes": 462694,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 5838
+        "mesh_bytes": 462694.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 5838.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -248,7 +248,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Houses/House_04.glb",
       "source_sha256": "35ec884ee557720d0a77bfe504a0c9c5b481e08e47c8db54830e1b9c8300a55a",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_building_house_04.tres"
     },
     {
@@ -256,8 +256,8 @@
       "id": "lpfv.building.house.05",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 11636,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 11636.0,
         "measured_aabb": {
           "position": [
             -5.92407274246216,
@@ -270,10 +270,10 @@
             6.8836555480957
           ]
         },
-        "mesh_bytes": 1145482,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 11636
+        "mesh_bytes": 1145482.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 11636.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -298,7 +298,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Houses/House_05.glb",
       "source_sha256": "f729059a71378e111122a2210b1bfb0a148161872b6c210610abb7458793d6ef",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_building_house_05.tres"
     },
     {
@@ -306,8 +306,8 @@
       "id": "lpfv.building.house.06",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 7818,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 7818.0,
         "measured_aabb": {
           "position": [
             -5.93028783798218,
@@ -320,10 +320,10 @@
             6.8836555480957
           ]
         },
-        "mesh_bytes": 623074,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 7818
+        "mesh_bytes": 623074.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 7818.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -348,7 +348,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Houses/House_06.glb",
       "source_sha256": "103c53aa5e20d7702372f1bb6f938a0a678ae947375116a3b80e2dd957ae39bc",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_building_house_06.tres"
     },
     {
@@ -356,8 +356,8 @@
       "id": "lpfv.building.house.07",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 9895,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 9895.0,
         "measured_aabb": {
           "position": [
             -2.9345178604126,
@@ -370,10 +370,10 @@
             6.84485864639282
           ]
         },
-        "mesh_bytes": 912630,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 9895
+        "mesh_bytes": 912630.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 9895.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -398,7 +398,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Houses/House_07.glb",
       "source_sha256": "ea1c0c31aa424d987d9a1768afcee5d3048923a58edd6b8f76ba5aca8071ecb1",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_building_house_07.tres"
     },
     {
@@ -406,12 +406,12 @@
       "id": "lpfv.fabric.chimney.orange.01",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 268,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 268.0,
         "measured_aabb": {
           "position": [
             -0.589596092700958,
-            -2.01165676116943e-07,
+            -0.00000020116567611,
             -0.397144347429276
           ],
           "size": [
@@ -420,10 +420,10 @@
             0.794289588928223
           ]
         },
-        "mesh_bytes": 23597,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 268
+        "mesh_bytes": 23597.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 268.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -452,7 +452,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Chimney_01.glb",
       "source_sha256": "3e2cbdf1dcf7a5e5ad3b7ddccbc4d755e9077911ccdfb9c5c503613ffcef3539",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_chimney_orange_01.tres"
     },
     {
@@ -460,8 +460,8 @@
       "id": "lpfv.fabric.door.closed.01",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 210,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 210.0,
         "measured_aabb": {
           "position": [
             -1.09571135044098,
@@ -474,10 +474,10 @@
             0.182220369577408
           ]
         },
-        "mesh_bytes": 19718,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 210
+        "mesh_bytes": 19718.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 210.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -503,7 +503,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Door1_02.glb",
       "source_sha256": "558123e20aa8177031e4a7d166c449a9a12f622061ce8b4565f89e14a9d9aa01",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_door_closed_01.tres"
     },
     {
@@ -511,8 +511,8 @@
       "id": "lpfv.fabric.door.closed.02",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 222,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 222.0,
         "measured_aabb": {
           "position": [
             -1.09350514411926,
@@ -525,10 +525,10 @@
             0.138490468263626
           ]
         },
-        "mesh_bytes": 20654,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 222
+        "mesh_bytes": 20654.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 222.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -554,7 +554,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Door2_02.glb",
       "source_sha256": "c0b504e6ccc5a88acb363d399f602741343f09a73a49b31e3ca8d7c2f7d1d310",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_door_closed_02.tres"
     },
     {
@@ -562,8 +562,8 @@
       "id": "lpfv.fabric.prop.bag.01",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.317513853311539,
@@ -576,10 +576,10 @@
             0.536139607429504
           ]
         },
-        "mesh_bytes": 16187,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 150
+        "mesh_bytes": 16187.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 150.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -602,7 +602,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Bag.glb",
       "source_sha256": "e30c7927f6fe4c0b68a22e24cd7e673274257ffef99111a12b7a447aa9d10734",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bag_01.tres"
     },
     {
@@ -610,8 +610,8 @@
       "id": "lpfv.fabric.prop.barrel.01",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.449679017066956,
@@ -624,10 +624,10 @@
             0.899357914924622
           ]
         },
-        "mesh_bytes": 80498,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 872
+        "mesh_bytes": 80498.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 872.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -650,7 +650,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Barrel_01.glb",
       "source_sha256": "a569667c50bd5342392c7ee28d112082a22872250aa064d4742f1d0a6dc4531f",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_barrel_01.tres"
     },
     {
@@ -658,8 +658,8 @@
       "id": "lpfv.fabric.prop.barrel.02",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.449679017066956,
@@ -672,10 +672,10 @@
             0.899357914924622
           ]
         },
-        "mesh_bytes": 63046,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 663
+        "mesh_bytes": 63046.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 663.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -698,7 +698,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Barrel_02.glb",
       "source_sha256": "6286c6b7ad116c61d3c4a8c0a2b141f7cda0d0b0bd6867c56fa0153099ff0ba4",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_barrel_02.tres"
     },
     {
@@ -706,12 +706,12 @@
       "id": "lpfv.fabric.prop.bench.01",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 96.0,
         "measured_aabb": {
           "position": [
             -1.15298068523407,
-            -1.57370045883454e-08,
+            -0.00000001573700458,
             -0.218379497528076
           ],
           "size": [
@@ -720,16 +720,17 @@
             0.437097311019897
           ]
         },
-        "mesh_bytes": 9745,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 96
+        "mesh_bytes": 9745.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 96.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
+        "collision_profile": "native_trimesh",
         "id": "lpfv.fabric.prop.bench.01",
-        "max_collision_pieces": 0.0,
-        "max_collision_triangles": 0.0,
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 1500.0,
         "max_mesh_bytes": 524288.0,
         "max_surfaces": 2.0,
         "max_visual_triangles": 1500.0,
@@ -747,7 +748,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Bench_01.glb",
       "source_sha256": "97fa152da0ff395e0d3ea3389a83125923c39ab7970b0558de0146736da8a8a4",
-      "tool_version": 22,
+      "tool_version": 34.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bench_01.tres"
     },
     {
@@ -755,12 +756,12 @@
       "id": "lpfv.fabric.prop.bench.02",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 162.0,
         "measured_aabb": {
           "position": [
             -1.01889872550964,
-            -1.33603164087504e-08,
+            -0.0000000133603164,
             -0.195911794900894
           ],
           "size": [
@@ -769,16 +770,17 @@
             0.403827130794525
           ]
         },
-        "mesh_bytes": 15181,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 162
+        "mesh_bytes": 15181.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 162.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
+        "collision_profile": "native_trimesh",
         "id": "lpfv.fabric.prop.bench.02",
-        "max_collision_pieces": 0.0,
-        "max_collision_triangles": 0.0,
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 1500.0,
         "max_mesh_bytes": 524288.0,
         "max_surfaces": 2.0,
         "max_visual_triangles": 1500.0,
@@ -796,7 +798,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Bench_02.glb",
       "source_sha256": "52f2dd64406e7cf2f809399a088b218220cfdfe8c6b856d1bcb6f312b417a694",
-      "tool_version": 22,
+      "tool_version": 34.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bench_02.tres"
     },
     {
@@ -804,8 +806,8 @@
       "id": "lpfv.fabric.prop.bucket.01",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.278002321720123,
@@ -818,10 +820,10 @@
             0.556004643440247
           ]
         },
-        "mesh_bytes": 55282,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 611
+        "mesh_bytes": 55282.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 611.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -844,7 +846,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Bucket_01.glb",
       "source_sha256": "7e17ab8503d3f26f5181361ff51e2ed934f39746d0c939469756c1a371150af3",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bucket_01.tres"
     },
     {
@@ -852,8 +854,8 @@
       "id": "lpfv.fabric.prop.chair.01",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.257986664772034,
@@ -866,10 +868,10 @@
             0.45857435464859
           ]
         },
-        "mesh_bytes": 32677,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 318
+        "mesh_bytes": 32677.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 318.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -893,7 +895,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Chair.glb",
       "source_sha256": "e5f863a2400e49772028d5536dbf3da9e0abfe6a75fecc706c82d9d181b6ddb4",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_chair_01.tres"
     },
     {
@@ -901,8 +903,8 @@
       "id": "lpfv.fabric.prop.crate.01",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.375586152076721,
@@ -915,10 +917,10 @@
             0.751272261142731
           ]
         },
-        "mesh_bytes": 33529,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 328
+        "mesh_bytes": 33529.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 328.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -941,7 +943,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Box.glb",
       "source_sha256": "c9552522638c42f6f2d9bacb16894f8f7630778a97475817ef4f0e9afe7761b8",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_crate_01.tres"
     },
     {
@@ -949,8 +951,8 @@
       "id": "lpfv.fabric.prop.firewood.01",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -1.06908440589905,
@@ -963,10 +965,10 @@
             1.94585347175598
           ]
         },
-        "mesh_bytes": 127636,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1888
+        "mesh_bytes": 127636.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1888.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -989,7 +991,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Logs.glb",
       "source_sha256": "b772a2aef0c13ec234340902ba7a82ba8d135e56f63e7c95c0a9d0c83e06aa88",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_firewood_01.tres"
     },
     {
@@ -997,8 +999,8 @@
       "id": "lpfv.fabric.prop.lantern.post.02",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.276329189538956,
@@ -1011,10 +1013,10 @@
             0.542578637599945
           ]
         },
-        "mesh_bytes": 55856,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 586
+        "mesh_bytes": 55856.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 586.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -1037,7 +1039,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Lantern_02.glb",
       "source_sha256": "dec744c391943ccb47e6d7a1afc3f1699010ec1d8cb1b18e052a6e41b0d02d1d",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_lantern_post_02.tres"
     },
     {
@@ -1045,8 +1047,8 @@
       "id": "lpfv.fabric.prop.lantern.table.01",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.0729037746787071,
@@ -1059,10 +1061,10 @@
             0.27837747335434
           ]
         },
-        "mesh_bytes": 26481,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 340
+        "mesh_bytes": 26481.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 340.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -1085,7 +1087,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Lantern_01.glb",
       "source_sha256": "8f60164fbd9a6a92763125bb0f0c290e7c5a392d002fa13c10544f602e589e4e",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_lantern_table_01.tres"
     },
     {
@@ -1093,8 +1095,8 @@
       "id": "lpfv.fabric.prop.plant.broad.03",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.405606061220169,
@@ -1107,10 +1109,10 @@
             0.767734825611115
           ]
         },
-        "mesh_bytes": 78559,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 968
+        "mesh_bytes": 78559.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 968.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -1133,7 +1135,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_03.glb",
       "source_sha256": "25c8234f575b14b0cf26cb0be3e9b26154a59cf922c1b00f847823f54a577ed1",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_plant_broad_03.tres"
     },
     {
@@ -1141,8 +1143,8 @@
       "id": "lpfv.fabric.prop.plant.low.01",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.492671191692352,
@@ -1155,10 +1157,10 @@
             0.853591203689575
           ]
         },
-        "mesh_bytes": 57257,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 658
+        "mesh_bytes": 57257.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 658.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -1181,7 +1183,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_01.glb",
       "source_sha256": "9dedda86861af433774932540a9ead08b73bad7b4580e53d3f53f8f525775808",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_plant_low_01.tres"
     },
     {
@@ -1189,8 +1191,8 @@
       "id": "lpfv.fabric.prop.plant.mid.02",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.405606061220169,
@@ -1203,10 +1205,10 @@
             0.807047128677368
           ]
         },
-        "mesh_bytes": 112121,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1378
+        "mesh_bytes": 112121.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1378.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -1229,7 +1231,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_02.glb",
       "source_sha256": "17dcae7e9747c2123ce1ab216b9f7d9e7013ed05c2fd1474f454b9aec0576054",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_plant_mid_02.tres"
     },
     {
@@ -1237,8 +1239,8 @@
       "id": "lpfv.fabric.prop.plant.tall.04",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 0,
-        "collision_triangles": 0,
+        "collision_piece_count": 0.0,
+        "collision_triangles": 0.0,
         "measured_aabb": {
           "position": [
             -0.457851856946945,
@@ -1251,10 +1253,10 @@
             0.809054315090179
           ]
         },
-        "mesh_bytes": 111774,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1260
+        "mesh_bytes": 111774.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1260.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -1277,7 +1279,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_04.glb",
       "source_sha256": "8757f9d299c4a52fee47b46b20b06300cc42f00151697ffb262b451c2e161fd2",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_prop_plant_tall_04.tres"
     },
     {
@@ -1285,8 +1287,8 @@
       "id": "lpfv.fabric.roof.compact.orange.03",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 2708,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2708.0,
         "measured_aabb": {
           "position": [
             -1.82826197147369,
@@ -1299,10 +1301,10 @@
             4.16390705108643
           ]
         },
-        "mesh_bytes": 272314,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 2708
+        "mesh_bytes": 272314.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2708.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -1331,7 +1333,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03.tres"
     },
     {
@@ -1339,12 +1341,12 @@
       "id": "lpfv.fabric.roof.compact.orange.03.rear",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 2010,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2010.0,
         "measured_aabb": {
           "position": [
             -1.82826197147369,
-            1.37065839567185e-07,
+            0.00000013706583956,
             -1.50000035762787
           ],
           "size": [
@@ -1353,10 +1355,10 @@
             3.00000047683716
           ]
         },
-        "mesh_bytes": 199731,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 2010
+        "mesh_bytes": 199731.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2010.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -1391,7 +1393,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_rear.tres"
     },
     {
@@ -1399,12 +1401,12 @@
       "id": "lpfv.fabric.roof.compact.orange.03.rear.end",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1230,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1230.0,
         "measured_aabb": {
           "position": [
             -1.82271206378937,
-            5.04190381889202e-07,
+            0.00000050419038188,
             -1.50000035762787
           ],
           "size": [
@@ -1413,10 +1415,10 @@
             1.50000035762787
           ]
         },
-        "mesh_bytes": 116719,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1230
+        "mesh_bytes": 116719.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1230.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -1451,7 +1453,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_rear_end.tres"
     },
     {
@@ -1465,12 +1467,12 @@
           "position": [
             -1.5,
             0.0276989936828613,
-            -1.50000035762787
+            -1.5
           ],
           "size": [
             3.0,
             2.14515972137451,
-            1.50000035762787
+            1.5
           ]
         },
         "mesh_bytes": 108577,
@@ -1491,6 +1493,23 @@
           ]
         },
         "collision_profile": "building_trimesh",
+        "fit_axis_profile": {
+          "axis": "z",
+          "knots": [
+            [
+              -1.5,
+              -1.5
+            ],
+            [
+              -0.9844,
+              -1.48
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ]
+        },
         "id": "lpfv.fabric.roof.compact.orange.03.rear.end.tight",
         "max_collision_pieces": 1.0,
         "max_collision_triangles": 3000.0,
@@ -1517,7 +1536,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 35,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_rear_end_tight.tres"
     },
     {
@@ -1531,12 +1550,12 @@
           "position": [
             -1.5,
             0.0276989936828613,
-            -1.50000035762787
+            -1.5
           ],
           "size": [
             3.0,
             2.14515972137451,
-            3.00000047683716
+            3.0
           ]
         },
         "mesh_bytes": 187409,
@@ -1557,6 +1576,27 @@
           ]
         },
         "collision_profile": "building_trimesh",
+        "fit_axis_profile": {
+          "axis": "z",
+          "knots": [
+            [
+              -1.5,
+              -1.5
+            ],
+            [
+              -0.9844,
+              -1.48
+            ],
+            [
+              0.0,
+              0.0
+            ],
+            [
+              1.5,
+              1.5
+            ]
+          ]
+        },
         "id": "lpfv.fabric.roof.compact.orange.03.rear.tight",
         "max_collision_pieces": 1.0,
         "max_collision_triangles": 3000.0,
@@ -1583,7 +1623,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 35,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_rear_tight.tres"
     },
     {
@@ -1591,8 +1631,8 @@
       "id": "lpfv.fabric.roof.compact.orange.03.run.end",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1175,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1175.0,
         "measured_aabb": {
           "position": [
             -1.8227117061615,
@@ -1605,10 +1645,10 @@
             1.33195447921753
           ]
         },
-        "mesh_bytes": 109874,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1175
+        "mesh_bytes": 109874.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1175.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -1643,7 +1683,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_end.tres"
     },
     {
@@ -1651,8 +1691,8 @@
       "id": "lpfv.fabric.roof.compact.orange.03.run.end.flush",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1175,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1175.0,
         "measured_aabb": {
           "position": [
             -1.8227117061615,
@@ -1665,10 +1705,10 @@
             0.75
           ]
         },
-        "mesh_bytes": 109880,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1175
+        "mesh_bytes": 109880.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1175.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -1712,7 +1752,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 31,
+      "tool_version": 31.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_end_flush.tres"
     },
     {
@@ -1720,8 +1760,8 @@
       "id": "lpfv.fabric.roof.compact.orange.03.run.end.tight",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1113,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1113.0,
         "measured_aabb": {
           "position": [
             -1.5,
@@ -1734,10 +1774,10 @@
             1.33195447921753
           ]
         },
-        "mesh_bytes": 102272,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1113
+        "mesh_bytes": 102272.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1113.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -1778,7 +1818,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_end_tight.tres"
     },
     {
@@ -1818,6 +1858,23 @@
           ]
         },
         "collision_profile": "building_trimesh",
+        "fit_axis_profile": {
+          "axis": "z",
+          "knots": [
+            [
+              0.75,
+              0.75
+            ],
+            [
+              1.22379875183105,
+              1.48
+            ],
+            [
+              1.5,
+              1.5
+            ]
+          ]
+        },
         "fit_visual_bounds": [
           -1.5,
           0.02769947,
@@ -1853,7 +1910,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 31,
+      "tool_version": 35,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_end_tight_flush.tres"
     },
     {
@@ -1861,12 +1918,12 @@
       "id": "lpfv.fabric.roof.compact.orange.03.run.middle",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1082,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1082.0,
         "measured_aabb": {
           "position": [
             -1.82826197147369,
-            1.7819554898324e-07,
+            0.00000017819554898,
             -0.75
           ],
           "size": [
@@ -1875,10 +1932,10 @@
             1.5
           ]
         },
-        "mesh_bytes": 105141,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1082
+        "mesh_bytes": 105141.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1082.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -1913,7 +1970,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_middle.tres"
     },
     {
@@ -1921,12 +1978,12 @@
       "id": "lpfv.fabric.roof.compact.orange.03.run.middle.mirror_z",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1082,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1082.0,
         "measured_aabb": {
           "position": [
             -1.82826197147369,
-            1.7819554898324e-07,
+            0.00000017819554898,
             -0.75
           ],
           "size": [
@@ -1935,10 +1992,10 @@
             1.5
           ]
         },
-        "mesh_bytes": 105150,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1082
+        "mesh_bytes": 105150.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1082.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -1975,7 +2032,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_middle_mirror_z.tres"
     },
     {
@@ -1983,8 +2040,8 @@
       "id": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1024,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1024.0,
         "measured_aabb": {
           "position": [
             -1.5,
@@ -1997,10 +2054,10 @@
             1.5
           ]
         },
-        "mesh_bytes": 97239,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1024
+        "mesh_bytes": 97239.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1024.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -2041,7 +2098,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_middle_tight.tres"
     },
     {
@@ -2049,8 +2106,8 @@
       "id": "lpfv.fabric.roof.compact.orange.03.run.middle.tight.mirror_z",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1024,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1024.0,
         "measured_aabb": {
           "position": [
             -1.5,
@@ -2063,10 +2120,10 @@
             1.5
           ]
         },
-        "mesh_bytes": 97248,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1024
+        "mesh_bytes": 97248.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1024.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -2109,7 +2166,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_middle_tight_mirror_z.tres"
     },
     {
@@ -2117,12 +2174,12 @@
       "id": "lpfv.fabric.roof.compact.orange.03.run.start",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1175,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1175.0,
         "measured_aabb": {
           "position": [
             -1.82271206378937,
-            5.45320119726966e-07,
+            0.00000054532011972,
             -2.08195233345032
           ],
           "size": [
@@ -2131,10 +2188,10 @@
             1.33195233345032
           ]
         },
-        "mesh_bytes": 110596,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1175
+        "mesh_bytes": 110596.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1175.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -2169,7 +2226,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_start.tres"
     },
     {
@@ -2177,12 +2234,12 @@
       "id": "lpfv.fabric.roof.compact.orange.03.run.start.flush",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1175,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1175.0,
         "measured_aabb": {
           "position": [
             -1.82271206378937,
-            5.45320119726966e-07,
+            0.00000054532011972,
             -1.5
           ],
           "size": [
@@ -2191,10 +2248,10 @@
             0.750000059604645
           ]
         },
-        "mesh_bytes": 110602,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1175
+        "mesh_bytes": 110602.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1175.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -2206,7 +2263,7 @@
         "collision_profile": "building_trimesh",
         "fit_visual_bounds": [
           -1.8227121,
-          5.453201e-07,
+          0.0000005453201,
           -1.5,
           3.645424,
           2.1728582,
@@ -2238,7 +2295,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 31,
+      "tool_version": 31.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_start_flush.tres"
     },
     {
@@ -2246,8 +2303,8 @@
       "id": "lpfv.fabric.roof.compact.orange.03.run.start.tight",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1115,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1115.0,
         "measured_aabb": {
           "position": [
             -1.5,
@@ -2260,10 +2317,10 @@
             1.33195233345032
           ]
         },
-        "mesh_bytes": 102898,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1115
+        "mesh_bytes": 102898.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1115.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -2304,7 +2361,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_start_tight.tres"
     },
     {
@@ -2323,7 +2380,7 @@
           "size": [
             3.0,
             2.14515972137451,
-            0.750000059604645
+            0.75000011920929
           ]
         },
         "mesh_bytes": 102904,
@@ -2344,6 +2401,23 @@
           ]
         },
         "collision_profile": "building_trimesh",
+        "fit_axis_profile": {
+          "axis": "z",
+          "knots": [
+            [
+              -1.5,
+              -1.5
+            ],
+            [
+              -1.22730815410614,
+              -1.48
+            ],
+            [
+              -0.75,
+              -0.75
+            ]
+          ]
+        },
         "fit_visual_bounds": [
           -1.5,
           0.027698994,
@@ -2379,7 +2453,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 31,
+      "tool_version": 35,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_03_run_start_tight_flush.tres"
     },
     {
@@ -2387,8 +2461,8 @@
       "id": "lpfv.fabric.roof.compact.orange.06",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 2708,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2708.0,
         "measured_aabb": {
           "position": [
             -1.82826197147369,
@@ -2401,10 +2475,10 @@
             4.16390705108643
           ]
         },
-        "mesh_bytes": 272314,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 2708
+        "mesh_bytes": 272314.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2708.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -2433,7 +2507,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "source_sha256": "c4b85933a1b55578991afaa7cc6b7b98c9f0a233e959f680ee59725910ebbd84",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_06.tres"
     },
     {
@@ -2441,8 +2515,8 @@
       "id": "lpfv.fabric.roof.compact.orange.06.front",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 2010,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2010.0,
         "measured_aabb": {
           "position": [
             -1.82826197147369,
@@ -2455,10 +2529,10 @@
             2.99999952316284
           ]
         },
-        "mesh_bytes": 199372,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 2010
+        "mesh_bytes": 199372.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2010.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -2493,7 +2567,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "source_sha256": "c4b85933a1b55578991afaa7cc6b7b98c9f0a233e959f680ee59725910ebbd84",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_06_front.tres"
     },
     {
@@ -2501,8 +2575,8 @@
       "id": "lpfv.fabric.roof.compact.orange.06.front.end",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1230,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1230.0,
         "measured_aabb": {
           "position": [
             -1.8227117061615,
@@ -2515,10 +2589,10 @@
             1.49999952316284
           ]
         },
-        "mesh_bytes": 116072,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1230
+        "mesh_bytes": 116072.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1230.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -2553,7 +2627,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "source_sha256": "c4b85933a1b55578991afaa7cc6b7b98c9f0a233e959f680ee59725910ebbd84",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_06_front_end.tres"
     },
     {
@@ -2572,7 +2646,7 @@
           "size": [
             3.0,
             2.14515733718872,
-            1.49999952316284
+            1.5
           ]
         },
         "mesh_bytes": 107930,
@@ -2593,6 +2667,23 @@
           ]
         },
         "collision_profile": "building_trimesh",
+        "fit_axis_profile": {
+          "axis": "z",
+          "knots": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.9859,
+              1.48
+            ],
+            [
+              1.5,
+              1.5
+            ]
+          ]
+        },
         "id": "lpfv.fabric.roof.compact.orange.06.front.end.tight",
         "max_collision_pieces": 1.0,
         "max_collision_triangles": 3000.0,
@@ -2619,7 +2710,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "source_sha256": "c4b85933a1b55578991afaa7cc6b7b98c9f0a233e959f680ee59725910ebbd84",
-      "tool_version": 22,
+      "tool_version": 35,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_06_front_end_tight.tres"
     },
     {
@@ -2638,7 +2729,7 @@
           "size": [
             3.0,
             2.14515733718872,
-            2.99999952316284
+            3.0
           ]
         },
         "mesh_bytes": 187110,
@@ -2659,6 +2750,27 @@
           ]
         },
         "collision_profile": "building_trimesh",
+        "fit_axis_profile": {
+          "axis": "z",
+          "knots": [
+            [
+              -1.5,
+              -1.5
+            ],
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.9859,
+              1.48
+            ],
+            [
+              1.5,
+              1.5
+            ]
+          ]
+        },
         "id": "lpfv.fabric.roof.compact.orange.06.front.tight",
         "max_collision_pieces": 1.0,
         "max_collision_triangles": 3000.0,
@@ -2685,7 +2797,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "source_sha256": "c4b85933a1b55578991afaa7cc6b7b98c9f0a233e959f680ee59725910ebbd84",
-      "tool_version": 22,
+      "tool_version": 35,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_06_front_tight.tres"
     },
     {
@@ -2693,8 +2805,8 @@
       "id": "lpfv.fabric.roof.compact.orange.06.middle",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 2338,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2338.0,
         "measured_aabb": {
           "position": [
             -1.82826197147369,
@@ -2707,10 +2819,10 @@
             3.0
           ]
         },
-        "mesh_bytes": 225317,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 2338
+        "mesh_bytes": 225317.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2338.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -2745,7 +2857,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "source_sha256": "c4b85933a1b55578991afaa7cc6b7b98c9f0a233e959f680ee59725910ebbd84",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_06_middle.tres"
     },
     {
@@ -2753,8 +2865,8 @@
       "id": "lpfv.fabric.roof.compact.orange.06.middle.tight",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 2238,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2238.0,
         "measured_aabb": {
           "position": [
             -1.5,
@@ -2767,10 +2879,10 @@
             3.0
           ]
         },
-        "mesh_bytes": 211331,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 2238
+        "mesh_bytes": 211331.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2238.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -2811,7 +2923,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "source_sha256": "c4b85933a1b55578991afaa7cc6b7b98c9f0a233e959f680ee59725910ebbd84",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_orange_06_middle_tight.tres"
     },
     {
@@ -2819,8 +2931,8 @@
       "id": "lpfv.fabric.roof.compact.slate.03",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 2708,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2708.0,
         "measured_aabb": {
           "position": [
             -1.82826197147369,
@@ -2833,10 +2945,10 @@
             4.16390705108643
           ]
         },
-        "mesh_bytes": 272313,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 2708
+        "mesh_bytes": 272313.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2708.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -2868,7 +2980,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03.tres"
     },
     {
@@ -2876,8 +2988,8 @@
       "id": "lpfv.fabric.roof.compact.slate.03.front",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 2010,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2010.0,
         "measured_aabb": {
           "position": [
             -1.82826197147369,
@@ -2890,10 +3002,10 @@
             2.99999952316284
           ]
         },
-        "mesh_bytes": 199371,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 2010
+        "mesh_bytes": 199371.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2010.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -2931,7 +3043,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_front.tres"
     },
     {
@@ -2939,8 +3051,8 @@
       "id": "lpfv.fabric.roof.compact.slate.03.front.end",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1230,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1230.0,
         "measured_aabb": {
           "position": [
             -1.8227117061615,
@@ -2953,10 +3065,10 @@
             1.49999952316284
           ]
         },
-        "mesh_bytes": 116071,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1230
+        "mesh_bytes": 116071.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1230.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -2994,7 +3106,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_front_end.tres"
     },
     {
@@ -3013,7 +3125,7 @@
           "size": [
             3.0,
             2.14515733718872,
-            1.49999952316284
+            1.5
           ]
         },
         "mesh_bytes": 107929,
@@ -3034,6 +3146,23 @@
           ]
         },
         "collision_profile": "building_trimesh",
+        "fit_axis_profile": {
+          "axis": "z",
+          "knots": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.984397,
+              1.48
+            ],
+            [
+              1.5,
+              1.5
+            ]
+          ]
+        },
         "id": "lpfv.fabric.roof.compact.slate.03.front.end.tight",
         "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
         "max_collision_pieces": 1.0,
@@ -3063,7 +3192,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 35,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_front_end_tight.tres"
     },
     {
@@ -3082,7 +3211,7 @@
           "size": [
             3.0,
             2.14515733718872,
-            2.99999952316284
+            3.0
           ]
         },
         "mesh_bytes": 187109,
@@ -3103,6 +3232,27 @@
           ]
         },
         "collision_profile": "building_trimesh",
+        "fit_axis_profile": {
+          "axis": "z",
+          "knots": [
+            [
+              -1.5,
+              -1.5
+            ],
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.984397,
+              1.48
+            ],
+            [
+              1.5,
+              1.5
+            ]
+          ]
+        },
         "id": "lpfv.fabric.roof.compact.slate.03.front.tight",
         "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
         "max_collision_pieces": 1.0,
@@ -3132,7 +3282,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 35,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_front_tight.tres"
     },
     {
@@ -3140,8 +3290,8 @@
       "id": "lpfv.fabric.roof.compact.slate.03.middle",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 2338,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2338.0,
         "measured_aabb": {
           "position": [
             -1.82826197147369,
@@ -3154,10 +3304,10 @@
             3.0
           ]
         },
-        "mesh_bytes": 225316,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 2338
+        "mesh_bytes": 225316.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2338.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -3195,7 +3345,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_middle.tres"
     },
     {
@@ -3203,8 +3353,8 @@
       "id": "lpfv.fabric.roof.compact.slate.03.middle.tight",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 2238,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2238.0,
         "measured_aabb": {
           "position": [
             -1.5,
@@ -3217,10 +3367,10 @@
             3.0
           ]
         },
-        "mesh_bytes": 211330,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 2238
+        "mesh_bytes": 211330.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2238.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -3264,7 +3414,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_middle_tight.tres"
     },
     {
@@ -3272,8 +3422,8 @@
       "id": "lpfv.fabric.roof.compact.slate.03.run.end",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1175,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1175.0,
         "measured_aabb": {
           "position": [
             -1.8227117061615,
@@ -3286,10 +3436,10 @@
             1.33195447921753
           ]
         },
-        "mesh_bytes": 109873,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1175
+        "mesh_bytes": 109873.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1175.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -3327,7 +3477,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_end.tres"
     },
     {
@@ -3335,8 +3485,8 @@
       "id": "lpfv.fabric.roof.compact.slate.03.run.end.flush",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1175,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1175.0,
         "measured_aabb": {
           "position": [
             -1.8227117061615,
@@ -3349,10 +3499,10 @@
             0.75
           ]
         },
-        "mesh_bytes": 109879,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1175
+        "mesh_bytes": 109879.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1175.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -3399,7 +3549,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 31,
+      "tool_version": 31.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_end_flush.tres"
     },
     {
@@ -3407,8 +3557,8 @@
       "id": "lpfv.fabric.roof.compact.slate.03.run.end.tight",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1113,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1113.0,
         "measured_aabb": {
           "position": [
             -1.5,
@@ -3421,10 +3571,10 @@
             1.33195447921753
           ]
         },
-        "mesh_bytes": 102271,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1113
+        "mesh_bytes": 102271.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1113.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -3468,7 +3618,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_end_tight.tres"
     },
     {
@@ -3508,6 +3658,23 @@
           ]
         },
         "collision_profile": "building_trimesh",
+        "fit_axis_profile": {
+          "axis": "z",
+          "knots": [
+            [
+              0.75,
+              0.75
+            ],
+            [
+              1.22379875183105,
+              1.48
+            ],
+            [
+              1.5,
+              1.5
+            ]
+          ]
+        },
         "fit_visual_bounds": [
           -1.5,
           0.02769947,
@@ -3546,7 +3713,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 31,
+      "tool_version": 35,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_end_tight_flush.tres"
     },
     {
@@ -3554,12 +3721,12 @@
       "id": "lpfv.fabric.roof.compact.slate.03.run.middle",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1082,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1082.0,
         "measured_aabb": {
           "position": [
             -1.82826197147369,
-            1.7819554898324e-07,
+            0.00000017819554898,
             -0.75
           ],
           "size": [
@@ -3568,10 +3735,10 @@
             1.5
           ]
         },
-        "mesh_bytes": 105140,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1082
+        "mesh_bytes": 105140.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1082.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -3609,7 +3776,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_middle.tres"
     },
     {
@@ -3617,12 +3784,12 @@
       "id": "lpfv.fabric.roof.compact.slate.03.run.middle.mirror_z",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1082,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1082.0,
         "measured_aabb": {
           "position": [
             -1.82826197147369,
-            1.7819554898324e-07,
+            0.00000017819554898,
             -0.75
           ],
           "size": [
@@ -3631,10 +3798,10 @@
             1.5
           ]
         },
-        "mesh_bytes": 105149,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1082
+        "mesh_bytes": 105149.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1082.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -3674,7 +3841,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_middle_mirror_z.tres"
     },
     {
@@ -3682,8 +3849,8 @@
       "id": "lpfv.fabric.roof.compact.slate.03.run.middle.tight",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1024,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1024.0,
         "measured_aabb": {
           "position": [
             -1.5,
@@ -3696,10 +3863,10 @@
             1.5
           ]
         },
-        "mesh_bytes": 97238,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1024
+        "mesh_bytes": 97238.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1024.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -3743,7 +3910,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_middle_tight.tres"
     },
     {
@@ -3751,8 +3918,8 @@
       "id": "lpfv.fabric.roof.compact.slate.03.run.middle.tight.mirror_z",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1024,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1024.0,
         "measured_aabb": {
           "position": [
             -1.5,
@@ -3765,10 +3932,10 @@
             1.5
           ]
         },
-        "mesh_bytes": 97247,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1024
+        "mesh_bytes": 97247.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1024.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -3814,7 +3981,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_middle_tight_mirror_z.tres"
     },
     {
@@ -3822,12 +3989,12 @@
       "id": "lpfv.fabric.roof.compact.slate.03.run.start",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1175,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1175.0,
         "measured_aabb": {
           "position": [
             -1.82271206378937,
-            5.45320119726966e-07,
+            0.00000054532011972,
             -2.08195233345032
           ],
           "size": [
@@ -3836,10 +4003,10 @@
             1.33195233345032
           ]
         },
-        "mesh_bytes": 110595,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1175
+        "mesh_bytes": 110595.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1175.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -3877,7 +4044,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_start.tres"
     },
     {
@@ -3885,12 +4052,12 @@
       "id": "lpfv.fabric.roof.compact.slate.03.run.start.flush",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1175,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1175.0,
         "measured_aabb": {
           "position": [
             -1.82271206378937,
-            5.45320119726966e-07,
+            0.00000054532011972,
             -1.5
           ],
           "size": [
@@ -3899,10 +4066,10 @@
             0.750000059604645
           ]
         },
-        "mesh_bytes": 110601,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1175
+        "mesh_bytes": 110601.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1175.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -3914,7 +4081,7 @@
         "collision_profile": "building_trimesh",
         "fit_visual_bounds": [
           -1.8227121,
-          5.453201e-07,
+          0.0000005453201,
           -1.5,
           3.645424,
           2.1728582,
@@ -3949,7 +4116,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 31,
+      "tool_version": 31.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_start_flush.tres"
     },
     {
@@ -3957,8 +4124,8 @@
       "id": "lpfv.fabric.roof.compact.slate.03.run.start.tight",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1115,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1115.0,
         "measured_aabb": {
           "position": [
             -1.5,
@@ -3971,10 +4138,10 @@
             1.33195233345032
           ]
         },
-        "mesh_bytes": 102897,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1115
+        "mesh_bytes": 102897.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1115.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -4018,7 +4185,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_start_tight.tres"
     },
     {
@@ -4037,7 +4204,7 @@
           "size": [
             3.0,
             2.14515972137451,
-            0.750000059604645
+            0.75000011920929
           ]
         },
         "mesh_bytes": 102903,
@@ -4058,6 +4225,23 @@
           ]
         },
         "collision_profile": "building_trimesh",
+        "fit_axis_profile": {
+          "axis": "z",
+          "knots": [
+            [
+              -1.5,
+              -1.5
+            ],
+            [
+              -1.22730815410614,
+              -1.48
+            ],
+            [
+              -0.75,
+              -0.75
+            ]
+          ]
+        },
         "fit_visual_bounds": [
           -1.5,
           0.027698994,
@@ -4096,7 +4280,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "source_sha256": "0ea4c21446079a543e253afbb2d0e144684e0748eaf39f16b4d4ce06ffde6ad0",
-      "tool_version": 31,
+      "tool_version": 35,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_03_run_start_tight_flush.tres"
     },
     {
@@ -4104,8 +4288,8 @@
       "id": "lpfv.fabric.roof.compact.slate.06",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 2708,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2708.0,
         "measured_aabb": {
           "position": [
             -1.82826197147369,
@@ -4118,10 +4302,10 @@
             4.16390705108643
           ]
         },
-        "mesh_bytes": 272313,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 2708
+        "mesh_bytes": 272313.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2708.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -4153,7 +4337,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "source_sha256": "c4b85933a1b55578991afaa7cc6b7b98c9f0a233e959f680ee59725910ebbd84",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06.tres"
     },
     {
@@ -4161,12 +4345,12 @@
       "id": "lpfv.fabric.roof.compact.slate.06.rear",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 2010,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 2010.0,
         "measured_aabb": {
           "position": [
             -1.82826197147369,
-            1.37065839567185e-07,
+            0.00000013706583956,
             -1.50000035762787
           ],
           "size": [
@@ -4175,10 +4359,10 @@
             3.00000047683716
           ]
         },
-        "mesh_bytes": 199730,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 2010
+        "mesh_bytes": 199730.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 2010.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -4216,7 +4400,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "source_sha256": "c4b85933a1b55578991afaa7cc6b7b98c9f0a233e959f680ee59725910ebbd84",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06_rear.tres"
     },
     {
@@ -4224,12 +4408,12 @@
       "id": "lpfv.fabric.roof.compact.slate.06.rear.end",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 1230,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1230.0,
         "measured_aabb": {
           "position": [
             -1.82271206378937,
-            5.04190381889202e-07,
+            0.00000050419038188,
             -1.50000035762787
           ],
           "size": [
@@ -4238,10 +4422,10 @@
             1.50000035762787
           ]
         },
-        "mesh_bytes": 116718,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 1230
+        "mesh_bytes": 116718.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1230.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -4279,7 +4463,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "source_sha256": "c4b85933a1b55578991afaa7cc6b7b98c9f0a233e959f680ee59725910ebbd84",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06_rear_end.tres"
     },
     {
@@ -4293,12 +4477,12 @@
           "position": [
             -1.5,
             0.0276989936828613,
-            -1.50000035762787
+            -1.5
           ],
           "size": [
             3.0,
             2.14515972137451,
-            1.50000035762787
+            1.5
           ]
         },
         "mesh_bytes": 108576,
@@ -4319,6 +4503,23 @@
           ]
         },
         "collision_profile": "building_trimesh",
+        "fit_axis_profile": {
+          "axis": "z",
+          "knots": [
+            [
+              -1.5,
+              -1.5
+            ],
+            [
+              -0.985903,
+              -1.48
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ]
+        },
         "id": "lpfv.fabric.roof.compact.slate.06.rear.end.tight",
         "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
         "max_collision_pieces": 1.0,
@@ -4347,7 +4548,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "source_sha256": "c4b85933a1b55578991afaa7cc6b7b98c9f0a233e959f680ee59725910ebbd84",
-      "tool_version": 22,
+      "tool_version": 35,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06_rear_end_tight.tres"
     },
     {
@@ -4361,12 +4562,12 @@
           "position": [
             -1.5,
             0.0276989936828613,
-            -1.50000035762787
+            -1.5
           ],
           "size": [
             3.0,
             2.14515972137451,
-            3.00000047683716
+            3.0
           ]
         },
         "mesh_bytes": 187408,
@@ -4387,6 +4588,27 @@
           ]
         },
         "collision_profile": "building_trimesh",
+        "fit_axis_profile": {
+          "axis": "z",
+          "knots": [
+            [
+              -1.5,
+              -1.5
+            ],
+            [
+              -0.985903,
+              -1.48
+            ],
+            [
+              0.0,
+              0.0
+            ],
+            [
+              1.5,
+              1.5
+            ]
+          ]
+        },
         "id": "lpfv.fabric.roof.compact.slate.06.rear.tight",
         "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
         "max_collision_pieces": 1.0,
@@ -4416,7 +4638,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "source_sha256": "c4b85933a1b55578991afaa7cc6b7b98c9f0a233e959f680ee59725910ebbd84",
-      "tool_version": 22,
+      "tool_version": 35,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_compact_slate_06_rear_tight.tres"
     },
     {
@@ -4424,8 +4646,8 @@
       "id": "lpfv.fabric.roof.room.boarded.02",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 5688,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 5688.0,
         "measured_aabb": {
           "position": [
             -3.0717761516571,
@@ -4438,10 +4660,10 @@
             6.65013551712036
           ]
         },
-        "mesh_bytes": 271328,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 5688
+        "mesh_bytes": 271328.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 5688.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -4471,7 +4693,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_02.glb",
       "source_sha256": "1cd45fc23ebea5c77f1a7839c656ae6934c1df2efc783fab4ac23de5273aad7d",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_room_boarded_02.tres"
     },
     {
@@ -4479,8 +4701,8 @@
       "id": "lpfv.fabric.roof.room.boarded.05",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 5688,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 5688.0,
         "measured_aabb": {
           "position": [
             -3.0717761516571,
@@ -4493,10 +4715,10 @@
             6.65013551712036
           ]
         },
-        "mesh_bytes": 271328,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 5688
+        "mesh_bytes": 271328.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 5688.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -4526,7 +4748,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_05.glb",
       "source_sha256": "605e12ae62c5ba149cb2b9ca2c128ee262b4932cdef7bd86f18fc4c9316fb899",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_room_boarded_05.tres"
     },
     {
@@ -4534,12 +4756,12 @@
       "id": "lpfv.fabric.roof.room.orange.01",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 3982,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 3982.0,
         "measured_aabb": {
           "position": [
             -2.9345178604126,
-            2.38418579101562e-07,
+            0.0000002384185791,
             -3.32506656646729
           ],
           "size": [
@@ -4548,10 +4770,10 @@
             6.65013551712036
           ]
         },
-        "mesh_bytes": 433027,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3982
+        "mesh_bytes": 433027.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3982.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -4580,7 +4802,7 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_01.glb",
       "source_sha256": "46fed53e5cc75d54d144c7e69465d5590fa7f36eab55cb2f6886dc178d112745",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_room_orange_01.tres"
     },
     {
@@ -4588,12 +4810,12 @@
       "id": "lpfv.fabric.roof.room.orange.04",
       "license": "LowPolyFantasyVillage source-pack license",
       "metrics": {
-        "collision_piece_count": 1,
-        "collision_triangles": 3982,
+        "collision_piece_count": 1.0,
+        "collision_triangles": 3982.0,
         "measured_aabb": {
           "position": [
             -2.9345178604126,
-            2.38418579101562e-07,
+            0.0000002384185791,
             -3.32506656646729
           ],
           "size": [
@@ -4602,10 +4824,10 @@
             6.65013551712036
           ]
         },
-        "mesh_bytes": 433027,
-        "surface_count": 1,
-        "visual_piece_count": 1,
-        "visual_triangles": 3982
+        "mesh_bytes": 433027.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 3982.0
       },
       "pack": "low_poly_fantasy_village_fabric",
       "parameters": {
@@ -4634,11 +4856,11 @@
       },
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_04.glb",
       "source_sha256": "821bec5da4f50eb09a786b3aab5dfc09ba4346ee55ad26849e6660bb237597ee",
-      "tool_version": 22,
+      "tool_version": 22.0,
       "visual": "res://terrain/environment/visuals/low_poly_fantasy_village_fabric/lpfv_fabric_roof_room_orange_04.tres"
     }
   ],
   "license": "LowPolyFantasyVillage source-pack license",
   "pack": "low_poly_fantasy_village_fabric",
-  "tool_version": 31
+  "tool_version": 35
 }

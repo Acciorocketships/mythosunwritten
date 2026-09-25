@@ -49,15 +49,42 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 	for cell_value: Variant in fabric_plan.transformed_cells(&"solid"):
 		var cell := cell_value as Vector3i
 		structural_solids[_cell_key(cell)] = true
-	# Built rooms and retained masonry are both authored fall barriers.
-	var guard_solids := structural_solids.duplicate()
+	# Roof cells reserve the complete pitch envelope for construction. Its empty
+	# corners are not a fall barrier beside a higher court. Keep those cells in
+	# structural clearance, but only rooms and retained masonry close guards.
+	var guard_solids: Dictionary = {}
+	var guard_owners := fabric_plan.transformed_cells(&"solid", &"", &"roof")
+	var prefab_bounds: Dictionary = {}
+	for unit_value: FabricUnit in fabric_plan.units:
+		var recipe_value := fabric_plan.recipe(unit_value.recipe_id)
+		if not recipe_value.has_tag(&"prefab_anchor"): continue
+		var frame := FabricRecipe.lattice_transform(unit_value.lattice_origin,
+			unit_value.yaw_quarters)
+		var boxes: Array[AABB] = []
+		for box: AABB in recipe_value.placement_bounds:
+			boxes.append(frame * box)
+		prefab_bounds[unit_value.stable_id] = boxes
+	for cell: Vector3i in guard_owners:
+		guard_solids[_cell_key(cell)] = true
 	var guard_boxes: Array[AABB] = []
 	for cell: Vector3i in fabric_plan.retained_terrace_cells:
 		guard_solids[_cell_key(cell)] = true
 	for key: String in guard_solids:
 		var xyz := key.split(":")
-		var base := Vector3(float(xyz[0]), float(xyz[1]), float(xyz[2])) * FabricRecipe.CELL_SIZE
-		guard_boxes.append(AABB(base - Vector3(0.75, 0, 0.75), Vector3.ONE * FabricRecipe.CELL_SIZE))
+		var cell := Vector3i(int(xyz[0]), int(xyz[1]), int(xyz[2]))
+		var base := Vector3(cell) * FabricRecipe.CELL_SIZE
+		var box := AABB(base - Vector3(0.75, 0, 0.75), Vector3.ONE * FabricRecipe.CELL_SIZE)
+		var owner := StringName(guard_owners.get(cell, &""))
+		# A prefab's rounded-up shell reserves construction space beyond its
+		# actual walls and eaves. That empty margin cannot replace a stair guard.
+		# Retained earth still closes its whole cell; prefab cuts are bounded by
+		# the measured native placements without changing construction occupancy.
+		if prefab_bounds.has(owner) and not fabric_plan.retained_terrace_cells.has(cell):
+			for native_box: AABB in prefab_bounds[owner]:
+				var overlap := box.intersection(native_box)
+				if overlap.has_volume(): guard_boxes.append(overlap)
+		else:
+			guard_boxes.append(box)
 	var inhabited: Dictionary = {}
 	for cell: Vector3i in fabric_plan.transformed_cells(&"inhabited"):
 		inhabited[_cell_key(cell)] = true
@@ -164,7 +191,10 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 	var footprints := SettlementFabricAssembler.maze_module_footprints(fabric_plan)
 	for index in (footprints.boxes as Array).size():
 		var asset := String(footprints.assets[index])
-		if asset.begins_with("sfv.fabric.wall.") and not ".door." in asset:
+		# Timber floors hang below their room's wall datum. An ascending rail
+		# meets that actual underside before it reaches the wall above it.
+		if (asset.begins_with("sfv.fabric.wall.") and not ".door." in asset) \
+				or asset == String(SettlementFabricProgram.FLOOR):
 			module_walls.append(footprints.boxes[index])
 	if not result.finish_transition_guards(guard_boxes,module_walls): return null
 	if not result.seal(required, other_classified, guard_solids, entrances,

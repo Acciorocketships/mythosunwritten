@@ -461,9 +461,9 @@ func test_phase_b_facades_use_multiple_measured_detail_families() -> void:
 	assert_eq(SettlementFabricProgram._upper_facade_detail_kind(
 		&"blue", &"long"), &"clothes")
 	assert_eq(SettlementFabricProgram._upper_facade_detail_kind(
-		&"amber", &"tower"), &"ivy")
+		&"amber", &"tower"), &"")
 	assert_eq(SettlementFabricProgram._upper_facade_detail_kind(
-		&"orange", &"slim"), &"sign")
+		&"orange", &"slim"), &"")
 	var detail_assets: Dictionary = {}
 	for recipe_id: StringName in [&"room.upper.orange.b",
 			&"room.long.upper.blue.b", &"room.tower.upper.amber.b",
@@ -472,8 +472,9 @@ func test_phase_b_facades_use_multiple_measured_detail_families() -> void:
 		assert_not_null(recipe_value, "missing decorated recipe %s" % recipe_id)
 		if recipe_value == null:
 			continue
-		assert_true(recipe_value.has_tag(&"facade_detail"),
-			"%s lost its measured facade detail role" % recipe_id)
+		assert_eq(recipe_value.has_tag(&"facade_detail"),
+			recipe_id in [&"room.upper.orange.b", &"room.long.upper.blue.b"],
+			"Only retained laundry/window-box phases carry a detail role")
 		for placement: Dictionary in recipe_value.placements:
 			var asset_id := StringName(placement.asset_id)
 			if asset_id in [SettlementFabricProgram.FACADE_IVY,
@@ -481,8 +482,8 @@ func test_phase_b_facades_use_multiple_measured_detail_families() -> void:
 					SettlementFabricProgram.FACADE_SIGN,
 					SettlementFabricProgram.ROOF_PLANTER]:
 				detail_assets[asset_id] = true
-	assert_eq(detail_assets.size(), 4,
-		"the reviewed phase-B sample should contain ivy, laundry, sign, and planter")
+	assert_eq(detail_assets.size(), 2,
+		"the reviewed phase-B sample retains laundry and planter; retired detail phases stay quiet")
 	var planted := _program.recipe(&"room.upper.orange.b")
 	assert_true(planted.has_tag(&"planted_facade"))
 	var planted_asset_ids := planted.asset_ids()

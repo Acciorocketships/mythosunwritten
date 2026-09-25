@@ -313,28 +313,8 @@ func test_compact_blue_roofs_use_real_slate_palette_variants() -> void:
 
 
 func test_compact_and_slim_roofs_have_measured_dormer_variants() -> void:
-	## TASK F3 MEMBER 4. This test was RED, and it was the test that was wrong.
-	## It asserted the GABLED family's registration (`DORMER_EMBED_Y` = 0.10,
-	## `position.y < 0.2`, tag `authored_gabled_dormer`) on all three recipes,
-	## and `roof.slim.orange.dormer.right` is a SHED-family dormer on purpose:
-	## the blue compact roofs take the gabled attic-window shells 001/002 and
-	## the orange ones take the shed shells 003/004, which have their own
-	## reviewed 50% scale and 0.22 m registration
-	## (`DORMER_SHED_EMBED_Y`). No recipe changed; the test now reads the
-	## family each recipe DECLARES and holds it to that family's registration.
-	## The split itself is not re-asserted here; it is owned by
-	## `test_settlement_fabric::test_dormer_styles_keep_steep_gables_and
-	## _replace_the_weak_shell_with_sheds`, which has been GREEN the whole time
-	## this one was red -- two suites disagreed about the same recipe and only
-	## one of them was measuring it.
-	##
-	## The `< 0.2` bound was a proxy for one authored rule -- the dormer stays
-	## buried under the host pitch -- expressed as a constant that only the
-	## gabled family could meet. It is replaced by the rule itself, measured
-	## against the host roof's own silhouette in the same recipe. MEASURED
-	## 2026-08-25: gabled dormers register at 0.100 and crown at 1.838, shed
-	## dormers at 0.220 and 1.776, both inside the compact host's 2.173 m
-	## ridge.
+	# Recipe family and silhouette controls. Actual host intersection and glazing
+	# clearance are checked against native triangles in test_september13_dormer_fit.
 	assert_not_null(_program)
 	for recipe_id: StringName in [
 			&"roof.tower.blue.dormer.left",
@@ -398,8 +378,8 @@ func test_compact_and_slim_roofs_have_measured_dormer_variants() -> void:
 		for stock_asset: StringName in [
 			SettlementFabricProgram.ROOF_WINDOW_01,
 			SettlementFabricProgram.ROOF_WINDOW_02,
-			SettlementFabricProgram.ROOF_WINDOW_03,
-			SettlementFabricProgram.ROOF_WINDOW_04,
+			SettlementFabricProgram.DORMER_SHED_BLUE_DEEP,
+			SettlementFabricProgram.DORMER_SHED_ORANGE_DEEP,
 		]:
 			authored_shell_count += int(recipe_value.asset_ids().has(stock_asset))
 		assert_eq(authored_shell_count, 1,
@@ -425,7 +405,7 @@ func test_compact_and_slim_roofs_have_measured_dormer_variants() -> void:
 				func(value: Dictionary) -> bool:
 					return String(value.id).contains("dormer"))[0] as Dictionary
 			assert_almost_eq((dormer.transform as Transform3D).origin.y,
-				SettlementFabricProgram.DORMER_SHED_EMBED_Y, 0.001,
+				(SettlementFabricProgram.DORMER_SHED_EMBED_Y if String(recipe_id).contains("tower") else SettlementFabricProgram.DORMER_WIDE_SHED_EMBED_Y), 0.001,
 				"%s must expose its low window course above the host tiles" % recipe_id)
 
 	var opposed := _program.recipe(&"roof.long.blue.dormer.pair.left")
@@ -600,7 +580,7 @@ func test_lived_in_recipes_use_the_new_measured_prop_families() -> void:
 		assert_true(market.has_tag(&"market_work_corner"))
 
 
-func test_fabric_props_are_small_collisionless_catalog_assets() -> void:
+func test_fabric_props_are_small_and_keep_their_declared_collision() -> void:
 	var expected := {
 		SettlementFabricProgram.TERRACE_LANTERN_TABLE: Vector3(0.2, 0.6, 0.4),
 		SettlementFabricProgram.TERRACE_LANTERN_POST: Vector3(1.6, 2.5, 0.6),
@@ -624,8 +604,13 @@ func test_fabric_props_are_small_collisionless_catalog_assets() -> void:
 		if descriptor == null:
 			continue
 		assert_true(descriptor.tags.has(&"fabric_dressing"))
-		assert_eq(descriptor.collision_piece_count, 0,
-			"private-roof dressing unexpectedly added physics")
+		# The accepted September 11 bench repair gives both seats native mesh
+		# collision. Incidental decoration retains its collisionless contract.
+		var expected_collision := 1 if asset_id in [
+			SettlementFabricProgram.TERRACE_BENCH,
+			SettlementFabricProgram.TERRACE_BENCH_ALT] else 0
+		assert_eq(descriptor.collision_piece_count, expected_collision,
+			"fabric prop collision must match its declared role")
 		var limit := expected[asset_id] as Vector3
 		assert_lte(descriptor.measured_aabb.size.x, limit.x)
 		assert_lte(descriptor.measured_aabb.size.y, limit.y)

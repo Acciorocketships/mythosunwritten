@@ -113,10 +113,12 @@ func test_diagonal_stone_contact_has_one_closed_joint_per_band() -> void:
 		Vector3i(0,1,0): true, Vector3i(1,1,1): true}
 	var payload := SettlementFabricAssembler.masonry_corner_joints(retained, {})
 	assert_eq(payload.instance_count, 2)
-	var positions: Array = payload.batches[SettlementFabricAssembler.TIMBER_SUPPORT].transforms
+	var positions: Array = payload.batches[SettlementFabricAssembler.MAZE_STONE_MODULE].transforms
+	var stock := EnvironmentCatalog.load_default().descriptor(SettlementFabricAssembler.MAZE_STONE_MODULE).measured_aabb
 	for pose: Transform3D in positions:
-		assert_eq(pose.origin.x, 0.75)
-		assert_eq(pose.origin.z, 0.75)
+		var bounds: AABB = pose * stock
+		assert_almost_eq(bounds.get_center().x, 0.75, 0.0001)
+		assert_almost_eq(bounds.get_center().z, 0.75, 0.0001)
 	retained[Vector3i(1,0,0)] = true
 	assert_eq(SettlementFabricAssembler.masonry_corner_joints(retained, {}).instance_count, 2,
 		"a recessed inside corner also requires one common joint")

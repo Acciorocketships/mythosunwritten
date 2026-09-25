@@ -5,7 +5,7 @@ func test_photographed_window_return_closes_its_native_cut_face() -> void:
 	var asset := &"sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.back1070858.square"
 	var visual: EnvironmentVisual=load(catalog.descriptor(asset).visual_path)
 	var faces := PackedVector3Array()
-	for piece: EnvironmentVisualPiece in visual.pieces:faces.append_array(piece.local_transform*piece.mesh.get_faces())
+	for piece: EnvironmentVisualPiece in visual.pieces:faces.append_array(piece.local_transform*EnvironmentBakeGeometry.triangle_faces(piece.mesh))
 	var cut := -1.5+1.07085800170898
 	for y in [0.4,1.0,1.6,2.2,2.8]:
 		for z in [-0.2,0.0,0.2]:
@@ -23,7 +23,7 @@ func test_both_window_hands_and_floor_owned_variants_have_closed_returns() -> vo
 		for suffix in ["", ".course_open"]:
 			var visual: EnvironmentVisual=load(catalog.descriptor(StringName(String(entry.id)+suffix)).visual_path)
 			var faces := PackedVector3Array()
-			for piece: EnvironmentVisualPiece in visual.pieces:faces.append_array(piece.local_transform*piece.mesh.get_faces())
+			for piece: EnvironmentVisualPiece in visual.pieces:faces.append_array(piece.local_transform*EnvironmentBakeGeometry.triangle_faces(piece.mesh))
 			for end in 2:
 				var depth := float(entry.facade_return_depths[end])
 				if depth<=0.0:continue
@@ -47,13 +47,14 @@ func test_closed_return_vertices_stay_inside_the_declared_cut_planes() -> void:
 		if not entry.has("facade_miter_cap_source"):continue
 		var depths:Array=entry.facade_return_depths
 		var source_id:=StringName(String(entry.id).split(".doorreturn.")[0])
-		# Native ArrayMesh decoding can extend tens of micrometres past its
-		# stored AABB. Compare real source vertices, not that metadata box.
+		# Decode indexed surface arrays directly: Mesh.get_faces() quantizes
+		# its triangle cache to 0.1 mm, which can cross a precise cut plane.
+		# Compare actual referenced vertices to both stock and cut bounds.
 		var source_visual:EnvironmentVisual=load(catalog.descriptor(source_id).visual_path)
 		var source_min:=Vector3.INF
 		var source_max:=-Vector3.INF
 		for piece:EnvironmentVisualPiece in source_visual.pieces:
-			for vertex:Vector3 in piece.local_transform*piece.mesh.get_faces():
+			for vertex:Vector3 in piece.local_transform*EnvironmentBakeGeometry.triangle_faces(piece.mesh):
 				source_min=source_min.min(vertex)
 				source_max=source_max.max(vertex)
 		var original:=AABB(source_min,source_max-source_min).grow(0.000001)
@@ -61,7 +62,7 @@ func test_closed_return_vertices_stay_inside_the_declared_cut_planes() -> void:
 			var visual:EnvironmentVisual=load(catalog.descriptor(StringName(String(entry.id)+suffix)).visual_path)
 			var contained:=true
 			for piece:EnvironmentVisualPiece in visual.pieces:
-				for vertex:Vector3 in piece.local_transform*piece.mesh.get_faces():
+				for vertex:Vector3 in piece.local_transform*EnvironmentBakeGeometry.triangle_faces(piece.mesh):
 					contained=contained and original.has_point(vertex)
 					if float(depths[0])>0:contained=contained and vertex.x>=-1.5+float(depths[0])-0.000001
 					if float(depths[1])>0:contained=contained and vertex.x<=1.5-float(depths[1])+0.000001

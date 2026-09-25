@@ -503,10 +503,12 @@ static func _building_top(plan: WarrenMazeSourcePlan, streets: Dictionary,
 static func _rolled_seed_top(plan: WarrenMazeSourcePlan,
 		building: Dictionary, index: int) -> int:
 	var floor_band := int(building["floor"])
+	var budget: Vector2i = STOREY_BUDGET.get(plan.scale_profile.scale_id, Vector2i(1, 2))
+	if plan.massif.form_id == &"ridge":
+		budget = Vector2i(1, 2)
 	return floor_band + WarrenBuildingParcel.ROOF_RESERVATION_BANDS \
 		+ WarrenBuildingParcel.STOREY_BANDS * roll(plan, STOREY_SALT,
-			building["door"] as Vector3i, index, STOREY_BUDGET.get(
-				plan.scale_profile.scale_id, Vector2i(1, 2)))
+			building["door"] as Vector3i, index, budget)
 
 
 static func _skyline_peak_indices(plan: WarrenMazeSourcePlan,

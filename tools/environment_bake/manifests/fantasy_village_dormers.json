@@ -1,0 +1,94 @@
+{
+  "pack": "fantasy_village_dormers",
+  "license": "Fantasy Village source-pack license",
+  "default_scale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "assets": [
+    {
+      "id": "sfv.fabric.roof.window.003.deep",
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Attachable Attic Window/SFV_Roof_Window_Attachable_003.fbx",
+      "merge_pieces": true,
+      "collision_profile": "building_trimesh",
+      "tags": [
+        "building",
+        "dormer",
+        "fabric_roof_feature",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 5000,
+      "max_collision_triangles": 5000,
+      "max_surfaces": 3,
+      "max_collision_pieces": 1,
+      "fit_axis_profile": {
+        "axis": "z",
+        "knots": [
+          [
+            -1.31,
+            -2.31
+          ],
+          [
+            -0.8,
+            -1.8
+          ],
+          [
+            0.5,
+            0.5
+          ],
+          [
+            1.31,
+            1.31
+          ]
+        ]
+      }
+    },
+    {
+      "id": "sfv.fabric.roof.window.004.deep",
+      "source": "res://assets/FantasyVillageFBX/FBX/Building Attachables/Attachable Attic Window/SFV_Roof_Window_Attachable_004.fbx",
+      "merge_pieces": true,
+      "collision_profile": "building_trimesh",
+      "tags": [
+        "building",
+        "dormer",
+        "fabric_roof_feature",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 5000,
+      "max_collision_triangles": 5000,
+      "max_surfaces": 3,
+      "max_collision_pieces": 1,
+      "fallback_albedo_textures": {
+        "SFV_ROOF_ORANGE": "res://assets/FantasyVillageFBX/SFV_TEXTURE_ORANGE.png"
+      },
+      "fit_axis_profile": {
+        "axis": "z",
+        "knots": [
+          [
+            -1.31,
+            -2.31
+          ],
+          [
+            -0.8,
+            -1.8
+          ],
+          [
+            0.5,
+            0.5
+          ],
+          [
+            1.31,
+            1.31
+          ]
+        ]
+      }
+    }
+  ]
+}

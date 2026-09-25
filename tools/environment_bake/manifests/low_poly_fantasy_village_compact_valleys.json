@@ -1,0 +1,7435 @@
+{
+  "pack": "low_poly_fantasy_village_compact_valleys",
+  "license": "LowPolyFantasyVillage source-pack license",
+  "default_scale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "assets": [
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_negative.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_negative.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_negative.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_negative.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_positive.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_positive.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_positive.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_positive.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_positive.end_negative.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_positive.end_negative.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_positive.end_negative.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_positive.end_negative.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_positive.end_positive.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_positive.end_positive.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_positive.end_positive.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_positive.end_positive.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_negative.end_negative.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_negative.end_negative.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_negative.end_negative.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_negative.end_negative.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_negative.end_positive.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_negative.end_positive.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_negative.end_positive.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_negative.end_positive.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_positive.end_negative.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_positive.end_negative.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_positive.end_negative.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_positive.end_negative.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_positive.end_positive.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_positive.end_positive.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_positive.end_positive.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.slate.03.valley.ordinary.eave_positive.end_positive.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "material_override": "res://terrain/environment/materials/warren/compact_roof_slate.tres",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": false,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_negative.end_negative.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_negative.end_negative.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_negative.end_negative.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_negative.end_negative.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_negative.end_positive.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_negative.end_positive.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_negative.end_positive.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_negative.end_positive.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_positive.end_negative.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_positive.end_negative.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_positive.end_negative.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_positive.end_negative.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_positive.end_positive.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_positive.end_positive.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_positive.end_positive.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.tight.eave_positive.end_positive.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ],
+              "x": [
+                -1.5,
+                1.5
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_negative.end_negative.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_negative.end_negative.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_negative.end_negative.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_negative.end_negative.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_negative.end_positive.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_negative.end_positive.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_negative.end_positive.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_negative.end_positive.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              -3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": -1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_positive.end_negative.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_positive.end_negative.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_positive.end_negative.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_positive.end_negative.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -2.1,
+                -0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_positive.end_positive.end",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_positive.end_positive.middle",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_positive.end_positive.adjacent",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              1.5
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "owns_coplanar": true
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    },
+    {
+      "id": "lpfv.fabric.roof.compact.orange.03.valley.ordinary.eave_positive.end_positive.branch",
+      "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
+      "pivot": [
+        0.0,
+        2.672677,
+        0.0
+      ],
+      "merge_pieces": true,
+      "roof_envelope": {
+        "subject": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "positive_ridge_half": true
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              1.5,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              3.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 1
+          }
+        ],
+        "cutter": [
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                -0.75,
+                0.75
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              -1.5
+            ],
+            "yaw_quarters": 0,
+            "mirror_axis": "z"
+          },
+          {
+            "clip_ranges": {
+              "z": [
+                0.75,
+                2.1
+              ]
+            },
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "yaw_quarters": 0
+          }
+        ],
+        "owns_coplanar": false
+      },
+      "collision_profile": "building_trimesh",
+      "use_instance_color": false,
+      "tags": [
+        "building",
+        "compact_roof",
+        "fabric_roof",
+        "native_valley",
+        "village"
+      ],
+      "tint_group": "identity",
+      "supports_instance_color": true,
+      "max_mesh_bytes": 4194304,
+      "max_visual_triangles": 12000,
+      "max_collision_triangles": 12000,
+      "max_surfaces": 1,
+      "max_collision_pieces": 1
+    }
+  ]
+}

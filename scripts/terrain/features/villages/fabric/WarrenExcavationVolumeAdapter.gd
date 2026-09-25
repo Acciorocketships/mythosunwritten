@@ -78,7 +78,8 @@ static func envelope_from_massif(massif: WarrenMassif) -> WarrenVolumeEnvelope:
 static func to_volume_plan(massif: WarrenMassif,
 		excavation: WarrenExcavation,
 		typed_market_cells: Array[Vector3i] = [],
-		validate_result: bool = true) -> WarrenVolumePlan:
+		validate_result: bool = true,
+		additional_transitions: Array[WarrenVolumeTransition] = []) -> WarrenVolumePlan:
 	last_failure = ""
 	if massif == null or not massif.is_sealed():
 		last_failure = "massif missing or unsealed"
@@ -157,6 +158,16 @@ static func to_volume_plan(massif: WarrenMassif,
 			if not plan.mark_terminal_lookout_cell(cell):
 				last_failure = "terminal terrace cell is not a walk node: %s" % cell
 				return null
+	for flight: WarrenVolumeTransition in additional_transitions:
+		if not plan.has_walk(flight.to_cell):
+			last_failure = "planned court flight has no shared landing"
+			return null
+		if not plan.has_walk(flight.from_cell):
+			plan.add_walk_cell(flight.from_cell,false)
+		plan.add_frontage(flight.from_cell)
+		if not plan.add_transition(flight):
+			last_failure = "invalid planned court flight"
+			return null
 	if not _close_landing_turns(plan):
 		return null
 	plan.mass_context = {&"massif": massif, &"excavation": excavation}

@@ -28,6 +28,7 @@ var side_served_house_count: int = 0
 ## ceiling after a volumetric solve has already composed several real exits.
 var route_exit_count: int = 0
 var supported_house_count: int = 0
+var shared_street_house_count: int = 0
 var foundation_piece_count: int = 0
 var audit: Array[Dictionary] = []
 
@@ -40,8 +41,13 @@ func validate(program: VillageOutskirtsProgram,
 			and placements.is_empty()
 	var minimum_branches := mini(placements.size(), route_exit_count) \
 		if route_exit_count > 0 else mini(placements.size(), 1)
+	if shared_street_house_count > 0:
+		minimum_branches = mini(placements.size() - shared_street_house_count,
+			route_exit_count) + 1
 	if reason != &"accepted" or program == null \
 			or route_exit_count < 0 \
+			or shared_street_house_count < 0 \
+			or shared_street_house_count > placements.size() \
 			or placements.size() > program.target_houses(tier, route_exit_count) \
 			or supported_house_count != placements.size() \
 			or side_served_house_count != placements.size() \

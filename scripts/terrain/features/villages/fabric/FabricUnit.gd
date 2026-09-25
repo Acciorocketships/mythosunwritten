@@ -24,6 +24,9 @@ var square_corner_end_masks: Dictionary = {}
 var floor_owned_cap_ids: Array[StringName] = []
 var public_node_id: StringName
 var bounds := AABB()
+## Rooms of one inhabited volume share a visibility decision. Their omitted
+## private interfaces cannot become visible merely because a storey recedes.
+var visibility_enclosure_id: StringName = &""
 
 
 func _init(p_stable_id: StringName, p_recipe_id: StringName,

@@ -8,6 +8,7 @@ enum GenerationKind {
 	LEGACY_TERRAIN_MASSING,
 	SECTIONAL_WARREN,
 	VOLUMETRIC_WARREN,
+	GROUND_HAMLET,
 }
 const MAX_FABRIC_TERRAIN_RELIEF := 4.5
 
@@ -23,6 +24,7 @@ var fabric_audit: Dictionary = {}
 ## common fabric above remains the sole render/collision transaction. The
 ## production lineage for the authoritative fine-grid town.
 var volumetric_spatial: WarrenSpatialPlan
+var ground_settlement: VillageOutskirtsPlan
 ## Canonical local-fabric to world transform chosen by the terrain adapter.
 ## Review, navigation, and future gameplay consumers use this same authored
 ## frame instead of trying to recover it from render placements or bounds.
@@ -57,6 +59,9 @@ var surface_meshes: Array[Dictionary] = []
 ## The outskirts solver reads these to keep its lanes in front of the stalls
 ## and to mirror a market street across from them.
 var frontage_sites: Array[Dictionary] = []
+## External country-road connections consume this town's already owned gates.
+## They are world placement facts, separate from the sealed native fabric audit.
+var world_road_connections: Array[Dictionary] = []
 var volumes: Array[VillageOccupancyVolume] = []
 var surfaces: Array[FeatureGroundShape] = []
 var clearances: Array[FeatureGroundShape] = []
@@ -81,6 +86,14 @@ func validate(program: VillageProgram, tier: StringName) -> bool:
 			and collision_boxes.is_empty()
 	if generation_kind == GenerationKind.SECTIONAL_WARREN:
 		return _validate_sectional_warren(program)
+	if generation_kind == GenerationKind.GROUND_HAMLET:
+		return reason == &"accepted" and tier == &"hamlet" \
+			and ground_settlement != null \
+			and ground_settlement.placements.size() >= 3 \
+			and ground_settlement.validate(program.outskirts_program, tier) \
+			and terrain_grade != null and volumetric_spatial == null \
+			and not entries.is_empty() \
+			and VillageOccupancy.new().first_conflict(volumes).is_empty()
 	if generation_kind == GenerationKind.VOLUMETRIC_WARREN:
 		return _validate_volumetric_warren(program)
 	if reason != &"accepted" or massing == null or circulation == null \
@@ -109,11 +122,9 @@ func validate(program: VillageProgram, tier: StringName) -> bool:
 
 
 func requires_outskirts() -> bool:
-	# Sectional diagnostic fixtures retain their self-contained historical
-	# contract. Production volumetric warrens and the legacy terrain-led town
-	# both receive the same optional, separately sealed ground-house edge.
-	return generation_kind in [GenerationKind.LEGACY_TERRAIN_MASSING,
-		GenerationKind.VOLUMETRIC_WARREN]
+	# Production source towns and ground hamlets own every building already.
+	# Only the historical terrain-massing diagnostic retains its separate edge.
+	return generation_kind == GenerationKind.LEGACY_TERRAIN_MASSING
 
 
 func _validate_sectional_warren(program: VillageProgram) -> bool:
@@ -254,7 +265,7 @@ func _validate_compiled_fabric(program: VillageProgram) -> bool:
 	if terrain_entrance_lift_m < 0.0 \
 			or terrain_entrance_lift_m > TraversalEnvelope.MAX_PLANNED_STEP \
 			or terrain_relief_m < 0.0 \
-			or terrain_relief_m > MAX_FABRIC_TERRAIN_RELIEF * VillageWorldScale.PRODUCTION_UNIFORM_SCALE:
+			or terrain_relief_m > MAX_FABRIC_TERRAIN_RELIEF * VillageWorldScale.VERTICAL_SCALE:
 		return false
 	var inspection := SettlementFabricSolver.audit_plan(fabric_plan, fabric_audit)
 	if not _fabric_audit_matches_plan() \

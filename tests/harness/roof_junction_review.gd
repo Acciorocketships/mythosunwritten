@@ -25,6 +25,9 @@ func _run() -> void:
 	var topology := FabricRoofTopologyPlan.build(proposals)
 	assert(topology != null and WarrenAssetCompiler._assign_neighborhood_styles(
 		proposals, topology, 701))
+	if OS.get_cmdline_user_args().has("--orange"):
+		for proposal: Dictionary in proposals:
+			proposal["roof_theme"] = &"orange"
 	var payload := EnvironmentInstancePayload.new()
 	for proposal: Dictionary in proposals:
 		for component: Dictionary in StaggeredFabricCompiler.proposal_components(
@@ -61,6 +64,23 @@ func _run() -> void:
 	RenderingServer.force_draw()
 	await process_frame
 	var output := _argument("--output", "/tmp/warren-roof-junction-review.png")
+	if OS.get_cmdline_user_args().has("--views"):
+		DirAccess.make_dir_recursive_absolute(output)
+		for view: Dictionary in [
+			{"id":"NE","eye":Vector3(20,17,24)},
+			{"id":"SW","eye":Vector3(-15,17,-22)},
+			{"id":"NW","eye":Vector3(-15,17,22)},
+			{"id":"SE","eye":Vector3(20,17,-22)},
+			{"id":"plan","eye":Vector3(3.5,30,0.1)},
+			{"id":"close","eye":Vector3(10,9,12)},
+		]:
+			camera.look_at_from_position(view.eye,Vector3(3.5,1.5,-0.5))
+			for frame in 5: await process_frame
+			RenderingServer.force_draw()
+			await process_frame
+			assert(root.get_texture().get_image().save_png(output.path_join("%s.png" % view.id)) == OK)
+		quit()
+		return
 	var captured := root.get_texture().get_image()
 	assert(captured != null and captured.save_png(output) == OK)
 	print("[roof_junction_review] captured %s" % output)

@@ -1,14 +1,20 @@
-[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
 
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_ekbvn"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_i6mpu"]
-[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bench_02_piece_00.res" id="3_0goer"]
-[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_btibe"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_i6mpu"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bench_02_piece_00.res" id="2_0goer"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_btibe"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/low_poly_fantasy_village_fabric/lpfv_fabric_prop_bench_02_piece_00.res" id="4_mue0k"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_ogpin"]
 
-[sub_resource type="Resource" id="Resource_mue0k"]
-script = ExtResource("2_i6mpu")
-mesh = ExtResource("3_0goer")
+[sub_resource type="Resource" id="Resource_irpo2"]
+script = ExtResource("1_i6mpu")
+shape = ExtResource("2_0goer")
+
+[sub_resource type="Resource" id="Resource_k28cy"]
+script = ExtResource("3_btibe")
+mesh = ExtResource("4_mue0k")
 
 [resource]
-script = ExtResource("4_btibe")
-pieces = Array[ExtResource("2_i6mpu")]([SubResource("Resource_mue0k")])
+script = ExtResource("5_ogpin")
+pieces = Array[ExtResource("3_btibe")]([SubResource("Resource_k28cy")])
+collisions = Array[ExtResource("1_i6mpu")]([SubResource("Resource_irpo2")])

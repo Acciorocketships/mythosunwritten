@@ -59,29 +59,19 @@ func _build(frame: VillageFrame) -> VillageRecord:
 	var terrain := VillageTerrainView.from_fields(_fields) \
 		if _fields != null else VillageTerrainView.from_region(
 			frame.region, frame.water)
-	var urban_fabric := VillageWarrenFabricSolver.solve(terrain,
+	var urban_fabric := VillageHamletConstruction.solve(terrain,
 		_warren_seed(frame), frame.settlement_id, frame.centre, street_axis,
-		_program, _world_seed)
+		theme, _program, frame.path_ground, _world_seed) if tier == &"hamlet" \
+		else VillageWarrenFabricSolver.solve(terrain,
+		_warren_seed(frame), frame.settlement_id, frame.centre, street_axis,
+		_program, _world_seed, frame.path_ground)
 	_stats["urban_usec"] = Time.get_ticks_usec() - stage_start
 	stage_start = Time.get_ticks_usec()
 	if urban_fabric.accepted:
 		_materialize_urban_fabric(urban_fabric, payload, surfaces,
 			clearances, occupancy)
-	# The town and its neighbours must survey the same finished ground. Sampling
-	# untouched nature here introduced competing lower pads beside town doors.
-	var outskirts_terrain := terrain.with_terrain_grades([urban_fabric.terrain_grade]) \
-		if urban_fabric.terrain_grade != null else terrain
 	_stats["materialize_usec"] = Time.get_ticks_usec() - stage_start
-	stage_start = Time.get_ticks_usec()
-	var outskirts := VillageOutskirtsConstruction.generate(outskirts_terrain,
-		frame.settlement_id, frame.centre, street_axis, tier, theme, _program,
-		urban_fabric, frame.path_ground) \
-			if urban_fabric.accepted \
-			and urban_fabric.requires_outskirts() else null
-	_stats["outskirts_usec"] = Time.get_ticks_usec() - stage_start
-	if outskirts != null and outskirts.accepted:
-		_materialize_outskirts(outskirts, payload, surfaces, clearances,
-			occupancy)
+	_stats["outskirts_usec"] = 0
 	var prop_results: Dictionary = {}
 	for slot: VillagePropSlotSpec in _program.prop_slots_for_tier(tier):
 		if not urban_fabric.accepted:
@@ -93,14 +83,14 @@ func _build(frame: VillageFrame) -> VillageRecord:
 	var bounds := _record_bounds(frame.centre, payload, surfaces, clearances,
 		occupancy.volumes(), _program)
 	if urban_fabric.terrain_grade != null:
-		bounds = bounds.merge(urban_fabric.terrain_grade.bounds)
+		bounds = bounds.merge(urban_fabric.terrain_grade.bounds.grow(TerrainGradePatch.NATIVE_CONTROL_MARGIN))
 	var record := VillageRecord.new(frame.settlement_id, frame.centre, bounds,
 		payload, surfaces, clearances, occupancy.volumes())
 	record.tier = tier
 	record.theme = theme
 	record.street_axis = street_axis
 	record.urban_fabric = urban_fabric
-	record.outskirts = outskirts
+	record.outskirts = null
 	record.prop_results = prop_results
 	return record
 
@@ -117,7 +107,7 @@ static func _materialize_urban_fabric(fabric: VillageUrbanFabricPlan,
 		# channel that names none keeps the white it always had.
 		payload.add(entry.asset_id, entry.transform,
 			entry.get("color", Color.WHITE) as Color, entry.stable_id,
-			bool(entry.get("collision_enabled", true)))
+			bool(entry.get("collision_enabled", true)), entry.get("visibility_owner", AABB()) as AABB)
 	for box: Dictionary in fabric.collision_boxes:
 		payload.add_collision_box(box.transform as Transform3D,
 			box.size as Vector3, StringName(box.get("stable_id", &"")))
@@ -127,19 +117,6 @@ static func _materialize_urban_fabric(fabric: VillageUrbanFabricPlan,
 	clearances.append_array(fabric.clearances)
 	occupancy.index_constructed(fabric.volumes)
 
-
-static func _materialize_outskirts(outskirts: VillageOutskirtsPlan,
-		payload: EnvironmentInstancePayload,
-		surfaces: Array[FeatureGroundShape],
-		clearances: Array[FeatureGroundShape],
-		occupancy: VillageOccupancy) -> void:
-	assert(outskirts != null and outskirts.accepted)
-	for entry: Dictionary in outskirts.entries:
-		payload.add(entry.asset_id, entry.transform, Color.WHITE,
-			entry.stable_id)
-	surfaces.append_array(outskirts.surfaces)
-	clearances.append_array(outskirts.clearances)
-	occupancy.index_constructed(outskirts.volumes)
 
 func _street_axis(_frame: VillageFrame) -> Vector2:
 	# The source town owns its gate orientation before roads exist. Keeping the

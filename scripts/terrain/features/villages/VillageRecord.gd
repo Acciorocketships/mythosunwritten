@@ -44,7 +44,7 @@ func _init(p_stable_id: StringName, p_centre: Vector2, p_bounds: Rect2,
 func validate(program: VillageProgram) -> bool:
 	if program == null or not payload.validate() or not bounds.has_area():
 		return false
-	var permitted := program.record_bound(centre).grow(0.001)
+	var permitted := program.record_bound(centre).grow(TerrainGradePatch.NATIVE_CONTROL_MARGIN + 0.001)
 	if not permitted.encloses(bounds):
 		return false
 	for shape: FeatureGroundShape in surface_shapes + clearance_shapes:

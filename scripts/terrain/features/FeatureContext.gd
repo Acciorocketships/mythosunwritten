@@ -41,8 +41,9 @@ func clearance_at(world_xz: Vector2) -> float:
 ## than their anchor. Keeping this on the shared ground field means every
 ## dressing family gets the same reservation semantics without knowing which
 ## feature (road, village, or a future authored structure) owns the space.
-func overlaps_clearance(shape: FeatureGroundShape, margin: float = 0.0) -> bool:
-	return _ground.overlaps_clearance(shape, margin)
+func overlaps_clearance(shape: FeatureGroundShape, margin: float = 0.0,
+		include_envelopes: bool = true) -> bool:
+	return _ground.overlaps_clearance(shape, margin, include_envelopes)
 
 func ground_field() -> FeatureGroundField:
 	return _ground

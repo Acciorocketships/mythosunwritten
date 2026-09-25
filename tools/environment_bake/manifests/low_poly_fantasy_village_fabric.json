@@ -225,6 +225,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.03.rear",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [-0.9844, -1.48], [0, 0], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [0.0, 2.672677, -0.581952],
       "merge_pieces": true,
@@ -242,6 +243,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.06.front",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [0, 0], [0.9859, 1.48], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "pivot": [0.0, 2.672677, 0.581955],
       "merge_pieces": true,
@@ -259,6 +261,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.03.rear.end",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [-0.9844, -1.48], [0, 0]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [0.0, 2.672677, -0.581952],
       "merge_pieces": true,
@@ -276,6 +279,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.06.front.end",
+      "fit_axis_profile": {"axis": "z", "knots": [[0, 0], [0.9859, 1.48], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "pivot": [0.0, 2.672677, 0.581955],
       "merge_pieces": true,
@@ -310,6 +314,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.03.rear.end.tight",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [-0.9844, -1.48], [0, 0]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [0.0, 2.672677, -0.581952],
       "merge_pieces": true,
@@ -326,6 +331,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.06.front.end.tight",
+      "fit_axis_profile": {"axis": "z", "knots": [[0, 0], [0.9859, 1.48], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "pivot": [0.0, 2.672677, 0.581955],
       "merge_pieces": true,
@@ -342,6 +348,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.03.rear.tight",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [-0.9844, -1.48], [0, 0], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [0.0, 2.672677, -0.581952],
       "merge_pieces": true,
@@ -374,6 +381,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.06.front.tight",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [0, 0], [0.9859, 1.48], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "pivot": [0.0, 2.672677, 0.581955],
       "merge_pieces": true,
@@ -407,6 +415,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.03.run.start.flush",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [-1.425, -1.495], [-0.75, -0.75]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [
         0.0,
@@ -480,6 +489,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.03.run.end.flush",
+      "fit_axis_profile": {"axis": "z", "knots": [[0.75, 0.75], [1.425, 1.495], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [
         0.0,
@@ -535,6 +545,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.03.run.start.tight.flush",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [-1.22730815410614, -1.48], [-0.75, -0.75]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [
         0.0,
@@ -612,6 +623,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.orange.03.run.end.tight.flush",
+      "fit_axis_profile": {"axis": "z", "knots": [[0.75, 0.75], [1.22379875183105, 1.48], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [
         0.0,
@@ -674,6 +686,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.03.front",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [0, 0], [0.984397, 1.48], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [0.0, 2.672677, 0.581955],
       "merge_pieces": true,
@@ -710,6 +723,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.06.rear",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [-0.985903, -1.48], [0, 0], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "pivot": [0.0, 2.672677, -0.581952],
       "merge_pieces": true,
@@ -729,6 +743,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.06.rear.end",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [-0.985903, -1.48], [0, 0]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "pivot": [0.0, 2.672677, -0.581952],
       "merge_pieces": true,
@@ -748,6 +763,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.03.front.end",
+      "fit_axis_profile": {"axis": "z", "knots": [[0, 0], [0.984397, 1.48], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [0.0, 2.672677, 0.581955],
       "merge_pieces": true,
@@ -786,6 +802,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.06.rear.end.tight",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [-0.985903, -1.48], [0, 0]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "pivot": [0.0, 2.672677, -0.581952],
       "merge_pieces": true,
@@ -804,6 +821,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.03.front.end.tight",
+      "fit_axis_profile": {"axis": "z", "knots": [[0, 0], [0.984397, 1.48], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [0.0, 2.672677, 0.581955],
       "merge_pieces": true,
@@ -822,6 +840,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.06.rear.tight",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [-0.985903, -1.48], [0, 0], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_06.glb",
       "pivot": [0.0, 2.672677, -0.581952],
       "merge_pieces": true,
@@ -858,6 +877,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.03.front.tight",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [0, 0], [0.984397, 1.48], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [0.0, 2.672677, 0.581955],
       "merge_pieces": true,
@@ -895,6 +915,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.03.run.start.flush",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [-1.425, -1.495], [-0.75, -0.75]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [
         0.0,
@@ -975,6 +996,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.03.run.end.flush",
+      "fit_axis_profile": {"axis": "z", "knots": [[0.75, 0.75], [1.425, 1.495], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [
         0.0,
@@ -1035,6 +1057,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.03.run.start.tight.flush",
+      "fit_axis_profile": {"axis": "z", "knots": [[-1.5, -1.5], [-1.22730815410614, -1.48], [-0.75, -0.75]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [
         0.0,
@@ -1119,6 +1142,7 @@
     },
     {
       "id": "lpfv.fabric.roof.compact.slate.03.run.end.tight.flush",
+      "fit_axis_profile": {"axis": "z", "knots": [[0.75, 0.75], [1.22379875183105, 1.48], [1.5, 1.5]]},
       "source": "res://assets/LowPolyFantasyVillage/Models/HouseParts/Roof_03.glb",
       "pivot": [
         0.0,
@@ -1266,14 +1290,15 @@
       "id": "lpfv.fabric.prop.bench.02",
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Bench_02.glb",
       "merge_pieces": true,
+      "collision_profile": "native_trimesh",
       "tags": ["bench", "fabric_dressing", "furniture", "prop", "village"],
       "tint_group": "identity",
       "supports_instance_color": true,
       "max_mesh_bytes": 524288,
       "max_visual_triangles": 1500,
-      "max_collision_triangles": 0,
+      "max_collision_triangles": 1500,
       "max_surfaces": 2,
-      "max_collision_pieces": 0
+      "max_collision_pieces": 1
     },
     {
       "id": "lpfv.fabric.prop.plant.low.01",
@@ -1344,14 +1369,15 @@
       "id": "lpfv.fabric.prop.bench.01",
       "source": "res://assets/LowPolyFantasyVillage/Models/Props/Bench_01.glb",
       "merge_pieces": true,
+      "collision_profile": "native_trimesh",
       "tags": ["bench", "fabric_dressing", "furniture", "prop", "village"],
       "tint_group": "identity",
       "supports_instance_color": true,
       "max_mesh_bytes": 524288,
       "max_visual_triangles": 1500,
-      "max_collision_triangles": 0,
+      "max_collision_triangles": 1500,
       "max_surfaces": 2,
-      "max_collision_pieces": 0
+      "max_collision_pieces": 1
     },
     {
       "id": "lpfv.fabric.prop.bucket.01",

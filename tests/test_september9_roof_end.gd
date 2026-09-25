@@ -56,11 +56,22 @@ func test_fitted_end_preserves_native_cross_section_and_texture_channels() -> vo
 					assert_eq(after.size(),before.size(),"The complete authored end retains every triangle")
 					if after.size()!=before.size(): continue
 					var preserved := true
+					var longitudinal := {}
 					for i in before.size():
 						var b: Vector3 = before[i][0]
 						var a: Vector3 = after[i][0]
 						var expected_z := new_bounds.position.z + (b.z-old_bounds.position.z) * new_bounds.size.z / old_bounds.size.z
-						preserved = preserved and absf(a.x-b.x)<0.000001 and absf(a.y-b.y)<0.000001 and absf(a.z-expected_z)<0.000001 and after[i][1]==before[i][1]
+						preserved = preserved and absf(a.x-b.x)<0.000001 and absf(a.y-b.y)<0.000001 and (tight==".tight" or absf(a.z-expected_z)<0.000001) and after[i][1]==before[i][1]
+						# Tight ends now seat the gable near the wall plane. Their
+						# internal fit must remain single-valued and ordered at mesh precision.
+						if longitudinal.has(b.z): preserved = preserved and absf(longitudinal[b.z]-a.z)<0.000001
+						longitudinal[b.z] = a.z
+					var ordered := longitudinal.keys()
+					ordered.sort()
+					for i in range(1,ordered.size()):
+						preserved = preserved and longitudinal[ordered[i]]>=longitudinal[ordered[i-1]]-0.000001
+						if ordered[i]-ordered[i-1]>0.00001:
+							preserved = preserved and longitudinal[ordered[i]]>longitudinal[ordered[i-1]]
 					assert_true(preserved,"%s keeps native X/Y, all UVs and the inner seam; only Z fits" % base)
 
 func _stream(arrays: Array) -> Array:

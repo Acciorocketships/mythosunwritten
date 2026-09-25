@@ -12,7 +12,7 @@ const GUARD_HEIGHT := PublicRealmSurfacePlan.GUARD_HEIGHT
 const GUARD_BEAM := PublicRealmSurfacePlan.GUARD_BEAM
 const STAIR_STEP_RUN := 0.5
 const MAX_STAIR_RISE := (TraversalEnvelope.MAX_PLANNED_STEP \
-	- VillageWorldScale.GROUND_DATUM_GUARD) / VillageWorldScale.PRODUCTION_UNIFORM_SCALE
+	- VillageWorldScale.GROUND_DATUM_GUARD) / VillageWorldScale.VERTICAL_SCALE
 const POST_SPACING := 1.5
 const END_POST_WIDTH := 0.22
 const END_POST_HEADROOM := 0.20
@@ -115,7 +115,7 @@ static func _append_ramp(payload: Dictionary, start: Vector3, end: Vector3,
 	var b := start + lateral * half_width
 	var c := end + lateral * half_width
 	var d := end - lateral * half_width
-	_append_quad(payload, a, b, c, d, top_normal, true)
+	_append_quad(payload, a, b, c, d, top_normal, true, true)
 	var down := Vector3.DOWN * FLOOR_THICKNESS
 	_append_quad(payload, d + down, c + down, b + down, a + down,
 		-top_normal, true)
@@ -153,7 +153,7 @@ static func _append_stairs(payload: Dictionary, start: Vector3, end: Vector3,
 		var b := center0 + lateral * half_width
 		var c := center1 + lateral * half_width
 		var d := center1 - lateral * half_width
-		_append_quad(payload, a, b, c, d, Vector3.UP, true)
+		_append_quad(payload, a, b, c, d, Vector3.UP, true, true)
 		var bottom0_y := lerpf(start.y, end.y, t0) - FLOOR_THICKNESS
 		var bottom1_y := lerpf(start.y, end.y, t1) - FLOOR_THICKNESS
 		var bottom0 := Vector3(start.x, bottom0_y, start.z) \
@@ -206,26 +206,63 @@ static func _append_side_guards(payload: Dictionary, start: Vector3,
 		var side := float(side_value)
 		var side_offset: Vector3 = lateral * MACRO_SIZE * 0.5 * side
 		var inset := ((end-start)*Vector3(1,0,1)).normalized()*start_inset
+		var rails: Array[PackedVector3Array] = []
+		var upper_rails: Array[PackedVector3Array] = []
 		for fraction in [0.52, 1.0]:
-			_append_exposed_guard(payload,
+			var exposed := _exposed_guard_spans(
 				start + side_offset - inset + Vector3.UP * start_rail_height * fraction,
 				end + side_offset + Vector3.UP * GUARD_HEIGHT * fraction, wall_boxes)
+			rails.append_array(exposed)
+			if fraction == 1.0: upper_rails = exposed
+		for rail: PackedVector3Array in rails:
+			_append_beam(payload,rail[0],rail[1],GUARD_BEAM)
+		var post_ratios: Array[float] = []
 		for post_index in range(0 if owns_start_posts else 1,post_intervals + 1):
-			var ratio := float(post_index) / float(post_intervals)
+			post_ratios.append(float(post_index) / float(post_intervals))
+		var regular_count := post_ratios.size()
+		var run := (end-start)*Vector3(1,0,1)
+		# Clipping can create a new rail end between the original posts. Seat
+		# its support on the same flight, then clip it against the same building.
+		for rail: PackedVector3Array in upper_rails:
+			for tip: Vector3 in rail:
+				var ratio := (tip-start-side_offset).dot(run)/maxf(run.length_squared(),0.000001)
+				if ratio <= 0.00001 or ratio >= 0.99999: continue
+				var supported := false
+				for existing: float in post_ratios:
+					if absf(existing-ratio)*horizontal_length < END_POST_WIDTH:
+						supported = true
+						break
+				if not supported: post_ratios.append(ratio)
+		for post_index in post_ratios.size():
+			var ratio := post_ratios[post_index]
 			var foot: Vector3 = start.lerp(end, ratio) + side_offset
 			# A free beam end is housed inside a visibly wider post. Its head
 			# stands above the rail instead of ending at the rail centreline.
-			var endpoint := post_index == 0 or post_index == post_intervals
+			var endpoint := ratio == 0.0 or ratio == 1.0 or post_index >= regular_count
 			var height := GUARD_HEIGHT + (END_POST_HEADROOM if endpoint else 0.0)
 			var width := END_POST_WIDTH if endpoint else GUARD_BEAM
-			_append_exposed_guard(payload, foot, foot + Vector3.UP * height, wall_boxes, width)
+			for post: PackedVector3Array in _exposed_guard_spans(foot,foot+Vector3.UP*height,wall_boxes):
+				# A wall can hide the shaft and both rails but leave the post's
+				# decorative head exposed. Keep only pieces joined to a rail.
+				if _post_meets_rail(post,rails,width):
+					_append_beam(payload,post[0],post[1],width)
+
+
+static func _post_meets_rail(post: PackedVector3Array,
+		rails: Array[PackedVector3Array], width: float) -> bool:
+	for rail: PackedVector3Array in rails:
+		var closest := Geometry3D.get_closest_points_between_segments(post[0],post[1],rail[0],rail[1])
+		if closest[0].distance_to(closest[1]) <= (width+GUARD_BEAM)*.5+0.00001:
+			return true
+	return false
 
 
 ## Subtract the sealed mass union from each guard member's centre line. This
 ## leaves guards on exposed spans, including partial walls and parapets, while
 ## visual and collision geometry retain the same ownership at wall sockets.
-static func _append_exposed_guard(payload: Dictionary, a: Vector3, b: Vector3,
-		wall_boxes: Array[AABB], thickness := GUARD_BEAM) -> void:
+static func _exposed_guard_spans(a: Vector3, b: Vector3,
+		wall_boxes: Array[AABB]) -> Array[PackedVector3Array]:
+	var result: Array[PackedVector3Array] = []
 	var intervals: Array[Vector2] = [Vector2(0, 1)]
 	for box: AABB in wall_boxes:
 		var cut := _line_box_interval(a, b, box)
@@ -238,10 +275,11 @@ static func _append_exposed_guard(payload: Dictionary, a: Vector3, b: Vector3,
 			if cut.x > span.x: remaining.append(Vector2(span.x, cut.x))
 			if cut.y < span.y: remaining.append(Vector2(cut.y, span.y))
 		intervals = remaining
-		if intervals.is_empty(): return
+		if intervals.is_empty(): return result
 	for span: Vector2 in intervals:
 		if (span.y - span.x) * a.distance_to(b) < 0.00001: continue
-		_append_beam(payload, a.lerp(b, span.x), a.lerp(b, span.y), thickness)
+		result.append(PackedVector3Array([a.lerp(b,span.x),a.lerp(b,span.y)]))
+	return result
 
 
 static func _line_box_interval(a: Vector3, b: Vector3, box: AABB) -> Vector2:
@@ -296,15 +334,17 @@ static func _append_box(payload: Dictionary, center: Vector3, size: Vector3,
 		[points[0], points[4], points[5], points[1]],
 	]
 	for face: Array in faces:
-		var normal := ((face[1] as Vector3) - (face[0] as Vector3)).cross(
+		var normal := -((face[1] as Vector3) - (face[0] as Vector3)).cross(
 			(face[2] as Vector3) - (face[0] as Vector3)).normalized()
+		# Box corners already wind clockwise from outside, unlike floor quads.
+		# Keep those render fronts and shade outward; collision stays identical.
 		_append_quad(payload, face[0] as Vector3, face[1] as Vector3,
-			face[2] as Vector3, face[3] as Vector3, normal, true, true)
+			face[2] as Vector3, face[3] as Vector3, normal, true, true, false)
 
 
 static func _append_quad(payload: Dictionary, a: Vector3, b: Vector3,
 		c: Vector3, d: Vector3, normal: Vector3,
-		include_collision: bool, face_uv := false) -> void:
+		include_collision: bool, face_uv := false, reverse_winding := true) -> void:
 	var vertices := payload.vertices as PackedVector3Array
 	var normals := payload.normals as PackedVector3Array
 	var uvs := payload.uvs as PackedVector2Array
@@ -317,7 +357,10 @@ static func _append_quad(payload: Dictionary, a: Vector3, b: Vector3,
 		# X/Z projection collapses vertical post and beam-end faces to a line.
 		# A metric face basis keeps grain readable on every side and end.
 		var u_axis := (b-a).normalized()
-		var v_axis := normal.cross(u_axis).normalized()
+		# Texture registration belongs to the unchanged corners, independently
+		# of whether their lighting normal points with or against that order.
+		var face_plane := (b-a).cross(c-a).normalized()
+		var v_axis := face_plane.cross(u_axis).normalized()
 		for point: Vector3 in [a,b,c,d]:
 			uvs.append(Vector2((point-a).dot(u_axis),(point-a).dot(v_axis))/3.0)
 	else:
@@ -330,8 +373,9 @@ static func _append_quad(payload: Dictionary, a: Vector3, b: Vector3,
 	# Reversed fan, matching PublicRealmSurfacePlan: tops must be front faces
 	# when seen from above so lit materials shade them as walk surfaces.
 	indices.append_array(PackedInt32Array([
-		base, base + 2, base + 1,
-		base, base + 3, base + 2,
+		base, base + 2, base + 1, base, base + 3, base + 2,
+	]) if reverse_winding else PackedInt32Array([
+		base, base + 1, base + 2, base, base + 2, base + 3,
 	]))
 	payload["vertices"] = vertices
 	payload["normals"] = normals

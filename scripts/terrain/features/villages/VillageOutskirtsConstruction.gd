@@ -12,20 +12,39 @@ static func generate(terrain: VillageTerrainView, settlement_id: StringName,
 		arrival: Vector2, axis: Vector2, tier: StringName, theme: StringName,
 		program: VillageProgram, urban: VillageUrbanFabricPlan,
 		canonical_ground: FeatureGroundField) -> VillageOutskirtsPlan:
-	var plan := VillageOutskirtsPlan.new()
 	var contacts := VillageOutskirtsSolver._ground_contacts(terrain, arrival, axis, urban)
 	var street_grid := VillageOutskirtsSolver._urban_perimeter_grid(urban, arrival, axis)
 	var datum := urban.world_transform.origin.y - VillageWarrenFabricSolver.DATUM_GUARD
 	var topology := _perimeter_streets(terrain, settlement_id, arrival, axis,
 		contacts, street_grid, datum)
 	var branches: Array[Dictionary] = topology.branches
+	var shared_frontages := _inward_street_frontages(branches)
+	shared_frontages.append_array(_shared_street_frontages(urban, datum, settlement_id))
+	branches.append_array(shared_frontages)
+	if StringName(urban.fabric_audit.get("scale_profile_id", "")) == &"compact":
+		topology["target_houses"] = maxi(4, contacts.size())
+	return construct_frontages(terrain, settlement_id, arrival, tier, theme,
+		program, urban, canonical_ground, topology, contacts.size(),
+		shared_frontages.size())
+
+
+static func construct_frontages(terrain: VillageTerrainView,
+		settlement_id: StringName, arrival: Vector2, tier: StringName,
+		theme: StringName, program: VillageProgram, urban: VillageUrbanFabricPlan,
+		canonical_ground: FeatureGroundField, topology: Dictionary,
+		exit_count: int, shared_branch_count: int = 0) -> VillageOutskirtsPlan:
+	# The same measured frontage allocation constructs both a warren's shared
+	# streets and a ground hamlet. Topology exists before any house is placed.
+	var plan := VillageOutskirtsPlan.new()
+	var branches: Array[Dictionary] = topology.branches
+	var datum := urban.world_transform.origin.y - VillageWarrenFabricSolver.DATUM_GUARD
 	var planned_streets: Array[Dictionary] = topology.paths
 	# The town owns its street network inside the circuit. Country roads meet
 	# that boundary; they cannot independently paint a second street through it.
 	plan.surfaces.append(topology.domain)
 	planned_streets.append_array(_world_road_handoffs(topology.domain,
 		canonical_ground, settlement_id))
-	plan.route_exit_count = contacts.size()
+	plan.route_exit_count = exit_count
 	urban.terrain_grade = _extend_street_grade(urban.terrain_grade, planned_streets, datum)
 	terrain = terrain.with_terrain_grades([urban.terrain_grade])
 	for branch: Dictionary in branches:
@@ -69,6 +88,8 @@ static func generate(terrain: VillageTerrainView, settlement_id: StringName,
 					-Vector2.ONE*PITCH*0.5,Vector2.ONE*PITCH))
 		for spec: VillageAssetSpec in program.outskirts_program.house_specs:
 			if not spec.allowed_in(tier): continue
+			if spec.measured_aabb.size.y * scale_value > float(topology.get("maximum_house_height", INF)):
+				continue
 			var yaw := spec.entrance_outward.angle() - (-node.outward).angle()
 			var transform := Transform3D(Basis(Vector3.UP,yaw).scaled(Vector3.ONE*scale_value),Vector3.ZERO)
 			var visual := spec.world_solid(transform)
@@ -80,21 +101,39 @@ static func generate(terrain: VillageTerrainView, settlement_id: StringName,
 			if bool(branch.get("market",false)): setback += VillageOutskirtsSolver.MARKET_STALL_BAND
 			for depth: float in [0.0]:
 				var origin := node.point + node.outward*(setback + depth - near_edge)
-				var span := float(branch.frontage_half_length) - PathProgram.CORNER_RADIUS - HALF_PATH
+				# Existing warren streets already contribute their complete physical
+				# bounds to obstacles. They have no new filleted circuit corners.
+				var end_margin := float(branch.get("end_margin",
+					PathProgram.CORNER_RADIUS + HALF_PATH))
+				var span := float(branch.frontage_half_length) - end_margin
 				var house_span := VillageFrontageDomain.projection(bounds,tangent)
+				var interval := Vector2(-span-house_span.x, span-house_span.y)
+				if interval.x > interval.y:
+					continue
 				var free := VillageFrontageDomain.subtract_obstacles(
-					[Vector2(-span-house_span.x,span-house_span.y)] as Array[Vector2],
+					[interval] as Array[Vector2],
 					origin,tangent,bounds,obstacles,MARGIN)
 				free = VillageFrontageDomain.subtract_obstacles(free,origin,tangent,
 					pad,incompatible_ground,0.0)
 				domains.append({"id":"%s/%s/%d" % [node.stable_key,spec.asset_id,depth],
 					"group":branch.side_key,"origin":origin,"tangent":tangent,
+					"priority": int(branch.get("priority", 1)),
 					"bounds":bounds,"pad":pad,"access_bounds":bounds.merge(
 					Rect2(node.point-origin-Vector2.ONE*HALF_PATH,Vector2.ONE*HALF_PATH*2.0)),"area":spec.ground_contact_local_rect.get_area(),
 					"intervals":free,"spec":spec,"branch":branch,"yaw":yaw,"ground_y":ground_y})
+	var shared_domains := 0
+	var shared_available := 0
+	for domain: Dictionary in domains:
+		if int(domain.priority) == 0:
+			shared_domains += 1
+			shared_available += int(not (domain.intervals as Array).is_empty())
+	plan.audit.append({"construction_method": "shared_frontage_availability",
+		"branches": shared_branch_count,
+		"domains": shared_domains, "available": shared_available})
 	var lots := VillageFrontageDomain.allocate(domains,
-		program.outskirts_program.target_houses(tier,contacts.size()),String(settlement_id).hash(),
-		VillageOutskirtsProgram.SUBSTANTIAL_COHORT_FRACTION)
+		int(topology.get("target_houses", program.outskirts_program.target_houses(tier,exit_count))),
+		String(settlement_id).hash(), float(topology.get("substantial_fraction",
+			VillageOutskirtsProgram.SUBSTANTIAL_COHORT_FRACTION)))
 	var ground_cells := claims.duplicate()
 	var served: Dictionary = {}
 	var street_ids: Dictionary = {}
@@ -132,11 +171,10 @@ static func generate(terrain: VillageTerrainView, settlement_id: StringName,
 		placement.ground_accessible = true
 		placement.ground_route_support_profile = true
 		var owner := StringName("%s.%s" % [settlement_id,slot.stable_key])
-		plan.entries.append({"asset_id":spec.asset_for_theme(theme),"stable_id":owner,"transform":built})
-		for attachment: VillageAttachedAssetSpec in spec.attachments:
-			plan.entries.append({"asset_id":attachment.asset_for_theme(theme),
-				"stable_id":StringName("%s.component.%s" % [owner,attachment.stable_key]),
-				"transform":attachment.world_transform(built)})
+		# The lot keeps its measured prefab contract; the building kit draws a
+		# designed house inside its support footprint, door on the entrance side.
+		plan.entries.append_array(KitStandaloneHouse.entries(SuntailBuildingKit.create(),
+			spec, built, floor_y, owner, hash([owner, index])))
 		plan.placements.append(placement)
 		plan.volumes.append(VillageOccupancyVolume.new(VillageOccupancy.Role.SOLID,
 			placement.support_centre,placement.support_half_extents,placement.support_angle,
@@ -160,6 +198,8 @@ static func generate(terrain: VillageTerrainView, settlement_id: StringName,
 		plan.clearances.append(FeatureGroundShape.axis_rect(lot.world_bounds,
 			FeatureGroundField.NATURAL,0,StringName("%s.clearance" % owner)))
 		served[lot.group]=true
+		if int(lot.get("priority", 1)) == 0:
+			plan.shared_street_house_count += 1
 		plan.audit.append({"slot":String(slot.stable_key),"accepted":true,
 			"asset_id":String(spec.asset_id),"contact":String(node.stable_key),
 			"construction_method":"frontage_domain","placement_count":1})
@@ -168,11 +208,12 @@ static func generate(terrain: VillageTerrainView, settlement_id: StringName,
 	var finished_terrain := terrain.with_terrain_grades([urban.terrain_grade])
 	for street: Dictionary in planned_streets:
 		_append_street(plan,street.points,street.owner,urban.public_walk_network_id,
-			finished_terrain,HALF_PATH,street_ids)
+			finished_terrain,HALF_PATH,street_ids, int(street.get("surface_id", FeatureGroundField.WORN_PATH)))
 	for street: Dictionary in streets:
 		_append_street(plan,street.points,street.owner,urban.public_walk_network_id,
-			finished_terrain,float(street.half_width),street_ids)
-	plan.surfaces.append_array(PathProgram.shared_junction_shapes(plan.street_paths,
+			finished_terrain,float(street.half_width),street_ids, int(topology.get("street_surface", FeatureGroundField.WORN_PATH)))
+	plan.surfaces.append_array(PathProgram.shared_junction_shapes(plan.street_paths.filter(
+		func(street: Dictionary) -> bool: return street.surface_id == FeatureGroundField.WORN_PATH),
 		HALF_PATH,FeatureGroundField.WORN_PATH,VillagePlan.SURFACE_PRIORITY,
 		StringName("%s.junctions" % settlement_id)))
 	plan.clearances.append_array(PathProgram.shared_junction_shapes(plan.street_paths,
@@ -184,6 +225,83 @@ static func generate(terrain: VillageTerrainView, settlement_id: StringName,
 	plan.accepted = true
 	plan.reason = &"accepted"
 	return plan
+
+
+static func _inward_street_frontages(exterior: Array[Dictionary]) -> Array[Dictionary]:
+	# Both sides of the same street participate in one allocation. Concave bays
+	# and open corners inside the town boundary can host complete native houses;
+	# the finished warren's exact occupancy subtracts every occupied interval.
+	var out: Array[Dictionary] = []
+	for branch: Dictionary in exterior:
+		var source := branch.node as VillageCirculationNode
+		var id := StringName("%s.inward" % source.stable_key)
+		var node := VillageCirculationNode.new(id, source.kind, source.point,
+			source.surface_y, source.owner_key, -source.outward)
+		var inward := branch.duplicate()
+		inward["node"] = node
+		inward["side_key"] = id
+		inward["priority"] = 0
+		inward["network_nodes"] = [node] as Array[VillageCirculationNode]
+		out.append(inward)
+	return out
+
+
+static func _shared_street_frontages(urban: VillageUrbanFabricPlan,
+		datum: float, owner: StringName) -> Array[Dictionary]:
+	## The same native-house allocation may address open space beside an existing
+	## warren street. These are real ground-level public cells, not invented
+	## approach roads. The caller subtracts the complete finished construction
+	## and incompatible foundation claims before any house is selected.
+	var out: Array[Dictionary] = []
+	if urban.volumetric_spatial == null:
+		return out
+	var floor_cells: Dictionary = {}
+	for cell: Vector3i in urban.volumetric_spatial.route_floor_cells:
+		if cell.y == 0:
+			floor_cells[cell] = true
+	var directions: Array[Vector3i] = [Vector3i.RIGHT, Vector3i.LEFT,
+		Vector3i.BACK, Vector3i.FORWARD]
+	var runs: Dictionary = {}
+	for cell: Vector3i in floor_cells:
+		for d in directions.size():
+			var direction := directions[d]
+			if floor_cells.has(cell + direction):
+				continue
+			var key := Vector2i(d, cell.x if direction.x != 0 else cell.z)
+			var values: Array = runs.get(key, [])
+			values.append(cell.z if direction.x != 0 else cell.x)
+			runs[key] = values
+	var keys: Array = runs.keys()
+	keys.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.x < b.x if a.x != b.x else a.y < b.y)
+	for key: Vector2i in keys:
+		var values: Array = runs[key]
+		values.sort()
+		var first := int(values[0])
+		var last := first
+		for i in range(1, values.size() + 1):
+			if i < values.size() and int(values[i]) == last + 1:
+				last = int(values[i])
+				continue
+			var direction := directions[key.x]
+			var middle := float(first + last) * 0.5
+			var local := Vector3(key.y, 0, middle) if direction.x != 0 \
+				else Vector3(middle, 0, key.y)
+			var world := urban.world_transform * (local * FabricRecipe.CELL_SIZE)
+			var normal := (urban.world_transform.basis * Vector3(direction)).normalized()
+			var id := StringName("warren.street.%d.%d.%d" % [key.x, key.y, first])
+			var node := VillageCirculationNode.new(id,
+				VillageCirculationNode.Kind.TERRAIN_CONTACT,
+				Vector2(world.x, world.z), datum, owner,
+				Vector2(normal.x, normal.z))
+			out.append({"node": node, "side_key": id, "ground_y": datum,
+				"priority": 0, "end_margin": 0.0,
+				"frontage_half_length": float(last - first + 1) * PITCH * 0.5,
+				"network_nodes": [node] as Array[VillageCirculationNode]})
+			if i < values.size():
+				first = int(values[i])
+				last = first
+	return out
 
 static func _ground_entrance(spec: VillageAssetSpec, built: Transform3D) -> Vector2:
 	if spec.ground_entrance_local.is_finite():
@@ -198,10 +316,10 @@ static func _ground_entrance(spec: VillageAssetSpec, built: Transform3D) -> Vect
 
 static func _append_street(plan: VillageOutskirtsPlan, points: Array[Vector2],
 		owner: StringName, network_id: StringName, terrain: VillageTerrainView,
-		_door_half_width: float, seen: Dictionary) -> void:
-	plan.street_paths.append({"points":points,"owner":owner})
+		_door_half_width: float, seen: Dictionary, surface_id: int = FeatureGroundField.WORN_PATH) -> void:
+	plan.street_paths.append({"points":points,"owner":owner,"surface_id":surface_id})
 	plan.surfaces.append_array(PathProgram.filleted_path_shapes(points,HALF_PATH,
-		FeatureGroundField.WORN_PATH,VillagePlan.SURFACE_PRIORITY,StringName("%s.street" % owner)))
+		surface_id,VillagePlan.SURFACE_PRIORITY,StringName("%s.street" % owner)))
 	plan.clearances.append_array(PathProgram.filleted_path_shapes(points,HALF_PATH+0.5,
 		FeatureGroundField.NATURAL,0,StringName("%s.street-clearance" % owner)))
 	for index in range(1,points.size()):

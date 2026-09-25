@@ -28,6 +28,8 @@ static func subtract_obstacles(intervals: Array[Vector2], origin: Vector2,
 static func subtract_interval(intervals: Array[Vector2], cut: Vector2) -> Array[Vector2]:
 	var result: Array[Vector2] = []
 	for interval: Vector2 in intervals:
+		if interval.x > interval.y:
+			continue
 		if cut.y <= interval.x or cut.x >= interval.y:
 			result.append(interval)
 		else:
@@ -57,6 +59,8 @@ static func allocate(domains: Array[Dictionary], count: int,
 			if not (domain.intervals as Array).is_empty(): available.append(domain)
 		if available.is_empty(): break
 		available.sort_custom(func(a: Dictionary,b: Dictionary) -> bool:
+			if int(a.get("priority", 1)) != int(b.get("priority", 1)):
+				return int(a.get("priority", 1)) < int(b.get("priority", 1))
 			var a_served := int(served.get(a.group,0))
 			var b_served := int(served.get(b.group,0))
 			if a_served != b_served: return a_served < b_served

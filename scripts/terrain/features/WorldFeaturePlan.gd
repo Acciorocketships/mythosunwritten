@@ -13,6 +13,7 @@ var _villages: VillagePlan
 var _frames: Dictionary = {}
 var _contexts: Dictionary = {}
 var _context_margin: float
+var profile_stage_callback := Callable()
 const FRAME_CACHE_CAP := 64
 const CONTEXT_CACHE_CAP := 96
 
@@ -30,12 +31,15 @@ func _init(world_seed: int, water: WaterPlan, fields: WorldFieldBlockCache,
 	_paths = PathPlan.new(world_seed, water, fields, program.paths,
 		_context_margin, settlements, program.surface_priorities)
 
-func context_for(block: Vector2i) -> FeatureContext:
+func context_for(block: Vector2i, cancelled := Callable()) -> FeatureContext:
 	if _contexts.has(block):
-		return _contexts[block]
-	if _contexts.size() >= CONTEXT_CACHE_CAP:
-		_contexts.clear()
-	var path_context := _paths.context_for(block)
+		var cached: FeatureContext = _contexts[block]
+		_contexts.erase(block)
+		_contexts[block] = cached
+		return cached
+	if profile_stage_callback.is_valid(): profile_stage_callback.call(block, &"feature_paths")
+	var path_context := _paths.context_for(block, cancelled)
+	if path_context == null: return null
 	var surface_shapes: Array[FeatureGroundShape] = []
 	var clearance_shapes: Array[FeatureGroundShape] = []
 	var village_payload := EnvironmentInstancePayload.new()
@@ -43,6 +47,7 @@ func context_for(block: Vector2i) -> FeatureContext:
 	# Dressing may carry a broad canopy into this block from an anchor outside
 	# it. Discover records over the same complete context used by reservation
 	# queries so those intersections cannot disappear at block seams.
+	if profile_stage_callback.is_valid(): profile_stage_callback.call(block, &"feature_villages")
 	for record: VillageRecord in _records_affecting(path_context.coverage()):
 		if record.urban_fabric != null and record.urban_fabric.terrain_grade != null:
 			grades.append(record.urban_fabric.terrain_grade)
@@ -69,11 +74,17 @@ func context_for(block: Vector2i) -> FeatureContext:
 	# receive their final vertical attachment after the town's grade is sealed.
 	# Do this before adding village placements: terrace props already have an
 	# authored structural attachment and must retain that elevation.
+	if profile_stage_callback.is_valid(): profile_stage_callback.call(block, &"feature_attachments")
 	_seat_ground_assets(context.placements(), _program.paths.assets,
 		func(point: Vector2) -> float:
 			var region := context.graded_region(_fields.region_at(point))
 			return TerrainSurfaceField.surface_y(region, point.x, point.y))
 	context.placements().append_from(village_payload)
+	# Keep completed nearby work warm across long journeys. Capacity retires
+	# one least-recently-used context, never the whole 96-block working set.
+	# A cancelled build above cannot evict an otherwise usable context.
+	if _contexts.size() >= CONTEXT_CACHE_CAP:
+		_contexts.erase(_contexts.keys()[0])
 	_contexts[block] = context
 	return context
 
@@ -119,7 +130,10 @@ func village_plan() -> VillagePlan:
 	return _villages
 
 func _records_affecting(core: Rect2) -> Array[VillageRecord]:
-	var query := core.grow(_program.record_discovery_radius)
+	# Discover complete control owners before either neighbour reconstructs its
+	# native terrain. Geometry-only bounds cannot exclude a grading dependency.
+	var control_query := core.grow(TerrainGradePatch.NATIVE_CONTROL_MARGIN)
+	var query := control_query.grow(_program.record_discovery_radius)
 	var lo := Vector2i(floori(query.position.x / SettlementPlan.SUPER_WORLD),
 		floori(query.position.y / SettlementPlan.SUPER_WORLD))
 	var hi := Vector2i(floori(query.end.x / SettlementPlan.SUPER_WORLD),
@@ -135,14 +149,14 @@ func _records_affecting(core: Rect2) -> Array[VillageRecord]:
 			var layout_bound := Rect2(site_centre - Vector2.ONE \
 				* _village_program.layout_record_radius,
 				Vector2.ONE * _village_program.layout_record_radius * 2.0)
-			if not layout_bound.intersects(core.grow(
+			if not layout_bound.intersects(control_query.grow(
 					_program.maximum_clearance), true):
 				continue
 			var frame := frame_for(super_cell)
 			if frame == null:
 				continue
 			var conservative := _village_program.record_bound(frame.centre)
-			if not conservative.intersects(core.grow(
+			if not conservative.intersects(control_query.grow(
 					_program.maximum_clearance), true):
 				continue
 			var record := _villages.record_for(frame)

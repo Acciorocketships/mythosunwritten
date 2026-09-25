@@ -60,8 +60,9 @@ func _ready() -> void:
 	_character = world.find_child("Character", true, false) as CharacterBody3D
 	assert(_streamer != null and _character != null)
 	_streamer.SEED_OVERRIDE = WORLD_SEED
-	_streamer.CHUNK_RADIUS = 1
-	_streamer.KEEP_RADIUS = 2
+	if not OS.get_cmdline_user_args().has("--production-radius"):
+		_streamer.CHUNK_RADIUS = 1
+		_streamer.KEEP_RADIUS = 2
 	_streamer.GRASS_ENABLED = _grass_enabled()
 	_character.position = Vector3(_spot[2]) + Vector3.UP * 4.0
 	_character.velocity = Vector3.ZERO
@@ -132,12 +133,10 @@ func _wait_for_site() -> bool:
 		if elapsed >= WAIT_HARD_TIMEOUT_SECONDS:
 			push_error("Village visual QA timed out; missing=%s" % _missing(wanted))
 			return false
-		var missing := _missing(wanted)
 		var progress := _streamer.worker_progress_snapshot()
 		var active := bool(progress.get("active", false)) \
 			and StringName(progress.get("phase", &"idle")) != &"idle"
-		if missing.is_empty() and _streamer.startup_loading_complete() \
-				and not active:
+		if _capture_ready(wanted, active):
 			if idle_since < 0:
 				idle_since = Time.get_ticks_msec()
 			elif float(Time.get_ticks_msec() - idle_since) / 1000.0 \
@@ -147,6 +146,13 @@ func _wait_for_site() -> bool:
 			idle_since = -1
 		await get_tree().create_timer(0.25).timeout
 	return false
+
+
+func _capture_ready(wanted: Array, active: bool) -> bool:
+	# Collision readiness deliberately precedes visual commits. An idle worker
+	# does not imply that the main-thread visual queue has drained.
+	return _missing(wanted).is_empty() and _streamer.startup_loading_complete() \
+		and not active and _streamer._feature_queue.pending_count() == 0
 
 
 func _missing(wanted: Array) -> Array:
@@ -159,8 +165,8 @@ func _missing(wanted: Array) -> Array:
 
 
 func _shot(name: String) -> void:
-	RenderingServer.force_draw()
 	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
 	var image := get_viewport().get_texture().get_image()
 	var path := "%s/%s.png" % [_output_dir, name]
 	assert(image != null and image.save_png(path) == OK)

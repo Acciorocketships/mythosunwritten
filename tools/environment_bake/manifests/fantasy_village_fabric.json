@@ -1676,6 +1676,9 @@
   {
    "id": "sfv.fabric.wall.wood.door.closed.001",
    "source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Door/SFV_Door_Wall_Wooden_001_1.fbx",
+   "facade_side_source": "res://assets/FantasyVillageFBX/FBX/Walls/Wooden/Walls/SFV_Wall_Wooden_M_005.fbx",
+   "facade_side_thickness": 0.4686609,
+   "facade_side_mirror_left": true,
    "merge_pieces": true,
    "collision_profile": "building_trimesh",
    "tags": [

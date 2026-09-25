@@ -41,7 +41,8 @@ func test_planned_lawn_does_not_invent_equal_height_neighbours() -> void:
 	assert_false(controls.has(Vector3i(1, 1, 0)),
 		"a phantom control ring suppresses the lawn's actual cliff lips")
 
-func test_turf_retaining_corner_uses_the_matching_terrain_wall() -> void:
+func test_turf_retaining_corner_keeps_the_lip_and_uses_fitted_city_masonry() -> void:
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
 	var east := SettlementFabricAssembler.STONE_FACE_DIRECTIONS.find(Vector3i.RIGHT)
 	var south := SettlementFabricAssembler.STONE_FACE_DIRECTIONS.find(Vector3i.BACK)
 	var faces := {Vector4i(0, 0, 0, east): Vector3i.ZERO,
@@ -51,12 +52,12 @@ func test_turf_retaining_corner_uses_the_matching_terrain_wall() -> void:
 		treatments[face] = SettlementFabricAssembler.SkinTreatment.MASONRY
 	var payload := SettlementFabricAssembler.maze_stone_walls({}, {}, {}, {}, {},
 		{"faces": faces, "treatments": treatments, "exposed": faces}, 0,
-		{Vector3i.ZERO: true})
-	assert_true(payload.batches.has(&"kaykit.cliff.outer_wall"),
-		"a turf turn needs the wall authored to meet the same rounded lip")
-	assert_false(payload.batches.has(SettlementFabricAssembler.MAZE_STONE_MODULE),
-		"the square masonry nose must not protrude through the rounded grass")
-	assert_eq(payload.instance_count, 1, "one corner closes both faces without overlap")
+		{Vector3i.ZERO: true},[],program.asset_wall_interfaces)
+	assert_false(payload.batches.has(&"kaykit.cliff.outer_wall"),
+		"the September 10 city-material review replaces terrain rock below city gardens")
+	assert_eq(payload.surface_meshes.size(),2,"both native masonry faces share the rounded fitting")
+	for mesh: Dictionary in payload.surface_meshes:
+		assert_eq(StringName(mesh.material_asset_id),SettlementFabricAssembler.MAZE_STONE_MODULE)
 	assert_eq(payload.collision_boxes.size(), 2,
 		"visual-only terrain dressing still needs both logical retaining walls")
 	for box: Dictionary in payload.collision_boxes:

@@ -150,12 +150,15 @@ static func for_id(id: StringName) -> WarrenVillageScaleProfile:
 	# they can occupy; changing them alone merely rearranges a small hill. Keeping
 	# the vertical budgets unchanged also prevents the scale correction from
 	# making doors, storeys, or the crown taller relative to the player.
+	# The shared low/high field owns the ground houses formerly allocated around
+	# a completed warren. Extra lanes provide common frontage before all native
+	# and modular plots. Native requests still require measured legal sites.
 	match id:
 		COMPACT:
 			return WarrenVillageScaleProfile.new(COMPACT, 5,
-				Vector2i(12, 17), 10, Vector2i(12, 18), Vector2i(5, 7),
-				4, 16, Vector2i(10, 30), 6, 2, Vector2i(2, 2),
-				Vector2i(0, 2), Vector2i.ZERO, Vector2i(4, 4), 0.29, false,
+				Vector2i(10, 14), 6, Vector2i(8, 14), Vector2i(3, 5),
+				5, 20, Vector2i(6, 20), 4, 1, Vector2i(1, 2),
+				Vector2i(0, 1), Vector2i.ZERO, Vector2i(5, 6), 0.29, false,
 				false)
 		STANDARD:
 			# Five complete two-band terraces are the semantic minimum for both
@@ -165,8 +168,8 @@ static func for_id(id: StringName) -> WarrenVillageScaleProfile:
 			# player scale; a higher source minimum is not needed to manufacture it.
 			return WarrenVillageScaleProfile.new(STANDARD, 6,
 				Vector2i(13, 17), 10, Vector2i(14, 22), Vector2i(5, 8),
-				5, 20, Vector2i(12, 35), 6, 2, Vector2i(2, 3),
-				Vector2i(1, 3), Vector2i.ZERO, Vector2i(3, 4), 0.33, false,
+				7, 28, Vector2i(12, 35), 6, 2, Vector2i(2, 3),
+				Vector2i(1, 3), Vector2i.ZERO, Vector2i(7, 8), 0.33, false,
 				false)
 		LARGE:
 			# Skywalk range minimum below maximum: request the richer link
@@ -174,8 +177,8 @@ static func for_id(id: StringName) -> WarrenVillageScaleProfile:
 			# extra link provably adds no distinct inhabited route coverage.
 			return WarrenVillageScaleProfile.new(LARGE, 7,
 				Vector2i(14, 18), 12, Vector2i(16, 26), Vector2i(6, 9),
-				8, 32, Vector2i(18, 50), 8, 3, Vector2i(3, 4),
-				Vector2i(3, 4), Vector2i.ZERO, Vector2i(4, 5), 0.38, true)
+				10, 40, Vector2i(18, 50), 8, 3, Vector2i(3, 4),
+				Vector2i(3, 4), Vector2i.ZERO, Vector2i(8, 9), 0.38, true)
 		GRAND:
 			# The core maximum stops at `WarrenMassif.BUILDABLE_LAYER_BANDS`
 			# and not at the +2 the other three scales take: the massif suite
@@ -183,8 +186,8 @@ static func for_id(id: StringName) -> WarrenVillageScaleProfile:
 			# compiler builds", and 18 is what the compiler builds.
 			return WarrenVillageScaleProfile.new(GRAND, 8,
 				Vector2i(15, 18), 14, Vector2i(20, 30), Vector2i(7, 10),
-				10, 40, Vector2i(25, 75), 12, 4, Vector2i(4, 5),
-				Vector2i(4, 6), Vector2i.ZERO, Vector2i(5, 6), 0.38, true)
+				12, 48, Vector2i(25, 75), 12, 4, Vector2i(4, 5),
+				Vector2i(4, 6), Vector2i.ZERO, Vector2i(9, 10), 0.38, true)
 		_:
 			return null
 

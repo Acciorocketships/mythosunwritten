@@ -16,12 +16,10 @@ extends GutTest
 ## below is simply that solve. Every assertion in this file therefore now
 ## describes the town production really ships, not the searched one.
 const REVIEW_SEED := 6357506428441529412
-## MEASURED 2026-08-31 after the canonical maximal-relief pass: this town keeps
-## three roofed structural facade bays in addition to the assembler's balanced
-## shallow bays/bump-outs. It uses at least one complete 3 m gabled bay. The
-## partial-height oriel remains the bounded fallback wherever that larger
-## measured envelope cannot fit.
-const MEASURED_OUTCROP_BAYS := 3
+## September 10's overhang review excludes a bay on an already cantilevered
+## parent face. Two of this town's former three bays used such faces (measured
+## in 11-overhang/legacy-bays.txt). Keep a real bay opportunity, without requiring
+## those rejected doubled projections to return just to meet a historic count.
 
 static var _built: SettlementFabricPlan
 static var _solved := false
@@ -78,8 +76,8 @@ func test_the_probe_seed_builds_its_measured_roofed_facade_bays() -> void:
 		])
 	gut.p("one-pass town: outcrop units=%d full_gabled=%d embedded_oriels=%d"
 		% [units.size(), full_gabled, embedded])
-	assert_gte(units.size(), MEASURED_OUTCROP_BAYS,
-		"the review seed lost outcroppings it used to build")
+	assert_gt(units.size(), 0,
+		"the review seed retains facade relief on supported parent faces")
 	assert_gte(full_gabled, 1,
 		"an open eligible facade must receive a complete native-width gabled bay")
 	assert_eq(embedded + full_gabled, units.size(),
@@ -353,13 +351,14 @@ func test_embedded_oriels_use_composed_partial_height_window_bays() -> void:
 			"the missing terminal timber must be a pure wood jamb")
 		assert_between(placed_post.size.x, 0.25, 0.31,
 			"the right jamb must match the authored heavy post on the left")
-		assert_gt(placed_post.position.x, 0.30,
+		assert_gt(placed_post.position.x - (face.transform as Transform3D).origin.x, 0.30,
 			"the added terminal timber must close the narrowed panel's right edge")
 		var left_contract := program.module_program.contract(
 			StringName(left_post.asset_id))
 		var placed_left := (left_post.transform as Transform3D) \
 			* left_contract.visual_bounds
-		assert_almost_eq(placed_left.position.x, -placed_post.end.x, 0.001,
+		assert_almost_eq(placed_left.position.x + placed_post.end.x,
+			2.0 * (face.transform as Transform3D).origin.x, 0.001,
 			"the two bay jambs must be exact reflected silhouettes")
 		assert_almost_eq(placed_left.size.x, placed_post.size.x, 0.001)
 		assert_gt(placed_left.end.x, placed_face.position.x,
@@ -498,7 +497,7 @@ static func _outcrop_units(plan: SettlementFabricPlan) -> Array[FabricUnit]:
 
 static func _room_back_bond(unit_value: FabricUnit) -> Dictionary:
 	for bond: Dictionary in unit_value.socket_bonds:
-		if StringName(bond.own_socket) == &"room.back":
+		if StringName(bond.own_socket) in [&"room.back", &"room.back.width"]:
 			return bond
 	return {"target_unit": &"", "target_socket": &""}
 

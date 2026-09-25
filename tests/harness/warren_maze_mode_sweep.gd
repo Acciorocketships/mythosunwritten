@@ -1756,6 +1756,10 @@ func _measure_clearance(tally: Dictionary, city_seed: int,
 			var crossing := _clearance_of_gate(space, query, cell, direction)
 			if crossing > 0:
 				gates_offset += 1
+				print("CROSSING_OFFSET %s %s -> %s by[%s]" % [label, cell,
+					cell + direction, _clearance_blockers(space, query,
+						_clearance_stance(cell) + Vector3(direction)
+						* (FabricRecipe.CELL_SIZE * 0.5), shape_sources)])
 			elif crossing < 0:
 				gates_blocked += 1
 				shut[_clearance_edge_key(cell, cell + direction)] = [cell,

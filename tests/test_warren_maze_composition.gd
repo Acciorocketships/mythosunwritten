@@ -838,10 +838,19 @@ const MAZE_FACADE_YIELD_CEILING := 7
 ## 1989 / 2267 / 1822, 9/standard 2544 / 2589 / 2678 -- every row
 ## inside its ceiling with room, and every row's own arithmetic on this machine
 ## lower than the numbers pinned below, which is why none of them moved down.
+## September 10 city-form change: seed 3 is now the wider crescent (83 buildings,
+## 87 rooms), rather than the former round town. Its first candidate cost 11943 ms.
+## Stage profiling found repeated complete roof-closure and native-cap queries.
+## Exact cap memoization and proposal-local closure reuse reduce composition
+## from 8389 to 3325 ms; final fabric costs 2059 ms. Frozen-reference tests preserve
+## cap order and roofability. Three quiet in-suite solves: 5397 / 5501 / 5284 ms.
+## Re-pin only this changed town using the existing median x1.5 rule:
+## 5397 x1.5 = 8095.5 -> 8100. Other planner ceilings remain unchanged.
+## This records a more expensive new town, not a claim that old performance held.
 const PLANNER_SOLVE_MS_CEILING: Dictionary = {
 	"12/compact": 2300,
 	"9/compact": 3600,
-	"3/standard": 4000,
+	"3/standard": 8100,
 	"9/standard": 4900,
 }
 
@@ -8003,6 +8012,7 @@ func test_the_hillside_pushes_back() -> void:
 	var cache := EnvironmentRenderCache.new(catalog)
 	var checked := 0
 	var corpus_head_panels := 0
+	var corpus_foot_panels := 0
 	var corpus_collided_gardens := 0
 	var corpus_rims := 0
 	for outcome: Dictionary in _corpus():
@@ -8031,7 +8041,10 @@ func test_the_hillside_pushes_back() -> void:
 			if not bool(mesh.get("terrain_ground", false)):
 				continue
 			var vertices := mesh.vertices as PackedVector3Array
-			var expected_faces := vertices.size() / 4 * 6
+			# Concave corners add visual-only rock tuck triangles (the mesher's
+			# `terrain_rock_vertices`); collision keeps the complete cell quads.
+			var tucks := (mesh.get("terrain_rock_vertices", []) as Array).size()
+			var expected_faces := (vertices.size() - tucks) / 4 * 6
 			if bool(mesh.get("visual_only", false)):
 				public_plazas += vertices.size() / 4
 				var collision_faces := mesh.collision_faces \
@@ -8085,9 +8098,12 @@ func test_the_hillside_pushes_back() -> void:
 		# SUCCESS, and this test is the repo's only rim counter -- a vocabulary
 		# regression that dropped the rolled rim entirely would leave the
 		# cosmetic ruling with nothing left to rule on, while green.
-		assert_gt(foot_panels, 0,
-			"%s must line some walked cell with rock to measure" \
-				% _label(outcome))
+		# September 22 (L1): the FOOT population is corpus-wide too. A prefab
+		# may no longer stand alone on a raised level, so 12/compact's hilltop
+		# is built out instead of left as a grass-capped rock platform, and that
+		# town has no rock beside a street left to measure (20 foot panels
+		# before). The other towns keep the class honest.
+		corpus_foot_panels += foot_panels
 		# TASK I1: the HEAD population is corpus-wide, not per town. A rock panel
 		# at head height over a walked cell needs a bank standing two bands over
 		# a street, and the smallest town in the shrunk corpus -- 12/compact, 30
@@ -8122,6 +8138,8 @@ func test_the_hillside_pushes_back() -> void:
 		corpus_rims += rims
 		checked += 1
 	assert_gt(checked, 0, "the corpus must seal a town to measure")
+	assert_gt(corpus_foot_panels, 0,
+		"the corpus must line some walked cell with rock to measure")
 	assert_gt(corpus_head_panels, 0,
 		("no town in the corpus raises a rock panel to head height over a " \
 			+ "walked cell; the per-town head assertion above is vacuous"))
@@ -9467,6 +9485,8 @@ func test_corpus_composes() -> void:
 	## written summary, because solving it a second time inside this file would
 	## double its budget for no new information.
 	for outcome: Dictionary in _corpus():
+		print("PLANNER_MEASURE seed=%s scale=%s ms=%d" % [outcome.seed,
+			outcome.scale, outcome.ms])
 		var ceiling := int(PLANNER_SOLVE_MS_CEILING.get(
 			"%d/%s" % [int(outcome.seed), String(outcome.scale)], 0))
 		assert_gt(ceiling, 0,

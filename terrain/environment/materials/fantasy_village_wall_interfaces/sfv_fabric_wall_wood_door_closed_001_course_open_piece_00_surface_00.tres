@@ -1,6 +1,6 @@
-[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://c5mxciqt8lfwh"]
 
-[ext_resource type="Texture2D" path="res://terrain/environment/textures/fantasy_village_wall_interfaces/6b8ecd33a34708110ecc.res" id="1_7x50y"]
+[ext_resource type="Texture2D" uid="uid://bir1lm0u1gvue" path="res://terrain/environment/textures/fantasy_village_wall_interfaces/6b8ecd33a34708110ecc.res" id="1_7x50y"]
 
 [resource]
 resource_name = "SFV_MAIN_MATERIAL"

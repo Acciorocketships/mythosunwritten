@@ -6,7 +6,7 @@ extends RefCounted
 ## Its finite grade patch is published before final terrain sampling.
 const DATUM_GUARD := VillageWorldScale.GROUND_DATUM_GUARD
 const MAX_TERRAIN_RELIEF := VillageUrbanFabricPlan.MAX_FABRIC_TERRAIN_RELIEF \
-	* VillageWorldScale.PRODUCTION_UNIFORM_SCALE
+	* VillageWorldScale.VERTICAL_SCALE
 const SUPPORT_STEP := 3.0
 const CLEARANCE_MARGIN := 1.5
 const WALK_HALF_THICKNESS := 0.10
@@ -21,7 +21,8 @@ const _CARDINAL_QUARTERS := 4
 
 static func solve(terrain: VillageTerrainView, city_seed: int,
 		stable_id: StringName, centre: Vector2, street_axis: Vector2,
-		program: VillageProgram, world_seed: int = 0) -> VillageUrbanFabricPlan:
+		program: VillageProgram, world_seed: int = 0,
+		canonical_ground: FeatureGroundField = null) -> VillageUrbanFabricPlan:
 	assert(terrain != null and not stable_id.is_empty() and centre.is_finite())
 	assert(street_axis.is_normalized() and program != null)
 	if program.settlement_fabric_program == null:
@@ -44,8 +45,10 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 			WarrenSpatialFabricCompiler.last_failure))
 	var placement := _placement(terrain, preview, centre, street_axis)
 	placement["local_bounds"] = _local_bounds(preview_fabric)
-	return _materialize(terrain, stable_id, preview, preview_fabric,
+	var result := _materialize(terrain, stable_id, preview, preview_fabric,
 		placement, program, world_seed)
+	_connect_world_roads(result, terrain, stable_id, centre, street_axis, canonical_ground)
+	return result
 
 
 static func _placement(terrain: VillageTerrainView,
@@ -101,7 +104,12 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	var contact_specs := terrain_contact_specs(spatial, fabric)
 	result.terrain_grade = _ground_grade(stable_id, spatial, fabric, world_frame)
 	result.world_transform = world_frame
-	var local_payload := SettlementFabricAssembler.payload(fabric)
+	# Buildings are realized by the active building kit; legacy recipe
+	# placements owned by those buildings are withdrawn (see KitVillageBuildings).
+	var built := KitVillageBuildings.build(spatial, fabric, SuntailBuildingKit.create())
+	var local_payload := KitVillageBuildings.legacy_payload_without(fabric,
+		built.replaced_units)
+	local_payload.append_from(built.payload as EnvironmentInstancePayload)
 	# TASK I4 ROUND 6, B2. The court's own edge planters are gated on the module
 	# boxes the plan really carries, exactly as the garden planting is -- see
 	# `maze_courtyard_planter_is_clear`.
@@ -111,14 +119,14 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 		SettlementFabricAssembler.maze_skin_panel_boxes_for(fabric),
 		fabric.planned_plaza_cells))
 	local_payload.append_from(SettlementFabricAssembler.low_retaining_payload(fabric))
-	local_payload.append_from(
-		SettlementFabricAssembler.terrace_retaining_payload(fabric, false))
+	local_payload.append_from(KitVillageBuildings.without_prefixes(
+		SettlementFabricAssembler.terrace_retaining_payload(fabric, false),
+		KitVillageBuildings.REPLACED_TERRACE_PREFIXES))
 	var frontage := _terrain_qualified_frontage(terrain, fabric, world_frame)
 	result.frontage_sites = frontage.records
 	local_payload.append_from(frontage.payload as EnvironmentInstancePayload)
-	_append_terrain_bearing_foundations(local_payload, terrain, fabric,
-		world_frame)
 	_append_ground_supports(local_payload, terrain, fabric, world_frame, contact_specs)
+	local_payload = KitSubstitution.apply(local_payload)
 	for asset_id: StringName in local_payload.asset_ids():
 		var batch := local_payload.batches[asset_id] as Dictionary
 		var collision_flags: Array = batch.get("collision_enabled", [])
@@ -161,6 +169,8 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 				color = CliffDressing.tint_at(world_transform, world_seed)
 			result.entries.append({
 				"asset_id": asset_id,
+				"visibility_owner": world_frame * (batch.visibility_owners[index] as AABB) \
+					if batch.has("visibility_owners") and (batch.visibility_owners[index] as AABB).has_volume() else AABB(),
 				"transform": world_transform,
 				"color": color,
 				"collision_enabled": collision_flags.is_empty() \
@@ -193,10 +203,12 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	var district_id := StringName("%s.warren" % stable_id)
 	var district_centre := Vector2(world_centre3.x, world_centre3.z)
 	_append_typed_occupancy(result, fabric, world_frame, district_id, yaw)
-	result.clearances.append(FeatureGroundShape.oriented_rect(
+	var envelope := FeatureGroundShape.oriented_rect(
 		district_centre, horizontal_size * 0.5 \
 			+ Vector2.ONE * CLEARANCE_MARGIN * world_scale,
-		yaw, 0, 0, StringName("%s.clearance" % district_id)))
+		yaw, 0, 0, StringName("%s.clearance" % district_id))
+	envelope.envelope = true
+	result.clearances.append(envelope)
 	# Ground-level cells retain the canonical path paint beneath their plank
 	# modules.  Upper cells are deliberately absent from the 2D ground field.
 	for cell: Vector3i in fabric.surface_plan.cells_for_kind(
@@ -213,7 +225,8 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	result.volumes.append(VillageOccupancyVolume.new(
 		VillageOccupancy.Role.GROUND_EXCLUSIVE, district_centre,
 		horizontal_size * 0.5 + Vector2.ONE * CLEARANCE_MARGIN * world_scale, yaw,
-		float(placement.minimum_y) - SUPPORT_STEP * world_scale, top_y,
+		float(placement.minimum_y) - SUPPORT_STEP \
+			* VillageWorldScale.vertical_scale_of(world_frame), top_y,
 		StringName("%s.exclusive" % district_id), district_id))
 	for building: WarrenBuildingVolume in spatial.buildings:
 		result.buildings.append({
@@ -233,6 +246,30 @@ static func _materialize(terrain: VillageTerrainView, stable_id: StringName,
 	result.accepted = true
 	result.reason = &"accepted"
 	return result
+
+
+static func _append_terrain_handoff_paint(result: VillageUrbanFabricPlan,
+		specs: Array[Dictionary], paths: Array[Dictionary], district_id: StringName) -> void:
+	## Paint an approach only after an actual external road has selected its
+	## gate. Raised exits keep their built stair approach; an unused level gate
+	## opens directly onto natural ground without inventing a narrow road stub.
+	for spec: Dictionary in specs:
+		var geometry := terrain_contact_local_geometry(spec)
+		var inner: Vector3 = result.world_transform * (geometry.inner_centre as Vector3)
+		var outer: Vector3 = result.world_transform * (geometry.outer_centre as Vector3)
+		var a := Vector2(inner.x,inner.z)
+		var b := Vector2(outer.x,outer.z)
+		var connected := bool(geometry.has_stairs)
+		for path: Dictionary in paths:
+			var points: Array = path.points
+			if not points.is_empty() and (points.back() as Vector2).distance_to(b) < 0.001:
+				connected = true
+				break
+		if not connected: continue
+		result.surfaces.append(FeatureGroundShape.oriented_rect((a+b)*0.5,
+			Vector2(a.distance_to(b)*0.5,PathProgram.PATH_HALF_WIDTH),(b-a).angle(),
+			FeatureGroundField.WORN_PATH,VillagePlan.SURFACE_PRIORITY,
+			StringName("%s.handoff.%s" % [district_id,spec.stable_suffix])))
 
 
 static func _append_terrain_handoffs(result: VillageUrbanFabricPlan,
@@ -257,13 +294,11 @@ static func _append_terrain_handoffs(result: VillageUrbanFabricPlan,
 			result.entrance_stair_count += 1
 			result.volumes.append(VillageOccupancyVolume.new(
 				VillageOccupancy.Role.WALK_SURFACE,centre,half_extents,angle,
-				minf(inner.y,outer.y)-PublicRealmSurfacePlan.FLOOR_THICKNESS*scale_value,
+				minf(inner.y,outer.y)-PublicRealmSurfacePlan.FLOOR_THICKNESS \
+					* VillageWorldScale.vertical_scale_of(result.world_transform),
 				maxf(inner.y,outer.y),id,district_id,result.public_walk_network_id))
-		# Paint shares the connecting road's width. The two-cell structural
-		# aperture still owns its complete clearance and, when raised, its stairs.
-		result.surfaces.append(FeatureGroundShape.oriented_rect(centre,
-			Vector2(half_extents.x,PathProgram.PATH_HALF_WIDTH), angle, FeatureGroundField.WORN_PATH,
-			VillagePlan.SURFACE_PRIORITY, id))
+		# The full structural approach owns clearance independently of whether
+		# an external road later selects this gate for ground paint.
 		result.clearances.append(FeatureGroundShape.oriented_rect(centre,
 			half_extents, angle, FeatureGroundField.NATURAL, 0,
 			StringName("%s.clearance" % id)))
@@ -345,12 +380,17 @@ static func _world_surface_mesh(mesh: Dictionary, world_frame: Transform3D,
 	## payload needs no per-mesh transform channel. Uniform scale preserves normal
 	## directions, so the transformed basis only needs normalization here.
 	var out := mesh.duplicate(true)
+	if mesh.has("visibility_owner"):
+		out["visibility_owner"] = world_frame * (mesh.visibility_owner as AABB)
 	var vertices := PackedVector3Array()
 	for vertex: Vector3 in mesh.vertices as PackedVector3Array:
 		vertices.append(world_frame * vertex)
 	var normals := PackedVector3Array()
+	# The frame may be anisotropic (kit-derived metric): normals transform by
+	# the inverse transpose.
+	var normal_basis := world_frame.basis.inverse().transposed()
 	for normal: Vector3 in mesh.normals as PackedVector3Array:
-		normals.append((world_frame.basis * normal).normalized())
+		normals.append((normal_basis * normal).normalized())
 	var collision := PackedVector3Array()
 	for face_point: Vector3 in mesh.collision_faces as PackedVector3Array:
 		collision.append(world_frame * face_point)
@@ -360,12 +400,12 @@ static func _world_surface_mesh(mesh: Dictionary, world_frame: Transform3D,
 	if bool(mesh.get("terrain_ground", false)):
 		var colors := PackedColorArray()
 		colors.resize(vertices.size())
+		var earth := bool(mesh.get("terrain_path", false)) \
+			or bool(mesh.get("terrain_path_spot", false))
 		for index in vertices.size():
-			# Streamed grass, path paint, cliff skirts, and village terrain
-			# surfaces all multiply the shared atlas by the same world-space biome
-			# tint. Leaving structural paths white made a handoff change colour at
-			# the exact seam even when its vertices were coincident with terrain.
-			colors[index] = BiomeRegistry.ground_tint_at(vertices[index], world_seed) \
+			# Match native paths at town handoffs while turf keeps its biome tint.
+			colors[index] = SlopeAtlas.path_tint(bool(mesh.get("terrain_path_spot", false))) \
+				if earth else BiomeRegistry.ground_tint_at(vertices[index], world_seed) \
 				if world_seed != 0 else Color.WHITE
 		out["colors"] = colors
 	elif CliffDressing.is_terrain_skin_asset(StringName(mesh.get("material_asset_id", ""))):
@@ -682,7 +722,8 @@ static func _append_typed_occupancy(result: VillageUrbanFabricPlan,
 			Vector2(local_delta.length() * world_scale * 0.5,
 				GUARD_HALF_WIDTH * world_scale),
 			yaw + local_angle, world_centre.y,
-			world_centre.y + GUARD_HEIGHT * world_scale,
+			world_centre.y + GUARD_HEIGHT \
+				* VillageWorldScale.vertical_scale_of(world_frame),
 			StringName("%s.guard.%s" % [district_id,
 				StringName(segment.stable_key)]), district_id,
 			walk_network_id))
@@ -694,6 +735,8 @@ static func _append_cell_volumes(result: VillageUrbanFabricPlan,
 		yaw: float) -> void:
 	var world_scale := VillageWorldScale.scale_of(world_frame)
 	var half_cell := FabricRecipe.CELL_SIZE * world_scale * 0.5
+	var half_band := WarrenVolumePlan.VERTICAL_BAND_SIZE_M \
+		* VillageWorldScale.vertical_scale_of(world_frame) * 0.5
 	# Coalesce identical-role voxels before entering the bucketed occupancy
 	# index. This retains exact cell coverage while avoiding a quadratic
 	# transaction check over hundreds of one-cell prisms.
@@ -707,9 +750,9 @@ static func _append_cell_volumes(result: VillageUrbanFabricPlan,
 		var world_centre := world_frame * local_centre
 		var cell_count := maximum - minimum + Vector3i.ONE
 		var y_min := world_frame.origin.y \
-			+ float(minimum.y) * VillageWorldScale.WORLD_FINE_CELL_M - half_cell
+			+ float(minimum.y) * VillageWorldScale.WORLD_BAND_M - half_band
 		var y_max := world_frame.origin.y \
-			+ float(maximum.y) * VillageWorldScale.WORLD_FINE_CELL_M + half_cell
+			+ float(maximum.y) * VillageWorldScale.WORLD_BAND_M + half_band
 		if role == VillageOccupancy.Role.WALK_SURFACE:
 			y_min = world_centre.y - WALK_HALF_THICKNESS * world_scale
 			y_max = world_centre.y + WALK_HALF_THICKNESS * world_scale
@@ -784,7 +827,8 @@ static func _append_ground_supports(payload: EnvironmentInstancePayload,
 		var lateral := Vector3(spec.lateral) * float(geometry.half_width)
 		var box := AABB(inner-lateral,Vector3.ZERO).expand(inner+lateral)
 		box = box.expand(outer-lateral).expand(outer+lateral)
-		box.size.y += TraversalEnvelope.MIN_HEADROOM / VillageWorldScale.scale_of(world_frame)
+		box.size.y += TraversalEnvelope.MIN_HEADROOM \
+			/ VillageWorldScale.vertical_scale_of(world_frame)
 		approach_boxes.append(box)
 	var support_cells: Dictionary = {}
 	var solids := fabric.transformed_cells(&"solid")
@@ -826,7 +870,7 @@ static func _append_ground_supports(payload: EnvironmentInstancePayload,
 		# approach must nevertheless reserve its standing space before posts are
 		# emitted, just as the internal public lanes do above. Test the whole
 		# column, including the native timber width, so no floating upper stump remains.
-		var local_drop := drop / VillageWorldScale.scale_of(world_frame)
+		var local_drop := drop / VillageWorldScale.vertical_scale_of(world_frame)
 		var column := AABB(local_point-Vector3(0.35,local_drop,0.35),Vector3(0.7,local_drop,0.7))
 		var crosses_approach := false
 		for approach: AABB in approach_boxes:
@@ -834,7 +878,7 @@ static func _append_ground_supports(payload: EnvironmentInstancePayload,
 		if crosses_approach:
 			continue
 		var world_support_step := SUPPORT_STEP \
-			* VillageWorldScale.scale_of(world_frame)
+			* VillageWorldScale.vertical_scale_of(world_frame)
 		var segment_count := ceili(drop / world_support_step)
 		for segment in segment_count:
 			var local_y := local_point.y - float(segment + 1) * SUPPORT_STEP
@@ -897,7 +941,7 @@ static func _append_terrain_bearing_foundations(
 			# elevated terrace. A single plinth is not a column: if its authored
 			# bottom cannot reach the ground, emitting it creates a floating stone
 			# box beside the lower roof. Structural terrace supports own that span.
-			var course_height := 3.0 * VillageWorldScale.scale_of(world_frame)
+			var course_height := 3.0 * VillageWorldScale.vertical_scale_of(world_frame)
 			if floor_world_y - minimum_ground_y > course_height \
 					+ OPTIONAL_FRONTAGE_GROUND_TOLERANCE:
 				continue
@@ -940,6 +984,17 @@ static func _local_bounds(fabric: SettlementFabricPlan) -> AABB:
 				Vector3.ONE * FabricRecipe.CELL_SIZE)
 			bounds = cell_bounds if not initialized else bounds.merge(cell_bounds)
 			initialized = true
+	# The finished retained ground is built town mass too. In particular a
+	# raised garden can extend beyond every room and public floor. Omitting it
+	# let the external road run through its stone base. Use the same transaction
+	# as the renderer, so withdrawn suspended support markers stay withdrawn.
+	var skin := SettlementFabricAssembler.maze_ground_skin_transaction(fabric)
+	for cell: Vector3i in skin.retained:
+		var corner := (Vector3(cell) - Vector3(0.5, 0.0, 0.5)) \
+			* FabricRecipe.CELL_SIZE
+		var cell_bounds := AABB(corner, Vector3.ONE * FabricRecipe.CELL_SIZE)
+		bounds = cell_bounds if not initialized else bounds.merge(cell_bounds)
+		initialized = true
 	assert(initialized)
 	return bounds
 
@@ -1014,7 +1069,7 @@ static func _sample_ground_bands(terrain: VillageTerrainView,
 			maximum_y = maxf(maximum_y, height)
 			column_max = maxf(column_max, height)
 		bands[column] = ceili((column_max - world_frame.origin.y) \
-			/ VillageWorldScale.WORLD_FINE_CELL_M)
+			/ VillageWorldScale.WORLD_BAND_M)
 	return {
 		"wet": false,
 		"ground_bands": bands,
@@ -1036,3 +1091,36 @@ static func _rejected(reason: StringName) -> VillageUrbanFabricPlan:
 		VillageUrbanFabricPlan.GenerationKind.VOLUMETRIC_WARREN
 	result.reason = reason
 	return result
+
+
+static func _connect_world_roads(result: VillageUrbanFabricPlan,
+		terrain: VillageTerrainView, stable_id: StringName, centre: Vector2,
+		axis: Vector2, ground: FeatureGroundField) -> void:
+	var occupied := Rect2(centre, Vector2.ZERO)
+	for volume: VillageOccupancyVolume in result.volumes:
+		occupied = occupied.merge(volume.bounds_xz())
+	var contacts := VillageOutskirtsSolver._ground_contacts(terrain, centre, axis, result)
+	var topology := preload("res://scripts/terrain/features/villages/VillageWarrenRoadConnections.gd").topology(
+		occupied, contacts, ground, stable_id)
+	result.surfaces.append(topology.domain)
+	result.surfaces.append_array(topology.handoff_domains)
+	var paths: Array[Dictionary] = topology.paths
+	result.world_road_connections.assign(paths)
+	if result.volumetric_spatial != null and result.fabric_plan != null:
+		_append_terrain_handoff_paint(result,
+			terrain_contact_specs(result.volumetric_spatial,result.fabric_plan),
+			paths,StringName("%s.warren" % stable_id))
+	if paths.is_empty():
+		return
+	var datum := result.world_transform.origin.y - DATUM_GUARD
+	result.terrain_grade = VillageOutskirtsConstruction._extend_street_grade(
+		result.terrain_grade, paths, datum)
+	var graded := terrain.with_terrain_grades([result.terrain_grade])
+	var streets := VillageOutskirtsPlan.new()
+	var seen: Dictionary = {}
+	for path: Dictionary in paths:
+		VillageOutskirtsConstruction._append_street(streets, path.points, path.owner,
+			result.public_walk_network_id, graded, PathProgram.PATH_HALF_WIDTH, seen)
+	result.surfaces.append_array(streets.surfaces)
+	result.clearances.append_array(streets.clearances)
+	result.volumes.append_array(streets.volumes)

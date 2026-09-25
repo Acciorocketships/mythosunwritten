@@ -707,7 +707,7 @@ static func from_volume(volume: WarrenVolumePlan,
 	var room_units := WarrenSpatialFabricCompiler.compile_room_units(plan,
 		construction_program)
 	_stamp_maze_stage(volume, &"room_gate", room_gate_started_ms)
-	if room_units.is_empty():
+	if room_units.is_empty() and not plan.buildings.is_empty():
 		last_failure = "authored room envelope gate failed: %s" \
 			% WarrenSpatialFabricCompiler.last_failure
 		if diagnostic_trace_room_gate:
@@ -769,7 +769,10 @@ static func _grid_bounds(massif: WarrenMassif) -> Dictionary:
 		maximum_z = maxi(maximum_z, column.y * 2 + 1)
 		minimum_y = mini(minimum_y, massif.base_at(column))
 		maximum_y = maxi(maximum_y, massif.top_at(column))
-	var minimum := Vector3i(minimum_x - GRID_PADDING_CELLS, minimum_y,
+	# Native feet and foundation slabs can cross the ground datum. Keep one
+	# exterior band for their measured clearance, just as X/Z keep an eave halo.
+	# This does not add massif, walking surfaces or terrain bearing.
+	var minimum := Vector3i(minimum_x - GRID_PADDING_CELLS, minimum_y - 1,
 		minimum_z - GRID_PADDING_CELLS)
 	var maximum := Vector3i(maximum_x + GRID_PADDING_CELLS,
 		maximum_y + ROOF_CLEARANCE_CELLS,
@@ -906,6 +909,9 @@ static func _carve_public_volume(grid: WarrenSpatialGrid,
 			air[fine_cell] = true
 	for cell_value: Variant in additional_air.keys():
 		air[cell_value as Vector3i] = true
+	for transition: WarrenVolumeTransition in volume.transitions:
+		for cell: Vector3i in transition.clearance_air_cells():
+			air[cell] = true
 	var route: Dictionary = {}
 	for macro_floor: Vector3i in volume.walk_cells:
 		for fine_floor: Vector3i in _fine_square(macro_floor):
@@ -2219,8 +2225,7 @@ static func _maze_deck_floor_cells(volume: WarrenVolumePlan) -> Dictionary:
 		if StringName(plot["kind"]) != WarrenMazeSourcePlan.PLOT_DECK:
 			continue
 		var band := int(plot["floor"])
-		for cell_value: Variant in plot["cells"] as Array:
-			var column := cell_value as Vector2i
+		for column: Vector2i in WarrenMazeSourcePlan.deck_flat_columns(plot):
 			for fine: Vector3i in _fine_square(Vector3i(column.x, band,
 					column.y)):
 				out[fine] = true
@@ -2442,9 +2447,6 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 						parcel.frontage_direction.y)))
 		proposal["parcel"] = parcel
 		proposals.append(proposal)
-	if proposals.is_empty():
-		last_failure = "parcel seed produced no complete room proposals"
-		return {}
 	proposals.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return String(a.stable_id) < String(b.stable_id))
 	var court_floors := _courtyard_floor_cells(volume)
@@ -2562,6 +2564,11 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	skywalk_plan = maze_features.skywalk_plan as Dictionary
 	landmark_reservations.assign(
 		maze_features.landmark_reservations as Array)
+	# Native buildings and modular rooms are alternative occupants of the
+	# same source. Require actual construction after both have been resolved.
+	if proposals.is_empty() and landmark_reservations.is_empty():
+		last_failure = "source produced no complete modular or native buildings"
+		return {}
 	selected_occluder_rank = \
 		maze_features.selected_occluder_rank as Dictionary
 	selected_market_landmark_owners = \
@@ -3210,9 +3217,11 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# bridge no longer depends on a later generic room happening to become its
 	# flank. Existing primary rooms can still satisfy those sockets; otherwise
 	# `_stamp_maze_bridges` constructs the sealed endpoint pair atomically.
+	var bridge_stamp_started_ms := Time.get_ticks_msec()
 	var bridges := _stamp_maze_bridges(grid, volume, parcels, buildings,
 		supports, required_supports, terrain_support_ids, support_edges,
 		protected_owners, construction_program)
+	_stamp_maze_stage(volume, &"bridge_stamping", bridge_stamp_started_ms)
 	if bool(bridges.get("failed", false)):
 		last_failure = "maze bridge stamping failed: %s" % last_failure
 		return {}
@@ -3220,9 +3229,11 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# plot mass is not something to discover -- the plot planner assigned it to a
 	# building already -- so it is stamped from the record rather than searched
 	# for. It now composes around the already-sealed bridge network.
+	var back_room_started_ms := Time.get_ticks_msec()
 	var back_rooms := _stamp_maze_back_rooms(grid, volume, parcels, proposals,
 		buildings, supports, required_supports, terrain_support_ids,
 		support_edges, protected_owners, construction_program)
+	_stamp_maze_stage(volume, &"directed_back_rooms", back_room_started_ms)
 	if bool(back_rooms.get("failed", false)):
 		last_failure = "maze back-room stamping failed: %s" % last_failure
 		return {}
@@ -3427,6 +3438,14 @@ static func _partition_rooms(grid: WarrenSpatialGrid,
 	# Building count is an observation for the corpus, not town admission.
 	# Connected components can merge several addressed parcels into one owner.
 	composition_audit["building_count_below_reference"] = buildings.size() < MIN_BUILDINGS
+	for reservation: Dictionary in landmark_reservations:
+		var native_id := StringName(reservation.feature_id)
+		if (reservation.bearing_cells as Dictionary).is_empty() \
+				or not supports.add_node(native_id):
+			last_failure = "native building has no unique reserved terrain bearing"
+			return {}
+		required_supports.append(native_id)
+		terrain_support_ids.append(native_id)
 	for root_id: StringName in terrain_support_ids:
 		if not supports.mark_terrain_root(root_id):
 			last_failure = "could not root %s" % root_id
@@ -3704,8 +3723,18 @@ static func _maze_landmark_refusal(grid: WarrenSpatialGrid,
 			or not _skywalk_clearance_fits_grid(grid, clearance) \
 			or not _skywalk_clearance_fits_protected(protected_cells,
 				protected_owners):
-		return {"reason": ("measured clearance at %s leaves the grid or " \
-			+ "meets another feature") % origin}
+		var conflicts: Array[String] = []
+		for cell: Vector3i in protected_cells:
+			if protected_owners.has(cell):
+				conflicts.append("%s owned by %s" % [cell, protected_owners[cell]])
+			elif not grid.contains(cell):
+				conflicts.append("%s outside grid" % cell)
+			elif clearance.has(cell) and grid.use_at(cell) not in [
+					WarrenSpatialGrid.Use.OUTSIDE, WarrenSpatialGrid.Use.ALLOCATABLE]:
+				conflicts.append("%s use %s" % [cell, grid.use_at(cell)])
+			if conflicts.size() >= 4:
+				break
+		return {"reason": "measured clearance at %s: %s" % [origin, "; ".join(conflicts)]}
 	# TASK C5c RULING 5, the other half of letting a prefab commit. A house's
 	# AUTHORED SHELL is wider than its footprint -- native eaves overhang by a
 	# fraction of a fine cell, which is why the residual scan carries a
@@ -9305,15 +9334,6 @@ static func _residual_room_envelope_rejection(candidate: WarrenRoomStamp,
 		return "candidate or construction program is missing"
 	if not _residual_preserves_existing_roofability(candidate, building_by_id):
 		return "candidate would leave an existing room without a complete crown"
-	var roof_conflict := _residual_existing_exact_roof_conflict(candidate,
-		building_by_id, program, world_seed, grid)
-	if not roof_conflict.is_empty():
-		return ("candidate intersects existing room roof closure %s" \
-			% roof_conflict)
-	var role_roof_rejection := _role_specific_roof_rejection(candidate,
-		building_by_id, program, world_seed)
-	if not role_roof_rejection.is_empty():
-		return role_roof_rejection
 	var candidate_recipe := program.recipe(
 		WarrenSpatialFabricCompiler._room_recipe_id(candidate, world_seed, false))
 	if candidate_recipe == null:
@@ -9347,8 +9367,18 @@ static func _residual_room_envelope_rejection(candidate: WarrenRoomStamp,
 						candidate_bounds, existing_bounds):
 					return ("candidate envelope %s intersects room %s envelope %s" % [
 						candidate_bounds, existing.stable_id, existing_bounds])
+	var closure_context: Dictionary = {}
+	var roof_conflict := _residual_existing_exact_roof_conflict(candidate,
+		building_by_id, program, world_seed, grid, closure_context)
+	if not roof_conflict.is_empty():
+		return ("candidate intersects existing room roof closure %s" \
+			% roof_conflict)
+	var role_roof_rejection := _role_specific_roof_rejection(candidate,
+		building_by_id, program, world_seed)
+	if not role_roof_rejection.is_empty():
+		return role_roof_rejection
 	if not _residual_roof_envelope_fits(candidate, building_by_id, program,
-			world_seed, grid):
+			world_seed, grid, closure_context):
 		return "candidate has no exact roof envelope that clears existing rooms"
 	return ""
 
@@ -9430,16 +9460,20 @@ static func _residual_preserves_existing_roofability(
 
 static func _roofability_defect_count(rooms: Array[WarrenRoomStamp],
 		occupied: Dictionary) -> int:
+	# All rooms at one band query the same complete upper occupancy. Index it
+	# once instead of scanning every town cell again for every room.
+	var columns_by_band: Dictionary = {}
+	for occupied_cell: Vector3i in occupied:
+		if not columns_by_band.has(occupied_cell.y):
+			columns_by_band[occupied_cell.y] = {}
+		(columns_by_band[occupied_cell.y] as Dictionary)[Vector2i(
+			occupied_cell.x, occupied_cell.z)] = true
 	var defects := 0
 	for room: WarrenRoomStamp in rooms:
 		var top_y := room.lattice_origin.y \
 			+ WarrenSpatialGrid.STOREY_CELLS - 1
 		var exposed: Dictionary = {}
-		var upper_columns: Dictionary = {}
-		for occupied_cell_value: Variant in occupied.keys():
-			var occupied_cell := occupied_cell_value as Vector3i
-			if occupied_cell.y == top_y + 1:
-				upper_columns[Vector2i(occupied_cell.x, occupied_cell.z)] = true
+		var upper_columns: Dictionary = columns_by_band.get(top_y + 1, {})
 		for cell: Vector3i in room.private_cells:
 			if cell.y == top_y and not occupied.has(cell + Vector3i.UP):
 				exposed[Vector2i(cell.x, cell.z)] = true
@@ -9452,7 +9486,8 @@ static func _roofability_defect_count(rooms: Array[WarrenRoomStamp],
 
 static func _residual_roof_envelope_fits(candidate: WarrenRoomStamp,
 		building_by_id: Dictionary, program: SettlementFabricProgram,
-		world_seed: int, grid: WarrenSpatialGrid = null) -> bool:
+		world_seed: int, grid: WarrenSpatialGrid = null,
+		closure_context: Dictionary = {}) -> bool:
 	## Residual rooms are selected after the macro composition, so they must prove
 	## a complete roof profile before entering the grid. Room-shell adjacency alone
 	## is insufficient: the old preflight skipped every shared face and admitted a
@@ -9472,15 +9507,8 @@ static func _residual_roof_envelope_fits(candidate: WarrenRoomStamp,
 	# atomic campaign later found passing through an unrelated terminal-tight
 	# roof. Candidate admission now uses the same semantic and measured-seam
 	# predicate as sequential roof commitment.
-	var closure_rooms: Array[WarrenRoomStamp] = []
-	for building_value: Variant in building_by_id.values():
-		var closure_building := building_value as WarrenBuildingVolume
-		if closure_building != null:
-			closure_rooms.append_array(closure_building.room_records)
-	closure_rooms.append(candidate)
-	var required_closures := WarrenSpatialFabricCompiler \
-		.required_roof_closure_options_for_rooms(grid, closure_rooms, program,
-			world_seed) if grid != null else [] as Array[Dictionary]
+	var required_closures := _residual_required_roof_closures(candidate,
+		building_by_id, program, world_seed, grid, closure_context)
 	# Residual admission and final roof construction share the compiler's exact
 	# required closure, rather than independently enumerating every stepped-gable
 	# permutation. For a complete free crown that closure is the all-low authored
@@ -9740,7 +9768,7 @@ static func _discard_unassigned_mass(grid: WarrenSpatialGrid) -> bool:
 static func _residual_existing_exact_roof_conflict(
 		candidate: WarrenRoomStamp, building_by_id: Dictionary,
 		program: SettlementFabricProgram, world_seed: int,
-		grid: WarrenSpatialGrid) -> StringName:
+		grid: WarrenSpatialGrid, closure_context: Dictionary = {}) -> StringName:
 	## Residual packing is downstream of the primary room composition but upstream
 	## of roof construction. Ask the roof compiler for the exact finite closure
 	## domains of the town WITH the candidate present, then prove the candidate's
@@ -9749,6 +9777,26 @@ static func _residual_existing_exact_roof_conflict(
 	## removes the former second AABB-only approximation of roofability.
 	if candidate == null or program == null or grid == null:
 		return &"invalid-candidate-or-program"
+	var closures := _residual_required_roof_closures(candidate,
+		building_by_id, program, world_seed, grid, closure_context)
+	var candidate_recipe := program.recipe(WarrenSpatialFabricCompiler \
+		._room_recipe_id(candidate, world_seed, false))
+	if candidate_recipe == null:
+		return &"missing-candidate-recipe"
+	return WarrenSpatialFabricCompiler._room_required_roof_conflict(candidate,
+		candidate_recipe, closures, program)
+
+
+static func _residual_required_roof_closures(candidate: WarrenRoomStamp,
+		building_by_id: Dictionary, program: SettlementFabricProgram,
+		world_seed: int, grid: WarrenSpatialGrid,
+		context: Dictionary) -> Array[Dictionary]:
+	# Both shell admission and crown admission inspect this identical future
+	# town. Keep one query within the current proposal, never across mutations.
+	if context.has("closures"):
+		return context.closures
+	if grid == null:
+		return [] as Array[Dictionary]
 	var rooms: Array[WarrenRoomStamp] = []
 	for building_value: Variant in building_by_id.values():
 		var building := building_value as WarrenBuildingVolume
@@ -9758,12 +9806,8 @@ static func _residual_existing_exact_roof_conflict(
 	var closures := WarrenSpatialFabricCompiler \
 		.required_roof_closure_options_for_rooms(grid, rooms, program,
 			world_seed)
-	var candidate_recipe := program.recipe(WarrenSpatialFabricCompiler \
-		._room_recipe_id(candidate, world_seed, false))
-	if candidate_recipe == null:
-		return &"missing-candidate-recipe"
-	return WarrenSpatialFabricCompiler._room_required_roof_conflict(candidate,
-		candidate_recipe, closures, program)
+	context["closures"] = closures
+	return closures
 
 
 static func _unassigned_mass_audit(grid: WarrenSpatialGrid) -> Dictionary:
@@ -10001,8 +10045,7 @@ static func _carve_route_connected_rooftop_court(grid: WarrenSpatialGrid,
 	## bored route.  The later shell pass sees PUBLIC_FLOOR on that interface and
 	## therefore emits neither a pitched roof nor a second overlapping floor.
 	if grid == null or grid.is_sealed() or source == null \
-			or not source.is_sealed() or route_floors.is_empty() \
-			or buildings.is_empty():
+			or not source.is_sealed() or route_floors.is_empty():
 		last_failure = "roof-court planning lacks mutable town topology"
 		return {"failed": true}
 	var building_by_cell: Dictionary = {}

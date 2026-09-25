@@ -1,0 +1,5 @@
+{
+"ground_bands": {},
+"profile": &"compact",
+"world_seed": 9045190421882749890
+}

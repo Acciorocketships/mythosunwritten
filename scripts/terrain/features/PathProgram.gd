@@ -117,7 +117,10 @@ static func shared_junction_shapes(paths: Array[Dictionary], half_width: float,
 
 const SUPER_CELLS := SettlementPlan.SUPER_CELLS
 const NODE_MAX_SUPPORT_SPAN := 1.0
+# Additional climbing/descending beyond the endpoint elevation difference.
 const ROUTE_VERTICAL_BUDGET_UNITS := 28
+# A finite 96 m corridor around the endpoint rectangle permits local bypasses.
+const ROUTE_DETOUR_CELLS := 4
 const ROUTE_TURN_COST := 2.0
 const ROUTE_ROCKY_COST := 3.0
 const ROUTE_BRIDGE_COST := 12.0

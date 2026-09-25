@@ -26,6 +26,7 @@ var last_rejection := ""
 ## and lets the village adapter reuse the proof the selector just paid for.
 var _compiled_fabric_cache: SettlementFabricPlan
 var _compiled_room_units_cache: Array[FabricUnit] = []
+var _compiled_room_units_ready := false
 var _compiled_room_audit_cache: Dictionary = {}
 var _route_set: Dictionary = {}
 var _building_by_id: Dictionary = {}
@@ -114,9 +115,12 @@ func finish_construction(p_entry_floor_cell: Vector3i) -> bool:
 
 func validate_construction() -> bool:
 	last_rejection = ""
+	var native_building_count := 0
+	for feature: WarrenFeatureReservation in features:
+		if feature.kind == &"prefab_landmark": native_building_count += 1
 	if stable_id.is_empty() or grid == null or not grid.is_valid() \
 			or route_floor_cells.size() < 2 \
-			or buildings.is_empty() or support_graph == null \
+			or (buildings.is_empty() and native_building_count == 0) or support_graph == null \
 			or not support_graph.is_sealed() or not _route_set.has(
 				entry_floor_cell):
 		return _reject("missing grid, route, entry, buildings, or support graph")
@@ -139,6 +143,10 @@ func validate_construction() -> bool:
 		if not support_graph.reaches_terrain(building.stable_id):
 			return _reject("building support does not reach terrain: %s" \
 				% building.stable_id)
+	for feature: WarrenFeatureReservation in features:
+		if feature.kind == &"prefab_landmark" \
+				and not support_graph.reaches_terrain(feature.stable_id):
+			return _reject("native building support does not reach terrain: %s" % feature.stable_id)
 	var interface_audit := _interface_audit()
 	if int(interface_audit.unclassified_public_private_face_count) != 0:
 		return _reject("public/private interface is unclassified")
@@ -167,12 +175,17 @@ func compiled_fabric_cache() -> SettlementFabricPlan:
 
 func cache_compiled_room_units(values: Array[FabricUnit],
 		room_audit: Dictionary) -> bool:
-	if not _sealed or values.is_empty() \
-			or not _compiled_room_units_cache.is_empty():
+	if not _sealed or (values.is_empty() and not buildings.is_empty()) \
+			or _compiled_room_units_ready:
 		return false
 	_compiled_room_units_cache.assign(values)
 	_compiled_room_audit_cache = room_audit.duplicate(true)
+	_compiled_room_units_ready = true
 	return true
+
+
+func has_compiled_room_units() -> bool:
+	return _compiled_room_units_ready
 
 
 func compiled_room_units_cache() -> Array[FabricUnit]:
