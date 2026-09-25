@@ -1,3 +1,1918 @@
+> September 24 building kits (Suntail migration, branch `suntail-towns`):
+> village buildings are no longer drawn from the SFV/LPFV recipe art. A
+> pack-agnostic layer in `scripts/terrain/features/villages/kit/` realizes
+> the planner's buildings: `BuildingKit` (native metric + ROLE -> baked asset
+> table; `SuntailBuildingKit` is the Raygeas Suntail pack), `BuildingMass`
+> (architecture IR in module cells and planner bands), `BuildingDesigner`
+> (stone/timber, per-edge jetties, bays, pent eaves, finishes, gable wings,
+> dormers, chimneys, awnings, dressing; clearance-checked), and the pure
+> `BuildingKitAssembler`. `KitVillageBuildings` adapts the sealed warren
+> (lineage parts merged into houses, landmark reservations, balconies,
+> overhang supports, skywalk bridge-houses, retained-terrace skin) and
+> withdraws the legacy units/families it replaces; `KitSubstitution` redraws
+> remaining legacy public pieces by measured bounds (tiled) and swaps props;
+> `KitStandaloneHouse` draws hamlet lots. The world frame follows the kit
+> metric: `VillageWorldScale` is anisotropic (x2 horizontal, x1.5 vertical
+> on the 1.5 m lattice) so Suntail renders at a uniform 1.5x with 4.5 m
+> storeys; ask `scale_of` (horizontal) or `vertical_scale_of`. New packs add
+> a kit + bake manifest (`material_palette`/`material_roughness` restore
+> vendor shader tints). Review: `tests/harness/suntail/kit_town_review.gd`
+> (flat-ground towns by city seed), `building_gallery.gd`, and
+> `village_site_capture.tscn --orbit R,H --ground-ring R` in-world. Pinned by
+> `tests/test_building_kit.gd` (House_1 replica inventory). Spec/plan:
+> `docs/superpowers/specs|plans/2026-09-24-suntail-building-kit*`.
+
+> September 22 town review (photos 1-5, seed 2697992464): four issues, each
+> red-first with matched native and fresh live photo-angle pairs and pixel
+> differences. R1: same-datum compact crowns now join — a branch continues to
+> its perpendicular host's ridge (flush end buried, explicit roof-junction
+> partners), a square leaf beside a longer parallel crown turns into it, and a
+> modular roof continues over the compact double pile tiling its end wall.
+> R2: recessed LPFV half-roof gables are bake-fitted flush with their facade
+> (bounds unchanged). L1: a prefab may take a raised datum only if that level
+> keeps room for companion buildings; a withdrawn climb's floating headroom no
+> longer creates phantom volume mass. W1: timber convex corners and deep-door
+> return seams each own a slender timber post. 48/48 towns seal with 11,752
+> clear positions / 16,898 crossings. See docs/qa/2026-09-22-manual/issues.md.
+
+> September 23 cliff rock direction (owner selected): `CliffRockStyle`
+> defaults to subtle projection (foot 0.26 of the old depth, 0.17 at convex
+> corners, crown fifth untouched), ground-up moss in `cliff_crag.gdshader`
+> (UV2 = height above terrain, vertex colour = lawn tint), and inner-corner
+> terraces (`CliffKitDressing`): 9 m native-kit tops on storey bands whose
+> wall rows join the ordinary rock pipeline. Outer-corner platforms and the
+> `chunky` tier facets are rejected/optional. Shape tests written for the old
+> full projection pin `CliffRockStyle.apply("current")`. Subtle narrows
+> ledges (walls keep 58-76% turf; convex corners none). See
+> docs/qa/2026-09-23-manual/02-subtle-moss-terraces/result.md. Follow-up:
+> collinear panels of different heights abut (`left_abut`/`right_abut`,
+> 1.2 m joint fade) instead of both fading to bare wall; convex corners stand
+> on a measured lower-tier edge; subtle columns cannot undercut faster than
+> 45 degrees; moss is darker, textured (`cliff_moss_detail.png`) and graded
+> to 8 m. See docs/qa/2026-09-23-manual/03-moss-joints-overhangs/result.md.
+> Second follow-up: a panel continues 3 m into a collinear neighbour at least
+> as tall and cross-fades (no joint crack); stepped convex corners on a tier
+> narrower than 2 m keep only a skin; moss is graded by relative cliff height
+> (UV2.y) to every crest, blends into the lawn at the foot, and can use any
+> pack's rock-moss layer (`CliffRockStyle.moss_texture`: raygeas | suntail |
+> angry | polyart). See docs/qa/2026-09-23-manual/04-moss-textures/result.md.
+> Owner picked `raygeas`; the lawn colour now fades into moss over 4 m with
+> patches. A `slopes` trial (not default) turns the lower cliff into ridged
+> mossy talus running into the terrain, with pack rocks (`CliffSlopeRocks`,
+> source-loaded, no collision) set into it. See
+> docs/qa/2026-09-23-manual/05-mossy-slopes/result.md. The owner rejected
+> that pass (banded colour, seams, rock noise on the slope, sparse rocks). The
+> second pass replaces it with `CliffRockCrags._slope_faces`: a smooth
+> superellipse fillet (vertical at the wall, tangent to the ground), unioned
+> smoothly with the finished rock. It tapers at every end and raises shared
+> mounds under bunched, sunk pack-rock clusters. The shader grades lawn into
+> moss with warped, patchy fbm gradients instead of bands. See
+> docs/qa/2026-09-23-manual/06-smooth-slopes/result.md. Third pass
+> (September 24): per-formation slopes left blades at every formation end,
+> so `CliffSlopeField` now emits the slope as its own sheets. There is one
+> sheet per merged foot line and one per outer-corner arc, on world-aligned
+> columns with world-space parameters and 5 m ridges. Sheets taper wherever
+> a foot line stops. Formations keep their rock but are pulled inside the
+> sheet below the 2 m rock band. Ledges are off by default
+> (`CliffRockStyle.ledges`; ledge-generator tests pin them on). Moss is
+> thick up to 60% of the wall. Rocks are the layered Meadow P_Rock 01-05
+> and Farmlands Cliff_Flat with grass tops. `slopes_cliffs` trials
+> Farmlands cliff masses on walls. See
+> docs/qa/2026-09-23-manual/07-slope-sheet/result.md. Checkpoint tag
+> `checkpoint/cliff-slope-sheet-2026-09-24`. Fourth pass: the `sheet` style
+> (`CliffRockStyle.sheet_only`) makes the slope sheet the whole wall. There
+> are no crag meshes. The sheet runs from under the grass lip, near vertical
+> (power 1.7), to the ground. All rocks follow one bunch rule
+> (`CliffSlopeField._find_rocks`; cliff masses stand upright where steep).
+> The sheet takes a smooth union with an ellipsoid per rock. See
+> docs/qa/2026-09-23-manual/08-whole-wall-sheet/result.md. Fifth pass:
+> - Sheet columns hang from the lip to the lowest ground along their run
+>   (`_frame`), so stepped corners wrap.
+> - Inner corners round with a fillet that fades in at steps.
+> - Moss covers the full height (`moss_full`).
+> - Ground rocks bunch at the foot; cliff rocks stand out higher up.
+> - Ridges are warped two-octave noise; small bumps and divots are added.
+> - Kit terraces are off under `sheet`.
+> See docs/qa/2026-09-23-manual/09-sheet-ridges-rocks/result.md. Sixth
+> and seventh passes: `sheet` is one implicit solid (`CliffSlopeField.solid`),
+> a smooth union of per-line/arc slope heights (`slope_height`,
+> `a*x^0.6` falling to real ground) and the sunk terrain, with no per-column
+> base. It is meshed by surface nets with neighbour-union level ranges and
+> gradient normals. Storeys merge; ridges lift the whole face; rocks form
+> 7-11-rock outcrops on each merged line. See
+> docs/qa/2026-09-23-manual/10-slope-solid/result.md. Eighth pass: the
+> profile is a quarter circle plus a 0.35 tail, flush with the plateau
+> grass. Plateau ground within 2 m in front of a lip is not a floor (the
+> terrain cell overhangs the wall line). Face rocks sit on 4 m slots and
+> outcrops are larger; placement is focused on the computed chunk. See
+> docs/qa/2026-09-23-manual/11-rocky-face/result.md.
+
+> September 22 cliff rock review (owner photos, seed 2697992464): four fixes.
+> (1) Water fronting a wall becomes its formation's support: waterline banks
+> stand WATERLINE_DEPTH (1 m) under the surface, never on the channel bed, and
+> lose submerged turf; `_wet_formation` now only rejects rock deeper than that.
+> A warren's whole-town clearance rectangle is a `FeatureGroundShape.envelope`
+> that terrain rock/vegetation ignore (`overlaps_clearance(...,false)`); real
+> lots/paths still apply, and a reservation in front of a wall compresses the
+> rock's reach (`_fit_reach`) instead of removing the panel. (2) Formations stop
+> at their own terrace edge: `CliffRockCrags.supported_depth` + a smoothed
+> per-column `support_scale`; floors ignore ground more than SUPPORT_DROP below
+> the base, so no sheer curtain drops from a corner to the next level. (3) Baked
+> Nature-rock sections are slope-limited (`_taper_section`) and nearby ledges
+> merge by symmetric, order-independent transfer (`_merge_close_ledges`),
+> removing sheer tread steps. (4) Convex corners compress their whole foot (arms included) and facet
+> thick bodies into 2-3 chords instead of a round pool. Eight tests in
+> `tests/test_september22_cliff_rock.gd` pass; the geometric three are red on the
+> reconstructed baseline. Review loop: `tests/harness/cliff_site_review.tscn`
+> (hot reload). See docs/qa/2026-09-22-manual/01-cliff-rock/result.md.
+
+> September 19 bank traversal: all eight real-player swims through the two
+> flagged bends pass, with identical before/after trajectories and no bank
+> contacts. A 782-position capsule survey retains 747 clear positions; shallow
+> bank-fringe contacts remain. This proves available routes, not every near-bank
+> path or final bank art. Production integration and original scope stay open.
+> See docs/qa/2026-09-19-manual/130-bank-traversal/result.md.
+
+> September 19 water-query cost: WaterFieldContext reuses its evaluated level
+> instead of evaluating wet points twice. All 18,820 mixed-bank results and timed
+> arrays match exactly; the isolated median falls from 344.356 to 280.609 ms.
+> The existing context/vegetation test passes 1,406 assertions. This is a query
+> cost reduction; overall startup and original streaming reports remain open.
+> See docs/qa/2026-09-19-manual/131-water-query-cost/result.md.
+
+> September 19 sloping bank study: bounded receiving-corridor checks restore
+> one flowing corner, retaining 40 banks and 57 native-supported plants. Five
+> admission tests pass. Combined collision distinguishes 290 internal join probes
+> from 14 unresolved exterior shallow-water probes; one exact backing-edge ray
+> also remains red. Production bank integration and full original scope stay open.
+> See docs/qa/2026-09-19-manual/129-bank-corridor/result.md.
+
+> September 19 bank exposure repair: the pass-127 failed fern was occluded by
+> a neighboring fitted wall. Canonical dry and fitted surface rays remove only
+> that fern; 57 unchanged plants remain. Two tests / five assertions verify
+> contact and split-owner identity; native collision verifies all 57 roots.
+> Five N04 pairs and the local overlap pair retain identical rock and water.
+> This is a study attachment repair; production bank integration stays open.
+> See docs/qa/2026-09-19-manual/128-bank-exposure/result.md.
+
+> September 19 shallow-relief study: preserving the first 1.4 m retains
+> 63,257 exposed source vertices and improves independent upper-wall shapes.
+> Two profile tests / six assertions pass. Fresh admission retains 39 of the
+> 41 studied banks; two corners expose separate dry-bank and graded-water
+> constraints. One exact native edge ray misses while all eight millimetre
+> offsets hit; 57/58 mapped plants contact correctly, with one occlusion failure.
+> These red integration gates remain open; no production bank promotion.
+> See docs/qa/2026-09-19-manual/127-bank-preserved-relief/result.md.
+
+> September 19 shoreline contact study: narrow compression no longer buries
+> originally exposed faces. A red/green contact regression repairs 13,748 lost
+> contacts; fresh water admission retains 41 banks and 55 mapped plants. Ten
+> focused tests / 48 assertions and all 55 native plant contacts pass. The
+> 36-formation native survey retains buried feet and clear sampled channels;
+> five formations exceed the saved collision world. Upper repetition and smooth
+> lower faces remain, so no production bank promotion or final art acceptance.
+> See docs/qa/2026-09-19-manual/126-bank-relief/result.md.
+
+> September 19 bank follow-up: wider compression is rejected; it adds no
+> usable grass ledges. The narrow study passes 43,366 native backing probes and
+> 5,544 buried-foot samples across 36 formations; five exceed the saved world.
+> Independently built neighboring water domains retain identical geometry and
+> admission for 28 shared forms (14 banks); seven shore-level metadata values
+> differ by at most 3.553e-15 m, so strict record identity is not claimed.
+> N04 opaque-water controls and 211 native hits show no sampled rise above
+> its 13.7 m lake level. Production bank fitting remains experimental; original
+> cliff, water and generation scope stays open. See
+> docs/qa/2026-09-19-manual/124-bank-water/result.md and
+> docs/qa/2026-09-19-manual/125-bank-domains/result.md.
+
+> September 19 bank attachment study: source fern roots follow the exact fitted
+> bank triangles while retaining canonical identities and conservative canopy
+> reservations. Five tests / 36 assertions, 66 supported study roots and twenty
+> native contacts verify the local mapping; five N04 angle pairs and a close pair
+> show attached, ground-tinted plants. No production promotion: shared grass
+> support, remaining joined recipes, independent hydraulic domains and swims
+> remain open. See docs/qa/2026-09-19-manual/122-bank-attachments/result.md.
+
+> September 19 shoreline study: a narrow, attached rock-bank trial continues
+> through N04's visible underwater cliff. Four shape tests / six assertions,
+> five native angle pairs, 15,581 backing samples and 2,368 buried feet support
+> the local geometry; actual owned replay retains 17 nearby banks with clear
+> channel probes. The integration audit exposed two pre-existing collapsed
+> ledge-join triangles. Production now removes only exact collapsed triangles;
+> eleven regression tests / 97 assertions and an identical native rendered pair
+> verify that cleanup. A separate dry-halo control passes. Shoreline fitting
+> itself remains experimental: bank vegetation, joined-surface recipes, broader
+> water and generation remain open. See
+> docs/qa/2026-09-19-manual/121-shoreline-rock/result.md.
+
+> September 19 N03 corner repair: complete one-storey convex corners now receive
+> the same closed dressing as their adjoining faces. Short radial shoulders retain
+> thin native attachments while avoiding the rejected oversized pedestal; corners
+> eight metres and taller keep identical faces, turf and attachment data. Five
+> native matched angles, 98 buried foot probes, 15 matching physics contacts and
+> the production-owned face payload verify the reported site; 21 tests / 116
+> assertions pass. N03/N04 retain all
+> 277 sampled native wall rows. Waterside diagnosis finds 20 of 27 formations
+> rejected by wet footprints; channel-preserving geometry remains open, as do
+> broader cliff art, bank water, path outlines and generation speed. See
+> docs/qa/2026-09-19-manual/120-corner-shore/result.md.
+
+> September 19 N02 town follow-up: native earth paths and retained streets now
+> share a neutral atlas tint instead of the grass biome multiplier that turned
+> them pink. Destination-owned pruning also withdraws an unused level tail past
+> the final house entrance, retaining its stairs and adding the normal end guard.
+> Sixteen focused tests / 295 assertions, native matched colour/geometry studies,
+> 92 local clear positions / 138 crossings, 48/48 towns with 11,708 clear positions
+> / 16,819 crossings, and the 95-assertion composition gate pass. The same 25
+> conservative off-centre pillar candidates remain. Angular path outlines,
+> broader small-town elevation design, water/corner dressing and generation speed
+> remain open. See docs/qa/2026-09-19-manual/119-small-town/result.md.
+
+> September 19 passes 117–118 add committed-ground frontier fog and remove a
+> cliff commit stall. The boundary is fully opaque, with a smooth inward fade;
+> five native GPU controls and three seeded replay angles verify the scoped view.
+> Logs now report missing ground dependencies, meshing phases and slow commit parts.
+> Sixteen actual cliff formations retain all 32 rendered surface arrays exactly,
+> while main-thread mesh preparation/upload falls from 2.796 s to 20.3 ms by moving
+> normal construction into detached worker arrays. Twenty-seven distinct focused
+> tests / 90 assertions pass across the two passes. Fresh baseline startup was
+> 759.255 s; total generation speed, moving-arrival acceptance, town issues,
+> missing corner/waterside rock and bank water remain open. See
+> docs/qa/2026-09-19-manual/117-loading-frontier/result.md and
+> docs/qa/2026-09-19-manual/118-cliff-commit/result.md.
+
+> September 19 pass 115 separates coarse/fine hillside-water errors. Wet
+> diagonal grade constraints remove two native route rises; a confluence rise
+> remains (0.027 m), so the full downhill gate stays red. Four tests / thirteen
+> assertions, exact frozen replay, fresh P10/P21 meshes, unchanged terrain and
+> wet/dry probes verify this isolated experiment. Production and original issue
+> statuses remain unchanged. See docs/qa/2026-09-19-manual/115-hillside-fill-stages/result.md.
+
+> September 19 pass 114 localizes hillside rises to the shared fill, before
+> meshing. An isolated longitudinal-profile trial first loses bank constraints
+> and is rejected; restored provenance passes five tests / twenty assertions.
+> Final native terrain identities and 882 ground rays stay unchanged, and all
+> 247 in-scene route probes retain water. Three mesh rises remain (max 0.141 m);
+> the downhill gate stays red. No production promotion or original issue closure.
+> See docs/qa/2026-09-19-manual/114-hillside-surface-joins/result.md.
+
+> September 19 pass 113 isolates reach-based water on identical baseline
+> terrain. Paired mesh/instance/collision hashes and 441 rays per site verify
+> unchanged ground. Both P10/P21 lose the high sheet; all 247 in-scene route
+> probes retain water. However, three local downstream surface rises reach
+> 0.270 m, and the explicit downhill gate remains red. Production is unchanged;
+> this is a controlled experiment, not acceptance. See
+> docs/qa/2026-09-19-manual/113-hillside-stable-terrain/result.md.
+
+> September 19 pass 112 completes native reach-network comparisons at P10/P21.
+> Three adapter tests / fourteen assertions and 429 bounded routes pass, but
+> the candidate changes 204/441 P10 ground samples (up to +40 m) and removes
+> much of its adjacent channel. P21 has smaller terrain changes. Corrected
+> double-sided water probes pass all 32 centroid controls; earlier one-sided
+> zero-water results are invalid. Production water remains unchanged. Pass 113
+> isolates routing on the exact original terrain; original issues stay open.
+> See docs/qa/2026-09-19-manual/112-hillside-native-reaches/result.md.
+
+> September 19 pass 111 corrects a terminal-lake bypass in the detached
+> hillside-routing study. A valid red regression becomes green; three tests /
+> twelve assertions pass. All 103 sources across three seeds reach existing
+> basins, with identical forward/reverse station hashes over 14,885 stations.
+> Large confluence drops, short channel switches, complete native discovery
+> and actual terrain/water rendering remain unverified. Production water and
+> pass-110 fixtures are unchanged. Original judging issues remain open. See
+> docs/qa/2026-09-19-manual/111-hillside-reach-corpus/result.md.
+
+> September 19 pass 110 investigates the hillside-water network without
+> changing production water. Seven-source retained-contact diagnostics expose
+> source-prefix ownership failures. A detached reach-based study preserves
+> newly supplied downstream tails; forward/reverse paths match across 1,326
+> stations with no rising beds, and two synthetic tests / 16 assertions pass.
+> One route exceeds the old source radius, so shared discovery must change.
+> Native geometry, filled water, source jumps and broader bounds remain
+> unverified. See docs/qa/2026-09-19-manual/110-hillside-retained-network/result.md.
+
+> September 19 pass 109 clips stair guards against the actual hanging house
+> floor and supports newly cut handrail ends on their flight. Fifteen distinct
+> tests / 133 assertions, complete collision contacts, six fresh actual stair
+> walks and saved-pose native/game views verify P04. All 48 towns and the
+> fingerprint gate / 95 assertions pass. Three occluded walk-end images are
+> excluded as visual proof. Broader bridge traversal and original issues remain
+> open. See docs/qa/2026-09-19-manual/109-rail-wall-joint/result.md.
+
+> September 19 pass 108 clips prefab-adjacent stair guards against measured
+> native placement bounds, restoring P15's lower roof-side rails and posts.
+> Thirteen tests / 114 assertions, eleven complete physics contacts, six fresh
+> actual stair walks, saved-pose visual review and all 48 towns pass; the
+> fingerprint gate passes 95 assertions. The corrected complete-collision
+> harness retains existing fixed-height floor contacts rather than calling
+> them clear. P04's upper rail/house joint and the broader register remain open.
+> See docs/qa/2026-09-19-manual/108-rail-roof-context/result.md.
+
+> September 19 pass 107 retires only the replaced incoming world-road corridor,
+> removing P02's square projection outside its curved town approach. Fourteen
+> tests / 4,929 assertions, fresh production-grass views, both actual walking
+> directions and 468 clear capsule samples verify the junction. All 48 towns
+> retain 11,772 clear centres / 16,915 crossings; the fingerprint gate passes
+> 95 assertions. Twenty-five conservative offset pillar candidates remain.
+> Other external approaches and the broader original register remain open.
+> See docs/qa/2026-09-19-manual/107-town-road-corner/result.md.
+
+> September 19 pass 106 includes final retained town ground in external-road
+> bounds, routing P02 around its raised garden. Nine tests / 409 assertions
+> preserve construction, collision and town grade; actual player traversal fails
+> both directions before and passes both after. Fresh source views and diagnostic
+> route/garden views retain the prior board repair. The square approach corner
+> remains open (T06), as do all-town road clearance and the broader register.
+> The separate related run retains one obsolete outskirts-null fixture failure.
+> See docs/qa/2026-09-19-manual/106-town-path-context/result.md.
+
+> September 19 pass 105 connects the raised cliff run at the taller wall’s
+> actual end, removing its upper blade without changing the lower receiver.
+> Twenty-nine distinct tests / 186 assertions, 534 native contacts, 250 local
+> ground probes, and fresh exact replay / collision coverage of 338,574 triangles
+> pass; all 3,981 production foot probes remain buried. Eight grass-enabled detail
+> views and three saved-reference views were inspected. Automatic inside-rock
+> captures are excluded. Smaller angular shelf crossings and broader art remain
+> open; concurrent 459.300 s startup is not performance acceptance. See
+> docs/qa/2026-09-19-manual/105-stepped-end-profile/result.md.
+
+> September 19 pass 104 rejects four implicit three-way cliff reconstructions.
+> Ragged turf, coarse transitions and the retained upper blade fail art review;
+> these remain isolated study fixtures. Production was unchanged at pass 102.
+> See docs/qa/2026-09-19-manual/104-three-way-surface/result.md.
+
+> September 19 pass 103 rejects five lower-junction art variants. Actual
+> profiles isolate a three-way conflict between a tall wall, its raised-base
+> collinear neighbor and the low perpendicular receiver. Pairwise lofts remove
+> the upper blade but create strips or unsupported feet; widening the base adds
+> another pointed shelf. Production remains exactly pass 102. The lower crossing
+> and original register stay open. See
+> docs/qa/2026-09-19-manual/103-receiver-crown-transition/result.md.
+
+> September 19 pass 102 joins the short stepped inner corner through actual
+> parent profiles and a supported sloping tread. Five pinned gap failures become
+> zero; 28 distinct tests / 168 assertions pass. Fresh geometry replays exactly,
+> all 327,717 inspected triangles have production collision, and 3,949 feet stay
+> buried. All 211 native surface contacts and 130 ground probes pass. Eight fresh
+> detail views retain the scoped repair. Lower shelf crossings, overall cliff art
+> and the original judging register remain open. Startup is 430.072 s without a
+> performance claim. See docs/qa/2026-09-19-manual/102-corner-surface-loft/result.md.
+
+> September 19 pass 101 rejects the complete-run short-corner study. The low
+> native three-metre panel belongs to an adjoining twelve-metre run, but combining
+> them and extending the taller parent still creates a flat projection. Production
+> remains exactly pass 100. The short seam and original register stay open. See
+> docs/qa/2026-09-19-manual/101-short-corner-runs/result.md.
+
+> September 19 pass 100 repairs closing triangles that crossed deformed cliff
+> end outlines. Eight actual production failures become zero; 22 tests / 133
+> assertions pass. Fresh native geometry replays exactly, all 320,237 inspected
+> triangles have collision, and 3,917 roots remain buried. All 6,533 sampled
+> contacts hit; all 4,387 inspected cap triangles stay inside their outlines.
+> Shared-depth studies remain experimental. The short inner seam, lower shelf
+> crossings and original judging register remain open. Startup is 429.485 s,
+> without a performance claim. See
+> docs/qa/2026-09-19-manual/100-corner-edge-profiles/result.md.
+
+> September 19 pass 99: height-aware ends and connected narrow panels fill the
+> short turn but expose mismatched closing faces, including a large diagonal slab
+> at the neighboring lower corner. Candidate rejected; all five production/replay
+> files restored exactly. Candidate checks pass 33 tests / 171 assertions, 4,683
+> native contacts and complete 210,508-triangle collision/replay coverage. These
+> do not constitute art acceptance. Restored suites pass 8 tests / 83 assertions.
+> Short seam and original register remain open. See
+> docs/qa/2026-09-19-manual/99-height-transition/result.md.
+
+> September 19 pass 98: the remaining short inner turn omits two native 3 m
+> transition panels. Supplying them passes the pinned connectivity test but creates
+> a pointed slab; containing-parent and local remesh variants are also rejected.
+> No production change is retained. Restored inner suites pass 8 tests / 83
+> assertions. A crashed narrow-only capture is excluded. The short seam and original
+> judging register remain open. See docs/qa/2026-09-19-manual/98-short-inner-join/result.md.
+
+> September 19 pass 97: existing broad ledges share their height through admitted
+> inner joins while preserving footprints, triangle topology, buried roots and flush
+> crowns. The photographed 42 cm mismatch becomes less than a micrometre at all
+> 34 shared tread probes. Twenty-nine tests / 204 assertions pass; 845 native
+> contacts and 728 roots pass. Fresh production reconstructs exactly, retains all
+> 110,741 inspected collision triangles and 1,218 buried foot probes. Native views
+> confirm the continuous inner ledge. Lower shelf crossings, the short inner seam,
+> broader cliff art and the original judging register remain open. Startup is
+> 426.832 seconds without a performance claim. See
+> docs/qa/2026-09-19-manual/97-inner-ledge-levels/result.md.
+
+> September 19 pass 96: weak emerging shelves no longer interrupt established
+> merges, and ordered tread correspondence stops hairlines stealing broad ledges.
+> Thirty-two tests / 174 assertions pass. Native checks retain 845 contacts and
+> 728 buried roots; fresh production contains all 110,745 inspected collision
+> triangles and 1,218 buried foot probes. Matched views remove the reproduced fin
+> while preserving the broad corner. Angular shelf intersections, the short inner
+> seam, broader cliff art and original judging issues remain open. Startup is
+> 427.614 seconds without a performance claim. See
+> docs/qa/2026-09-19-manual/96-inner-shelf-tips/result.md.
+
+> September 19 pass 95: curved turf shares connected lighting normals instead
+> of per-triangle shading. All 1,142 measured gentle-edge discontinuities become
+> zero; five tests / 25 assertions pass, retaining real sharp folds and tread
+> geometry. Nine native pairs on pass-94's fresh scene verify the visual change;
+> 106 replay meshes preserve all stone buffers and turf geometry/UV/material.
+> Pointed inner shelf overlaps and broader cliff/original judging issues remain
+> open. See docs/qa/2026-09-19-manual/95-ledge-lighting/result.md.
+
+> September 19 pass 94: backed stepped inner joins continue the actual tall
+> and low parents, withdrawing the separate corner only when the upper extension
+> has complete existing wall backing. Two inspected joins now use four connected
+> parents. Twenty-five distinct tests / 148 assertions are verified across the
+> focused run and corrected reservation rerun. Native checks retain 856 contacts
+> and 728 buried feet; fresh production has all 110,073 inspected collision
+> triangles and 1,218 buried native foot probes. Startup is 425.042 seconds,
+> without a performance claim. Pointed shelf ends, turf stripes, the remaining
+> short junction, broader cliff art and original issues remain open. See
+> docs/qa/2026-09-19-manual/94-stepped-inner-join/result.md.
+
+> September 19 pass 93: fresh production confirms the connected inner walls
+> and broad outer turn, but exposed an escaped halo water query. Connections
+> now precede ordinary complete-owned-solid water admission; public/grade pair
+> checks remain. This supersedes pass 92's production whole-pair wet callback.
+> Escaped regression samples fall from 168,646 to zero. Twenty-four tests / 194
+> assertions pass. Fresh native rock/turf recipes match exactly; 84,004 inspected
+> triangles exist in production collision and 1,000 native foot probes stay buried.
+> Startup is 422.643 seconds, without a controlled performance claim. Stepped
+> inner intersections, broader cliff art and original judging issues remain open.
+> See docs/qa/2026-09-19-manual/93-fresh-corner-review/result.md.
+
+> September 19 pass 92: matching-height inner turns continue both actual wall
+> formations instead of adding a third independent shelf family. Complete pair
+> admission preserves public/wet/grade exclusions and canonical chunk ownership.
+> Twenty-two tests / 184 assertions pass; seven old failed end bearings become
+> zero, all 440 native collision contacts hit and 412 ground probes stay buried.
+> Native paired views retain the scoped improvement. Unequal-height joins,
+> broad/plain composition and generation cost remain open. Shared-depth remesh
+> studies are rejected for fins. See
+> docs/qa/2026-09-19-manual/92-inner-shared-surface/result.md.
+
+> September 19 pass 91: pure retaining-wall joints use native district-tinted
+> stone instead of exposed timber posts; inhabited-room contacts retain timber.
+> Frozen P02 changes nine of 313 instances, with unchanged other instances,
+> generated surfaces, walked cells and explicit boxes. Thirteen tests / 93
+> assertions, 1,080 native collision rays and four matched native pairs pass.
+> Surrounding terrain/path issues and broader acceptance remain open. Pass 90's
+> inner shelf-union studies are rejected for pinched turf; production cliffs
+> remain pass 89. See docs/qa/2026-09-19-manual/91-masonry-joints/result.md and
+> docs/qa/2026-09-19-manual/90-inner-union/result.md.
+
+> September 19 pass 89: inner attachment samples the actual native corner and
+> adjoining walls continuously along its diagonal sweep. This removes the fixed
+> sampler boundary and its false depth jump. Eighteen tests / 126 assertions,
+> 4,169 physical contacts and 224 buried ground probes pass. Seven actual native
+> wall pieces verify the backing; outer geometry is unchanged. Matched saved-world
+> renders retain broad lower bearings, with plain faces and shelf intersections
+> still open. No fresh-world or overall art acceptance. See
+> docs/qa/2026-09-19-manual/89-inner-attachment/result.md.
+
+> September 19 pass 88: outer rock turns retain physical formation scale instead
+> of compressing twelve metres into the bend. Closed inner-corner dressing now
+> covers short and tall joins, with native roots and fuller lower bearings.
+> Twenty-eight tests / 98 assertions and 4,169 physical contacts pass. A fresh
+> world contains four outer and three inner corners, all exactly matching the
+> final generator; 224 native ground probes find no exposed feet. Startup is
+> 432.075 seconds. Broader/plain cliff composition and original issues remain
+> open. Pass 87 corrected a review bug that rebuilt saved corners as straight
+> panels; prior pass-84–86 corner replay judgments are superseded. See
+> docs/qa/2026-09-18-manual/88-cliff-corner-continuity/result.md and
+> docs/qa/2026-09-18-manual/87-cliff-replay-fidelity/result.md.
+
+> September 18 pass 86: embedded Nature-rock fronts rotate independently,
+> with a restrained depth increase and closer physical ledge blending. Actual
+> photo geometry gains 679 outward samples while retaining every turf vertex
+> and the flush crown. Thirty-six tests / 118 assertions pass, with 311 supported
+> grass roots and all 317 changed native collision contacts. Five matched game
+> views and a tall study retain this scoped change; a stronger variant is rejected
+> for busy dark ridges. Tall composition, plain areas and inherited panel ends
+> remain open. No new full-world or broad performance acceptance. See
+> docs/qa/2026-09-18-manual/86-cliff-oriented-stones/result.md.
+
+> September 18 pass 85: wider/deeper irregular Nature-rock geometry replaces
+> smaller face bumps. Ledge protection now uses physical 3D separation instead
+> of projecting distant shelves and long supports onto unrelated wall faces.
+> The new red-first check goes from 447 falsely flattened samples to zero.
+> Thirty-five tests / 113 assertions pass, retaining 31 closed photo shells,
+> 460 tread checks, nine corner checks and 311 supported grass roots. All 345
+> changed native collision samples hit; one unchanged historical miss remains.
+> Five matched game-context pairs and a tall study retain the scoped change;
+> broad/tall composition and the original issue register remain open. No new
+> full-world startup or traversal claim. See
+> docs/qa/2026-09-18-manual/85-cliff-anchored-stones/result.md.
+
+> September 18 pass 84: seven cliff geometry studies are rejected; production
+> stays on pass 82. The original P02 T05 bottom-board defect is reproduced red
+> and repaired by applying the existing buried-base rule to retained columns,
+> not only their top turf cells. Thirty ground-level soffits withdraw; remaining
+> instances, public surfaces, walked cells and explicit collision boxes match.
+> Four native before/after pairs and 26 tests / 932 assertions pass; elevated
+> garden undersides remain. The separate vertical stone-joint substitute is
+> rejected for white end faces. Cliff art, vertical joints, full-world terrain/
+> path review and the broader original register remain open. See
+> docs/qa/2026-09-18-manual/84-cliff-curved-masses/result.md.
+
+> September 18 fresh cliff verification retains pass-82 geometry. Fresh P12
+> startup completes in 480.505 s; twelve actual ledge walks and 372 native-ground
+> root probes pass. Three original photo-camera captures are rejected as embedded
+> in widened rock; five clear context views retain plain/upright/angular art issues.
+> Original P02 timber joints and soffits reproduce in a current native town payload;
+> source diagnosis is recorded, with no town repair selected. No complete cliff-art,
+> original-issue or global performance acceptance. See
+> docs/qa/2026-09-18-manual/83-cliff-fresh-world/result.md.
+
+> September 18 physical relief fin repair bounds differences in added depth
+> across the connected front mesh, preserving original rock and protected treads.
+> The alternate simplified stone-volume study is rejected for pronounced fins.
+> Excessive short-edge incidences fall from 1,904 to zero in 191,364 samples;
+> existing bump, crown and turf checks remain green. Thirty-four tests / 111
+> assertions pass, with 341 supported grass roots and all 33 changed physical
+> probes hitting. One known unchanged miss remains among 887 total contacts.
+> Final native game and tall views retain broader upright/angular art issues.
+> No complete cliff-art, fresh-world or original-issue acceptance. See
+> docs/qa/2026-09-18-manual/82-cliff-stone-volumes/result.md.
+
+> September 18 ledge-relief transition repair makes the spatial search cover
+> the full 1.6 m blend radius. A truncated search had introduced a 0.6465 m
+> relief step across a 0.25 m interval; the same sampled step is now 0.3943 m.
+> Thirty-three tests / 109 assertions pass, including turf, corners and grass.
+> All fourteen changed physical samples hit; one known baseline miss remains
+> among 887 total probes. Final native game and tall views retain broader angular
+> and upright composition issues. No full cliff-art, fresh-world or original-issue
+> acceptance. See docs/qa/2026-09-18-manual/81-cliff-relief-transitions/result.md.
+
+> September 18 upper cliff relief adds restrained physical variation below the
+> crown by real distance, avoiding a blank upper quarter on tall walls. The upper
+> 1.3 m remains unchanged; a full-strength study is rejected as too busy. Thirty-two
+> distinct tests / 107 assertions pass across the integration run and targeted
+> rerun after correcting the obsolete whole-upper-quarter invariant. All 64 changed
+> collision samples hit; one known baseline miss remains among 887 total probes.
+> Turf retains 57/57 cap samples, 460 treads and 341 supported grass roots.
+> Frozen native game views and a tall study retain upright/angular art issues;
+> no complete cliff, fresh-world, performance or original-issue acceptance.
+> See docs/qa/2026-09-18-manual/80-cliff-upper-relief/result.md.
+
+> September 18 exposed face variation keeps localized Nature-derived bumps at
+> useful sizes on tall walls and shares their depth budget with larger shoulders.
+> Broad tread transitions retain full turf without shelf-adjacent lips. Thirty-one
+> focused/integration tests / 101 assertions and 347 grass roots pass; all 266
+> changed-face collision samples hit. One of 887 total probes retains its known
+> baseline miss. Seventeen frozen-world views and a tall study record the change.
+> Tall upper smoothness and overall cliff composition remain open; no fresh-world,
+> traversal or performance acceptance. See
+> docs/qa/2026-09-18-manual/79-cliff-formation-ledges/result.md.
+
+> September 18 source-profile and carved-body studies remain rejected. Stronger
+> physical bumps retain smooth supports; a carved alternative gains forms but
+> creates undercuts. A monotone support correction passes nine geometry tests
+> yet erases 42% / 66% of short/tall ledge area and restores upright columns.
+> Two new area regressions reproduce that loss and pass on unchanged pass-77
+> production. No new art, traversal, performance or original-issue acceptance.
+> See docs/qa/2026-09-18-manual/78-cliff-angular-bumps/result.md.
+
+> September 18 physical face variation samples varied Nature-rock body profiles
+> into the completed closed cliff shell. Actual bumps share render/collision
+> vertices; finished turf, tread supports, crown and roots remain protected.
+> Twenty-eight tests / 92 assertions and 347 worker grass roots pass. All 201
+> changed-face physics samples hit; one of 887 total contacts misses identically
+> on baseline. Seventeen frozen-world captures and a tall study record the change.
+> Broad smooth faces and upright composition remain open; no complete cliff-art,
+> fresh-world traversal or performance acceptance. See
+> docs/qa/2026-09-18-manual/77-cliff-shape-envelope/result.md.
+
+> September 18 connected rock bumps add sparse asymmetric compound shoulders
+> to actual cliff vertices and collision. Variable width, depth, lean and height
+> break up lower faces; the upper quarter retains its existing attachment.
+> Final foot sampling includes the extra depth. Twenty-four tests / 78 assertions,
+> 385 supported grass patches and 334 native physics contacts pass. Seventeen
+> frozen game views and a tall study verify the scoped change. Broad smooth faces,
+> inherited uprights and thin ledges remain under art review; no fresh-world,
+> global performance or complete cliff-art acceptance is claimed. See
+> docs/qa/2026-09-18-manual/76-cliff-connected-relief/result.md.
+
+> September 18 tread projection repair rescales a curved ledge's drop when
+> final body shaping shortens its width. Actual physical endpoints improve from
+> 181 steepened caps to zero across 461 samples. Twenty-three tests / 72 assertions,
+> 332 supported grass patches and 333 Godot physical contacts pass. Native frozen
+> game views and matched tall/overhead studies preserve the scoped correction;
+> plain upper faces and upright smooth supports remain. Larger formation studies
+> are rejected; no full cliff-art, fresh-world traversal or performance acceptance.
+> See docs/qa/2026-09-18-manual/74-cliff-formation-sampling/result.md.
+
+> September 18 physical outcrop revision adds deterministic Nature-rock shapes
+> to the closed cliff mesh and its actual collision. Local overlapping shoulders
+> widen toward the base; added projection obeys the rooted crown-to-foot envelope.
+> No material or crack-network change. Thirty tests / 95 assertions, 345 supported
+> grass patches, twelve fresh-world walks and 370 native foot probes pass. Seventeen
+> frozen game views, a tall study and fresh P12 show stronger lower formations;
+> smooth upper faces and upright composition remain open. An upper-projection
+> candidate is rejected before final generation. Startup is 480.953 s without a
+> performance claim. See docs/qa/2026-09-18-manual/69-cliff-weathered-shapes/result.md.
+
+> September 18 no-crags revision follows the owner's explicit direction change:
+> remove narrow geological joints and chipped-cell relief; retain broad continuous
+> shape variation, with modestly increased shoulder-width and lateral variation.
+> Twenty-five distinct focused/integration tests / 76 assertions, 410 supported
+> grass patches, twelve fresh-world character walks and 368 native foot contacts
+> pass. The basal test isolates actual basal growth from filling deleted crack
+> valleys; an over-tall basal control reproduces its failure. Fresh P12 loads in
+> 499.007 s, without a performance claim. Tall upright forms and angular lower
+> turf boundaries remain open. Pass-64 body studies stay unselected; pass 65 only
+> removes unused computation with 68 identical geometry comparisons. See
+> docs/qa/2026-09-18-manual/66-cliff-no-crags/result.md.
+
+> September 18 shelf/profile studies: no production change. Explicit ownership
+> of adjoining shallow shoulders closes 57/57 turf probes, but native faces stay
+> plain; boundary filtering opens three mesh edges and is rejected. Curving the
+> full-height projection more strongly removes upper ledges. A gentler curve
+> passes the existing nine-test gate but moves the upper quarter inward by only
+> 0.008931 m on average and makes the tall face flatter; it is also rejected.
+> Production remains pass 60. See
+> docs/qa/2026-09-18-manual/62-cliff-shelf-boundary/result.md and
+> docs/qa/2026-09-18-manual/63-cliff-curved-descent/result.md.
+
+> September 18 projection investigation: no new production change. Global
+> depth blending shrinks shelves; broadened support and finite Nature bodies
+> retain poor composition. Carved/inset shelves reduce outline repetition and
+> retain 42.5 m spans, but their turf classification regresses. A connected-turf
+> repair passes nine tests / seventeen assertions yet creates jagged native
+> grass patches and is rejected. Production stays pass 60. The cap diagnostic
+> identifies shallow adjoining riser triangles; final tread grade must also
+> account for depth compression. No fresh-world or traversal acceptance. See
+> docs/qa/2026-09-18-manual/61-cliff-projection-blend/result.md.
+
+> September 18 attachment relief: larger geological divisions retain their
+> layout while the thin covering skin halves its displacement and recesses its
+> base by 7 cm. Upper envelope excess falls from 0.231739 to 0.068267 m;
+> long ledges retain 6.25–40.25 m spans. Twenty-three production tests / 71
+> assertions pass, with 416 supported grass patches. Fresh P12 with grass,
+> twelve actual-player ledge walks and 368 rooted-foot probes pass. Rejected
+> lateral-support, layered-body and detail-fade variants remain separate.
+> Startup is 425.430 s, without a performance claim. Tall upright organization,
+> broad plain faces and the original judging register remain open. See
+> docs/qa/2026-09-18-manual/60-cliff-local-bearing/result.md.
+
+> September 18 riser triangulation: local curvature chooses the diagonal of
+> regular rock-face quads, removing three avoidable hard creases in 41,022
+> photographed quads. Production keeps the pass-55 sampled shape, all turf
+> triangles and triangle count. Twenty-two tests / 69 assertions plus one
+> preservation test / three assertions pass; 407 grass roots and 40.75 m ledges
+> remain. Native game, tall and matched corner views retain the composition.
+> Strong-body and finer-sampling trials remain rejected. Overall cliff art and
+> the original register stay open. See
+> docs/qa/2026-09-18-manual/59-cliff-tread-correspondence/result.md.
+
+> September 18 layered-body study: staggered Nature bodies and released lower
+> relief retain upright composition. Stronger relief introduces folds and reduces
+> the longest upper shelf to 17.75 m. A new lip-bearing guard reproduces 44 abrupt
+> prototype recessions and verifies their experimental repair; unchanged production
+> passes one test / two assertions. Twenty-five tall, eighty-five frozen game and
+> seven lighting controls are retained. No candidate is promoted; production stays
+> pass 55, and overall cliff art remains open. See
+> docs/qa/2026-09-18-manual/58-cliff-layered-bodies/result.md.
+
+> September 18 support-volume investigation: independent body/support removals
+> retain fluting. A shared-bearing union passes its proposed red test but loses
+> the reported cap and upper ledges. Whole-column bending retains closed shells
+> while exposing attachment artifacts and bent-column composition; fixed-x
+> diagnostics are not valid for it. Continuous shallow relief passes five tests /
+> ten assertions but leaves broad blank faces. Thirty-two tall and thirty-four
+> frozen game captures support rejection. Nothing is promoted; production stays
+> pass 55 and overall cliff art remains open. See
+> docs/qa/2026-09-18-manual/57-cliff-support-volumes/result.md.
+
+> September 18 exterior-relief follow-up: post-envelope shallow relief produces
+> jagged creases and is rejected. Shape-preserving supports retain 42.5 m ledges
+> and the upper envelope, but six cap probes lose turf and tall faces still flute.
+> Connected-shoulder turf passes six tests / twelve assertions but looks ragged;
+> contour subdivision softens it while failing shell closure. The initial plane-fit
+> diagnostic is invalidated by its changing sample selection. Native frozen and
+> tall comparisons are retained; nothing is promoted. Production remains pass 55.
+> See docs/qa/2026-09-18-manual/56-cliff-face-relief/result.md.
+
+> September 18 local lower-rock revision: production retains the larger shallow
+> divisions and restrained upper profile, adding locally wider rooted Nature
+> shoulders. Of 356 foot samples, 228 widen and 102 stay unchanged; maximum added
+> reach is 3.008 m. Close ledge channels and quantized corner-tip degeneracy are
+> repaired. Twenty production tests / 65 assertions pass, with 407 supported grass
+> roots (450 in the preceding control). Fresh P12 geometry, twelve actual ledge
+> walks and 368 native-ground root probes pass. The fresh capture omitted grass;
+> startup is 419.473 s without a performance claim. Broad plain faces and overall
+> cliff art remain open, as does the original issue register. See
+> docs/qa/2026-09-18-manual/55-cliff-basal-rocks/result.md.
+
+> September 18 lateral shelf-bearing study: supports fan toward the base;
+> a prototype ledge discontinuity drops from 1.599431 to 0.000565 m. The final
+> outline metric improves to 0.462818, with long treads and upper-profile checks
+> retained. Intermediate integration passes eighteen tests / 96 assertions.
+> Native views still have upright faces and a flattened foot; ordinary-height
+> yellow cliffs barely change. The combined bounded-boulder variant also fails
+> art judgment. Nothing is promoted; production stays pass 51. See
+> docs/qa/2026-09-18-manual/54-cliff-fanning-feet/result.md.
+
+> September 18 follow-up investigations: bounded Nature boulder height passes
+> four tests / thirteen assertions but worsens the tall outline and is rejected.
+> The existing source-head water-order experiment is also unpromoted: native P21
+> comparison changes the actor's ground from 20 to 32 m, while two prior river
+> joins disappear. Five lit diagnostic pairs use fresh saved native worlds;
+> initial black-water optical captures are excluded. Production cliffs remain
+> pass 51 and production water is unchanged. See
+> docs/qa/2026-09-18-manual/52-cliff-root-scale/result.md and
+> docs/qa/2026-09-18-manual/53-hillside-native/result.md.
+
+> September 18 larger-section cliff revision: production now uses larger shallow
+> shape-linked stone divisions and a root-derived full-height projection envelope.
+> The old collar’s silhouette excess falls from 2.687962 m to zero; independent
+> faces no longer borrow native tile normals (49.304554 to 0.001237 degrees).
+> Sparse major curved shelves retain 4.75–40.75 m connected upper spans, and the
+> outline correlation gate passes at 0.527707. Random fine wear and the independent
+> shader crease overlay are removed; native/added stone keep a common grey palette.
+> Nineteen production tests / 42 assertions pass after correcting a test default;
+> fourteen integration tests / 89 assertions retain 450 supported grass patches,
+> closed corners and halo ownership. Two tall tests / six assertions and one native
+> GPU test / twelve assertions pass. Fresh P12 startup is 428.045 s; three final
+> material replays of that new world retain the exact saved cameras. A wrong camera
+> root in the first capture is corrected without regenerating the saved world.
+> Some tall elongated faces remain; overall art, traversal and the original issue
+> register are not complete. See docs/qa/2026-09-18-manual/51-cliff-native-blend/result.md.
+
+> September 18 crown and shelf follow-up: production now includes only the
+> scoped upper-metre native attachment repair (face excess 2.692877 to 0.035050 m;
+> convex excess 1.191476 to 0.025561 m). Twenty-six distinct focused tests / 118
+> assertions pass across corrected runs, with 17 frozen pairs and three fresh P12
+> views; fresh startup is 437.945 s, not a performance improvement. The owner
+> confirms the top correction but rejects the rapid widening below its collar.
+> Small randomly patched crags are now rejected; pursue larger, shallower details
+> tied to actual rock joins and shelf risers. Long-shelf/full-height studies reach
+> 37.25 m connected upper ledges and pass 11 tests / 25 assertions, but native tall
+> views expose repeated backing and plain upright faces; no such study is promoted.
+> See docs/qa/2026-09-18-manual/49-cliff-crown-collar/result.md and
+> docs/qa/2026-09-18-manual/50-cliff-long-shelves/result.md. Overall cliff composition
+> and the original judging register remain open.
+
+> September 18 recovered cliff studies: owner-selected yellow-world pass 34 and
+> tall rooted-joints pass 45 references are identified by exact image hashes.
+> The combined experiment localizes smaller geometric fractures and adds sparse
+> long curved shelves (2.5–41.75 m measured connected upper spans). A short-wall
+> crown collar repair reduces upper-metre excess from 2.695677 to 0.035050 m.
+> Eight of nine final geometry tests pass (17/18 assertions); the unchanged
+> large-outline repetition check still fails. Two tall support tests / six
+> assertions pass. Native views retain upright forms and serrated crack edges;
+> wider normal smoothing adds seams and is rejected. No production promotion:
+> production remains the exact recovered pass-34 source. See
+> docs/qa/2026-09-18-manual/47-cliff-recovered-composition/result.md.
+
+> September 18 widening-support study: a hard crown eligibility cutoff in the
+> pass-44 prototype caused a 1.877900 m interior depth jump. A red-first actual-mesh
+> regression verifies the continuous repair (0.076100 m in the final study).
+> Curved shoulder centres, broader descending roots and three geometry-linked
+> joint controls each retain nine tests / seventeen assertions. Native game views
+> still show plain faces and thin shelves, so none is promoted. Production remains
+> exactly pre-trial pass 34; overall cliff art and the broader issue register stay
+> open. See docs/qa/2026-09-18-manual/45-cliff-widening-shoulders/result.md.
+
+> September 18 cliff art review: the owner rejects the earlier tall columns and
+> independent scratches. Connected-stone studies and no/subtle/strong small-relief
+> controls remain experimental. Narrower sampling and a quieter near-cap zone
+> restore 57/57 turf contacts; the final upper-join study passes nine geometry
+> tests / seventeen assertions, but ordinary-height game views still look too
+> slab-like. No art promotion; production remains exactly pre-trial pass 34.
+> See docs/qa/2026-09-17-manual/43-cliff-connected-stone/result.md and
+> docs/qa/2026-09-18-manual/44-cliff-scale-study/result.md.
+>
+> The pass-41 grass uncertainty is resolved separately: sixteen paired grass
+> placement seeds on fixed geometry yield 176 old / 170 groove roots, all fully
+> supported. The expanded four-test grass gate passes on each; precise groove
+> corners pass nine tests / 37 assertions. This does not adopt the owner-rejected
+> grooves. See docs/qa/2026-09-17-manual/42-cliff-groove-grass/result.md.
+
+> September 17 groove integration review: the preferred sparse-groove study
+> remains experimental. A provisional integration passes 36/38 tests but loses
+> grass coverage (five roots versus eight) and collapses two tall-corner triangles.
+> A fixture-only precision repair fixes the corner; the grass regression remains.
+> All three production files are restored exactly to pre-trial pass 34. Four more
+> large-form trials are rejected for columnar composition or unsupported undercuts.
+> Seventeen groove and 83 shape-study native views are retained. Overall cliff art
+> remains open. See docs/qa/2026-09-17-manual/41-cliff-selected-grooves/result.md and
+> docs/qa/2026-09-17-manual/40-cliff-rooted-fans/result.md.
+
+> September 17 groove sampling follow-up: a quieter narrow-groove study uses
+> half the dense study's lateral sampling, retaining the judged detail direction.
+> Seven focused tests / fourteen assertions pass; 22 native context/studio views
+> are retained. Three photo formations use 90,356 triangles versus dense 179,580
+> and production 48,252, so there is no performance acceptance. A separate broad
+> upper-terrace study passes 22 tests / 120 assertions but remains too columnar
+> visually; neither study is promoted. Production remains pass 34 and overall
+> cliff art stays open. See docs/qa/2026-09-17-manual/39-cliff-groove-sampling/result.md
+> and docs/qa/2026-09-17-manual/38-cliff-terrace-composition/result.md.
+
+> September 17 small-crag comparison: the owner rejects pass 34 detail as
+> wrinkled fabric. Clean surfaces, extra grounded outcrops and narrow deeper
+> grooves now have matched native game/studio studies. Shorter grooves are the
+> preferred detail direction, but none is promoted: broad faces and tall vertical
+> composition remain unresolved. Each alternative passes six focused tests /
+> twelve assertions; the refined groove also passes the duplicate-fracture
+> erosion regression. Production remains unchanged, not artistically accepted.
+> The separate tall-terrace investigation retains red production checks. See
+> docs/qa/2026-09-17-manual/37-cliff-detail-options/result.md and
+> docs/qa/2026-09-17-manual/36-cliff-local-terraces/result.md.
+
+> September 17 tall composition review: separate height, reach and wider-terrace
+> studies remain unselected. Wider tall shelves erase quieter intervals (three
+> small-crag columns versus eight required), and the native oblique view becomes
+> large upright slabs. Production retains pass 34. Its shared warm/cool gray colour
+> passes a fresh native GPU run / twelve assertions; seventeen current replay
+> captures retain the material and pointed turf. No fresh-world or overall art
+> acceptance. See docs/qa/2026-09-17-manual/35-cliff-height-composition/result.md
+> and docs/qa/2026-09-17-manual/29-cliff-stone-colour/result.md.
+
+> September 17 patchy rock detail: oblique chipped planes occupy irregular parts
+> of the physical cliff skin, with quiet weathering between them. Full-coverage
+> planes are rejected for a cobbled tall-wall pattern. Thirty-eight tests / 192
+> assertions pass, including 57/57 reported turf contacts and eight supported
+> worker grass roots. Per-formation seed caching preserves exact geometry on
+> 31 photo and two tall controls. Native views retain open vertical-composition
+> concerns; local three-formation generation costs about 15% more, with no global
+> performance or art acceptance. See
+> docs/qa/2026-09-17-manual/34-cliff-oblique-relief/result.md.
+
+> September 17 hybrid cliff relief: wider Nature-derived lower profiles combine
+> with retained curved terraces and restored tall upper coverage. Twelve authored
+> profiles widen toward their feet; closure, rooting and eleven worker grass roots
+> pass. The combined run passes 36/37 tests; its stale triangle-width measurement
+> also fails on baseline, and the corrected physical-width/ribbon controls pass
+> two tests / six assertions. Three fresh P20 views retain pointed turf and shared
+> stone colour; soft upright faces and repeated backing remain open. Startup is
+> 421.852 seconds under concurrent work, not a performance comparison. See
+> docs/qa/2026-09-17-manual/33-cliff-hybrid-relief/result.md.
+
+> September 17 neutral rock-profile joins: the smooth-union radius now vanishes
+> with an incoming zero-depth profile, removing a reproduced 0.113713 m raised
+> edge. Empty profiles are neutral; deep overlaps retain their original blend.
+> Eighteen geometry tests / 54 assertions and eight support tests / 53 assertions
+> pass, with thirteen fully supported grass roots. Native saved/alternate views
+> preserve ledges and turf. Two authored-shoulder art studies are rejected; broad
+> cliff composition remains open. See
+> docs/qa/2026-09-17-manual/32-cliff-authored-shoulders/result.md.
+
+> September 17 authored-foot study: widening Nature-derived lower profiles alone
+> loses photographed corner coverage, tall-wall relief and distinct projections.
+> The taller follow-up also misses continuity. Neither is selected; production
+> retains pass 30 geometry and shared gray variation. P05 turf verification now
+> follows actual tread bounds: historical 30/57 versus retained 57/57 contacts.
+> Fourteen geometry tests / 45 assertions and one native GPU colour test / twelve
+> assertions pass. Broad cliff art remains open. See
+> docs/qa/2026-09-17-manual/31-cliff-fan-bearing/result.md.
+
+> September 17 upper shelf grades: generic finite ledges now share the existing
+> resting/sloped curved tread family. Inclined upper turf rises from 23.88% to
+> 59.42%; broader body/depth experiments are rejected. The initial run passes
+> 50/51 tests; a half-mesh-step prominence sampling correction retains the same
+> thresholds and passes its two-test follow-up. Fresh P12 and native tall/context
+> views retain supported terrain but coarse faces and repeated backing remain.
+> Fresh startup is 487.436 s under concurrent work, not a performance comparison.
+> Shared stone colour is unchanged. See docs/qa/2026-09-17-manual/30-cliff-broad-shoulders/result.md.
+
+> September 17 ledge channels and stone colour: active-height cap matching and
+> merged nearby cuts remove the reported P05 notch; connected turf follows broad
+> treads through their pointed ends. All 31 photo shells are closed and nondegenerate,
+> all nine notch probes have turf, and seventeen worker grass roots remain supported.
+> Shared world-space warm/cool gray variation retains matching native/outcrop join
+> colours. Fifty focused tests / 1,988 assertions and one native GPU test / twelve
+> assertions pass. Native alternate views verify these scoped changes; vertical
+> organization, backing repetition and overall cliff art remain open. No fresh-world,
+> traversal or performance acceptance. See docs/qa/2026-09-17-manual/28-cliff-ledge-channels/result.md
+> and docs/qa/2026-09-17-manual/29-cliff-stone-colour/result.md.
+
+> September 17 curved tread follow-up: selected broad shelves now have stronger
+> grades and concave/convex depth profiles, retaining lower bearing and crown
+> retreat. Support-only finer grass sampling yields twelve safe roots; ordinary
+> ground buffers stay identical. A spatial index preserves exact queries and
+> removes the measured support-sampling cost increase. The main 63-test / 1,062-
+> assertion run and post-index 30-test / 365-assertion run pass. Physical tread
+> width checks account for subdivision without relaxing thresholds. Inspected
+> native context, tall and grass views retain open backing repetition and overall
+> cliff art. No fresh-world or global performance acceptance. See
+> docs/qa/2026-09-17-manual/26-cliff-curved-treads/result.md.
+
+> September 17 continuous rock feet: complete widened-foot admission removes
+> upper-radius cutoffs; a fixed per-mass seed removes tilted-crest noise jumps.
+> The 76,599-sample maximum 2 cm depth jump falls from 0.609898 to 0.074629 m.
+> Grass borders now prove whole-component plane fit, repairing a false internal
+> edge without accepting accumulated curvature. Thirty-six tests / 610 assertions
+> pass; seven grass roots retain full support. Native game/tall views retain open
+> vertical organization and overall cliff art. Two curved-tread retries still lose
+> planting and are rejected. No fresh-world or performance acceptance. See
+> docs/qa/2026-09-17-manual/24-cliff-mass-support/result.md and
+> docs/qa/2026-09-17-manual/25-cliff-curved-support/result.md.
+
+> September 17 curvature investigations: depthwise curved treads pass their
+> geometry probe but lose supported grass, including variants that preserve
+> the original inner triangle planes. Bent inherited relief breaks numerical
+> repetition but still renders as softened vertical sections. Both are rejected;
+> production remains the inclined broad terraces. The hillside terminal control
+> is already wet/descending without its experimental added connector, which
+> raises the filled surface unnecessarily and is not selected. See
+> docs/qa/2026-09-17-manual/22-cliff-tread-curvature/result.md,
+> docs/qa/2026-09-17-manual/23-cliff-relief-curves/result.md and
+> docs/qa/2026-09-17-manual/10-hillside-order/result.md.
+
+> September 17 inclined broad terraces: selected wider Nature-profile treads
+> gain shallow depthwise grades while their paths retain along-wall curves.
+> Inclining every shelf lost an independent projection and was rejected; broad
+> terraces retain the original seven prominence samples. Thirty-two focused
+> tests / 594 assertions pass, including closed collision and six fully rooted
+> grass patches. Four selected game views and two tall controls were inspected.
+> Angular endpoints, native backing repetition and overall cliff art remain open.
+> No fresh-world, traversal or performance acceptance. See
+> docs/qa/2026-09-17-manual/20-cliff-shelf-edges/result.md.
+
+> September 17 curved cliff ledges: rounded asymmetric mass sections replace
+> box-like fronts; finite shelf paths slope and bend along the wall. Whole Nature
+> rock profiles retain lower bearing, while the crown retreats under native turf.
+> Low curves remain above the closed floor. Tall upper-corner coverage retains
+> independent relief. Forty-five focused tests / 674 assertions pass across scoped
+> runs; production matches all 31 rendered short photo formations. Seven matched
+> game views and three final tall controls were inspected. Depthwise tread slopes
+> were rejected for losing grass support. Native backing repetition, some angular
+> endpoints, sparse grass on curved caps and broader cliff art remain open. No
+> fresh-world, hydraulic, streaming or overall art acceptance is claimed. See
+> docs/qa/2026-09-17-manual/19-cliff-shelves-rocks/result.md.
+
+> September 17 quieter cliff faces: sparse shallow cuts replace the rejected
+> dense gouges; fine shader relief is restrained. Baked CC0 Nature Pack horizontal
+> profiles add finite lower terraces to the same closed skin. Removing the old
+> aggregate shoulder clamp restores shelf depth; the final projection bound stays.
+> Half-metre tread eligibility removes narrow turf streaks. The focused 45-test /
+> 1,163-assertion set passes across the main run and historical-art-control rerun;
+> 17 frozen game views and five tall controls were judged. Deep-cleft/exact-old-cap
+> pins are explicitly archival after owner rejection. Native repetition, soft
+> faces and overall art remain open; no fresh-world, traversal, streaming or
+> hydraulic acceptance. See docs/qa/2026-09-17-manual/18-cliff-terraced-base/result.md.
+
+> September 17 shoulder-detail repair: crag exposure includes ledge support,
+> while a short cap transition preserves the original usable shelves. The first
+> exposure correction failed broad-turf-area coverage and was rejected. Nine
+> actual face pins now retain their clefts; three cap arrays remain identical.
+> Forty-four tests / 1,063 assertions and 22 judged final context/tall views verify
+> the scoped repair. Broad soft faces, angular cuts and overall art remain open;
+> no fresh-world, traversal or performance acceptance. See
+> docs/qa/2026-09-17-manual/16-cliff-shoulder-union/result.md.
+
+> September 17 cut-depth repair: deep erosion retains the native attachment
+> through a smooth depth budget, repairing five reproduced cut-through samples.
+> Forty-two tests / 1,042 assertions pass. Seventeen selected frozen views, four
+> close before/after views, and three fresh P20 views were judged. Broader plane,
+> erosion and shading studies were rejected; soft faces and overall art remain
+> open. Fresh startup is 421.173 s under concurrent work; the snapshot parameter
+> introspection diagnostic remains. No traversal or performance acceptance. See
+> docs/qa/2026-09-17-manual/15-cliff-planes/result.md.
+
+> September 17 close-face investigation: six isolated scar, weathering, bevel,
+> facet and native-blend studies were rejected in matched photo views. A pocket
+> count already passes baseline; a narrower shading cutoff passes its diagnostic
+> but exposes angular patches. Both probes remain experimental fixtures, not new
+> production gates. Production geometry/material stay at the prior selected
+> version. Broad face structure needs further work. See
+> docs/qa/2026-09-17-manual/14-cliff-spalls/result.md.
+
+> September 17 tall cliff composition: occasional larger upper formations and
+> scattered fracture heights replace uniform tall courses. Regional depth variation
+> retains smaller crags; the change blends in above 16 m, preserving short geometry.
+> Over-enlarged and short-wall-smoothing candidates were rejected. Forty distinct
+> tests / 1,008 assertions pass across focused and corrected targeted runs; a live
+> historical dependency is now frozen. Thirty final views were judged, including
+> 32/64 m constructions and short amber/highland replays. Broad soft faces and
+> native repetition remain open; no overall art, fresh-world, traversal or performance
+> acceptance. See docs/qa/2026-09-17-manual/13-cliff-scale/result.md.
+
+> September 17 local cliff follow-up: physical root easing removes the full-slope
+> crossing hidden by normal blending. Short oblique cuts, another finite lower
+> ledge family and fuller lower corner shoulders add localized relief. A sharper
+> normal variant was rejected for triangular artifacts; reduced bumps and narrowed
+> foot eligibility were also withdrawn. Thirty-seven tests / 981 assertions pass,
+> with seventeen matched frozen views, five tall native controls and three fresh
+> P12 views judged. Cold startup is 426.087 s under concurrent work. Broad soft
+> faces and tall mass regularity remain open; no overall art, traversal or global
+> performance acceptance. See docs/qa/2026-09-17-manual/12-cliff-local-crags/result.md.
+
+> September 17 geometric crags: deeper finite horizontal clefts and vertical
+> splits break broad stone faces without enlarging the masses. Stronger bump
+> noise was rejected as swollen. Thirty-six tests / 892 assertions retain native
+> joins, upper coverage, wider feet, closed collision, turf and crevice support.
+> Seventeen native replays, five tall construction views and three fresh P17
+> production views are judged. Cold startup is 418.338 s under concurrent work;
+> broad soft faces, native repetition and overall art remain open. See
+> docs/qa/2026-09-17-manual/11-cliff-body-crags/result.md. The separate W01 ordering
+> experiments remain fixtures: stable confluence prefixes still leave a 12.2835 m
+> incoming/receiver hydraulic gap. See 10-hillside-order/result.md beside it.
+
+> September 17 cliff turf cleanup: actual ledge depth excludes vanishing green
+> strips; connected-area filtering removes isolated paint dashes while preserving
+> open owner-cut continuations. Thirty-one photo formations retain identical stone
+> vertices, zero thin turf triangles and 96.18% of broad ledge area. Eighteen tests /
+> 801 assertions pass, with seventeen native replay views. The width-only candidate
+> was rejected for residual dashes. Full-height joins and wider lower shoulders
+> remain; broad soft faces and overall cliff art are still open. See
+> docs/qa/2026-09-17-manual/09-cliff-turf-width/result.md.
+
+> September 17 convex corner integration: actual native corner samples blend thin
+> attachments into independently varying crags around exposed outer columns. A
+> longer source composition breaks ring-like ledges; broader lower shoulders and
+> restored upper body depth follow the available native height. Closed triangles,
+> four rooted orientations, native normals, worker determinism, complete wet/public
+> exclusions and chunk ownership pass nine tests / 37 assertions. Seventeen final
+> frozen context views and five fresh 64 m construction views were captured. The
+> shallow tall-body candidate and misoriented first studio arm are rejected.
+> Overall cliff art, fresh photo-site traversal and performance remain open. See
+> docs/qa/2026-09-17-manual/08-cliff-corner-joints/result.md.
+
+> September 17 cliff material: sparse vertically elongated fracture patches replace
+> soft mottling alone, fading out through the existing native-root weight. Exact
+> nearest dividing-plane distances remove dotted normal spikes; closed-cell and
+> directional-weighted candidates were rejected. Fifteen focused tests / 110
+> assertions pass, including nine native GPU location/orientation controls and
+> unchanged attachment normals. Seventeen final context views and five fresh
+> 64 m study views were captured. Local uncapped frame means add 2–3 ms; no global
+> performance acceptance. Geometry remains byte-identical to the connected-normal
+> correction. Convex wraps were rejected for cylindrical ledge stacking; broad
+> forms, corner joins and overall cliff art remain open. See
+> docs/qa/2026-09-17-manual/07-cliff-weathering/result.md and 06-cliff-corners/result.md.
+
+> September 17 connected cliff normals: shared-edge smooth fans replace per-face
+> incident weighting, removing 162 unintended normal discontinuities on the first
+> photographed formation. Three nearby thick-face controls also have zero; sharp
+> folds and native thin-root blending remain. Eleven focused tests / 31 assertions
+> pass, with 17 frozen context and five fresh tall native views. Geometry, turf and
+> collision stay unchanged. Two further cut studies are rejected; broad soft forms
+> and native corner repetition remain. No full art/traversal/performance acceptance.
+> See docs/qa/2026-09-17-manual/05-cliff-normal-fans/result.md.
+
+> September 17 crevice canopy spacing: actual transformed canopy overlap and stable
+> canonical-halo priority remove 24 heavily overlapping pairs from the photographed
+> 31 formations (186 to 165 plants). Surviving roots, poses, sizes and grass tint
+> remain. Eleven distinct focused tests / 50 assertions pass, including independent
+> chunk halos; 17 frozen native context views were captured. Native-wall foliage is
+> a separate unchanged pass. Uneven coverage and broad soft stone remain; no global
+> art, fresh traversal or performance acceptance. See
+> docs/qa/2026-09-17-manual/03-cliff-plant-spacing/result.md.
+
+> September 17 cliff triangulation: shared physical height samples and elevation-
+> ordered neighboring connections remove the tall study's diagonal mesh hatching.
+> Lighting/bump/SSAO controls rejected a lighting cause. Exact ledge boundaries and
+> closed physical topology remain. Twenty-eight distinct focused tests / 1,317
+> assertions pass; five fresh tall study views and 17 frozen context views were
+> captured. Native corner repetition, broad soft faces and uneven close planting
+> remain; no full art, traversal or performance acceptance. See
+> docs/qa/2026-09-17-manual/01-cliff-lighting/result.md.
+
+> September 17 crag attachment follow-up: physical-scale fractures vary in span,
+> slope and horizontal position; independent cuts fade out at thin native-wall
+> roots. The native depth/normal blend, full-height relief and varied wider feet
+> remain. Tightened mass bevels were rejected as flat panels. Twenty-six focused
+> tests / 1,315 assertions pass; 17 frozen context views and five fresh 64 m study
+> views were captured. Corner repetition, soft faces, close fern overlap and tall
+> study hatching remain; no gold-standard art, fresh traversal or performance
+> acceptance. See docs/qa/2026-09-16-manual/18-cliff-crags/result.md.
+
+> September 17 cliff shading follow-up: neighboring-face normal averaging retains
+> carved fractures while preserving rounded faces and the native thin-attachment
+> blend. Direct per-triangle sharpening was rejected in native renders. Fourteen
+> distinct focused tests / 59 assertions pass; 17 matched frozen camera pairs were
+> captured. Native corner repetition, soft broad faces and close fern overlap remain;
+> no gold-standard art, fresh traversal or performance acceptance is claimed. See
+> docs/qa/2026-09-16-manual/16-cliff-fracture-shading/result.md.
+
+> September 17 bridge/post follow-up: complete enclosed shell footprints reject
+> overlapping neighboring bridges. Two obstructed side spans withdraw in P04;
+> original gallery alignment stays and the vacated lane regains its end guard.
+> A paired-gallery candidate was rejected for poor native facade joins. Clipped
+> stair posts now require contact with an exposed rail, removing P15's orphan
+> cap and two other fragments. Native/game pairs, focused guard tests and a
+> native GPU material test pass. The final 48-town sweep seals 48/48 with 11,772
+> clear centres / 16,915 crossings; the fingerprint gate passes 95 assertions.
+> Twenty-five conservative offset pillar candidates remain. Longer bridge casts
+> retain baseline endpoint contacts; full traversal and other T08 junctions stay
+> open. No fresh streaming/full-suite acceptance. See
+> docs/qa/2026-09-16-manual/13-bridge-overlap/result.md and
+> docs/qa/2026-09-16-manual/14-rail-fragments/result.md.
+
+> September 17 doorway-rail follow-up: accepted exterior bridge walking lanes
+> reopen their exact terminal public guards before final fabric construction.
+> P04 loses two rails; all other instances and 101 generated meshes remain.
+> Nine tests / 498 assertions and six native collision sweeps verify the doorway;
+> 312 public stance and 444 crossing results remain identical. Twelve native/game
+> pairs retain adjacent guards. The prior exact-3D test missed the guard floor
+> lift and is corrected red-first. P15's stray cap/roof junction and an adjacent
+> bridge side-wall collision remain open; no fresh streaming/full-suite approval.
+> See docs/qa/2026-09-16-manual/05-town-rails/result.md.
+
+> September 16–17 cliff attachment follow-up: thin added stone now borrows the
+> actual native wall depth/normals, fading to independent crags as projection grows.
+> The native mesh is sampled once on the main thread; workers use detached arrays.
+> Most relief reaches near each wall's full crown, with local recesses; tall walls
+> gain enough vertical samples to avoid stretched details. Selected wider feet and
+> finite low terraces retain the sub-8 m projection bound. The old <90% coverage
+> ceiling is superseded by the owner's full-height request. Twenty-six focused tests
+> / 1,581 assertions pass; 17 matched frozen-context pairs plus a corrected 64 m
+> native study document the result. Replay reuses saved anchors/terrain/collision;
+> no fresh world/traversal or global performance acceptance. Native corner pattern,
+> soft broad faces and a close fern overlap remain. See
+> docs/qa/2026-09-16-manual/12-cliff-transition/result.md.
+
+> September 16 cliff texture/variability follow-up supersedes the rejected smooth
+> rounded candidate. Independent weathered block masses and finite offset ledges
+> add mixed widths/heights/depths; smaller crags interrupt broader lower shoulders.
+> Shallow fractures and a restrained world-space stone bump material replace blank
+> smooth faces without copying native wall courses. Final focused tests pass 22/22
+> with 1,167 assertions; the actual protrusion control rises from 2 to 7 sampled
+> projections. Seventeen matched frozen-context pairs are captured. This is art-only
+> replay at saved anchors, not fresh hydraulic/seating/collision/traversal acceptance.
+> Native upper-wall repetition and a close P12 fern overlap remain. No owner or
+> gold-standard art approval is claimed. See
+> docs/qa/2026-09-16-manual/11-fractured-outcrops/result.md.
+
+> September 16 evening cliff art remains OPEN. The owner rejected the 09
+> jagged shelf direction and reaffirmed the rounded reference as the gold standard.
+> `download-1.png` is the closest previous game direction, but its two continuous
+> bands and lack of lower boulder variation remain rejected. Current requirements:
+> rounded worn faces with sharp carved ledges, irregular composition, broader
+> supporting masses toward the ground, restrained protrusion, and gray wall joins.
+> Current `CliffRockCrags.gd` is an unaccepted native-render candidate. Five studio
+> views and 21 focused tests pass, but the fresh game capture did not finish
+> after 2,092 s startup and Metal waits; production visual/traversal checks remain
+> open (docs/qa/2026-09-16-manual/10-rounded-ledges/result.md). Ferns/ivy
+> retain grass colour and actual crevice contacts. Older geometry/test passes do
+> not establish acceptance. See docs/qa/2026-09-16-manual/10-rounded-ledges/iteration.md.
+
+> September 16 latest owner follow-up reopens Production04 art: shelves remain too
+> flat, a side curls inward, and exposed wall coverage is insufficient. Increase
+> connected coverage, remove pinched/undercut ends and vary ledge grade. Repetitive
+> vines and scaled spherical bushes are also rejected; inspect existing fern/plant
+> stock. The earlier technical checks remain scoped evidence, not art acceptance.
+> See docs/qa/2026-09-16-manual/07-cliff-planting/reference/owner-shelf.png.
+
+> September 16 manual cliff follow-up supersedes the rejected separate mounds.
+> Six original closed connected shoulders replace those sources under the existing
+> outcrop IDs. Gray buried wall junctions, intrinsic lower benches and turf only on
+> flatter faces preserve native wall relief. Actual bench triangles feed ordinary
+> grass; horizontal rock sections exclude buried roots. Rounded shrubs own ledge
+> planting, avoiding a duplicate fern pass. Multiple studies and three production
+> revisions were rejected before Production04. Seventeen matched camera pairs,
+> fresh Amber/Highland views and twelve actual ledge walks verify inspected sites.
+> Twenty focused tests / 677 assertions and a grass follow-up / 8 assertions pass.
+> The wider terrace run retains one historical UID-warning failure (22/23 tests).
+> No owner approval, perfect landscape art, full-suite or performance acceptance
+> is claimed. Native terrain repetition and other manual issues remain open. See
+> docs/qa/2026-09-16-manual/06-cliff-rework/result.md.
+
+
+> September 16 cliff revision supersedes the dense September 15 facade: six
+> weathered Ultimate Nature outcrop solids replace all backing ribs/panels.
+> Wider lower shoulders retain actual rooted collision; original wall relief
+> stays visible (31–67% sampled outcrop coverage). Native cliff, ambient stones
+> and outcrops share one restrained gray-brown palette. Moss uses the native turf
+> UV/material and biome ground tint. Rounded KayKit shrubs replace fine-leaf
+> bushes; trailing vines retain alpha cutouts and biome foliage tint. Owned rock
+> footprints reject wet channel intersections; dry halo reservations stay
+> conservative. Fresh Q01/Q02 geometry plus final material replays and a frozen
+> amber art control produce nine judged views/differences. Seventy-four focused
+> tests / 7,387 assertions and one native GPU test / four assertions pass.
+> The broader catalog run is 90/93, with three stale village material UID-warning
+> failures. Q02 startup remains 334.949 seconds. No general hydraulic, streaming
+> or full-suite acceptance is claimed. See docs/qa/2026-09-16-cliffs/result.md.
+
+> September 15 moss-rock cliff dressing: the owner rejected both replacement
+> cliff textures and stacks of smaller ordinary cliff tiles. Production now uses
+> `CliffRockDressing.gd`: four adapted CC0 Ultimate Nature moss rocks plus eight
+> original closed ledged ribs, overlapping outside the unchanged native wall/cap
+> family. Canonical face panels follow the native -12 + 24n cell phase; a one-cell
+> halo supplies shared root, plant-occlusion and ground reservations before owner
+> projection. Complete grade/public footprints veto rocks. Roots sample the real
+> neighboring surface; exposed moss shelves support baked green bushes above water.
+> Resources prepare on the main thread; worker placement uses detached arrays.
+> Collision uses the actual rock triangles. The old `CliffTerraces.gd` library
+> remains available to historical tests but no longer dresses production cliffs.
+> P04/P06 production captures, oblique views and matched differences review the
+> new style. This is not universal camera, hydraulic or streaming acceptance;
+> cold startup remains expensive. See docs/qa/2026-09-15-manual/08-cliff-siding/result.md.
+
+> September 15 study grounding: intrinsic rooted terraces replace all three
+> separate elevated slabs. Full-footprint seating replaces centre-only sampling
+> on the study floor. Sixteen formerly exposed bases reproduce red; actual native
+> foot samples now remain buried on all fifteen formations. Fourteen planted/bare
+> pairs, three native tests / 215 assertions, 41 clear capsules and 15 matching
+> contacts verify the study. Production grid integration remains open. See
+> docs/qa/2026-09-15-manual/07-grounded-study/result.md.
+
+> September 15 mountain terrace assets: shared post-fracture shoulder profiles
+> add intermediate green ledges and broaden the bases of all five tall original
+> assets. Joints open after shaping; tiny slivers collapse without opening solids.
+> Four source tests and two native tests / 184 assertions pass, with fourteen
+> matched planted/bare pairs, 41 clear study capsules and 18 matching contacts.
+> Source-to-catalogue checks reject stale editor imports; the mountain bake wrapper
+> feeds fresh GLBs to the ordinary baker. The separate study shelves and production
+> grid-cliff integration remain open. See docs/qa/2026-09-15-manual/06-terraces/result.md.
+
+> September 15 cliff-spill review: supplied upper water reaches the actual
+> native crown before descending to existing receiving water. Coarse and fine
+> support share the same bounded rule, using one-sided native extrema at
+> multi-height corners. Dry banks, ridges and missing receivers remain protected.
+> Both P10 strips pass 200 field probes and 186 detached physics samples;
+> fifteen matched static/timed pairs verify the production view. Sixty distinct
+> tests / 3,847 assertions pass across the broad and focused runs. The older
+> photo-16 inland shoreline becomes a connected outlet; its original free-shore
+> inputs retain every old threshold under current interpolation. Cold loading
+> and broader water acceptance remain open. See
+> docs/qa/2026-09-15-manual/05-water-drops/result.md.
+
+> September 15 water-motion review: current wavelets use a separate 192 m
+> field with a continuous circular 48–90 m envelope. The 96 m contact domain,
+> 0.375 m ripple texels and 3 m current grid remain unchanged. Expanded packet
+> capacity retains area density and bounds local admissions/rejected retries.
+> CPU buoyancy shares the displayed envelope. Twenty-six tests / 150 assertions,
+> fifteen matched timed P12 pairs and six identical GPU contact-ripple fields
+> pass; 4,761 GPU/CPU envelope samples agree within 0.000489. Simulation CPU
+> mean adds about 1 ms in the replay; Metal GPU timings are unavailable. Other
+> water geometry and global performance remain open. See
+> docs/qa/2026-09-15-manual/04-water-motion/result.md.
+
+> September 15 spawn water review: actual river/pond seeds retain provenance
+> through spill containment. A finite wet-component traversal removes pools
+> whose supplying sill dried; subsequent fine rescue can restore real narrow
+> passages. The photographed 12,561-sample source-free pool is removed without
+> a spawn exception, terrain change or renderer mask. Fifty-one tests / 3,629
+> assertions, 81 positions through four chunk owners and nine judged matched
+> view pairs verify P11. Other water reports and universal source-domain
+> independence remain open; startup timings are not controlled comparisons.
+> See docs/qa/2026-09-15-manual/03-spawn-water/result.md.
+
+> September 15 streaming review: active background jobs yield at completed
+> planning boundaries to strictly more urgent work, preserving generation and
+> completed caches without publishing partial terrain. Upcoming crossings precede
+> lateral prefetch while moving; actual feature parents lend their urgency.
+> A 180-second 10 m/s survey improves from 1,440 m / 36.219 s frozen to 1,803 m /
+> zero frozen, with six yields and no unexpected duplicate starts. The first
+> candidate's 11.209 s freeze is rejected. Forty-six tests / 479 assertions,
+> 76 exact water hashes and three matched loaded P05 views pass. P05's original
+> foreground void is not temporally recreated; the reproduced stall is farther
+> south. Startup remains roughly seven minutes and frame p95 is unchanged.
+> No universal streaming or startup acceptance. See
+> docs/qa/2026-09-15-manual/02-streaming/result.md.
+
+> September 15 grass topology follow-up: candidate 07 only repaired hanging
+> sheets and was rejected by the owner. Sealed village datums now select native
+> world controls before ordinary slope/cliff/corner classification. Complete
+> fixed pads and bounded support closure share one lattice with ground, rock,
+> grass and collision; continuous road samples retain their lineage. Canonical
+> domains and two-cell record discovery preserve query-order independence.
+> P08 retains a flat native cliff crown and rounded corner; P07/P09 retile their
+> partly graded cliffs to ordinary ground. Nine judged game pairs/differences,
+> 5,325 supported foundation rays and six topology tests / 20 assertions verify
+> these sites. The terrain run is 139/145 with five historical failures and one
+> pending. A separate house/path failure reproduces on baseline. No global
+> mixed-pad, water, streaming or full-suite acceptance is claimed. See
+> docs/qa/2026-09-15-manual/01-grass/result.md.
+
+> September 14 ledge seating: actual native wall recess and usable walking
+> depth govern stock selection. Face caps share an exposed edge; shallow stock
+> turns when it can provide full bearing, otherwise it is ineligible. Both
+> corner types seat against their real walls. Seventeen original contacts fail;
+> 216 candidate placements in four orientations pass five-height probes. Fifteen
+> native pairs, nine fresh game views and three jumps pass; 15 tests / 351
+> assertions remain green. Concurrent load timings are not compared. See
+> docs/qa/2026-09-13-manual/24-cliff-layout/result.md.
+
+> September 14 terrace collision: nine native columns share their actual flat
+> caps and rounded outlines between grass and closed vertical ground collision.
+> Decorative undersides no longer catch jumps; rock collision stays native.
+> Sixteen original failed approaches now pass, as do three frozen and three
+> fresh game jumps, all without underside contacts. Six matched views retain
+> appearance; 31 tests / 649 assertions pass. Physical columns use 64–188
+> triangles instead of 336–1,026. Isolated character timings improve; no global
+> performance claim. Fresh startup is 359.170 s. See
+> docs/qa/2026-09-13-manual/23-terraces/collision-result.md.
+
+> September 14 terrace grass: accepted native flat cap triangles join the
+> ordinary detached grass worker sampler. Native borders contain whole patches;
+> rock footprints and higher ground exclude buried roots. Shared halo caps retain
+> identical chunk ownership. Five native pairs, three fresh game views, 29 tests /
+> 594 assertions and 140 actual worker roots across fifteen local tiles verify
+> P18. Startup remains 357.842 s. The zero-shore-limit initial control is excluded.
+> Ledge layout, cliff composition and native underside jump collision remain open.
+> See docs/qa/2026-09-13-manual/23-terraces/grass-result.md.
+
+> September 14 water wave clearance: complete swept native terrain footprints
+> and the turf lift constrain displacement. Shared world-lattice budgets blend
+> continuously; shoreline joining faces stay anchored, with full waves returning
+> in deeper water. P39 retains 1,053 covered native samples through maximum and
+> moderate troughs, fifteen diagnostic phase pairs, six game pairs, and twelve
+> tests / 2,042 assertions. Startup is 339.914 s. Static domain cutoffs, mountain
+> pools and distant animation remain open. See
+> docs/qa/2026-09-13-manual/22-water/turf-result.md.
+
+> September 14 water-corner follow-up: an existing fine water channel owns
+> its actual dry edges; missing fine corners use bounded coarse interpolation.
+> A phantom coarse dry edge no longer pulls P12 below its receiving reach.
+> The first candidate was rejected for an older shoreline discontinuity.
+> Final verification passes 33 tests / 2,929 assertions, three frozen and three
+> fresh game pairs. Startup remains about 309 s. Other water reports, broad
+> water acceptance and general performance remain open. See
+> docs/qa/2026-09-13-manual/22-water/corner-result.md.
+
+> September 14 civic review: native wells scale uniformly to 1.5 and reserve
+> their complete transformed footprint before shared frontage allocation.
+> Campfire variants retain natural ground across the civic clearing and internal
+> routes; actual world-road handoffs keep paving. Five-house photo allocation
+> stays fixed. Eighteen native/grass pairs and six clear game comparisons,
+> eight tests / 997 assertions, four 1,224-position native collision surveys,
+> 48/48 towns and the 95/95 fingerprinted gate verify the scoped repair.
+> Twenty-five off-centre pillar contacts and expensive startup remain. Campfire
+> grass is checked in the controlled production fixture, not a full-world run.
+> See docs/qa/2026-09-13-manual/20-civic/result.md.
+
+> September 14 street-footprint review: unused ground parcels enclosed by four
+> level streets join the public graph after actual plot allocation. Intentional
+> plots/features and open courts remain protected; a single pass cannot flood lawns.
+> Level exit paint follows actual road selection, while raised approaches retain
+> their built stairs. Six matched native/game pairs, 13 focused tests / 172 assertions,
+> unchanged 92/132 old physical samples plus 4/12 clear additions, 48/48 towns and
+> 95/95 composition verify P23. The corpus has 11,772 clear positions / 16,915
+> crossings and the same 25 conservative off-centre pillar contacts. Two historical
+> road-coordinate pins fail identically with original paint. Startup is 305.349 s;
+> no performance or full road-suite acceptance is claimed. See
+> docs/qa/2026-09-13-manual/19-streets/result.md.
+
+> September 14 village approach: construction collars blend maximal-pad
+> distances before applying the common slope profile once. Their complete
+> finite extent and interval bounds share that distance; fixed foundation
+> heights and single-pad 12 m profiles remain. Photo P11 falls from 48.45 to
+> 36.02 degrees, and all six actual-player uphill/downhill runs pass without
+> changing controller limits. Six matched native/game pairs, 20 tests /
+> 19,240 assertions, 48/48 towns with unchanged 11,764 clear positions /
+> 16,891 crossings and 95/95 composition verify the approach. The same 25
+> conservative pillar contacts remain. Loaded startup is 373.793 s; P24's
+> rock slivers remain separately open. See
+> docs/qa/2026-09-13-manual/17-village-grade/approach-result.md.
+
+> September 14 destination-owned stairs: actual plot allocation precedes pruning
+> of terminal climbs above all useful destinations. Complete flights and optional
+> empty lookouts withdraw together; entrances, civic decks, gates, ordinary lanes,
+> loop connections and occupied spans retain their approaches. P14/P22 keep their
+> native house plots and addresses. Twenty-four matched native/game pairs, eight
+> tests / 99 assertions, 48/48 towns with 11,764 clear positions / 16,891 crossings,
+> and 95/95 composition pass. The same 25 conservative pillar contacts and three
+> baseline carver failures remain. Cold loading stays expensive; no performance
+> acceptance. See docs/qa/2026-09-13-manual/14-deck-purpose/result.md.
+
+> September 14 floating lawn: retained tunnel crowns no longer borrow a jamb
+> from a prefab occupied box or PRIVATE_VOLUME reservation. Actual retained,
+> modular solid and plinth bearings remain eligible; prefab foundations keep
+> their original contract. P14 loses all eight unsupported bed cells and their
+> turf, timber underside and furnishings, gaining two native landing guards.
+> Three houses remain. Twelve judged pairs, six tests / 92 assertions, identical
+> 76-position / 108-crossing clearance, 48/48 towns and 95/95 composition pass.
+> Twenty-five conservative pillar contacts remain. Upper-deck purpose is still
+> under review. See docs/qa/2026-09-13-manual/13-floating-lawn/result.md.
+
+> September 14 centred oriel review: small native bays align to actual two-cell
+> facade panels, with four rear contacts and both attachment sockets. A finite
+> plain parent facade phase replaces the shutter and stays inside the previously
+> reserved room envelope; final compilation verifies its unsuppressed backing.
+> The photo retains eight bays. A shutter-visible candidate and a balcony-conflicting
+> phase candidate were rejected. Nine judged pairs, four tests / 215 assertions,
+> identical 356-position / 502-crossing clearance, 48/48 towns and 95/95 composition
+> pass. The related 15/16 result retains the original full-gabled-bay count failure.
+> Twenty-five conservative off-centre pillar contacts remain. No broad performance
+> acceptance. See docs/qa/2026-09-13-manual/12-bay-spacing/result.md.
+
+> September 14 compact roof junctions: complete square leaves at exposed slim/row
+> ends select paired native valley alternatives against the completed allocation.
+> Prepared cuts retain native bearing/phase and the original chimney pose; continuous
+> runs stage complete replacements and preserve existing run membership. Two-sided,
+> partial, occupied and dormered candidates retain their complete roofs. P09 changes
+> only four of 2,000 native placements; all 111 rooms and 356/502 public samples remain.
+> Seven clear native pairs, three fresh game pairs, 26 focused tests / 520 assertions,
+> 48/48 towns and 95/95 composition pass. The shared 52/53 test result retains the
+> historical prefab circulation bound. P31 retains its native two-sided dormer.
+> Cold startup is 192.620 s; no performance/full-suite acceptance is claimed. See
+> docs/qa/2026-09-13-manual/11-roof-joins/result.md.
+
+> September 14 review capture correction: collision readiness and an idle worker
+> can precede feature visual commits. Village reported captures now wait for the
+> feature queue to drain before freezing/saving the world. Eight tests / 40
+> assertions pass; a fresh P10 capture and replay retain all 345 expected current
+> wall/window pieces. Older issue-09 snapshots lacked 70 wall pieces and must not
+> serve as complete-world references. Production streaming is unchanged; grass,
+> lighting and general performance are not accepted by this correction. See
+> docs/qa/2026-09-13-manual/45-live-panels/result.md.
+
+> September 14 lawn borders: suspended cells use the complete same-height turf
+> footprint for exposed frames and grass insets. Two photographed internal L strips
+> disappear while exterior frames, supports and guards remain. Six matched pairs,
+> fifteen tests / 4,635 assertions, identical 356-stance / 502-crossing clearance,
+> 48/48 towns and the 95-assertion composition gate pass. Fresh startup is 188.871 s;
+> no performance acceptance is claimed. See docs/qa/2026-09-13-manual/42-lawn-strips/result.md.
+
+> September 14 doorway panels: closed native doorway returns use plain
+> horizontal wall stock at its full normal relief. Manifest-owned left handing
+> places both native jambs toward the front, preserving winding, source-centre
+> bounds and central doorwork. Baker 37 updates ten variants; other recipes
+> retain the default operation. Eleven judged pairs, 96 native depth samples,
+> 2,715 room sightlines, identical 164/235 local clearance and 48/48 towns with
+> 11,868 clear stances / 17,035 crossings verify P37. Composition is 95/95.
+> The 32 focused tests retain two original-asset historical failures (1,896/1,898
+> assertions). Six visual floor caps adapt; their collision stays identical.
+> Startup is 367.264 s, without performance or full-suite acceptance. See
+> docs/qa/2026-09-13-manual/39-door-panels/result.md.
+
+> September 14 garden/stair guards: rounded stair occupancy does not open a
+> lateral garden exit. Raised courts own their level guards and clip diagonal
+> rail fragments above the retaining wall; end landings remain open. P40 has
+> ten matched native/game pairs, six actual bidirectional stair/landing walks,
+> 14 tests / 428 assertions and 48 towns with 11,868 / 17,035 clear positions /
+> crossings. One local unsafe lateral exit deliberately closes; all 164 stances
+> and the other 234 crossings remain unchanged. The roof-side guard was present,
+> partially occluded by the gable. Composition passes 95 assertions. Startup is
+> 366.166 s; no performance claim. See docs/qa/2026-09-13-manual/40-rail-ends/result.md.
+
+> September 14 dormer fitting: two finite native shed variants extend their rear
+> stock through the existing editor fitting operation while preserving front geometry,
+> UVs and complete native collision. Compact/wide registrations and native-repeat
+> paired spacing close both P41 junctions without burying glazing. Four native tests /
+> 12,018 assertions, matched game/native controls, unchanged 164/235 local clearance,
+> all 48 towns and the 95-assertion gate pass. The related 70/71 result retains one
+> circulation assertion reproduced with the saved original program. Cold startup is
+> 367.801 s; no general performance acceptance. See
+> docs/qa/2026-09-13-manual/41-dormers/result.md.
+
+> September 14 facade-prop review: shared facade recipes leave rejected white
+> ivy and mug-sign phases empty while retaining laundry and planted window boxes.
+> Released envelopes allow normal optional-detail/roof reselection. Twenty-one
+> native/game/wide pairs, 28 tests / 49,707 assertions, unchanged 164/235 photo
+> clearance, 48/48 towns with 11,868 clear centers / 17,035 crossings and 95/95
+> composition assertions pass. Twenty-five conservative pillar AABB candidates
+> have zero measured blocks/intrusion; these are not demonstrated contacts.
+> Cold photo startup is 191.744 s; no general performance/full-suite claim.
+> See docs/qa/2026-09-13-manual/16-facade-props/result.md.
+
+> September 14 public floor finish: production and review share one cached
+> transition plank material. Face-metric ramp/stair UVs retain full-width boards
+> in all four directions. A square-grid candidate was rejected visually.
+> Six matched native/live pairs, eight GPU controls and 19 tests / 187 assertions
+> pass. Native placements and all collision stay identical; seven of 52 surface
+> payloads change only UVs. The 48-town matrix retains 11,868 clear centers /
+> 17,035 crossings and 24 off-center pillar contacts; composition passes 95/95.
+> Startup remains expensive. See docs/qa/2026-09-13-manual/38-floor/result.md.
+
+> September 14 barrel review: optional dressing checks actual sealed public
+> triangles as well as native modules. P36 loses only its ramp-embedded barrel;
+> other placements, 52 public surface payloads and collision remain identical.
+> Six matched pairs, 15 tests / 2,067 assertions, identical 164/235 local clearance
+> and 48/48 towns with 11,868 centers / 17,035 crossings verify the repair.
+> The same 24 offset-only pillar contacts remain; the 95-assertion gate passes.
+> See docs/qa/2026-09-13-manual/37-barrel/result.md.
+
+> September 14 road follow-up: actual-width edge eligibility, bounded four-direction
+> routing and endpoint-derived town gates restore two reviewed neighboring links.
+> Lazy exact-cost search preserves the rendered route records. Two 672 m streamed
+> walks and six native entrance traversals pass; 48/48 towns retain 11,868 centers /
+> 17,035 crossings and 24 offset-only pillar contacts. The unchanged 60 s timing
+> bound fails on original (87.748 s) and final (95.012 s); performance remains open.
+> See docs/qa/2026-09-13-manual/36-world-paths/result.md.
+
+> September 13 partial retaining courses: an incomplete exposed storey uses
+> the existing fitted masonry treatment, keeping complete facade courses intact.
+> The photographed low plaster patch becomes a continuous stone column. Six
+> matched native/game pairs, four tests / 44 assertions and identical 356-position /
+> 502-crossing surveys verify the site. All 48 towns retain 11,868 clear centers /
+> 17,035 crossings and the same 24 off-center pillar contacts; the fingerprinted
+> gate passes 95 assertions. Two older fixture failures reproduce unchanged;
+> no full-suite or performance acceptance is claimed. See
+> docs/qa/2026-09-13-manual/10-low-wall/result.md.
+
+> September 13 upper-bay review: native open backs declare complete parent-wall
+> contact cells. Centred facade placement retains exact room/bearing sockets
+> across both columns, with all original bearing/roof/public clearance checks.
+> P10's half-backed bay becomes a closed projection on a compatible facade.
+> Ten focused tests / 475 assertions, six judged pairs, identical 164-cell /
+> 235-crossing clearance and 48/48 towns (11,868 centres / 17,035 crossings)
+> pass. The same 24 off-centre pillar contacts remain. The first candidate's
+> 20 socket-match failures were rejected. Separate live-panel omissions remain
+> open; no general renderer or full-suite acceptance. See
+> docs/qa/2026-09-13-manual/09-upper-wall/result.md.
+
+> September 13 half-roof review: a complete actual upper room backs the open
+> party cut, leaving the native finished gable toward the street. Early/final
+> admission share the rule; partial/lower walls cannot choose the hand. P07
+> changes only two of 2,001 placements with identical bounds, generated surfaces
+> and support boxes. Six native closure rays, 48 rotated native cases, three
+> matched game and four useful native pairs verify the reported ends. The
+> 48-town sweep retains 11,868 clear centers / 17,035 crossings and the same
+> 24 off-center pillar contacts; the corpus gate passes 95 assertions. The
+> full composition file retains 21 baseline failing tests. Local clearance
+> remains 356 clear centers and 498 clear / four offset-only crossings. No
+> universal roof, performance or full-suite acceptance is claimed. See
+> docs/qa/2026-09-13-manual/08-roofs/result.md.
+
+> September 13 evening visibility: complete native foliage owners share one
+> cutaway plane; upward leaves no longer masquerade as ground. Actual cliffs
+> may receive foliage reveals, while houses retain their ground/enclosure rule.
+> Background earth stays opaque, and foreground terrain only peels when actual
+> depth obstructs the actor. Receiver peeling shares that decision with grass.
+> Existing complete physical heightfield triangles prove native-cap burial;
+> cached private proof meshes release with their owners. WaterSheet keeps its
+> native material outside camera adaptation. Twenty-four evening pairs and twelve
+> prior-site controls, 40 tests / 328 assertions and a 60-frame bank sweep pass.
+> Invalid black captures are replaced; an intermittent shutdown report remains
+> documented beside the clean isolated test run. No general renderer, streaming
+> or performance acceptance. See docs/qa/2026-09-13-manual/01-near/evening-review.md.
+
+> September 13 platform access: ordinary full-width perpendicular stairs are
+> reserved before house allocation and share the existing upper landing. The
+> whole route footprint leaves flat deck/plaza ownership; occupied or short
+> courts cannot shrink the flight. The half-width candidate is withdrawn.
+> Three matched game pairs, native detail/collateral views, 22/22 real traversals,
+> nine tests / 137 assertions and 48/48 towns pass. Surveys retain 11,868 clear
+> centers, now 17,035 crossings and the same 24 off-center pillar contacts;
+> the fingerprinted gate passes 95/95. No relocation fallback, broad-suite or
+> general performance acceptance. See docs/qa/2026-09-13-manual/07-platform/result.md.
+
+> September 13 P08 rail review: deferred ramp/stair guards consume the same
+> finished native wall envelope as landing guards, removing detached timber
+> across upper rooms. Coarse masonry alone was insufficient. Exposed spans and
+> low parapets retain guards and collision. Three photo pairs, native detail/wide
+> controls, ten unchanged traversals, 12 tests / 368 assertions and 48/48 towns
+> with 11,868 clear centres / 17,038 crossings pass; the gate passes 95/95.
+> The same 24 off-centre pillar contacts remain. No broad-suite or performance
+> acceptance is claimed. See docs/qa/2026-09-13-manual/06-rails/result.md.
+
+> September 13 stone-path review: the complete-flight reservation also removes
+> P05's six U-shaped retained masonry panels. No extra production change. Three
+> native photo pairs/differences, 125 clear capsule stances and ten actual traversals
+> verify the repair; the original has 53 blocked stances and one blocked traversal.
+> Issue-04 corpus and broader-suite limitations apply unchanged. See
+> docs/qa/2026-09-13-manual/05-stone/result.md.
+
+> September 13 path barrier: continuous native ramp/stair air is reserved before
+> room and prefab allocation, preserving the canonical route. P04 removes its
+> transverse timber/plaster barrier; all six real traversals and 99 capsule stances
+> clear. Retained-stone support closes to a fixed point after jamb withdrawals,
+> repairing a discovered six-cell regression in seed 9/standard. Three matched photo
+> poses and native context/support views, 51 tests / 511 assertions, 48/48 towns and
+> the 95-assertion fingerprinted gate pass. The same 19 broad composition test names
+> fail as baseline; no full-suite or performance acceptance. See
+> docs/qa/2026-09-13-manual/04-path/result.md.
+
+> September 13 ground cutaway review: actual first-surface depth gives every
+> intervening earth skin one screen-ray feather; full-frustum ground selection
+> includes reverse skins beyond the original actor corridor. Raised grass follows
+> its root's actual receiver depth. No substitute fill or collision change.
+> Fifteen photo-angle pairs, six motion pairs and 42 tests / 346 assertions pass.
+> Rejected candidates exposed reverse skins or shaved raised ground cover. Native
+> frame medians rise from about 27 to 38 ms; no performance acceptance is claimed.
+> See docs/qa/2026-09-13-manual/03-ground/result.md.
+
+> September 13 background visibility: native instances carry construction-owned
+> enclosure footprints through payload/chunk projection. Separate roofs inherit
+> their bearing rooms; stepped rooms share their inhabited-volume identity.
+> Background buildings stay opaque while a foreground enclosure uses one screen-ray
+> feather mask across all depths. P33/P06 and four neighboring views, independent
+> native background controls, and 41 tests / 333 assertions verify the scoped repair.
+> Existing P06 orange roof geometry remains under the roof review; broader ground,
+> interior, traversal and performance acceptance is not claimed. See
+> docs/qa/2026-09-13-manual/02-background/result.md.
+
+> September 13 near-camera visibility: foreground coverage retains its world
+> radius up to the eye, expanding its projected area for nearby obstacles.
+> The camera defaults to full transparency inside the feathered reveal;
+> real-ground mask taps clamp at viewport borders without relaxing the mandatory
+> center receiver. P03/P32 and four nearby native pairs/differences pass; 37
+> focused tests / 285 assertions pass. Background building preservation (P33)
+> remains open. See docs/qa/2026-09-13-manual/01-near/result.md.
+
+> September 12 current manual visibility review: the owner rejected both the
+> actor silhouette and brown earth-cap approaches. The requirement is bubble
+> intersection with real visible ground behind the obstacle. Where no genuine
+> receiver exists, preserve the original foreground, with an inward soft edge.
+> The receiver pass shares actual ground meshes and live native buffers; no fake
+> cap is emitted. One inward-feathered mask clears intervening front/rear shells
+> up to genuine terrain or public ground. Turf swatches reject sloping rock;
+> building interiors never qualify. Fifteen matched photo views and six motion
+> pairs, plus 36 camera tests / 275 assertions, verify these reported sites.
+> The baseline produces 8,120 synthetic void pixels and 210 reverse-skin pixels;
+> both become zero. Two black three-phase capture sets are excluded; the same
+> town angle passes when captured first in a fresh process. This does not resolve
+> general renderer stability. Warm frame medians are 32.304 versus 26.491 ms.
+> Cameras use rounded overlay reconstruction; no physical walk, global performance
+> or remaining manual-issue acceptance is claimed. See
+> docs/qa/2026-09-12-manual/01-ground/result.md.
+
+> September 12 biome terrain review: seven continuous geological profiles use
+> a 128 m range / 32 storeys while retaining the native 4 m / three-storey step.
+> Physical water source thresholds survive that range change. Wide gentle reaches
+> retain low bars; receiving rivers share fitted lake island/peninsula ownership.
+> Natural overhead arches reserve complete bearings and use closed visual/physical
+> triangles. Exact float32 queue comparisons end the reproduced water requeue stall;
+> buried rim intervals cannot create inverted swim volumes. Complete native-only
+> neighborhoods use the common owned parcel/support pipeline without dummy rooms.
+> Steep moving water uses bounded hydraulic-power scattering along its actual face;
+> shoreline, stationary, transverse and flat controls stay unchanged on both sides.
+> Ninety landmark pairs, final lake/gorge/arch/bar and native-town views, six actual
+> arch swims, six bar and six lake surveys, 39 dry peninsula samples, 64 tests /
+> 10,009 assertions, seven material tests / 47 assertions and ten GPU controls pass.
+> The mandatory corpus remains 48/48 with 11,868 clear centers / 17,038 crossings;
+> 24 off-center pillar contacts remain, and the fingerprinted gate passes 95/95.
+> Coarse contours, restrained forest bowls, clear broad cascades and unwired plunge
+> spray remain. Cold arrivals still take minutes (final island 327.947 s); no global
+> streaming, water, renderer or full-suite acceptance is claimed. See
+> docs/qa/2026-09-11-manual/12-landforms/result.md.
+
+> September 12 cliff terraces: nine catalogued native KayKit hill columns keep
+> their full proportions and collision, rooted in lower ground and embedded in
+> exposed faces and both corner types. One-cell halo arbitration preserves chunk
+> ownership; complete public/graded footprints and wet feet veto placement.
+> Sparse native rocks sit on wider caps; CPU workers use detached prepared values.
+> Sixty-six matched pairs, eighteen detail views, eight tests / 283 assertions and
+> 128 orientation/seed cases verify inspected sites. Original ground/cliff arrays
+> remain identical. The broader 100/103 result retains three historical carved
+> corner failures. Startup is 132.281 s; no new long-walk or general performance
+> acceptance is claimed. See docs/qa/2026-09-11-manual/11-cliffs/result.md.
+
+> September 12 unified city and follow-ups: low native neighborhoods and upper
+> rooms share one massif/route/plot allocation. The separate ground-house ring is
+> removed; real external roads hand off to source gates. Retained earth over public
+> air requires a continuous crown between opposing actual jambs, removing the entire
+> photographed floating grass/stone/timber bed. Optional skywalks require a complete
+> neighboring wall storey beside both endpoint groups, outside their own compound
+> and future public openings. The photo keeps one interior span and three low
+> prefabs. Complete exposed crowns share early/final native roof alternatives despite
+> stale flat topology markers, repairing seed 8 grand without retries or seam changes.
+> Matched photo/wide/native comparisons, 42 tests / 9,081 assertions, 48/48 towns,
+> 11,868 clear public positions / 17,038 crossings and 95/95 composition pass.
+> Twenty-four off-center pillar contacts remain. Four black live captures are excluded;
+> clean persistent-camera/GPU replays do not explain those readbacks. Camera matching
+> uses rounded original overlays. See docs/qa/2026-09-11-manual/10-unified-city/result.md.
+
+> September 12 prefab integration: all 32 complete native recipes survive the
+> 17 measured doorway-relative reservation families. Source selection chooses the
+> actual native variant before modular partitioning, and its signature records
+> that choice independently of audit order. Each tier requests one extra supported
+> prefab site; existing bearing, visual/public air and frontage checks remain.
+> The photo town retains all 28 room records and two prefabs; seed 11 compact
+> gains a second prefab (27 to 18 modular rooms), retaining identical 76/108 public
+> clearance. Photo clearance remains 88/124. Fifty-four credited visual pairs plus
+> ten obscured context views, 48/48 constructed towns, 11,112 clear positions and
+> 15,923 clear crossings pass. The same 27 off-centre pillar contacts remain.
+> Composition passes 95/95; raw host calibration 2.810x is still invalid for a
+> performance bound. An isolated grand-town pair totals 57,197/55,976 ms; no general
+> speedup is claimed. Source-plot historical failures are identical to baseline;
+> two older scale pins remain. Native floors/ground/street interfaces are shared,
+> without new interior openings. See docs/qa/2026-09-11-manual/09-prefabs/result.md.
+
+> September 12 skywalk integration review: two completely borne half-storey
+> endpoint gaps use full-width native masonry with ordinary native corner miters
+> and continuous timber quoins. Early reservations remove the inaccessible crown
+> planter; final foundation connectivity proves every lower bearing before emission.
+> Public/daylight/protected air veto infill. Both occupied spans and 27 warren rooms
+> join one constructed mass; the small roofed house remains separate. All 28 room
+> records and unrelated recipe choices stay fixed. Three candidates were rejected,
+> including narrow-panel gaps missed by centre rays. Final evidence: 38 judged
+> pairs, 23,850 native shell segments, 10 tests / 266 assertions, identical local
+> 88-cell / 124-crossing clearance, 48/48 towns and 11,112 / 15,923 clear positions /
+> crossings. The 27 off-centre pillar contacts remain. Composition is 94/95: only
+> 3/standard timing fails, 17,856 vs 16,200 ms at invalid host factor 3.35x.
+> Timing stays unresolved, pins unchanged. Closed rooms gain construction
+> connectivity, not playable interiors. See docs/qa/2026-09-11-manual/08-skywalk/result.md.
+
+> September 11 roofless-cell review: the issue-5 removal also resolves the
+> blue-circled unused roof slab. Four remaining columns have actual rooms above
+> and below; 25 native triangle samples prove the smaller ceiling is closed.
+> Original payload reproduces eight failed bearing/use assertions, current code
+> passes all six related tests / 157 assertions. Sixteen fresh native pairs and
+> twelve live comparisons retain the issue-6 details. No new production change;
+> same 48-town matrix and timing limits. See docs/qa/2026-09-11-manual/07-roofless/result.md.
+
+> September 11 architectural-variety review: supported bay opportunities follow
+> upper-room lineages. Native private corner walkouts reserve two real bearing
+> walls, complete L decks and guards, and measured lower knee contacts. Compact
+> dormer requests survive compatible roof selection with unchanged native seams.
+> The photographed town retains all 28 rooms, adding one bay, two corner balconies
+> and one dormered roof. Twelve live pairs, sixteen native pairs, eight clear
+> detail pairs, 116 new assertions and 48 constructed towns retain 11,112 clear
+> public positions / 15,923 crossings. The composition gate retains timing
+> failures; no timing pin is changed. See docs/qa/2026-09-11-manual/06-variety/result.md.
+
+> September 11 floating-block review: ordinary room composition limits timber
+> projections to one fine cell, retaining the deeper complete public arcade.
+> The photographed slim room becomes its fully borne rear tower under the same
+> skywalk endpoint; all 28 rooms remain. Compact native timber knees replace
+> empty bracket recipes. Twelve live pairs, sixteen native pairs, 46 focused
+> tests / 357 assertions, unchanged 88-cell / 124-crossing local clearance and
+> all 48 corpus towns with 11,112 clear positions / 15,923 crossings verify the
+> reported repair. Loaded timing gates remain red on original and candidate;
+> no timing pin or full-suite acceptance is claimed. See
+> docs/qa/2026-09-11-manual/05-floating/result.md.
+
+> September 11 black-screen review: the original material adapter reproduces
+> fresh black/nonfinite GPU frames in the embedded Game view. The issue-1 live
+> buffer/native mesh ownership repair passes 4,682 marked embedded frames, both
+> exact failure poses, twelve photo-angle pairs and 13 native tests / 143
+> assertions. No renderer/effect change is added. Intermittent original clean
+> runs and stale diagnostic exclusions remain documented; acceptance is scoped
+> to the measured failure, not universal Metal stability. Temporary editor
+> settings are restored. See docs/qa/2026-09-11-manual/04-black/result.md.
+
+> September 11 camera roles: tactical left/right travel uses the old close
+> camera's angular follow response at a fixed elevated boom. The close view
+> instead uses bounded mouse yaw/pitch and a center crosshair above the mage
+> hat, with position following independent of heading. F7 preserves heading;
+> Escape, focus loss and pause release capture, and a game click reacquires it.
+> Twenty-four native tests / 166 assertions and sixteen judged image pairs with
+> camera trajectories verify the roles. Native capture is tested separately
+> from deterministic image motion replay. Enclosed close views retain real wall
+> obstruction. See docs/qa/2026-09-11-manual/03-controls/result.md.
+
+> September 11 larger visibility bubble: tactical coverage spans half the
+> viewport width, with no projected/world-height half-plane cutoff. Nearby
+> upward support surfaces remain opaque around the physical feet, including
+> lower ground during a jump/fall. Twelve frozen pairs and ten valid live pairs
+> with differences, 31 native tests / 289 assertions and a 720-tick orbit verify
+> the reported shape. Two wholly black live nearby pairs are excluded; all four
+> original reconstructed angles pass. Camera CPU p95 is 4.260 ms under a 30 FPS
+> cap. The separate manual black-screen issue remains open. See
+> docs/qa/2026-09-11-manual/02-bubble/result.md.
+
+> September 10 city-form review: default tiers now favor 3–6-house ground
+> hamlets (50%), then villages (40%) and towns (10%). Tiny settlements own a
+> shared square and measured well/fire/tree reservation before native frontage
+> allocation, without a second warren/outskirts pass. Real nearby road handoffs
+> may enlarge that square; distant roads do not. Native height eligibility keeps
+> civic towers out of tiny settlements. Hill, ridge, courtyard and crescent
+> warren sources reserve their open ground before routes and plots. One-storey
+> rims, at-grade streets, supported interior prefabs and inner/outer shared
+> frontage replace the universal tall core plus detached house ring.
+> Mixed crowns use bounded exact native tiling and preserve measured approved
+> roof seams. Optional bay supports clear the whole swept public crossing.
+> S002-derived native valley pieces share the normal roof pitch; twelve legal
+> T-junction signatures pass 20,532 actual triangle coverage samples.
+> Final evidence: 48/48 constructed towns, 11,112 clear public positions and
+> 15,923 clear crossings; 50 hamlet walks; 44 judged image pairs plus ten compact
+> views; 18 final tests / 7,560 assertions and 22 earlier architecture tests.
+> Exact cap memoization and proposal-local closure reuse retain geometry and all
+> corpus counts. The changed standard crescent remains costlier than its old
+> round counterpart (three solves 5397/5501/5284 ms); its timing pin is explicitly
+> recalibrated using the existing median x1.5 rule. Thirty off-centre pillar
+> contacts remain, without blocked centres/crossings. Windmills, island hamlets,
+> watermills and paired villages remain proposals. Cold-start and historical
+> water/contour limitations remain. See docs/qa/2026-09-10-manual/15-city-form/result.md.
+
+> September 10 grass-loading review: nearby grass uses one dedicated visual
+> worker with detached completed ground/water sampling data. Canonical terrain,
+> road and water plans remain confined to their original worker; private grade
+> caches retain exact samples. Only committed terrain supplies grass inputs.
+> The existing visual radius, placement field and upload budget are unchanged.
+> Teleports cancel distant queued tiles; completion and terrain eviction release
+> sampling owners, including the last local held across an idle semaphore wait.
+> Forty-five tests / 452 assertions, 32 judged render pairs and four real walks
+> verify the reported delay. The 775 m route has zero missing grass and zero
+> frozen time, versus 6.706 s missing nonempty underfoot grass before. The heath
+> also removes its 15.689 s unprepared-underfoot interval. Startup and teleport
+> waits remain expensive and variable; no startup speedup or global acceptance
+> is claimed. See `docs/qa/2026-09-10-manual/14-grass/result.md`.
+
+> September 10 repeated streaming review: exact early road-selection proofs
+> skip irrelevant alternatives while preserving seven complete production road
+> contexts and settlement entrance masks. Obsolete jobs cancel between complete
+> cached operations; partial contexts never publish. Follow-up terrain rebases
+> urgency, and bounded caches evict one completed entry only after replacement.
+> Discontinuous relocations prepare the existing travel buffer; ordinary motion
+> retains its existing collision/feature dependency gate. Water relaxation queues
+> violated edges and retains all 6,724 accepted photo-field samples exactly.
+> Sixteen teleports eliminate both reproduced walking freezes; an additional
+> 120-second walk travels 824 m and a separate retry travels 800 m without freezing.
+> Startup is 168.671 s; cold arrival waits remain expensive and some increase with
+> the buffer. Six matched render pairs/differences show loaded surroundings but
+> do not recreate the original foreground void. The documented cold-start timeout
+> remains. Acceptance is limited to the measured routes, not universal streaming.
+> See `docs/qa/2026-09-10-manual/13-streaming/result.md`.
+
+> September 10 manual water review: touching wet river heads reconcile downward
+> over their complete coarse and fine support, at a 0.30 grade with actual wet
+> bed floors. Dry barriers and enclosed lakes remain separate. Shore interpolation
+> removes only excess virtual dry-edge height above the physical dry-depth plane;
+> real fine water anchors contribute to that support. The same continuous bound
+> survives fine interpolation. No mesh-only shelf patch or terrain change is used.
+> Photos 15/16/18/19 and all 24 matched views/differences pass. A 73,322-point ledge
+> scan finds at most 5.4 cm wet entry depth and 5.8 mm height change per centimetre.
+> Four live water routes pass with zero frozen ticks; two chunk seams agree exactly.
+> The 93-test run retains eight identical historical failures (24,605/24,617
+> assertions). Initial loading remains expensive and is reviewed separately.
+> See `docs/qa/2026-09-10-manual/12-water/result.md` for scope and evidence.
+
+> September 11 manual entrance overhang: optional occupied facade bays require
+> a complete immediately borne parent wall edge. Already cantilevered faces and
+> empty roof reservations cannot extend again. Photo 10 loses its doubled,
+> offset projection while its parent room and entrance remain fixed. Six game
+> pairs, five native pairs/differences, 20 tests / 700 assertions and identical
+> 112-cell / 164-crossing clearance verify the repair. The older three-bay census
+> contained two newly rejected unborne faces. See docs/qa/2026-09-10-manual/11-overhang/result.md.
+
+> September 11 manual railing review: generated transition boxes use outward
+> lighting normals and Godot front winding; their original corner-based UVs,
+> vertices and collision stay identical. Suspended lawn borders remove their
+> former compensating reversal. Photos 1/12 and twelve matched game pairs plus
+> two native pairs pass after rejecting a first border regression. Seventeen
+> focused tests pass 4,490 assertions; eleven transition collision streams remain
+> identical. See docs/qa/2026-09-10-manual/10-railings/result.md.
+
+> September 11 manual roof review: bounded terminal roofs fit their measured
+> native gable above the supporting wall while preserving outer stock and party
+> seams. Joined partial crowns keep their original longitudinal end boundaries.
+> Baker version 35 retains every triangle, X/Y, UV and native height across twelve
+> finite alternatives. Photo 14 and five matched game views/differences, five
+> native pairs, 30 tests / 55,338 assertions and identical 132-cell / 188-crossing
+> clearance verify both circled roofs. See docs/qa/2026-09-10-manual/09-roofs/result.md.
+
+> September 10 manual ceiling review: a singleton exposed masonry face fits
+> its complete native stock into its owned band. Clearance and facade miters
+> share that fact. City garden retaining walls use city masonry and palette,
+> with shared rounded corner coordinates contained by the actual native grass
+> cap. Source faces and UVs remain complete; ordinary terrain rock is unchanged.
+> Photos 4/8/9 and all 18 matched game pairs plus ten native comparisons pass.
+> The 57 distinct related tests pass 6,021 assertions with clean exits. Both
+> photographed towns retain identical clearance: 120 cells / 175 crossings and
+> 297 cells / 424 crossings. See docs/qa/2026-09-10-manual/08-ceilings/result.md.
+
+> September 11 manual skywalk review: a two-ended span consumes bearing from
+> both endpoint buildings and cannot return one end's bearing to its other end.
+> The final ground graph excludes those spans and empty roof reservations.
+> Disconnected endpoint rooms receive the existing native corner frame, seated
+> on their lower building and joined to the upper floor underside. Photo 3 and
+> five nearby game pairs, four native pairs, 47 tests / 1,069 assertions and
+> identical 132-cell / 188-crossing clearance verify the photographed repair.
+> See `docs/qa/2026-09-10-manual/07-skywalk/result.md`.
+
+> September 10 garden-underside review: raised garden cells retain exposed
+> lower shell faces and close them with the ordinary fitted native timber
+> soffit. Ground-level gardens retain their buried terrain interface. Native
+> turf lips and the existing suspended lawn's soil/frame/deck remain unchanged.
+> Thirty-six matched game pairs, two direct underside comparisons, 74 native
+> depth samples and unchanged 112-cell / 164-crossing clearance verify the
+> inspected sites. Forty-two focused tests pass with 5,652 assertions. The
+> broad initial restoration was rejected for a new low timber strip; the final
+> ground-interface regression prevents it. See docs/qa/2026-09-10-manual/06-turf/result.md.
+
+> September 11 platform guard review: roof reservation cells keep construction
+> clearance but do not substitute for full walls at an exposed public edge.
+> Four native railing sections close photo 5's platform beside its sloping roof.
+> Six matched render pairs/differences, sixteen physical probes in four
+> orientations, 30 tests / 1,076 assertions and identical 112-cell / 164-crossing
+> clearance verify the photographed platform. See
+> `docs/qa/2026-09-10-manual/05-guards/result.md`.
+
+> September 11 bench review: both native bench variants retain their visual
+> meshes and placements and now carry their complete 96/162-triangle collision.
+> Baker 34 supports a manifest-owned native_trimesh profile. Eight seat probes,
+> both capsule approaches and six matched real-player before/after approaches
+> pass; six render pairs retain the furnishing shape. Six focused tests / 399
+> assertions and unchanged 112-cell / 164-crossing clearance verify photo 7.
+> See `docs/qa/2026-09-10-manual/04-bench/result.md`.
+
+> September 11 prefab foundation review: complete prefab recipes own native
+> timber floors across their declared footprints, correcting the measured board
+> pivot once and reserving every lower bearing before admission. Catalog-derived
+> source templates retain the same complete support contract. Private floors and
+> exposed timber shoulders recess their retaining stone beneath the board.
+> Photos 2/17 and ten additional matched views/differences pass, alongside
+> 18 tests / 1,295 assertions and the independent 207-assertion template check.
+> Physical surveys remain identical at 112 cells / 164 crossings and 297 / 424;
+> the latter retains two baseline blocked crossings and one offset-only stance.
+> Evidence: `docs/qa/2026-09-10-manual/03-prefab/result.md`.
+
+> September 11 spirit-orb review: both sizes use real spherical cores, a shared
+> restrained halo and bounded analytic drift. Small canonical firefly anchors
+> render in two MultiMeshes with at most sixteen nearby shadow-free lights per
+> chunk; distant chunks release the pool. Six production pairs, sixteen timed
+> pairs, rendered centroids and ground-light differences verify photo 11.
+> Eleven native tests pass 2,606 assertions. Three uncapped views add 0.36–0.84
+> ms/frame for the new illumination. Streaming remains separately pending.
+> See `docs/qa/2026-09-10-manual/02-orbs/result.md`.
+
+> September 11 manual wall review (September 10 photos 6/13): the native closed
+> wooden doorway has full side housing made from authored timber/plaster stock
+> within its original envelope. Its central leaf, hinges and arch remain intact.
+> Baker 33 fits the actual source minimum and full height, including door feet.
+> Return planes and their vocabulary remain unchanged. Concave facade ends share
+> a plain native timber return across their rear reveals. Twelve matched render
+> pairs and differences, 16 tests / 1,486 assertions and identical 124-cell /
+> 179-crossing clearance verify the reported seams. A rear-slab-only candidate
+> was rejected after its oblique through-view remained visible. See
+> `docs/qa/2026-09-10-manual/01-walls/result.md`.
+
 > September 9 tunnel arches (accepted): native timber frames belong to the
 > transition from open public air into a complete three-band warren bore.
 > Two walking cells, two solid jamb columns and real lower bearings precede
@@ -767,15 +2682,17 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
     a 4 m storey slope. Levels do not emit cliff dressing or vertical backing walls.
 - **`heightfield/HeightfieldRegion.gd`** — precomputed storey/level dictionaries with O(1)
   `storey_at` / `level_at` / `surface_height`. Same read API as the plan.
-  Its final graded view composes the village's sealed ground-band and foundation-pad
-  constraints through `TerrainGradePatch`, using the same centre/edge/corner smootherstep
-  kernel for target heights. The finite collar applies the normal 12 m transition profile
-  once to distance from the claimed-cell union, with continuous boundary-height blending;
-  it never resmooths weights at every 3 m construction cell or switches nearest-pad owners.
-  Natural fields remain available
-  for deterministic site and parcel selection. The final view is shared by terrain visuals,
-  collision and environmental dressing; foundation bounds use conservative interval
-  composition rather than assuming a coarse natural quadrant still contains every extremum.
+  Its final graded view resolves sealed village ground and foundation constraints
+  through `NativeTerrainGrade` into ordinary world-grid height controls before selecting
+  slopes, flat cliff crowns and native corners. The fine `TerrainGradePatch` remains a
+  planning constraint; it must not bend an already selected native crown or side face.
+  Fixed pads reserve native cells and bounded monotone support closure raises free controls
+  only when an ordinary reconstructed pad would sag. Inherited continuous street samples
+  do not become fixed pads. Canonical complete input and the two-cell discovery margin
+  are independent of chunk query order. Natural maps remain available for deterministic
+  site and parcel selection. Terrain, collision, grass copies and native dressing share
+  the final control dictionary. Legacy post-classification grading remains explicit only
+  for historical fixtures and comparisons; removing that legacy warp retains native controls.
 - **`field/TerrainSurfaceField.gd`** — reconstructs the **continuous walkable height** from a
   region. Each non-cliff cell quadrant is a smootherstep patch through four shared controls:
   its centre, the pairwise-minimum height at each adjoining edge midpoint, and the four-cell
@@ -1060,9 +2977,9 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   repeat at the authored 3 m pitch, and are rejected when their thickness would enter any public
   lane below; internal surface seams can never manufacture posts in a plaza. The route entry also
   publishes ground-height constraints and path paint at each boundary. Production no longer
-  emits separate town-street or handoff-ramp meshes: the terrain's fine local tessellation owns
+  emits separate town-street or handoff-ramp meshes: the ordinary terrain surface owns
   both their appearance and collision. Nearby accepted house pads join the same sealed grading
-  transaction, retaining the neighbourhood while the collar meets untouched natural ground.
+  transaction, which selects native controls before the normal terrain joins are reconstructed.
   Outskirts survey the finished field and propose pads on that same construction datum/grid
   before their entrance and route proofs. A later pad cannot overwrite a sealed ground band.
   After retained masonry is finalized, root rooms are re-proved against the actual
@@ -1391,7 +3308,8 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   Pitched compact and slim roofs may receive measured dormers. Each uses one complete authored
   attic-window shell, retaining its window, cheeks, sill, supports, and closed gabled or shed crown
   as one coherent asset. The reviewed steep gable stays at 56% scale; the broader shed uses 50%,
-  a lower 0.22 m registration, and a 0.22 m downslope shift so its tail stays below the host ridge.
+  0.22 m compact / 0.74 m wide registration, and a 0.12 m downslope shift. Two finite native
+  rear-stock variants close the host contact without moving the authored glazing.
   The blue compact tower retains the reviewed steep
   gable; the warm compact tower uses the lower-profile shed instead of the weaker shallow gable.
   Gabled and lower-profile shed families use separate registrations so their feet and open backs remain buried in the host slope without
@@ -2066,10 +3984,11 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   Man-made feature assets are deliberately excluded from eager warm-up and demand-loaded by the
   commit queue.
   The worker returns only arrays/transforms/sampler payloads. Terrain and feature generations are
-  independent, but queued requests for one block widen into one job. Typed grass jobs reuse the
-  canonical `WorldFieldBlockCache`/`WorldFeaturePlan`, are eligible only after their containing terrain is
-  committed, and sit behind player-critical and grass-underlay terrain but ahead of the outer
-  terrain ring. Grass never gates terrain readiness. A completed terrain payload waits in one nearest-first
+  independent, but queued requests for one block widen into one job. `GrassSamplingContext`
+  detaches completed field inputs from their canonical owners and mutable caches. One separate
+  `GrassWorkQueue` computes nearby ordinary grass tiles only after their terrain is committed,
+  cancelling distant queued work on movement. It never enters the canonical planners. Grass
+  never gates terrain readiness. A completed terrain payload waits in one nearest-first
   list until every key in its footprint-derived feature halo is ready; v1's maximum footprint
   yields exactly the lexicographically sorted 3×3 square. Empty feature blocks are explicit ready
   records and allocate no node/resource. `FeatureCommitQueue` demand-loads sorted assets and
@@ -2301,7 +4220,8 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   `WaterRippleSim` owns two player-centred GPU fields. Its ping-pong wave equation carries
   swim wakes, entry splashes, and ambient clear rings; semi-Lagrangian backtracing advects it
   through a 32×32 current texture over the restored 96m interaction domain. Its second pass
-  rasterizes at most 16 persistent world-space Morlet-style wavelets (compact, Gaussian-
+  rasterizes at most 64 persistent world-space Morlet-style wavelets over 192 m,
+  with a local admission limit and a continuous 48–90 m circular fade (compact, Gaussian-
   windowed 6–10m oscillating crests, not closed blur bubbles or repeated trains). Their CPU
   centres/lifetimes/directions/phases are transported through the same
   `WaterSampler.velocity_at()` field and turn with the shared vorticity as that field bends.
@@ -2529,3 +4449,14 @@ across 140 cells and 205 crossings verify the change.
 > checks pass 33 tests / 399 assertions; corrected-pose locomotion passes 10 /
 > 147 and native input passes 9 / 96. Normal-game acceptance is recorded in
 > `docs/qa/2026-09-10-tactical/continuous-input-and-stride.md`.
+> September 11 village camera work: visibility keeps live MultiMesh buffers and
+> native geometry, with reversible render-surface bindings for multi-material
+> batches. Source materials share one adapter; per-instance strength retains
+> independent fades. Last-owner restoration includes freed nodes. A 32-program
+> history retains shaders without retaining unselected source textures. Four
+> pinned views and twelve frozen plus three live pairs preserve appearance.
+> The live held-input/orbit replay reduces camera CPU p95 12.531 to 2.594 ms;
+> original/fixed/disabled travel and collision stops agree, with no streaming
+> freezes. Twenty-nine native tests / 263 assertions pass with a clean exit.
+> This verifies reproduced camera work, not universal streaming, whole-frame
+> speed or unrecorded native focus loss. See docs/qa/2026-09-11-manual/01-movement/result.md.

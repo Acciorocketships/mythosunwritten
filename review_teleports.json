@@ -1,5 +1,17 @@
 [
  {
+  "name": "C1: tall green massif, sheet-style cliff slopes (seed 2697992464)",
+  "pos": [
+   262.0,
+   30.0,
+   1045.0
+  ],
+  "look": [
+   300.0,
+   990.0
+  ]
+ },
+ {
   "look": [
    240.0,
    -360.0
