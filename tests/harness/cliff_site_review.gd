@@ -1,0 +1,274 @@
+extends Node3D
+
+## Iterative cliff-rock review at one streamed production site.
+## Streams the real world around `--at`, captures every `--view`, then waits.
+## Touch `<output>/reload` to hot-reload the cliff rock scripts, recompute the
+## rock formations and cliff vegetation of every loaded chunk from the same
+## worker regions/features/water, and capture again into the next iteration
+## folder. Touch `<output>/quit` to exit. Terrain, water and grass are not
+## regenerated; only the rock layer changes between iterations.
+##
+##   Godot --path . res://tests/harness/cliff_site_review.tscn -- \
+##     --seed 2697992464 --at 300,20,995 --output DIR \
+##     --view id:px,py,pz:tx,ty,tz[:fov]
+const WAIT_HARD_TIMEOUT_SECONDS := 1500.0
+const IDLE_SETTLE_SECONDS := 3.0
+const RELOAD := [
+	"res://scripts/terrain/field/CliffRockEndCaps.gd",
+	"res://scripts/terrain/field/CliffLedgeJoin.gd",
+	"res://scripts/terrain/field/CliffRockCrags.gd",
+	"res://scripts/terrain/field/CliffCornerCrags.gd",
+	"res://scripts/terrain/field/CliffRockRelief.gd",
+	"res://scripts/terrain/field/CliffInnerSurface.gd",
+	"res://scripts/terrain/field/CliffStepSurface.gd",
+	"res://scripts/terrain/field/CliffInnerConnections.gd",
+	"res://scripts/terrain/field/CliffRockDressing.gd",
+	"res://scripts/terrain/field/CliffVegetation.gd",
+	"res://scripts/terrain/field/CliffKitDressing.gd",
+	"res://scripts/terrain/field/CliffSlopeRocks.gd",
+	"res://scripts/terrain/field/CliffSlopeField.gd",
+]
+const CRAG_SHADER := "res://terrain/materials/cliff_crag.gdshader"
+const STYLE = preload("res://scripts/terrain/field/CliffRockStyle.gd")
+
+var _seed := 2697992464
+var _at := Vector3.ZERO
+var _radius := 1
+var _grass := false
+var _output_dir := "/tmp/mythos-cliff-site-review"
+var _views: Array[Dictionary] = []
+## Art-direction variants rendered per iteration (CliffRockStyle.apply names).
+var _styles: PackedStringArray = []
+var _plain := false
+var _streamer: FieldTerrainStreamer
+var _character: CharacterBody3D
+var _camera := Camera3D.new()
+var _inputs: Dictionary = {}
+
+
+func _ready() -> void:
+	_read_args()
+	get_window().size = Vector2i(1600, 900)
+	DirAccess.make_dir_recursive_absolute(_output_dir)
+	var world := (load("res://scenes/world.tscn") as PackedScene).instantiate()
+	_streamer = world.find_child("FieldTerrain", true, false) as FieldTerrainStreamer
+	_character = world.find_child("Character", true, false) as CharacterBody3D
+	_character.visible = false
+	_streamer.SEED_OVERRIDE = _seed
+	_streamer.CHUNK_RADIUS = _radius
+	_streamer.KEEP_RADIUS = _radius + 1
+	_streamer.GRASS_ENABLED = _grass
+	_character.position = _at + Vector3.UP * 4.0
+	add_child(world)
+	_camera.current = true
+	add_child(_camera)
+	_run.call_deferred()
+
+
+func _read_args() -> void:
+	var args := OS.get_cmdline_user_args()
+	for index in args.size():
+		var next := args[index + 1] if index + 1 < args.size() else ""
+		match args[index]:
+			"--seed": _seed = int(next)
+			"--at": _at = _v3(next)
+			"--radius": _radius = int(next)
+			"--grass": _grass = true
+			"--output": _output_dir = next
+			"--styles": _styles = next.split(",", false)
+			"--plain": _plain = true
+			"--view":
+				var parts := next.split(":", false)
+				_views.append({"id": parts[0], "position": _v3(parts[1]), "target": _v3(parts[2]),
+					"fov": float(parts[3]) if parts.size() > 3 else 62.0})
+
+
+static func _v3(text: String) -> Vector3:
+	var p := text.split(",", false)
+	return Vector3(float(p[0]), float(p[1]), float(p[2]))
+
+
+func _run() -> void:
+	var ready := await _wait_for_site()
+	print("[cliff_site_review] site_ready=", ready)
+	_character.set_physics_process(false)
+	_collect_inputs()
+	var iteration := 0
+	await _capture_iteration(iteration)
+	while true:
+		if FileAccess.file_exists(_output_dir + "/quit"):
+			DirAccess.remove_absolute(_output_dir + "/quit")
+			break
+		if FileAccess.file_exists(_output_dir + "/reload"):
+			DirAccess.remove_absolute(_output_dir + "/reload")
+			iteration += 1
+			var started := Time.get_ticks_msec()
+			_reload_scripts()
+			await _capture_iteration(iteration)
+			print("[cliff_site_review] iteration=%d ms=%d" % [iteration, Time.get_ticks_msec() - started])
+		await get_tree().create_timer(0.3).timeout
+	get_tree().quit(0)
+
+
+func _capture_iteration(iteration: int) -> void:
+	if _styles.is_empty():
+		if iteration > 0:
+			_rebuild_rocks()
+		await _capture_all(iteration)
+		return
+	for style: String in _styles:
+		STYLE.apply(style)
+		var started := Time.get_ticks_msec()
+		_rebuild_rocks()
+		print("[cliff_site_review] style=%s rebuilt ms=%d" % [style, Time.get_ticks_msec() - started])
+		await _capture_all(iteration, style)
+	STYLE.apply("current")
+
+
+func _collect_inputs() -> void:
+	# The worker is idle: its canonical caches are safe to read here.
+	# Only chunks framed by a view are rebuilt; rock generation is expensive.
+	var framed := {}
+	for view: Dictionary in _views:
+		var target: Vector3 = view.target
+		for dx in [-40.0, 0.0, 40.0]:
+			for dz in [-40.0, 0.0, 40.0]:
+				framed[FieldTerrainStreamer.chunk_of(target + Vector3(dx, 0, dz))] = true
+	for chunk: Vector2i in _streamer._built.keys():
+		if not framed.has(chunk):
+			continue
+		var features: FeatureContext = _streamer._features.context_for(chunk, Callable())
+		_inputs[chunk] = {"region": features.graded_region(_streamer._fields.region(chunk)),
+			"water": _streamer._fields.water(chunk), "features": features}
+
+
+func _reload_scripts() -> void:
+	for path: String in RELOAD:
+		var script := load(path) as GDScript
+		script.source_code = FileAccess.get_file_as_string(path)
+		var error := script.reload(false)
+		if error != OK:
+			push_error("reload failed: %s (%d)" % [path, error])
+	# Shared crag shader: every material holding this Shader recompiles.
+	var shader := load(CRAG_SHADER) as Shader
+	shader.code = FileAccess.get_file_as_string(CRAG_SHADER)
+	load("res://scripts/terrain/field/CliffRockDressing.gd").prepare()
+	load("res://scripts/terrain/field/CliffVegetation.gd").prepare()
+
+
+func _rebuild_rocks() -> void:
+	var rocks: GDScript = load("res://scripts/terrain/field/CliffRockDressing.gd")
+	var vegetation: GDScript = load("res://scripts/terrain/field/CliffVegetation.gd")
+	var cells := TerrainChunkMesher.CELLS_PER_CHUNK
+	var seed_value: int = _streamer._mesher._water_seed
+	for chunk: Vector2i in _inputs:
+		var root: Node3D = _streamer._built.get(chunk)
+		if root == null:
+			continue
+		var input: Dictionary = _inputs[chunk]
+		var lo := chunk * cells
+		for name: String in ["CliffRockFormations", "CliffVegetation", "CliffKit"]:
+			var old := root.get_node_or_null(name)
+			if old != null:
+				root.remove_child(old)
+				old.free()
+		if STYLE.crags:
+			var cliffs := CliffDressing.compute(input.region, lo.x, lo.y, cells)
+			var data: Dictionary = rocks.compute(input.region, lo.x, lo.y, cells, seed_value, input.features, input.water)
+			var plants: Array = vegetation.compute(cliffs, data, input.region, seed_value, input.features, input.water)
+			root.add_child(rocks.build(data, _streamer._mesher._water_seed))
+			root.add_child(vegetation.build(plants))
+
+
+
+func _wait_for_site() -> bool:
+	var wanted: Array = _streamer.desired_chunks(FieldTerrainStreamer.chunk_of(_at), _radius)
+	var started := Time.get_ticks_msec()
+	var idle_since := -1
+	while float(Time.get_ticks_msec() - started) / 1000.0 < WAIT_HARD_TIMEOUT_SECONDS:
+		var missing := wanted.filter(func(c: Vector2i) -> bool:
+			return not _streamer._built.has(c) or not _streamer._feature_square_ready(c))
+		var progress := _streamer.worker_progress_snapshot()
+		var active := bool(progress.get("active", false)) and StringName(progress.get("phase", &"idle")) != &"idle"
+		if missing.is_empty() and _streamer.startup_loading_complete() and not active:
+			if idle_since < 0:
+				idle_since = Time.get_ticks_msec()
+			elif float(Time.get_ticks_msec() - idle_since) / 1000.0 >= IDLE_SETTLE_SECONDS:
+				return true
+		else:
+			idle_since = -1
+		await get_tree().create_timer(0.25).timeout
+	return false
+
+
+func _capture_all(iteration: int, style := "") -> void:
+	var dir := "%s/%02d" % [_output_dir, iteration]
+	if not style.is_empty():
+		dir += "/" + style
+	DirAccess.make_dir_recursive_absolute(dir)
+	# Views may be added between iterations: one "id:px,py,pz:tx,ty,tz[:fov]"
+	# per line in <output>/views.txt (the rebuilt chunks stay those framed at start).
+	var extra := FileAccess.get_file_as_string(_output_dir + "/views.txt")
+	for line: String in extra.split("\n", false):
+		var parts := line.strip_edges().split(":", false)
+		if parts.size() >= 3 and not _views.any(func(v: Dictionary) -> bool: return v.id == parts[0]):
+			_views.append({"id": parts[0], "position": _v3(parts[1]), "target": _v3(parts[2]),
+				"fov": float(parts[3]) if parts.size() > 3 else 62.0})
+	for view: Dictionary in _views:
+		_camera.fov = float(view.fov)
+		var up := Vector3.FORWARD if String(view.id).begins_with("plan") else Vector3.UP
+		_camera.look_at_from_position(view.position, view.target, up)
+		_camera.force_update_transform()
+		for unused in 4:
+			await get_tree().process_frame
+		RenderingServer.force_draw()
+		await get_tree().process_frame
+		var image := get_viewport().get_texture().get_image()
+		image.save_png("%s/%s.png" % [dir, String(view.id)])
+		for mode: String in ([] if _plain else ["kinds", "ids"]):
+			_paint(mode)
+			for unused in 3:
+				await get_tree().process_frame
+			RenderingServer.force_draw()
+			await get_tree().process_frame
+			get_viewport().get_texture().get_image().save_png("%s/%s_%s.png" % [dir, String(view.id), mode])
+		_paint("")
+	print("[cliff_site_review] captured iteration=%d dir=%s" % [iteration, dir])
+
+
+const KIND_COLORS := {"wall": Color(0.85, 0.85, 0.85), "joined": Color(1.0, 0.55, 0.1),
+	"step": Color(1.0, 0.95, 0.1), "ledge": Color(0.1, 0.9, 0.95), "corner": Color(0.15, 0.35, 1.0),
+	"inner_corner": Color(0.1, 0.8, 0.2), "inner_surface": Color(1.0, 0.1, 0.1), "waterline": Color(0.7, 0.2, 1.0)}
+
+
+func _paint(mode: String) -> void:
+	var index := 0
+	for root: Node in _streamer._built.values():
+		var formations := (root as Node).get_node_or_null("CliffRockFormations")
+		if formations == null:
+			continue
+		for child: Node in formations.get_children():
+			var instance := child as GeometryInstance3D
+			if instance == null:
+				continue
+			if mode.is_empty():
+				instance.material_override = null
+				continue
+			var color := Color(0.4, 0.4, 0.4)
+			if instance.has_meta("relief_recipe"):
+				var recipe: Dictionary = instance.get_meta("relief_recipe")
+				if mode == "ids":
+					color = Color.from_hsv(fposmod(float(hash(str(recipe)) % 1000) * 0.618, 1.0), 0.75, 0.95)
+				else:
+					var kind := String(recipe.get("kind", "wall"))
+					if kind == "wall":
+						if recipe.has("waterline"): kind = "waterline"
+						elif recipe.has("step_surface"): kind = "step"
+						elif recipe.has("inner_connections"): kind = "joined"
+						elif recipe.has("ledge_joins"): kind = "ledge"
+					color = KIND_COLORS.get(kind, Color.MAGENTA)
+			var material := StandardMaterial3D.new()
+			material.albedo_color = color
+			material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+			instance.material_override = material
+			index += 1

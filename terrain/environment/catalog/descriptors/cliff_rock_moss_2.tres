@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_da4t3"]
+
+[resource]
+script = ExtResource("1_da4t3")
+id = &"cliff.rock.moss_2"
+visual_path = "res://terrain/environment/visuals/cliff_moss_rocks/cliff_rock_moss_2.tres"
+tags = Array[StringName]([&"cliff", &"rock"])
+measured_aabb = AABB(-0.5, 0, -0.5, 1, 1, 1)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+provenance_id = &"cliff_moss_rocks:cliff.rock.moss_2"

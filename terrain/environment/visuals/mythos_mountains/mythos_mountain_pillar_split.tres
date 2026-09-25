@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_etf2n"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/mythos_mountains/mythos_mountain_pillar_split_piece_00.res" id="2_mughk"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_xydxk"]
+[ext_resource type="Material" path="res://terrain/environment/materials/mythos_mountains/limestone.tres" id="4_3h1po"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/mythos_mountains/mythos_mountain_pillar_split_piece_00.res" id="5_8five"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="6_r7b3y"]
+
+[sub_resource type="Resource" id="Resource_xiv0w"]
+script = ExtResource("1_etf2n")
+shape = ExtResource("2_mughk")
+
+[sub_resource type="Resource" id="Resource_vbedm"]
+script = ExtResource("3_xydxk")
+mesh = ExtResource("5_8five")
+material_override = ExtResource("4_3h1po")
+use_instance_color = false
+
+[resource]
+script = ExtResource("6_r7b3y")
+pieces = Array[ExtResource("3_xydxk")]([SubResource("Resource_vbedm")])
+collisions = Array[ExtResource("1_etf2n")]([SubResource("Resource_xiv0w")])

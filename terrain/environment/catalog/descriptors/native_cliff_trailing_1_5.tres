@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_o5qkt"]
+
+[resource]
+script = ExtResource("1_o5qkt")
+id = &"native.cliff.trailing_1_5"
+visual_path = "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_1_5.tres"
+tags = Array[StringName]([&"cliff", &"foliage"])
+measured_aabb = AABB(-0.7640841, -10.423117, 0.4194667, 1.7203372, 9.055146, 0.6501677)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+provenance_id = &"native_cliff_foliage:native.cliff.trailing_1_5"

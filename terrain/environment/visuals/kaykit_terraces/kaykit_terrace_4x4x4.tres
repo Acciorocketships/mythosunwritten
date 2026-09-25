@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_0mjhq"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/kaykit_terraces/kaykit_terrace_4x4x4_piece_00.res" id="2_t4u1m"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_1png3"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/kaykit_terraces/kaykit_terrace_4x4x4_piece_00.res" id="4_1x1wr"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_eu8d1"]
+
+[sub_resource type="Resource" id="Resource_dt8xu"]
+script = ExtResource("1_0mjhq")
+shape = ExtResource("2_t4u1m")
+
+[sub_resource type="Resource" id="Resource_5bu8i"]
+script = ExtResource("3_1png3")
+mesh = ExtResource("4_1x1wr")
+
+[resource]
+script = ExtResource("5_eu8d1")
+pieces = Array[ExtResource("3_1png3")]([SubResource("Resource_5bu8i")])
+collisions = Array[ExtResource("1_0mjhq")]([SubResource("Resource_dt8xu")])

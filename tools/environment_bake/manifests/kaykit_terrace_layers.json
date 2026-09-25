@@ -1,0 +1,78 @@
+{
+  "pack": "kaykit_terraces",
+  "license": "KayKit CC0",
+  "assets": [
+    {
+      "id": "kaykit.terrace.4x4x8",
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_4x4x8_Color1.gltf",
+      "collision_profile": "native_trimesh",
+      "tags": [
+        "cliff",
+        "terrain",
+        "terrace"
+      ],
+      "tint_group": "ground",
+      "supports_instance_color": true
+    },
+    {
+      "id": "kaykit.terrace.8x4x2",
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_8x4x2_Color1.gltf",
+      "collision_profile": "native_trimesh",
+      "tags": [
+        "cliff",
+        "terrain",
+        "terrace"
+      ],
+      "tint_group": "ground",
+      "supports_instance_color": true
+    },
+    {
+      "id": "kaykit.terrace.8x4x8",
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_8x4x8_Color1.gltf",
+      "collision_profile": "native_trimesh",
+      "tags": [
+        "cliff",
+        "terrain",
+        "terrace"
+      ],
+      "tint_group": "ground",
+      "supports_instance_color": true
+    },
+    {
+      "id": "kaykit.terrace.12x6x2",
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_12x6x2_Color1.gltf",
+      "collision_profile": "native_trimesh",
+      "tags": [
+        "cliff",
+        "terrain",
+        "terrace"
+      ],
+      "tint_group": "ground",
+      "supports_instance_color": true
+    },
+    {
+      "id": "kaykit.terrace.12x6x4",
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_12x6x4_Color1.gltf",
+      "collision_profile": "native_trimesh",
+      "tags": [
+        "cliff",
+        "terrain",
+        "terrace"
+      ],
+      "tint_group": "ground",
+      "supports_instance_color": true
+    },
+    {
+      "id": "kaykit.terrace.12x6x8",
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_12x6x8_Color1.gltf",
+      "collision_profile": "native_trimesh",
+      "tags": [
+        "cliff",
+        "terrain",
+        "terrace"
+      ],
+      "tint_group": "ground",
+      "supports_instance_color": true
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_o2f7l"]
+
+[resource]
+script = ExtResource("1_o2f7l")
+id = &"quaternius.cliff.fern"
+visual_path = "res://terrain/environment/visuals/native_cliff_foliage/quaternius_cliff_fern.tres"
+tags = Array[StringName]([&"fern", &"foliage"])
+measured_aabb = AABB(-1.3812423, -0.077334434, -1.2785361, 2.8269339, 0.8402432, 2.65232)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+provenance_id = &"native_cliff_foliage:quaternius.cliff.fern"

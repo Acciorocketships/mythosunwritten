@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_1sbut"]
+
+[resource]
+script = ExtResource("1_1sbut")
+id = &"cliff.outcrop.4"
+visual_path = "res://terrain/environment/visuals/cliff_outcrops/cliff_outcrop_4.tres"
+tags = Array[StringName]([&"cliff", &"rock"])
+measured_aabb = AABB(-0.6154509, 0.015108444, -0.48, 1.1291897, 0.98489153, 1.3332238)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"cliff_outcrops:cliff.outcrop.4"

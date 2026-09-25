@@ -1,0 +1,336 @@
+{
+  "assets": [
+    {
+      "id": "native.cliff.trailing_1_1",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_1_1.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_1_2",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_1_2.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_1_3",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_1_3.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_1_4",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_1_4.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_1_5",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_1_5.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_2_1",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_2_1.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_2_2",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_2_2.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_2_3",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_2_3.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_2_4",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_2_4.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_2_5",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_2_5.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_4_1",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_4_1.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_4_2",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_4_2.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_4_3",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_4_3.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_4_4",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_4_4.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_4_5",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_4_5.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_5_1",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_5_1.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_5_2",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_5_2.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_5_3",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_5_3.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_5_4",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_5_4.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_5_5",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_5_5.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_6_1",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_6_1.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_6_2",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_6_2.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_6_3",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_6_3.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_6_4",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_6_4.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_6_5",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_6_5.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_9_1",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_9_1.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_9_2",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_9_2.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_9_3",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_9_3.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_9_4",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_9_4.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "native.cliff.trailing_9_5",
+      "merge_pieces": true,
+      "source": "res://assets/NativeCliffVines/trailing_9_5.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "cliff"
+      ]
+    },
+    {
+      "id": "quaternius.cliff.fern",
+      "merge_pieces": true,
+      "source": "res://assets/StylizedNatureQuaternius/glTF/Fern_1.gltf",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "fern"
+      ]
+    },
+    {
+      "id": "native.cliff.groundplant_1",
+      "merge_pieces": true,
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_01.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "plant"
+      ]
+    },
+    {
+      "id": "native.cliff.groundplant_3",
+      "merge_pieces": true,
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_03.glb",
+      "supports_instance_color": false,
+      "tags": [
+        "foliage",
+        "plant"
+      ]
+    }
+  ],
+  "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+  "pack": "native_cliff_foliage"
+}

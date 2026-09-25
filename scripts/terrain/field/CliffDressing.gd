@@ -720,6 +720,26 @@ static func _finish_piece_setup() -> void:
 			"local": _pieces[key][1]}
 
 
+## Keep the native recess while there is a cliff, and close it onto the
+## logical cell boundary where grading removes that cliff. The sheet, lip,
+## rock and lower apron all use this same mapping. Collapse only within the
+## existing 0.001 removal tolerance. Scaling every surviving recess by grade
+## strength instead pulls visible rock away from its backing wall and exposes
+## a long seam across the ground at a partly graded cliff end.
+static func graded_rim_point(region: HeightfieldRegion, point: Vector3) -> Vector3:
+	var result := point
+	var boundary_x := roundf((point.x-TILE*.5)/TILE)*TILE+TILE*.5
+	var boundary_z := roundf((point.z-TILE*.5)/TILE)*TILE+TILE*.5
+	if absf(point.x-boundary_x)<=3.01:
+		var retained := region.graded_height(boundary_x,point.z,1.0)-region.graded_height(boundary_x,point.z,0.0)
+		result.x = lerpf(boundary_x,point.x,smoothstep(0.0,0.001,retained))
+	if absf(point.z-boundary_z)<=3.01:
+		var retained := region.graded_height(point.x,boundary_z,1.0)-region.graded_height(point.x,boundary_z,0.0)
+		result.z = lerpf(boundary_z,point.z,smoothstep(0.0,0.001,retained))
+	result.y = region.graded_height(result.x,result.z,point.y)
+	return result
+
+
 static func compute_graded_faces(region: HeightfieldRegion, lo_cx: int,
 		lo_cz: int, cells: int, world_seed: int) -> Array:
 	if region.terrain_grades.is_empty(): return []
@@ -732,7 +752,7 @@ static func compute_graded_faces(region: HeightfieldRegion, lo_cx: int,
 	var normals := PackedVector3Array()
 	var uvs := PackedVector2Array()
 	var colours := PackedColorArray()
-	for key: String in ["wall", "outer_wall", "inner_wall"]:
+	for key: String in placements:
 		if not _cpu_pieces.has(key): continue
 		var source: Dictionary = _cpu_pieces[key]
 		var source_vertices := source.vertices as PackedVector3Array
@@ -750,7 +770,7 @@ static func compute_graded_faces(region: HeightfieldRegion, lo_cx: int,
 				# its collapsed triangles into coplanar rock paint on the lawn.
 				retained.append(region.graded_height(point.x, point.z, 1.0)
 					- region.graded_height(point.x, point.z, 0.0) > 0.001)
-				point.y = region.graded_height(point.x, point.z, point.y)
+				point = graded_rim_point(region, point)
 				points.append(point)
 			var count := indices.size() if not indices.is_empty() else points.size()
 			for triangle in range(0, count, 3):
@@ -856,6 +876,7 @@ static func _multimesh(piece: Array, transforms: Array, nm: String, tints: Packe
 		mm.set_instance_color(i, tints[i])
 	var mmi := MultiMeshInstance3D.new()
 	mmi.name = nm
+	mmi.add_to_group("tactical_solid_earth", true)
 	mmi.multimesh = mm
 	# every piece renders with THE shared de-sheened terrain material (owner round 8: the lip,
 	# skirt and slope must be visually continuous from every angle)

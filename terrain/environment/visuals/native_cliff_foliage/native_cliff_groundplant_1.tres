@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_udwwj"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_qtq18"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/native_cliff_foliage/native_cliff_groundplant_1_piece_00.res" id="3_bhb4i"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_67h76"]
+
+[sub_resource type="Resource" id="Resource_2tm2d"]
+script = ExtResource("2_qtq18")
+mesh = ExtResource("3_bhb4i")
+
+[resource]
+script = ExtResource("4_67h76")
+pieces = Array[ExtResource("2_qtq18")]([SubResource("Resource_2tm2d")])

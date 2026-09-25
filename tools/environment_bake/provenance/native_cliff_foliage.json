@@ -1,0 +1,1327 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_groundplant_1.tres",
+      "id": "native.cliff.groundplant_1",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.492671191692352,
+            -0.00501985242590308,
+            -0.436698824167252
+          ],
+          "size": [
+            0.951424241065979,
+            0.308599323034286,
+            0.853591203689575
+          ]
+        },
+        "mesh_bytes": 57243,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 658
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.groundplant_1",
+        "merge_pieces": true,
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_01.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "plant"
+        ]
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_01.glb",
+      "source_sha256": "9dedda86861af433774932540a9ead08b73bad7b4580e53d3f53f8f525775808",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_groundplant_1.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_groundplant_3.tres",
+      "id": "native.cliff.groundplant_3",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.405606061220169,
+            0.00786710251122713,
+            -0.337853819131851
+          ],
+          "size": [
+            0.880164384841919,
+            0.335764437913895,
+            0.767734825611115
+          ]
+        },
+        "mesh_bytes": 78543,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 968
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.groundplant_3",
+        "merge_pieces": true,
+        "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_03.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "plant"
+        ]
+      },
+      "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_03.glb",
+      "source_sha256": "25c8234f575b14b0cf26cb0be3e9b26154a59cf922c1b00f847823f54a577ed1",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_groundplant_3.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_1_1.tres",
+      "id": "native.cliff.trailing_1_1",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.710216701030731,
+            -3.97052216529846,
+            0.450739800930023
+          ],
+          "size": [
+            1.66646981239319,
+            2.60255146026611,
+            0.618894636631012
+          ]
+        },
+        "mesh_bytes": 5750,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 82
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_1_1",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_1_1.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_1_1.glb",
+      "source_sha256": "d5baae3475da55751512e1ed4e33845d5b7d9aabf6ffbf92b43dc6f9c7268d34",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_1_1.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_1_2.tres",
+      "id": "native.cliff.trailing_1_2",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.710216701030731,
+            -5.85763502120972,
+            0.450739800930023
+          ],
+          "size": [
+            1.66646981239319,
+            4.48966407775879,
+            0.618894636631012
+          ]
+        },
+        "mesh_bytes": 10694,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 164
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_1_2",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_1_2.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_1_2.glb",
+      "source_sha256": "4b0fccc76def3489173496f3ea72717fc90c8cf7812a52e7139d605f336ed7ff",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_1_2.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_1_3.tres",
+      "id": "native.cliff.trailing_1_3",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.720585644245148,
+            -6.34084701538086,
+            0.419466704130173
+          ],
+          "size": [
+            1.67683863639832,
+            4.97287607192993,
+            0.65016770362854
+          ]
+        },
+        "mesh_bytes": 12590,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 195
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_1_3",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_1_3.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_1_3.glb",
+      "source_sha256": "eb1dc412bb6f273e0a1f915049b43fd26f38a8e577424194ab606e90fe39f47d",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_1_3.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_1_4.tres",
+      "id": "native.cliff.trailing_1_4",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.764084100723267,
+            -8.53434562683105,
+            0.419466704130173
+          ],
+          "size": [
+            1.72033715248108,
+            7.16637468338013,
+            0.65016770362854
+          ]
+        },
+        "mesh_bytes": 17534,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 277
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_1_4",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_1_4.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_1_4.glb",
+      "source_sha256": "90353106fb28409b8ae3e7fca20550d04fe1e607f180e1efe83476a5d95d21f7",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_1_4.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_1_5.tres",
+      "id": "native.cliff.trailing_1_5",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.764084100723267,
+            -10.42311668396,
+            0.419466704130173
+          ],
+          "size": [
+            1.72033715248108,
+            9.05514621734619,
+            0.65016770362854
+          ]
+        },
+        "mesh_bytes": 22478,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 359
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_1_5",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_1_5.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_1_5.glb",
+      "source_sha256": "ed833f0a2692ed37f0236a6012dc61847efe574d9c7e2a30e8a1d290c17ff386",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_1_5.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_2_1.tres",
+      "id": "native.cliff.trailing_2_1",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.858989417552948,
+            -3.97052216529846,
+            0.455777883529663
+          ],
+          "size": [
+            1.48992276191711,
+            2.60255146026611,
+            0.607234239578247
+          ]
+        },
+        "mesh_bytes": 3542,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 45
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_2_1",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_2_1.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_2_1.glb",
+      "source_sha256": "aa7c8c5e7fb3d526a43495107aa8c853d19fd940eb3cbf59524799dec761d685",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_2_1.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_2_2.tres",
+      "id": "native.cliff.trailing_2_2",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.858989417552948,
+            -5.68737363815308,
+            0.455777883529663
+          ],
+          "size": [
+            1.83331990242004,
+            4.31940269470215,
+            0.612417459487915
+          ]
+        },
+        "mesh_bytes": 6274,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 90
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_2_2",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_2_2.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_2_2.glb",
+      "source_sha256": "14bd0421242816d571933ed375e84625ae1281eaf50e73f768951e64ba259701",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_2_2.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_2_3.tres",
+      "id": "native.cliff.trailing_2_3",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.858989417552948,
+            -6.68751764297485,
+            0.414307773113251
+          ],
+          "size": [
+            1.83331990242004,
+            5.31954669952393,
+            0.740157067775726
+          ]
+        },
+        "mesh_bytes": 12158,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 207
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_2_3",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_2_3.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_2_3.glb",
+      "source_sha256": "f0f602fcff43b770a74905c7c83ae51ebb6550a2e46c316fe5a0f0804e0d625e",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_2_3.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_2_4.tres",
+      "id": "native.cliff.trailing_2_4",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.858989417552948,
+            -8.53708744049072,
+            0.414307773113251
+          ],
+          "size": [
+            1.83331990242004,
+            7.16911649703979,
+            0.740157067775726
+          ]
+        },
+        "mesh_bytes": 14890,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 252
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_2_4",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_2_4.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_2_4.glb",
+      "source_sha256": "d0ca886c8731d430346a5fc9a2b855bee324146a6dc946f67292a6fb94c17c4a",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_2_4.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_2_5.tres",
+      "id": "native.cliff.trailing_2_5",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.858989417552948,
+            -10.2484359741211,
+            0.414307773113251
+          ],
+          "size": [
+            1.83331990242004,
+            8.88046550750732,
+            0.740157067775726
+          ]
+        },
+        "mesh_bytes": 17626,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 297
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_2_5",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_2_5.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_2_5.glb",
+      "source_sha256": "fdab82e76480027990be68de2039dad25f633c96ed4720a761ca2c5c5a3638bf",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_2_5.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_4_1.tres",
+      "id": "native.cliff.trailing_4_1",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.31366091966629,
+            -2.86388278007507,
+            0.718563914299011
+          ],
+          "size": [
+            1.11639189720154,
+            1.58817267417908,
+            0.34535276889801
+          ]
+        },
+        "mesh_bytes": 2702,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 31
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_4_1",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_4_1.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_4_1.glb",
+      "source_sha256": "5c9aa0fffe8a35253cbe3b1b28f24ea7cf8e308d9e7b131ab8c72e593b4f2fab",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_4_1.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_4_2.tres",
+      "id": "native.cliff.trailing_4_2",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.992488861083984,
+            -4.13212871551514,
+            0.384188175201416
+          ],
+          "size": [
+            1.79521989822388,
+            2.85641860961914,
+            0.679728507995605
+          ]
+        },
+        "mesh_bytes": 4594,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 62
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_4_2",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_4_2.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_4_2.glb",
+      "source_sha256": "5c2384e3629505e2118dac814d7967ee49f126069bfb3afa83678afdaddf56d5",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_4_2.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_4_3.tres",
+      "id": "native.cliff.trailing_4_3",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.992488861083984,
+            -6.10864925384521,
+            0.384188175201416
+          ],
+          "size": [
+            1.89177250862122,
+            4.83293914794922,
+            0.805428028106689
+          ]
+        },
+        "mesh_bytes": 10262,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 176
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_4_3",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_4_3.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_4_3.glb",
+      "source_sha256": "2f61a8e77e078203625ccf8aa61fbccfb5e6be74c907dd08e00320b758458535",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_4_3.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_4_4.tres",
+      "id": "native.cliff.trailing_4_4",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.992488861083984,
+            -7.67262697219849,
+            0.384188175201416
+          ],
+          "size": [
+            1.89177250862122,
+            6.39691686630249,
+            0.805428028106689
+          ]
+        },
+        "mesh_bytes": 12158,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 207
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_4_4",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_4_4.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_4_4.glb",
+      "source_sha256": "f5c26aabe565396c7a059411ed2c2217114d4a072a7b2358301a4835eeae7e1a",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_4_4.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_4_5.tres",
+      "id": "native.cliff.trailing_4_5",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.992488861083984,
+            -8.94391345977783,
+            0.384188175201416
+          ],
+          "size": [
+            1.89177250862122,
+            7.66820335388184,
+            0.805428028106689
+          ]
+        },
+        "mesh_bytes": 14050,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 238
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_4_5",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_4_5.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_4_5.glb",
+      "source_sha256": "d37627f60133051aa9da76add035d5285cbdc808622222f2240f6d72bdea83fd",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_4_5.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_5_1.tres",
+      "id": "native.cliff.trailing_5_1",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.35684597492218,
+            -3.8048210144043,
+            0.328561782836914
+          ],
+          "size": [
+            1.90340399742126,
+            2.98571968078613,
+            0.748970985412598
+          ]
+        },
+        "mesh_bytes": 6690,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 117
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_5_1",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_5_1.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_5_1.glb",
+      "source_sha256": "abd003369fea637d7446fdeaa64ae24e816f89cd3817b4f88115101571fc0879",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_5_1.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_5_2.tres",
+      "id": "native.cliff.trailing_5_2",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.35684597492218,
+            -5.41995477676392,
+            0.328561782836914
+          ],
+          "size": [
+            2.35489130020142,
+            4.60085344314575,
+            0.797780632972717
+          ]
+        },
+        "mesh_bytes": 12570,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 234
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_5_2",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_5_2.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_5_2.glb",
+      "source_sha256": "c0b0d14f212a05936be28214ab8914cb58212f01b26a449aaa44c447133e05a9",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_5_2.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_5_3.tres",
+      "id": "native.cliff.trailing_5_3",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.35684597492218,
+            -6.10918188095093,
+            0.328561782836914
+          ],
+          "size": [
+            2.46764421463013,
+            5.29008054733276,
+            0.797780632972717
+          ]
+        },
+        "mesh_bytes": 14850,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 278
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_5_3",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_5_3.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_5_3.glb",
+      "source_sha256": "67d0261bad9fa94c5f926c5cef2718d7015ea3483c82c19a11cdf45aaeeb5f94",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_5_3.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_5_4.tres",
+      "id": "native.cliff.trailing_5_4",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.35684597492218,
+            -8.40228176116943,
+            0.328561782836914
+          ],
+          "size": [
+            2.46764421463013,
+            7.58318042755127,
+            0.816685557365417
+          ]
+        },
+        "mesh_bytes": 20734,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 395
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_5_4",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_5_4.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_5_4.glb",
+      "source_sha256": "11ceffed3ba96f848aece42507a0e5900e7fbee5241e0855f09c87683c7bed77",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_5_4.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_5_5.tres",
+      "id": "native.cliff.trailing_5_5",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.35684597492218,
+            -10.0236434936523,
+            0.328561782836914
+          ],
+          "size": [
+            2.46764421463013,
+            9.20454216003418,
+            0.816685557365417
+          ]
+        },
+        "mesh_bytes": 26614,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 512
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_5_5",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_5_5.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_5_5.glb",
+      "source_sha256": "f8176fe083a0f11f8baf3683cf10d5a2958866e3bcc6581e25f37795b7d2c2ee",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_5_5.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_6_1.tres",
+      "id": "native.cliff.trailing_6_1",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.27285575866699,
+            -2.92199563980103,
+            0.342418074607849
+          ],
+          "size": [
+            2.16209721565247,
+            2.46830058097839,
+            0.871836304664612
+          ]
+        },
+        "mesh_bytes": 6474,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 114
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_6_1",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_6_1.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_6_1.glb",
+      "source_sha256": "337358669cc5676d0516c38ad61248a1964170b88518b7acf29817b30fc45dae",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_6_1.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_6_2.tres",
+      "id": "native.cliff.trailing_6_2",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.27285575866699,
+            -4.90104246139526,
+            0.342418074607849
+          ],
+          "size": [
+            2.41991066932678,
+            4.44734764099121,
+            0.871836304664612
+          ]
+        },
+        "mesh_bytes": 12142,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 228
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_6_2",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_6_2.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_6_2.glb",
+      "source_sha256": "a0c66c8bfa5e5507f339ae2212d3335e4fed330f4f35b84f69f48e672adcbc0f",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_6_2.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_6_3.tres",
+      "id": "native.cliff.trailing_6_3",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.27285575866699,
+            -7.21802663803101,
+            0.342418074607849
+          ],
+          "size": [
+            2.41991066932678,
+            6.76433181762695,
+            0.871836304664612
+          ]
+        },
+        "mesh_bytes": 17086,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 310
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_6_3",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_6_3.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_6_3.glb",
+      "source_sha256": "31b97edd739918da3357378e3300fd596c35ed6d32c6879169cf2ca933e5f4f7",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_6_3.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_6_4.tres",
+      "id": "native.cliff.trailing_6_4",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.27285575866699,
+            -7.7224817276001,
+            0.342418074607849
+          ],
+          "size": [
+            2.41991066932678,
+            7.26878690719604,
+            0.871836304664612
+          ]
+        },
+        "mesh_bytes": 22754,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 424
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_6_4",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_6_4.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_6_4.glb",
+      "source_sha256": "a059e49e670d7aeb0afaa5553c6e80c59205f2c459335b98cdd427484d5316ab",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_6_4.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_6_5.tres",
+      "id": "native.cliff.trailing_6_5",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.27285575866699,
+            -9.70181941986084,
+            0.342418074607849
+          ],
+          "size": [
+            2.41991066932678,
+            9.24812412261963,
+            0.871836304664612
+          ]
+        },
+        "mesh_bytes": 28422,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 538
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_6_5",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_6_5.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_6_5.glb",
+      "source_sha256": "869be54a560d8d0f801b0c8b29b37de6f3698c2647f2e53e9793992b0b67d7de",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_6_5.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_9_1.tres",
+      "id": "native.cliff.trailing_9_1",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.797183990478516,
+            -2.4833710193634,
+            0.364714562892914
+          ],
+          "size": [
+            2.15646123886108,
+            1.4671847820282,
+            0.762172877788544
+          ]
+        },
+        "mesh_bytes": 3086,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 44
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_9_1",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_9_1.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_9_1.glb",
+      "source_sha256": "01bce02d0646cb055994e570afdfe19a228addb3668e3b28b0b8e74a11ee568b",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_9_1.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_9_2.tres",
+      "id": "native.cliff.trailing_9_2",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.922492682933807,
+            -3.8263144493103,
+            0.364714562892914
+          ],
+          "size": [
+            2.28176999092102,
+            2.8101282119751,
+            0.768780767917633
+          ]
+        },
+        "mesh_bytes": 5366,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 88
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_9_2",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_9_2.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_9_2.glb",
+      "source_sha256": "151a46d62b78b61e66156ce86386520d2e7a9aba8d3c37dfff47ad30f03a7ba7",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_9_2.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_9_3.tres",
+      "id": "native.cliff.trailing_9_3",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.922492682933807,
+            -7.08149480819702,
+            0.364714562892914
+          ],
+          "size": [
+            2.28176999092102,
+            6.06530857086182,
+            0.768780767917633
+          ]
+        },
+        "mesh_bytes": 8102,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 133
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_9_3",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_9_3.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_9_3.glb",
+      "source_sha256": "5e40d48e83a3d88c9ab20b006acb2de36cdd1a161b29bfbebe79b6d672ca01e1",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_9_3.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_9_4.tres",
+      "id": "native.cliff.trailing_9_4",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.922492682933807,
+            -7.37738704681396,
+            0.364714562892914
+          ],
+          "size": [
+            2.28176999092102,
+            6.36120080947876,
+            0.768780767917633
+          ]
+        },
+        "mesh_bytes": 10382,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 177
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_9_4",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_9_4.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_9_4.glb",
+      "source_sha256": "92a3facec3597bbc41b7811a936b85cbb8c97ba09c667823c2084b2844341f60",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_9_4.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/native_cliff_trailing_9_5.tres",
+      "id": "native.cliff.trailing_9_5",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.922492682933807,
+            -8.72450923919678,
+            0.364714562892914
+          ],
+          "size": [
+            2.28176999092102,
+            7.70832300186157,
+            0.768780767917633
+          ]
+        },
+        "mesh_bytes": 12662,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 221
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "native.cliff.trailing_9_5",
+        "merge_pieces": true,
+        "source": "res://assets/NativeCliffVines/trailing_9_5.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/NativeCliffVines/trailing_9_5.glb",
+      "source_sha256": "062cd17ed637f00a60e6d78bdc80eb45bba190e2acf7d3ced22c342e3b52d65a",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/native_cliff_trailing_9_5.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/quaternius_cliff_fern.tres",
+      "id": "quaternius.cliff.fern",
+      "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -1.38124227523804,
+            -0.0773344337940216,
+            -1.27853608131409
+          ],
+          "size": [
+            2.82693386077881,
+            0.840243220329285,
+            2.65231990814209
+          ]
+        },
+        "mesh_bytes": 10306,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 288
+      },
+      "pack": "native_cliff_foliage",
+      "parameters": {
+        "id": "quaternius.cliff.fern",
+        "merge_pieces": true,
+        "source": "res://assets/StylizedNatureQuaternius/glTF/Fern_1.gltf",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "fern"
+        ]
+      },
+      "source": "res://assets/StylizedNatureQuaternius/glTF/Fern_1.gltf",
+      "source_sha256": "d41915cffe9dbbde1ae88be381eb9c60f7caa2274511436cc78fe4de627468ab",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/native_cliff_foliage/quaternius_cliff_fern.tres"
+    }
+  ],
+  "license": "Quaternius CC0 vines and fern fitted to KayKit CC0 cliff stock; ground plants retain the LowPolyFantasyVillage source-pack license",
+  "pack": "native_cliff_foliage",
+  "tool_version": 38
+}

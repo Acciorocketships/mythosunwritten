@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_6bbwd"]
+
+[resource]
+script = ExtResource("1_6bbwd")
+id = &"mythos.mountain.shelf_corner"
+visual_path = "res://terrain/environment/visuals/mythos_mountains/mythos_mountain_shelf_corner.tres"
+tags = Array[StringName]([&"cliff", &"rock"])
+measured_aabb = AABB(-4.401852, 0.03, -5.3931303, 9.271617, 6.5099998, 10.918976)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+provenance_id = &"mythos_mountains:mythos.mountain.shelf_corner"

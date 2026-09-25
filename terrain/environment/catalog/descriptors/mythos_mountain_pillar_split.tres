@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_hr58j"]
+
+[resource]
+script = ExtResource("1_hr58j")
+id = &"mythos.mountain.pillar_split"
+visual_path = "res://terrain/environment/visuals/mythos_mountains/mythos_mountain_pillar_split.tres"
+tags = Array[StringName]([&"cliff", &"rock"])
+measured_aabb = AABB(-11.725189, 0.028665, -10.943148, 20.516506, 46.657864, 22.57498)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+provenance_id = &"mythos_mountains:mythos.mountain.pillar_split"

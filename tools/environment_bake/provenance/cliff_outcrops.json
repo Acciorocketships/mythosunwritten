@@ -1,0 +1,253 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_outcrop_0.tres",
+      "id": "cliff.outcrop.0",
+      "license": "Original connected terraced cliff buttresses; authored in tools/mountain_art/build_outcrop_boulders.gd",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 442,
+        "measured_aabb": {
+          "position": [
+            -0.625013053417206,
+            0.0147079015150666,
+            -0.479999989271164
+          ],
+          "size": [
+            1.18378138542175,
+            0.985292077064514,
+            1.27452278137207
+          ]
+        },
+        "mesh_bytes": 30328,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 442
+      },
+      "pack": "cliff_outcrops",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.outcrop.0",
+        "merge_pieces": true,
+        "source": "res://assets/CliffOutcrops/boulder_0.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffOutcrops/boulder_0.glb",
+      "source_sha256": "227761b02739673e87ebdc1a4fcc6b625835c92178d51340257f5a44741f6ae1",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_outcrops/cliff_outcrop_0.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_outcrop_1.tres",
+      "id": "cliff.outcrop.1",
+      "license": "Original connected terraced cliff buttresses; authored in tools/mountain_art/build_outcrop_boulders.gd",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 442,
+        "measured_aabb": {
+          "position": [
+            -0.481714159250259,
+            0.0157611388713121,
+            -0.479999989271164
+          ],
+          "size": [
+            1.07693767547607,
+            0.984238862991333,
+            1.47292375564575
+          ]
+        },
+        "mesh_bytes": 30328,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 442
+      },
+      "pack": "cliff_outcrops",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.outcrop.1",
+        "merge_pieces": true,
+        "source": "res://assets/CliffOutcrops/boulder_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffOutcrops/boulder_1.glb",
+      "source_sha256": "e0ae263fd707f5c441174cd55e0b9a886e717a73ea9473b0c009f143f4dd4bdb",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_outcrops/cliff_outcrop_1.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_outcrop_2.tres",
+      "id": "cliff.outcrop.2",
+      "license": "Original connected terraced cliff buttresses; authored in tools/mountain_art/build_outcrop_boulders.gd",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 442,
+        "measured_aabb": {
+          "position": [
+            -0.37158140540123,
+            0.0155037138611078,
+            -0.479999989271164
+          ],
+          "size": [
+            0.841428518295288,
+            0.984496295452118,
+            1.50892901420593
+          ]
+        },
+        "mesh_bytes": 30328,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 442
+      },
+      "pack": "cliff_outcrops",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.outcrop.2",
+        "merge_pieces": true,
+        "source": "res://assets/CliffOutcrops/boulder_2.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffOutcrops/boulder_2.glb",
+      "source_sha256": "4435bd5742157964ba9ddcc2d3d0aecacb0af09982e62a3f74cadc4619c6be47",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_outcrops/cliff_outcrop_2.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_outcrop_3.tres",
+      "id": "cliff.outcrop.3",
+      "license": "Original connected terraced cliff buttresses; authored in tools/mountain_art/build_outcrop_boulders.gd",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 442,
+        "measured_aabb": {
+          "position": [
+            -0.463097780942917,
+            0.0154141066595912,
+            -0.479999989271164
+          ],
+          "size": [
+            0.89252096414566,
+            0.984585881233215,
+            1.54675161838531
+          ]
+        },
+        "mesh_bytes": 30328,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 442
+      },
+      "pack": "cliff_outcrops",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.outcrop.3",
+        "merge_pieces": true,
+        "source": "res://assets/CliffOutcrops/boulder_3.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffOutcrops/boulder_3.glb",
+      "source_sha256": "eb2adf0316d09f6e89b532fe28a390c1f40238a3ad2ee88777e326c3d7361d10",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_outcrops/cliff_outcrop_3.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_outcrop_4.tres",
+      "id": "cliff.outcrop.4",
+      "license": "Original connected terraced cliff buttresses; authored in tools/mountain_art/build_outcrop_boulders.gd",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 442,
+        "measured_aabb": {
+          "position": [
+            -0.615450918674469,
+            0.0151084437966347,
+            -0.479999989271164
+          ],
+          "size": [
+            1.12918972969055,
+            0.984891533851624,
+            1.33322381973267
+          ]
+        },
+        "mesh_bytes": 30328,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 442
+      },
+      "pack": "cliff_outcrops",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.outcrop.4",
+        "merge_pieces": true,
+        "source": "res://assets/CliffOutcrops/boulder_4.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffOutcrops/boulder_4.glb",
+      "source_sha256": "99774dffb89165d99da25f452d086c37a40a3a049ac2f77e52d99dcea6f5c196",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_outcrops/cliff_outcrop_4.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_outcrop_5.tres",
+      "id": "cliff.outcrop.5",
+      "license": "Original connected terraced cliff buttresses; authored in tools/mountain_art/build_outcrop_boulders.gd",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 442,
+        "measured_aabb": {
+          "position": [
+            -0.582759141921997,
+            0.0143557274714112,
+            -0.479999989271164
+          ],
+          "size": [
+            1.1519775390625,
+            0.985644280910492,
+            1.32148122787476
+          ]
+        },
+        "mesh_bytes": 30328,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 442
+      },
+      "pack": "cliff_outcrops",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.outcrop.5",
+        "merge_pieces": true,
+        "source": "res://assets/CliffOutcrops/boulder_5.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffOutcrops/boulder_5.glb",
+      "source_sha256": "30b62c435495d2a025a62dd79d71598d609025e93c487fe99cf4c59f557122da",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_outcrops/cliff_outcrop_5.tres"
+    }
+  ],
+  "license": "Original connected terraced cliff buttresses; authored in tools/mountain_art/build_outcrop_boulders.gd",
+  "pack": "cliff_outcrops",
+  "tool_version": 38
+}

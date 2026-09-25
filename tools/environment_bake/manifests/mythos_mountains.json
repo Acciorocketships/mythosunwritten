@@ -1,0 +1,102 @@
+{
+  "pack": "mythos_mountains",
+  "license": "Original project assets; authored from mathematical profiles",
+  "assets": [
+    {
+      "id": "mythos.mountain.pillar_slender",
+      "source": "res://assets/MythosMountains/pillar_slender.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "mythos.mountain.pillar_split",
+      "source": "res://assets/MythosMountains/pillar_split.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "mythos.mountain.pillar_crown",
+      "source": "res://assets/MythosMountains/pillar_crown.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "mythos.mountain.buttress_tall",
+      "source": "res://assets/MythosMountains/buttress_tall.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "mythos.mountain.buttress_wide",
+      "source": "res://assets/MythosMountains/buttress_wide.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "mythos.mountain.shelf_long",
+      "source": "res://assets/MythosMountains/shelf_long.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "mythos.mountain.shelf_end",
+      "source": "res://assets/MythosMountains/shelf_end.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "mythos.mountain.shelf_corner",
+      "source": "res://assets/MythosMountains/shelf_corner.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    }
+  ]
+}

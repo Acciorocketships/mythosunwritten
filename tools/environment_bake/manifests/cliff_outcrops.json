@@ -1,0 +1,72 @@
+{
+  "pack": "cliff_outcrops",
+  "license": "Original connected terraced cliff buttresses; authored in tools/mountain_art/build_outcrop_boulders.gd",
+  "assets": [
+    {
+      "id": "cliff.outcrop.0",
+      "source": "res://assets/CliffOutcrops/boulder_0.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": true
+    },
+    {
+      "id": "cliff.outcrop.1",
+      "source": "res://assets/CliffOutcrops/boulder_1.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": true
+    },
+    {
+      "id": "cliff.outcrop.2",
+      "source": "res://assets/CliffOutcrops/boulder_2.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": true
+    },
+    {
+      "id": "cliff.outcrop.3",
+      "source": "res://assets/CliffOutcrops/boulder_3.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": true
+    },
+    {
+      "id": "cliff.outcrop.4",
+      "source": "res://assets/CliffOutcrops/boulder_4.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": true
+    },
+    {
+      "id": "cliff.outcrop.5",
+      "source": "res://assets/CliffOutcrops/boulder_5.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": true
+    }
+  ]
+}

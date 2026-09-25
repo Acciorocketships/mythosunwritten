@@ -1,0 +1,539 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_rock_bush.tres",
+      "id": "cliff.rock.bush",
+      "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+      "metrics": {
+        "collision_piece_count": 0,
+        "collision_triangles": 0,
+        "measured_aabb": {
+          "position": [
+            -0.923476159572601,
+            -0.234694704413414,
+            -0.9743891954422
+          ],
+          "size": [
+            1.91484475135803,
+            1.58178567886353,
+            1.96514081954956
+          ]
+        },
+        "mesh_bytes": 63792,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 900
+      },
+      "pack": "cliff_moss_rocks",
+      "parameters": {
+        "id": "cliff.rock.bush",
+        "merge_pieces": true,
+        "source": "res://assets/StylizedNatureQuaternius/glTF/Bush_Common.gltf",
+        "supports_instance_color": false,
+        "tags": [
+          "foliage",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/StylizedNatureQuaternius/glTF/Bush_Common.gltf",
+      "source_sha256": "77811fca92610cb254713d3d49d5029ab6cf13050c3afb61aa942786a7b2ca90",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_moss_rocks/cliff_rock_bush.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_rock_moss_1.tres",
+      "id": "cliff.rock.moss_1",
+      "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 70,
+        "measured_aabb": {
+          "position": [
+            -0.5,
+            0.0,
+            -0.5
+          ],
+          "size": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "mesh_bytes": 5784,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 70
+      },
+      "pack": "cliff_moss_rocks",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.rock.moss_1",
+        "merge_pieces": true,
+        "source": "res://assets/CliffMossRocks/moss_1.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffMossRocks/moss_1.glb",
+      "source_sha256": "cf620eff42aefa045102b5ff42e0bb604ef4fdcb8c308f1593a89921497948e6",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_moss_rocks/cliff_rock_moss_1.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_rock_moss_10.tres",
+      "id": "cliff.rock.moss_10",
+      "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 92,
+        "measured_aabb": {
+          "position": [
+            -0.513316869735718,
+            0.0,
+            -0.528289616107941
+          ],
+          "size": [
+            1.04714155197144,
+            1.0,
+            1.36451721191406
+          ]
+        },
+        "mesh_bytes": 7238,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 92
+      },
+      "pack": "cliff_moss_rocks",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.rock.moss_10",
+        "merge_pieces": true,
+        "source": "res://assets/CliffMossRocks/moss_10.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffMossRocks/moss_10.glb",
+      "source_sha256": "86f87470728cbbd294d2a94da3a6ccd0ebe68e7c1831c99a9f863470eeada178",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_moss_rocks/cliff_rock_moss_10.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_rock_moss_11.tres",
+      "id": "cliff.rock.moss_11",
+      "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 124,
+        "measured_aabb": {
+          "position": [
+            -0.571339130401611,
+            0.0,
+            -0.528489887714386
+          ],
+          "size": [
+            1.07570672035217,
+            1.0,
+            1.37294483184814
+          ]
+        },
+        "mesh_bytes": 9350,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 124
+      },
+      "pack": "cliff_moss_rocks",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.rock.moss_11",
+        "merge_pieces": true,
+        "source": "res://assets/CliffMossRocks/moss_11.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffMossRocks/moss_11.glb",
+      "source_sha256": "aee0301041ce5074b35f99589ea671c4f2ab78363ccb18fb5b4ffbac90703af5",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_moss_rocks/cliff_rock_moss_11.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_rock_moss_12.tres",
+      "id": "cliff.rock.moss_12",
+      "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 60,
+        "measured_aabb": {
+          "position": [
+            -0.561031341552734,
+            0.0,
+            -0.484593570232391
+          ],
+          "size": [
+            1.06312215328217,
+            1.0,
+            1.31075191497803
+          ]
+        },
+        "mesh_bytes": 5130,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 60
+      },
+      "pack": "cliff_moss_rocks",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.rock.moss_12",
+        "merge_pieces": true,
+        "source": "res://assets/CliffMossRocks/moss_12.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffMossRocks/moss_12.glb",
+      "source_sha256": "a0eba0829d3d8445ac2548ad0a23bd7ddd41c95e78e5da3fcc18c24a41a46719",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_moss_rocks/cliff_rock_moss_12.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_rock_moss_13.tres",
+      "id": "cliff.rock.moss_13",
+      "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 92,
+        "measured_aabb": {
+          "position": [
+            -0.506157219409943,
+            0.0,
+            -0.51150518655777
+          ],
+          "size": [
+            1.0594265460968,
+            1.0,
+            1.35790455341339
+          ]
+        },
+        "mesh_bytes": 7242,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 92
+      },
+      "pack": "cliff_moss_rocks",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.rock.moss_13",
+        "merge_pieces": true,
+        "source": "res://assets/CliffMossRocks/moss_13.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffMossRocks/moss_13.glb",
+      "source_sha256": "781089906391012336479e5681ae0b676653c5cccdefe3458a6b9b10ec2b7041",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_moss_rocks/cliff_rock_moss_13.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_rock_moss_14.tres",
+      "id": "cliff.rock.moss_14",
+      "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 124,
+        "measured_aabb": {
+          "position": [
+            -0.568321287631989,
+            0.0,
+            -0.485816895961761
+          ],
+          "size": [
+            1.09284377098083,
+            1.0,
+            1.3093433380127
+          ]
+        },
+        "mesh_bytes": 9350,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 124
+      },
+      "pack": "cliff_moss_rocks",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.rock.moss_14",
+        "merge_pieces": true,
+        "source": "res://assets/CliffMossRocks/moss_14.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffMossRocks/moss_14.glb",
+      "source_sha256": "ac5c627d762fb4f038e5f7414ee7724027dc8af10626d99866af5c714c1208c5",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_moss_rocks/cliff_rock_moss_14.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_rock_moss_15.tres",
+      "id": "cliff.rock.moss_15",
+      "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 60,
+        "measured_aabb": {
+          "position": [
+            -0.494467973709106,
+            0.0,
+            -0.514495968818665
+          ],
+          "size": [
+            0.997368395328522,
+            1.0,
+            1.32417154312134
+          ]
+        },
+        "mesh_bytes": 5130,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 60
+      },
+      "pack": "cliff_moss_rocks",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.rock.moss_15",
+        "merge_pieces": true,
+        "source": "res://assets/CliffMossRocks/moss_15.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffMossRocks/moss_15.glb",
+      "source_sha256": "6fe64e94e946d5af29c94f4326220fd60826946f535fe66e9aeddfbbde43b337",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_moss_rocks/cliff_rock_moss_15.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_rock_moss_16.tres",
+      "id": "cliff.rock.moss_16",
+      "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 92,
+        "measured_aabb": {
+          "position": [
+            -0.52336061000824,
+            0.0,
+            -0.531027972698212
+          ],
+          "size": [
+            1.06367373466492,
+            1.0,
+            1.33887982368469
+          ]
+        },
+        "mesh_bytes": 7238,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 92
+      },
+      "pack": "cliff_moss_rocks",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.rock.moss_16",
+        "merge_pieces": true,
+        "source": "res://assets/CliffMossRocks/moss_16.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffMossRocks/moss_16.glb",
+      "source_sha256": "f738968b2abd3e46507ae829b86a9271c72909e32cb168086a2dfabe4d6a223e",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_moss_rocks/cliff_rock_moss_16.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_rock_moss_17.tres",
+      "id": "cliff.rock.moss_17",
+      "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 124,
+        "measured_aabb": {
+          "position": [
+            -0.564227342605591,
+            0.0,
+            -0.523367702960968
+          ],
+          "size": [
+            1.08752000331879,
+            1.0,
+            1.36569893360138
+          ]
+        },
+        "mesh_bytes": 9350,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 124
+      },
+      "pack": "cliff_moss_rocks",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.rock.moss_17",
+        "merge_pieces": true,
+        "source": "res://assets/CliffMossRocks/moss_17.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffMossRocks/moss_17.glb",
+      "source_sha256": "083668cfbbd19bf03597176effb98dd751ee5f8f44120efc8a6db965e7f743f4",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_moss_rocks/cliff_rock_moss_17.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_rock_moss_2.tres",
+      "id": "cliff.rock.moss_2",
+      "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 78,
+        "measured_aabb": {
+          "position": [
+            -0.5,
+            0.0,
+            -0.5
+          ],
+          "size": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "mesh_bytes": 6312,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 78
+      },
+      "pack": "cliff_moss_rocks",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.rock.moss_2",
+        "merge_pieces": true,
+        "source": "res://assets/CliffMossRocks/moss_2.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffMossRocks/moss_2.glb",
+      "source_sha256": "1e205550fa6c030f9b30dc7c6e90cb91159389609892bdb096dc690f89a51ecb",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_moss_rocks/cliff_rock_moss_2.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_rock_moss_4.tres",
+      "id": "cliff.rock.moss_4",
+      "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 128,
+        "measured_aabb": {
+          "position": [
+            -0.5,
+            0.0,
+            -0.5
+          ],
+          "size": [
+            1.0,
+            1.00000011920929,
+            1.0
+          ]
+        },
+        "mesh_bytes": 9612,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 128
+      },
+      "pack": "cliff_moss_rocks",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.rock.moss_4",
+        "merge_pieces": true,
+        "source": "res://assets/CliffMossRocks/moss_4.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffMossRocks/moss_4.glb",
+      "source_sha256": "9071f2ee5817e73b648cc35466489d32461b76515c12fc5a790a7cb8d86879a9",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_moss_rocks/cliff_rock_moss_4.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/cliff_rock_moss_7.tres",
+      "id": "cliff.rock.moss_7",
+      "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 88,
+        "measured_aabb": {
+          "position": [
+            -0.5,
+            0.0,
+            -0.5
+          ],
+          "size": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "mesh_bytes": 6976,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 88
+      },
+      "pack": "cliff_moss_rocks",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "cliff.rock.moss_7",
+        "merge_pieces": true,
+        "source": "res://assets/CliffMossRocks/moss_7.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/CliffMossRocks/moss_7.glb",
+      "source_sha256": "e2caeeab841121cf4e3a148e207856da3727878f9baeaf0f3fffc55a958eeecb",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/cliff_moss_rocks/cliff_rock_moss_7.tres"
+    }
+  ],
+  "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+  "pack": "cliff_moss_rocks",
+  "tool_version": 38
+}

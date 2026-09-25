@@ -1,0 +1,9 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3 uid="uid://c7k4xxt5p1xuw"]
+
+[ext_resource type="Texture2D" uid="uid://bgovc0rgj4gas" path="res://terrain/environment/textures/kaykit_terraces/db6c409d41d895cfc2ac.res" id="1_a4pep"]
+
+[resource]
+resource_name = "forest"
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("1_a4pep")
+roughness = 0.6

@@ -1,0 +1,13 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/native_cliff_foliage/892852198ac28877ec7b.res" id="1_xu38x"]
+
+[resource]
+resource_name = "MI_Vine"
+transparency = 2
+alpha_scissor_threshold = 0.5
+alpha_antialiasing_mode = 0
+cull_mode = 2
+albedo_color = Color(0.35313797, 0.62507975, 0, 1)
+albedo_texture = ExtResource("1_xu38x")
+roughness = 0.95

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="DressingSet" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingChoice.gd" id="1_choice"]
+[ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingSet.gd" id="2_set"]
+
+[sub_resource type="Resource" id="PointedLeaves"]
+script = ExtResource("1_choice")
+asset_id = &"kaykit.grass.04"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0, &"amber_heath": 1.0, &"jade_wetlands": 1.0}
+
+[resource]
+script = ExtResource("2_set")
+id = &"ambient.cliff_tuft"
+choices = Array[ExtResource("1_choice")]([SubResource("PointedLeaves")])
+fill_per_cell = {&"meadow": 4.0, &"deep_forest": 8.0, &"highland": 6.0, &"blossom_grove": 4.0, &"twilight_marsh": 6.0, &"amber_heath": 3.0, &"jade_wetlands": 6.0}
+visual_ground_support = true
+max_grade = 0.5
+relief_radius = 4.0
+relief_range = Vector2(4,128)
+shore_distance_range = Vector2(0.2,0.2)
+feature_clearance = 0.3
+spacing_radius = 1.5
+scale_range = Vector2(1.4,2.1)
+brightness_range = Vector2(0.8,1.0)

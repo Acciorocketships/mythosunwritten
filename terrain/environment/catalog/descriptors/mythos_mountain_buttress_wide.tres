@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ssrm1"]
+
+[resource]
+script = ExtResource("1_ssrm1")
+id = &"mythos.mountain.buttress_wide"
+visual_path = "res://terrain/environment/visuals/mythos_mountains/mythos_mountain_buttress_wide.tres"
+tags = Array[StringName]([&"cliff", &"rock"])
+measured_aabb = AABB(-18.055103, 0.037746612, -10.939089, 33.93051, 34.68073, 22.633604)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+provenance_id = &"mythos_mountains:mythos.mountain.buttress_wide"

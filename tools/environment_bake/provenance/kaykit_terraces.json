@@ -1,0 +1,637 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_12x6x2.tres",
+      "id": "kaykit.terrace.12x6x2",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1550,
+        "measured_aabb": {
+          "position": [
+            -6.25,
+            0.0,
+            -3.25000166893005
+          ],
+          "size": [
+            12.5,
+            2.0,
+            6.50000190734863
+          ]
+        },
+        "mesh_bytes": 91766,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1550
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.12x6x2",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_12x6x2_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_12x6x2_Color1.gltf",
+      "source_sha256": "dc80add88d48539dfffec0141e1e6901406fdf2b4ccc1a13d9ca957dc5db2f6b",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_12x6x2.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_12x6x4.tres",
+      "id": "kaykit.terrace.12x6x4",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1550,
+        "measured_aabb": {
+          "position": [
+            -6.25,
+            0.0,
+            -3.25000166893005
+          ],
+          "size": [
+            12.5,
+            4.0,
+            6.50000190734863
+          ]
+        },
+        "mesh_bytes": 91990,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1550
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.12x6x4",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_12x6x4_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_12x6x4_Color1.gltf",
+      "source_sha256": "21ac01a67cef0b44b5427b970205a93789b51370901654b5314406755c4de613",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_12x6x4.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_12x6x8.tres",
+      "id": "kaykit.terrace.12x6x8",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1790,
+        "measured_aabb": {
+          "position": [
+            -6.25,
+            0.0,
+            -3.25000166893005
+          ],
+          "size": [
+            12.5,
+            8.0,
+            6.50000190734863
+          ]
+        },
+        "mesh_bytes": 96398,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1790
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.12x6x8",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_12x6x8_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_12x6x8_Color1.gltf",
+      "source_sha256": "5438c177f3f310df9f228ac46fb842f67aeadbcd199b6eba033eba27ab1e4eb3",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_12x6x8.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_2x2x2.tres",
+      "id": "kaykit.terrace.2x2x2",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 336.0,
+        "measured_aabb": {
+          "position": [
+            -1.23470997810364,
+            0.0,
+            -1.23470997810364
+          ],
+          "size": [
+            2.46941995620728,
+            2.0,
+            2.46941995620728
+          ]
+        },
+        "mesh_bytes": 20887.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 336.0
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.2x2x2",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_2x2x2_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_2x2x2_Color1.gltf",
+      "source_sha256": "8e8e0ce993b7fe691cc2da0329639487939b4c9b393f3beb1decf615745b994b",
+      "tool_version": 36.0,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_2x2x2.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_2x2x4.tres",
+      "id": "kaykit.terrace.2x2x4",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 336.0,
+        "measured_aabb": {
+          "position": [
+            -1.23470997810364,
+            0.0,
+            -1.23470997810364
+          ],
+          "size": [
+            2.46941995620728,
+            4.0,
+            2.46941995620728
+          ]
+        },
+        "mesh_bytes": 18223.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 336.0
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.2x2x4",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_2x2x4_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_2x2x4_Color1.gltf",
+      "source_sha256": "3bd86473119b70dc5177a700cf02c110108c9221f71aa762d66b43252a0738a5",
+      "tool_version": 36.0,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_2x2x4.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_2x2x8.tres",
+      "id": "kaykit.terrace.2x2x8",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 384.0,
+        "measured_aabb": {
+          "position": [
+            -1.23470997810364,
+            0.0,
+            -1.23470997810364
+          ],
+          "size": [
+            2.46941995620728,
+            8.0,
+            2.46941995620728
+          ]
+        },
+        "mesh_bytes": 23783.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 384.0
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.2x2x8",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_2x2x8_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_2x2x8_Color1.gltf",
+      "source_sha256": "c641828467caea1a8a8a7f79259f31c377fa9c8e3457401b4e08910deda07e5c",
+      "tool_version": 36.0,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_2x2x8.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_4x2x2.tres",
+      "id": "kaykit.terrace.4x2x2",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 536.0,
+        "measured_aabb": {
+          "position": [
+            -2.23470997810364,
+            0.0,
+            -1.25000023841858
+          ],
+          "size": [
+            4.46941995620728,
+            2.0,
+            2.50000047683716
+          ]
+        },
+        "mesh_bytes": 24347.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 536.0
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.4x2x2",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_4x2x2_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_4x2x2_Color1.gltf",
+      "source_sha256": "d6f75093acd1e32c557c1c213a2ddbe5c35bb3c35f1ffba07796955688090bd8",
+      "tool_version": 36.0,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_4x2x2.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_4x2x4.tres",
+      "id": "kaykit.terrace.4x2x4",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 520.0,
+        "measured_aabb": {
+          "position": [
+            -2.23470997810364,
+            0.0,
+            -1.25000023841858
+          ],
+          "size": [
+            4.46941995620728,
+            4.0,
+            2.50000047683716
+          ]
+        },
+        "mesh_bytes": 31811.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 520.0
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.4x2x4",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_4x2x4_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_4x2x4_Color1.gltf",
+      "source_sha256": "ff367ce92b7fc9cb173f7b3a91fab40f58b7a0381265766ca22010c52356bb80",
+      "tool_version": 36.0,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_4x2x4.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_4x2x8.tres",
+      "id": "kaykit.terrace.4x2x8",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 604.0,
+        "measured_aabb": {
+          "position": [
+            -2.23470997810364,
+            0.0,
+            -1.25000023841858
+          ],
+          "size": [
+            4.46941995620728,
+            8.0,
+            2.50000047683716
+          ]
+        },
+        "mesh_bytes": 38219.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 604.0
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.4x2x8",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_4x2x8_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_4x2x8_Color1.gltf",
+      "source_sha256": "e68e0718702e6d18fdaaa3c0dcba66c1ebbef494e28ed4594504a2e74eb39cd9",
+      "tool_version": 36.0,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_4x2x8.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_4x4x2.tres",
+      "id": "kaykit.terrace.4x4x2",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 698.0,
+        "measured_aabb": {
+          "position": [
+            -2.25000023841858,
+            0.0,
+            -2.25000023841858
+          ],
+          "size": [
+            4.50000047683716,
+            2.0,
+            4.50000047683716
+          ]
+        },
+        "mesh_bytes": 36019.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 698.0
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.4x4x2",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_4x4x2_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_4x4x2_Color1.gltf",
+      "source_sha256": "ee26cf21e2849b1b907fda719722f1af11505b1138ff39d5dfa3df314b10cf20",
+      "tool_version": 36.0,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_4x4x2.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_4x4x4.tres",
+      "id": "kaykit.terrace.4x4x4",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 700.0,
+        "measured_aabb": {
+          "position": [
+            -2.25000023841858,
+            0.0,
+            -2.25000023841858
+          ],
+          "size": [
+            4.50000047683716,
+            4.0,
+            4.50000047683716
+          ]
+        },
+        "mesh_bytes": 41819.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 700.0
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.4x4x4",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_4x4x4_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_4x4x4_Color1.gltf",
+      "source_sha256": "a96b708470f3468b3b49f54c1c1853153674d310d7c79851598887cb85b00c5a",
+      "tool_version": 36.0,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_4x4x4.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_4x4x8.tres",
+      "id": "kaykit.terrace.4x4x8",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 820,
+        "measured_aabb": {
+          "position": [
+            -2.25000023841858,
+            0.0,
+            -2.25000023841858
+          ],
+          "size": [
+            4.50000047683716,
+            8.0,
+            4.50000047683716
+          ]
+        },
+        "mesh_bytes": 44587,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 820
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.4x4x8",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_4x4x8_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_4x4x8_Color1.gltf",
+      "source_sha256": "5ddbf8ee03c0c7b0a4c8d59217620975701bf23463261f5a9665cd8e6dc32ac6",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_4x4x8.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_8x4x2.tres",
+      "id": "kaykit.terrace.8x4x2",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1026,
+        "measured_aabb": {
+          "position": [
+            -4.25,
+            0.0,
+            -2.25000023841858
+          ],
+          "size": [
+            8.5,
+            2.0,
+            4.50000047683716
+          ]
+        },
+        "mesh_bytes": 60023,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1026
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.8x4x2",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_8x4x2_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_8x4x2_Color1.gltf",
+      "source_sha256": "ae51dae4659b3ca62c4075cf12c88c59b2368fab24e4028f2db3823c3b35df15",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_8x4x2.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_8x4x4.tres",
+      "id": "kaykit.terrace.8x4x4",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1.0,
+        "collision_triangles": 1026.0,
+        "measured_aabb": {
+          "position": [
+            -4.25,
+            0.0,
+            -2.25000023841858
+          ],
+          "size": [
+            8.5,
+            4.0,
+            4.50000047683716
+          ]
+        },
+        "mesh_bytes": 59407.0,
+        "surface_count": 1.0,
+        "visual_piece_count": 1.0,
+        "visual_triangles": 1026.0
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.8x4x4",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_8x4x4_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_8x4x4_Color1.gltf",
+      "source_sha256": "01efa11d8c6ba5b3255fc86dabda1f806d078f2984595c04924c9f3715fe63ce",
+      "tool_version": 36.0,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_8x4x4.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/kaykit_terrace_8x4x8.tres",
+      "id": "kaykit.terrace.8x4x8",
+      "license": "KayKit CC0",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1194,
+        "measured_aabb": {
+          "position": [
+            -4.25,
+            0.0,
+            -2.25000023841858
+          ],
+          "size": [
+            8.5,
+            8.0,
+            4.50000047683716
+          ]
+        },
+        "mesh_bytes": 70887,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 1194
+      },
+      "pack": "kaykit_terraces",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "kaykit.terrace.8x4x8",
+        "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_8x4x8_Color1.gltf",
+        "supports_instance_color": true,
+        "tags": [
+          "cliff",
+          "terrain",
+          "terrace"
+        ],
+        "tint_group": "ground"
+      },
+      "source": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_8x4x8_Color1.gltf",
+      "source_sha256": "37cedddb0e5c20c530bb1532d35dd007650ed8556dd703bfd0dc2e973d7b84c7",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_8x4x8.tres"
+    }
+  ],
+  "license": "KayKit CC0",
+  "pack": "kaykit_terraces",
+  "tool_version": 38
+}

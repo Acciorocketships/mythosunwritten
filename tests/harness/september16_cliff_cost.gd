@@ -1,0 +1,33 @@
+extends SceneTree
+func _init()->void:
+ call_deferred("_run")
+func _run()->void:
+ var before:=GDScript.new()
+ before.source_code=FileAccess.get_file_as_string("res://docs/qa/2026-09-16-manual/10-rounded-ledges/before-profile-cache.gd.txt")
+ assert(before.reload()==OK)
+ var current=preload("res://scripts/terrain/field/CliffRockCrags.gd")
+ var original:Array=[];var revised:Array=[];var clock_start:=Time.get_ticks_msec()
+ for x in 8:original.append_array(before.make(Transform3D(Basis.IDENTITY,Vector3(x*24,0,0)),24,16,2697992464))
+ print("COST original profiles ",Time.get_ticks_msec()-clock_start," ms")
+ clock_start=Time.get_ticks_msec()
+ for x in 8:revised.append_array(current.make(Transform3D(Basis.IDENTITY,Vector3(x*24,0,0)),24,16,2697992464))
+ print("COST cached profiles ",Time.get_ticks_msec()-clock_start," ms")
+ assert(var_to_bytes(original)==var_to_bytes(revised),"Optimization must preserve every geometry and turf byte")
+ print("COST geometry identical across eight panels")
+ var rocks=preload("res://scripts/terrain/field/CliffRockDressing.gd")
+ rocks.prepare()
+ var plan:=HeightfieldPlan.new(17,64,12,"mean",4)
+ plan.set_raw_height_override(func(x:int,_z:int)->float:return 16.0 if x<=3 else 0.0)
+ var region:=plan.compute_region(4,4,12)
+ var start:=Time.get_ticks_msec()
+ var walls:Array=CliffDressing.compute(region,-1,-1,10).wall
+ var forms:=rocks.formations(walls,99,region)
+ print("COST forms ",Time.get_ticks_msec()-start," ms count=",forms.size())
+ start=Time.get_ticks_msec()
+ var plants:=rocks.plants(forms,region,99)
+ print("COST plants ",Time.get_ticks_msec()-start," ms count=",plants.size())
+ start=Time.get_ticks_msec()
+ var supports:=[]
+ for rock:Dictionary in forms:supports.append_array(rocks.ledge_grass_supports(rock,forms))
+ print("COST supports ",Time.get_ticks_msec()-start," ms count=",supports.size())
+ quit()

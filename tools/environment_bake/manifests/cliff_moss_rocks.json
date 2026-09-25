@@ -1,0 +1,148 @@
+{
+  "pack": "cliff_moss_rocks",
+  "license": "Original ledge ribs and adapted Quaternius UltimateNature CC0 outcrops; Quaternius CC0 bush",
+  "assets": [
+    {
+      "id": "cliff.rock.moss_1",
+      "source": "res://assets/CliffMossRocks/moss_1.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "cliff.rock.moss_2",
+      "source": "res://assets/CliffMossRocks/moss_2.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "cliff.rock.moss_4",
+      "source": "res://assets/CliffMossRocks/moss_4.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "cliff.rock.moss_7",
+      "source": "res://assets/CliffMossRocks/moss_7.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "cliff.rock.moss_10",
+      "source": "res://assets/CliffMossRocks/moss_10.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "cliff.rock.moss_11",
+      "source": "res://assets/CliffMossRocks/moss_11.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "cliff.rock.moss_12",
+      "source": "res://assets/CliffMossRocks/moss_12.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "cliff.rock.moss_13",
+      "source": "res://assets/CliffMossRocks/moss_13.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "cliff.rock.moss_14",
+      "source": "res://assets/CliffMossRocks/moss_14.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "cliff.rock.moss_15",
+      "source": "res://assets/CliffMossRocks/moss_15.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "cliff.rock.moss_16",
+      "source": "res://assets/CliffMossRocks/moss_16.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "cliff.rock.moss_17",
+      "source": "res://assets/CliffMossRocks/moss_17.glb",
+      "collision_profile": "native_trimesh",
+      "merge_pieces": true,
+      "tags": [
+        "rock",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    },
+    {
+      "id": "cliff.rock.bush",
+      "source": "res://assets/StylizedNatureQuaternius/glTF/Bush_Common.gltf",
+      "merge_pieces": true,
+      "tags": [
+        "foliage",
+        "cliff"
+      ],
+      "supports_instance_color": false
+    }
+  ]
+}

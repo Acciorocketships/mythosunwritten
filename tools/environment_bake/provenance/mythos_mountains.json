@@ -1,0 +1,343 @@
+{
+  "assets": [
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/mythos_mountain_buttress_tall.tres",
+      "id": "mythos.mountain.buttress_tall",
+      "license": "Original project assets; authored from mathematical profiles",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 12180,
+        "measured_aabb": {
+          "position": [
+            -11.6214780807495,
+            0.0256071425974369,
+            -8.45477294921875
+          ],
+          "size": [
+            22.8434562683105,
+            36.340763092041,
+            17.5419960021973
+          ]
+        },
+        "mesh_bytes": 1243166,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 12180
+      },
+      "pack": "mythos_mountains",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "mythos.mountain.buttress_tall",
+        "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+        "merge_pieces": true,
+        "source": "res://assets/MythosMountains/buttress_tall.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/MythosMountains/buttress_tall.glb",
+      "source_sha256": "0b80202966cbaed7be2228087fe4d4912f6453d36e7013598a43e3a13c9377ce",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/mythos_mountains/mythos_mountain_buttress_tall.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/mythos_mountain_buttress_wide.tres",
+      "id": "mythos.mountain.buttress_wide",
+      "license": "Original project assets; authored from mathematical profiles",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 13966,
+        "measured_aabb": {
+          "position": [
+            -18.055103302002,
+            0.037746611982584,
+            -10.9390888214111
+          ],
+          "size": [
+            33.9305114746094,
+            34.6807289123535,
+            22.6336040496826
+          ]
+        },
+        "mesh_bytes": 1425338,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 13966
+      },
+      "pack": "mythos_mountains",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "mythos.mountain.buttress_wide",
+        "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+        "merge_pieces": true,
+        "source": "res://assets/MythosMountains/buttress_wide.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/MythosMountains/buttress_wide.glb",
+      "source_sha256": "d47fa7f64a45b8490dbcacda0cfdcb7b27710ad8914a2b1df4f50bf91e9ff166",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/mythos_mountains/mythos_mountain_buttress_wide.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/mythos_mountain_pillar_crown.tres",
+      "id": "mythos.mountain.pillar_crown",
+      "license": "Original project assets; authored from mathematical profiles",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 14918,
+        "measured_aabb": {
+          "position": [
+            -12.6617517471313,
+            0.0275707319378853,
+            -10.6067342758179
+          ],
+          "size": [
+            25.3387641906738,
+            41.2225379943848,
+            20.1808586120605
+          ]
+        },
+        "mesh_bytes": 1522441,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 14918
+      },
+      "pack": "mythos_mountains",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "mythos.mountain.pillar_crown",
+        "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+        "merge_pieces": true,
+        "source": "res://assets/MythosMountains/pillar_crown.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/MythosMountains/pillar_crown.glb",
+      "source_sha256": "949fc8f9ec0eabb380152129d0e9436d3017ab1fa9af7ba5d8a42032bb192719",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/mythos_mountains/mythos_mountain_pillar_crown.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/mythos_mountain_pillar_slender.tres",
+      "id": "mythos.mountain.pillar_slender",
+      "license": "Original project assets; authored from mathematical profiles",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 12156,
+        "measured_aabb": {
+          "position": [
+            -8.34384155273438,
+            0.0250545460730791,
+            -7.56730604171753
+          ],
+          "size": [
+            15.9163017272949,
+            50.3427352905273,
+            17.1274032592773
+          ]
+        },
+        "mesh_bytes": 1240719,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 12156
+      },
+      "pack": "mythos_mountains",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "mythos.mountain.pillar_slender",
+        "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+        "merge_pieces": true,
+        "source": "res://assets/MythosMountains/pillar_slender.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/MythosMountains/pillar_slender.glb",
+      "source_sha256": "5f1278234e3b49bb26654a5e06c314afd4c49506e4c16740de45af50a2bca20c",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/mythos_mountains/mythos_mountain_pillar_slender.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/mythos_mountain_pillar_split.tres",
+      "id": "mythos.mountain.pillar_split",
+      "license": "Original project assets; authored from mathematical profiles",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 12720,
+        "measured_aabb": {
+          "position": [
+            -11.7251892089844,
+            0.0286650005728006,
+            -10.9431476593018
+          ],
+          "size": [
+            20.5165061950684,
+            46.6578636169434,
+            22.5749797821045
+          ]
+        },
+        "mesh_bytes": 1298245,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 12720
+      },
+      "pack": "mythos_mountains",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "mythos.mountain.pillar_split",
+        "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+        "merge_pieces": true,
+        "source": "res://assets/MythosMountains/pillar_split.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/MythosMountains/pillar_split.glb",
+      "source_sha256": "7229a524966143c0413e71ce51cd96e91a1df8b8a8c04d81773e71cf4250ceb1",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/mythos_mountains/mythos_mountain_pillar_split.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/mythos_mountain_shelf_corner.tres",
+      "id": "mythos.mountain.shelf_corner",
+      "license": "Original project assets; authored from mathematical profiles",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 556,
+        "measured_aabb": {
+          "position": [
+            -4.40185213088989,
+            0.0299999993294477,
+            -5.3931303024292
+          ],
+          "size": [
+            9.27161693572998,
+            6.50999975204468,
+            10.9189758300781
+          ]
+        },
+        "mesh_bytes": 57517,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 556
+      },
+      "pack": "mythos_mountains",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "mythos.mountain.shelf_corner",
+        "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+        "merge_pieces": true,
+        "source": "res://assets/MythosMountains/shelf_corner.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/MythosMountains/shelf_corner.glb",
+      "source_sha256": "e70634390afbd05471304b9b85d7e66c6dd14edb19bbf4e639b6bbb8baf659ab",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/mythos_mountains/mythos_mountain_shelf_corner.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/mythos_mountain_shelf_end.tres",
+      "id": "mythos.mountain.shelf_end",
+      "license": "Original project assets; authored from mathematical profiles",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 528,
+        "measured_aabb": {
+          "position": [
+            -3.99817109107971,
+            0.0199999995529652,
+            -3.01364254951477
+          ],
+          "size": [
+            8.181809425354,
+            4.76000022888184,
+            6.26528167724609
+          ]
+        },
+        "mesh_bytes": 54658,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 528
+      },
+      "pack": "mythos_mountains",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "mythos.mountain.shelf_end",
+        "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+        "merge_pieces": true,
+        "source": "res://assets/MythosMountains/shelf_end.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/MythosMountains/shelf_end.glb",
+      "source_sha256": "a63c6c4d24c70770b8e3a89af9658d256ba56fad5b786e0d709ebac1a8bc1f4c",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/mythos_mountains/mythos_mountain_shelf_end.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/mythos_mountain_shelf_long.tres",
+      "id": "mythos.mountain.shelf_long",
+      "license": "Original project assets; authored from mathematical profiles",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 516,
+        "measured_aabb": {
+          "position": [
+            -10.7071685791016,
+            0.0199999995529652,
+            -4.23247814178467
+          ],
+          "size": [
+            21.7529602050781,
+            5.07999992370605,
+            7.52988767623901
+          ]
+        },
+        "mesh_bytes": 53435,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 516
+      },
+      "pack": "mythos_mountains",
+      "parameters": {
+        "collision_profile": "native_trimesh",
+        "id": "mythos.mountain.shelf_long",
+        "material_override": "res://terrain/environment/materials/mythos_mountains/limestone.tres",
+        "merge_pieces": true,
+        "source": "res://assets/MythosMountains/shelf_long.glb",
+        "supports_instance_color": false,
+        "tags": [
+          "rock",
+          "cliff"
+        ]
+      },
+      "source": "res://assets/MythosMountains/shelf_long.glb",
+      "source_sha256": "610c8f64f01d2d02dd032b5a825bc6452b9c86737d143676a7f5041ef6ea5b60",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/mythos_mountains/mythos_mountain_shelf_long.tres"
+    }
+  ],
+  "license": "Original project assets; authored from mathematical profiles",
+  "pack": "mythos_mountains",
+  "tool_version": 38
+}

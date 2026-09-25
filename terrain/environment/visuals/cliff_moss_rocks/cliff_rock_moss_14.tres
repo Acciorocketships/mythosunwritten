@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_q1ggt"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/cliff_moss_rocks/cliff_rock_moss_14_piece_00.res" id="2_8ubsg"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_8v3cp"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/cliff_moss_rocks/cliff_rock_moss_14_piece_00.res" id="4_btpl8"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_ofsaq"]
+
+[sub_resource type="Resource" id="Resource_6hi5f"]
+script = ExtResource("1_q1ggt")
+shape = ExtResource("2_8ubsg")
+
+[sub_resource type="Resource" id="Resource_cjagt"]
+script = ExtResource("3_8v3cp")
+mesh = ExtResource("4_btpl8")
+
+[resource]
+script = ExtResource("5_ofsaq")
+pieces = Array[ExtResource("3_8v3cp")]([SubResource("Resource_cjagt")])
+collisions = Array[ExtResource("1_q1ggt")]([SubResource("Resource_6hi5f")])

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3 uid="uid://b8dbwoyyhfvug"]
+
+[ext_resource type="Script" uid="uid://djmjr4fhawgyt" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_kyu5u"]
+
+[resource]
+script = ExtResource("1_kyu5u")
+id = &"kaykit.terrace.12x6x4"
+visual_path = "res://terrain/environment/visuals/kaykit_terraces/kaykit_terrace_12x6x4.tres"
+tags = Array[StringName]([&"cliff", &"terrace", &"terrain"])
+measured_aabb = AABB(-6.25, 0, -3.2500017, 12.5, 4, 6.500002)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"ground"
+supports_instance_color = true
+provenance_id = &"kaykit_terraces:kaykit.terrace.12x6x4"
