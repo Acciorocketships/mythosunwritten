@@ -217,7 +217,7 @@ func test_warren_fabric_kit_has_structural_collision_and_decor_stays_nonblocking
 		assert_eq(catalog.descriptor(asset_id).collision_piece_count, 0,
 			"soft facade dressing stays nonblocking: %s" % asset_id)
 
-func test_every_rigid_nature_asset_has_only_simple_convex_collision() -> void:
+func test_rigid_nature_collision_distinguishes_walkable_cliff_solids_from_ambient_props() -> void:
 	var catalog := EnvironmentCatalog.load_default()
 	var cache := EnvironmentRenderCache.new(catalog)
 	assert_true(cache.prepare(catalog.ids()))
@@ -234,6 +234,9 @@ func test_every_rigid_nature_asset_has_only_simple_convex_collision() -> void:
 			"rigid nature asset %s cannot silently lose collision" % asset_id)
 		for collision: EnvironmentCollisionPiece in visual.collisions:
 			var shape := collision.shape
+			if descriptor.tags.has(&"cliff"):
+				assert_true(shape is ConcavePolygonShape3D,"Static cliff ledges retain their full walkable surface")
+				continue
 			assert_true(shape is ConvexPolygonShape3D or shape is BoxShape3D \
 				or shape is CapsuleShape3D or shape is CylinderShape3D \
 				or shape is SphereShape3D,

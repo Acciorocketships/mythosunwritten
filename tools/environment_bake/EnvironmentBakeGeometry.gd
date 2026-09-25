@@ -332,8 +332,45 @@ static func transform_mesh(source: ArrayMesh, pose: Transform3D) -> ArrayMesh:
 	return out
 
 
+static func fit_axis_profile(source: ArrayMesh, axis: int, knots: Array) -> ArrayMesh:
+	# A measured internal bearing and the two outer stock boundaries are distinct
+	# datums. Fit them monotonically; never move the shared seam or erase faces.
+	if source == null or axis < 0 or axis > 2 or knots.size() < 2: return null
+	for i in knots.size():
+		if not knots[i] is Array or knots[i].size()!=2: return null
+		if not is_finite(float(knots[i][0])) or not is_finite(float(knots[i][1])): return null
+		if i>0 and (float(knots[i][0])<=float(knots[i-1][0]) or float(knots[i][1])<=float(knots[i-1][1])): return null
+	var bounds := source.get_aabb()
+	if bounds.position[axis] < float(knots[0][0])-0.00001 or bounds.end[axis] > float(knots[-1][0])+0.00001: return null
+	var out := ArrayMesh.new()
+	for surface in source.get_surface_count():
+		var arrays := source.surface_get_arrays(surface)
+		var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+		for i in vertices.size():
+			var point := vertices[i]
+			var interval := 1
+			while interval < knots.size()-1 and point[axis] > float(knots[interval][0]): interval+=1
+			var low: Array = knots[interval-1]
+			var high: Array = knots[interval]
+			var slope := (float(high[1])-float(low[1]))/(float(high[0])-float(low[0]))
+			point[axis]=float(low[1])+(point[axis]-float(low[0]))*slope
+			vertices[i]=point
+			if normals.size()==vertices.size():
+				var normal := normals[i]
+				normal[axis]/=slope
+				normals[i]=normal.normalized()
+		arrays[Mesh.ARRAY_VERTEX]=vertices
+		arrays[Mesh.ARRAY_NORMAL]=normals
+		# Tangents follow the changed surface; the authored UV coordinates do not.
+		arrays[Mesh.ARRAY_TANGENT]=null
+		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+		out.surface_set_material(surface,source.surface_get_material(surface))
+	return out
+
+
 static func finish_facade_sides(source: ArrayMesh, side: ArrayMesh,
-		thickness: float) -> ArrayMesh:
+		thickness: float, mirror_left: bool = false) -> ArrayMesh:
 	# Replace the raw cut ends with the authored wall's actual relief and UVs.
 	# Both returned sides live inside the original doorway envelope. The body
 	# ends inside their backing, so no old end face competes with the new skin.
@@ -348,11 +385,15 @@ static func finish_facade_sides(source: ArrayMesh, side: ArrayMesh,
 	for sign_value in [-1.0, 1.0]:
 		var normal := Vector3.RIGHT * float(sign_value)
 		var basis := Basis(Vector3.UP.cross(normal) * box.size.z / stock.size.x,
-			Vector3.UP * 3.0 / stock.size.y, normal * thickness / stock.size.z)
+			Vector3.UP * box.size.y / stock.size.y, normal * thickness / stock.size.z)
 		var anchor := Vector3(box.end.x if sign_value > 0.0 else box.position.x,
-			0.0, box.get_center().z)
+			box.position.y, box.get_center().z)
 		var piece := MeshInstance3D.new()
-		piece.mesh = side
+		# Asymmetric native stock can put its full-height jamb at the front
+		# of both returns. Reflect the left stock before fitting, not its relief.
+		piece.mesh = transform_mesh(mirror_axis(side, Vector3.AXIS_X), Transform3D(
+			Basis.IDENTITY, Vector3(2.0 * stock.get_center().x, 0.0, 0.0))) \
+			if mirror_left and sign_value < 0.0 else side
 		piece.transform = Transform3D(basis, anchor - basis * Vector3(
 			stock.get_center().x, stock.position.y, stock.end.z))
 		assembly.add_child(piece)

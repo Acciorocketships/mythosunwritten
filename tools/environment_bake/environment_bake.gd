@@ -3,7 +3,8 @@ extends SceneTree
 
 ## Deterministic editor-side importer for source-pack visuals. Runtime code is
 ## intentionally unaware of every source path named by the manifests.
-const TOOL_VERSION := 32
+const TOOL_VERSION := 38
+const RoofEnvelope = preload("res://tools/environment_bake/EnvironmentRoofEnvelope.gd")
 const DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
 const INDEX_PATH := "res://terrain/environment/catalog/index.tres"
 const MANIFEST_DIR := "res://tools/environment_bake/manifests"
@@ -11,6 +12,12 @@ const RIGID_NATURE_TAGS: Array[String] = ["tree", "rock", "deadwood"]
 
 var _texture_cache: Dictionary = {}
 var _canopy_assets: Dictionary = {}
+## Manifest-level art direction: source material name -> albedo colour.
+## Packs whose vendor shaders tinted greyscale textures (Suntail) restore
+## their palette here instead of per-asset tints.
+var _material_palette: Dictionary = {}
+## Source material name -> roughness (removes converter mirror finishes).
+var _material_roughness: Dictionary = {}
 var _failed := false
 var _provenance_by_pack: Dictionary = {}
 
@@ -63,6 +70,14 @@ func _bake_manifest(path: String) -> void:
 	var pack := String(manifest.get("pack", ""))
 	var license_label := String(manifest.get("license", ""))
 	var default_scale = manifest.get("default_scale", [1.0, 1.0, 1.0])
+	_material_palette.clear()
+	_material_roughness.clear()
+	var roughness: Dictionary = manifest.get("material_roughness", {})
+	for material_name: String in roughness:
+		_material_roughness[StringName(material_name)] = float(roughness[material_name])
+	var palette: Dictionary = manifest.get("material_palette", {})
+	for material_name: String in palette:
+		_material_palette[StringName(material_name)] = _color(palette[material_name])
 	var entries := _expanded_manifest_entries(manifest, path)
 	if pack.is_empty() or entries.is_empty():
 		_fail("Manifest %s requires pack and assets" % path)
@@ -346,7 +361,12 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 			var side_mesh := EnvironmentBakeGeometry.merge_pieces(side_root, correction)
 			side_root.free()
 			merged = EnvironmentBakeGeometry.finish_facade_sides(merged, side_mesh,
-				float(entry.facade_side_thickness))
+				float(entry.facade_side_thickness), bool(entry.get("facade_side_mirror_left", false)))
+		if entry.has("roof_envelope"):
+			merged = _roof_envelope_asset(merged, entry.roof_envelope, asset_id)
+			if merged == null:
+				root.free()
+				return {}
 		merged = _clip_merged_asset(merged, entry, asset_id)
 		if merged == null:
 			root.free()
@@ -370,6 +390,14 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 			merged = EnvironmentBakeGeometry.transform_mesh(merged,
 				Transform3D(Basis.from_scale(fit_scale),
 					target.position - measured.position * fit_scale))
+		if entry.has("fit_axis_profile"):
+			var profile: Dictionary = entry.fit_axis_profile
+			merged = EnvironmentBakeGeometry.fit_axis_profile(merged,
+				["x","y","z"].find(String(profile.get("axis",""))),profile.get("knots",[]))
+			if merged == null:
+				_fail("Invalid fitted native axis profile: %s" % asset_id)
+				root.free()
+				return {}
 		merged = _mirror_merged_asset(merged, mirror_axis_name, asset_id)
 		if merged == null:
 			root.free()
@@ -616,8 +644,82 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 	}
 
 
+func _roof_envelope_asset(source: ArrayMesh, declaration: Dictionary,
+		asset_id: String) -> ArrayMesh:
+	# Both sides use the same authored stock, source pivot and native section
+	# operations as ordinary continuous roofs. Declarations are finite offline
+	# recipes; no baked catalog resource is used as an untracked source input.
+	var subject := _roof_envelope_sections(source,
+		declaration.get("subject", []), asset_id)
+	var cutter := _roof_envelope_sections(source,
+		declaration.get("cutter", []), asset_id)
+	if subject == null or cutter == null: return null
+	var result := RoofEnvelope.subtract(subject, cutter,
+		bool(declaration.get("owns_coplanar", false)))
+	if result == null or result.get_surface_count() == 0:
+		_fail("Native roof envelope cut is empty or exceeds its finite budget: %s" % asset_id)
+		return null
+	return result
+
+
+func _roof_envelope_sections(source: ArrayMesh, declarations: Array,
+		asset_id: String) -> ArrayMesh:
+	if declarations.is_empty() or declarations.size() > 16:
+		_fail("Native roof envelope requires 1–16 source sections: %s" % asset_id)
+		return null
+	if source.get_surface_count() != 1:
+		_fail("Native compact roof sections require one authored material surface: %s" % asset_id)
+		return null
+	var combined := SurfaceTool.new()
+	combined.begin(Mesh.PRIMITIVE_TRIANGLES)
+	combined.set_material(source.surface_get_material(0))
+	for declaration: Dictionary in declarations:
+		var section := _clip_merged_asset(source, declaration, asset_id)
+		if section == null: return null
+		section = _mirror_merged_asset(section,
+			String(declaration.get("mirror_axis", "")), asset_id)
+		if section == null: return null
+		var offset: Array = declaration.get("offset", [0.0, 0.0, 0.0])
+		var yaw_quarters := int(declaration.get("yaw_quarters", 0))
+		if offset.size() != 3 or absi(yaw_quarters) > 3:
+			_fail("Invalid native roof section pose: %s" % asset_id)
+			return null
+		var origin := Vector3(float(offset[0]), float(offset[1]), float(offset[2]))
+		if not origin.is_finite() \
+				or maxf(absf(origin.x), maxf(absf(origin.y), absf(origin.z))) > 16.0:
+			_fail("Native roof section pose exceeds its 16 m source domain: %s" % asset_id)
+			return null
+		# Use the UNCUT native section's bearing. Re-aligning the final clipped
+		# asset by its new minimum would move the valley away from its neighbor.
+		origin.y -= section.get_aabb().position.y
+		var pose := Transform3D(Basis(Vector3.UP,
+			float(yaw_quarters) * PI * 0.5), origin)
+		if bool(declaration.get("positive_ridge_half", false)):
+			section = EnvironmentBakeGeometry.clip_axis_range(section, 2, 0.0, 16.0)
+			if section == null: continue
+		for surface in section.get_surface_count():
+			combined.append_from(section, surface, pose)
+	return combined.commit()
+
+
 func _clip_merged_asset(mesh: ArrayMesh, entry: Dictionary,
 		asset_id: String) -> ArrayMesh:
+	# Finite authored junction cuts retain source positions, UVs and materials.
+	# Plane coefficients use n.dot(point) <= d, including non-unit normals.
+	for coefficients: Array in entry.get("clip_planes", []):
+		if coefficients.size() != 4:
+			_fail("clip_planes requires four coefficients: %s" % asset_id)
+			return null
+		var normal := Vector3(float(coefficients[0]), float(coefficients[1]), float(coefficients[2]))
+		var distance := float(coefficients[3])
+		if not normal.is_finite() or normal.length_squared() < 0.000001 or not is_finite(distance):
+			_fail("clip_planes requires a finite nonzero plane: %s" % asset_id)
+			return null
+		mesh = EnvironmentBakeGeometry.clip_half_space(mesh,
+			Plane(normal.normalized(), distance / normal.length()))
+		if mesh == null:
+			_fail("clip_planes removed asset: %s" % asset_id)
+			return null
 	var ranges_value: Variant = entry.get("clip_ranges", {})
 	var axis_name := String(entry.get("clip_axis", ""))
 	var range_value: Variant = entry.get("clip_range", [])
@@ -1077,7 +1179,7 @@ func _bake_collisions(pack: String, asset_id: String, entry: Dictionary,
 			out = _bake_flat_box_collisions(pack, asset_id, entry, visual_pieces)
 		"plate_box":
 			out = _bake_plate_box_collisions(pack, asset_id, entry, visual_pieces)
-		"building_trimesh":
+		"building_trimesh", "native_trimesh":
 			out = _bake_building_trimesh(pack, asset_id, visual_pieces,
 				collision_mesh_override)
 		"ramp_box":
@@ -2104,6 +2206,15 @@ func _bake_material(source: Material, pack: String, asset_id: String, piece_inde
 		green_hue: float, fallback_albedo: Texture2D,
 		fallback_albedos_by_material: Dictionary = {}) -> Material:
 	var material := source.duplicate(true) as Material
+	if _material_palette.has(StringName(source.resource_name)) \
+			and material is StandardMaterial3D:
+		(material as StandardMaterial3D).albedo_color = \
+			_material_palette[StringName(source.resource_name)]
+	if _material_roughness.has(StringName(source.resource_name)) \
+			and material is StandardMaterial3D:
+		var finish := material as StandardMaterial3D
+		finish.roughness = _material_roughness[StringName(source.resource_name)]
+		finish.roughness_texture = null
 	var selected_fallback := fallback_albedos_by_material.get(
 		StringName(source.resource_name), fallback_albedo) as Texture2D
 	if selected_fallback != null:
