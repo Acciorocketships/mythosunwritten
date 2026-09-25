@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_8f733"]
+
+[resource]
+script = ExtResource("1_8f733")
+id = &"suntail.decor.cornice_cover_1"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_cornice_cover_1.tres"
+tags = Array[StringName]([&"decor", &"suntail_kit", &"village"])
+measured_aabb = AABB(-2.0333567, -0.027220726, -0.0465683, 2.1887295, 3.1764364, 0.093171425)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.decor.cornice_cover_1"

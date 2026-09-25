@@ -1,0 +1,13 @@
+[gd_resource type="StandardMaterial3D" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/36b11b481ec634447e57.res" id="1_538hr"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/fc73dea9f68d4bffa418.res" id="2_tmaku"]
+
+[resource]
+resource_name = "Stone_Wall"
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.74, 0.78, 0.86, 1)
+albedo_texture = ExtResource("1_538hr")
+roughness = 0.85
+normal_enabled = true
+normal_texture = ExtResource("2_tmaku")

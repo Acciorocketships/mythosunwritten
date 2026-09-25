@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_obra3"]
+
+[resource]
+script = ExtResource("1_obra3")
+id = &"suntail.prop.smelter"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_smelter.tres"
+tags = Array[StringName]([&"building", &"prop", &"suntail_kit", &"village"])
+measured_aabb = AABB(-1.0210513, -0.025947975, -1.0082929, 2.0316854, 1.0264463, 1.9919951)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.prop.smelter"

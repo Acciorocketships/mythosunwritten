@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_c6t4d"]
+
+[resource]
+script = ExtResource("1_c6t4d")
+id = &"suntail.prop.pumpkin"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_pumpkin.tres"
+tags = Array[StringName]([&"prop", &"suntail_kit", &"village"])
+measured_aabb = AABB(-0.39330375, -0.0016487725, -0.39330378, 0.7866075, 0.51293635, 0.78660756)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.prop.pumpkin"

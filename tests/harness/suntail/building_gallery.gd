@@ -1,0 +1,137 @@
+extends SceneTree
+## Renders designed kit buildings through the real catalog/commit path.
+## GUI only (captures need a renderer):
+##   Godot --path . -s res://tests/harness/suntail/building_gallery.gd -- \
+##     --output DIR [--set replica|designer] [--count N] [--seed S] [--compare]
+## `replica` rebuilds the pack's House_1 from a BuildingMass beside the source
+## prefab; `designer` lays out BuildingDesigner results on a grid.
+const GALLERY := preload("res://tests/harness/suntail/gallery_masses.gd")
+
+var _out := "user://building_gallery"
+var _set := "replica"
+var _count := 12
+var _seed := 1
+var _compare := false
+var _close := false
+
+
+func _init() -> void:
+	var args := OS.get_cmdline_user_args()
+	for i in args.size():
+		match args[i]:
+			"--output": _out = args[i + 1]
+			"--set": _set = args[i + 1]
+			"--count": _count = int(args[i + 1])
+			"--seed": _seed = int(args[i + 1])
+			"--compare": _compare = true
+			"--close": _close = true
+	DirAccess.make_dir_recursive_absolute(_out)
+	call_deferred("_run")
+
+
+func _stage() -> Node3D:
+	var stage := Node3D.new()
+	get_root().add_child(stage)
+	var env := WorldEnvironment.new()
+	var e := Environment.new()
+	var sky_material := ProceduralSkyMaterial.new()
+	sky_material.sky_top_color = Color(0.27, 0.46, 0.75)
+	sky_material.sky_horizon_color = Color(0.71, 0.82, 0.92)
+	sky_material.ground_bottom_color = Color(0.42, 0.5, 0.56)
+	sky_material.ground_horizon_color = Color(0.68, 0.78, 0.86)
+	var sky := Sky.new()
+	sky.sky_material = sky_material
+	e.background_mode = Environment.BG_SKY
+	e.sky = sky
+	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	e.ambient_light_color = Color(0.62, 0.6, 0.55)
+	e.ambient_light_sky_contribution = 0.6
+	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	e.ssao_enabled = true
+	env.environment = e
+	stage.add_child(env)
+	var sun := DirectionalLight3D.new()
+	sun.rotation_degrees = Vector3(-48, -40, 0)
+	sun.light_energy = 1.2
+	sun.shadow_enabled = true
+	sun.shadow_opacity = 0.75
+	stage.add_child(sun)
+	var ground := MeshInstance3D.new()
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(600, 600)
+	ground.mesh = plane
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.36, 0.52, 0.24)
+	ground.material_override = material
+	ground.position.y = -0.02
+	stage.add_child(ground)
+	return stage
+
+
+func _commit(stage: Node3D, payload: EnvironmentInstancePayload) -> void:
+	var catalog := EnvironmentCatalog.load_default()
+	var cache := EnvironmentRenderCache.new(catalog)
+	cache.prepare(payload.asset_ids())
+	var parent := Node3D.new()
+	stage.add_child(parent)
+	var queue := FeatureCommitQueue.new(cache)
+	queue.enqueue(Vector2i.ZERO, 1, parent, payload)
+	while queue.pending_count() > 0:
+		queue.drain(100000, 100000, 100000)
+		await process_frame
+
+
+func _shoot(stage: Node3D, eye: Vector3, target: Vector3, name: String,
+		fov := 50.0) -> void:
+	var camera := Camera3D.new()
+	camera.fov = fov
+	stage.add_child(camera)
+	camera.look_at_from_position(eye, target)
+	camera.current = true
+	for i in 10:
+		await process_frame
+	await RenderingServer.frame_post_draw
+	get_root().get_texture().get_image().save_png("%s/%s.png" % [_out, name])
+	camera.queue_free()
+
+
+func _run() -> void:
+	get_root().size = Vector2i(1600, 900)
+	var stage := _stage()
+	var kit := SuntailBuildingKit.create()
+	var assembler := BuildingKitAssembler.new(kit)
+	var payload := EnvironmentInstancePayload.new()
+	var spots: Array[Vector3] = []
+	var masses: Array[BuildingMass] = GALLERY.masses(_set, _count, _seed, kit)
+	var spacing := 26.0
+	var columns := int(ceil(sqrt(float(masses.size()))))
+	for i in masses.size():
+		var at := Vector3(float(i % columns) * spacing, 0.0,
+			float(i / columns) * spacing)
+		spots.append(at + Vector3(4, 4, 4))
+		var placements := assembler.assemble(masses[i])
+		BuildingKitAssembler.append_to_payload(placements,
+			Transform3D(Basis.IDENTITY, at), payload)
+	if _set == "replica" or _compare:
+		var prefab: Node3D = (load("res://assets/Raygeas/Models/Buildings/House_1.glb") as PackedScene).instantiate()
+		prefab.position = Vector3(-24, -1, 4)
+		stage.add_child(prefab)
+		spots.append(Vector3(-24, 4, 4))
+	await _commit(stage, payload)
+	var centre := Vector3(float(columns - 1) * spacing * 0.5, 0,
+		float((masses.size() - 1) / columns) * spacing * 0.5)
+	await _shoot(stage, centre + Vector3(-10, 70, 90), centre, "overview", 50)
+	for i in spots.size():
+		var c := spots[i]
+		if _close:
+			for k in 4:
+				var ang := PI * 0.25 + PI * 0.5 * float(k)
+				var dir := Vector3(cos(ang), 0, sin(ang))
+				await _shoot(stage, c + dir * 11.0 + Vector3(0, -2.2, 0), c + Vector3(0, 0.5, 0),
+					"b%02d_c%d" % [i, k], 60)
+			await _shoot(stage, c + Vector3(6, 11, 8), c + Vector3(0, 5, 0), "b%02d_roof" % i, 55)
+			continue
+		await _shoot(stage, c + Vector3(15, 9, 17), c, "b%02d_a" % i, 55)
+		await _shoot(stage, c + Vector3(-17, 6, -14), c, "b%02d_b" % i, 55)
+	print("GALLERY_DONE ", _out)
+	quit()

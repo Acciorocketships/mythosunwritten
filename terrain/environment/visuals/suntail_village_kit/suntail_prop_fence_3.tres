@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_cpt6y"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/suntail_village_kit/suntail_prop_fence_3_piece_00.res" id="2_4o75x"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_xw4yt"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/suntail_village_kit/suntail_prop_fence_3_piece_00.res" id="4_htp3j"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_5x5wn"]
+
+[sub_resource type="Resource" id="Resource_wle6q"]
+script = ExtResource("1_cpt6y")
+shape = ExtResource("2_4o75x")
+
+[sub_resource type="Resource" id="Resource_8aafj"]
+script = ExtResource("3_xw4yt")
+mesh = ExtResource("4_htp3j")
+
+[resource]
+script = ExtResource("5_5x5wn")
+pieces = Array[ExtResource("3_xw4yt")]([SubResource("Resource_8aafj")])
+collisions = Array[ExtResource("1_cpt6y")]([SubResource("Resource_wle6q")])

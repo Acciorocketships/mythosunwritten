@@ -18,6 +18,9 @@ var _grass := false
 var _show_character := false
 var _output_dir := "/tmp/mythos-village-site-capture"
 var _views: Array[Dictionary] = []
+## Auto views around --at: orbit radius/height and ground-level ring radius.
+var _orbit := Vector2.ZERO
+var _ground_ring := 0.0
 var _streamer: FieldTerrainStreamer
 var _character: CharacterBody3D
 var _camera := Camera3D.new()
@@ -61,6 +64,10 @@ func _read_args() -> void:
 				_show_character = true
 			"--output":
 				_output_dir = next
+			"--orbit":
+				_orbit = Vector2(float(next.get_slice(",", 0)), float(next.get_slice(",", 1)))
+			"--ground-ring":
+				_ground_ring = float(next)
 			"--view":
 				var parts := next.split(":", false)
 				assert(parts.size() >= 3, "--view id:px,py,pz:tx,ty,tz[:fov]")
@@ -83,11 +90,38 @@ func _run() -> void:
 	print("[village_site_capture] site_ready=%s seed=%d at=%s" % [ready, _seed,
 		_at])
 	_character.set_physics_process(false)
+	_add_auto_views()
 	for view: Dictionary in _views:
 		await _capture(view)
 	print("[village_site_capture] complete captures=%d output=%s" % [
 		_views.size(), _output_dir])
 	get_tree().quit(0 if ready else 2)
+
+
+func _ground_y(xz: Vector2) -> float:
+	var space := get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(Vector3(xz.x, 400.0, xz.y),
+		Vector3(xz.x, -200.0, xz.y))
+	var hit := space.intersect_ray(query)
+	return (hit.position as Vector3).y if not hit.is_empty() else _at.y
+
+
+func _add_auto_views() -> void:
+	var centre := Vector3(_at.x, _ground_y(Vector2(_at.x, _at.z)), _at.z)
+	if _orbit.x > 0.0:
+		for k in 8:
+			var angle := TAU * float(k) / 8.0 + 0.3
+			var eye := centre + Vector3(cos(angle), 0.0, sin(angle)) * _orbit.x \
+				+ Vector3.UP * _orbit.y
+			_views.append({"id": "orbit%d" % k, "position": eye,
+				"target": centre + Vector3.UP * 6.0, "fov": 55.0})
+	if _ground_ring > 0.0:
+		for k in 8:
+			var angle := TAU * float(k) / 8.0 + 0.15
+			var xz := Vector2(centre.x, centre.z) + Vector2(cos(angle), sin(angle)) * _ground_ring
+			var eye := Vector3(xz.x, _ground_y(xz) + 2.2, xz.y)
+			_views.append({"id": "ground%d" % k, "position": eye,
+				"target": Vector3(centre.x, eye.y + 4.0, centre.z), "fov": 70.0})
 
 
 func _wait_for_site() -> bool:

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_ossf2"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_m3e0g"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/suntail_village_kit/suntail_decor_ivy_3_piece_00.res" id="3_67jjl"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_jjk1q"]
+
+[sub_resource type="Resource" id="Resource_vqdhm"]
+script = ExtResource("2_m3e0g")
+mesh = ExtResource("3_67jjl")
+
+[resource]
+script = ExtResource("4_jjk1q")
+pieces = Array[ExtResource("2_m3e0g")]([SubResource("Resource_vqdhm")])

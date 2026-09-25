@@ -1,0 +1,15 @@
+[gd_resource type="StandardMaterial3D" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/2d26b58775218a50aad7.res" id="1_q3ce1"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/91e9b816c82e8e43ad14.res" id="2_bojmh"]
+
+[resource]
+resource_name = "Wooden_Planks"
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.56, 0.36, 0.24, 1)
+albedo_texture = ExtResource("1_q3ce1")
+roughness = 0.8
+normal_enabled = true
+normal_texture = ExtResource("2_bojmh")
+uv1_scale = Vector3(0.7, 0.7, 1)
+uv1_offset = Vector3(0, 0.3, 0)

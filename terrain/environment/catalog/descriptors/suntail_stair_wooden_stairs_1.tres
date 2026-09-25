@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_bmapj"]
+
+[resource]
+script = ExtResource("1_bmapj")
+id = &"suntail.stair.wooden_stairs_1"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_stair_wooden_stairs_1.tres"
+tags = Array[StringName]([&"building", &"stair", &"suntail_kit", &"village"])
+measured_aabb = AABB(-0.047779627, -0.09305763, -1.0776956, 1.0888238, 1.1505473, 1.1505479)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.stair.wooden_stairs_1"

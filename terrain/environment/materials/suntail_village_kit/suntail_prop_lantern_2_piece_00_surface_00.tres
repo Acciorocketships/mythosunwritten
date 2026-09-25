@@ -1,0 +1,20 @@
+[gd_resource type="StandardMaterial3D" load_steps=5 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/ecd0ecd91affd8ecac21.res" id="1_7xqou"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/dc4a8b3e9f86699f1be4.res" id="2_q3lng"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/02f803e03fe93aaf277f.res" id="3_7bt3g"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/a2220738190d13f0bb9d.res" id="4_vgams"]
+
+[resource]
+resource_name = "Lantern"
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("1_7xqou")
+metallic = 1.0
+metallic_texture = ExtResource("3_7bt3g")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("3_7bt3g")
+roughness_texture_channel = 1
+emission_enabled = true
+emission_texture = ExtResource("2_q3lng")
+normal_enabled = true
+normal_texture = ExtResource("4_vgams")

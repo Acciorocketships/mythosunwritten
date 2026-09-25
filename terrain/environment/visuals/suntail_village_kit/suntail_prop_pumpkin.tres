@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_21qyi"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_cs7od"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/suntail_village_kit/suntail_prop_pumpkin_piece_00.res" id="3_sbpjd"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_gawro"]
+
+[sub_resource type="Resource" id="Resource_tgdn7"]
+script = ExtResource("2_cs7od")
+mesh = ExtResource("3_sbpjd")
+
+[resource]
+script = ExtResource("4_gawro")
+pieces = Array[ExtResource("2_cs7od")]([SubResource("Resource_tgdn7")])

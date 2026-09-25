@@ -1,0 +1,15 @@
+[gd_resource type="StandardMaterial3D" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/3939f12f65493ec760ed.res" id="1_6smrf"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/e373c53c6944687f9278.res" id="2_8qbn0"]
+
+[resource]
+resource_name = "Roof_Planks"
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.62, 0.44, 0.31, 1)
+albedo_texture = ExtResource("1_6smrf")
+roughness = 0.8
+normal_enabled = true
+normal_texture = ExtResource("2_8qbn0")
+uv1_scale = Vector3(2, 2, 1)
+uv1_offset = Vector3(0, -1, 0)

@@ -1,0 +1,17 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/068d61ddd0f14350f506.res" id="1_yp24a"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/e6b0737bbd494e525ad3.res" id="2_gt55a"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/4aa4547b5bb156c1fb0b.res" id="3_5bajs"]
+
+[resource]
+resource_name = "Chair_2"
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("1_yp24a")
+metallic = 1.0
+metallic_texture = ExtResource("2_gt55a")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_gt55a")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_5bajs")

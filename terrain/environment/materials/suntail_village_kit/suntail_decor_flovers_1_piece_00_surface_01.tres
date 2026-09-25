@@ -1,0 +1,14 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/a439edf363d05763b92a.res" id="1_o5upe"]
+
+[resource]
+resource_name = "FlowerPot_Leaves"
+transparency = 2
+alpha_scissor_threshold = 0.6
+alpha_antialiasing_mode = 0
+cull_mode = 2
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.16078433, 0.427451, 0.20451018, 1)
+albedo_texture = ExtResource("1_o5upe")
+roughness = 0.7

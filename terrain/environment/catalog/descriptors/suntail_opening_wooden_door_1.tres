@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_2mk1i"]
+
+[resource]
+script = ExtResource("1_2mk1i")
+id = &"suntail.opening.wooden_door_1"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_opening_wooden_door_1.tres"
+tags = Array[StringName]([&"opening", &"suntail_kit", &"village"])
+measured_aabb = AABB(-1.1346498, -0.9868589, -0.061705478, 1.1508757, 2.1799703, 0.17929238)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.opening.wooden_door_1"

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_qvv1w"]
+
+[resource]
+script = ExtResource("1_qvv1w")
+id = &"suntail.prop.pot_2"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_pot_2.tres"
+tags = Array[StringName]([&"prop", &"suntail_kit", &"village"])
+measured_aabb = AABB(-0.24543281, 0, -0.24543275, 0.49086568, 0.6571321, 0.4908655)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.prop.pot_2"

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_nsbn8"]
+
+[resource]
+script = ExtResource("1_nsbn8")
+id = &"suntail.prop.ladder"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_ladder.tres"
+tags = Array[StringName]([&"building", &"prop", &"suntail_kit", &"village"])
+measured_aabb = AABB(-0.274443, 0.0073486087, -0.06251274, 0.54775, 2.3471372, 0.12125024)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.prop.ladder"

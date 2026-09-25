@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_0kj2b"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_xc8mi"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/suntail_village_kit/suntail_prop_carrot_2_piece_00.res" id="3_ypxmb"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_dupfo"]
+
+[sub_resource type="Resource" id="Resource_cjnjs"]
+script = ExtResource("2_xc8mi")
+mesh = ExtResource("3_ypxmb")
+
+[resource]
+script = ExtResource("4_dupfo")
+pieces = Array[ExtResource("2_xc8mi")]([SubResource("Resource_cjnjs")])

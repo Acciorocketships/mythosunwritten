@@ -1,0 +1,2592 @@
+{
+ "pack": "suntail_village_kit",
+ "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
+ "default_scale": [
+  1.0,
+  1.0,
+  1.0
+ ],
+ "material_palette": {
+  "Wooden_Planks": [
+   0.56,
+   0.36,
+   0.24,
+   1.0
+  ],
+  "Roof_Planks": [
+   0.62,
+   0.44,
+   0.31,
+   1.0
+  ],
+  "Wooden_Boards": [
+   0.6,
+   0.43,
+   0.3,
+   1.0
+  ],
+  "Wall": [
+   0.97,
+   0.96,
+   0.93,
+   1.0
+  ],
+  "Stone_Wall": [
+   0.74,
+   0.78,
+   0.86,
+   1.0
+  ],
+  "Stone": [
+   0.46,
+   0.48,
+   0.53,
+   1.0
+  ],
+  "Roof_Red": [
+   0.9,
+   0.36,
+   0.22,
+   1.0
+  ],
+  "Roof_Blue": [
+   0.44,
+   0.56,
+   0.8,
+   1.0
+  ],
+  "FlowerPot": [
+   0.62,
+   0.4,
+   0.3,
+   1.0
+  ]
+ },
+ "material_roughness": {
+  "Roof_Red": 0.62,
+  "Roof_Blue": 0.58,
+  "Wall": 0.9,
+  "Stone_Wall": 0.85,
+  "Stone": 0.85,
+  "Wooden_Planks": 0.8,
+  "Roof_Planks": 0.8,
+  "Wooden_Boards": 0.8,
+  "FlowerPot": 0.85
+ },
+ "assets": [
+  {
+   "id": "suntail.frame.frame_extension_blue",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Extension_Blue.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "frame",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.frame.frame_extension_red",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Extension_Red.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "frame",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.frame.frame_wall_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "frame",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.frame.frame_wall_1_d",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_1_D.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "frame",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.frame.frame_wall_1_d_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_1_D_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "frame",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.frame.frame_wall_1_w",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_1_W.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "frame",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.frame.frame_wall_2",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "frame",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.frame.frame_wall_2_w",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Frame_Wall_2_W.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "frame",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.frame.gable_l",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Gable_L.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "frame",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.frame.gable_r",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Gable_R.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "frame",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.frame.gable_small",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Frame_Modules/Gable_Small.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "frame",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.stone.stone_base",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Base.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stone",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.stone.stone_wall",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stone",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.stone.stone_wall_d",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stone",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.stone.stone_wall_d_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stone",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.stone.stone_wall_w",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_W.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stone",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.roof.roof_1_cornice_red",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_1_Cornice_Red.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "roof",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.roof.roof_1_cornice_w_red",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_1_Cornice_W_Red.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "roof",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.roof.roof_1_red",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_1_Red.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "roof",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.roof.roof_2_cornice_red",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_2_Cornice_Red.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "roof",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.roof.roof_2_red",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_2_Red.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "roof",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.roof.roof_top_1_red",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_Top_1_Red.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "roof",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.roof.roof_top_2_red",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Red/Roof_Top_2_Red.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "roof",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.roof.roof_1_blue",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_1_Blue.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "roof",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.roof.roof_1_cornice_blue",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_1_Cornice_Blue.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "roof",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.roof.roof_1_cornice_w_blue",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_1_Cornice_W_Blue.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "roof",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.roof.roof_2_blue",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_2_Blue.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "roof",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.roof.roof_2_cornice_blue",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_2_Cornice_Blue.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "roof",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.roof.roof_top_1_blue",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_Top_1_Blue.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "roof",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.roof.roof_top_2_blue",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Roofs/Blue/Roof_Top_2_Blue.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "roof",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.decor.cornice_cover_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Cornice_Cover_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.cornice_cover_2",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Cornice_Cover_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.cornice_cover_3",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Cornice_Cover_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.crossbar_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Crossbar_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.crossbar_2",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Crossbar_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.decor_peaks_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Decor_Peaks_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.decor_peaks_2",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Decor_Peaks_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.flovers_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Flovers_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.flovers_2",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Flovers_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.ivy_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ivy_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.ivy_2",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ivy_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.ivy_3",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ivy_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.ivy_4_l",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ivy_4_L.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.ivy_4_r",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ivy_4_R.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.ivy_5_l",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ivy_5_L.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.ivy_5_r",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ivy_5_R.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.ridge",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Ridge.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.support_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Support_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.support_2",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Support_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.support_3",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Support_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.support_3_base",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Support_3_Base.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.decor.wooden_canopy_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Decor/Wooden_Canopy_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "decor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.opening.window_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Doors_And_Windows/Window_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "opening"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.opening.window_2",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Doors_And_Windows/Window_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "opening"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.opening.window_2_small",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Doors_And_Windows/Window_2_Small.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "opening"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.opening.wooden_door_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Doors_And_Windows/Wooden_Door_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "opening"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.opening.wooden_door_1_w",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Doors_And_Windows/Wooden_Door_1_W.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "opening"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.stair.stone_stairs",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Stone_Stairs.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stair",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.stair.wooden_platform",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Platform.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stair",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.stair.wooden_platform_cover",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Platform_Cover.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stair",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.stair.wooden_railings_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Railings_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stair",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.stair.wooden_railings_2",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Railings_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stair",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.stair.wooden_railings_3",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Railings_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stair",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.stair.wooden_stairs_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Stairs_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stair",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.stair.wooden_stairs_2",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stairs/Wooden_Stairs_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stair",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.chimney.fireplace_2",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Fireplace_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "chimney"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.chimney.fireplace_3",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Fireplace_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "chimney"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.floor.floor_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "floor",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.floor.floor_2",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Floor_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "floor",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.floor.beam_1",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Beam_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "floor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.floor.beam_2",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Indoor_Modules/Beam_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "floor"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.anvil",
+   "source": "res://assets/Raygeas/Models/Environment/Anvil.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.apple_2",
+   "source": "res://assets/Raygeas/Models/Environment/Apple_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.bag_1",
+   "source": "res://assets/Raygeas/Models/Environment/Bag_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.bag_2",
+   "source": "res://assets/Raygeas/Models/Environment/Bag_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.bag_3",
+   "source": "res://assets/Raygeas/Models/Environment/Bag_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.bag_4",
+   "source": "res://assets/Raygeas/Models/Environment/Bag_4.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.barrel",
+   "source": "res://assets/Raygeas/Models/Environment/Barrel.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.boat",
+   "source": "res://assets/Raygeas/Models/Environment/Boat.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.boiler",
+   "source": "res://assets/Raygeas/Models/Environment/Boiler.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.bonfire",
+   "source": "res://assets/Raygeas/Models/Environment/Bonfire.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.box_1",
+   "source": "res://assets/Raygeas/Models/Environment/Box_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.box_2",
+   "source": "res://assets/Raygeas/Models/Environment/Box_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.carrot_2",
+   "source": "res://assets/Raygeas/Models/Environment/Carrot_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.cart_1",
+   "source": "res://assets/Raygeas/Models/Environment/Cart_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.cart_2",
+   "source": "res://assets/Raygeas/Models/Environment/Cart_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.cart_3",
+   "source": "res://assets/Raygeas/Models/Environment/Cart_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.case_and_food_1",
+   "source": "res://assets/Raygeas/Models/Environment/Case_and_food_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.case_and_food_2",
+   "source": "res://assets/Raygeas/Models/Environment/Case_and_food_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.case_and_food_3",
+   "source": "res://assets/Raygeas/Models/Environment/Case_and_food_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.chair_1",
+   "source": "res://assets/Raygeas/Models/Environment/Chair_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.chair_2",
+   "source": "res://assets/Raygeas/Models/Environment/Chair_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.chest_1",
+   "source": "res://assets/Raygeas/Models/Environment/Chest_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.chest_2",
+   "source": "res://assets/Raygeas/Models/Environment/Chest_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.chest_3",
+   "source": "res://assets/Raygeas/Models/Environment/Chest_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.fence_1",
+   "source": "res://assets/Raygeas/Models/Environment/Fence_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.fence_2",
+   "source": "res://assets/Raygeas/Models/Environment/Fence_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.fence_3",
+   "source": "res://assets/Raygeas/Models/Environment/Fence_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.fence_4",
+   "source": "res://assets/Raygeas/Models/Environment/Fence_4.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.fence_5",
+   "source": "res://assets/Raygeas/Models/Environment/Fence_5.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.fence_6",
+   "source": "res://assets/Raygeas/Models/Environment/Fence_6.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.fence_7",
+   "source": "res://assets/Raygeas/Models/Environment/Fence_7.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.horns",
+   "source": "res://assets/Raygeas/Models/Environment/Horns.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.ladder",
+   "source": "res://assets/Raygeas/Models/Environment/Ladder.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.lamp_1",
+   "source": "res://assets/Raygeas/Models/Environment/Lamp_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.lamp_2",
+   "source": "res://assets/Raygeas/Models/Environment/Lamp_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.lamp_3",
+   "source": "res://assets/Raygeas/Models/Environment/Lamp_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.lantern_1",
+   "source": "res://assets/Raygeas/Models/Environment/Lantern_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.lantern_2",
+   "source": "res://assets/Raygeas/Models/Environment/Lantern_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.log_2",
+   "source": "res://assets/Raygeas/Models/Environment/Log_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.log_3",
+   "source": "res://assets/Raygeas/Models/Environment/Log_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.rack_1",
+   "source": "res://assets/Raygeas/Models/Environment/Rack_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.rack_2",
+   "source": "res://assets/Raygeas/Models/Environment/Rack_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.rack_3",
+   "source": "res://assets/Raygeas/Models/Environment/Rack_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.shop_1",
+   "source": "res://assets/Raygeas/Models/Environment/Shop_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.shop_2",
+   "source": "res://assets/Raygeas/Models/Environment/Shop_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.shop_3",
+   "source": "res://assets/Raygeas/Models/Environment/Shop_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.smelter",
+   "source": "res://assets/Raygeas/Models/Environment/Smelter.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.table_1",
+   "source": "res://assets/Raygeas/Models/Environment/Table_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.table_2",
+   "source": "res://assets/Raygeas/Models/Environment/Table_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.tomato_2",
+   "source": "res://assets/Raygeas/Models/Environment/Tomato_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.washtub",
+   "source": "res://assets/Raygeas/Models/Environment/Washtub.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.well_1",
+   "source": "res://assets/Raygeas/Models/Environment/Well_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.well_2",
+   "source": "res://assets/Raygeas/Models/Environment/Well_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.allboard",
+   "source": "res://assets/Raygeas/Models/Environment/_allboard.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 20000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 20000,
+   "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.prop.pot_1",
+   "source": "res://assets/Raygeas/Models/Props/Pot_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.pot_2",
+   "source": "res://assets/Raygeas/Models/Props/Pot_2.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.pot_3",
+   "source": "res://assets/Raygeas/Models/Props/Pot_3.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.pot_4",
+   "source": "res://assets/Raygeas/Models/Props/Pot_4.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.pot_5",
+   "source": "res://assets/Raygeas/Models/Props/Pot_5.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.pot_6",
+   "source": "res://assets/Raygeas/Models/Props/Pot_6.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.pumpkin",
+   "source": "res://assets/Raygeas/Models/Props/Pumpkin.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.bucket",
+   "source": "res://assets/Raygeas/Models/Props/Bucket.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.log_1",
+   "source": "res://assets/Raygeas/Models/Props/Log_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.axe",
+   "source": "res://assets/Raygeas/Models/Props/Axe.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.rake",
+   "source": "res://assets/Raygeas/Models/Props/Rake.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.shovel",
+   "source": "res://assets/Raygeas/Models/Props/Shovel.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  },
+  {
+   "id": "suntail.prop.hoe",
+   "source": "res://assets/Raygeas/Models/Props/Hoe.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "prop"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "max_collision_triangles": 0,
+   "max_collision_pieces": 0
+  }
+ ]
+}

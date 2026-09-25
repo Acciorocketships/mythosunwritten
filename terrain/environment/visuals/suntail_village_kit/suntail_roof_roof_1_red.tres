@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_wdgt6"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/suntail_village_kit/suntail_roof_roof_1_red_piece_00.res" id="2_mdou5"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_ihjfk"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/suntail_village_kit/suntail_roof_roof_1_red_piece_00.res" id="4_um6mr"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_ycrly"]
+
+[sub_resource type="Resource" id="Resource_qtidn"]
+script = ExtResource("1_wdgt6")
+shape = ExtResource("2_mdou5")
+
+[sub_resource type="Resource" id="Resource_v4iii"]
+script = ExtResource("3_ihjfk")
+mesh = ExtResource("4_um6mr")
+
+[resource]
+script = ExtResource("5_ycrly")
+pieces = Array[ExtResource("3_ihjfk")]([SubResource("Resource_v4iii")])
+collisions = Array[ExtResource("1_wdgt6")]([SubResource("Resource_qtidn")])

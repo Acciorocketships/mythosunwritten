@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_wpqrp"]
+
+[resource]
+script = ExtResource("1_wpqrp")
+id = &"suntail.prop.lamp_2"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_lamp_2.tres"
+tags = Array[StringName]([&"building", &"prop", &"suntail_kit", &"village"])
+measured_aabb = AABB(-1.1001257, 0.0016113165, -0.42831764, 1.5284433, 4.708116, 0.8566353)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.prop.lamp_2"

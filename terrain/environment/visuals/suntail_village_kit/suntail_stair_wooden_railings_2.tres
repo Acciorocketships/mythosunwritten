@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_5lyc1"]
+[ext_resource type="Shape3D" path="res://terrain/environment/collisions/suntail_village_kit/suntail_stair_wooden_railings_2_piece_00.res" id="2_lxthn"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="3_e3trq"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/suntail_village_kit/suntail_stair_wooden_railings_2_piece_00.res" id="4_sj5xb"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="5_pj7ic"]
+
+[sub_resource type="Resource" id="Resource_cfyqy"]
+script = ExtResource("1_5lyc1")
+shape = ExtResource("2_lxthn")
+
+[sub_resource type="Resource" id="Resource_fsict"]
+script = ExtResource("3_e3trq")
+mesh = ExtResource("4_sj5xb")
+
+[resource]
+script = ExtResource("5_pj7ic")
+pieces = Array[ExtResource("3_e3trq")]([SubResource("Resource_fsict")])
+collisions = Array[ExtResource("1_5lyc1")]([SubResource("Resource_cfyqy")])

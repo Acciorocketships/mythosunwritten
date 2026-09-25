@@ -1,0 +1,17 @@
+[gd_resource type="StandardMaterial3D" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/97605743e724cf138368.res" id="1_xhmd5"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/195e85acb040c78aa49f.res" id="2_564y8"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/e9e2d071a6b9e077d942.res" id="3_dbrx8"]
+
+[resource]
+resource_name = "Ladder"
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("1_xhmd5")
+metallic = 1.0
+metallic_texture = ExtResource("2_564y8")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("2_564y8")
+roughness_texture_channel = 1
+normal_enabled = true
+normal_texture = ExtResource("3_dbrx8")

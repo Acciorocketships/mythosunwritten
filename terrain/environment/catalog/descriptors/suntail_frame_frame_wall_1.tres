@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_hoajs"]
+
+[resource]
+script = ExtResource("1_hoajs")
+id = &"suntail.frame.frame_wall_1"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_frame_frame_wall_1.tres"
+tags = Array[StringName]([&"building", &"frame", &"suntail_kit", &"village"])
+measured_aabb = AABB(-1.1583322, -0.0011501012, -0.1614107, 2.159498, 3.0756397, 0.31366897)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.frame.frame_wall_1"

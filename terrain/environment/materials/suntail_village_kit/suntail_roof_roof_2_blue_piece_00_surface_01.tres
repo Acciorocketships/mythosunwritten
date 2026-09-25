@@ -1,0 +1,13 @@
+[gd_resource type="StandardMaterial3D" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/403651da11f06e869d8a.res" id="1_onkom"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/b9f5d0f92675e7b8cb52.res" id="2_g23x8"]
+
+[resource]
+resource_name = "Roof_Blue"
+vertex_color_use_as_albedo = true
+albedo_color = Color(0.44, 0.56, 0.8, 1)
+albedo_texture = ExtResource("1_onkom")
+roughness = 0.58
+normal_enabled = true
+normal_texture = ExtResource("2_g23x8")

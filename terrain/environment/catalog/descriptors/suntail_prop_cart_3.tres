@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_jvvri"]
+
+[resource]
+script = ExtResource("1_jvvri")
+id = &"suntail.prop.cart_3"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_prop_cart_3.tres"
+tags = Array[StringName]([&"building", &"prop", &"suntail_kit", &"village"])
+measured_aabb = AABB(-1.0793351, -0.0077257752, -2.370681, 2.1700983, 1.8111203, 3.2568834)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.prop.cart_3"

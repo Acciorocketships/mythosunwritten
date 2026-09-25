@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_p33uo"]
+
+[resource]
+script = ExtResource("1_p33uo")
+id = &"suntail.opening.window_2"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_opening_window_2.tres"
+tags = Array[StringName]([&"opening", &"suntail_kit", &"village"])
+measured_aabb = AABB(-0.4541957, -0.5970472, -0.14454475, 0.9083914, 1.2280178, 0.2899457)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.opening.window_2"

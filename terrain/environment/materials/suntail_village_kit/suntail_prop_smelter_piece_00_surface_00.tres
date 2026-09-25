@@ -1,0 +1,20 @@
+[gd_resource type="StandardMaterial3D" load_steps=5 format=3]
+
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/ce6958a0ba18a36a6558.res" id="1_b8ci0"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/872eda365bdbbfd71a7d.res" id="2_wylfi"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/b0bacf9bc08ac6ac34ae.res" id="3_0iegk"]
+[ext_resource type="Texture2D" path="res://terrain/environment/textures/suntail_village_kit/324da7a92a117c0e7683.res" id="4_puonv"]
+
+[resource]
+resource_name = "Smelter"
+vertex_color_use_as_albedo = true
+albedo_texture = ExtResource("1_b8ci0")
+metallic = 1.0
+metallic_texture = ExtResource("3_0iegk")
+metallic_texture_channel = 2
+roughness_texture = ExtResource("3_0iegk")
+roughness_texture_channel = 1
+emission_enabled = true
+emission_texture = ExtResource("2_wylfi")
+normal_enabled = true
+normal_texture = ExtResource("4_puonv")

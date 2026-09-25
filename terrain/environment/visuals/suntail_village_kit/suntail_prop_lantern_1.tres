@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentVisual" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentCollisionPiece.gd" id="1_gfo0p"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisualPiece.gd" id="2_lrm32"]
+[ext_resource type="ArrayMesh" path="res://terrain/environment/meshes/suntail_village_kit/suntail_prop_lantern_1_piece_00.res" id="3_y7ng1"]
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentVisual.gd" id="4_a1ifx"]
+
+[sub_resource type="Resource" id="Resource_0j8id"]
+script = ExtResource("2_lrm32")
+mesh = ExtResource("3_y7ng1")
+
+[resource]
+script = ExtResource("4_a1ifx")
+pieces = Array[ExtResource("2_lrm32")]([SubResource("Resource_0j8id")])

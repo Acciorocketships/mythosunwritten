@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_8afa5"]
+
+[resource]
+script = ExtResource("1_8afa5")
+id = &"suntail.roof.roof_top_1_red"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_roof_roof_top_1_red.tres"
+tags = Array[StringName]([&"building", &"roof", &"suntail_kit", &"village"])
+measured_aabb = AABB(-1.0000362, -0.10124469, -1.1185395, 2.0000358, 1.7197828, 2.2370796)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.roof.roof_top_1_red"

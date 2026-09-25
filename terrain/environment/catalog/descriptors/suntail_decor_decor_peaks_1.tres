@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_cmm7p"]
+
+[resource]
+script = ExtResource("1_cmm7p")
+id = &"suntail.decor.decor_peaks_1"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_decor_decor_peaks_1.tres"
+tags = Array[StringName]([&"decor", &"suntail_kit", &"village"])
+measured_aabb = AABB(-1.0384232, 0.008821085, -0.0384223, 2.0229928, 1.1967944, 0.076846346)
+ground_contact_points = PackedVector2Array()
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.decor.decor_peaks_1"
