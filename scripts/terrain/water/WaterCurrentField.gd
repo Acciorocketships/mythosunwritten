@@ -57,7 +57,7 @@ static func trace_speed(depth: float, half_width: float, grade: float) -> float:
 ## with the velocity and are visual-generation fields, not another water mask.
 static func solve_local(desired: PackedVector2Array,
 		signed_depth: PackedFloat32Array, nx: int, nz: int,
-		step: float) -> Dictionary:
+		step: float, surface_gradients: PackedVector2Array = PackedVector2Array()) -> Dictionary:
 	assert(nx > 0 and nz > 0 and step > 0.0)
 	assert(desired.size() == nx * nz)
 	assert(signed_depth.size() == nx * nz)
@@ -65,7 +65,18 @@ static func solve_local(desired: PackedVector2Array,
 	velocity.resize(nx * nz)
 	for k in nx * nz:
 		velocity[k] = desired[k] if signed_depth[k] > 0.0 else Vector2.ZERO
-	_project_banks(velocity, signed_depth, nx, nz, step)
+	if surface_gradients.is_empty():
+		_project_banks(velocity, signed_depth, nx, nz, step)
+	else:
+		assert(surface_gradients.size() == nx * nz)
+		for j in nz:
+			for i in nx:
+				var k := j * nx + i
+				if signed_depth[k] <= 0.0: continue
+				var inward := Vector2.ZERO
+				if signed_depth[k] < BANK_BAND:
+					inward = _gradient(signed_depth,nx,nz,i,j,step).normalized()
+				velocity[k] = surface_current(velocity[k],surface_gradients[k],inward)
 	var diagnostics: Dictionary = _diagnostics(velocity, signed_depth, nx, nz, step)
 	return {
 		"velocity": velocity,
@@ -148,3 +159,55 @@ static func _sample_velocity(values: PackedVector2Array,
 		return fallback
 	var k: int = j * nx + i
 	return values[k] if signed_depth[k] > 0.0 else fallback
+
+
+## The finished water surface may cross a different grade from its source
+## trace. Reflect only the uphill component, then project onto both the dry
+## bank and downhill half-planes together. Flat reaches retain their current.
+static func surface_current(desired: Vector2, gradient: Vector2,
+		inward: Vector2 = Vector2.ZERO) -> Vector2:
+	var normal := gradient.normalized() if gradient.length() > .005 else Vector2.ZERO
+	var target := desired - normal * (2.0 * maxf(0.0,desired.dot(normal)))
+	var best := Vector2.ZERO
+	var error := target.length_squared()
+	for candidate: Vector2 in [target,target-normal*target.dot(normal),target-inward*target.dot(inward)]:
+		if candidate.dot(normal) > .000001 or candidate.dot(inward) < -.000001: continue
+		var distance := candidate.distance_squared_to(target)
+		if distance <= error:
+			best = candidate
+			error = distance
+	return best
+
+
+## Bilinear interpolation can mix currents from opposite sides of a saddle.
+## Reapply the same constraint at the consumer's actual position, using the
+## authoritative surface rather than a second interpolated slope grid.
+static func sample_surface_current(desired: Vector2, p: Vector2, level_at: Callable) -> Vector2:
+	if desired.length_squared() < .000001: return desired
+	var frame := sample_surface_frame(p, level_at)
+	return Vector2.ZERO if frame.is_empty() else surface_current(desired, frame[0], frame[1])
+
+
+## A consumer transporting both an envelope and a crest can reuse one actual
+## surface derivative/bank frame. Empty means the centre is dry.
+static func sample_surface_frame(p: Vector2, level_at: Callable) -> PackedVector2Array:
+	var center: float = level_at.call(p)
+	if not is_finite(center): return PackedVector2Array()
+	var gradient := Vector2.ZERO
+	var inward := Vector2.ZERO
+	for axis in 2:
+		# Resolve the local branch of the native piecewise surface. A metre
+		# wide difference straddles narrow minima and can reverse the actual
+		# grade on their shallower side. Keep the existing bank look-ahead
+		# independent from the shorter derivative stencil.
+		var offset := Vector2(.025,0) if axis == 0 else Vector2(0,.025)
+		var a: float = level_at.call(p-offset)
+		var b: float = level_at.call(p+offset)
+		var a_wet := is_finite(a)
+		var b_wet := is_finite(b)
+		if not a_wet: a = center
+		if not b_wet: b = center
+		gradient[axis] = (b-a)/.05
+		var bank_offset := Vector2(.5,0) if axis == 0 else Vector2(0,.5)
+		inward[axis] = float(is_finite(level_at.call(p+bank_offset)))-float(is_finite(level_at.call(p-bank_offset)))
+	return PackedVector2Array([gradient,inward.normalized()])

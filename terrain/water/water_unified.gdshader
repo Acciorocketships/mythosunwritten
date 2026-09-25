@@ -19,9 +19,10 @@ uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_l
 uniform sampler2D packet_tex : repeat_disable, filter_linear;
 uniform vec2 packet_origin = vec2(1000000.0, 1000000.0);
 uniform float packet_size = 192.0;
+uniform vec2 packet_center = vec2(1000000.0);
 
 // Interactive and current-forced wave simulation: R/G = height/velocity
-// around 0.5. Player impulses remain clear; no colour/foam channel exists.
+// as signed HDR values. Player impulses remain clear; no colour/foam channel exists.
 uniform sampler2D ripple_tex : repeat_disable, filter_linear;
 uniform vec2 ripple_origin = vec2(1000000.0, 1000000.0);
 uniform float ripple_size = 96.0;
@@ -57,6 +58,9 @@ uniform float surface_specular : hint_range(0.0, 1.0) = 0.35;
 varying vec3 world_pos;
 varying float surface_scale;
 varying float flow_compression;
+varying float falling_power;
+varying vec2 falling_velocity;
+varying float falling_shore_distance;
 
 
 float domain_fade(vec2 uv) {
@@ -68,15 +72,23 @@ float domain_fade(vec2 uv) {
 }
 
 
+// Full current detail through the former 48m boundary; then a 42m circular
+// transition. The continuously moving centre cannot expose snapped square
+// edges. Keep the CPU buoyancy envelope in WaterRippleSim.packet_fade equal.
+float packet_fade(vec2 world_xz) {
+	return 1.0 - smoothstep(packet_size * 0.25, packet_size * 0.46875,
+		distance(world_xz, packet_center));
+}
+
 float packet_height_at(vec2 world_xz) {
 	vec2 uv = (world_xz - packet_origin) / packet_size;
-	return (texture(packet_tex, uv).r - 0.5) * domain_fade(uv);
+	return (texture(packet_tex, uv).r - 0.5) * packet_fade(world_xz);
 }
 
 
 float ripple_height_at(vec2 world_xz) {
 	vec2 uv = (world_xz - ripple_origin) / ripple_size;
-	return (texture(ripple_tex, uv).r - 0.5) * ripple_height * domain_fade(uv);
+	return texture(ripple_tex, uv).r * ripple_height * domain_fade(uv);
 }
 
 
@@ -112,6 +124,11 @@ void vertex() {
 	surface_scale = COLOR.r;
 	biome_water_tint = COLOR.gba;
 	flow_compression = CUSTOM1.w;
+	// Gravitational power per unit water mass, from the shared hydraulic
+	// slope and current. Flat pools and still water supply no falling energy.
+	falling_power = 9.81 * max(CUSTOM0.z, 0.0) * length(CUSTOM1.xy);
+	falling_velocity = CUSTOM1.xy;
+	falling_shore_distance = CUSTOM0.w;
 	float dynamic_height = water_dynamic_height(base_world.xz) * surface_scale;
 	VERTEX += NORMAL * dynamic_height;
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
@@ -204,10 +221,21 @@ void fragment() {
 	// White exists only where persistent wavelets break or the continuous
 	// current compresses. Player swim/entry ripples stay entirely clear.
 	vec2 packet_uv = (p - packet_origin) / packet_size;
-	float packet_breaking = texture(packet_tex, packet_uv).g * domain_fade(packet_uv);
+	float packet_breaking = texture(packet_tex, packet_uv).g * packet_fade(p);
 	float foam_amount = clamp(packet_breaking * 0.20
 		+ smoothstep(0.18, 0.65, flow_compression) * 0.04, 0.0, 0.30);
 	body = mix(body, vec3(0.93, 0.97, 0.94), foam_amount);
+	// A steep flowing face entrains air and scatters light before it reaches
+	// the bed. Use the undisplaced hydraulic mesh normal: calm shore curls,
+	// ambient waves and a swimmer's ripple must not become cloudy water.
+	// Both sides of the sheet describe the same fall; normal reversal changes
+	// neither its slope along the current nor its dissipated hydraulic power.
+	vec2 fall_direction = falling_velocity / max(length(falling_velocity), 0.001);
+	float face_grade = abs(dot(mesh_world_normal.xz, fall_direction)) / max(abs(mesh_world_normal.y), 0.05);
+	float aeration = smoothstep(0.45, 1.1, face_grade)
+		* smoothstep(2.0, 12.0, falling_power)
+		* smoothstep(2.0, 6.0, falling_shore_distance);
+	body = mix(body, mix(biome_water_tint, vec3(0.45, 0.72, 0.75), 0.65), aeration * 0.65);
 
 	// Keep the refracted scene as emission so it is not lit a second time,
 	// while returning the old PBR specular response to the REAL displaced

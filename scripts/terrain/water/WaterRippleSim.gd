@@ -1,5 +1,5 @@
 # scripts/terrain/water/WaterRippleSim.gd
-# One player-centred dynamic-water domain for the unified water material:
+# Two player-centred dynamic-water fields for the unified water material:
 # - a GPU wave-equation surface for interactive wakes/splashes, advected by
 #   WaterSampler's current texture;
 # - persistent compact asymmetric wavelets whose centres are transported by
@@ -13,12 +13,18 @@ const DOMAIN := 96.0
 const TEXEL := DOMAIN / RES
 const FLOW_RES := 32
 const FLOW_STEP := DOMAIN / FLOW_RES
-const MAX_PACKETS := 16
+# Current wavelets extend beyond the contact simulation. Their shortest 6m
+# wavelength still has eight texels; contact rings keep the original 0.375m
+# texels and 3m advection grid. Preserve packet density over the larger area.
+const PACKET_DOMAIN := 192.0
+const PACKET_RES := 256
+const MAX_PACKETS := 64
+const LOCAL_PACKET_LIMIT := 16
 const PACKET_AMPLITUDE_MIN := 0.10
 const PACKET_AMPLITUDE_MAX := 0.22
 const DROP_PERIOD := 0.12
 const AMBIENT_PERIOD := 0.7
-const PACKET_PERIOD := 0.22
+const PACKET_PERIOD := 0.055
 const TAU := PI * 2.0
 
 @export var player: Node3D
@@ -45,6 +51,7 @@ var _packet_data_image: Image
 var _packets: Array[Dictionary] = []
 var _packet_timer := 0.0
 var _packet_n := 0
+var _packet_origin := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -75,20 +82,21 @@ func _ready() -> void:
 	_packet_data_image.fill(Color(0.0, 0.0, 0.0, 0.0))
 	_packet_data_tex = ImageTexture.create_from_image(_packet_data_image)
 	_packet_vp = SubViewport.new()
-	_packet_vp.size = Vector2i(RES, RES)
+	_packet_vp.size = Vector2i(PACKET_RES, PACKET_RES)
 	_packet_vp.disable_3d = true
 	_packet_vp.use_hdr_2d = true
 	_packet_vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	var packet_rect := ColorRect.new()
-	packet_rect.size = Vector2(RES, RES)
+	packet_rect.size = Vector2(PACKET_RES, PACKET_RES)
 	_packet_mat = ShaderMaterial.new()
 	_packet_mat.shader = load("res://terrain/water/wave_packet_field.gdshader")
 	_packet_mat.set_shader_parameter("packet_data", _packet_data_tex)
-	_packet_mat.set_shader_parameter("field_size", DOMAIN)
+	_packet_mat.set_shader_parameter("field_size", PACKET_DOMAIN)
 	packet_rect.material = _packet_mat
 	_packet_vp.add_child(packet_rect)
 	add_child(_packet_vp)
 	_origin = _snapped_origin()
+	_packet_origin = _origin - Vector2.ONE * ((PACKET_DOMAIN-DOMAIN)*0.5)
 
 
 func _player_xz() -> Vector2:
@@ -97,8 +105,8 @@ func _player_xz() -> Vector2:
 	return Vector2(player.global_position.x, player.global_position.z)
 
 
-## Snapping to the 3m current lattice makes the 64x64 flow texture exactly
-## world aligned. Ripple-state shifts are still integral (four 0.75m texels).
+## Snapping to the 3m current lattice makes the 32x32 flow texture exactly
+## world aligned. Ripple-state shifts are integral (eight 0.375m texels).
 func _snapped_origin() -> Vector2:
 	var o: Vector2 = _player_xz() - Vector2.ONE * (DOMAIN * 0.5)
 	return Vector2(snappedf(o.x, FLOW_STEP), snappedf(o.y, FLOW_STEP))
@@ -153,12 +161,20 @@ func _hash01(n: int) -> float:
 func _spawn_packet() -> bool:
 	for attempt in 72:
 		var n: int = _packet_n * 193 + attempt * 17
-		var p := _origin + Vector2(_hash01(n + 11), _hash01(n + 71)) * DOMAIN
+		var p := _packet_origin + Vector2(_hash01(n + 11), _hash01(n + 71)) * PACKET_DOMAIN
 		var sampler: WaterSampler = _sampler_at(p)
 		if sampler == null:
 			continue
 		var velocity: Vector2 = sampler.velocity_at(p)
 		if velocity.length() < 0.2:
+			continue
+		# More total coverage must not crowd all the extra packets into the
+		# same small wet pocket. Apply the former capacity locally as well.
+		var neighbours := 0
+		for active:Dictionary in _packets:
+			var offset:Vector2 = (active.p-p).abs()
+			if maxf(offset.x,offset.y) < DOMAIN*.5: neighbours += 1
+		if neighbours >= LOCAL_PACKET_LIMIT:
 			continue
 		var wavelength: float = lerpf(6.0, 10.0, _hash01(n + 113))
 		var initial_direction: Vector2 = velocity.normalized().rotated(
@@ -193,7 +209,8 @@ func _update_packets(delta: float) -> void:
 		if sampler == null:
 			_packets.remove_at(i)
 			continue
-		var velocity: Vector2 = sampler.velocity_at(packet.p)
+		var frame := sampler.current_frame_at(packet.p)
+		var velocity: Vector2 = frame[0]
 		if velocity.length() < 0.1:
 			_packets.remove_at(i)
 			continue
@@ -202,6 +219,17 @@ func _update_packets(delta: float) -> void:
 			clampf(diagnostics.x * 2.5, -0.55, 0.55))
 		packet.dir = packet.dir.lerp(target_dir,
 			clampf(delta * 0.45, 0.0, 1.0)).normalized()
+		# Turning inertia may retain an upstream-facing crest even after the
+		# envelope has turned downstream. Apply the shared surface constraint
+		# to the crest direction as well as to its transporting current.
+		var direction := WaterCurrentField.surface_current(packet.dir,frame[1],frame[2])
+		packet.dir = direction.normalized() if direction.length_squared() > .000001 else velocity.normalized()
+		# Sample through the step so a packet responds to a nearby bend or
+		# minimum before carrying the old velocity across it.
+		var midpoint: Vector2 = packet.p + velocity * (delta * .5)
+		var middle_sampler := _sampler_at(midpoint)
+		if middle_sampler != null:
+			velocity = middle_sampler.velocity_at(midpoint)
 		packet.p += velocity * delta
 		# Crests propagate downstream within the transported envelope too.
 		packet.phase -= delta * lerpf(0.75, 1.25,
@@ -209,8 +237,8 @@ func _update_packets(delta: float) -> void:
 
 	_packet_timer -= delta
 	if _packet_timer <= 0.0 and _packets.size() < MAX_PACKETS:
-		_spawn_packet()
-		_packet_timer = PACKET_PERIOD
+		# Dry or locally saturated domains need no rapid rejection loop.
+		_packet_timer = PACKET_PERIOD if _spawn_packet() else AMBIENT_PERIOD
 
 
 func _upload_packets() -> void:
@@ -224,7 +252,7 @@ func _upload_packets() -> void:
 			packet.radius, packet.phase))
 	_packet_data_tex.update(_packet_data_image)
 	_packet_mat.set_shader_parameter("packet_count", _packets.size())
-	_packet_mat.set_shader_parameter("field_origin", _origin)
+	_packet_mat.set_shader_parameter("field_origin", _packet_origin)
 	_packet_vp.render_target_update_mode = SubViewport.UPDATE_ONCE
 
 
@@ -241,7 +269,14 @@ func packet_height_at(p: Vector2) -> float:
 	var height := 0.0
 	for packet: Dictionary in _packets:
 		height += packet_height(packet, p)
-	return clampf(height, -0.48, 0.48)
+	return clampf(height, -0.48, 0.48) * packet_fade(p, _player_xz())
+
+
+## Same circular, 42m-wide fade as the material. It is centred continuously
+## on the player, not on the snapped texture rectangle. A 6m outer margin
+## keeps all nonzero samples inside the texture even across lattice shifts.
+static func packet_fade(p:Vector2, center:Vector2) -> float:
+	return 1.0-smoothstep(PACKET_DOMAIN*.25,PACKET_DOMAIN*.46875,p.distance_to(center))
 
 
 static func packet_height(packet: Dictionary, p: Vector2) -> float:
@@ -287,6 +322,8 @@ func debug_state() -> Dictionary:
 		"positions": positions,
 		"speeds": speeds,
 		"origin": _origin,
+		"packet_origin": _packet_origin,
+		"packet_domain": PACKET_DOMAIN,
 	}
 
 
@@ -302,6 +339,7 @@ func _process(delta: float) -> void:
 	var new_origin: Vector2 = _snapped_origin()
 	var origin_changed: bool = new_origin != old_origin
 	_origin = new_origin
+	_packet_origin = new_origin-Vector2.ONE*((PACKET_DOMAIN-DOMAIN)*0.5)
 	_flow_refresh -= delta
 	if origin_changed or _flow_refresh <= 0.0:
 		_refresh_samplers()
@@ -356,5 +394,6 @@ func _process(delta: float) -> void:
 	wm.set_shader_parameter("ripple_origin", _origin)
 	wm.set_shader_parameter("ripple_size", DOMAIN)
 	wm.set_shader_parameter("packet_tex", _packet_vp.get_texture())
-	wm.set_shader_parameter("packet_origin", _origin)
-	wm.set_shader_parameter("packet_size", DOMAIN)
+	wm.set_shader_parameter("packet_origin", _packet_origin)
+	wm.set_shader_parameter("packet_size", PACKET_DOMAIN)
+	wm.set_shader_parameter("packet_center", _player_xz())

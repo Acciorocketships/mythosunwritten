@@ -260,7 +260,7 @@ const SHORE_DIST_MAX := 8.0
 const SHORE_RADIUS_CELLS := 4   # BUCKET=3.0m cells; safely covers an 8.0m clamp radius with slack — mirrors _nearest_curve_dist's own "radius=1 covers INSET=2.0 since BUCKET=3.0" derivation, scaled up (8.0/3.0 -> 3 cells, +1 slack for a query point sitting at its own cell's far edge)
 const SWELL_SHORE_FADE := 4.0
 const SWELL_TROUGH_BOUND := 1.40 # 0.51m ambient + 0.48m packets + 0.375m interactive ripple, rounded up
-const SWELL_BED_COVER := 0.02    # never let a trough uncover rendered terrain
+const SWELL_BED_COVER := 0.02    # clearance above the visible terrain envelope
 
 # --- Rim normals (controller addition) — curl-rotation angle per rim row,
 # about the curve tangent, sweeping from UP toward the curve's own outward
@@ -342,15 +342,6 @@ static func build(water: WaterPlan, chunk: Vector2i, region,
 	var sampler_grid: Dictionary = _sampler_grid(rect)
 	var current: Dictionary = _current_grid(st, sampler_grid.origin, SAMPLER_STEP,
 		sampler_grid.nx, sampler_grid.nz)
-	var arrays: Array = []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = st.verts
-	arrays[Mesh.ARRAY_INDEX] = st.idx
-	arrays[Mesh.ARRAY_NORMAL] = _bake_normals(st)
-	var payload: Dictionary = _vertex_payload(st, current)
-	arrays[Mesh.ARRAY_CUSTOM0] = payload.custom0
-	arrays[Mesh.ARRAY_CUSTOM1] = payload.custom1
-	arrays[Mesh.ARRAY_COLOR] = payload.colors
 
 	# Sampler bake: the FIELD across this chunk, on a fixed 3m CPU grid
 	# independent of render tessellation (Task 7 review MEDIUM fix — the render lattice insets
@@ -367,6 +358,16 @@ static func build(water: WaterPlan, chunk: Vector2i, region,
 	var sampler := WaterSampler.build(ctx, region, sampler_grid.origin, SAMPLER_STEP,
 		sampler_grid.nx, sampler_grid.nz, flow.s, flow.d, flow.slope, flow.wave_scale,
 		current.velocity, current.vorticity, current.compression)
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = st.verts
+	arrays[Mesh.ARRAY_INDEX] = st.idx
+	arrays[Mesh.ARRAY_NORMAL] = _bake_normals(st)
+	var payload: Dictionary = _vertex_payload(st, current, sampler)
+	arrays[Mesh.ARRAY_CUSTOM0] = payload.custom0
+	arrays[Mesh.ARRAY_CUSTOM1] = payload.custom1
+	arrays[Mesh.ARRAY_COLOR] = payload.colors
+
 	return {"arrays": arrays, "triggers": _triggers(st), "sampler": sampler}
 
 
@@ -427,8 +428,10 @@ static func _current_grid(st: Dictionary, origin: Vector2, step: float,
 	var horigin: Vector2 = origin - Vector2.ONE * (step * float(h))
 	var desired := PackedVector2Array()
 	var wet := PackedByteArray()
+	var gradients := PackedVector2Array()
 	desired.resize(hnx * hnz)
 	wet.resize(hnx * hnz)
+	gradients.resize(hnx * hnz)
 	for j in hnz:
 		for i in hnx:
 			var k: int = j * hnx + i
@@ -441,6 +444,7 @@ static func _current_grid(st: Dictionary, origin: Vector2, step: float,
 			if depth <= WaterSampler.WET_EPS:
 				continue
 			wet[k] = 1
+			gradients[k] = _surface_gradient(st.ctx,p,lvl)
 			var frame: Dictionary = _flow_frame_at(st, p)
 			if frame.width <= 0.0 or frame.tangent.length_squared() <= 0.000001:
 				continue
@@ -453,7 +457,7 @@ static func _current_grid(st: Dictionary, origin: Vector2, step: float,
 	var signed_bank: PackedFloat32Array = WaterCurrentField.signed_distance(
 		wet, hnx, hnz, step)
 	var solved: Dictionary = WaterCurrentField.solve_local(desired, signed_bank,
-		hnx, hnz, step)
+		hnx, hnz, step, gradients)
 	var velocity := PackedVector2Array()
 	var vorticity := PackedFloat32Array()
 	var compression := PackedFloat32Array()
@@ -520,7 +524,7 @@ static func _current_at(current: Dictionary, p: Vector2) -> Dictionary:
 ## normally, since it is a shore-proximity signal independent of river/pond
 ## mode. See _flow_frame_at for the full per-vertex derivation, including
 ## junction blending where two traces both lie within JUNCTION_RADIUS=12m.
-static func _vertex_payload(st: Dictionary, current: Dictionary) -> Dictionary:
+static func _vertex_payload(st: Dictionary, current: Dictionary, sampler: WaterSampler = null) -> Dictionary:
 	var cust := PackedFloat32Array()
 	var cust1 := PackedFloat32Array()
 	var colors := PackedColorArray()
@@ -537,6 +541,8 @@ static func _vertex_payload(st: Dictionary, current: Dictionary) -> Dictionary:
 		cust[vi * 4 + 2] = frame.slope
 		cust[vi * 4 + 3] = frame.shore_dist
 		var flow: Dictionary = _current_at(current, p)
+		if sampler != null:
+			flow.velocity = sampler.velocity_at(p)
 		cust1[vi * 4 + 0] = flow.velocity.x
 		cust1[vi * 4 + 1] = flow.velocity.y
 		cust1[vi * 4 + 2] = flow.vorticity
@@ -564,13 +570,42 @@ static func _vertex_payload(st: Dictionary, current: Dictionary) -> Dictionary:
 ## shelf can sit far from every shore and remain only centimetres deep.  The
 ## second gate therefore derives directly from static water-to-bed clearance.
 ## Multiplying the spectrum's conservative trough bound by this scale can
-## never lower the vertex past ground+SWELL_BED_COVER.
+## never lower the vertex past the native turf envelope plus SWELL_BED_COVER.
 static func _swell_scale(st: Dictionary, p: Vector2, water_y: float, shore_dist: float) -> float:
-	var shore_t: float = clampf(shore_dist / SWELL_SHORE_FADE, 0.0, 1.0)
+	# The shoreline strip joins deliberately buried boundary vertices to the
+	# interior lattice. Moving its wet end pivots a whole triangle through the
+	# turf even when each moving vertex clears the bed. Anchor that complete
+	# joining span, then fade into the ordinary spectrum beyond it.
+	var shore_t: float = clampf((shore_dist - STRIP_EDGE_MAX) / SWELL_SHORE_FADE, 0.0, 1.0)
 	var shore_scale: float = shore_t * shore_t * (3.0 - 2.0 * shore_t)
-	var ground: float = TerrainSurfaceField.surface_y(st.region, p.x, p.y)
-	var room: float = maxf(0.0, water_y - ground - SWELL_BED_COVER)
-	var depth_scale: float = clampf(room / SWELL_TROUGH_BOUND, 0.0, 1.0)
+	# A vertex may lie over the low side of a cliff while its incident face
+	# still crosses the higher cap. Bound the complete triangle footprint,
+	# including its maximum horizontal wave travel, before allowing a trough.
+	# Interpolate conservative amplitude budgets on the shared world lattice.
+	# A direct moving maximum jumps as a cliff exits its query rectangle.
+	# Every corner's expanded rectangle covers this point's complete swept
+	# face, so blending their safe budgets stays safe and removes that jump.
+	var reach: float = STRIP_EDGE_MAX + SWELL_TROUGH_BOUND + STEP
+	var q := p / STEP
+	var cell := Vector2i(q.floor())
+	var fraction := q - Vector2(cell)
+	fraction = Vector2(smoothstep(0.0,1.0,fraction.x),smoothstep(0.0,1.0,fraction.y))
+	if not st.has("wave_ground_bounds"): st["wave_ground_bounds"] = {}
+	var depth_scale := 0.0
+	for z in 2:
+		for x in 2:
+			var corner := cell + Vector2i(x,z)
+			if not st.wave_ground_bounds.has(corner):
+				var centre := Vector2(corner) * STEP
+				st.wave_ground_bounds[corner] = TerrainSurfaceField.height_bounds(st.region,
+					Rect2(centre-Vector2.ONE*reach,Vector2.ONE*reach*2.0)).y
+			# The native lip and its tucked ground sheet rise above the physical
+			# heightfield. Both the mesh and buoyancy sampler reserve that lift.
+			var room: float = maxf(0.0,water_y-float(st.wave_ground_bounds[corner])
+				-CliffDressing.LIP_LIFT-SWELL_BED_COVER)
+			var weight: float = (fraction.x if x==1 else 1.0-fraction.x) \
+				*(fraction.y if z==1 else 1.0-fraction.y)
+			depth_scale += clampf(room/SWELL_TROUGH_BOUND,0.0,1.0)*weight
 	return minf(shore_scale, depth_scale)
 
 
@@ -2139,9 +2174,28 @@ static func _triggers(st: Dictionary) -> Array:
 		var e: Dictionary = cells[cell]
 		if e.max_grade > STEEP_UNSWIMMABLE:
 			continue   # steep water: no trigger, unswimmable by design
+		var top: float = e.top + TRIGGER_TOP_CLEAR
+		var bottom: float = e.bottom - TRIGGER_BOTTOM_CLEAR
+		# A tile touched only by a deeply buried closure has no water volume
+		# above its ground. Do not manufacture a box from that empty interval.
+		if top <= bottom: continue
 		out.append({
 			"rect": Rect2(Vector2(cell) * TILE, Vector2.ONE * TILE),
-			"top": e.top + TRIGGER_TOP_CLEAR,
-			"bottom": e.bottom - TRIGGER_BOTTOM_CLEAR,
+			"top": top,
+			"bottom": bottom,
 		})
 	return out
+
+
+## Sub-texel samples follow the final dual-resolution surface, including
+## cliff descents and rescued narrow channels. Dry neighbors use one side.
+static func _surface_gradient(ctx: Dictionary, p: Vector2, center: float) -> Vector2:
+	var gradient := Vector2.ZERO
+	for axis in 2:
+		var offset := Vector2(.375,0) if axis == 0 else Vector2(0,.375)
+		var a := WaterField.level_at(ctx,p-offset)
+		var b := WaterField.level_at(ctx,p+offset)
+		if a == -INF: a = center
+		if b == -INF: b = center
+		gradient[axis] = (b-a)/.75
+	return gradient

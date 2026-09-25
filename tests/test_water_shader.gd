@@ -96,8 +96,8 @@ func test_current_drives_geometric_surface_turbulence_without_polluting_swim_rip
 
 
 func test_flow_wave_particle_is_a_compact_oscillating_surface_wavelet() -> void:
-	assert_true(WaterRippleSim.MAX_PACKETS <= 16,
-		"the surface cannot turn into an overlapping wave-train carpet")
+	assert_true(float(WaterRippleSim.MAX_PACKETS)/(WaterRippleSim.PACKET_DOMAIN*WaterRippleSim.PACKET_DOMAIN) <= 16.0/(96.0*96.0),
+		"packet density cannot turn the enlarged surface into an overlapping wave-train carpet")
 	assert_true(WaterRippleSim.PACKET_AMPLITUDE_MAX >= 0.20
 		and WaterRippleSim.PACKET_AMPLITUDE_MAX <= 0.25,
 		"river wavelets stay readable without becoming opaque-looking ridges")

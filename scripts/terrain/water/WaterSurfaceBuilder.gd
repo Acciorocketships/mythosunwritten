@@ -120,10 +120,14 @@ func commit_chunk(skin: Dictionary) -> Node3D:
 	root.name = "Water"
 	var mi := MeshInstance3D.new()
 	mi.name = "WaterSheet"
+	# Water keeps its own optical surface even inside the camera corridor.
+	mi.add_to_group("tactical_preserve_surface", true)
 	mi.mesh = WaterSkin.commit(skin.arrays)
 	mi.material_override = WaterSurfaceBuilder.sheet_material()
 	root.add_child(mi)
 	var sampler: WaterSampler = skin.sampler
+	root.set_meta("sampler",sampler)
+	root.add_to_group("water_surface")
 	for trig: Dictionary in skin.triggers:
 		var area := Area3D.new()
 		area.add_to_group("water_volume")

@@ -29,7 +29,7 @@ func test_sources_sit_on_high_smooth_ground() -> void:
 	var plan: WaterPlan = _plan()
 	for sc in _sources_in(plan, 6):
 		var p: Vector2 = plan.source_pos(sc)
-		assert_true(plan.smooth01(p) >= WaterPlan.SOURCE_MIN01,
+		assert_true(plan.smooth_h(p) >= WaterPlan.SOURCE_MIN_HEIGHT,
 			"source %s at %s is on high ground" % [sc, p])
 
 func test_no_source_inside_spawn_ring() -> void:

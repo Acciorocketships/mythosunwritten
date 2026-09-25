@@ -9,7 +9,7 @@ uniform vec2 field_origin = vec2(0.0);
 uniform float field_size = 192.0;
 uniform int packet_count = 0;
 
-const int MAX_PACKETS = 16;
+const int MAX_PACKETS = 64;
 void fragment() {
 	vec2 world_xz = field_origin + UV * field_size;
 	float height = 0.0;

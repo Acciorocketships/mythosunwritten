@@ -70,6 +70,17 @@ func bed_y() -> float:
 	return surface_y() + SURFACE_DROP - depth
 
 
+## Shared dry-land reservation, also consumed by this lake's incoming river.
+func island_excavation_weight(p: Vector2) -> float:
+	if island_radius <= 0.0: return 1.0
+	var local := p - center - island_offset
+	if peninsula:
+		var direction := island_offset.normalized()
+		var along := clampf(local.dot(direction), 0.0, radius)
+		local -= direction * along
+	return smoothstep(island_radius * 0.75, island_radius * 1.25, local.length())
+
+
 ## Metres to remove at world point p given the pre-carve ground height there.
 ## Full bowl in the core, smootherstep feather over the outer RIM_FEATHER of
 ## the footprint. Only ever lowers ground.
@@ -78,11 +89,5 @@ func carve_at(p: Vector2, ground_y: float) -> float:
 	if t >= 1.0:
 		return 0.0
 	var w: float = SlopeProfile.smootherstep(clampf((1.0 - t) / RIM_FEATHER, 0.0, 1.0))
-	if island_radius > 0.0:
-		var local := p - center - island_offset
-		if peninsula:
-			var direction := island_offset.normalized()
-			var along := clampf(local.dot(direction), 0.0, radius)
-			local -= direction * along
-		w *= smoothstep(island_radius * 0.75, island_radius * 1.25, local.length())
+	w *= island_excavation_weight(p)
 	return maxf(0.0, (ground_y - bed_y()) * w)

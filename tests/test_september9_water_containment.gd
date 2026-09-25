@@ -130,8 +130,9 @@ func test_unfilled_ground_inside_a_closed_basin_is_not_an_outlet()->void:
 	assert_almost_eq(levels[40],3.0,0.000001,"a dry neighbor inside the same enclosing rim is not a drain")
 
 func test_reported_plateaus_and_lower_channel_banks_do_not_hold_high_water()->void:
-	var water:=TerrainWorldTuning.make_water(2697992464)
-	var plan:=TerrainWorldTuning.make_heightfield(2697992464,water)
+	var geography:=preload("res://tests/fixtures/september11/landforms/PhotoGeography.gd")
+	var water:=geography.make_water(2697992464)
+	var plan:=geography.make_heightfield(2697992464,water)
 	var fields:=WorldFieldBlockCache.new(plan,water,0.0,0.0,64)
 	for p:Vector2 in [Vector2(48,-1569),Vector2(132,-1710),Vector2(114,-1854),Vector2(180,-1830)]:
 		var chunk:=Vector2i((p/192.0).floor())
@@ -221,8 +222,9 @@ func test_enclosing_rim_is_independent_of_extra_dry_domain()->void:
 		assert_almost_eq(levels[center*side+center],5.0,0.000001,"adding dry terrain outside a real rim preserves its lake")
 
 func test_photographed_water_neighborhoods_agree_across_chunk_borders()->void:
-	var water:=TerrainWorldTuning.make_water(2697992464)
-	var plan:=TerrainWorldTuning.make_heightfield(2697992464,water)
+	var geography:=preload("res://tests/fixtures/september11/landforms/PhotoGeography.gd")
+	var water:=geography.make_water(2697992464)
+	var plan:=geography.make_heightfield(2697992464,water)
 	var fields:=WorldFieldBlockCache.new(plan,water,12,0,64)
 	var failures:Array=[]
 	for chunk:Vector2i in [Vector2i(-1,-9),Vector2i(0,-9),Vector2i(-1,-10),Vector2i(0,-10)]:

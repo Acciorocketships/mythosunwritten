@@ -335,13 +335,34 @@ func flow_frame_at(xz: Vector2) -> Vector3:
 ## World-XZ current used by the wave-particle and foam simulations. Calm
 ## water and points outside this chunk snapshot return zero.
 func velocity_at(xz: Vector2) -> Vector2:
+	return current_frame_at(xz)[0]
+
+
+## Current, surface gradient and inward bank direction evaluated together.
+## This is a detached local value, not a mutable cache shared by consumers.
+func current_frame_at(xz: Vector2) -> PackedVector2Array:
 	var corners: Array = _corners(xz)
 	if corners.is_empty():
-		return Vector2.ZERO
+		return PackedVector2Array([Vector2.ZERO,Vector2.ZERO,Vector2.ZERO])
 	var velocity := Vector2.ZERO
 	for cnr: Array in corners:
 		velocity += _velocity[cnr[1] * _nx + cnr[0]] * cnr[2]
-	return velocity
+	if velocity.length_squared() < .000001:
+		return PackedVector2Array([velocity,Vector2.ZERO,Vector2.ZERO])
+	var frame := WaterCurrentField.sample_surface_frame(xz, _current_surface_level_at)
+	if frame.is_empty():
+		return PackedVector2Array([Vector2.ZERO,Vector2.ZERO,Vector2.ZERO])
+	return PackedVector2Array([WaterCurrentField.surface_current(velocity,frame[0],frame[1]),frame[0],frame[1]])
+
+
+## Derivatives use the retained native halo, including across a chunk edge.
+## The public velocity query still admits only this chunk's own points.
+func _current_surface_level_at(xz: Vector2) -> float:
+	if not _fill_levels.is_empty():
+		var coverage := Rect2(_fill_origin, Vector2.ONE * ((_fill_n - 1) * WaterField.FILL_STEP))
+		if coverage.has_point(xz):
+			return _native_fill_level_at(xz)
+	return level_at(xz)
 
 
 ## (vorticity, compression) paired with velocity_at for wave turning and

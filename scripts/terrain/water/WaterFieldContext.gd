@@ -55,9 +55,14 @@ func is_wet(point: Vector2) -> bool:
 
 func level_at(point: Vector2) -> float:
 	_require_coverage(point)
-	if not WaterField.wet(_ctx, _region, point):
+	# The wet predicate already evaluates the interpolated field level. Reuse
+	# that value here instead of evaluating the same level again on every wet
+	# terrain, dressing and path query. Keep the authoritative wet threshold.
+	var level := WaterField.level_at(_ctx, point)
+	if not (level > -INF and level > TerrainSurfaceField.surface_y(
+			_region, point.x, point.y) + WaterField.EPS):
 		return NAN
-	return WaterField.level_at(_ctx, point)
+	return level
 
 func signed_depth_at(point: Vector2) -> float:
 	_require_coverage(point)

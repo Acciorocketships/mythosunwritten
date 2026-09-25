@@ -1,0 +1,48 @@
+extends SceneTree
+
+## Production field census around the four September 10 photographs. Rows carry
+## final terrain, natural terrain and water separately; no renderer inference.
+func _init()->void:
+	_run.call_deferred()
+
+func _run()->void:
+	var output:=OS.get_cmdline_user_args()[0]
+	var water:=TerrainWorldTuning.make_water(2697992464)
+	var plan:=TerrainWorldTuning.make_heightfield(2697992464,water)
+	var natural:=TerrainWorldTuning.make_heightfield(2697992464,null)
+	var program:=FeatureProgram.compile(EnvironmentCatalog.load_default())
+	var fields:=WorldFieldBlockCache.new(plan,water,0,0,64)
+	WaterField.profile_source_cost = true
+	var regions:Dictionary={}
+	var natural_regions:Dictionary={}
+	var rows:Array=[]
+	var started:=Time.get_ticks_msec()
+	for spot:Array in [["15",Vector2(892.5,-1828.3)],["16",Vector2(678.8,-1744.2)],["18",Vector2(815.2,-1777.9)],["19",Vector2(899.7,-1765.8)]]:
+		var base:Vector2=(spot[1]/3.0).floor()*3.0-Vector2.ONE*60.0
+		var samples:Array=[]
+		for z in 41:
+			for x in 41:
+				var p:=base+Vector2(x,z)*3.0
+				var chunk:=Vector2i((p/192.0).floor())
+				if not regions.has(chunk):
+					regions[chunk]=fields.region(chunk)
+					natural_regions[chunk]=natural.compute_region(chunk.x*8+4,chunk.y*8+4,8)
+				var ctx:=fields.water(chunk)
+				var level:=ctx.level_at(p)
+				var raw:=WaterField.level_at(ctx._ctx,p)
+				samples.append([TerrainSurfaceField.surface_y(regions[chunk],p.x,p.y),
+					TerrainSurfaceField.surface_y(natural_regions[chunk],p.x,p.y),
+					level if is_finite(level) else null,raw if is_finite(raw) else null])
+		var bodies:=water.bodies_in_rect(Rect2(base,Vector2.ONE*120.0))
+		var sources:Array=[]
+		for trace:RiverTrace in bodies.rivers:
+			var points:Array=[]
+			for i in trace.points.size():
+				if Rect2(base,Vector2.ONE*120.0).grow(72).has_point(trace.points[i]):
+					points.append([trace.points[i].x,trace.points[i].y,trace.beds[i],trace.widths[i]])
+			sources.append({"source":str(trace.source_cell),"points":points})
+		rows.append({"photo":spot[0],"base":[base.x,base.y],"step":3,"size":41,
+			"columns":["canonical_ground","natural_ground","wet_level","raw_level"],"samples":samples,"sources":sources})
+		FileAccess.open(output,FileAccess.WRITE).store_string(JSON.stringify({"sites":rows,"elapsed_ms":Time.get_ticks_msec()-started},"  "))
+		print("WATER_PHOTO_PROBE ",spot[0]," ms=",Time.get_ticks_msec()-started)
+	quit()

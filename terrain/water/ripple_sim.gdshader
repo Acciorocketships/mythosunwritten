@@ -1,8 +1,9 @@
-// Damped wave-equation ripple sim (RG = height, velocity, 0.5-centred).
+// Damped wave-equation ripple sim (RG = signed height and velocity).
 // Two SubViewports ping-pong this shader (WaterRippleSim.gd); `shift_texels`
 // re-centres the domain as the player moves so rings stay world-anchored.
 // Technique after CBerry22's Godot water ripple simulation.
 shader_type canvas_item;
+render_mode blend_disabled;
 
 uniform sampler2D prev_tex : repeat_disable, filter_linear;
 uniform vec2 tex_size = vec2(256.0);
@@ -18,10 +19,10 @@ uniform float wave_c : hint_range(0.0, 0.6) = 0.16;
 uniform vec4 drop_a = vec4(-1.0, -1.0, 0.0, 0.01);
 uniform vec4 drop_b = vec4(-1.0, -1.0, 0.0, 0.01);
 uniform vec4 drop_c = vec4(-1.0, -1.0, 0.0, 0.01);
-// First frames after startup output pure rest state: the viewport's initial
-// BLACK texture decodes as a -0.5 bias everywhere, and every domain shift
-// against a biased interior spawns a coherent straight wavefront (the long
-// horizontal ripples on player movement).
+// Signed HDR values keep zero exactly representable with symmetric precision.
+// Encoding around 0.5 in RGBA16F gives negative ripples twice the precision
+// of positive ones; feedback then accumulates a domain-sized negative bias.
+// A freshly cleared black viewport is now also the physical rest state.
 uniform bool reset = false;
 
 // Out-of-domain reads return REST STATE: after a domain shift, border texels
@@ -31,13 +32,13 @@ vec2 state_at(sampler2D tex, vec2 uv) {
 	if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) {
 		return vec2(0.0);
 	}
-	return texture(tex, uv).rg - vec2(0.5);
+	return texture(tex, uv).rg;
 }
 
 void fragment() {
 	// NOTE: 'return' is not allowed in fragment(); use if/else.
 	if (reset) {
-		COLOR = vec4(0.5, 0.5, 0.0, 1.0);
+		COLOR = vec4(0.0, 0.0, 0.0, 1.0);
 	} else {
 	vec2 px = 1.0 / tex_size;
 	vec2 current = texture(flow_tex, UV).rg;
@@ -73,6 +74,6 @@ void fragment() {
 	// Bounded height gives WaterSkin a hard worst-case trough for bed cover.
 	h = clamp(h, -0.5, 0.5);
 	v = clamp(v, -0.5, 0.5);
-	COLOR = vec4(h + 0.5, v + 0.5, 0.0, 1.0);
+	COLOR = vec4(h, v, 0.0, 1.0);
 	}
 }
