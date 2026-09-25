@@ -1,0 +1,63 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_loose_rails.gd
+[0m* test_p08_ramp_rails_yield_to_the_finished_upper_house_wall
+* test_finished_native_wall_clips_deferred_guards_without_removing_exposed_guard
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september8_night_rails.gd
+[0m* test_photographed_towns_do_not_fence_retained_walls
+* test_wall_socket_preserves_exposed_guard_and_collision_in_all_directions
+* test_photo14_lower_rail_respects_the_emitted_stone_course
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_september9_rail_attachment.gd
+[0m* test_gate_rails_enter_actual_native_landing_posts_in_four_orientations
+* test_attachment_keeps_the_reserved_treads_and_lower_landing
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september10_rail_shading.gd
+[0m* test_guard_beams_and_posts_shade_their_outer_faces_in_all_orientations
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_september13_path_clearance.gd
+[0m* test_photographed_ramp_reserves_real_air_and_clears_native_house_collision
+* test_native_flights_reserve_the_air_above_every_actual_tread_in_both_directions
+* test_ramp_clearance_keeps_only_final_grounded_stone_after_jamb_withdrawals
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_september13_stone_path.gd
+[0m* test_photographed_stone_ramp_has_no_native_masonry_in_its_walking_aperture
+[1m1/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               6
+Tests                12
+Passing Tests        12
+Asserts             368
+Time              63.521s
+
+
+[32m---- All tests passed! ----
+[0m

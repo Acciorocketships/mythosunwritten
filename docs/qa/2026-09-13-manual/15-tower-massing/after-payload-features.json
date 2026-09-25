@@ -1,0 +1,146 @@
+[
+  {
+    "audit": {
+      "annex_backing_phase": -1,
+      "annex_breaks_tower_lineage": false,
+      "annex_building_id": "spatial.parcel.maze.house.011.part02",
+      "annex_embedded_depth_m": 0.0,
+      "annex_endpoint_facing": "(-1, 0, 0)",
+      "annex_is_embedded_partial_extrusion": false,
+      "annex_is_full_scale_diagonal_overlap": false,
+      "annex_matches_parent_palette": true,
+      "annex_projected_depth_m": 0.0,
+      "annex_recipe_id": "outcrop.blue",
+      "annex_relief_profile_key": "parcel.maze.house.011/outcrop.blue",
+      "annex_reserved_cell_count": 16,
+      "annex_room_id": "spatial.parcel.maze.house.011.part02.room00",
+      "annex_source_parcel_id": "parcel.maze.house.011",
+      "annex_source_storey_index": 2,
+      "annex_uses_compound_union_shell": false,
+      "annex_vertical_facade_key": "parcel.maze.house.011/-6,8/-1,0",
+      "construction_record_count": 1,
+      "endpoint_count": 1,
+      "endpoint_owner_count": 1,
+      "public_cell_count": 0,
+      "reserved_cell_count": 16,
+      "terrain_bearing_cell_count": 0
+    },
+    "id": "spatial.feature.facade-bay.00",
+    "records": [
+      {
+        "origin": "(-8, 6, 9)",
+        "recipe_id": "outcrop.blue",
+        "role": "occupied_room_annex",
+        "yaw_quarters": 3
+      }
+    ]
+  },
+  {
+    "audit": {
+      "annex_backing_phase": 3,
+      "annex_breaks_tower_lineage": false,
+      "annex_building_id": "spatial.parcel.maze.house.004.part02",
+      "annex_embedded_depth_m": 0.03,
+      "annex_endpoint_facing": "(0, 0, -1)",
+      "annex_is_embedded_partial_extrusion": true,
+      "annex_is_full_scale_diagonal_overlap": false,
+      "annex_matches_parent_palette": true,
+      "annex_projected_depth_m": 0.87,
+      "annex_recipe_id": "outcrop.embedded.blue",
+      "annex_relief_profile_key": "parcel.maze.house.004/outcrop.embedded.blue",
+      "annex_reserved_cell_count": 4,
+      "annex_room_id": "spatial.parcel.maze.house.004.part02.room00",
+      "annex_source_parcel_id": "parcel.maze.house.004",
+      "annex_source_storey_index": 2,
+      "annex_uses_compound_union_shell": false,
+      "annex_vertical_facade_key": "parcel.maze.house.004/2,-2/0,-1",
+      "construction_record_count": 1,
+      "endpoint_count": 1,
+      "endpoint_owner_count": 1,
+      "public_cell_count": 0,
+      "reserved_cell_count": 4,
+      "terrain_bearing_cell_count": 0
+    },
+    "id": "spatial.feature.facade-bay.01",
+    "records": [
+      {
+        "origin": "(2, 4, -3)",
+        "recipe_id": "outcrop.embedded.blue",
+        "role": "occupied_room_annex",
+        "yaw_quarters": 2
+      }
+    ]
+  },
+  {
+    "audit": {
+      "annex_backing_phase": 5,
+      "annex_breaks_tower_lineage": false,
+      "annex_building_id": "spatial.maze_bridge_end.00.00",
+      "annex_embedded_depth_m": 0.03,
+      "annex_endpoint_facing": "(0, 0, 1)",
+      "annex_is_embedded_partial_extrusion": true,
+      "annex_is_full_scale_diagonal_overlap": false,
+      "annex_matches_parent_palette": true,
+      "annex_projected_depth_m": 0.87,
+      "annex_recipe_id": "outcrop.embedded.blue",
+      "annex_relief_profile_key": "maze.bridge_end.bridge.00.00/outcrop.embedded.blue",
+      "annex_reserved_cell_count": 4,
+      "annex_room_id": "spatial.maze_bridge_end.00.00.room01",
+      "annex_source_parcel_id": "maze.bridge_end.bridge.00.00",
+      "annex_source_storey_index": 1,
+      "annex_uses_compound_union_shell": false,
+      "annex_vertical_facade_key": "maze.bridge_end.bridge.00.00/-3,5/0,1",
+      "construction_record_count": 1,
+      "endpoint_count": 1,
+      "endpoint_owner_count": 1,
+      "public_cell_count": 0,
+      "reserved_cell_count": 4,
+      "terrain_bearing_cell_count": 0
+    },
+    "id": "spatial.feature.facade-bay.02",
+    "records": [
+      {
+        "origin": "(-3, 6, 6)",
+        "recipe_id": "outcrop.embedded.blue",
+        "role": "occupied_room_annex",
+        "yaw_quarters": 0
+      }
+    ]
+  },
+  {
+    "audit": {
+      "annex_backing_phase": 4,
+      "annex_breaks_tower_lineage": false,
+      "annex_building_id": "spatial.maze_bridge_end.00.01",
+      "annex_embedded_depth_m": 0.03,
+      "annex_endpoint_facing": "(0, 0, -1)",
+      "annex_is_embedded_partial_extrusion": true,
+      "annex_is_full_scale_diagonal_overlap": false,
+      "annex_matches_parent_palette": true,
+      "annex_projected_depth_m": 0.87,
+      "annex_recipe_id": "outcrop.embedded.blue",
+      "annex_relief_profile_key": "maze.bridge_end.bridge.00.01/outcrop.embedded.blue",
+      "annex_reserved_cell_count": 4,
+      "annex_room_id": "spatial.maze_bridge_end.00.01.room01",
+      "annex_source_parcel_id": "maze.bridge_end.bridge.00.01",
+      "annex_source_storey_index": 1,
+      "annex_uses_compound_union_shell": false,
+      "annex_vertical_facade_key": "maze.bridge_end.bridge.00.01/-7,4/0,-1",
+      "construction_record_count": 1,
+      "endpoint_count": 1,
+      "endpoint_owner_count": 1,
+      "public_cell_count": 0,
+      "reserved_cell_count": 4,
+      "terrain_bearing_cell_count": 0
+    },
+    "id": "spatial.feature.facade-bay.03",
+    "records": [
+      {
+        "origin": "(-8, 6, 3)",
+        "recipe_id": "outcrop.embedded.blue",
+        "role": "occupied_room_annex",
+        "yaw_quarters": 2
+      }
+    ]
+  }
+]

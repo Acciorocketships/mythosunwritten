@@ -1,0 +1,46 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_tower_massing.gd
+[0m* test_reported_detached_towers_keep_their_addresses_as_low_houses
+[31m    [Failed]:  [0m[6] expected to equal [4]:  A detached narrow plot is a cottage, not an isolated spire
+      at line 16
+[31m    [Failed]:  [0m[6] expected to equal [4]:  A detached narrow plot is a cottage, not an isolated spire
+      at line 16
+[31m    [Failed]:  [0m[8] expected to equal [4]:  A detached narrow plot is a cottage, not an isolated spire
+      at line 16
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_tower_massing.gd
+[0m- test_reported_detached_towers_keep_their_addresses_as_low_houses
+[31m    [Failed]:  [0m[6] expected to equal [4]:  A detached narrow plot is a cottage, not an isolated spire
+          at line 16
+[31m    [Failed]:  [0m[6] expected to equal [4]:  A detached narrow plot is a cottage, not an isolated spire
+          at line 16
+[31m    [Failed]:  [0m[8] expected to equal [4]:  A detached narrow plot is a cottage, not an isolated spire
+          at line 16
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts           58/61
+Time              0.407s
+
+
+[31m---- 1 failing tests ----
+[0m

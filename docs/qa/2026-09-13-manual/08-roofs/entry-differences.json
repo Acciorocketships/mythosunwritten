@@ -1,0 +1,50 @@
+{
+  "scope": "Expanded fabric placements only; baseline also lists generated support entries, compared separately through the complete payload. Baseline settlement prefix normalized.",
+  "after_count": 1031,
+  "matched_before_count": 1031,
+  "added": [],
+  "changed": [
+    {
+      "id": "spatial.roof.spatial.parcel.maze.house.000.part00.room00.tile00/gable.00",
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.orange.03.rear.end.tight",
+        "bounds": [
+          -207.0,
+          14.0799999237061,
+          -967.0,
+          -201.0,
+          18.3703193664551,
+          -964.0
+        ],
+        "id": "settlement.5a2e5aae27b1bbab/spatial.roof.spatial.parcel.maze.house.000.part00.room00.tile00/gable.00",
+        "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-204.0, 14.0246, -967.0)]"
+      },
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.orange.06.front.end.tight",
+        "id": "spatial.roof.spatial.parcel.maze.house.000.part00.room00.tile00/gable.00",
+        "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-204.0, 14.0246, -964.0)]"
+      }
+    },
+    {
+      "id": "spatial.roof.spatial.parcel.maze.house.000.part00.room00.tile00/gable.01",
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.orange.03.rear.end.tight",
+        "bounds": [
+          -213.0,
+          14.0799999237061,
+          -967.0,
+          -207.0,
+          18.3703193664551,
+          -964.0
+        ],
+        "id": "settlement.5a2e5aae27b1bbab/spatial.roof.spatial.parcel.maze.house.000.part00.room00.tile00/gable.01",
+        "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-210.0, 14.0246, -967.0)]"
+      },
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.orange.06.front.end.tight",
+        "id": "spatial.roof.spatial.parcel.maze.house.000.part00.room00.tile00/gable.01",
+        "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-210.0, 14.0246, -964.0)]"
+      }
+    }
+  ]
+}

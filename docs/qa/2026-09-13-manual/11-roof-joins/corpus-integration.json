@@ -1,0 +1,413 @@
+{
+	"attempted": 48,
+	"fingerprint": "6413f4e4e729a657bec864bd969dd87fefebc03df181a9b1ac64d4f7f617220c",
+	"rows": [
+		{
+			"failure": "maze fabric gate failed: atomic roof neighborhood for spatial.maze_back.06.room00 rejected (campaign [&\"spatial.maze_back.06.room00\", &\"spatial.parcel.maze.house.007.part00.room00\"]): pitched roof.compact.valley.branch.orange.eave_negative.",
+			"gate": "maze fabric gate failed: atomic roof neighborhood for spatial.maze_back.06.room00 rejected (campaign [&\"spatial.maze_back.06.room00\",",
+			"ms": 774,
+			"scale": "compact",
+			"sealed": false,
+			"seed": 1
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 5717,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 1
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 7793,
+			"scale": "large",
+			"sealed": true,
+			"seed": 1
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 14255,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 1
+		},
+		{
+			"failure": "maze fabric gate failed: atomic roof neighborhood for spatial.parcel.maze.house.021.part00.room00 rejected (campaign [&\"spatial.maze_back.00.room00\", &\"spatial.parcel.maze.house.021.part00.room00\"]): pitched roof.compact.valley.host.blue.ea",
+			"gate": "maze fabric gate failed: atomic roof neighborhood for spatial.parcel.maze.house.021.part00.room00 rejected (campaign [&\"spatial.maze_back.00.room00\",",
+			"ms": 1899,
+			"scale": "compact",
+			"sealed": false,
+			"seed": 2
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 11992,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 2
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 7335,
+			"scale": "large",
+			"sealed": true,
+			"seed": 2
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 26487,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 2
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 1351,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 3
+		},
+		{
+			"failure": "maze fabric gate failed: atomic roof neighborhood for spatial.maze_back.03.room00 rejected (campaign [&\"spatial.maze_back.03.room00\", &\"spatial.parcel.maze.house.023.part00.room00\"]): pitched roof.compact.valley.branch.orange.eave_negative.",
+			"gate": "maze fabric gate failed: atomic roof neighborhood for spatial.maze_back.03.room00 rejected (campaign [&\"spatial.maze_back.03.room00\",",
+			"ms": 4379,
+			"scale": "standard",
+			"sealed": false,
+			"seed": 3
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 9057,
+			"scale": "large",
+			"sealed": true,
+			"seed": 3
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 15088,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 3
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 784,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 4
+		},
+		{
+			"failure": "maze fabric gate failed: terminal house crown spatial.maze_back.04.room00 has no fitting authored gable: pitched roof.row.blue.dormer.left/r0: blocks required future roof closure spatial.maze_back.06.room00/roof.compact.valley.branch.blue.e",
+			"gate": "maze fabric gate failed: terminal house crown spatial.maze_back.04.room00 has no fitting authored",
+			"ms": 2055,
+			"scale": "standard",
+			"sealed": false,
+			"seed": 4
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 10532,
+			"scale": "large",
+			"sealed": true,
+			"seed": 4
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 12413,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 4
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 922,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 5
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 6354,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 5
+		},
+		{
+			"failure": "maze fabric gate failed: terminal house crown spatial.maze_back.11.room00 has no fitting authored gable: pitched roof.row.orange.dormer.right/r0: blocks required future roof closure spatial.parcel.maze.house.036.part00.room00/roof.compact.v",
+			"gate": "maze fabric gate failed: terminal house crown spatial.maze_back.11.room00 has no fitting authored",
+			"ms": 7781,
+			"scale": "large",
+			"sealed": false,
+			"seed": 5
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 13779,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 5
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2542,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 6
+		},
+		{
+			"failure": "maze fabric gate failed: atomic roof neighborhood for spatial.maze_back.07.room00 rejected (campaign [&\"spatial.maze_back.07.room00\", &\"spatial.maze_back.08.room00\"]): pitched roof.compact.valley.host.blue.eave_negative.end_positive/r0: vis",
+			"gate": "maze fabric gate failed: atomic roof neighborhood for spatial.maze_back.07.room00 rejected (campaign [&\"spatial.maze_back.07.room00\",",
+			"ms": 4558,
+			"scale": "standard",
+			"sealed": false,
+			"seed": 6
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 21978,
+			"scale": "large",
+			"sealed": true,
+			"seed": 6
+		},
+		{
+			"failure": "maze fabric gate failed: terminal house crown spatial.parcel.maze.house.017.part01.room00 has no fitting authored gable: pitched roof.tower.blue.dormer.left/r0: blocks required future roof closure spatial.maze_back.52.room00/roof.compact.va",
+			"gate": "maze fabric gate failed: terminal house crown spatial.parcel.maze.house.017.part01.room00 has no fitting authored",
+			"ms": 30411,
+			"scale": "grand",
+			"sealed": false,
+			"seed": 6
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 1376,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 7
+		},
+		{
+			"failure": "maze fabric gate failed: terminal house crown spatial.maze_back.05.room00 has no fitting authored gable: pitched roof.slim.blue.dormer.left/r0: blocks required future roof closure spatial.maze_back.06.room00/roof.compact.valley.host.blue.ea",
+			"gate": "maze fabric gate failed: terminal house crown spatial.maze_back.05.room00 has no fitting authored",
+			"ms": 3586,
+			"scale": "standard",
+			"sealed": false,
+			"seed": 7
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 10662,
+			"scale": "large",
+			"sealed": true,
+			"seed": 7
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 14291,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 7
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 689,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 8
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 3354,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 8
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 3560,
+			"scale": "large",
+			"sealed": true,
+			"seed": 8
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 29817,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 8
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 1398,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 9
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 4165,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 9
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 10243,
+			"scale": "large",
+			"sealed": true,
+			"seed": 9
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 11708,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 9
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2230,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 10
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 4275,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 10
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 8354,
+			"scale": "large",
+			"sealed": true,
+			"seed": 10
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 19135,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 10
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 659,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 11
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 5364,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 11
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 15823,
+			"scale": "large",
+			"sealed": true,
+			"seed": 11
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 11151,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 11
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 1215,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 12
+		},
+		{
+			"failure": "maze fabric gate failed: terminal house crown spatial.maze_back.02.room00 has no fitting authored gable: pitched roof.row.short.blue/r0: blocks required future roof closure spatial.maze_back.04.room00/roof.compact.valley.branch.blue.eave_po",
+			"gate": "maze fabric gate failed: terminal house crown spatial.maze_back.02.room00 has no fitting authored",
+			"ms": 1475,
+			"scale": "standard",
+			"sealed": false,
+			"seed": 12
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2909,
+			"scale": "large",
+			"sealed": true,
+			"seed": 12
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 10135,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 12
+		}
+	],
+	"scales": [
+		"compact",
+		"standard",
+		"large",
+		"grand"
+	],
+	"sealed": 39,
+	"seeds": [
+		1,
+		2,
+		3,
+		4,
+		5,
+		6,
+		7,
+		8,
+		9,
+		10,
+		11,
+		12
+	],
+	"total_ms": 397810,
+	"unix_time": 1789391180
+}

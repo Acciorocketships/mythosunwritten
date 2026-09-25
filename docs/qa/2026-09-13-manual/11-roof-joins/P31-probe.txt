@@ -1,0 +1,6 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ROOF_PROFILE compile_ms=4417
+ROOF_PROFILE frame_ms=94195
+ROOF_PROFILE record_ms=792
+ROOF_PROFILE stages={ "queries": 1, "builds": 1, "evictions": 0, "urban_usec": 790037, "materialize_usec": 1398, "outskirts_usec": 0, "cache": 1 }

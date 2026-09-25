@@ -1,0 +1,21 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+WARNING: Adding 'WorldEnvironment' as child to 'FrozenVillage' will make owner 'FrozenVillage' inconsistent. Consider unsetting the owner beforehand.
+     at: add_child (scene/main/node.cpp:1696)
+     GDScript backtrace (most recent call first):
+         [0] _run (res://tests/harness/september13_path_qa.gd:24)
+WARNING: Adding 'DirectionalLight3D' as child to 'FrozenVillage' will make owner 'FrozenVillage' inconsistent. Consider unsetting the owner beforehand.
+     at: add_child (scene/main/node.cpp:1696)
+     GDScript backtrace (most recent call first):
+         [0] _run (res://tests/harness/september13_path_qa.gd:24)
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/36-world-paths/gate-walk/south/south_gate_0.png
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/36-world-paths/gate-walk/south/south_gate_-30.png
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/36-world-paths/gate-walk/south/south_gate_30.png
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/36-world-paths/gate-walk/south/south_gate_90.png
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/36-world-paths/gate-walk/south/south_gate_180.png
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/36-world-paths/gate-walk/south/south_gate_-90.png
+ROAD_GATE_WALK south_gate reverse=false passed=true end=(-216.0, 8.000215, -899.75)
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/36-world-paths/gate-walk/south/gate_walk_false.png
+ROAD_GATE_WALK south_gate reverse=true passed=true end=(-216.0, 8.000391, -864.25)
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/36-world-paths/gate-walk/south/gate_walk_true.png

@@ -1,0 +1,24 @@
+{
+  "added": [
+    "spatial.roof.spatial.maze_back.06.room00/dormer"
+  ],
+  "changed": [
+    "spatial.roof.spatial.maze_back.00.room00/dormer",
+    "spatial.roof.spatial.maze_back.02.room00/dormer",
+    "spatial.roof.spatial.parcel.maze.house.002.part00.room00/dormer",
+    "spatial.roof.spatial.parcel.maze.house.019.part00.room00/dormer",
+    "spatial.roof.spatial.parcel.maze.house.026.part00.room00/dormer",
+    "spatial.roof.spatial.maze_back.09.room00/dormer",
+    "spatial.roof.spatial.parcel.maze.house.016.part01.room00/dormer",
+    "spatial.roof.spatial.parcel.maze.house.018.part01.room00/dormer",
+    "spatial.roof.spatial.parcel.maze.house.020.part01.room00/dormer",
+    "spatial.roof.spatial.parcel.maze.house.004.part02.room00/dormer",
+    "spatial.roof.spatial.parcel.maze.house.027.part02.room00/dormer",
+    "spatial.roof.spatial.parcel.maze.house.014.part01.room00/dormer",
+    "spatial.roof.spatial.maze_back.12.room00/dormer"
+  ],
+  "collision_boxes_identical": true,
+  "removed": [],
+  "surfaces_identical": true,
+  "walked_identical": true
+}

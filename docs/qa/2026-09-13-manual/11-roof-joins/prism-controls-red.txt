@@ -1,0 +1,346 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_roof_intersection.gd
+[0m* test_coplanar_faces_have_one_owner_without_double_removal
+SCRIPT ERROR: Invalid cast: could not convert value to 'PackedInt32Array'.
+          at: triangle_faces (res://tools/environment_bake/EnvironmentBakeGeometry.gd:593)
+          GDScript backtrace (most recent call first):
+              [0] triangle_faces (res://tools/environment_bake/EnvironmentBakeGeometry.gd:593)
+              [1] subtract (res://tests/harness/september13_roof_prism_cut.gd:31)
+              [2] test_coplanar_faces_have_one_owner_without_double_removal (res://tests/test_september13_roof_intersection.gd:33)
+              [3] _run_test (res://addons/gut/gut.gd:612)
+              [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [5] test_scripts (res://addons/gut/gut.gd:1027)
+              [6] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [7] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [8] main (res://addons/gut/cli/gut_cli.gd:284)
+              [9] _init (res://addons/gut/gut_cmdln.gd:39)
+SCRIPT ERROR: Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+          at: subtract (res://tests/harness/september13_roof_prism_cut.gd:55)
+          GDScript backtrace (most recent call first):
+              [0] subtract (res://tests/harness/september13_roof_prism_cut.gd:55)
+              [1] test_coplanar_faces_have_one_owner_without_double_removal (res://tests/test_september13_roof_intersection.gd:33)
+              [2] _run_test (res://addons/gut/gut.gd:612)
+              [3] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [4] test_scripts (res://addons/gut/gut.gd:1027)
+              [5] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [6] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [7] main (res://addons/gut/cli/gut_cli.gd:284)
+              [8] _init (res://addons/gut/gut_cmdln.gd:39)
+SCRIPT ERROR: Invalid cast: could not convert value to 'PackedInt32Array'.
+          at: triangle_faces (res://tools/environment_bake/EnvironmentBakeGeometry.gd:593)
+          GDScript backtrace (most recent call first):
+              [0] triangle_faces (res://tools/environment_bake/EnvironmentBakeGeometry.gd:593)
+              [1] subtract (res://tests/harness/september13_roof_prism_cut.gd:31)
+              [2] test_coplanar_faces_have_one_owner_without_double_removal (res://tests/test_september13_roof_intersection.gd:34)
+              [3] _run_test (res://addons/gut/gut.gd:612)
+              [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [5] test_scripts (res://addons/gut/gut.gd:1027)
+              [6] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [7] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [8] main (res://addons/gut/cli/gut_cli.gd:284)
+              [9] _init (res://addons/gut/gut_cmdln.gd:39)
+SCRIPT ERROR: Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+          at: subtract (res://tests/harness/september13_roof_prism_cut.gd:55)
+          GDScript backtrace (most recent call first):
+              [0] subtract (res://tests/harness/september13_roof_prism_cut.gd:55)
+              [1] test_coplanar_faces_have_one_owner_without_double_removal (res://tests/test_september13_roof_intersection.gd:34)
+              [2] _run_test (res://addons/gut/gut.gd:612)
+              [3] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [4] test_scripts (res://addons/gut/gut.gd:1027)
+              [5] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [6] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [7] main (res://addons/gut/cli/gut_cli.gd:284)
+              [8] _init (res://addons/gut/gut_cmdln.gd:39)
+[31m    [Failed]:  [0m[0.00000000000000000000] expected to equal [4.0] +/- [0.00001]:  The host keeps the coincident weather face
+      at line 35
+[31m    [Failed]:  [0m[0.00000000000000000000] expected to equal [2.0] +/- [0.00001]:  The other roof retains only its exposed extension
+      at line 36
+[31m    [Failed]:  [0m[-inf] expected to equal [2.0] +/- [0.00001]:  
+      at line 37
+[31m    [Failed]:  [0m[-inf] expected to equal [2.0] +/- [0.00001]:  
+      at line 37
+[31m    [Failed]:  [0m[-inf] expected to equal [2.0] +/- [0.00001]:  
+      at line 37
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Invalid cast: could not convert value to 'PackedInt32Array'.
+    [2] <engine-2>Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+    [3] <engine-2>Invalid cast: could not convert value to 'PackedInt32Array'.
+    [4] <engine-2>Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+      at line -1
+* test_crossed_slopes_keep_the_exact_upper_surface_and_uvs
+SCRIPT ERROR: Invalid cast: could not convert value to 'PackedInt32Array'.
+          at: triangle_faces (res://tools/environment_bake/EnvironmentBakeGeometry.gd:593)
+          GDScript backtrace (most recent call first):
+              [0] triangle_faces (res://tools/environment_bake/EnvironmentBakeGeometry.gd:593)
+              [1] subtract (res://tests/harness/september13_roof_prism_cut.gd:31)
+              [2] test_crossed_slopes_keep_the_exact_upper_surface_and_uvs (res://tests/test_september13_roof_intersection.gd:42)
+              [3] _run_test (res://addons/gut/gut.gd:612)
+              [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [5] test_scripts (res://addons/gut/gut.gd:1027)
+              [6] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [7] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [8] main (res://addons/gut/cli/gut_cli.gd:284)
+              [9] _init (res://addons/gut/gut_cmdln.gd:39)
+SCRIPT ERROR: Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+          at: subtract (res://tests/harness/september13_roof_prism_cut.gd:55)
+          GDScript backtrace (most recent call first):
+              [0] subtract (res://tests/harness/september13_roof_prism_cut.gd:55)
+              [1] test_crossed_slopes_keep_the_exact_upper_surface_and_uvs (res://tests/test_september13_roof_intersection.gd:42)
+              [2] _run_test (res://addons/gut/gut.gd:612)
+              [3] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [4] test_scripts (res://addons/gut/gut.gd:1027)
+              [5] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [6] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [7] main (res://addons/gut/cli/gut_cli.gd:284)
+              [8] _init (res://addons/gut/gut_cmdln.gd:39)
+SCRIPT ERROR: Invalid cast: could not convert value to 'PackedInt32Array'.
+          at: triangle_faces (res://tools/environment_bake/EnvironmentBakeGeometry.gd:593)
+          GDScript backtrace (most recent call first):
+              [0] triangle_faces (res://tools/environment_bake/EnvironmentBakeGeometry.gd:593)
+              [1] subtract (res://tests/harness/september13_roof_prism_cut.gd:31)
+              [2] test_crossed_slopes_keep_the_exact_upper_surface_and_uvs (res://tests/test_september13_roof_intersection.gd:42)
+              [3] _run_test (res://addons/gut/gut.gd:612)
+              [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [5] test_scripts (res://addons/gut/gut.gd:1027)
+              [6] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [7] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [8] main (res://addons/gut/cli/gut_cli.gd:284)
+              [9] _init (res://addons/gut/gut_cmdln.gd:39)
+SCRIPT ERROR: Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+          at: subtract (res://tests/harness/september13_roof_prism_cut.gd:55)
+          GDScript backtrace (most recent call first):
+              [0] subtract (res://tests/harness/september13_roof_prism_cut.gd:55)
+              [1] test_crossed_slopes_keep_the_exact_upper_surface_and_uvs (res://tests/test_september13_roof_intersection.gd:42)
+              [2] _run_test (res://addons/gut/gut.gd:612)
+              [3] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [4] test_scripts (res://addons/gut/gut.gd:1027)
+              [5] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [6] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [7] main (res://addons/gut/cli/gut_cli.gd:284)
+              [8] _init (res://addons/gut/gut_cmdln.gd:39)
+[31m    [Failed]:  [0m[-inf] expected to equal [1.36] +/- [0.00001]:  Native crossing surface at (-1.7, -1.6)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [1.72] +/- [0.00001]:  Native crossing surface at (-1.7, -0.7)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.02] +/- [0.00001]:  Native crossing surface at (-1.7, 0.05)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.32] +/- [0.00001]:  Native crossing surface at (-1.7, 0.8)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.64] +/- [0.00001]:  Native crossing surface at (-1.7, 1.6)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [1.68] +/- [0.00001]:  Native crossing surface at (-0.8, -1.6)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [1.72] +/- [0.00001]:  Native crossing surface at (-0.8, -0.7)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.02] +/- [0.00001]:  Native crossing surface at (-0.8, 0.05)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.32] +/- [0.00001]:  Native crossing surface at (-0.8, 0.8)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.64] +/- [0.00001]:  Native crossing surface at (-0.8, 1.6)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.02] +/- [0.00001]:  Native crossing surface at (0.05, -1.6)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.02] +/- [0.00001]:  Native crossing surface at (0.05, -0.7)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.02] +/- [0.00001]:  Native crossing surface at (0.05, 0.05)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.32] +/- [0.00001]:  Native crossing surface at (0.05, 0.8)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.64] +/- [0.00001]:  Native crossing surface at (0.05, 1.6)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.36] +/- [0.00001]:  Native crossing surface at (0.9, -1.6)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.36] +/- [0.00001]:  Native crossing surface at (0.9, -0.7)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.36] +/- [0.00001]:  Native crossing surface at (0.9, 0.05)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.36] +/- [0.00001]:  Native crossing surface at (0.9, 0.8)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.64] +/- [0.00001]:  Native crossing surface at (0.9, 1.6)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.68] +/- [0.00001]:  Native crossing surface at (1.7, -1.6)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.68] +/- [0.00001]:  Native crossing surface at (1.7, -0.7)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.68] +/- [0.00001]:  Native crossing surface at (1.7, 0.05)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.68] +/- [0.00001]:  Native crossing surface at (1.7, 0.8)
+      at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.68] +/- [0.00001]:  Native crossing surface at (1.7, 1.6)
+      at line 45
+SCRIPT ERROR: Cannot call method 'get_surface_count' on a null value.
+          at: test_crossed_slopes_keep_the_exact_upper_surface_and_uvs (res://tests/test_september13_roof_intersection.gd:47)
+          GDScript backtrace (most recent call first):
+              [0] test_crossed_slopes_keep_the_exact_upper_surface_and_uvs (res://tests/test_september13_roof_intersection.gd:47)
+              [1] _run_test (res://addons/gut/gut.gd:612)
+              [2] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [3] test_scripts (res://addons/gut/gut.gd:1027)
+              [4] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [5] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [6] main (res://addons/gut/cli/gut_cli.gd:284)
+              [7] _init (res://addons/gut/gut_cmdln.gd:39)
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Invalid cast: could not convert value to 'PackedInt32Array'.
+    [2] <engine-2>Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+    [3] <engine-2>Invalid cast: could not convert value to 'PackedInt32Array'.
+    [4] <engine-2>Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+    [5] <engine-2>Cannot call method 'get_surface_count' on a null value.
+      at line -1
+* test_disjoint_roofs_preserve_the_original_surface
+SCRIPT ERROR: Invalid cast: could not convert value to 'PackedInt32Array'.
+          at: triangle_faces (res://tools/environment_bake/EnvironmentBakeGeometry.gd:593)
+          GDScript backtrace (most recent call first):
+              [0] triangle_faces (res://tools/environment_bake/EnvironmentBakeGeometry.gd:593)
+              [1] subtract (res://tests/harness/september13_roof_prism_cut.gd:31)
+              [2] test_disjoint_roofs_preserve_the_original_surface (res://tests/test_september13_roof_intersection.gd:56)
+              [3] _run_test (res://addons/gut/gut.gd:612)
+              [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [5] test_scripts (res://addons/gut/gut.gd:1027)
+              [6] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [7] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [8] main (res://addons/gut/cli/gut_cli.gd:284)
+              [9] _init (res://addons/gut/gut_cmdln.gd:39)
+SCRIPT ERROR: Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+          at: subtract (res://tests/harness/september13_roof_prism_cut.gd:55)
+          GDScript backtrace (most recent call first):
+              [0] subtract (res://tests/harness/september13_roof_prism_cut.gd:55)
+              [1] test_disjoint_roofs_preserve_the_original_surface (res://tests/test_september13_roof_intersection.gd:56)
+              [2] _run_test (res://addons/gut/gut.gd:612)
+              [3] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [4] test_scripts (res://addons/gut/gut.gd:1027)
+              [5] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [6] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [7] main (res://addons/gut/cli/gut_cli.gd:284)
+              [8] _init (res://addons/gut/gut_cmdln.gd:39)
+[31m    [Failed]:  [0m[0.00000000000000000000] expected to equal [4.0] +/- [0.00001]:  
+      at line 57
+SCRIPT ERROR: Invalid cast: could not convert value to 'PackedInt32Array'.
+          at: triangle_faces (res://tools/environment_bake/EnvironmentBakeGeometry.gd:593)
+          GDScript backtrace (most recent call first):
+              [0] triangle_faces (res://tools/environment_bake/EnvironmentBakeGeometry.gd:593)
+              [1] test_disjoint_roofs_preserve_the_original_surface (res://tests/test_september13_roof_intersection.gd:58)
+              [2] _run_test (res://addons/gut/gut.gd:612)
+              [3] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [4] test_scripts (res://addons/gut/gut.gd:1027)
+              [5] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [6] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [7] main (res://addons/gut/cli/gut_cli.gd:284)
+              [8] _init (res://addons/gut/gut_cmdln.gd:39)
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Invalid cast: could not convert value to 'PackedInt32Array'.
+    [2] <engine-2>Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+    [3] <engine-2>Invalid cast: could not convert value to 'PackedInt32Array'.
+      at line -1
+[1m0/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_roof_intersection.gd
+[0m- test_coplanar_faces_have_one_owner_without_double_removal
+[31m    [Failed]:  [0m[0.00000000000000000000] expected to equal [4.0] +/- [0.00001]:  The host keeps the coincident weather face
+          at line 35
+[31m    [Failed]:  [0m[0.00000000000000000000] expected to equal [2.0] +/- [0.00001]:  The other roof retains only its exposed extension
+          at line 36
+[31m    [Failed]:  [0m[-inf] expected to equal [2.0] +/- [0.00001]:  
+          at line 37
+[31m    [Failed]:  [0m[-inf] expected to equal [2.0] +/- [0.00001]:  
+          at line 37
+[31m    [Failed]:  [0m[-inf] expected to equal [2.0] +/- [0.00001]:  
+          at line 37
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Invalid cast: could not convert value to 'PackedInt32Array'.
+    [2] <engine-2>Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+    [3] <engine-2>Invalid cast: could not convert value to 'PackedInt32Array'.
+    [4] <engine-2>Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+          at line -1
+- test_crossed_slopes_keep_the_exact_upper_surface_and_uvs
+[31m    [Failed]:  [0m[-inf] expected to equal [1.36] +/- [0.00001]:  Native crossing surface at (-1.7, -1.6)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [1.72] +/- [0.00001]:  Native crossing surface at (-1.7, -0.7)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.02] +/- [0.00001]:  Native crossing surface at (-1.7, 0.05)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.32] +/- [0.00001]:  Native crossing surface at (-1.7, 0.8)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.64] +/- [0.00001]:  Native crossing surface at (-1.7, 1.6)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [1.68] +/- [0.00001]:  Native crossing surface at (-0.8, -1.6)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [1.72] +/- [0.00001]:  Native crossing surface at (-0.8, -0.7)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.02] +/- [0.00001]:  Native crossing surface at (-0.8, 0.05)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.32] +/- [0.00001]:  Native crossing surface at (-0.8, 0.8)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.64] +/- [0.00001]:  Native crossing surface at (-0.8, 1.6)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.02] +/- [0.00001]:  Native crossing surface at (0.05, -1.6)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.02] +/- [0.00001]:  Native crossing surface at (0.05, -0.7)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.02] +/- [0.00001]:  Native crossing surface at (0.05, 0.05)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.32] +/- [0.00001]:  Native crossing surface at (0.05, 0.8)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.64] +/- [0.00001]:  Native crossing surface at (0.05, 1.6)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.36] +/- [0.00001]:  Native crossing surface at (0.9, -1.6)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.36] +/- [0.00001]:  Native crossing surface at (0.9, -0.7)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.36] +/- [0.00001]:  Native crossing surface at (0.9, 0.05)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.36] +/- [0.00001]:  Native crossing surface at (0.9, 0.8)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.64] +/- [0.00001]:  Native crossing surface at (0.9, 1.6)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.68] +/- [0.00001]:  Native crossing surface at (1.7, -1.6)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.68] +/- [0.00001]:  Native crossing surface at (1.7, -0.7)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.68] +/- [0.00001]:  Native crossing surface at (1.7, 0.05)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.68] +/- [0.00001]:  Native crossing surface at (1.7, 0.8)
+          at line 45
+[31m    [Failed]:  [0m[-inf] expected to equal [2.68] +/- [0.00001]:  Native crossing surface at (1.7, 1.6)
+          at line 45
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Invalid cast: could not convert value to 'PackedInt32Array'.
+    [2] <engine-2>Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+    [3] <engine-2>Invalid cast: could not convert value to 'PackedInt32Array'.
+    [4] <engine-2>Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+    [5] <engine-2>Cannot call method 'get_surface_count' on a null value.
+          at line -1
+- test_disjoint_roofs_preserve_the_original_surface
+[31m    [Failed]:  [0m[0.00000000000000000000] expected to equal [4.0] +/- [0.00001]:  
+          at line 57
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Invalid cast: could not convert value to 'PackedInt32Array'.
+    [2] <engine-2>Trying to assign value of type 'Nil' to a variable of type 'PackedInt32Array'.
+    [3] <engine-2>Invalid cast: could not convert value to 'PackedInt32Array'.
+          at line -1
+
+Totals
+------
+Scripts               1
+Tests                 3
+Passing Tests      none
+Failing Tests         3
+Asserts            1/35
+Time              0.412s
+
+
+[31m---- 3 failing tests ----
+[0m

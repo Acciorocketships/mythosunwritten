@@ -1,0 +1,48 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_frontage_surfaces.gd
+[0m* test_photographed_barrel_does_not_pierce_public_ramp
+* test_frontage_uses_actual_sloping_surface_in_all_directions
+* test_surface_intersection_keeps_contact_and_empty_triangle_corners
+* test_surface_assignment_refreshes_previously_requested_footprints
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_village_frontage_domain.gd
+[0m* test_frontage_subtracts_the_whole_house_footprint_in_both_directions
+* test_allocation_constructs_disjoint_lots_without_placement_trials
+* test_allocation_preserves_the_remaining_contiguous_street_frontage
+* test_world_road_lattice_reserves_house_frontage_even_without_explicit_shapes
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_village_walkway_dressing.gd
+[0m* test_a_stair_landing_cannot_fall_back_to_planters_in_the_lane
+* test_stair_claims_are_not_flat_door_approaches
+* test_stairs_may_reach_a_flat_doorstep_through_their_open_end
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               3
+Tests                11
+Passing Tests        11
+Asserts              94
+Time              7.724s
+
+
+[32m---- All tests passed! ----
+[0m

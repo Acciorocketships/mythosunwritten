@@ -1,0 +1,17 @@
+[
+  {
+    "view": "P18_0",
+    "mean_absolute_rgb_difference": 0.0011638087630343197,
+    "changed_pixels": 2363
+  },
+  {
+    "view": "P18_-8",
+    "mean_absolute_rgb_difference": 0.0010782484160993357,
+    "changed_pixels": 2248
+  },
+  {
+    "view": "P18_8",
+    "mean_absolute_rgb_difference": 0.0008779807908559119,
+    "changed_pixels": 2127
+  }
+]

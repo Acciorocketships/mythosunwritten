@@ -1,0 +1,10 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+WORLD_ROUTE_START [(-1, -2), (0, -2)]
+WORLD_ROUTE {"a":{"cell":"(-9, -41)","id":"settlement.5a2e5aae27b1bbab"},"b":{"cell":"(21, -49)","id":"settlement.15289ce93c11a72d"},"cells":663,"edge_cells":565,"pair":"[(-1, -2), (0, -2)]","range_budget_solved":false,"solved":false}
+WORLD_ROUTE_START [(-1, -2), (-1, -1)]
+WORLD_ROUTE {"a":{"cell":"(-9, -41)","id":"settlement.5a2e5aae27b1bbab"},"b":{"cell":"(-20, -13)","id":"settlement.579b3da1cb014fc1"},"cells":740,"edge_cells":722,"exact":true,"pair":"[(-1, -2), (-1, -1)]","range_budget_solved":true,"range_exact":true,"range_variation":34,"solved":true,"variation":34}
+WORLD_ROUTE_START [(0, -2), (0, -1)]
+WORLD_ROUTE {"a":{"cell":"(21, -49)","id":"settlement.15289ce93c11a72d"},"b":{"cell":"(10, -16)","id":"settlement.29bc5c240c52f84a"},"cells":840,"edge_cells":687,"pair":"[(0, -2), (0, -1)]","range_budget_solved":false,"solved":false}
+WORLD_ROUTE_START [(-1, -1), (0, -1)]
+WORLD_ROUTE {"a":{"cell":"(-20, -13)","id":"settlement.579b3da1cb014fc1"},"b":{"cell":"(10, -16)","id":"settlement.29bc5c240c52f84a"},"cells":468,"edge_cells":468,"exact":true,"pair":"[(-1, -1), (0, -1)]","range_budget_solved":true,"range_exact":true,"range_variation":42,"solved":true,"variation":42}

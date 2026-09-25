@@ -1,0 +1,56 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_frontage_surfaces.gd
+[0m* test_photographed_barrel_does_not_pierce_public_ramp
+[31m    [Failed]:  [0mOptional frontage must not grow through P36's public ramp; do not lift it onto the path
+      at line 14
+* test_frontage_uses_actual_sloping_surface_in_all_directions
+[31m    [Failed]:  [0mIntersecting ramp, direction 0
+      at line 32
+[31m    [Failed]:  [0mIntersecting ramp, direction 1
+      at line 32
+[31m    [Failed]:  [0mIntersecting ramp, direction 2
+      at line 32
+[31m    [Failed]:  [0mIntersecting ramp, direction 3
+      at line 32
+[1m0/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_frontage_surfaces.gd
+[0m- test_photographed_barrel_does_not_pierce_public_ramp
+[31m    [Failed]:  [0mOptional frontage must not grow through P36's public ramp; do not lift it onto the path
+          at line 14
+- test_frontage_uses_actual_sloping_surface_in_all_directions
+[31m    [Failed]:  [0mIntersecting ramp, direction 0
+          at line 32
+[31m    [Failed]:  [0mIntersecting ramp, direction 1
+          at line 32
+[31m    [Failed]:  [0mIntersecting ramp, direction 2
+          at line 32
+[31m    [Failed]:  [0mIntersecting ramp, direction 3
+          at line 32
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests      none
+Failing Tests         2
+Asserts             4/9
+Time              7.777s
+
+
+[31m---- 2 failing tests ----
+[0m

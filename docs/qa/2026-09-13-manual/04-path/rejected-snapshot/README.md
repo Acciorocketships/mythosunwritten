@@ -1,0 +1,1 @@
+Excluded from visual acceptance: snapshot was serialized before clearing the live visibility material adapter. Native live capture had correct colors, but replay lost material bindings. Harness now clears the adapter before snapshotting; rerun from production is required. Physics diagnostic remains independently valid.

@@ -1,0 +1,52 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/harness/september13_door_cap_baseline.gd
+[0m* test_photographed_retaining_remnant_is_not_a_single_panel_house_facade
+SCRIPT ERROR: Invalid access to property or key '(-3, 2, 9, 3)' on a base object of type 'Dictionary'.
+          at: test_photographed_retaining_remnant_is_not_a_single_panel_house_facade (res://tests/harness/september13_door_cap_baseline.gd:8)
+          GDScript backtrace (most recent call first):
+              [0] test_photographed_retaining_remnant_is_not_a_single_panel_house_facade (res://tests/harness/september13_door_cap_baseline.gd:8)
+              [1] _run_test (res://addons/gut/gut.gd:612)
+              [2] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [3] test_scripts (res://addons/gut/gut.gd:1027)
+              [4] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [5] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [6] main (res://addons/gut/cli/gut_cli.gd:284)
+              [7] _init (res://addons/gut/gut_cmdln.gd:39)
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Invalid access to property or key '(-3, 2, 9, 3)' on a base object of type 'Dictionary'.
+      at line -1
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/harness/september13_door_cap_baseline.gd
+[0m- test_photographed_retaining_remnant_is_not_a_single_panel_house_facade
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Invalid access to property or key '(-3, 2, 9, 3)' on a base object of type 'Dictionary'.
+          at line -1
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             0/1
+Time              6.582s
+
+
+Ran Tests matching "test_photographed_retaining_remnant"
+[31m---- 1 failing tests ----
+[0m

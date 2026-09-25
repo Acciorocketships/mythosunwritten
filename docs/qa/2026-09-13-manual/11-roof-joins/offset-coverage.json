@@ -1,0 +1,8 @@
+{
+  "rays": 16875,
+  "source_hits": 16875,
+  "missing_hits": 0,
+  "max_height_error": 7.181296926006553e-07,
+  "wrong_height_over_0_1mm": 0,
+  "missing_positions": []
+}

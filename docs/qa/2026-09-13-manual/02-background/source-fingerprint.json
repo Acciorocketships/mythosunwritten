@@ -1,0 +1,15 @@
+{
+  "scripts/camera/CameraVisibilityBubble.gd": "6c4ff75339a23ad28d37970492c52eaa0fee780816e3b62a71d606264141d1d9",
+  "scripts/camera/visibility_bubble.gdshaderinc": "f396f0708b59e60de2187c75944c83c7ce3d5121eb15092da6501d4a0dbdb722",
+  "scripts/terrain/environment/EnvironmentInstancePayload.gd": "b726248be030c24903f1103ae910566e719dc7cbdd5f0a88c95e9804a60479b0",
+  "scripts/terrain/environment/EnvironmentCommitQueue.gd": "6d7848e1cc7fd8bd21356aeacf3f2119090b15ea480e53a7390718fd2d1c8193",
+  "scripts/terrain/features/FeatureCommitQueue.gd": "740053f1c4823e421800e9454ca8356ce35bac2c44639b7fefdb44d8d62eb463",
+  "scripts/terrain/features/villages/fabric/FabricUnit.gd": "eec8f8429ddd1b206ece7f8c505854bc64c0db55e5c131ef7dc1893b5a8b61f0",
+  "scripts/terrain/features/villages/fabric/WarrenSpatialFabricCompiler.gd": "a0499a0359aec48e37881655b3b0b7e128b7020a99d8b3f8eed8ffa23e9484ba",
+  "scripts/terrain/features/villages/fabric/SettlementFabricPlan.gd": "82f5db90dd43c6f9ceb237976802ceacfa53d7d4ade0e4baa81fd103bd4e3850",
+  "scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd": "2cbe6d884a65426bf10733d2cab0c36df712aede0f5aa29f1f9d6aa6cf1b9a6f",
+  "scripts/terrain/features/villages/VillageWarrenFabricSolver.gd": "b7e52b85e22fe60ae73c9799ac1e36db05b5aba808694888bbb374d68e200746",
+  "scripts/terrain/features/villages/VillagePlan.gd": "9c4bda7e0e921106a1509643e30607737ad45a44c53ad97878396b52467d4dd2",
+  "tests/test_september13_background_visibility.gd": "f0b74a9dfab0087346bbda711eee8c6864eb46c0307281fae07cf5c5eeaf9c33",
+  "tests/harness/september13_visibility_qa.gd": "f40d052127af8aee45126c6c8336b9f4dea6514dadd26add4f27216657fe62c0"
+}

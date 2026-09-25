@@ -1,0 +1,65 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_compact_roof_join.gd
+[0m* test_reported_compact_branch_joins_the_continuing_roof_across_its_ridge
+SCRIPT ERROR: Assertion failed: atomic roof neighborhood for spatial.maze_back.03.room00 rejected (campaign [&"spatial.maze_back.03.room00", &"spatial.parcel.maze.house.031.part00.room00"]): pitched roof.compact.valley.branch.blue.eave_positive.end_positive/r0: pitched roof roof.compact.valley.branch.blue.eave_positive.end_positive is not centred and seated on its declared lattice footprint
+          at: spatial (res://tests/fixtures/frozen_maze_source.gd:32)
+          GDScript backtrace (most recent call first):
+              [0] spatial (res://tests/fixtures/frozen_maze_source.gd:32)
+              [1] test_reported_compact_branch_joins_the_continuing_roof_across_its_ridge (res://tests/test_september13_compact_roof_join.gd:6)
+              [2] _run_test (res://addons/gut/gut.gd:612)
+              [3] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [4] test_scripts (res://addons/gut/gut.gd:1027)
+              [5] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [6] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [7] main (res://addons/gut/cli/gut_cli.gd:284)
+              [8] _init (res://addons/gut/gut_cmdln.gd:39)
+SCRIPT ERROR: Invalid call. Nonexistent function 'compiled_fabric_cache' in base 'Nil'.
+          at: test_reported_compact_branch_joins_the_continuing_roof_across_its_ridge (res://tests/test_september13_compact_roof_join.gd:6)
+          GDScript backtrace (most recent call first):
+              [0] test_reported_compact_branch_joins_the_continuing_roof_across_its_ridge (res://tests/test_september13_compact_roof_join.gd:6)
+              [1] _run_test (res://addons/gut/gut.gd:612)
+              [2] _test_the_scripts (res://addons/gut/gut.gd:815)
+              [3] test_scripts (res://addons/gut/gut.gd:1027)
+              [4] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+              [5] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+              [6] main (res://addons/gut/cli/gut_cli.gd:284)
+              [7] _init (res://addons/gut/gut_cmdln.gd:39)
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Assertion failed: atomic roof neighborhood for spatial.maze_back.03.room00 rejected (campaign [&"spatial.maze_back.03.room00", &"spatial.parcel.maze.house.031.part00.room00"]): pitched roof.compact.valley.branch.blue.eave_positive.end_positive/r0: pitched roof roof.compact.valley.branch.blue.eave_positive.end_positive is not centred and seated on its declared lattice footprint
+    [2] <engine-2>Invalid call. Nonexistent function 'compiled_fabric_cache' in base 'Nil'.
+      at line -1
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_compact_roof_join.gd
+[0m- test_reported_compact_branch_joins_the_continuing_roof_across_its_ridge
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Assertion failed: atomic roof neighborhood for spatial.maze_back.03.room00 rejected (campaign [&"spatial.maze_back.03.room00", &"spatial.parcel.maze.house.031.part00.room00"]): pitched roof.compact.valley.branch.blue.eave_positive.end_positive/r0: pitched roof roof.compact.valley.branch.blue.eave_positive.end_positive is not centred and seated on its declared lattice footprint
+    [2] <engine-2>Invalid call. Nonexistent function 'compiled_fabric_cache' in base 'Nil'.
+          at line -1
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             0/1
+Time              13.601s
+
+
+[31m---- 1 failing tests ----
+[0m

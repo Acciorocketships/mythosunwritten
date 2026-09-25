@@ -1,0 +1,25 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+SFV_Wall_Wooden_M_001 depth=0.46866089105606 edge_misses=26
+SFV_Wall_Wooden_M_002 depth=0.46866089105606 edge_misses=26
+SFV_Wall_Wooden_M_003 depth=0.46866089105606 edge_misses=26
+SFV_Wall_Wooden_M_004 depth=0.46866089105606 edge_misses=26
+SFV_Wall_Wooden_M_005 depth=0.46866089105606 edge_misses=26
+SFV_Wall_Wooden_M_006 depth=0.46866106987 edge_misses=26
+SFV_Wall_Wooden_M_007 depth=0.46866089105606 edge_misses=26
+SFV_Wall_Wooden_M_008 depth=0.46866106987 edge_misses=26
+SFV_Wall_Wooden_M_009 depth=0.46866089105606 edge_misses=26
+SFV_Wall_Wooden_M_010 depth=0.46866089105606 edge_misses=26
+SFV_Wall_Wooden_M_011 depth=0.46866089105606 edge_misses=26
+SFV_Wall_Wooden_M_012 depth=0.46866089105606 edge_misses=26
+SFV_Wall_Wooden_M_013 depth=0.46866089105606 edge_misses=26
+SFV_Wall_Wooden_M_014 depth=0.46866089105606 edge_misses=26
+SFV_Wall_Wooden_M_015 depth=0.46866089105606 edge_misses=26
+SFV_Wall_Wooden_S_001 depth=0.46866083145142 edge_misses=26
+SFV_Wall_Wooden_S_002 depth=0.46866083145142 edge_misses=26
+SFV_Wall_Wooden_S_003 depth=0.46866083145142 edge_misses=26
+SFV_Wall_Wooden_S_004 depth=0.46866083145142 edge_misses=26
+SFV_Wall_Wooden_S_005 depth=0.46866083145142 edge_misses=26
+SFV_Wall_Wooden_S_006 depth=0.46866083145142 edge_misses=26
+SFV_Wall_Wooden_S_007 depth=0.46866083145142 edge_misses=26

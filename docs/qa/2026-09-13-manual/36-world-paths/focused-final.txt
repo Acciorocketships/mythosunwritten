@@ -1,0 +1,61 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_world_paths.gd
+[0m* test_real_hillside_node_keeps_its_walkable_narrow_exit
+* test_route_goes_around_a_finite_cliff_without_crossing_it
+* test_road_can_climb_between_towns_in_the_current_height_range
+* test_solver_revisits_cells_after_a_detour_instead_of_using_a_dag_order
+* test_detour_corridor_is_discovered_outside_the_endpoint_rectangle
+* test_solver_keeps_distinct_near_equal_costs
+[1m6/6 passed.
+[0m[4m
+
+res://tests/test_path_route_solver.gd
+[0m* test_selects_lowest_cost_monotone_path_and_charges_turns
+* test_vertical_variation_budget_is_symmetric
+* test_bridge_macro_edge_is_reconstructed_atomically
+* test_one_value_variation_formula_matches_ascent_and_descent
+* test_dominance_solver_matches_exhaustive_small_dags
+[1m5/5 passed.
+[0m[4m
+
+res://tests/test_path_plan_nodes.gd
+[0m* test_nodes_are_deterministic_order_independent_and_minimal
+* test_node_cache_eviction_changes_work_not_answers
+* test_only_a_provisional_winner_materializes_exact_water
+[31m    [Failed]:  [0m[12] expected to be <= than [9]:  at most one winning support footprint per queried super-cell asks exact water
+      at line 54
+* test_hillside_route_uses_only_rendered_walkable_slopes
+* test_route_never_cuts_through_an_exposed_cliff_face
+[1m4/5 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_path_plan_nodes.gd
+[0m- test_only_a_provisional_winner_materializes_exact_water
+[31m    [Failed]:  [0m[12] expected to be <= than [9]:  at most one winning support footprint per queried super-cell asks exact water
+          at line 54
+
+Totals
+------
+Scripts               3
+Tests                16
+Passing Tests        15
+Failing Tests         1
+Asserts           831/832
+Time              9.269s
+
+
+[31m---- 1 failing tests ----
+[0m

@@ -1,0 +1,35 @@
+{
+  "P01_spawn_-8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 4.074738185338379,
+    "roi_mean_abs_rgb": 4.074738185338379,
+    "roi_changed_over_20_fraction": 0.12102877761154625
+  },
+  "P01_spawn_0": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 3.3543653829229823,
+    "roi_mean_abs_rgb": 3.3543653829229823,
+    "roi_changed_over_20_fraction": 0.09828514499376068
+  },
+  "P01_spawn_8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 2.9861832262606707,
+    "roi_mean_abs_rgb": 2.9861832262606707,
+    "roi_changed_over_20_fraction": 0.08754910787824631
+  }
+}

@@ -1,0 +1,44 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_village_grade.gd
+[0m* test_reported_eastern_approach_stays_below_player_climb_limit
+[31m    [Failed]:  [0m[1.12909173965454] expected to be < than [0.95]:  the photographed gentle approach must remain below the player's 45 degree floor limit, with margin
+      at line 16
+* test_overlapping_pad_collars_do_not_multiply_a_single_storey_slope
+[31m    [Failed]:  [0m[0.63283461332321] expected to be <= than [0.626]:  overlapping reservations must blend distance before applying the common slope profile once
+      at line 28
+[1m0/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_village_grade.gd
+[0m- test_reported_eastern_approach_stays_below_player_climb_limit
+[31m    [Failed]:  [0m[1.12909173965454] expected to be < than [0.95]:  the photographed gentle approach must remain below the player's 45 degree floor limit, with margin
+          at line 16
+- test_overlapping_pad_collars_do_not_multiply_a_single_storey_slope
+[31m    [Failed]:  [0m[0.63283461332321] expected to be <= than [0.626]:  overlapping reservations must blend distance before applying the common slope profile once
+          at line 28
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests      none
+Failing Tests         2
+Asserts           45/47
+Time              0.47s
+
+
+[31m---- 2 failing tests ----
+[0m

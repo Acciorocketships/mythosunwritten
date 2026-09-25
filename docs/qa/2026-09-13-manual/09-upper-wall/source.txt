@@ -1,0 +1,6 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+PATH_PROFILE compile_ms=4316
+PATH_PROFILE frame_ms=169397
+PATH_PROFILE record_ms=2585
+PATH_PROFILE stages={ "queries": 1, "builds": 1, "evictions": 0, "urban_usec": 2578874, "materialize_usec": 3514, "outskirts_usec": 0, "cache": 1 }

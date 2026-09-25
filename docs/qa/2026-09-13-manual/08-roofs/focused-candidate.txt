@@ -1,0 +1,77 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_roof_party_ends.gd
+[0m* test_photographed_half_roofs_present_native_gables_to_the_street
+* test_wall_backed_roof_selection_rotates_without_changing_native_stock
+* test_short_or_partial_wall_does_not_claim_a_complete_roof_end
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_september10_roof_alignment.gd
+[0m* test_terminal_gables_close_above_the_actual_facade_plane
+* test_joined_partial_crown_keeps_its_original_end_boundaries
+* test_bounded_continuous_gables_reach_the_facade_without_an_inset_shelf
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_warren_spatial_fabric_compiler.gd
+[0m* test_arcade_overhang_adapter_binds_foundation_to_both_room_plates
+* test_roof_gate_checks_measured_volume_against_exact_finished_headroom
+* test_roof_gate_protects_the_body_lane_but_keeps_a_shallow_eave
+* test_future_roof_domain_rejects_semantic_overlap_before_commit
+* test_compound_roof_partition_replaces_cells_with_complete_house_crowns
+* test_setback_gable_does_not_exempt_neighboring_room_collisions
+* test_complete_room_roof_never_uses_a_shallow_seam_piece
+* test_rotated_even_cell_roof_preserves_the_room_plate_centre
+* test_terminal_setback_names_only_the_neighboring_roof_seam
+* test_setback_wall_seam_comes_from_the_exact_cap_perimeter
+* test_flashing_allows_a_thin_subcell_join_not_a_deep_overlap
+* test_one_parent_shoulder_never_becomes_a_pile_of_sibling_gables
+* test_spatial_roofs_admit_only_complete_atomic_t_valleys
+* test_rowhouse_roof_axis_and_join_follow_the_broad_frontage_contract
+* test_measured_room_units_preserve_every_spatial_stamp
+    one-pass town: markets=0 market_units=0 shortfall=0
+    one-pass town: market candidates=0 open_max=<no candidate> limit=4 ray=10
+    one-pass town: landmarks=3
+    one-pass town: dormered=5 rejected_pitched=0 setback_units=0 pitched=6
+    one-pass town: setback_shed=0 setback_plain_cap=0 setback_terrace=0
+[31m    [Failed]:  [0m[0] expected to be > than [0]:  the pinned partial-crown fixture must exercise real gable halves
+      at line 766
+    one-pass town: cap_recipe_units=0 of 6 roofs (vocabulary=0 tiling=0 other=0) partial_gables=0 setback_units=0 dormered_units=5
+[31m    [Failed]:  [0m[0] expected to be >= than [8]:  the fixed city must materially break up its flat facade planes
+      at line 814
+* test_typed_balcony_endpoint_drives_the_exact_room_portal_mask
+[1m15/16 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_warren_spatial_fabric_compiler.gd
+[0m- test_measured_room_units_preserve_every_spatial_stamp
+[31m    [Failed]:  [0m[0] expected to be > than [0]:  the pinned partial-crown fixture must exercise real gable halves
+          at line 766
+[31m    [Failed]:  [0m[0] expected to be >= than [8]:  the fixed city must materially break up its flat facade planes
+          at line 814
+
+Totals
+------
+Scripts               3
+Tests                22
+Passing Tests        21
+Failing Tests         1
+Asserts           7744/7746
+Time              49.993s
+
+
+[31m---- 1 failing tests ----
+[0m

@@ -1,0 +1,13 @@
+{
+  "added": [],
+  "changed": [],
+  "collision_boxes_identical": true,
+  "removed": [
+    {
+      "asset": "lpfv.fabric.prop.barrel.01",
+      "id": "maze-frontage/-7/0/-2/1"
+    }
+  ],
+  "surfaces_identical": true,
+  "walked_identical": true
+}

@@ -1,0 +1,78 @@
+{
+  "cameras": [
+    {
+      "angle": 0,
+      "camera": "[X: (-0.242736, 0.0, -0.970092), Y: (-0.484777, 0.866186, 0.121301), Z: (0.84028, 0.499723, -0.210254), O: (31.7224, 16.0, -13.71114)]",
+      "target": "(6.5, 1.0, -7.4)"
+    },
+    {
+      "angle": -8,
+      "camera": "[X: (-0.105363, 0.0, -0.994434), Y: (-0.496941, 0.866186, 0.052652), Z: (0.861364, 0.499723, -0.091264), O: (32.35528, 16.0, -10.13944)]",
+      "target": "(6.5, 1.0, -7.4)"
+    },
+    {
+      "angle": 8,
+      "camera": "[X: (-0.375385, 0.0, -0.926869), Y: (-0.463177, 0.866186, 0.187588), Z: (0.802841, 0.499722, -0.325153), O: (30.5986, 16.0, -17.16)]",
+      "target": "(6.5, 1.0, -7.4)"
+    },
+    {
+      "angle": 90,
+      "camera": "[X: (-0.970092, 0.0, 0.242736), Y: (0.121301, 0.866186, 0.484777), Z: (-0.210254, 0.499722, -0.84028), O: (0.18886, 16.0, -32.6224)]",
+      "target": "(6.5, 1.0, -7.4)"
+    }
+  ],
+  "chunks": [
+    {
+      "chunk": "(-1, -2)",
+      "water_triangles": 0
+    },
+    {
+      "chunk": "(0, -2)",
+      "water_triangles": 0
+    },
+    {
+      "chunk": "(1, -2)",
+      "water_triangles": 0
+    },
+    {
+      "chunk": "(-1, -1)",
+      "water_triangles": 18684
+    },
+    {
+      "chunk": "(0, -1)",
+      "water_triangles": 0
+    },
+    {
+      "chunk": "(1, -1)",
+      "water_triangles": 0
+    },
+    {
+      "chunk": "(-1, 0)",
+      "water_triangles": 18721
+    },
+    {
+      "chunk": "(0, 0)",
+      "water_triangles": 17992
+    },
+    {
+      "chunk": "(1, 0)",
+      "water_triangles": 4001
+    }
+  ],
+  "spot": {
+    "crosshair": [
+      6.9,
+      1.2,
+      -7.5
+    ],
+    "id": "P01",
+    "player": [
+      6.5,
+      0.0,
+      -7.4
+    ],
+    "precision": "Rounded overlay values transcribed from source image; full camera transform is reconstructed, not recorded.",
+    "seed": 2697992464.0,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-12 at 11.56.57 AM.png"
+  }
+}

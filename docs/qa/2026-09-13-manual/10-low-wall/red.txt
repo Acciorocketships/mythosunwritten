@@ -1,0 +1,47 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_low_wall.gd
+[0m* test_photographed_partial_course_keeps_retaining_masonry
+LOW_WALL band=-1 exposed=false bank=false treatment=-1
+LOW_WALL band=0 exposed=false bank=false treatment=-1
+LOW_WALL band=1 exposed=true bank=true treatment=3
+LOW_WALL band=2 exposed=true bank=true treatment=-1
+LOW_WALL band=3 exposed=true bank=true treatment=0
+LOW_WALL band=4 exposed=true bank=true treatment=-1
+LOW_WALL band=5 exposed=true bank=true treatment=0
+LOW_WALL band=6 exposed=false bank=false treatment=-1
+LOW_WALL band=7 exposed=false bank=false treatment=-1
+[31m    [Failed]:  [0m[3] expected to equal [0]:  The half-height patch in P27 belongs to the surrounding retaining wall
+      at line 13
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_low_wall.gd
+[0m- test_photographed_partial_course_keeps_retaining_masonry
+[31m    [Failed]:  [0m[3] expected to equal [0]:  The half-height patch in P27 belongs to the surrounding retaining wall
+          at line 13
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             0/1
+Time              11.875s
+
+
+[31m---- 1 failing tests ----
+[0m

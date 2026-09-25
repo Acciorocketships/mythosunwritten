@@ -1,0 +1,63 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_rail_ends.gd
+[0m* test_p40_garden_owns_a_level_guard_beside_the_descending_stair
+* test_p40_no_diagonal_guard_projects_above_the_raised_garden
+* test_stair_side_contacts_do_not_open_courts_in_any_orientation
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_september13_loose_rails.gd
+[0m* test_p08_ramp_rails_yield_to_the_finished_upper_house_wall
+* test_finished_native_wall_clips_deferred_guards_without_removing_exposed_guard
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september9_rail_attachment.gd
+[0m* test_gate_rails_enter_actual_native_landing_posts_in_four_orientations
+* test_attachment_keeps_the_reserved_treads_and_lower_landing
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september10_rail_shading.gd
+[0m* test_guard_beams_and_posts_shade_their_outer_faces_in_all_orientations
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_september10_platform_guards.gd
+[0m* test_photographed_platform_keeps_guards_beside_the_sloping_roof
+* test_photographed_guard_has_baked_collision_in_four_orientations
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september13_shared_stair_landing.gd
+[0m* test_p07_deck_has_full_width_orthogonal_stair_to_existing_upper_landing
+* test_shared_landing_rule_rotates_translates_and_keeps_both_lanes
+* test_occupied_or_short_court_cannot_squeeze_the_stair
+* test_plaza_stairs_keep_only_flat_ground_in_the_green
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               6
+Tests                14
+Passing Tests        14
+Asserts             428
+Time              61.046s
+
+
+[32m---- All tests passed! ----
+[0m

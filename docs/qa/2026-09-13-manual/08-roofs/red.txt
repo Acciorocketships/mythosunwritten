@@ -1,0 +1,58 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_roof_party_ends.gd
+[0m* test_photographed_half_roofs_present_native_gables_to_the_street
+[31m    [Failed]:  [0mThe street-facing native gable must close at -204.0/14.9
+      at line 25
+[31m    [Failed]:  [0mThe street-facing native gable must close at -204.0/15.7
+      at line 25
+[31m    [Failed]:  [0mThe street-facing native gable must close at -204.0/16.5
+      at line 25
+[31m    [Failed]:  [0mThe street-facing native gable must close at -210.0/14.9
+      at line 25
+[31m    [Failed]:  [0mThe street-facing native gable must close at -210.0/15.7
+      at line 25
+[31m    [Failed]:  [0mThe street-facing native gable must close at -210.0/16.5
+      at line 25
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_roof_party_ends.gd
+[0m- test_photographed_half_roofs_present_native_gables_to_the_street
+[31m    [Failed]:  [0mThe street-facing native gable must close at -204.0/14.9
+          at line 25
+[31m    [Failed]:  [0mThe street-facing native gable must close at -204.0/15.7
+          at line 25
+[31m    [Failed]:  [0mThe street-facing native gable must close at -204.0/16.5
+          at line 25
+[31m    [Failed]:  [0mThe street-facing native gable must close at -210.0/14.9
+          at line 25
+[31m    [Failed]:  [0mThe street-facing native gable must close at -210.0/15.7
+          at line 25
+[31m    [Failed]:  [0mThe street-facing native gable must close at -210.0/16.5
+          at line 25
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             1/7
+Time              11.734s
+
+
+[31m---- 1 failing tests ----
+[0m

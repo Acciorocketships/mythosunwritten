@@ -1,0 +1,212 @@
+{
+  "baseline-composition": {
+    "test_unroomed_plot_mass_is_bounded": [
+      "[0.39344262295082] expected to be <= than [0.36]:  seed 9/compact leaves 0.393 of its plot mass unroomed"
+    ],
+    "test_bridges_become_rooms_decks_or_audited_releases": [
+      "Expected [ARRAY([\"source bridge has no sealed two-endpoint compound\", \"span is not a one-storey tower or slim shell\", \"span mass is already spent or feature-reserved\", \"span footprint is not an authored shell\", \"source did not prove two opposite endpoint footprints\", \"endpoint footprint has no complete room recipe\", \"endpoint footprint was consumed before bridge composition\", \"endpoint cells do not match an authored room phase\", \"endpoint room could not claim its exact private cells\", \"endpoint has neither continuous source bearing nor complete terrain-reaching arcade portal\", \"endpoint authored envelope or bridge socket does not fit\", \"endpoint authored envelopes overlap\", \"two-ended bridge compound has no exact public access root\", \"complete occupied bridge authored envelope does not fit\", \"two-ended bridge compound has no inhabited access root\", \"bearing flank has no room to name\", \"authored envelope does not fit\"])] to contain value:  [\"promoted endpoint support envelope does not fit\"]:  seed 6357506428441529412/standard released bridge bridge.02 for an unvocabularised reason",
+      "[0.66666666666667] expected to be >= than [0.95]:  seed 6357506428441529412/standard stamps only 0.667 of its bridge plots"
+    ],
+    "test_the_roofscape_is_a_village_not_a_fortress": [
+      "[0] expected to be > than [0]:  seed 9/standard renders no overhang bracket at all"
+    ],
+    "test_a_street_borne_crown_stays_in_the_flat_vocabulary": [
+      "[1] expected to equal [0]:  seed 9/standard publishes 1 street-borne plates against 0 derived from its grid"
+    ],
+    "test_stacked_houses_bond_to_flat_roofs": [
+      "[1] expected to equal [0]:  seed 3/standard must publish the declared stacks that composed nothing"
+    ],
+    "test_retained_stone_is_skinned": [
+      "[300] expected to equal [301]:  seed 9/standard must hand the renderer exactly the panels it audited"
+    ],
+    "test_the_rock_reads_as_hillside_not_masonry": [
+      "[14] expected to equal [0]:  seed 12/compact must alternate facade and masonry storeys on tall banks",
+      "[51] expected to equal [61]:  seed 12/compact audited masonry panel count must equal the payload's",
+      "[27] expected to equal [13]:  seed 12/compact audited facade panel count must equal the payload's",
+      "[27] expected to equal [13]:  seed 12/compact every clad mass face belongs to exactly one district family",
+      "[27] expected to equal [41]:  seed 12/compact audited tall-bank masonry must equal the payload's",
+      "[27] expected to equal [41]:  seed 12/compact audited above-ground stone must equal the alternating courses",
+      "[0] expected to equal [14]:  seed 12/compact audited tall-course mismatches must equal the payload's",
+      "[7] expected to equal [3]:  seed 12/compact audited closed masonry crowns must equal the payload's",
+      "[108] expected to equal [112]:  seed 12/compact every panel of the shell wears exactly one module",
+      "[34] expected to equal [32]:  seed 9/compact audited masonry panel count must equal the payload's",
+      "[5] expected to equal [3]:  seed 9/compact audited closed masonry crowns must equal the payload's",
+      "[59] expected to equal [61]:  seed 9/compact every panel of the shell wears exactly one module",
+      "[22] expected to equal [0]:  seed 3/standard must alternate facade and masonry storeys on tall banks",
+      "[1] expected to equal [0]:  seed 3/standard may only clad a tall bank's SIDE in facade storeys",
+      "[23] expected to equal [6]:  seed 3/standard audited facade panel count must equal the payload's",
+      "[23] expected to equal [6]:  seed 3/standard every clad mass face belongs to exactly one district family",
+      "[30] expected to equal [46]:  seed 3/standard audited tall-bank masonry must equal the payload's",
+      "[30] expected to equal [46]:  seed 3/standard audited above-ground stone must equal the alternating courses",
+      "[6] expected to equal [22]:  seed 3/standard audited tall-course mismatches must equal the payload's",
+      "[20] expected to equal [3]:  seed 3/standard audited undercroft stone caps must equal the payload's -- the exception the free-bench pin above allows is only as honest as this count",
+      "[238] expected to equal [255]:  seed 3/standard every panel of the shell wears exactly one module",
+      "[32] expected to equal [0]:  seed 9/standard must alternate facade and masonry storeys on tall banks",
+      "[162] expected to equal [181]:  seed 9/standard audited masonry panel count must equal the payload's",
+      "[46] expected to equal [15]:  seed 9/standard audited facade panel count must equal the payload's",
+      "[46] expected to equal [15]:  seed 9/standard every clad mass face belongs to exactly one district family",
+      "[49] expected to equal [79]:  seed 9/standard audited tall-bank masonry must equal the payload's",
+      "[49] expected to equal [79]:  seed 9/standard audited above-ground stone must equal the alternating courses",
+      "[2] expected to equal [32]:  seed 9/standard audited tall-course mismatches must equal the payload's",
+      "[6] expected to equal [4]:  seed 9/standard audited closed masonry crowns must equal the payload's",
+      "[12] expected to equal [3]:  seed 9/standard audited undercroft stone caps must equal the payload's -- the exception the free-bench pin above allows is only as honest as this count",
+      "[289] expected to equal [301]:  seed 9/standard every panel of the shell wears exactly one module",
+      "[0] expected to be > than [0]:  the corpus must retain some connected terrain-classified garden ground"
+    ],
+    "test_the_plaza_deck_opens_the_square": [
+      "[1] expected to equal [2]:  1 of the four planner towns site a plaza deck; the pin is 2"
+    ],
+    "test_the_town_gets_its_life": [
+      "[31] expected to equal [32]:  seed 6357506428441529412/standard audited outcropping count must equal the payload's",
+      "[64] expected to equal [62]:  seed 6357506428441529412/standard must bracket every outcropping twice"
+    ],
+    "test_every_garden_edge_turns_the_rim": [
+      "[5] expected to equal [13]:  seed 9/standard audited rim count must equal the payload's"
+    ],
+    "test_the_rim_stands_off_the_panel_it_caps": [
+      "[2] expected to equal [0]:  seed 3/standard lays 2 rim(s) on a face that is neither a panel nor a level walked junction; the rim would take the boundary and the stand-off would mean nothing",
+      "[1] expected to equal [0]:  seed 9/standard lays 1 rim(s) on a face that is neither a panel nor a level walked junction; the rim would take the boundary and the stand-off would mean nothing",
+      "[0] expected to be > than [0]:  the corpus must exercise the matching terrain wall/lip seam"
+    ],
+    "test_the_stone_trim_refuses_to_strand_a_plot_or_a_street": [
+      "seed 12/compact must stand at least one plot on another"
+    ],
+    "test_assets_land": [
+      "[7] expected to equal [1]:  the realisation mirror accepts 7 of 256 sites it tested; it accepted 1 when this was measured"
+    ],
+    "test_the_big_towns_carry_the_round_s_own_zeroes": [
+      "[2] expected to equal [0]:  seed 1/large stands 2 collider(s) in a walked body lane: sfv.deck.pillar.001@(-16, 0, 2) rise=1.500, sfv.deck.pillar.001@(-15, 0, 2) rise=1.500"
+    ],
+    "test_sloped_ground_composes": [
+      "Expected [<null>] to be anything but NULL:  ramp seed 12/compact must compose on real ground: maze source rejected: carve: single spine DFS exhausted 7 visits",
+      "[0.54268292682926833059] expected to be between [0.0] and [0.39]:  step/12/compact leaves 0.543 of its plot mass unroomed",
+      "[0] expected to equal [1]:  the pinned sloped refusals are [\"step/3/standard\"] and [] actually refused; a row that started composing is a re-pin",
+      "[48] expected to equal [56]:  the sloped rows skipped 48 unproved flank neighbour(s) against the pinned 56; a rise means `_stamp_maze_bridges` is catching spans the carver used to refuse at seed time"
+    ],
+    "test_the_decor_constants_mirror_the_module_descriptors": [
+      "[1] expected to equal [0]:  lpfv.fabric.prop.bench.02 has started baking colliders; DECOR_CLEARANCE is the VISUAL envelope alone and must become the larger of the two",
+      "[1] expected to equal [0]:  lpfv.fabric.prop.bench.02 bakes a collider its clearance row does not carry",
+      "[1] expected to equal [0]:  lpfv.fabric.prop.bench.01 has started baking colliders; DECOR_CLEARANCE is the VISUAL envelope alone and must become the larger of the two",
+      "[1] expected to equal [0]:  lpfv.fabric.prop.bench.01 bakes a collider its clearance row does not carry"
+    ],
+    "test_no_decor_stands_inside_the_wall_beside_it": [
+      "[1] expected to equal [0]:  seed 9/grand stands 1 planted piece(s) inside a module of a unit (lpfv.flower.01 in sfv.deck.pillar.001 at facade-joint/15/0/-37). Round 5 pinned the RULE and left 28 of 83 corpus-wide; this is the OUTCOME, measured against the plan's own per-placement boxes"
+    ],
+    "test_no_authored_dressing_is_buried_in_the_town_s_own_masonry": [
+      "[1] expected to equal [0]:  seed 12/compact leaves 1 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.001.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01). That is the user's plant in the wall",
+      "[1] expected to equal [0]:  seed 3/standard leaves 1 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01). That is the user's plant in the wall",
+      "[1] expected to equal [0]:  seed 9/standard leaves 1 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01). That is the user's plant in the wall",
+      "[2] expected to equal [0]:  seed 1/large leaves 2 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.maze_back.01.room00/south/lantern (lpfv.fabric.prop.lantern.table.01)",
+      "[3] expected to equal [0]:  seed 9/grand leaves 3 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.000.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01)"
+    ],
+    "test_the_town_s_decor_is_not_one_repeated_piece": [
+      "[3] expected to be >= than [4]:  seed 1/large dresses its yards with 3 distinct piece(s) out of 4 planted; the three pools carry 23 between them"
+    ]
+  },
+  "final-composition": {
+    "test_unroomed_plot_mass_is_bounded": [
+      "[0.39344262295082] expected to be <= than [0.36]:  seed 9/compact leaves 0.393 of its plot mass unroomed"
+    ],
+    "test_bridges_become_rooms_decks_or_audited_releases": [
+      "Expected [ARRAY([\"source bridge has no sealed two-endpoint compound\", \"span is not a one-storey tower or slim shell\", \"span mass is already spent or feature-reserved\", \"span footprint is not an authored shell\", \"source did not prove two opposite endpoint footprints\", \"endpoint footprint has no complete room recipe\", \"endpoint footprint was consumed before bridge composition\", \"endpoint cells do not match an authored room phase\", \"endpoint room could not claim its exact private cells\", \"endpoint has neither continuous source bearing nor complete terrain-reaching arcade portal\", \"endpoint authored envelope or bridge socket does not fit\", \"endpoint authored envelopes overlap\", \"two-ended bridge compound has no exact public access root\", \"complete occupied bridge authored envelope does not fit\", \"two-ended bridge compound has no inhabited access root\", \"bearing flank has no room to name\", \"authored envelope does not fit\"])] to contain value:  [\"promoted endpoint support envelope does not fit\"]:  seed 6357506428441529412/standard released bridge bridge.02 for an unvocabularised reason",
+      "[0.66666666666667] expected to be >= than [0.95]:  seed 6357506428441529412/standard stamps only 0.667 of its bridge plots"
+    ],
+    "test_the_roofscape_is_a_village_not_a_fortress": [
+      "[0] expected to be > than [0]:  seed 9/standard renders no overhang bracket at all"
+    ],
+    "test_a_street_borne_crown_stays_in_the_flat_vocabulary": [
+      "[1] expected to equal [0]:  seed 9/standard derives 1 street-borne flat crowns against the pinned 0; the equality below is only worth something while this number is right"
+    ],
+    "test_stacked_houses_bond_to_flat_roofs": [
+      "[1] expected to equal [0]:  seed 3/standard must publish the declared stacks that composed nothing"
+    ],
+    "test_retained_stone_is_skinned": [
+      "[302] expected to equal [303]:  seed 9/standard must hand the renderer exactly the panels it audited"
+    ],
+    "test_the_rock_reads_as_hillside_not_masonry": [
+      "[14] expected to equal [0]:  seed 12/compact must alternate facade and masonry storeys on tall banks",
+      "[51] expected to equal [61]:  seed 12/compact audited masonry panel count must equal the payload's",
+      "[27] expected to equal [13]:  seed 12/compact audited facade panel count must equal the payload's",
+      "[27] expected to equal [13]:  seed 12/compact every clad mass face belongs to exactly one district family",
+      "[27] expected to equal [41]:  seed 12/compact audited tall-bank masonry must equal the payload's",
+      "[27] expected to equal [41]:  seed 12/compact audited above-ground stone must equal the alternating courses",
+      "[0] expected to equal [14]:  seed 12/compact audited tall-course mismatches must equal the payload's",
+      "[7] expected to equal [3]:  seed 12/compact audited closed masonry crowns must equal the payload's",
+      "[108] expected to equal [112]:  seed 12/compact every panel of the shell wears exactly one module",
+      "[40] expected to equal [38]:  seed 9/compact audited masonry panel count must equal the payload's",
+      "[7] expected to equal [5]:  seed 9/compact audited closed masonry crowns must equal the payload's",
+      "[63] expected to equal [65]:  seed 9/compact every panel of the shell wears exactly one module",
+      "[22] expected to equal [0]:  seed 3/standard must alternate facade and masonry storeys on tall banks",
+      "[1] expected to equal [0]:  seed 3/standard may only clad a tall bank's SIDE in facade storeys",
+      "[167] expected to equal [165]:  seed 3/standard audited masonry panel count must equal the payload's",
+      "[23] expected to equal [6]:  seed 3/standard audited facade panel count must equal the payload's",
+      "[23] expected to equal [6]:  seed 3/standard every clad mass face belongs to exactly one district family",
+      "[30] expected to equal [46]:  seed 3/standard audited tall-bank masonry must equal the payload's",
+      "[30] expected to equal [46]:  seed 3/standard audited above-ground stone must equal the alternating courses",
+      "[6] expected to equal [22]:  seed 3/standard audited tall-course mismatches must equal the payload's",
+      "[8] expected to equal [6]:  seed 3/standard audited closed masonry crowns must equal the payload's",
+      "[20] expected to equal [3]:  seed 3/standard audited undercroft stone caps must equal the payload's -- the exception the free-bench pin above allows is only as honest as this count",
+      "[239] expected to equal [258]:  seed 3/standard every panel of the shell wears exactly one module",
+      "[32] expected to equal [0]:  seed 9/standard must alternate facade and masonry storeys on tall banks",
+      "[173] expected to equal [190]:  seed 9/standard audited masonry panel count must equal the payload's",
+      "[42] expected to equal [11]:  seed 9/standard audited facade panel count must equal the payload's",
+      "[42] expected to equal [11]:  seed 9/standard every clad mass face belongs to exactly one district family",
+      "[45] expected to equal [75]:  seed 9/standard audited tall-bank masonry must equal the payload's",
+      "[45] expected to equal [75]:  seed 9/standard audited above-ground stone must equal the alternating courses",
+      "[2] expected to equal [32]:  seed 9/standard audited tall-course mismatches must equal the payload's",
+      "[15] expected to equal [11]:  seed 9/standard audited closed masonry crowns must equal the payload's",
+      "[12] expected to equal [3]:  seed 9/standard audited undercroft stone caps must equal the payload's -- the exception the free-bench pin above allows is only as honest as this count",
+      "[289] expected to equal [303]:  seed 9/standard every panel of the shell wears exactly one module",
+      "[0] expected to be > than [0]:  the corpus must retain some connected terrain-classified garden ground"
+    ],
+    "test_the_plaza_deck_opens_the_square": [
+      "[1] expected to equal [2]:  1 of the four planner towns site a plaza deck; the pin is 2"
+    ],
+    "test_the_town_gets_its_life": [
+      "[31] expected to equal [32]:  seed 6357506428441529412/standard audited outcropping count must equal the payload's",
+      "[64] expected to equal [62]:  seed 6357506428441529412/standard must bracket every outcropping twice"
+    ],
+    "test_every_garden_edge_turns_the_rim": [
+      "[5] expected to equal [13]:  seed 9/standard audited rim count must equal the payload's"
+    ],
+    "test_the_rim_stands_off_the_panel_it_caps": [
+      "[2] expected to equal [0]:  seed 3/standard lays 2 rim(s) on a face that is neither a panel nor a level walked junction; the rim would take the boundary and the stand-off would mean nothing",
+      "[1] expected to equal [0]:  seed 9/standard lays 1 rim(s) on a face that is neither a panel nor a level walked junction; the rim would take the boundary and the stand-off would mean nothing",
+      "[0] expected to be > than [0]:  the corpus must exercise the matching terrain wall/lip seam"
+    ],
+    "test_the_stone_trim_refuses_to_strand_a_plot_or_a_street": [
+      "seed 12/compact must stand at least one plot on another"
+    ],
+    "test_assets_land": [
+      "[7] expected to equal [1]:  the realisation mirror accepts 7 of 256 sites it tested; it accepted 1 when this was measured"
+    ],
+    "test_the_big_towns_carry_the_round_s_own_zeroes": [
+      "[2] expected to equal [0]:  seed 1/large stands 2 collider(s) in a walked body lane: sfv.deck.pillar.001@(-16, 0, 2) rise=1.500, sfv.deck.pillar.001@(-15, 0, 2) rise=1.500"
+    ],
+    "test_sloped_ground_composes": [
+      "Expected [<null>] to be anything but NULL:  ramp seed 12/compact must compose on real ground: maze source rejected: carve: single spine DFS exhausted 7 visits",
+      "[0.54268292682926833059] expected to be between [0.0] and [0.39]:  step/12/compact leaves 0.543 of its plot mass unroomed",
+      "[0] expected to equal [1]:  the pinned sloped refusals are [\"step/3/standard\"] and [] actually refused; a row that started composing is a re-pin",
+      "[48] expected to equal [56]:  the sloped rows skipped 48 unproved flank neighbour(s) against the pinned 56; a rise means `_stamp_maze_bridges` is catching spans the carver used to refuse at seed time"
+    ],
+    "test_the_decor_constants_mirror_the_module_descriptors": [
+      "[1] expected to equal [0]:  lpfv.fabric.prop.bench.02 has started baking colliders; DECOR_CLEARANCE is the VISUAL envelope alone and must become the larger of the two",
+      "[1] expected to equal [0]:  lpfv.fabric.prop.bench.02 bakes a collider its clearance row does not carry",
+      "[1] expected to equal [0]:  lpfv.fabric.prop.bench.01 has started baking colliders; DECOR_CLEARANCE is the VISUAL envelope alone and must become the larger of the two",
+      "[1] expected to equal [0]:  lpfv.fabric.prop.bench.01 bakes a collider its clearance row does not carry"
+    ],
+    "test_no_decor_stands_inside_the_wall_beside_it": [
+      "[1] expected to equal [0]:  seed 9/grand stands 1 planted piece(s) inside a module of a unit (lpfv.flower.01 in sfv.deck.pillar.001 at facade-joint/15/0/-37). Round 5 pinned the RULE and left 28 of 83 corpus-wide; this is the OUTCOME, measured against the plan's own per-placement boxes"
+    ],
+    "test_no_authored_dressing_is_buried_in_the_town_s_own_masonry": [
+      "[1] expected to equal [0]:  seed 12/compact leaves 1 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.001.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01). That is the user's plant in the wall",
+      "[1] expected to equal [0]:  seed 3/standard leaves 1 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01). That is the user's plant in the wall",
+      "[1] expected to equal [0]:  seed 9/standard leaves 1 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01). That is the user's plant in the wall",
+      "[2] expected to equal [0]:  seed 1/large leaves 2 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.maze_back.01.room00/south/lantern (lpfv.fabric.prop.lantern.table.01)",
+      "[3] expected to equal [0]:  seed 9/grand leaves 3 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.000.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01)"
+    ],
+    "test_the_town_s_decor_is_not_one_repeated_piece": [
+      "[3] expected to be >= than [4]:  seed 1/large dresses its yards with 3 distinct piece(s) out of 4 planted; the three pools carry 23 between them"
+    ]
+  }
+}

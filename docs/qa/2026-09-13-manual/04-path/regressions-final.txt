@@ -1,0 +1,94 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_path_clearance.gd
+[0m* test_photographed_ramp_reserves_real_air_and_clears_native_house_collision
+* test_native_flights_reserve_the_air_above_every_actual_tread_in_both_directions
+* test_ramp_clearance_keeps_only_final_grounded_stone_after_jamb_withdrawals
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_warren_volumetric_solver.gd
+[0m* test_skywalk_flanks_must_be_opposite_independent_buildings
+* test_raw_single_macro_rock_crown_descends_to_a_joined_terrace
+* test_two_macro_rock_crowns_form_a_ridge_instead_of_being_deleted
+* test_uncomposed_plot_crown_cannot_survive_as_a_raw_rock_cube
+* test_unused_plot_roof_band_cannot_survive_as_a_raw_rock_cube
+* test_landmark_embeddedness_counts_only_surviving_city_mass
+* test_room_pair_repair_never_drops_required_transition_house
+* test_balcony_measured_bounds_yield_to_existing_outcrop_supports
+* test_balcony_doorway_preserves_an_unrelated_required_roof
+* test_optional_facade_bay_preserves_one_finite_gable_option
+* test_room_outcropping_geometry_requires_full_scale_diagonal_overlap
+* test_route_spanning_size_change_retains_its_true_projection_and_portal
+* test_room_support_preflight_keeps_one_bracketable_edge_not_floating_mass
+* test_route_overhang_preflight_requires_native_arcade_floor_phase
+* test_macro_merge_bearing_reads_the_current_room_graph
+* test_frontier_gateway_uses_final_room_bearing_instead_of_overlapping_braces
+* test_tower_annexes_may_step_across_adjacent_storeys_not_repeat_one_face
+* test_structural_outcropping_satisfies_one_tower_relief_obligation
+* test_diagonal_outcrop_quota_uses_upper_tower_rooms_only
+* test_wrap_balcony_requires_a_side_wall_contact
+* test_balcony_support_course_must_meet_the_complete_parent_wall
+* test_only_macroscopic_or_lean_to_shoulders_are_roofable
+* test_fast_macro_column_stamp_matches_the_room_contract
+* test_macro_merge_rejects_an_unroofable_participant_seam
+* test_exact_room_preflight_uses_the_final_skywalk_portal_mask
+* test_one_storey_composition_records_truncate_only_unrequired_tower_crown
+* test_registered_optional_crown_terminates_above_a_complete_house
+* test_registered_crown_keeps_required_interface_and_bearer
+* test_three_storey_narrow_lineage_requires_one_occupied_annex
+* test_market_protection_includes_the_full_public_aisle_headroom
+* test_paired_registration_relief_repartitions_two_locked_upper_rooms
+* test_paired_registration_relief_sees_half_storey_phase_overlap
+* test_addressed_room_recomposition_accepts_second_measured_door_phase
+* test_cantilever_support_assignment_can_revise_an_earlier_course
+* test_collinear_cantilever_courses_share_one_structural_frame
+* test_macroscopic_shape_audit_finds_exposed_towers_with_an_exact_slim_cover
+* test_macroscopic_shape_audit_disposes_two_addressed_towers_as_distinct
+* test_macroscopic_shape_audit_disposes_offset_towers_as_a_stepped_join
+* test_supported_base_towers_merge_without_losing_upper_addresses
+* test_unassigned_mass_audit_separates_room_sized_and_thin_trim
+* test_unassigned_mass_audit_finds_enclosed_rooms_and_one_cell_slits
+[1m41/41 passed.
+[0m[4m
+
+res://tests/test_september11_unified_city.gd
+[0m* test_a_source_generated_city_does_not_request_a_second_ground_house_pass
+* test_photographed_city_allocates_low_native_neighborhood_before_modular_rooms
+* test_world_roads_connect_only_real_crossings_to_source_gates
+* test_external_connector_uses_the_short_boundary_arc
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_september11_skywalk_integration.gd
+[0m* test_half_storey_skywalks_join_the_inhabited_mass_with_complete_courses
+* test_masonry_course_refuses_missing_lower_bearing_and_protected_air
+* test_native_masonry_course_has_no_open_corner_rays
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               4
+Tests                51
+Passing Tests        51
+Asserts             511
+Time              49.847s
+
+
+[32m---- All tests passed! ----
+[0m

@@ -1,0 +1,62 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_door_panels.gd
+[0m* test_door_side_housing_keeps_native_wall_relief_instead_of_a_protruding_flat_strip
+* test_replacement_housing_does_not_open_previously_closed_room_sightlines
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september10_wall_returns.gd
+[0m* test_photographed_stone_inside_corner_closes_at_the_wall_ends
+* test_doorway_rear_recess_meets_its_return_wall_in_every_orientation
+* test_closed_door_housing_finishes_both_sides_of_the_projecting_frame
+* test_door_housing_retains_native_bounds_and_central_doorwork
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_september9_door_return_cap.gd
+[0m* test_photographed_window_return_closes_its_native_cut_face
+* test_both_window_hands_and_floor_owned_variants_have_closed_returns
+* test_closed_return_vertices_stay_inside_the_declared_cut_planes
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_september9_door_ownership.gd
+[0m* test_connected_native_party_openings_share_one_entry_in_four_orientations
+* test_partial_walls_gaps_and_staggered_floors_keep_separate_access
+* test_photographed_frontage_keeps_its_central_door_and_corner_entrance
+[31m    [Failed]:  [0m[<null>] expected to equal [STRING_NAME(spatial.parcel.maze.house.005.part00.room00)]:  
+      at line 72
+* test_replacement_window_closes_into_the_deep_door_reveal_in_four_orientations
+[1m3/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september9_door_ownership.gd
+[0m- test_photographed_frontage_keeps_its_central_door_and_corner_entrance
+[31m    [Failed]:  [0m[<null>] expected to equal [STRING_NAME(spatial.parcel.maze.house.005.part00.room00)]:  
+          at line 72
+
+Totals
+------
+Scripts               4
+Tests                13
+Passing Tests        12
+Failing Tests         1
+Asserts           1733/1734
+Time              49.863s
+
+
+[31m---- 1 failing tests ----
+[0m

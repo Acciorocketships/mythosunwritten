@@ -1,0 +1,322 @@
+[
+  {
+    "asset": "2x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(1.0, 0.0)",
+    "end": "(-0.209931, 4.000936, 0.0)",
+    "highest": 4.32732391357422,
+    "reached": true,
+    "solid_control": false,
+    "start": "(1.397933, -0.000691, 0.0)"
+  },
+  {
+    "asset": "2x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(-1.0, 0.0)",
+    "end": "(0.209931, 4.000936, -0.0)",
+    "highest": 4.32751035690308,
+    "reached": true,
+    "solid_control": false,
+    "start": "(-1.40971, -0.000505, 0.0)"
+  },
+  {
+    "asset": "2x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, -1.0)",
+    "end": "(-0.0, 4.000936, 0.209932)",
+    "highest": 4.32751035690308,
+    "reached": true,
+    "solid_control": false,
+    "start": "(0.0, -0.000505, -1.40971)"
+  },
+  {
+    "asset": "2x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, 1.0)",
+    "end": "(-0.0, 4.000936, -0.209932)",
+    "highest": 4.32751035690308,
+    "reached": true,
+    "solid_control": false,
+    "start": "(0.0, -0.000505, 1.40971)"
+  },
+  {
+    "asset": "2x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(1.0, 0.0)",
+    "end": "(0.024768, 4.000844, 0.0)",
+    "highest": 4.32751083374023,
+    "reached": true,
+    "solid_control": true,
+    "start": "(1.632366, -0.000505, 0.0)"
+  },
+  {
+    "asset": "2x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(-1.0, 0.0)",
+    "end": "(-0.024761, 4.000844, 0.0)",
+    "highest": 4.32781410217285,
+    "reached": true,
+    "solid_control": true,
+    "start": "(-1.632366, -0.000202, 0.0)"
+  },
+  {
+    "asset": "2x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, -1.0)",
+    "end": "(0.0, 4.000823, -0.024767)",
+    "highest": 4.32781410217285,
+    "reached": true,
+    "solid_control": true,
+    "start": "(0.0, -0.000202, -1.632366)"
+  },
+  {
+    "asset": "2x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, 1.0)",
+    "end": "(0.0, 4.000823, 0.024768)",
+    "highest": 4.32781410217285,
+    "reached": true,
+    "solid_control": true,
+    "start": "(0.0, -0.000202, 1.632366)"
+  },
+  {
+    "asset": "4x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(1.0, 0.0)",
+    "end": "(0.790067, 4.000936, -0.0)",
+    "highest": 4.32763528823853,
+    "reached": true,
+    "solid_control": false,
+    "start": "(2.40971, -0.000381, 0.0)"
+  },
+  {
+    "asset": "4x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(-1.0, 0.0)",
+    "end": "(-0.790067, 4.000937, -0.0)",
+    "highest": 4.32912969589233,
+    "reached": true,
+    "solid_control": false,
+    "start": "(-2.40971, 0.001113, 0.0)"
+  },
+  {
+    "asset": "4x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, -1.0)",
+    "end": "(0.0, 4.000846, 0.209933)",
+    "highest": 4.32825183868408,
+    "reached": true,
+    "solid_control": false,
+    "start": "(0.0, 0.000236, -1.397982)"
+  },
+  {
+    "asset": "4x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, 1.0)",
+    "end": "(-0.0, 4.000844, -0.209933)",
+    "highest": 4.32767295837402,
+    "reached": true,
+    "solid_control": false,
+    "start": "(0.0, -0.000343, 1.397982)"
+  },
+  {
+    "asset": "4x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(1.0, 0.0)",
+    "end": "(1.024768, 4.000833, 0.0)",
+    "highest": 4.32763433456421,
+    "reached": true,
+    "solid_control": true,
+    "start": "(2.632366, -0.000381, 0.0)"
+  },
+  {
+    "asset": "4x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(-1.0, 0.0)",
+    "end": "(-1.024763, 4.000841, 0.0)",
+    "highest": 4.32825708389282,
+    "reached": true,
+    "solid_control": true,
+    "start": "(-2.632366, 0.000242, 0.0)"
+  },
+  {
+    "asset": "4x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, -1.0)",
+    "end": "(0.0, 4.00084, -0.040054)",
+    "highest": 4.32680130004883,
+    "reached": true,
+    "solid_control": true,
+    "start": "(0.0, -0.001215, -1.647656)"
+  },
+  {
+    "asset": "4x2x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, 1.0)",
+    "end": "(0.0, 4.000844, 0.040054)",
+    "highest": 4.32782363891602,
+    "reached": true,
+    "solid_control": true,
+    "start": "(0.0, -0.000192, 1.647656)"
+  },
+  {
+    "asset": "4x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(1.0, 0.0)",
+    "end": "(0.790065, 4.000845, -0.0)",
+    "highest": 4.32788419723511,
+    "reached": true,
+    "solid_control": false,
+    "start": "(2.397982, -0.000132, 0.0)"
+  },
+  {
+    "asset": "4x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(-1.0, 0.0)",
+    "end": "(-0.790065, 4.00084, -0.0)",
+    "highest": 4.32912921905518,
+    "reached": true,
+    "solid_control": false,
+    "start": "(-2.397982, 0.001113, 0.0)"
+  },
+  {
+    "asset": "4x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, -1.0)",
+    "end": "(0.0, 4.000844, -0.790064)",
+    "highest": 4.32763481140137,
+    "reached": true,
+    "solid_control": false,
+    "start": "(0.0, -0.000381, -2.397982)"
+  },
+  {
+    "asset": "4x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, 1.0)",
+    "end": "(-0.0, 4.000844, 0.790064)",
+    "highest": 4.32763481140137,
+    "reached": true,
+    "solid_control": false,
+    "start": "(0.0, -0.000381, 2.397982)"
+  },
+  {
+    "asset": "4x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(1.0, 0.0)",
+    "end": "(1.040058, 4.00078, 0.0)",
+    "highest": 4.32763481140137,
+    "reached": true,
+    "solid_control": true,
+    "start": "(2.647657, -0.000381, 0.0)"
+  },
+  {
+    "asset": "4x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(-1.0, 0.0)",
+    "end": "(-1.040057, 4.000836, 0.0)",
+    "highest": 4.32825756072998,
+    "reached": true,
+    "solid_control": true,
+    "start": "(-2.647657, 0.000242, 0.0)"
+  },
+  {
+    "asset": "4x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, -1.0)",
+    "end": "(0.0, 4.000794, -1.040057)",
+    "highest": 4.32825803756714,
+    "reached": true,
+    "solid_control": true,
+    "start": "(0.0, 0.000242, -2.647657)"
+  },
+  {
+    "asset": "4x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, 1.0)",
+    "end": "(0.0, 4.00083, 1.040057)",
+    "highest": 4.32825756072998,
+    "reached": true,
+    "solid_control": true,
+    "start": "(0.0, 0.000242, 2.647657)"
+  },
+  {
+    "asset": "8x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(1.0, 0.0)",
+    "end": "(2.790062, 4.00084, -0.0)",
+    "highest": 4.32912921905518,
+    "reached": true,
+    "solid_control": false,
+    "start": "(4.397983, 0.001113, 0.0)"
+  },
+  {
+    "asset": "8x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(-1.0, 0.0)",
+    "end": "(-2.790062, 4.00084, 0.0)",
+    "highest": 4.32912921905518,
+    "reached": true,
+    "solid_control": false,
+    "start": "(-4.397983, 0.001113, 0.0)"
+  },
+  {
+    "asset": "8x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, -1.0)",
+    "end": "(0.0, 4.000845, -0.790063)",
+    "highest": 4.32788372039795,
+    "reached": true,
+    "solid_control": false,
+    "start": "(0.0, -0.000132, -2.397982)"
+  },
+  {
+    "asset": "8x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, 1.0)",
+    "end": "(0.0, 4.000845, 0.790062)",
+    "highest": 4.32788419723511,
+    "reached": true,
+    "solid_control": false,
+    "start": "(0.0, -0.000132, 2.397982)"
+  },
+  {
+    "asset": "8x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(1.0, 0.0)",
+    "end": "(3.040055, 4.000835, 0.0)",
+    "highest": 4.32788419723511,
+    "reached": true,
+    "solid_control": true,
+    "start": "(4.647656, -0.000132, 0.0)"
+  },
+  {
+    "asset": "8x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(-1.0, 0.0)",
+    "end": "(-3.040055, 4.000836, 0.0)",
+    "highest": 4.32825708389282,
+    "reached": true,
+    "solid_control": true,
+    "start": "(-4.647656, 0.000242, 0.0)"
+  },
+  {
+    "asset": "8x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, -1.0)",
+    "end": "(0.0, 4.000836, -1.040056)",
+    "highest": 4.32825803756714,
+    "reached": true,
+    "solid_control": true,
+    "start": "(0.0, 0.000242, -2.647657)"
+  },
+  {
+    "asset": "8x4x4",
+    "ceiling_contacts": 0,
+    "direction": "(0.0, 1.0)",
+    "end": "(0.0, 4.000836, 1.040056)",
+    "highest": 4.32825803756714,
+    "reached": true,
+    "solid_control": true,
+    "start": "(0.0, 0.000242, 2.647657)"
+  }
+]

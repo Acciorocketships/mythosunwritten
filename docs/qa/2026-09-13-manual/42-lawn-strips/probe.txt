@@ -1,0 +1,4 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+SKIN_KEYS ["retained", "suspended_plaza", "solids", "bearing", "paved", "walked", "plinths", "footprints", "garden", "capped_ground", "classification_shell", "cap_owners", "shell"]
+SUSPENDED { (6, 5, 6): true, (7, 5, 6): true, (6, 5, 7): true, (7, 5, 7): true, (9, 5, 6): true, (9, 5, 7): true, (9, 5, 8): true }

@@ -1,0 +1,57 @@
+extends GutTest
+
+func test_photographed_platform_has_owned_connection_to_actual_flight() -> void:
+	var program := SettlementFabricProgram.compile(EnvironmentCatalog.load_default())
+	var frozen := preload("res://tests/fixtures/frozen_maze_source.gd")
+	var spatial := frozen.spatial(frozen.read("res://docs/qa/2026-09-13-manual/04-path/source.txt"),program)
+	var surface := spatial.compiled_fabric_cache().surface_plan
+	var entry := Vector3i(5,2,8)
+	assert_true(surface.has_transition_geometry(entry),"P07 court must reach the actual staircase surface, not only its coarse floor label")
+	for x in range(2,6):
+		for z in range(8,12):
+			assert_true(surface.kind_at(Vector3i(x,2,z)) in [PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,PublicRealmSurfacePlan.SurfaceKind.STAIR],"Every photographed platform cell remains walkable")
+
+func test_side_connection_has_matching_visual_collision_and_outward_faces_in_four_orientations() -> void:
+	for sample in 8:
+		var quarter := sample%4
+		var rotation := Basis(Vector3.UP,float(quarter)*PI*.5)
+		var plan := PublicRealmSurfacePlan.new(&"entry")
+		for cell: Vector3i in [Vector3i(5,2,8),Vector3i(5,2,9)]:
+			assert_true(plan.add_claim(Vector3i((rotation*Vector3(cell)).round()),PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,&"court"))
+		var payload := WarrenTransitionSurfaceBuilder._empty_payload(&"flight",[] as Array[Vector3i])
+		payload.pending_guard_span = {"start":rotation*Vector3(8.25,3,9.75),"end":rotation*Vector3(5.25,4.5,9.75),"lateral":rotation*Vector3(0,0,-1),"kind":WarrenVolumeTransition.Kind.STAIR if sample<4 else WarrenVolumeTransition.Kind.RAMP}
+		plan._transition_mesh_payloads.append(payload)
+		assert_true(plan.finish_transition_guards([]))
+		var found := false
+		for mesh: Dictionary in plan._transition_mesh_payloads:
+			if String(mesh.stable_id)=="flight": continue
+			found=true
+			var vertices: PackedVector3Array = mesh.vertices
+			var normals: PackedVector3Array = mesh.normals
+			var indices: PackedInt32Array = mesh.indices
+			var collision: PackedVector3Array = mesh.collision_faces
+			assert_eq(indices.size(),collision.size(),"Visible and physical triangles have equal coverage")
+			var bad_normals := 0
+			var mismatches := 0
+			for i in range(0,indices.size(),3):
+				var a := vertices[indices[i]]
+				var b := vertices[indices[i+1]]
+				var c := vertices[indices[i+2]]
+				if (c-a).cross(b-a).dot(normals[indices[i]]) < -.00001: bad_normals+=1
+				if a!=collision[i] or not ((b==collision[i+2] and c==collision[i+1]) or (b==collision[i+1] and c==collision[i+2])): mismatches+=1
+			assert_eq(bad_normals,0,"Every nondegenerate face has outward Godot winding")
+			assert_eq(mismatches,0,"Render triangles and collision use identical coordinates")
+		assert_true(found,"A supported court gets a physical side connection")
+
+func test_connection_requires_existing_approach_clear_air_and_gentle_grade() -> void:
+	for obstruction in 4:
+		var plan := PublicRealmSurfacePlan.new(&"rejected-entry")
+		if obstruction!=0: plan.add_claim(Vector3i(5,2,8),PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,&"court")
+		if obstruction!=1: plan.add_claim(Vector3i(5,2,9),PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT,&"court")
+		var payload := WarrenTransitionSurfaceBuilder._empty_payload(&"flight",[] as Array[Vector3i])
+		payload.pending_guard_span = {"start":Vector3(8.25,3,9.75),"end":Vector3(5.25,7.5 if obstruction==3 else 4.5,9.75),"lateral":Vector3(0,0,-1),"kind":WarrenVolumeTransition.Kind.STAIR}
+		plan._transition_mesh_payloads.append(payload)
+		var walls: Array[AABB] = []
+		if obstruction==2: walls.append(AABB(Vector3(7,3,11.25),Vector3(1,3,1.5)))
+		assert_true(plan.finish_transition_guards(walls))
+		assert_eq(plan._transition_mesh_payloads.size(),1,"No connection without complete owned approach, clear walking air and a walkable grade")

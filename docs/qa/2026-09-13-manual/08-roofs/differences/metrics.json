@@ -1,0 +1,17 @@
+[
+  {
+    "angle": 0,
+    "mean_rgb_difference": 0.4448455438290869,
+    "changed_over_20": 9845
+  },
+  {
+    "angle": -8,
+    "mean_rgb_difference": 0.48539136995090526,
+    "changed_over_20": 12117
+  },
+  {
+    "angle": 8,
+    "mean_rgb_difference": 0.3660153173705933,
+    "changed_over_20": 8849
+  }
+]

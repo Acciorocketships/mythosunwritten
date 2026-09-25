@@ -1,0 +1,3 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+DECK_CLEARANCE before_cells=76 after_cells=56 before_gates=108 after_gates=82

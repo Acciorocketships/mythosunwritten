@@ -1,0 +1,68 @@
+[
+  {
+    "asset": "kaykit.terrace.12x6x2",
+    "ceiling_contacts": 0,
+    "end": "(912.0, 17.88092, 1090.102)",
+    "highest": 20.3288516998291,
+    "id": "(38, 46)/face/(912.0, 1092.0)",
+    "level": 0,
+    "reached": true,
+    "side": -1.0,
+    "start": "(912.0, 16.00083, 1088.102)"
+  },
+  {
+    "asset": "kaykit.terrace.8x4x2",
+    "ceiling_contacts": 0,
+    "end": "(909.0, 19.76096, 1091.602)",
+    "highest": 22.2116088867188,
+    "id": "(38, 46)/face/(912.0, 1092.0)/layer/8",
+    "level": 1,
+    "reached": true,
+    "side": -1.0,
+    "start": "(909.0, 17.88111, 1090.092)"
+  },
+  {
+    "asset": "kaykit.terrace.4x4x4",
+    "ceiling_contacts": 0,
+    "end": "(911.3506, 23.64009, 1090.909)",
+    "highest": 24.0904808044434,
+    "id": "(38, 46)/face/(912.0, 1092.0)/layer/4",
+    "level": 2,
+    "reached": true,
+    "side": -1.0,
+    "start": "(909.6139, 19.76111, 1091.4)"
+  },
+  {
+    "asset": "kaykit.terrace.12x6x2",
+    "ceiling_contacts": 0,
+    "end": "(912.0, 17.88033, 1090.102)",
+    "highest": 20.3282585144043,
+    "id": "(38, 46)/face/(912.0, 1092.0)",
+    "level": 0,
+    "reached": true,
+    "side": 1.0,
+    "start": "(912.0, 16.00024, 1088.102)"
+  },
+  {
+    "asset": "kaykit.terrace.8x4x2",
+    "ceiling_contacts": 0,
+    "end": "(915.0, 19.76006, 1091.602)",
+    "highest": 22.2116088867188,
+    "id": "(38, 46)/face/(912.0, 1092.0)/layer/8",
+    "level": 1,
+    "reached": true,
+    "side": 1.0,
+    "start": "(915.0, 17.88111, 1090.092)"
+  },
+  {
+    "asset": "kaykit.terrace.4x4x4",
+    "ceiling_contacts": 0,
+    "end": "(912.4784, 23.67974, 1090.996)",
+    "highest": 24.089147567749,
+    "id": "(38, 46)/face/(912.0, 1092.0)/layer/4",
+    "level": 2,
+    "reached": true,
+    "side": 1.0,
+    "start": "(914.3861, 19.76111, 1091.4)"
+  }
+]

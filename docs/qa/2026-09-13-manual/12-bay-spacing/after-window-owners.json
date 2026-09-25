@@ -1,0 +1,131 @@
+[
+  {
+    "hits": [
+      {
+        "asset": "sfv.fabric.wall.wood.window.052.miter3",
+        "distance": 38.102855682373,
+        "id": "spatial.fabric.spatial.maze_bridge_end.02.01.room01/north",
+        "transform": "[X: (2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-186.0, 23.08, -931.9175)]"
+      },
+      {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight.mirror_z",
+        "distance": 46.1119956970215,
+        "id": "spatial.roof.spatial.maze_bridge_end.02.01.room01/continuous-roof/002/002",
+        "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-186.0, 29.02312, -937.0)]"
+      },
+      {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight",
+        "distance": 49.5333061218262,
+        "id": "spatial.roof.spatial.maze_bridge_end.02.01.room01/continuous-roof/002/003",
+        "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-186.0, 29.02312, -940.0)]"
+      },
+      {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight.mirror_z",
+        "distance": 49.9587593078613,
+        "id": "spatial.roof.spatial.maze_bridge_end.02.01.room01/continuous-roof/002/004",
+        "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-186.0, 29.02312, -943.0)]"
+      },
+      {
+        "asset": "lpfv.fabric.roof.compact.orange.03.rear.tight",
+        "distance": 54.3978233337402,
+        "id": "spatial.roof.spatial.parcel.maze.house.014.part00.room00/gable.00.00.00",
+        "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (-192.0, 29.0246, -946.0)]"
+      },
+      {
+        "asset": "sfv.deck.pillar.001",
+        "distance": 66.9174041748047,
+        "id": "spatial.fabric.spatial.feature.balcony.02.component.00/support.knee.0",
+        "transform": "[X: (-0.0, 0.0, -1.13731), Y: (0.946667, 0.386667, -0.0), Z: (0.230387, -0.56405, -0.0), O: (-195.14, 36.78, -956.5)]"
+      },
+      {
+        "asset": "sfv.deck.floor.s.001",
+        "distance": 67.8771514892578,
+        "id": "spatial.fabric.spatial.feature.balcony.02.component.00/floor.-1.0",
+        "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-193.5, 37.7579, -958.0)]"
+      }
+    ],
+    "pixel": "(800.0, 174.0)"
+  },
+  {
+    "hits": [
+      {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "distance": 36.9898529052734,
+        "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.face",
+        "transform": "[X: (1.64, 0.0, -0.0), Y: (0.0, 0.92, 0.0), Z: (0.0, 0.0, 2.0), O: (-186.0, 24.48, -929.8132)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.window.052.miter3",
+        "distance": 38.8290901184082,
+        "id": "spatial.fabric.spatial.maze_bridge_end.02.01.room01/north",
+        "transform": "[X: (2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-186.0, 23.08, -931.9175)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.plain.011.mirror_x.miter2",
+        "distance": 44.0908012390137,
+        "id": "spatial.fabric.spatial.maze_bridge_end.02.01.room01/east",
+        "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (-188.5313, 23.08, -934.0)]"
+      },
+      {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight.mirror_z",
+        "distance": 45.2889518737793,
+        "id": "spatial.roof.spatial.maze_bridge_end.02.01.room01/continuous-roof/002/002",
+        "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-186.0, 29.02312, -937.0)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.window.040.miter3.course_open",
+        "distance": 66.7854614257812,
+        "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room00/north",
+        "transform": "[X: (2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-198.0, 32.08, -955.5783)]"
+      },
+      {
+        "asset": "sfv.fabric.floor.l.001",
+        "distance": 67.1021423339844,
+        "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room01/floor",
+        "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-198.0, 37.7579, -958.0)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.door.closed.001.mirror_x",
+        "distance": 67.9132461547852,
+        "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room01/west",
+        "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-196.0166, 38.08, -958.0)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.window.004.doorreturn.back1070859.square",
+        "distance": 72.8094787597656,
+        "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room01/south",
+        "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-198.0, 38.08, -960.4468)]"
+      },
+      {
+        "asset": "sfv.fabric.planter.003",
+        "distance": 74.0331344604492,
+        "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room01/facade.windowbox",
+        "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-198.0, 39.72, -961.84)]"
+      }
+    ],
+    "pixel": "(773.0, 174.0)"
+  },
+  {
+    "hits": [
+      {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "distance": 72.8407897949219,
+        "id": "spatial.fabric.spatial.feature.facade-bay.04.component.00/bay.face",
+        "transform": "[X: (1.64, 0.0, -0.0), Y: (0.0, 0.92, 0.0), Z: (0.0, 0.0, 2.0), O: (-210.0, 39.48, -953.8132)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.window.052.miter1",
+        "distance": 74.9802017211914,
+        "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room01/north",
+        "transform": "[X: (2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-210.0, 38.08, -955.9175)]"
+      },
+      {
+        "asset": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.back1070859.miter",
+        "distance": 77.9424896240234,
+        "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room01/east",
+        "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (-212.5313, 38.08, -958.0)]"
+      }
+    ],
+    "pixel": "(664.0, 171.0)"
+  }
+]

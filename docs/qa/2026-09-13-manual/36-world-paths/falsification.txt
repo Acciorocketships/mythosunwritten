@@ -1,0 +1,47 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_world_paths.gd
+[0m* test_real_hillside_node_keeps_its_walkable_narrow_exit
+* test_route_goes_around_a_finite_cliff_without_crossing_it
+* test_road_can_climb_between_towns_in_the_current_height_range
+* test_solver_revisits_cells_after_a_detour_instead_of_using_a_dag_order
+* test_detour_corridor_is_discovered_outside_the_endpoint_rectangle
+* test_solver_keeps_distinct_near_equal_costs
+* test_town_gates_use_the_actual_road_approach_after_a_detour
+* test_accepted_road_width_has_no_hidden_step_between_boundary_controls
+* test_graph_search_matches_exhaustive_simple_paths_with_detours
+[1m9/9 passed.
+[0m[4m
+
+res://tests/test_path_route_solver.gd
+[0m* test_selects_lowest_cost_monotone_path_and_charges_turns
+* test_vertical_variation_budget_is_symmetric
+* test_bridge_macro_edge_is_reconstructed_atomically
+* test_one_value_variation_formula_matches_ascent_and_descent
+* test_dominance_solver_matches_exhaustive_small_dags
+[1m5/5 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                14
+Passing Tests        14
+Asserts            1964
+Time              5.013s
+
+
+[32m---- All tests passed! ----
+[0m

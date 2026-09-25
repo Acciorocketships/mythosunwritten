@@ -1,0 +1,92 @@
+{
+  "batches_identical": true,
+  "changed_meshes": [
+    {
+      "after_vertices": 24,
+      "before_vertices": 312,
+      "index": 57
+    },
+    {
+      "after_vertices": 24,
+      "before_vertices": 264,
+      "index": 58
+    },
+    {
+      "after_vertices": 228,
+      "before_vertices": 300,
+      "index": 59
+    },
+    {
+      "after_vertices": 24,
+      "before_vertices": 240,
+      "index": 60
+    },
+    {
+      "after_vertices": 168,
+      "before_vertices": 360,
+      "index": 61
+    },
+    {
+      "after_vertices": 216,
+      "before_vertices": 360,
+      "index": 62
+    },
+    {
+      "after_vertices": 132,
+      "before_vertices": 372,
+      "index": 63
+    },
+    {
+      "after_vertices": 216,
+      "before_vertices": 360,
+      "index": 65
+    },
+    {
+      "after_vertices": 120,
+      "before_vertices": 384,
+      "index": 66
+    },
+    {
+      "after_vertices": 24,
+      "before_vertices": 408,
+      "index": 68
+    },
+    {
+      "after_vertices": 24,
+      "before_vertices": 360,
+      "index": 69
+    },
+    {
+      "after_vertices": 24,
+      "before_vertices": 384,
+      "index": 70
+    },
+    {
+      "after_vertices": 24,
+      "before_vertices": 384,
+      "index": 71
+    },
+    {
+      "after_vertices": 132,
+      "before_vertices": 228,
+      "index": 72
+    },
+    {
+      "after_vertices": 24,
+      "before_vertices": 360,
+      "index": 73
+    },
+    {
+      "after_vertices": 24,
+      "before_vertices": 408,
+      "index": 74
+    },
+    {
+      "after_vertices": 228,
+      "before_vertices": 348,
+      "index": 75
+    }
+  ],
+  "collision_boxes_identical": true,
+  "unchanged_meshes": 59
+}

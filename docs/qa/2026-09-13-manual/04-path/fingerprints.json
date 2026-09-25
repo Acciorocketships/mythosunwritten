@@ -1,0 +1,5 @@
+{
+  "scripts/terrain/features/villages/fabric/WarrenVolumeTransition.gd": "f073240fd018c3a440f3e230fdeeb7fad6ad050afe542c1a1917ccb9926c5182",
+  "scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd": "a8f371fb0c6dcc57ae5dc5757159539ef768b84c55d37604cf11759d2cb9f673",
+  "scripts/terrain/features/villages/fabric/WarrenPlotReservations.gd": "d32e294908dbbbab2a0080d588d176aa3c3349e132b41208f494a0d94c0c0a9b"
+}

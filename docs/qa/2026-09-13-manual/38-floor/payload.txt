@@ -1,0 +1,3 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+UPPER_WALL_PAYLOAD { "batches_identical": true, "collision_boxes_identical": true, "changed_meshes": [{ "index": 45, "before_vertices": 24, "after_vertices": 24 }, { "index": 46, "before_vertices": 24, "after_vertices": 24 }, { "index": 47, "before_vertices": 132, "after_vertices": 132 }, { "index": 48, "before_vertices": 204, "after_vertices": 204 }, { "index": 49, "before_vertices": 228, "after_vertices": 228 }, { "index": 50, "before_vertices": 132, "after_vertices": 132 }, { "index": 51, "before_vertices": 24, "after_vertices": 24 }], "unchanged_meshes": 45 }

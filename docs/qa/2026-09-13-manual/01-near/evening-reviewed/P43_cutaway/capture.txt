@@ -1,0 +1,23 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+SEPT12_WAIT P43_cutaway
+EVENING_NATIVE_OWNERS 48
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P43_cutaway/opaque/P43_cutaway_0.png
+SEPT12_SHOT P43_cutaway 0.0 opaque
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P43_cutaway/before/P43_cutaway_0.png
+SEPT12_SHOT P43_cutaway 0.0 before
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P43_cutaway/after/P43_cutaway_0.png
+SEPT12_SHOT P43_cutaway 0.0 after
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P43_cutaway/opaque/P43_cutaway_-8.png
+SEPT12_SHOT P43_cutaway -8.0 opaque
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P43_cutaway/before/P43_cutaway_-8.png
+SEPT12_SHOT P43_cutaway -8.0 before
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P43_cutaway/after/P43_cutaway_-8.png
+SEPT12_SHOT P43_cutaway -8.0 after
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P43_cutaway/opaque/P43_cutaway_8.png
+SEPT12_SHOT P43_cutaway 8.0 opaque
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P43_cutaway/before/P43_cutaway_8.png
+SEPT12_SHOT P43_cutaway 8.0 before
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P43_cutaway/after/P43_cutaway_8.png
+SEPT12_SHOT P43_cutaway 8.0 after

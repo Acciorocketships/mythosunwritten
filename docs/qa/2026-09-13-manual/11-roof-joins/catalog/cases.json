@@ -1,0 +1,66 @@
+[
+  {
+    "label": "slate.tight.eave_negative.end_negative",
+    "triangles": 13282
+  },
+  {
+    "label": "slate.tight.eave_negative.end_positive",
+    "triangles": 12807
+  },
+  {
+    "label": "slate.tight.eave_positive.end_negative",
+    "triangles": 12797
+  },
+  {
+    "label": "slate.tight.eave_positive.end_positive",
+    "triangles": 13202
+  },
+  {
+    "label": "slate.ordinary.eave_negative.end_negative",
+    "triangles": 14133
+  },
+  {
+    "label": "slate.ordinary.eave_negative.end_positive",
+    "triangles": 13654
+  },
+  {
+    "label": "slate.ordinary.eave_positive.end_negative",
+    "triangles": 13431
+  },
+  {
+    "label": "slate.ordinary.eave_positive.end_positive",
+    "triangles": 13749
+  },
+  {
+    "label": "orange.tight.eave_negative.end_negative",
+    "triangles": 13282
+  },
+  {
+    "label": "orange.tight.eave_negative.end_positive",
+    "triangles": 12807
+  },
+  {
+    "label": "orange.tight.eave_positive.end_negative",
+    "triangles": 12797
+  },
+  {
+    "label": "orange.tight.eave_positive.end_positive",
+    "triangles": 13202
+  },
+  {
+    "label": "orange.ordinary.eave_negative.end_negative",
+    "triangles": 14133
+  },
+  {
+    "label": "orange.ordinary.eave_negative.end_positive",
+    "triangles": 13654
+  },
+  {
+    "label": "orange.ordinary.eave_positive.end_negative",
+    "triangles": 13431
+  },
+  {
+    "label": "orange.ordinary.eave_positive.end_positive",
+    "triangles": 13749
+  }
+]

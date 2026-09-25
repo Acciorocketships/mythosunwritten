@@ -1,0 +1,23 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+SEPT12_WAIT P51_background
+EVENING_NATIVE_OWNERS 0
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P51_background/opaque/P51_background_0.png
+SEPT12_SHOT P51_background 0.0 opaque
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P51_background/before/P51_background_0.png
+SEPT12_SHOT P51_background 0.0 before
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P51_background/after/P51_background_0.png
+SEPT12_SHOT P51_background 0.0 after
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P51_background/opaque/P51_background_-8.png
+SEPT12_SHOT P51_background -8.0 opaque
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P51_background/before/P51_background_-8.png
+SEPT12_SHOT P51_background -8.0 before
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P51_background/after/P51_background_-8.png
+SEPT12_SHOT P51_background -8.0 after
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P51_background/opaque/P51_background_8.png
+SEPT12_SHOT P51_background 8.0 opaque
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P51_background/before/P51_background_8.png
+SEPT12_SHOT P51_background 8.0 before
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P51_background/after/P51_background_8.png
+SEPT12_SHOT P51_background 8.0 after

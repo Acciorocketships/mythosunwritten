@@ -1,0 +1,4 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+KEYS ["profile", "profile_counts", "chunk", "surface_arrays", "collision_faces", "apron_arrays", "wall_arrays", "wall_collision_arrays", "cliffs", "cliff_terraces", "natural_arches", "structure_clearance", "graded_cliff_arrays", "world_seed"]
+EXPOSED VISUAL 0

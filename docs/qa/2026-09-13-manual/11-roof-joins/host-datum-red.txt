@@ -1,0 +1,53 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_compact_roof_junction_admission.gd
+[0m* test_all_prepared_hosts_and_chimneys_reject_displaced_stock
+[31m    [Failed]:  [0mroof.compact.valley.host.blue.eave_negative.end_positive
+      at line 73
+HOST_DATUM roof.compact.valley.host.blue.eave_negative.end_positive { "id": &"roof.start", "asset_id": &"lpfv.fabric.roof.compact.slate.03.run.start.tight.flush", "transform": [X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-0.75, -0.027699, -2.25)] } [P: (-2.25, 0.0, -3.75), S: (3.0, 2.14516, 0.75)]
+HOST_DATUM roof.compact.valley.host.blue.eave_negative.end_positive { "id": &"roof.negative", "asset_id": &"lpfv.fabric.roof.compact.slate.03.run.middle.tight", "transform": [X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-0.75, -0.028438, -2.25)] } [P: (-2.25, 0.0, -3.0), S: (3.0, 1.997213, 1.5)]
+HOST_DATUM roof.compact.valley.host.blue.eave_negative.end_positive { "id": &"roof.adjacent", "asset_id": &"lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_positive.adjacent", "transform": [X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-0.75, 0.0, -0.75)] } [P: (-2.25, 0.000003, -1.5), S: (3.0, 1.99721, 1.5)]
+HOST_DATUM roof.compact.valley.host.blue.eave_negative.end_positive { "id": &"roof.positive", "asset_id": &"lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_positive.middle", "transform": [X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-0.75, 0.0, 0.75)] } [P: (-1.522025, 0.000003, 0.0), S: (2.272025, 1.99721, 1.5)]
+HOST_DATUM roof.compact.valley.host.blue.eave_negative.end_positive { "id": &"roof.end", "asset_id": &"lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_positive.end", "transform": [X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-0.75, 0.0, 0.75)] } [P: (-2.25, 0.008051, 1.5), S: (3.0, 2.137106, 1.331954)]
+[31m    [Failed]:  [0mroof.compact.valley.host.orange.eave_negative.end_positive
+      at line 73
+HOST_DATUM roof.compact.valley.host.orange.eave_negative.end_positive { "id": &"roof.start", "asset_id": &"lpfv.fabric.roof.compact.orange.03.run.start.tight.flush", "transform": [X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-0.75, -0.027699, -2.25)] } [P: (-2.25, 0.0, -3.75), S: (3.0, 2.14516, 0.75)]
+HOST_DATUM roof.compact.valley.host.orange.eave_negative.end_positive { "id": &"roof.negative", "asset_id": &"lpfv.fabric.roof.compact.orange.03.run.middle.tight", "transform": [X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-0.75, -0.028438, -2.25)] } [P: (-2.25, 0.0, -3.0), S: (3.0, 1.997213, 1.5)]
+HOST_DATUM roof.compact.valley.host.orange.eave_negative.end_positive { "id": &"roof.adjacent", "asset_id": &"lpfv.fabric.roof.compact.orange.03.valley.tight.eave_negative.end_positive.adjacent", "transform": [X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-0.75, 0.0, -0.75)] } [P: (-2.25, 0.000003, -1.5), S: (3.0, 1.99721, 1.5)]
+HOST_DATUM roof.compact.valley.host.orange.eave_negative.end_positive { "id": &"roof.positive", "asset_id": &"lpfv.fabric.roof.compact.orange.03.valley.tight.eave_negative.end_positive.middle", "transform": [X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-0.75, 0.0, 0.75)] } [P: (-1.522025, 0.000003, 0.0), S: (2.272025, 1.99721, 1.5)]
+HOST_DATUM roof.compact.valley.host.orange.eave_negative.end_positive { "id": &"roof.end", "asset_id": &"lpfv.fabric.roof.compact.orange.03.valley.tight.eave_negative.end_positive.end", "transform": [X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-0.75, 0.0, 0.75)] } [P: (-2.25, 0.008051, 1.5), S: (3.0, 2.137106, 1.331954)]
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_compact_roof_junction_admission.gd
+[0m- test_all_prepared_hosts_and_chimneys_reject_displaced_stock
+[31m    [Failed]:  [0mroof.compact.valley.host.blue.eave_negative.end_positive
+          at line 73
+[31m    [Failed]:  [0mroof.compact.valley.host.orange.eave_negative.end_positive
+          at line 73
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts           110/112
+Time              6.281s
+
+
+Ran Tests matching "test_all_prepared_hosts_and_chimneys"
+[31m---- 1 failing tests ----
+[0m

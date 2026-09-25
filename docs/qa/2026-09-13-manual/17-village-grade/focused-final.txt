@@ -1,0 +1,65 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_village_grade.gd
+[0m* test_reported_eastern_approach_stays_below_player_climb_limit
+* test_overlapping_pad_collars_do_not_multiply_a_single_storey_slope
+* test_finite_collar_extent_and_bounds_cover_blended_corners
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_terrain_grade_patch.gd
+[0m* test_new_foundation_cannot_regrade_previously_sealed_ground
+* test_collar_uses_one_natural_length_slope_not_fine_cell_ripples
+* test_unequal_pad_collars_do_not_switch_nearest_owner_at_a_ridge
+* test_grade_pins_claimed_cell_and_leaves_distant_nature_unchanged
+* test_grade_keeps_distinct_ground_bands_and_welds_cell_seams
+* test_baked_and_direct_ground_agree_and_bounds_enclose_collar
+[1m6/6 passed.
+[0m[4m
+
+res://tests/test_september8_night_ground_crease.gd
+[0m* test_reported_diagonal_collar_has_no_slope_jump
+* test_concave_claim_boundary_blends_in_every_orientation
+* test_collar_convex_cover_preserves_the_claim_union
+* test_straight_pad_profile_does_not_depend_on_construction_pitch
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_september7_continuous_street_grade.gd
+[0m* test_grade_sample_cache_preserves_cold_values_and_natural_input
+* test_street_extension_preserves_one_normal_terrain_slope
+* test_foundation_extension_and_second_street_keep_the_inherited_curve_and_bounds
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_graded_cliff_construction.gd
+[0m* test_constructed_street_removes_the_natural_cliff_wall_from_its_walk
+* test_lip_dressing_and_surface_clipping_follow_the_same_graded_street
+* test_graded_banks_keep_the_authored_rock_mesh_and_uv_detail
+* test_a_filled_cliff_has_no_coplanar_apron_across_the_street
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               5
+Tests                20
+Passing Tests        20
+Asserts           19240
+Time              2.847s
+
+
+[32m---- All tests passed! ----
+[0m

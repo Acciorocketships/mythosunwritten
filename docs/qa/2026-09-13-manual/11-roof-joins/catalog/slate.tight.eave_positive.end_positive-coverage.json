@@ -1,0 +1,31 @@
+{
+  "rays": 29535,
+  "source_hits": 20729,
+  "missing_hits": 0,
+  "max_height_error": 0.0008438957588581264,
+  "wrong_height_over_0_1mm": 1,
+  "missing_positions": [],
+  "wrong_samples": [
+    {
+      "xz": [
+        2.4730000000000034,
+        1.3150476665496842
+      ],
+      "expected": 1.8996975157126201,
+      "actual": 1.898853619953762
+    }
+  ],
+  "unchanged_native_triangle_rounding": [
+    {
+      "xz": [
+        2.4730000000000034,
+        1.3150476665496842
+      ],
+      "expected_triangle": 7185,
+      "actual_triangle": 10945,
+      "max_vertex_delta": 1.1920928999487046e-07,
+      "vertical_height_delta": 0.0008438957588581264
+    }
+  ],
+  "unexplained_height_errors": 0
+}

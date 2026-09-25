@@ -1,0 +1,50 @@
+{
+  "after_meshes": 77,
+  "batch_changes": [
+    {
+      "after": 49771,
+      "asset": "sfv.fabric.floor.l.001",
+      "before": 50603
+    },
+    {
+      "after": 3839,
+      "asset": "sfv.fabric.planter.003",
+      "before": 3842
+    },
+    {
+      "after": 61276,
+      "asset": "sfv.deck.pillar.001",
+      "before": 60360
+    },
+    {
+      "after": 16798,
+      "asset": "sfv.deck.floor.s.001",
+      "before": 14208
+    },
+    {
+      "after": 15322,
+      "asset": "sfv.deck.railing.s.001",
+      "before": 15878
+    },
+    {
+      "after": 29785,
+      "asset": "sfv.fabric.gallery.floor.m.001",
+      "before": 29599
+    },
+    {
+      "after": 30186,
+      "asset": "sfv.fabric.wall.rock.retaining.001",
+      "before": 30184
+    }
+  ],
+  "batches_identical": false,
+  "before_meshes": 76,
+  "changed_meshes": [
+    "public-structural-skin/1"
+  ],
+  "collision_boxes_identical": true,
+  "new_meshes": [
+    "public-transition/volume.transition.44.mesh"
+  ],
+  "walked_identical": false
+}

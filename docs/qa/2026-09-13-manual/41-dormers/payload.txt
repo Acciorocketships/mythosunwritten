@@ -1,0 +1,3 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+UPPER_WALL_PAYLOAD { "batches_identical": false, "collision_boxes_identical": true, "surfaces_identical": true, "before_surfaces": 56, "after_surfaces": 56 }

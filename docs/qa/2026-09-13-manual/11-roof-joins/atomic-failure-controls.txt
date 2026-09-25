@@ -1,0 +1,6 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+COMPACT_JOIN_FAILURE [1, &"compact"] PASS
+COMPACT_JOIN_FAILURE [2, &"compact"] PASS
+COMPACT_JOIN_FAILURE [3, &"standard"] PASS
+COMPACT_JOIN_FAILURE [4, &"standard"] PASS

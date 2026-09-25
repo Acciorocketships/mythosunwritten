@@ -1,0 +1,3 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+[{"after_count":1152,"before_count":1152,"key":"vertices","max_distance":0.353553384542465,"stable_id":"maze-ground-turf","surface":51,"type":"PackedVector3Array"},{"after_count":192,"before_count":384,"key":"vertices","max_distance":0.0,"stable_id":"maze-lawn-border","surface":53,"type":"PackedVector3Array"},{"after_count":192,"before_count":384,"key":"normals","max_distance":0.0,"stable_id":"maze-lawn-border","surface":53,"type":"PackedVector3Array"},{"key":"uvs","stable_id":"maze-lawn-border","surface":53,"type":"PackedVector2Array"},{"key":"indices","stable_id":"maze-lawn-border","surface":53,"type":"PackedInt32Array"}]

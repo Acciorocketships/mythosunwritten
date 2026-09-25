@@ -1,0 +1,4 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+WORLD_ROUTE_START [(-1, -1), (0, -1)]
+DETOUR {"found":false,"pair":"[(-1, -1), (0, -1)]","points":[],"reachable":1}

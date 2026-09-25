@@ -1,0 +1,56 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_low_wall.gd
+[0m* test_photographed_partial_course_keeps_retaining_masonry
+[31m    [Failed]:  [0m[3] expected to equal [0]:  The half-height patch in P27 belongs to the surrounding retaining wall
+      at line 10
+* test_partial_and_complete_storeys_in_all_orientations
+[31m    [Failed]:  [0m[3] expected to equal [0]:  A single exposed band cannot wear a complete house storey
+      at line 20
+[31m    [Failed]:  [0m[3] expected to equal [0]:  A single exposed band cannot wear a complete house storey
+      at line 20
+[31m    [Failed]:  [0m[3] expected to equal [0]:  A single exposed band cannot wear a complete house storey
+      at line 20
+[31m    [Failed]:  [0m[3] expected to equal [0]:  A single exposed band cannot wear a complete house storey
+      at line 20
+[1m0/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_low_wall.gd
+[0m- test_photographed_partial_course_keeps_retaining_masonry
+[31m    [Failed]:  [0m[3] expected to equal [0]:  The half-height patch in P27 belongs to the surrounding retaining wall
+          at line 10
+- test_partial_and_complete_storeys_in_all_orientations
+[31m    [Failed]:  [0m[3] expected to equal [0]:  A single exposed band cannot wear a complete house storey
+          at line 20
+[31m    [Failed]:  [0m[3] expected to equal [0]:  A single exposed band cannot wear a complete house storey
+          at line 20
+[31m    [Failed]:  [0m[3] expected to equal [0]:  A single exposed band cannot wear a complete house storey
+          at line 20
+[31m    [Failed]:  [0m[3] expected to equal [0]:  A single exposed band cannot wear a complete house storey
+          at line 20
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests      none
+Failing Tests         2
+Asserts            8/13
+Time              11.716s
+
+
+[31m---- 2 failing tests ----
+[0m

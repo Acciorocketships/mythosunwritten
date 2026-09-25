@@ -1,0 +1,34 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_tower_massing.gd
+[0m* test_reported_detached_towers_keep_their_addresses_as_low_houses
+* test_complete_upper_party_walls_keep_towers_in_four_directions
+* test_roofs_and_partial_height_contacts_do_not_substitute_for_walls
+* test_diagonal_neighbors_do_not_count_as_party_walls
+* test_real_upper_loads_are_not_shortened
+[1m5/5 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 5
+Passing Tests         5
+Asserts              69
+Time              0.41s
+
+
+[32m---- All tests passed! ----
+[0m

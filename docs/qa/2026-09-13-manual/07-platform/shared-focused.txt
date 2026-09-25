@@ -1,0 +1,48 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_shared_stair_landing.gd
+[0m* test_p07_deck_has_full_width_orthogonal_stair_to_existing_upper_landing
+* test_shared_landing_rule_rotates_translates_and_keeps_both_lanes
+* test_occupied_or_short_court_cannot_squeeze_the_stair
+* test_plaza_stairs_keep_only_flat_ground_in_the_green
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_september13_loose_rails.gd
+[0m* test_p08_ramp_rails_yield_to_the_finished_upper_house_wall
+* test_finished_native_wall_clips_deferred_guards_without_removing_exposed_guard
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september13_path_clearance.gd
+[0m* test_photographed_ramp_reserves_real_air_and_clears_native_house_collision
+* test_native_flights_reserve_the_air_above_every_actual_tread_in_both_directions
+* test_ramp_clearance_keeps_only_final_grounded_stone_after_jamb_withdrawals
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               3
+Tests                 9
+Passing Tests         9
+Asserts             137
+Time              63.345s
+
+
+[32m---- All tests passed! ----
+[0m

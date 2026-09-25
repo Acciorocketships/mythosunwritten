@@ -1,0 +1,50 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_bay_backing.gd
+[0m* test_photographed_roofed_bay_has_a_complete_parent_wall
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 rear wall cell (-7, 6, 5) must meet its actual parent
+      at line 23
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 rear wall cell (-7, 7, 5) must meet its actual parent
+      at line 23
+[31m    [Failed]:  [0mspatial.feature.facade-bay.02 rear wall cell (1, 4, -2) must meet its actual parent
+      at line 23
+[31m    [Failed]:  [0mspatial.feature.facade-bay.02 rear wall cell (1, 5, -2) must meet its actual parent
+      at line 23
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_bay_backing.gd
+[0m- test_photographed_roofed_bay_has_a_complete_parent_wall
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 rear wall cell (-7, 6, 5) must meet its actual parent
+          at line 23
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 rear wall cell (-7, 7, 5) must meet its actual parent
+          at line 23
+[31m    [Failed]:  [0mspatial.feature.facade-bay.02 rear wall cell (1, 4, -2) must meet its actual parent
+          at line 23
+[31m    [Failed]:  [0mspatial.feature.facade-bay.02 rear wall cell (1, 5, -2) must meet its actual parent
+          at line 23
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts           12/16
+Time              7.69s
+
+
+[31m---- 1 failing tests ----
+[0m

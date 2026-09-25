@@ -1,0 +1,57 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_roof_intersection.gd
+[0m* test_coplanar_faces_have_one_owner_without_double_removal
+PRISM_CUT 2 cutter faces; 2 output triangles
+PRISM_CUT 2 cutter faces; 3 output triangles
+* test_crossed_slopes_keep_the_exact_upper_surface_and_uvs
+PRISM_CUT 2 cutter faces; 1 output triangles
+PRISM_CUT 2 cutter faces; 1 output triangles
+* test_disjoint_roofs_preserve_the_original_surface
+PRISM_CUT 2 cutter faces; 2 output triangles
+* test_secondary_uvs_and_tangent_handedness_survive_a_real_cut
+PRISM_CUT 2 cutter faces; 3 output triangles
+* test_complete_burial_emits_no_surface_and_unindexed_stock_is_supported
+PRISM_CUT 2 cutter faces; 0 output triangles
+PRISM_CUT 2 cutter faces; 3 output triangles
+* test_native_section_domain_is_bounded_before_spatial_bucketing
+PRISM_CUT 2 cutter faces; 2 output triangles
+[31m    [Failed]:  [0mExpected [<ArrayMesh#-9223371974376421610>] to be NULL:  Subject outside the finite bake domain is rejected
+      at line 103
+PRISM_CUT 2 cutter faces; 2 output triangles
+[31m    [Failed]:  [0mExpected [<ArrayMesh#-9223371974242203882>] to be NULL:  Cutter outside the finite bake domain is rejected
+      at line 104
+[1m5/6 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_roof_intersection.gd
+[0m- test_native_section_domain_is_bounded_before_spatial_bucketing
+[31m    [Failed]:  [0mExpected [<ArrayMesh#-9223371974376421610>] to be NULL:  Subject outside the finite bake domain is rejected
+          at line 103
+[31m    [Failed]:  [0mExpected [<ArrayMesh#-9223371974242203882>] to be NULL:  Cutter outside the finite bake domain is rejected
+          at line 104
+
+Totals
+------
+Scripts               1
+Tests                 6
+Passing Tests         5
+Failing Tests         1
+Asserts           55/57
+Time              0.41s
+
+
+[31m---- 1 failing tests ----
+[0m

@@ -1,0 +1,58 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_platform_connection.gd
+[0m* test_photographed_platform_has_owned_connection_to_actual_flight
+[31m    [Failed]:  [0mP07 court must reach the actual staircase surface, not only its coarse floor label
+      at line 9
+* test_side_connection_has_matching_visual_collision_and_outward_faces_in_four_orientations
+[31m    [Failed]:  [0mA supported court gets a physical side connection
+      at line 43
+[31m    [Failed]:  [0mA supported court gets a physical side connection
+      at line 43
+[31m    [Failed]:  [0mA supported court gets a physical side connection
+      at line 43
+[31m    [Failed]:  [0mA supported court gets a physical side connection
+      at line 43
+[1m0/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_platform_connection.gd
+[0m- test_photographed_platform_has_owned_connection_to_actual_flight
+[31m    [Failed]:  [0mP07 court must reach the actual staircase surface, not only its coarse floor label
+          at line 9
+- test_side_connection_has_matching_visual_collision_and_outward_faces_in_four_orientations
+[31m    [Failed]:  [0mA supported court gets a physical side connection
+          at line 43
+[31m    [Failed]:  [0mA supported court gets a physical side connection
+          at line 43
+[31m    [Failed]:  [0mA supported court gets a physical side connection
+          at line 43
+[31m    [Failed]:  [0mA supported court gets a physical side connection
+          at line 43
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests      none
+Failing Tests         2
+Asserts           28/33
+Time              11.417s
+
+
+[31m---- 2 failing tests ----
+[0m

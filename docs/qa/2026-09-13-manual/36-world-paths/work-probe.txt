@@ -1,0 +1,27 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ROUTE_BEGIN (-10, 22) -> (8, 11)
+ROUTE_END settlement.0b2413172a2efcd0|settlement.78222112071b3d94 ms=203
+ROUTE_BEGIN (-10, 22) -> (-43, 15)
+ROUTE_END settlement.0b2413172a2efcd0|settlement.4abd6004be00b319 ms=233
+ROUTE_BEGIN (-10, 22) -> (-18, 45)
+ROUTE_END settlement.0b2413172a2efcd0|settlement.4410c9de493222b2 ms=188
+ROUTE_BEGIN (-10, 22) -> (-11, -23)
+ROUTE_END settlement.0b2413172a2efcd0|settlement.10142558f548312c ms=178
+ROUTE_BEGIN (12, -23) -> (8, 11)
+ROUTE_END settlement.1325687bedd100b5|settlement.78222112071b3d94 ms=209
+ROUTE_BEGIN (12, -23) -> (46, -12)
+ROUTE_END settlement.1325687bedd100b5|settlement.44784b0e891059f1 ms=312
+ROUTE_BEGIN (-11, -23) -> (12, -23)
+ROUTE_END settlement.10142558f548312c|settlement.1325687bedd100b5 ms=79
+ROUTE_BEGIN (53, 15) -> (8, 11)
+ROUTE_END settlement.4be85d8dd12135a4|settlement.78222112071b3d94 ms=250
+ROUTE_BEGIN (10, 47) -> (8, 11)
+ROUTE_END settlement.482d342e43656e08|settlement.78222112071b3d94 ms=157
+ROUTE_BEGIN (49, 49) -> (10, 47)
+ROUTE_END settlement.288d3ae47785c1ba|settlement.482d342e43656e08 ms=182
+ROUTE_BEGIN (-18, 45) -> (10, 47)
+ROUTE_END settlement.4410c9de493222b2|settlement.482d342e43656e08 ms=118
+ROUTE_BEGIN (76, 14) -> (53, 15)
+ROUTE_END settlement.4b0232a6fb52f9fe|settlement.4be85d8dd12135a4 ms=106
+CONTEXT_END ms=2307 masks=30 stats={ "node_queries": 21, "node_builds": 11, "route_queries": 17, "route_solves": 12, "route_exact_failures": 0, "bridge_profiles": 0, "context_builds": 1, "evictions": 0, "node_cache": 11, "route_cache": 12, "bridge_raw_cache": 0, "bridge_resolved_cache": 0, "context_cache": 1, "planning_point_cache": 4690 }

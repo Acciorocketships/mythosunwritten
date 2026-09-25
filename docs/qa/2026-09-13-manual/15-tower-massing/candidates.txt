@@ -1,0 +1,4 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+TOWER_CANDIDATES { "reservations": [], "selected_candidates": [], "forced_offsets": {  }, "priority_cells": {  }, "candidate_count": 0, "target_count": 2, "unique_route_cover_count": 0, "marginal_route_cover_count": 0, "landmark_coverage_count": 0 }
+TOWER_RESULT true 

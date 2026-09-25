@@ -1,0 +1,243 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+[terrain-streamer] startup_begin seed=2697992464 support_chunks=[(4, -4), (4, -3), (4, -2), (5, -4), (5, -3), (5, -2), (6, -4), (6, -3), (6, -2)]
+[terrain-streamer] startup_plan seed=2697992464 feature_keys=25
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=5122 progress=0.0000 ready=0/9 cold_plan=0.0000 chunk=0,0 phase=idle phase_ms=0 job_ms=0 queued=0 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=5,-3 terrain=true features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-3 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=10149 progress=0.1384 ready=0/9 cold_plan=0.2645 chunk=5,-3 phase=feature_context phase_ms=5026 job_ms=5026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=15149 progress=0.1625 ready=0/9 cold_plan=0.3108 chunk=5,-3 phase=feature_context phase_ms=10026 job_ms=10026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=20149 progress=0.1749 ready=0/9 cold_plan=0.3346 chunk=5,-3 phase=feature_context phase_ms=15026 job_ms=15026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=25149 progress=0.2604 ready=0/9 cold_plan=0.4989 chunk=5,-3 phase=feature_context phase_ms=20026 job_ms=20026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=30149 progress=0.3024 ready=0/9 cold_plan=0.5795 chunk=5,-3 phase=feature_context phase_ms=25026 job_ms=25026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=35149 progress=0.3045 ready=0/9 cold_plan=0.5835 chunk=5,-3 phase=feature_context phase_ms=30026 job_ms=30026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=40149 progress=0.3050 ready=0/9 cold_plan=0.5845 chunk=5,-3 phase=feature_context phase_ms=35026 job_ms=35026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=45149 progress=0.5214 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=40026 job_ms=40026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=50149 progress=0.5214 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=45026 job_ms=45026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=55149 progress=0.5214 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=50026 job_ms=50026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=60149 progress=0.5214 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=55026 job_ms=55026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=65149 progress=0.5214 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=60026 job_ms=60026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=70149 progress=0.5214 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=65026 job_ms=65026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=75149 progress=0.5214 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=70026 job_ms=70026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=80149 progress=0.5221 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=75026 job_ms=75026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=85149 progress=0.5221 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=80026 job_ms=80026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=90149 progress=0.5221 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=85026 job_ms=85026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=95149 progress=0.5221 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=90026 job_ms=90026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=100149 progress=0.5221 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=95026 job_ms=95026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=105149 progress=0.5246 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=100026 job_ms=100026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=110149 progress=0.5249 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=105026 job_ms=105026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=115149 progress=0.5249 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=110026 job_ms=110026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=120149 progress=0.5249 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=115026 job_ms=115026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=125149 progress=0.5249 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=120026 job_ms=120026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=130149 progress=0.5263 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=125026 job_ms=125026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=135149 progress=0.5263 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=130026 job_ms=130026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=140149 progress=0.5263 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=135026 job_ms=135026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=145149 progress=0.5263 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=140026 job_ms=140026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=150149 progress=0.5263 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=145026 job_ms=145026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=155149 progress=0.5263 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=150026 job_ms=150026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=160149 progress=0.5263 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=155026 job_ms=155026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=165149 progress=0.5263 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=160026 job_ms=160026 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=170150 progress=0.5263 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=165027 job_ms=165027 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=175183 progress=0.5263 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=170060 job_ms=170060 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=180183 progress=0.5423 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=feature_context phase_ms=175060 job_ms=175060 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-3 phase=feature_placements previous=feature_context previous_ms=177215 job_ms=177215
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-3 phase=heightfield_region previous=feature_placements previous_ms=0 job_ms=177215
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-3 phase=water_context previous=heightfield_region previous_ms=0 job_ms=177215
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-3 phase=terrain_mesh previous=water_context previous_ms=0 job_ms=177215
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=185183 progress=0.5463 ready=0/9 cold_plan=1.0000 chunk=5,-3 phase=terrain_mesh phase_ms=2845 job_ms=180060 queued=8 done=0 pending=0 built=0 feature_ready=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-3 phase=water_mesh previous=terrain_mesh previous_ms=4466 job_ms=181681
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-3 phase=dressing previous=water_mesh previous_ms=790 job_ms=182471
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-3 phase=biome_fx previous=dressing previous_ms=121 job_ms=182592
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=5,-3 final_phase=biome_fx phase_ms=9 job_ms=182601
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=4,-4 terrain=true features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-4 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-4 phase=feature_placements previous=feature_context previous_ms=5 job_ms=5
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-4 phase=heightfield_region previous=feature_placements previous_ms=0 job_ms=5
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-4 phase=water_context previous=heightfield_region previous_ms=8 job_ms=13
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=190193 progress=0.5820 ready=0/9 cold_plan=1.0000 chunk=4,-4 phase=water_context phase_ms=2455 job_ms=2468 queued=7 done=0 pending=1 built=0 feature_ready=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-4 phase=terrain_mesh previous=water_context previous_ms=3833 job_ms=3846
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-4 phase=water_mesh previous=terrain_mesh previous_ms=616 job_ms=4462
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-4 phase=dressing previous=water_mesh previous_ms=29 job_ms=4491
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-4 phase=biome_fx previous=dressing previous_ms=118 job_ms=4609
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=4,-4 final_phase=biome_fx phase_ms=7 job_ms=4616
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=4,-3 terrain=true features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-3 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-3 phase=feature_placements previous=feature_context previous_ms=6 job_ms=6
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-3 phase=heightfield_region previous=feature_placements previous_ms=0 job_ms=6
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-3 phase=water_context previous=heightfield_region previous_ms=0 job_ms=6
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-3 phase=terrain_mesh previous=water_context previous_ms=68 job_ms=74
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-3 phase=water_mesh previous=terrain_mesh previous_ms=1499 job_ms=1573
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-3 phase=dressing previous=water_mesh previous_ms=26 job_ms=1599
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-3 phase=biome_fx previous=dressing previous_ms=105 job_ms=1704
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=4,-3 final_phase=biome_fx phase_ms=7 job_ms=1711
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=4,-2 terrain=true features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-2 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-2 phase=feature_placements previous=feature_context previous_ms=13 job_ms=13
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-2 phase=heightfield_region previous=feature_placements previous_ms=0 job_ms=13
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-2 phase=water_context previous=heightfield_region previous_ms=0 job_ms=13
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-2 phase=terrain_mesh previous=water_context previous_ms=168 job_ms=181
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-2 phase=water_mesh previous=terrain_mesh previous_ms=784 job_ms=965
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=195194 progress=0.6633 ready=0/9 cold_plan=1.0000 chunk=4,-2 phase=water_mesh phase_ms=177 job_ms=1142 queued=11 done=0 pending=3 built=0 feature_ready=2
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-2 phase=dressing previous=water_mesh previous_ms=605 job_ms=1570
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-2 phase=biome_fx previous=dressing previous_ms=199 job_ms=1769
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=4,-2 final_phase=biome_fx phase_ms=8 job_ms=1777
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=5,-4 terrain=true features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-4 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-4 phase=feature_placements previous=feature_context previous_ms=5 job_ms=5
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-4 phase=heightfield_region previous=feature_placements previous_ms=0 job_ms=5
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-4 phase=water_context previous=heightfield_region previous_ms=8 job_ms=13
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-4 phase=terrain_mesh previous=water_context previous_ms=212 job_ms=225
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-4 phase=water_mesh previous=terrain_mesh previous_ms=790 job_ms=1015
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-4 phase=dressing previous=water_mesh previous_ms=1615 job_ms=2630
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-4 phase=biome_fx previous=dressing previous_ms=137 job_ms=2767
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=5,-4 final_phase=biome_fx phase_ms=10 job_ms=2777
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=5,-2 terrain=true features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-2 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-2 phase=feature_placements previous=feature_context previous_ms=6 job_ms=6
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-2 phase=heightfield_region previous=feature_placements previous_ms=0 job_ms=6
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-2 phase=water_context previous=heightfield_region previous_ms=0 job_ms=6
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-2 phase=terrain_mesh previous=water_context previous_ms=0 job_ms=6
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=200226 progress=0.7330 ready=0/9 cold_plan=1.0000 chunk=5,-2 phase=terrain_mesh phase_ms=1614 job_ms=1620 queued=13 done=0 pending=5 built=0 feature_ready=5
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-2 phase=water_mesh previous=terrain_mesh previous_ms=1771 job_ms=1777
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-2 phase=dressing previous=water_mesh previous_ms=1032 job_ms=2809
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-2 phase=biome_fx previous=dressing previous_ms=118 job_ms=2927
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=5,-2 final_phase=biome_fx phase_ms=9 job_ms=2936
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=6,-4 terrain=true features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-4 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-4 phase=feature_placements previous=feature_context previous_ms=11 job_ms=11
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-4 phase=heightfield_region previous=feature_placements previous_ms=0 job_ms=11
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-4 phase=water_context previous=heightfield_region previous_ms=8 job_ms=19
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=205234 progress=0.7687 ready=0/9 cold_plan=1.0000 chunk=6,-4 phase=water_context phase_ms=3672 job_ms=3691 queued=13 done=0 pending=6 built=0 feature_ready=6
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=210234 progress=0.7687 ready=0/9 cold_plan=1.0000 chunk=6,-4 phase=water_context phase_ms=8672 job_ms=8691 queued=13 done=0 pending=6 built=0 feature_ready=6
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-4 phase=terrain_mesh previous=water_context previous_ms=9418 job_ms=9437
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-4 phase=water_mesh previous=terrain_mesh previous_ms=762 job_ms=10199
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-4 phase=dressing previous=water_mesh previous_ms=426 job_ms=10625
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-4 phase=biome_fx previous=dressing previous_ms=222 job_ms=10847
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=6,-4 final_phase=biome_fx phase_ms=8 job_ms=10855
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=6,-3 terrain=true features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-3 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-3 phase=feature_placements previous=feature_context previous_ms=5 job_ms=5
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-3 phase=heightfield_region previous=feature_placements previous_ms=0 job_ms=5
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-3 phase=water_context previous=heightfield_region previous_ms=0 job_ms=5
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=215234 progress=0.8060 ready=0/9 cold_plan=1.0000 chunk=6,-3 phase=water_context phase_ms=2831 job_ms=2836 queued=15 done=0 pending=7 built=0 feature_ready=7
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-3 phase=terrain_mesh previous=water_context previous_ms=5200 job_ms=5205
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-3 phase=water_mesh previous=terrain_mesh previous_ms=720 job_ms=5925
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-3 phase=dressing previous=water_mesh previous_ms=789 job_ms=6714
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-3 phase=biome_fx previous=dressing previous_ms=204 job_ms=6918
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=6,-3 final_phase=biome_fx phase_ms=9 job_ms=6927
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=6,-2 terrain=true features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-2 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-2 phase=feature_placements previous=feature_context previous_ms=12 job_ms=12
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-2 phase=heightfield_region previous=feature_placements previous_ms=0 job_ms=12
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-2 phase=water_context previous=heightfield_region previous_ms=1 job_ms=13
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=220234 progress=0.8433 ready=0/9 cold_plan=1.0000 chunk=6,-2 phase=water_context phase_ms=896 job_ms=909 queued=15 done=0 pending=8 built=0 feature_ready=8
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=225234 progress=0.8433 ready=0/9 cold_plan=1.0000 chunk=6,-2 phase=water_context phase_ms=5896 job_ms=5909 queued=15 done=0 pending=8 built=0 feature_ready=8
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-2 phase=terrain_mesh previous=water_context previous_ms=7303 job_ms=7316
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-2 phase=water_mesh previous=terrain_mesh previous_ms=691 job_ms=8007
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-2 phase=dressing previous=water_mesh previous_ms=840 job_ms=8847
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-2 phase=biome_fx previous=dressing previous_ms=238 job_ms=9085
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=6,-2 final_phase=biome_fx phase_ms=9 job_ms=9094
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=3,-4 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=3,-4 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=230259 progress=0.8651 ready=1/9 cold_plan=1.0000 chunk=3,-4 phase=feature_context phase_ms=1840 job_ms=1840 queued=15 done=0 pending=8 built=1 feature_ready=9
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=235259 progress=0.8651 ready=1/9 cold_plan=1.0000 chunk=3,-4 phase=feature_context phase_ms=6840 job_ms=6840 queued=15 done=0 pending=8 built=1 feature_ready=9
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=240259 progress=0.8651 ready=1/9 cold_plan=1.0000 chunk=3,-4 phase=feature_context phase_ms=11840 job_ms=11840 queued=15 done=0 pending=8 built=1 feature_ready=9
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=245259 progress=0.8653 ready=1/9 cold_plan=1.0000 chunk=3,-4 phase=feature_context phase_ms=16840 job_ms=16840 queued=15 done=0 pending=8 built=1 feature_ready=9
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=250259 progress=0.8665 ready=1/9 cold_plan=1.0000 chunk=3,-4 phase=feature_context phase_ms=21840 job_ms=21840 queued=15 done=0 pending=8 built=1 feature_ready=9
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=255259 progress=0.8665 ready=1/9 cold_plan=1.0000 chunk=3,-4 phase=feature_context phase_ms=26840 job_ms=26840 queued=15 done=0 pending=8 built=1 feature_ready=9
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=260259 progress=0.8665 ready=1/9 cold_plan=1.0000 chunk=3,-4 phase=feature_context phase_ms=31840 job_ms=31840 queued=15 done=0 pending=8 built=1 feature_ready=9
+[terrain-streamer] worker_phase seed=2697992464 chunk=3,-4 phase=feature_placements previous=feature_context previous_ms=34579 job_ms=34579
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=3,-4 final_phase=feature_placements phase_ms=0 job_ms=34579
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=3,-3 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=3,-3 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=3,-3 phase=feature_placements previous=feature_context previous_ms=8 job_ms=8
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=3,-3 final_phase=feature_placements phase_ms=0 job_ms=8
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=3,-2 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=3,-2 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=3,-2 phase=feature_placements previous=feature_context previous_ms=9 job_ms=9
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=3,-2 final_phase=feature_placements phase_ms=0 job_ms=9
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=4,-1 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-1 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=265284 progress=0.8866 ready=2/9 cold_plan=1.0000 chunk=4,-1 phase=feature_context phase_ms=2269 job_ms=2269 queued=12 done=0 pending=7 built=2 feature_ready=12
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=270293 progress=0.8866 ready=2/9 cold_plan=1.0000 chunk=4,-1 phase=feature_context phase_ms=7278 job_ms=7278 queued=12 done=0 pending=7 built=2 feature_ready=12
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=275293 progress=0.8868 ready=2/9 cold_plan=1.0000 chunk=4,-1 phase=feature_context phase_ms=12278 job_ms=12278 queued=12 done=0 pending=7 built=2 feature_ready=12
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=280293 progress=0.8869 ready=2/9 cold_plan=1.0000 chunk=4,-1 phase=feature_context phase_ms=17278 job_ms=17278 queued=12 done=0 pending=7 built=2 feature_ready=12
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=285293 progress=0.8869 ready=2/9 cold_plan=1.0000 chunk=4,-1 phase=feature_context phase_ms=22278 job_ms=22278 queued=12 done=0 pending=7 built=2 feature_ready=12
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=290293 progress=0.8869 ready=2/9 cold_plan=1.0000 chunk=4,-1 phase=feature_context phase_ms=27278 job_ms=27278 queued=12 done=0 pending=7 built=2 feature_ready=12
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=295293 progress=0.8869 ready=2/9 cold_plan=1.0000 chunk=4,-1 phase=feature_context phase_ms=32278 job_ms=32278 queued=12 done=0 pending=7 built=2 feature_ready=12
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=300293 progress=0.8869 ready=2/9 cold_plan=1.0000 chunk=4,-1 phase=feature_context phase_ms=37278 job_ms=37278 queued=12 done=0 pending=7 built=2 feature_ready=12
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=305293 progress=0.8869 ready=2/9 cold_plan=1.0000 chunk=4,-1 phase=feature_context phase_ms=42278 job_ms=42278 queued=12 done=0 pending=7 built=2 feature_ready=12
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-1 phase=feature_placements previous=feature_context previous_ms=43854 job_ms=43854
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=4,-1 final_phase=feature_placements phase_ms=0 job_ms=43854
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=5,-1 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-1 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-1 phase=feature_placements previous=feature_context previous_ms=8 job_ms=8
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=5,-1 final_phase=feature_placements phase_ms=0 job_ms=8
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=6,-1 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-1 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-1 phase=feature_placements previous=feature_context previous_ms=9 job_ms=9
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=6,-1 final_phase=feature_placements phase_ms=0 job_ms=9
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=3,-1 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=3,-1 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=3,-1 phase=feature_placements previous=feature_context previous_ms=14 job_ms=14
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=3,-1 final_phase=feature_placements phase_ms=0 job_ms=14
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=4,-5 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-5 phase=feature_context previous=starting previous_ms=1 job_ms=1
+[terrain-streamer] worker_phase seed=2697992464 chunk=4,-5 phase=feature_placements previous=feature_context previous_ms=157 job_ms=158
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=4,-5 final_phase=feature_placements phase_ms=0 job_ms=158
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=5,-5 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-5 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=5,-5 phase=feature_placements previous=feature_context previous_ms=5 job_ms=5
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=5,-5 final_phase=feature_placements phase_ms=0 job_ms=5
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=6,-5 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-5 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=6,-5 phase=feature_placements previous=feature_context previous_ms=5 job_ms=5
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=6,-5 final_phase=feature_placements phase_ms=0 job_ms=5
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=3,-5 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=3,-5 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=3,-5 phase=feature_placements previous=feature_context previous_ms=1198 job_ms=1198
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=3,-5 final_phase=feature_placements phase_ms=1 job_ms=1199
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=7,-4 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=7,-4 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=310301 progress=0.9541 ready=6/9 cold_plan=1.0000 chunk=7,-4 phase=feature_context phase_ms=2033 job_ms=2033 queued=4 done=0 pending=3 built=6 feature_ready=20
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=315309 progress=0.9541 ready=6/9 cold_plan=1.0000 chunk=7,-4 phase=feature_context phase_ms=7041 job_ms=7041 queued=4 done=0 pending=3 built=6 feature_ready=20
+[terrain-streamer] worker_phase seed=2697992464 chunk=7,-4 phase=feature_placements previous=feature_context previous_ms=10976 job_ms=10976
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=7,-4 final_phase=feature_placements phase_ms=0 job_ms=10976
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=7,-3 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=7,-3 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=7,-3 phase=feature_placements previous=feature_context previous_ms=5 job_ms=5
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=7,-3 final_phase=feature_placements phase_ms=0 job_ms=5
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=7,-2 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=7,-2 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=2697992464 chunk=7,-2 phase=feature_placements previous=feature_context previous_ms=5 job_ms=5
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=7,-2 final_phase=feature_placements phase_ms=0 job_ms=5
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=7,-1 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=7,-1 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=320318 progress=0.9767 ready=7/9 cold_plan=1.0000 chunk=7,-1 phase=feature_context phase_ms=1064 job_ms=1064 queued=1 done=0 pending=2 built=7 feature_ready=23
+[terrain-streamer] worker_phase seed=2697992464 chunk=7,-1 phase=feature_placements previous=feature_context previous_ms=2400 job_ms=2400
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=7,-1 final_phase=feature_placements phase_ms=0 job_ms=2400
+[terrain-streamer] worker_job_begin seed=2697992464 chunk=7,-5 terrain=false features=true
+[terrain-streamer] worker_phase seed=2697992464 chunk=7,-5 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=325343 progress=0.9878 ready=8/9 cold_plan=1.0000 chunk=7,-5 phase=feature_context phase_ms=3689 job_ms=3689 queued=0 done=0 pending=1 built=8 feature_ready=24
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=330343 progress=0.9880 ready=8/9 cold_plan=1.0000 chunk=7,-5 phase=feature_context phase_ms=8689 job_ms=8689 queued=0 done=0 pending=1 built=8 feature_ready=24
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=335343 progress=0.9880 ready=8/9 cold_plan=1.0000 chunk=7,-5 phase=feature_context phase_ms=13689 job_ms=13689 queued=0 done=0 pending=1 built=8 feature_ready=24
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=340343 progress=0.9896 ready=8/9 cold_plan=1.0000 chunk=7,-5 phase=feature_context phase_ms=18689 job_ms=18689 queued=0 done=0 pending=1 built=8 feature_ready=24
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=345343 progress=0.9896 ready=8/9 cold_plan=1.0000 chunk=7,-5 phase=feature_context phase_ms=23689 job_ms=23689 queued=0 done=0 pending=1 built=8 feature_ready=24
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=350343 progress=0.9896 ready=8/9 cold_plan=1.0000 chunk=7,-5 phase=feature_context phase_ms=28689 job_ms=28689 queued=0 done=0 pending=1 built=8 feature_ready=24
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=355343 progress=0.9896 ready=8/9 cold_plan=1.0000 chunk=7,-5 phase=feature_context phase_ms=33689 job_ms=33689 queued=0 done=0 pending=1 built=8 feature_ready=24
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=360343 progress=0.9896 ready=8/9 cold_plan=1.0000 chunk=7,-5 phase=feature_context phase_ms=38689 job_ms=38689 queued=0 done=0 pending=1 built=8 feature_ready=24
+[terrain-streamer] startup_heartbeat seed=2697992464 elapsed_ms=365343 progress=0.9896 ready=8/9 cold_plan=1.0000 chunk=7,-5 phase=feature_context phase_ms=43689 job_ms=43689 queued=0 done=0 pending=1 built=8 feature_ready=24
+[terrain-streamer] worker_phase seed=2697992464 chunk=7,-5 phase=feature_placements previous=feature_context previous_ms=43861 job_ms=43861
+[terrain-streamer] worker_job_complete seed=2697992464 chunk=7,-5 final_phase=feature_placements phase_ms=0 job_ms=43861
+[terrain-streamer] startup_complete seed=2697992464 elapsed_ms=365613 chunks=9
+ERROR: This function should never be used outside the editor, it can severely damage performance.
+   at: global_shader_parameter_get_list (servers/rendering/renderer_rd/storage_rd/material_storage.cpp:1632)
+   GDScript backtrace (most recent call first):
+       [0] save (res://tests/harness/september11_snapshot.gd:35)
+       [1] _run (res://tests/harness/september13_path_qa.gd:33)
+       [2] _wait_for_site (res://tests/harness/village_reported_qa.gd:146)
+VILLAGE_SNAPSHOT res://docs/qa/2026-09-13-manual/37-barrel/after/world.scn
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/37-barrel/after/P36_barrel_0.png
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/37-barrel/after/P36_barrel_-8.png
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/37-barrel/after/P36_barrel_8.png

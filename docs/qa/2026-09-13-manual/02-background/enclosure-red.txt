@@ -1,0 +1,55 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_background_visibility.gd
+[0m* test_background_house_survives_foreground_house_in_same_native_batch
+[33m    [Pending]:  [0mRequires native GPU rendering
+* test_visibility_owners_survive_payload_copy_and_chunk_projection
+* test_roof_overhang_keeps_its_supporting_rooms_visibility_owner
+* test_offset_storeys_share_their_inhabited_enclosure_but_not_other_buildings
+[31m    [Failed]:  [0m[AABB([P: (-3.0, 0.0, -9.0), S: (6.0, 4.0, 6.0)])] expected to equal [AABB([P: (-3.0, 0.0, -9.0), S: (6.0, 8.0, 10.0)])]:  
+      at line 174
+[31m    [Failed]:  [0m[AABB([P: (-3.0, 4.0, -5.0), S: (6.0, 4.0, 6.0)])] expected to equal [AABB([P: (-3.0, 0.0, -9.0), S: (6.0, 8.0, 10.0)])]:  
+      at line 175
+[31m    [Failed]:  [0m[AABB([P: (-3.0, 0.0, -9.0), S: (6.0, 4.0, 6.0)])] expected to equal [AABB([P: (-3.0, 0.0, -9.0), S: (6.0, 8.0, 10.0)])]:  
+      at line 176
+[1m2/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_background_visibility.gd
+[0m- test_background_house_survives_foreground_house_in_same_native_batch
+[33m    [Pending]:  [0mRequires native GPU rendering
+- test_offset_storeys_share_their_inhabited_enclosure_but_not_other_buildings
+[31m    [Failed]:  [0m[AABB([P: (-3.0, 0.0, -9.0), S: (6.0, 4.0, 6.0)])] expected to equal [AABB([P: (-3.0, 0.0, -9.0), S: (6.0, 8.0, 10.0)])]:  
+          at line 174
+[31m    [Failed]:  [0m[AABB([P: (-3.0, 4.0, -5.0), S: (6.0, 4.0, 6.0)])] expected to equal [AABB([P: (-3.0, 0.0, -9.0), S: (6.0, 8.0, 10.0)])]:  
+          at line 175
+[31m    [Failed]:  [0m[AABB([P: (-3.0, 0.0, -9.0), S: (6.0, 4.0, 6.0)])] expected to equal [AABB([P: (-3.0, 0.0, -9.0), S: (6.0, 8.0, 10.0)])]:  
+          at line 176
+
+Totals
+------
+Scripts               1
+Tests                 4
+Passing Tests         2
+Failing Tests         1
+Risky/Pending         1
+Asserts            9/12
+Time              0.374s
+
+
+[31m---- 1 failing tests ----
+[0m

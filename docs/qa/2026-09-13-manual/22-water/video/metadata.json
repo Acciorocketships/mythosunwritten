@@ -1,0 +1,82 @@
+{
+    "streams": [
+        {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+            "profile": "Main",
+            "codec_type": "video",
+            "codec_tag_string": "avc1",
+            "codec_tag": "0x31637661",
+            "width": 3020,
+            "height": 1698,
+            "coded_width": 3020,
+            "coded_height": 1698,
+            "closed_captions": 0,
+            "has_b_frames": 16,
+            "pix_fmt": "yuv420p",
+            "level": 51,
+            "color_range": "tv",
+            "color_space": "bt709",
+            "color_transfer": "bt709",
+            "color_primaries": "bt709",
+            "chroma_location": "center",
+            "refs": 1,
+            "is_avc": "true",
+            "nal_length_size": "4",
+            "r_frame_rate": "60/1",
+            "avg_frame_rate": "15900/269",
+            "time_base": "1/6000",
+            "start_pts": 0,
+            "start_time": "0.000000",
+            "duration_ts": 26700,
+            "duration": "4.450000",
+            "bit_rate": "41439324",
+            "bits_per_raw_sample": "8",
+            "nb_frames": "265",
+            "disposition": {
+                "default": 1,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0
+            },
+            "tags": {
+                "creation_time": "2026-09-12T16:05:48.000000Z",
+                "language": "und",
+                "handler_name": "Core Media Video",
+                "vendor_id": "[0][0][0][0]",
+                "encoder": "H.264"
+            }
+        }
+    ],
+    "format": {
+        "filename": "/Users/ryko/Desktop/game/town feedback/Screen Recording 2026-09-12 at 12.05.48 PM.mov",
+        "nb_streams": 1,
+        "nb_programs": 0,
+        "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+        "format_long_name": "QuickTime / MOV",
+        "start_time": "0.000000",
+        "duration": "4.450000",
+        "size": "23441820",
+        "bit_rate": "42142597",
+        "probe_score": 100,
+        "tags": {
+            "major_brand": "qt  ",
+            "minor_version": "0",
+            "compatible_brands": "qt  ",
+            "creation_time": "2026-09-12T16:05:48.000000Z",
+            "com.apple.quicktime.make": "Apple",
+            "com.apple.quicktime.model": "MacBookPro18,1",
+            "com.apple.quicktime.software": "macOS 15.6.1 (24G90)",
+            "com.apple.quicktime.creationdate": "2026-09-12T12:05:48-0400"
+        }
+    }
+}

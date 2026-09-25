@@ -1,0 +1,33 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_loose_rails.gd
+[0m* test_p08_ramp_rails_yield_to_the_finished_upper_house_wall
+* test_finished_native_wall_clips_deferred_guards_without_removing_exposed_guard
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         2
+Asserts              22
+Time              12.166s
+
+
+[32m---- All tests passed! ----
+[0m

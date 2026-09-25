@@ -1,0 +1,86 @@
+{
+  "assets": [
+    {
+      "asset": "kaykit.rock.05",
+      "native_bounds": "[P: (-4.744142, 0.000025, -4.143012), S: (9.503394, 8.585823, 9.920389)]",
+      "native_triangles": 438,
+      "physical_bounds": "[P: (-4.7442, 0.0, -4.143), S: (9.503399, 8.585699, 9.9204)]",
+      "physical_triangles": 438,
+      "profile": "native mesh"
+    },
+    {
+      "asset": "kaykit.terrace.2x2x2",
+      "native_bounds": "[P: (-1.23471, 0.0, -1.23471), S: (2.46942, 2.0, 2.46942)]",
+      "native_triangles": 336,
+      "physical_bounds": "[P: (-1.0, 0.0, -1.0), S: (2.0, 2.0, 2.0)]",
+      "physical_triangles": 64,
+      "profile": "native flat cap and vertical terrain sides"
+    },
+    {
+      "asset": "kaykit.terrace.2x2x4",
+      "native_bounds": "[P: (-1.23471, 0.0, -1.23471), S: (2.46942, 4.0, 2.46942)]",
+      "native_triangles": 336,
+      "physical_bounds": "[P: (-1.0, 0.0, -1.0), S: (2.0, 4.0, 2.0)]",
+      "physical_triangles": 64,
+      "profile": "native flat cap and vertical terrain sides"
+    },
+    {
+      "asset": "kaykit.terrace.2x2x8",
+      "native_bounds": "[P: (-1.23471, 0.0, -1.23471), S: (2.46942, 8.0, 2.46942)]",
+      "native_triangles": 384,
+      "physical_bounds": "[P: (-1.0, 0.0, -1.0), S: (2.0, 8.0, 2.0)]",
+      "physical_triangles": 64,
+      "profile": "native flat cap and vertical terrain sides"
+    },
+    {
+      "asset": "kaykit.terrace.4x2x2",
+      "native_bounds": "[P: (-2.23471, 0.0, -1.25), S: (4.46942, 2.0, 2.5)]",
+      "native_triangles": 536,
+      "physical_bounds": "[P: (-2.0, 0.0, -1.0), S: (4.0, 2.0, 2.0)]",
+      "physical_triangles": 100,
+      "profile": "native flat cap and vertical terrain sides"
+    },
+    {
+      "asset": "kaykit.terrace.4x2x4",
+      "native_bounds": "[P: (-2.23471, 0.0, -1.25), S: (4.46942, 4.0, 2.5)]",
+      "native_triangles": 520,
+      "physical_bounds": "[P: (-2.0, 0.0, -1.0), S: (4.0, 4.0, 2.0)]",
+      "physical_triangles": 100,
+      "profile": "native flat cap and vertical terrain sides"
+    },
+    {
+      "asset": "kaykit.terrace.4x2x8",
+      "native_bounds": "[P: (-2.23471, 0.0, -1.25), S: (4.46942, 8.0, 2.5)]",
+      "native_triangles": 604,
+      "physical_bounds": "[P: (-2.0, 0.0, -1.0), S: (4.0, 8.0, 2.0)]",
+      "physical_triangles": 100,
+      "profile": "native flat cap and vertical terrain sides"
+    },
+    {
+      "asset": "kaykit.terrace.4x4x2",
+      "native_bounds": "[P: (-2.25, 0.0, -2.25), S: (4.5, 2.0, 4.5)]",
+      "native_triangles": 698,
+      "physical_bounds": "[P: (-2.0, 0.0, -2.0), S: (4.0, 2.0, 4.0)]",
+      "physical_triangles": 124,
+      "profile": "native flat cap and vertical terrain sides"
+    },
+    {
+      "asset": "kaykit.terrace.4x4x4",
+      "native_bounds": "[P: (-2.25, 0.0, -2.25), S: (4.5, 4.0, 4.5)]",
+      "native_triangles": 700,
+      "physical_bounds": "[P: (-2.0, 0.0, -2.0), S: (4.0, 4.0, 4.0)]",
+      "physical_triangles": 124,
+      "profile": "native flat cap and vertical terrain sides"
+    },
+    {
+      "asset": "kaykit.terrace.8x4x4",
+      "native_bounds": "[P: (-4.25, 0.0, -2.25), S: (8.5, 4.0, 4.5)]",
+      "native_triangles": 1026,
+      "physical_bounds": "[P: (-4.0, 0.0, -2.0), S: (8.0, 4.0, 4.0)]",
+      "physical_triangles": 188,
+      "profile": "native flat cap and vertical terrain sides"
+    }
+  ],
+  "prepare_usec": 842195,
+  "shape": "ConcavePolygonShape3D; one aggregate static shape per nonempty chunk"
+}

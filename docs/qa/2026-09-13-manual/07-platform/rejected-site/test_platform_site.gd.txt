@@ -1,0 +1,37 @@
+extends GutTest
+
+func test_p07_platform_site_addresses_a_real_level_landing() -> void:
+	var source := preload("res://tests/fixtures/frozen_maze_source.gd").read("res://docs/qa/2026-09-13-manual/04-path/source.txt",false)
+	# Keep exactly the photographed 2x2 candidate footprint available. Source
+	# records identify its former entrance as (2,2,3), inside transition 07.
+	var footprint: Array[Vector2i] = [Vector2i(1,4),Vector2i(2,4),Vector2i(1,5),Vector2i(2,5)]
+	var blocked := {}
+	for column: Vector2i in source.massif.columns:
+		if column not in footprint: blocked[column]=true
+	var site := WarrenPlotReservations._best_plaza_site(source,WarrenPlotPlanner.street_bands(source),blocked,{})
+	assert_true(site.is_empty(),"The old footprint has no supported level entrance; a rounded ramp cell cannot admit it")
+
+func test_level_deck_frontages_keep_landings_and_separate_street_levels() -> void:
+	for quarter in 4:
+		for rise in [-1,1]:
+			var source := preload("res://tests/fixtures/frozen_maze_source.gd").read("res://docs/qa/2026-09-13-manual/04-path/source.txt",false)
+			var directions: Array[Vector2i] = [Vector2i.RIGHT,Vector2i.DOWN,Vector2i.LEFT,Vector2i.UP]
+			var d := directions[quarter]
+			var from_cell := Vector3i(0,2,0)
+			var to_cell := Vector3i(d.x*3,2+rise,d.y*3)
+			var transition := {"from":from_cell,"to":to_cell,"kind":WarrenVolumeTransition.Kind.RAMP}
+			source.excavation.transitions.clear()
+			source.excavation.lanes.clear()
+			source.excavation.loop_edges.clear()
+			# Exercise both canonical route and secondary-lane provenance.
+			if quarter%2==0: source.excavation.transitions.append(transition)
+			else: source.excavation.lanes.append({"transitions":[transition]})
+			var streets := {Vector2i.ZERO:[2],d:[mini(2,2+rise),5],d*2:[maxi(2,2+rise),5],d*3:[2+rise],d*4:[2+rise]}
+			var original := streets.duplicate(true)
+			var result := WarrenPlotReservations._level_deck_frontages(source,streets)
+			assert_eq(result[Vector2i.ZERO],[2],"Lower/upper start landing remains usable")
+			assert_eq(result[d*3],[2+rise],"End landing remains usable")
+			assert_eq(result[d*4],[2+rise],"Level continuation remains usable")
+			assert_eq(result[d],[5],"Sloping intermediate is excluded while separate upper street survives")
+			assert_eq(result[d*2],[5],"Both halves of the flight are excluded")
+			assert_eq(streets,original,"Physical street plan is unchanged")

@@ -1,0 +1,218 @@
+[
+  {
+    "after_count": 102,
+    "before_count": 90,
+    "key": "vertices",
+    "max_distance": 0.0,
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/cap.0",
+    "surface": 9,
+    "type": "PackedVector3Array"
+  },
+  {
+    "after_count": 102,
+    "before_count": 90,
+    "key": "normals",
+    "max_distance": 0.0,
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/cap.0",
+    "surface": 9,
+    "type": "PackedVector3Array"
+  },
+  {
+    "key": "uvs",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/cap.0",
+    "surface": 9,
+    "type": "PackedVector2Array"
+  },
+  {
+    "key": "colors",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/cap.0",
+    "surface": 9,
+    "type": "PackedColorArray"
+  },
+  {
+    "key": "indices",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/cap.0",
+    "surface": 9,
+    "type": "PackedInt32Array"
+  },
+  {
+    "after_count": 102,
+    "before_count": 90,
+    "key": "vertices",
+    "max_distance": 0.0,
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.006.part00.room00/front.0/cap.0",
+    "surface": 15,
+    "type": "PackedVector3Array"
+  },
+  {
+    "after_count": 102,
+    "before_count": 90,
+    "key": "normals",
+    "max_distance": 0.0,
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.006.part00.room00/front.0/cap.0",
+    "surface": 15,
+    "type": "PackedVector3Array"
+  },
+  {
+    "key": "uvs",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.006.part00.room00/front.0/cap.0",
+    "surface": 15,
+    "type": "PackedVector2Array"
+  },
+  {
+    "key": "colors",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.006.part00.room00/front.0/cap.0",
+    "surface": 15,
+    "type": "PackedColorArray"
+  },
+  {
+    "key": "indices",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.006.part00.room00/front.0/cap.0",
+    "surface": 15,
+    "type": "PackedInt32Array"
+  },
+  {
+    "after_count": 36,
+    "before_count": 24,
+    "key": "vertices",
+    "max_distance": 0.0,
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/south/cap.0",
+    "surface": 16,
+    "type": "PackedVector3Array"
+  },
+  {
+    "after_count": 36,
+    "before_count": 24,
+    "key": "normals",
+    "max_distance": 0.0,
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/south/cap.0",
+    "surface": 16,
+    "type": "PackedVector3Array"
+  },
+  {
+    "key": "uvs",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/south/cap.0",
+    "surface": 16,
+    "type": "PackedVector2Array"
+  },
+  {
+    "key": "colors",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/south/cap.0",
+    "surface": 16,
+    "type": "PackedColorArray"
+  },
+  {
+    "key": "indices",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/south/cap.0",
+    "surface": 16,
+    "type": "PackedInt32Array"
+  },
+  {
+    "after_count": 36,
+    "before_count": 24,
+    "key": "vertices",
+    "max_distance": 0.0,
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.012.part00.room00/south/cap.0",
+    "surface": 17,
+    "type": "PackedVector3Array"
+  },
+  {
+    "after_count": 36,
+    "before_count": 24,
+    "key": "normals",
+    "max_distance": 0.0,
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.012.part00.room00/south/cap.0",
+    "surface": 17,
+    "type": "PackedVector3Array"
+  },
+  {
+    "key": "uvs",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.012.part00.room00/south/cap.0",
+    "surface": 17,
+    "type": "PackedVector2Array"
+  },
+  {
+    "key": "colors",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.012.part00.room00/south/cap.0",
+    "surface": 17,
+    "type": "PackedColorArray"
+  },
+  {
+    "key": "indices",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.012.part00.room00/south/cap.0",
+    "surface": 17,
+    "type": "PackedInt32Array"
+  },
+  {
+    "after_count": 36,
+    "before_count": 24,
+    "key": "vertices",
+    "max_distance": 0.0,
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.014.part00.room00/south/cap.0",
+    "surface": 19,
+    "type": "PackedVector3Array"
+  },
+  {
+    "after_count": 36,
+    "before_count": 24,
+    "key": "normals",
+    "max_distance": 0.0,
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.014.part00.room00/south/cap.0",
+    "surface": 19,
+    "type": "PackedVector3Array"
+  },
+  {
+    "key": "uvs",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.014.part00.room00/south/cap.0",
+    "surface": 19,
+    "type": "PackedVector2Array"
+  },
+  {
+    "key": "colors",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.014.part00.room00/south/cap.0",
+    "surface": 19,
+    "type": "PackedColorArray"
+  },
+  {
+    "key": "indices",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.014.part00.room00/south/cap.0",
+    "surface": 19,
+    "type": "PackedInt32Array"
+  },
+  {
+    "after_count": 36,
+    "before_count": 24,
+    "key": "vertices",
+    "max_distance": 0.0,
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.027.part00.room00/south/cap.0",
+    "surface": 24,
+    "type": "PackedVector3Array"
+  },
+  {
+    "after_count": 36,
+    "before_count": 24,
+    "key": "normals",
+    "max_distance": 0.0,
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.027.part00.room00/south/cap.0",
+    "surface": 24,
+    "type": "PackedVector3Array"
+  },
+  {
+    "key": "uvs",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.027.part00.room00/south/cap.0",
+    "surface": 24,
+    "type": "PackedVector2Array"
+  },
+  {
+    "key": "colors",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.027.part00.room00/south/cap.0",
+    "surface": 24,
+    "type": "PackedColorArray"
+  },
+  {
+    "key": "indices",
+    "stable_id": "spatial.fabric.spatial.parcel.maze.house.027.part00.room00/south/cap.0",
+    "surface": 24,
+    "type": "PackedInt32Array"
+  }
+]

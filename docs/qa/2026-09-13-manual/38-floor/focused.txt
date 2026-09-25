@@ -1,0 +1,42 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_transition_material.gd
+[0m* test_production_photo_ramp_uses_the_reviewed_plank_material
+* test_transition_material_is_shared_with_native_review
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_feature_commit_queue.gd
+[0m* test_assets_and_collision_are_staged_before_readiness
+* test_empty_blocks_become_explicit_ready_records_without_nodes
+* test_invalidation_discards_a_detached_partial_commit
+* test_collision_contract_skips_visual_instances_and_commits_boxes
+* test_box_only_payload_waits_for_collision_commit
+* test_terrain_corner_backing_keeps_rock_uv_at_commit
+* test_partitioned_cap_keeps_the_authored_material
+[1m7/7 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 9
+Passing Tests         9
+Asserts              54
+Time              6.953s
+
+
+[32m---- All tests passed! ----
+[0m

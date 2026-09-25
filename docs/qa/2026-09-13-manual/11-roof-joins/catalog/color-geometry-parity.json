@@ -1,0 +1,34 @@
+[
+  {
+    "case": "slate.tight.eave_negative.end_negative",
+    "identical": true
+  },
+  {
+    "case": "slate.tight.eave_negative.end_positive",
+    "identical": true
+  },
+  {
+    "case": "slate.tight.eave_positive.end_negative",
+    "identical": true
+  },
+  {
+    "case": "slate.tight.eave_positive.end_positive",
+    "identical": true
+  },
+  {
+    "case": "slate.ordinary.eave_negative.end_negative",
+    "identical": true
+  },
+  {
+    "case": "slate.ordinary.eave_negative.end_positive",
+    "identical": true
+  },
+  {
+    "case": "slate.ordinary.eave_positive.end_negative",
+    "identical": true
+  },
+  {
+    "case": "slate.ordinary.eave_positive.end_positive",
+    "identical": true
+  }
+]

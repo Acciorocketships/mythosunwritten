@@ -1,0 +1,35 @@
+{
+  "P47_bush_-8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 0.97728137732978,
+    "roi_mean_abs_rgb": 0.97728137732978,
+    "roi_changed_over_20_fraction": 0.02324796855290563
+  },
+  "P47_bush_0": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 0.8672970301721512,
+    "roi_mean_abs_rgb": 0.8672970301721512,
+    "roi_changed_over_20_fraction": 0.021114977310524263
+  },
+  "P47_bush_8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 0.8217289057076085,
+    "roi_mean_abs_rgb": 0.8217289057076085,
+    "roi_changed_over_20_fraction": 0.0200826118057483
+  }
+}

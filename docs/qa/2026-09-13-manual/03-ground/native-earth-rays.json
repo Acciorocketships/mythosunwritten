@@ -1,0 +1,173 @@
+[
+  {
+    "hits": [
+      {
+        "distance": 22.7471961975098,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 299,
+        "node": "/root/FrozenVillage/@MultiMeshInstance3D@3552",
+        "normal": "(0.0, 1.0, 0.0)",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-426.107, 28.05, -657.8801)"
+      },
+      {
+        "distance": 24.2518844604492,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 298,
+        "node": "/root/FrozenVillage/@MultiMeshInstance3D@3552",
+        "normal": "(0.0, -0.990772, 0.135538)",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-425.5308, 27.39843, -659.108)"
+      },
+      {
+        "distance": 24.7292366027832,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 522,
+        "node": "/root/FrozenVillage/@MultiMeshInstance3D@3551",
+        "normal": "(-0.0, -0.286579, -0.958057)",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-425.3481, 27.19172, -659.4975)"
+      },
+      {
+        "distance": 31.9845848083496,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 252,
+        "node": "/root/FrozenVillage/@MultiMeshInstance3D@3552",
+        "normal": "(0.0, 1.0, 0.0)",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-422.57, 24.05, -665.418)"
+      },
+      {
+        "distance": 32.0171928405762,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/@MeshInstance3D@3550",
+        "normal": "(-0.024867, 0.999691, 0.0)",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-422.5575, 24.03588, -665.4446)"
+      },
+      {
+        "distance": 36.265323638916,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 460,
+        "node": "/root/FrozenVillage/@MultiMeshInstance3D@3551",
+        "normal": "(0.789372, 0.0, -0.613915)",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-420.9309, 22.19635, -668.9111)"
+      }
+    ],
+    "pixel": "(670.0, 440.0)"
+  },
+  {
+    "hits": [
+      {
+        "distance": 22.118782043457,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 292,
+        "node": "/root/FrozenVillage/@MultiMeshInstance3D@3552",
+        "normal": "(0.0, 1.0, 0.0)",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-420.511, 28.05, -653.0134)"
+      },
+      {
+        "distance": 31.101037979126,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 317,
+        "node": "/root/FrozenVillage/@MultiMeshInstance3D@3552",
+        "normal": "(0.0, 1.0, 0.0)",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-414.7016, 24.05, -658.575)"
+      },
+      {
+        "distance": 32.4805183410645,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 316,
+        "node": "/root/FrozenVillage/@MultiMeshInstance3D@3552",
+        "normal": "(-0.514277, -0.857624, 0.0)",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-413.8094, 23.43567, -659.4291)"
+      },
+      {
+        "distance": 40.1955795288086,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/@MeshInstance3D@3550",
+        "normal": "(0.0, 1.0, 0.0)",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-408.8195, 20.0, -664.2061)"
+      }
+    ],
+    "pixel": "(1040.0, 455.0)"
+  },
+  {
+    "hits": [
+      {
+        "distance": 17.5176620483398,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/@MeshInstance3D@3550",
+        "normal": "(0.0, 1.0, 0.0)",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-432.6972, 28.0, -653.6137)"
+      },
+      {
+        "distance": 24.2271518707275,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 524,
+        "node": "/root/FrozenVillage/@MultiMeshInstance3D@3551",
+        "normal": "(-0.613915, 0.0, -0.789372)",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-431.8854, 24.20815, -659.0891)"
+      },
+      {
+        "distance": 24.5954837799072,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/Aprons",
+        "normal": "(0.0, 1.0, 0.0)",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-431.8409, 24.0, -659.3897)"
+      }
+    ],
+    "pixel": "(400.0, 665.0)"
+  }
+]

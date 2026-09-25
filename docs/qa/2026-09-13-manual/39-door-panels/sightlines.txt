@@ -1,0 +1,39 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_door_panels.gd
+[0m* test_door_side_housing_keeps_native_wall_relief_instead_of_a_protruding_flat_strip
+* test_replacement_housing_does_not_open_previously_closed_front_or_rear_sightlines
+[31m    [Failed]:  [0m[26] expected to equal [0]:  No new through-view across the housing: [(-1.49, 0.3), (-1.49, 0.5), (-1.49, 0.7), (-1.49, 0.9), (-1.49, 1.1), (-1.49, 1.3), (-1.49, 1.5), (-1.49, 1.7), (-1.49, 1.9), (-1.49, 2.1), (-1.49, 2.3), (-1.49, 2.5), (-1.49, 2.7), (1.49, 0.3), (1.49, 0.5), (1.49, 0.7), (1.49, 0.9), (1.49, 1.1), (1.49, 1.3), (1.49, 1.5), (1.49, 1.7), (1.49, 1.9), (1.49, 2.1), (1.49, 2.3), (1.49, 2.5), (1.49, 2.7)]
+      at line 57
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_door_panels.gd
+[0m- test_replacement_housing_does_not_open_previously_closed_front_or_rear_sightlines
+[31m    [Failed]:  [0m[26] expected to equal [0]:  No new through-view across the housing: [(-1.49, 0.3), (-1.49, 0.5), (-1.49, 0.7), (-1.49, 0.9), (-1.49, 1.1), (-1.49, 1.3), (-1.49, 1.5), (-1.49, 1.7), (-1.49, 1.9), (-1.49, 2.1), (-1.49, 2.3), (-1.49, 2.5), (-1.49, 2.7), (1.49, 0.3), (1.49, 0.5), (1.49, 0.7), (1.49, 0.9), (1.49, 1.1), (1.49, 1.3), (1.49, 1.5), (1.49, 1.7), (1.49, 1.9), (1.49, 2.1), (1.49, 2.3), (1.49, 2.5), (1.49, 2.7)]
+          at line 57
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts           73/74
+Time              5.185s
+
+
+[31m---- 1 failing tests ----
+[0m

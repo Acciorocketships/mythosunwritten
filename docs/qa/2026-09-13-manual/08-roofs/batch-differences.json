@@ -1,0 +1,43 @@
+{
+  "added": [],
+  "after": 2001,
+  "before": 2001,
+  "changed": [
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.orange.06.front.end.tight",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 2.972301, 9.75)]",
+        "visibility_owners": "[P: (-6.75, -0.161052, 8.25), S: (6.0, 3.161052, 3.00102)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.orange.03.rear.end.tight",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 2.972301, 11.25)]",
+        "visibility_owners": "[P: (-6.75, -0.161052, 8.25), S: (6.0, 3.161052, 3.00102)]"
+      },
+      "id": "spatial.roof.spatial.parcel.maze.house.000.part00.room00.tile00/gable.00"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.orange.06.front.end.tight",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 2.972301, 9.75)]",
+        "visibility_owners": "[P: (-6.75, -0.161052, 8.25), S: (6.0, 3.161052, 3.00102)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.orange.03.rear.end.tight",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 2.972301, 11.25)]",
+        "visibility_owners": "[P: (-6.75, -0.161052, 8.25), S: (6.0, 3.161052, 3.00102)]"
+      },
+      "id": "spatial.roof.spatial.parcel.maze.house.000.part00.room00.tile00/gable.01"
+    }
+  ],
+  "removed": [],
+  "unchanged": 1999
+}

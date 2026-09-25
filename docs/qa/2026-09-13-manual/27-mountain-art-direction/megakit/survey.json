@@ -1,0 +1,47 @@
+[
+	{
+		"bounds": "[P: (-1.381242, -0.077334, -1.278536), S: (2.826934, 0.840243, 2.65232)]",
+		"index": 0,
+		"path": "res://assets/StylizedNatureQuaternius/glTF/Fern_1.gltf"
+	},
+	{
+		"bounds": "[P: (-0.739245, -0.036052, -0.818591), S: (1.540073, 1.671802, 1.593716)]",
+		"index": 1,
+		"path": "res://assets/StylizedNatureQuaternius/glTF/Grass_Wispy_Tall.gltf"
+	},
+	{
+		"bounds": "[P: (-0.923476, -0.234695, -0.974389), S: (1.914845, 1.581786, 1.965141)]",
+		"index": 2,
+		"path": "res://assets/StylizedNatureQuaternius/glTF/Bush_Common.gltf"
+	},
+	{
+		"bounds": "[P: (-2.174241, -0.201475, -6.726779), S: (13.51575, 16.7255, 11.54936)]",
+		"index": 3,
+		"path": "res://assets/StylizedNatureQuaternius/glTF/TwistedTree_1.gltf"
+	},
+	{
+		"bounds": "[P: (-6.61997, -0.201475, -5.540718), S: (10.56287, 18.9492, 9.202588)]",
+		"index": 4,
+		"path": "res://assets/StylizedNatureQuaternius/glTF/TwistedTree_2.gltf"
+	},
+	{
+		"bounds": "[P: (-3.746437, -0.201475, -6.338997), S: (9.494712, 15.66218, 9.387029)]",
+		"index": 5,
+		"path": "res://assets/StylizedNatureQuaternius/glTF/TwistedTree_5.gltf"
+	},
+	{
+		"bounds": "[P: (-1.727287, -0.271131, -1.149883), S: (3.225148, 2.259797, 2.989136)]",
+		"index": 6,
+		"path": "res://assets/StylizedNatureQuaternius/glTF/Rock_Medium_1.gltf"
+	},
+	{
+		"bounds": "[P: (-1.713642, -0.050842, -1.159125), S: (3.04876, 1.898975, 2.479072)]",
+		"index": 7,
+		"path": "res://assets/StylizedNatureQuaternius/glTF/Rock_Medium_2.gltf"
+	},
+	{
+		"bounds": "[P: (-1.824279, -0.315644, -0.890462), S: (3.420085, 2.316283, 3.47611)]",
+		"index": 8,
+		"path": "res://assets/StylizedNatureQuaternius/glTF/Rock_Medium_3.gltf"
+	}
+]

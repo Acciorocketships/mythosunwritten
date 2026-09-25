@@ -1,0 +1,52 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_platform_connection.gd
+[0m* test_photographed_platform_has_owned_connection_to_actual_flight
+* test_side_connection_has_matching_visual_collision_and_outward_faces_in_four_orientations
+* test_connection_requires_existing_approach_clear_air_and_gentle_grade
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_september8_night_rails.gd
+[0m* test_photographed_towns_do_not_fence_retained_walls
+* test_wall_socket_preserves_exposed_guard_and_collision_in_all_directions
+* test_photo14_lower_rail_respects_the_emitted_stone_course
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_september9_rail_attachment.gd
+[0m* test_gate_rails_enter_actual_native_landing_posts_in_four_orientations
+* test_attachment_keeps_the_reserved_treads_and_lower_landing
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september10_rail_shading.gd
+[0m* test_guard_beams_and_posts_shade_their_outer_faces_in_all_orientations
+[1m1/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               4
+Tests                 9
+Passing Tests         9
+Asserts             387
+Time              27.548s
+
+
+[32m---- All tests passed! ----
+[0m

@@ -1,0 +1,74 @@
+[
+  {
+    "hits": [],
+    "pixel": "(680.0, 180.0)"
+  },
+  {
+    "hits": [
+      {
+        "asset": "lpfv.fabric.roof.compact.orange.03.rear.end.tight",
+        "distance": 33.5679359436035,
+        "id": "spatial.roof.spatial.parcel.maze.house.013.part00.room00/gable.00.00.00",
+        "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (966.0, 22.0246, -2068.0)]"
+      },
+      {
+        "asset": "lpfv.fabric.roof.compact.orange.06",
+        "distance": 35.8723945617676,
+        "id": "spatial.roof.spatial.maze_back.06.room00/roof",
+        "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (966.0, 22.08, -2074.0)]"
+      }
+    ],
+    "pixel": "(760.0, 180.0)"
+  },
+  {
+    "hits": [
+      {
+        "asset": "lpfv.fabric.roof.compact.orange.06",
+        "distance": 39.5286979675293,
+        "id": "spatial.roof.spatial.maze_back.06.room00/roof",
+        "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (966.0, 22.08, -2074.0)]"
+      },
+      {
+        "asset": "lpfv.fabric.roof.compact.orange.03.rear.tight",
+        "distance": 40.4007873535156,
+        "id": "spatial.roof.spatial.parcel.maze.house.010.part00.room00/gable.00.00.00",
+        "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (960.0, 22.0246, -2080.0)]"
+      },
+      {
+        "asset": "lpfv.fabric.roof.compact.orange.06.front.tight",
+        "distance": 43.0257263183594,
+        "id": "spatial.roof.spatial.parcel.maze.house.010.part00.room00/gable.00.01.00",
+        "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (966.0, 22.0246, -2080.0)]"
+      }
+    ],
+    "pixel": "(650.0, 140.0)"
+  },
+  {
+    "hits": [
+      {
+        "asset": "lpfv.fabric.roof.compact.orange.03.rear.tight",
+        "distance": 38.7635650634766,
+        "id": "spatial.roof.spatial.parcel.maze.house.010.part00.room00/gable.00.00.00",
+        "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (960.0, 22.0246, -2080.0)]"
+      }
+    ],
+    "pixel": "(550.0, 160.0)"
+  },
+  {
+    "hits": [
+      {
+        "asset": "lpfv.fabric.roof.compact.orange.06",
+        "distance": 38.1658744812012,
+        "id": "spatial.roof.spatial.maze_back.06.room00/roof",
+        "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (966.0, 22.08, -2074.0)]"
+      },
+      {
+        "asset": "lpfv.fabric.roof.compact.orange.06.front.tight",
+        "distance": 41.4285087585449,
+        "id": "spatial.roof.spatial.parcel.maze.house.010.part00.room00/gable.00.01.00",
+        "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (966.0, 22.0246, -2080.0)]"
+      }
+    ],
+    "pixel": "(680.0, 125.0)"
+  }
+]

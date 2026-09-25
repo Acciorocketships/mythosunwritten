@@ -1,0 +1,52 @@
+[
+  {
+    "pair": "[(-1, -2), (-1, -1)]",
+    "route_identical": true,
+    "connections": 39,
+    "cost": 974.0,
+    "eager_ms": 102364,
+    "lazy_ms": 101949
+  },
+  {
+    "pair": "[(-1, -1), (0, -1)]",
+    "route_identical": true,
+    "connections": 33,
+    "cost": 836.0,
+    "eager_ms": 659,
+    "lazy_ms": 540
+  },
+  {
+    "pair": "[(-1, -2), (0, -2)]",
+    "route_identical": true,
+    "connections": 0,
+    "cost": null,
+    "eager_ms": 6436,
+    "lazy_ms": 1184
+  },
+  {
+    "pair": "[(0, -2), (0, -1)]",
+    "route_identical": true,
+    "connections": 0,
+    "cost": null,
+    "eager_ms": 14361,
+    "lazy_ms": 1433
+  },
+  {
+    "gate": "(-1, -2)",
+    "accepted": 4,
+    "projected": 4,
+    "masks_identical": true
+  },
+  {
+    "gate": "(-1, -1)",
+    "accepted": 8,
+    "projected": 8,
+    "masks_identical": true
+  },
+  {
+    "gate": "(0, -1)",
+    "accepted": 2,
+    "projected": 2,
+    "masks_identical": true
+  }
+]

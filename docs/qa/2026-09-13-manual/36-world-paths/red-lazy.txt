@@ -1,0 +1,43 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_world_paths.gd
+[0m* test_route_search_does_not_prepare_every_unused_detour_edge
+[31m    [Failed]:  [0m[1376] expected to equal [0]:  Building the search domain must not prepare water for unused detours
+      at line 199
+[31m    [Failed]:  [0m[1376] expected to be < than [738]:  The clear straight route leaves most detour edges unprepared
+      at line 203
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_world_paths.gd
+[0m- test_route_search_does_not_prepare_every_unused_detour_edge
+[31m    [Failed]:  [0m[1376] expected to equal [0]:  Building the search domain must not prepare water for unused detours
+          at line 199
+[31m    [Failed]:  [0m[1376] expected to be < than [738]:  The clear straight route leaves most detour edges unprepared
+          at line 203
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             2/4
+Time              1.261s
+
+
+Ran Tests matching "test_route_search_does"
+[31m---- 1 failing tests ----
+[0m

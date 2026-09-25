@@ -1,0 +1,35 @@
+{
+  "P44_buried_-8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 1.3088179433774787,
+    "roi_mean_abs_rgb": 1.3088179433774787,
+    "roi_changed_over_20_fraction": 0.015407067924008873
+  },
+  "P44_buried_0": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 1.2980698713999779,
+    "roi_mean_abs_rgb": 1.2980698713999779,
+    "roi_changed_over_20_fraction": 0.015367578533115803
+  },
+  "P44_buried_8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 1.4023592842566706,
+    "roi_mean_abs_rgb": 1.4023592842566706,
+    "roi_changed_over_20_fraction": 0.016801043422534225
+  }
+}

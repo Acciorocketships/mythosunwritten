@@ -1,0 +1,48 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_facade_props.gd
+[0m* test_generated_facades_omit_rejected_ivy_and_tavern_signs
+[31m    [Failed]:  [0mThe rejected white ivy and mug signs still occur in 248 native recipes
+      at line 14
+* test_reported_east_town_contains_neither_rejected_detail_family
+[31m    [Failed]:  [0mP38/P41 white clusters
+      at line 23
+[31m    [Failed]:  [0mP38 floating dark mugs
+      at line 24
+[1m0/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_facade_props.gd
+[0m- test_generated_facades_omit_rejected_ivy_and_tavern_signs
+[31m    [Failed]:  [0mThe rejected white ivy and mug signs still occur in 248 native recipes
+          at line 14
+- test_reported_east_town_contains_neither_rejected_detail_family
+[31m    [Failed]:  [0mP38/P41 white clusters
+          at line 23
+[31m    [Failed]:  [0mP38 floating dark mugs
+          at line 24
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests      none
+Failing Tests         2
+Asserts             2/5
+Time              13.415s
+
+
+[31m---- 2 failing tests ----
+[0m

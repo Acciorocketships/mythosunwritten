@@ -1,0 +1,44 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_warren_maze_composition.gd
+[0m* test_corpus_composes
+PLANNER_MEASURE seed=12 scale=compact ms=857
+MACHINE_FACTOR reference_ms=[131, 132, 132] median=132 calibration=137 raw=0.964 applied=1.000
+PLANNER_MEASURE seed=9 scale=compact ms=1220
+PLANNER_MEASURE seed=3 scale=standard ms=4333
+PLANNER_MEASURE seed=9 scale=standard ms=3147
+MAZE_STAGE_MS seed 12/compact spatial=483 { &"parcels": 4, &"hero_beam": 8, &"room_composition": 56, &"bridge_stamping": 0, &"directed_back_rooms": 47, &"residual_rooms": 182, &"partition_rooms": 303, &"feature_solver": 33, &"room_gate": 45 }
+MAZE_STAGE_MS seed 9/compact spatial=708 { &"parcels": 6, &"hero_beam": 14, &"room_composition": 65, &"bridge_stamping": 59, &"directed_back_rooms": 34, &"residual_rooms": 291, &"partition_rooms": 480, &"feature_solver": 48, &"room_gate": 49 }
+MAZE_STAGE_MS seed 3/standard spatial=2624 { &"parcels": 17, &"hero_beam": 25, &"room_composition": 513, &"bridge_stamping": 411, &"directed_back_rooms": 911, &"residual_rooms": 59, &"partition_rooms": 1937, &"feature_solver": 207, &"room_gate": 112 }
+MAZE_STAGE_MS seed 9/standard spatial=1697 { &"parcels": 14, &"hero_beam": 36, &"room_composition": 235, &"bridge_stamping": 341, &"directed_back_rooms": 527, &"residual_rooms": 44, &"partition_rooms": 1203, &"feature_solver": 117, &"room_gate": 84 }
+MAZE_CORPUS compact sealed=12/12 failures=
+MAZE_CORPUS standard sealed=12/12 failures=
+MAZE_CORPUS large sealed=12/12 failures=
+MAZE_CORPUS grand sealed=12/12 failures=
+[1m1/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests         1
+Asserts              95
+Time              14.689s
+
+
+Ran Tests matching "test_corpus_composes"
+[32m---- All tests passed! ----
+[0m

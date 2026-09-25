@@ -1,0 +1,41 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_deck_purpose.gd
+[0m* test_terminal_flights_do_not_climb_above_every_actual_destination
+* test_a_real_upper_destination_keeps_its_complete_flight
+* test_upper_external_connections_are_not_pruned
+* test_ordinary_lane_attachment_prevents_terminal_pruning
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_september13_shared_stair_landing.gd
+[0m* test_p07_deck_has_full_width_orthogonal_stair_to_existing_upper_landing
+* test_shared_landing_rule_rotates_translates_and_keeps_both_lanes
+* test_occupied_or_short_court_cannot_squeeze_the_stair
+* test_plaza_stairs_keep_only_flat_ground_in_the_green
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 8
+Passing Tests         8
+Asserts              99
+Time              29.606s
+
+
+[32m---- All tests passed! ----
+[0m

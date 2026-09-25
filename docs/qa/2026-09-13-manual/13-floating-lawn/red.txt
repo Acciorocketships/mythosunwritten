@@ -1,0 +1,116 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_floating_lawn.gd
+[0m* test_native_house_reservation_cannot_hold_the_photographed_soil_shelf
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+      at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+      at line 13
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+      at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+      at line 13
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+      at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+      at line 13
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+      at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+      at line 13
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+      at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+      at line 13
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+      at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+      at line 13
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+      at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+      at line 13
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+      at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+      at line 13
+* test_private_reservation_alone_is_not_an_earth_crown_jamb
+[31m    [Failed] [0m
+      at line 30
+[31m    [Failed] [0m
+      at line 30
+[31m    [Failed] [0m
+      at line 30
+[31m    [Failed] [0m
+      at line 30
+[1m0/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_floating_lawn.gd
+[0m- test_native_house_reservation_cannot_hold_the_photographed_soil_shelf
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+          at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+          at line 13
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+          at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+          at line 13
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+          at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+          at line 13
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+          at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+          at line 13
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+          at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+          at line 13
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+          at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+          at line 13
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+          at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+          at line 13
+[31m    [Failed]:  [0mThe source shelf over public air has no complete native jamb at its prefab end
+          at line 12
+[31m    [Failed]:  [0mRemoving the unsupported stone must also remove turf and its generated soffit
+          at line 13
+- test_private_reservation_alone_is_not_an_earth_crown_jamb
+[31m    [Failed]:  [0m
+          at line 30
+[31m    [Failed]:  [0m
+          at line 30
+[31m    [Failed]:  [0m
+          at line 30
+[31m    [Failed]:  [0m
+          at line 30
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests      none
+Failing Tests         2
+Asserts           17/37
+Time              5.322s
+
+
+[31m---- 2 failing tests ----
+[0m

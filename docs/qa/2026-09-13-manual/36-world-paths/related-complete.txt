@@ -1,0 +1,148 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_path_program.gd
+[0m* test_compiles_sorted_resource_free_feature_metrics
+* test_missing_asset_fails_compilation
+ERROR: PathProgram asset is missing: sfv.bridge.001
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail (res://scripts/terrain/features/PathProgram.gd:363)
+       [1] compile (res://scripts/terrain/features/PathProgram.gd:188)
+       [2] test_missing_asset_fails_compilation (res://tests/test_path_program.gd:53)
+       [3] _run_test (res://addons/gut/gut.gd:612)
+       [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+[34m[ExpectedError][0mExpected push_error error containing 'missing: sfv.bridge.001'.  
+* test_missing_tag_or_collision_fails_compilation
+ERROR: PathProgram asset sfv.bridge.001 lacks required feature tags
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail (res://scripts/terrain/features/PathProgram.gd:363)
+       [1] compile (res://scripts/terrain/features/PathProgram.gd:192)
+       [2] test_missing_tag_or_collision_fails_compilation (res://tests/test_path_program.gd:60)
+       [3] _run_test (res://addons/gut/gut.gd:612)
+       [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+[34m[ExpectedError][0mExpected push_error error containing 'lacks required feature tags'.  
+ERROR: PathProgram asset sfv.bridge.001 lacks finite collision/bounds
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail (res://scripts/terrain/features/PathProgram.gd:363)
+       [1] compile (res://scripts/terrain/features/PathProgram.gd:196)
+       [2] test_missing_tag_or_collision_fails_compilation (res://tests/test_path_program.gd:65)
+       [3] _run_test (res://addons/gut/gut.gd:612)
+       [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+[34m[ExpectedError][0mExpected push_error error containing 'lacks finite collision/bounds'.  
+* test_missing_metric_and_invalid_bridge_sample_fail
+ERROR: PathProgram asset sfv.arch.002 lacks authored placement metrics
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail (res://scripts/terrain/features/PathProgram.gd:363)
+       [1] compile (res://scripts/terrain/features/PathProgram.gd:198)
+       [2] test_missing_metric_and_invalid_bridge_sample_fail (res://tests/test_path_program.gd:71)
+       [3] _run_test (res://addons/gut/gut.gd:612)
+       [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+[34m[ExpectedError][0mExpected push_error error containing 'lacks authored placement metrics'.  
+ERROR: Bridge support_samples lies outside measured bounds
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail_bool (res://scripts/terrain/features/PathProgram.gd:367)
+       [1] _validate_bridge (res://scripts/terrain/features/PathProgram.gd:303)
+       [2] compile (res://scripts/terrain/features/PathProgram.gd:208)
+       [3] test_missing_metric_and_invalid_bridge_sample_fail (res://tests/test_path_program.gd:76)
+       [4] _run_test (res://addons/gut/gut.gd:612)
+       [5] _test_the_scripts (res://addons/gut/gut.gd:815)
+[34m[ExpectedError][0mExpected push_error error containing 'support_samples lies outside'.  
+* test_invalid_metric_shape_vector_and_footprint_fail_compilation
+ERROR: Bridge deck_contacts has an invalid sample count
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail_bool (res://scripts/terrain/features/PathProgram.gd:367)
+       [1] _validate_bridge (res://scripts/terrain/features/PathProgram.gd:300)
+       [2] compile (res://scripts/terrain/features/PathProgram.gd:208)
+       [3] test_invalid_metric_shape_vector_and_footprint_fail_compilation (res://tests/test_path_program.gd:83)
+       [4] _run_test (res://addons/gut/gut.gd:612)
+       [5] _test_the_scripts (res://addons/gut/gut.gd:815)
+[34m[ExpectedError][0mExpected push_error error containing 'deck_contacts has an invalid sample count'.  
+ERROR: Lamp arm direction must be unit length
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail_bool (res://scripts/terrain/features/PathProgram.gd:367)
+       [1] _validate_lamp (res://scripts/terrain/features/PathProgram.gd:325)
+       [2] compile (res://scripts/terrain/features/PathProgram.gd:214)
+       [3] test_invalid_metric_shape_vector_and_footprint_fail_compilation (res://tests/test_path_program.gd:87)
+       [4] _run_test (res://addons/gut/gut.gd:612)
+       [5] _test_the_scripts (res://addons/gut/gut.gd:815)
+[34m[ExpectedError][0mExpected push_error error containing 'arm direction must be unit length'.  
+ERROR: Asset footprint lies outside measured bounds
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail_bool (res://scripts/terrain/features/PathProgram.gd:367)
+       [1] _validate_footprint_bounds (res://scripts/terrain/features/PathProgram.gd:338)
+       [2] compile (res://scripts/terrain/features/PathProgram.gd:202)
+       [3] test_invalid_metric_shape_vector_and_footprint_fail_compilation (res://tests/test_path_program.gd:92)
+       [4] _run_test (res://addons/gut/gut.gd:612)
+       [5] _test_the_scripts (res://addons/gut/gut.gd:815)
+[34m[ExpectedError][0mExpected push_error error containing 'footprint lies outside measured bounds'.  
+* test_invalid_water_margin_and_footprint_halo_fail
+ERROR: PathProgram water query margin exceeds canonical fill coverage
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail (res://scripts/terrain/features/PathProgram.gd:363)
+       [1] compile (res://scripts/terrain/features/PathProgram.gd:183)
+       [2] test_invalid_water_margin_and_footprint_halo_fail (res://tests/test_path_program.gd:98)
+       [3] _run_test (res://addons/gut/gut.gd:612)
+       [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+[34m[ExpectedError][0mExpected push_error error containing 'water query margin exceeds'.  
+ERROR: PathProgram footprint requires halo 2, maximum is 1
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail (res://scripts/terrain/features/PathProgram.gd:363)
+       [1] compile (res://scripts/terrain/features/PathProgram.gd:227)
+       [2] test_invalid_water_margin_and_footprint_halo_fail (res://tests/test_path_program.gd:107)
+       [3] _run_test (res://addons/gut/gut.gd:612)
+       [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+[34m[ExpectedError][0mExpected push_error error containing 'footprint requires halo'.  
+* test_manifest_uses_explicit_vector_scales
+* test_large_arches_have_baked_atlas_materials
+* test_collision_primitives_preserve_walkable_openings
+[1m9/9 passed.
+[0m[4m
+
+res://tests/test_path_bridge_sites.gd
+[0m* test_site_discovery_is_canonical_from_either_bank
+* test_profiled_bridge_transform_is_the_placement_transform
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_path_features.gd
+[0m* test_lamps_have_hard_spacing_and_alternate_observed_sides
+* test_village_approaches_do_not_receive_detached_road_gates
+* test_turning_approach_does_not_receive_a_detached_gate
+* test_split_approaches_do_not_multiply_detached_gates
+* test_small_arch_is_owned_by_the_exact_biome_crossing
+* test_biome_gates_stay_clear_of_villages_and_each_other
+[1m6/6 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               3
+Tests                17
+Passing Tests        17
+Asserts             145
+Time              20.676s
+
+
+[32m---- All tests passed! ----
+[0m

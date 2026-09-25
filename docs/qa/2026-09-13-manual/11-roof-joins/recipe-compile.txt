@@ -1,0 +1,3 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+COMPACT_PAIR_ADMISSION [{ "host_id": &"spatial.parcel.maze.house.031.part00.room00", "branch_id": &"spatial.maze_back.03.room00", "host_yaw": 1, "eave_sign": 1, "end_sign": 1, "host_centre_twice": (-17, -15), "branch_centre_twice": (-15, -19), "roof_base_band": 2 }]

@@ -1,0 +1,62 @@
+[
+  {
+    "a": {
+      "cell": "(-9, -41)",
+      "id": "settlement.5a2e5aae27b1bbab"
+    },
+    "b": {
+      "cell": "(21, -49)",
+      "id": "settlement.15289ce93c11a72d"
+    },
+    "cells": 279,
+    "edge_cells": 239,
+    "pair": "[(-1, -2), (0, -2)]",
+    "range_budget_solved": false,
+    "solved": false
+  },
+  {
+    "a": {
+      "cell": "(-9, -41)",
+      "id": "settlement.5a2e5aae27b1bbab"
+    },
+    "b": {
+      "cell": "(-20, -13)",
+      "id": "settlement.579b3da1cb014fc1"
+    },
+    "cells": 348,
+    "edge_cells": 311,
+    "pair": "[(-1, -2), (-1, -1)]",
+    "range_budget_solved": false,
+    "solved": false
+  },
+  {
+    "a": {
+      "cell": "(21, -49)",
+      "id": "settlement.15289ce93c11a72d"
+    },
+    "b": {
+      "cell": "(10, -16)",
+      "id": "settlement.29bc5c240c52f84a"
+    },
+    "cells": 408,
+    "edge_cells": 290,
+    "pair": "[(0, -2), (0, -1)]",
+    "range_budget_solved": false,
+    "solved": false
+  },
+  {
+    "a": {
+      "cell": "(-20, -13)",
+      "id": "settlement.579b3da1cb014fc1"
+    },
+    "b": {
+      "cell": "(10, -16)",
+      "id": "settlement.29bc5c240c52f84a"
+    },
+    "cells": 124,
+    "edge_cells": 120,
+    "pair": "[(-1, -1), (0, -1)]",
+    "range_budget_solved": false,
+    "solved": false
+  }
+]

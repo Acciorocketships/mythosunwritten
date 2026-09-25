@@ -1,0 +1,35 @@
+{
+  "P43_cutaway_-8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 0.5090026409000271,
+    "roi_mean_abs_rgb": 0.5090026409000271,
+    "roi_changed_over_20_fraction": 0.016907664777945513
+  },
+  "P43_cutaway_0": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 0.36757684071333635,
+    "roi_mean_abs_rgb": 0.36757684071333635,
+    "roi_changed_over_20_fraction": 0.012165553065843483
+  },
+  "P43_cutaway_8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 0.2801971611264932,
+    "roi_mean_abs_rgb": 0.2801971611264932,
+    "roi_changed_over_20_fraction": 0.0072699968634140945
+  }
+}

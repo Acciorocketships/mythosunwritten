@@ -1,0 +1,149 @@
+{
+  "pairs": [
+    {
+      "group": "native-pairs",
+      "angle": 0,
+      "changed_pixels": 20583,
+      "bounds": [
+        193,
+        142,
+        737,
+        465
+      ],
+      "judgment": "PASS: complete unsupported bed, timber underside and furnishings removed; neighboring buildings and supported paths retained; landing edge guarded."
+    },
+    {
+      "group": "native-pairs",
+      "angle": -8,
+      "changed_pixels": 21630,
+      "bounds": [
+        417,
+        136,
+        681,
+        254
+      ],
+      "judgment": "PASS: complete unsupported bed, timber underside and furnishings removed; neighboring buildings and supported paths retained; landing edge guarded."
+    },
+    {
+      "group": "native-pairs",
+      "angle": 8,
+      "changed_pixels": 20403,
+      "bounds": [
+        543,
+        143,
+        796,
+        252
+      ],
+      "judgment": "PASS: complete unsupported bed, timber underside and furnishings removed; neighboring buildings and supported paths retained; landing edge guarded."
+    },
+    {
+      "group": "native-orbit",
+      "angle": 0,
+      "changed_pixels": 29220,
+      "bounds": [
+        486,
+        306,
+        779,
+        461
+      ],
+      "judgment": "PASS: complete unsupported bed, timber underside and furnishings removed; neighboring buildings and supported paths retained; landing edge guarded."
+    },
+    {
+      "group": "native-orbit",
+      "angle": -30,
+      "changed_pixels": 27908,
+      "bounds": [
+        484,
+        304,
+        757,
+        480
+      ],
+      "judgment": "PASS: complete unsupported bed, timber underside and furnishings removed; neighboring buildings and supported paths retained; landing edge guarded."
+    },
+    {
+      "group": "native-orbit",
+      "angle": 30,
+      "changed_pixels": 29234,
+      "bounds": [
+        482,
+        303,
+        768,
+        442
+      ],
+      "judgment": "PASS: complete unsupported bed, timber underside and furnishings removed; neighboring buildings and supported paths retained; landing edge guarded."
+    },
+    {
+      "group": "native-orbit",
+      "angle": 90,
+      "changed_pixels": 24115,
+      "bounds": [
+        529,
+        283,
+        755,
+        474
+      ],
+      "judgment": "PASS: complete unsupported bed, timber underside and furnishings removed; neighboring buildings and supported paths retained; landing edge guarded."
+    },
+    {
+      "group": "native-orbit",
+      "angle": 180,
+      "changed_pixels": 29355,
+      "bounds": [
+        502,
+        302,
+        801,
+        455
+      ],
+      "judgment": "PASS: complete unsupported bed, timber underside and furnishings removed; neighboring buildings and supported paths retained; landing edge guarded."
+    },
+    {
+      "group": "native-orbit",
+      "angle": -90,
+      "changed_pixels": 17869,
+      "bounds": [
+        545,
+        302,
+        777,
+        458
+      ],
+      "judgment": "PASS: complete unsupported bed, timber underside and furnishings removed; neighboring buildings and supported paths retained; landing edge guarded."
+    },
+    {
+      "group": "frozen",
+      "angle": 0,
+      "changed_pixels": 483074,
+      "bounds": [
+        0,
+        0,
+        1716,
+        1033
+      ],
+      "judgment": "PASS: complete unsupported bed, timber underside and furnishings removed; neighboring buildings and supported paths retained; landing edge guarded."
+    },
+    {
+      "group": "frozen",
+      "angle": -8,
+      "changed_pixels": 685107,
+      "bounds": [
+        0,
+        0,
+        1716,
+        1033
+      ],
+      "judgment": "PASS: complete unsupported bed, timber underside and furnishings removed; neighboring buildings and supported paths retained; landing edge guarded."
+    },
+    {
+      "group": "frozen",
+      "angle": 8,
+      "changed_pixels": 495898,
+      "bounds": [
+        0,
+        0,
+        1716,
+        1033
+      ],
+      "judgment": "PASS: complete unsupported bed, timber underside and furnishings removed; neighboring buildings and supported paths retained; landing edge guarded."
+    }
+  ],
+  "excluded": "First native-wide camera cropped the bed; those six pairs are excluded from acceptance. Native-orbit corrects framing using bed centre and F3-derived view direction. Fresh live captures provide source snapshots; fixed-lighting frozen pairs are credited."
+}

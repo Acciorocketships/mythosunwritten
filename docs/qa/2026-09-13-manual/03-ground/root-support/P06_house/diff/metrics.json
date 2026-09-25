@@ -1,0 +1,35 @@
+{
+  "P06_house_-8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 11.799461026227725,
+    "roi_mean_abs_rgb": 11.799461026227725,
+    "roi_changed_over_20_fraction": 0.21952885771859634
+  },
+  "P06_house_0": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 12.015265846340386,
+    "roi_mean_abs_rgb": 12.015265846340386,
+    "roi_changed_over_20_fraction": 0.22165000214370978
+  },
+  "P06_house_8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 12.103629940028778,
+    "roi_mean_abs_rgb": 12.103629940028778,
+    "roi_changed_over_20_fraction": 0.22474935519466013
+  }
+}

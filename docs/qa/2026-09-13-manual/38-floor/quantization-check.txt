@@ -1,0 +1,81 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_transition_material.gd
+[0m* test_production_photo_ramp_uses_the_reviewed_plank_material
+* test_transition_material_is_shared_with_native_review
+* test_board_registration_tracks_full_width_and_run_in_four_directions
+* test_photo_payload_changes_only_transition_uvs
+* test_native_planks_survive_camera_material_adaptation
+[31m    [Failed]:  [0m[PACKED_BYTE_ARRAY([38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38,  [large byte-array diagnostic omitted; rendered images retained]
+      at line 107
+[31m    [Failed]:  [0m[PACKED_BYTE_ARRAY([38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38,  [large byte-array diagnostic omitted; rendered images retained]
+      at line 107
+[31m    [Failed]:  [0m[PACKED_BYTE_ARRAY([38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38,  [large byte-array diagnostic omitted; rendered images retained]
+      at line 107
+[31m    [Failed]:  [0m[PACKED_BYTE_ARRAY([38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38,  [large byte-array diagnostic omitted; rendered images retained]
+      at line 107
+[1m4/5 passed.
+[0m[4m
+
+res://tests/test_feature_commit_queue.gd
+[0m* test_assets_and_collision_are_staged_before_readiness
+* test_empty_blocks_become_explicit_ready_records_without_nodes
+* test_invalidation_discards_a_detached_partial_commit
+* test_collision_contract_skips_visual_instances_and_commits_boxes
+* test_box_only_payload_waits_for_collision_commit
+* test_terrain_corner_backing_keeps_rock_uv_at_commit
+* test_partitioned_cap_keeps_the_authored_material
+[1m7/7 passed.
+[0m[4m
+
+res://tests/test_visibility_bubble.gd
+[0m* test_generic_material_adapter_restores_shared_resources_and_batch
+* test_corridor_selects_neighbours_but_excludes_floor_and_distant_objects
+* test_shader_adapter_preserves_existing_vertex_fragment_and_light_code
+* test_comments_and_early_returns_cannot_bypass_the_bubble
+* test_step_smoothed_focus_never_lowers_the_protected_physical_floor
+* test_faded_materials_follow_live_source_uniforms_and_resets
+[1m6/6 passed.
+[0m[4m
+
+res://tests/test_september11_visibility_render.gd
+[0m* test_shared_render_mesh_fades_only_selected_geometry_and_restores_pixels
+[1m1/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_transition_material.gd
+[0m- test_native_planks_survive_camera_material_adaptation
+[31m    [Failed]:  [0m[PACKED_BYTE_ARRAY([38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38,  [large byte-array diagnostic omitted; rendered images retained]
+          at line 107
+[31m    [Failed]:  [0m[PACKED_BYTE_ARRAY([38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38,  [large byte-array diagnostic omitted; rendered images retained]
+          at line 107
+[31m    [Failed]:  [0m[PACKED_BYTE_ARRAY([38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38,  [large byte-array diagnostic omitted; rendered images retained]
+          at line 107
+[31m    [Failed]:  [0m[PACKED_BYTE_ARRAY([38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38, 38,  [large byte-array diagnostic omitted; rendered images retained]
+          at line 107
+
+Totals
+------
+Scripts               4
+Tests                19
+Passing Tests        18
+Failing Tests         1
+Asserts           175/179
+Time              73.128s
+
+
+[31m---- 1 failing tests ----
+[0m

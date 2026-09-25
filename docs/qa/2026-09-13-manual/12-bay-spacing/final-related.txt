@@ -1,0 +1,63 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_bay_spacing.gd
+[0m* test_embedded_bay_centres_on_complete_parent_panels_in_every_orientation
+* test_photo_bays_replace_windows_with_closed_native_backing
+    PHOTO_BAY_COUNT 8 / features 18 / rooms 247
+* test_missing_backing_cannot_be_hidden_by_a_centred_bay
+* test_backing_phase_preserves_existing_balcony_clearance
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_warren_outcrops.gd
+[0m* test_the_probe_seed_builds_its_measured_roofed_facade_bays
+    one-pass town: outcrop units=4 full_gabled=0 embedded_oriels=4
+[31m    [Failed]:  [0m[0] expected to be >= than [1]:  an open eligible facade must receive a complete native-width gabled bay
+      at line 81
+* test_facade_bays_cannot_fragment_a_partial_roof_campaign
+* test_outcrops_are_shallow_projections
+* test_corner_bays_wrap_the_parent_corner_as_overlapping_squares
+* test_bay_roofs_match_the_parent_roof_family
+* test_outcrop_wood_matches_parent_wall_family
+* test_capped_jetties_stay_roofless_and_capped
+* test_embedded_oriels_use_composed_partial_height_window_bays
+* test_corner_wrap_bays_roof_only_the_exterior_union
+* test_a_stack_facade_carries_at_most_one_outcropping
+[1m9/10 passed.
+[0m[4m
+
+res://tests/test_september13_bay_backing.gd
+[0m* test_photographed_roofed_bay_has_a_complete_parent_wall
+* test_complete_backing_is_centred_in_each_facade_orientation
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_warren_outcrops.gd
+[0m- test_the_probe_seed_builds_its_measured_roofed_facade_bays
+[31m    [Failed]:  [0m[0] expected to be >= than [1]:  an open eligible facade must receive a complete native-width gabled bay
+          at line 81
+
+Totals
+------
+Scripts               3
+Tests                16
+Passing Tests        15
+Failing Tests         1
+Asserts           673/674
+Time              62.041s
+
+
+[31m---- 1 failing tests ----
+[0m

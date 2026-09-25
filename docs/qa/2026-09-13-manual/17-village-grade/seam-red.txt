@@ -1,0 +1,39 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_graded_bank_seams.gd
+[0m* test_reported_bank_has_one_shared_surface_across_its_old_cliff
+[31m    [Failed]:  [0m[1.66604617241212] expected to be < than [0.0001]:  the two graded owners must join; residual natural steps form the photographed stone fins
+      at line 11
+* test_natural_cliffs_outside_the_construction_remain_vertical
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_graded_bank_seams.gd
+[0m- test_reported_bank_has_one_shared_surface_across_its_old_cliff
+[31m    [Failed]:  [0m[1.66604617241212] expected to be < than [0.0001]:  the two graded owners must join; residual natural steps form the photographed stone fins
+          at line 11
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts           101/102
+Time              0.403s
+
+
+[31m---- 1 failing tests ----
+[0m

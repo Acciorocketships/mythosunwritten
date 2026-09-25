@@ -1,0 +1,20 @@
+{
+  "P06_house_0": {
+    "no_receiver_pixels": 114387,
+    "changed_no_receiver": 16717,
+    "changed_no_receiver_over_20": 0,
+    "no_receiver_max_difference": 3
+  },
+  "P06_house_-8": {
+    "no_receiver_pixels": 124056,
+    "changed_no_receiver": 16322,
+    "changed_no_receiver_over_20": 0,
+    "no_receiver_max_difference": 9
+  },
+  "P06_house_8": {
+    "no_receiver_pixels": 110901,
+    "changed_no_receiver": 17344,
+    "changed_no_receiver_over_20": 0,
+    "no_receiver_max_difference": 4
+  }
+}

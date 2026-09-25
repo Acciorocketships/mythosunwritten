@@ -1,0 +1,25 @@
+# Issue 08 — street-facing half-roof gables
+
+P07's two orange half-depth roofs selected the native hand with its finished gable against the higher adjoining room. Their open party cuts faced the street. The source assets contained complete gables; the generator selected the wrong ends.
+
+The general admission rule now rejects that hand when a complete actual room backs its finished end and does not back the opposite end. Every cell across the roof width and through its measured height must be private room volume. Lower or partial walls do not decide the hand. The finite opposite native recipe provides the outward gable. Early reservations and final candidate admission use the same condition. There is no seed, coordinate, mesh patch or new asset bake in production.
+
+Only two of the photographed town's 2,001 complete payload placements change. Their native hand and longitudinal origin change together, retaining the same outer roof bounds. The other 1,999 placements, construction visibility owners, all 77 generated surface arrays and every generated collision box are identical. The expanded-fabric comparison covers 1,031 placements; the complete payload comparison separately includes generated supports. See `batch-differences.json`, `entry-differences.json` and `payload-comparison.json`.
+
+## Verification
+
+- The original exact source fails all six native triangle closure rays across the two street gables (`red.txt`). The candidate closes all six.
+- Three new tests pass, including 48 native cases across two colors, three widths, four orientations and both backing sides, plus eight incomplete-backing controls. Three existing roof alignment tests also pass. The related compiler run totals 21/22 tests and 7,744/7,746 assertions; the two failed expectations in its older fixture also fail without the roof rule (`baseline-control.txt`).
+- The mandatory 48-town native sweep retains 11,868 clear centers and 17,035 clear crossings, no blocked centers/crossings or disconnected route components, and the same 24 off-center pillar contacts. The fingerprinted corpus gate passes one test / 95 assertions (`corpus.txt`, `gate.txt`). These numbers do not describe the entire composition test file.
+- The complete composition file passes 67/88 tests, with 71 failed assertions in 21 tests. The baseline also has those 21 failures and 71 failed assertions. Seventy failure messages match exactly; the remaining message reports the same two intersecting lanterns but names a different first lantern. The baseline corpus-fingerprint test is pending because its intentionally altered compiler cannot use the candidate's cached matrix. See `broad-candidate.txt`, `broad-baseline.txt`, `broad-failure-comparison.json`. No test thresholds were relaxed and no full-suite acceptance is claimed.
+- The photographed town's actual collision survey is identical: all 356 cell centers clear; 498 of 502 crossing centers clear and the same four crossings require a lateral offset before and after. The initial all-zero harness assertion correctly rejected that overbroad expectation; the final comparison asserts equality of every result (`clearance.json`, `clearance2.txt`). The roof change does not repair those existing offset-only crossings.
+
+## Visual judgment
+
+The reconstructed P07 camera uses the rounded original player/crosshair overlay through `ReviewCam.solve_cam`, tactical 26 m / 16 m / 1 m dimensions, FOV 50 and viewport 1716×1033. Before and after pose files are identical. All three matched original/±8-degree game views show the complete outward gables, retaining the surrounding town and full-width stairs. See `live/` and `differences/game-pairs.jpg`; baseline is `../07-platform/shared-live/`.
+
+Three additional native front/oblique pairs (150, 180, 210 degrees) clearly show the repaired closed fronts. The 270-degree pair provides the rear wall junction and side context; it shows the roof meeting the taller wall. The first 0/90-degree native attempts were obscured and are not credited as positive evidence. Their replacement camera poses and the final comparisons are in `native/poses.json` and `native/pairs-final.jpg`. Native pixel differences remain confined to the two roofs and their immediate shading. No new gap is visible in the inspected angles. Separate upper-wall, T-roof and dormer reports remain open.
+
+The headless saved-MultiMesh ownership probe returned identity instance transforms and is invalid for placement identification. The normal native renderer supplied valid transforms and triangle hits in `owner-rays.json`; headless tests use explicit CPU placement transforms and real authored triangles. A first broad-baseline experiment had a temporary parser error and ran no tests; only the valid automatically restored baseline run is credited.
+
+Accepted for the photographed wall-backed half-roof case and its rotated native controls. Roofs with neither end completely backed retain their existing admission behavior; this result does not establish universal roof closure or renderer/performance acceptance.

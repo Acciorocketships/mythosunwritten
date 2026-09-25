@@ -1,0 +1,5 @@
+{
+  "batches": true,
+  "collision_boxes": true,
+  "surface_meshes": true
+}

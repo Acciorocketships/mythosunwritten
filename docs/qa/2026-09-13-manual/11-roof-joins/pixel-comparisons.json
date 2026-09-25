@@ -1,0 +1,124 @@
+[
+  {
+    "group": "native-current-control",
+    "angle": 0,
+    "changed_pixels": 15348,
+    "bbox": [
+      435,
+      232,
+      653,
+      348
+    ]
+  },
+  {
+    "group": "native-current-control",
+    "angle": -8,
+    "changed_pixels": 16881,
+    "bbox": [
+      372,
+      223,
+      733,
+      348
+    ]
+  },
+  {
+    "group": "native-current-control",
+    "angle": 8,
+    "changed_pixels": 14478,
+    "bbox": [
+      492,
+      238,
+      705,
+      348
+    ]
+  },
+  {
+    "group": "native-junction-orbit",
+    "angle": 0,
+    "changed_pixels": 37724,
+    "bbox": [
+      406,
+      288,
+      773,
+      465
+    ]
+  },
+  {
+    "group": "native-junction-orbit",
+    "angle": -30,
+    "changed_pixels": 38960,
+    "bbox": [
+      443,
+      270,
+      759,
+      470
+    ]
+  },
+  {
+    "group": "native-junction-orbit",
+    "angle": 30,
+    "changed_pixels": 32092,
+    "bbox": [
+      431,
+      292,
+      783,
+      477
+    ]
+  },
+  {
+    "group": "native-junction-orbit",
+    "angle": 90,
+    "changed_pixels": 0,
+    "bbox": null
+  },
+  {
+    "group": "native-junction-orbit",
+    "angle": 180,
+    "changed_pixels": 0,
+    "bbox": null
+  },
+  {
+    "group": "native-junction-orbit",
+    "angle": -90,
+    "changed_pixels": 39850,
+    "bbox": [
+      528,
+      287,
+      870,
+      467
+    ]
+  },
+  {
+    "group": "live",
+    "angle": 0,
+    "changed_pixels": 823253,
+    "bbox": [
+      0,
+      0,
+      1716,
+      1033
+    ]
+  },
+  {
+    "group": "live",
+    "angle": -8,
+    "changed_pixels": 765987,
+    "bbox": [
+      0,
+      0,
+      1716,
+      1033
+    ]
+  },
+  {
+    "group": "live",
+    "angle": 8,
+    "changed_pixels": 474366,
+    "bbox": [
+      0,
+      0,
+      1716,
+      1033
+    ]
+  }
+]

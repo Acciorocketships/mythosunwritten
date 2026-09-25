@@ -1,0 +1,68 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_transition_material.gd
+[0m* test_production_photo_ramp_uses_the_reviewed_plank_material
+[31m    [Failed]:  [0mProduction transition public-transition/volume.transition.04.mesh must retain its plank pattern
+      at line 14
+[31m    [Failed]:  [0mProduction transition public-transition/volume.transition.05.mesh must retain its plank pattern
+      at line 14
+[31m    [Failed]:  [0mProduction transition public-transition/volume.transition.06.mesh must retain its plank pattern
+      at line 14
+[31m    [Failed]:  [0mProduction transition public-transition/volume.transition.08.mesh must retain its plank pattern
+      at line 14
+[31m    [Failed]:  [0mProduction transition public-transition/volume.transition.09.mesh must retain its plank pattern
+      at line 14
+[31m    [Failed]:  [0mProduction transition public-transition/volume.transition.12.mesh must retain its plank pattern
+      at line 14
+[31m    [Failed]:  [0mProduction transition public-transition/volume.transition.15.mesh must retain its plank pattern
+      at line 14
+* test_transition_material_is_shared_with_native_review
+[31m    [Failed]:  [0m[<StandardMaterial3D#-9223371608884769618>] expected to be same as  [<ShaderMaterial#-9223371336187902424>]:  Review and production must use the same material owner
+      at line 28
+[1m0/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_transition_material.gd
+[0m- test_production_photo_ramp_uses_the_reviewed_plank_material
+[31m    [Failed]:  [0mProduction transition public-transition/volume.transition.04.mesh must retain its plank pattern
+          at line 14
+[31m    [Failed]:  [0mProduction transition public-transition/volume.transition.05.mesh must retain its plank pattern
+          at line 14
+[31m    [Failed]:  [0mProduction transition public-transition/volume.transition.06.mesh must retain its plank pattern
+          at line 14
+[31m    [Failed]:  [0mProduction transition public-transition/volume.transition.08.mesh must retain its plank pattern
+          at line 14
+[31m    [Failed]:  [0mProduction transition public-transition/volume.transition.09.mesh must retain its plank pattern
+          at line 14
+[31m    [Failed]:  [0mProduction transition public-transition/volume.transition.12.mesh must retain its plank pattern
+          at line 14
+[31m    [Failed]:  [0mProduction transition public-transition/volume.transition.15.mesh must retain its plank pattern
+          at line 14
+- test_transition_material_is_shared_with_native_review
+[31m    [Failed]:  [0m[<StandardMaterial3D#-9223371608884769618>] expected to be same as  [<ShaderMaterial#-9223371336187902424>]:  Review and production must use the same material owner
+          at line 28
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests      none
+Failing Tests         2
+Asserts           15/23
+Time              1.83s
+
+
+[31m---- 2 failing tests ----
+[0m

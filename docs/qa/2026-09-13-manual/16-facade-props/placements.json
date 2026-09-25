@@ -1,0 +1,415 @@
+{
+  "added": [
+    "spatial.fabric.spatial.maze_bridge_end.00.00.room00/floor",
+    "spatial.fabric.spatial.maze_bridge_end.00.01.room00/floor",
+    "spatial.fabric.spatial.maze_bridge_end.00.00.room01/floor",
+    "spatial.fabric.spatial.maze_bridge_end.00.01.room01/floor",
+    "spatial.fabric.spatial.maze_bridge.01.room00/floor",
+    "spatial.fabric.spatial.maze_bridge.01.room00/west",
+    "spatial.fabric.spatial.maze_bridge_end.00.01.room00/west",
+    "spatial.fabric.spatial.maze_bridge_end.00.00.room00/west",
+    "spatial.fabric.spatial.maze_bridge_end.00.00.room00/south",
+    "spatial.fabric.spatial.maze_bridge_end.00.00.room00/north",
+    "spatial.fabric.spatial.maze_bridge_end.00.01.room00/north",
+    "spatial.fabric.spatial.maze_bridge_end.00.00.room00/east",
+    "spatial.fabric.spatial.maze_bridge_end.00.01.room00/east",
+    "spatial.fabric.spatial.maze_bridge_end.00.00.room01/south",
+    "spatial.fabric.spatial.maze_bridge_end.00.00.room01/north",
+    "spatial.fabric.spatial.maze_bridge_end.00.00.room01/east",
+    "spatial.fabric.spatial.maze_bridge_end.00.00.room01/facade.windowbox",
+    "spatial.fabric.spatial.maze_bridge_end.00.00.room01/facade.windowbox.plant",
+    "spatial.fabric.spatial.maze_bridge_end.00.01.room01/north",
+    "spatial.fabric.spatial.maze_bridge_end.00.01.room01/west",
+    "spatial.fabric.spatial.maze_bridge.01.room00/east",
+    "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.sill",
+    "spatial.fabric.spatial.feature.facade-bay.06.component.00/bay.sill",
+    "spatial.fabric.spatial.feature.facade-bay.07.component.00/bay.sill",
+    "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.post.left",
+    "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.post.right",
+    "spatial.fabric.spatial.feature.facade-bay.06.component.00/bay.post.left",
+    "spatial.fabric.spatial.feature.facade-bay.06.component.00/bay.post.right",
+    "spatial.fabric.spatial.feature.facade-bay.07.component.00/bay.post.left",
+    "spatial.fabric.spatial.feature.facade-bay.07.component.00/bay.post.right",
+    "facade-joint/-13/6/11",
+    "facade-run-joint/-12750/6000/8250/-1/0",
+    "facade-run-joint/-9750/6000/8250/1/0",
+    "facade-run-joint/-6750/9000/5250/0/-1",
+    "facade-run-joint/-12750/9000/8250/-1/0",
+    "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.face",
+    "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.cheek.right",
+    "spatial.fabric.spatial.feature.facade-bay.06.component.00/bay.face",
+    "spatial.fabric.spatial.feature.facade-bay.06.component.00/bay.cheek.right",
+    "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.cheek.left",
+    "spatial.fabric.spatial.feature.facade-bay.06.component.00/bay.cheek.left",
+    "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.canopy",
+    "spatial.fabric.spatial.feature.facade-bay.06.component.00/bay.canopy",
+    "spatial.fabric.spatial.feature.facade-bay.07.component.00/bay.canopy",
+    "spatial.fabric.spatial.feature.facade-bay.07.component.00/bay.face",
+    "spatial.fabric.spatial.feature.facade-bay.07.component.00/bay.cheek.right",
+    "spatial.fabric.spatial.feature.facade-bay.07.component.00/bay.cheek.left",
+    "spatial.roof.spatial.maze_bridge_end.00.01.room01/continuous-roof/000/000",
+    "spatial.roof.spatial.maze_back.08.room00/continuous-roof/007/000",
+    "spatial.roof.spatial.maze_bridge_end.00.01.room01/continuous-roof/000/001",
+    "spatial.roof.spatial.maze_bridge_end.00.01.room01/continuous-roof/000/003",
+    "spatial.roof.spatial.maze_bridge_end.00.01.room01/continuous-roof/000/005",
+    "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/002/001",
+    "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/002/003",
+    "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/002/005",
+    "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/002/007",
+    "spatial.roof.spatial.parcel.maze.house.006.part00.room00.tile00/continuous-roof/005/001",
+    "spatial.roof.spatial.maze_back.08.room00/continuous-roof/007/001",
+    "spatial.roof.spatial.maze_back.08.room00/continuous-roof/007/003",
+    "spatial.roof.spatial.maze_back.08.room00/continuous-roof/007/005",
+    "spatial.roof.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00.tile00/continuous-roof/010/001",
+    "spatial.roof.spatial.maze_bridge_end.00.01.room01/continuous-roof/000/002",
+    "spatial.roof.spatial.maze_bridge_end.00.01.room01/continuous-roof/000/004",
+    "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/002/002",
+    "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/002/004",
+    "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/002/006",
+    "spatial.roof.spatial.maze_back.08.room00/continuous-roof/007/002",
+    "spatial.roof.spatial.maze_back.08.room00/continuous-roof/007/004",
+    "spatial.roof.spatial.maze_bridge_end.00.01.room01/continuous-roof/000/006",
+    "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/002/000",
+    "spatial.roof.spatial.maze_back.08.room00/continuous-roof/007/006",
+    "spatial.roof.spatial.maze_bridge_end.01.00.room01/continuous-roof/001/000",
+    "spatial.roof.spatial.maze_bridge_end.01.00.room01/continuous-roof/001/001",
+    "spatial.roof.spatial.maze_bridge_end.01.00.room01/continuous-roof/001/003",
+    "spatial.roof.spatial.maze_bridge_end.01.00.room01/continuous-roof/001/005",
+    "spatial.roof.spatial.maze_bridge_end.01.00.room01/continuous-roof/001/002",
+    "spatial.roof.spatial.maze_bridge_end.01.00.room01/continuous-roof/001/004",
+    "spatial.roof.spatial.maze_bridge_end.01.00.room01/continuous-roof/001/006",
+    "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/002/008",
+    "spatial.roof.spatial.parcel.maze.house.006.part00.room00.tile00/continuous-roof/005/000",
+    "spatial.roof.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00.tile00/continuous-roof/010/000",
+    "spatial.roof.spatial.maze_back.01.room00/continuous-roof/003/000",
+    "spatial.roof.spatial.parcel.maze.house.001.part00.room00.tile00/continuous-roof/004/000",
+    "spatial.roof.spatial.parcel.maze.house.022.part00.room00.tile00/continuous-roof/006/000",
+    "spatial.roof.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00.tile00/continuous-roof/008/000",
+    "spatial.roof.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00.tile00/continuous-roof/009/000",
+    "spatial.roof.spatial.maze_back.01.room00/continuous-roof/003/001",
+    "spatial.roof.spatial.maze_back.01.room00/continuous-roof/003/003",
+    "spatial.roof.spatial.maze_back.01.room00/continuous-roof/003/005",
+    "spatial.roof.spatial.maze_back.01.room00/continuous-roof/003/007",
+    "spatial.roof.spatial.parcel.maze.house.001.part00.room00.tile00/continuous-roof/004/001",
+    "spatial.roof.spatial.parcel.maze.house.022.part00.room00.tile00/continuous-roof/006/001",
+    "spatial.roof.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00.tile00/continuous-roof/008/001",
+    "spatial.roof.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00.tile00/continuous-roof/009/001",
+    "spatial.roof.spatial.maze_back.01.room00/continuous-roof/003/002",
+    "spatial.roof.spatial.maze_back.01.room00/continuous-roof/003/004",
+    "spatial.roof.spatial.maze_back.01.room00/continuous-roof/003/006",
+    "spatial.roof.spatial.maze_back.01.room00/continuous-roof/003/008",
+    "spatial.roof.spatial.parcel.maze.house.001.part00.room00.tile00/continuous-roof/004/002",
+    "spatial.roof.spatial.parcel.maze.house.022.part00.room00.tile00/continuous-roof/006/002",
+    "spatial.roof.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00.tile00/continuous-roof/008/002",
+    "spatial.roof.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00.tile00/continuous-roof/009/002",
+    "spatial.roof.spatial.parcel.maze.house.006.part00.room00.tile00/continuous-roof/005/002",
+    "spatial.roof.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00.tile00/continuous-roof/010/002",
+    "maze-frontage/-8/0/7/0"
+  ],
+  "changed": [
+    "spatial.fabric.spatial.maze_bridge.00.room00/floor",
+    "spatial.fabric.spatial.maze_bridge.00.room00/west",
+    "spatial.fabric.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00/west.0",
+    "spatial.fabric.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00/east.1",
+    "spatial.fabric.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00/east.0",
+    "spatial.fabric.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00/south",
+    "spatial.fabric.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00/west",
+    "spatial.fabric.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00/north",
+    "spatial.fabric.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00/east",
+    "spatial.fabric.spatial.parcel.maze.house.012.part01.room00/south",
+    "spatial.fabric.spatial.parcel.maze.house.012.part01.room00/north",
+    "spatial.fabric.spatial.parcel.maze.house.012.part02.room00/south",
+    "spatial.fabric.spatial.maze_bridge.00.room00/east",
+    "spatial.fabric.spatial.parcel.maze.house.012.part02.room00/north",
+    "spatial.fabric.spatial.feature.facade-bay.02.component.00/bay.sill",
+    "spatial.fabric.spatial.feature.facade-bay.03.component.00/bay.sill",
+    "spatial.fabric.spatial.feature.facade-bay.05.component.00/bay.sill",
+    "spatial.fabric.spatial.feature.facade-bay.02.component.00/bay.post.left",
+    "spatial.fabric.spatial.feature.facade-bay.02.component.00/bay.post.right",
+    "spatial.fabric.spatial.feature.facade-bay.03.component.00/bay.post.left",
+    "spatial.fabric.spatial.feature.facade-bay.03.component.00/bay.post.right",
+    "spatial.fabric.spatial.feature.facade-bay.05.component.00/bay.post.left",
+    "spatial.fabric.spatial.feature.facade-bay.05.component.00/bay.post.right",
+    "spatial.fabric.spatial.feature.facade-bay.02.component.00/bay.face",
+    "spatial.fabric.spatial.feature.facade-bay.02.component.00/bay.cheek.right",
+    "spatial.fabric.spatial.feature.facade-bay.03.component.00/bay.face",
+    "spatial.fabric.spatial.feature.facade-bay.03.component.00/bay.cheek.right",
+    "spatial.fabric.spatial.feature.facade-bay.02.component.00/bay.cheek.left",
+    "spatial.fabric.spatial.feature.facade-bay.03.component.00/bay.cheek.left",
+    "spatial.fabric.spatial.feature.facade-bay.02.component.00/bay.canopy",
+    "spatial.fabric.spatial.feature.facade-bay.03.component.00/bay.canopy",
+    "spatial.fabric.spatial.feature.facade-bay.05.component.00/bay.canopy",
+    "spatial.fabric.spatial.feature.facade-bay.05.component.00/bay.face",
+    "spatial.fabric.spatial.feature.facade-bay.05.component.00/bay.cheek.right",
+    "spatial.fabric.spatial.feature.facade-bay.05.component.00/bay.cheek.left"
+  ],
+  "collision_boxes_identical": true,
+  "removed": [
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/floor"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001.mirror_x",
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/left"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001",
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/front"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001",
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/right"
+    },
+    {
+      "asset": "sfv.fabric.ivy.001",
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room01/facade.ivy"
+    },
+    {
+      "asset": "sfv.fabric.ivy.001",
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room01/facade.ivy"
+    },
+    {
+      "asset": "sfv.fabric.ivy.001",
+      "id": "spatial.fabric.spatial.parcel.maze.house.020.part01.room00/facade.ivy"
+    },
+    {
+      "asset": "sfv.fabric.ivy.001",
+      "id": "spatial.fabric.spatial.parcel.maze.house.012.part02.room00/facade.ivy"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.017.mirror_x.miter3.course_open",
+      "id": "spatial.fabric.spatial.parcel.maze.house.012.part01.room00/east"
+    },
+    {
+      "asset": "sfv.fabric.sign.tavern.001",
+      "id": "spatial.fabric.spatial.parcel.maze.house.018.part01.room00/facade.sign"
+    },
+    {
+      "asset": "sfv.fabric.sign.tavern.001",
+      "id": "spatial.fabric.spatial.parcel.maze.house.027.part02.room00/facade.sign"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.plain.011.mirror_x.miter3",
+      "id": "spatial.fabric.spatial.parcel.maze.house.012.part02.room00/east"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.front",
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/roof"
+    },
+    {
+      "asset": "sfv.fabric.bracket.wood.m.attach.001",
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/support.bracket"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.rear",
+      "id": "spatial.roof.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00/roof.rear"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.06.front",
+      "id": "spatial.roof.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00/roof.front"
+    },
+    {
+      "asset": "lpfv.fabric.chimney.orange.01",
+      "id": "spatial.roof.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00/chimney"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.rear.end.tight",
+      "id": "spatial.roof.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00/gable.00.00.00"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.06.front.end.tight",
+      "id": "spatial.roof.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00/gable.00.00.01"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.start",
+      "id": "spatial.roof.spatial.maze_bridge_end.01.00.room01/continuous-roof/000/000"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle",
+      "id": "spatial.roof.spatial.maze_bridge_end.01.00.room01/continuous-roof/000/001"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle",
+      "id": "spatial.roof.spatial.maze_bridge_end.01.00.room01/continuous-roof/000/003"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle",
+      "id": "spatial.roof.spatial.maze_bridge_end.01.00.room01/continuous-roof/000/005"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.mirror_z",
+      "id": "spatial.roof.spatial.maze_bridge_end.01.00.room01/continuous-roof/000/002"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.mirror_z",
+      "id": "spatial.roof.spatial.maze_bridge_end.01.00.room01/continuous-roof/000/004"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.end",
+      "id": "spatial.roof.spatial.maze_bridge_end.01.00.room01/continuous-roof/000/006"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.end.tight",
+      "id": "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/001/000"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.end.tight",
+      "id": "spatial.roof.spatial.maze_back.08.room00/continuous-roof/006/006"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "id": "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/001/001"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "id": "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/001/003"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "id": "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/001/005"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "id": "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/001/007"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "id": "spatial.roof.spatial.parcel.maze.house.006.part00.room00.tile00/continuous-roof/004/001"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "id": "spatial.roof.spatial.maze_back.08.room00/continuous-roof/006/001"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "id": "spatial.roof.spatial.maze_back.08.room00/continuous-roof/006/003"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "id": "spatial.roof.spatial.maze_back.08.room00/continuous-roof/006/005"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight.mirror_z",
+      "id": "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/001/002"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight.mirror_z",
+      "id": "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/001/004"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight.mirror_z",
+      "id": "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/001/006"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight.mirror_z",
+      "id": "spatial.roof.spatial.maze_back.08.room00/continuous-roof/006/002"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight.mirror_z",
+      "id": "spatial.roof.spatial.maze_back.08.room00/continuous-roof/006/004"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.start.tight.flush",
+      "id": "spatial.roof.spatial.parcel.maze.house.002.part00.room00/continuous-roof/001/008"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.start.tight.flush",
+      "id": "spatial.roof.spatial.parcel.maze.house.006.part00.room00.tile00/continuous-roof/004/000"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.start.tight.flush",
+      "id": "spatial.roof.spatial.maze_back.01.room00/continuous-roof/002/000"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.start.tight.flush",
+      "id": "spatial.roof.spatial.parcel.maze.house.001.part00.room00.tile00/continuous-roof/003/000"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.start.tight.flush",
+      "id": "spatial.roof.spatial.parcel.maze.house.022.part00.room00.tile00/continuous-roof/005/000"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.start.tight.flush",
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00.tile00/continuous-roof/007/000"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.start.tight.flush",
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00.tile00/continuous-roof/008/000"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight",
+      "id": "spatial.roof.spatial.maze_back.01.room00/continuous-roof/002/001"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight",
+      "id": "spatial.roof.spatial.maze_back.01.room00/continuous-roof/002/003"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight",
+      "id": "spatial.roof.spatial.maze_back.01.room00/continuous-roof/002/005"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight",
+      "id": "spatial.roof.spatial.maze_back.01.room00/continuous-roof/002/007"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight",
+      "id": "spatial.roof.spatial.parcel.maze.house.001.part00.room00.tile00/continuous-roof/003/001"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight",
+      "id": "spatial.roof.spatial.parcel.maze.house.022.part00.room00.tile00/continuous-roof/005/001"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight",
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00.tile00/continuous-roof/007/001"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight",
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00.tile00/continuous-roof/008/001"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight.mirror_z",
+      "id": "spatial.roof.spatial.maze_back.01.room00/continuous-roof/002/002"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight.mirror_z",
+      "id": "spatial.roof.spatial.maze_back.01.room00/continuous-roof/002/004"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight.mirror_z",
+      "id": "spatial.roof.spatial.maze_back.01.room00/continuous-roof/002/006"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.end.tight.flush",
+      "id": "spatial.roof.spatial.maze_back.01.room00/continuous-roof/002/008"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.end.tight.flush",
+      "id": "spatial.roof.spatial.parcel.maze.house.001.part00.room00.tile00/continuous-roof/003/002"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.end.tight.flush",
+      "id": "spatial.roof.spatial.parcel.maze.house.022.part00.room00.tile00/continuous-roof/005/002"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.end.tight.flush",
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00.tile00/continuous-roof/007/002"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.slate.03.run.end.tight.flush",
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00.tile00/continuous-roof/008/002"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.end.tight.flush",
+      "id": "spatial.roof.spatial.parcel.maze.house.006.part00.room00.tile00/continuous-roof/004/002"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.start.tight",
+      "id": "spatial.roof.spatial.maze_back.08.room00/continuous-roof/006/000"
+    }
+  ],
+  "surfaces_identical": false,
+  "walked_identical": true
+}

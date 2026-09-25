@@ -1,0 +1,48 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_warren_maze_composition.gd
+[0m* test_the_frontage_constants_mirror_the_module_descriptors
+* test_the_frontage_clearance_covers_the_baked_colliders
+MAZE_FRONTAGE_HULL sfm.stall.variant.001 colliders=7 hull=5.280 x 4.550 x 3.661 half_width=2.640 rise=4.550 reach=3.430
+MAZE_FRONTAGE_HULL sfv.fabric.awning.blue.001 colliders=0 (geometry is the envelope)
+MAZE_FRONTAGE_HULL sfm.table.fishmonger.001 colliders=5 hull=1.960 x 0.910 x 1.000 half_width=0.980 rise=0.910 reach=1.309
+MAZE_FRONTAGE_HULL lpfv.fabric.prop.barrel.01 colliders=0 (geometry is the envelope)
+* test_the_perimeter_stands_its_frontage_on_open_ground
+MAZE_FRONTAGE seed 12/compact sites=16 laid=16 ground_band=0 wide=9 shoulders=0
+MAZE_FRONTAGE seed 9/compact sites=7 laid=7 ground_band=0 wide=4 shoulders=0
+MAZE_FRONTAGE seed 3/standard sites=25 laid=25 ground_band=0 wide=12 shoulders=0
+MAZE_FRONTAGE seed 9/standard sites=15 laid=15 ground_band=0 wide=2 shoulders=0
+* test_the_frontage_stands_clear_of_the_town_s_own_cladding
+MAZE_FRONTAGE_STANDOFF pool=[&"sfm.stall.variant.001", &"sfv.fabric.awning.blue.001"] reach=3.4301 cleared=4.5000 slack=0.5169
+MAZE_FRONTAGE_STANDOFF pool=[&"lpfv.fabric.prop.barrel.01"] reach=0.8994 cleared=1.5000 slack=0.0476
+MAZE_FRONTAGE_GROUND seed 12/compact sites=16 stood_off=7 shifted=0 pieces=57 outside=0 worst=0.0000 first=
+MAZE_FRONTAGE_GROUND seed 9/compact sites=7 stood_off=3 shifted=0 pieces=24 outside=0 worst=0.0000 first=
+MAZE_FRONTAGE_GROUND seed 3/standard sites=25 stood_off=18 shifted=2 pieces=79 outside=0 worst=0.0000 first=
+MAZE_FRONTAGE_GROUND seed 9/standard sites=15 stood_off=4 shifted=1 pieces=25 outside=0 worst=0.0000 first=
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 4
+Passing Tests         4
+Asserts            1973
+Time              17.397s
+
+
+Ran Tests matching "frontage"
+[32m---- All tests passed! ----
+[0m

@@ -1,0 +1,78 @@
+{
+  "cameras": [
+    {
+      "angle": 0,
+      "camera": "[X: (-0.458592, 0.0, 0.888647), Y: (0.501717, 0.825374, 0.258915), Z: (-0.733466, 0.564586, -0.37851), O: (1317.286, 19.82959, 223.1962)]",
+      "target": "(1323.3, 15.2, 226.3)"
+    },
+    {
+      "angle": -8,
+      "camera": "[X: (-0.577804, 0.0, 0.816176), Y: (0.4608, 0.825375, 0.32622), Z: (-0.673651, 0.564585, -0.476905), O: (1317.776, 19.82959, 222.3894)]",
+      "target": "(1323.3, 15.2, 226.3)"
+    },
+    {
+      "angle": 8,
+      "camera": "[X: (-0.330454, 0.0, 0.943822), Y: (0.532869, 0.825374, 0.18657), Z: (-0.779006, 0.564587, -0.272748), O: (1316.912, 19.82959, 224.0635)]",
+      "target": "(1323.3, 15.2, 226.3)"
+    },
+    {
+      "angle": 90,
+      "camera": "[X: (0.888648, 0.0, 0.458591), Y: (0.258914, 0.825374, -0.501718), Z: (-0.378509, 0.564586, 0.733467), O: (1320.196, 19.82959, 232.3144)]",
+      "target": "(1323.3, 15.2, 226.3)"
+    }
+  ],
+  "chunks": [
+    {
+      "chunk": "(5, 0)",
+      "water_triangles": 7062
+    },
+    {
+      "chunk": "(6, 0)",
+      "water_triangles": 11456
+    },
+    {
+      "chunk": "(7, 0)",
+      "water_triangles": 0
+    },
+    {
+      "chunk": "(5, 1)",
+      "water_triangles": 4704
+    },
+    {
+      "chunk": "(6, 1)",
+      "water_triangles": 5296
+    },
+    {
+      "chunk": "(7, 1)",
+      "water_triangles": 4412
+    },
+    {
+      "chunk": "(5, 2)",
+      "water_triangles": 0
+    },
+    {
+      "chunk": "(6, 2)",
+      "water_triangles": 1046
+    },
+    {
+      "chunk": "(7, 2)",
+      "water_triangles": 6241
+    }
+  ],
+  "spot": {
+    "crosshair": [
+      1332.0,
+      8.5,
+      230.8
+    ],
+    "id": "P13",
+    "player": [
+      1323.3,
+      12.0,
+      226.3
+    ],
+    "precision": "Rounded overlay values transcribed from source image; full camera transform is reconstructed, not recorded.",
+    "seed": 2697992464.0,
+    "source": "/Users/ryko/Desktop/game/town feedback/Screenshot 2026-09-12 at 12.10.53 PM.png"
+  }
+}

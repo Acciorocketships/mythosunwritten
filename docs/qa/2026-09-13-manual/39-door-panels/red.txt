@@ -1,0 +1,322 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_door_panels.gd
+[0m* test_door_side_housing_keeps_native_wall_relief_instead_of_a_protruding_flat_strip
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 0.6 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 0.6 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 0.6 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 1.2 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 1.2 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 1.2 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 1.8 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 1.8 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 1.8 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 0.6 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 0.6 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 0.6 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 1.2 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 1.2 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 1.2 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 1.8 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 1.8 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 1.8 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 0.6 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 0.6 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 0.6 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 1.2 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 1.2 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 1.2 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 1.8 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 1.8 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 1.8 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 0.6 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 0.6 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 0.6 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 1.2 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 1.2 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 1.2 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 1.8 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 1.8 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 1.8 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 0.6 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 0.6 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 0.6 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 1.2 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 1.2 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 1.2 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 1.8 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 1.8 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 1.8 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 0.6 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 0.6 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 0.6 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 1.2 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 1.2 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 1.2 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 1.8 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 1.8 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 1.8 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 0.6 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 0.6 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 0.6 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 1.2 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 1.2 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 1.2 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 1.8 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 1.8 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 1.8 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 0.6 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 0.6 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 0.6 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 1.2 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 1.2 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 1.2 z 0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 1.8 z -0.25
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 1.8 z 0.00
+      at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 1.8 z 0.25
+      at line 36
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_door_panels.gd
+[0m- test_door_side_housing_keeps_native_wall_relief_instead_of_a_protruding_flat_strip
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 0.6 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 0.6 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 0.6 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 1.2 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 1.2 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 1.2 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 1.8 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 1.8 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand -1 y 1.8 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 0.6 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 0.6 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 0.6 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 1.2 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 1.2 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 1.2 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 1.8 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 1.8 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth:  hand 1 y 1.8 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 0.6 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 0.6 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 0.6 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 1.2 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 1.2 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 1.2 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 1.8 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 1.8 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand -1 y 1.8 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 0.6 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 0.6 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 0.6 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 1.2 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 1.2 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 1.2 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 1.8 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 1.8 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x hand 1 y 1.8 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 0.6 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 0.6 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 0.6 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 1.2 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 1.2 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 1.2 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 1.8 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 1.8 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand -1 y 1.8 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 0.6 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 0.6 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 0.6 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 1.2 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 1.2 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 1.2 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 1.8 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 1.8 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .course_open hand 1 y 1.8 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 0.6 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 0.6 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 0.6 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 1.2 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 1.2 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 1.2 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 1.8 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 1.8 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand -1 y 1.8 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.11326646804809570312] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 0.6 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 0.6 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 0.6 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 1.2 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 1.2 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 1.2 z 0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561677932739257812] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 1.8 z -0.25
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910200595856] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 1.8 z 0.00
+          at line 36
+[31m    [Failed]:  [0m[0.13561689853668212891] expected to equal [0.23910188674927] +/- [0.0002]:  Housing plaster and timber must retain native depth: .mirror_x.course_open hand 1 y 1.8 z 0.25
+          at line 36
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts            0/72
+Time              4.105s
+
+
+[31m---- 1 failing tests ----
+[0m

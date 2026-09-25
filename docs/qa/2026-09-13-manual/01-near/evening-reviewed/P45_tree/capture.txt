@@ -1,0 +1,23 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+SEPT12_WAIT P45_tree
+EVENING_NATIVE_OWNERS 0
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P45_tree/opaque/P45_tree_0.png
+SEPT12_SHOT P45_tree 0.0 opaque
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P45_tree/before/P45_tree_0.png
+SEPT12_SHOT P45_tree 0.0 before
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P45_tree/after/P45_tree_0.png
+SEPT12_SHOT P45_tree 0.0 after
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P45_tree/opaque/P45_tree_-8.png
+SEPT12_SHOT P45_tree -8.0 opaque
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P45_tree/before/P45_tree_-8.png
+SEPT12_SHOT P45_tree -8.0 before
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P45_tree/after/P45_tree_-8.png
+SEPT12_SHOT P45_tree -8.0 after
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P45_tree/opaque/P45_tree_8.png
+SEPT12_SHOT P45_tree 8.0 opaque
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P45_tree/before/P45_tree_8.png
+SEPT12_SHOT P45_tree 8.0 before
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-reviewed/P45_tree/after/P45_tree_8.png
+SEPT12_SHOT P45_tree 8.0 after

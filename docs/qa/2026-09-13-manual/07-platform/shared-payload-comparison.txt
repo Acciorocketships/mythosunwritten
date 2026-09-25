@@ -1,0 +1,5 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+{ "batches_identical": false, "collision_boxes_identical": true, "walked_identical": false, "before_meshes": 76, "after_meshes": 77, "new_meshes": ["public-transition/volume.transition.44.mesh"], "changed_meshes": ["public-structural-skin/1"], "batch_changes": [{ "asset": "sfv.fabric.floor.l.001", "before": 50603, "after": 49771 }, { "asset": "sfv.fabric.planter.003", "before": 3842, "after": 3839 }, { "asset": "sfv.deck.pillar.001", "before": 60360, "after": 61276 }, { "asset": "sfv.deck.floor.s.001", "before": 14208, "after": 16798 }, { "asset": "sfv.deck.railing.s.001", "before": 15878, "after": 15322 }, { "asset": "sfv.fabric.gallery.floor.m.001", "before": 29599, "after": 29785 }, { "asset": "sfv.fabric.wall.rock.retaining.001", "before": 30184, "after": 30186 }] }
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

@@ -1,0 +1,7 @@
+{
+  "scripts/camera/camera.gd": "d6831d89649e4543c7fbb5b364946fed50927844bf9d22fe126e240350fc43d0",
+  "scripts/camera/visibility_bubble.gdshaderinc": "cf1cebd3d555a3198b145b4f31fa3b41eaddf71e7e34a3dddd52976a623196c2",
+  "tests/test_visibility_projection.gd": "695c243d288af5a8984b4ee5f318dc6e723297a171efe5aa352c323b039f8f92",
+  "tests/test_september13_near_visibility.gd": "7eb219329dd6610a20a6066bcd3569d92b45152f9459ab1738b35623cd5a4713",
+  "tests/harness/september13_visibility_qa.gd": "404b7efbf9f5a0ce447bccc646b4064eedb7c947e17aad67f085567bbf97d55d"
+}

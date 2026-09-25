@@ -1,0 +1,44 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_dormer_fit.gd
+[0m* test_compact_shed_rear_join_is_buried_in_actual_host_triangles
+[31m    [Failed]:  [0m[0.60660886764526] expected to be < than [-0.02]:  roof.tower.orange.dormer.left: exposed rear gap 0.6066 m
+      at line 4
+* test_wide_shed_keeps_the_complete_glazed_opening_above_the_roof
+[31m    [Failed]:  [0m[0.29707646369934] expected to be < than [-0.02]:  roof.square.orange.dormer.right: roof covers pane by 0.2971 m
+      at line 7
+[1m0/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_dormer_fit.gd
+[0m- test_compact_shed_rear_join_is_buried_in_actual_host_triangles
+[31m    [Failed]:  [0m[0.60660886764526] expected to be < than [-0.02]:  roof.tower.orange.dormer.left: exposed rear gap 0.6066 m
+          at line 4
+- test_wide_shed_keeps_the_complete_glazed_opening_above_the_roof
+[31m    [Failed]:  [0m[0.29707646369934] expected to be < than [-0.02]:  roof.square.orange.dormer.right: roof covers pane by 0.2971 m
+          at line 7
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests      none
+Failing Tests         2
+Asserts             4/6
+Time              10.131s
+
+
+[31m---- 2 failing tests ----
+[0m

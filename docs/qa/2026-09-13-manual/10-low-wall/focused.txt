@@ -1,0 +1,74 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_low_wall.gd
+[0m* test_photographed_partial_course_keeps_retaining_masonry
+* test_partial_and_complete_storeys_in_all_orientations
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september10_ceiling_courses.gd
+[0m* test_photographed_stone_courses_do_not_hang_below_their_owned_band
+[31m    [Failed]:  [0m[5] expected to equal [6]:  
+      at line 29
+* test_garden_tunnel_turn_uses_city_stone_inside_the_native_grass_lip
+* test_a_short_neighbor_course_cannot_own_a_full_facade_miter
+[1m2/3 passed.
+[0m[4m
+
+res://tests/test_september8_facade_ends.gd
+[0m* test_photographed_retaining_remnant_is_not_a_single_panel_house_facade
+SCRIPT ERROR: Invalid access to property or key '(-3, 2, 9, 3)' on a base object of type 'Dictionary'.
+          at: test_photographed_retaining_remnant_is_not_a_single_panel_house_facade (res://tests/test_september8_facade_ends.gd:8)
+          GDScript backtrace (most recent call first):
+              [0] test_photographed_retaining_remnant_is_not_a_single_panel_house_facade (res://tests/test_september8_facade_ends.gd:8)
+              [1] _run_test (res://addons/gut/gut.gd:612)
+              [2] _test_the_scripts (res://addons/gut/gut.gd:815)
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Invalid access to property or key '(-3, 2, 9, 3)' on a base object of type 'Dictionary'.
+      at line -1
+* test_facade_continuity_uses_aligned_complete_bank_courses
+* test_shared_corner_does_not_cancel_a_deep_door_return
+[1m2/3 passed.
+[0m[4m
+
+res://tests/test_september7_garden_wall.gd
+[0m* test_roof_clearance_and_wall_enclosure_remain_separate_in_every_direction
+* test_reported_garden_wall_closes_air_above_neighbor_roof
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september10_ceiling_courses.gd
+[0m- test_photographed_stone_courses_do_not_hang_below_their_owned_band
+[31m    [Failed]:  [0m[5] expected to equal [6]:  
+          at line 29
+[4m
+res://tests/test_september8_facade_ends.gd
+[0m- test_photographed_retaining_remnant_is_not_a_single_panel_house_facade
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Invalid access to property or key '(-3, 2, 9, 3)' on a base object of type 'Dictionary'.
+          at line -1
+
+Totals
+------
+Scripts               4
+Tests                10
+Passing Tests         8
+Failing Tests         2
+Asserts           108/110
+Time              40.281s
+
+
+[31m---- 2 failing tests ----
+[0m

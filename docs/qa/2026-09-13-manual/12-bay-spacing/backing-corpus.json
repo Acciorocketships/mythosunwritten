@@ -1,0 +1,413 @@
+{
+	"attempted": 48,
+	"fingerprint": "a16d4c79db4f3b609d5f9aa8fc036d1142ccb42d1c92a25b002511af1b008477",
+	"rows": [
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 1034,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 1
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 4373,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 1
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 5298,
+			"scale": "large",
+			"sealed": true,
+			"seed": 1
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 9009,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 1
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2264,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 2
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 7987,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 2
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 5688,
+			"scale": "large",
+			"sealed": true,
+			"seed": 2
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 14875,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 2
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 1146,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 3
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 4436,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 3
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 7126,
+			"scale": "large",
+			"sealed": true,
+			"seed": 3
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 10431,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 3
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 815,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 4
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2241,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 4
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 6979,
+			"scale": "large",
+			"sealed": true,
+			"seed": 4
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 8316,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 4
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 839,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 5
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 4445,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 5
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 6866,
+			"scale": "large",
+			"sealed": true,
+			"seed": 5
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 9114,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 5
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2066,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 6
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 4533,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 6
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 12451,
+			"scale": "large",
+			"sealed": true,
+			"seed": 6
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 18883,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 6
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 1156,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 7
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 4023,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 7
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 7780,
+			"scale": "large",
+			"sealed": true,
+			"seed": 7
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 9587,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 7
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 649,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 8
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2609,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 8
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2902,
+			"scale": "large",
+			"sealed": true,
+			"seed": 8
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 13954,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 8
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 1185,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 9
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2986,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 9
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 5803,
+			"scale": "large",
+			"sealed": true,
+			"seed": 9
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 7412,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 9
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 1660,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 10
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 3229,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 10
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 5676,
+			"scale": "large",
+			"sealed": true,
+			"seed": 10
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 11630,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 10
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 596,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 11
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 4064,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 11
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 9896,
+			"scale": "large",
+			"sealed": true,
+			"seed": 11
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 8130,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 11
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 879,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 12
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 1856,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 12
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2488,
+			"scale": "large",
+			"sealed": true,
+			"seed": 12
+		},
+		{
+			"failure": "maze fabric gate failed: feature component spatial.fabric.spatial.feature.balcony.00.component.00 rejected: visual envelope of spatial.fabric.spatial.feature.balcony.00.component.00 (balcony.corner.left.blue at (8, 10, 5)/r1) [P: (8.18264, ",
+			"gate": "maze fabric gate failed: feature component spatial.fabric.spatial.feature.balcony.00.component.00 rejected: visual envelope of spatial.fabric.spatial.feature.balcony.00.component.00",
+			"ms": 4339,
+			"scale": "grand",
+			"sealed": false,
+			"seed": 12
+		}
+	],
+	"scales": [
+		"compact",
+		"standard",
+		"large",
+		"grand"
+	],
+	"sealed": 47,
+	"seeds": [
+		1,
+		2,
+		3,
+		4,
+		5,
+		6,
+		7,
+		8,
+		9,
+		10,
+		11,
+		12
+	],
+	"total_ms": 265704,
+	"unix_time": 1789398497
+}

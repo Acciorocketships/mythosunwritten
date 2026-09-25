@@ -1,0 +1,322 @@
+[
+  {
+    "room": "spatial.parcel.maze.bridge.00.end.0.lower.part00.room00",
+    "screen": "(1289.685, 329.9139)",
+    "world": "(972.0, 29.08, -409.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.bridge.00.end.1.lower.part00.room00",
+    "screen": "(1596.397, 327.351)",
+    "world": "(960.0, 29.08, -412.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.bridge.01.end.0.lower.part00.room00",
+    "screen": "(6650.38, 1065.472)",
+    "world": "(960.0, 26.08, -430.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.bridge.01.end.1.lower.part00.room00",
+    "screen": "(7612.309, 1741.399)",
+    "world": "(975.0, 26.08, -427.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.000.part00.room00",
+    "screen": "(-231.1743, 8.814716)",
+    "world": "(978.0, 23.08, -448.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.001.part00.room00",
+    "screen": "(-553.3856, -108.4434)",
+    "world": "(978.0, 23.08, -442.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.001.part01.room00",
+    "screen": "(-912.5851, 138.4604)",
+    "world": "(975.0, 29.08, -439.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.002.part00.room00",
+    "screen": "(-34.05968, -287.4435)",
+    "world": "(993.0, 23.08, -433.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.003.part00.room00",
+    "screen": "(-1425.243, -425.7267)",
+    "world": "(978.0, 23.08, -436.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.004.part00.room00",
+    "screen": "(5850.264, 4468.795)",
+    "world": "(990.0, 23.08, -424.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.004.part01.room00",
+    "screen": "(-11500.15, -2448.63)",
+    "world": "(990.0, 29.08, -424.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.004.part02.room00",
+    "screen": "(-2163.701, 1273.714)",
+    "world": "(990.0, 35.08, -424.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.006.part00.room00",
+    "screen": "(1621.802, 747.8309)",
+    "world": "(981.0, 23.08, -418.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.006.part01.room00",
+    "screen": "(1527.604, 372.5107)",
+    "world": "(978.0, 29.08, -415.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.008.part00.room00",
+    "screen": "(1858.476, 520.4837)",
+    "world": "(972.0, 26.08, -418.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.009.part00.room00",
+    "screen": "(2888.79, 577.4889)",
+    "world": "(960.0, 26.08, -424.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.010.part00.room00",
+    "screen": "(1973.289, 458.7228)",
+    "world": "(960.0, 26.08, -418.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.011.part00.room00",
+    "screen": "(1116.437, 306.6636)",
+    "world": "(966.0, 29.08, -400.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.011.part01.room00",
+    "screen": "(1143.067, 190.1315)",
+    "world": "(966.0, 35.08, -400.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.011.part02.room00",
+    "screen": "(1172.85, 59.80125)",
+    "world": "(966.0, 41.08, -400.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.012.part00.room00",
+    "screen": "(1309.982, 315.0059)",
+    "world": "(963.0, 29.08, -406.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.012.part01.room00",
+    "screen": "(1355.165, 174.9675)",
+    "world": "(963.0, 35.08, -406.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.012.part02.room00",
+    "screen": "(1406.883, 14.67516)",
+    "world": "(963.0, 41.08, -406.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.014.part00.room00",
+    "screen": "(901.5259, 244.5018)",
+    "world": "(984.0, 32.08, -403.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.014.part01.room00",
+    "screen": "(923.1395, 67.06348)",
+    "world": "(984.0, 38.08, -403.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.015.part00.room00",
+    "screen": "(1017.421, 441.2671)",
+    "world": "(993.0, 29.08, -415.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.016.part00.room00",
+    "screen": "(424.871, 17.49709)",
+    "world": "(999.0, 23.08, -442.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.016.part01.room00",
+    "screen": "(441.4724, 200.6986)",
+    "world": "(999.0, 29.08, -442.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.018.part00.room00",
+    "screen": "(559.2631, 429.3378)",
+    "world": "(996.0, 23.08, -394.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.018.part01.room00",
+    "screen": "(554.4424, 312.1795)",
+    "world": "(996.0, 29.08, -394.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.019.part00.room00",
+    "screen": "(177.715, 489.2699)",
+    "world": "(1011.0, 23.08, -397.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.020.part00.room00",
+    "screen": "(326.5005, 417.8001)",
+    "world": "(1008.0, 23.08, -388.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.020.part01.room00",
+    "screen": "(309.1568, 308.6079)",
+    "world": "(1008.0, 29.08, -388.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.022.part00.room00",
+    "screen": "(-17769.72, -3420.887)",
+    "world": "(960.0, 23.08, -436.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.022.part01.room00",
+    "screen": "(-23457.55, -1200.068)",
+    "world": "(963.0, 29.08, -433.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.024.part00.room00",
+    "screen": "(-947.7086, -104.4704)",
+    "world": "(969.0, 23.08, -445.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.024.part01.room00",
+    "screen": "(-771.2041, 173.0071)",
+    "world": "(969.0, 29.08, -445.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.026.part00.room00",
+    "screen": "(10006.76, 1669.212)",
+    "world": "(945.0, 23.08, -436.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.027.part00.room00",
+    "screen": "(678.346, 390.7937)",
+    "world": "(987.0, 23.08, -388.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.027.part01.room00",
+    "screen": "(680.0792, 300.3625)",
+    "world": "(987.0, 29.08, -388.0)"
+  },
+  {
+    "room": "spatial.parcel.maze.house.027.part02.room00",
+    "screen": "(681.9765, 201.3694)",
+    "world": "(987.0, 35.08, -388.0)"
+  },
+  {
+    "room": "spatial.maze_bridge_end.00.00.room00",
+    "screen": "(1293.842, 140.7245)",
+    "world": "(975.0, 35.08, -409.0)"
+  },
+  {
+    "room": "spatial.maze_bridge_end.00.00.room01",
+    "screen": "(1361.289, -91.45589)",
+    "world": "(975.0, 41.08, -409.0)"
+  },
+  {
+    "room": "spatial.maze_bridge_end.00.01.room00",
+    "screen": "(1479.217, 162.5698)",
+    "world": "(963.0, 35.08, -409.0)"
+  },
+  {
+    "room": "spatial.maze_bridge_end.00.01.room01",
+    "screen": "(1549.107, -23.05737)",
+    "world": "(963.0, 41.08, -409.0)"
+  },
+  {
+    "room": "spatial.maze_bridge.00.room00",
+    "screen": "(1666.083, -117.55)",
+    "world": "(969.0, 41.08, -412.0)"
+  },
+  {
+    "room": "spatial.maze_bridge_end.01.00.room00",
+    "screen": "(5587.141, 167.0042)",
+    "world": "(963.0, 32.08, -427.0)"
+  },
+  {
+    "room": "spatial.maze_bridge_end.01.00.room01",
+    "screen": "(8709.224, -1236.86)",
+    "world": "(963.0, 38.08, -427.0)"
+  },
+  {
+    "room": "spatial.maze_bridge_end.01.01.room00",
+    "screen": "(33334.36, -657.0031)",
+    "world": "(975.0, 32.08, -427.0)"
+  },
+  {
+    "room": "spatial.maze_bridge_end.01.01.room01",
+    "screen": "(-11517.78, 3525.148)",
+    "world": "(975.0, 38.08, -427.0)"
+  },
+  {
+    "room": "spatial.maze_bridge.01.room00",
+    "screen": "(-7355.883, 1970.66)",
+    "world": "(969.0, 38.08, -430.0)"
+  },
+  {
+    "room": "spatial.maze_back.00.room00",
+    "screen": "(682.3757, -120.8941)",
+    "world": "(1005.0, 23.08, -433.0)"
+  },
+  {
+    "room": "spatial.maze_back.01.room00",
+    "screen": "(1112.886, -125.2316)",
+    "world": "(1014.0, 23.08, -430.0)"
+  },
+  {
+    "room": "spatial.maze_back.02.room00",
+    "screen": "(17497.06, -10015.11)",
+    "world": "(1014.0, 23.08, -418.0)"
+  },
+  {
+    "room": "spatial.maze_back.03.room00",
+    "screen": "(697.441, 15.72752)",
+    "world": "(1008.0, 23.08, -439.0)"
+  },
+  {
+    "room": "spatial.maze_back.04.room00",
+    "screen": "(-190.7032, 774.9505)",
+    "world": "(1011.0, 23.08, -409.0)"
+  },
+  {
+    "room": "spatial.maze_back.05.room00",
+    "screen": "(196.6146, 558.5869)",
+    "world": "(1008.0, 23.08, -403.0)"
+  },
+  {
+    "room": "spatial.maze_back.06.room00",
+    "screen": "(3056.412, 625.3297)",
+    "world": "(942.0, 23.08, -427.0)"
+  },
+  {
+    "room": "spatial.maze_back.07.room00",
+    "screen": "(3473.16, 582.034)",
+    "world": "(951.0, 26.08, -427.0)"
+  },
+  {
+    "room": "spatial.maze_back.08.room00",
+    "screen": "(2028.708, 428.9111)",
+    "world": "(951.0, 26.08, -418.0)"
+  },
+  {
+    "room": "spatial.maze_back.09.room00",
+    "screen": "(692.9789, 200.2818)",
+    "world": "(1008.0, 29.08, -439.0)"
+  },
+  {
+    "room": "spatial.maze_back.10.room00",
+    "screen": "(1036.88, 309.4758)",
+    "world": "(972.0, 29.08, -400.0)"
+  },
+  {
+    "room": "spatial.maze_back.11.room00",
+    "screen": "(1060.597, 185.0565)",
+    "world": "(972.0, 35.08, -400.0)"
+  },
+  {
+    "room": "spatial.maze_back.12.room00",
+    "screen": "(1087.329, 44.82193)",
+    "world": "(972.0, 41.08, -400.0)"
+  }
+]

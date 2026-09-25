@@ -1,0 +1,19 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+CONTEXT_PERF { "trial": 0, "candidate": false, "frame_ms_median": 26.704, "frame_ms_p95": 28.527, "cpu_ms_p95": 1.528 }
+CONTEXT_PERF { "trial": 1, "candidate": true, "frame_ms_median": 38.595, "frame_ms_p95": 41.218, "cpu_ms_p95": 2.317 }
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-13-manual/03-ground/motion/before/frame_000.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-13-manual/03-ground/motion/before/frame_025.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-13-manual/03-ground/motion/before/frame_050.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-13-manual/03-ground/motion/before/frame_075.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-13-manual/03-ground/motion/before/frame_100.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-13-manual/03-ground/motion/before/frame_125.png
+CONTEXT_PERF { "trial": 2, "candidate": false, "frame_ms_median": 26.691, "frame_ms_p95": 29.339, "cpu_ms_p95": 0.396 }
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-13-manual/03-ground/motion/after/frame_000.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-13-manual/03-ground/motion/after/frame_025.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-13-manual/03-ground/motion/after/frame_050.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-13-manual/03-ground/motion/after/frame_075.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-13-manual/03-ground/motion/after/frame_100.png
+SUBVIEW_CAPTURE /Users/ryko/story/docs/qa/2026-09-13-manual/03-ground/motion/after/frame_125.png
+CONTEXT_PERF { "trial": 3, "candidate": true, "frame_ms_median": 38.149, "frame_ms_p95": 40.422, "cpu_ms_p95": 1.438 }

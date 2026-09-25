@@ -1,0 +1,370 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_bay_spacing.gd
+[0m* test_embedded_bay_centres_on_complete_parent_panels_in_every_orientation
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+      at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+      at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+      at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+      at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+      at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+      at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+      at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+      at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+      at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+      at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+      at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+      at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+      at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+      at line 27
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_bay_spacing.gd
+[0m- test_embedded_bay_centres_on_complete_parent_panels_in_every_orientation
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+          at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+          at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+          at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+          at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+          at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+          at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+          at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+          at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+          at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+          at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+          at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.25000000000000000000] expected to equal [0.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0.75] expected to be <= than [0.65]:  
+          at line 26
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[0.75000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+[31m    [Failed]:  [0m[1.25000000000000000000] expected to equal [1.0] +/- [0.0001]:  Bay replaces a panel centre, never the building corner or an inter-panel joint
+          at line 24
+[31m    [Failed]:  [0m[0] expected to equal [4]:  Both columns and both heights require real parent wall
+          at line 27
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts           96/180
+Time              5.349s
+
+
+[31m---- 1 failing tests ----
+[0m

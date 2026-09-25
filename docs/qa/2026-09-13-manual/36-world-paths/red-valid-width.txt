@@ -1,0 +1,39 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_world_paths.gd
+[0m* test_real_hillside_node_keeps_its_walkable_narrow_exit
+[31m    [Failed]:  [0mThe road's centre is continuous; its outer edge has only a 14 cm step
+      at line 19
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_world_paths.gd
+[0m- test_real_hillside_node_keeps_its_walkable_narrow_exit
+[31m    [Failed]:  [0mThe road's centre is continuous; its outer edge has only a 14 cm step
+          at line 19
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             2/3
+Time              1.416s
+
+
+Ran Tests matching "test_real_hillside"
+[31m---- 1 failing tests ----
+[0m

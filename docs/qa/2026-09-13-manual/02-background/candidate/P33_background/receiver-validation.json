@@ -1,0 +1,20 @@
+{
+  "P33_background_0": {
+    "no_receiver_pixels": 3197,
+    "changed_no_receiver": 611,
+    "changed_no_receiver_over_20": 0,
+    "no_receiver_max_difference": 1
+  },
+  "P33_background_-8": {
+    "no_receiver_pixels": 3264,
+    "changed_no_receiver": 495,
+    "changed_no_receiver_over_20": 0,
+    "no_receiver_max_difference": 1
+  },
+  "P33_background_8": {
+    "no_receiver_pixels": 6014,
+    "changed_no_receiver": 999,
+    "changed_no_receiver_over_20": 0,
+    "no_receiver_max_difference": 1
+  }
+}

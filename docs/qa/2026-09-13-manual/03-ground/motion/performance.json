@@ -1,0 +1,30 @@
+[
+  {
+    "candidate": false,
+    "cpu_ms_p95": 1.528,
+    "frame_ms_median": 26.704,
+    "frame_ms_p95": 28.527,
+    "trial": 0
+  },
+  {
+    "candidate": true,
+    "cpu_ms_p95": 2.317,
+    "frame_ms_median": 38.595,
+    "frame_ms_p95": 41.218,
+    "trial": 1
+  },
+  {
+    "candidate": false,
+    "cpu_ms_p95": 0.396,
+    "frame_ms_median": 26.691,
+    "frame_ms_p95": 29.339,
+    "trial": 2
+  },
+  {
+    "candidate": true,
+    "cpu_ms_p95": 1.438,
+    "frame_ms_median": 38.149,
+    "frame_ms_p95": 40.422,
+    "trial": 3
+  }
+]

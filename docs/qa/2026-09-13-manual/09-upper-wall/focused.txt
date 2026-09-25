@@ -1,0 +1,51 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_bay_backing.gd
+[0m* test_photographed_roofed_bay_has_a_complete_parent_wall
+* test_complete_backing_is_centred_in_each_facade_orientation
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september10_overhang.gd
+[0m* test_photographed_entrance_does_not_stack_a_bay_on_a_room_cantilever
+* test_bay_bearing_rejects_partial_edges_and_empty_roof_bands_in_four_orientations
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september11_architectural_variety.gd
+[0m* test_photographed_facades_use_available_supported_bays
+* test_private_corner_walkout_can_share_two_real_walls_without_occupying_them
+* test_tight_terminal_crowns_offer_dormers_without_changing_the_roof_seam
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_september13_roof_party_ends.gd
+[0m* test_photographed_half_roofs_present_native_gables_to_the_street
+* test_wall_backed_roof_selection_rotates_without_changing_native_stock
+* test_short_or_partial_wall_does_not_claim_a_complete_roof_end
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               4
+Tests                10
+Passing Tests        10
+Asserts             475
+Time              58.618s
+
+
+[32m---- All tests passed! ----
+[0m

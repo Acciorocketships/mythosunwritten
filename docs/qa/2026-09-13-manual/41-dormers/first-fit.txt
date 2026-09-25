@@ -1,0 +1,90 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_dormer_fit.gd
+[0m* test_compact_shed_rear_join_is_buried_in_actual_host_triangles
+WARNING: 'res://terrain/environment/meshes/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00.res': In external resource #0, invalid UID: 'uid://51hucbc8f5pp' - using text path instead: 'res://terrain/environment/materials/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00_surface_00.tres'.
+     at: open (core/io/resource_format_binary.cpp:1089)
+     GDScript backtrace (most recent call first):
+         [0] _check_fit (res://tests/test_september13_dormer_fit.gd:22)
+         [1] test_compact_shed_rear_join_is_buried_in_actual_host_triangles (res://tests/test_september13_dormer_fit.gd:4)
+         [2] _run_test (res://addons/gut/gut.gd:612)
+         [3] _test_the_scripts (res://addons/gut/gut.gd:815)
+         [4] test_scripts (res://addons/gut/gut.gd:1027)
+         [5] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+         [6] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+         [7] main (res://addons/gut/cli/gut_cli.gd:284)
+         [8] _init (res://addons/gut/gut_cmdln.gd:39)
+WARNING: 'res://terrain/environment/meshes/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00.res': In external resource #1, invalid UID: 'uid://v03m3i8elwko' - using text path instead: 'res://terrain/environment/materials/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00_surface_01.tres'.
+     at: open (core/io/resource_format_binary.cpp:1089)
+     GDScript backtrace (most recent call first):
+         [0] _check_fit (res://tests/test_september13_dormer_fit.gd:22)
+         [1] test_compact_shed_rear_join_is_buried_in_actual_host_triangles (res://tests/test_september13_dormer_fit.gd:4)
+         [2] _run_test (res://addons/gut/gut.gd:612)
+         [3] _test_the_scripts (res://addons/gut/gut.gd:815)
+         [4] test_scripts (res://addons/gut/gut.gd:1027)
+         [5] run_tests (res://addons/gut/gui/GutRunner.gd:194)
+         [6] _run_tests (res://addons/gut/cli/gut_cli.gd:238)
+         [7] main (res://addons/gut/cli/gut_cli.gd:284)
+         [8] _init (res://addons/gut/gut_cmdln.gd:39)
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-1>'res://terrain/environment/meshes/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00.res': In external resource #0, invalid UID: 'uid://51hucbc8f5pp' - using text path instead: 'res://terrain/environment/materials/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00_surface_00.tres'.
+    [2] <engine-1>'res://terrain/environment/meshes/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00.res': In external resource #1, invalid UID: 'uid://v03m3i8elwko' - using text path instead: 'res://terrain/environment/materials/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00_surface_01.tres'.
+      at line -1
+* test_wide_shed_keeps_the_complete_glazed_opening_above_the_roof
+WARNING: 'res://terrain/environment/meshes/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00.res': In external resource #0, invalid UID: 'uid://51hucbc8f5pp' - using text path instead: 'res://terrain/environment/materials/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00_surface_00.tres'.
+     at: open (core/io/resource_format_binary.cpp:1089)
+     GDScript backtrace (most recent call first):
+         [0] _check_fit (res://tests/test_september13_dormer_fit.gd:22)
+         [1] test_wide_shed_keeps_the_complete_glazed_opening_above_the_roof (res://tests/test_september13_dormer_fit.gd:7)
+         [2] _run_test (res://addons/gut/gut.gd:612)
+         [3] _test_the_scripts (res://addons/gut/gut.gd:815)
+WARNING: 'res://terrain/environment/meshes/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00.res': In external resource #1, invalid UID: 'uid://v03m3i8elwko' - using text path instead: 'res://terrain/environment/materials/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00_surface_01.tres'.
+     at: open (core/io/resource_format_binary.cpp:1089)
+     GDScript backtrace (most recent call first):
+         [0] _check_fit (res://tests/test_september13_dormer_fit.gd:22)
+         [1] test_wide_shed_keeps_the_complete_glazed_opening_above_the_roof (res://tests/test_september13_dormer_fit.gd:7)
+         [2] _run_test (res://addons/gut/gut.gd:612)
+         [3] _test_the_scripts (res://addons/gut/gut.gd:815)
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-1>'res://terrain/environment/meshes/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00.res': In external resource #0, invalid UID: 'uid://51hucbc8f5pp' - using text path instead: 'res://terrain/environment/materials/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00_surface_00.tres'.
+    [2] <engine-1>'res://terrain/environment/meshes/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00.res': In external resource #1, invalid UID: 'uid://v03m3i8elwko' - using text path instead: 'res://terrain/environment/materials/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00_surface_01.tres'.
+      at line -1
+[1m0/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_dormer_fit.gd
+[0m- test_compact_shed_rear_join_is_buried_in_actual_host_triangles
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-1>'res://terrain/environment/meshes/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00.res': In external resource #0, invalid UID: 'uid://51hucbc8f5pp' - using text path instead: 'res://terrain/environment/materials/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00_surface_00.tres'.
+    [2] <engine-1>'res://terrain/environment/meshes/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00.res': In external resource #1, invalid UID: 'uid://v03m3i8elwko' - using text path instead: 'res://terrain/environment/materials/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00_surface_01.tres'.
+          at line -1
+- test_wide_shed_keeps_the_complete_glazed_opening_above_the_roof
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-1>'res://terrain/environment/meshes/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00.res': In external resource #0, invalid UID: 'uid://51hucbc8f5pp' - using text path instead: 'res://terrain/environment/materials/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00_surface_00.tres'.
+    [2] <engine-1>'res://terrain/environment/meshes/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00.res': In external resource #1, invalid UID: 'uid://v03m3i8elwko' - using text path instead: 'res://terrain/environment/materials/fantasy_village_dormers/sfv_fabric_roof_window_004_deep_piece_00_surface_01.tres'.
+          at line -1
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests      none
+Failing Tests         2
+Asserts             6/8
+Time              10.304s
+
+
+[31m---- 2 failing tests ----
+[0m

@@ -1,0 +1,9 @@
+{
+  "scripts/camera/CameraVisibilityBubble.gd": "5d44fe4b80b291ca72a633eee92c41db90081e78b73952105534477b101612c7",
+  "scripts/camera/VisibilityGroundDepth.gd": "636388cb8674c30df36d57f9624efe884239b668bf88e3ec678f77fca8a804fb",
+  "scripts/camera/visibility_bubble.gdshaderinc": "471fb11d2d82d16d7bdd9f9916c3f140b473b20e20bd494abdf0cd4d4d765c4a",
+  "scripts/camera/ground_receiver_depth.gdshader": "32cf823f8b348fefd174c52cdc03df9b137e9cee009c1ef003a52ba78347f8f9",
+  "tests/test_september12_ground_visibility.gd": "cdb16aa85d6f4973cf8acf19ba41f543a49791a27fde91e3013997128d64784c",
+  "tests/harness/september13_visibility_qa.gd": "1bf417a254e1fe3b99eaacd4771fb34bed7552b5df84491e49fbd9cf0bf2f5ed",
+  "tests/harness/september13_context_motion.gd": "5884211d07adaaeed3a793b60bebe74c4888e871004f2a72e22638a089cace8c"
+}

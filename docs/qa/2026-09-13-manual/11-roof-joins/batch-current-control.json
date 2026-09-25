@@ -1,0 +1,77 @@
+{
+  "added": [],
+  "after": 2000,
+  "before": 2000,
+  "changed": [
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_positive.end_positive.branch",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-11.25, 3.0, -11.25)]",
+        "visibility_owners": "[P: (-12.75, -0.161052, -15.75), S: (3.0, 3.161053, 3.00102)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.slate.03",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-11.25, 3.0, -14.25)]",
+        "visibility_owners": "[P: (-12.75, -0.161052, -15.75), S: (3.0, 3.161053, 3.00102)]"
+      },
+      "id": "spatial.roof.spatial.maze_back.03.room00/roof"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_positive.end_positive.middle",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-11.25, 3.0, -11.25)]",
+        "visibility_owners": "[P: (-21.75, -0.161052, -12.75), S: (12.0, 3.161052, 3.00102)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-11.25, 2.971562, -11.25)]",
+        "visibility_owners": "[P: (-21.75, -0.161052, -12.75), S: (12.0, 3.161052, 3.00102)]"
+      },
+      "id": "spatial.roof.spatial.maze_back.04.room00/continuous-roof/003/007"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_positive.end_positive.adjacent",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-12.75, 3.0, -11.25)]",
+        "visibility_owners": "[P: (-21.75, -0.161052, -12.75), S: (12.0, 3.161052, 3.00102)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.tight.mirror_z",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-12.75, 2.971562, -11.25)]",
+        "visibility_owners": "[P: (-21.75, -0.161052, -12.75), S: (12.0, 3.161052, 3.00102)]"
+      },
+      "id": "spatial.roof.spatial.maze_back.04.room00/continuous-roof/003/006"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_positive.end_positive.end",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-11.25, 3.0, -11.25)]",
+        "visibility_owners": "[P: (-21.75, -0.161052, -12.75), S: (12.0, 3.161052, 3.00102)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.end.tight",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-11.25, 2.972301, -11.25)]",
+        "visibility_owners": "[P: (-21.75, -0.161052, -12.75), S: (12.0, 3.161052, 3.00102)]"
+      },
+      "id": "spatial.roof.spatial.maze_back.04.room00/continuous-roof/003/008"
+    }
+  ],
+  "removed": [],
+  "unchanged": 1996
+}

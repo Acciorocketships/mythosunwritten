@@ -1,0 +1,19 @@
+# Issue 07 — full-width shared landing
+
+The half-width graded connector is withdrawn; its implementation and evidence remain in `rejected-half-width/`. The revised rule reserves an ordinary perpendicular staircase before house allocation when a deck otherwise meets the middle of an existing flight. Both flights use the normal passage width and meet the same existing upper landing. Admission proves the complete lower landing, intermediate flight and public headroom inside the owned court, excluding prefab and occupied plot volumes. It uses no seed or photographed coordinates. P07 has enough room without moving its original flight; this change does not implement a relocation fallback for courts without enough room.
+
+The added transition goes through the normal volume, surface, collision and railing pipeline. Its landing and intermediate footprint leave the flat deck/plaza allocation together, so grass cannot overlap the steps. This last shared ownership correction resolved two real initial corpus failures (3/standard and 7/standard); `shared-corpus-rejected-plaza.txt` and `shared-plaza-red.txt` preserve those failures.
+
+## Verification
+
+- The first regression fails because the ordinary side flight is absent (`shared-red.txt`). The final focused run passes nine tests / 137 assertions, including the photographed source, eight rotated/handed translated layouts, occupied/short-court rejection, both discovered plaza cases, rail and clearance controls (`shared-focused.txt`).
+- Actual player traversal passes 22/22, against 10/22 before: five lateral lanes in both directions on each flight plus both directions around the shared landing. The original flight passes all ten before and after; the added flight and two turns account for the twelve repaired traversals. See `shared-before/walking.json` and `shared-live/walking.json`.
+- All 48 village layouts construct and pass physical surveys: 11,868 clear centers, 17,035 clear crossings, zero blocked centers/crossings, splits or unreachable components. The changed topology has three fewer surveyed crossings than the 17,038 baseline. The same 24 off-center pillar contacts remain. The fingerprinted composition gate passes 95/95 (`shared-corpus.txt`, `shared-gate.txt`). This is not full-suite or general performance acceptance.
+
+## Visual judgment
+
+All three matched P07 game views (reconstructed original overlay angle and ±8 degrees) show two ordinary full-width flights meeting the same landing. The side flight occupies the whole six-meter passage; the original flight remains. Original camera coordinates are rounded overlays, not exact recorded transforms. Before/after pairs use identical reconstructed cameras. See `shared-photo-diff/` for actual pixel differences and comparisons. Native detail 180 clearly shows both flights and landing; 90 provides a partially obstructed additional side view. Native 0 and 270 are not credited as clear detail evidence. All three auxiliary entry game views are obstructed by surrounding architecture and are excluded from positive visual acceptance.
+
+Eight matched native views of the two collateral plaza layouts were inspected. The zero-degree views clearly show the ordinary staircase replacing its owned half of the flat court while the remaining lawn and surrounding rooms stay coherent. The 90/180-degree views give partial context; both 270-degree views are obscured and are not credited for stair visibility. See `shared-plaza-diff/`. Their baseline disables only the new deck-access admission in an isolated project; all other production rules are the same. Existing facade decoration and roof problems remain separately tracked.
+
+The rule is accepted for the reviewed full-width access case. It does not promise a staircase in every too-small or occupied court, and the remaining photographed issues are still open.

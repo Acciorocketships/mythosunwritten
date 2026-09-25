@@ -1,0 +1,104 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_path_decision_work.gd
+[0m* test_selected_loop_does_not_solve_unrelated_incident_roads
+* test_selected_loops_supply_the_settlement_mask_without_remote_rankings
+* test_contexts_match_frozen_exhaustive_route_decisions
+ROAD_COMPARE_BEGIN seed=4242 key=(0, 0)
+ROAD_COMPARE_ORACLE_DONE seed=4242 key=(0, 0)
+ROAD_COMPARE_CURRENT_DONE seed=4242 key=(0, 0)
+ROAD_COMPARE_BEGIN seed=4242 key=(2, 0)
+ROAD_COMPARE_ORACLE_DONE seed=4242 key=(2, 0)
+ROAD_COMPARE_CURRENT_DONE seed=4242 key=(2, 0)
+ROAD_COMPARE_BEGIN seed=4242 key=(-2, -1)
+ROAD_COMPARE_ORACLE_DONE seed=4242 key=(-2, -1)
+ROAD_COMPARE_CURRENT_DONE seed=4242 key=(-2, -1)
+ROAD_COMPARE_BEGIN seed=4242 key=(0, 2)
+ROAD_COMPARE_ORACLE_DONE seed=4242 key=(0, 2)
+ROAD_COMPARE_CURRENT_DONE seed=4242 key=(0, 2)
+ROAD_MASK_BEGIN seed=4242 key=(0, 0)
+ROAD_MASK_CURRENT_DONE seed=4242 key=(0, 0)
+ROAD_MASK_ORACLE_DONE seed=4242 key=(0, 0)
+ROAD_MASK_BEGIN seed=4242 key=(1, 0)
+ROAD_MASK_CURRENT_DONE seed=4242 key=(1, 0)
+ROAD_MASK_ORACLE_DONE seed=4242 key=(1, 0)
+ROAD_MASK_BEGIN seed=4242 key=(-1, 0)
+ROAD_MASK_CURRENT_DONE seed=4242 key=(-1, 0)
+ROAD_MASK_ORACLE_DONE seed=4242 key=(-1, 0)
+ROAD_MASK_BEGIN seed=4242 key=(0, 2)
+ROAD_MASK_CURRENT_DONE seed=4242 key=(0, 2)
+ROAD_MASK_ORACLE_DONE seed=4242 key=(0, 2)
+ROAD_COMPARE_BEGIN seed=7319 key=(0, 0)
+ROAD_COMPARE_ORACLE_DONE seed=7319 key=(0, 0)
+ROAD_COMPARE_CURRENT_DONE seed=7319 key=(0, 0)
+ROAD_COMPARE_BEGIN seed=7319 key=(2, 0)
+ROAD_COMPARE_ORACLE_DONE seed=7319 key=(2, 0)
+ROAD_COMPARE_CURRENT_DONE seed=7319 key=(2, 0)
+ROAD_COMPARE_BEGIN seed=7319 key=(-2, -1)
+ROAD_COMPARE_ORACLE_DONE seed=7319 key=(-2, -1)
+ROAD_COMPARE_CURRENT_DONE seed=7319 key=(-2, -1)
+ROAD_COMPARE_BEGIN seed=7319 key=(0, 2)
+ROAD_COMPARE_ORACLE_DONE seed=7319 key=(0, 2)
+ROAD_COMPARE_CURRENT_DONE seed=7319 key=(0, 2)
+ROAD_MASK_BEGIN seed=7319 key=(0, 0)
+ROAD_MASK_CURRENT_DONE seed=7319 key=(0, 0)
+ROAD_MASK_ORACLE_DONE seed=7319 key=(0, 0)
+ROAD_MASK_BEGIN seed=7319 key=(1, 0)
+ROAD_MASK_CURRENT_DONE seed=7319 key=(1, 0)
+ROAD_MASK_ORACLE_DONE seed=7319 key=(1, 0)
+ROAD_MASK_BEGIN seed=7319 key=(-1, 0)
+ROAD_MASK_CURRENT_DONE seed=7319 key=(-1, 0)
+ROAD_MASK_ORACLE_DONE seed=7319 key=(-1, 0)
+ROAD_MASK_BEGIN seed=7319 key=(0, 2)
+ROAD_MASK_CURRENT_DONE seed=7319 key=(0, 2)
+ROAD_MASK_ORACLE_DONE seed=7319 key=(0, 2)
+ROAD_COMPARE_BEGIN seed=9320 key=(0, 0)
+ROAD_COMPARE_ORACLE_DONE seed=9320 key=(0, 0)
+ROAD_COMPARE_CURRENT_DONE seed=9320 key=(0, 0)
+ROAD_COMPARE_BEGIN seed=9320 key=(2, 0)
+ROAD_COMPARE_ORACLE_DONE seed=9320 key=(2, 0)
+ROAD_COMPARE_CURRENT_DONE seed=9320 key=(2, 0)
+ROAD_COMPARE_BEGIN seed=9320 key=(-2, -1)
+ROAD_COMPARE_ORACLE_DONE seed=9320 key=(-2, -1)
+ROAD_COMPARE_CURRENT_DONE seed=9320 key=(-2, -1)
+ROAD_COMPARE_BEGIN seed=9320 key=(0, 2)
+ROAD_COMPARE_ORACLE_DONE seed=9320 key=(0, 2)
+ROAD_COMPARE_CURRENT_DONE seed=9320 key=(0, 2)
+ROAD_MASK_BEGIN seed=9320 key=(0, 0)
+ROAD_MASK_CURRENT_DONE seed=9320 key=(0, 0)
+ROAD_MASK_ORACLE_DONE seed=9320 key=(0, 0)
+ROAD_MASK_BEGIN seed=9320 key=(1, 0)
+ROAD_MASK_CURRENT_DONE seed=9320 key=(1, 0)
+ROAD_MASK_ORACLE_DONE seed=9320 key=(1, 0)
+ROAD_MASK_BEGIN seed=9320 key=(-1, 0)
+ROAD_MASK_CURRENT_DONE seed=9320 key=(-1, 0)
+ROAD_MASK_ORACLE_DONE seed=9320 key=(-1, 0)
+ROAD_MASK_BEGIN seed=9320 key=(0, 2)
+ROAD_MASK_CURRENT_DONE seed=9320 key=(0, 2)
+ROAD_MASK_ORACLE_DONE seed=9320 key=(0, 2)
+[1m3/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 3
+Passing Tests         3
+Asserts              64
+Time              224.851s
+
+
+[32m---- All tests passed! ----
+[0m

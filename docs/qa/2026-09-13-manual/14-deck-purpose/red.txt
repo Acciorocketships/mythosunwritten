@@ -1,0 +1,43 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_deck_purpose.gd
+[0m* test_terminal_flights_do_not_climb_above_every_actual_destination
+[31m    [Failed]:  [0m[3] expected to be <= than [1]:  res://docs/qa/2026-09-13-manual/13-floating-lawn/current-source.txt
+      at line 17
+[31m    [Failed]:  [0m[3] expected to be <= than [2]:  res://docs/qa/2026-09-13-manual/14-deck-purpose/current-source.txt
+      at line 17
+* test_a_real_upper_destination_keeps_its_complete_flight
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_deck_purpose.gd
+[0m- test_terminal_flights_do_not_climb_above_every_actual_destination
+[31m    [Failed]:  [0m[3] expected to be <= than [1]:  res://docs/qa/2026-09-13-manual/13-floating-lawn/current-source.txt
+          at line 17
+[31m    [Failed]:  [0m[3] expected to be <= than [2]:  res://docs/qa/2026-09-13-manual/14-deck-purpose/current-source.txt
+          at line 17
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts           16/18
+Time              0.373s
+
+
+[31m---- 1 failing tests ----
+[0m

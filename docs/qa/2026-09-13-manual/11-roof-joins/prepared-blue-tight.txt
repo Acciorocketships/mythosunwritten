@@ -1,0 +1,6 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+PRISM_CUT 4142 cutter faces; 7343 output triangles
+PRISM_CUT 5300 cutter faces; 5774 output triangles
+NATIVE_VALLEY bounds=[P: (-1.5, 0.0, -3.581952), S: (6.581954, 2.172857, 7.163907)] triangles=13117

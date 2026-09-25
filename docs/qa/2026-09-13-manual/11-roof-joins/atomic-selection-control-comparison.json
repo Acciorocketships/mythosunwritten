@@ -1,0 +1,15 @@
+{
+  "rooms": {
+    "before": 111,
+    "after": 111,
+    "changed": []
+  },
+  "units": {
+    "before": 101,
+    "after": 101,
+    "changed": [
+      "spatial.roof.spatial.maze_back.03.room00",
+      "spatial.roof.spatial.parcel.maze.house.031.part00.room00"
+    ]
+  }
+}

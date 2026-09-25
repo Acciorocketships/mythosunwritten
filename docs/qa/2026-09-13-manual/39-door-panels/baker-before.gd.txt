@@ -1,0 +1,2381 @@
+@tool
+extends SceneTree
+
+## Deterministic editor-side importer for source-pack visuals. Runtime code is
+## intentionally unaware of every source path named by the manifests.
+const TOOL_VERSION := 36
+const DESCRIPTOR_DIR := "res://terrain/environment/catalog/descriptors"
+const INDEX_PATH := "res://terrain/environment/catalog/index.tres"
+const MANIFEST_DIR := "res://tools/environment_bake/manifests"
+const RIGID_NATURE_TAGS: Array[String] = ["tree", "rock", "deadwood"]
+
+var _texture_cache: Dictionary = {}
+var _canopy_assets: Dictionary = {}
+var _failed := false
+var _provenance_by_pack: Dictionary = {}
+
+func _init() -> void:
+	call_deferred("_run")
+
+func _run() -> void:
+	var manifests := _requested_manifests()
+	if manifests.is_empty():
+		_fail("Usage: --manifest <res://...json> (repeatable)")
+		quit(1)
+		return
+	for manifest_path: String in manifests:
+		_bake_manifest(manifest_path)
+		if _failed:
+			quit(1)
+			return
+	if not OS.get_cmdline_user_args().has("--keep-existing"):
+		_prune_unmanifested_descriptors()
+	if _failed:
+		quit(1)
+		return
+	_refresh_index()
+	if _failed:
+		quit(1)
+		return
+	if not OS.get_cmdline_user_args().has("--keep-existing"):
+		_prune_generated_orphans()
+	print("Environment bake complete: %d manifest(s)" % manifests.size())
+	quit(0)
+
+func _requested_manifests() -> Array[String]:
+	var out: Array[String] = []
+	var args := OS.get_cmdline_user_args()
+	var i := 0
+	while i < args.size():
+		if args[i] == "--manifest" and i + 1 < args.size():
+			out.append(args[i + 1])
+			i += 2
+			continue
+		i += 1
+	return out
+
+func _bake_manifest(path: String) -> void:
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if not parsed is Dictionary:
+		_fail("Invalid bake manifest: %s" % path)
+		return
+	var manifest: Dictionary = parsed
+	var pack := String(manifest.get("pack", ""))
+	var license_label := String(manifest.get("license", ""))
+	var default_scale = manifest.get("default_scale", [1.0, 1.0, 1.0])
+	var entries := _expanded_manifest_entries(manifest, path)
+	if pack.is_empty() or entries.is_empty():
+		_fail("Manifest %s requires pack and assets" % path)
+		return
+	if _failed:
+		return
+	if not _valid_scale(default_scale):
+		_fail("Manifest %s requires a finite positive three-axis default_scale" % path)
+		return
+	entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return String(a.get("id", "")) < String(b.get("id", "")))
+	var provenance_path := "res://tools/environment_bake/provenance/%s.json" % _slug(pack)
+	var provenance: Array = _provenance_by_pack.get(pack, [])
+	if not _provenance_by_pack.has(pack) and OS.get_cmdline_user_args().has("--keep-existing") \
+			and FileAccess.file_exists(provenance_path):
+		var previous: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(provenance_path))
+		provenance = previous.get("assets", [])
+		for record: Dictionary in provenance:
+			if not record.has("tool_version"): record["tool_version"] = previous.get("tool_version", 0)
+	for value in entries:
+		if not value is Dictionary:
+			_fail("Manifest %s contains a non-dictionary asset" % path)
+			return
+		var entry: Dictionary = value
+		var record := _bake_asset(pack, license_label, entry, default_scale)
+		if _failed:
+			return
+		record["tool_version"] = TOOL_VERSION
+		provenance = provenance.filter(func(old: Dictionary) -> bool: return old.id != record.id)
+		provenance.append(record)
+	provenance.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return String(a.id) < String(b.id))
+	_provenance_by_pack[pack] = provenance
+	var file := FileAccess.open(provenance_path, FileAccess.WRITE)
+	if file == null:
+		_fail("Cannot write provenance: %s" % provenance_path)
+		return
+	file.store_string(JSON.stringify({
+		"tool_version": TOOL_VERSION,
+		"pack": pack,
+		"license": license_label,
+		"assets": provenance,
+	}, "  ", true))
+
+
+func _expanded_manifest_entries(manifest: Dictionary, path: String) -> Array:
+	## A handed construction part is a baked asset, never a negative-scale
+	## runtime placement. A manifest may request deterministic mirrored variants
+	## for complete ID families without copying dozens of source-pack records.
+	var source_entries: Array = manifest.get("assets", [])
+	var out: Array = []
+	var ids: Dictionary = {}
+	for value: Variant in source_entries:
+		if not value is Dictionary:
+			_fail("Manifest %s contains a non-dictionary asset" % path)
+			return []
+		var entry := (value as Dictionary).duplicate(true)
+		var asset_id := String(entry.get("id", ""))
+		if asset_id.is_empty() or ids.has(asset_id):
+			_fail("Manifest %s contains an empty or duplicate asset id: %s" % [
+				path, asset_id])
+			return []
+		ids[asset_id] = true
+		out.append(entry)
+	var variant_specs: Variant = manifest.get("mirror_variants", [])
+	if not variant_specs is Array:
+		_fail("Manifest %s mirror_variants must be an array" % path)
+		return []
+	for spec_value: Variant in variant_specs:
+		if not spec_value is Dictionary:
+			_fail("Manifest %s contains a non-dictionary mirror variant" % path)
+			return []
+		var spec := spec_value as Dictionary
+		var suffix := String(spec.get("suffix", ""))
+		var axis := String(spec.get("axis", ""))
+		var prefixes: Variant = spec.get("id_prefixes", [])
+		if suffix.is_empty() or axis not in ["x", "y", "z"] \
+				or not prefixes is Array or (prefixes as Array).is_empty():
+			_fail("Manifest %s has an invalid mirror variant" % path)
+			return []
+		for value: Variant in source_entries:
+			var source := value as Dictionary
+			var source_id := String(source.get("id", ""))
+			var selected := false
+			for prefix_value: Variant in prefixes as Array:
+				var prefix := String(prefix_value)
+				if prefix.is_empty():
+					_fail("Manifest %s has an empty mirror id prefix" % path)
+					return []
+				selected = selected or source_id.begins_with(prefix)
+			if not selected:
+				continue
+			var derived_id := source_id + suffix
+			if ids.has(derived_id):
+				_fail("Manifest %s derives duplicate asset id %s" % [path,
+					derived_id])
+				return []
+			var derived := source.duplicate(true)
+			derived["id"] = derived_id
+			derived["mirror_axis"] = axis
+			var tags: Array = derived.get("tags", []) as Array
+			if not tags.has("mirrored_variant"):
+				tags.append("mirrored_variant")
+			derived["tags"] = tags
+			ids[derived_id] = true
+			out.append(derived)
+	# A finite corner alternative is selected by a construction contract, never
+	# cut or offset by the runtime renderer. Both ends are independent so an
+	# intermediate panel in a straight wall never receives a corner notch.
+	var corner_sources := out.duplicate(true)
+	for prefix: String in manifest.get("facade_miter_prefixes", []):
+		for source: Dictionary in corner_sources:
+			if not String(source.id).begins_with(prefix):
+				continue
+			for mask in range(1, 4):
+				var derived := source.duplicate(true)
+				derived.id = "%s.miter%d" % [source.id, mask]
+				if ids.has(derived.id):
+					_fail("Manifest %s derives duplicate asset id %s" % [path, derived.id])
+					return []
+				ids[derived.id] = true
+				derived["facade_miter_ends"] = mask
+				out.append(derived)
+	return out
+
+func _bake_asset(pack: String, license_label: String, entry: Dictionary,
+		default_scale: Variant) -> Dictionary:
+	var asset_id := String(entry.get("id", ""))
+	var omitted_face_bounds := AABB()
+	var omitted_face_surfaces: Array[Dictionary] = []
+	var source_path := String(entry.get("source", ""))
+	if asset_id.is_empty() or not source_path.begins_with("res://"):
+		_fail("Bake entry requires a stable id and res:// source path")
+		return {}
+	_validate_collision_policy(asset_id, entry, default_scale)
+	if _failed:
+		return {}
+	var packed := load(source_path) as PackedScene
+	if packed == null:
+		_fail("Source is not an imported scene: %s" % source_path)
+		return {}
+	var root := packed.instantiate()
+	var visual_root: Node = root
+	var source_root_path := String(entry.get("source_root", ""))
+	if not source_root_path.is_empty():
+		visual_root = root.get_node_or_null(NodePath(source_root_path))
+		if visual_root == null:
+			_fail("Source root %s does not exist for %s" % [
+				source_root_path, asset_id])
+			root.free()
+			return {}
+	var scale_value = entry.get("scale", default_scale)
+	if not _valid_scale(scale_value):
+		_fail("Bake entry %s requires a finite positive three-axis scale" % asset_id)
+		root.free()
+		return {}
+	var scale := _vector3(scale_value, Vector3.ONE)
+	var pivot := _vector3(entry.get("pivot", [0.0, 0.0, 0.0]), Vector3.ZERO)
+	var correction := Transform3D(Basis.IDENTITY.scaled(scale), -pivot)
+	var supports_color := bool(entry.get("supports_instance_color", false))
+	_canopy_assets[asset_id] = bool(entry.get("biome_canopy", false))
+	var material_tint := _color(entry.get("material_tint", [1.0, 1.0, 1.0, 1.0]))
+	var fallback_albedo: Texture2D = null
+	var fallback_albedo_path := String(entry.get("fallback_albedo_texture", ""))
+	if not fallback_albedo_path.is_empty():
+		if not fallback_albedo_path.begins_with("res://"):
+			_fail("fallback_albedo_texture must be a res:// path: %s" % asset_id)
+			root.free()
+			return {}
+		fallback_albedo = load(fallback_albedo_path) as Texture2D
+		if fallback_albedo == null:
+			_fail("Cannot load fallback albedo texture for %s: %s" % [
+				asset_id, fallback_albedo_path])
+			root.free()
+			return {}
+	var fallback_albedos_by_material: Dictionary = {}
+	var fallback_values: Variant = entry.get("fallback_albedo_textures", {})
+	if not fallback_values is Dictionary:
+		_fail("fallback_albedo_textures must be a dictionary: %s" % asset_id)
+		root.free()
+		return {}
+	var fallback_names: Array = (fallback_values as Dictionary).keys()
+	fallback_names.sort_custom(func(a: Variant, b: Variant) -> bool:
+		return String(a) < String(b))
+	for name_value: Variant in fallback_names:
+		var material_name := StringName(String(name_value))
+		var texture_path := String((fallback_values as Dictionary)[name_value])
+		if String(material_name).is_empty() or not texture_path.begins_with("res://"):
+			_fail("fallback_albedo_textures requires material-name -> res:// path: %s" % asset_id)
+			root.free()
+			return {}
+		var texture := load(texture_path) as Texture2D
+		if texture == null:
+			_fail("Cannot load named fallback albedo for %s/%s: %s" % [
+				asset_id, material_name, texture_path])
+			root.free()
+			return {}
+		fallback_albedos_by_material[material_name] = texture
+	var green_hue := float(entry.get("green_hue", -1.0))
+	if green_hue != -1.0 and (green_hue < 0.0 or green_hue > 1.0):
+		_fail("green_hue must be absent or in [0,1]: %s" % asset_id)
+		root.free()
+		return {}
+	var material_override: Material = null
+	var material_override_path := String(entry.get("material_override", ""))
+	if not material_override_path.is_empty():
+		if not material_override_path.begins_with("res://"):
+			_fail("material_override must be a res:// path: %s" % asset_id)
+			root.free()
+			return {}
+		material_override = load(material_override_path) as Material
+		if material_override == null:
+			_fail("Cannot load material override for %s: %s" % [asset_id,
+				material_override_path])
+			root.free()
+			return {}
+	var pieces: Array[EnvironmentVisualPiece] = []
+	var bounds := AABB()
+	var has_bounds := false
+	var ribbon_stride := int(entry.get("ribbon_stride", 0))
+	if ribbon_stride < 0:
+		_fail("ribbon_stride must be zero or positive: %s" % asset_id)
+		root.free()
+		return {}
+	var component_ribbon_rows := int(entry.get("component_ribbon_rows", 0))
+	if component_ribbon_rows != 0 and component_ribbon_rows < 2:
+		_fail("component_ribbon_rows must be zero or at least two: %s" % asset_id)
+		root.free()
+		return {}
+	var component_root_spread := float(entry.get("component_root_spread", 1.0))
+	if not is_finite(component_root_spread) or component_root_spread <= 0.0:
+		_fail("component_root_spread must be finite and positive: %s" % asset_id)
+		root.free()
+		return {}
+	if component_ribbon_rows == 0 and not is_equal_approx(component_root_spread, 1.0):
+		_fail("component_root_spread requires component_ribbon_rows: %s" % asset_id)
+		root.free()
+		return {}
+	if ribbon_stride > 0 and component_ribbon_rows > 0:
+		_fail("Asset %s cannot combine ribbon simplifiers" % asset_id)
+		root.free()
+		return {}
+	var merge_pieces := bool(entry.get("merge_pieces", false))
+	var mirror_axis_name := String(entry.get("mirror_axis", ""))
+	if not mirror_axis_name.is_empty() \
+			and (mirror_axis_name not in ["x", "y", "z"] or not merge_pieces):
+		_fail("Asset %s mirror_axis requires x/y/z and merge_pieces" % asset_id)
+		root.free()
+		return {}
+	if merge_pieces and (ribbon_stride > 0 or component_ribbon_rows > 0):
+		_fail("Asset %s cannot combine merge_pieces with ribbon simplifiers" % asset_id)
+		root.free()
+		return {}
+	if entry.has("mesh_poses"):
+		var poses: Variant = entry.mesh_poses
+		if not poses is Array or not EnvironmentBakeGeometry.pose_meshes(visual_root,poses):
+			_fail("Invalid authored mesh poses: %s" % asset_id)
+			root.free()
+			return {}
+	var stack: Array[Node] = [visual_root]
+	var piece_index := 0
+	var collision_mesh_override: ArrayMesh = null
+	if merge_pieces:
+		var excluded_paths := _excluded_mesh_paths(entry, visual_root, asset_id,
+			"exclude_mesh_paths")
+		if _failed:
+			root.free()
+			return {}
+		var merged := EnvironmentBakeGeometry.merge_pieces(visual_root, correction,
+			excluded_paths)
+		if merged == null:
+			_fail("Could not merge structural visual pieces: %s" % asset_id)
+			root.free()
+			return {}
+		if entry.has("facade_side_source"):
+			var side_scene := load(String(entry.facade_side_source)) as PackedScene
+			if side_scene == null:
+				_fail("Cannot load facade end stock: %s" % asset_id)
+				root.free()
+				return {}
+			var side_root := side_scene.instantiate()
+			var side_mesh := EnvironmentBakeGeometry.merge_pieces(side_root, correction)
+			side_root.free()
+			merged = EnvironmentBakeGeometry.finish_facade_sides(merged, side_mesh,
+				float(entry.facade_side_thickness))
+		merged = _clip_merged_asset(merged, entry, asset_id)
+		if merged == null:
+			root.free()
+			return {}
+		if entry.has("fit_visual_bounds"):
+			var declared: Array = entry.fit_visual_bounds
+			if declared.size() != 6:
+				_fail("fit_visual_bounds requires six coordinates: %s" % asset_id)
+				root.free()
+				return {}
+			var target := AABB(Vector3(declared[0], declared[1], declared[2]),
+				Vector3(declared[3], declared[4], declared[5]))
+			var measured := merged.get_aabb()
+			if not target.position.is_finite() or not target.size.is_finite() \
+					or not target.has_volume() or not measured.has_volume():
+				_fail("fit_visual_bounds requires finite solid stock: %s" % asset_id)
+				root.free()
+				return {}
+			# Cropping decorative stock retains its declared joining envelope.
+			var fit_scale := target.size / measured.size
+			merged = EnvironmentBakeGeometry.transform_mesh(merged,
+				Transform3D(Basis.from_scale(fit_scale),
+					target.position - measured.position * fit_scale))
+		if entry.has("fit_axis_profile"):
+			var profile: Dictionary = entry.fit_axis_profile
+			merged = EnvironmentBakeGeometry.fit_axis_profile(merged,
+				["x","y","z"].find(String(profile.get("axis",""))),profile.get("knots",[]))
+			if merged == null:
+				_fail("Invalid fitted native axis profile: %s" % asset_id)
+				root.free()
+				return {}
+		merged = _mirror_merged_asset(merged, mirror_axis_name, asset_id)
+		if merged == null:
+			root.free()
+			return {}
+		if bool(entry.get("facade_return_fit_panel", false)) and entry.has("facade_return_depths"):
+			var depths: Array = entry.facade_return_depths
+			if depths.size() != 2 or float(depths[0]) < 0.0 or float(depths[1]) < 0.0 \
+					or not is_finite(float(depths[0]) + float(depths[1])) \
+					or float(depths[0]) + float(depths[1]) >= 3.0:
+				_fail("Invalid fitted facade return depths: %s" % asset_id)
+				root.free()
+				return {}
+			# This authored window occupies the complete panel. Fit its aperture,
+			# leadwork and frame together before constructing either end joint.
+			# Y, relief depth, native UVs and the reserved return plane stay fixed.
+			var span := 3.0 - float(depths[0]) - float(depths[1])
+			merged = EnvironmentBakeGeometry.transform_mesh(merged,
+				Transform3D(Basis.from_scale(Vector3(span / 3.0, 1.0, 1.0)),
+					Vector3((float(depths[0]) - float(depths[1])) * 0.5, 0.0, 0.0)))
+		var miter_mask := int(entry.get("facade_miter_ends", 0))
+		var cap_material: Material = null
+		var cap_uv := Vector2.ZERO
+		if entry.has("facade_miter_cap_source") \
+				and (miter_mask != 0 or entry.has("facade_return_depths")):
+			var cap_root := (load(String(entry.facade_miter_cap_source)) as PackedScene).instantiate()
+			var stock := EnvironmentBakeGeometry.merge_pieces(cap_root, correction)
+			cap_root.free()
+			cap_material = stock.surface_get_material(0).duplicate(true)
+			(cap_material as BaseMaterial3D).cull_mode = BaseMaterial3D.CULL_BACK
+			cap_uv = (stock.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV] as PackedVector2Array)[0]
+		if miter_mask != 0:
+			var front := float(entry.get("facade_join_front", merged.get_aabb().end.z))
+			var half_width := float(entry.get("facade_join_half_width", 1.5))
+			for end in 2:
+				if miter_mask & (1 << end):
+					var plane := Plane(Vector3(-1.0 if end == 0 else 1.0, 0.0, -1.0), half_width - front)
+					merged = EnvironmentBakeGeometry.clip_half_space(merged, plane) if cap_material == null \
+						else EnvironmentBakeGeometry.closed_facade_miter(merged, plane, cap_material, cap_uv)
+			if merged == null:
+				_fail("Could not miter facade %s" % asset_id)
+				root.free()
+				return {}
+		var end_owner_mask := int(entry.get("facade_end_owner_mask", 0))
+		for end in 2:
+			if end_owner_mask & (1 << end):
+				# A shallow jetty's solid corner stock owns the matching end face.
+				# Keep the panel's front, relief and bounds; omit only the shared cap.
+				merged = EnvironmentBakeGeometry.omit_coplanar_faces(merged,
+					Plane(Vector3.RIGHT, -0.75 if end == 0 else 0.75), 0.002)
+		if entry.has("facade_return_depths"):
+			var depths: Array = entry.facade_return_depths
+			if depths.size() != 2 or float(depths[0]) < 0.0 or float(depths[1]) < 0.0 \
+					or float(depths[0]) + float(depths[1]) >= 3.0:
+				_fail("Invalid measured facade return depths: %s" % asset_id)
+				root.free()
+				return {}
+			var minimum := -1.5 + float(depths[0]) if float(depths[0]) > 0.0 \
+				else merged.get_aabb().position.x - 1.0
+			var maximum := 1.5 - float(depths[1]) if float(depths[1]) > 0.0 \
+				else merged.get_aabb().end.x + 1.0
+			if cap_material == null:
+				merged = EnvironmentBakeGeometry.clip_axis_range(merged,Vector3.AXIS_X,minimum,maximum)
+			else:
+				# A doorway owns the return boundary, but does not fill the side
+				# panel's exposed thickness. Close each real cut with its declared
+				# native timber stock, as for a miter. Uncut ends remain untouched.
+				if float(depths[0]) > 0.0:
+					merged = EnvironmentBakeGeometry.closed_facade_miter(merged,
+						Plane(Vector3.LEFT,-minimum),cap_material,cap_uv)
+				if float(depths[1]) > 0.0:
+					merged = EnvironmentBakeGeometry.closed_facade_miter(merged,
+						Plane(Vector3.RIGHT,maximum),cap_material,cap_uv)
+			if merged == null:
+				_fail("Could not construct facade return: %s" % asset_id)
+				root.free()
+				return {}
+		if entry.has("omit_coplanar_y"):
+			var tolerance := float(entry.get("omit_coplanar_tolerance",0.00001))
+			if not is_finite(tolerance) or tolerance<=0.0 or tolerance>0.001:
+				_fail("Invalid authored wall interface tolerance: %s" % asset_id)
+				root.free()
+				return {}
+			omitted_face_surfaces = EnvironmentBakeGeometry.coplanar_face_surfaces(merged,
+				Plane(Vector3.UP, float(entry.omit_coplanar_y)),tolerance)
+			for surface: Dictionary in omitted_face_surfaces:
+				surface["material_piece"] = piece_index
+			omitted_face_bounds = EnvironmentBakeGeometry.coplanar_face_bounds(merged,
+				Plane(Vector3.UP, float(entry.omit_coplanar_y)),tolerance)
+			merged = EnvironmentBakeGeometry.omit_coplanar_faces(merged,
+				Plane(Vector3.UP, float(entry.omit_coplanar_y)),tolerance)
+			if merged == null:
+				_fail("Could not omit the owned horizontal interface: %s" % asset_id)
+				root.free()
+				return {}
+		var baked_mesh := _bake_mesh(merged, pack, asset_id, piece_index,
+			supports_color, material_tint, green_hue, fallback_albedo,
+			fallback_albedos_by_material)
+		if baked_mesh == null:
+			root.free()
+			return {}
+		var piece := EnvironmentVisualPiece.new()
+		piece.mesh = baked_mesh
+		piece.local_transform = Transform3D.IDENTITY
+		_configure_visual_piece(piece, material_override, entry, supports_color)
+		pieces.append(piece)
+		bounds = baked_mesh.get_aabb()
+		has_bounds = true
+		var collision_excluded := _excluded_mesh_paths(entry, visual_root,
+			asset_id, "exclude_collision_mesh_paths")
+		if _failed:
+			root.free()
+			return {}
+		if not collision_excluded.is_empty():
+			for path: String in excluded_paths:
+				if not collision_excluded.has(path):
+					collision_excluded.append(path)
+			collision_excluded.sort()
+			collision_mesh_override = EnvironmentBakeGeometry.merge_pieces(
+				visual_root, correction, collision_excluded)
+			if collision_mesh_override == null:
+				_fail("Collision mesh exclusions removed all geometry: %s" % asset_id)
+				root.free()
+				return {}
+			collision_mesh_override = _clip_merged_asset(collision_mesh_override,
+				entry, asset_id)
+			if collision_mesh_override == null:
+				root.free()
+				return {}
+			collision_mesh_override = _mirror_merged_asset(
+				collision_mesh_override, mirror_axis_name, asset_id)
+			if collision_mesh_override == null:
+				root.free()
+				return {}
+		stack.clear()
+	elif ribbon_stride > 0 or component_ribbon_rows > 0:
+		var merged: ArrayMesh
+		if component_ribbon_rows > 0:
+			merged = _merge_component_ribbons(visual_root, asset_id,
+				component_ribbon_rows, component_root_spread)
+		else:
+			merged = _merge_simplified_ribbons(visual_root, asset_id,
+				ribbon_stride)
+		if merged == null:
+			root.free()
+			return {}
+		var baked_mesh := _bake_mesh(merged, pack, asset_id, piece_index,
+			supports_color, material_tint, green_hue, fallback_albedo,
+			fallback_albedos_by_material)
+		if baked_mesh == null:
+			root.free()
+			return {}
+		var piece := EnvironmentVisualPiece.new()
+		piece.mesh = baked_mesh
+		piece.local_transform = correction
+		_configure_visual_piece(piece, material_override, entry, supports_color)
+		pieces.append(piece)
+		bounds = correction * baked_mesh.get_aabb()
+		has_bounds = true
+		stack.clear()
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		for child: Node in node.get_children():
+			stack.append(child)
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		var local := correction * _relative_transform(mesh_instance, visual_root)
+		var baked_mesh := _bake_mesh(mesh_instance.mesh, pack, asset_id, piece_index,
+			supports_color, material_tint, green_hue, fallback_albedo,
+			fallback_albedos_by_material)
+		if baked_mesh == null:
+			root.free()
+			return {}
+		var piece := EnvironmentVisualPiece.new()
+		piece.mesh = baked_mesh
+		piece.local_transform = local
+		_configure_visual_piece(piece, material_override, entry, supports_color)
+		pieces.append(piece)
+		var piece_bounds: AABB = local * baked_mesh.get_aabb()
+		bounds = piece_bounds if not has_bounds else bounds.merge(piece_bounds)
+		has_bounds = true
+		piece_index += 1
+	root.free()
+	if pieces.is_empty():
+		_fail("Source contains no MeshInstance3D: %s" % source_path)
+		return {}
+	var collisions := _bake_collisions(pack, asset_id, entry, pieces, correction,
+		collision_mesh_override)
+	if _failed:
+		return {}
+	var metrics := _asset_metrics(pieces, collisions, bounds)
+	var budget_error := EnvironmentBakeBudget.validate(metrics, entry)
+	if not budget_error.is_empty():
+		_fail("Asset %s failed its bake budget: %s" % [asset_id, budget_error])
+		return {}
+	var slug := _slug(asset_id)
+	var visual := EnvironmentVisual.new()
+	visual.pieces = pieces
+	visual.collisions = collisions
+	var visual_path := "res://terrain/environment/visuals/%s/%s.tres" % [_slug(pack), slug]
+	_ensure_parent(visual_path)
+	if ResourceSaver.save(visual, visual_path) != OK:
+		_fail("Cannot save environment visual: %s" % visual_path)
+		return {}
+	var descriptor := EnvironmentAssetDescriptor.new()
+	descriptor.id = StringName(asset_id)
+	descriptor.visual_path = visual_path
+	for tag_value in entry.get("tags", []):
+		descriptor.tags.append(StringName(String(tag_value)))
+	descriptor.tags.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
+	descriptor.measured_aabb = bounds
+	descriptor.omitted_face_bounds = omitted_face_bounds
+	descriptor.omitted_face_surfaces = omitted_face_surfaces
+	if bool(entry.get("derive_ground_contacts", false)):
+		var contact_band := float(entry.get("ground_contact_band", 0.35))
+		var contact_pitch := float(entry.get("ground_contact_pitch", 0.75))
+		descriptor.ground_contact_points = \
+			EnvironmentBakeGeometry.ground_contact_points(pieces,
+				bounds.position.y, contact_band, contact_pitch)
+		if descriptor.ground_contact_points.is_empty():
+			_fail("Building %s has no finite baked ground contacts" % asset_id)
+			return {}
+	descriptor.collision_piece_count = collisions.size()
+	descriptor.tint_group = StringName(String(entry.get("tint_group", "identity")))
+	descriptor.supports_instance_color = supports_color
+	descriptor.provenance_id = StringName("%s:%s" % [pack, asset_id])
+	var descriptor_path := "%s/%s.tres" % [DESCRIPTOR_DIR, slug]
+	_ensure_parent(descriptor_path)
+	if ResourceSaver.save(descriptor, descriptor_path) != OK:
+		_fail("Cannot save environment descriptor: %s" % descriptor_path)
+		return {}
+	for output_path: String in [visual_path, descriptor_path]:
+		_validate_dependencies(output_path)
+	return {
+		"id": asset_id,
+		"source": source_path,
+		"source_sha256": FileAccess.get_sha256(source_path),
+		"descriptor": descriptor_path,
+		"visual": visual_path,
+		"pack": pack,
+		"license": license_label,
+		"parameters": entry.duplicate(true),
+		"metrics": metrics,
+	}
+
+
+func _clip_merged_asset(mesh: ArrayMesh, entry: Dictionary,
+		asset_id: String) -> ArrayMesh:
+	# Finite authored junction cuts retain source positions, UVs and materials.
+	# Plane coefficients use n.dot(point) <= d, including non-unit normals.
+	for coefficients: Array in entry.get("clip_planes", []):
+		if coefficients.size() != 4:
+			_fail("clip_planes requires four coefficients: %s" % asset_id)
+			return null
+		var normal := Vector3(float(coefficients[0]), float(coefficients[1]), float(coefficients[2]))
+		var distance := float(coefficients[3])
+		if not normal.is_finite() or normal.length_squared() < 0.000001 or not is_finite(distance):
+			_fail("clip_planes requires a finite nonzero plane: %s" % asset_id)
+			return null
+		mesh = EnvironmentBakeGeometry.clip_half_space(mesh,
+			Plane(normal.normalized(), distance / normal.length()))
+		if mesh == null:
+			_fail("clip_planes removed asset: %s" % asset_id)
+			return null
+	var ranges_value: Variant = entry.get("clip_ranges", {})
+	var axis_name := String(entry.get("clip_axis", ""))
+	var range_value: Variant = entry.get("clip_range", [])
+	if not ranges_value is Dictionary:
+		_fail("clip_ranges must be an axis-to-range dictionary: %s" % asset_id)
+		return null
+	var ranges := ranges_value as Dictionary
+	if not ranges.is_empty():
+		if not axis_name.is_empty() or (range_value is Array \
+				and not (range_value as Array).is_empty()):
+			_fail("Asset %s cannot combine clip_ranges with clip_axis/clip_range" \
+				% asset_id)
+			return null
+		var clipped := mesh
+		# Fixed axis order makes multi-plane derivatives independent of JSON key
+		# order.  Applying the ordinary convex half-space clip repeatedly gives an
+		# exact authored rectangular envelope while preserving every interpolated
+		# source channel and material surface.
+		for candidate_axis in ["x", "y", "z"]:
+			if not ranges.has(candidate_axis):
+				continue
+			var candidate_range: Variant = ranges[candidate_axis]
+			if not candidate_range is Array \
+					or (candidate_range as Array).size() != 2:
+				_fail("clip_ranges.%s must contain two bounds: %s" % [
+					candidate_axis, asset_id])
+				return null
+			var minimum := float((candidate_range as Array)[0])
+			var maximum := float((candidate_range as Array)[1])
+			if not is_finite(minimum) or not is_finite(maximum) \
+					or maximum <= minimum:
+				_fail("clip_ranges.%s must be finite and increasing: %s" % [
+					candidate_axis, asset_id])
+				return null
+			var axis := Vector3.AXIS_X if candidate_axis == "x" \
+				else Vector3.AXIS_Y if candidate_axis == "y" \
+				else Vector3.AXIS_Z
+			clipped = EnvironmentBakeGeometry.clip_axis_range(clipped, axis,
+				minimum, maximum)
+			if clipped == null:
+				_fail("clip_ranges.%s removed or could not clip asset: %s" % [
+					candidate_axis, asset_id])
+				return null
+		for key: Variant in ranges.keys():
+			if String(key) not in ["x", "y", "z"]:
+				_fail("clip_ranges contains an unknown axis %s: %s" % [
+					String(key), asset_id])
+				return null
+		return clipped
+	if axis_name.is_empty() and range_value is Array \
+			and (range_value as Array).is_empty():
+		return mesh
+	if axis_name not in ["x", "y", "z"] or not range_value is Array \
+			or (range_value as Array).size() != 2:
+		_fail("clip_axis/clip_range must name x/y/z and two bounds: %s" \
+			% asset_id)
+		return null
+	var minimum := float((range_value as Array)[0])
+	var maximum := float((range_value as Array)[1])
+	if not is_finite(minimum) or not is_finite(maximum) or maximum <= minimum:
+		_fail("clip_range must be finite and increasing: %s" % asset_id)
+		return null
+	var axis := Vector3.AXIS_X if axis_name == "x" \
+		else Vector3.AXIS_Y if axis_name == "y" else Vector3.AXIS_Z
+	var clipped := EnvironmentBakeGeometry.clip_axis_range(mesh, axis,
+		minimum, maximum)
+	if clipped == null:
+		_fail("clip_range removed or could not clip asset: %s" % asset_id)
+	return clipped
+
+
+func _mirror_merged_asset(mesh: ArrayMesh, axis_name: String,
+		asset_id: String) -> ArrayMesh:
+	if axis_name.is_empty():
+		return mesh
+	var axis := Vector3.AXIS_X if axis_name == "x" \
+		else Vector3.AXIS_Y if axis_name == "y" else Vector3.AXIS_Z
+	var mirrored := EnvironmentBakeGeometry.mirror_axis(mesh, axis)
+	if mirrored == null:
+		_fail("mirror_axis could not reflect asset: %s" % asset_id)
+	return mirrored
+
+
+func _configure_visual_piece(piece: EnvironmentVisualPiece,
+		material_override: Material, entry: Dictionary,
+		supports_color: bool) -> void:
+	if material_override == null:
+		return
+	piece.material_override = material_override
+	piece.use_instance_color = bool(entry.get("use_instance_color",
+		supports_color))
+
+
+func _excluded_mesh_paths(entry: Dictionary, visual_root: Node,
+		asset_id: String, key: String) -> Array[String]:
+	var out: Array[String] = []
+	var values: Variant = entry.get(key, [])
+	if not values is Array:
+		_fail("%s must be an array: %s" % [key, asset_id])
+		return out
+	for value: Variant in values:
+		if not value is String or String(value).is_empty() \
+				or out.has(String(value)):
+			_fail("%s contains an empty, non-string, or duplicate path: %s" \
+				% [key, asset_id])
+			return []
+		var node := visual_root.get_node_or_null(NodePath(String(value))) \
+			as MeshInstance3D
+		if node == null or node.mesh == null:
+			_fail("Excluded mesh path does not name a mesh for %s: %s" % [
+				asset_id, String(value)])
+			return []
+		out.append(String(value))
+	out.sort()
+	return out
+
+func _asset_metrics(pieces: Array[EnvironmentVisualPiece],
+		collisions: Array[EnvironmentCollisionPiece], bounds: AABB) -> Dictionary:
+	var visual_triangles := 0
+	var collision_triangles := 0
+	var surface_count := 0
+	var mesh_bytes := 0
+	for piece: EnvironmentVisualPiece in pieces:
+		surface_count += piece.mesh.get_surface_count()
+		visual_triangles += int(
+			EnvironmentBakeGeometry.triangle_faces(piece.mesh).size() / 3)
+		if not piece.mesh.resource_path.is_empty():
+			mesh_bytes += FileAccess.get_file_as_bytes(piece.mesh.resource_path).size()
+	for collision: EnvironmentCollisionPiece in collisions:
+		var concave := collision.shape as ConcavePolygonShape3D
+		if concave != null:
+			collision_triangles += int(concave.get_faces().size() / 3)
+	return {
+		"mesh_bytes": mesh_bytes,
+		"visual_triangles": visual_triangles,
+		"collision_triangles": collision_triangles,
+		"surface_count": surface_count,
+		"visual_piece_count": pieces.size(),
+		"collision_piece_count": collisions.size(),
+		"measured_aabb": {
+			"position": [bounds.position.x, bounds.position.y, bounds.position.z],
+			"size": [bounds.size.x, bounds.size.y, bounds.size.z],
+		},
+	}
+
+## Some authored grass FBXs store one clump as many independently named ribbon
+## meshes. The runtime needs one mesh per MultiMesh batch, so the bake selects
+## that subtree, removes redundant centre vertices and height rings, and merges
+## the result into one self-contained surface. This is deliberately an import
+## concern: neither the worker nor the runtime catalogue knows about the FBX.
+func _merge_simplified_ribbons(source_root: Node, asset_id: String,
+		stride: int) -> ArrayMesh:
+	var out_vertices := PackedVector3Array()
+	var out_normals := PackedVector3Array()
+	var out_uvs := PackedVector2Array()
+	var out_indices := PackedInt32Array()
+	var source_material: Material
+	var stack: Array[Node] = [source_root]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		for child: Node in node.get_children():
+			stack.append(child)
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		var transform := _relative_transform(mesh_instance, source_root)
+		for surface_index in mesh_instance.mesh.get_surface_count():
+			if mesh_instance.mesh.surface_get_primitive_type(surface_index) \
+					!= Mesh.PRIMITIVE_TRIANGLES:
+				_fail("Ribbon grass requires triangle surfaces: %s" % asset_id)
+				return null
+			var arrays := mesh_instance.mesh.surface_get_arrays(surface_index)
+			var vertices := arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array
+			var normals := arrays[Mesh.ARRAY_NORMAL] as PackedVector3Array
+			var uvs := arrays[Mesh.ARRAY_TEX_UV] as PackedVector2Array
+			if vertices.is_empty() or normals.size() != vertices.size() \
+					or uvs.size() != vertices.size():
+				_fail("Ribbon grass requires positions, normals, and UVs: %s" % asset_id)
+				return null
+			var rows := _ribbon_edge_rows(uvs, asset_id)
+			if rows.is_empty():
+				return null
+			var selected_rows: Array[Vector2i] = []
+			for row_index in range(0, rows.size(), maxi(stride, 1)):
+				selected_rows.append(rows[row_index])
+			if selected_rows[-1] != rows[-1]:
+				selected_rows.append(rows[-1])
+			var base_index := out_vertices.size()
+			var normal_basis := transform.basis.inverse().transposed()
+			for row: Vector2i in selected_rows:
+				for vertex_index: int in [row.x, row.y]:
+					out_vertices.append(transform * vertices[vertex_index])
+					out_normals.append((normal_basis * normals[vertex_index]).normalized())
+					out_uvs.append(uvs[vertex_index])
+			for row_index in selected_rows.size() - 1:
+				var left := base_index + row_index * 2
+				var right := left + 1
+				var next_left := left + 2
+				var next_right := left + 3
+				out_indices.append_array(PackedInt32Array([
+					left, right, next_right, left, next_right, next_left]))
+			var material := mesh_instance.mesh.surface_get_material(surface_index)
+			if source_material == null:
+				source_material = material
+			elif material != source_material \
+					and material.resource_path != source_material.resource_path:
+				_fail("Merged ribbon grass must share one material: %s" % asset_id)
+				return null
+	if out_vertices.is_empty() or source_material == null:
+		_fail("Source root contains no ribbon grass: %s" % asset_id)
+		return null
+	var bounds := AABB(out_vertices[0], Vector3.ZERO)
+	for vertex: Vector3 in out_vertices:
+		bounds = bounds.expand(vertex)
+	var anchor := Vector3(bounds.get_center().x, bounds.position.y,
+		bounds.get_center().z)
+	for index in out_vertices.size():
+		out_vertices[index] -= anchor
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = out_vertices
+	arrays[Mesh.ARRAY_NORMAL] = out_normals
+	arrays[Mesh.ARRAY_TEX_UV] = out_uvs
+	arrays[Mesh.ARRAY_INDEX] = out_indices
+	var merged := ArrayMesh.new()
+	merged.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	merged.surface_set_material(0, source_material)
+	return merged
+
+func _ribbon_edge_rows(uvs: PackedVector2Array,
+		asset_id: String) -> Array[Vector2i]:
+	var indices_by_height: Dictionary = {}
+	for vertex_index in uvs.size():
+		var key := roundi(uvs[vertex_index].y * 100000.0)
+		if not indices_by_height.has(key):
+			indices_by_height[key] = []
+		(indices_by_height[key] as Array).append(vertex_index)
+	var heights: Array = indices_by_height.keys()
+	heights.sort()
+	heights.reverse()
+	var rows: Array[Vector2i] = []
+	for height: int in heights:
+		var row: Array = indices_by_height[height]
+		if row.size() < 2:
+			_fail("Ribbon grass row has fewer than two vertices: %s" % asset_id)
+			return []
+		row.sort_custom(func(a: int, b: int) -> bool:
+			return uvs[a].x < uvs[b].x)
+		rows.append(Vector2i(int(row[0]), int(row[-1])))
+	if rows.size() < 2:
+		_fail("Ribbon grass requires at least two height rows: %s" % asset_id)
+		return []
+	return rows
+
+## Some source patches merge hundreds of blades into one indexed surface.
+## Every connected component is still a regular two-edge ribbon. Keep a fixed
+## number of evenly spaced rows per blade, preserving all silhouettes and their
+## authored normals while removing redundant subdivisions along each curve.
+func _merge_component_ribbons(source_root: Node, asset_id: String,
+		keep_row_count: int, root_spread: float = 1.0) -> ArrayMesh:
+	var out_vertices := PackedVector3Array()
+	var out_normals := PackedVector3Array()
+	var out_uvs := PackedVector2Array()
+	var out_uv2s := PackedVector2Array()
+	var out_indices := PackedInt32Array()
+	var source_material: Material
+	var stack: Array[Node] = [source_root]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		for child: Node in node.get_children():
+			stack.append(child)
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		var transform := _relative_transform(mesh_instance, source_root)
+		var normal_basis := transform.basis.inverse().transposed()
+		for surface_index in mesh_instance.mesh.get_surface_count():
+			if mesh_instance.mesh.surface_get_primitive_type(surface_index) \
+					!= Mesh.PRIMITIVE_TRIANGLES:
+				_fail("Component ribbon grass requires triangle surfaces: %s" % asset_id)
+				return null
+			var arrays := mesh_instance.mesh.surface_get_arrays(surface_index)
+			var vertices := arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array
+			var normals := arrays[Mesh.ARRAY_NORMAL] as PackedVector3Array
+			var uvs := arrays[Mesh.ARRAY_TEX_UV] as PackedVector2Array
+			var indices := arrays[Mesh.ARRAY_INDEX] as PackedInt32Array
+			if vertices.is_empty() or normals.size() != vertices.size() \
+					or uvs.size() != vertices.size() or indices.is_empty() \
+					or indices.size() % 3 != 0:
+				_fail("Component ribbon grass requires indexed positions, normals, and UVs: %s" % asset_id)
+				return null
+			var components := _indexed_components(vertices.size(), indices)
+			for component: PackedInt32Array in components:
+				var rows := _component_ribbon_edge_rows(component, uvs, asset_id)
+				if rows.is_empty():
+					return null
+				if rows.size() < keep_row_count:
+					_fail("Component ribbon has fewer source rows than requested: %s" % asset_id)
+					return null
+				# UV2 stores this blade's authored root in mesh-local XZ. All
+				# retained vertices share it, so runtime deformation can sample
+				# trample state once per blade instead of once per 311-blade patch.
+				var root := Vector3.ZERO
+				var root_y := INF
+				for source_row: Vector2i in rows:
+					var midpoint := transform * ((vertices[source_row.x]
+						+ vertices[source_row.y]) * 0.5)
+					if midpoint.y < root_y:
+						root = midpoint
+						root_y = midpoint.y
+				# Move each complete blade radially from the patch origin. This
+				# preserves its authored silhouette while breaking up the tight,
+				# visibly repeated clump that the source mesh otherwise forms.
+				var root_offset := Vector3(root.x, 0.0, root.z) * (root_spread - 1.0)
+				var spread_root := root + root_offset
+				var base_index := out_vertices.size()
+				for selected_index in keep_row_count:
+					var row_index := roundi(float(selected_index)
+						* float(rows.size() - 1) / float(keep_row_count - 1))
+					var row: Vector2i = rows[row_index]
+					for vertex_index: int in [row.x, row.y]:
+						out_vertices.append(
+							transform * vertices[vertex_index] + root_offset)
+						out_normals.append((normal_basis * normals[vertex_index]).normalized())
+						out_uvs.append(uvs[vertex_index])
+						out_uv2s.append(Vector2(spread_root.x, spread_root.z))
+				for row_index in keep_row_count - 1:
+					var left := base_index + row_index * 2
+					var right := left + 1
+					var next_left := left + 2
+					var next_right := left + 3
+					out_indices.append_array(PackedInt32Array([
+						left, right, next_right, left, next_right, next_left]))
+			var material := mesh_instance.mesh.surface_get_material(surface_index)
+			if source_material == null:
+				source_material = material
+			elif material != source_material \
+					and material.resource_path != source_material.resource_path:
+				_fail("Component ribbon grass must share one material: %s" % asset_id)
+				return null
+	if out_vertices.is_empty() or source_material == null:
+		_fail("Source root contains no component ribbon grass: %s" % asset_id)
+		return null
+	var bounds := AABB(out_vertices[0], Vector3.ZERO)
+	for vertex: Vector3 in out_vertices:
+		bounds = bounds.expand(vertex)
+	var anchor := Vector3(bounds.get_center().x, bounds.position.y,
+		bounds.get_center().z)
+	for index in out_vertices.size():
+		out_vertices[index] -= anchor
+		out_uv2s[index] -= Vector2(anchor.x, anchor.z)
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = out_vertices
+	arrays[Mesh.ARRAY_NORMAL] = out_normals
+	arrays[Mesh.ARRAY_TEX_UV] = out_uvs
+	arrays[Mesh.ARRAY_TEX_UV2] = out_uv2s
+	arrays[Mesh.ARRAY_INDEX] = out_indices
+	var merged := ArrayMesh.new()
+	merged.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	merged.surface_set_material(0, source_material)
+	return merged
+
+func _indexed_components(vertex_count: int,
+		indices: PackedInt32Array) -> Array[PackedInt32Array]:
+	var adjacency: Array = []
+	adjacency.resize(vertex_count)
+	var used := PackedByteArray()
+	used.resize(vertex_count)
+	for vertex_index in vertex_count:
+		adjacency[vertex_index] = []
+	for triangle_index in range(0, indices.size(), 3):
+		var a := indices[triangle_index]
+		var b := indices[triangle_index + 1]
+		var c := indices[triangle_index + 2]
+		used[a] = 1
+		used[b] = 1
+		used[c] = 1
+		(adjacency[a] as Array).append_array([b, c])
+		(adjacency[b] as Array).append_array([a, c])
+		(adjacency[c] as Array).append_array([a, b])
+	var visited := PackedByteArray()
+	visited.resize(vertex_count)
+	var out: Array[PackedInt32Array] = []
+	for start in vertex_count:
+		if used[start] == 0 or visited[start] != 0:
+			continue
+		var component := PackedInt32Array()
+		var pending: Array[int] = [start]
+		visited[start] = 1
+		while not pending.is_empty():
+			var current: int = pending.pop_back()
+			component.append(current)
+			for value: int in adjacency[current]:
+				if visited[value] == 0:
+					visited[value] = 1
+					pending.append(value)
+		out.append(component)
+	return out
+
+func _component_ribbon_edge_rows(component: PackedInt32Array,
+		uvs: PackedVector2Array, asset_id: String) -> Array[Vector2i]:
+	var unique_u: Dictionary = {}
+	var unique_v: Dictionary = {}
+	for vertex_index: int in component:
+		# The importer leaves the two sides of a nominal row a few 1e-5 UV
+		# units apart. Millitexel grouping joins that authored seam while the
+		# next along-blade row remains more than 0.1 UV units away.
+		unique_u[roundi(uvs[vertex_index].x * 1000.0)] = true
+		unique_v[roundi(uvs[vertex_index].y * 1000.0)] = true
+	var along_u := unique_u.size() > unique_v.size()
+	var indices_by_row: Dictionary = {}
+	for vertex_index: int in component:
+		var uv := uvs[vertex_index]
+		var key := roundi((uv.x if along_u else uv.y) * 1000.0)
+		if not indices_by_row.has(key):
+			indices_by_row[key] = []
+		(indices_by_row[key] as Array).append(vertex_index)
+	var row_keys: Array = indices_by_row.keys()
+	row_keys.sort()
+	var rows: Array[Vector2i] = []
+	for key: int in row_keys:
+		var row: Array = indices_by_row[key]
+		if row.size() != 2:
+			_fail("Component ribbon row must have exactly two vertices: %s" % asset_id)
+			return []
+		row.sort_custom(func(a: int, b: int) -> bool:
+			return (uvs[a].y if along_u else uvs[a].x) \
+				< (uvs[b].y if along_u else uvs[b].x))
+		rows.append(Vector2i(int(row[0]), int(row[1])))
+	if rows.size() < 2:
+		_fail("Component ribbon requires at least two rows: %s" % asset_id)
+		return []
+	return rows
+
+func _bake_collisions(pack: String, asset_id: String, entry: Dictionary,
+		visual_pieces: Array[EnvironmentVisualPiece],
+		correction: Transform3D,
+		collision_mesh_override: ArrayMesh = null) -> Array[EnvironmentCollisionPiece]:
+	var source_path := String(entry.get("collision_source", ""))
+	var addition_path := String(entry.get("collision_additions", ""))
+	var profile := String(entry.get("collision_profile", ""))
+	if not source_path.is_empty() and not profile.is_empty():
+		_fail("Asset %s cannot combine collision_source and collision_profile" % asset_id)
+		return []
+	if not source_path.is_empty():
+		return _bake_collision_source(pack, asset_id, source_path, correction)
+	var out: Array[EnvironmentCollisionPiece] = []
+	match profile:
+		"":
+			out = []
+		"convex":
+			out = _bake_piece_convex_collisions(pack, asset_id, visual_pieces)
+		"flat_rock":
+			out = _bake_flat_rock_collisions(pack, asset_id, entry, visual_pieces)
+		"flat_box":
+			out = _bake_flat_box_collisions(pack, asset_id, entry, visual_pieces)
+		"plate_box":
+			out = _bake_plate_box_collisions(pack, asset_id, entry, visual_pieces)
+		"building_trimesh", "native_trimesh":
+			out = _bake_building_trimesh(pack, asset_id, visual_pieces,
+				collision_mesh_override)
+		"ramp_box":
+			out = _bake_ramp_box(pack, asset_id, entry, visual_pieces)
+		"stump_cylinder":
+			out = _bake_stump_collision(pack, asset_id, visual_pieces)
+		"trunk_capsule":
+			out = _bake_trunk_collision(pack, asset_id, entry, visual_pieces)
+		"trunk_capsule_chain":
+			out = _bake_trunk_capsule_chain(pack, asset_id, entry, visual_pieces)
+		"oriented_capsule":
+			out = _bake_oriented_capsule(pack, asset_id, entry, visual_pieces)
+		"oriented_cylinder":
+			out = _bake_oriented_cylinder(pack, asset_id, entry, visual_pieces)
+		_:
+			_fail("Unknown collision profile %s for %s" % [profile, asset_id])
+			return []
+	if _failed:
+		return []
+	if not addition_path.is_empty():
+		out.append_array(_bake_collision_source(pack, asset_id, addition_path,
+			correction, out.size()))
+	return out
+
+func _validate_collision_policy(asset_id: String, entry: Dictionary,
+		default_scale: Variant) -> void:
+	## TASK H2c FIX 2, MINOR 7: `default_scale` takes no default. Its old one --
+	## unit scale -- was the value that makes the plate gate below pass, so a
+	## caller that forgot the manifest's own default would have been waved
+	## through on the exact case the gate exists for. `_bake_asset` is the one
+	## caller and hands it the manifest's, resolved in `_bake_manifest`.
+	var tags: Array = entry.get("tags", [])
+	var is_rigid := false
+	for tag: String in RIGID_NATURE_TAGS:
+		is_rigid = is_rigid or tags.has(tag)
+	var has_collision := not String(entry.get("collision_source", "")).is_empty() \
+		or not String(entry.get("collision_profile", "")).is_empty()
+	if is_rigid and not has_collision:
+		_fail("Rigid nature asset %s requires collision_source or collision_profile" % asset_id)
+	for structural_tag: String in ["building", "stall", "deck", "stair",
+			"support", "railing", "foundation"]:
+		if tags.has(structural_tag) and not has_collision:
+			_fail("Structural asset %s requires collision" % asset_id)
+	var profile := String(entry.get("collision_profile", ""))
+	var addition_path := String(entry.get("collision_additions", ""))
+	if not addition_path.is_empty() and (profile.is_empty() \
+			or not addition_path.begins_with("res://")):
+		_fail("collision_additions requires a profile and res:// scene: %s" \
+			% asset_id)
+	if profile == "building_trimesh" and not tags.has("building") \
+			and not tags.has("tent"):
+		_fail("building_trimesh is restricted to buildings and tents: %s" % asset_id)
+	if tags.has("village") and profile == "flat_box" \
+			and not tags.has("slab"):
+		_fail("Village flat-box collision is restricted to true slab modules: %s" \
+			% asset_id)
+	if profile == "plate_box":
+		# A DECLARED thickness is the whole reason this profile exists beside
+		# `flat_box`, and the tag gate keeps it a terrain-plate answer: any
+		# other module thick enough to stand on can be measured instead of
+		# asserted, and should be.
+		if float(entry.get("collision_plate_thickness", 0.0)) <= 0.0:
+			_fail("plate_box requires a positive collision_plate_thickness: %s" \
+				% asset_id)
+		if not tags.has("terrain"):
+			_fail("plate_box is restricted to terrain plates: %s" % asset_id)
+		# The declared thickness is the ONE number in this profile that does not
+		# scale honestly. It is authored in the piece's unscaled mesh space, and
+		# the piece's `local_transform` then carries the manifest scale (see
+		# `correction` in `_bake_asset`) -- so a plate at "scale":[4,4,4] would
+		# ship a 1 m slab from a 0.25 m declaration without anything
+		# complaining, which is the sibling of the paper-thin `flat_box` this
+		# profile exists to replace. The footprint has no such problem: it is
+		# measured off the same bounds the visual is drawn from, so it scales
+		# with the module. Refuse the entry rather than pre-divide the
+		# thickness: a plate that needs a scale needs its author to say what the
+		# slab is in metres, out loud.
+		var plate_scale := _vector3(entry.get("scale", default_scale), Vector3.ONE)
+		if not plate_scale.is_equal_approx(Vector3.ONE):
+			_fail(("plate_box requires unit scale so the declared %.3f m " \
+				+ "thickness survives the bake; %s is scaled %s") % [
+				float(entry.get("collision_plate_thickness", 0.0)), asset_id,
+				plate_scale])
+	if profile in ["building_trimesh", "ramp_box"] \
+			and not bool(entry.get("merge_pieces", false)):
+		_fail("Structural collision profile %s requires merge_pieces: %s" % [
+			profile, asset_id])
+	var collision_exclusions: Variant = entry.get(
+		"exclude_collision_mesh_paths", [])
+	if not collision_exclusions is Array:
+		_fail("exclude_collision_mesh_paths must be an array: %s" % asset_id)
+	elif not (collision_exclusions as Array).is_empty() \
+			and profile != "building_trimesh":
+		_fail("Collision mesh exclusions require building_trimesh: %s" % asset_id)
+
+func _bake_building_trimesh(pack: String, asset_id: String,
+		visual_pieces: Array[EnvironmentVisualPiece],
+		collision_mesh_override: ArrayMesh = null) -> Array[EnvironmentCollisionPiece]:
+	if visual_pieces.size() != 1:
+		_fail("Building trimesh expects one merged visual piece: %s" % asset_id)
+		return []
+	var visual_piece := visual_pieces[0]
+	var collision_mesh: Mesh = collision_mesh_override \
+		if collision_mesh_override != null else visual_piece.mesh
+	var collision_transform := Transform3D.IDENTITY \
+		if collision_mesh_override != null else visual_piece.local_transform
+	var shape := EnvironmentBakeGeometry.building_trimesh(collision_mesh,
+		collision_transform)
+	if shape == null:
+		_fail("Could not derive building trimesh collision for %s" % asset_id)
+		return []
+	var collision := EnvironmentCollisionPiece.new()
+	collision.shape = _save_collision_shape(shape, pack, asset_id, 0)
+	collision.local_transform = Transform3D.IDENTITY
+	return [collision]
+
+func _bake_ramp_box(pack: String, asset_id: String, entry: Dictionary,
+		visual_pieces: Array[EnvironmentVisualPiece]) -> Array[EnvironmentCollisionPiece]:
+	if visual_pieces.size() != 1:
+		_fail("Ramp box expects one merged visual piece: %s" % asset_id)
+		return []
+	var direction_value = entry.get("collision_ramp_direction", null)
+	if not direction_value is Array or direction_value.size() != 2:
+		_fail("Ramp box requires collision_ramp_direction [x,z]: %s" % asset_id)
+		return []
+	var direction := Vector2(float(direction_value[0]), float(direction_value[1]))
+	if not direction.is_finite() or not is_equal_approx(direction.length(), 1.0):
+		_fail("Ramp box direction must be finite and unit length: %s" % asset_id)
+		return []
+	var thickness := float(entry.get("collision_ramp_thickness", 0.24))
+	var piece := EnvironmentBakeGeometry.ramp_box(visual_pieces[0].mesh,
+		direction, thickness)
+	if piece == null:
+		_fail("Could not fit ramp box collision for %s" % asset_id)
+		return []
+	piece.shape = _save_collision_shape(piece.shape, pack, asset_id, 0)
+	return [piece]
+
+func _bake_piece_convex_collisions(pack: String, asset_id: String,
+		visual_pieces: Array[EnvironmentVisualPiece]) -> Array[EnvironmentCollisionPiece]:
+	var out: Array[EnvironmentCollisionPiece] = []
+	for piece_index in visual_pieces.size():
+		var visual_piece := visual_pieces[piece_index]
+		var shape := visual_piece.mesh.create_convex_shape(true, false)
+		if shape == null:
+			_fail("Could not derive convex collision for %s piece %d" % [asset_id, piece_index])
+			return []
+		var collision := EnvironmentCollisionPiece.new()
+		collision.shape = _save_collision_shape(shape, pack, asset_id, piece_index)
+		collision.local_transform = visual_piece.local_transform
+		out.append(collision)
+	return out
+
+func _bake_flat_rock_collisions(pack: String, asset_id: String, entry: Dictionary,
+		visual_pieces: Array[EnvironmentVisualPiece]) -> Array[EnvironmentCollisionPiece]:
+	var component_count := maxi(1, int(entry.get("collision_component_count", 1)))
+	if component_count > 1 and visual_pieces.size() != 1:
+		_fail("Multi-component rock collision expects one visual piece: %s" % asset_id)
+		return []
+	var out: Array[EnvironmentCollisionPiece] = []
+	for visual_piece: EnvironmentVisualPiece in visual_pieces:
+		var rigid_meshes := _extract_primary_rigid_meshes(visual_piece.mesh, asset_id,
+			component_count)
+		if rigid_meshes.size() != component_count:
+			_fail("Expected %d rigid rock components for %s, found %d" % [
+				component_count, asset_id, rigid_meshes.size()])
+			return []
+		for rigid_mesh: ArrayMesh in rigid_meshes:
+			var shape := rigid_mesh.create_convex_shape(true, false) as ConvexPolygonShape3D
+			if shape == null:
+				_fail("Could not derive rock collision for %s" % asset_id)
+				return []
+			_flatten_convex_top(shape,
+				_collision_height_limit_local(entry, visual_piece))
+			var collision := EnvironmentCollisionPiece.new()
+			collision.shape = _save_collision_shape(shape, pack, asset_id, out.size())
+			collision.local_transform = visual_piece.local_transform
+			out.append(collision)
+	return out
+
+func _bake_flat_box_collisions(pack: String, asset_id: String, entry: Dictionary,
+		visual_pieces: Array[EnvironmentVisualPiece]) -> Array[EnvironmentCollisionPiece]:
+	var out: Array[EnvironmentCollisionPiece] = []
+	var footprint_scale := clampf(float(entry.get("collision_footprint", 0.9)), 0.5, 1.0)
+	for visual_piece: EnvironmentVisualPiece in visual_pieces:
+		var rigid_mesh := _extract_primary_rigid_mesh(visual_piece.mesh, asset_id)
+		if rigid_mesh == null:
+			return []
+		var bounds := rigid_mesh.get_aabb()
+		var height := minf(bounds.size.y,
+			_collision_height_limit_local(entry, visual_piece))
+		var shape := BoxShape3D.new()
+		shape.size = Vector3(bounds.size.x * footprint_scale, height,
+			bounds.size.z * footprint_scale)
+		var centre := Vector3(bounds.get_center().x,
+			bounds.position.y + height * 0.5, bounds.get_center().z)
+		var collision := EnvironmentCollisionPiece.new()
+		collision.shape = _save_collision_shape(shape, pack, asset_id, out.size())
+		collision.local_transform = visual_piece.local_transform \
+			* Transform3D(Basis.IDENTITY, centre)
+		out.append(collision)
+	return out
+
+func _bake_plate_box_collisions(pack: String, asset_id: String,
+		entry: Dictionary,
+		visual_pieces: Array[EnvironmentVisualPiece]) -> Array[EnvironmentCollisionPiece]:
+	## A FLOOR for a module that has no thickness to make one out of.
+	##
+	## `flat_box` derives its height from the geometry, which is right for a
+	## flagstone and useless for a single-swatch terrain plate: the KayKit
+	## grass tile measures 1e-05 m tall, and a box that thin stops no fall. The
+	## thickness is therefore DECLARED rather than measured, and the reviewer's
+	## objection to `flat_box` here is exactly the reason this profile exists.
+	##
+	## Two deliberate differences from `flat_box`, both because this shape is a
+	## walkable surface and not an obstacle:
+	##
+	## * the slab hangs BELOW the plate's top face instead of rising from its
+	##   underside, so the plane a body stands on is the plane the eye sees;
+	## * the footprint defaults to the WHOLE tile rather than to 0.9 of it,
+	##   because two neighbouring plates that each shrink by a tenth leave a
+	##   gap between them that a player falls through.
+	##
+	## The thickness is in the piece's own local space, which is where the
+	## manifest scale has not been applied yet -- the same space `flat_box`
+	## measures its bounds in -- so a scaled asset would carry it into the world
+	## multiplied. `_validate_collision_policy` refuses a scaled plate outright
+	## rather than let that happen quietly.
+	var thickness := float(entry.get("collision_plate_thickness", 0.0))
+	if not is_finite(thickness) or thickness <= 0.0:
+		_fail("plate_box requires a positive collision_plate_thickness: %s" \
+			% asset_id)
+		return []
+	var footprint_scale := clampf(float(entry.get("collision_footprint", 1.0)),
+		0.5, 1.0)
+	var out: Array[EnvironmentCollisionPiece] = []
+	for visual_piece: EnvironmentVisualPiece in visual_pieces:
+		if visual_piece.mesh == null:
+			_fail("Plate box collision needs a mesh: %s" % asset_id)
+			return []
+		# Both numbers this profile reads off the geometry -- the top face the
+		# slab hangs from and the footprint it spans -- must come from the PLATE
+		# and not from anything sitting on it. `flat_box` guards the same risk
+		# with `_extract_primary_rigid_mesh`; the largest connected component is
+		# that helper's half that applies here. The other half, the foliage
+		# filter, cannot: a terrain plate is a grass swatch, and the filter
+		# classifies every one of the KayKit tile's 18 triangles as foliage and
+		# leaves nothing to bound. So a decorative tuft is excluded because it
+		# is a SEPARATE, SMALLER component, not because it is green.
+		var plate_mesh := _extract_largest_component_mesh(visual_piece.mesh,
+			asset_id)
+		if plate_mesh == null:
+			# FIX 2, MINOR 8. Returning an empty array on its own bakes a plate
+			# with NO collision and leaves the run green -- a walkable surface
+			# that is not there, which is the failure this whole profile exists
+			# to prevent. `_fail` instead, so the bake stops and says which
+			# asset lost its component.
+			_fail(("Plate box collision could not isolate a component to bound: " \
+				+ "%s") % asset_id)
+			return []
+		var bounds := plate_mesh.get_aabb()
+		var shape := BoxShape3D.new()
+		shape.size = Vector3(bounds.size.x * footprint_scale, thickness,
+			bounds.size.z * footprint_scale)
+		var centre := Vector3(bounds.get_center().x,
+			bounds.end.y - thickness * 0.5, bounds.get_center().z)
+		var collision := EnvironmentCollisionPiece.new()
+		collision.shape = _save_collision_shape(shape, pack, asset_id, out.size())
+		collision.local_transform = visual_piece.local_transform \
+			* Transform3D(Basis.IDENTITY, centre)
+		out.append(collision)
+	return out
+
+func _bake_stump_collision(pack: String, asset_id: String,
+		visual_pieces: Array[EnvironmentVisualPiece]) -> Array[EnvironmentCollisionPiece]:
+	if visual_pieces.size() != 1:
+		_fail("Stump collision expects one visual piece: %s" % asset_id)
+		return []
+	var visual_piece := visual_pieces[0]
+	# The cut trunk is the largest connected woody component. Selecting it first
+	# prevents decorative mushrooms (also brown) from raising or widening the
+	# walkable cut, while the single cylinder intentionally ignores root flares.
+	var rigid_mesh := _extract_primary_rigid_mesh(visual_piece.mesh, asset_id)
+	if rigid_mesh == null:
+		return []
+	var bounds := rigid_mesh.get_aabb()
+	var top_min_y := bounds.end.y - bounds.size.y * 0.28
+	var top_bounds := AABB()
+	var has_top := false
+	for point: Vector3 in _mesh_triangle_vertices(rigid_mesh, asset_id):
+		if point.y < top_min_y:
+			continue
+		var point_bounds := AABB(point, Vector3.ZERO)
+		top_bounds = point_bounds if not has_top else top_bounds.merge(point_bounds)
+		has_top = true
+	if not has_top:
+		_fail("Could not find stump cut for %s" % asset_id)
+		return []
+	var shape := CylinderShape3D.new()
+	shape.height = bounds.size.y
+	shape.radius = maxf(0.01, minf(top_bounds.size.x, top_bounds.size.z) * 0.5)
+	var centre := Vector3(top_bounds.get_center().x, bounds.get_center().y,
+		top_bounds.get_center().z)
+	var collision := EnvironmentCollisionPiece.new()
+	collision.shape = _save_collision_shape(shape, pack, asset_id, 0)
+	collision.local_transform = visual_piece.local_transform \
+		* Transform3D(Basis.IDENTITY, centre)
+	return [collision]
+
+func _bake_trunk_collision(pack: String, asset_id: String, entry: Dictionary,
+		visual_pieces: Array[EnvironmentVisualPiece]) -> Array[EnvironmentCollisionPiece]:
+	if visual_pieces.size() != 1:
+		_fail("Trunk collision expects one visual piece: %s" % asset_id)
+		return []
+	var visual_piece := visual_pieces[0]
+	var non_foliage := _extract_non_foliage_mesh(visual_piece.mesh, asset_id)
+	if non_foliage == null:
+		return []
+	# A canopy branch can have more surface area than the trunk. Collision owns
+	# the grounded component instead: whichever wood actually reaches the base.
+	var wood_mesh := _extract_grounded_component_mesh(non_foliage, asset_id)
+	if wood_mesh == null:
+		return []
+	var bounds := wood_mesh.get_aabb()
+	var height_fraction := clampf(float(entry.get("collision_height_fraction",
+		0.28)), 0.2, 0.4)
+	var vertices := _mesh_triangle_vertices(wood_mesh, asset_id)
+	var bottom_y := bounds.position.y
+	var top_y := bounds.position.y + bounds.size.y * height_fraction
+	var lower_sample := _cross_section_bounds(vertices,
+		bounds.position.y + bounds.size.y * minf(0.1, height_fraction * 0.4))
+	var upper_sample := _cross_section_bounds(vertices,
+		bounds.position.y + bounds.size.y * maxf(0.14, height_fraction - 0.06))
+	var radius := _fitted_trunk_radius(entry, visual_piece, lower_sample,
+		upper_sample, top_y - bottom_y, 0.45)
+	var lower_centre := Vector3(lower_sample.get_center().x, bottom_y + radius,
+		lower_sample.get_center().z)
+	var upper_centre := Vector3(upper_sample.get_center().x, top_y - radius,
+		upper_sample.get_center().z)
+	if upper_centre.y <= lower_centre.y:
+		upper_centre.y = lower_centre.y + 0.01
+	var axis := upper_centre - lower_centre
+	var shape := CapsuleShape3D.new()
+	shape.radius = radius
+	shape.height = maxf(axis.length() + radius * 2.0, radius * 2.0)
+	var collision := EnvironmentCollisionPiece.new()
+	collision.shape = _save_collision_shape(shape, pack, asset_id, 0)
+	collision.local_transform = visual_piece.local_transform \
+		* Transform3D(_basis_with_y_axis(axis), (lower_centre + upper_centre) * 0.5)
+	return [collision]
+
+func _bake_trunk_capsule_chain(pack: String, asset_id: String, entry: Dictionary,
+		visual_pieces: Array[EnvironmentVisualPiece]) -> Array[EnvironmentCollisionPiece]:
+	if visual_pieces.size() != 1:
+		_fail("Trunk capsule chain expects one visual piece: %s" % asset_id)
+		return []
+	var visual_piece := visual_pieces[0]
+	var non_foliage := _extract_non_foliage_mesh(visual_piece.mesh, asset_id)
+	if non_foliage == null:
+		return []
+	var wood_mesh := _extract_grounded_component_mesh(non_foliage, asset_id)
+	if wood_mesh == null:
+		return []
+	var bounds := wood_mesh.get_aabb()
+	var vertices := _mesh_triangle_vertices(wood_mesh, asset_id)
+	var authored_joints: Array = entry.get("collision_joint_points_m", [])
+	var authored_radii: Array = entry.get("collision_segment_radii_m", [])
+	if not authored_joints.is_empty() or not authored_radii.is_empty():
+		return _bake_authored_capsule_chain(pack, asset_id, visual_piece,
+			authored_joints, authored_radii)
+	var height_fraction := clampf(float(entry.get("collision_height_fraction",
+		0.4)), 0.2, 0.6)
+	var capsule_count := clampi(int(entry.get("collision_capsule_count", 3)), 2, 6)
+	var radius_span_fraction := clampf(float(entry.get(
+		"collision_segment_radius_fraction", 0.4)), 0.25, 0.45)
+	var bottom_y := bounds.position.y
+	var top_y := bounds.position.y + bounds.size.y * height_fraction
+	var base_span := (top_y - bottom_y) / float(capsule_count)
+	# Internal axis endpoints are shared verbatim. The outer endpoints start
+	# inset from the desired bounds and are refined from their fitted radii.
+	var joint_ys: Array[float] = []
+	for joint_index in capsule_count + 1:
+		if joint_index == 0:
+			joint_ys.append(bottom_y + base_span * radius_span_fraction)
+		elif joint_index == capsule_count:
+			joint_ys.append(top_y - base_span * radius_span_fraction)
+		else:
+			joint_ys.append(bottom_y + base_span * joint_index)
+	var segment_radii: Array[float] = []
+	# Two bounded fitting passes place the first/last cap centres one radius
+	# inside the requested trunk span while leaving every internal joint fixed.
+	for unused in 2:
+		var joint_samples: Array[AABB] = []
+		for joint_y: float in joint_ys:
+			joint_samples.append(_cross_section_bounds(vertices, joint_y))
+		segment_radii.clear()
+		for capsule_index in capsule_count:
+			segment_radii.append(_fitted_trunk_radius(entry, visual_piece,
+				joint_samples[capsule_index], joint_samples[capsule_index + 1],
+				base_span, radius_span_fraction))
+		joint_ys[0] = bottom_y + segment_radii[0]
+		joint_ys[capsule_count] = top_y - segment_radii[capsule_count - 1]
+	var joint_points: Array[Vector3] = []
+	for joint_y: float in joint_ys:
+		joint_points.append(_cross_section_median(vertices, joint_y))
+	return _build_capsule_chain(pack, asset_id, visual_piece, joint_points,
+		segment_radii)
+
+func _bake_authored_capsule_chain(pack: String, asset_id: String,
+		visual_piece: EnvironmentVisualPiece, joint_values: Array,
+		radius_values: Array) -> Array[EnvironmentCollisionPiece]:
+	if joint_values.size() < 3 or joint_values.size() > 7:
+		_fail("Authored capsule chain for %s requires 3-7 joint points" % asset_id)
+		return []
+	if radius_values.size() != joint_values.size() - 1:
+		_fail("Authored capsule chain for %s requires one radius per segment" % asset_id)
+		return []
+	var inverse_visual := visual_piece.local_transform.affine_inverse()
+	var joint_points: Array[Vector3] = []
+	for joint_index in joint_values.size():
+		var joint_value = joint_values[joint_index]
+		if not joint_value is Array or joint_value.size() != 3:
+			_fail("Invalid capsule-chain joint %d for %s" % [joint_index, asset_id])
+			return []
+		joint_points.append(inverse_visual * _vector3(joint_value, Vector3.ZERO))
+	var world_radius_scale := maxf(
+		(visual_piece.local_transform.basis * Vector3.RIGHT).length(),
+		(visual_piece.local_transform.basis * Vector3.BACK).length())
+	var segment_radii: Array[float] = []
+	for radius_index in radius_values.size():
+		var world_radius := float(radius_values[radius_index])
+		if world_radius <= 0.0:
+			_fail("Capsule-chain radius %d for %s must be positive" % [
+				radius_index, asset_id])
+			return []
+		segment_radii.append(world_radius / maxf(world_radius_scale, 0.0001))
+	return _build_capsule_chain(pack, asset_id, visual_piece, joint_points,
+		segment_radii)
+
+func _build_capsule_chain(pack: String, asset_id: String,
+		visual_piece: EnvironmentVisualPiece, joint_points: Array[Vector3],
+		segment_radii: Array[float]) -> Array[EnvironmentCollisionPiece]:
+	var out: Array[EnvironmentCollisionPiece] = []
+	var capsule_count := segment_radii.size()
+	for capsule_index in capsule_count:
+		var lower_joint := joint_points[capsule_index]
+		var upper_joint := joint_points[capsule_index + 1]
+		var axis := upper_joint - lower_joint
+		if axis.length_squared() < 0.000001:
+			_fail("Capsule-chain segment %d for %s has coincident joints" % [
+				capsule_index, asset_id])
+			return []
+		var radius := segment_radii[capsule_index]
+		var shape := CapsuleShape3D.new()
+		shape.radius = radius
+		shape.height = maxf(axis.length() + radius * 2.0, radius * 2.0)
+		var collision := EnvironmentCollisionPiece.new()
+		collision.shape = _save_collision_shape(shape, pack, asset_id,
+			capsule_index)
+		collision.local_transform = visual_piece.local_transform \
+			* Transform3D(_basis_with_y_axis(axis),
+				(lower_joint + upper_joint) * 0.5)
+		out.append(collision)
+	return out
+
+func _fitted_trunk_radius(entry: Dictionary,
+		visual_piece: EnvironmentVisualPiece, lower_sample: AABB,
+		upper_sample: AABB, span: float, span_fraction: float) -> float:
+	var radius_scale := clampf(float(entry.get("collision_radius_scale", 0.82)),
+		0.5, 0.98)
+	var radius := minf(_cross_section_radius(lower_sample),
+		_cross_section_radius(upper_sample)) * radius_scale
+	# A very sparse trunk can expose only narrow diagonal chords. Preserve a
+	# usable minimum without ever inheriting canopy width.
+	radius = maxf(radius, visual_piece.mesh.get_aabb().size.y * 0.012)
+	var max_world_radius := float(entry.get("collision_max_radius", INF))
+	if max_world_radius != INF:
+		var world_radius_scale := maxf(
+			(visual_piece.local_transform.basis * Vector3.RIGHT).length(),
+			(visual_piece.local_transform.basis * Vector3.BACK).length())
+		radius = minf(radius,
+			max_world_radius / maxf(world_radius_scale, 0.0001))
+	return clampf(radius, 0.01, span * span_fraction)
+
+func _cross_section_bounds(points: PackedVector3Array, target_y: float) -> AABB:
+	# Intersect the actual triangles with the requested plane. The old nearest-
+	# vertex approximation jumped between sparse low-poly rings and could pull a
+	# leaning trunk capsule toward a branch even though the trunk itself was
+	# continuous. Exact edge intersections make the centreline stable by
+	# construction, independent of vertex tessellation.
+	var intersections := _cross_section_intersections(points, target_y)
+	var section_bounds := AABB()
+	for point_index in intersections.size():
+		var point_bounds := AABB(intersections[point_index], Vector3.ZERO)
+		section_bounds = point_bounds if point_index == 0 \
+			else section_bounds.merge(point_bounds)
+	if intersections.size() >= 3 and section_bounds.size.x > 0.0001 \
+			and section_bounds.size.z > 0.0001:
+		return section_bounds
+
+	# Degenerate/coplanar source triangles still get a deterministic fallback.
+	var distance_keys: Dictionary = {}
+	for point: Vector3 in points:
+		var distance := absf(point.y - target_y)
+		distance_keys[roundi(distance * 100000.0)] = distance
+	var distances: Array[float] = []
+	for key: int in distance_keys:
+		distances.append(float(distance_keys[key]))
+	distances.sort()
+	var fallback := AABB()
+	for distance_limit: float in distances:
+		var bounds := AABB()
+		var has_bounds := false
+		var unique_points: Dictionary = {}
+		for point: Vector3 in points:
+			if absf(point.y - target_y) > distance_limit + 0.0001:
+				continue
+			var point_bounds := AABB(point, Vector3.ZERO)
+			bounds = point_bounds if not has_bounds else bounds.merge(point_bounds)
+			has_bounds = true
+			unique_points["%d:%d:%d" % [roundi(point.x * 10000.0),
+				roundi(point.y * 10000.0), roundi(point.z * 10000.0)]] = true
+		fallback = bounds
+		if unique_points.size() >= 4 and bounds.size.x > 0.0001 \
+				and bounds.size.z > 0.0001:
+			return bounds
+	return fallback
+
+func _cross_section_intersections(points: PackedVector3Array,
+		target_y: float) -> PackedVector3Array:
+	var out := PackedVector3Array()
+	var seen: Dictionary = {}
+	for offset in range(0, points.size() - 2, 3):
+		for edge_index in 3:
+			var a := points[offset + edge_index]
+			var b := points[offset + (edge_index + 1) % 3]
+			var a_delta := a.y - target_y
+			var b_delta := b.y - target_y
+			var intersection := Vector3.ZERO
+			var intersects := false
+			if absf(a_delta) <= 0.00001:
+				intersection = Vector3(a.x, target_y, a.z)
+				intersects = true
+			elif (a_delta < 0.0 and b_delta > 0.0) \
+					or (a_delta > 0.0 and b_delta < 0.0):
+				var weight := -a_delta / (b_delta - a_delta)
+				intersection = a.lerp(b, weight)
+				intersection.y = target_y
+				intersects = true
+			if not intersects:
+				continue
+			var key := "%d:%d" % [roundi(intersection.x * 10000.0),
+				roundi(intersection.z * 10000.0)]
+			if seen.has(key):
+				continue
+			seen[key] = true
+			out.append(intersection)
+	return out
+
+func _cross_section_median(points: PackedVector3Array, target_y: float) -> Vector3:
+	var intersections := _cross_section_intersections(points, target_y)
+	if intersections.is_empty():
+		var fallback := _cross_section_bounds(points, target_y).get_center()
+		return Vector3(fallback.x, target_y, fallback.z)
+	var xs: Array[float] = []
+	var zs: Array[float] = []
+	for point: Vector3 in intersections:
+		xs.append(point.x)
+		zs.append(point.z)
+	xs.sort()
+	zs.sort()
+	var middle := xs.size() / 2
+	var x := xs[middle]
+	var z := zs[middle]
+	if xs.size() % 2 == 0:
+		x = (xs[middle - 1] + x) * 0.5
+		z = (zs[middle - 1] + z) * 0.5
+	return Vector3(x, target_y, z)
+
+func _cross_section_radius(bounds: AABB) -> float:
+	var narrow := minf(bounds.size.x, bounds.size.z) * 0.5
+	var wide := maxf(bounds.size.x, bounds.size.z) * 0.5
+	# Some low-poly rings expose only two coplanar vertices. The conservative
+	# wide-axis fallback keeps a usable trunk without inheriting branch width.
+	return maxf(narrow, wide * 0.22)
+
+func _bake_oriented_capsule(pack: String, asset_id: String, entry: Dictionary,
+		visual_pieces: Array[EnvironmentVisualPiece]) -> Array[EnvironmentCollisionPiece]:
+	if visual_pieces.size() != 1:
+		_fail("Capsule collision expects one visual piece: %s" % asset_id)
+		return []
+	var visual_piece := visual_pieces[0]
+	var rigid_mesh := _extract_primary_rigid_mesh(visual_piece.mesh, asset_id)
+	if rigid_mesh == null:
+		return []
+	var bounds := rigid_mesh.get_aabb()
+	var sizes: Array[float] = [bounds.size.x, bounds.size.y, bounds.size.z]
+	var longest := 0
+	for axis in range(1, 3):
+		if sizes[axis] > sizes[longest]:
+			longest = axis
+	var cross_a := sizes[(longest + 1) % 3]
+	var cross_b := sizes[(longest + 2) % 3]
+	var radius_fraction := clampf(float(entry.get("collision_radius_fraction", 0.45)),
+		0.1, 0.5)
+	var cross_radius := minf(cross_a, cross_b) * radius_fraction
+	var shape := CapsuleShape3D.new()
+	shape.radius = maxf(0.01, cross_radius)
+	shape.height = maxf(sizes[longest], shape.radius * 2.0)
+	var axis_vector := [Vector3.RIGHT, Vector3.UP, Vector3.BACK][longest] as Vector3
+	var collision := EnvironmentCollisionPiece.new()
+	collision.shape = _save_collision_shape(shape, pack, asset_id, 0)
+	collision.local_transform = visual_piece.local_transform \
+		* Transform3D(_basis_with_y_axis(axis_vector), bounds.get_center())
+	return [collision]
+
+func _bake_oriented_cylinder(pack: String, asset_id: String, entry: Dictionary,
+		visual_pieces: Array[EnvironmentVisualPiece]) -> Array[EnvironmentCollisionPiece]:
+	if visual_pieces.size() != 1:
+		_fail("Cylinder collision expects one visual piece: %s" % asset_id)
+		return []
+	var visual_piece := visual_pieces[0]
+	var rigid_mesh := _extract_primary_rigid_mesh(visual_piece.mesh, asset_id)
+	if rigid_mesh == null:
+		return []
+	var bounds := rigid_mesh.get_aabb()
+	var sizes: Array[float] = [bounds.size.x, bounds.size.y, bounds.size.z]
+	var longest := 0
+	for axis in range(1, 3):
+		if sizes[axis] > sizes[longest]:
+			longest = axis
+	var cross_a := sizes[(longest + 1) % 3]
+	var cross_b := sizes[(longest + 2) % 3]
+	var radius_fraction := clampf(float(entry.get("collision_radius_fraction", 0.46)),
+		0.1, 0.5)
+	var shape := CylinderShape3D.new()
+	shape.radius = maxf(0.01, minf(cross_a, cross_b) * radius_fraction)
+	shape.height = sizes[longest]
+	var axis_vector := [Vector3.RIGHT, Vector3.UP, Vector3.BACK][longest] as Vector3
+	var collision := EnvironmentCollisionPiece.new()
+	collision.shape = _save_collision_shape(shape, pack, asset_id, 0)
+	collision.local_transform = visual_piece.local_transform \
+		* Transform3D(_basis_with_y_axis(axis_vector), bounds.get_center())
+	return [collision]
+
+func _collision_height_limit_local(entry: Dictionary,
+		visual_piece: EnvironmentVisualPiece) -> float:
+	var max_world_height := float(entry.get("collision_max_height", INF))
+	if max_world_height == INF:
+		return INF
+	var world_y_scale := (visual_piece.local_transform.basis * Vector3.UP).length()
+	return maxf(0.01, max_world_height / maxf(world_y_scale, 0.0001))
+
+func _flatten_convex_top(shape: ConvexPolygonShape3D,
+		max_height: float = INF) -> void:
+	var points := shape.points
+	if points.size() < 4:
+		return
+	var top_y := -INF
+	var bottom_y := INF
+	for point: Vector3 in points:
+		top_y = maxf(top_y, point.y)
+		bottom_y = minf(bottom_y, point.y)
+	if max_height != INF and top_y - bottom_y > max_height:
+		top_y = bottom_y + max_height
+		for index in points.size():
+			points[index].y = minf(points[index].y, top_y)
+	var band := maxf((top_y - bottom_y) * 0.12, 0.005)
+	var top_indices: Array[int] = []
+	while top_indices.size() < 3 and band <= (top_y - bottom_y) * 0.5 + 0.001:
+		top_indices.clear()
+		for index in points.size():
+			if points[index].y >= top_y - band:
+				top_indices.append(index)
+		band *= 1.5
+	for index: int in top_indices:
+		points[index].y = top_y
+	shape.points = points
+
+func _basis_with_y_axis(y_axis: Vector3) -> Basis:
+	var y := y_axis.normalized()
+	var x := Vector3.UP.cross(y)
+	if x.length_squared() < 0.001:
+		x = Vector3.RIGHT
+	else:
+		x = x.normalized()
+	var z := x.cross(y).normalized()
+	return Basis(x, y, z)
+
+func _extract_primary_rigid_mesh(source: ArrayMesh, asset_id: String) -> ArrayMesh:
+	var meshes := _extract_primary_rigid_meshes(source, asset_id, 1)
+	return meshes[0] if not meshes.is_empty() else null
+
+func _extract_primary_rigid_meshes(source: ArrayMesh, asset_id: String,
+		count: int) -> Array[ArrayMesh]:
+	var non_foliage := _extract_non_foliage_mesh(source, asset_id)
+	if non_foliage == null:
+		return []
+	return _extract_largest_component_meshes(non_foliage, asset_id, count)
+
+func _extract_non_foliage_mesh(source: ArrayMesh, asset_id: String) -> ArrayMesh:
+	var wood_vertices := PackedVector3Array()
+	for surface_index in source.get_surface_count():
+		if source.surface_get_primitive_type(surface_index) != Mesh.PRIMITIVE_TRIANGLES:
+			_fail("Woody collision requires triangle surfaces: %s" % asset_id)
+			return null
+		var arrays := source.surface_get_arrays(surface_index)
+		var vertices := arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array
+		var uvs := arrays[Mesh.ARRAY_TEX_UV] as PackedVector2Array
+		var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] \
+			if arrays[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
+		var texture := _material_albedo_texture(source.surface_get_material(surface_index))
+		var image: Image = null
+		if texture != null and uvs.size() == vertices.size():
+			image = texture.get_image()
+			if image != null and image.is_compressed():
+				image.decompress()
+		var element_count := indices.size() if not indices.is_empty() else vertices.size()
+		for element_index in range(0, element_count - 2, 3):
+			var triangle := PackedInt32Array([
+				indices[element_index] if not indices.is_empty() else element_index,
+				indices[element_index + 1] if not indices.is_empty() else element_index + 1,
+				indices[element_index + 2] if not indices.is_empty() else element_index + 2,
+			])
+			if image != null and not image.is_empty() \
+				and _triangle_is_foliage(uvs, triangle, image):
+				continue
+			for vertex_index: int in triangle:
+				wood_vertices.append(vertices[vertex_index])
+	if wood_vertices.size() < 12:
+		_fail("Could not isolate enough woody geometry for %s" % asset_id)
+		return null
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = wood_vertices
+	var out := ArrayMesh.new()
+	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return out
+
+func _extract_largest_component_mesh(source: ArrayMesh, asset_id: String) -> ArrayMesh:
+	var meshes := _extract_largest_component_meshes(source, asset_id, 1)
+	return meshes[0] if not meshes.is_empty() else null
+
+func _extract_largest_component_meshes(source: ArrayMesh, asset_id: String,
+		count: int) -> Array[ArrayMesh]:
+	var records := _extract_component_records(source, asset_id)
+	var out: Array[ArrayMesh] = []
+	for index in mini(maxi(count, 0), records.size()):
+		out.append(records[index]["mesh"] as ArrayMesh)
+	return out
+
+func _extract_grounded_component_mesh(source: ArrayMesh, asset_id: String) -> ArrayMesh:
+	var records := _extract_component_records(source, asset_id)
+	if records.is_empty():
+		return null
+	var overall_bottom := INF
+	var overall_top := -INF
+	for record: Dictionary in records:
+		var component_bounds: AABB = record["bounds"]
+		overall_bottom = minf(overall_bottom, component_bounds.position.y)
+		overall_top = maxf(overall_top, component_bounds.end.y)
+	var bottom_tolerance := maxf(0.001, (overall_top - overall_bottom) * 0.015)
+	var best_record: Dictionary = {}
+	for record: Dictionary in records:
+		var component_bounds: AABB = record["bounds"]
+		if component_bounds.position.y > overall_bottom + bottom_tolerance:
+			continue
+		if best_record.is_empty():
+			best_record = record
+			continue
+		var best_bounds: AABB = best_record["bounds"]
+		if component_bounds.end.y > best_bounds.end.y + 0.0001 \
+				or (is_equal_approx(component_bounds.end.y, best_bounds.end.y) \
+				and float(record["area"]) > float(best_record["area"])):
+			best_record = record
+	return best_record["mesh"] as ArrayMesh if not best_record.is_empty() else null
+
+func _extract_component_records(source: ArrayMesh,
+		asset_id: String) -> Array[Dictionary]:
+	var triangles: Array[PackedVector3Array] = []
+	var parent: Array[int] = []
+	var rank: Array[int] = []
+	var owner_by_point: Dictionary = {}
+	var vertices := _mesh_triangle_vertices(source, asset_id)
+	if vertices.is_empty():
+		return []
+	for offset in range(0, vertices.size(), 3):
+		var triangle := PackedVector3Array([
+			vertices[offset], vertices[offset + 1], vertices[offset + 2]])
+		var triangle_index := triangles.size()
+		triangles.append(triangle)
+		parent.append(triangle_index)
+		rank.append(0)
+		for point: Vector3 in triangle:
+			var key := "%d:%d:%d" % [roundi(point.x * 10000.0),
+				roundi(point.y * 10000.0), roundi(point.z * 10000.0)]
+			if owner_by_point.has(key):
+				_union_components(parent, rank, triangle_index, int(owner_by_point[key]))
+			else:
+				owner_by_point[key] = triangle_index
+	var area_by_root: Dictionary = {}
+	var bounds_by_root: Dictionary = {}
+	for index in triangles.size():
+		var root := _find_component(parent, index)
+		var triangle := triangles[index]
+		var area := (triangle[1] - triangle[0]).cross(triangle[2] - triangle[0]).length()
+		area_by_root[root] = float(area_by_root.get(root, 0.0)) + area
+		var triangle_bounds := AABB(triangle[0], Vector3.ZERO) \
+			.expand(triangle[1]).expand(triangle[2])
+		bounds_by_root[root] = triangle_bounds if not bounds_by_root.has(root) \
+			else (bounds_by_root[root] as AABB).merge(triangle_bounds)
+	var vertices_by_root: Dictionary = {}
+	for index in triangles.size():
+		var root := _find_component(parent, index)
+		var component_vertices: PackedVector3Array = vertices_by_root.get(root,
+			PackedVector3Array())
+		for point: Vector3 in triangles[index]:
+			component_vertices.append(point)
+		vertices_by_root[root] = component_vertices
+	var records: Array[Dictionary] = []
+	for root: int in area_by_root:
+		var component_vertices: PackedVector3Array = vertices_by_root[root]
+		if component_vertices.size() < 12:
+			continue
+		var arrays: Array = []
+		arrays.resize(Mesh.ARRAY_MAX)
+		arrays[Mesh.ARRAY_VERTEX] = component_vertices
+		var mesh := ArrayMesh.new()
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		records.append({
+			"mesh": mesh,
+			"area": float(area_by_root[root]),
+			"bounds": bounds_by_root[root] as AABB,
+		})
+	if records.is_empty():
+		_fail("Could not isolate rigid geometry for %s" % asset_id)
+		return []
+	records.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var area_a := float(a["area"])
+		var area_b := float(b["area"])
+		if not is_equal_approx(area_a, area_b):
+			return area_a > area_b
+		var centre_a: Vector3 = (a["bounds"] as AABB).get_center()
+		var centre_b: Vector3 = (b["bounds"] as AABB).get_center()
+		if not is_equal_approx(centre_a.x, centre_b.x):
+			return centre_a.x < centre_b.x
+		if not is_equal_approx(centre_a.y, centre_b.y):
+			return centre_a.y < centre_b.y
+		return centre_a.z < centre_b.z)
+	return records
+
+func _mesh_triangle_vertices(source: ArrayMesh, asset_id: String) -> PackedVector3Array:
+	var out := PackedVector3Array()
+	for surface_index in source.get_surface_count():
+		if source.surface_get_primitive_type(surface_index) != Mesh.PRIMITIVE_TRIANGLES:
+			_fail("Rigid collision requires triangle surfaces: %s" % asset_id)
+			return PackedVector3Array()
+		var arrays := source.surface_get_arrays(surface_index)
+		var vertices := arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array
+		var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] \
+			if arrays[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
+		if indices.is_empty():
+			out.append_array(vertices)
+		else:
+			for index: int in indices:
+				out.append(vertices[index])
+	return out
+
+func _find_component(parent: Array[int], index: int) -> int:
+	var cursor := index
+	while parent[cursor] != cursor:
+		parent[cursor] = parent[parent[cursor]]
+		cursor = parent[cursor]
+	return cursor
+
+func _union_components(parent: Array[int], rank: Array[int], a: int, b: int) -> void:
+	var root_a := _find_component(parent, a)
+	var root_b := _find_component(parent, b)
+	if root_a == root_b:
+		return
+	if rank[root_a] < rank[root_b]:
+		parent[root_a] = root_b
+	elif rank[root_a] > rank[root_b]:
+		parent[root_b] = root_a
+	else:
+		parent[root_b] = root_a
+		rank[root_a] += 1
+
+func _material_albedo_texture(material: Material) -> Texture2D:
+	var standard := material as StandardMaterial3D
+	if standard != null:
+		return standard.albedo_texture
+	var shader_material := material as ShaderMaterial
+	if shader_material != null:
+		return shader_material.get_shader_parameter("albedo_texture") as Texture2D
+	return null
+
+func _triangle_is_foliage(uvs: PackedVector2Array, triangle: PackedInt32Array,
+		image: Image) -> bool:
+	var uv0 := uvs[triangle[0]]
+	var uv1 := _unwrap_uv_near(uvs[triangle[1]], uv0)
+	var uv2 := _unwrap_uv_near(uvs[triangle[2]], uv0)
+	var centroid := (uv0 + uv1 + uv2) / 3.0
+	if _is_foliage_color(_sample_wrapped(image, centroid)):
+		return true
+	var green_vertices := 0
+	for vertex_index: int in triangle:
+		if _is_foliage_color(_sample_wrapped(image, uvs[vertex_index])):
+			green_vertices += 1
+	return green_vertices >= 2
+
+func _unwrap_uv_near(uv: Vector2, origin: Vector2) -> Vector2:
+	return origin + Vector2(uv.x - origin.x - roundf(uv.x - origin.x),
+		uv.y - origin.y - roundf(uv.y - origin.y))
+
+func _sample_wrapped(image: Image, uv: Vector2) -> Color:
+	var x := clampi(int(floor(fposmod(uv.x, 1.0) * image.get_width())),
+		0, image.get_width() - 1)
+	var y := clampi(int(floor(fposmod(uv.y, 1.0) * image.get_height())),
+		0, image.get_height() - 1)
+	return image.get_pixel(x, y)
+
+func _is_foliage_color(color: Color) -> bool:
+	return color.g > color.r * 1.08 and color.g > color.b * 1.08 and color.s > 0.15
+
+func _bake_collision_source(pack: String, asset_id: String,
+		source_path: String, correction: Transform3D,
+		piece_offset: int = 0) -> Array[EnvironmentCollisionPiece]:
+	var packed := load(source_path) as PackedScene
+	if packed == null:
+		_fail("Collision source is not a scene: %s" % source_path)
+		return []
+	var root := packed.instantiate()
+	var nodes: Array[CollisionShape3D] = []
+	var stack: Array[Node] = [root]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		for child: Node in node.get_children():
+			stack.append(child)
+		var collision := node as CollisionShape3D
+		if collision != null and not collision.disabled and collision.shape != null:
+			nodes.append(collision)
+	nodes.sort_custom(func(a: CollisionShape3D, b: CollisionShape3D) -> bool:
+		return String(root.get_path_to(a)) < String(root.get_path_to(b)))
+	var out: Array[EnvironmentCollisionPiece] = []
+	for piece_index in nodes.size():
+		var source := nodes[piece_index]
+		var piece := EnvironmentCollisionPiece.new()
+		piece.shape = _save_collision_shape(source.shape.duplicate(true), pack,
+			asset_id, piece_offset + piece_index)
+		# Authored wrapper shapes lived under the same scaled/pivoted root as
+		# their visual. Preserve that composition exactly; applying correction
+		# only to the mesh makes otherwise-correct proxies miniature.
+		piece.local_transform = correction * _relative_transform(source, root)
+		out.append(piece)
+	root.free()
+	if out.is_empty():
+		_fail("Collision source contains no enabled shapes: %s" % source_path)
+	return out
+
+func _save_collision_shape(shape: Shape3D, pack: String,
+		asset_id: String, piece_index: int) -> Shape3D:
+	var path := "res://terrain/environment/collisions/%s/%s_piece_%02d.res" % [
+		_slug(pack), _slug(asset_id), piece_index]
+	_ensure_parent(path)
+	if ResourceSaver.save(shape, path) != OK:
+		_fail("Cannot save collision shape: %s" % path)
+		return null
+	return ResourceLoader.load(path, "Shape3D", ResourceLoader.CACHE_MODE_REPLACE) as Shape3D
+
+func _relative_transform(node: Node3D, root: Node) -> Transform3D:
+	return EnvironmentBakeGeometry.relative_transform(node, root)
+
+func _bake_mesh(source: Mesh, pack: String, asset_id: String, piece_index: int,
+		supports_color: bool, material_tint: Color, green_hue: float,
+		fallback_albedo: Texture2D,
+		fallback_albedos_by_material: Dictionary = {}) -> ArrayMesh:
+	var source_array := source as ArrayMesh
+	if source_array == null:
+		_fail("Only ArrayMesh source pieces are supported: %s" % asset_id)
+		return null
+	var mesh := _remap_mesh_green_hue(source_array, green_hue) \
+		if green_hue >= 0.0 else source_array.duplicate(true) as ArrayMesh
+	if mesh == null:
+		_fail("Could not duplicate mesh data for %s" % asset_id)
+		return null
+	for surface_index in mesh.get_surface_count():
+		var material := source_array.surface_get_material(surface_index)
+		if material == null:
+			continue
+		var baked_material := _bake_material(material, pack, asset_id, piece_index,
+			surface_index, supports_color, material_tint, green_hue,
+			fallback_albedo, fallback_albedos_by_material)
+		if baked_material == null:
+			return null
+		mesh.surface_set_material(surface_index, baked_material)
+	var mesh_path := "res://terrain/environment/meshes/%s/%s_piece_%02d.res" % [
+		_slug(pack), _slug(asset_id), piece_index]
+	_ensure_parent(mesh_path)
+	if ResourceSaver.save(mesh, mesh_path) != OK:
+		_fail("Cannot save mesh: %s" % mesh_path)
+		return null
+	return load(mesh_path) as ArrayMesh
+
+func _remap_mesh_green_hue(source: ArrayMesh, green_hue: float) -> ArrayMesh:
+	var mesh := ArrayMesh.new()
+	for blend_index in source.get_blend_shape_count():
+		mesh.add_blend_shape(source.get_blend_shape_name(blend_index))
+	mesh.blend_shape_mode = source.blend_shape_mode
+	for surface_index in source.get_surface_count():
+		var arrays := source.surface_get_arrays(surface_index)
+		if arrays[Mesh.ARRAY_COLOR] is PackedColorArray:
+			var colors: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
+			for color_index in colors.size():
+				colors[color_index] = _remap_green(colors[color_index], green_hue)
+			arrays[Mesh.ARRAY_COLOR] = colors
+		mesh.add_surface_from_arrays(source.surface_get_primitive_type(surface_index), arrays,
+			source.surface_get_blend_shape_arrays(surface_index))
+		mesh.surface_set_name(surface_index, source.surface_get_name(surface_index))
+	return mesh
+
+func _bake_material(source: Material, pack: String, asset_id: String, piece_index: int,
+		surface_index: int, supports_color: bool, material_tint: Color,
+		green_hue: float, fallback_albedo: Texture2D,
+		fallback_albedos_by_material: Dictionary = {}) -> Material:
+	var material := source.duplicate(true) as Material
+	var selected_fallback := fallback_albedos_by_material.get(
+		StringName(source.resource_name), fallback_albedo) as Texture2D
+	if selected_fallback != null:
+		var standard := material as StandardMaterial3D
+		if standard == null:
+			_fail("Fallback albedo asset %s uses unsupported material %s" % [
+				asset_id, source.get_class()])
+			return null
+		if standard.albedo_texture == null:
+			standard.albedo_texture = selected_fallback
+	if supports_color:
+		var standard := material as StandardMaterial3D
+		if standard == null:
+			_fail("Instance-colour asset %s uses unsupported material %s" % [asset_id, source.get_class()])
+			return null
+		standard.vertex_color_use_as_albedo = true
+		standard.albedo_color *= material_tint
+	for property: Dictionary in material.get_property_list():
+		if int(property.get("type", TYPE_NIL)) != TYPE_OBJECT:
+			continue
+		var property_name := StringName(property.get("name", ""))
+		var texture := material.get(property_name) as Texture2D
+		if texture == null:
+			continue
+		# Palette variants are evaluated in the material so green foliage can
+		# change hue without recolouring bark that shares the same atlas.
+		var baked_texture := _bake_texture(texture, pack, -1.0)
+		if baked_texture == null:
+			return null
+		material.set(property_name, baked_texture)
+	if green_hue >= 0.0:
+		var standard := material as StandardMaterial3D
+		if standard == null or standard.albedo_texture == null:
+			_fail("Palette variant %s requires a standard albedo texture" % asset_id)
+			return null
+		var variant := ShaderMaterial.new()
+		variant.shader = load("res://terrain/environment/materials/palette_variant.gdshader") as Shader
+		variant.set_shader_parameter("albedo_texture", standard.albedo_texture)
+		variant.set_shader_parameter("green_target", Color.from_hsv(green_hue, 0.72, 1.0))
+		material = variant
+	if _canopy_assets.get(asset_id, false):
+		var standard := material as StandardMaterial3D
+		if standard == null or standard.albedo_texture == null or not supports_color:
+			_fail("Biome canopy requires a textured, instance-coloured material: %s" % asset_id)
+			return null
+		var canopy := ShaderMaterial.new()
+		canopy.shader = load("res://terrain/environment/materials/biome_canopy.gdshader")
+		canopy.set_shader_parameter("albedo_texture", standard.albedo_texture)
+		canopy.set_shader_parameter("base_color", standard.albedo_color)
+		material = canopy
+	var material_path := "res://terrain/environment/materials/%s/%s_piece_%02d_surface_%02d.tres" % [
+		_slug(pack), _slug(asset_id), piece_index, surface_index]
+	_ensure_parent(material_path)
+	if ResourceSaver.save(material, material_path) != OK:
+		_fail("Cannot save material: %s" % material_path)
+		return null
+	return load(material_path) as Material
+
+func _bake_texture(source: Texture2D, pack: String, green_hue: float) -> Texture2D:
+	var image := source.get_image()
+	if image == null or image.is_empty():
+		_fail("Cannot read texture pixels: %s" % source.resource_path)
+		return null
+	image = image.duplicate()
+	if image.is_compressed():
+		image.decompress()
+	image.convert(Image.FORMAT_RGBA8)
+	if green_hue >= 0.0:
+		for y in image.get_height():
+			for x in image.get_width():
+				var color := image.get_pixel(x, y)
+				# Palette variants remap foliage-like greens only. Bark, rock,
+				# flowers, and neutral texels retain their authored hue.
+				image.set_pixel(x, y, _remap_green(color, green_hue))
+	var hash: String = image.get_data().hex_encode().sha256_text()
+	var key := "%s:%s:%.5f" % [pack, hash, green_hue]
+	var cached := _texture_cache.get(key) as Texture2D
+	if cached != null:
+		return cached
+	# ImageTexture is renderer-backed; saving it can retain stale GPU data
+	# after an editor-side pixel transform even though get_image() reports the
+	# new pixels. PortableCompressedTexture2D serializes the actual image and
+	# therefore makes palette variants and source-pack-free exports reliable.
+	var texture := PortableCompressedTexture2D.new()
+	texture.keep_compressed_buffer = true
+	texture.create_from_image(image, PortableCompressedTexture2D.COMPRESSION_MODE_LOSSLESS)
+	var texture_path := "res://terrain/environment/textures/%s/%s.res" % [_slug(pack), hash.left(20)]
+	_ensure_parent(texture_path)
+	if ResourceSaver.save(texture, texture_path) != OK:
+		_fail("Cannot save texture: %s" % texture_path)
+		return null
+	var loaded := ResourceLoader.load(texture_path, "Texture2D",
+		ResourceLoader.CACHE_MODE_REPLACE) as Texture2D
+	_texture_cache[key] = loaded
+	return loaded
+
+func _remap_green(color: Color, green_hue: float) -> Color:
+	if _is_foliage_color(color):
+		return Color.from_hsv(green_hue, color.s, color.v, color.a)
+	return color
+
+func _prune_unmanifested_descriptors() -> void:
+	var active_paths: Dictionary = {}
+	var manifest_directory := DirAccess.open(MANIFEST_DIR)
+	if manifest_directory == null:
+		_fail("Cannot open environment manifest directory: %s" % MANIFEST_DIR)
+		return
+	manifest_directory.list_dir_begin()
+	var filename := manifest_directory.get_next()
+	while not filename.is_empty():
+		if not manifest_directory.current_is_dir() and filename.ends_with(".json"):
+			var path := MANIFEST_DIR.path_join(filename)
+			var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+			if not parsed is Dictionary:
+				_fail("Invalid bake manifest during catalogue prune: %s" % path)
+				manifest_directory.list_dir_end()
+				return
+			var entries := _expanded_manifest_entries(parsed as Dictionary, path)
+			if _failed:
+				manifest_directory.list_dir_end()
+				return
+			for value: Variant in entries:
+				if value is Dictionary:
+					var asset_id := String((value as Dictionary).get("id", ""))
+					if not asset_id.is_empty():
+						active_paths["%s/%s.tres" % [DESCRIPTOR_DIR, _slug(asset_id)]] = true
+		filename = manifest_directory.get_next()
+	manifest_directory.list_dir_end()
+	var descriptor_directory := DirAccess.open(DESCRIPTOR_DIR)
+	if descriptor_directory == null:
+		_fail("Cannot open descriptor directory during catalogue prune: %s" % DESCRIPTOR_DIR)
+		return
+	descriptor_directory.list_dir_begin()
+	filename = descriptor_directory.get_next()
+	while not filename.is_empty():
+		if not descriptor_directory.current_is_dir() and filename.ends_with(".tres"):
+			var path := DESCRIPTOR_DIR.path_join(filename)
+			if not active_paths.has(path):
+				print("Pruning unmanifested environment descriptor: ", path)
+				DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+		filename = descriptor_directory.get_next()
+	descriptor_directory.list_dir_end()
+
+func _refresh_index() -> void:
+	var directory := DirAccess.open(DESCRIPTOR_DIR)
+	if directory == null:
+		_fail("Cannot open descriptor directory: %s" % DESCRIPTOR_DIR)
+		return
+	var paths: Array[String] = []
+	directory.list_dir_begin()
+	var filename := directory.get_next()
+	while not filename.is_empty():
+		if not directory.current_is_dir() and filename.ends_with(".tres"):
+			paths.append("%s/%s" % [DESCRIPTOR_DIR, filename])
+		filename = directory.get_next()
+	directory.list_dir_end()
+	var descriptors: Array[EnvironmentAssetDescriptor] = []
+	for path: String in paths:
+		var descriptor := load(path) as EnvironmentAssetDescriptor
+		if descriptor == null:
+			_fail("Invalid generated descriptor: %s" % path)
+			return
+		descriptors.append(descriptor)
+	descriptors.sort_custom(func(a: EnvironmentAssetDescriptor, b: EnvironmentAssetDescriptor) -> bool:
+		return String(a.id) < String(b.id))
+	var index := EnvironmentCatalogIndex.new()
+	index.descriptors = descriptors
+	if ResourceSaver.save(index, INDEX_PATH) != OK:
+		_fail("Cannot save environment catalogue index: %s" % INDEX_PATH)
+		return
+	_validate_dependencies(INDEX_PATH)
+
+func _validate_dependencies(path: String) -> void:
+	for dependency: String in ResourceLoader.get_dependencies(path):
+		if dependency.contains("res://assets/"):
+			_fail("Generated runtime resource depends on a source pack: %s -> %s" % [path, dependency])
+
+func _prune_generated_orphans() -> void:
+	var reachable: Dictionary = {}
+	var pending: Array[String] = [INDEX_PATH]
+	var catalog := EnvironmentCatalog.load_default()
+	if catalog == null:
+		_fail("Cannot prune generated resources without a valid catalogue")
+		return
+	for asset_id: StringName in catalog.ids():
+		pending.append(catalog.descriptor(asset_id).visual_path)
+	while not pending.is_empty():
+		var path: String = pending.pop_back()
+		if reachable.has(path):
+			continue
+		reachable[path] = true
+		for dependency: String in ResourceLoader.get_dependencies(path):
+			var marker := dependency.find("res://")
+			if marker >= 0:
+				pending.append(dependency.substr(marker))
+	for root: String in [
+		"res://terrain/environment/visuals",
+		"res://terrain/environment/meshes",
+		"res://terrain/environment/collisions",
+		"res://terrain/environment/materials",
+		"res://terrain/environment/textures",
+	]:
+		_prune_generated_tree(root, reachable)
+
+func _prune_generated_tree(root: String, reachable: Dictionary) -> void:
+	var directory := DirAccess.open(root)
+	if directory == null:
+		return
+	directory.list_dir_begin()
+	var entry := directory.get_next()
+	while not entry.is_empty():
+		var path := root.path_join(entry)
+		if directory.current_is_dir():
+			if not entry.begins_with("."):
+				_prune_generated_tree(path, reachable)
+		elif entry.get_extension() in ["res", "tres"] and not reachable.has(path):
+			print("Pruning orphaned generated environment resource: ", path)
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+		entry = directory.get_next()
+	directory.list_dir_end()
+
+func _vector3(value, fallback: Vector3) -> Vector3:
+	if not value is Array or value.size() != 3:
+		return fallback
+	return Vector3(float(value[0]), float(value[1]), float(value[2]))
+
+func _valid_scale(value: Variant) -> bool:
+	if not value is Array or value.size() != 3:
+		return false
+	for component: Variant in value:
+		if not component is float and not component is int:
+			return false
+		if not is_finite(float(component)) or float(component) <= 0.0:
+			return false
+	return true
+
+func _color(value) -> Color:
+	if not value is Array or value.size() != 4:
+		return Color.WHITE
+	return Color(float(value[0]), float(value[1]), float(value[2]), float(value[3]))
+
+func _slug(value: String) -> String:
+	return value.to_lower().replace(".", "_").replace("-", "_").replace("/", "_").replace(" ", "_")
+
+func _ensure_parent(path: String) -> void:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(path.get_base_dir()))
+
+func _fail(message: String) -> void:
+	_failed = true
+	push_error(message)
+	printerr(message)

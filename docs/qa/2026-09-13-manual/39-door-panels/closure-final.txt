@@ -1,0 +1,76 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_environment_bake_geometry.gd
+[0m* test_owned_horizontal_interface_retains_wall_sides_and_authored_channels
+* test_declared_wall_interface_tolerance_preserves_imported_source_coordinates
+* test_diagonal_corner_cut_preserves_channels_and_stays_inside_source
+* test_merge_bakes_transforms_and_combines_shared_material_surfaces
+* test_merge_keeps_distinct_materials_as_distinct_surfaces
+* test_merge_can_exclude_a_reviewed_source_mesh_by_stable_path
+* test_building_trimesh_uses_the_complete_merged_triangle_soup
+* test_axis_clip_keeps_authored_outer_end_and_opens_exact_party_seam
+* test_axis_mirror_reflects_joinery_without_a_negative_runtime_scale
+* test_ground_contacts_follow_disjoint_feet_not_the_full_visual_bounds
+* test_ramp_box_encodes_slope_in_rotation_not_nonuniform_transform_scale
+* test_resource_gates_report_the_exact_exceeded_metric
+* test_merge_preserves_unindexed_cap_after_indexed_surface_with_same_material
+* test_declared_hinge_pose_preserves_native_mesh_and_parent_transform
+[1m14/14 passed.
+[0m[4m
+
+res://tests/test_reported_facade_floor_caps.gd
+[0m* test_reported_upper_floor_has_one_horizontal_surface_owner
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_facade_corner_closure.gd
+[0m* test_finished_corners_preserve_the_enclosure_of_the_original_walls
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_september8_facade_ends.gd
+[0m* test_photographed_retaining_remnant_is_not_a_single_panel_house_facade
+SCRIPT ERROR: Invalid access to property or key '(-3, 2, 9, 3)' on a base object of type 'Dictionary'.
+          at: test_photographed_retaining_remnant_is_not_a_single_panel_house_facade (res://tests/test_september8_facade_ends.gd:8)
+          GDScript backtrace (most recent call first):
+              [0] test_photographed_retaining_remnant_is_not_a_single_panel_house_facade (res://tests/test_september8_facade_ends.gd:8)
+              [1] _run_test (res://addons/gut/gut.gd:612)
+              [2] _test_the_scripts (res://addons/gut/gut.gd:815)
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Invalid access to property or key '(-3, 2, 9, 3)' on a base object of type 'Dictionary'.
+      at line -1
+* test_facade_continuity_uses_aligned_complete_bank_courses
+* test_shared_corner_does_not_cancel_a_deep_door_return
+[1m2/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september8_facade_ends.gd
+[0m- test_photographed_retaining_remnant_is_not_a_single_panel_house_facade
+[31m    [Failed]:  [0mUnexpected Errors:
+    [1] <engine-2>Invalid access to property or key '(-3, 2, 9, 3)' on a base object of type 'Dictionary'.
+          at line -1
+
+Totals
+------
+Scripts               4
+Tests                19
+Passing Tests        18
+Failing Tests         1
+Asserts           163/164
+Time              24.136s
+
+
+[31m---- 1 failing tests ----
+[0m

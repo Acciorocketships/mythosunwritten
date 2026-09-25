@@ -1,0 +1,40 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_terrain_occlusion.gd
+[0m* test_clear_character_does_not_cut_neighboring_terrain
+[31m    [Failed]:  [0m[COLOR(0.4941, 0.549, 0.0, 1.0)] expected to equal [COLOR(0.2471, 0.2745, 0.0, 1.0)]:  An uncut bank retains its actual top receiver for grass-root protection
+      at line -1
+* test_intervening_terrain_still_reveals_character
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_terrain_occlusion.gd
+[0m- test_clear_character_does_not_cut_neighboring_terrain
+[31m    [Failed]:  [0m[COLOR(0.4941, 0.549, 0.0, 1.0)] expected to equal [COLOR(0.2471, 0.2745, 0.0, 1.0)]:  An uncut bank retains its actual top receiver for grass-root protection
+          at line -1
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts             2/3
+Time              0.961s
+
+
+[31m---- 1 failing tests ----
+[0m

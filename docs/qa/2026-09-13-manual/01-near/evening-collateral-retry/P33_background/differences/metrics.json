@@ -1,0 +1,13 @@
+{
+  "P33_background_8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 0.6713843325653587,
+    "roi_mean_abs_rgb": 0.6713843325653587,
+    "roi_changed_over_20_fraction": 0.014335777162495459
+  }
+}

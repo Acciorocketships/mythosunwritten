@@ -1,0 +1,248 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_bay_spacing.gd
+[0m* test_embedded_bay_centres_on_complete_parent_panels_in_every_orientation
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_warren_outcrops.gd
+[0m* test_the_probe_seed_builds_its_measured_roofed_facade_bays
+    one-pass town: outcrop units=6 full_gabled=0 embedded_oriels=6
+[31m    [Failed]:  [0m[0] expected to be >= than [1]:  an open eligible facade must receive a complete native-width gabled bay
+      at line 81
+* test_facade_bays_cannot_fragment_a_partial_roof_campaign
+* test_outcrops_are_shallow_projections
+* test_corner_bays_wrap_the_parent_corner_as_overlapping_squares
+* test_bay_roofs_match_the_parent_roof_family
+* test_outcrop_wood_matches_parent_wall_family
+* test_capped_jetties_stay_roofless_and_capped
+* test_embedded_oriels_use_composed_partial_height_window_bays
+[31m    [Failed]:  [0m[-0.38638293743134] expected to be > than [0.3]:  the added terminal timber must close the narrowed panel's right edge
+      at line 354
+[31m    [Failed]:  [0m[-1.39498293399810791016] expected to equal [0.10501730442047] +/- [0.001]:  the two bay jambs must be exact reflected silhouettes
+      at line 360
+[31m    [Failed]:  [0m[-0.38638293743134] expected to be > than [0.3]:  the added terminal timber must close the narrowed panel's right edge
+      at line 354
+[31m    [Failed]:  [0m[-1.39498293399810791016] expected to equal [0.10501730442047] +/- [0.001]:  the two bay jambs must be exact reflected silhouettes
+      at line 360
+[31m    [Failed]:  [0m[-0.38638293743134] expected to be > than [0.3]:  the added terminal timber must close the narrowed panel's right edge
+      at line 354
+[31m    [Failed]:  [0m[-1.39498293399810791016] expected to equal [0.10501730442047] +/- [0.001]:  the two bay jambs must be exact reflected silhouettes
+      at line 360
+* test_corner_wrap_bays_roof_only_the_exterior_union
+* test_a_stack_facade_carries_at_most_one_outcropping
+[31m    [Failed]:  [0moutcrops spatial.fabric.spatial.feature.facade-bay.02.component.00 and spatial.fabric.spatial.feature.facade-bay.04.component.00 hang on one facade side |2; repeated jetties on one face read as a stamp, not articulation
+      at line 473
+[31m    [Failed]:  [0moutcrops spatial.fabric.spatial.feature.facade-bay.03.component.00 and spatial.fabric.spatial.feature.facade-bay.05.component.00 hang on one facade side |0; repeated jetties on one face read as a stamp, not articulation
+      at line 473
+[1m7/10 passed.
+[0m[4m
+
+res://tests/test_september13_bay_backing.gd
+[0m* test_photographed_roofed_bay_has_a_complete_parent_wall
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 actual native rear wall/roof closure at -1.8,0.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 actual native rear wall/roof closure at -1.8,2.8
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 actual native rear wall/roof closure at -1.8,3.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 actual native rear wall/roof closure at -0.3,0.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 actual native rear wall/roof closure at -0.3,2.8
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 actual native rear wall/roof closure at -0.3,3.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.02 actual native rear wall/roof closure at -1.8,2.8
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.02 actual native rear wall/roof closure at -1.8,3.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.02 actual native rear wall/roof closure at -0.3,0.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.02 actual native rear wall/roof closure at -0.3,2.8
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.02 actual native rear wall/roof closure at -0.3,3.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.03 actual native rear wall/roof closure at -1.8,2.8
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.03 actual native rear wall/roof closure at -1.8,3.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.03 actual native rear wall/roof closure at -0.3,0.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.03 actual native rear wall/roof closure at -0.3,2.8
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.03 actual native rear wall/roof closure at -0.3,3.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.04 actual native rear wall/roof closure at -1.8,0.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.04 actual native rear wall/roof closure at -1.8,2.8
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.04 actual native rear wall/roof closure at -1.8,3.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.04 actual native rear wall/roof closure at -0.3,0.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.04 actual native rear wall/roof closure at -0.3,2.8
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.04 actual native rear wall/roof closure at -0.3,3.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.05 actual native rear wall/roof closure at -1.8,0.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.05 actual native rear wall/roof closure at -1.8,2.8
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.05 actual native rear wall/roof closure at -1.8,3.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.05 actual native rear wall/roof closure at -0.3,0.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.05 actual native rear wall/roof closure at -0.3,2.8
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.05 actual native rear wall/roof closure at -0.3,3.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.06 actual native rear wall/roof closure at -1.8,3.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.06 actual native rear wall/roof closure at -0.3,0.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.06 actual native rear wall/roof closure at -0.3,2.8
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.06 actual native rear wall/roof closure at -0.3,3.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.07 actual native rear wall/roof closure at -1.8,0.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.07 actual native rear wall/roof closure at -1.8,2.8
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.07 actual native rear wall/roof closure at -1.8,3.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.07 actual native rear wall/roof closure at -0.3,0.3
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.07 actual native rear wall/roof closure at -0.3,2.8
+      at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.07 actual native rear wall/roof closure at -0.3,3.3
+      at line 49
+* test_complete_backing_is_centred_in_each_facade_orientation
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_warren_outcrops.gd
+[0m- test_the_probe_seed_builds_its_measured_roofed_facade_bays
+[31m    [Failed]:  [0m[0] expected to be >= than [1]:  an open eligible facade must receive a complete native-width gabled bay
+          at line 81
+- test_embedded_oriels_use_composed_partial_height_window_bays
+[31m    [Failed]:  [0m[-0.38638293743134] expected to be > than [0.3]:  the added terminal timber must close the narrowed panel's right edge
+          at line 354
+[31m    [Failed]:  [0m[-1.39498293399810791016] expected to equal [0.10501730442047] +/- [0.001]:  the two bay jambs must be exact reflected silhouettes
+          at line 360
+[31m    [Failed]:  [0m[-0.38638293743134] expected to be > than [0.3]:  the added terminal timber must close the narrowed panel's right edge
+          at line 354
+[31m    [Failed]:  [0m[-1.39498293399810791016] expected to equal [0.10501730442047] +/- [0.001]:  the two bay jambs must be exact reflected silhouettes
+          at line 360
+[31m    [Failed]:  [0m[-0.38638293743134] expected to be > than [0.3]:  the added terminal timber must close the narrowed panel's right edge
+          at line 354
+[31m    [Failed]:  [0m[-1.39498293399810791016] expected to equal [0.10501730442047] +/- [0.001]:  the two bay jambs must be exact reflected silhouettes
+          at line 360
+- test_a_stack_facade_carries_at_most_one_outcropping
+[31m    [Failed]:  [0moutcrops spatial.fabric.spatial.feature.facade-bay.02.component.00 and spatial.fabric.spatial.feature.facade-bay.04.component.00 hang on one facade side |2; repeated jetties on one face read as a stamp, not articulation
+          at line 473
+[31m    [Failed]:  [0moutcrops spatial.fabric.spatial.feature.facade-bay.03.component.00 and spatial.fabric.spatial.feature.facade-bay.05.component.00 hang on one facade side |0; repeated jetties on one face read as a stamp, not articulation
+          at line 473
+[4m
+res://tests/test_september13_bay_backing.gd
+[0m- test_photographed_roofed_bay_has_a_complete_parent_wall
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 actual native rear wall/roof closure at -1.8,0.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 actual native rear wall/roof closure at -1.8,2.8
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 actual native rear wall/roof closure at -1.8,3.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 actual native rear wall/roof closure at -0.3,0.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 actual native rear wall/roof closure at -0.3,2.8
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.01 actual native rear wall/roof closure at -0.3,3.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.02 actual native rear wall/roof closure at -1.8,2.8
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.02 actual native rear wall/roof closure at -1.8,3.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.02 actual native rear wall/roof closure at -0.3,0.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.02 actual native rear wall/roof closure at -0.3,2.8
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.02 actual native rear wall/roof closure at -0.3,3.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.03 actual native rear wall/roof closure at -1.8,2.8
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.03 actual native rear wall/roof closure at -1.8,3.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.03 actual native rear wall/roof closure at -0.3,0.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.03 actual native rear wall/roof closure at -0.3,2.8
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.03 actual native rear wall/roof closure at -0.3,3.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.04 actual native rear wall/roof closure at -1.8,0.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.04 actual native rear wall/roof closure at -1.8,2.8
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.04 actual native rear wall/roof closure at -1.8,3.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.04 actual native rear wall/roof closure at -0.3,0.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.04 actual native rear wall/roof closure at -0.3,2.8
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.04 actual native rear wall/roof closure at -0.3,3.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.05 actual native rear wall/roof closure at -1.8,0.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.05 actual native rear wall/roof closure at -1.8,2.8
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.05 actual native rear wall/roof closure at -1.8,3.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.05 actual native rear wall/roof closure at -0.3,0.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.05 actual native rear wall/roof closure at -0.3,2.8
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.05 actual native rear wall/roof closure at -0.3,3.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.06 actual native rear wall/roof closure at -1.8,3.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.06 actual native rear wall/roof closure at -0.3,0.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.06 actual native rear wall/roof closure at -0.3,2.8
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.06 actual native rear wall/roof closure at -0.3,3.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.07 actual native rear wall/roof closure at -1.8,0.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.07 actual native rear wall/roof closure at -1.8,2.8
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.07 actual native rear wall/roof closure at -1.8,3.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.07 actual native rear wall/roof closure at -0.3,0.3
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.07 actual native rear wall/roof closure at -0.3,2.8
+          at line 49
+[31m    [Failed]:  [0mspatial.feature.facade-bay.07 actual native rear wall/roof closure at -0.3,3.3
+          at line 49
+
+Totals
+------
+Scripts               3
+Tests                13
+Passing Tests         9
+Failing Tests         4
+Asserts           642/689
+Time              38.654s
+
+
+[31m---- 4 failing tests ----
+[0m

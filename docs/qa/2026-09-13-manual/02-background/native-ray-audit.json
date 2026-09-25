@@ -1,0 +1,406 @@
+[
+  {
+    "hits": [
+      {
+        "distance": 23.698881149292,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 4,
+        "node": "/root/FrozenVillage/lpfv_fabric_roof_compact_slate_06_rear_end_tight_00",
+        "owner": "(-219.0, -955.002, -213.0, -949.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-214.7599, 29.80733, -951.6232)"
+      },
+      {
+        "distance": 29.4750957489014,
+        "groups": [
+          "tactical_deck_surface",
+          "tactical_closed_shell"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/settlement_5a2e5aae27b1bbab_maze-stone_0_5_4_4_floor-interface_0_0",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-213.151, 26.08, -955.7321)"
+      },
+      {
+        "distance": 38.773078918457,
+        "groups": [
+          "tactical_deck_surface",
+          "tactical_closed_shell"
+        ],
+        "instance": 197,
+        "node": "/root/FrozenVillage/sfv_fabric_floor_l_001_00",
+        "owner": "(-213.002, -964.0, -201.0, -956.2599)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-210.5611, 20.0801, -962.3462)"
+      },
+      {
+        "distance": 39.1494407653809,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/sfv_fabric_wall_wood_window_052_miter2_course_open_00",
+        "owner": "(-213.002, -964.0, -201.0, -956.2599)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-210.4562, 19.83721, -962.6139)"
+      },
+      {
+        "distance": 41.7206535339355,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 4,
+        "node": "/root/FrozenVillage/lpfv_fabric_roof_compact_orange_03_rear_end_tight_00",
+        "owner": "(-213.0, -967.002, -201.0, -961.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-209.7401, 18.17805, -964.4429)"
+      },
+      {
+        "distance": 53.850154876709,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 7,
+        "node": "/root/FrozenVillage/sfv_fabric_wall_wood_door_closed_001_00",
+        "owner": "(-207.0, -979.002, -195.0, -973.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-206.3614, 10.35097, -973.0712)"
+      },
+      {
+        "distance": 57.3693237304688,
+        "groups": [
+          "tactical_deck_surface",
+          "tactical_closed_shell"
+        ],
+        "instance": 149,
+        "node": "/root/FrozenVillage/sfv_fabric_floor_l_001_00",
+        "owner": "(-207.0, -979.002, -195.0, -973.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-205.3812, 8.080089, -975.5745)"
+      },
+      {
+        "distance": 57.493465423584,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/@MeshInstance3D@2222",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-205.3466, 7.999996, -975.6628)"
+      }
+    ],
+    "pixel": "(970.0, 720.0)"
+  },
+  {
+    "hits": [
+      {
+        "distance": 24.1324672698975,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 4,
+        "node": "/root/FrozenVillage/lpfv_fabric_roof_compact_slate_06_rear_end_tight_00",
+        "owner": "(-219.0, -955.002, -213.0, -949.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-213.7211, 29.29482, -951.3242)"
+      },
+      {
+        "distance": 29.48659324646,
+        "groups": [
+          "tactical_deck_surface",
+          "tactical_closed_shell"
+        ],
+        "instance": 107,
+        "node": "/root/FrozenVillage/sfv_fabric_floor_l_001_00",
+        "owner": "(-213.0, -961.0, -207.0, -954.998)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-212.026, 25.78819, -954.998)"
+      },
+      {
+        "distance": 38.24365234375,
+        "groups": [
+          "tactical_deck_surface",
+          "tactical_closed_shell"
+        ],
+        "instance": 197,
+        "node": "/root/FrozenVillage/sfv_fabric_floor_l_001_00",
+        "owner": "(-213.002, -964.0, -201.0, -956.2599)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-209.2536, 20.05289, -961.0068)"
+      },
+      {
+        "distance": 40.6559829711914,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/sfv_fabric_wall_wood_window_052_miter2_course_open_00",
+        "owner": "(-213.002, -964.0, -201.0, -956.2599)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-208.4899, 18.47297, -962.6621)"
+      },
+      {
+        "distance": 45.9084129333496,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 3,
+        "node": "/root/FrozenVillage/lpfv_fabric_roof_compact_orange_03_rear_end_tight_00",
+        "owner": "(-213.0, -967.002, -201.0, -961.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-206.827, 15.03297, -966.2662)"
+      },
+      {
+        "distance": 55.9006385803223,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/sfv_fabric_wall_wood_window_001_mirror_x_doorreturn_back1070858_square_00",
+        "owner": "(-207.0, -979.002, -195.0, -973.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-203.6636, 8.488726, -973.1226)"
+      },
+      {
+        "distance": 56.5245475769043,
+        "groups": [
+          "tactical_deck_surface",
+          "tactical_closed_shell"
+        ],
+        "instance": 149,
+        "node": "/root/FrozenVillage/sfv_fabric_floor_l_001_00",
+        "owner": "(-207.0, -979.002, -195.0, -973.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-203.466, 8.080096, -973.5507)"
+      },
+      {
+        "distance": 56.646842956543,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/@MeshInstance3D@2222",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-203.4273, 8.000004, -973.6346)"
+      }
+    ],
+    "pixel": "(1020.0, 740.0)"
+  },
+  {
+    "hits": [
+      {
+        "distance": 30.9645938873291,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 3,
+        "node": "/root/FrozenVillage/lpfv_fabric_roof_compact_orange_03_run_end_tight_flush_00",
+        "owner": "(-214.74, -955.002, -207.0, -943.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-210.2875, 24.21841, -954.7686)"
+      },
+      {
+        "distance": 37.1011619567871,
+        "groups": [
+          "tactical_deck_surface",
+          "tactical_closed_shell"
+        ],
+        "instance": 197,
+        "node": "/root/FrozenVillage/sfv_fabric_floor_l_001_00",
+        "owner": "(-213.002, -964.0, -201.0, -956.2599)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-208.0929, 20.0801, -958.7329)"
+      },
+      {
+        "distance": 42.9186782836914,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/sfv_fabric_wall_wood_window_052_miter1_course_open_00",
+        "owner": "(-213.002, -964.0, -201.0, -956.2599)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-206.0124, 16.15693, -962.4911)"
+      },
+      {
+        "distance": 45.3096618652344,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 3,
+        "node": "/root/FrozenVillage/lpfv_fabric_roof_compact_orange_03_rear_end_tight_00",
+        "owner": "(-213.0, -967.002, -201.0, -961.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-205.1573, 14.54453, -964.0357)"
+      },
+      {
+        "distance": 48.708366394043,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 3,
+        "node": "/root/FrozenVillage/sfv_fabric_wall_wood_window_001_mirror_x_00",
+        "owner": "(-213.0, -967.002, -201.0, -961.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-203.9419, 12.25257, -966.2313)"
+      },
+      {
+        "distance": 55.0143508911133,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/@MeshInstance3D@2222",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-201.6867, 8.0, -970.3051)"
+      }
+    ],
+    "pixel": "(1080.0, 780.0)"
+  },
+  {
+    "hits": [
+      {
+        "distance": 23.7470664978027,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 4,
+        "node": "/root/FrozenVillage/lpfv_fabric_roof_compact_slate_06_rear_end_tight_00",
+        "owner": "(-219.0, -955.002, -213.0, -949.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-215.2212, 28.63003, -950.7327)"
+      },
+      {
+        "distance": 28.6911315917969,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 4,
+        "node": "/root/FrozenVillage/sfv_fabric_wall_wood_window_040_miter3_00",
+        "owner": "(-219.0, -955.002, -213.0, -949.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-213.9429, 25.20103, -954.0571)"
+      },
+      {
+        "distance": 28.6913242340088,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 2,
+        "node": "/root/FrozenVillage/sfv_fabric_wall_wood_window_010_mirror_x_miter3_00",
+        "owner": "(-219.0, -955.002, -213.0, -949.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-213.9428, 25.20089, -954.0573)"
+      },
+      {
+        "distance": 29.6749134063721,
+        "groups": [
+          "tactical_deck_surface",
+          "tactical_closed_shell"
+        ],
+        "instance": 156,
+        "node": "/root/FrozenVillage/sfv_deck_pillar_001_00",
+        "owner": "(-214.328, -955.2814, -213.0, -954.7186)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-213.6885, 24.51873, -954.7186)"
+      },
+      {
+        "distance": 30.0833034515381,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 47,
+        "node": "/root/FrozenVillage/sfv_fabric_wall_rock_retaining_001_00",
+        "owner": "(-214.3279, -957.9932, -213.0001, -954.9932)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-213.5829, 24.23548, -954.9932)"
+      },
+      {
+        "distance": 33.5675582885742,
+        "groups": [
+          "tactical_deck_surface",
+          "tactical_closed_shell"
+        ],
+        "instance": 89,
+        "node": "/root/FrozenVillage/sfv_deck_pillar_001_00",
+        "owner": "(-213.664, -958.664, -212.336, -957.336)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-212.682, 21.81895, -957.3361)"
+      },
+      {
+        "distance": 36.0746955871582,
+        "groups": [
+          "tactical_deck_surface",
+          "tactical_closed_shell"
+        ],
+        "instance": 197,
+        "node": "/root/FrozenVillage/sfv_fabric_floor_l_001_00",
+        "owner": "(-213.002, -964.0, -201.0, -956.2599)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-212.0338, 20.0801, -959.0219)"
+      },
+      {
+        "distance": 36.3185386657715,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/sfv_fabric_wall_wood_window_017_mirror_x_miter1_course_open_00",
+        "owner": "(-213.002, -964.0, -201.0, -956.2599)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-211.9707, 19.91095, -959.1858)"
+      },
+      {
+        "distance": 41.4768104553223,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/sfv_fabric_wall_wood_window_052_miter2_course_open_00",
+        "owner": "(-213.002, -964.0, -201.0, -956.2599)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-210.637, 16.3334, -962.6542)"
+      },
+      {
+        "distance": 43.5377044677734,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 4,
+        "node": "/root/FrozenVillage/lpfv_fabric_roof_compact_orange_03_rear_end_tight_00",
+        "owner": "(-213.0, -967.002, -201.0, -961.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-210.1042, 14.90404, -964.04)"
+      },
+      {
+        "distance": 46.8340454101562,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/sfv_fabric_wall_wood_window_010_mirror_x_doorreturn_square_back1070858_00",
+        "owner": "(-213.0, -967.002, -201.0, -961.0)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-209.2519, 12.61786, -966.2565)"
+      },
+      {
+        "distance": 53.4489784240723,
+        "groups": [
+          "tactical_solid_earth"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/@MeshInstance3D@2222",
+        "owner": "<null>",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(-207.5415, 8.029999, -970.7043)"
+      }
+    ],
+    "pixel": "(960.0, 795.0)"
+  }
+]

@@ -1,0 +1,35 @@
+{
+  "P05_stone_-8": {
+    "roi": [
+      652,
+      351,
+      1064,
+      547
+    ],
+    "mean_abs_rgb": 1.1841059338639204,
+    "roi_mean_abs_rgb": 8.735081896836405,
+    "roi_changed_over_20_fraction": 0.21043441648504063
+  },
+  "P05_stone_0": {
+    "roi": [
+      652,
+      351,
+      1064,
+      547
+    ],
+    "mean_abs_rgb": 1.55942890066801,
+    "roi_mean_abs_rgb": 8.626692424542632,
+    "roi_changed_over_20_fraction": 0.21136318605111948
+  },
+  "P05_stone_8": {
+    "roi": [
+      652,
+      351,
+      1064,
+      547
+    ],
+    "mean_abs_rgb": 1.6107965122969963,
+    "roi_mean_abs_rgb": 9.102957202298395,
+    "roi_changed_over_20_fraction": 0.221195759857341
+  }
+}

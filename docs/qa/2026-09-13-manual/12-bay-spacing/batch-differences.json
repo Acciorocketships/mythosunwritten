@@ -1,0 +1,2045 @@
+{
+  "added": [
+    "facade-run-joint/17250/7500/5250/0/-1",
+    "facade-run-joint/-6750/15000/8250/0/1",
+    "facade-run-joint/-15750/7500/-750/-1/0"
+  ],
+  "after": 1995,
+  "before": 2000,
+  "changed": [
+    {
+      "after": {
+        "asset": "sfv.fabric.floor.l.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 11.83895, 6.75)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.001021, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.floor.l.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 11.83895, 6.75)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room00/floor"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.floor.l.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-8.25, 11.83895, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.floor.l.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-8.25, 11.83895, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room00/floor"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.floor.l.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-14.25, -0.161052, 9.75)]",
+        "visibility_owners": "[P: (-15.75102, -0.161052, 8.25), S: (3.00102, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.floor.l.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-14.25, -0.161052, 9.75)]",
+        "visibility_owners": "[P: (-15.80171, -0.161052, 8.25), S: (3.103428, 3.201071, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.066.part00.room00/floor"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.floor.l.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 14.83895, 6.75)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.001021, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.floor.l.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 14.83895, 6.75)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room01/floor"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.floor.l.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-8.25, 14.83895, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.floor.l.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-8.25, 14.83895, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room01/floor"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.floor.l.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 11.83895, 12.75)]",
+        "visibility_owners": "[P: (-3.75, 11.83895, 11.25), S: (3.001021, 3.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.floor.l.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 11.83895, 12.75)]",
+        "visibility_owners": "[P: (-3.75, 11.83895, 10.37998), S: (3.001021, 3.161053, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.018.part01.room00/floor"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.floor.l.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 4.338948, -14.25)]",
+        "visibility_owners": "[P: (-3.75102, 4.338948, -15.75), S: (3.001021, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.floor.l.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 4.338948, -14.25)]",
+        "visibility_owners": "[P: (-3.75102, 4.338948, -15.75), S: (3.00102, 3.161052, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.028.part01.room00/floor"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.004.mirror_x.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-1.026581, 12.0, 6.75)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.001021, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.004.mirror_x.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-1.026581, 12.0, 6.75)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room00/east"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.004.mirror_x.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-7.026581, 12.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.004.mirror_x.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-7.026581, 12.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room00/east"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.door.closed.001.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-14.25, 0.0, 10.74169)]",
+        "visibility_owners": "[P: (-15.75102, -0.161052, 8.25), S: (3.00102, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.rock.door.closed.005",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-14.25, 0.0, 10.69323)]",
+        "visibility_owners": "[P: (-15.80171, -0.161052, 8.25), S: (3.103428, 3.201071, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.066.part00.room00/south"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.door.closed.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 15.0, 7.741692)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.001021, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.door.closed.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 15.0, 7.741692)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room01/south"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.plain.005.miter1",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-14.25, 7.5, 2.01567)]",
+        "visibility_owners": "[P: (-15.75102, 4.338948, -0.75), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.040.miter1",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-14.25, 7.5, 1.960841)]",
+        "visibility_owners": "[P: (-15.75102, 4.338948, -0.75), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.02.00.room01/south"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.017.mirror_x.miter2",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-15.46966, 7.5, 0.75)]",
+        "visibility_owners": "[P: (-15.75102, 4.338948, -0.75), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.004.mirror_x.miter2",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-15.47342, 7.5, 0.75)]",
+        "visibility_owners": "[P: (-15.75102, 4.338948, -0.75), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.02.00.room01/west"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.008.miter1",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (15.75, 7.5, 7.973419)]",
+        "visibility_owners": "[P: (14.24898, 4.338948, 5.25), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.048.miter1",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (15.75, 7.5, 7.960841)]",
+        "visibility_owners": "[P: (14.24898, 4.338948, 5.25), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room01/south"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-3.473417, 12.0, 6.75)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.001021, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-3.473417, 12.0, 6.75)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room00/west"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-9.473417, 12.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-9.473417, 12.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room00/west"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.001.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 12.0, 7.960841)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.001021, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.001.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 12.0, 7.960841)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room00/south"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.001.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-8.25, 12.0, 7.960841)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.001.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-8.25, 12.0, 7.960841)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room00/south"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.040.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 12.0, 5.539159)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.001021, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.040.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 12.0, 5.539159)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room00/north"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.040.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-8.25, 12.0, 5.539159)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.040.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-8.25, 12.0, 5.539159)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room00/north"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.miter.back1070858.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-15.47342, 0.0, 9.75)]",
+        "visibility_owners": "[P: (-15.75102, -0.161052, 8.25), S: (3.00102, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.rock.window.010.doorreturn.miter.back1113540.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-15.41806, 0.0, 9.75)]",
+        "visibility_owners": "[P: (-15.80171, -0.161052, 8.25), S: (3.103428, 3.201071, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.066.part00.room00/west"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.060.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-14.25, 0.0, 8.728727)]",
+        "visibility_owners": "[P: (-15.75102, -0.161052, 8.25), S: (3.00102, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.rock.plain.002.miter3.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-14.25, 0.0, 8.581944)]",
+        "visibility_owners": "[P: (-15.80171, -0.161052, 8.25), S: (3.103428, 3.201071, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.066.part00.room00/north"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.back1070859.miter.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-13.03034, 0.0, 9.75)]",
+        "visibility_owners": "[P: (-15.75102, -0.161052, 8.25), S: (3.00102, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.rock.window.m.016.doorreturn.back1113540.miter.course_open",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-13.08194, 0.0, 9.75)]",
+        "visibility_owners": "[P: (-15.80171, -0.161052, 8.25), S: (3.103428, 3.201071, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.066.part00.room00/east"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.door.closed.001.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-9.241692, 15.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.door.closed.001.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-9.241692, 15.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room01/west"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.044.miter2",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (15.75, 7.5, 5.539159)]",
+        "visibility_owners": "[P: (14.24898, 4.338948, 5.25), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.008.miter2",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (15.75, 7.5, 5.526581)]",
+        "visibility_owners": "[P: (14.24898, 4.338948, 5.25), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room01/north"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.plain.003.mirror_x.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (14.48433, 7.5, 6.75)]",
+        "visibility_owners": "[P: (14.24898, 4.338948, 5.25), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.044.mirror_x.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (14.53916, 7.5, 6.75)]",
+        "visibility_owners": "[P: (14.24898, 4.338948, 5.25), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room01/west"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.plain.005.miter1",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 15.0, 5.484331)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.001021, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.052.miter1",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 15.0, 5.70873)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room01/north"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.017.mirror_x.doorreturn.back1070859.miter",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-1.030342, 15.0, 6.75)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.001021, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.plain.011.mirror_x.doorreturn.back1070859.miter",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-0.984331, 15.0, 6.75)]",
+        "visibility_owners": "[P: (-3.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room01/east"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.033.doorreturn.back1070859.square",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-8.25, 15.0, 7.951091)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.004.doorreturn.back1070859.square",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-8.25, 15.0, 7.973419)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room01/south"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.plain.005.doorreturn.square.back1070859",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-8.25, 15.0, 5.484331)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.033.doorreturn.square.back1070859",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-8.25, 15.0, 5.548909)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (3.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room01/north"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.plain.005.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-14.25, 7.5, -6.515669)]",
+        "visibility_owners": "[P: (-15.75102, 4.338948, -6.75), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.052.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-14.25, 7.5, -6.29127)]",
+        "visibility_owners": "[P: (-15.75102, 4.338948, -6.75), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.02.01.room01/north"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.052.mirror_x.miter1",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-15.29127, 7.5, -5.25)]",
+        "visibility_owners": "[P: (-15.75102, 4.338948, -6.75), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.017.mirror_x.miter1",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-15.46966, 7.5, -5.25)]",
+        "visibility_owners": "[P: (-15.75102, 4.338948, -6.75), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.02.01.room01/west"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.017.mirror_x.miter2",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-13.03034, 7.5, -5.25)]",
+        "visibility_owners": "[P: (-15.75102, 4.338948, -6.75), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.plain.011.mirror_x.miter2",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-12.98433, 7.5, -5.25)]",
+        "visibility_owners": "[P: (-15.75102, 4.338948, -6.75), S: (3.00102, 6.161052, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.maze_bridge_end.02.01.room01/east"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.033.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 4.5, -13.04891)]",
+        "visibility_owners": "[P: (-3.75102, 4.338948, -15.75), S: (3.001021, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.004.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 4.5, -13.02658)]",
+        "visibility_owners": "[P: (-3.75102, 4.338948, -15.75), S: (3.00102, 3.161052, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.028.part01.room00/south"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.052.mirror_x.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-3.29127, 4.5, -14.25)]",
+        "visibility_owners": "[P: (-3.75102, 4.338948, -15.75), S: (3.001021, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.plain.005.mirror_x.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-3.515669, 4.5, -14.25)]",
+        "visibility_owners": "[P: (-3.75102, 4.338948, -15.75), S: (3.00102, 3.161052, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.028.part01.room00/west"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.033.miter2",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 12.0, 11.54891)]",
+        "visibility_owners": "[P: (-3.75, 11.83895, 11.25), S: (3.001021, 3.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.004.miter2",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 12.0, 11.52658)]",
+        "visibility_owners": "[P: (-3.75, 11.83895, 10.37998), S: (3.001021, 3.161053, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.018.part01.room00/south"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.plain.005.miter1",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 12.0, 14.01567)]",
+        "visibility_owners": "[P: (-3.75, 11.83895, 11.25), S: (3.001021, 3.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.033.miter1",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 12.0, 13.95109)]",
+        "visibility_owners": "[P: (-3.75, 11.83895, 10.37998), S: (3.001021, 3.161053, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.018.part01.room00/north"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.017.mirror_x.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-3.469658, 12.0, 12.75)]",
+        "visibility_owners": "[P: (-3.75, 11.83895, 11.25), S: (3.001021, 3.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.052.mirror_x.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-3.29127, 12.0, 12.75)]",
+        "visibility_owners": "[P: (-3.75, 11.83895, 10.37998), S: (3.001021, 3.161053, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.018.part01.room00/east"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.017.mirror_x.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-1.030342, 4.5, -14.25)]",
+        "visibility_owners": "[P: (-3.75102, 4.338948, -15.75), S: (3.001021, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.052.mirror_x.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-1.20873, 4.5, -14.25)]",
+        "visibility_owners": "[P: (-3.75102, 4.338948, -15.75), S: (3.00102, 3.161052, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.028.part01.room00/east"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.plain.005.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 4.5, -15.51567)]",
+        "visibility_owners": "[P: (-3.75102, 4.338948, -15.75), S: (3.001021, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.033.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 4.5, -15.45109)]",
+        "visibility_owners": "[P: (-3.75102, 4.338948, -15.75), S: (3.00102, 3.161052, 3.870018)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.028.part01.room00/north"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.010.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-20.25, 4.5, 11.52658)]",
+        "visibility_owners": "[P: (-21.75, 4.338948, 11.25), S: (3.00102, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.037.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-20.25, 4.5, 11.54891)]",
+        "visibility_owners": "[P: (-21.75, 4.338948, 11.25), S: (3.00102, 3.161052, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.049.part01.room00/south"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.024.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-20.25, 4.5, 13.96966)]",
+        "visibility_owners": "[P: (-21.75, 4.338948, 11.25), S: (3.00102, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.plain.007.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-20.25, 4.5, 14.01567)]",
+        "visibility_owners": "[P: (-21.75, 4.338948, 11.25), S: (3.00102, 3.161052, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.049.part01.room00/north"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.037.mirror_x.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-19.04891, 4.5, 12.75)]",
+        "visibility_owners": "[P: (-21.75, 4.338948, 11.25), S: (3.00102, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.056.mirror_x.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-19.22072, 4.5, 12.75)]",
+        "visibility_owners": "[P: (-21.75, 4.338948, 11.25), S: (3.00102, 3.161052, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.049.part01.room00/west"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.plain.007.mirror_x.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-21.51567, 4.5, 12.75)]",
+        "visibility_owners": "[P: (-21.75, 4.338948, 11.25), S: (3.00102, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.028.mirror_x.miter3",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-21.46966, 4.5, 12.75)]",
+        "visibility_owners": "[P: (-21.75, 4.338948, 11.25), S: (3.00102, 3.161052, 3.0)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.049.part01.room00/east"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 0.46, 0.0), Z: (-1.0, 0.0, 0.0), O: (-22.344, 5.2, 12.2457)]",
+        "visibility_owners": "[P: (-22.63943, 5.038948, 11.9184), S: (0.919428, 1.792338, 1.591163)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 0.46, 0.0), Z: (-1.0, 0.0, 0.0), O: (-22.344, 5.2, 11.4957)]",
+        "visibility_owners": "[P: (-22.63943, 5.038948, 11.1684), S: (0.919428, 1.792338, 1.591163)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.00.component.00/bay.post.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 0.46, 0.0), Z: (-1.0, 0.0, 0.0), O: (-22.344, 5.2, 13.2543)]",
+        "visibility_owners": "[P: (-22.63943, 5.038948, 11.9184), S: (0.919428, 1.792338, 1.591163)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 0.46, 0.0), Z: (-1.0, 0.0, 0.0), O: (-22.344, 5.2, 12.5043)]",
+        "visibility_owners": "[P: (-22.63943, 5.038948, 11.1684), S: (0.919428, 1.792338, 1.591163)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.00.component.00/bay.post.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-13.7457, 8.2, -7.344)]",
+        "visibility_owners": "[P: (-15.00956, 8.038948, -7.639427), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-12.9957, 8.2, -7.344)]",
+        "visibility_owners": "[P: (-14.25956, 8.038948, -7.639427), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.post.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-14.7543, 8.2, -7.344)]",
+        "visibility_owners": "[P: (-15.00956, 8.038948, -7.639427), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-14.0043, 8.2, -7.344)]",
+        "visibility_owners": "[P: (-14.25956, 8.038948, -7.639427), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.post.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (-14.7543, 8.2, 2.844)]",
+        "visibility_owners": "[P: (-15.0816, 8.038948, 2.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (-14.0043, 8.2, 2.844)]",
+        "visibility_owners": "[P: (-14.3316, 8.038948, 2.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.02.component.00/bay.post.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (-13.7457, 8.2, 2.844)]",
+        "visibility_owners": "[P: (-15.0816, 8.038948, 2.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (-12.9957, 8.2, 2.844)]",
+        "visibility_owners": "[P: (-14.3316, 8.038948, 2.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.02.component.00/bay.post.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.7543, 12.7, 14.844)]",
+        "visibility_owners": "[P: (-3.081603, 12.53895, 14.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (-3.5043, 12.7, 14.844)]",
+        "visibility_owners": "[P: (-3.831603, 12.53895, 14.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.03.component.00/bay.post.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (-1.7457, 12.7, 14.844)]",
+        "visibility_owners": "[P: (-3.081603, 12.53895, 14.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.4957, 12.7, 14.844)]",
+        "visibility_owners": "[P: (-3.831603, 12.53895, 14.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.03.component.00/bay.post.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-1.7457, 15.7, 4.656)]",
+        "visibility_owners": "[P: (-3.00956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-0.9957, 15.7, 4.656)]",
+        "visibility_owners": "[P: (-2.25956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.04.component.00/bay.post.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.7543, 15.7, 4.656)]",
+        "visibility_owners": "[P: (-3.00956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.0043, 15.7, 4.656)]",
+        "visibility_owners": "[P: (-2.25956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.04.component.00/bay.post.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 0.46, 0.0), Z: (-1.0, 0.0, 0.0), O: (13.656, 8.2, 6.2457)]",
+        "visibility_owners": "[P: (13.36057, 8.038948, 5.918397), S: (0.919427, 1.792337, 1.591163)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 0.46, 0.0), Z: (-1.0, 0.0, 0.0), O: (13.656, 8.2, 6.9957)]",
+        "visibility_owners": "[P: (13.36057, 8.038948, 6.668397), S: (0.919427, 1.792337, 1.591163)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.05.component.00/bay.post.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 0.46, 0.0), Z: (-1.0, 0.0, 0.0), O: (13.656, 8.2, 7.2543)]",
+        "visibility_owners": "[P: (13.36057, 8.038948, 5.918397), S: (0.919427, 1.792337, 1.591163)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 0.46, 0.0), Z: (-1.0, 0.0, 0.0), O: (13.656, 8.2, 8.0043)]",
+        "visibility_owners": "[P: (13.36057, 8.038948, 6.668397), S: (0.919427, 1.792337, 1.591163)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.05.component.00/bay.post.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-7.7457, 15.7, 4.656)]",
+        "visibility_owners": "[P: (-9.00956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-6.9957, 15.7, 4.656)]",
+        "visibility_owners": "[P: (-8.25956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.06.component.00/bay.post.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-8.7543, 15.7, 4.656)]",
+        "visibility_owners": "[P: (-9.00956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-8.0043, 15.7, 4.656)]",
+        "visibility_owners": "[P: (-8.25956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.06.component.00/bay.post.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-1.7457, 5.2, -16.344)]",
+        "visibility_owners": "[P: (-3.00956, 5.038948, -16.63943), S: (1.591163, 1.792338, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-0.9957, 5.2, -16.344)]",
+        "visibility_owners": "[P: (-2.25956, 5.038948, -16.63943), S: (1.591163, 1.792338, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.07.component.00/bay.post.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.7543, 5.2, -16.344)]",
+        "visibility_owners": "[P: (-3.00956, 5.038948, -16.63943), S: (1.591163, 1.792338, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.0043, 5.2, -16.344)]",
+        "visibility_owners": "[P: (-2.25956, 5.038948, -16.63943), S: (1.591163, 1.792338, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.07.component.00/bay.post.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-6.094899, 0.0, -8.518303), Y: (0.0, 1.0, 0.0), Z: (0.813264, 0.0, -0.581895), O: (-13.27127, 1.5, 8.81465)]",
+        "visibility_owners": "[P: (-14.36898, 1.5, 7.444365), S: (2.195415, 3.0, 2.740572)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-6.818988, 0.0, -6.818988), Y: (0.0, 1.0, 0.0), Z: (0.707107, 0.0, -0.707107), O: (-13.29084, 1.5, 8.790841)]",
+        "visibility_owners": "[P: (-14.45905, 1.5, 7.622629), S: (2.336426, 3.0, 2.336426)]"
+      },
+      "id": "facade-joint/-17/1/11"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (9.711812, 0.0, -9.711812), Y: (0.0, 0.5, 0.0), Z: (0.707107, 0.0, 0.707107), O: (-16.49433, 1.5, 10.50567)]",
+        "visibility_owners": "[P: (-18.06951, 1.5, 8.930489), S: (3.150366, 1.5, 3.150368)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (9.711812, 0.0, -10.09889), Y: (0.0, 0.5, 0.0), Z: (0.720785, 0.0, 0.693158), O: (-16.49837, 1.5, 10.48845)]",
+        "visibility_owners": "[P: (-18.07759, 1.5, 8.862935), S: (3.15845, 1.5, 3.251037)]"
+      },
+      "id": "facade-joint/-21/1/15"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.426491, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.011786), O: (-0.75, 12.0, 11.56891)]",
+        "visibility_owners": "[P: (-0.81, 12.0, 11.27), S: (0.12, 3.0, 0.597818)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.426491, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.00857), O: (-0.75, 12.0, 11.56796)]",
+        "visibility_owners": "[P: (-0.81, 12.0, 11.27), S: (0.12, 3.0, 0.595919)]"
+      },
+      "id": "facade-run-joint/-750/12000/11250/0/-1"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.426491, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.00857), O: (-0.75, 12.0, 13.93204)]",
+        "visibility_owners": "[P: (-0.81, 12.0, 13.63408), S: (0.12, 3.0, 0.595919)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.426491, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.011786), O: (-0.75, 12.0, 13.93109)]",
+        "visibility_owners": "[P: (-0.81, 12.0, 13.63218), S: (0.12, 3.0, 0.597818)]"
+      },
+      "id": "facade-run-joint/-750/12000/14250/0/1"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.426491, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -0.936209), O: (-3.75, 15.0, 5.546582)]",
+        "visibility_owners": "[P: (-3.81, 15.0, 5.27), S: (0.12, 3.0, 0.553164)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.426491, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.295563), O: (-3.75, 15.0, 5.652745)]",
+        "visibility_owners": "[P: (-3.81, 15.0, 5.27), S: (0.12, 3.0, 0.765489)]"
+      },
+      "id": "facade-run-joint/-3750/15000/5250/0/-1"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.426491, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -0.936209), O: (-6.75, 15.0, 5.546582)]",
+        "visibility_owners": "[P: (-6.81, 15.0, 5.27), S: (0.12, 3.0, 0.553164)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.426491, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.011786), O: (-6.75, 15.0, 5.568909)]",
+        "visibility_owners": "[P: (-6.81, 15.0, 5.27), S: (0.12, 3.0, 0.597818)]"
+      },
+      "id": "facade-run-joint/-6750/15000/5250/0/-1"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.426491), Y: (0.0, 1.0, 0.0), Z: (-1.295563, 0.0, 0.0), O: (-15.34725, 7.5, -3.75)]",
+        "visibility_owners": "[P: (-15.73, 7.5, -3.81), S: (0.76549, 3.0, 0.12)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.426491), Y: (0.0, 1.0, 0.0), Z: (-0.9512, 0.0, 0.0), O: (-15.44899, 7.5, -3.75)]",
+        "visibility_owners": "[P: (-15.73, 7.5, -3.81), S: (0.562021, 3.0, 0.12)]"
+      },
+      "id": "facade-run-joint/-15750/7500/-3750/-1/0"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -0.426491), Y: (0.0, 1.0, 0.0), Z: (0.9512, 0.0, -0.0), O: (-13.05101, 7.5, -3.75)]",
+        "visibility_owners": "[P: (-13.33202, 7.5, -3.81), S: (0.562021, 3.0, 0.12)]"
+      },
+      "before": {
+        "asset": "sfv.deck.pillar.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -0.426491), Y: (0.0, 1.0, 0.0), Z: (0.936209, 0.0, -0.0), O: (-13.04658, 7.5, -3.75)]",
+        "visibility_owners": "[P: (-13.32316, 7.5, -3.81), S: (0.553164, 3.0, 0.12)]"
+      },
+      "id": "facade-run-joint/-12750/7500/-3750/1/0"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-0.6, 0.0, 0.0), O: (-22.17, 5.038948, 13.5)]",
+        "visibility_owners": "[P: (-22.63943, 5.038948, 11.9184), S: (0.919428, 1.792338, 1.591163)]"
+      },
+      "before": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-0.6, 0.0, 0.0), O: (-22.17, 5.038948, 12.75)]",
+        "visibility_owners": "[P: (-22.63943, 5.038948, 11.1684), S: (0.919428, 1.792338, 1.591163)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.00.component.00/bay.sill"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -0.6), O: (-15.0, 8.038948, -7.17)]",
+        "visibility_owners": "[P: (-15.00956, 8.038948, -7.639427), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -0.6), O: (-14.25, 8.038948, -7.17)]",
+        "visibility_owners": "[P: (-14.25956, 8.038948, -7.639427), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.sill"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 0.6), O: (-13.5, 8.038948, 2.67)]",
+        "visibility_owners": "[P: (-15.0816, 8.038948, 2.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 0.6), O: (-12.75, 8.038948, 2.67)]",
+        "visibility_owners": "[P: (-14.3316, 8.038948, 2.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.02.component.00/bay.sill"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 0.6), O: (-1.5, 12.53895, 14.67)]",
+        "visibility_owners": "[P: (-3.081603, 12.53895, 14.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 0.6), O: (-2.25, 12.53895, 14.67)]",
+        "visibility_owners": "[P: (-3.831603, 12.53895, 14.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.03.component.00/bay.sill"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -0.6), O: (-3.0, 15.53895, 4.83)]",
+        "visibility_owners": "[P: (-3.00956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -0.6), O: (-2.25, 15.53895, 4.83)]",
+        "visibility_owners": "[P: (-2.25956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.04.component.00/bay.sill"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-0.6, 0.0, 0.0), O: (13.83, 8.038948, 7.5)]",
+        "visibility_owners": "[P: (13.36057, 8.038948, 5.918397), S: (0.919427, 1.792337, 1.591163)]"
+      },
+      "before": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-0.6, 0.0, 0.0), O: (13.83, 8.038948, 8.25)]",
+        "visibility_owners": "[P: (13.36057, 8.038948, 6.668397), S: (0.919427, 1.792337, 1.591163)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.05.component.00/bay.sill"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -0.6), O: (-9.0, 15.53895, 4.83)]",
+        "visibility_owners": "[P: (-9.00956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -0.6), O: (-8.25, 15.53895, 4.83)]",
+        "visibility_owners": "[P: (-8.25956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.06.component.00/bay.sill"
+    },
+    {
+      "after": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -0.6), O: (-3.0, 5.038948, -16.17)]",
+        "visibility_owners": "[P: (-3.00956, 5.038948, -16.63943), S: (1.591163, 1.792338, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.deck.floor.s.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -0.6), O: (-2.25, 5.038948, -16.17)]",
+        "visibility_owners": "[P: (-2.25956, 5.038948, -16.63943), S: (1.591163, 1.792338, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.07.component.00/bay.sill"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.82), Y: (0.0, 0.46, 0.0), Z: (-1.0, 0.0, 0.0), O: (-22.36123, 5.2, 12.75)]",
+        "visibility_owners": "[P: (-22.63943, 5.038948, 11.9184), S: (0.919428, 1.792338, 1.591163)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.82), Y: (0.0, 0.46, 0.0), Z: (-1.0, 0.0, 0.0), O: (-22.36123, 5.2, 12.0)]",
+        "visibility_owners": "[P: (-22.63943, 5.038948, 11.1684), S: (0.919428, 1.792338, 1.591163)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.00.component.00/bay.face"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.6, 0.0, -0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 0.3), O: (-22.17, 5.2, 13.28737)]",
+        "visibility_owners": "[P: (-22.63943, 5.038948, 11.9184), S: (0.919428, 1.792338, 1.591163)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.6, 0.0, -0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 0.3), O: (-22.17, 5.2, 12.53737)]",
+        "visibility_owners": "[P: (-22.63943, 5.038948, 11.1684), S: (0.919428, 1.792338, 1.591163)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.00.component.00/bay.cheek.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.004.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.6, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -0.3), O: (-22.17, 5.2, 12.21263)]",
+        "visibility_owners": "[P: (-22.63943, 5.038948, 11.9184), S: (0.919428, 1.792338, 1.591163)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.004.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.6, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -0.3), O: (-22.17, 5.2, 11.46263)]",
+        "visibility_owners": "[P: (-22.63943, 5.038948, 11.1684), S: (0.919428, 1.792338, 1.591163)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.00.component.00/bay.cheek.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.roof.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.52), Y: (0.0, 0.42, 0.0), Z: (-0.4, 0.0, 0.0), O: (-22.17, 6.65, 12.75)]",
+        "visibility_owners": "[P: (-22.63943, 5.038948, 11.9184), S: (0.919428, 1.792338, 1.591163)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.roof.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.52), Y: (0.0, 0.42, 0.0), Z: (-0.4, 0.0, 0.0), O: (-22.17, 6.65, 12.0)]",
+        "visibility_owners": "[P: (-22.63943, 5.038948, 11.1684), S: (0.919428, 1.792338, 1.591163)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.00.component.00/bay.canopy"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.roof.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.52), Y: (0.0, 0.42, 0.0), Z: (-0.4, 0.0, 0.0), O: (13.83, 9.65, 6.75)]",
+        "visibility_owners": "[P: (13.36057, 8.038948, 5.918397), S: (0.919427, 1.792337, 1.591163)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.roof.001",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.52), Y: (0.0, 0.42, 0.0), Z: (-0.4, 0.0, 0.0), O: (13.83, 9.65, 7.5)]",
+        "visibility_owners": "[P: (13.36057, 8.038948, 6.668397), S: (0.919427, 1.792337, 1.591163)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.05.component.00/bay.canopy"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.82, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-14.25, 8.2, -7.343419)]",
+        "visibility_owners": "[P: (-15.00956, 8.038948, -7.639427), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.82, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-13.5, 8.2, -7.343419)]",
+        "visibility_owners": "[P: (-14.25956, 8.038948, -7.639427), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.face"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.6), Y: (0.0, 0.46, 0.0), Z: (-0.3, 0.0, 0.0), O: (-14.78203, 8.2, -7.17)]",
+        "visibility_owners": "[P: (-15.00956, 8.038948, -7.639427), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.6), Y: (0.0, 0.46, 0.0), Z: (-0.3, 0.0, 0.0), O: (-14.03203, 8.2, -7.17)]",
+        "visibility_owners": "[P: (-14.25956, 8.038948, -7.639427), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.cheek.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.82, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (-14.25, 8.2, 2.843419)]",
+        "visibility_owners": "[P: (-15.0816, 8.038948, 2.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.82, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (-13.5, 8.2, 2.843419)]",
+        "visibility_owners": "[P: (-14.3316, 8.038948, 2.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.02.component.00/bay.face"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, -0.6), Y: (0.0, 0.46, 0.0), Z: (0.3, 0.0, -0.0), O: (-13.71797, 8.2, 2.67)]",
+        "visibility_owners": "[P: (-15.0816, 8.038948, 2.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, -0.6), Y: (0.0, 0.46, 0.0), Z: (0.3, 0.0, -0.0), O: (-12.96797, 8.2, 2.67)]",
+        "visibility_owners": "[P: (-14.3316, 8.038948, 2.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.02.component.00/bay.cheek.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.82, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 12.7, 14.84342)]",
+        "visibility_owners": "[P: (-3.081603, 12.53895, 14.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.82, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (-3.0, 12.7, 14.84342)]",
+        "visibility_owners": "[P: (-3.831603, 12.53895, 14.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.03.component.00/bay.face"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, -0.6), Y: (0.0, 0.46, 0.0), Z: (0.3, 0.0, -0.0), O: (-1.717974, 12.7, 14.67)]",
+        "visibility_owners": "[P: (-3.081603, 12.53895, 14.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, -0.6), Y: (0.0, 0.46, 0.0), Z: (0.3, 0.0, -0.0), O: (-2.467974, 12.7, 14.67)]",
+        "visibility_owners": "[P: (-3.831603, 12.53895, 14.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.03.component.00/bay.cheek.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.82, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 15.7, 4.656581)]",
+        "visibility_owners": "[P: (-3.00956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.82, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-1.5, 15.7, 4.656581)]",
+        "visibility_owners": "[P: (-2.25956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.04.component.00/bay.face"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.6), Y: (0.0, 0.46, 0.0), Z: (-0.3, 0.0, 0.0), O: (-2.782026, 15.7, 4.83)]",
+        "visibility_owners": "[P: (-3.00956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.6), Y: (0.0, 0.46, 0.0), Z: (-0.3, 0.0, 0.0), O: (-2.032026, 15.7, 4.83)]",
+        "visibility_owners": "[P: (-2.25956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.04.component.00/bay.cheek.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.82, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-8.25, 15.7, 4.656581)]",
+        "visibility_owners": "[P: (-9.00956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.82, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-7.5, 15.7, 4.656581)]",
+        "visibility_owners": "[P: (-8.25956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.06.component.00/bay.face"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.6), Y: (0.0, 0.46, 0.0), Z: (-0.3, 0.0, 0.0), O: (-8.782025, 15.7, 4.83)]",
+        "visibility_owners": "[P: (-9.00956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.6), Y: (0.0, 0.46, 0.0), Z: (-0.3, 0.0, 0.0), O: (-8.032025, 15.7, 4.83)]",
+        "visibility_owners": "[P: (-8.25956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.06.component.00/bay.cheek.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.82, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 5.2, -16.34342)]",
+        "visibility_owners": "[P: (-3.00956, 5.038948, -16.63943), S: (1.591163, 1.792338, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.82, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -1.0), O: (-1.5, 5.2, -16.34342)]",
+        "visibility_owners": "[P: (-2.25956, 5.038948, -16.63943), S: (1.591163, 1.792338, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.07.component.00/bay.face"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.6), Y: (0.0, 0.46, 0.0), Z: (-0.3, 0.0, 0.0), O: (-2.782026, 5.2, -16.17)]",
+        "visibility_owners": "[P: (-3.00956, 5.038948, -16.63943), S: (1.591163, 1.792338, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.6), Y: (0.0, 0.46, 0.0), Z: (-0.3, 0.0, 0.0), O: (-2.032026, 5.2, -16.17)]",
+        "visibility_owners": "[P: (-2.25956, 5.038948, -16.63943), S: (1.591163, 1.792338, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.07.component.00/bay.cheek.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -0.6), Y: (0.0, 0.46, 0.0), Z: (0.3, 0.0, -0.0), O: (-13.71797, 8.2, -7.17)]",
+        "visibility_owners": "[P: (-15.00956, 8.038948, -7.639427), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -0.6), Y: (0.0, 0.46, 0.0), Z: (0.3, 0.0, -0.0), O: (-12.96797, 8.2, -7.17)]",
+        "visibility_owners": "[P: (-14.25956, 8.038948, -7.639427), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.cheek.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.6), Y: (0.0, 0.46, 0.0), Z: (-0.3, 0.0, 0.0), O: (-14.78203, 8.2, 2.67)]",
+        "visibility_owners": "[P: (-15.0816, 8.038948, 2.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.6), Y: (0.0, 0.46, 0.0), Z: (-0.3, 0.0, 0.0), O: (-14.03203, 8.2, 2.67)]",
+        "visibility_owners": "[P: (-14.3316, 8.038948, 2.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.02.component.00/bay.cheek.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.6), Y: (0.0, 0.46, 0.0), Z: (-0.3, 0.0, 0.0), O: (-2.782026, 12.7, 14.67)]",
+        "visibility_owners": "[P: (-3.081603, 12.53895, 14.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.6), Y: (0.0, 0.46, 0.0), Z: (-0.3, 0.0, 0.0), O: (-3.532026, 12.7, 14.67)]",
+        "visibility_owners": "[P: (-3.831603, 12.53895, 14.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.03.component.00/bay.cheek.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -0.6), Y: (0.0, 0.46, 0.0), Z: (0.3, 0.0, -0.0), O: (-1.717974, 15.7, 4.83)]",
+        "visibility_owners": "[P: (-3.00956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -0.6), Y: (0.0, 0.46, 0.0), Z: (0.3, 0.0, -0.0), O: (-0.967974, 15.7, 4.83)]",
+        "visibility_owners": "[P: (-2.25956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.04.component.00/bay.cheek.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -0.6), Y: (0.0, 0.46, 0.0), Z: (0.3, 0.0, -0.0), O: (-7.717975, 15.7, 4.83)]",
+        "visibility_owners": "[P: (-9.00956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -0.6), Y: (0.0, 0.46, 0.0), Z: (0.3, 0.0, -0.0), O: (-6.967974, 15.7, 4.83)]",
+        "visibility_owners": "[P: (-8.25956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.06.component.00/bay.cheek.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.002.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -0.6), Y: (0.0, 0.46, 0.0), Z: (0.3, 0.0, -0.0), O: (-1.717974, 5.2, -16.17)]",
+        "visibility_owners": "[P: (-3.00956, 5.038948, -16.63943), S: (1.591163, 1.792338, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.002.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -0.6), Y: (0.0, 0.46, 0.0), Z: (0.3, 0.0, -0.0), O: (-0.967974, 5.2, -16.17)]",
+        "visibility_owners": "[P: (-2.25956, 5.038948, -16.63943), S: (1.591163, 1.792338, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.07.component.00/bay.cheek.left"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.roof.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.52, 0.0, 0.0), Y: (0.0, 0.42, 0.0), Z: (-0.0, 0.0, -0.4), O: (-14.25, 9.65, -7.17)]",
+        "visibility_owners": "[P: (-15.00956, 8.038948, -7.639427), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.roof.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.52, 0.0, 0.0), Y: (0.0, 0.42, 0.0), Z: (-0.0, 0.0, -0.4), O: (-13.5, 9.65, -7.17)]",
+        "visibility_owners": "[P: (-14.25956, 8.038948, -7.639427), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.canopy"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.roof.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.52, 0.0, 0.0), Y: (0.0, 0.42, 0.0), Z: (0.0, 0.0, 0.4), O: (-14.25, 9.65, 2.67)]",
+        "visibility_owners": "[P: (-15.0816, 8.038948, 2.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.roof.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.52, 0.0, 0.0), Y: (0.0, 0.42, 0.0), Z: (0.0, 0.0, 0.4), O: (-13.5, 9.65, 2.67)]",
+        "visibility_owners": "[P: (-14.3316, 8.038948, 2.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.02.component.00/bay.canopy"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.roof.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.52, 0.0, 0.0), Y: (0.0, 0.42, 0.0), Z: (0.0, 0.0, 0.4), O: (-2.25, 14.15, 14.67)]",
+        "visibility_owners": "[P: (-3.081603, 12.53895, 14.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.roof.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.52, 0.0, 0.0), Y: (0.0, 0.42, 0.0), Z: (0.0, 0.0, 0.4), O: (-3.0, 14.15, 14.67)]",
+        "visibility_owners": "[P: (-3.831603, 12.53895, 14.22), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.03.component.00/bay.canopy"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.roof.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.52, 0.0, 0.0), Y: (0.0, 0.42, 0.0), Z: (-0.0, 0.0, -0.4), O: (-2.25, 17.15, 4.83)]",
+        "visibility_owners": "[P: (-3.00956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.roof.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.52, 0.0, 0.0), Y: (0.0, 0.42, 0.0), Z: (-0.0, 0.0, -0.4), O: (-1.5, 17.15, 4.83)]",
+        "visibility_owners": "[P: (-2.25956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.04.component.00/bay.canopy"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.roof.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.52, 0.0, 0.0), Y: (0.0, 0.42, 0.0), Z: (-0.0, 0.0, -0.4), O: (-8.25, 17.15, 4.83)]",
+        "visibility_owners": "[P: (-9.00956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.roof.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.52, 0.0, 0.0), Y: (0.0, 0.42, 0.0), Z: (-0.0, 0.0, -0.4), O: (-7.5, 17.15, 4.83)]",
+        "visibility_owners": "[P: (-8.25956, 15.53895, 4.360573), S: (1.591163, 1.792337, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.06.component.00/bay.canopy"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.roof.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.52, 0.0, 0.0), Y: (0.0, 0.42, 0.0), Z: (-0.0, 0.0, -0.4), O: (-2.25, 6.65, -16.17)]",
+        "visibility_owners": "[P: (-3.00956, 5.038948, -16.63943), S: (1.591163, 1.792338, 0.919427)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.roof.004",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.52, 0.0, 0.0), Y: (0.0, 0.42, 0.0), Z: (-0.0, 0.0, -0.4), O: (-1.5, 6.65, -16.17)]",
+        "visibility_owners": "[P: (-2.25956, 5.038948, -16.63943), S: (1.591163, 1.792338, 0.919427)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.07.component.00/bay.canopy"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.006",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.82), Y: (0.0, 0.46, 0.0), Z: (-1.0, 0.0, 0.0), O: (13.65605, 8.2, 6.75)]",
+        "visibility_owners": "[P: (13.36057, 8.038948, 5.918397), S: (0.919427, 1.792337, 1.591163)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.006",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.0, 0.0, 0.82), Y: (0.0, 0.46, 0.0), Z: (-1.0, 0.0, 0.0), O: (13.65605, 8.2, 7.5)]",
+        "visibility_owners": "[P: (13.36057, 8.038948, 6.668397), S: (0.919427, 1.792337, 1.591163)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.05.component.00/bay.face"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.006",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.6, 0.0, -0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 0.3), O: (13.83, 8.2, 7.282186)]",
+        "visibility_owners": "[P: (13.36057, 8.038948, 5.918397), S: (0.919427, 1.792337, 1.591163)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.006",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (0.6, 0.0, -0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 0.3), O: (13.83, 8.2, 8.032186)]",
+        "visibility_owners": "[P: (13.36057, 8.038948, 6.668397), S: (0.919427, 1.792337, 1.591163)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.05.component.00/bay.cheek.right"
+    },
+    {
+      "after": {
+        "asset": "sfv.fabric.wall.wood.window.s.006.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.6, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -0.3), O: (13.83, 8.2, 6.217814)]",
+        "visibility_owners": "[P: (13.36057, 8.038948, 5.918397), S: (0.919427, 1.792337, 1.591163)]"
+      },
+      "before": {
+        "asset": "sfv.fabric.wall.wood.window.s.006.mirror_x",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.6, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (-0.0, 0.0, -0.3), O: (13.83, 8.2, 6.967814)]",
+        "visibility_owners": "[P: (13.36057, 8.038948, 6.668397), S: (0.919427, 1.792337, 1.591163)]"
+      },
+      "id": "spatial.fabric.spatial.feature.facade-bay.05.component.00/bay.cheek.left"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.slate.03",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 7.5, -14.25)]",
+        "visibility_owners": "[P: (-3.75102, 4.338948, -15.75), S: (3.001021, 3.161052, 3.0)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.slate.03",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 7.5, -14.25)]",
+        "visibility_owners": "[P: (-3.75102, 4.338948, -15.75), S: (3.00102, 3.161052, 3.870018)]"
+      },
+      "id": "spatial.roof.spatial.parcel.maze.house.028.part01.room00/roof"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.slate.06.rear.end.tight",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 14.9723, 12.75)]",
+        "visibility_owners": "[P: (-3.75, 11.83895, 11.25), S: (3.001021, 3.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.slate.06.rear.end.tight",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 14.9723, 12.75)]",
+        "visibility_owners": "[P: (-3.75, 11.83895, 10.37998), S: (3.001021, 3.161053, 3.870018)]"
+      },
+      "id": "spatial.roof.spatial.parcel.maze.house.018.part01.room00/gable.00.00.00"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.front.end.tight",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 14.9723, 12.75)]",
+        "visibility_owners": "[P: (-3.75, 11.83895, 11.25), S: (3.001021, 3.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.front.end.tight",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 14.9723, 12.75)]",
+        "visibility_owners": "[P: (-3.75, 11.83895, 10.37998), S: (3.001021, 3.161053, 3.870018)]"
+      },
+      "id": "spatial.roof.spatial.parcel.maze.house.018.part01.room00/gable.00.00.01"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-13.15, 2.3, 10.76747)]",
+        "visibility_owners": "[P: (-13.2229, 2.297917, 10.56199), S: (0.145807, 0.492823, 0.278378)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.prop.lantern.table.01",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-13.15, 2.3, 10.88382)]",
+        "visibility_owners": "[P: (-13.2229, 2.297917, 10.67835), S: (0.145807, 0.492823, 0.278378)]"
+      },
+      "id": "spatial.fabric.spatial.parcel.maze.house.066.part00.room00/south/lantern"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.start",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, 18.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (9.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.start",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, 18.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (9.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.roof.spatial.maze_bridge_end.01.01.room01/continuous-roof/001/000"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, 18.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (9.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, 18.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (9.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.roof.spatial.maze_bridge_end.01.01.room01/continuous-roof/001/001"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, 18.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (9.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, 18.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (9.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.roof.spatial.maze_bridge_end.01.01.room01/continuous-roof/001/003"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-2.25, 18.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (9.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-2.25, 18.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (9.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.roof.spatial.maze_bridge_end.01.01.room01/continuous-roof/001/005"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.mirror_z",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-6.75, 18.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (9.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.mirror_z",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-6.75, 18.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (9.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.roof.spatial.maze_bridge_end.01.01.room01/continuous-roof/001/002"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.mirror_z",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-3.75, 18.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (9.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.middle.mirror_z",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-3.75, 18.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (9.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.roof.spatial.maze_bridge_end.01.01.room01/continuous-roof/001/004"
+    },
+    {
+      "after": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.end",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-2.25, 18.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (9.00102, 6.161053, 3.0)]"
+      },
+      "before": {
+        "asset": "lpfv.fabric.roof.compact.slate.03.run.end",
+        "collision_enabled": "true",
+        "color": "(1.0, 1.0, 1.0, 1.0)",
+        "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-2.25, 18.0, 6.75)]",
+        "visibility_owners": "[P: (-9.75102, 11.83895, 5.25), S: (9.00102, 6.161053, 3.870018)]"
+      },
+      "id": "spatial.roof.spatial.maze_bridge_end.01.01.room01/continuous-roof/001/006"
+    }
+  ],
+  "removed": [
+    "spatial.fabric.spatial.maze_bridge_end.01.01.room01/facade.windowbox",
+    "spatial.fabric.spatial.parcel.maze.house.018.part01.room00/facade.windowbox",
+    "spatial.fabric.spatial.parcel.maze.house.028.part01.room00/facade.windowbox",
+    "spatial.fabric.spatial.maze_bridge_end.01.01.room01/facade.windowbox.plant",
+    "spatial.fabric.spatial.parcel.maze.house.018.part01.room00/facade.windowbox.plant",
+    "spatial.fabric.spatial.parcel.maze.house.028.part01.room00/facade.windowbox.plant",
+    "facade-run-joint/17250/7500/8250/0/1",
+    "maze-frontage/-2/0/-10/2"
+  ],
+  "unchanged": 1873
+}

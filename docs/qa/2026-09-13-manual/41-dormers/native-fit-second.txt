@@ -1,0 +1,33 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_dormer_fit.gd
+[0m* test_compact_shed_rear_join_is_buried_in_actual_host_triangles
+* test_wide_shed_keeps_the_complete_glazed_opening_above_the_roof
+* test_all_selected_shed_recipe_forms_close_the_back_and_expose_the_window
+* test_fitted_shed_preserves_native_front_width_height_uvs_and_collision
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 4
+Passing Tests         4
+Asserts           12018
+Time              12.541s
+
+
+[32m---- All tests passed! ----
+[0m

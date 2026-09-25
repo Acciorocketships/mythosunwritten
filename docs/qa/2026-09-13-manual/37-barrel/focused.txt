@@ -1,0 +1,31 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_frontage_surfaces.gd
+[0m* test_photographed_barrel_does_not_pierce_public_ramp
+* test_frontage_uses_actual_sloping_surface_in_all_directions
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         2
+Asserts               9
+Time              7.734s
+
+
+[32m---- All tests passed! ----
+[0m

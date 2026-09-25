@@ -1,0 +1,35 @@
+{
+  "P31_town_-8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 3.2047058566903677,
+    "roi_mean_abs_rgb": 3.2047058566903677,
+    "roi_changed_over_20_fraction": 0.08092278808638925
+  },
+  "P31_town_0": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 3.236562324413244,
+    "roi_mean_abs_rgb": 3.236562324413244,
+    "roi_changed_over_20_fraction": 0.08214526680160755
+  },
+  "P31_town_8": {
+    "roi": [
+      0,
+      0,
+      1716,
+      1033
+    ],
+    "mean_abs_rgb": 3.378161689875146,
+    "roi_mean_abs_rgb": 3.378161689875146,
+    "roi_changed_over_20_fraction": 0.08379310267015978
+  }
+}

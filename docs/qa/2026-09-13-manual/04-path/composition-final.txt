@@ -1,0 +1,704 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_warren_maze_composition.gd
+[0m* test_maze_mode_reaches_composition
+* test_maze_mode_seals_the_planner_seeds
+MAZE_COMPOSITION seed 12/compact sealed=true ms=866 { "frontage": 0.66666666666667, "frontage_target": 0.9, "covered_market": 0, "hero_courtyard_bridges": 0, "hero_landmarks": 2, "hero_landmarks_target": 0, "hero_skywalks": 0, "hero_skywalks_target": 1, "landmarks": 2, "landmarks_target": 5, "skywalks": 0, "skywalks_target": 1 }
+MACHINE_FACTOR reference_ms=[130, 132, 132] median=132 calibration=137 raw=0.964 applied=1.000
+MAZE_COMPOSITION seed 9/compact sealed=true ms=1229 { "frontage": 0.81481481481481, "frontage_target": 0.9, "covered_market": 0, "hero_courtyard_bridges": 0, "hero_landmarks": 2, "hero_landmarks_target": 0, "hero_skywalks": 0, "hero_skywalks_target": 1, "bridges": 0, "landmarks": 2, "landmarks_target": 5, "skywalks": 0, "skywalks_target": 1 }
+MAZE_COMPOSITION seed 3/standard sealed=true ms=4381 { "frontage": 0.75, "frontage_target": 0.9, "covered_market": 0, "hero_courtyard_bridges": 0, "hero_landmarks": 1, "hero_landmarks_target": 0, "hero_skywalks": 0, "hero_skywalks_target": 2, "bridges": 0, "landmarks": 1, "landmarks_target": 7, "skywalks": 0, "skywalks_target": 2 }
+MAZE_COMPOSITION seed 9/standard sealed=true ms=3179 { "frontage": 0.80327868852459, "frontage_target": 0.9, "covered_market": 0, "hero_courtyard_bridges": 0, "hero_landmarks": 2, "hero_landmarks_target": 0, "hero_skywalks": 0, "hero_skywalks_target": 2, "bridges": 0, "landmarks": 2, "landmarks_target": 7, "skywalks": 0, "skywalks_target": 2 }
+* test_hero_shortfalls_are_audit_facts
+* test_assets_become_landmarks_or_audited_shortfalls
+MAZE_ASSETS seed 12/compact plots=2 landmarks=2 shortfalls=0 [{ "id": &"asset.00", "kind_id": &"anchor.prefab.10", "cells": [(1, -4), (2, -4), (3, -4), (1, -3), (2, -3), (3, -3), (1, -2), (2, -2), (3, -2)], "floor": 3, "door_walk": (1, 3, -1), "placed": true, "reason": "" }, { "id": &"asset.01", "kind_id": &"anchor.prefab.11", "cells": [(-5, -2), (-4, -2), (-3, -2), (-5, -1), (-4, -1), (-3, -1), (-5, 0), (-4, 0), (-3, 0), (-5, 1), (-4, 1), (-3, 1)], "floor": 0, "door_walk": (-2, 0, -1), "placed": true, "reason": "" }]
+MAZE_ASSETS seed 9/compact plots=2 landmarks=2 shortfalls=0 [{ "id": &"asset.00", "kind_id": &"anchor.prefab.11", "cells": [(0, -6), (1, -6), (2, -6), (3, -6), (0, -5), (1, -5), (2, -5), (3, -5), (0, -4), (1, -4), (2, -4), (3, -4)], "floor": 0, "door_walk": (4, 0, -5), "placed": true, "reason": "" }, { "id": &"asset.01", "kind_id": &"anchor.prefab.14", "cells": [(-6, 1), (-5, 1), (-4, 1), (-3, 1), (-2, 1), (-6, 2), (-5, 2), (-4, 2), (-3, 2), (-2, 2), (-6, 3), (-5, 3), (-4, 3), (-3, 3), (-2, 3)], "floor": 0, "door_walk": (-1, 0, 1), "placed": true, "reason": "" }]
+MAZE_ASSETS seed 3/standard plots=1 landmarks=1 shortfalls=0 [{ "id": &"asset.00", "kind_id": &"anchor.prefab.16", "cells": [(-4, 4), (-3, 4), (-2, 4), (-4, 5), (-3, 5), (-2, 5), (-4, 6), (-3, 6), (-2, 6)], "floor": 0, "door_walk": (-5, 0, 4), "placed": true, "reason": "" }]
+MAZE_ASSETS seed 9/standard plots=2 landmarks=2 shortfalls=0 [{ "id": &"asset.00", "kind_id": &"anchor.prefab.10", "cells": [(1, -8), (2, -8), (3, -8), (1, -7), (2, -7), (3, -7), (1, -6), (2, -6), (3, -6)], "floor": 0, "door_walk": (2, 0, -5), "placed": true, "reason": "" }, { "id": &"asset.01", "kind_id": &"anchor.prefab.14", "cells": [(-7, -1), (-6, -1), (-5, -1), (-4, -1), (-3, -1), (-7, 0), (-6, 0), (-5, 0), (-4, 0), (-3, 0), (-7, 1), (-6, 1), (-5, 1), (-4, 1), (-3, 1)], "floor": 3, "door_walk": (-6, 3, 2), "placed": true, "reason": "" }]
+* test_back_rooms_become_rooms
+MAZE_BACK_ROOMS seed 12/compact stamped=104/104 share=1.000 rooms=6 addressed=0 private=6 unstamped=0
+MAZE_BACK_ROOMS seed 9/compact stamped=32/32 share=1.000 rooms=3 addressed=0 private=3 unstamped=0
+MAZE_BACK_ROOMS seed 3/standard stamped=416/436 share=0.954 rooms=25 addressed=5 private=20 unstamped=20
+MAZE_BACK_ROOMS seed 9/standard stamped=224/224 share=1.000 rooms=20 addressed=9 private=11 unstamped=0
+* test_unroomed_plot_mass_is_bounded
+MAZE_PLOT_MASS seed 12/compact plot=704 roomed=344 roofed=168 public=0 feature=0 unbuildable=0 unroomed=192 share=0.273 rock=208 stone_total=208
+MAZE_PLOT_MASS_USES seed 12/compact { 0: 192 }
+MAZE_PLOT_MASS_CAUSES seed 12/compact back_room_unstamped=0 refusals={  }
+MAZE_PLOT_MASS_CAUSES seed 12/compact parcels=6 uncomposed=0 gates={  } uncomposed_stacks=0 residual_rooms=2 back_rooms=6
+MAZE_STONE_TRIM seed 12/compact trimmed=0 (unroomed=0 roof_band=0) asset_envelope=165 required_roof=27/0/27/0 singleton=4/4/0/0 refused_plots=0 retained_unroomed=0 unroomed=192
+MAZE_PLOT_MASS seed 9/compact plot=976 roomed=428 roofed=164 public=0 feature=0 unbuildable=0 unroomed=384 share=0.393 rock=193 stone_total=193
+MAZE_PLOT_MASS_USES seed 9/compact { 0: 384 }
+MAZE_PLOT_MASS_CAUSES seed 9/compact back_room_unstamped=0 refusals={  }
+MAZE_PLOT_MASS_CAUSES seed 9/compact parcels=12 uncomposed=0 gates={  } uncomposed_stacks=0 residual_rooms=2 back_rooms=3
+MAZE_STONE_TRIM seed 9/compact trimmed=0 (unroomed=0 roof_band=0) asset_envelope=352 required_roof=35/3/32/0 singleton=0/0/0/0 refused_plots=0 retained_unroomed=0 unroomed=384
+[31m    [Failed]:  [0m[0.39344262295082] expected to be <= than [0.36]:  seed 9/compact leaves 0.393 of its plot mass unroomed
+      at line 1375
+MAZE_PLOT_MASS seed 3/standard plot=2056 roomed=1120 roofed=656 public=8 feature=0 unbuildable=0 unroomed=272 share=0.132 rock=692 stone_total=719
+MAZE_PLOT_MASS_USES seed 3/standard { 0: 245, 5: 27 }
+MAZE_PLOT_MASS_CAUSES seed 3/standard back_room_unstamped=20 refusals={ "storey is not whole allocatable mass": 1, "authored envelope does not fit": 2 }
+MAZE_PLOT_MASS_CAUSES seed 3/standard parcels=31 uncomposed=3 gates={ &"exact_composition_unsolved": 2, &"structural_yielded_lineage": 1 } uncomposed_stacks=1 residual_rooms=0 back_rooms=25
+MAZE_STONE_TRIM seed 3/standard trimmed=53 (unroomed=53 roof_band=0) asset_envelope=99 required_roof=133/12/93/28 singleton=8/8/0/0 refused_plots=0 retained_unroomed=27 unroomed=272
+MAZE_PLOT_MASS seed 9/standard plot=1716 roomed=924 roofed=442 public=8 feature=0 unbuildable=0 unroomed=342 share=0.199 rock=540 stone_total=543
+MAZE_PLOT_MASS_USES seed 9/standard { 0: 339, 5: 3 }
+MAZE_PLOT_MASS_CAUSES seed 9/standard back_room_unstamped=0 refusals={  }
+MAZE_PLOT_MASS_CAUSES seed 9/standard parcels=25 uncomposed=1 gates={ &"exact_composition_unsolved": 1 } uncomposed_stacks=1 residual_rooms=0 back_rooms=20
+MAZE_STONE_TRIM seed 9/standard trimmed=17 (unroomed=17 roof_band=0) asset_envelope=262 required_roof=114/26/60/28 singleton=4/4/0/0 refused_plots=0 retained_unroomed=3 unroomed=342
+* test_uncomposed_parcels_are_explained
+MAZE_UNCOMPOSED seed 12/compact parcels=6 uncomposed=0 gates={  }
+MAZE_UNCOMPOSED seed 9/compact parcels=12 uncomposed=0 gates={  }
+MAZE_UNCOMPOSED seed 3/standard parcels=31 uncomposed=3 gates={ &"exact_composition_unsolved": 2, &"structural_yielded_lineage": 1 }
+MAZE_UNCOMPOSED_DETAIL seed 3/standard parcel.maze.bridge.02.end.1.lower gate=structural_yielded_lineage area=1 [3,7) 
+MAZE_UNCOMPOSED_DETAIL seed 3/standard parcel.maze.house.012 gate=exact_composition_unsolved area=2 [5,11) storey 0 cell (-2, 5, 2) is claimed by [&"parcel.maze.house.001"]
+MAZE_UNCOMPOSED_DETAIL seed 3/standard parcel.maze.house.013 gate=exact_composition_unsolved area=2 [5,15) storey 1 cell (-8, 7, 2) is claimed by [&"spatial.skywalk.reserve.maze_bridge.01"]
+MAZE_UNCOMPOSED seed 9/standard parcels=25 uncomposed=1 gates={ &"exact_composition_unsolved": 1 }
+MAZE_UNCOMPOSED_DETAIL seed 9/standard parcel.maze.house.009 gate=exact_composition_unsolved area=2 [5,11) storey 0 cell (2, 5, 6) is claimed by [&"parcel.maze.house.000"]
+* test_residual_rooms_stay_inside_plots
+* test_decks_are_walkable_public_floor
+MAZE_DECKS seed 3/standard paved=16 reachable=16 share=1.000 surfaced=16
+* test_bridges_become_rooms_decks_or_audited_releases
+[31m    [Failed]:  [0mExpected [ARRAY(["source bridge has no sealed two-endpoint compound", "span is not a one-storey tower or slim shell", "span mass is already spent or feature-reserved", "span footprint is not an authored shell", "source did not prove two opposite endpoint footprints", "endpoint footprint has no complete room recipe", "endpoint footprint was consumed before bridge composition", "endpoint cells do not match an authored room phase", "endpoint room could not claim its exact private cells", "endpoint has neither continuous source bearing nor complete terrain-reaching arcade portal", "endpoint authored envelope or bridge socket does not fit", "endpoint authored envelopes overlap", "two-ended bridge compound has no exact public access root", "complete occupied bridge authored envelope does not fit", "two-ended bridge compound has no inhabited access root", "bearing flank has no room to name", "authored envelope does not fit"])] to contain value:  ["promoted endpoint support envelope does not fit"]:  seed 6357506428441529412/standard released bridge bridge.02 for an unvocabularised reason
+      at line 1667
+MAZE_BRIDGES seed 6357506428441529412/standard stamped=2/3 share=0.667 released=1 [{ "id": &"bridge.00", "outcome": "stamped", "reason": "", "span_counts": { "flank_contacts": 2, "flank_rooms_probed": 2, "sample_miss": { "flank_room": &"spatial.maze_bridge_end.00.01.room01", "flank_kind": &"tower", "socket": &"bearing.east", "socket_cell": (-7, 7, -3), "facing": (1, 0, 0), "candidate_min": (-10, 7, -4) }, "unproved_flank_column": 8 }, "flat_flank_columns": -1, "flat_flank_sides": -1 }, { "id": &"bridge.01", "outcome": "stamped", "reason": "", "span_counts": { "unproved_flank_column": 8, "flank_contacts": 2, "flank_rooms_probed": 2, "sample_miss": { "flank_room": &"spatial.maze_bridge_end.01.01.room01", "flank_kind": &"tower", "socket": &"bearing.east", "socket_cell": (-7, 5, 5), "facing": (1, 0, 0), "candidate_min": (-8, 5, 6) } }, "flat_flank_columns": -1, "flat_flank_sides": -1 }, { "id": &"bridge.02", "outcome": "released", "reason": "promoted endpoint support envelope does not fit", "span_counts": { "unproved_flank_column": 8 }, "detail": "r1: promoted endpoint support envelope does not fit (candidate has no exact roof envelope that clears existing rooms); r0: promoted endpoint support envelope does not fit (candidate has no exact roof envelope that clears existing rooms); r2: promoted endpoint support envelope does not fit (candidate has no exact roof envelope that clears existing rooms); r3: promoted endpoint support envelope does not fit (candidate has no exact roof envelope that clears existing rooms)", "flat_flank_columns": 0, "flat_flank_sides": 0 }]
+[31m    [Failed]:  [0m[0.66666666666667] expected to be >= than [0.95]:  seed 6357506428441529412/standard stamps only 0.667 of its bridge plots
+      at line 1715
+* test_finished_city_connectivity_uses_its_valid_private_skywalk_sites
+* test_bridge_flanks_at_storey_level_are_reported
+MAZE_BRIDGE_FLANK checked=seed 6357506428441529412/standard storey_level_cases=0
+MAZE_BRIDGE_FLANK SKIPPED: no sealing seed of seed 6357506428441529412/standard offers a bridge whose floor lies inside a flank parcel's storeys
+* test_bridge_shells_match_the_span_shape
+* test_bridge_cells_are_one_authored_storey
+* test_a_bound_span_stamps_a_bridge_room
+* test_a_one_flank_span_cannot_masquerade_as_a_skywalk
+MAZE_JETTY outcome=released reason=source bridge has no sealed two-endpoint compound counts={  }
+* test_source_height_contract_never_forces_a_plank_roof
+MAZE_FLAT_ROOFS seed 12/compact stamps=10 roofed=12 flat_units=0 pitched=12 partial=0 rejected=0
+MAZE_FLAT_ROOFS seed 9/compact stamps=15 roofed=15 flat_units=0 pitched=12 partial=0 rejected=0
+MAZE_FLAT_ROOFS seed 3/standard stamps=51 roofed=48 flat_units=3 pitched=37 partial=0 rejected=0
+MAZE_FLAT_ROOFS seed 9/standard stamps=33 roofed=42 flat_units=3 pitched=31 partial=0 rejected=0
+* test_maze_crowns_are_pitched_unless_something_stands_on_them
+MAZE_FLAT_FIRST seed 12/compact crowns=12 flat=0 pitched=12 refused=0 fell_through=0 source_preferred=6 eligible_rooms=12 rate=1.00 faces=100/100
+MAZE_FLAT_FIRST seed 9/compact crowns=15 flat=0 pitched=12 refused=0 fell_through=0 source_preferred=12 eligible_rooms=12 rate=1.00 faces=110/110
+MAZE_FLAT_FIRST seed 3/standard crowns=48 flat=3 pitched=37 refused=0 fell_through=0 source_preferred=27 eligible_rooms=37 rate=1.00 faces=374/374
+MAZE_FLAT_FIRST seed 9/standard crowns=42 flat=3 pitched=31 refused=0 fell_through=0 source_preferred=21 eligible_rooms=31 rate=1.00 faces=276/276
+MAZE_FLAT_FIRST corpus towns=4 pitched=92 preferred=92 eligible=92
+* test_the_roofscape_is_a_village_not_a_fortress
+MAZE_ROOFSCAPE seed 12/compact rubble=0/0 paved=0/0 borne=0/0 bearing=0/0 dressed=0 bare=0 flat=0 boxes=0 brackets=2/2 bare_overhangs=0
+MAZE_ROOFSCAPE seed 9/compact rubble=0/0 paved=0/0 borne=0/0 bearing=0/0 dressed=0 bare=0 flat=0 boxes=1 brackets=1/1 bare_overhangs=0
+MAZE_ROOFSCAPE seed 3/standard rubble=0/0 paved=0/0 borne=2/2 bearing=0/0 dressed=2 bare=1 flat=3 boxes=2 brackets=4/4 bare_overhangs=0
+MAZE_ROOFSCAPE seed 9/standard rubble=0/0 paved=0/0 borne=2/2 bearing=0/0 dressed=2 bare=1 flat=3 boxes=0 brackets=0/0 bare_overhangs=0
+[31m    [Failed]:  [0m[0] expected to be > than [0]:  seed 9/standard renders no overhang bracket at all
+      at line 2621
+MAZE_ROOFSCAPE corpus towns=4 dressed=4/6 share=0.667
+* test_free_flat_crown_detection_requires_a_real_upper_building
+* test_facade_projections_and_crowns_carry_the_measured_variation
+MAZE_VARIATION seed 12/compact pitched=12/6 balconies=0/0 outcroppings=0 facade_bays=2 bridge_rooms=0 jetties=0
+MAZE_VARIATION seed 9/compact pitched=12/12 balconies=2/2 outcroppings=0 facade_bays=3 bridge_rooms=1 jetties=0
+MAZE_VARIATION seed 3/standard pitched=37/27 balconies=5/5 outcroppings=0 facade_bays=12 bridge_rooms=3 jetties=0
+MAZE_VARIATION seed 9/standard pitched=31/21 balconies=1/1 outcroppings=0 facade_bays=9 bridge_rooms=3 jetties=0
+MAZE_VARIATION corpus pitched=92/66=1.394 balconies=8 buildings=8 outcroppings=0 bridge_rooms=7 jetties=0
+* test_partial_plates_are_tiled
+MAZE_TILED seed 12/compact crowns=12 partial=0 street_borne_full=0 tiled=0 tiles=0 refused=0 to_setback=0 lid_caps=0 lid_cells=0 lid_cross=0 modules={  }
+MAZE_TILED seed 9/compact crowns=15 partial=3 street_borne_full=0 tiled=3 tiles=4 refused=0 to_setback=0 lid_caps=0 lid_cells=0 lid_cross=0 modules={ &"roof.partial.gable.orange.2.positive": 2, &"roof.partial.gable.blue.2.negative": 1, &"roof.partial.gable.blue.4.negative": 1 }
+MAZE_TILED seed 3/standard crowns=48 partial=7 street_borne_full=1 tiled=8 tiles=16 refused=0 to_setback=0 lid_caps=0 lid_cells=0 lid_cross=0 modules={ &"roof.partial.gable.orange.2.negative": 1, &"roof.partial.gable.orange.4.positive": 1, &"roof.partial.gable.orange.2.positive": 10, &"roof.partial.gable.blue.2.positive": 2, &"roof.setback.cap.2": 2 }
+MAZE_TILED seed 9/standard crowns=42 partial=7 street_borne_full=1 tiled=8 tiles=14 refused=0 to_setback=0 lid_caps=0 lid_cells=0 lid_cross=0 modules={ &"roof.partial.gable.blue.4.negative": 1, &"roof.partial.gable.blue.4.positive": 1, &"roof.partial.gable.orange.2.negative": 4, &"roof.setback.cap.2": 6, &"roof.partial.gable.blue.2.positive": 2 }
+MAZE_TILED corpus towns=4 tiled=19 tiles=34
+* test_a_street_borne_crown_stays_in_the_flat_vocabulary
+MAZE_STREET_BORNE seed 9/standard derived=1 published=1 to_setback=0 rooms=spatial.parcel.maze.house.002.part01.room00
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 9/standard derives 1 street-borne flat crowns against the pinned 0; the equality below is only worth something while this number is right
+      at line 3338
+* test_a_one_cell_maze_sliver_is_repaired_only_where_the_lid_continues
+* test_flat_crowns_have_railings_on_open_edges
+MAZE_TERRACE seed 12/compact deck_edges=0 rails=0 audited=0 edge_audit=0
+MAZE_TERRACE seed 9/compact deck_edges=0 rails=0 audited=0 edge_audit=0
+MAZE_TERRACE seed 3/standard deck_edges=14 rails=14 audited=8 edge_audit=14
+MAZE_TERRACE seed 9/standard deck_edges=5 rails=5 audited=3 edge_audit=5
+MAZE_TERRACE corpus towns=4 rails=11
+* test_maze_back_room_bearing_mirrors_the_builder
+MAZE_BEARING_MIRROR seed 12/compact band=1 stone_borne=(0, -6) at_grade=(0, -1)
+MAZE_BEARING_MIRROR seed 9/compact band=1 stone_borne=(0, -6) at_grade=(0, -1)
+MAZE_BEARING_MIRROR seed 3/standard band=1 stone_borne=(-5, -4) at_grade=(-2, -2)
+MAZE_BEARING_MIRROR seed 9/standard band=1 stone_borne=(1, -8) at_grade=(0, 0)
+* test_rock_is_retained_as_stone
+MAZE_ROCK seed 12/compact rock=208 retained=200 audited=176 missing=0 skipped_reserved=0 plinth_faces_suppressed=8
+MAZE_ROUTE_STONE seed 12/compact standing=84/84 share=1.000 holes={  } first=
+MAZE_ROCK seed 9/compact rock=193 retained=178 audited=74 missing=0 skipped_reserved=0 plinth_faces_suppressed=24
+MAZE_ROUTE_STONE seed 9/compact standing=108/108 share=1.000 holes={  } first=
+MAZE_ROCK seed 3/standard rock=692 retained=686 audited=342 missing=0 skipped_reserved=0 plinth_faces_suppressed=38
+MAZE_ROUTE_STONE seed 3/standard standing=240/240 share=1.000 holes={  } first=
+MAZE_ROCK seed 9/standard rock=540 retained=530 audited=462 missing=0 skipped_reserved=0 plinth_faces_suppressed=20
+MAZE_ROUTE_STONE seed 9/standard standing=244/244 share=1.000 holes={  } first=
+* test_stone_borne_rooms_are_counted
+MAZE_STONE_BORNE seed 12/compact terrain_rooms=14 stone_borne=0/0
+MAZE_STONE_BORNE seed 9/compact terrain_rooms=18 stone_borne=2/2
+MAZE_STONE_BORNE seed 3/standard terrain_rooms=58 stone_borne=25/25
+MAZE_STONE_BORNE seed 9/standard terrain_rooms=49 stone_borne=17/17
+* test_stone_split_reconciles_across_the_compiler
+MAZE_STONE_SPLIT seed 12/compact rock=208 roof=0 unroomed=0 total=208 channel=176
+MAZE_STONE_SPLIT seed 9/compact rock=193 roof=0 unroomed=0 total=193 channel=74
+MAZE_STONE_SPLIT seed 3/standard rock=692 roof=0 unroomed=27 total=719 channel=342
+MAZE_STONE_SPLIT seed 9/standard rock=540 roof=0 unroomed=3 total=543 channel=462
+* test_every_nonbridge_plot_stands_on_solid_and_bridges_have_grounded_ends
+MAZE_PLOT_SUPPORT seed 12/compact columns=42 floating=0
+MAZE_PLOT_SUPPORT seed 9/compact columns=95 floating=0
+MAZE_PLOT_SUPPORT seed 3/standard columns=206 floating=0
+MAZE_PLOT_SUPPORT seed 9/standard columns=307 floating=0
+* test_stone_bases_follow_bears_on_rock
+MAZE_BASES seed 12/compact stacked_on_rock=0
+MAZE_BASES seed 12/compact parcels=6 unrooted_terrain_bearing=0
+MAZE_BASES seed 9/compact stacked_on_rock=1
+MAZE_BASES seed 9/compact parcels=18 unrooted_terrain_bearing=0
+MAZE_BASES seed 3/standard stacked_on_rock=0
+MAZE_BASES seed 3/standard parcels=46 unrooted_terrain_bearing=1
+MAZE_BASES seed 9/standard stacked_on_rock=0
+MAZE_BASES seed 9/standard parcels=70 unrooted_terrain_bearing=1
+* test_stacked_houses_bond_to_flat_roofs
+MAZE_STACKS seed 12/compact stacked_plots=0 declared=0 slab_gaps=0
+MAZE_STACK_SEAMS seed 12/compact declared=0 bonded=0 uncomposed=0 audited_uncomposed=0
+MAZE_STACKS seed 9/compact stacked_plots=0 declared=0 slab_gaps=0
+MAZE_STACK_SEAMS seed 9/compact declared=0 bonded=0 uncomposed=0 audited_uncomposed=0
+MAZE_STACKS seed 3/standard stacked_plots=2 declared=1 slab_gaps=0
+MAZE_STACK_SEAMS seed 3/standard declared=1 bonded=1 uncomposed=0 audited_uncomposed=1
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 3/standard must publish the declared stacks that composed nothing
+      at line 4315
+MAZE_STACKS seed 9/standard stacked_plots=2 declared=2 slab_gaps=0
+MAZE_STACK_SEAMS seed 9/standard declared=2 bonded=1 uncomposed=1 audited_uncomposed=1
+* test_retained_rock_skips_a_cell_another_feature_reserved
+    ROCK_SKIP taken=(-14, 0, 4) baseline={ "failed": false, "cells": 380, "skipped": 0, "rock_cells": 208, "unroomed_plot_cells": 172, "roof_cells": 0, "released_parapet_cells": 168, "trimmed_unroomed_plot_cells": 0, "trimmed_roof_band_cells": 0, "released_asset_envelope_cells": 336, "released_required_roof_envelope_cells": 0, "released_required_roof_derived_cells": 0, "released_required_roof_unroomed_plot_cells": 0, "released_required_roof_band_cells": 0, "released_singleton_crown_cells": 32, "released_singleton_derived_rock_cells": 4, "released_singleton_unroomed_plot_cells": 28, "released_singleton_roof_band_cells": 0, "remaining_singleton_crown_count": 0, "refused_plot_trims": 0, "stranded_release_repairs": 0 } guarded={ "failed": false, "cells": 379, "skipped": 1, "rock_cells": 208, "unroomed_plot_cells": 171, "roof_cells": 0, "released_parapet_cells": 168, "trimmed_unroomed_plot_cells": 0, "trimmed_roof_band_cells": 0, "released_asset_envelope_cells": 336, "released_required_roof_envelope_cells": 0, "released_required_roof_derived_cells": 0, "released_required_roof_unroomed_plot_cells": 0, "released_required_roof_band_cells": 0, "released_singleton_crown_cells": 32, "released_singleton_derived_rock_cells": 4, "released_singleton_unroomed_plot_cells": 28, "released_singleton_roof_band_cells": 0, "remaining_singleton_crown_count": 0, "refused_plot_trims": 0, "stranded_release_repairs": 0 }
+* test_maze_mode_is_deterministic
+* test_native_floor_cap_census_rejects_absent_partial_and_lower_floor_owners
+* test_the_skin_constants_mirror_the_module_descriptors
+SKIN_ENVELOPE rock=[P: (-1.5, -0.3, 0.250006), S: (3.0, 4.0, 0.749992)] grass=[P: (-1.500001, 0.0, -1.5), S: (3.0, 0.00001, 3.000001)] masonry=[P: (-0.881078, 0.0, -0.331944), S: (1.770173, 3.000123, 0.663887)]
+* test_retained_stone_is_skinned
+MAZE_STONE_SKIN seed 12/compact cells=176 exposed=192 derived=192 expected=112 rendered=112 missing=0 instances=112 uncovered=0 tops=14 bottoms=68 top_slabs=7 bottom_slabs=34 doubled_caps=0 plinth_overlap=0 paved_suppressed=8 deferred_to_plinth=0 foundation=18/18
+MAZE_STONE_SKIN seed 9/compact cells=74 exposed=107 derived=107 expected=65 rendered=65 missing=0 instances=65 uncovered=0 tops=14 bottoms=48 top_slabs=7 bottom_slabs=24 doubled_caps=0 plinth_overlap=0 paved_suppressed=26 deferred_to_plinth=0 foundation=45/45
+MAZE_STONE_SKIN seed 3/standard cells=342 exposed=423 derived=423 expected=258 rendered=258 missing=0 instances=258 uncovered=0 tops=52 bottoms=136 top_slabs=28 bottom_slabs=68 doubled_caps=0 plinth_overlap=0 paved_suppressed=46 deferred_to_plinth=0 foundation=100/100
+MAZE_STONE_SKIN seed 9/standard cells=462 exposed=519 derived=519 expected=303 rendered=303 missing=0 instances=302 uncovered=0 tops=52 bottoms=176 top_slabs=27 bottom_slabs=88 doubled_caps=0 plinth_overlap=0 paved_suppressed=34 deferred_to_plinth=0 foundation=39/39
+[31m    [Failed]:  [0m[302] expected to equal [303]:  seed 9/standard must hand the renderer exactly the panels it audited
+      at line 5127
+* test_the_rock_reads_as_hillside_not_masonry
+MAZE_SKIN seed 12/compact masonry=61 natural=0 green=0 facade=13 tall_bank_masonry=41 free_bench_stone=3 undercroft=0 low_bank_masonry=17 misplaced=0/0/0 banks={ 1: 5, 2: 24, 3: 81 } tallest=3 families=0/27/0 windows=14 garden=18 green_cells=0 planting=8
+[31m    [Failed]:  [0m[14] expected to equal [0]:  seed 12/compact must alternate facade and masonry storeys on tall banks
+      at line 5394
+[31m    [Failed]:  [0m[51] expected to equal [61]:  seed 12/compact audited masonry panel count must equal the payload's
+      at line 5429
+[31m    [Failed]:  [0m[27] expected to equal [13]:  seed 12/compact audited facade panel count must equal the payload's
+      at line 5446
+[31m    [Failed]:  [0m[27] expected to equal [13]:  seed 12/compact every clad mass face belongs to exactly one district family
+      at line 5449
+[31m    [Failed]:  [0m[27] expected to equal [41]:  seed 12/compact audited tall-bank masonry must equal the payload's
+      at line 5454
+[31m    [Failed]:  [0m[27] expected to equal [41]:  seed 12/compact audited above-ground stone must equal the alternating courses
+      at line 5458
+[31m    [Failed]:  [0m[0] expected to equal [14]:  seed 12/compact audited tall-course mismatches must equal the payload's
+      at line 5462
+[31m    [Failed]:  [0m[7] expected to equal [3]:  seed 12/compact audited closed masonry crowns must equal the payload's
+      at line 5476
+[31m    [Failed]:  [0m[108] expected to equal [112]:  seed 12/compact every panel of the shell wears exactly one module
+      at line 5487
+MAZE_SKIN seed 9/compact masonry=38 natural=0 green=0 facade=1 tall_bank_masonry=1 free_bench_stone=5 undercroft=0 low_bank_masonry=32 misplaced=0/0/0 banks={ 1: 22, 2: 20, 3: 3 } tallest=3 families=1/0/0 windows=1 garden=0 green_cells=0 planting=0
+[31m    [Failed]:  [0m[40] expected to equal [38]:  seed 9/compact audited masonry panel count must equal the payload's
+      at line 5429
+[31m    [Failed]:  [0m[7] expected to equal [5]:  seed 9/compact audited closed masonry crowns must equal the payload's
+      at line 5476
+[31m    [Failed]:  [0m[63] expected to equal [65]:  seed 9/compact every panel of the shell wears exactly one module
+      at line 5487
+MAZE_SKIN seed 3/standard masonry=165 natural=0 green=0 facade=6 tall_bank_masonry=46 free_bench_stone=6 undercroft=3 low_bank_masonry=110 misplaced=0/0/1 banks={ 1: 75, 2: 72, 3: 36, 4: 36, 5: 10, 6: 6 } tallest=6 families=21/0/2 windows=18 garden=16 green_cells=16 planting=0
+[31m    [Failed]:  [0m[22] expected to equal [0]:  seed 3/standard must alternate facade and masonry storeys on tall banks
+      at line 5394
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 3/standard may only clad a tall bank's SIDE in facade storeys
+      at line 5408
+[31m    [Failed]:  [0m[167] expected to equal [165]:  seed 3/standard audited masonry panel count must equal the payload's
+      at line 5429
+[31m    [Failed]:  [0m[23] expected to equal [6]:  seed 3/standard audited facade panel count must equal the payload's
+      at line 5446
+[31m    [Failed]:  [0m[23] expected to equal [6]:  seed 3/standard every clad mass face belongs to exactly one district family
+      at line 5449
+[31m    [Failed]:  [0m[30] expected to equal [46]:  seed 3/standard audited tall-bank masonry must equal the payload's
+      at line 5454
+[31m    [Failed]:  [0m[30] expected to equal [46]:  seed 3/standard audited above-ground stone must equal the alternating courses
+      at line 5458
+[31m    [Failed]:  [0m[6] expected to equal [22]:  seed 3/standard audited tall-course mismatches must equal the payload's
+      at line 5462
+[31m    [Failed]:  [0m[8] expected to equal [6]:  seed 3/standard audited closed masonry crowns must equal the payload's
+      at line 5476
+[31m    [Failed]:  [0m[20] expected to equal [3]:  seed 3/standard audited undercroft stone caps must equal the payload's -- the exception the free-bench pin above allows is only as honest as this count
+      at line 5480
+[31m    [Failed]:  [0m[239] expected to equal [258]:  seed 3/standard every panel of the shell wears exactly one module
+      at line 5487
+MAZE_SKIN seed 9/standard masonry=190 natural=0 green=0 facade=11 tall_bank_masonry=75 free_bench_stone=11 undercroft=3 low_bank_masonry=101 misplaced=0/0/0 banks={ 1: 53, 2: 98, 3: 96, 4: 44 } tallest=4 families=28/14/0 windows=19 garden=9 green_cells=0 planting=6
+[31m    [Failed]:  [0m[32] expected to equal [0]:  seed 9/standard must alternate facade and masonry storeys on tall banks
+      at line 5394
+[31m    [Failed]:  [0m[173] expected to equal [190]:  seed 9/standard audited masonry panel count must equal the payload's
+      at line 5429
+[31m    [Failed]:  [0m[42] expected to equal [11]:  seed 9/standard audited facade panel count must equal the payload's
+      at line 5446
+[31m    [Failed]:  [0m[42] expected to equal [11]:  seed 9/standard every clad mass face belongs to exactly one district family
+      at line 5449
+[31m    [Failed]:  [0m[45] expected to equal [75]:  seed 9/standard audited tall-bank masonry must equal the payload's
+      at line 5454
+[31m    [Failed]:  [0m[45] expected to equal [75]:  seed 9/standard audited above-ground stone must equal the alternating courses
+      at line 5458
+[31m    [Failed]:  [0m[2] expected to equal [32]:  seed 9/standard audited tall-course mismatches must equal the payload's
+      at line 5462
+[31m    [Failed]:  [0m[15] expected to equal [11]:  seed 9/standard audited closed masonry crowns must equal the payload's
+      at line 5476
+[31m    [Failed]:  [0m[12] expected to equal [3]:  seed 9/standard audited undercroft stone caps must equal the payload's -- the exception the free-bench pin above allows is only as honest as this count
+      at line 5480
+[31m    [Failed]:  [0m[289] expected to equal [303]:  seed 9/standard every panel of the shell wears exactly one module
+      at line 5487
+[31m    [Failed]:  [0m[0] expected to be > than [0]:  the corpus must retain some connected terrain-classified garden ground
+      at line 5493
+* test_the_bench_tops_read_as_gardens_with_one_village_green
+MAZE_GARDEN seed 12/compact garden=18 plaza=0 bands=0 planting=8 edge=0 built=0 clearing=0 off=0 turf=28 non_neutral=0
+MAZE_GARDEN seed 9/compact garden=0 plaza=0 bands=0 planting=0 edge=0 built=0 clearing=0 off=0 turf=0 non_neutral=0
+MAZE_GARDEN seed 3/standard garden=16 plaza=16 bands=1 planting=0 edge=0 built=0 clearing=0 off=0 turf=25 non_neutral=0
+MAZE_GARDEN seed 9/standard garden=9 plaza=0 bands=0 planting=6 edge=0 built=0 clearing=0 off=0 turf=11 non_neutral=0
+MAZE_GARDEN seed 1/large garden=24 plaza=16 bands=1 planting=4 edge=0 built=0 clearing=0 off=0 turf=34 non_neutral=0
+MAZE_GARDEN seed 9/grand garden=98 plaza=56 bands=1 planting=36 edge=19 built=19 clearing=0 off=0 turf=144 non_neutral=0
+* test_the_plaza_deck_opens_the_square
+MAZE_SQUARE seed 3/standard green=16 box=4x4 entries=1 deck_cells=16
+[31m    [Failed]:  [0m[1] expected to equal [2]:  1 of the four planner towns site a plaza deck; the pin is 2
+      at line 5781
+    plaza-deck towns: 1, of which 1 designate a green inside 2:1
+* test_no_fence_stands_across_the_square_s_mouth
+MAZE_MOUTH seed 3/standard mouths=1 edges=1 railed=0
+* test_the_square_s_feature_stands_in_its_middle
+MAZE_CENTRE seed 3/standard asset=sfv.well.001 block=3x3 offset=0.71 was=0.71 candidates=3
+* test_a_public_turf_square_cannot_gain_late_furniture_or_planting
+* test_skywalk_corbel_course_stays_inside_the_crossing_lane
+* test_the_life_constants_mirror_the_module_descriptors
+* test_the_town_gets_its_life
+MAZE_LIFE seed 12/compact spans=0 candidates=0 enclosed=0 private=0 occupied=-1/-1(-1/-1 candidates, -1 endpoints) overlaps=0 unborne=0 shut=0 malformed=0 bays=10 bumps=0 bare=0 green=0 interior=0 entries=0 thresholds=0 centre=0
+MAZE_LIFE seed 9/compact spans=0 candidates=0 enclosed=0 private=0 occupied=-1/-1(-1/-1 candidates, -1 endpoints) overlaps=0 unborne=0 shut=0 malformed=0 bays=0 bumps=0 bare=0 green=0 interior=0 entries=0 thresholds=0 centre=0
+MAZE_LIFE seed 3/standard spans=2 candidates=12 enclosed=11 private=5 occupied=-1/-1(-1/-1 candidates, -1 endpoints) overlaps=0 unborne=0 shut=0 malformed=0 bays=0 bumps=0 bare=0 green=16 interior=4 entries=1 thresholds=0 centre=0
+MAZE_LIFE seed 9/standard spans=1 candidates=4 enclosed=3 private=0 occupied=-1/-1(-1/-1 candidates, -1 endpoints) overlaps=0 unborne=0 shut=0 malformed=0 bays=11 bumps=1 bare=0 green=0 interior=0 entries=0 thresholds=0 centre=0
+MAZE_LIFE seed 6357506428441529412/standard spans=0 candidates=0 enclosed=0 private=0 occupied=-1/-1(-1/-1 candidates, -1 endpoints) overlaps=0 unborne=0 shut=0 malformed=0 bays=28 bumps=4 bare=0 green=16 interior=4 entries=5 thresholds=0 centre=0
+[31m    [Failed]:  [0m[31] expected to equal [32]:  seed 6357506428441529412/standard audited outcropping count must equal the payload's
+      at line 6520
+[31m    [Failed]:  [0m[64] expected to equal [62]:  seed 6357506428441529412/standard must bracket every outcropping twice
+      at line 6525
+MAZE_LIFE corpus towns=5 open_spans=3 occupied_skywalks=9 outcroppings=53
+* test_a_green_cap_never_juts_past_the_bench_it_caps
+MAZE_TERRAIN_GROUND seed 12/compact cells=18 quads=72 surfaces=1
+MAZE_TERRAIN_GROUND seed 9/compact cells=0 quads=0 surfaces=0
+MAZE_TERRAIN_GROUND seed 3/standard cells=16 quads=64 surfaces=1
+MAZE_TERRAIN_GROUND seed 9/standard cells=9 quads=36 surfaces=1
+* test_every_garden_edge_turns_the_rim
+MAZE_GARDEN_RIM seed 12/compact edges=14 rims=14 payload=14 deficit=0
+MAZE_GARDEN_RIM seed 9/compact edges=0 rims=0 payload=0 deficit=0
+MAZE_GARDEN_RIM seed 3/standard edges=12 rims=12 payload=12 deficit=0
+MAZE_GARDEN_RIM seed 9/standard edges=13 rims=13 payload=5 deficit=0
+[31m    [Failed]:  [0m[5] expected to equal [13]:  seed 9/standard audited rim count must equal the payload's
+      at line 6697
+* test_the_rim_stands_off_the_panel_it_caps
+MAZE_RIM_STANDOFF seed 12/compact masonry=0 facade=6 level=4 unpanelled=0 natural=0 misplaced=0 worst=0.000000
+MAZE_RIM_STANDOFF seed 9/compact masonry=0 facade=0 level=0 unpanelled=0 natural=0 misplaced=0 worst=0.000000
+MAZE_RIM_STANDOFF seed 3/standard masonry=2 facade=0 level=5 unpanelled=2 natural=0 misplaced=0 worst=0.000000
+[31m    [Failed]:  [0m[2] expected to equal [0]:  seed 3/standard lays 2 rim(s) on a face that is neither a panel nor a level walked junction; the rim would take the boundary and the stand-off would mean nothing
+      at line 6855
+MAZE_RIM_STANDOFF seed 9/standard masonry=0 facade=0 level=1 unpanelled=1 natural=0 misplaced=0 worst=0.000000
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 9/standard lays 1 rim(s) on a face that is neither a panel nor a level walked junction; the rim would take the boundary and the stand-off would mean nothing
+      at line 6855
+MAZE_RIM_STANDOFF corpus masonry=2 facade=6
+[31m    [Failed]:  [0m[0] expected to be > than [0]:  the corpus must exercise the matching terrain wall/lip seam
+      at line 6883
+* test_a_free_top_smaller_than_a_yard_remains_a_closed_roof
+MAZE_GARDEN_RUNS seed 12/compact cells=18 runs=1 smallest=18 thin=0 fake=0
+MAZE_GARDEN_RUNS seed 9/compact cells=0 runs=0 smallest=1073741824 thin=0 fake=0
+MAZE_GARDEN_RUNS seed 3/standard cells=16 runs=1 smallest=16 thin=0 fake=0
+MAZE_GARDEN_RUNS seed 9/standard cells=9 runs=1 smallest=9 thin=0 fake=0
+* test_public_floor_plates_never_use_stair_like_bearers
+MAZE_FLOOR_BEARER_RETIRED seed 12/compact candidates=16 laid=0
+MAZE_FLOOR_BEARER_RETIRED seed 9/compact candidates=4 laid=0
+MAZE_FLOOR_BEARER_RETIRED seed 3/standard candidates=18 laid=0
+MAZE_FLOOR_BEARER_RETIRED seed 9/standard candidates=16 laid=0
+* test_the_frontage_constants_mirror_the_module_descriptors
+* test_the_frontage_clearance_covers_the_baked_colliders
+MAZE_FRONTAGE_HULL sfm.stall.variant.001 colliders=7 hull=5.280 x 4.550 x 3.661 half_width=2.640 rise=4.550 reach=3.430
+MAZE_FRONTAGE_HULL sfv.fabric.awning.blue.001 colliders=0 (geometry is the envelope)
+MAZE_FRONTAGE_HULL sfm.table.fishmonger.001 colliders=5 hull=1.960 x 0.910 x 1.000 half_width=0.980 rise=0.910 reach=1.309
+MAZE_FRONTAGE_HULL lpfv.fabric.prop.barrel.01 colliders=0 (geometry is the envelope)
+* test_the_perimeter_stands_its_frontage_on_open_ground
+MAZE_FRONTAGE seed 12/compact sites=17 laid=17 ground_band=0 wide=9 shoulders=0
+MAZE_FRONTAGE seed 9/compact sites=7 laid=7 ground_band=0 wide=4 shoulders=0
+MAZE_FRONTAGE seed 3/standard sites=25 laid=25 ground_band=0 wide=12 shoulders=0
+MAZE_FRONTAGE seed 9/standard sites=16 laid=16 ground_band=0 wide=2 shoulders=0
+* test_the_frontage_stands_clear_of_the_town_s_own_cladding
+MAZE_FRONTAGE_STANDOFF pool=[&"sfm.stall.variant.001", &"sfv.fabric.awning.blue.001"] reach=3.4301 cleared=4.5000 slack=0.5169
+MAZE_FRONTAGE_STANDOFF pool=[&"lpfv.fabric.prop.barrel.01"] reach=0.8994 cleared=1.5000 slack=0.0476
+MAZE_FRONTAGE_GROUND seed 12/compact sites=17 stood_off=8 shifted=1 pieces=58 outside=0 worst=0.0000 first=
+MAZE_FRONTAGE_GROUND seed 9/compact sites=7 stood_off=3 shifted=0 pieces=24 outside=0 worst=0.0000 first=
+MAZE_FRONTAGE_GROUND seed 3/standard sites=25 stood_off=18 shifted=2 pieces=79 outside=0 worst=0.0000 first=
+MAZE_FRONTAGE_GROUND seed 9/standard sites=16 stood_off=5 shifted=2 pieces=26 outside=0 worst=0.0000 first=
+* test_no_lawn_is_laid_over_a_building
+MAZE_GARDEN_GROUND seed 12/compact cells=18 over_building=0 capless=0
+MAZE_GARDEN_GROUND seed 9/compact cells=0 over_building=0 capless=0
+MAZE_GARDEN_GROUND seed 3/standard cells=0 over_building=0 capless=0
+MAZE_GARDEN_GROUND seed 9/standard cells=9 over_building=0 capless=0
+* test_the_village_green_is_never_a_thread
+MAZE_GREEN_SHAPE seed 3/standard green=16 blocks=9 entered_shaped=true
+* test_a_roof_never_stands_inside_the_wall_it_meets
+MAZE_ROOF_SEAM seed 12/compact roof_conflicts=0 embedded=0
+MAZE_ROOF_SEAM seed 9/compact roof_conflicts=3 embedded=0
+MAZE_ROOF_SEAM seed 3/standard roof_conflicts=6 embedded=0
+MAZE_ROOF_SEAM seed 9/standard roof_conflicts=4 embedded=0
+* test_a_stone_cap_never_reaches_over_a_street
+* test_a_cap_over_a_street_is_trimmed_to_the_run_it_closes
+* test_the_hillside_pushes_back
+MAZE_COLLISION_CENSUS seed 12/compact foot=0/6 head=0/10 gardens=72 plaza=0 missing_ground=0 rims=10 bare=10 unfloored=0
+MAZE_COLLISION_CENSUS seed 9/compact foot=0/6 head=0/7 gardens=0 plaza=0 missing_ground=0 rims=0 bare=0 unfloored=0
+MAZE_COLLISION_CENSUS seed 3/standard foot=0/23 head=0/8 gardens=64 plaza=0 missing_ground=0 rims=9 bare=9 unfloored=0
+MAZE_COLLISION_CENSUS seed 9/standard foot=0/18 head=0/20 gardens=36 plaza=0 missing_ground=0 rims=2 bare=2 unfloored=0
+* test_the_hillside_treatment_fires_on_a_planted_bank
+* test_the_seeded_rock_relief_can_never_open_the_shell
+* test_retained_stone_concentrates_in_the_bottom_storeys
+MAZE_STONE_BANDS seed 12/compact faces=192 high=0 ratio=0.0000 (ceiling 0.16) roof_band_high=0 unroomed_high=0 raised_shoulder_high=0 grounded=16 min=-2 max=2 (ceiling 9)
+MAZE_STONE_BANDS seed 12/compact per-band { -2: 10, -1: 43, 0: 99, 1: 27, 2: 13 }
+MAZE_STONE_BANDS seed 12/compact per-storey { 0: 152, 1: 40 }
+MAZE_STONE_BANDS seed 9/compact faces=107 high=0 ratio=0.0000 (ceiling 0.16) roof_band_high=0 unroomed_high=0 raised_shoulder_high=0 grounded=0 min=-2 max=0 (ceiling 9)
+MAZE_STONE_BANDS seed 9/compact per-band { -2: 27, -1: 42, 0: 38 }
+MAZE_STONE_BANDS seed 9/compact per-storey { 0: 107 }
+MAZE_STONE_BANDS seed 3/standard faces=423 high=0 ratio=0.0000 (ceiling 0.16) roof_band_high=0 unroomed_high=0 raised_shoulder_high=0 grounded=0 min=-4 max=3 (ceiling 9)
+MAZE_STONE_BANDS seed 3/standard per-band { -4: 11, -3: 11, -2: 60, -1: 148, 0: 137, 1: 37, 2: 12, 3: 7 }
+MAZE_STONE_BANDS seed 3/standard per-storey { 0: 367, 1: 49, 2: 7 }
+MAZE_STONE_BANDS seed 9/standard faces=519 high=0 ratio=0.0000 (ceiling 0.16) roof_band_high=0 unroomed_high=0 raised_shoulder_high=0 grounded=16 min=-3 max=2 (ceiling 9)
+MAZE_STONE_BANDS seed 9/standard per-band { -3: 58, -2: 100, -1: 136, 0: 176, 1: 28, 2: 21 }
+MAZE_STONE_BANDS seed 9/standard per-storey { 0: 470, 1: 49 }
+* test_exterior_walls_are_plank_and_plaster_over_coherent_bases
+EXTERIOR_WALLS seed 12/compact faces=216 stone=42 ratio=0.1944 (ceiling 0.24) high=0 high_ratio=0.0000 (ceiling 0.04) off_datum=0 base_runs=64 fragmented=0
+EXTERIOR_WALLS seed 12/compact stone-per-band { 0: 26, 1: 16 }
+EXTERIOR_WALLS seed 12/compact timber-per-band { 0: 72, 1: 75, 2: 20, 3: 7 }
+EXTERIOR_WALLS seed 9/compact faces=312 stone=62 ratio=0.1987 (ceiling 0.24) high=0 high_ratio=0.0000 (ceiling 0.04) off_datum=6 base_runs=96 fragmented=0
+EXTERIOR_WALLS seed 9/compact stone-per-band { 0: 28, 1: 34 }
+EXTERIOR_WALLS seed 9/compact timber-per-band { 0: 75, 1: 77, 2: 35, 3: 35, 4: 11, 5: 11 }
+EXTERIOR_WALLS seed 3/standard faces=1076 stone=176 ratio=0.1636 (ceiling 0.24) high=26 high_ratio=0.0242 (ceiling 0.04) off_datum=0 base_runs=297 fragmented=0
+EXTERIOR_WALLS seed 3/standard stone-per-band { -3: 1, -2: 11, -1: 8, 0: 56, 1: 74, 2: 18, 3: 8 }
+EXTERIOR_WALLS seed 3/standard timber-per-band { -3: 4, -2: 12, -1: 24, 0: 217, 1: 206, 2: 170, 3: 164, 4: 52, 5: 45, 6: 3, 7: 3 }
+EXTERIOR_WALLS seed 9/standard faces=785 stone=162 ratio=0.2064 (ceiling 0.24) high=4 high_ratio=0.0051 (ceiling 0.04) off_datum=0 base_runs=260 fragmented=0
+EXTERIOR_WALLS seed 9/standard stone-per-band { 0: 76, 1: 82, 2: 4 }
+EXTERIOR_WALLS seed 9/standard timber-per-band { -3: 4, -2: 1, 0: 174, 1: 166, 2: 107, 3: 89, 4: 35, 5: 38, 6: 9 }
+* test_the_stone_trim_refuses_to_strand_a_plot_or_a_street
+[31m    [Failed]:  [0mseed 12/compact must stand at least one plot on another
+      at line 8754
+* test_the_stone_trim_reads_a_datum_below_the_frame_origin
+* test_retained_stone_never_stands_over_released_air
+MAZE_STONE_HANGING seed 12/compact retained=200 hanging=0 repairs=0 first=
+MAZE_STONE_HANGING seed 9/compact retained=178 hanging=0 repairs=0 first=
+MAZE_STONE_HANGING seed 3/standard retained=686 hanging=0 repairs=12 first=
+MAZE_STONE_HANGING seed 9/standard retained=530 hanging=0 repairs=8 first=
+* test_assets_land
+MAZE_ASSET_LAND seed 12/compact placed=2 realisable=2 landmarks=2 mirror={ "tested": 18, "no_frontage": 0, "street_over_top": 0, "body_outside_plot": 8, "bearing_off_ground": 4, "realisable": 6 } |  ; 
+MAZE_ASSET_LAND seed 9/compact placed=2 realisable=2 landmarks=2 mirror={ "tested": 10, "no_frontage": 0, "street_over_top": 0, "body_outside_plot": 0, "bearing_off_ground": 2, "realisable": 8 } |  ; 
+MAZE_ASSET_LAND seed 3/standard placed=1 realisable=1 landmarks=1 mirror={ "tested": 195, "no_frontage": 0, "street_over_top": 0, "body_outside_plot": 193, "bearing_off_ground": 0, "realisable": 2 } | 
+MAZE_ASSET_LAND seed 9/standard placed=2 realisable=2 landmarks=2 mirror={ "tested": 33, "no_frontage": 0, "street_over_top": 0, "body_outside_plot": 28, "bearing_off_ground": 0, "realisable": 5 } |  ; 
+MAZE_ASSET_LAND corpus realisable=7 realised=7 tested=256
+MAZE_ASSET_LAND ratchet seed 3/standard landmarks=1 floor=1
+[31m    [Failed]:  [0m[7] expected to equal [1]:  the realisation mirror accepts 7 of 256 sites it tested; it accepted 1 when this was measured
+      at line 9134
+* test_optional_facade_projections_yield_to_mandatory_shells
+MAZE_FACADE_YIELD seed 12/compact rooms=18 envelopes=18 desired_b=2 selected_b=2 fallbacks=0 yields=0
+MAZE_FACADE_YIELD seed 9/compact rooms=25 envelopes=25 desired_b=1 selected_b=1 fallbacks=0 yields=0
+MAZE_FACADE_YIELD seed 3/standard rooms=91 envelopes=91 desired_b=13 selected_b=11 fallbacks=2 yields=1
+MAZE_FACADE_YIELD seed 9/standard rooms=68 envelopes=68 desired_b=4 selected_b=4 fallbacks=0 yields=0
+MAZE_FACADE_YIELD corpus towns=4 yields=1
+* test_a_level_realm_edge_is_proved_only_by_level_lanes
+* test_a_supplemental_court_prefers_a_level_partner
+* test_a_realm_edge_with_only_stepped_lanes_says_it_is_a_stair
+* test_corpus_composes
+PLANNER_MEASURE seed=12 scale=compact ms=866
+PLANNER_MEASURE seed=9 scale=compact ms=1229
+PLANNER_MEASURE seed=3 scale=standard ms=4381
+PLANNER_MEASURE seed=9 scale=standard ms=3179
+MAZE_STAGE_MS seed 12/compact spatial=489 { &"parcels": 4, &"hero_beam": 9, &"room_composition": 55, &"bridge_stamping": 0, &"directed_back_rooms": 48, &"residual_rooms": 182, &"partition_rooms": 304, &"feature_solver": 35, &"room_gate": 45 }
+MAZE_STAGE_MS seed 9/compact spatial=711 { &"parcels": 6, &"hero_beam": 14, &"room_composition": 66, &"bridge_stamping": 58, &"directed_back_rooms": 33, &"residual_rooms": 290, &"partition_rooms": 480, &"feature_solver": 48, &"room_gate": 52 }
+MAZE_STAGE_MS seed 3/standard spatial=2648 { &"parcels": 18, &"hero_beam": 24, &"room_composition": 518, &"bridge_stamping": 414, &"directed_back_rooms": 920, &"residual_rooms": 59, &"partition_rooms": 1953, &"feature_solver": 213, &"room_gate": 110 }
+MAZE_STAGE_MS seed 9/standard spatial=1724 { &"parcels": 13, &"hero_beam": 36, &"room_composition": 241, &"bridge_stamping": 346, &"directed_back_rooms": 533, &"residual_rooms": 45, &"partition_rooms": 1222, &"feature_solver": 118, &"room_gate": 90 }
+MAZE_CORPUS compact sealed=12/12 failures=
+MAZE_CORPUS standard sealed=12/12 failures=
+MAZE_CORPUS large sealed=12/12 failures=
+MAZE_CORPUS grand sealed=12/12 failures=
+* test_large_and_grand_towns_exist
+MAZE_BIG seed 1/large ms=5108 buildings=84 rooms={ &"slim": 15, &"tower": 20, &"row": 9 } markets=0 { "courtyard_parcel_sides": 0, "covered_market": 0, "courtyard_bridges": 0, "hero_courtyard_bridges": 0, "hero_landmarks": 4, "hero_landmarks_target": 0, "hero_skywalks": 0, "hero_skywalks_target": 3, "composed_courtyard_sides": 0, "composed_courtyard_sides_target": 3, "bridges": 1, "landmarks": 4, "landmarks_target": 8, "skywalks": 0, "skywalks_target": 3, "courtyard_bridge_houses": 0, "elevated_courtyards": 0, "balconies": 1, "balconies_target": 3 }
+MAZE_BIG seed 9/grand ms=7679 buildings=99 rooms={ &"slim": 17, &"row": 10, &"tower": 28, &"building": 2, &"long": 1 } markets=0 { "courtyard_parcel_sides": 0, "covered_market": 0, "courtyard_bridges": 0, "hero_courtyard_bridges": 0, "hero_landmarks": 5, "hero_landmarks_target": 0, "hero_skywalks": 0, "hero_skywalks_target": 4, "composed_courtyard_sides": 0, "composed_courtyard_sides_target": 3, "bridges": 1, "landmarks": 5, "landmarks_target": 9, "skywalks": 0, "skywalks_target": 4, "courtyard_bridge_houses": 0, "elevated_courtyards": 0 }
+* test_the_big_towns_carry_the_round_s_own_zeroes
+MAZE_BIG_ZEROES seed 1/large pieces={ "maze-garden/": 4, "maze-stall-goods/": 44, "maze-frontage/": 21, "courtyard-planter/": 2 } in_module=0 in_skin=0 ruled=0/0 in_module_by={  } in_skin_by={  } colliding=2 ruled_colliding=0 others=[sfv.deck.pillar.001@(-16, 0, 2) rise=1.500, sfv.deck.pillar.001@(-15, 0, 2) rise=1.500] withdrew=2/0 garden=24 green=16 entries=2
+[31m    [Failed]:  [0m[2] expected to equal [0]:  seed 1/large stands 2 collider(s) in a walked body lane: sfv.deck.pillar.001@(-16, 0, 2) rise=1.500, sfv.deck.pillar.001@(-15, 0, 2) rise=1.500
+      at line 9917
+MAZE_BIG_ZEROES seed 9/grand pieces={ "maze-garden/": 36, "maze-stall-goods/": 36, "maze-frontage/": 22, "maze-plaza-centre/": 1 } in_module=0 in_skin=0 ruled=0/0 in_module_by={  } in_skin_by={  } colliding=0 ruled_colliding=0 others=[] withdrew=2/0 garden=98 green=56 entries=1
+* test_every_asset_the_assembler_places_is_declared
+MAZE_PAYLOAD_ASSETS seed 12/compact assets=111 instances=515 undeclared=[]
+MAZE_PAYLOAD_ASSETS seed 9/compact assets=115 instances=462 undeclared=[]
+MAZE_PAYLOAD_ASSETS seed 3/standard assets=218 instances=1519 undeclared=[]
+MAZE_PAYLOAD_ASSETS seed 9/standard assets=197 instances=1198 undeclared=[]
+MAZE_PAYLOAD_ASSETS seed 1/large assets=223 instances=1903 undeclared=[]
+MAZE_PAYLOAD_ASSETS seed 9/grand assets=265 instances=2270 undeclared=[]
+* test_sloped_ground_composes
+[31m    [Failed]:  [0mExpected [<null>] to be anything but NULL:  ramp seed 12/compact must compose on real ground: maze source rejected: carve: single spine DFS exhausted 7 visits
+      at line 10526
+MAZE_SLOPED_COMPOSE ramp seed 3/standard SEALED ms=4327 relief=5 plots=29 frontage=0.650 unroomed=0.059 route_on_stone=1.000 unproved_flanks=24 built_in=0 holes={  }
+MAZE_SLOPED_COMPOSE step seed 12/compact SEALED ms=572 relief=3 plots=6 frontage=0.458 unroomed=0.543 route_on_stone=1.000 unproved_flanks=0 built_in=0 holes={  }
+[31m    [Failed]:  [0m[0.54268292682926833059] expected to be between [0.0] and [0.39]:  step/12/compact leaves 0.543 of its plot mass unroomed
+      at line 10636
+MAZE_SLOPED_COMPOSE step seed 3/standard SEALED ms=3359 relief=3 plots=28 frontage=0.805 unroomed=0.223 route_on_stone=1.000 unproved_flanks=24 built_in=0 holes={  }
+[31m    [Failed]:  [0m[0] expected to equal [1]:  the pinned sloped refusals are ["step/3/standard"] and [] actually refused; a row that started composing is a re-pin
+      at line 10647
+[31m    [Failed]:  [0m[48] expected to equal [56]:  the sloped rows skipped 48 unproved flank neighbour(s) against the pinned 56; a rise means `_stamp_maze_bridges` is catching spans the carver used to refuse at seed time
+      at line 10660
+* test_solve_selected_rebuilds_the_maze_on_real_ground
+MAZE_SELECTED ramp 1/compact quarter 0 SEALED ms=1077 entry=(0, 2, 3) preview=(0, 0, 3) lands=true
+MAZE_SELECTED ramp 1/compact quarter 1 SEALED ms=1471 entry=(0, 1, 3) preview=(0, 0, 3) lands=true
+MAZE_SELECTED ramp 1/compact quarter 2 SEALED ms=1279 entry=(0, 2, 3) preview=(0, 0, 3) lands=true
+MAZE_SELECTED ramp 1/compact quarter 3 SEALED ms=2334 entry=(0, 4, 3) preview=(0, 0, 3) lands=true
+MAZE_SELECTED step 12/compact quarter 0 SEALED ms=571 entry=(0, 0, 2) preview=(0, 0, 2) lands=true
+MAZE_SELECTED step 12/compact quarter 1 SEALED ms=1229 entry=(0, 0, 2) preview=(0, 0, 2) lands=true
+MAZE_SELECTED step 12/compact quarter 2 REFUSED ms=17 maze source rejected: carve: single spine DFS exhausted 70 visits
+MAZE_SELECTED step 12/compact quarter 3 SEALED ms=743 entry=(0, 0, 2) preview=(0, 0, 2) lands=true
+* test_the_production_site_builds_a_maze_town_on_real_terrain
+MAZE_PRODUCTION settlement=settlement.29bc5c240c52f84a cell=(10, -16) city_seed=166029932451774690 scale=compact ms=1003 accepted=true reason=accepted
+MAZE_PRODUCTION entries=540 meshes=9 lift=0.080 relief=3.964 origin=(255.5, 8.08, -382.5) advisory={ "covered_market": 0, "hero_courtyard_bridges": 0, "hero_landmarks": 2, "hero_landmarks_target": 0, "hero_skywalks": 0, "hero_skywalks_target": 1, "landmarks": 2, "landmarks_target": 5, "skywalks": 0, "skywalks_target": 1 }
+* test_the_decor_constants_mirror_the_module_descriptors
+[31m    [Failed]:  [0m[1] expected to equal [0]:  lpfv.fabric.prop.bench.02 has started baking colliders; DECOR_CLEARANCE is the VISUAL envelope alone and must become the larger of the two
+      at line 11112
+[31m    [Failed]:  [0m[1] expected to equal [0]:  lpfv.fabric.prop.bench.02 bakes a collider its clearance row does not carry
+      at line 11119
+[31m    [Failed]:  [0m[1] expected to equal [0]:  lpfv.fabric.prop.bench.01 has started baking colliders; DECOR_CLEARANCE is the VISUAL envelope alone and must become the larger of the two
+      at line 11112
+[31m    [Failed]:  [0m[1] expected to equal [0]:  lpfv.fabric.prop.bench.01 bakes a collider its clearance row does not carry
+      at line 11119
+* test_no_decor_stands_inside_the_wall_beside_it
+MAZE_DECOR_FIT seed 12/compact placed=8 spans=4 over_reach=0 uncatalogued=0 intersecting=0 worst=0.0000
+MAZE_DECOR_CHANNELS seed 12/compact pieces={ "maze-garden/": 8, "maze-stall-goods/": 41, "maze-frontage/": 17 } in_module=0 in_skin=0 ruled=0/0 in_module_by={  } in_skin_by={  } first=
+MAZE_DECOR_FIT seed 9/compact placed=0 spans=0 over_reach=0 uncatalogued=0 intersecting=0 worst=0.0000
+MAZE_DECOR_CHANNELS seed 9/compact pieces={ "maze-stall-goods/": 17, "maze-frontage/": 7 } in_module=0 in_skin=0 ruled=0/0 in_module_by={  } in_skin_by={  } first=
+MAZE_DECOR_FIT seed 3/standard placed=0 spans=0 over_reach=0 uncatalogued=0 intersecting=0 worst=0.0000
+MAZE_DECOR_CHANNELS seed 3/standard pieces={ "maze-stall-goods/": 54, "maze-frontage/": 25 } in_module=0 in_skin=0 ruled=0/0 in_module_by={  } in_skin_by={  } first=
+MAZE_DECOR_FIT seed 9/standard placed=6 spans=2 over_reach=0 uncatalogued=0 intersecting=0 worst=0.0000
+MAZE_DECOR_CHANNELS seed 9/standard pieces={ "maze-garden/": 6, "maze-stall-goods/": 10, "maze-frontage/": 16 } in_module=0 in_skin=0 ruled=0/0 in_module_by={  } in_skin_by={  } first=
+MAZE_DECOR_FIT seed 1/large placed=4 spans=2 over_reach=0 uncatalogued=0 intersecting=0 worst=0.0000
+MAZE_DECOR_CHANNELS seed 1/large pieces={ "maze-garden/": 4, "maze-stall-goods/": 44, "maze-frontage/": 21, "courtyard-planter/": 2 } in_module=0 in_skin=0 ruled=0/0 in_module_by={  } in_skin_by={  } first=
+MAZE_DECOR_FIT seed 9/grand placed=36 spans=14 over_reach=0 uncatalogued=0 intersecting=1 worst=0.0000
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 9/grand stands 1 planted piece(s) inside a module of a unit (lpfv.flower.01 in sfv.deck.pillar.001 at facade-joint/15/0/-37). Round 5 pinned the RULE and left 28 of 83 corpus-wide; this is the OUTCOME, measured against the plan's own per-placement boxes
+      at line 11261
+MAZE_DECOR_CHANNELS seed 9/grand pieces={ "maze-garden/": 36, "maze-stall-goods/": 36, "maze-frontage/": 22, "maze-plaza-centre/": 1 } in_module=0 in_skin=0 ruled=0/0 in_module_by={  } in_skin_by={  } first=
+* test_no_authored_dressing_is_buried_in_the_town_s_own_masonry
+MAZE_BURIED_DRESSING seed 12/compact dressing=7 panels=123 buried=1 colliding=0 withdrew=0/0 first=spatial.fabric.spatial.parcel.maze.house.001.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01) 
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 12/compact leaves 1 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.001.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01). That is the user's plant in the wall
+      at line 11361
+MAZE_BURIED_DRESSING seed 9/compact dressing=13 panels=103 buried=0 colliding=0 withdrew=0/0 first= 
+MAZE_BURIED_DRESSING seed 3/standard dressing=39 panels=328 buried=1 colliding=0 withdrew=1/0 first=spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01) 
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 3/standard leaves 1 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01). That is the user's plant in the wall
+      at line 11361
+MAZE_BURIED_DRESSING seed 9/standard dressing=28 panels=313 buried=1 colliding=0 withdrew=0/0 first=spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01) 
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 9/standard leaves 1 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01). That is the user's plant in the wall
+      at line 11361
+MAZE_BURIED_DRESSING_BIG seed 1/large dressing=39 panels=530 buried=2 spatial.fabric.spatial.maze_back.01.room00/south/lantern (lpfv.fabric.prop.lantern.table.01)
+[31m    [Failed]:  [0m[2] expected to equal [0]:  seed 1/large leaves 2 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.maze_back.01.room00/south/lantern (lpfv.fabric.prop.lantern.table.01)
+      at line 11398
+MAZE_BURIED_DRESSING_BIG seed 9/grand dressing=56 panels=685 buried=3 spatial.fabric.spatial.parcel.maze.house.000.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01)
+[31m    [Failed]:  [0m[3] expected to equal [0]:  seed 9/grand leaves 3 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.000.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01)
+      at line 11398
+* test_the_courtyard_planter_gate_can_actually_refuse
+* test_the_stall_stations_fit_the_canopies_they_hang_from
+MAZE_STALL_FIT sfm.stall.variant.001 rise=4.0193 hangs=true string_top=3.9004 string_foot=2.6351
+MAZE_STALL_FIT sfv.fabric.awning.blue.001 rise=3.4910 hangs=false string_top=3.9004 string_foot=2.6351
+* test_every_canopy_the_town_stands_is_stocked
+MAZE_STALL_GOODS seed 12/compact canopies=9 goods=41 counters=9 anchors=9 above=0 worst=0.0000
+MAZE_STALL_GOODS seed 9/compact canopies=4 goods=17 counters=4 anchors=4 above=0 worst=0.0000
+MAZE_STALL_GOODS seed 3/standard canopies=12 goods=54 counters=12 anchors=12 above=0 worst=0.0000
+MAZE_STALL_GOODS seed 9/standard canopies=2 goods=10 counters=2 anchors=2 above=0 worst=0.0000
+* test_the_town_s_decor_is_not_one_repeated_piece
+MAZE_DECOR_VARIETY seed 12/compact types=4 pieces=8 placed=8 pairs=3 repeats=0
+MAZE_DECOR_VARIETY seed 9/compact types=0 pieces=0 placed=0 pairs=0 repeats=0
+MAZE_DECOR_VARIETY seed 3/standard types=0 pieces=0 placed=0 pairs=0 repeats=0
+MAZE_DECOR_VARIETY seed 9/standard types=5 pieces=6 placed=6 pairs=4 repeats=0
+MAZE_DECOR_VARIETY seed 1/large types=3 pieces=4 placed=4 pairs=1 repeats=0
+[31m    [Failed]:  [0m[3] expected to be >= than [4]:  seed 1/large dresses its yards with 3 distinct piece(s) out of 4 planted; the three pools carry 23 between them
+      at line 12025
+MAZE_DECOR_VARIETY seed 9/grand types=14 pieces=36 placed=42 pairs=12 repeats=0
+MAZE_DECOR_CORPUS types=15
+* test_no_bearer_hangs_over_a_surface_a_body_stands_on
+MAZE_BEARER_HEADROOM seed 12/compact borne=4 refused=12 pinched=0 stances=18 capped_pinched=0 walked_pinched=0
+MAZE_BEARER_HEADROOM seed 9/compact borne=4 refused=0 pinched=0 stances=0 capped_pinched=0 walked_pinched=0
+MAZE_BEARER_HEADROOM seed 3/standard borne=13 refused=5 pinched=0 stances=16 capped_pinched=0 walked_pinched=0
+MAZE_BEARER_HEADROOM seed 9/standard borne=8 refused=8 pinched=0 stances=9 capped_pinched=0 walked_pinched=0
+[1m69/88 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_warren_maze_composition.gd
+[0m- test_unroomed_plot_mass_is_bounded
+[31m    [Failed]:  [0m[0.39344262295082] expected to be <= than [0.36]:  seed 9/compact leaves 0.393 of its plot mass unroomed
+          at line 1375
+- test_bridges_become_rooms_decks_or_audited_releases
+[31m    [Failed]:  [0mExpected [ARRAY(["source bridge has no sealed two-endpoint compound", "span is not a one-storey tower or slim shell", "span mass is already spent or feature-reserved", "span footprint is not an authored shell", "source did not prove two opposite endpoint footprints", "endpoint footprint has no complete room recipe", "endpoint footprint was consumed before bridge composition", "endpoint cells do not match an authored room phase", "endpoint room could not claim its exact private cells", "endpoint has neither continuous source bearing nor complete terrain-reaching arcade portal", "endpoint authored envelope or bridge socket does not fit", "endpoint authored envelopes overlap", "two-ended bridge compound has no exact public access root", "complete occupied bridge authored envelope does not fit", "two-ended bridge compound has no inhabited access root", "bearing flank has no room to name", "authored envelope does not fit"])] to contain value:  ["promoted endpoint support envelope does not fit"]:  seed 6357506428441529412/standard released bridge bridge.02 for an unvocabularised reason
+          at line 1667
+[31m    [Failed]:  [0m[0.66666666666667] expected to be >= than [0.95]:  seed 6357506428441529412/standard stamps only 0.667 of its bridge plots
+          at line 1715
+- test_the_roofscape_is_a_village_not_a_fortress
+[31m    [Failed]:  [0m[0] expected to be > than [0]:  seed 9/standard renders no overhang bracket at all
+          at line 2621
+- test_a_street_borne_crown_stays_in_the_flat_vocabulary
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 9/standard derives 1 street-borne flat crowns against the pinned 0; the equality below is only worth something while this number is right
+          at line 3338
+- test_stacked_houses_bond_to_flat_roofs
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 3/standard must publish the declared stacks that composed nothing
+          at line 4315
+- test_retained_stone_is_skinned
+[31m    [Failed]:  [0m[302] expected to equal [303]:  seed 9/standard must hand the renderer exactly the panels it audited
+          at line 5127
+- test_the_rock_reads_as_hillside_not_masonry
+[31m    [Failed]:  [0m[14] expected to equal [0]:  seed 12/compact must alternate facade and masonry storeys on tall banks
+          at line 5394
+[31m    [Failed]:  [0m[51] expected to equal [61]:  seed 12/compact audited masonry panel count must equal the payload's
+          at line 5429
+[31m    [Failed]:  [0m[27] expected to equal [13]:  seed 12/compact audited facade panel count must equal the payload's
+          at line 5446
+[31m    [Failed]:  [0m[27] expected to equal [13]:  seed 12/compact every clad mass face belongs to exactly one district family
+          at line 5449
+[31m    [Failed]:  [0m[27] expected to equal [41]:  seed 12/compact audited tall-bank masonry must equal the payload's
+          at line 5454
+[31m    [Failed]:  [0m[27] expected to equal [41]:  seed 12/compact audited above-ground stone must equal the alternating courses
+          at line 5458
+[31m    [Failed]:  [0m[0] expected to equal [14]:  seed 12/compact audited tall-course mismatches must equal the payload's
+          at line 5462
+[31m    [Failed]:  [0m[7] expected to equal [3]:  seed 12/compact audited closed masonry crowns must equal the payload's
+          at line 5476
+[31m    [Failed]:  [0m[108] expected to equal [112]:  seed 12/compact every panel of the shell wears exactly one module
+          at line 5487
+[31m    [Failed]:  [0m[40] expected to equal [38]:  seed 9/compact audited masonry panel count must equal the payload's
+          at line 5429
+[31m    [Failed]:  [0m[7] expected to equal [5]:  seed 9/compact audited closed masonry crowns must equal the payload's
+          at line 5476
+[31m    [Failed]:  [0m[63] expected to equal [65]:  seed 9/compact every panel of the shell wears exactly one module
+          at line 5487
+[31m    [Failed]:  [0m[22] expected to equal [0]:  seed 3/standard must alternate facade and masonry storeys on tall banks
+          at line 5394
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 3/standard may only clad a tall bank's SIDE in facade storeys
+          at line 5408
+[31m    [Failed]:  [0m[167] expected to equal [165]:  seed 3/standard audited masonry panel count must equal the payload's
+          at line 5429
+[31m    [Failed]:  [0m[23] expected to equal [6]:  seed 3/standard audited facade panel count must equal the payload's
+          at line 5446
+[31m    [Failed]:  [0m[23] expected to equal [6]:  seed 3/standard every clad mass face belongs to exactly one district family
+          at line 5449
+[31m    [Failed]:  [0m[30] expected to equal [46]:  seed 3/standard audited tall-bank masonry must equal the payload's
+          at line 5454
+[31m    [Failed]:  [0m[30] expected to equal [46]:  seed 3/standard audited above-ground stone must equal the alternating courses
+          at line 5458
+[31m    [Failed]:  [0m[6] expected to equal [22]:  seed 3/standard audited tall-course mismatches must equal the payload's
+          at line 5462
+[31m    [Failed]:  [0m[8] expected to equal [6]:  seed 3/standard audited closed masonry crowns must equal the payload's
+          at line 5476
+[31m    [Failed]:  [0m[20] expected to equal [3]:  seed 3/standard audited undercroft stone caps must equal the payload's -- the exception the free-bench pin above allows is only as honest as this count
+          at line 5480
+[31m    [Failed]:  [0m[239] expected to equal [258]:  seed 3/standard every panel of the shell wears exactly one module
+          at line 5487
+[31m    [Failed]:  [0m[32] expected to equal [0]:  seed 9/standard must alternate facade and masonry storeys on tall banks
+          at line 5394
+[31m    [Failed]:  [0m[173] expected to equal [190]:  seed 9/standard audited masonry panel count must equal the payload's
+          at line 5429
+[31m    [Failed]:  [0m[42] expected to equal [11]:  seed 9/standard audited facade panel count must equal the payload's
+          at line 5446
+[31m    [Failed]:  [0m[42] expected to equal [11]:  seed 9/standard every clad mass face belongs to exactly one district family
+          at line 5449
+[31m    [Failed]:  [0m[45] expected to equal [75]:  seed 9/standard audited tall-bank masonry must equal the payload's
+          at line 5454
+[31m    [Failed]:  [0m[45] expected to equal [75]:  seed 9/standard audited above-ground stone must equal the alternating courses
+          at line 5458
+[31m    [Failed]:  [0m[2] expected to equal [32]:  seed 9/standard audited tall-course mismatches must equal the payload's
+          at line 5462
+[31m    [Failed]:  [0m[15] expected to equal [11]:  seed 9/standard audited closed masonry crowns must equal the payload's
+          at line 5476
+[31m    [Failed]:  [0m[12] expected to equal [3]:  seed 9/standard audited undercroft stone caps must equal the payload's -- the exception the free-bench pin above allows is only as honest as this count
+          at line 5480
+[31m    [Failed]:  [0m[289] expected to equal [303]:  seed 9/standard every panel of the shell wears exactly one module
+          at line 5487
+[31m    [Failed]:  [0m[0] expected to be > than [0]:  the corpus must retain some connected terrain-classified garden ground
+          at line 5493
+- test_the_plaza_deck_opens_the_square
+[31m    [Failed]:  [0m[1] expected to equal [2]:  1 of the four planner towns site a plaza deck; the pin is 2
+          at line 5781
+- test_the_town_gets_its_life
+[31m    [Failed]:  [0m[31] expected to equal [32]:  seed 6357506428441529412/standard audited outcropping count must equal the payload's
+          at line 6520
+[31m    [Failed]:  [0m[64] expected to equal [62]:  seed 6357506428441529412/standard must bracket every outcropping twice
+          at line 6525
+- test_every_garden_edge_turns_the_rim
+[31m    [Failed]:  [0m[5] expected to equal [13]:  seed 9/standard audited rim count must equal the payload's
+          at line 6697
+- test_the_rim_stands_off_the_panel_it_caps
+[31m    [Failed]:  [0m[2] expected to equal [0]:  seed 3/standard lays 2 rim(s) on a face that is neither a panel nor a level walked junction; the rim would take the boundary and the stand-off would mean nothing
+          at line 6855
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 9/standard lays 1 rim(s) on a face that is neither a panel nor a level walked junction; the rim would take the boundary and the stand-off would mean nothing
+          at line 6855
+[31m    [Failed]:  [0m[0] expected to be > than [0]:  the corpus must exercise the matching terrain wall/lip seam
+          at line 6883
+- test_the_stone_trim_refuses_to_strand_a_plot_or_a_street
+[31m    [Failed]:  [0mseed 12/compact must stand at least one plot on another
+          at line 8754
+- test_assets_land
+[31m    [Failed]:  [0m[7] expected to equal [1]:  the realisation mirror accepts 7 of 256 sites it tested; it accepted 1 when this was measured
+          at line 9134
+- test_the_big_towns_carry_the_round_s_own_zeroes
+[31m    [Failed]:  [0m[2] expected to equal [0]:  seed 1/large stands 2 collider(s) in a walked body lane: sfv.deck.pillar.001@(-16, 0, 2) rise=1.500, sfv.deck.pillar.001@(-15, 0, 2) rise=1.500
+          at line 9917
+- test_sloped_ground_composes
+[31m    [Failed]:  [0mExpected [<null>] to be anything but NULL:  ramp seed 12/compact must compose on real ground: maze source rejected: carve: single spine DFS exhausted 7 visits
+          at line 10526
+[31m    [Failed]:  [0m[0.54268292682926833059] expected to be between [0.0] and [0.39]:  step/12/compact leaves 0.543 of its plot mass unroomed
+          at line 10636
+[31m    [Failed]:  [0m[0] expected to equal [1]:  the pinned sloped refusals are ["step/3/standard"] and [] actually refused; a row that started composing is a re-pin
+          at line 10647
+[31m    [Failed]:  [0m[48] expected to equal [56]:  the sloped rows skipped 48 unproved flank neighbour(s) against the pinned 56; a rise means `_stamp_maze_bridges` is catching spans the carver used to refuse at seed time
+          at line 10660
+- test_the_decor_constants_mirror_the_module_descriptors
+[31m    [Failed]:  [0m[1] expected to equal [0]:  lpfv.fabric.prop.bench.02 has started baking colliders; DECOR_CLEARANCE is the VISUAL envelope alone and must become the larger of the two
+          at line 11112
+[31m    [Failed]:  [0m[1] expected to equal [0]:  lpfv.fabric.prop.bench.02 bakes a collider its clearance row does not carry
+          at line 11119
+[31m    [Failed]:  [0m[1] expected to equal [0]:  lpfv.fabric.prop.bench.01 has started baking colliders; DECOR_CLEARANCE is the VISUAL envelope alone and must become the larger of the two
+          at line 11112
+[31m    [Failed]:  [0m[1] expected to equal [0]:  lpfv.fabric.prop.bench.01 bakes a collider its clearance row does not carry
+          at line 11119
+- test_no_decor_stands_inside_the_wall_beside_it
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 9/grand stands 1 planted piece(s) inside a module of a unit (lpfv.flower.01 in sfv.deck.pillar.001 at facade-joint/15/0/-37). Round 5 pinned the RULE and left 28 of 83 corpus-wide; this is the OUTCOME, measured against the plan's own per-placement boxes
+          at line 11261
+- test_no_authored_dressing_is_buried_in_the_town_s_own_masonry
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 12/compact leaves 1 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.001.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01). That is the user's plant in the wall
+          at line 11361
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 3/standard leaves 1 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01). That is the user's plant in the wall
+          at line 11361
+[31m    [Failed]:  [0m[1] expected to equal [0]:  seed 9/standard leaves 1 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01). That is the user's plant in the wall
+          at line 11361
+[31m    [Failed]:  [0m[2] expected to equal [0]:  seed 1/large leaves 2 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.maze_back.01.room00/south/lantern (lpfv.fabric.prop.lantern.table.01)
+          at line 11398
+[31m    [Failed]:  [0m[3] expected to equal [0]:  seed 9/grand leaves 3 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.000.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01)
+          at line 11398
+- test_the_town_s_decor_is_not_one_repeated_piece
+[31m    [Failed]:  [0m[3] expected to be >= than [4]:  seed 1/large dresses its yards with 3 distinct piece(s) out of 4 planted; the three pools carry 23 between them
+          at line 12025
+
+Totals
+------
+Scripts               1
+Tests                88
+Passing Tests        69
+Failing Tests        19
+Asserts           8591/8657
+Time              134.192s
+
+
+[31m---- 19 failing tests ----
+[0m

@@ -1,0 +1,23 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+SEPT12_WAIT P33_background
+EVENING_NATIVE_OWNERS 71
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-collateral/P33_background/opaque/P33_background_0.png
+SEPT12_SHOT P33_background 0.0 opaque
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-collateral/P33_background/before/P33_background_0.png
+SEPT12_SHOT P33_background 0.0 before
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-collateral/P33_background/after/P33_background_0.png
+SEPT12_SHOT P33_background 0.0 after
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-collateral/P33_background/opaque/P33_background_-8.png
+SEPT12_SHOT P33_background -8.0 opaque
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-collateral/P33_background/before/P33_background_-8.png
+SEPT12_SHOT P33_background -8.0 before
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-collateral/P33_background/after/P33_background_-8.png
+SEPT12_SHOT P33_background -8.0 after
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-collateral/P33_background/opaque/P33_background_8.png
+SEPT12_SHOT P33_background 8.0 opaque
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-collateral/P33_background/before/P33_background_8.png
+SEPT12_SHOT P33_background 8.0 before
+SUBVIEW_CAPTURE res://docs/qa/2026-09-13-manual/01-near/evening-collateral/P33_background/after/P33_background_8.png
+SEPT12_SHOT P33_background 8.0 after

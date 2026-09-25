@@ -1,0 +1,231 @@
+extends RefCounted
+
+## Native, ground-rooted cliff outcrops. Resource preparation is main-thread
+## only; placement and collision transformation consume detached CPU values.
+const SIZES: Array[String] = ["2x2x2", "2x2x4", "2x2x8", "4x2x2", "4x2x4",
+	"4x2x8", "4x4x2", "4x4x4", "8x4x4"]
+const ROCK := &"kaykit.rock.05"
+const TILE := 24.0
+const BURIAL := 0.12
+const WALK_DEPTH := 1.5
+const REAR_BEARING := .5
+static var _wall_recess := 0.0
+const GRASS_SUPPORTS = preload("res://scripts/terrain/grass/GrassSupportSurfaces.gd")
+const NATIVE_CAP = preload("res://scripts/terrain/field/NativeTerrainCap.gd")
+static var _definitions: Dictionary = {}
+static var _pieces: Dictionary = {}
+
+static func prepare() -> void:
+	if not _definitions.is_empty(): return
+	assert(OS.get_thread_caller_id() == OS.get_main_thread_id())
+	CliffDressing._ensure_loaded()
+	# Measure the innermost authored cliff relief, rather than treating the
+	# logical 24 m cell boundary as the visible rock face.
+	var wall_piece: Array = CliffDressing._pieces["wall"]
+	var wall_min := INF
+	for vertex: Vector3 in wall_piece[0].get_faces():
+		wall_min = minf(wall_min,(wall_piece[1]*vertex).z)
+	_wall_recess = CliffDressing.PLACE+wall_min-TILE*.5
+	var catalog := EnvironmentCatalog.load_default()
+	var cache := EnvironmentRenderCache.new(catalog)
+	var ids: Array[StringName] = [ROCK]
+	for size: String in SIZES: ids.append(StringName("kaykit.terrace.%s" % size))
+	assert(cache.prepare(ids))
+	for id: StringName in ids:
+		var visual := cache.visual(id)
+		assert(visual.pieces.size() == 1)
+		var piece := visual.pieces[0]
+		var mesh := CliffDressing._retexel_grass_region(piece.mesh,CliffDressing.ground_uv())
+		_pieces[id] = [mesh,piece.local_transform]
+		var faces := piece.mesh.get_faces()
+		for index in faces.size(): faces[index] = piece.local_transform*faces[index]
+		var bounds := catalog.descriptor(id).measured_aabb
+		var collision := faces
+		var cap_bounds := Rect2()
+		if id != ROCK:
+			var cap := NATIVE_CAP.measure({"id":id,"top":bounds.end.y,"transform":Transform3D.IDENTITY,"bounds":bounds},faces)
+			collision = NATIVE_CAP.collision_faces(cap,bounds.position.y)
+			cap_bounds = Rect2(cap.border[0],Vector2.ZERO)
+			for point: Vector2 in cap.border: cap_bounds = cap_bounds.expand(point)
+		_definitions[id] = {"bounds":bounds,"faces":faces,"collision_faces":collision,"cap_bounds":cap_bounds}
+
+static func compute(region: HeightfieldRegion, lo_x: int, lo_z: int, cells: int,
+		world_seed: int, features: FeatureContext = null, water: WaterFieldContext = null) -> Dictionary:
+	assert(not _definitions.is_empty(), "Prepare native terrace resources before worker computation")
+	var proposals: Array[Dictionary] = []
+	# Every owner compares the same halo proposals before projection. A chunk
+	# boundary cannot change which overlapping outcrop wins.
+	for z in range(lo_z-1,lo_z+cells+1):
+		for x in range(lo_x-1,lo_x+cells+1):
+			_cell(region,Vector2i(x,z),world_seed,features,proposals)
+	var placements: Array[Dictionary] = []
+	var grass_supports: Array[Dictionary] = []
+	var grass_core := Rect2(Vector2(lo_x,lo_z)*TILE,Vector2.ONE*cells*TILE)
+	var faces := PackedVector3Array()
+	for candidate: Dictionary in proposals:
+		var owner: Vector2i = candidate.owner
+		var owned := owner.x >= lo_x and owner.x < lo_x+cells and owner.y >= lo_z and owner.y < lo_z+cells
+		var box: AABB = candidate.bounds
+		var crosses_grass := grass_core.intersects(Rect2(Vector2(box.position.x,box.position.z),Vector2(box.size.x,box.size.z)))
+		if not owned and not crosses_grass: continue
+		var kept := true
+		for other: Dictionary in proposals:
+			if other.id == candidate.id: continue
+			if other.priority > candidate.priority or (other.priority == candidate.priority and String(other.id) > String(candidate.id)): continue
+			if (candidate.bounds as AABB).grow(.3).intersects(other.bounds):
+				kept = false
+				break
+		if not kept: continue
+		# Wet exclusion follows spatial arbitration. Owned columns and the halo
+		# caps crossing grass tiles fit inside the same water sampling margin;
+		# a wet rejection never changes a neighboring chunk's spatial winner.
+		if _wet_footprint(candidate.bounds,water): continue
+		var rock := _rock(region,candidate,world_seed)
+		if crosses_grass:
+			var support := GRASS_SUPPORTS.from_native(candidate,_definitions[candidate.asset].faces)
+			if not rock.is_empty():
+				var rock_box: AABB = rock.bounds
+				support.obstacles.append(Rect2(Vector2(rock_box.position.x,rock_box.position.z),Vector2(rock_box.size.x,rock_box.size.z)).grow(.05))
+			grass_supports.append(support)
+		if owned:
+			placements.append(candidate)
+			_append_collision_faces(faces,candidate.asset,candidate.transform)
+			if not rock.is_empty():
+				placements.append(rock)
+				_append_collision_faces(faces,rock.asset,rock.transform)
+	return {"placements":placements,"collision_faces":faces,"grass_supports":grass_supports}
+
+static func _wet_footprint(box: AABB, water: WaterFieldContext) -> bool:
+	if water == null or not water.has_sources(): return false
+	var footprint := Rect2(Vector2(box.position.x,box.position.z),Vector2(box.size.x,box.size.z))
+	assert(water.coverage().encloses(footprint))
+	var nx := ceili(footprint.size.x)
+	var nz := ceili(footprint.size.y)
+	for z in nz+1:
+		for x in nx+1:
+			if water.is_wet(footprint.position+footprint.size*Vector2(float(x)/nx,float(z)/nz)): return true
+	return false
+
+static func _cell(region: HeightfieldRegion, cell: Vector2i, seed_value: int,
+		features: FeatureContext, out: Array[Dictionary]) -> void:
+	var height := region.surface_height(cell.x,cell.y)
+	var center := Vector2(cell)*TILE
+	if TerrainSurfaceField.is_flat_cell(region,cell.x,cell.y):
+		var exposure := CliffDressing._exposure(region,cell.x,cell.y)
+		var cliffs: Dictionary = exposure[0]
+		for direction: Vector2i in CliffDressing.CARDINALS:
+			if not cliffs[direction]: continue
+			var tangent := Vector2(-direction.y,direction.x)
+			for offset: float in [-6.0,6.0]:
+				var anchor := center+Vector2(direction)*12.0+tangent*offset
+				_propose(region,cell,anchor,Vector2(direction),height,"face",seed_value,features,out)
+		for corner: Vector2i in CliffDressing.CORNERS:
+			if cliffs[Vector2i(corner.x,0)] and cliffs[Vector2i(0,corner.y)]:
+				_propose(region,cell,center+Vector2(corner)*12.0,
+					Vector2(corner).normalized(),height,"outer",seed_value,features,out)
+	# A concave corner belongs to its low pocket, including stepped arms.
+	for corner: Vector2i in CliffDressing.CORNERS:
+		var a := cell+Vector2i(corner.x,0)
+		var b := cell+Vector2i(0,corner.y)
+		var upper := minf(region.surface_height(a.x,a.y),region.surface_height(b.x,b.y))
+		if upper-height < 3.0: continue
+		if not TerrainSurfaceField.is_flat_cell(region,a.x,a.y) or not TerrainSurfaceField.is_flat_cell(region,b.x,b.y): continue
+		_propose(region,cell,center+Vector2(corner)*12.0,
+			-Vector2(corner).normalized(),upper,"inner",seed_value,features,out)
+
+static func _propose(region: HeightfieldRegion, owner: Vector2i, anchor: Vector2,
+		outward: Vector2, upper: float, kind: String, seed_value: int,
+		features: FeatureContext, out: Array[Dictionary]) -> void:
+	var key := Vector3(anchor.x,upper,anchor.y)
+	var roll := Helper.position_hash01(key,seed_value+81473)
+	if kind == "face" and roll > .72: return
+	var toe := anchor+outward*5.0
+	var lower := TerrainSurfaceField.surface_y(region,toe.x,toe.y)
+	var choices: Array[StringName] = []
+	for size: String in SIZES:
+		var id := StringName("kaykit.terrace.%s" % size)
+		var box: AABB = _definitions[id].bounds
+		if box.size.y >= upper-lower-.4: continue
+		if kind != "face" and not is_equal_approx(box.size.x,box.size.z): continue
+		var cap_size: Vector2 = _definitions[id].cap_bounds.size
+		# Preserve enough native stock behind the visible wall while leaving
+		# a usable strip outside the physical ground. Shallow stock may turn
+		# a quarter turn; small columns that cannot satisfy both are ineligible.
+		if maxf(cap_size.x,cap_size.y) < WALK_DEPTH-_wall_recess+REAR_BEARING: continue
+		choices.append(id)
+	if choices.is_empty(): return
+	var asset := choices[mini(int(Helper.position_hash01(key,seed_value+81479)*choices.size()),choices.size()-1)]
+	var local: AABB = _definitions[asset].bounds
+	var cap: Rect2 = _definitions[asset].cap_bounds
+	var turn_stock := kind == "face" and cap.size.y < WALK_DEPTH-_wall_recess+REAR_BEARING
+	var yaw := atan2(outward.x,outward.y) if kind == "face" else 0.0
+	if turn_stock: yaw += PI*.5
+	var depth := cap.size.x if turn_stock else cap.size.y
+	# Face stocks share one exposed cap edge. Convex corners continue that
+	# edge on both arms; concave stock bears its rear into both walls.
+	var position := anchor+outward*(WALK_DEPTH-depth*.5)
+	if kind == "outer":
+		position = anchor+outward.sign()*(Vector2.ONE*WALK_DEPTH-cap.size*.5)
+	elif kind == "inner":
+		position = anchor+outward.sign()*(Vector2.ONE*(_wall_recess-REAR_BEARING)+cap.size*.5)
+	var basis := Basis(Vector3.UP,yaw)
+	var pose := Transform3D(basis,Vector3(position.x,0,position.y))
+	var world_box := pose*local
+	var footprint := Rect2(Vector2(world_box.position.x,world_box.position.z),Vector2(world_box.size.x,world_box.size.z))
+	if region.has_grade_effect_in(footprint.grow(.3)): return
+	if features != null and features.overlaps_clearance(FeatureGroundShape.axis_rect(footprint),.3): return
+	var heights: Array[float] = []
+	var base := INF
+	for zi in 5:
+		for xi in 5:
+			var sample := pose*Vector3(lerpf(local.position.x,local.end.x,float(xi)/4),0,
+				lerpf(local.position.z,local.end.z,float(zi)/4))
+			var h := TerrainSurfaceField.surface_y(region,sample.x,sample.z)
+			heights.append(h)
+			base = minf(base,h)
+	var top := base-BURIAL+local.size.y
+	if top > upper-.4: return
+	var buried := 0
+	var exposed := 0
+	for h: float in heights:
+		if h >= top+.3: buried += 1
+		elif h <= base+.35: exposed += 1
+		else: return # A tilted foot or intermediate shelf may not cut through the turf top.
+	if buried < 3 or exposed < 3: return
+	pose.origin.y = base-BURIAL-local.position.y
+	out.append({"id":"%s/%s/%s" % [owner,kind,anchor],"owner":owner,"kind":kind,
+		"asset":asset,"transform":pose,"bounds":pose*local,"outward":outward,
+		"base":base,"top":top,"wall_top":upper,"buried_samples":buried,
+		"exposed_samples":exposed,"priority":roll+(1.0 if kind == "face" else 0.0)})
+
+static func _rock(region: HeightfieldRegion, terrace: Dictionary, seed_value: int) -> Dictionary:
+	var box: AABB = terrace.bounds
+	var pose: Transform3D = terrace.transform
+	if minf(box.size.x,box.size.z) < 3.0 or Helper.position_hash01(pose.origin,seed_value+81503) > .16: return {}
+	var local: AABB = _definitions[ROCK].bounds
+	var scale_value := minf(box.size.x,box.size.z)*.28/maxf(local.size.x,local.size.z)
+	var point := Vector2(pose.origin.x,pose.origin.z)+(terrace.outward as Vector2)*minf(box.size.x,box.size.z)*.2
+	if TerrainSurfaceField.surface_y(region,point.x,point.y) >= terrace.top-.2: return {}
+	var rock_pose := Transform3D(Basis.from_scale(Vector3.ONE*scale_value),
+		Vector3(point.x,terrace.top-local.position.y*scale_value-.03,point.y))
+	return {"id":String(terrace.id)+"/rock","owner":terrace.owner,"kind":"rock",
+		"asset":ROCK,"transform":rock_pose,"bounds":rock_pose*local}
+
+static func _append_faces(out: PackedVector3Array, asset: StringName, pose: Transform3D) -> void:
+	for vertex: Vector3 in _definitions[asset].faces: out.append(pose*vertex)
+
+static func _append_collision_faces(out: PackedVector3Array, asset: StringName, pose: Transform3D) -> void:
+	for vertex: Vector3 in _definitions[asset].collision_faces: out.append(pose*vertex)
+
+static func build(data: Dictionary, world_seed: int) -> Node3D:
+	assert(OS.get_thread_caller_id() == OS.get_main_thread_id())
+	var root := Node3D.new()
+	root.name = "CliffTerraces"
+	var batches: Dictionary = {}
+	for placement: Dictionary in data.get("placements",[]):
+		if not batches.has(placement.asset): batches[placement.asset] = []
+		(batches[placement.asset] as Array).append(placement.transform)
+	for asset: StringName in batches:
+		root.add_child(CliffDressing._multimesh(_pieces[asset],batches[asset],
+			String(asset).replace(".","_"),CliffDressing.compute_tints(batches[asset],world_seed)))
+	return root

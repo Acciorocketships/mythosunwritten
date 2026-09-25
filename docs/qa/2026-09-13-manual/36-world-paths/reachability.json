@@ -1,0 +1,26 @@
+[
+  {
+    "reachable": 192,
+    "route": 0,
+    "total": 279,
+    "undirected_reaches_goal": false
+  },
+  {
+    "reachable": 320,
+    "route": 1,
+    "total": 348,
+    "undirected_reaches_goal": false
+  },
+  {
+    "reachable": 103,
+    "route": 2,
+    "total": 408,
+    "undirected_reaches_goal": false
+  },
+  {
+    "reachable": 1,
+    "route": 3,
+    "total": 124,
+    "undirected_reaches_goal": false
+  }
+]

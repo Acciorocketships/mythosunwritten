@@ -1,0 +1,39 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/harness/september13_dormer_baseline_test.gd
+[0m* test_circulation_recipes_express_section_changes_and_local_ground
+[31m    [Failed]:  [0m[96] expected to be < than [96]:  authored feet do not turn the prefab's complete eave bounds into terrain
+      at line 1200
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/harness/september13_dormer_baseline_test.gd
+[0m- test_circulation_recipes_express_section_changes_and_local_ground
+[31m    [Failed]:  [0m[96] expected to be < than [96]:  authored feet do not turn the prefab's complete eave bounds into terrain
+          at line 1200
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts           140/141
+Time              5.359s
+
+
+Ran Tests matching "test_circulation_recipes_express_section_changes_and_local_ground"
+[31m---- 1 failing tests ----
+[0m

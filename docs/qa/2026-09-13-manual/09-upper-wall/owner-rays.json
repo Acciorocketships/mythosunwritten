@@ -1,0 +1,88 @@
+[
+  {
+    "hits": [
+      {
+        "distance": 63.0114440917969,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 1,
+        "node": "/root/FrozenVillage/lpfv_fabric_roof_compact_slate_03_front_00",
+        "owner": "(962.37, -412.6565, 969.0, -405.3435)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(964.9633, 47.29068, -409.6547)"
+      }
+    ],
+    "pixel": "(683.0, 105.0)"
+  },
+  {
+    "hits": [
+      {
+        "distance": 60.4935722351074,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 1,
+        "node": "/root/FrozenVillage/lpfv_fabric_roof_compact_slate_03_front_00",
+        "owner": "(962.37, -412.6565, 969.0, -405.3435)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(963.6211, 44.2698, -410.5846)"
+      }
+    ],
+    "pixel": "(672.0, 136.0)"
+  },
+  {
+    "hits": [
+      {
+        "distance": 64.4561996459961,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 1,
+        "node": "/root/FrozenVillage/lpfv_fabric_roof_compact_slate_03_front_00",
+        "owner": "(962.37, -412.6565, 969.0, -405.3435)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(967.9622, 44.15462, -410.2465)"
+      }
+    ],
+    "pixel": "(675.0, 162.0)"
+  },
+  {
+    "hits": [
+      {
+        "distance": 58.7841644287109,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 0,
+        "node": "/root/FrozenVillage/sfv_fabric_wall_wood_plain_005_miter2_00",
+        "owner": "(957.0, -410.63, 963.8481, -402.998)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(962.3409, 42.20744, -406.4659)"
+      },
+      {
+        "distance": 59.5493545532227,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 1,
+        "node": "/root/FrozenVillage/sfv_fabric_wall_wood_window_001_mirror_x_00",
+        "owner": "(962.37, -412.6565, 969.0, -405.3435)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(963.0446, 42.4976, -406.3879)"
+      },
+      {
+        "distance": 63.9311256408691,
+        "groups": [
+          "tactical_closed_shell"
+        ],
+        "instance": 1,
+        "node": "/root/FrozenVillage/lpfv_fabric_roof_compact_slate_03_front_00",
+        "owner": "(962.37, -412.6565, 969.0, -405.3435)",
+        "parent": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]",
+        "point": "(967.0745, 44.15922, -405.9415)"
+      }
+    ],
+    "pixel": "(729.0, 164.0)"
+  }
+]

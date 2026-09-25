@@ -1,0 +1,83 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_compact_roof_join.gd
+[0m* test_reported_compact_branch_joins_the_continuing_roof_across_its_ridge
+* test_second_photo_keeps_the_two_sided_dormered_roof_complete
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_compact_roof_junction_admission.gd
+[0m* test_both_hands_and_ends_rotate_without_seed_or_name_rules
+* test_unprepared_crossings_do_not_acquire_a_compact_valley
+* test_unrelated_order_and_identity_do_not_change_the_owned_pair
+* test_prepared_branches_keep_native_datums_instead_of_recentering_cut_bounds
+* test_all_prepared_hosts_and_chimneys_reject_displaced_stock
+[1m5/5 passed.
+[0m[4m
+
+res://tests/test_september13_roof_intersection.gd
+[0m* test_coplanar_faces_have_one_owner_without_double_removal
+PRISM_CUT 2 cutter faces; 2 output triangles
+PRISM_CUT 2 cutter faces; 3 output triangles
+* test_crossed_slopes_keep_the_exact_upper_surface_and_uvs
+PRISM_CUT 2 cutter faces; 1 output triangles
+PRISM_CUT 2 cutter faces; 1 output triangles
+* test_disjoint_roofs_preserve_the_original_surface
+PRISM_CUT 2 cutter faces; 2 output triangles
+* test_secondary_uvs_and_tangent_handedness_survive_a_real_cut
+PRISM_CUT 2 cutter faces; 3 output triangles
+* test_complete_burial_emits_no_surface_and_unindexed_stock_is_supported
+PRISM_CUT 2 cutter faces; 0 output triangles
+PRISM_CUT 2 cutter faces; 3 output triangles
+* test_native_section_domain_is_bounded_before_spatial_bucketing
+[1m6/6 passed.
+[0m[4m
+
+res://tests/test_fabric_roof_topology.gd
+[0m* test_classifier_distinguishes_orthogonal_roof_join_families
+* test_module_table_covers_every_classifier_kind_explicitly
+* test_perpendicular_valley_rejects_roofs_without_an_atomic_vocabulary
+* test_flat_caps_resolve_a_crossing_gable_without_fake_seams
+* test_massif_partial_ridge_flattens_both_complete_roofs_atomically
+* test_complete_perpendicular_valley_selects_host_and_branch_recipes
+* test_clearance_exception_exactly_follows_implemented_junction_table
+* test_partial_parallel_contact_selects_one_offset_native_pitch_segment
+* test_roof_junctions_are_reciprocal_and_style_avoids_repeated_rows
+[1m9/9 passed.
+[0m[4m
+
+res://tests/test_september10_roof_alignment.gd
+[0m* test_terminal_gables_close_above_the_actual_facade_plane
+* test_joined_partial_crown_keeps_its_original_end_boundaries
+* test_bounded_continuous_gables_reach_the_facade_without_an_inset_shelf
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_september10_roof_valley.gd
+[0m* test_t_valley_has_actual_roof_triangles_across_the_complete_join
+[1m1/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               6
+Tests                26
+Passing Tests        26
+Asserts             520
+Time              60.787s
+
+
+[32m---- All tests passed! ----
+[0m

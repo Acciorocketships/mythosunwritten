@@ -1,0 +1,35 @@
+{
+  "P07_platform_-8": {
+    "roi": [
+      618,
+      331,
+      1150,
+      640
+    ],
+    "mean_abs_rgb": 1.001304466212501,
+    "roi_mean_abs_rgb": 2.328393800034066,
+    "roi_changed_over_20_fraction": 0.03873762075090639
+  },
+  "P07_platform_0": {
+    "roi": [
+      618,
+      331,
+      1150,
+      640
+    ],
+    "mean_abs_rgb": 0.8424175856412062,
+    "roi_mean_abs_rgb": 2.199167011379582,
+    "roi_changed_over_20_fraction": 0.039260773292454434
+  },
+  "P07_platform_8": {
+    "roi": [
+      618,
+      331,
+      1150,
+      640
+    ],
+    "mean_abs_rgb": 0.7964697988899344,
+    "roi_mean_abs_rgb": 2.1639860168219904,
+    "roi_changed_over_20_fraction": 0.03670584227559189
+  }
+}

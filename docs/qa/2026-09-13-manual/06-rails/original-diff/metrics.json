@@ -1,0 +1,35 @@
+{
+  "P08_rails_-8": {
+    "roi": [
+      498,
+      331,
+      841,
+      723
+    ],
+    "mean_abs_rgb": 0.8513109725597625,
+    "roi_mean_abs_rgb": 6.343936554213522,
+    "roi_changed_over_20_fraction": 0.15783602070565836
+  },
+  "P08_rails_0": {
+    "roi": [
+      498,
+      331,
+      841,
+      723
+    ],
+    "mean_abs_rgb": 1.0708644641364873,
+    "roi_mean_abs_rgb": 9.810822871422621,
+    "roi_changed_over_20_fraction": 0.23972898197179746
+  },
+  "P08_rails_8": {
+    "roi": [
+      498,
+      331,
+      841,
+      723
+    ],
+    "mean_abs_rgb": 1.7158102734094989,
+    "roi_mean_abs_rgb": 13.661163007477043,
+    "roi_changed_over_20_fraction": 0.3312161599333611
+  }
+}

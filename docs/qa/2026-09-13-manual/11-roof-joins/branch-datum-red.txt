@@ -1,0 +1,69 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_compact_roof_junction_admission.gd
+[0m* test_both_hands_and_ends_rotate_without_seed_or_name_rules
+* test_unprepared_crossings_do_not_acquire_a_compact_valley
+* test_unrelated_order_and_identity_do_not_change_the_owned_pair
+* test_prepared_branches_keep_native_datums_instead_of_recentering_cut_bounds
+[31m    [Failed] [0m
+      at line 57
+[31m    [Failed] [0m
+      at line 57
+[31m    [Failed] [0m
+      at line 57
+[31m    [Failed] [0m
+      at line 57
+[31m    [Failed] [0m
+      at line 57
+[31m    [Failed] [0m
+      at line 57
+[31m    [Failed] [0m
+      at line 57
+[31m    [Failed] [0m
+      at line 57
+[1m3/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_compact_roof_junction_admission.gd
+[0m- test_prepared_branches_keep_native_datums_instead_of_recentering_cut_bounds
+[31m    [Failed]:  [0m
+          at line 57
+[31m    [Failed]:  [0m
+          at line 57
+[31m    [Failed]:  [0m
+          at line 57
+[31m    [Failed]:  [0m
+          at line 57
+[31m    [Failed]:  [0m
+          at line 57
+[31m    [Failed]:  [0m
+          at line 57
+[31m    [Failed]:  [0m
+          at line 57
+[31m    [Failed]:  [0m
+          at line 57
+
+Totals
+------
+Scripts               1
+Tests                 4
+Passing Tests         3
+Failing Tests         1
+Asserts           119/127
+Time              5.378s
+
+
+[31m---- 1 failing tests ----
+[0m

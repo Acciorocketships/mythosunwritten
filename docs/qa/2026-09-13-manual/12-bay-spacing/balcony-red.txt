@@ -1,0 +1,39 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_bay_spacing.gd
+[0m* test_backing_phase_preserves_existing_balcony_clearance
+[31m    [Failed]:  [0mExpected [<null>] to be anything but NULL:  maze fabric gate failed: feature component spatial.fabric.spatial.feature.balcony.00.component.00 rejected: visual envelope of spatial.fabric.spatial.feature.balcony.00.component.00 (balcony.corner.left.blue at (8, 10, 5)/r1) [P: (8.18264, 14.26353, 5.182641), S: (4.63472, 1.666417, 4.634719)] intersects unrelated unit spatial.fabric.spatial.parcel.maze.house.044.part02.room00 (room.tower.upper.blue.d at (5, 9, 6)/r1) [P: (5.25, 13.33895, 8.25), S: (3.870018, 3.161053, 3.00102)]
+      at line 77
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_bay_spacing.gd
+[0m- test_backing_phase_preserves_existing_balcony_clearance
+[31m    [Failed]:  [0mExpected [<null>] to be anything but NULL:  maze fabric gate failed: feature component spatial.fabric.spatial.feature.balcony.00.component.00 rejected: visual envelope of spatial.fabric.spatial.feature.balcony.00.component.00 (balcony.corner.left.blue at (8, 10, 5)/r1) [P: (8.18264, 14.26353, 5.182641), S: (4.63472, 1.666417, 4.634719)] intersects unrelated unit spatial.fabric.spatial.parcel.maze.house.044.part02.room00 (room.tower.upper.blue.d at (5, 9, 6)/r1) [P: (5.25, 13.33895, 8.25), S: (3.870018, 3.161053, 3.00102)]
+          at line 77
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             0/1
+Time              9.436s
+
+
+Ran Tests matching "test_backing_phase_preserves_existing_balcony_clearance"
+[31m---- 1 failing tests ----
+[0m

@@ -1,0 +1,13 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+KEYS ["profile", "profile_counts", "chunk", "surface_arrays", "collision_faces", "apron_arrays", "wall_arrays", "wall_collision_arrays", "cliffs", "cliff_terraces", "natural_arches", "structure_clearance", "graded_cliff_arrays", "world_seed"]
+EXPOSED VISUAL 0
+PIXEL (480.0, 222.0) surface_arrays hit=<null> distance=inf field=0
+PIXEL (480.0, 222.0) graded_cliff_arrays hit=(-283.1662, 17.84398, 443.322) distance=23.952844619751 field=19.115518287793
+PIXEL (480.0, 222.0) wall_arrays hit=(-283.7631, 17.62447, 442.7) distance=24.8423690795898 field=19.4599994974655
+PIXEL (553.0, 319.0) surface_arrays hit=<null> distance=inf field=0
+PIXEL (553.0, 319.0) graded_cliff_arrays hit=(-279.9639, 14.07237, 443.2355) distance=23.2976551055908 field=15.7278117342228
+PIXEL (553.0, 319.0) wall_arrays hit=<null> distance=inf field=0
+PIXEL (816.0, 158.0) surface_arrays hit=(-276.1562, 15.9011, 407.9915) distance=53.4416923522949 field=15.8999661981602
+PIXEL (816.0, 158.0) graded_cliff_arrays hit=(-276.8371, 15.31091, 404.078) distance=57.4576606750488 field=19.5920437867636
+PIXEL (816.0, 158.0) wall_arrays hit=(-277.3, 14.90974, 401.4178) distance=60.1874542236328 field=20.0

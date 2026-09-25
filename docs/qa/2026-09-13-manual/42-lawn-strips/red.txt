@@ -1,0 +1,99 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_lawn_strips.gd
+[0m* test_shared_turf_edges_have_grass_instead_of_internal_timber_borders
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (7, 5, 6) (1, 0, 0)
+      at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (7, 5, 6) (1, 0, 0)
+      at line 33
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (6, 5, 7) (0, 0, 1)
+      at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (6, 5, 7) (0, 0, 1)
+      at line 33
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (7, 5, 7) (1, 0, 0)
+      at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (7, 5, 7) (1, 0, 0)
+      at line 33
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (7, 5, 7) (0, 0, 1)
+      at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (7, 5, 7) (0, 0, 1)
+      at line 33
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (9, 5, 6) (-1, 0, 0)
+      at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (9, 5, 6) (-1, 0, 0)
+      at line 33
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (9, 5, 7) (-1, 0, 0)
+      at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (9, 5, 7) (-1, 0, 0)
+      at line 33
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (9, 5, 8) (-1, 0, 0)
+      at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (9, 5, 8) (-1, 0, 0)
+      at line 33
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (9, 5, 8) (0, 0, 1)
+      at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (9, 5, 8) (0, 0, 1)
+      at line 33
+* test_exterior_suspended_edges_keep_their_complete_timber_frame
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_lawn_strips.gd
+[0m- test_shared_turf_edges_have_grass_instead_of_internal_timber_borders
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (7, 5, 6) (1, 0, 0)
+          at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (7, 5, 6) (1, 0, 0)
+          at line 33
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (6, 5, 7) (0, 0, 1)
+          at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (6, 5, 7) (0, 0, 1)
+          at line 33
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (7, 5, 7) (1, 0, 0)
+          at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (7, 5, 7) (1, 0, 0)
+          at line 33
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (7, 5, 7) (0, 0, 1)
+          at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (7, 5, 7) (0, 0, 1)
+          at line 33
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (9, 5, 6) (-1, 0, 0)
+          at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (9, 5, 6) (-1, 0, 0)
+          at line 33
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (9, 5, 7) (-1, 0, 0)
+          at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (9, 5, 7) (-1, 0, 0)
+          at line 33
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (9, 5, 8) (-1, 0, 0)
+          at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (9, 5, 8) (-1, 0, 0)
+          at line 33
+[31m    [Failed]:  [0mShared turf boundary must not carry a visible border: (9, 5, 8) (0, 0, 1)
+          at line 32
+[31m    [Failed]:  [0mGrass must close the former interior frame strip: (9, 5, 8) (0, 0, 1)
+          at line 33
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts           10/26
+Time              12.162s
+
+
+[31m---- 1 failing tests ----
+[0m

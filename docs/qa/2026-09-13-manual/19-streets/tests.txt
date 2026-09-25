@@ -1,0 +1,71 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_street_handoffs.gd
+[0m* test_unused_level_exit_does_not_paint_a_detached_spur
+* test_a_real_road_keeps_its_entire_continuous_gate_connection
+* test_raised_exit_keeps_its_built_stair_approach_without_a_road
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_september13_street_infill.gd
+[0m* test_unused_ground_parcel_inside_four_streets_becomes_public
+* test_reclaimed_parcel_compiles_to_four_ground_street_cells
+* test_intentional_deck_or_house_column_is_not_reclaimed
+* test_open_sided_space_and_upper_courts_are_not_filled
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_september13_deck_purpose.gd
+[0m* test_terminal_flights_do_not_climb_above_every_actual_destination
+* test_a_real_upper_destination_keeps_its_complete_flight
+* test_upper_external_connections_are_not_pruned
+* test_ordinary_lane_attachment_prevents_terminal_pruning
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_village_gate_handoffs.gd
+[0m* test_reported_town_road_connected_gates_are_painted_and_graded_to_the_street
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_september9_road_exit.gd
+[0m* test_primary_gate_does_not_invent_a_country_road_in_four_orientations
+* test_photographed_north_spur_disappears_and_south_road_stays_connected
+[31m    [Failed]:  [0m[6.0] expected to be < than [0.001]:  
+      at line 43
+[31m    [Failed]:  [0m[12.0] expected to be < than [0.001]:  
+      at line 44
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september9_road_exit.gd
+[0m- test_photographed_north_spur_disappears_and_south_road_stays_connected
+[31m    [Failed]:  [0m[6.0] expected to be < than [0.001]:  
+          at line 43
+[31m    [Failed]:  [0m[12.0] expected to be < than [0.001]:  
+          at line 44
+
+Totals
+------
+Scripts               5
+Tests                14
+Passing Tests        13
+Failing Tests         1
+Asserts           234/236
+Time              83.633s
+
+
+[31m---- 1 failing tests ----
+[0m

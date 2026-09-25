@@ -1,0 +1,90 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_settlement_fabric.gd
+[0m* test_maze_bridge_room_is_one_roofed_two_ended_skywalk_recipe
+* test_setback_sheds_keep_the_high_edge_on_the_parent_wall
+* test_terminal_low_gable_slopes_rise_to_one_shared_ridge
+* test_integrated_bridge_roof_has_no_unbounded_bearing_exemption
+* test_surface_audit_distinguishes_narrow_gallery_from_broad_plaza
+* test_structural_support_rhythm_anchors_corners_and_native_edge_pitch
+* test_named_upper_courtyard_uses_distinct_collision_aligned_paving
+* test_irregular_upper_courtyard_furniture_never_uses_a_missing_aabb_corner
+* test_surface_audit_detects_plaza_split_across_public_claim_kinds
+* test_program_compiles_one_common_recipe_vocabulary
+* test_room_jetty_support_has_plain_native_knees
+* test_dormer_styles_keep_steep_gables_and_replace_the_weak_shell_with_sheds
+* test_terminal_gables_cover_every_finite_low_bay_profile
+* test_addressed_room_vocabulary_has_two_exact_door_phases
+* test_rowhouse_is_one_broad_frontage_and_one_coherent_roof
+* test_module_contracts_pin_floor_facade_and_roof_datums
+* test_collinear_modular_roofs_compile_as_one_continuous_run
+* test_continuous_roof_endpoints_clear_the_finished_public_body
+* test_three_compact_house_crowns_realize_one_exact_roof_run
+* test_neighboring_half_depth_crowns_realize_one_complete_roof
+* test_circulation_recipes_express_section_changes_and_local_ground
+[31m    [Failed]:  [0m[96] expected to be < than [96]:  authored feet do not turn the prefab's complete eave bounds into terrain
+      at line 1200
+* test_deferred_passage_surface_stays_private_but_reaches_its_portals
+* test_occupied_skywalk_is_private_overhead_mass
+* test_feature_portal_room_variants_finish_exact_private_socket_facades
+* test_route_spanning_overhang_is_a_four_corner_support_frame
+* test_recomposed_room_door_phase_is_derived_from_final_geometry
+* test_flat_roof_fallbacks_have_measured_guarded_terrace_variants
+* test_exterior_builder_rejects_deferred_interior_route_units
+* test_public_node_requires_full_exterior_headroom
+* test_volume_proof_rejects_occupied_and_disconnected_public_air
+* test_folded_route_uses_socket_bonds_and_reaches_one_landing
+* test_disconnected_public_walk_is_rejected
+* test_solid_or_headroom_overlap_is_rejected_during_construction
+* test_visual_rejection_rolls_back_staged_semantic_claims
+* test_retained_terrace_refuses_a_cell_the_fabric_already_built_in
+* test_stacked_room_requires_the_declared_bearing_parent_socket
+* test_enclosed_skywalk_requires_two_independent_bearing_ends
+* test_composite_recipes_expand_to_stable_asset_placements
+* test_fabric_unit_omits_only_declared_recipe_placements
+* test_party_wall_suppression_requires_a_complete_authored_module
+* test_sectional_plan_binds_units_and_seals_one_surface_union
+* test_sectional_surface_rejects_an_unclassified_required_interval
+* test_sectional_surface_rejects_an_exterior_door_without_a_landing
+* test_sectional_surface_rejects_a_door_with_only_a_one_cell_balcony
+* test_generated_door_opens_both_guard_halves_of_its_authored_facade
+* test_handed_door_forecourt_uses_one_guard_run_without_a_centre_post
+* test_minimum_requirements_reject_incomplete_visual_slice
+* test_plot_void_stairs_have_square_landings_and_no_disconnected_flights
+* test_seed_changes_the_actual_maze_geometry
+* test_seeded_maze_grammar_always_interposes_square_stair_landings
+* test_folded_visual_proof_passes_the_common_transaction
+* test_staggered_embedder_closes_route_sides_without_entering_public_air
+* test_critical_review_succeeds_by_reporting_current_visual_issues
+[1m52/53 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_settlement_fabric.gd
+[0m- test_circulation_recipes_express_section_changes_and_local_ground
+[31m    [Failed]:  [0m[96] expected to be < than [96]:  authored feet do not turn the prefab's complete eave bounds into terrain
+          at line 1200
+
+Totals
+------
+Scripts               1
+Tests                53
+Passing Tests        52
+Failing Tests         1
+Asserts           99153/99154
+Time              80.735s
+
+
+[31m---- 1 failing tests ----
+[0m

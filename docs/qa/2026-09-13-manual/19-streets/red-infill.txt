@@ -1,0 +1,44 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september13_street_infill.gd
+[0m* test_unused_ground_parcel_inside_four_streets_becomes_public
+[31m    [Failed]:  [0mP23: the enclosed unused parcel must join the surrounding street
+      at line 12
+[31m    [Failed]:  [0mThe paving must be an actual public destination
+      at line 13
+* test_intentional_deck_or_house_column_is_not_reclaimed
+* test_open_sided_space_and_upper_courts_are_not_filled
+[1m2/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september13_street_infill.gd
+[0m- test_unused_ground_parcel_inside_four_streets_becomes_public
+[31m    [Failed]:  [0mP23: the enclosed unused parcel must join the surrounding street
+          at line 12
+[31m    [Failed]:  [0mThe paving must be an actual public destination
+          at line 13
+
+Totals
+------
+Scripts               1
+Tests                 3
+Passing Tests         2
+Failing Tests         1
+Asserts             7/9
+Time              0.368s
+
+
+[31m---- 1 failing tests ----
+[0m
