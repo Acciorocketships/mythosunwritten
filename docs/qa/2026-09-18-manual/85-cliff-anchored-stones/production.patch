@@ -1,0 +1,76 @@
+--- before/CliffRockCrags.gd
++++ after/CliffRockCrags.gd
+@@ -919,8 +919,9 @@
+  for p:Vector3 in green:bearing[p]=true
+  for edge:Array in tread_edges:
+   for p:Vector3 in edge:bearing[p]=true
+- # Keep the adjoining support triangles too. Long triangles at tapering
+- # shelf ends cannot safely carry a separate face displacement.
++ # Keep the vertices of long support triangles fixed. Their interior is not
++ # a ledge: projecting that whole height interval onto the wall flattens
++ # unrelated rock behind a deep shelf.
+  for i in range(0,faces.size(),3):
+   var a:Vector3=faces[i];var b:Vector3=faces[i+1];var c:Vector3=faces[i+2]
+   if minf(a.z,minf(b.z,c.z))<=0.0:continue
+@@ -928,26 +929,25 @@
+   if high-low<1.0:continue
+   for vertex:Vector3 in [a,b,c]:
+    bearing[vertex]=true
+-   if not caps.has(vertex.x):caps[vertex.x]=[]
+-   var steps:=maxi(1,ceili((high-low)/.15))
+-   for step in steps+1:caps[vertex.x].append(lerpf(low,high,float(step)/steps))
+  var collar:=bearing.duplicate()
+  for i in range(0,faces.size(),3):
+   if not (bearing.has(faces[i]) or bearing.has(faces[i+1]) or bearing.has(faces[i+2])):continue
+   for j in 3:collar[faces[i+j]]=true
+  for p:Vector3 in collar:
+   if not caps.has(p.x):caps[p.x]=[]
+-  caps[p.x].append(p.y)
++  caps[p.x].append(p)
+  for p:Vector3 in faces:
+   roots[p.x]=minf(roots.get(p.x,INF),p.y)
+   if p.y<=.01:feet[p.x]=maxf(feet.get(p.x,0.0),p.z)
++ # Measure physical separation. Equal x/y does not imply contact when a
++ # curved shelf stands several metres farther out than the adjacent rock.
+  var nearby_caps:Dictionary={}
+  for x:float in roots:
+-  var adjacent:Array[Vector2]=[]
++  var adjacent:Array[Vector3]=[]
+   for cx:float in caps:
+    # Search the full blend support so relief cannot jump at a shorter cutoff.
+    if absf(cx-x)>LEDGE_RELIEF_BLEND_RADIUS:continue
+-   for y:float in caps[cx]:adjacent.append(Vector2(cx,y))
++   for point:Vector3 in caps[cx]:adjacent.append(point)
+   nearby_caps[x]=adjacent
+  var columns:Dictionary={};var moved:Dictionary={}
+  for i in faces.size():
+@@ -956,7 +956,7 @@
+   if moved.has(p):faces[i]=moved[p];continue
+   if not columns.has(p.x):columns[p.x]=[_embedded_bumps(coordinate+p.x,height,salt),_rounded_shoulders(coordinate+p.x,height,salt)]
+   var cap_distance:=INF
+-  for cap:Vector2 in nearby_caps[p.x]:cap_distance=minf(cap_distance,Vector2(p.x,p.y).distance_to(cap))
++  for cap:Vector3 in nearby_caps[p.x]:cap_distance=minf(cap_distance,p.distance_to(cap))
+   var drop:=height-p.y
+   var descent:=clampf((drop-1.05)/maxf(1.0,height-1.05),0.0,1.0)
+   # Distance from the crown retains restrained upper detail on tall walls;
+@@ -1015,16 +1015,16 @@
+  var rows:=ceili(height/.2)+1
+  var result:=PackedFloat32Array();result.resize(rows)
+  var scale:=clampf(height/20.0,1.0,1.3)
+- var spacing:=3.5*scale
++ var spacing:=4.3*scale
+  for cell in range(floori(u/spacing)-2,floori(u/spacing)+3):
+   for layer in ceili(height/(3.0*scale)):
+    var key:=Vector3(cell,layer,89)
+    if Helper.position_hash01(key,salt+8701)<.20:continue
+    var center:float=(cell+.1+.8*Helper.position_hash01(key,salt+8707))*spacing
+    var cy:float=(layer+.1+.8*Helper.position_hash01(key,salt+8711))*3.0*scale
+-   var rx:=lerpf(.9,2.1,Helper.position_hash01(key,salt+8717))*scale
+-   var ry:=lerpf(.8,1.7,Helper.position_hash01(key,salt+8721))*scale
+-   var depth:=lerpf(.45,.95,Helper.position_hash01(key,salt+8727))
++   var rx:=lerpf(1.2,2.8,Helper.position_hash01(key,salt+8717))*scale
++   var ry:=lerpf(1.0,2.2,Helper.position_hash01(key,salt+8721))*scale
++   var depth:=lerpf(.7,1.2,Helper.position_hash01(key,salt+8727))
+    var lean:=lerpf(-.45,.45,Helper.position_hash01(key,salt+8731))
+    var tilt:=lerpf(-.4,.4,Helper.position_hash01(key,salt+8737))
+    var index:=mini(7,int(Helper.position_hash01(key,salt+8741)*8.0))

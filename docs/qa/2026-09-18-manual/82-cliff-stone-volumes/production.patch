@@ -1,0 +1,51 @@
+--- pass81/CliffRockCrags.gd
++++ production/CliffRockCrags.gd
+@@ -913,6 +913,7 @@
+ # Shape the completed physical shell. The finished turf and tread topology owns
+ # its bearing vertices, including tapered tips stitched into adjoining risers.
+ static func _shape_stone_faces(faces:PackedVector3Array,green:PackedVector3Array,tread_edges:Dictionary,coordinate:float,width:float,height:float,salt:int,left_end:bool,right_end:bool)->void:
++ var unshaped:=faces.duplicate()
+  var caps:Dictionary={};var roots:Dictionary={};var feet:Dictionary={}
+  var bearing:Dictionary={}
+  for p:Vector3 in green:bearing[p]=true
+@@ -976,6 +977,40 @@
+   var shaped:=Vector3(p.x,p.y,snappedf(p.z+extra,.0001)) if extra>.00005 else p
+   moved[p]=shaped;faces[i]=shaped
+ 
++ _bound_added_relief(faces,unshaped)
++
++static func _bound_added_relief(faces:PackedVector3Array,unshaped:PackedVector3Array)->void:
++ var ids:Dictionary={};var points:=PackedVector3Array();var depths:=PackedFloat32Array();var adjacent:Array=[]
++ for i in unshaped.size():
++  var p:Vector3=unshaped[i]
++  if p.z<=0.0 or ids.has(p):continue
++  ids[p]=points.size();points.append(p)
++  depths.append(maxf(0.0,faces[i].z-p.z));adjacent.append({})
++ for i in range(0,unshaped.size(),3):
++  for j in 3:
++   var p:Vector3=unshaped[i+j];var q:Vector3=unshaped[i+(j+1)%3]
++   if not ids.has(p) or not ids.has(q):continue
++   var a:int=ids[p];var b:int=ids[q]
++   var reach:=Vector2(p.x,p.y).distance_to(Vector2(q.x,q.y))*.9
++   adjacent[a][b]=reach;adjacent[b][a]=reach
++ # Propagate a maximum slope for added depth across the connected front skin.
++ # This only reduces additions; it never smooths away the underlying rock or
++ # moves a protected tread. All copies of a shared vertex receive the same depth.
++ var pending:Array[int]=[];var queued:Dictionary={}
++ for i in points.size():pending.append(i);queued[i]=true
++ var cursor:=0
++ while cursor<pending.size():
++  var a:int=pending[cursor];cursor+=1;queued.erase(a)
++  for b:int in adjacent[a]:
++   var limit:float=depths[a]+adjacent[a][b]
++   if depths[b]<=limit+.00001:continue
++   depths[b]=limit
++   if not queued.has(b):pending.append(b);queued[b]=true
++ for i in faces.size():
++  var p:Vector3=unshaped[i]
++  if ids.has(p) and depths[ids[p]]<faces[i].z-p.z-.00005:
++   faces[i]=Vector3(p.x,p.y,snappedf(p.z+depths[ids[p]],.0001))
++
+ static func _embedded_bumps(u:float,height:float,salt:int)->PackedFloat32Array:
+  var rows:=ceili(height/.2)+1
+  var result:=PackedFloat32Array();result.resize(rows)

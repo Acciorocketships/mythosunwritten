@@ -1,0 +1,180 @@
+--- before/CliffRockCrags.gd
++++ current/CliffRockCrags.gd
+@@ -7,8 +7,8 @@
+ static var _wall_depth:=PackedFloat32Array()
+ static var _wall_normals:=PackedVector3Array()
+ const MASS_FOOT_WIDENING:=.38
+-const MASS_SIDE_VARIATION:=.24
+-const MASS_LATERAL_DRIFT:=.12
++const MASS_SIDE_VARIATION:=.36
++const MASS_LATERAL_DRIFT:=.38
+ static func prepare()->void:
+  if not _wall_depth.is_empty():return
+  assert(OS.get_thread_caller_id()==OS.get_main_thread_id())
+@@ -186,7 +186,7 @@
+    points.append(Vector3(x,y,_attach(depth,u,y,fade)))
+   bands.append([band_start,points.size()-1,false])
+   # A shallow independent face covers the periodic backing away from actual
+-  # joins. Its large shaped sections and creases share one geological field.
++  # joins. Broad continuous relief gives it variation without a crack network.
+   var root_reach:=maxf(0.0,points[-1].z)
+   for i in range(2,points.size()):
+    points[i]=points[i].snapped(Vector3.ONE*.0001)
+@@ -194,11 +194,11 @@
+    var native:=_native_depth(coordinate+p.x,p.y)
+    var drop:=height-p.y
+    var collar:=smoothstep(1.05,minf(3.0,height*.7),drop)
+-   var geology:=_stone_relief(coordinate+p.x,p.y,salt,detail_cache)
+-   # Keep the same large geological divisions, but do not spend their full
+-   # relief in the thin attachment skin. The rooted body supplies the wider
++   var relief:=_stone_relief(coordinate+p.x,p.y,salt,detail_cache)
++   # Keep the broad deformation shallow in the thin attachment skin.
++   # The rooted body supplies the wider
+    # projection below; a thick skin here creates a shelf beneath the crown.
+-   var covering:=lerpf(native+.035,1.09+.5*geology,collar)
++   var covering:=lerpf(native+.035,1.09+.5*relief,collar)
+    covering=lerpf(-.5,covering,fade)
+    var excess:=points[i].z-covering
+    # The smooth union adds no ridge when the incoming body has no depth.
+@@ -402,10 +402,9 @@
+  var cap_distance:=INF
+  for cut:Array in cuts:cap_distance=minf(cap_distance,absf(y-float(cut[0])))
+  var detail_shoulder:=shoulder*smoothstep(.01,.45,cap_distance)
+- detail_cache["ledge_wear"]=1.0-smoothstep(.4,1.8,cap_distance)
+  var depth:=_body_depth(u,y,core,crest,boulder,salt,fractures,masses,detail_shoulder,detail_cache)+shoulder
+- # The same broad stone sections shape exposed masses as well as the thin
+- # backing skin. Keep tread interiors clear of perpendicular relief channels.
++ # Broad shape variation continues across exposed masses and the thin skin.
++ # Keep tread interiors clear of perpendicular relief channels.
+  depth+=1.35*_stone_relief(u,y,salt,detail_cache)*smoothstep(.05,.65,cap_distance)
+  # Upper projections return to their actual native backing below the turf lip.
+  # Continuous changes in exposure leave recessed intervals between buttresses.
+@@ -420,7 +419,6 @@
+  broad+=1.35*smoothstep(24.0,64.0,crest)*t*t
+  var lower:float=boulder*(1.0-smoothstep(.06,.48,maxf(0,y)/crest))
+  var mass_depth:=0.0
+- var seam:=0.0
+  for mass:Array in masses:
+   if mass.size()==5:
+    var fraction:=clampf((y-mass[0])/mass[1],0.0,1.0)
+@@ -432,7 +430,6 @@
+    # adds a raised ridge even when an admitted profile has zero depth.
+    var radius:=minf(.45,2.0*minf(mass_depth,native_shape))
+    var blend:=maxf(radius-absf(mass_depth-native_shape),0.0)/radius if radius>0.0 else 0.0
+-   seam=maxf(seam,blend*smoothstep(.15,.6,minf(mass_depth,native_shape)))
+    mass_depth=maxf(mass_depth,native_shape)+blend*blend*radius*.25
+    continue
+   # A shoulder keeps its full bearing beneath its widest point.
+@@ -447,15 +444,13 @@
+   var bevel:float=smoothstep(0.0,.82,1.0-distance)
+   mass_depth=maxf(mass_depth,mass[3]*bevel*(1.0+.10*dy+ .20*pow(clampf((mass[0]-y)/maxf(1.0,mass[0]),0.0,1.0),1.3)))
+  var q:=Vector2(u*.91+y*.41,-u*.41+y*.91)
+- # Larger shallow divisions follow actual shelf risers and blended mass
+- # junctions. Uninterrupted broad faces do not receive randomly placed patches.
+- var wear:=maxf(seam,float(detail_cache.get("ledge_wear",0.0))*.8)
+- var detail:=_rock_planes(q/5.0,salt,detail_cache)*.38*wear
++ # Vary complete shoulders on a broad scale, without a crack overlay.
++ var detail:=_face_noise(q/7.5,salt+4201)*.48
+  var envelope:=pow(t,1.15)
+  var structure:=broad+lower+mass_depth*envelope
+  # The complete rock includes the support below a ledge. Decide exposure
+- # after that support is present; otherwise thick shoulders lose their crags
+- # merely because the underlying body would have been a thin attachment.
++ # after that support is present so broad shape variation fades only where
++ # the complete body is thin against the native wall.
+  var detail_weight:=smoothstep(.25,1.7,_projection(structure+shoulder)-_native_depth(u,y))
+  var change:float=detail*envelope*detail_weight
+  # Retain the exposed native attachment beneath an eroded outer face. A soft
+@@ -585,6 +580,7 @@
+  return radius*(1.0+MASS_FOOT_WIDENING)/(1.0-MASS_SIDE_VARIATION*.5)+MASS_LATERAL_DRIFT
+ 
+ static func _fracture_profile(u:float,height:float,salt:int)->Array:
++ # Historical helper only; the production make() path does not evaluate it.
+  # On tall faces, separate fracture clusters leave larger coherent formations.
+  # Short walls retain their scale. Sparse cuts leave broad quiet faces.
+  # All centers remain world-coordinate owned.
+@@ -718,30 +714,6 @@
+  # finite shelf preserves coherent support while its path bends along the wall.
+  return 0.0 if choice<.45 else lerpf(.10,.25,(choice-.45)/.55)
+ 
+-static func _rock_planes(p:Vector2,salt:int,detail_cache:Dictionary={})->float:
+- var cell:=p.floor();var nearest:=Vector2.ZERO;var distance:=INF
+- # This cache belongs to one make() call, never shared between workers.
+- # Store only seed positions: cached and uncached evaluation remain identical.
+- var cache_key:=Vector3i(int(cell.x),int(cell.y),salt)
+- if not detail_cache.has(cache_key):
+-  var entries:Array[Vector2]=[]
+-  for iy in range(-1,2):
+-   for ix in range(-1,2):
+-    var key:=Vector3(cell.x+ix,cell.y+iy,0)
+-    entries.append(Vector2(key.x,key.y)+Vector2(.12+.76*Helper.position_hash01(key,salt+2101),.12+.76*Helper.position_hash01(key,salt+2107)))
+-  detail_cache[cache_key]=entries
+- var seeds:Array[Vector2]=detail_cache[cache_key]
+- for seed:Vector2 in seeds:
+-  var d:=p.distance_squared_to(seed)
+-  if d<distance:distance=d;nearest=seed
+- var edge:=INF
+- for seed:Vector2 in seeds:
+-  if seed==nearest:continue
+-  edge=minf(edge,((seed+nearest)*.5-p).dot((seed-nearest).normalized()))
+- # A broad chipped plane with a short bevel; the value is continuous at
+- # cell boundaries and blends back to native relief at thin attachments.
+- return smoothstep(.015,.16,edge)*(.32+.35*edge)-.22
+-
+ static func _face_noise(p:Vector2,salt:int)->float:
+  var row:=floori(p.y)
+  return lerpf(_noise(p.x,salt+row*37),_noise(p.x,salt+(row+1)*37),smoothstep(0.0,1.0,p.y-row))-.5
+@@ -770,48 +742,11 @@
+  return result
+ 
+ static func _stone_relief(u:float,y:float,salt:int,cache:Dictionary)->float:
+- return _geology(u,y,salt,cache,true)+.45*_geology(u,y,salt,cache,false)
+-
+-static func _geology(u:float,y:float,salt:int,cache:Dictionary,joint:bool)->float:
+- # Shape and fracture share a gently warped, oblique geological partition.
+- # Every joint is a boundary between the actual neighboring rock volumes.
+- var p:=Vector2(u+.23*y,y-.14*u)
+- p+=Vector2(1.3*(_noise(y/7.0+u/19.0,salt+2801)-.5),1.1*(_noise(u/8.0-y/23.0,salt+2807)-.5))
+- var cell:=_stone_cell(p,7.3,salt+2811,cache)
+- var edge:float=cell[0]
+- var key:Vector3=cell[2]
+- var amplitude:=lerpf(.45,.70,Helper.position_hash01(key,salt+2819))
+- if joint:
+-  return -.10*(1.0-smoothstep(.03,.40,edge))
+- return amplitude*(1.0-exp(-edge*.65))
+-
+-static func _stone_cell(p:Vector2,spacing:float,salt:int,cache:Dictionary)->Array:
+- var bucket:=Vector2i(floori(p.x/spacing),floori(p.y/spacing))
+- var cache_key:=Vector3i(bucket.x,bucket.y,roundi(spacing*100.0))
+- if not cache.has(cache_key):
+-  var sites:Array=[]
+-  for x in range(bucket.x-2,bucket.x+3):
+-   for y in range(bucket.y-2,bucket.y+3):
+-    var key:=Vector3(x,y,19)
+-    if Helper.position_hash01(key,salt+1811)<.18:continue
+-    var site:=Vector2((x+.08+.84*Helper.position_hash01(key,salt+1813))*spacing,(y+.08+.84*Helper.position_hash01(key,salt+1817))*spacing)
+-    sites.append([site,key])
+-  cache[cache_key]=sites
+- var sites:Array=cache[cache_key]
+- var nearest:=INF;var owner:=0
+- for i in sites.size():
+-  var distance:=p.distance_squared_to(sites[i][0])
+-  if distance<nearest:nearest=distance;owner=i
+- var center:Vector2=sites[owner][0];var edge:=INF
+- for i in sites.size():
+-  if i==owner:continue
+-  var other:Vector2=sites[i][0]
+-  edge=minf(edge,((center+other)*.5-p).dot((other-center).normalized()))
+- return [maxf(0,edge),center,sites[owner][1]]
+-
+-
+-# Finite authored rock bodies shape grounded ridges at ordinary cliff scale.
+-# Their footprint stays in world coordinates across ownership boundaries.
++ # Broad continuous deformation replaces the crack network. No cell boundaries
++ # or narrow recesses are cut into the rock. Physical ledges remain sharp.
++ var p:=Vector2(u+.23*y,y-.14*u)/7.5
++ return .12+.20*_face_noise(p,salt+4211)
++
+ static func _basal_profile(u:float,height:float,salt:int)->Array:
+  var result:Array=[]
+  var cell_size:=18.0

@@ -1,0 +1,3 @@
+Production geometry remains pass 60; only unused computation was removed.
+08019e7f50f61789bcb18646efdb5a3d12c76621d84f27c532ca3da95ab09a89  scripts/terrain/field/CliffRockCrags.gd
+bd2f4d8c71a5c831721243dd8e2fc3bc30d42a5f0865f970970e3a2f337af6d6  scripts/terrain/field/CliffCornerCrags.gd

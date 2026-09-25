@@ -1,0 +1,7 @@
+{
+  "tests/fixtures/september18/cliff-weathered-shapes/before.gd": "6a053d8fc14637502b07ae645ef5d53d901fa33923c97568f40176f060c3372a",
+  "scripts/terrain/field/CliffRockCrags.gd": "68a75bf5dbdc7484fcddec7f30960e679fb272a400a8d77cd791701e6e6bc76a",
+  "scripts/terrain/field/CliffCornerCrags.gd": "bd2f4d8c71a5c831721243dd8e2fc3bc30d42a5f0865f970970e3a2f337af6d6",
+  "terrain/materials/cliff_crag.gdshader": "f8fd7c69570bd6aaa80c8aaf65d222f924524c07c820ef3f1e0a184cd4b9fdd6",
+  "tests/test_september18_cliff_solid_outcrops.gd": "dcab284106c4b746afb0c380a324af2604b69b47db60a3b421a0d354a41618bf"
+}

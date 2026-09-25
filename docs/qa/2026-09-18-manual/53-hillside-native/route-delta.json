@@ -1,0 +1,93 @@
+[
+  {
+    "after_count": 31,
+    "after_end": "(-2652.421, -2227.438)",
+    "after_joined": true,
+    "before_count": 31,
+    "before_end": "(-2652.421, -2227.438)",
+    "before_joined": true,
+    "old_receiver": "(-6, -4)",
+    "same_source_band": false,
+    "source": "(-4, -3)",
+    "source_head": 67.5,
+    "trial_is_raw_prefix": true
+  },
+  {
+    "after_count": 235,
+    "after_end": "(-1373.35, -2965.719)",
+    "after_joined": false,
+    "before_count": 34,
+    "before_end": "(-1635.96, -1164.461)",
+    "before_joined": true,
+    "old_receiver": "(-2, -1)",
+    "same_source_band": false,
+    "source": "(-3, -2)",
+    "source_head": 23.5,
+    "trial_is_raw_prefix": true
+  },
+  {
+    "after_count": 1,
+    "after_end": "(-936.8406, -942.9514)",
+    "after_joined": true,
+    "before_count": 58,
+    "before_end": "(-1312.857, -1159.04)",
+    "before_joined": true,
+    "old_receiver": "(-2, -1)",
+    "same_source_band": false,
+    "source": "(-2, -2)",
+    "source_head": 55.5,
+    "trial_is_raw_prefix": true
+  },
+  {
+    "after_count": 221,
+    "after_end": "(-595.5051, -1034.412)",
+    "after_joined": false,
+    "before_count": 100,
+    "before_end": "(-1802.015, -682.3005)",
+    "before_joined": true,
+    "old_receiver": "(-3, -4)",
+    "same_source_band": false,
+    "source": "(-4, -1)",
+    "source_head": 39.5,
+    "trial_is_raw_prefix": true
+  },
+  {
+    "after_count": 63,
+    "after_end": "(-1424.702, 111.1966)",
+    "after_joined": true,
+    "before_count": 259,
+    "before_end": "(-1146.394, 1874.85)",
+    "before_joined": false,
+    "old_receiver": "none",
+    "same_source_band": false,
+    "source": "(-3, -1)",
+    "source_head": 79.5,
+    "trial_is_raw_prefix": true
+  },
+  {
+    "after_count": 69,
+    "after_end": "(-1135.292, -782.2354)",
+    "after_joined": true,
+    "before_count": 288,
+    "before_end": "(-1566.721, -2638.121)",
+    "before_joined": false,
+    "old_receiver": "none",
+    "same_source_band": false,
+    "source": "(-2, -1)",
+    "source_head": 43.2212791442871,
+    "trial_is_raw_prefix": true
+  },
+  {
+    "after_count": 34,
+    "after_end": "(-2045.942, -2376.057)",
+    "after_joined": true,
+    "before_count": 305,
+    "before_end": "(-1120.768, -401.0696)",
+    "before_joined": false,
+    "old_receiver": "none",
+    "same_source_band": false,
+    "source": "(-3, -4)",
+    "source_head": 30.909496307373,
+    "trial_is_raw_prefix": true
+  }
+]

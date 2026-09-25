@@ -1,0 +1,72 @@
+[
+  {
+    "height": 8.0,
+    "physical_triangles": 37222,
+    "source": "before",
+    "turf_area": 69.1376291875531,
+    "turf_triangles": 995
+  },
+  {
+    "height": 32.0,
+    "physical_triangles": 132528,
+    "source": "before",
+    "turf_area": 48.9225390613992,
+    "turf_triangles": 1108
+  },
+  {
+    "height": 8.0,
+    "physical_triangles": 37222,
+    "source": "candidate",
+    "turf_area": 69.1376291875531,
+    "turf_triangles": 995
+  },
+  {
+    "height": 32.0,
+    "physical_triangles": 132528,
+    "source": "candidate",
+    "turf_area": 48.9225390613992,
+    "turf_triangles": 1108
+  },
+  {
+    "height": 8.0,
+    "physical_triangles": 37228,
+    "source": "bearing",
+    "turf_area": 70.0660737911603,
+    "turf_triangles": 1002
+  },
+  {
+    "height": 32.0,
+    "physical_triangles": 132526,
+    "source": "bearing",
+    "turf_area": 48.9096125938067,
+    "turf_triangles": 1108
+  },
+  {
+    "height": 8.0,
+    "physical_triangles": 37584,
+    "source": "carved",
+    "turf_area": 63.0303057070796,
+    "turf_triangles": 924
+  },
+  {
+    "height": 32.0,
+    "physical_triangles": 132810,
+    "source": "carved",
+    "turf_area": 135.397386445979,
+    "turf_triangles": 1634
+  },
+  {
+    "height": 8.0,
+    "physical_triangles": 37578,
+    "source": "open-carved",
+    "turf_area": 39.9819934613533,
+    "turf_triangles": 715
+  },
+  {
+    "height": 32.0,
+    "physical_triangles": 132720,
+    "source": "open-carved",
+    "turf_area": 16.6252094530792,
+    "turf_triangles": 416
+  }
+]

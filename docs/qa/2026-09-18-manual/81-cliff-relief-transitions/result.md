@@ -1,0 +1,11 @@
+# Cliff relief transitions — pass 81
+
+The completed-shell relief faded across 1.6 m around ledge bearings but only searched 0.8 m horizontally for those bearings. A bearing leaving that search window could therefore cause a sudden physical displacement step before the blend reached full strength. Production uses one shared 1.6 m radius for the search and blend. Existing source rock profiles, depth budget, crown envelope, turf triangles and collision construction are unchanged.
+
+The regression samples actual generated vertices around a tall-control ledge transition. Before the repair, the added relief changes by 0.6465 m across a 0.25 m horizontal interval; afterward it changes by 0.3943 m. The underlying unshaped wall slope is subtracted. This is a reduction of the truncated-blend artifact, not a claim that all local slope or angular geometry is repaired. An exploratory 64,939-edge sample shows 2,868 versus 2,839 relief differences above 0.15 m, and the same global maximum of 0.7457 m. Thus this defect explains only a small part of the remaining sharp forms.
+
+The new test reproduces red on pass 80 and passes on production. The full focused/integration run passes 33 tests / 109 assertions. It retains 57/57 covered cap samples, 460 treads with none missing or steepened, 31 closed photo shells, nine passing corner tests, and 341 supported grass roots with no escapes or burial. Ordinary/tall ledge areas remain 69.137629 / 48.922539 square metres. Actual Godot collision hits all 14 changed sampled faces; one known unchanged baseline miss remains among 887 total probes. Maximum contact error is 0.000010874 m.
+
+Native Metal tall candidate, final production tall oblique and final frozen game P20 oblique views have been inspected. The game view retains the connected ledges and physical bumps with a local transition improvement. The tall wall still contains upright formations, smooth regions and angular details. No complete cliff-art acceptance is claimed. No fresh-world traversal or controlled performance comparison was run. The original water, village, streaming and biome issues remain open.
+
+[Game view](final-world/P20_oblique.png) · [Production delta](production.patch)

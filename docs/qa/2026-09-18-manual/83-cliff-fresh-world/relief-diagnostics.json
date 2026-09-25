@@ -1,0 +1,32 @@
+[
+  {
+    "depth_budget_limited": 101,
+    "fin_guard_reduced_over_1cm": 40,
+    "height": 8.0,
+    "inspected_vertices": 4319,
+    "potential_bumps_over_8cm": 692,
+    "surviving_bumps_over_8cm": 674,
+    "weight_below_point_one": 2617,
+    "width": 24.0
+  },
+  {
+    "depth_budget_limited": 338,
+    "fin_guard_reduced_over_1cm": 1153,
+    "height": 32.0,
+    "inspected_vertices": 32843,
+    "potential_bumps_over_8cm": 8100,
+    "surviving_bumps_over_8cm": 8099,
+    "weight_below_point_one": 10706,
+    "width": 48.0
+  },
+  {
+    "depth_budget_limited": 1395,
+    "fin_guard_reduced_over_1cm": 2369,
+    "height": 64.0,
+    "inspected_vertices": 63930,
+    "potential_bumps_over_8cm": 22669,
+    "surviving_bumps_over_8cm": 22416,
+    "weight_below_point_one": 11729,
+    "width": 48.0
+  }
+]

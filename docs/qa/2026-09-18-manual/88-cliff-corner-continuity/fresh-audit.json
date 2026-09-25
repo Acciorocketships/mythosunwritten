@@ -1,0 +1,66 @@
+{
+  "exact_mismatches": 0,
+  "exposed_roots": 0,
+  "forms": [
+    {
+      "exact_current": true,
+      "faces": 27294,
+      "floor": -4.19999980926514,
+      "height": 8.0,
+      "kind": "corner",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-421.5, 32.0, -301.5)]"
+    },
+    {
+      "exact_current": true,
+      "faces": 26844,
+      "floor": -0.199999988079071,
+      "height": 8.0,
+      "kind": "corner",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-397.5, 20.0, -277.5)]"
+    },
+    {
+      "exact_current": true,
+      "faces": 26424,
+      "floor": -4.19999980926514,
+      "height": 8.0,
+      "kind": "corner",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-445.5, 32.0, -253.5)]"
+    },
+    {
+      "exact_current": true,
+      "faces": 25902,
+      "floor": -0.199999988079071,
+      "height": 8.0,
+      "kind": "corner",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-421.5, 20.0, -229.5)]"
+    },
+    {
+      "exact_current": true,
+      "faces": 14724,
+      "floor": -0.199999988079071,
+      "height": 4.0,
+      "kind": "inner_corner",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-421.5, 28.0, -349.5)]"
+    },
+    {
+      "exact_current": true,
+      "faces": 26808,
+      "floor": -0.199999988079071,
+      "height": 8.0,
+      "kind": "inner_corner",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-445.5, 32.0, -301.5)]"
+    },
+    {
+      "exact_current": true,
+      "faces": 16632,
+      "floor": -0.199999988079071,
+      "height": 4.0,
+      "kind": "inner_corner",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-445.5, 28.0, -277.5)]"
+    }
+  ],
+  "inner": 3,
+  "missing_ground": 0,
+  "outer": 4,
+  "root_samples": 224
+}

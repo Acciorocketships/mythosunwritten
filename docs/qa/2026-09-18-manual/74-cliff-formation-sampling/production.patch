@@ -1,0 +1,30 @@
+--- a/scripts/terrain/field/CliffRockCrags.gd
++++ b/scripts/terrain/field/CliffRockCrags.gd
+@@ -188,6 +188,7 @@
+   bands.append([band_start,points.size()-1,false])
+   # A shallow independent face covers the periodic backing away from actual
+   # joins. Broad continuous relief gives it variation without a crack network.
++  var original_points:=points.duplicate()
+   var root_reach:=maxf(0.0,points[-1].z)
+   var rooted_addition:=maxf(_basal_depth(0.0,height,basal),_outcrop_depth(0.0,height,outcrops))*fade
+   for i in range(2,points.size()):
+@@ -221,6 +222,19 @@
+    var supported_limit:=covering+maxf(0.0,root_reach+rooted_addition-covering)*descent
+    formation_addition=minf(formation_addition,maxf(0.0,supported_limit-points[i].z))
+    points[i].z+=maxf(basal_addition,formation_addition)
++  for band:Array in bands:
++   if not band[2]:continue
++   var first:int=band[0];var last:int=band[1]
++   var original_width:float=original_points[last].z-original_points[first].z
++   var width_now:float=points[last].z-points[first].z
++   if original_width<.001 or width_now<.001:continue
++   # Projection changes tread width after the initial curved profile is built.
++   # Retain its intended grade by applying the same width ratio to its drop.
++   # Otherwise a shortened tread becomes a steep channel and loses its turf.
++   var scale_drop:=minf(1.0,width_now/original_width)
++   var root_y:float=points[first].y
++   for vertex in range(first+1,last+1):
++    points[vertex].y=root_y+(original_points[vertex].y-original_points[first].y)*scale_drop
+   columns.append(points);column_bands.append(bands)
+  # Join each continuous face band by elevation, not its sampling-row index.
+  # Neighboring ledges can have different heights; index pairing shears dense

@@ -1,0 +1,14 @@
+--- before/SettlementFabricAssembler.gd
++++ after/SettlementFabricAssembler.gd
+@@ -1588,8 +1588,10 @@
+ 	# Above the base terrain, turf owns only the top boundary: a garden may
+ 	# project over open air and needs the ordinary fitted timber soffit below.
+ 	# The ground-level lower boundary is buried in the town's natural terrain.
++	# Inspect the supporting column, not just its turf cap: on a taller column
++	# the cap is above zero while its bottom still rests in that same terrain.
+ 	var down_index := STONE_FACE_DIRECTIONS.find(Vector3i.DOWN)
+-	for ground_cell: Vector3i in capped_ground:
++	for ground_cell: Vector3i in retained:
+ 		if ground_cell.y > 0: continue
+ 		(shell.exposed as Dictionary).erase(Vector4i(ground_cell.x,
+ 			ground_cell.y, ground_cell.z, down_index))

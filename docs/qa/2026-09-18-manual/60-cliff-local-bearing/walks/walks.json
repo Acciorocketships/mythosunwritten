@@ -1,0 +1,162 @@
+[
+  {
+    "asset": "cliff.native_crag",
+    "contacts": [],
+    "end": "(-417.6854, 28.31024, -294.1249)",
+    "floor": true,
+    "ledge_y": 28.3747329711914,
+    "origin": "(-421.5, 28.0, -289.5)",
+    "passed": true,
+    "side": -1.0,
+    "start": "(-417.6854, 28.49153, -295.9166)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.native_crag",
+    "contacts": [],
+    "end": "(-417.6854, 28.45951, -295.7083)",
+    "floor": true,
+    "ledge_y": 28.3747329711914,
+    "origin": "(-421.5, 28.0, -289.5)",
+    "passed": true,
+    "side": 1.0,
+    "start": "(-417.6854, 28.35334, -293.9166)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.native_crag",
+    "contacts": [
+      "/root/CliffWalk/@SubViewport@410/FrozenVillage/@StaticBody3D@347/CliffRocks(0.0, 1.0, -0.08)",
+      "/root/CliffWalk/@SubViewport@410/FrozenVillage/@StaticBody3D@347/CliffRocks(0.0, 1.0, -0.03)"
+    ],
+    "end": "(-419.493, 33.64885, -316.8751)",
+    "floor": true,
+    "ledge_y": 33.6217651367188,
+    "origin": "(-421.5, 28.0, -313.5)",
+    "passed": true,
+    "side": -1.0,
+    "start": "(-419.493, 33.56252, -318.6666)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.native_crag",
+    "contacts": [],
+    "end": "(-419.493, 33.57918, -318.4582)",
+    "floor": true,
+    "ledge_y": 33.6217651367188,
+    "origin": "(-421.5, 28.0, -313.5)",
+    "passed": true,
+    "side": 1.0,
+    "start": "(-419.493, 33.6504, -316.6666)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.native_crag",
+    "contacts": [
+      "/root/CliffWalk/@SubViewport@410/FrozenVillage/@StaticBody3D@347/CliffRocks(0.23, 0.95, -0.22)",
+      "/root/CliffWalk/@SubViewport@410/FrozenVillage/@StaticBody3D@347/CliffRocks(0.22, 0.97, -0.05)"
+    ],
+    "end": "(-417.7166, 32.62848, -321.5422)",
+    "floor": true,
+    "ledge_y": 32.4714012145996,
+    "origin": "(-421.5, 28.0, -313.5)",
+    "passed": true,
+    "side": -1.0,
+    "start": "(-417.7169, 32.3773, -323.3333)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.native_crag",
+    "contacts": [],
+    "end": "(-417.7169, 32.41953, -323.1251)",
+    "floor": true,
+    "ledge_y": 32.4714012145996,
+    "origin": "(-421.5, 28.0, -313.5)",
+    "passed": true,
+    "side": 1.0,
+    "start": "(-417.7169, 32.6768, -321.3333)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.native_crag",
+    "contacts": [
+      "/root/CliffWalk/@SubViewport@410/FrozenVillage/@StaticBody3D@347/CliffRocks(0.04, 1.0, -0.03)",
+      "/root/CliffWalk/@SubViewport@410/FrozenVillage/@StaticBody3D@347/CliffRocks(0.22, 0.96, -0.17)",
+      "/root/CliffWalk/@SubViewport@410/FrozenVillage/@StaticBody3D@347/CliffRocks(0.22, 0.96, -0.15)"
+    ],
+    "end": "(-417.2909, 32.29115, -323.2954)",
+    "floor": true,
+    "ledge_y": 32.1986999511719,
+    "origin": "(-421.5, 28.0, -334.5)",
+    "passed": true,
+    "side": -1.0,
+    "start": "(-417.2912, 32.44852, -325.0833)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.native_crag",
+    "contacts": [
+      "/root/CliffWalk/@SubViewport@410/FrozenVillage/@StaticBody3D@347/CliffRocks(0.02, 0.71, 0.7)"
+    ],
+    "end": "(-417.2912, 32.42516, -324.7965)",
+    "floor": true,
+    "ledge_y": 32.1986999511719,
+    "origin": "(-421.5, 28.0, -334.5)",
+    "passed": true,
+    "side": 1.0,
+    "start": "(-417.2912, 32.33772, -323.0833)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.native_crag",
+    "contacts": [
+      "/root/CliffWalk/@SubViewport@410/FrozenVillage/@StaticBody3D@347/CliffRocks(0.17, 0.96, -0.23)"
+    ],
+    "end": "(-419.4528, 34.46429, -324.2917)",
+    "floor": true,
+    "ledge_y": 34.1685981750488,
+    "origin": "(-421.5, 28.0, -334.5)",
+    "passed": true,
+    "side": -1.0,
+    "start": "(-419.4528, 33.81235, -326.0833)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.native_crag",
+    "contacts": [],
+    "end": "(-419.4528, 33.86528, -325.8753)",
+    "floor": true,
+    "ledge_y": 34.1685981750488,
+    "origin": "(-421.5, 28.0, -334.5)",
+    "passed": true,
+    "side": 1.0,
+    "start": "(-419.4528, 34.4968, -324.0833)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.native_crag",
+    "contacts": [],
+    "end": "(-417.9123, 32.43316, -355.7916)",
+    "floor": true,
+    "ledge_y": 32.523998260498,
+    "origin": "(-421.5, 32.0, -358.5)",
+    "passed": true,
+    "side": -1.0,
+    "start": "(-417.9123, 32.64632, -357.5833)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.native_crag",
+    "contacts": [
+      "/root/CliffWalk/@SubViewport@410/FrozenVillage/@StaticBody3D@347/CliffRocks(0.0, 0.99, 0.12)"
+    ],
+    "end": "(-417.9123, 32.62259, -357.3749)",
+    "floor": true,
+    "ledge_y": 32.523998260498,
+    "origin": "(-421.5, 32.0, -358.5)",
+    "passed": true,
+    "side": 1.0,
+    "start": "(-417.9123, 32.40738, -355.5833)",
+    "underside_contacts": 0
+  }
+]

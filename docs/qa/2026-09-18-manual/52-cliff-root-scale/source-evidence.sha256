@@ -1,0 +1,15 @@
+8d4df9669f8e95d4733b72844ca35d5ec5b47c01ec79d7ea469f3ca16c9fc866  docs/qa/2026-09-18-manual/52-cliff-root-scale/native.log
+28fd3713379716b3a61148002c2a4f036bf7893d7b0d7b302f180fde41c1a66e  docs/qa/2026-09-18-manual/52-cliff-root-scale/red.log
+817b5ad1e083c3197c8913c0fddbb0cd3df4418af77039af483b50e5932b3fb8  docs/qa/2026-09-18-manual/52-cliff-root-scale/tall/close.png
+2c22f4531f8a02ad6e55730e841564c7a6700da7cef1ed8b1d1d90cab430b765  docs/qa/2026-09-18-manual/52-cliff-root-scale/tall/front.png
+42078f92bc3f24967089a3aba42b49a0ad23b58bb697adeaa8408ca9f2a7ca71  docs/qa/2026-09-18-manual/52-cliff-root-scale/tall/ledges.png
+46fd5e27c10daa4e0272c336daa29d4b5b94c494b501997bd5e85b3d3892b517  docs/qa/2026-09-18-manual/52-cliff-root-scale/tall/oblique.png
+52d98f8e07bb5e9835bc070ae1a5d2973494d48f5cf0be1632e9771b94600227  docs/qa/2026-09-18-manual/52-cliff-root-scale/tall/wide.png
+5d9b2b59f42600f473ef0e2b5e8592f55bc3c9cdde6c1c98f71a8de4b25bdf6e  docs/qa/2026-09-18-manual/52-cliff-root-scale/tests.log
+2b6a32880babc994269f61aabe1c5b3565af26ce0162346593d1ef03b7a134f1  tests/fixtures/september18/cliff-root-scale/before.gd
+735a4a0343e46e92ae972b34f28f9a610f718b1c9e29e8ffcf52294a95f4cc5e  tests/fixtures/september18/cliff-root-scale/bounded-corner.gd
+59e31c69b925a89574b5b8a68f7df27801230b9fbcb91a66fa55d2094def88a9  tests/fixtures/september18/cliff-root-scale/bounded-dressing.gd
+237ad906cfd96493936c6b4b81226f57e84dad83ba5124f42231b11c79ae595d  tests/fixtures/september18/cliff-root-scale/bounded-tall.gd
+4d471c67019628ed719b4388c37cd5e3d006e91d0e26283053cb92ce4c04bde0  tests/fixtures/september18/cliff-root-scale/bounded-tall.tscn
+92999ee3c1b731c6f0a5f4a7971464863879d0002abd8cd0dada318f04b611ee  tests/fixtures/september18/cliff-root-scale/bounded.gd
+d1b073e398f4125fc695316f2500f244df675e91eac17e85289ceb3663d85fa3  tests/fixtures/september18/cliff-root-scale/scale-test.gd

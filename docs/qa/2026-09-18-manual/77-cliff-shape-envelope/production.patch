@@ -1,0 +1,113 @@
+--- pass76/CliffRockCrags.gd
++++ pass77/CliffRockCrags.gd
+@@ -327,6 +327,7 @@
+    var outward:Vector3=Vector3.LEFT if ix==0 else Vector3.RIGHT
+    if (tri[2]-tri[0]).cross(tri[1]-tri[0]).dot(outward)>0:_triangle(faces,tri[0],tri[1],tri[2])
+    else:_triangle(faces,tri[0],tri[2],tri[1])
++ _shape_stone_faces(faces,green,tread_edges,coordinate,width,height,salt,left_end,right_end)
+  var bounds:=AABB(faces[0],Vector3.ZERO)
+  for p:Vector3 in faces:bounds=bounds.expand(p)
+  return [{"faces":faces,"green":green,"bounds":pose*bounds,"transform":pose,"anchor":pose.origin,
+@@ -907,3 +908,102 @@
+  var t:=clampf(y/height,0.0,1.0)*(column.size()-1)
+  var row:=mini(column.size()-2,floori(t))
+  return lerpf(column[row],column[row+1],t-row)
++
++# Shape the completed physical shell. The finished turf and tread topology owns
++# its bearing vertices, including tapered tips stitched into adjoining risers.
++static func _shape_stone_faces(faces:PackedVector3Array,green:PackedVector3Array,tread_edges:Dictionary,coordinate:float,width:float,height:float,salt:int,left_end:bool,right_end:bool)->void:
++ var caps:Dictionary={};var roots:Dictionary={};var feet:Dictionary={}
++ var bearing:Dictionary={}
++ for p:Vector3 in green:bearing[p]=true
++ for edge:Array in tread_edges:
++  for p:Vector3 in edge:bearing[p]=true
++ # Keep the adjoining support triangles too. Long triangles at tapering
++ # shelf ends cannot safely carry a separate face displacement.
++ for i in range(0,faces.size(),3):
++  var a:Vector3=faces[i];var b:Vector3=faces[i+1];var c:Vector3=faces[i+2]
++  if minf(a.z,minf(b.z,c.z))<=0.0:continue
++  var low:=minf(a.y,minf(b.y,c.y));var high:=maxf(a.y,maxf(b.y,c.y))
++  if high-low<1.0:continue
++  for vertex:Vector3 in [a,b,c]:
++   bearing[vertex]=true
++   if not caps.has(vertex.x):caps[vertex.x]=[]
++   var steps:=maxi(1,ceili((high-low)/.15))
++   for step in steps+1:caps[vertex.x].append(lerpf(low,high,float(step)/steps))
++ var collar:=bearing.duplicate()
++ for i in range(0,faces.size(),3):
++  if not (bearing.has(faces[i]) or bearing.has(faces[i+1]) or bearing.has(faces[i+2])):continue
++  for j in 3:collar[faces[i+j]]=true
++ for p:Vector3 in collar:
++  if not caps.has(p.x):caps[p.x]=[]
++  caps[p.x].append(p.y)
++ for p:Vector3 in faces:
++  roots[p.x]=minf(roots.get(p.x,INF),p.y)
++  if p.y<=.01:feet[p.x]=maxf(feet.get(p.x,0.0),p.z)
++ var nearby_caps:Dictionary={}
++ for x:float in roots:
++  var adjacent:Array[Vector2]=[]
++  for cx:float in caps:
++   if absf(cx-x)>.8:continue
++   for y:float in caps[cx]:adjacent.append(Vector2(cx,y))
++  nearby_caps[x]=adjacent
++ var columns:Dictionary={};var moved:Dictionary={}
++ for i in faces.size():
++  var p:Vector3=faces[i]
++  if p.z<=0.0:continue
++  if moved.has(p):faces[i]=moved[p];continue
++  if not columns.has(p.x):columns[p.x]=[_embedded_bumps(coordinate+p.x,height,salt),_rounded_shoulders(coordinate+p.x,height,salt)]
++  var cap_distance:=INF
++  for cap:Vector2 in nearby_caps[p.x]:cap_distance=minf(cap_distance,Vector2(p.x,p.y).distance_to(cap))
++  var drop:=height-p.y
++  var descent:=clampf((drop-1.05)/maxf(1.0,height-1.05),0.0,1.0)
++  var weight:=smoothstep(.08,.8,cap_distance)*smoothstep(.25,.5,descent)*smoothstep(0.0,.8,p.y-roots[p.x])
++  if left_end:weight*=smoothstep(0.0,2.5,p.x+width*.5)
++  if right_end:weight*=smoothstep(0.0,2.5,width*.5-p.x)
++  var shapes:Array=columns[p.x]
++  var detail:=_shoulder_depth(p.y,height,shapes[0])
++  var existing:=_shoulder_depth(p.y,height,shapes[1])
++  var extra:=detail*weight*(1.0-clampf(existing/1.3,0.0,1.0))
++  # Keep the existing gradual crown-to-foot projection. Lower faces can carry
++  # finite rock shoulders; the repaired upper silhouette stays restrained.
++  var upper_limit:=1.4+maxf(0.0,feet.get(p.x,0.0)-1.0)*(drop-1.0)/maxf(1.0,height-1.0)
++  extra=lerpf(minf(extra,maxf(0.0,upper_limit-p.z)),extra,smoothstep(.45,.7,drop/height))
++  var shaped:=Vector3(p.x,p.y,snappedf(p.z+extra,.0001)) if extra>.00005 else p
++  moved[p]=shaped;faces[i]=shaped
++
++static func _embedded_bumps(u:float,height:float,salt:int)->PackedFloat32Array:
++ var rows:=ceili(height/.2)+1
++ var result:=PackedFloat32Array();result.resize(rows)
++ var scale:=clampf(height/10.0,1.0,2.5)
++ var spacing:=4.5*scale
++ for cell in range(floori(u/spacing)-2,floori(u/spacing)+3):
++  for layer in ceili(height/(3.0*scale)):
++   var key:=Vector3(cell,layer,89)
++   if Helper.position_hash01(key,salt+8701)<.20:continue
++   var center:float=(cell+.1+.8*Helper.position_hash01(key,salt+8707))*spacing
++   var cy:float=(layer+.1+.8*Helper.position_hash01(key,salt+8711))*3.0*scale
++   var rx:=lerpf(1.3,2.8,Helper.position_hash01(key,salt+8717))*scale
++   var ry:=lerpf(1.0,2.1,Helper.position_hash01(key,salt+8721))*scale
++   var depth:=lerpf(.35,.75,Helper.position_hash01(key,salt+8727))
++   var lean:=lerpf(-.45,.45,Helper.position_hash01(key,salt+8731))
++   var tilt:=lerpf(-.4,.4,Helper.position_hash01(key,salt+8737))
++   var index:=mini(7,int(Helper.position_hash01(key,salt+8741)*8.0))
++   var support:=0.0
++   for row in range(rows-1,-1,-1):
++    var y:=float(row)*height/(rows-1)
++    var dx:float=(u-center)/rx;var dy:float=(y-cy)/ry
++    var a:=dx+dy*lean;var b:=dy+dx*tilt
++    var front:=0.0
++    if absf(a)<1.0 and absf(b)<1.0:
++     var nx:float=(a*.5+.5)*48.0;var ny:float=(b*.5+.5)*32.0
++     var ix:=mini(47,floori(nx));var iy:=mini(31,floori(ny))
++     var r0:PackedFloat32Array=_nature_bodies[index][iy]
++     var r1:PackedFloat32Array=_nature_bodies[index][iy+1]
++     var sample:float=lerpf(lerpf(r0[ix],r0[ix+1],nx-ix),lerpf(r1[ix],r1[ix+1],nx-ix),ny-iy)
++     front=maxf(0.0,(sample-.2)/.8)*depth
++     front*=smoothstep(0.0,.2,1.0-absf(a))*smoothstep(0.0,.2,1.0-absf(b))
++    front*=smoothstep(.8,2.5,height-y)
++    support=maxf(front,support-.085)
++    var radius:=minf(.12,2.0*minf(result[row],support))
++    var h:=maxf(radius-absf(result[row]-support),0.0)/radius if radius>0.0 else 0.0
++    result[row]=maxf(result[row],support)+h*h*radius*.25
++ return result

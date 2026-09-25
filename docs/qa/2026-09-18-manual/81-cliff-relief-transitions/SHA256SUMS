@@ -1,0 +1,5 @@
+274ce0074023a5da5ed3871d92d8b202138e2a5c80f7b8dc3a1afea01dc1d287  scripts/terrain/field/CliffRockCrags.gd
+274ce0074023a5da5ed3871d92d8b202138e2a5c80f7b8dc3a1afea01dc1d287  tests/fixtures/september18/cliff-relief-transitions/final.gd
+c04fea5e6dfe1aab40de0d9576d981fb51acb4397476beb2ed44cd42698e3c7d  tests/test_september18_cliff_relief_transition.gd
+d848a98d3353d7c9c5bf2e2ca91888d9cea204b558b0fae5f41bf28f64ab03d3  docs/qa/2026-09-18-manual/81-cliff-relief-transitions/final-world/P20_oblique.png
+0b5ef1333042d9402086e1b2132910dbb800ed73776fca322f2fa9db9b2dfbe2  docs/qa/2026-09-18-manual/81-cliff-relief-transitions/final-tall/oblique.png

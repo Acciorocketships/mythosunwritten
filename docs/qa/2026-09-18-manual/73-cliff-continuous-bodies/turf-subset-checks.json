@@ -1,0 +1,34 @@
+[
+  {
+    "mesh": "union",
+    "body_triangles": 259978,
+    "turf_triangles": 11949,
+    "turf_triangles_missing_from_body": 0,
+    "body_sha256": "2a386456e52f32e8c1c065da853b3591a312f22bdc4e2cddaa63d4f91f74f180",
+    "turf_sha256": "e42b290a3ee8b09c08e5343a79f0f84b58b66903ed442e4ec8b2e0757c67cbd2"
+  },
+  {
+    "mesh": "world-union-19",
+    "body_triangles": 77842,
+    "turf_triangles": 11845,
+    "turf_triangles_missing_from_body": 0,
+    "body_sha256": "729da641116540f60bcff2aa4118860bb958d10dd86b0e7db780872a99c1b0e4",
+    "turf_sha256": "67900b91abaecacfc56097f5847ba62b14428d1613a961ac6a5d1605b4a89848"
+  },
+  {
+    "mesh": "world-union-20",
+    "body_triangles": 139004,
+    "turf_triangles": 17248,
+    "turf_triangles_missing_from_body": 0,
+    "body_sha256": "6c1d9567065b90767465af6c3c26a1b0c02ed6197d519732a5efb8d33c9951cd",
+    "turf_sha256": "90f9abc2725bd442d0d87c95a3e6924059d7d1468ffa765b8fb56415e73f59cf"
+  },
+  {
+    "mesh": "world-union-21",
+    "body_triangles": 134108,
+    "turf_triangles": 19551,
+    "turf_triangles_missing_from_body": 0,
+    "body_sha256": "1464466e5c946548ceebb45a0ba23db8a73316ae1b92a8c2332fe08b59c2434a",
+    "turf_sha256": "dae54a9e37b2850ff1227ee8eb47dc15f438f06600c324d2077cce0173d41d95"
+  }
+]

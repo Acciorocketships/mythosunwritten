@@ -1,0 +1,10 @@
+{
+  "changed_missing": 0,
+  "changed_samples": 33,
+  "max_contact_error": 0.0000108735603134846,
+  "missing": [
+    "(76.16666, 0.398533, 7.696733)"
+  ],
+  "missing_or_wrong_body": 1,
+  "samples": 887
+}

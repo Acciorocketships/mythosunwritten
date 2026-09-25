@@ -1,0 +1,80 @@
+--- before/CliffRockCrags.gd
++++ after/CliffRockCrags.gd
+@@ -96,6 +96,7 @@
+   var crest:=height-.08-minf(2.6,height*.25)*pow(_noise(u/3.7,salt+91),12.0)
+   var basal:=_basal_profile(u,height,salt)
+   var outcrops:=_outcrop_profile(u,height,salt)
++  var shoulders:=_rounded_shoulders(u,height,salt)
+   # The retired small-crack field is no longer consumed by the body builder.
+   # Keep its legacy argument empty instead of computing it for every column.
+   var fractures:Array=[]
+@@ -177,7 +178,7 @@
+   var foot_depth:=_attach(_surface_depth(u,0,core,crest,boulder,salt,fractures,masses,cuts,0,detail_cache),u,0,fade)
+   var floor_y:=-.20
+   if region!=null:
+-   var total_foot:=foot_depth+maxf(_basal_depth(0.0,height,basal),_outcrop_depth(0.0,height,outcrops))*fade
++   var total_foot:=_shoulder_depth(0.0,height,shoulders)*fade+foot_depth+maxf(_basal_depth(0.0,height,basal),_outcrop_depth(0.0,height,outcrops))*fade
+    for z:float in [0.0,total_foot*.5,total_foot]:
+     var foot:Vector3=pose*Vector3(x,0,z)
+     floor_y=minf(floor_y,TerrainSurfaceField.surface_y(region,foot.x,foot.z)-pose.origin.y-.2)
+@@ -222,6 +223,7 @@
+    var supported_limit:=covering+maxf(0.0,root_reach+rooted_addition-covering)*descent
+    formation_addition=minf(formation_addition,maxf(0.0,supported_limit-points[i].z))
+    points[i].z+=maxf(basal_addition,formation_addition)
++   points[i].z+=_shoulder_depth(p.y,height,shoulders)*fade
+   for band:Array in bands:
+    if not band[2]:continue
+    var first:int=band[0];var last:int=band[1]
+@@ -775,6 +777,7 @@
+  var result:Array=[]
+  var spacing:=15.0
+  for cell in range(floori(u/spacing)-2,floori(u/spacing)+3):
++  if Helper.position_hash01(Vector3(cell,0,97),salt+8147)<.55:continue
+   for layer in maxi(1,ceili(height/11.0)):
+    var key:=Vector3(cell,layer,67)
+    if Helper.position_hash01(key,salt+5101)<.36:continue
+@@ -863,3 +866,44 @@
+   var column:PackedFloat32Array=profile[2]
+   depth=maxf(depth,lerpf(column[row],column[row+1],t-row)*profile[1])
+  return depth
++
++# Finite, asymmetric stone shoulders. Their bearing persists below the rounded
++# front, so a bump becomes a rooted outcrop rather than an unsupported pod.
++static func _rounded_shoulders(u:float,height:float,salt:int)->PackedFloat32Array:
++ var rows:=ceili(height/.2)+1
++ var result:=PackedFloat32Array();result.resize(rows)
++ var scale:=clampf(height/10.0,1.0,2.5)
++ var spacing:=6.0*scale
++ for cell in range(floori(u/spacing)-2,floori(u/spacing)+3):
++  if Helper.position_hash01(Vector3(cell,0,97),salt+8147)<.55:continue
++  for layer in maxi(1,ceili(height/(4.5*scale))):
++   var key:=Vector3(cell,layer,97)
++   var center:float=(cell+.15+.7*Helper.position_hash01(key,salt+8101))*spacing
++   var top:float=minf(height-1.3,(layer+.5+.65*Helper.position_hash01(key,salt+8107))*4.5*scale)
++   var rise:=lerpf(2.0,4.8,Helper.position_hash01(key,salt+8111))*scale
++   var radius:=lerpf(1.5,3.5,Helper.position_hash01(key,salt+8117))*scale
++   var reach:=lerpf(.65,1.65,Helper.position_hash01(key,salt+8123))
++   var lean:=lerpf(-.8,.8,Helper.position_hash01(key,salt+8129))
++   var tilt:=lerpf(-.25,.25,Helper.position_hash01(key,salt+8131))
++   if absf(u-center)>radius+absf(lean)+1.0:continue
++   var bearing:=0.0
++   for row in range(rows-1,-1,-1):
++    var y:=float(row)*height/(rows-1)
++    var t:float=clampf((top-y+tilt*(u-center))/rise,0.0,1.0)
++    var dx:float=(u-center-lean*t)/(radius*(1.0+.35*t))
++    # A broad rounded front with a soft attachment, not a repeated ridge texture.
++    var dy:float=(t-.6)/.6
++    var cap:=maxf(0.0,1.0-dx*dx-dy*dy)
++    var front:=reach*pow(cap,.65)
++    # A second overlapping stone lobe breaks the symmetric ellipsoid.
++    var lobe:=maxf(0.0,1.0-pow((dx-.32)/.58,2.0)-pow((dy+.24)/.72,2.0))
++    front+=reach*.22*pow(lobe,.7)/scale
++    front*=smoothstep(.25,.60,(height-y)/height)
++    bearing=maxf(front,bearing-.095)
++    result[row]=maxf(result[row],bearing*.8)
++ return result
++
++static func _shoulder_depth(y:float,height:float,column:PackedFloat32Array)->float:
++ var t:=clampf(y/height,0.0,1.0)*(column.size()-1)
++ var row:=mini(column.size()-2,floori(t))
++ return lerpf(column[row],column[row+1],t-row)

@@ -1,0 +1,5 @@
+ca09f79ebc214a6c56291f25754998fe6c267cbb6a34a2d4d96e4e37758d7e8b  scripts/terrain/field/CliffRockCrags.gd
+ca09f79ebc214a6c56291f25754998fe6c267cbb6a34a2d4d96e4e37758d7e8b  tests/fixtures/september18/cliff-stone-volumes/final.gd
+b7a26a6b9e45bf43ad5e827f3812de64b0efa8b9ee804b848d4cee046019f656  tests/test_september18_cliff_relief_fins.gd
+acf73b8c1b83ef621343bf9937bedd1143b9398f978857ac5d2088fee7adda62  docs/qa/2026-09-18-manual/82-cliff-stone-volumes/final-world/P20_oblique.png
+e3a7070ca8c94eec9eae177fcfcf847aa80f9c9bd7e46c3e1f4c9ff91622873e  docs/qa/2026-09-18-manual/82-cliff-stone-volumes/final-tall/oblique.png

@@ -1,0 +1,11 @@
+# Physical stone volumes and fin repair — pass 82
+
+The direct asymmetric stone-volume alternative passes four focused tests / 18 assertions, but is rejected in the native tall view: it produces long sharp fins alongside protected ledge supports. It is retained only as `candidate.gd`; production keeps the Nature-derived rock shapes.
+
+The selected change limits abrupt changes in **added** depth along the connected front mesh. A bounded propagation reduces excessive additions near their neighbors; it does not change the underlying wall geometry, add a texture, move protected treads, or average away the large source formations. All copies of each shared vertex retain one physical position. Only altered depth values are rewritten, preserving exact original vertices elsewhere.
+
+The new regression measures physical short-edge transitions after subtracting the unshaped wall. The pass-81 control has 1,904 excessive edge incidences among 191,364 samples, with a maximum excess of 0.4707 m over the allowed slope. The selected candidate has zero. The existing sampled ledge-transition step falls from 0.3943 m to 0.225 m. Four earlier focused checks / 18 assertions also pass and retain all photographed turf vertices and 460 tread samples. The final focused/integration run passes 34 tests / 111 assertions. It retains 31 closed photo shells, nine corner tests, 57/57 covered cap samples, 460 treads with none missing or steepened, and 341 supported grass roots with none escaped or buried. Ordinary/tall ledge areas remain 69.137629 / 48.922539 square metres. Actual Godot rays hit all 33 changed sampled stone faces; one known unchanged baseline miss remains among 887 total samples, with maximum contact error 0.000010874 m.
+
+The native tall study loses several small sharp fins while retaining broad lower masses, upper bumps and curved turf ledges. The ordinary frozen game view retains its current formations. Tall upright organization, occasional angular shapes inherited from the underlying wall and some broad smooth faces remain. This is a scoped geometry repair, not complete cliff art acceptance. No fresh-world traversal, global performance or original water/town/streaming/biome acceptance is claimed.
+
+[Game view](final-world/P20_oblique.png) · [Production delta](production.patch)

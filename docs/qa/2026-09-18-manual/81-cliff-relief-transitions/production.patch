@@ -1,0 +1,29 @@
+--- pass80/CliffRockCrags.gd
++++ production/CliffRockCrags.gd
+@@ -6,6 +6,7 @@
+ static var _nature_bodies:Array=[]
+ static var _wall_depth:=PackedFloat32Array()
+ static var _wall_normals:=PackedVector3Array()
++const LEDGE_RELIEF_BLEND_RADIUS:=1.6
+ const MASS_FOOT_WIDENING:=.38
+ const MASS_SIDE_VARIATION:=.36
+ const MASS_LATERAL_DRIFT:=.38
+@@ -943,7 +944,8 @@
+  for x:float in roots:
+   var adjacent:Array[Vector2]=[]
+   for cx:float in caps:
+-   if absf(cx-x)>.8:continue
++   # Search the full blend support so relief cannot jump at a shorter cutoff.
++   if absf(cx-x)>LEDGE_RELIEF_BLEND_RADIUS:continue
+    for y:float in caps[cx]:adjacent.append(Vector2(cx,y))
+   nearby_caps[x]=adjacent
+  var columns:Dictionary={};var moved:Dictionary={}
+@@ -959,7 +961,7 @@
+   # Distance from the crown retains restrained upper detail on tall walls;
+   # full-strength lower formations still grow with descent.
+   # Broad shelf transitions keep new shoulders below the usable turf surface.
+-  var weight:=smoothstep(.15,1.6,cap_distance)*maxf(smoothstep(.25,.5,descent),.4*smoothstep(1.3,4.0,drop))*smoothstep(0.0,.8,p.y-roots[p.x])
++  var weight:=smoothstep(.15,LEDGE_RELIEF_BLEND_RADIUS,cap_distance)*maxf(smoothstep(.25,.5,descent),.4*smoothstep(1.3,4.0,drop))*smoothstep(0.0,.8,p.y-roots[p.x])
+   if left_end:weight*=smoothstep(0.0,2.5,p.x+width*.5)
+   if right_end:weight*=smoothstep(0.0,2.5,width*.5-p.x)
+   var shapes:Array=columns[p.x]

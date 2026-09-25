@@ -1,0 +1,33 @@
+--- pass85/CliffRockCrags.gd
++++ production/CliffRockCrags.gd
+@@ -6,7 +6,7 @@
+ static var _nature_bodies:Array=[]
+ static var _wall_depth:=PackedFloat32Array()
+ static var _wall_normals:=PackedVector3Array()
+-const LEDGE_RELIEF_BLEND_RADIUS:=1.6
++const LEDGE_RELIEF_BLEND_RADIUS:=1.25
+ const MASS_FOOT_WIDENING:=.38
+ const MASS_SIDE_VARIATION:=.36
+ const MASS_LATERAL_DRIFT:=.38
+@@ -1024,15 +1024,17 @@
+    var cy:float=(layer+.1+.8*Helper.position_hash01(key,salt+8711))*3.0*scale
+    var rx:=lerpf(1.2,2.8,Helper.position_hash01(key,salt+8717))*scale
+    var ry:=lerpf(1.0,2.2,Helper.position_hash01(key,salt+8721))*scale
+-   var depth:=lerpf(.7,1.2,Helper.position_hash01(key,salt+8727))
+-   var lean:=lerpf(-.45,.45,Helper.position_hash01(key,salt+8731))
+-   var tilt:=lerpf(-.4,.4,Helper.position_hash01(key,salt+8737))
++   var depth:=lerpf(.8,1.4,Helper.position_hash01(key,salt+8727))
++   # Rotate each complete authored rock front. Shearing every upright front
++   # retained the same vertical shoulders despite randomized centers and sizes.
++   var angle:=lerpf(-1.35,1.35,Helper.position_hash01(key,salt+8731))
++   var turn:=Vector2(cos(angle),sin(angle))
+    var index:=mini(7,int(Helper.position_hash01(key,salt+8741)*8.0))
+    var support:=0.0
+    for row in range(rows-1,-1,-1):
+     var y:=float(row)*height/(rows-1)
+     var dx:float=(u-center)/rx;var dy:float=(y-cy)/ry
+-    var a:=dx+dy*lean;var b:=dy+dx*tilt
++    var a:=dx*turn.x+dy*turn.y;var b:=-dx*turn.y+dy*turn.x
+     var front:=0.0
+     if absf(a)<1.0 and absf(b)<1.0:
+      var nx:float=(a*.5+.5)*48.0;var ny:float=(b*.5+.5)*32.0

@@ -1,0 +1,16 @@
+{
+  "scripts/terrain/field/CliffRockCrags.gd": "b63513fe16e3a6c406c2c94357520cab4057325cc516a36a58b9d2a0d4b1a3cc",
+  "tests/test_september18_cliff_face_geometry.gd": "b524811e8b18a765e8f0e2b4e8c300cd4f12a08916aef024a574aa67b728db4b",
+  "tests/test_september18_cliff_surface_profile.gd": "9be14aceced7f24cf387c7806147051d7e2a3634214790be59b6a2f6d8589379",
+  "tests/fixtures/september18/cliff-shape-envelope/finished-native.gd": "b63513fe16e3a6c406c2c94357520cab4057325cc516a36a58b9d2a0d4b1a3cc",
+  "tests/fixtures/september18/cliff-shape-envelope/before.gd": "b65cc3f923616ded466368da75d8e9923220112f8da37016c8c5d899aaf39ddb",
+  "docs/qa/2026-09-18-manual/77-cliff-shape-envelope/production-physics.log": "01a004831e14519b9eb0047f1c9ec0f2261865764722a296508921aaf281431a",
+  "docs/qa/2026-09-18-manual/77-cliff-shape-envelope/production-world.log": "ed3ba4df8fa60cf1a40e9f175e783ecea3c4c7711316e9d4a653dc7f6551ca22",
+  "docs/qa/2026-09-18-manual/77-cliff-shape-envelope/production-tests.log": "1a9cbcf99942872f2ea4f6096a5cc2a29d1c4204444d229b388e0229f617d5b3",
+  "docs/qa/2026-09-18-manual/77-cliff-shape-envelope/production-tall.log": "d6bdc3bf9769107a58605c530a77d741116140767690b91b516962354c3523b5",
+  "docs/qa/2026-09-18-manual/77-cliff-shape-envelope/production.patch": "31f649c3811b7be3148caf4b187d687fabc81f5f905f18d491bc04f6d8e9b4bb",
+  "docs/qa/2026-09-18-manual/77-cliff-shape-envelope/physical-changes.json": "aa759e927ef04304cb818b3ded1e7627be001539d2981e7575ca4bee49dd8fbc",
+  "docs/qa/2026-09-18-manual/77-cliff-shape-envelope/before-physical-treads.json": "706ac235882b42858e7fca7d37d512e00e977a2ba704843e675a785344ed6469",
+  "docs/qa/2026-09-18-manual/77-cliff-shape-envelope/production-world/P20_oblique.png": "7a1b9f40493f9ff2dd5e253cb91d1c317f147b439ef95051d0a9d9955ab68c35",
+  "docs/qa/2026-09-18-manual/77-cliff-shape-envelope/production-tall/oblique.png": "7409d38a4d5978d0a8cf5b9cd71ca880b49dbaa002de1b1fc369e7563ee7600e"
+}

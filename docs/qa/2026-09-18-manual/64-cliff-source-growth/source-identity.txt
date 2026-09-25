@@ -1,0 +1,1 @@
+All candidates remain isolated. Production geometry is pass 60; pass 65 removes only unused computation.

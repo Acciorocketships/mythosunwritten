@@ -1,0 +1,105 @@
+--- pass66/CliffRockCrags.gd
++++ scripts/terrain/field/CliffRockCrags.gd
+@@ -95,6 +95,7 @@
+   var boulder:=2.5*smoothstep(.38,.84,_noise(u/5.7,salt+83))*clampf(height/16.0,.25,1.0)
+   var crest:=height-.08-minf(2.6,height*.25)*pow(_noise(u/3.7,salt+91),12.0)
+   var basal:=_basal_profile(u,height,salt)
++  var outcrops:=_outcrop_profile(u,height,salt)
+   # The retired small-crack field is no longer consumed by the body builder.
+   # Keep its legacy argument empty instead of computing it for every column.
+   var fractures:Array=[]
+@@ -176,7 +177,7 @@
+   var foot_depth:=_attach(_surface_depth(u,0,core,crest,boulder,salt,fractures,masses,cuts,0,detail_cache),u,0,fade)
+   var floor_y:=-.20
+   if region!=null:
+-   var total_foot:=foot_depth+_basal_depth(0.0,height,basal)*fade
++   var total_foot:=foot_depth+maxf(_basal_depth(0.0,height,basal),_outcrop_depth(0.0,height,outcrops))*fade
+    for z:float in [0.0,total_foot*.5,total_foot]:
+     var foot:Vector3=pose*Vector3(x,0,z)
+     floor_y=minf(floor_y,TerrainSurfaceField.surface_y(region,foot.x,foot.z)-pose.origin.y-.2)
+@@ -188,6 +189,7 @@
+   # A shallow independent face covers the periodic backing away from actual
+   # joins. Broad continuous relief gives it variation without a crack network.
+   var root_reach:=maxf(0.0,points[-1].z)
++  var rooted_addition:=maxf(_basal_depth(0.0,height,basal),_outcrop_depth(0.0,height,outcrops))*fade
+   for i in range(2,points.size()):
+    points[i]=points[i].snapped(Vector3.ONE*.0001)
+    var p:Vector3=points[i]
+@@ -212,7 +214,13 @@
+     points[i].z-=pow(maxf(0.0,over+.12),2.0)/.48 if over<.12 else over
+    # Lower embedded rock widens independently of the upper face envelope.
+    # Both edges of each curved tread receive the same continuous displacement.
+-   points[i].z+=_basal_depth(p.y,height,basal)*fade
++   var basal_addition:=_basal_depth(p.y,height,basal)*fade
++   var formation_addition:=_outcrop_depth(p.y,height,outcrops)*fade
++   # A higher formation can spend only the projection supported by its wider
++   # foot. This keeps the new rock beneath the same gradual crown-to-base slope.
++   var supported_limit:=covering+maxf(0.0,root_reach+rooted_addition-covering)*descent
++   formation_addition=minf(formation_addition,maxf(0.0,supported_limit-points[i].z))
++   points[i].z+=maxf(basal_addition,formation_addition)
+   columns.append(points);column_bands.append(bands)
+  # Join each continuous face band by elevation, not its sampling-row index.
+  # Neighboring ledges can have different heights; index pairing shears dense
+@@ -747,6 +755,62 @@
+  var p:=Vector2(u+.23*y,y-.14*u)/7.5
+  return .12+.20*_face_noise(p,salt+4211)
+ 
++# Authored Nature Pack cross-sections add physical, overlapping formations.
++# The same triangles own their rendered silhouette, ledges, and collision.
++static func _outcrop_profile(u:float,height:float,salt:int)->Array:
++ var result:Array=[]
++ var spacing:=15.0
++ for cell in range(floori(u/spacing)-2,floori(u/spacing)+3):
++  for layer in maxi(1,ceili(height/11.0)):
++   var key:=Vector3(cell,layer,67)
++   if Helper.position_hash01(key,salt+5101)<.36:continue
++   var center:float=(cell+.1+.8*Helper.position_hash01(key,salt+5107))*spacing
++   var width:=lerpf(5.0,11.0,Helper.position_hash01(key,salt+5113))
++   var top:=minf(height-1.2,(layer+.35+.6*Helper.position_hash01(key,salt+5119))*11.0)
++   var rise:=lerpf(3.0,7.0,Helper.position_hash01(key,salt+5123))
++   var bottom:=maxf(0.0,top-rise)
++   var index:=mini(7,int(Helper.position_hash01(key,salt+5131)*8.0))
++   var skew:=lerpf(-.35,.35,Helper.position_hash01(key,salt+5137))
++   var lean:=lerpf(-.6,.6,Helper.position_hash01(key,salt+5147))
++   if absf(u-center)>width*.9+absf(lean):continue
++   var depth:=lerpf(1.6,3.2,Helper.position_hash01(key,salt+5153))*clampf(height/12.0,.4,1.0)
++   var column:=PackedFloat32Array()
++   var rows:=ceili(height/.20)+1
++   column.resize(rows)
++   for row in rows:
++    var y:=float(row)*height/(rows-1)
++    var dy:=y+skew*(u-center)
++    var fraction:=clampf((dy-bottom)/maxf(.1,top-bottom),0.0,1.0)
++    var lower:=1.0-fraction
++    var nx:float=(u-center-lean*lower)/(width*(1.0+.8*lower))+.5
++    if nx<=0.0 or nx>=1.0 or dy>=top:continue
++    var fy:=fraction*32.0;var iy:=mini(31,floori(fy))
++    var fx:=nx*48.0;var ix:=mini(47,floori(fx))
++    var rock:Array=_nature_bodies[index]
++    var sample:float=lerpf(lerpf(rock[iy][ix],rock[iy][ix+1],fx-ix),lerpf(rock[iy+1][ix],rock[iy+1][ix+1],fx-ix),fy-iy)
++    sample=maxf(0.0,(sample-.22)/.78)
++    # A broad lower shoulder supports each authored rounded front. It fans out
++    # instead of repeating the same vertical silhouette down to the ground.
++    var support:=smoothstep(0.0,.5,lower)*.68
++    sample=maxf(sample,support)
++    sample*=smoothstep(0.0,.14,nx)*smoothstep(1.0,.86,nx)*smoothstep(1.0,.78,fraction)
++    column[row]=sample*depth*smoothstep(bottom-rise*1.7,bottom,dy) if bottom>.1 else sample*depth
++   result.append(column)
++ return result
++
++static func _outcrop_depth(y:float,height:float,profiles:Array)->float:
++ var depth:=0.0
++ var t:=clampf(y/height,0.0,1.0)
++ for profile:PackedFloat32Array in profiles:
++  var py:=t*(profile.size()-1);var row:=mini(profile.size()-2,floori(py))
++  var d:=lerpf(profile[row],profile[row+1],py-row)
++  # Overlapping formations meet with a short rounded shoulder, not a ridge.
++  var radius:=minf(.3,minf(depth,d))
++  var blend:=maxf(0.0,radius-absf(depth-d))/radius if radius>0 else 0.0
++  depth=maxf(depth,d)+blend*blend*radius*.25
++ var descent:=clampf((height-y-1.1)/maxf(1.0,height-1.1),0.0,1.0)
++ return depth*descent*descent*smoothstep(.25,.45,descent)
++
+ static func _basal_profile(u:float,height:float,salt:int)->Array:
+  var result:Array=[]
+  var cell_size:=18.0

@@ -1,0 +1,11 @@
+73916be42db7a575819eb20025aaebf084a392d00e63dd2c861d7bdd452e6c0e  docs/qa/2026-09-18-manual/65-cliff-unused-fractures/compare.log
+e7364cb7aa84c169d21e234d356f06626fec2bb37ab6293ce9d2ef3819e07d18  docs/qa/2026-09-18-manual/65-cliff-unused-fractures/production-tests.log
+ea2ac699f6227c807cb481df8f60b3348a3b6a64f3380228b597cb2bc045a04d  docs/qa/2026-09-18-manual/65-cliff-unused-fractures/production-world/P12_front.png
+508a2e8fbdcc0c918c998215baca18ae332b73ab734ff53d39a767fcef4a6e20  docs/qa/2026-09-18-manual/65-cliff-unused-fractures/production-world/scope.txt
+0cdc5a2c972b49060137c49421780d2a5dfd55254aacd02bdc631a2721be14a0  docs/qa/2026-09-18-manual/65-cliff-unused-fractures/result.md
+8e5213391cf2d3a3fdbd3b4b0c64f39b93a92bbc7a8e879a45e8c01d9f14db3a  docs/qa/2026-09-18-manual/65-cliff-unused-fractures/source-identity.txt
+bd2f4d8c71a5c831721243dd8e2fc3bc30d42a5f0865f970970e3a2f337af6d6  scripts/terrain/field/CliffCornerCrags.gd
+08019e7f50f61789bcb18646efdb5a3d12c76621d84f27c532ca3da95ab09a89  scripts/terrain/field/CliffRockCrags.gd
+0ef306a77941d370fa5650e426c72992a6d760668ccb0ef0743947fbe78419b6  tests/fixtures/september18/cliff-unused-fractures/before.gd
+63fdfcd405a15f6fdd92986877a11ac50fba7498c9fe646e74c529fb0ef63804  tests/fixtures/september18/cliff-unused-fractures/compare.gd
+892b6bd12ad10a95409ea21fd8b6bf9a523ec14c656ebc1c6a9dffe3c29935bd  tests/fixtures/september18/cliff-unused-fractures/lean.gd
