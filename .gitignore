@@ -29,7 +29,37 @@ tests/artifacts/village_review_runs/
 /docs/qa/2026-09-08-manual/*.png
 /docs/qa/2026-09-09-manual/**/*.png
 /docs/qa/2026-09-09-manual/*.png
+/docs/qa/2026-09-10-manual/**/*.png
+/docs/qa/2026-09-10-manual/**/*.gif
+/docs/qa/2026-09-10-manual/**/*.log
+/docs/qa/2026-09-10-manual/**/*.scn
 /docs/qa/2026-09-08-manual/**/*.gif
 /docs/qa/2026-09-08-manual/*.gif
 /docs/qa/2026-09-08-manual/**/*.log
 /docs/qa/2026-09-08-manual/*.log
+
+/docs/qa/2026-09-10-manual/09-roofs/native-before.bin
+/docs/qa/2026-09-11-manual/**/*.png
+/docs/qa/2026-09-11-manual/**/*.jpg
+/docs/qa/2026-09-11-manual/**/*.gif
+/docs/qa/2026-09-11-manual/**/*.scn
+/docs/qa/2026-09-11-manual/**/*.log
+
+# Later manual reviews follow the same policy: renders, saved worlds, raw
+# buffers, bulky live traces and logs stay local; reports, numeric evidence
+# and review scripts are versioned.
+/docs/qa/**/*.png
+/docs/qa/**/*.jpg
+/docs/qa/**/*.gif
+/docs/qa/**/*.webp
+/docs/qa/**/*.mp4
+/docs/qa/**/*.exr
+/docs/qa/**/*.scn
+/docs/qa/**/*.glb
+/docs/qa/**/*.res
+/docs/qa/**/*.bin
+/docs/qa/**/*.log
+/docs/qa/**/live.jsonl
+
+__pycache__/
+*.pyc
