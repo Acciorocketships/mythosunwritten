@@ -1,0 +1,779 @@
+{
+  "buildings": 9,
+  "columns": {
+    "(-5, 0)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(-5, 1)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(-4, -1)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(-4, 0)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-4, 1)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(-3, -1)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(-3, 0)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(-3, 1)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(-2, -1)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(-2, 0)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(-2, 1)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(-1, -2)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(-1, -1)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(-1, 0)": {
+      "base": 0,
+      "terrace": 10,
+      "top": 10
+    },
+    "(-1, 1)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(-1, 2)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(0, -3)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(0, -2)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(0, -1)": {
+      "base": 0,
+      "terrace": 10,
+      "top": 10
+    },
+    "(0, 0)": {
+      "base": 0,
+      "terrace": 10,
+      "top": 10
+    },
+    "(0, 1)": {
+      "base": 0,
+      "terrace": 10,
+      "top": 10
+    },
+    "(0, 2)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(0, 3)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(1, -4)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(1, -3)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(1, -2)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(1, -1)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(1, 0)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(1, 1)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(1, 2)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(1, 3)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(1, 4)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(2, -4)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(2, -3)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(2, -2)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(2, -1)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(2, 0)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(2, 1)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(2, 2)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(2, 3)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(2, 4)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(3, -4)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(3, -3)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(3, -2)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(3, 2)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(3, 3)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(3, 4)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    }
+  },
+  "plots": [
+    {
+      "building_id": "asset.00",
+      "cells": [
+        "(-4, -1)",
+        "(-3, -1)",
+        "(-2, -1)",
+        "(-4, 0)",
+        "(-3, 0)",
+        "(-2, 0)",
+        "(-4, 1)",
+        "(-3, 1)",
+        "(-2, 1)"
+      ],
+      "door_walk": "(-1, 1, 0)",
+      "floor": 1,
+      "id": "asset.00",
+      "kind": "asset",
+      "top": 5
+    },
+    {
+      "building_id": "house.000",
+      "cells": [
+        "(1, -4)",
+        "(2, -4)",
+        "(3, -4)",
+        "(1, -3)"
+      ],
+      "door_walk": "(1, 0, -2)",
+      "floor": 0,
+      "id": "house.000",
+      "kind": "house",
+      "top": 4
+    },
+    {
+      "building_id": "house.001",
+      "cells": [
+        "(2, -3)",
+        "(3, -3)",
+        "(3, -2)"
+      ],
+      "door_walk": "(2, 0, -2)",
+      "floor": 0,
+      "id": "house.001",
+      "kind": "house",
+      "top": 4
+    },
+    {
+      "building_id": "house.003",
+      "cells": [
+        "(3, 2)",
+        "(3, 3)",
+        "(3, 4)"
+      ],
+      "door_walk": "(2, 0, 2)",
+      "floor": 0,
+      "id": "house.003",
+      "kind": "house",
+      "top": 4
+    },
+    {
+      "building_id": "house.004",
+      "cells": [
+        "(2, 3)",
+        "(2, 4)"
+      ],
+      "door_walk": "(2, 0, 2)",
+      "floor": 0,
+      "id": "house.004",
+      "kind": "house",
+      "top": 6
+    },
+    {
+      "building_id": "house.005",
+      "cells": [
+        "(0, 3)",
+        "(1, 3)",
+        "(1, 4)"
+      ],
+      "door_walk": "(1, 0, 2)",
+      "floor": 0,
+      "id": "house.005",
+      "kind": "house",
+      "top": 4
+    }
+  ],
+  "prefabs": [
+    {
+      "audit": {
+        "construction_record_count": 1,
+        "endpoint_count": 1,
+        "endpoint_owner_count": 1,
+        "landmark_displaced_parcel_ids": [],
+        "landmark_entrance_cell": "(-3, 1, 0)",
+        "landmark_height_cell_count": 4,
+        "landmark_public_landing_cell": "(-2, 1, 0)",
+        "landmark_publicly_addressed": true,
+        "landmark_recipe_id": "anchor.prefab.10",
+        "landmark_source_family": "lpfv",
+        "landmark_terrain_bearing_cell_count": 24,
+        "landmark_terrain_rooted": true,
+        "landmark_visual_clearance_cell_count": 120,
+        "public_cell_count": 0,
+        "reserved_cell_count": 64,
+        "terrain_bearing_cell_count": 24
+      },
+      "construction": [
+        {
+          "origin": "(-5, 1, -1)",
+          "recipe_id": "anchor.prefab.10",
+          "role": "terrain_rooted_landmark",
+          "yaw_quarters": 1
+        }
+      ],
+      "id": "spatial.feature.landmark.00"
+    }
+  ],
+  "scale": "compact",
+  "seed": 4,
+  "source_audit": {
+    "addressed_column_ratio": 0.75,
+    "alley_cell_count": 7,
+    "block_thickness_histogram": {
+      "2": 10,
+      "3": 9,
+      "4": 1
+    },
+    "covered_passage_ratio": 0.15,
+    "exterior_rock_ratio": {
+      "exterior_cells": 119,
+      "plot_cells": 97,
+      "ratio": 0.184873949579832,
+      "rock_cells": 22
+    },
+    "exterior_stone_band_profile": {
+      "band_histogram": {
+        "-3": 1,
+        "-1": 12,
+        "0": 21,
+        "1": 5,
+        "3": 6
+      },
+      "faces": 45,
+      "grounded_faces": 6,
+      "high_face_ratio": 0.0,
+      "high_faces": 0,
+      "low_faces": 45,
+      "max_offset": 3,
+      "min_offset": -3,
+      "raised_shoulder_faces": 0,
+      "raised_shoulder_high_faces": 0,
+      "storey_histogram": {
+        "0": 34,
+        "1": 5,
+        "2": 6
+      }
+    },
+    "frontage_ratio": 0.5,
+    "fronted_house_column_count": 6,
+    "house_capable_column_count": 8,
+    "loop_join_count": 1,
+    "market_approach_cell_count": 4,
+    "market_cell_count": 5,
+    "market_square_cell_count": 4,
+    "max_alley_straight_run": 3,
+    "max_spine_straight_run": 2,
+    "passage_cell_count": 20,
+    "plot_outcomes": {
+      "asset_clearance_reservations": [
+        {
+          "columns": [
+            "(-1, -2)",
+            "(0, -2)",
+            "(-1, -1)",
+            "(0, -1)",
+            "(-5, 0)",
+            "(-1, 0)",
+            "(0, 0)",
+            "(-5, 1)",
+            "(-1, 1)",
+            "(0, 1)"
+          ],
+          "floor": 1,
+          "id": "asset.00",
+          "support_columns": [
+            "(-4, -1)",
+            "(-3, -1)",
+            "(-2, -1)",
+            "(-4, 0)",
+            "(-3, 0)",
+            "(-2, 0)"
+          ],
+          "top": 5
+        }
+      ],
+      "assets": [
+        {
+          "kind_id": "anchor.prefab.10",
+          "mirror": {
+            "bearing_off_ground": 0,
+            "body_outside_plot": 1,
+            "no_frontage": 0,
+            "realisable": 1,
+            "street_over_top": 0,
+            "tested": 2
+          },
+          "realisable": true,
+          "reason": "",
+          "site": {
+            "anchor": "(-4, -1)",
+            "clearance_column_count": 10,
+            "cost": 19,
+            "datum": 1,
+            "id": "asset.00",
+            "orientation": 0
+          }
+        }
+      ],
+      "bridges": [],
+      "buildings": [
+        {
+          "cells": 4,
+          "floor": 0,
+          "id": "house.000",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 4
+        },
+        {
+          "cells": 3,
+          "floor": 0,
+          "id": "house.001",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 4
+        },
+        {
+          "cells": 3,
+          "floor": 0,
+          "id": "house.003",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 4
+        },
+        {
+          "cells": 2,
+          "floor": 0,
+          "id": "house.004",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 6
+        },
+        {
+          "cells": 3,
+          "floor": 0,
+          "id": "house.005",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 4
+        }
+      ],
+      "decks": [],
+      "decks_short": 1,
+      "leftover_columns": 23,
+      "orphan_sweep_joined": 1,
+      "seed_refusals": [
+        {
+          "band": 0,
+          "column": "(3, 0)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(2, 1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(1, 0)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(2, -1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(3, -1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(2, 0)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(1, -1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(2, -2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(0, -1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(1, -2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(0, -2)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-1, -2)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(0, -3)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-1, -1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-2, -2)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-1, -3)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-1, 0)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-2, -1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(0, 0)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-1, 1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-2, 0)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-1, -1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(1, 0)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 1,
+          "column": "(0, 1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-1, 0)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(0, -1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 2,
+          "column": "(2, 0)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 2,
+          "column": "(1, 1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 2,
+          "column": "(0, 0)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 2,
+          "column": "(1, -1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 2,
+          "column": "(2, 1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 2,
+          "column": "(1, 2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 2,
+          "column": "(0, 1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 2,
+          "column": "(1, 0)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 2,
+          "column": "(0, 2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 2,
+          "column": "(-1, 1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 3,
+          "column": "(0, 1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 3,
+          "column": "(-1, 2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 3,
+          "column": "(-2, 1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 3,
+          "column": "(-1, 0)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(0, -4)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(3, 1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(2, 2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(1, 1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(1, 2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(0, 2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-1, 2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(0, 1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-1, 3)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-2, 2)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-1, 1)",
+          "reason": "column already spoken for"
+        }
+      ],
+      "street_floor_gaps": 0
+    },
+    "route_span_bands": 3,
+    "source_solid_retention_ratio": 0.551020408163265,
+    "spine_cell_count": 13,
+    "spine_descent_bands": 0,
+    "spine_descent_cells": 0,
+    "spine_direction_changes": 7,
+    "spine_summit_index": 12,
+    "street_floor_gaps": 0,
+    "two_sided_passage_ratio": 0.0
+  }
+}

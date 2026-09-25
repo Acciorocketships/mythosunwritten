@@ -1,0 +1,42 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_ceiling_courses.gd
+[0m* test_photographed_stone_courses_do_not_hang_below_their_owned_band
+* test_garden_tunnel_turn_uses_city_stone_inside_the_native_grass_lip
+* test_a_short_neighbor_course_cannot_own_a_full_facade_miter
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_september10_wall_returns.gd
+[0m* test_photographed_stone_inside_corner_closes_at_the_wall_ends
+* test_doorway_rear_recess_meets_its_return_wall_in_every_orientation
+* test_closed_door_housing_finishes_both_sides_of_the_projecting_frame
+* test_door_housing_retains_native_bounds_and_central_doorwork
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 7
+Passing Tests         7
+Asserts             202
+Time              23.865s
+
+
+[32m---- All tests passed! ----
+[0m

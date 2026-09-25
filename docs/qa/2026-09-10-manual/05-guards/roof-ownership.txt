@@ -1,0 +1,36 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+SITE (-2, 5, 2) retained false below false
+SOLID spatial.roof.spatial.parcel.maze.house.001.part01.room00 roof.slim.blue [&"roof", &"occupied_mass", &"slim_building", &"ridge_z", &"staggered_roof"]
+WALL 0.2 [P: (-5.25, 7.5, 3.75), S: (1.5, 1.5, 1.5)] hit (0.0, 0.026667)
+WALL 0.2 [P: (-5.25, 7.5, 2.25), S: (1.5, 1.5, 1.5)] hit (0.0, 1.0)
+WALL 1.15 [P: (-5.25, 7.5, 3.75), S: (1.5, 1.5, 1.5)] hit (0.0, 0.026667)
+WALL 1.15 [P: (-5.25, 7.5, 2.25), S: (1.5, 1.5, 1.5)] hit (0.0, 1.0)
+PUBLIC false BACKED true
+SITE (-2, 5, 3) retained false below false
+SOLID spatial.roof.spatial.parcel.maze.house.001.part01.room00 roof.slim.blue [&"roof", &"occupied_mass", &"slim_building", &"ridge_z", &"staggered_roof"]
+WALL 0.2 [P: (-5.25, 7.5, 5.25), S: (1.5, 1.5, 1.5)] hit (0.0, 0.026667)
+WALL 0.2 [P: (-5.25, 7.5, 3.75), S: (1.5, 1.5, 1.5)] hit (0.0, 1.0)
+WALL 0.2 [P: (-5.25, 7.5, 2.25), S: (1.5, 1.5, 1.5)] hit (0.973333, 1.0)
+WALL 1.15 [P: (-5.25, 7.5, 5.25), S: (1.5, 1.5, 1.5)] hit (0.0, 0.026667)
+WALL 1.15 [P: (-5.25, 7.5, 3.75), S: (1.5, 1.5, 1.5)] hit (0.0, 1.0)
+WALL 1.15 [P: (-5.25, 7.5, 2.25), S: (1.5, 1.5, 1.5)] hit (0.973333, 1.0)
+PUBLIC false BACKED true
+SITE (-2, 5, 4) retained false below false
+SOLID spatial.roof.spatial.parcel.maze.house.001.part01.room00 roof.slim.blue [&"roof", &"occupied_mass", &"slim_building", &"ridge_z", &"staggered_roof"]
+WALL 0.2 [P: (-5.25, 7.5, 6.75), S: (1.5, 1.5, 1.5)] hit (0.0, 0.026667)
+WALL 0.2 [P: (-5.25, 7.5, 5.25), S: (1.5, 1.5, 1.5)] hit (0.0, 1.0)
+WALL 0.2 [P: (-5.25, 7.5, 3.75), S: (1.5, 1.5, 1.5)] hit (0.973333, 1.0)
+WALL 1.15 [P: (-5.25, 7.5, 6.75), S: (1.5, 1.5, 1.5)] hit (0.0, 0.026667)
+WALL 1.15 [P: (-5.25, 7.5, 5.25), S: (1.5, 1.5, 1.5)] hit (0.0, 1.0)
+WALL 1.15 [P: (-5.25, 7.5, 3.75), S: (1.5, 1.5, 1.5)] hit (0.973333, 1.0)
+PUBLIC false BACKED true
+SITE (-2, 5, 5) retained false below false
+SOLID spatial.roof.spatial.parcel.maze.house.001.part01.room00 roof.slim.blue [&"roof", &"occupied_mass", &"slim_building", &"ridge_z", &"staggered_roof"]
+WALL 0.2 [P: (-5.25, 7.5, 6.75), S: (1.5, 1.5, 1.5)] hit (0.0, 1.0)
+WALL 0.2 [P: (-5.25, 7.5, 5.25), S: (1.5, 1.5, 1.5)] hit (0.973333, 1.0)
+WALL 1.15 [P: (-5.25, 7.5, 6.75), S: (1.5, 1.5, 1.5)] hit (0.0, 1.0)
+WALL 1.15 [P: (-5.25, 7.5, 5.25), S: (1.5, 1.5, 1.5)] hit (0.973333, 1.0)
+PUBLIC false BACKED true
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

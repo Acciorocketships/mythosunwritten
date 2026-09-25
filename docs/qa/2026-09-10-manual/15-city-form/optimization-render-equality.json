@@ -1,0 +1,27 @@
+[
+  {
+    "view": "seed-003-north-east.png",
+    "max_difference": 0,
+    "changed_values": 0
+  },
+  {
+    "view": "seed-003-north-west.png",
+    "max_difference": 0,
+    "changed_values": 0
+  },
+  {
+    "view": "seed-003-plan.png",
+    "max_difference": 1,
+    "changed_values": 2
+  },
+  {
+    "view": "seed-003-south-east.png",
+    "max_difference": 0,
+    "changed_values": 0
+  },
+  {
+    "view": "seed-003-south-west.png",
+    "max_difference": 0,
+    "changed_values": 0
+  }
+]

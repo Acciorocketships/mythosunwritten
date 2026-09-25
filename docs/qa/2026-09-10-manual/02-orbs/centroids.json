@@ -1,0 +1,226 @@
+[
+  {
+    "view": "exact",
+    "seconds": 0.0,
+    "predicted": [
+      1573.675,
+      575.3209
+    ],
+    "rendered_centroid": [
+      1573.6920415224913,
+      574.8183391003461
+    ],
+    "error_pixels": 0.5028497502732272,
+    "bright_pixels": 1156
+  },
+  {
+    "view": "exact",
+    "seconds": 5.0,
+    "predicted": [
+      1614.623,
+      473.3781
+    ],
+    "rendered_centroid": [
+      1614.4967012252591,
+      472.7822808671065
+    ],
+    "error_pixels": 0.6090581414142776,
+    "bright_pixels": 1061
+  },
+  {
+    "view": "exact",
+    "seconds": 10.0,
+    "predicted": [
+      1581.235,
+      401.3921
+    ],
+    "rendered_centroid": [
+      1580.9880810488678,
+      400.9129916567342
+    ],
+    "error_pixels": 0.5389932958906666,
+    "bright_pixels": 839
+  },
+  {
+    "view": "exact",
+    "seconds": 20.0,
+    "predicted": [
+      1406.581,
+      428.9976
+    ],
+    "rendered_centroid": [
+      1406.2666666666667,
+      428.4604166666667
+    ],
+    "error_pixels": 0.622391659693052,
+    "bright_pixels": 480
+  },
+  {
+    "view": "small_close",
+    "seconds": 0.0,
+    "predicted": [
+      729.4513,
+      487.9893
+    ],
+    "rendered_centroid": [
+      728.9220338983051,
+      487.51864406779663
+    ],
+    "error_pixels": 0.7082652136886753,
+    "bright_pixels": 295
+  },
+  {
+    "view": "small_close",
+    "seconds": 5.0,
+    "predicted": [
+      756.4064,
+      478.0051
+    ],
+    "rendered_centroid": [
+      755.9162162162162,
+      477.4513513513514
+    ],
+    "error_pixels": 0.7395388480430134,
+    "bright_pixels": 370
+  },
+  {
+    "view": "small_close",
+    "seconds": 10.0,
+    "predicted": [
+      820.6984,
+      481.0123
+    ],
+    "rendered_centroid": [
+      820.2629213483146,
+      480.46966292134834
+    ],
+    "error_pixels": 0.6957705478110353,
+    "bright_pixels": 445
+  },
+  {
+    "view": "small_close",
+    "seconds": 20.0,
+    "predicted": [
+      939.8572,
+      548.2205
+    ],
+    "rendered_centroid": [
+      939.4398976982097,
+      547.6547314578005
+    ],
+    "error_pixels": 0.7030186728829145,
+    "bright_pixels": 391
+  },
+  {
+    "view": "large_close",
+    "seconds": 0.0,
+    "predicted": [
+      255.1131,
+      286.2514
+    ],
+    "rendered_centroid": [
+      254.63934426229508,
+      285.7704918032787
+    ],
+    "error_pixels": 0.675068287421414,
+    "bright_pixels": 61
+  },
+  {
+    "view": "large_close",
+    "seconds": 5.0,
+    "predicted": [
+      243.3417,
+      273.6637
+    ],
+    "rendered_centroid": [
+      242.75,
+      273.171875
+    ],
+    "error_pixels": 0.7694158307605902,
+    "bright_pixels": 64
+  },
+  {
+    "view": "large_close",
+    "seconds": 10.0,
+    "predicted": [
+      248.1125,
+      268.0489
+    ],
+    "rendered_centroid": [
+      247.5,
+      267.5
+    ],
+    "error_pixels": 0.8224642606217109,
+    "bright_pixels": 66
+  },
+  {
+    "view": "large_close",
+    "seconds": 20.0,
+    "predicted": [
+      300.9296,
+      295.6139
+    ],
+    "rendered_centroid": [
+      300.41269841269843,
+      295.25396825396825
+    ],
+    "error_pixels": 0.6298715049566348,
+    "bright_pixels": 63
+  },
+  {
+    "view": "small_side",
+    "seconds": 0.0,
+    "predicted": [
+      875.1909,
+      533.2956
+    ],
+    "rendered_centroid": [
+      874.7258620689655,
+      532.8724137931034
+    ],
+    "error_pixels": 0.6287661274340687,
+    "bright_pixels": 580
+  },
+  {
+    "view": "small_side",
+    "seconds": 5.0,
+    "predicted": [
+      968.0395,
+      463.7539
+    ],
+    "rendered_centroid": [
+      967.6072072072072,
+      463.24684684684684
+    ],
+    "error_pixels": 0.6663182113848437,
+    "bright_pixels": 555
+  },
+  {
+    "view": "small_side",
+    "seconds": 10.0,
+    "predicted": [
+      1028.305,
+      416.789
+    ],
+    "rendered_centroid": [
+      1027.8934426229507,
+      416.2889344262295
+    ],
+    "error_pixels": 0.6476457771607436,
+    "bright_pixels": 488
+  },
+  {
+    "view": "small_side",
+    "seconds": 20.0,
+    "predicted": [
+      1002.563,
+      455.2841
+    ],
+    "rendered_centroid": [
+      1002.1419558359621,
+      454.6845425867508
+    ],
+    "error_pixels": 0.732630384199596,
+    "bright_pixels": 317
+  }
+]

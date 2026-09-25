@@ -1,0 +1,17 @@
+{
+  "small_close": {
+    "max_channel_light_gain": 29.0,
+    "pixels_gain_over_3": 380943,
+    "mean_rgb_gain": 1.452728683811338
+  },
+  "large_close": {
+    "max_channel_light_gain": 60.0,
+    "pixels_gain_over_3": 768059,
+    "mean_rgb_gain": 4.398481133130527
+  },
+  "small_side": {
+    "max_channel_light_gain": 57.0,
+    "pixels_gain_over_3": 573139,
+    "mean_rgb_gain": 2.508339844585603
+  }
+}

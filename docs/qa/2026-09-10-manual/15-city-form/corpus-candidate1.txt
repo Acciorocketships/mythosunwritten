@@ -1,0 +1,464 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+SWEEP seeds=12 scales=4
+SWEEP seed=1 scale=compact ms=5923 SEALED buildings=51 markets=0 open_skywalks=0 occupied_skywalks=1 enclosed=0 rooms={ &"slim": 10, &"tower": 19, &"row": 9, &"building": 3 }
+SWEEP seed=1 scale=compact STONE faces=698 high=21 ratio=0.0301 roof_high=0 unroomed_high=21 raised_high=0 grounded=0 max=5 trimmed=0 (unroomed=0 roof=0) refused_trims=0 bands={ -4: 42, -3: 47, -2: 80, -1: 193, 0: 189, 1: 59, 2: 24, 3: 18, 4: 25, 5: 21 }
+SWEEP seed=1 scale=compact WALLS faces=681 stone=67 ratio=0.0984 high_stone=0 high_ratio=0.0000 off_datum=42 min=-3 max=7 frag=0/177 stone_bands={ 0: 32, 1: 35 }
+SWEEP seed=1 scale=compact ROOFS crowns=32 pitched=18 share=0.5625 flat=4 tiled=10 refused=0 partial=0 dormers=1 dormered_roofs=1 dressed=3/4 chimneys=0 awnings=0 boxes=1 rails=3 rubble=0 (paved=0 borne=1 bearing=0) brackets=12 bare_overhangs=0 families={ &"orange": 7, &"blue": 13, &"boarded": 0 }
+SWEEP seed=1 scale=compact SKIN panels=408 masonry=214 natural=0 green=1 tall_masonry=73 free_bench_stone=3 shared_street=27 low=162 tall=270 tallest=9 cut=0 cut_coursed=20 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=4 banks={ 1: 70, 2: 92, 3: 87, 4: 80, 5: 40, 6: 18, 9: 45 }
+SWEEP seed=1 scale=compact CLEARANCE payload=fabric_dressing shapes=756 walked=144 centre_free=144 offset_free=0 blocked=0 gates=204 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=1 scale=compact STREET_PINCH walked=144 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-2, 0, -5) rise=1.500
+SWEEP 1/compact PINCH_BODY cell=(-2, 0, -5) asset=sfv.deck.pillar.001 placement=facade-joint/-5/1/-9 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=1 scale=compact GREEN_REACH garden=46 runs=2 entered=1 stepped=0 near=0 isolated=1 best_stepped=0 best_near=0
+SWEEP seed=1 scale=standard ms=4567 SEALED buildings=46 markets=0 open_skywalks=0 occupied_skywalks=3 enclosed=0 rooms={ &"slim": 11, &"tower": 7, &"row": 5, &"long": 1, &"building": 1 }
+SWEEP seed=1 scale=standard STONE faces=600 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=64 max=3 trimmed=0 (unroomed=0 roof=0) refused_trims=0 bands={ -4: 62, -3: 77, -2: 63, -1: 115, 0: 179, 1: 54, 2: 26, 3: 24 }
+SWEEP seed=1 scale=standard WALLS faces=666 stone=117 ratio=0.1757 high_stone=20 high_ratio=0.0321 off_datum=42 min=-2 max=6 frag=0/195 stone_bands={ -1: 1, 0: 42, 1: 54, 2: 12, 4: 4, 5: 4 }
+SWEEP seed=1 scale=standard ROOFS crowns=26 pitched=17 share=0.6538 flat=3 tiled=6 refused=0 partial=0 dormers=3 dormered_roofs=3 dressed=3/3 chimneys=0 awnings=0 boxes=4 rails=0 rubble=0 (paved=0 borne=0 bearing=0) brackets=6 bare_overhangs=0 families={ &"orange": 12, &"blue": 11, &"boarded": 0 }
+SWEEP seed=1 scale=standard SKIN panels=337 masonry=140 natural=0 green=0 tall_masonry=71 free_bench_stone=4 shared_street=22 low=62 tall=251 tallest=5 cut=0 cut_coursed=18 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=1 banks={ 1: 32, 2: 30, 3: 105, 4: 116, 5: 30 }
+SWEEP seed=1 scale=standard CLEARANCE payload=fabric_dressing shapes=696 walked=204 centre_free=204 offset_free=0 blocked=0 gates=292 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=1 scale=standard STREET_PINCH walked=204 pinched=0 colliding=0
+SWEEP seed=1 scale=standard GREEN_REACH garden=88 runs=3 entered=2 stepped=0 near=0 isolated=1 best_stepped=0 best_near=0
+SWEEP seed=1 scale=large ms=8522 SEALED buildings=67 markets=1 open_skywalks=1 occupied_skywalks=2 enclosed=1 rooms={ &"slim": 19, &"tower": 18, &"row": 12, &"building": 2, &"long": 2 }
+SWEEP seed=1 scale=large STONE faces=952 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=64 max=4 trimmed=19 (unroomed=19 roof=0) refused_trims=0 bands={ -3: 14, -2: 92, -1: 263, 0: 283, 1: 134, 2: 71, 3: 87, 4: 8 }
+SWEEP seed=1 scale=large WALLS faces=1002 stone=118 ratio=0.1178 high_stone=2 high_ratio=0.0021 off_datum=58 min=-3 max=7 frag=0/218 stone_bands={ -1: 4, 0: 56, 1: 56, 2: 2 }
+SWEEP seed=1 scale=large ROOFS crowns=39 pitched=23 share=0.5897 flat=3 tiled=13 refused=0 partial=0 dormers=3 dormered_roofs=3 dressed=2/3 chimneys=1 awnings=0 boxes=2 rails=3 rubble=0 (paved=0 borne=3 bearing=0) brackets=19 bare_overhangs=0 families={ &"orange": 19, &"blue": 8, &"boarded": 0 }
+SWEEP seed=1 scale=large SKIN panels=565 masonry=278 natural=0 green=2 tall_masonry=110 free_bench_stone=14 shared_street=32 low=193 tall=383 tallest=6 cut=0 cut_coursed=64 tail_candidates=0 tail_unclearable=0 coursed_trim=2 cap_juts=0 cap_trim=9 banks={ 1: 89, 2: 104, 3: 171, 4: 100, 5: 100, 6: 12 }
+SWEEP seed=1 scale=large CLEARANCE payload=fabric_dressing shapes=910 walked=296 centre_free=296 offset_free=0 blocked=0 gates=420 gates_offset=2 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=1 scale=large STREET_PINCH walked=296 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-13, 0, -1) rise=1.500
+SWEEP 1/large PINCH_BODY cell=(-13, 0, -1) asset=sfv.deck.pillar.001 placement=facade-joint/-25/1/-1 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=1 scale=large GREEN_REACH garden=98 runs=4 entered=3 stepped=0 near=0 isolated=1 best_stepped=0 best_near=0
+SWEEP seed=1 scale=grand ms=28795 SEALED buildings=139 markets=0 open_skywalks=1 occupied_skywalks=5 enclosed=1 rooms={ &"tower": 37, &"slim": 30, &"row": 14, &"building": 5 }
+SWEEP seed=1 scale=grand STONE faces=1089 high=20 ratio=0.0184 roof_high=0 unroomed_high=14 raised_high=0 grounded=58 max=9 trimmed=62 (unroomed=62 roof=0) refused_trims=0 bands={ -3: 5, -2: 58, -1: 254, 0: 338, 1: 160, 2: 105, 3: 130, 4: 19, 5: 6, 6: 3, 7: 3, 8: 4, 9: 4 }
+SWEEP seed=1 scale=grand WALLS faces=1963 stone=256 ratio=0.1304 high_stone=18 high_ratio=0.0099 off_datum=150 min=-3 max=9 frag=0/493 stone_bands={ -1: 4, 0: 110, 1: 124, 2: 18 }
+SWEEP seed=1 scale=grand ROOFS crowns=87 pitched=40 share=0.4598 flat=14 tiled=33 refused=0 partial=0 dormers=8 dormered_roofs=8 dressed=13/14 chimneys=3 awnings=0 boxes=1 rails=0 rubble=0 (paved=0 borne=4 bearing=0) brackets=37 bare_overhangs=0 families={ &"orange": 29, &"blue": 21, &"boarded": 0 }
+SWEEP seed=1 scale=grand SKIN panels=636 masonry=329 natural=0 green=1 tall_masonry=141 free_bench_stone=21 shared_street=52 low=190 tall=539 tallest=10 cut=0 cut_coursed=43 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=14 banks={ 1: 92, 2: 98, 3: 114, 4: 140, 5: 185, 6: 24, 7: 7, 9: 9, 10: 60 }
+SWEEP seed=1 scale=grand CLEARANCE payload=fabric_dressing shapes=1142 walked=332 centre_free=332 offset_free=0 blocked=0 gates=468 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=1 scale=grand STREET_PINCH walked=332 pinched=2 colliding=2 first=sfv.deck.pillar.001@(5, 0, 12) rise=1.500
+SWEEP 1/grand PINCH_BODY cell=(5, 0, 12) asset=sfv.deck.pillar.001 placement=facade-joint/11/1/23 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP 1/grand PINCH_BODY cell=(-18, 1, 0) asset=sfv.deck.pillar.001 placement=facade-joint/-37/2/-1 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=1 scale=grand GREEN_REACH garden=58 runs=2 entered=1 stepped=0 near=0 isolated=1 best_stepped=0 best_near=0
+SWEEP seed=2 scale=compact ms=9375 SEALED buildings=51 markets=0 open_skywalks=0 occupied_skywalks=1 enclosed=0 rooms={ &"tower": 16, &"row": 12, &"slim": 6, &"building": 2 }
+SWEEP seed=2 scale=compact STONE faces=617 high=14 ratio=0.0227 roof_high=0 unroomed_high=14 raised_high=0 grounded=0 max=5 trimmed=0 (unroomed=0 roof=0) refused_trims=0 bands={ -4: 50, -3: 43, -2: 74, -1: 148, 0: 183, 1: 52, 2: 25, 3: 17, 4: 11, 5: 14 }
+SWEEP seed=2 scale=compact WALLS faces=684 stone=99 ratio=0.1447 high_stone=0 high_ratio=0.0000 off_datum=40 min=-4 max=6 frag=0/175 stone_bands={ -4: 6, -3: 7, 0: 53, 1: 33 }
+SWEEP seed=2 scale=compact ROOFS crowns=33 pitched=22 share=0.6667 flat=2 tiled=9 refused=0 partial=0 dormers=4 dormered_roofs=3 dressed=2/2 chimneys=0 awnings=0 boxes=2 rails=8 rubble=0 (paved=0 borne=0 bearing=0) brackets=13 bare_overhangs=0 families={ &"orange": 7, &"blue": 17, &"boarded": 0 }
+SWEEP seed=2 scale=compact SKIN panels=355 masonry=201 natural=0 green=0 tall_masonry=83 free_bench_stone=15 shared_street=28 low=139 tall=286 tallest=10 cut=0 cut_coursed=17 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=7 banks={ 1: 49, 2: 90, 3: 84, 4: 132, 5: 25, 7: 7, 8: 8, 10: 30 }
+SWEEP seed=2 scale=compact CLEARANCE payload=fabric_dressing shapes=643 walked=148 centre_free=148 offset_free=0 blocked=0 gates=207 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=2 scale=compact STREET_PINCH walked=148 pinched=0 colliding=0
+SWEEP seed=2 scale=compact GREEN_REACH garden=17 runs=2 entered=0 stepped=1 near=0 isolated=1 best_stepped=9 best_near=0
+SWEEP seed=2 scale=standard ms=7607 SEALED buildings=66 markets=0 open_skywalks=2 occupied_skywalks=2 enclosed=2 rooms={ &"tower": 17, &"slim": 13, &"row": 11, &"building": 5 }
+SWEEP seed=2 scale=standard STONE faces=727 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=0 max=3 trimmed=12 (unroomed=4 roof=8) refused_trims=0 bands={ -4: 80, -3: 69, -2: 84, -1: 181, 0: 212, 1: 46, 2: 12, 3: 43 }
+SWEEP seed=2 scale=standard WALLS faces=945 stone=162 ratio=0.1714 high_stone=0 high_ratio=0.0000 off_datum=72 min=-3 max=8 frag=0/230 stone_bands={ -1: 4, 0: 81, 1: 77 }
+SWEEP seed=2 scale=standard ROOFS crowns=45 pitched=31 share=0.6889 flat=3 tiled=11 refused=0 partial=0 dormers=5 dormered_roofs=5 dressed=2/3 chimneys=1 awnings=0 boxes=0 rails=0 rubble=0 (paved=0 borne=5 bearing=0) brackets=19 bare_overhangs=0 families={ &"orange": 12, &"blue": 23, &"boarded": 0 }
+SWEEP seed=2 scale=standard SKIN panels=430 masonry=219 natural=0 green=1 tall_masonry=68 free_bench_stone=11 shared_street=33 low=156 tall=254 tallest=5 cut=0 cut_coursed=15 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=3 banks={ 1: 84, 2: 72, 3: 87, 4: 92, 5: 75 }
+SWEEP seed=2 scale=standard CLEARANCE payload=fabric_dressing shapes=777 walked=232 centre_free=232 offset_free=0 blocked=0 gates=336 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=2 scale=standard STREET_PINCH walked=232 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-7, 3, 4) rise=1.500
+SWEEP 2/standard PINCH_BODY cell=(-7, 3, 4) asset=sfv.deck.pillar.001 placement=facade-joint/-13/4/7 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=2 scale=standard GREEN_REACH garden=36 runs=4 entered=1 stepped=2 near=0 isolated=1 best_stepped=8 best_near=0
+SWEEP seed=2 scale=large ms=22380 SEALED buildings=124 markets=1 open_skywalks=1 occupied_skywalks=3 enclosed=1 rooms={ &"tower": 37, &"slim": 27, &"row": 12, &"building": 8 }
+SWEEP seed=2 scale=large STONE faces=803 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=29 max=3 trimmed=72 (unroomed=72 roof=0) refused_trims=0 bands={ -5: 10, -4: 40, -3: 35, -2: 68, -1: 245, 0: 252, 1: 74, 2: 30, 3: 49 }
+SWEEP seed=2 scale=large WALLS faces=1622 stone=233 ratio=0.1436 high_stone=8 high_ratio=0.0050 off_datum=24 min=-5 max=7 frag=0/358 stone_bands={ -5: 2, -4: 2, -3: 8, -2: 8, 0: 96, 1: 109, 2: 8 }
+SWEEP seed=2 scale=large ROOFS crowns=72 pitched=41 share=0.5694 flat=4 tiled=27 refused=0 partial=0 dormers=6 dormered_roofs=6 dressed=3/4 chimneys=0 awnings=0 boxes=0 rails=11 rubble=0 (paved=0 borne=4 bearing=0) brackets=30 bare_overhangs=0 families={ &"orange": 11, &"blue": 36, &"boarded": 0 }
+SWEEP seed=2 scale=large SKIN panels=480 masonry=276 natural=0 green=0 tall_masonry=75 free_bench_stone=14 shared_street=48 low=191 tall=254 tallest=6 cut=0 cut_coursed=22 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=9 banks={ 1: 115, 2: 76, 3: 81, 4: 156, 5: 5, 6: 12 }
+SWEEP seed=2 scale=large CLEARANCE payload=fabric_dressing shapes=844 walked=300 centre_free=300 offset_free=0 blocked=0 gates=424 gates_offset=2 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=2 scale=large STREET_PINCH walked=300 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-3, 4, -4) rise=1.500
+SWEEP 2/large PINCH_BODY cell=(-3, 4, -4) asset=sfv.deck.pillar.001 placement=facade-joint/-5/5/-9 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=2 scale=large GREEN_REACH garden=6 runs=1 entered=0 stepped=0 near=1 isolated=0 best_stepped=0 best_near=6
+SWEEP seed=2 scale=grand ms=17182 SEALED buildings=98 markets=0 open_skywalks=2 occupied_skywalks=3 enclosed=0 rooms={ &"slim": 24, &"row": 16, &"tower": 26, &"building": 6 }
+SWEEP seed=2 scale=grand STONE faces=1620 high=20 ratio=0.0123 roof_high=0 unroomed_high=20 raised_high=0 grounded=12 max=5 trimmed=123 (unroomed=123 roof=0) refused_trims=1 bands={ -7: 8, -6: 26, -5: 92, -4: 85, -3: 126, -2: 168, -1: 281, 0: 414, 1: 164, 2: 114, 3: 98, 4: 24, 5: 20 }
+SWEEP seed=2 scale=grand WALLS faces=1366 stone=163 ratio=0.1193 high_stone=0 high_ratio=0.0000 off_datum=52 min=-5 max=7 frag=0/330 stone_bands={ 0: 70, 1: 93 }
+SWEEP seed=2 scale=grand ROOFS crowns=69 pitched=43 share=0.6232 flat=6 tiled=20 refused=0 partial=0 dormers=6 dormered_roofs=6 dressed=6/6 chimneys=3 awnings=0 boxes=2 rails=6 rubble=0 (paved=0 borne=6 bearing=4) brackets=23 bare_overhangs=0 families={ &"orange": 19, &"blue": 30, &"boarded": 0 }
+SWEEP seed=2 scale=grand SKIN panels=962 masonry=478 natural=0 green=2 tall_masonry=216 free_bench_stone=23 shared_street=58 low=252 tall=774 tallest=11 cut=0 cut_coursed=63 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=9 banks={ 1: 164, 2: 88, 3: 252, 4: 232, 5: 140, 6: 18, 7: 112, 9: 9, 11: 11 }
+SWEEP seed=2 scale=grand CLEARANCE payload=fabric_dressing shapes=1829 walked=392 centre_free=392 offset_free=0 blocked=0 gates=565 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=2 scale=grand STREET_PINCH walked=392 pinched=0 colliding=0
+SWEEP seed=2 scale=grand GREEN_REACH garden=127 runs=8 entered=2 stepped=0 near=3 isolated=3 best_stepped=0 best_near=9
+SWEEP seed=3 scale=compact ms=4115 SEALED buildings=48 markets=0 open_skywalks=1 occupied_skywalks=2 enclosed=1 rooms={ &"tower": 13, &"slim": 7, &"row": 8, &"building": 2 }
+SWEEP seed=3 scale=compact STONE faces=681 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=50 max=3 trimmed=6 (unroomed=6 roof=0) refused_trims=0 bands={ -4: 34, -3: 28, -2: 120, -1: 196, 0: 222, 1: 67, 2: 6, 3: 8 }
+SWEEP seed=3 scale=compact WALLS faces=602 stone=124 ratio=0.2060 high_stone=0 high_ratio=0.0000 off_datum=12 min=-5 max=5 frag=0/191 stone_bands={ -3: 3, -2: 4, -1: 2, 0: 59, 1: 56 }
+SWEEP seed=3 scale=compact ROOFS crowns=30 pitched=18 share=0.6000 flat=5 tiled=7 refused=0 partial=0 dormers=0 dormered_roofs=0 dressed=4/5 chimneys=0 awnings=0 boxes=0 rails=4 rubble=0 (paved=0 borne=4 bearing=0) brackets=6 bare_overhangs=0 families={ &"orange": 22, &"blue": 0, &"boarded": 0 }
+SWEEP seed=3 scale=compact SKIN panels=393 masonry=229 natural=0 green=0 tall_masonry=69 free_bench_stone=16 shared_street=33 low=184 tall=257 tallest=6 cut=0 cut_coursed=16 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=3 banks={ 1: 76, 2: 108, 3: 69, 4: 148, 5: 10, 6: 30 }
+SWEEP seed=3 scale=compact CLEARANCE payload=fabric_dressing shapes=685 walked=144 centre_free=144 offset_free=0 blocked=0 gates=200 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=3 scale=compact STREET_PINCH walked=144 pinched=0 colliding=0
+SWEEP seed=3 scale=compact GREEN_REACH garden=24 runs=2 entered=0 stepped=1 near=0 isolated=1 best_stepped=18 best_near=0
+SWEEP seed=3 scale=standard ms=5800 SEALED buildings=49 markets=0 open_skywalks=0 occupied_skywalks=2 enclosed=0 rooms={ &"slim": 10, &"tower": 13, &"row": 8, &"building": 4, &"long": 2 }
+SWEEP seed=3 scale=standard STONE faces=888 high=10 ratio=0.0113 roof_high=0 unroomed_high=10 raised_high=0 grounded=48 max=5 trimmed=0 (unroomed=0 roof=0) refused_trims=0 bands={ -3: 34, -2: 101, -1: 197, 0: 290, 1: 130, 2: 66, 3: 60, 5: 10 }
+SWEEP seed=3 scale=standard WALLS faces=759 stone=128 ratio=0.1686 high_stone=0 high_ratio=0.0000 off_datum=74 min=-3 max=7 frag=0/158 stone_bands={ -1: 5, 0: 66, 1: 57 }
+SWEEP seed=3 scale=standard ROOFS crowns=29 pitched=22 share=0.7586 flat=0 tiled=7 refused=0 partial=0 dormers=4 dormered_roofs=4 dressed=0/0 chimneys=0 awnings=0 boxes=0 rails=0 rubble=0 (paved=0 borne=1 bearing=0) brackets=17 bare_overhangs=0 families={ &"orange": 23, &"blue": 3, &"boarded": 0 }
+SWEEP seed=3 scale=standard SKIN panels=515 masonry=268 natural=0 green=0 tall_masonry=99 free_bench_stone=16 shared_street=30 low=221 tall=344 tallest=9 cut=0 cut_coursed=39 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=8 banks={ 1: 69, 2: 152, 3: 144, 4: 116, 5: 45, 6: 12, 9: 27 }
+SWEEP seed=3 scale=standard CLEARANCE payload=fabric_dressing shapes=812 walked=188 centre_free=188 offset_free=0 blocked=0 gates=264 gates_offset=2 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=3 scale=standard STREET_PINCH walked=188 pinched=0 colliding=0
+SWEEP seed=3 scale=standard GREEN_REACH garden=73 runs=4 entered=0 stepped=1 near=1 isolated=2 best_stepped=32 best_near=12
+SWEEP seed=3 scale=large ms=11214 FAILED gate=[maze fabric gate failed: terminal house crown spatial.maze_back.00.room00 has no fitting authored] reason=maze fabric gate failed: terminal house crown spatial.maze_back.00.room00 has no fitting authored gable: pitched roof.slim.short.orange/r0: blocks required futu
+SWEEP seed=3 scale=grand ms=30005 SEALED buildings=145 markets=1 open_skywalks=0 occupied_skywalks=2 enclosed=0 rooms={ &"row": 26, &"tower": 46, &"slim": 32, &"building": 8, &"long": 2 }
+SWEEP seed=3 scale=grand STONE faces=1969 high=40 ratio=0.0203 roof_high=10 unroomed_high=30 raised_high=0 grounded=20 max=5 trimmed=75 (unroomed=71 roof=4) refused_trims=0 bands={ -4: 132, -3: 75, -2: 196, -1: 384, 0: 651, 1: 205, 2: 159, 3: 92, 4: 35, 5: 40 }
+SWEEP seed=3 scale=grand WALLS faces=2236 stone=300 ratio=0.1342 high_stone=8 high_ratio=0.0039 off_datum=182 min=-2 max=10 frag=0/426 stone_bands={ -2: 2, -1: 4, 0: 144, 1: 142, 2: 4, 3: 4 }
+SWEEP seed=3 scale=grand ROOFS crowns=79 pitched=50 share=0.6329 flat=4 tiled=25 refused=0 partial=0 dormers=9 dormered_roofs=9 dressed=4/4 chimneys=2 awnings=0 boxes=3 rails=1 rubble=1 (paved=0 borne=13 bearing=4) brackets=53 bare_overhangs=0 families={ &"orange": 46, &"blue": 8, &"boarded": 0 }
+SWEEP seed=3 scale=grand SKIN panels=1171 masonry=603 natural=0 green=1 tall_masonry=280 free_bench_stone=21 shared_street=77 low=313 tall=978 tallest=10 cut=0 cut_coursed=153 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=16 banks={ 1: 193, 2: 120, 3: 423, 4: 348, 5: 85, 6: 66, 8: 16, 10: 40 }
+SWEEP seed=3 scale=grand CLEARANCE payload=fabric_dressing shapes=1882 walked=516 centre_free=516 offset_free=0 blocked=0 gates=747 gates_offset=1 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=3 scale=grand STREET_PINCH walked=516 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-10, 6, -7) rise=1.500
+SWEEP 3/grand PINCH_BODY cell=(-10, 6, -7) asset=sfv.deck.pillar.001 placement=facade-joint/-21/7/-13 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=3 scale=grand GREEN_REACH garden=74 runs=5 entered=3 stepped=0 near=0 isolated=2 best_stepped=0 best_near=0
+SWEEP seed=4 scale=compact ms=4722 SEALED buildings=40 markets=0 open_skywalks=0 occupied_skywalks=2 enclosed=0 rooms={ &"slim": 8, &"tower": 10, &"row": 6 }
+SWEEP seed=4 scale=compact STONE faces=414 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=27 max=3 trimmed=0 (unroomed=0 roof=0) refused_trims=0 bands={ -4: 32, -3: 22, -2: 61, -1: 130, 0: 114, 1: 39, 2: 11, 3: 5 }
+SWEEP seed=4 scale=compact WALLS faces=527 stone=85 ratio=0.1613 high_stone=0 high_ratio=0.0000 off_datum=40 min=-3 max=5 frag=0/159 stone_bands={ -3: 1, 0: 46, 1: 38 }
+SWEEP seed=4 scale=compact ROOFS crowns=30 pitched=17 share=0.5667 flat=7 tiled=6 refused=0 partial=0 dormers=1 dormered_roofs=1 dressed=6/7 chimneys=2 awnings=0 boxes=1 rails=0 rubble=0 (paved=0 borne=0 bearing=0) brackets=6 bare_overhangs=0 families={ &"orange": 16, &"blue": 5, &"boarded": 0 }
+SWEEP seed=4 scale=compact SKIN panels=242 masonry=146 natural=0 green=0 tall_masonry=58 free_bench_stone=11 shared_street=23 low=87 tall=184 tallest=4 cut=0 cut_coursed=19 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=5 banks={ 1: 43, 2: 44, 3: 60, 4: 124 }
+SWEEP seed=4 scale=compact CLEARANCE payload=fabric_dressing shapes=433 walked=116 centre_free=116 offset_free=0 blocked=0 gates=166 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=4 scale=compact STREET_PINCH walked=116 pinched=0 colliding=0
+SWEEP seed=4 scale=compact GREEN_REACH garden=0 runs=0 entered=0 stepped=0 near=0 isolated=0 best_stepped=0 best_near=0
+SWEEP seed=4 scale=standard ms=3318 SEALED buildings=41 markets=0 open_skywalks=0 occupied_skywalks=3 enclosed=0 rooms={ &"slim": 9, &"tower": 9, &"row": 5 }
+SWEEP seed=4 scale=standard STONE faces=433 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=0 max=3 trimmed=15 (unroomed=15 roof=0) refused_trims=0 bands={ -3: 56, -2: 64, -1: 108, 0: 108, 1: 28, 2: 20, 3: 49 }
+SWEEP seed=4 scale=standard WALLS faces=588 stone=108 ratio=0.1837 high_stone=4 high_ratio=0.0069 off_datum=12 min=-3 max=6 frag=0/185 stone_bands={ -2: 4, -1: 2, 0: 56, 1: 42, 4: 4 }
+SWEEP seed=4 scale=standard ROOFS crowns=28 pitched=17 share=0.6071 flat=4 tiled=7 refused=0 partial=0 dormers=1 dormered_roofs=1 dressed=3/4 chimneys=1 awnings=0 boxes=2 rails=0 rubble=0 (paved=0 borne=2 bearing=0) brackets=3 bare_overhangs=0 families={ &"orange": 19, &"blue": 4, &"boarded": 0 }
+SWEEP seed=4 scale=standard SKIN panels=264 masonry=128 natural=0 green=1 tall_masonry=61 free_bench_stone=4 shared_street=11 low=64 tall=200 tallest=4 cut=0 cut_coursed=22 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=1 banks={ 1: 48, 2: 16, 3: 132, 4: 68 }
+SWEEP seed=4 scale=standard CLEARANCE payload=fabric_dressing shapes=539 walked=156 centre_free=156 offset_free=0 blocked=0 gates=222 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=4 scale=standard STREET_PINCH walked=156 pinched=0 colliding=0
+SWEEP seed=4 scale=standard GREEN_REACH garden=24 runs=2 entered=2 stepped=0 near=0 isolated=0 best_stepped=0 best_near=0
+SWEEP seed=4 scale=large ms=10602 SEALED buildings=74 markets=0 open_skywalks=3 occupied_skywalks=3 enclosed=2 rooms={ &"tower": 17, &"slim": 20, &"row": 8, &"building": 2 }
+SWEEP seed=4 scale=large STONE faces=799 high=8 ratio=0.0100 roof_high=0 unroomed_high=8 raised_high=0 grounded=0 max=5 trimmed=62 (unroomed=60 roof=2) refused_trims=0 bands={ -4: 87, -3: 49, -2: 87, -1: 193, 0: 259, 1: 58, 2: 26, 3: 26, 4: 6, 5: 8 }
+SWEEP seed=4 scale=large WALLS faces=1139 stone=146 ratio=0.1282 high_stone=6 high_ratio=0.0054 off_datum=32 min=-3 max=7 frag=0/292 stone_bands={ 0: 80, 1: 60, 2: 6 }
+SWEEP seed=4 scale=large ROOFS crowns=38 pitched=23 share=0.6053 flat=4 tiled=11 refused=0 partial=0 dormers=5 dormered_roofs=5 dressed=3/4 chimneys=1 awnings=0 boxes=1 rails=9 rubble=0 (paved=0 borne=0 bearing=0) brackets=18 bare_overhangs=0 families={ &"orange": 18, &"blue": 11, &"boarded": 0 }
+SWEEP seed=4 scale=large SKIN panels=460 masonry=240 natural=0 green=1 tall_masonry=118 free_bench_stone=12 shared_street=31 low=122 tall=397 tallest=7 cut=0 cut_coursed=36 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=9 banks={ 1: 62, 2: 60, 3: 126, 4: 240, 5: 10, 7: 21 }
+SWEEP seed=4 scale=large CLEARANCE payload=fabric_dressing shapes=907 walked=300 centre_free=300 offset_free=0 blocked=0 gates=435 gates_offset=1 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=4 scale=large STREET_PINCH walked=300 pinched=2 colliding=2 first=sfv.deck.pillar.001@(-6, 0, -3) rise=1.500
+SWEEP 4/large PINCH_BODY cell=(-6, 0, -3) asset=sfv.deck.pillar.001 placement=facade-joint/-13/1/-5 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP 4/large PINCH_BODY cell=(-10, 1, 1) asset=sfv.deck.pillar.001 placement=facade-joint/-21/2/3 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=4 scale=large GREEN_REACH garden=31 runs=3 entered=3 stepped=0 near=0 isolated=0 best_stepped=0 best_near=0
+SWEEP seed=4 scale=grand ms=10950 SEALED buildings=83 markets=1 open_skywalks=0 occupied_skywalks=4 enclosed=0 rooms={ &"slim": 19, &"tower": 26, &"row": 7, &"building": 1 }
+SWEEP seed=4 scale=grand STONE faces=911 high=14 ratio=0.0154 roof_high=0 unroomed_high=0 raised_high=0 grounded=108 max=5 trimmed=39 (unroomed=39 roof=0) refused_trims=0 bands={ -5: 22, -4: 6, -3: 21, -2: 113, -1: 219, 0: 260, 1: 101, 2: 64, 3: 77, 4: 14, 5: 14 }
+SWEEP seed=4 scale=grand WALLS faces=1133 stone=228 ratio=0.2012 high_stone=4 high_ratio=0.0036 off_datum=32 min=-5 max=7 frag=0/285 stone_bands={ -5: 6, -4: 6, -3: 14, -2: 18, 0: 86, 1: 94, 2: 4 }
+SWEEP seed=4 scale=grand ROOFS crowns=43 pitched=27 share=0.6279 flat=2 tiled=14 refused=0 partial=0 dormers=4 dormered_roofs=4 dressed=1/2 chimneys=1 awnings=0 boxes=2 rails=0 rubble=0 (paved=0 borne=1 bearing=0) brackets=18 bare_overhangs=0 families={ &"orange": 15, &"blue": 20, &"boarded": 0 }
+SWEEP seed=4 scale=grand SKIN panels=526 masonry=257 natural=0 green=0 tall_masonry=96 free_bench_stone=10 shared_street=25 low=183 tall=439 tallest=6 cut=0 cut_coursed=37 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=4 banks={ 1: 99, 2: 84, 3: 81, 4: 80, 5: 50, 6: 228 }
+SWEEP seed=4 scale=grand CLEARANCE payload=fabric_dressing shapes=907 walked=308 centre_free=308 offset_free=0 blocked=0 gates=445 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=4 scale=grand STREET_PINCH walked=308 pinched=2 colliding=2 first=sfv.deck.pillar.001@(-11, 0, 5) rise=1.500
+SWEEP 4/grand PINCH_BODY cell=(-11, 0, 5) asset=sfv.deck.pillar.001 placement=facade-joint/-21/1/11 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP 4/grand PINCH_BODY cell=(-8, 0, 5) asset=sfv.deck.pillar.001 placement=facade-joint/-17/1/11 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=4 scale=grand GREEN_REACH garden=52 runs=3 entered=0 stepped=1 near=0 isolated=2 best_stepped=20 best_near=0
+SWEEP seed=5 scale=compact ms=3444 SEALED buildings=40 markets=0 open_skywalks=0 occupied_skywalks=2 enclosed=0 rooms={ &"slim": 8, &"tower": 15, &"row": 5, &"building": 3 }
+SWEEP seed=5 scale=compact STONE faces=533 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=0 max=4 trimmed=0 (unroomed=0 roof=0) refused_trims=0 bands={ -4: 40, -3: 50, -2: 69, -1: 114, 0: 189, 1: 42, 2: 10, 3: 12, 4: 7 }
+SWEEP seed=5 scale=compact WALLS faces=603 stone=42 ratio=0.0697 high_stone=0 high_ratio=0.0000 off_datum=94 min=-3 max=6 frag=0/143 stone_bands={ 0: 28, 1: 14 }
+SWEEP seed=5 scale=compact ROOFS crowns=22 pitched=12 share=0.5455 flat=2 tiled=8 refused=0 partial=0 dormers=5 dormered_roofs=5 dressed=1/2 chimneys=0 awnings=0 boxes=0 rails=0 rubble=0 (paved=0 borne=1 bearing=0) brackets=14 bare_overhangs=0 families={ &"orange": 14, &"blue": 2, &"boarded": 0 }
+SWEEP seed=5 scale=compact SKIN panels=312 masonry=152 natural=0 green=0 tall_masonry=52 free_bench_stone=7 shared_street=18 low=116 tall=182 tallest=5 cut=0 cut_coursed=14 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=2 banks={ 1: 52, 2: 64, 3: 87, 4: 60, 5: 35 }
+SWEEP seed=5 scale=compact CLEARANCE payload=fabric_dressing shapes=557 walked=172 centre_free=172 offset_free=0 blocked=0 gates=245 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=5 scale=compact STREET_PINCH walked=172 pinched=1 colliding=1 first=sfv.deck.pillar.001@(3, 0, 6) rise=1.500
+SWEEP 5/compact PINCH_BODY cell=(3, 0, 6) asset=sfv.deck.pillar.001 placement=facade-joint/7/1/11 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=5 scale=compact GREEN_REACH garden=67 runs=2 entered=2 stepped=0 near=0 isolated=0 best_stepped=0 best_near=0
+SWEEP seed=5 scale=standard ms=3616 FAILED gate=[maze fabric gate failed: macro setback roof 0 for spatial.parcel.maze.house.001.part01.room00 and its] reason=maze fabric gate failed: macro setback roof 0 for spatial.parcel.maze.house.001.part01.room00 and its complete fallbacks were rejected: flat plate tiling: visua
+SCRIPT ERROR: Invalid operands 'bool' and 'StringName' in operator '!='.
+          at: close_borne_turf_corners (res://scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd:1671)
+          GDScript backtrace (most recent call first):
+              [0] close_borne_turf_corners (res://scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd:1671)
+              [1] maze_ground_skin_transaction (res://scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd:1572)
+              [2] maze_guard_wall_boxes (res://scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd:2207)
+              [3] solve (res://scripts/terrain/features/villages/fabric/PublicRealmSurfaceSolver.gd:166)
+              [4] generate (res://scripts/terrain/features/villages/fabric/WarrenSpatialFabricCompiler.gd:315)
+              [5] _solve_maze (res://scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd:238)
+              [6] _generate (res://scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd:175)
+              [7] solve (res://scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd:152)
+              [8] _run (res://tests/harness/warren_maze_mode_sweep.gd:403)
+              [9] _measure_street_pinches (res://tests/harness/warren_maze_mode_sweep.gd:1193)
+              [10] _measure_pinch_bodies (res://tests/harness/warren_maze_mode_sweep.gd:1398)
+SCRIPT ERROR: Invalid operands 'bool' and 'StringName' in operator '!='.
+          at: close_borne_turf_corners (res://scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd:1671)
+          GDScript backtrace (most recent call first):
+              [0] close_borne_turf_corners (res://scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd:1671)
+              [1] maze_ground_skin_transaction (res://scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd:1572)
+              [2] _suppress_intruding_modules (res://scripts/terrain/features/villages/fabric/WarrenSpatialFabricCompiler.gd:9401)
+              [3] generate (res://scripts/terrain/features/villages/fabric/WarrenSpatialFabricCompiler.gd:337)
+              [4] _solve_maze (res://scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd:238)
+              [5] _generate (res://scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd:175)
+              [6] solve (res://scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd:152)
+              [7] _run (res://tests/harness/warren_maze_mode_sweep.gd:403)
+              [8] _measure_street_pinches (res://tests/harness/warren_maze_mode_sweep.gd:1193)
+              [9] _measure_pinch_bodies (res://tests/harness/warren_maze_mode_sweep.gd:1398)
+SCRIPT ERROR: Invalid operands 'bool' and 'StringName' in operator '!='.
+          at: close_borne_turf_corners (res://scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd:1671)
+          GDScript backtrace (most recent call first):
+              [0] close_borne_turf_corners (res://scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd:1671)
+              [1] maze_ground_skin_transaction (res://scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd:1572)
+              [2] _maze_stone_skin_audit (res://scripts/terrain/features/villages/fabric/WarrenSpatialFabricCompiler.gd:1487)
+              [3] generate (res://scripts/terrain/features/villages/fabric/WarrenSpatialFabricCompiler.gd:361)
+              [4] _solve_maze (res://scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd:238)
+              [5] _generate (res://scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd:175)
+              [6] solve (res://scripts/terrain/features/villages/fabric/WarrenVolumetricSolver.gd:152)
+              [7] _run (res://tests/harness/warren_maze_mode_sweep.gd:403)
+              [8] _measure_street_pinches (res://tests/harness/warren_maze_mode_sweep.gd:1193)
+              [9] _measure_pinch_bodies (res://tests/harness/warren_maze_mode_sweep.gd:1398)
+SWEEP seed=5 scale=large ms=13761 SEALED buildings=89 markets=1 open_skywalks=1 occupied_skywalks=3 enclosed=1 rooms={ &"slim": 25, &"tower": 26, &"row": 11, &"building": 4 }
+SWEEP seed=5 scale=large STONE faces=1058 high=7 ratio=0.0066 roof_high=0 unroomed_high=7 raised_high=0 grounded=16 max=5 trimmed=23 (unroomed=23 roof=0) refused_trims=0 bands={ -3: 12, -2: 88, -1: 422, 0: 216, 1: 135, 2: 71, 3: 91, 4: 16, 5: 7 }
+SWEEP seed=5 scale=large WALLS faces=1266 stone=141 ratio=0.1114 high_stone=4 high_ratio=0.0032 off_datum=28 min=-2 max=9 frag=0/302 stone_bands={ 0: 69, 1: 68, 4: 2, 5: 2 }
+SWEEP seed=5 scale=large ROOFS crowns=55 pitched=34 share=0.6182 flat=3 tiled=18 refused=0 partial=0 dormers=4 dormered_roofs=4 dressed=3/3 chimneys=1 awnings=0 boxes=2 rails=0 rubble=0 (paved=0 borne=0 bearing=0) brackets=24 bare_overhangs=0 families={ &"orange": 27, &"blue": 13, &"boarded": 0 }
+SWEEP seed=5 scale=large SKIN panels=615 masonry=306 natural=0 green=41 tall_masonry=89 free_bench_stone=7 shared_street=42 low=259 tall=319 tallest=7 cut=0 cut_coursed=40 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=9 banks={ 1: 103, 2: 156, 3: 90, 4: 88, 5: 75, 6: 24, 7: 42 }
+SCRIPT ERROR: Invalid operands 'bool' and 'StringName' in operator '!='.
+          at: close_borne_turf_corners (res://scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd:1671)
+          GDScript backtrace (most recent call first):
+              [0] close_borne_turf_corners (res://scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd:1671)
+              [1] maze_ground_skin_transaction (res://scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd:1572)
+              [2] terrace_retaining_payload (res://scripts/terrain/features/villages/fabric/SettlementFabricAssembler.gd:1761)
+              [3] _measure_clearance (res://tests/harness/warren_maze_mode_sweep.gd:1692)
+              [4] _run (res://tests/harness/warren_maze_mode_sweep.gd:616)
+              [5] _measure_street_pinches (res://tests/harness/warren_maze_mode_sweep.gd:1193)
+              [6] _measure_pinch_bodies (res://tests/harness/warren_maze_mode_sweep.gd:1398)
+SWEEP seed=5 scale=large CLEARANCE payload=fabric_dressing shapes=915 walked=284 centre_free=284 offset_free=0 blocked=0 gates=402 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=5 scale=large STREET_PINCH walked=284 pinched=1 colliding=1 first=sfv.deck.pillar.001@(0, 4, 0) rise=1.500
+SWEEP 5/large PINCH_BODY cell=(0, 4, 0) asset=sfv.deck.pillar.001 placement=facade-joint/-1/5/-1 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=5 scale=large GREEN_REACH garden=80 runs=2 entered=2 stepped=0 near=0 isolated=0 best_stepped=0 best_near=0
+SWEEP seed=5 scale=grand ms=38942 SEALED buildings=149 markets=0 open_skywalks=2 occupied_skywalks=5 enclosed=2 rooms={ &"slim": 30, &"tower": 27, &"long": 4, &"building": 11, &"row": 13 }
+SWEEP seed=5 scale=grand STONE faces=1219 high=71 ratio=0.0582 roof_high=12 unroomed_high=59 raised_high=0 grounded=20 max=7 trimmed=68 (unroomed=68 roof=0) refused_trims=2 bands={ -5: 5, -4: 1, -3: 25, -2: 79, -1: 303, 0: 383, 1: 143, 2: 87, 3: 94, 4: 28, 5: 59, 6: 5, 7: 7 }
+SWEEP seed=5 scale=grand WALLS faces=2070 stone=167 ratio=0.0807 high_stone=16 high_ratio=0.0083 off_datum=152 min=-5 max=9 frag=0/444 stone_bands={ 0: 84, 1: 67, 2: 10, 3: 6 }
+SWEEP seed=5 scale=grand ROOFS crowns=80 pitched=43 share=0.5375 flat=3 tiled=34 refused=0 partial=0 dormers=9 dormered_roofs=9 dressed=3/3 chimneys=1 awnings=0 boxes=1 rails=0 rubble=0 (paved=0 borne=2 bearing=0) brackets=47 bare_overhangs=0 families={ &"orange": 34, &"blue": 19, &"boarded": 0 }
+SWEEP seed=5 scale=grand SKIN panels=750 masonry=396 natural=0 green=0 tall_masonry=126 free_bench_stone=21 shared_street=53 low=268 tall=494 tallest=6 cut=0 cut_coursed=70 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=13 banks={ 1: 182, 2: 86, 3: 147, 4: 84, 5: 155, 6: 108 }
+SWEEP seed=5 scale=grand CLEARANCE payload=fabric_dressing shapes=1290 walked=328 centre_free=328 offset_free=0 blocked=0 gates=462 gates_offset=3 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=5 scale=grand STREET_PINCH walked=328 pinched=3 colliding=3 first=sfv.deck.pillar.001@(-10, 1, 3) rise=1.500
+SWEEP 5/grand PINCH_BODY cell=(-10, 1, 3) asset=sfv.deck.pillar.001 placement=facade-joint/-21/2/7 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP 5/grand PINCH_BODY cell=(-9, 1, 3) asset=sfv.deck.pillar.001 placement=facade-joint/-17/2/7 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP 5/grand PINCH_BODY cell=(-1, 3, -6) asset=sfv.deck.pillar.001 placement=facade-joint/-1/4/-13 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=5 scale=grand GREEN_REACH garden=97 runs=4 entered=2 stepped=0 near=0 isolated=2 best_stepped=0 best_near=0
+SWEEP seed=6 scale=compact ms=3848 SEALED buildings=48 markets=0 open_skywalks=0 occupied_skywalks=2 enclosed=0 rooms={ &"tower": 13, &"slim": 8, &"row": 7, &"building": 2 }
+SWEEP seed=6 scale=compact STONE faces=594 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=58 max=3 trimmed=5 (unroomed=5 roof=0) refused_trims=0 bands={ -4: 42, -3: 25, -2: 99, -1: 176, 0: 178, 1: 62, 2: 4, 3: 8 }
+SWEEP seed=6 scale=compact WALLS faces=576 stone=87 ratio=0.1510 high_stone=0 high_ratio=0.0000 off_datum=12 min=-5 max=6 frag=0/181 stone_bands={ -5: 4, -4: 8, -3: 12, -2: 13, -1: 6, 0: 18, 1: 26 }
+SWEEP seed=6 scale=compact ROOFS crowns=29 pitched=15 share=0.5172 flat=9 tiled=5 refused=0 partial=0 dormers=1 dormered_roofs=1 dressed=7/9 chimneys=2 awnings=0 boxes=0 rails=0 rubble=0 (paved=0 borne=7 bearing=4) brackets=6 bare_overhangs=0 families={ &"orange": 7, &"blue": 12, &"boarded": 0 }
+SWEEP seed=6 scale=compact SKIN panels=356 masonry=220 natural=0 green=0 tall_masonry=47 free_bench_stone=17 shared_street=36 low=198 tall=158 tallest=5 cut=0 cut_coursed=14 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=6 banks={ 1: 84, 2: 114, 3: 72, 4: 76, 5: 10 }
+SWEEP seed=6 scale=compact CLEARANCE payload=fabric_dressing shapes=555 walked=140 centre_free=140 offset_free=0 blocked=0 gates=194 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=6 scale=compact STREET_PINCH walked=140 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-6, 4, 6) rise=1.500
+SWEEP 6/compact PINCH_BODY cell=(-6, 4, 6) asset=sfv.deck.pillar.001 placement=facade-joint/-13/5/11 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=6 scale=compact GREEN_REACH garden=29 runs=1 entered=0 stepped=0 near=1 isolated=0 best_stepped=0 best_near=29
+SWEEP seed=6 scale=standard ms=8994 SEALED buildings=75 markets=0 open_skywalks=3 occupied_skywalks=2 enclosed=0 rooms={ &"slim": 13, &"row": 13, &"tower": 23, &"building": 2 }
+SWEEP seed=6 scale=standard STONE faces=991 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=29 max=3 trimmed=22 (unroomed=22 roof=0) refused_trims=0 bands={ -5: 18, -4: 100, -3: 125, -2: 130, -1: 198, 0: 300, 1: 68, 2: 15, 3: 37 }
+SWEEP seed=6 scale=standard WALLS faces=1075 stone=127 ratio=0.1181 high_stone=0 high_ratio=0.0000 off_datum=52 min=-3 max=7 frag=0/255 stone_bands={ -2: 3, -1: 6, 0: 68, 1: 50 }
+SWEEP seed=6 scale=standard ROOFS crowns=51 pitched=36 share=0.7059 flat=4 tiled=11 refused=0 partial=0 dormers=3 dormered_roofs=3 dressed=3/4 chimneys=3 awnings=0 boxes=2 rails=8 rubble=0 (paved=0 borne=0 bearing=0) brackets=16 bare_overhangs=0 families={ &"orange": 22, &"blue": 18, &"boarded": 0 }
+SWEEP seed=6 scale=standard SKIN panels=566 masonry=294 natural=0 green=0 tall_masonry=107 free_bench_stone=18 shared_street=57 low=180 tall=386 tallest=6 cut=0 cut_coursed=16 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=3 banks={ 1: 88, 2: 92, 3: 132, 4: 200, 5: 30, 6: 24 }
+SWEEP seed=6 scale=standard CLEARANCE payload=fabric_dressing shapes=1035 walked=204 centre_free=204 offset_free=0 blocked=0 gates=289 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=6 scale=standard STREET_PINCH walked=204 pinched=0 colliding=0
+SWEEP seed=6 scale=standard GREEN_REACH garden=0 runs=0 entered=0 stepped=0 near=0 isolated=0 best_stepped=0 best_near=0
+SWEEP seed=6 scale=large ms=20325 SEALED buildings=135 markets=0 open_skywalks=1 occupied_skywalks=3 enclosed=1 rooms={ &"slim": 26, &"row": 23, &"tower": 41, &"building": 4 }
+SWEEP seed=6 scale=large STONE faces=633 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=0 max=3 trimmed=34 (unroomed=34 roof=0) refused_trims=0 bands={ -5: 4, -4: 33, -3: 23, -2: 103, -1: 234, 0: 175, 1: 29, 2: 8, 3: 24 }
+SWEEP seed=6 scale=large WALLS faces=1832 stone=267 ratio=0.1457 high_stone=18 high_ratio=0.0101 off_datum=41 min=-3 max=9 frag=0/401 stone_bands={ 0: 123, 1: 126, 2: 10, 3: 8 }
+SWEEP seed=6 scale=large ROOFS crowns=80 pitched=52 share=0.6500 flat=7 tiled=21 refused=0 partial=0 dormers=8 dormered_roofs=8 dressed=6/7 chimneys=3 awnings=0 boxes=3 rails=1 rubble=0 (paved=0 borne=4 bearing=4) brackets=22 bare_overhangs=0 families={ &"orange": 24, &"blue": 34, &"boarded": 0 }
+SWEEP seed=6 scale=large SKIN panels=391 masonry=212 natural=0 green=0 tall_masonry=53 free_bench_stone=7 shared_street=35 low=149 tall=182 tallest=6 cut=0 cut_coursed=25 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=5 banks={ 1: 111, 2: 38, 3: 84, 4: 72, 5: 20, 6: 6 }
+SWEEP seed=6 scale=large CLEARANCE payload=fabric_dressing shapes=727 walked=256 centre_free=256 offset_free=0 blocked=0 gates=360 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=6 scale=large STREET_PINCH walked=256 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-4, 4, 3) rise=1.500
+SWEEP 6/large PINCH_BODY cell=(-4, 4, 3) asset=sfv.deck.pillar.001 placement=facade-joint/-9/5/7 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=6 scale=large GREEN_REACH garden=36 runs=1 entered=1 stepped=0 near=0 isolated=0 best_stepped=0 best_near=0
+SWEEP seed=6 scale=grand ms=32426 SEALED buildings=134 markets=0 open_skywalks=2 occupied_skywalks=2 enclosed=2 rooms={ &"tower": 31, &"slim": 32, &"row": 20, &"building": 5, &"long": 1 }
+SWEEP seed=6 scale=grand STONE faces=1506 high=28 ratio=0.0186 roof_high=0 unroomed_high=28 raised_high=0 grounded=78 max=5 trimmed=79 (unroomed=71 roof=8) refused_trims=2 bands={ -7: 6, -6: 2, -5: 2, -4: 46, -3: 178, -2: 170, -1: 327, 0: 328, 1: 158, 2: 122, 3: 107, 4: 32, 5: 28 }
+SWEEP seed=6 scale=grand WALLS faces=1728 stone=233 ratio=0.1348 high_stone=0 high_ratio=0.0000 off_datum=28 min=-3 max=16 frag=0/420 stone_bands={ -2: 5, 0: 121, 1: 107 }
+SWEEP seed=6 scale=grand ROOFS crowns=84 pitched=42 share=0.5000 flat=19 tiled=23 refused=0 partial=0 dormers=7 dormered_roofs=7 dressed=15/19 chimneys=6 awnings=0 boxes=2 rails=9 rubble=0 (paved=0 borne=12 bearing=0) brackets=33 bare_overhangs=0 families={ &"orange": 21, &"blue": 25, &"boarded": 0 }
+SWEEP seed=6 scale=grand SKIN panels=891 masonry=456 natural=0 green=2 tall_masonry=200 free_bench_stone=19 shared_street=57 low=262 tall=716 tallest=9 cut=0 cut_coursed=53 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=10 banks={ 1: 152, 2: 110, 3: 258, 4: 256, 5: 85, 6: 12, 8: 24, 9: 81 }
+SWEEP seed=6 scale=grand CLEARANCE payload=fabric_dressing shapes=1634 walked=296 centre_free=296 offset_free=0 blocked=0 gates=413 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=6 scale=grand STREET_PINCH walked=296 pinched=0 colliding=0
+SWEEP seed=6 scale=grand GREEN_REACH garden=117 runs=6 entered=2 stepped=0 near=0 isolated=4 best_stepped=0 best_near=0
+SWEEP seed=7 scale=compact ms=4825 SEALED buildings=56 markets=0 open_skywalks=0 occupied_skywalks=2 enclosed=0 rooms={ &"slim": 10, &"tower": 14, &"row": 12, &"long": 2 }
+SWEEP seed=7 scale=compact STONE faces=483 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=0 max=3 trimmed=12 (unroomed=12 roof=0) refused_trims=0 bands={ -4: 74, -3: 36, -2: 54, -1: 132, 0: 134, 1: 25, 2: 10, 3: 18 }
+SWEEP seed=7 scale=compact WALLS faces=750 stone=129 ratio=0.1720 high_stone=0 high_ratio=0.0000 off_datum=71 min=-5 max=6 frag=0/199 stone_bands={ -5: 2, -4: 2, -3: 4, -2: 5, 0: 60, 1: 56 }
+SWEEP seed=7 scale=compact ROOFS crowns=34 pitched=21 share=0.6176 flat=3 tiled=10 refused=0 partial=0 dormers=3 dormered_roofs=3 dressed=3/3 chimneys=0 awnings=0 boxes=0 rails=0 rubble=0 (paved=0 borne=0 bearing=0) brackets=11 bare_overhangs=0 families={ &"orange": 25, &"blue": 0, &"boarded": 0 }
+SWEEP seed=7 scale=compact SKIN panels=281 masonry=150 natural=0 green=0 tall_masonry=58 free_bench_stone=10 shared_street=26 low=82 tall=210 tallest=5 cut=0 cut_coursed=15 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=1 banks={ 1: 54, 2: 28, 3: 60, 4: 140, 5: 10 }
+SWEEP seed=7 scale=compact CLEARANCE payload=fabric_dressing shapes=536 walked=144 centre_free=144 offset_free=0 blocked=0 gates=200 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=7 scale=compact STREET_PINCH walked=144 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-6, 4, 6) rise=1.500
+SWEEP 7/compact PINCH_BODY cell=(-6, 4, 6) asset=sfv.deck.pillar.001 placement=facade-joint/-13/5/11 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=7 scale=compact GREEN_REACH garden=0 runs=0 entered=0 stepped=0 near=0 isolated=0 best_stepped=0 best_near=0
+SWEEP seed=7 scale=standard ms=4524 SEALED buildings=43 markets=0 open_skywalks=1 occupied_skywalks=1 enclosed=1 rooms={ &"row": 4, &"tower": 8, &"slim": 11, &"building": 2 }
+SWEEP seed=7 scale=standard STONE faces=989 high=31 ratio=0.0313 roof_high=0 unroomed_high=31 raised_high=0 grounded=64 max=7 trimmed=104 (unroomed=104 roof=0) refused_trims=0 bands={ -5: 14, -4: 20, -3: 42, -2: 140, -1: 199, 0: 337, 1: 105, 2: 58, 3: 29, 4: 14, 5: 19, 6: 6, 7: 6 }
+SWEEP seed=7 scale=standard WALLS faces=644 stone=120 ratio=0.1863 high_stone=20 high_ratio=0.0338 off_datum=52 min=-2 max=7 frag=0/162 stone_bands={ -1: 11, 0: 49, 1: 40, 3: 10, 4: 10 }
+SWEEP seed=7 scale=standard ROOFS crowns=24 pitched=16 share=0.6667 flat=3 tiled=5 refused=0 partial=0 dormers=4 dormered_roofs=4 dressed=2/3 chimneys=2 awnings=0 boxes=2 rails=2 rubble=0 (paved=0 borne=4 bearing=0) brackets=10 bare_overhangs=0 families={ &"orange": 16, &"blue": 4, &"boarded": 0 }
+SWEEP seed=7 scale=standard SKIN panels=580 masonry=288 natural=0 green=1 tall_masonry=126 free_bench_stone=14 shared_street=30 low=186 tall=432 tallest=8 cut=0 cut_coursed=38 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=6 banks={ 1: 88, 2: 98, 3: 219, 4: 160, 5: 15, 6: 6, 8: 32 }
+SWEEP seed=7 scale=standard CLEARANCE payload=fabric_dressing shapes=1085 walked=168 centre_free=168 offset_free=0 blocked=0 gates=238 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=7 scale=standard STREET_PINCH walked=168 pinched=0 colliding=0
+SWEEP seed=7 scale=standard GREEN_REACH garden=95 runs=5 entered=1 stepped=2 near=1 isolated=1 best_stepped=32 best_near=9
+SWEEP seed=7 scale=large ms=15211 SEALED buildings=109 markets=0 open_skywalks=0 occupied_skywalks=1 enclosed=0 rooms={ &"tower": 40, &"row": 27, &"slim": 19, &"building": 5, &"long": 1 }
+SWEEP seed=7 scale=large STONE faces=1131 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=0 max=3 trimmed=32 (unroomed=32 roof=0) refused_trims=0 bands={ -5: 68, -4: 138, -3: 66, -2: 121, -1: 306, 0: 256, 1: 86, 2: 40, 3: 50 }
+SWEEP seed=7 scale=large WALLS faces=1473 stone=171 ratio=0.1161 high_stone=10 high_ratio=0.0073 off_datum=106 min=-4 max=7 frag=0/294 stone_bands={ -1: 4, 0: 72, 1: 85, 2: 6, 4: 4 }
+SWEEP seed=7 scale=large ROOFS crowns=68 pitched=43 share=0.6324 flat=7 tiled=18 refused=0 partial=0 dormers=7 dormered_roofs=7 dressed=4/7 chimneys=1 awnings=0 boxes=2 rails=4 rubble=0 (paved=0 borne=5 bearing=0) brackets=33 bare_overhangs=0 families={ &"orange": 37, &"blue": 10, &"boarded": 0 }
+SWEEP seed=7 scale=large SKIN panels=671 masonry=332 natural=0 green=0 tall_masonry=107 free_bench_stone=11 shared_street=56 low=234 tall=411 tallest=6 cut=0 cut_coursed=24 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=8 banks={ 1: 140, 2: 94, 3: 114, 4: 180, 5: 105, 6: 12 }
+SWEEP seed=7 scale=large CLEARANCE payload=fabric_dressing shapes=1174 walked=292 centre_free=292 offset_free=0 blocked=0 gates=416 gates_offset=1 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=7 scale=large STREET_PINCH walked=292 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-9, 4, -4) rise=1.500
+SWEEP 7/large PINCH_BODY cell=(-9, 4, -4) asset=sfv.deck.pillar.001 placement=facade-joint/-17/5/-9 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=7 scale=large GREEN_REACH garden=53 runs=3 entered=1 stepped=0 near=0 isolated=2 best_stepped=0 best_near=0
+SWEEP seed=7 scale=grand ms=12419 FAILED gate=[maze fabric gate failed: terminal house crown spatial.parcel.maze.house.042.part00.room00 has no fitting authored] reason=maze fabric gate failed: terminal house crown spatial.parcel.maze.house.042.part00.room00 has no fitting authored gable: pitched roof.square.blue.plain/r0: bloc
+SWEEP seed=8 scale=compact ms=3318 SEALED buildings=33 markets=0 open_skywalks=0 occupied_skywalks=1 enclosed=0 rooms={ &"slim": 8, &"tower": 10, &"building": 1, &"row": 6 }
+SWEEP seed=8 scale=compact STONE faces=627 high=35 ratio=0.0558 roof_high=0 unroomed_high=35 raised_high=0 grounded=0 max=5 trimmed=0 (unroomed=0 roof=0) refused_trims=0 bands={ -4: 39, -3: 49, -2: 65, -1: 170, 0: 157, 1: 37, 2: 29, 3: 20, 4: 26, 5: 35 }
+SWEEP seed=8 scale=compact WALLS faces=466 stone=102 ratio=0.2189 high_stone=0 high_ratio=0.0000 off_datum=56 min=-3 max=6 frag=0/130 stone_bands={ -3: 4, 0: 52, 1: 46 }
+SWEEP seed=8 scale=compact ROOFS crowns=21 pitched=11 share=0.5238 flat=6 tiled=4 refused=0 partial=0 dormers=1 dormered_roofs=1 dressed=5/6 chimneys=2 awnings=0 boxes=1 rails=5 rubble=0 (paved=0 borne=7 bearing=2) brackets=7 bare_overhangs=0 families={ &"orange": 3, &"blue": 10, &"boarded": 0 }
+SWEEP seed=8 scale=compact SKIN panels=386 masonry=223 natural=0 green=0 tall_masonry=84 free_bench_stone=22 shared_street=34 low=121 tall=309 tallest=10 cut=0 cut_coursed=11 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=10 banks={ 1: 93, 2: 28, 3: 90, 4: 88, 5: 55, 6: 36, 10: 40 }
+SWEEP seed=8 scale=compact CLEARANCE payload=fabric_dressing shapes=759 walked=128 centre_free=128 offset_free=0 blocked=0 gates=181 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=8 scale=compact STREET_PINCH walked=128 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-1, 3, 3) rise=1.500
+SWEEP 8/compact PINCH_BODY cell=(-1, 3, 3) asset=sfv.deck.pillar.001 placement=facade-joint/-1/4/7 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=8 scale=compact GREEN_REACH garden=12 runs=1 entered=0 stepped=0 near=0 isolated=1 best_stepped=0 best_near=0
+SWEEP seed=8 scale=standard ms=3952 SEALED buildings=31 markets=0 open_skywalks=0 occupied_skywalks=2 enclosed=0 rooms={ &"slim": 9, &"tower": 7, &"row": 2 }
+SWEEP seed=8 scale=standard STONE faces=618 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=54 max=3 trimmed=0 (unroomed=0 roof=0) refused_trims=0 bands={ -4: 23, -3: 10, -2: 64, -1: 176, 0: 203, 1: 50, 2: 34, 3: 58 }
+SWEEP seed=8 scale=standard WALLS faces=485 stone=105 ratio=0.2165 high_stone=10 high_ratio=0.0206 off_datum=0 min=-4 max=5 frag=0/148 stone_bands={ 0: 40, 1: 55, 2: 10 }
+SWEEP seed=8 scale=standard ROOFS crowns=18 pitched=10 share=0.5556 flat=2 tiled=6 refused=0 partial=0 dormers=3 dormered_roofs=2 dressed=1/2 chimneys=1 awnings=0 boxes=1 rails=0 rubble=0 (paved=0 borne=0 bearing=0) brackets=3 bare_overhangs=0 families={ &"orange": 5, &"blue": 9, &"boarded": 0 }
+SWEEP seed=8 scale=standard SKIN panels=378 masonry=218 natural=0 green=0 tall_masonry=68 free_bench_stone=16 shared_street=31 low=161 tall=211 tallest=4 cut=0 cut_coursed=28 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=8 banks={ 1: 83, 2: 78, 3: 135, 4: 76 }
+SWEEP seed=8 scale=standard CLEARANCE payload=fabric_dressing shapes=613 walked=144 centre_free=144 offset_free=0 blocked=0 gates=206 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=8 scale=standard STREET_PINCH walked=144 pinched=0 colliding=0
+SWEEP seed=8 scale=standard GREEN_REACH garden=42 runs=2 entered=1 stepped=0 near=0 isolated=1 best_stepped=0 best_near=0
+SWEEP seed=8 scale=large ms=10582 SEALED buildings=74 markets=0 open_skywalks=3 occupied_skywalks=2 enclosed=2 rooms={ &"slim": 18, &"tower": 20, &"row": 7, &"building": 3 }
+SWEEP seed=8 scale=large STONE faces=760 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=87 max=3 trimmed=8 (unroomed=8 roof=0) refused_trims=0 bands={ -4: 54, -3: 20, -2: 57, -1: 196, 0: 243, 1: 82, 2: 45, 3: 63 }
+SWEEP seed=8 scale=large WALLS faces=1022 stone=209 ratio=0.2045 high_stone=12 high_ratio=0.0124 off_datum=58 min=-3 max=9 frag=0/246 stone_bands={ -3: 2, -2: 2, -1: 2, 0: 91, 1: 100, 2: 6, 3: 6 }
+SWEEP seed=8 scale=large ROOFS crowns=45 pitched=26 share=0.5778 flat=4 tiled=15 refused=0 partial=0 dormers=4 dormered_roofs=4 dressed=4/4 chimneys=1 awnings=0 boxes=0 rails=8 rubble=0 (paved=0 borne=2 bearing=0) brackets=15 bare_overhangs=0 families={ &"orange": 9, &"blue": 21, &"boarded": 0 }
+SWEEP seed=8 scale=large SKIN panels=455 masonry=251 natural=0 green=0 tall_masonry=91 free_bench_stone=6 shared_street=38 low=138 tall=323 tallest=4 cut=0 cut_coursed=32 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=10 banks={ 1: 106, 2: 32, 3: 99, 4: 224 }
+SWEEP seed=8 scale=large CLEARANCE payload=fabric_dressing shapes=836 walked=176 centre_free=176 offset_free=0 blocked=0 gates=244 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=8 scale=large STREET_PINCH walked=176 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-2, 0, 6) rise=1.500
+SWEEP 8/large PINCH_BODY cell=(-2, 0, 6) asset=sfv.deck.pillar.001 placement=facade-joint/-5/1/11 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=8 scale=large GREEN_REACH garden=60 runs=3 entered=2 stepped=0 near=0 isolated=1 best_stepped=0 best_near=0
+SWEEP seed=8 scale=grand ms=12973 SEALED buildings=105 markets=0 open_skywalks=2 occupied_skywalks=1 enclosed=2 rooms={ &"slim": 25, &"row": 14, &"tower": 43, &"building": 4 }
+SWEEP seed=8 scale=grand STONE faces=823 high=20 ratio=0.0243 roof_high=0 unroomed_high=0 raised_high=0 grounded=93 max=5 trimmed=57 (unroomed=55 roof=2) refused_trims=0 bands={ -6: 26, -5: 6, -4: 12, -3: 20, -2: 60, -1: 186, 0: 253, 1: 107, 2: 72, 3: 50, 4: 11, 5: 20 }
+SWEEP seed=8 scale=grand WALLS faces=1465 stone=252 ratio=0.1720 high_stone=20 high_ratio=0.0151 off_datum=138 min=-3 max=9 frag=0/270 stone_bands={ 0: 110, 1: 122, 2: 20 }
+SWEEP seed=8 scale=grand ROOFS crowns=63 pitched=39 share=0.6190 flat=5 tiled=19 refused=0 partial=0 dormers=8 dormered_roofs=8 dressed=4/5 chimneys=1 awnings=0 boxes=1 rails=2 rubble=0 (paved=0 borne=5 bearing=0) brackets=37 bare_overhangs=0 families={ &"orange": 20, &"blue": 21, &"boarded": 0 }
+SWEEP seed=8 scale=grand SKIN panels=496 masonry=266 natural=0 green=1 tall_masonry=88 free_bench_stone=23 shared_street=35 low=187 tall=346 tallest=7 cut=0 cut_coursed=15 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=6 banks={ 1: 111, 2: 76, 3: 78, 4: 32, 5: 95, 6: 120, 7: 21 }
+SWEEP seed=8 scale=grand CLEARANCE payload=fabric_dressing shapes=883 walked=272 centre_free=272 offset_free=0 blocked=0 gates=382 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=8 scale=grand STREET_PINCH walked=272 pinched=3 colliding=3 first=sfv.deck.pillar.001@(-3, 0, -6) rise=1.500
+SWEEP 8/grand PINCH_BODY cell=(-3, 0, -6) asset=sfv.deck.pillar.001 placement=facade-joint/-5/1/-13 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP 8/grand PINCH_BODY cell=(10, 0, 5) asset=sfv.deck.pillar.001 placement=facade-joint/19/1/11 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP 8/grand PINCH_BODY cell=(4, 1, 8) asset=sfv.deck.pillar.001 placement=facade-joint/7/2/15 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=8 scale=grand GREEN_REACH garden=16 runs=1 entered=0 stepped=0 near=1 isolated=0 best_stepped=0 best_near=16
+SWEEP seed=9 scale=compact ms=6477 SEALED buildings=56 markets=0 open_skywalks=0 occupied_skywalks=1 enclosed=0 rooms={ &"slim": 10, &"row": 9, &"tower": 23, &"building": 2 }
+SWEEP seed=9 scale=compact STONE faces=667 high=28 ratio=0.0420 roof_high=0 unroomed_high=28 raised_high=0 grounded=0 max=5 trimmed=0 (unroomed=0 roof=0) refused_trims=0 bands={ -4: 50, -3: 43, -2: 64, -1: 143, 0: 184, 1: 68, 2: 43, 3: 35, 4: 9, 5: 28 }
+SWEEP seed=9 scale=compact WALLS faces=697 stone=149 ratio=0.2138 high_stone=14 high_ratio=0.0207 off_datum=20 min=-3 max=5 frag=0/185 stone_bands={ 0: 73, 1: 62, 2: 14 }
+SWEEP seed=9 scale=compact ROOFS crowns=38 pitched=26 share=0.6842 flat=2 tiled=10 refused=0 partial=0 dormers=5 dormered_roofs=5 dressed=2/2 chimneys=0 awnings=0 boxes=1 rails=0 rubble=0 (paved=0 borne=8 bearing=0) brackets=8 bare_overhangs=0 families={ &"orange": 5, &"blue": 23, &"boarded": 0 }
+SWEEP seed=9 scale=compact SKIN panels=391 masonry=213 natural=0 green=0 tall_masonry=80 free_bench_stone=9 shared_street=38 low=129 tall=282 tallest=7 cut=0 cut_coursed=18 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=7 banks={ 1: 69, 2: 60, 3: 78, 4: 164, 5: 5, 7: 35 }
+SWEEP seed=9 scale=compact CLEARANCE payload=fabric_dressing shapes=718 walked=144 centre_free=144 offset_free=0 blocked=0 gates=201 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=9 scale=compact STREET_PINCH walked=144 pinched=0 colliding=0
+SWEEP seed=9 scale=compact GREEN_REACH garden=14 runs=2 entered=0 stepped=0 near=0 isolated=2 best_stepped=0 best_near=0
+SWEEP seed=9 scale=standard ms=5584 FAILED gate=[maze fabric gate failed: macro setback roof 0 for spatial.residual.01.room00 and its] reason=maze fabric gate failed: macro setback roof 0 for spatial.residual.01.room00 and its complete fallbacks were rejected: visual envelope of spatial.roof.spatial.r
+SWEEP seed=9 scale=large ms=10209 SEALED buildings=64 markets=0 open_skywalks=2 occupied_skywalks=3 enclosed=1 rooms={ &"slim": 21, &"tower": 22, &"building": 2, &"row": 4 }
+SWEEP seed=9 scale=large STONE faces=848 high=10 ratio=0.0118 roof_high=0 unroomed_high=10 raised_high=0 grounded=12 max=5 trimmed=16 (unroomed=16 roof=0) refused_trims=0 bands={ -3: 52, -2: 136, -1: 224, 0: 257, 1: 66, 2: 38, 3: 53, 4: 12, 5: 10 }
+SWEEP seed=9 scale=large WALLS faces=993 stone=180 ratio=0.1813 high_stone=5 high_ratio=0.0051 off_datum=12 min=-2 max=7 frag=0/232 stone_bands={ 0: 87, 1: 88, 2: 5 }
+SWEEP seed=9 scale=large ROOFS crowns=37 pitched=23 share=0.6216 flat=3 tiled=11 refused=0 partial=0 dormers=5 dormered_roofs=5 dressed=1/3 chimneys=1 awnings=0 boxes=2 rails=4 rubble=0 (paved=0 borne=3 bearing=0) brackets=11 bare_overhangs=0 families={ &"orange": 9, &"blue": 20, &"boarded": 0 }
+SWEEP seed=9 scale=large SKIN panels=494 masonry=227 natural=0 green=0 tall_masonry=91 free_bench_stone=11 shared_street=20 low=162 tall=339 tallest=9 cut=0 cut_coursed=34 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=4 banks={ 1: 70, 2: 92, 3: 135, 4: 56, 5: 90, 6: 24, 8: 16, 9: 18 }
+SWEEP seed=9 scale=large CLEARANCE payload=fabric_dressing shapes=916 walked=272 centre_free=272 offset_free=0 blocked=0 gates=388 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=9 scale=large STREET_PINCH walked=272 pinched=0 colliding=0
+SWEEP seed=9 scale=large GREEN_REACH garden=93 runs=5 entered=2 stepped=1 near=0 isolated=2 best_stepped=7 best_near=0
+SWEEP seed=9 scale=grand ms=22268 SEALED buildings=113 markets=0 open_skywalks=0 occupied_skywalks=3 enclosed=0 rooms={ &"tower": 38, &"slim": 21, &"row": 15, &"building": 3, &"long": 5 }
+SWEEP seed=9 scale=grand STONE faces=1002 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=0 max=4 trimmed=79 (unroomed=79 roof=0) refused_trims=1 bands={ -6: 8, -5: 10, -4: 6, -3: 12, -2: 155, -1: 355, 0: 238, 1: 103, 2: 31, 3: 82, 4: 2 }
+SWEEP seed=9 scale=grand WALLS faces=1540 stone=218 ratio=0.1416 high_stone=12 high_ratio=0.0079 off_datum=26 min=-4 max=10 frag=0/334 stone_bands={ 0: 97, 1: 109, 2: 12 }
+SWEEP seed=9 scale=grand ROOFS crowns=72 pitched=40 share=0.5556 flat=7 tiled=25 refused=0 partial=0 dormers=7 dormered_roofs=7 dressed=5/7 chimneys=2 awnings=0 boxes=3 rails=7 rubble=0 (paved=0 borne=9 bearing=0) brackets=29 bare_overhangs=0 families={ &"orange": 12, &"blue": 34, &"boarded": 0 }
+SWEEP seed=9 scale=grand SKIN panels=619 masonry=326 natural=0 green=0 tall_masonry=104 free_bench_stone=21 shared_street=39 low=213 tall=382 tallest=8 cut=0 cut_coursed=42 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=8 banks={ 1: 157, 2: 56, 3: 153, 4: 52, 5: 85, 6: 84, 8: 8 }
+SWEEP seed=9 scale=grand CLEARANCE payload=fabric_dressing shapes=1212 walked=344 centre_free=344 offset_free=0 blocked=0 gates=484 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=9 scale=grand STREET_PINCH walked=344 pinched=0 colliding=0
+SWEEP seed=9 scale=grand GREEN_REACH garden=55 runs=3 entered=2 stepped=0 near=1 isolated=0 best_stepped=0 best_near=8
+SWEEP seed=10 scale=compact ms=3537 SEALED buildings=37 markets=0 open_skywalks=0 occupied_skywalks=1 enclosed=0 rooms={ &"row": 6, &"slim": 7, &"tower": 8, &"building": 2 }
+SWEEP seed=10 scale=compact STONE faces=596 high=16 ratio=0.0268 roof_high=0 unroomed_high=16 raised_high=0 grounded=58 max=5 trimmed=8 (unroomed=8 roof=0) refused_trims=0 bands={ -5: 10, -4: 43, -3: 26, -2: 93, -1: 138, 0: 175, 1: 53, 2: 10, 3: 17, 4: 15, 5: 16 }
+SWEEP seed=10 scale=compact WALLS faces=448 stone=98 ratio=0.2188 high_stone=0 high_ratio=0.0000 off_datum=0 min=-5 max=6 frag=0/139 stone_bands={ 0: 46, 1: 52 }
+SWEEP seed=10 scale=compact ROOFS crowns=24 pitched=13 share=0.5417 flat=6 tiled=5 refused=0 partial=0 dormers=1 dormered_roofs=1 dressed=6/6 chimneys=2 awnings=0 boxes=0 rails=0 rubble=0 (paved=0 borne=0 bearing=0) brackets=3 bare_overhangs=0 families={ &"orange": 13, &"blue": 2, &"boarded": 0 }
+SWEEP seed=10 scale=compact SKIN panels=343 masonry=204 natural=0 green=0 tall_masonry=54 free_bench_stone=13 shared_street=27 low=188 tall=189 tallest=10 cut=0 cut_coursed=16 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=5 banks={ 1: 60, 2: 128, 3: 63, 4: 72, 5: 10, 6: 6, 8: 8, 10: 30 }
+SWEEP seed=10 scale=compact CLEARANCE payload=fabric_dressing shapes=577 walked=140 centre_free=140 offset_free=0 blocked=0 gates=194 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=10 scale=compact STREET_PINCH walked=140 pinched=0 colliding=0
+SWEEP seed=10 scale=compact GREEN_REACH garden=34 runs=1 entered=0 stepped=1 near=0 isolated=0 best_stepped=34 best_near=0
+SWEEP seed=10 scale=standard ms=7281 SEALED buildings=78 markets=0 open_skywalks=1 occupied_skywalks=3 enclosed=1 rooms={ &"slim": 12, &"row": 14, &"tower": 25, &"building": 3 }
+SWEEP seed=10 scale=standard STONE faces=855 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=0 max=3 trimmed=11 (unroomed=11 roof=0) refused_trims=0 bands={ -4: 106, -3: 79, -2: 96, -1: 212, 0: 233, 1: 85, 2: 26, 3: 18 }
+SWEEP seed=10 scale=standard WALLS faces=1052 stone=155 ratio=0.1473 high_stone=4 high_ratio=0.0038 off_datum=6 min=-3 max=7 frag=0/247 stone_bands={ 0: 74, 1: 77, 2: 4 }
+SWEEP seed=10 scale=standard ROOFS crowns=42 pitched=31 share=0.7381 flat=1 tiled=10 refused=0 partial=0 dormers=6 dormered_roofs=6 dressed=1/1 chimneys=1 awnings=0 boxes=3 rails=0 rubble=0 (paved=0 borne=2 bearing=0) brackets=13 bare_overhangs=0 families={ &"orange": 19, &"blue": 18, &"boarded": 0 }
+SWEEP seed=10 scale=standard SKIN panels=472 masonry=225 natural=0 green=2 tall_masonry=100 free_bench_stone=6 shared_street=36 low=124 tall=375 tallest=6 cut=0 cut_coursed=25 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=4 banks={ 1: 56, 2: 68, 3: 87, 4: 276, 6: 12 }
+SWEEP seed=10 scale=standard CLEARANCE payload=fabric_dressing shapes=878 walked=208 centre_free=208 offset_free=0 blocked=0 gates=298 gates_offset=2 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=10 scale=standard STREET_PINCH walked=208 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-7, 3, -4) rise=1.500
+SWEEP 10/standard PINCH_BODY cell=(-7, 3, -4) asset=sfv.deck.pillar.001 placement=facade-joint/-13/4/-9 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=10 scale=standard GREEN_REACH garden=45 runs=2 entered=1 stepped=0 near=0 isolated=1 best_stepped=0 best_near=0
+SWEEP seed=10 scale=large ms=11008 SEALED buildings=89 markets=0 open_skywalks=0 occupied_skywalks=3 enclosed=0 rooms={ &"slim": 20, &"tower": 22, &"row": 17 }
+SWEEP seed=10 scale=large STONE faces=1034 high=5 ratio=0.0048 roof_high=0 unroomed_high=5 raised_high=0 grounded=0 max=5 trimmed=32 (unroomed=32 roof=0) refused_trims=0 bands={ -5: 6, -4: 78, -3: 44, -2: 94, -1: 247, 0: 305, 1: 104, 2: 71, 3: 76, 4: 4, 5: 5 }
+SWEEP seed=10 scale=large WALLS faces=1190 stone=255 ratio=0.2143 high_stone=0 high_ratio=0.0000 off_datum=0 min=-3 max=7 frag=0/308 stone_bands={ -1: 6, 0: 125, 1: 124 }
+SWEEP seed=10 scale=large ROOFS crowns=59 pitched=42 share=0.7119 flat=5 tiled=12 refused=0 partial=0 dormers=8 dormered_roofs=8 dressed=5/5 chimneys=3 awnings=0 boxes=5 rails=0 rubble=0 (paved=0 borne=3 bearing=0) brackets=17 bare_overhangs=0 families={ &"orange": 33, &"blue": 15, &"boarded": 0 }
+SWEEP seed=10 scale=large SKIN panels=585 masonry=296 natural=0 green=1 tall_masonry=131 free_bench_stone=14 shared_street=47 low=155 tall=459 tallest=11 cut=0 cut_coursed=40 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=7 banks={ 1: 83, 2: 72, 3: 105, 4: 288, 5: 40, 6: 6, 9: 9, 11: 11 }
+SWEEP seed=10 scale=large CLEARANCE payload=fabric_dressing shapes=1086 walked=232 centre_free=232 offset_free=0 blocked=0 gates=330 gates_offset=3 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=10 scale=large STREET_PINCH walked=232 pinched=1 colliding=1 first=sfv.deck.pillar.001@(9, 0, -4) rise=1.500
+SWEEP 10/large PINCH_BODY cell=(9, 0, -4) asset=sfv.deck.pillar.001 placement=facade-joint/19/1/-9 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=10 scale=large GREEN_REACH garden=52 runs=2 entered=1 stepped=0 near=0 isolated=1 best_stepped=0 best_near=0
+SWEEP seed=10 scale=grand ms=23372 SEALED buildings=124 markets=0 open_skywalks=2 occupied_skywalks=4 enclosed=2 rooms={ &"row": 21, &"tower": 30, &"slim": 34, &"building": 8 }
+SWEEP seed=10 scale=grand STONE faces=1975 high=7 ratio=0.0035 roof_high=7 unroomed_high=0 raised_high=0 grounded=95 max=5 trimmed=15 (unroomed=14 roof=1) refused_trims=0 bands={ -7: 14, -6: 16, -5: 8, -4: 142, -3: 201, -2: 186, -1: 382, 0: 603, 1: 209, 2: 119, 3: 88, 5: 7 }
+SWEEP seed=10 scale=grand WALLS faces=2003 stone=318 ratio=0.1588 high_stone=4 high_ratio=0.0022 off_datum=166 min=-3 max=9 frag=0/380 stone_bands={ -1: 4, 0: 144, 1: 166, 2: 4 }
+SWEEP seed=10 scale=grand ROOFS crowns=78 pitched=38 share=0.4872 flat=10 tiled=30 refused=0 partial=0 dormers=9 dormered_roofs=9 dressed=7/10 chimneys=3 awnings=0 boxes=4 rails=0 rubble=0 (paved=0 borne=4 bearing=0) brackets=47 bare_overhangs=0 families={ &"orange": 26, &"blue": 20, &"boarded": 0 }
+SWEEP seed=10 scale=grand SKIN panels=1159 masonry=556 natural=0 green=1 tall_masonry=292 free_bench_stone=18 shared_street=76 low=229 tall=998 tallest=8 cut=0 cut_coursed=93 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=8 banks={ 1: 149, 2: 80, 3: 453, 4: 304, 5: 75, 6: 18, 7: 140, 8: 8 }
+SWEEP seed=10 scale=grand CLEARANCE payload=fabric_dressing shapes=2098 walked=404 centre_free=404 offset_free=0 blocked=0 gates=578 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=10 scale=grand STREET_PINCH walked=404 pinched=1 colliding=1 first=sfv.deck.pillar.001@(8, 2, 11) rise=1.500
+SWEEP 10/grand PINCH_BODY cell=(8, 2, 11) asset=sfv.deck.pillar.001 placement=facade-joint/15/3/23 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=10 scale=grand GREEN_REACH garden=122 runs=7 entered=3 stepped=1 near=2 isolated=1 best_stepped=8 best_near=10
+SWEEP seed=11 scale=compact ms=3272 SEALED buildings=44 markets=0 open_skywalks=0 occupied_skywalks=2 enclosed=0 rooms={ &"tower": 11, &"slim": 11, &"row": 7, &"building": 1 }
+SWEEP seed=11 scale=compact STONE faces=640 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=0 max=3 trimmed=5 (unroomed=4 roof=1) refused_trims=0 bands={ -5: 8, -4: 78, -3: 57, -2: 86, -1: 174, 0: 185, 1: 30, 2: 14, 3: 8 }
+SWEEP seed=11 scale=compact WALLS faces=605 stone=126 ratio=0.2083 high_stone=0 high_ratio=0.0000 off_datum=54 min=-3 max=6 frag=0/162 stone_bands={ -3: 2, -2: 6, -1: 2, 0: 60, 1: 56 }
+SWEEP seed=11 scale=compact ROOFS crowns=26 pitched=18 share=0.6923 flat=2 tiled=6 refused=0 partial=0 dormers=3 dormered_roofs=3 dressed=2/2 chimneys=1 awnings=0 boxes=1 rails=0 rubble=0 (paved=0 borne=0 bearing=0) brackets=10 bare_overhangs=0 families={ &"orange": 6, &"blue": 16, &"boarded": 0 }
+SWEEP seed=11 scale=compact SKIN panels=370 masonry=194 natural=0 green=0 tall_masonry=90 free_bench_stone=17 shared_street=36 low=82 tall=319 tallest=5 cut=0 cut_coursed=22 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=2 banks={ 1: 54, 2: 28, 3: 93, 4: 176, 5: 50 }
+SWEEP seed=11 scale=compact CLEARANCE payload=fabric_dressing shapes=700 walked=148 centre_free=148 offset_free=0 blocked=0 gates=206 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=11 scale=compact STREET_PINCH walked=148 pinched=1 colliding=1 first=sfv.deck.pillar.001@(1, 2, 7) rise=1.500
+SWEEP 11/compact PINCH_BODY cell=(1, 2, 7) asset=sfv.deck.pillar.001 placement=facade-joint/3/3/15 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=11 scale=compact GREEN_REACH garden=0 runs=0 entered=0 stepped=0 near=0 isolated=0 best_stepped=0 best_near=0
+SWEEP seed=11 scale=standard ms=9638 SEALED buildings=58 markets=0 open_skywalks=0 occupied_skywalks=2 enclosed=0 rooms={ &"slim": 14, &"row": 6, &"tower": 19, &"building": 1 }
+SWEEP seed=11 scale=standard STONE faces=786 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=50 max=3 trimmed=6 (unroomed=6 roof=0) refused_trims=0 bands={ -4: 103, -3: 46, -2: 93, -1: 165, 0: 282, 1: 58, 2: 21, 3: 18 }
+SWEEP seed=11 scale=standard WALLS faces=794 stone=158 ratio=0.1990 high_stone=4 high_ratio=0.0050 off_datum=0 min=-3 max=6 frag=0/224 stone_bands={ 0: 68, 1: 86, 2: 4 }
+SWEEP seed=11 scale=standard ROOFS crowns=39 pitched=28 share=0.7179 flat=3 tiled=8 refused=0 partial=0 dormers=2 dormered_roofs=1 dressed=1/3 chimneys=1 awnings=0 boxes=3 rails=0 rubble=0 (paved=0 borne=0 bearing=0) brackets=8 bare_overhangs=0 families={ &"orange": 9, &"blue": 23, &"boarded": 0 }
+SWEEP seed=11 scale=standard SKIN panels=460 masonry=234 natural=0 green=0 tall_masonry=86 free_bench_stone=9 shared_street=46 low=130 tall=293 tallest=5 cut=0 cut_coursed=16 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=5 banks={ 1: 76, 2: 54, 3: 150, 4: 128, 5: 15 }
+SWEEP seed=11 scale=standard CLEARANCE payload=fabric_dressing shapes=859 walked=224 centre_free=224 offset_free=0 blocked=0 gates=326 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=11 scale=standard STREET_PINCH walked=224 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-6, 4, 5) rise=1.500
+SWEEP 11/standard PINCH_BODY cell=(-6, 4, 5) asset=sfv.deck.pillar.001 placement=facade-joint/-13/5/11 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=11 scale=standard GREEN_REACH garden=0 runs=0 entered=0 stepped=0 near=0 isolated=0 best_stepped=0 best_near=0
+SWEEP seed=11 scale=large ms=11645 FAILED gate=[maze fabric gate failed: terminal house crown spatial.maze_back.04.room00 has no fitting authored] reason=maze fabric gate failed: terminal house crown spatial.maze_back.04.room00 has no fitting authored gable: pitched roof.row.short.blue/r0: visual envelope of spat
+SWEEP seed=11 scale=grand ms=37433 SEALED buildings=144 markets=0 open_skywalks=0 occupied_skywalks=3 enclosed=0 rooms={ &"tower": 47, &"slim": 26, &"row": 21, &"building": 4 }
+SWEEP seed=11 scale=grand STONE faces=1277 high=28 ratio=0.0219 roof_high=0 unroomed_high=28 raised_high=0 grounded=27 max=5 trimmed=68 (unroomed=59 roof=9) refused_trims=1 bands={ -3: 52, -2: 111, -1: 421, 0: 366, 1: 157, 2: 47, 3: 66, 4: 29, 5: 28 }
+SWEEP seed=11 scale=grand WALLS faces=1896 stone=244 ratio=0.1287 high_stone=0 high_ratio=0.0000 off_datum=12 min=-2 max=12 frag=0/437 stone_bands={ 0: 126, 1: 118 }
+SWEEP seed=11 scale=grand ROOFS crowns=83 pitched=41 share=0.4940 flat=20 tiled=22 refused=0 partial=0 dormers=6 dormered_roofs=5 dressed=16/20 chimneys=9 awnings=0 boxes=1 rails=0 rubble=0 (paved=0 borne=9 bearing=0) brackets=30 bare_overhangs=0 families={ &"orange": 24, &"blue": 23, &"boarded": 0 }
+SWEEP seed=11 scale=grand SKIN panels=789 masonry=455 natural=0 green=0 tall_masonry=149 free_bench_stone=11 shared_street=65 low=311 tall=484 tallest=8 cut=0 cut_coursed=74 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=18 banks={ 1: 179, 2: 132, 3: 231, 4: 112, 5: 110, 7: 7, 8: 24 }
+SWEEP seed=11 scale=grand CLEARANCE payload=fabric_dressing shapes=1210 walked=372 centre_free=372 offset_free=0 blocked=0 gates=527 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=11 scale=grand STREET_PINCH walked=372 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-7, 3, 5) rise=1.500
+SWEEP 11/grand PINCH_BODY cell=(-7, 3, 5) asset=sfv.deck.pillar.001 placement=facade-joint/-13/4/11 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=11 scale=grand GREEN_REACH garden=26 runs=2 entered=0 stepped=0 near=0 isolated=2 best_stepped=0 best_near=0
+SWEEP seed=12 scale=compact ms=2161 SEALED buildings=34 markets=0 open_skywalks=1 occupied_skywalks=2 enclosed=1 rooms={ &"row": 5, &"tower": 12, &"slim": 8 }
+SWEEP seed=12 scale=compact STONE faces=204 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=0 max=1 trimmed=16 (unroomed=16 roof=0) refused_trims=0 bands={ -2: 25, -1: 121, 0: 47, 1: 11 }
+SWEEP seed=12 scale=compact WALLS faces=500 stone=106 ratio=0.2120 high_stone=0 high_ratio=0.0000 off_datum=28 min=-3 max=6 frag=0/122 stone_bands={ 0: 52, 1: 54 }
+SWEEP seed=12 scale=compact ROOFS crowns=19 pitched=9 share=0.4737 flat=5 tiled=5 refused=0 partial=0 dormers=1 dormered_roofs=1 dressed=3/5 chimneys=1 awnings=0 boxes=1 rails=4 rubble=0 (paved=0 borne=4 bearing=0) brackets=6 bare_overhangs=0 families={ &"orange": 9, &"blue": 4, &"boarded": 0 }
+SWEEP seed=12 scale=compact SKIN panels=141 masonry=93 natural=0 green=1 tall_masonry=18 free_bench_stone=4 shared_street=11 low=69 tall=54 tallest=4 cut=0 cut_coursed=9 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=4 banks={ 1: 59, 2: 10, 3: 42, 4: 12 }
+SWEEP seed=12 scale=compact CLEARANCE payload=fabric_dressing shapes=244 walked=136 centre_free=136 offset_free=0 blocked=0 gates=194 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=12 scale=compact STREET_PINCH walked=136 pinched=0 colliding=0
+SWEEP seed=12 scale=compact GREEN_REACH garden=0 runs=0 entered=0 stepped=0 near=0 isolated=0 best_stepped=0 best_near=0
+SWEEP seed=12 scale=standard ms=4522 SEALED buildings=54 markets=1 open_skywalks=0 occupied_skywalks=2 enclosed=0 rooms={ &"tower": 15, &"slim": 8, &"row": 7, &"building": 2 }
+SWEEP seed=12 scale=standard STONE faces=486 high=12 ratio=0.0247 roof_high=0 unroomed_high=12 raised_high=0 grounded=0 max=5 trimmed=3 (unroomed=3 roof=0) refused_trims=0 bands={ -3: 52, -2: 66, -1: 172, 0: 119, 1: 28, 2: 8, 3: 18, 4: 11, 5: 12 }
+SWEEP seed=12 scale=standard WALLS faces=725 stone=154 ratio=0.2124 high_stone=6 high_ratio=0.0084 off_datum=12 min=-4 max=8 frag=0/231 stone_bands={ -1: 4, 0: 72, 1: 72, 2: 6 }
+SWEEP seed=12 scale=standard ROOFS crowns=35 pitched=23 share=0.6571 flat=5 tiled=7 refused=0 partial=0 dormers=0 dormered_roofs=0 dressed=4/5 chimneys=0 awnings=0 boxes=2 rails=0 rubble=0 (paved=0 borne=2 bearing=4) brackets=7 bare_overhangs=0 families={ &"orange": 10, &"blue": 17, &"boarded": 0 }
+SWEEP seed=12 scale=standard SKIN panels=303 masonry=175 natural=0 green=0 tall_masonry=51 free_bench_stone=10 shared_street=23 low=124 tall=173 tallest=5 cut=0 cut_coursed=18 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=2 banks={ 1: 78, 2: 46, 3: 90, 4: 48, 5: 35 }
+SWEEP seed=12 scale=standard CLEARANCE payload=fabric_dressing shapes=559 walked=184 centre_free=184 offset_free=0 blocked=0 gates=267 gates_offset=1 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=12 scale=standard STREET_PINCH walked=184 pinched=1 colliding=1 first=sfv.deck.pillar.001@(-6, 2, 5) rise=1.500
+SWEEP 12/standard PINCH_BODY cell=(-6, 2, 5) asset=sfv.deck.pillar.001 placement=facade-joint/-13/3/11 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=12 scale=standard GREEN_REACH garden=6 runs=1 entered=0 stepped=0 near=0 isolated=1 best_stepped=0 best_near=0
+SWEEP seed=12 scale=large ms=6624 SEALED buildings=63 markets=0 open_skywalks=0 occupied_skywalks=1 enclosed=0 rooms={ &"slim": 11, &"tower": 6, &"row": 8, &"building": 5 }
+SWEEP seed=12 scale=large STONE faces=547 high=0 ratio=0.0000 roof_high=0 unroomed_high=0 raised_high=0 grounded=0 max=3 trimmed=0 (unroomed=0 roof=0) refused_trims=0 bands={ -6: 21, -5: 36, -4: 23, -3: 41, -2: 49, -1: 106, 0: 176, 1: 50, 2: 22, 3: 23 }
+SWEEP seed=12 scale=large WALLS faces=891 stone=193 ratio=0.2166 high_stone=0 high_ratio=0.0000 off_datum=102 min=-5 max=7 frag=0/224 stone_bands={ -5: 8, -4: 8, -3: 10, -2: 10, 0: 75, 1: 82 }
+SWEEP seed=12 scale=large ROOFS crowns=38 pitched=27 share=0.7105 flat=3 tiled=8 refused=0 partial=0 dormers=5 dormered_roofs=5 dressed=3/3 chimneys=0 awnings=0 boxes=0 rails=0 rubble=0 (paved=0 borne=0 bearing=0) brackets=17 bare_overhangs=0 families={ &"orange": 14, &"blue": 15, &"boarded": 0 }
+SWEEP seed=12 scale=large SKIN panels=322 masonry=160 natural=0 green=3 tall_masonry=76 free_bench_stone=11 shared_street=18 low=97 tall=258 tallest=6 cut=0 cut_coursed=28 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=6 banks={ 1: 43, 2: 54, 3: 114, 4: 88, 5: 50, 6: 6 }
+SWEEP seed=12 scale=large CLEARANCE payload=fabric_dressing shapes=578 walked=196 centre_free=196 offset_free=0 blocked=0 gates=283 gates_offset=1 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=12 scale=large STREET_PINCH walked=196 pinched=0 colliding=0
+SWEEP seed=12 scale=large GREEN_REACH garden=44 runs=1 entered=1 stepped=0 near=0 isolated=0 best_stepped=0 best_near=0
+SWEEP seed=12 scale=grand ms=25009 SEALED buildings=105 markets=1 open_skywalks=0 occupied_skywalks=4 enclosed=0 rooms={ &"slim": 23, &"tower": 27, &"row": 14, &"building": 7, &"long": 1 }
+SWEEP seed=12 scale=grand STONE faces=726 high=30 ratio=0.0413 roof_high=0 unroomed_high=22 raised_high=0 grounded=55 max=5 trimmed=100 (unroomed=100 roof=0) refused_trims=1 bands={ -5: 10, -3: 8, -2: 55, -1: 199, 0: 222, 1: 64, 2: 42, 3: 76, 4: 20, 5: 30 }
+SWEEP seed=12 scale=grand WALLS faces=1582 stone=283 ratio=0.1789 high_stone=6 high_ratio=0.0040 off_datum=64 min=-4 max=10 frag=0/339 stone_bands={ -3: 2, -1: 4, 0: 130, 1: 141, 2: 6 }
+SWEEP seed=12 scale=grand ROOFS crowns=58 pitched=33 share=0.5690 flat=3 tiled=22 refused=0 partial=0 dormers=8 dormered_roofs=8 dressed=3/3 chimneys=2 awnings=0 boxes=0 rails=3 rubble=0 (paved=0 borne=8 bearing=5) brackets=35 bare_overhangs=0 families={ &"orange": 14, &"blue": 27, &"boarded": 0 }
+SWEEP seed=12 scale=grand SKIN panels=473 masonry=305 natural=0 green=0 tall_masonry=75 free_bench_stone=23 shared_street=42 low=235 tall=249 tallest=7 cut=0 cut_coursed=36 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=13 banks={ 1: 155, 2: 80, 3: 105, 4: 64, 5: 35, 6: 24, 7: 21 }
+SWEEP seed=12 scale=grand CLEARANCE payload=fabric_dressing shapes=789 walked=272 centre_free=272 offset_free=0 blocked=0 gates=383 gates_offset=0 gates_blocked=0 gates_blocked_required=0 route_components=1 splits=0 cells_unreachable=0
+SWEEP seed=12 scale=grand STREET_PINCH walked=272 pinched=3 colliding=3 first=sfv.deck.pillar.001@(6, 0, -10) rise=1.500
+SWEEP 12/grand PINCH_BODY cell=(6, 0, -10) asset=sfv.deck.pillar.001 placement=facade-joint/11/1/-21 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP 12/grand PINCH_BODY cell=(-3, 0, -6) asset=sfv.deck.pillar.001 placement=facade-joint/-5/1/-13 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP 12/grand PINCH_BODY cell=(4, 1, 8) asset=sfv.deck.pillar.001 placement=facade-joint/7/2/15 rise=1.500 centre_blocked=false gates=2 gates_blocked=0 cover=0/441 intrusion=0.000
+SWEEP seed=12 scale=grand GREEN_REACH garden=86 runs=3 entered=1 stepped=1 near=0 isolated=1 best_stepped=10 best_near=0
+SWEEP RESULT sealed=43/48 total_ms=568277
+SWEEP RESULT per_scale compact=12/12 grand=11/12 large=10/12 standard=10/12
+SWEEP RESULT stone towns=22 faces=14127 above_2_storeys=167 corpus_ratio=0.0118 of which plot_mass=167 (roof_band=0 unroomed=167) raised_shoulder=0 worst_max_offset=7
+SWEEP RESULT stone/large,grand towns=21 faces=22682 above_2_storeys=308 corpus_ratio=0.0136 of which plot_mass=260 (roof_band=29 unroomed=231) raised_shoulder=0 worst_max_offset=9
+SWEEP RESULT walls towns=22 faces=14872 stone=2548 corpus_ratio=0.1713 worst_town_ratio=0.2189 high_stone=82 off_datum=791 base_runs=3998 fragmented=0 worst_max_offset=8
+SWEEP RESULT walls/large,grand towns=21 faces=31412 stone=4575 corpus_ratio=0.1456 worst_town_ratio=0.2166 high_stone=153 off_datum=1463 base_runs=7033 fragmented=0 worst_max_offset=16
+SWEEP RESULT roofs towns=22 crowns=675 pitched=431 corpus_share=0.6385 worst_town_share=0.4737 flat=81 tiled=163 refused=0 partial=0 dormers=57 dormered_roofs=54 dormer_roof_share=0.1253 dressed=64/81 chimneys=20 awnings=0 boxes=27 rubble=0 worst_rubble=0 (paved=0 borne=48 bearing=10) brackets=204 bare_overhangs=0
+SWEEP RESULT roofs/large,grand towns=21 crowns=1327 pitched=770 corpus_share=0.5803 worst_town_share=0.4598 flat=136 tiled=421 refused=0 partial=0 dormers=136 dormered_roofs=135 dormer_roof_share=0.1753 dressed=111/136 chimneys=45 awnings=0 boxes=37 rubble=1 worst_rubble=1 (paved=0 borne=97 bearing=17) brackets=595 bare_overhangs=0
+SWEEP RESULT skin towns=22 panels=8283 masonry=4428 natural=0 green=7 facade=1670 facade_share=0.2016 windows=854 families=1101/290/279 above_ground_stone=1603 reclad_share=0.0008 tall_masonry=1603 free_bench_stone=252 undercroft=404 shared_street=656 low_faces=2965 tall_faces=5619 tall_share=0.6546 tallest_bank=10 cut=0 cut_share=0.0000 cut_coursed=426 tail_candidates=0 tail_unclearable=0 coursed_trim=0 cap_juts=0 cap_trim=97 garden=947 village_green=396 planting=282 paved_bench=656
+SWEEP RESULT life towns=22 spans=9 span_cells=22 occupied_spans=41 span_instances=53 bays=323 bumps=108 outcrops=431 brackets=862 bare_outcrops=0 dormers=57 plaza_towns=21 plaza_entries=49 plaza_features=3 plaza_decks=18 plaza_deck_columns=72 plaza_mouths=52 railed_mouths=0
+SWEEP RESULT annotations towns=22 garden_runs=53 rim_faces=685 rims=685 rim_deficit=0 lean_refusals=0 deck_caps=0 floor_bearers=0 floor_bearers_refused=509 frontages=285 frontages_wide=137
+SWEEP RESULT skin/large,grand towns=21 panels=13510 masonry=7005 natural=0 green=56 facade=3015 facade_share=0.2232 windows=1472 families=1692/716/607 above_ground_stone=2708 reclad_share=0.0041 tall_masonry=2708 free_bench_stone=318 undercroft=628 shared_street=946 low_faces=4343 tall_faces=9724 tall_share=0.6913 tallest_bank=11 cut=0 cut_share=0.0000 cut_coursed=1024 tail_candidates=0 tail_unclearable=0 coursed_trim=2 cap_juts=0 cap_trim=195 garden=1512 village_green=466 planting=522 paved_bench=946
+SWEEP RESULT life/large,grand towns=21 spans=23 span_cells=56 occupied_spans=60 span_instances=133 bays=474 bumps=138 outcrops=612 brackets=1224 bare_outcrops=0 dormers=136 plaza_towns=19 plaza_entries=49 plaza_features=6 plaza_decks=13 plaza_deck_columns=52 plaza_mouths=51 railed_mouths=0
+SWEEP RESULT annotations/large,grand towns=21 garden_runs=76 rim_faces=1046 rims=1046 rim_deficit=0 lean_refusals=0 deck_caps=0 floor_bearers=0 floor_bearers_refused=619 frontages=339 frontages_wide=156
+SWEEP RESULT clearance towns=43 payload=fabric_dressing capsule=r0.39746/h2.244 margin=0.02 walked=10056 centre_free=10056 offset_free=0 offset_share=0.0000 blocked=0 gates=14286 gates_offset=19 gates_offset_share=0.0013 gates_blocked=0 worst_town_gates_blocked=0 ceiling=0 worst_town_offset_free=0 offset_ceiling=0 worst_town_gates_offset=3 gates_offset_ceiling=0 gates_blocked_required=0 splits=0 cells_unreachable=0 split_towns=[] 
+SWEEP RESULT street_pinch towns=43 walked=10056 pinched=35 colliding=35 worst_town_pinched=3 worst_town_colliding=3 centre_blocked=0 gates_blocked=0 worst_intrusion=0.000 assets=[sfv.deck.pillar.001=35] colliding_towns=[1/compact (1), 1/large (1), 1/grand (2), 2/standard (1), 2/large (1), 3/grand (1), 4/large (2), 4/grand (2), 5/compact (1), 5/large (1), 5/grand (3), 6/compact (1), 6/large (1), 7/compact (1), 7/large (1), 8/compact (1), 8/large (1), 8/grand (3), 10/standard (1), 10/large (1), 10/grand (1), 11/compact (1), 11/standard (1), 11/grand (1), 12/standard (1), 12/grand (3)] blockers=[]
+SWEEP RESULT green_reach towns=43 garden=2035 runs=105 entered=43 stepped=12 near=11 isolated=39 towns_entered=25 towns_stepped_only=5 towns_near_only=3 towns_all_isolated=4 recoverable=[2/compact (9 cells), 3/compact (18 cells), 3/standard (32 cells), 4/grand (20 cells), 10/compact (34 cells)] near_only=[2/large (6 cells), 6/compact (29 cells), 8/grand (16 cells)]
+SWEEP SUMMARY written path=res://.godot/warren_maze_mode_sweep.json sealed=43/48
+SWEEP ERROR clearance 0 walked cell(s) admit no player capsule anywhere inside them; 0 route component(s) split and 0 cell(s) were cut off []; the worst town shuts 0 cell boundary(ies) against a ceiling of 0, and costs 0 off-centre cell(s) against 0 and 3 off-centre crossing(s) against 0. Scope: the scene is terrace_retaining_payload ALONE (the massif's skin and what the crown wears -- rims, garden and plaza dressing, railings, skywalks, outcroppings -- but NO buildings or props), which isolates the fabric's own colliders and is NOT a town walkability guarantee. A SPLIT is the serious one -- it means a shut crossing had no way round and the street is genuinely broken, not merely narrowed; the two off-centre ceilings are COSTS, and a rise in them means the skin leans into more streets than the rock cut left it leaning into. 
+ERROR: clearance pin violated: blocked=0 splits=0 cells_unreachable=0 worst_gates_blocked=0 worst_offset_free=0 worst_gates_offset=3
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tests/harness/warren_maze_mode_sweep.gd:716)
+       [1] _measure_street_pinches (res://tests/harness/warren_maze_mode_sweep.gd:1193)
+       [2] _measure_pinch_bodies (res://tests/harness/warren_maze_mode_sweep.gd:1398)

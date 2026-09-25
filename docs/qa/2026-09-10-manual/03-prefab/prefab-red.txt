@@ -1,0 +1,164 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_prefab_floor.gd
+* test_prefab_bearings_have_a_continuous_native_floor
+    [Failed]:  [42] expected to equal [0]:  anchor.prefab.00: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [47] expected to equal [0]:  anchor.prefab.01: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [62] expected to equal [0]:  anchor.prefab.02: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [215] expected to equal [0]:  anchor.prefab.03: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [25] expected to equal [0]:  anchor.prefab.04: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [25] expected to equal [0]:  anchor.prefab.05: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [58] expected to equal [0]:  anchor.prefab.06: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [58] expected to equal [0]:  anchor.prefab.07: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [47] expected to equal [0]:  anchor.prefab.08: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [42] expected to equal [0]:  anchor.prefab.09: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [14] expected to equal [0]:  anchor.prefab.10: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [17] expected to equal [0]:  anchor.prefab.11: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.12: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.13: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.14: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.15: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [16] expected to equal [0]:  anchor.prefab.16: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [59] expected to equal [0]:  anchor.prefab.17: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [59] expected to equal [0]:  anchor.prefab.18: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [35] expected to equal [0]:  anchor.prefab.19: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [39] expected to equal [0]:  anchor.prefab.20: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [56] expected to equal [0]:  anchor.prefab.21: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [56] expected to equal [0]:  anchor.prefab.22: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [93] expected to equal [0]:  anchor.prefab.23: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [84] expected to equal [0]:  anchor.prefab.24: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [207] expected to equal [0]:  anchor.prefab.25: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [202] expected to equal [0]:  anchor.prefab.26: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [197] expected to equal [0]:  anchor.prefab.27: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [206] expected to equal [0]:  anchor.prefab.28: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [218] expected to equal [0]:  anchor.prefab.29: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [206] expected to equal [0]:  anchor.prefab.30: every bearing must meet an actual native floor
+      at line 26
+    [Failed]:  [28] expected to equal [0]:  anchor.prefab.31: every bearing must meet an actual native floor
+      at line 26
+0/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september10_prefab_floor.gd
+- test_prefab_bearings_have_a_continuous_native_floor
+    [Failed]:  [42] expected to equal [0]:  anchor.prefab.00: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [47] expected to equal [0]:  anchor.prefab.01: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [62] expected to equal [0]:  anchor.prefab.02: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [215] expected to equal [0]:  anchor.prefab.03: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [25] expected to equal [0]:  anchor.prefab.04: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [25] expected to equal [0]:  anchor.prefab.05: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [58] expected to equal [0]:  anchor.prefab.06: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [58] expected to equal [0]:  anchor.prefab.07: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [47] expected to equal [0]:  anchor.prefab.08: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [42] expected to equal [0]:  anchor.prefab.09: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [14] expected to equal [0]:  anchor.prefab.10: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [17] expected to equal [0]:  anchor.prefab.11: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.12: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.13: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.14: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.15: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [16] expected to equal [0]:  anchor.prefab.16: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [59] expected to equal [0]:  anchor.prefab.17: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [59] expected to equal [0]:  anchor.prefab.18: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [35] expected to equal [0]:  anchor.prefab.19: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [39] expected to equal [0]:  anchor.prefab.20: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [56] expected to equal [0]:  anchor.prefab.21: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [56] expected to equal [0]:  anchor.prefab.22: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [93] expected to equal [0]:  anchor.prefab.23: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [84] expected to equal [0]:  anchor.prefab.24: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [207] expected to equal [0]:  anchor.prefab.25: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [202] expected to equal [0]:  anchor.prefab.26: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [197] expected to equal [0]:  anchor.prefab.27: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [206] expected to equal [0]:  anchor.prefab.28: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [218] expected to equal [0]:  anchor.prefab.29: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [206] expected to equal [0]:  anchor.prefab.30: every bearing must meet an actual native floor
+          at line 26
+    [Failed]:  [28] expected to equal [0]:  anchor.prefab.31: every bearing must meet an actual native floor
+          at line 26
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts            0/32
+Time              5.818s
+
+
+---- 1 failing tests ----
+

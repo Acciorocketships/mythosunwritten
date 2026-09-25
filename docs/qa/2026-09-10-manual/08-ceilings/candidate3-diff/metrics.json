@@ -1,0 +1,200 @@
+{
+  "04_ceiling_exact": {
+    "roi": [
+      447,
+      0,
+      1392,
+      372
+    ],
+    "mean_abs_rgb": 1.5853409381757535,
+    "roi_mean_abs_rgb": 7.953540611784339,
+    "roi_changed_over_20_fraction": 0.17243272458326223
+  },
+  "04_ceiling_gameplay_camera": {
+    "roi": [
+      447,
+      0,
+      1392,
+      372
+    ],
+    "mean_abs_rgb": 1.5843327261168392,
+    "roi_mean_abs_rgb": 7.9496482145227665,
+    "roi_changed_over_20_fraction": 0.17237867667975196
+  },
+  "04_ceiling_jitter_0": {
+    "roi": [
+      447,
+      0,
+      1392,
+      372
+    ],
+    "mean_abs_rgb": 1.5859316419839542,
+    "roi_mean_abs_rgb": 7.953248563463617,
+    "roi_changed_over_20_fraction": 0.1724469477157649
+  },
+  "04_ceiling_jitter_1": {
+    "roi": [
+      447,
+      0,
+      1392,
+      372
+    ],
+    "mean_abs_rgb": 1.5794909439176648,
+    "roi_mean_abs_rgb": 7.931610437882839,
+    "roi_changed_over_20_fraction": 0.17246686010126872
+  },
+  "04_ceiling_near_left": {
+    "roi": [
+      447,
+      0,
+      1392,
+      372
+    ],
+    "mean_abs_rgb": 1.3891304494678036,
+    "roi_mean_abs_rgb": 6.973652121143161,
+    "roi_changed_over_20_fraction": 0.15575183478409285
+  },
+  "04_ceiling_near_right": {
+    "roi": [
+      447,
+      0,
+      1392,
+      372
+    ],
+    "mean_abs_rgb": 1.8600180213448982,
+    "roi_mean_abs_rgb": 7.902098386148565,
+    "roi_changed_over_20_fraction": 0.16412357057518348
+  },
+  "08_hanging_stone_exact": {
+    "roi": [
+      223,
+      21,
+      1443,
+      569
+    ],
+    "mean_abs_rgb": 4.362998561144599,
+    "roi_mean_abs_rgb": 11.098104383550716,
+    "roi_changed_over_20_fraction": 0.22393951178652627
+  },
+  "08_hanging_stone_gameplay_camera": {
+    "roi": [
+      223,
+      21,
+      1443,
+      569
+    ],
+    "mean_abs_rgb": 6.1405098216704985,
+    "roi_mean_abs_rgb": 15.67378146065175,
+    "roi_changed_over_20_fraction": 0.30837621155917194
+  },
+  "08_hanging_stone_jitter_0": {
+    "roi": [
+      223,
+      21,
+      1443,
+      569
+    ],
+    "mean_abs_rgb": 4.3758257281156245,
+    "roi_mean_abs_rgb": 11.106583802002314,
+    "roi_changed_over_20_fraction": 0.2240442144310159
+  },
+  "08_hanging_stone_jitter_1": {
+    "roi": [
+      223,
+      21,
+      1443,
+      569
+    ],
+    "mean_abs_rgb": 4.369022501536806,
+    "roi_mean_abs_rgb": 11.100694527541782,
+    "roi_changed_over_20_fraction": 0.22359399305971042
+  },
+  "08_hanging_stone_near_left": {
+    "roi": [
+      223,
+      21,
+      1443,
+      569
+    ],
+    "mean_abs_rgb": 2.9423795455858963,
+    "roi_mean_abs_rgb": 7.6770561605041685,
+    "roi_changed_over_20_fraction": 0.15952644489649395
+  },
+  "08_hanging_stone_near_right": {
+    "roi": [
+      223,
+      21,
+      1443,
+      569
+    ],
+    "mean_abs_rgb": 4.868118431985373,
+    "roi_mean_abs_rgb": 11.540335447329584,
+    "roi_changed_over_20_fraction": 0.23167404571018307
+  },
+  "09_stone_course_exact": {
+    "roi": [
+      172,
+      0,
+      825,
+      579
+    ],
+    "mean_abs_rgb": 1.7492552403383899,
+    "roi_mean_abs_rgb": 8.062317226811112,
+    "roi_changed_over_20_fraction": 0.22411508462338034
+  },
+  "09_stone_course_gameplay_camera": {
+    "roi": [
+      172,
+      0,
+      825,
+      579
+    ],
+    "mean_abs_rgb": 1.7498663973597717,
+    "roi_mean_abs_rgb": 8.061195791797479,
+    "roi_changed_over_20_fraction": 0.22423939463668416
+  },
+  "09_stone_course_jitter_0": {
+    "roi": [
+      172,
+      0,
+      825,
+      579
+    ],
+    "mean_abs_rgb": 1.751951874527606,
+    "roi_mean_abs_rgb": 8.073796066337465,
+    "roi_changed_over_20_fraction": 0.22432403124148675
+  },
+  "09_stone_course_jitter_1": {
+    "roi": [
+      172,
+      0,
+      825,
+      579
+    ],
+    "mean_abs_rgb": 1.745105489792533,
+    "roi_mean_abs_rgb": 8.039368364071409,
+    "roi_changed_over_20_fraction": 0.22332161645335596
+  },
+  "09_stone_course_near_left": {
+    "roi": [
+      172,
+      0,
+      825,
+      579
+    ],
+    "mean_abs_rgb": 1.969553046628072,
+    "roi_mean_abs_rgb": 9.160079558408514,
+    "roi_changed_over_20_fraction": 0.24838198615662532
+  },
+  "09_stone_course_near_right": {
+    "roi": [
+      172,
+      0,
+      825,
+      579
+    ],
+    "mean_abs_rgb": 1.6067682121790066,
+    "roi_mean_abs_rgb": 7.371346630096601,
+    "roi_changed_over_20_fraction": 0.20120501366087698
+  }
+}

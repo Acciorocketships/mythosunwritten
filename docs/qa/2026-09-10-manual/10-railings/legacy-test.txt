@@ -1,0 +1,34 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september8_night_rails.gd
+* test_photographed_towns_do_not_fence_retained_walls
+* test_wall_socket_preserves_exposed_guard_and_collision_in_all_directions
+* test_photo14_lower_rail_respects_the_emitted_stone_course
+3/3 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               1
+Tests                 3
+Passing Tests         3
+Asserts              20
+Time              17.57s
+
+
+---- All tests passed! ----
+

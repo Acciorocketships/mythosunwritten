@@ -1,0 +1,68 @@
+{
+  "03_skywalk_exact": {
+    "roi": [
+      601,
+      103,
+      1014,
+      362
+    ],
+    "mean_abs_rgb": 0.3100161073744905,
+    "roi_mean_abs_rgb": 1.7507642543962156,
+    "roi_changed_over_20_fraction": 0.04419119915487954
+  },
+  "03_skywalk_gameplay_camera": {
+    "roi": [
+      601,
+      103,
+      1014,
+      362
+    ],
+    "mean_abs_rgb": 0.19321099684832874,
+    "roi_mean_abs_rgb": 1.6455698174826505,
+    "roi_changed_over_20_fraction": 0.04443426477324782
+  },
+  "03_skywalk_jitter_0": {
+    "roi": [
+      601,
+      103,
+      1014,
+      362
+    ],
+    "mean_abs_rgb": 0.1889632960521921,
+    "roi_mean_abs_rgb": 1.6773210429384764,
+    "roi_changed_over_20_fraction": 0.04484560658894799
+  },
+  "03_skywalk_jitter_1": {
+    "roi": [
+      601,
+      103,
+      1014,
+      362
+    ],
+    "mean_abs_rgb": 0.2483256511815202,
+    "roi_mean_abs_rgb": 1.656772649508727,
+    "roi_changed_over_20_fraction": 0.04469602774687521
+  },
+  "03_skywalk_near_left": {
+    "roi": [
+      601,
+      103,
+      1014,
+      362
+    ],
+    "mean_abs_rgb": 0.33156797709840585,
+    "roi_mean_abs_rgb": 1.8838208668717142,
+    "roi_changed_over_20_fraction": 0.04935166920639076
+  },
+  "03_skywalk_near_right": {
+    "roi": [
+      601,
+      103,
+      1014,
+      362
+    ],
+    "mean_abs_rgb": 0.21430220016527698,
+    "roi_mean_abs_rgb": 1.284146824098398,
+    "roi_changed_over_20_fraction": 0.026400665625847225
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "september10-skywalk-source.txt": {
+    "volume.transition.04.mesh": {
+      "collision_faces": "15c4293d789f44378fd94d8862b5b5a22a48151b799163a22c811cea8f70dd72",
+      "indices": "e0393ed213f7427b24e6eb45b1a12605d9f7d06b44972dc92bfe8818938a9145",
+      "normals": "14171418ec00e9444d5f0b072f5626057027f3e17c1dba72ceb35fa66d01f1ba",
+      "triangle_count": 126,
+      "uvs": "af186090557c264c25ee7d1b439ac2bd6fc622e4a18609038cc868964f61588d",
+      "vertices": "7aa80529509de087892642450fec6e710c8e0d21c7cce437ec89d497d2b34386"
+    },
+    "volume.transition.08.mesh": {
+      "collision_faces": "b21a18f98e4498f38887a48818e7d0692dd400a85c77b3d3377d65d38289c269",
+      "indices": "a7652f576e14b4f24a948efff604af8439b28d321ab0b5eebcd533119dd5a9f0",
+      "normals": "dab139dae1878b0d39622cfe4d8926a3f44c359e440caf35ef2418dbd3820d0a",
+      "triangle_count": 174,
+      "uvs": "b8933e96b3c131c0ef09f946b5980ded4b51201b94e0fdef260cb3175e824d69",
+      "vertices": "e8c1c43463d11028c0e7e8e5a4c4118375d6c43fd8ed299e00a3a14aa1d27180"
+    },
+    "volume.transition.09.mesh": {
+      "collision_faces": "713d6d0476adcc6ccee66ebd9248cdffcdd9d61b4f5b07dc86228fbacf0ca4bf",
+      "indices": "66702bdcf09e725cbadd77e4318cbede1b09185820ffbebf089b861b118d7d49",
+      "normals": "c5bcc1c1ad257e31c70509d74c397236115c5ce20906f62bce7d4c0b1abb65c8",
+      "triangle_count": 186,
+      "uvs": "4988fb5d7d3bb17240aa690ef66a550bf1fbfc7c0c13685f1e1b96c6abe81b0f",
+      "vertices": "1d604c465fc17302122649af13e388a82793560f89e37e0b6b90b9dff356a8ae"
+    },
+    "volume.transition.10.mesh": {
+      "collision_faces": "253677b501aa0a181cd92ca5af88413ae6d3d60b18c8eb1ae10f7bc0d3ee62e7",
+      "indices": "f144c417e179a6e3dc8b2c33f683f6103d6e7fcb2c5db84b35c0d31bd6499ec5",
+      "normals": "cdb1ff72d63af3cb935cf29ca97beb2f5d7a34717d20cf922505d5abb8d35a9b",
+      "triangle_count": 150,
+      "uvs": "bccca105d7c7b2cf3a86d87dd0cd6f88b0abb2e539b93f9d11832387863efc3b",
+      "vertices": "1c307d9e2d19de84a50541981a588c1a6ff873fca7557ddbf8332c7b83b53601"
+    },
+    "volume.transition.11.mesh": {
+      "collision_faces": "b72fa6fff0fa9e54e42b245a1c5c17c3fa6a24f7b0d61051845c83e6f94d22b9",
+      "indices": "66702bdcf09e725cbadd77e4318cbede1b09185820ffbebf089b861b118d7d49",
+      "normals": "f14a5275b11b5f37625a1b8c1f5d7461c86d8752742742d952febcd78bb91fed",
+      "triangle_count": 186,
+      "uvs": "f660521243b438b915b9e2b5eaf36056468a04a777eab821c2ef21790293f444",
+      "vertices": "a5626bf3ad9d06138ec58f281e50ac07043f625406a3cb19d945ab711bae6b34"
+    },
+    "volume.transition.12.mesh": {
+      "collision_faces": "b83cd9f77b4170fdde656ddfa653f8efcdc3c591752178c6b9ce225167ce76b3",
+      "indices": "66702bdcf09e725cbadd77e4318cbede1b09185820ffbebf089b861b118d7d49",
+      "normals": "7c014f7ccd3d8964d836263ab0c492a7711ed600fdb96ee19e038c60f846759c",
+      "triangle_count": 186,
+      "uvs": "29376ff4b3e20a2b244a02d877cf388c4e6452fae011cabac4e61f75cad9bcbd",
+      "vertices": "3b90d3c51855b7201db92085e1ee785c9576139a3b035496f48d1aa616e5c7ef"
+    }
+  },
+  "september10-stone-source.txt": {
+    "volume.transition.04.mesh": {
+      "collision_faces": "229bbea1ce6f7094f14df8e47e958643576883adeebf7f38d96aadef080efac3",
+      "indices": "66702bdcf09e725cbadd77e4318cbede1b09185820ffbebf089b861b118d7d49",
+      "normals": "18635510dc2f730e91c06ba59b1dcef598cdc8f47e15bceb43d57995926d2e84",
+      "triangle_count": 186,
+      "uvs": "b7b0470d9aa5bb0873b944a79ae915a252f186ed07401d6cd0b32208579699a2",
+      "vertices": "533741d7de823c4b2d1c53da6321ab04c3e8c7f9236260e3b26ebfbc11e2c368"
+    },
+    "volume.transition.05.mesh": {
+      "collision_faces": "6a2afbbd3f4eb92e6f65ef6994990c5c41a45750d2b0dccb94aa5f40c1fb51fc",
+      "indices": "f144c417e179a6e3dc8b2c33f683f6103d6e7fcb2c5db84b35c0d31bd6499ec5",
+      "normals": "ce8193580ade021e3ec62f4eb74fa5e674918cec0ede8320c08c243417534db5",
+      "triangle_count": 150,
+      "uvs": "8a694f12e65d7dd7bda33e4d33fc1b0a7d31b92556dfdcc45b94eca8193949c2",
+      "vertices": "dea8a5c8776c4ca9ec8919fd3fed671d7db6b9aa52f2636b7897415d7cc6dd17"
+    },
+    "volume.transition.06.mesh": {
+      "collision_faces": "21b90c37d9e998e8d8c4a5eaeb14bc8db92764996c1f4742581834aac9311f84",
+      "indices": "90794abfd12355527ea48dfbf479bfa1e84a973c48420a3b1532d1893345b9c1",
+      "normals": "8f8025d73bb9669aabe7996eef2a7be79b092d0056723ae75347d79a5de98a08",
+      "triangle_count": 138,
+      "uvs": "45986c495911006d2caf9340ade6ad233e3c24b119228b39ae343115db4c2faf",
+      "vertices": "c5e374fb499ce23ee2f25233268f5fcc4b684ddf5beaf799335098e95be74201"
+    },
+    "volume.transition.07.mesh": {
+      "collision_faces": "8a6886e05e3eb0b68f3325129e05e7baa2998feb89e344d3300be8cd5c4fc665",
+      "indices": "4562e07d94ae133d4555ca24f38cc19589df40793d44242ef55acc2f0a2220ee",
+      "normals": "4d0d4cb2fe29341d5b8e74dc69bb4ee0d9ae2626058bb27fe7bfb3626afe3a47",
+      "triangle_count": 162,
+      "uvs": "6ab139e1634e2d6bcabc3310bb9ec228adea2cb0591eb2e19a2431fa91854c8b",
+      "vertices": "1a24affd76040af1a10a70903b60c2e30cb83588df48c6ab6117bcae127e519e"
+    },
+    "volume.transition.09.mesh": {
+      "collision_faces": "cc7ee22cb6433eddd387845c19c90ce0fd4aa97b87e95f2315f75eadc78b1270",
+      "indices": "a7652f576e14b4f24a948efff604af8439b28d321ab0b5eebcd533119dd5a9f0",
+      "normals": "47fd238ae96690da59aeab0393a772849f74c9d76beab0bda5eacb315190bef5",
+      "triangle_count": 174,
+      "uvs": "693d1d80d3d28049543a39a06f303c30776614a0ab97f6165d6da0a1a443c0ff",
+      "vertices": "acef9ce79192fe9a7e6a0083cc45cdf2a840c9551c512313cfdc034976fe0653"
+    }
+  }
+}

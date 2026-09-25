@@ -1,0 +1,134 @@
+{
+  "06_stone_gap_exact": {
+    "roi": [
+      636,
+      0,
+      825,
+      445
+    ],
+    "mean_abs_rgb": 1.0709932905955,
+    "roi_mean_abs_rgb": 5.548156074747835,
+    "roi_changed_over_20_fraction": 0.1833422507579811
+  },
+  "06_stone_gap_gameplay_camera": {
+    "roi": [
+      636,
+      0,
+      825,
+      445
+    ],
+    "mean_abs_rgb": 0.475544712225167,
+    "roi_mean_abs_rgb": 5.055311812615184,
+    "roi_changed_over_20_fraction": 0.18330658105939004
+  },
+  "06_stone_gap_jitter_0": {
+    "roi": [
+      636,
+      0,
+      825,
+      445
+    ],
+    "mean_abs_rgb": 0.5151655884633369,
+    "roi_mean_abs_rgb": 5.114618631472564,
+    "roi_changed_over_20_fraction": 0.18350870935140598
+  },
+  "06_stone_gap_jitter_1": {
+    "roi": [
+      636,
+      0,
+      825,
+      445
+    ],
+    "mean_abs_rgb": 0.5044985810348801,
+    "roi_mean_abs_rgb": 5.062073202148109,
+    "roi_changed_over_20_fraction": 0.18286665477676714
+  },
+  "06_stone_gap_near_left": {
+    "roi": [
+      636,
+      0,
+      825,
+      445
+    ],
+    "mean_abs_rgb": 0.7852840444671619,
+    "roi_mean_abs_rgb": 5.763918118225234,
+    "roi_changed_over_20_fraction": 0.18843112775697046
+  },
+  "06_stone_gap_near_right": {
+    "roi": [
+      636,
+      0,
+      825,
+      445
+    ],
+    "mean_abs_rgb": 0.561098063587351,
+    "roi_mean_abs_rgb": 4.91938251788439,
+    "roi_changed_over_20_fraction": 0.17544735746982937
+  },
+  "13_plaster_gap_exact": {
+    "roi": [
+      636,
+      0,
+      825,
+      445
+    ],
+    "mean_abs_rgb": 0.8863377414698842,
+    "roi_mean_abs_rgb": 0.39398767413748687,
+    "roi_changed_over_20_fraction": 0.00021401819154628142
+  },
+  "13_plaster_gap_gameplay_camera": {
+    "roi": [
+      636,
+      0,
+      825,
+      445
+    ],
+    "mean_abs_rgb": 0.8775496149917174,
+    "roi_mean_abs_rgb": 0.1640925034183461,
+    "roi_changed_over_20_fraction": 0.00042803638309256285
+  },
+  "13_plaster_gap_jitter_0": {
+    "roi": [
+      636,
+      0,
+      825,
+      445
+    ],
+    "mean_abs_rgb": 0.7447746731426418,
+    "roi_mean_abs_rgb": 0.24920436755642747,
+    "roi_changed_over_20_fraction": 0.0007133939718209382
+  },
+  "13_plaster_gap_jitter_1": {
+    "roi": [
+      636,
+      0,
+      825,
+      445
+    ],
+    "mean_abs_rgb": 0.6799115295325634,
+    "roi_mean_abs_rgb": 0.17085389295127124,
+    "roi_changed_over_20_fraction": 0.00028535758872837527
+  },
+  "13_plaster_gap_near_left": {
+    "roi": [
+      636,
+      0,
+      825,
+      445
+    ],
+    "mean_abs_rgb": 0.7298804181312293,
+    "roi_mean_abs_rgb": 0.5387353110199552,
+    "roi_changed_over_20_fraction": 0.0025206587004339815
+  },
+  "13_plaster_gap_near_right": {
+    "roi": [
+      636,
+      0,
+      825,
+      445
+    ],
+    "mean_abs_rgb": 0.8272803080966953,
+    "roi_mean_abs_rgb": 0.4538572815726374,
+    "roi_changed_over_20_fraction": 0.0002734676891980263
+  }
+}

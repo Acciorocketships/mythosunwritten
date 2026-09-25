@@ -1,0 +1,49 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_orbs.gd
+* test_small_glows_have_moving_ground_lights_and_spherical_cores
+* test_large_orb_uses_spherical_core_and_restrained_halo
+* test_light_pool_is_bounded_and_distant_visits_release_it
+* test_native_small_core_halo_and_light_follow_same_slow_path_after_revisit
+4/4 passed.
+
+
+res://tests/test_september9_spirit_orbs.gd
+* test_orb_motion_is_slow_bounded_and_keeps_its_light_attached
+1/1 passed.
+
+
+res://tests/test_biome_chunk_fx.gd
+* test_marsh_builds_fog_two_emitters_and_orbs
+* test_meadow_no_fog_no_orbs_one_emitter
+* test_glow_recipes_are_soft_billboards
+* test_petals_keep_alpha_but_get_the_soft_texture
+* test_emitter_aabb_contains_emission_box
+* test_emission_band_follows_surface_heights
+6/6 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               3
+Tests                11
+Passing Tests        11
+Asserts            2606
+Time              0.625s
+
+
+---- All tests passed! ----
+

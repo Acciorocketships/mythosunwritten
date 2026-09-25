@@ -1,0 +1,14 @@
+{
+  "asset_count": 12,
+  "triangles_preserved": 16864,
+  "degenerate_triangles": 0,
+  "snapshot_sha256": "8747f6d6dc2e45611d95d19509ba40fdcaca6583235b4983a990f18b4f47b086",
+  "focused_distinct_tests": 30,
+  "focused_distinct_assertions": 55338,
+  "test_note": "29/30 passed in focused-candidate2; float32 ordering tolerance corrected in test only, followed by 2/2 roof-end tests passing (55,048 assertions). No production change between runs.",
+  "full_game_judgment": "accepted after inspection of all six matched comparisons and full-view difference",
+  "camera_metadata_identical": true,
+  "startup_ms": 384351,
+  "game_pairs": 6,
+  "native_pairs": 5
+}

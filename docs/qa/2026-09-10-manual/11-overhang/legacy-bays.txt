@@ -1,0 +1,32 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+BAY spatial.feature.facade-bay.00 { "annex_room_id": &"spatial.parcel.maze.house.006.part03.room00", "annex_building_id": &"spatial.parcel.maze.house.006.part03", "annex_source_parcel_id": &"parcel.maze.house.006", "annex_recipe_id": &"outcrop.embedded.orange", "annex_breaks_tower_lineage": false, "annex_endpoint_facing": (0, 0, -1), "annex_source_storey_index": 3, "annex_vertical_facade_key": "parcel.maze.house.006/-7,-5/0,-1", "annex_relief_profile_key": "parcel.maze.house.006/outcrop.embedded.orange", "annex_reserved_cell_count": 2, "annex_is_embedded_partial_extrusion": true, "annex_embedded_depth_m": 0.03, "annex_projected_depth_m": 0.87, "annex_is_full_scale_diagonal_overlap": false, "annex_uses_compound_union_shell": false, "annex_matches_parent_palette": true, "reserved_cell_count": 2, "public_cell_count": 0, "terrain_bearing_cell_count": 0, "endpoint_count": 1, "endpoint_owner_count": 1, "construction_record_count": 1 } records [{ "recipe_id": &"outcrop.embedded.orange", "origin": (-7, 7, -6), "yaw_quarters": 2, "role": &"occupied_room_annex" }]
+BAY spatial.feature.facade-bay.01 { "annex_room_id": &"spatial.parcel.maze.house.009.part02.room00", "annex_building_id": &"spatial.parcel.maze.house.009.part02", "annex_source_parcel_id": &"parcel.maze.house.009", "annex_recipe_id": &"outcrop.blue", "annex_breaks_tower_lineage": false, "annex_endpoint_facing": (1, 0, 0), "annex_source_storey_index": 2, "annex_vertical_facade_key": "parcel.maze.house.009/5,-10/1,0", "annex_relief_profile_key": "parcel.maze.house.009/outcrop.blue", "annex_reserved_cell_count": 16, "annex_is_embedded_partial_extrusion": false, "annex_embedded_depth_m": 0.0, "annex_projected_depth_m": 0.0, "annex_is_full_scale_diagonal_overlap": false, "annex_uses_compound_union_shell": false, "annex_matches_parent_palette": true, "reserved_cell_count": 16, "public_cell_count": 0, "terrain_bearing_cell_count": 0, "endpoint_count": 1, "endpoint_owner_count": 1, "construction_record_count": 1 } records [{ "recipe_id": &"outcrop.blue", "origin": (7, 7, -11), "yaw_quarters": 1, "role": &"occupied_room_annex" }]
+BAY spatial.feature.facade-bay.02 { "annex_room_id": &"spatial.parcel.maze.house.024.part02.room00", "annex_building_id": &"spatial.parcel.maze.house.024.part02", "annex_source_parcel_id": &"parcel.maze.house.024", "annex_recipe_id": &"outcrop.amber", "annex_breaks_tower_lineage": false, "annex_endpoint_facing": (1, 0, 0), "annex_source_storey_index": 2, "annex_vertical_facade_key": "parcel.maze.house.024/7,10/1,0", "annex_relief_profile_key": "parcel.maze.house.024/outcrop.amber", "annex_reserved_cell_count": 16, "annex_is_embedded_partial_extrusion": false, "annex_embedded_depth_m": 0.0, "annex_projected_depth_m": 0.0, "annex_is_full_scale_diagonal_overlap": false, "annex_uses_compound_union_shell": false, "annex_matches_parent_palette": true, "reserved_cell_count": 16, "public_cell_count": 0, "terrain_bearing_cell_count": 0, "endpoint_count": 1, "endpoint_owner_count": 1, "construction_record_count": 1 } records [{ "recipe_id": &"outcrop.amber", "origin": (9, 4, 9), "yaw_quarters": 1, "role": &"occupied_room_annex" }]
+BAY_UNBORNE_EDGE spatial.feature.facade-bay.00 [(-8, 7, -5), (-7, 7, -5)]
+BAY_UNBORNE_EDGE spatial.feature.facade-bay.01 [(5, 7, -10), (5, 7, -9)]
+BAY_UNBORNE_EDGE spatial.feature.facade-bay.02 []
+ROOM spatial.parcel.maze.house.006.part00.room00 origin (-3, 1, -3) yaw 0 audit { "private_cell_count": 8, "addressed": true, "address_door_phase": 1, "terrain_bearing": true, "roof_feature": 2, "flat_roof": true, "roof_preference": &"pitched" } cells [(-4, 1, -4), (-3, 1, -4), (-4, 1, -3), (-3, 1, -3), (-4, 2, -4), (-3, 2, -4), (-4, 2, -3), (-3, 2, -3)]
+ROOM spatial.parcel.maze.house.006.part01.room00 origin (-3, 3, -5) yaw 1 audit { "private_cell_count": 16, "addressed": false, "address_door_phase": 0, "terrain_bearing": false, "roof_feature": 2, "flat_roof": true, "roof_preference": &"pitched" } cells [(-4, 3, -6), (-3, 3, -6), (-4, 3, -5), (-3, 3, -5), (-4, 3, -4), (-3, 3, -4), (-4, 3, -3), (-3, 3, -3), (-4, 4, -6), (-3, 4, -6), (-4, 4, -5), (-3, 4, -5), (-4, 4, -4), (-3, 4, -4), (-4, 4, -3), (-3, 4, -3)]
+ROOM spatial.parcel.maze.house.006.part02.room00 origin (-5, 5, -4) yaw 3 audit { "private_cell_count": 32, "addressed": false, "address_door_phase": 0, "terrain_bearing": false, "roof_feature": 2, "flat_roof": true, "roof_preference": &"pitched" } cells [(-6, 5, -6), (-5, 5, -6), (-4, 5, -6), (-3, 5, -6), (-6, 5, -5), (-5, 5, -5), (-4, 5, -5), (-3, 5, -5), (-6, 5, -4), (-5, 5, -4), (-4, 5, -4), (-3, 5, -4), (-6, 5, -3), (-5, 5, -3), (-4, 5, -3), (-3, 5, -3), (-6, 6, -6), (-5, 6, -6), (-4, 6, -6), (-3, 6, -6), (-6, 6, -5), (-5, 6, -5), (-4, 6, -5), (-3, 6, -5), (-6, 6, -4), (-5, 6, -4), (-4, 6, -4), (-3, 6, -4), (-6, 6, -3), (-5, 6, -3), (-4, 6, -3), (-3, 6, -3)]
+ROOM spatial.parcel.maze.house.006.part03.room00 origin (-7, 7, -5) yaw 2 audit { "private_cell_count": 16, "addressed": false, "address_door_phase": 0, "terrain_bearing": false, "roof_feature": 2, "flat_roof": true, "roof_preference": &"pitched" } cells [(-8, 7, -5), (-7, 7, -5), (-6, 7, -5), (-5, 7, -5), (-8, 7, -4), (-7, 7, -4), (-6, 7, -4), (-5, 7, -4), (-8, 8, -5), (-7, 8, -5), (-6, 8, -5), (-5, 8, -5), (-8, 8, -4), (-7, 8, -4), (-6, 8, -4), (-5, 8, -4)]
+BELOW (4, 1, 1) 4
+BELOW (4, 1, 2) 4
+BELOW (4, 1, 3) 4
+BELOW (5, 1, 1) 4
+BELOW (5, 1, 2) 4
+BELOW (5, 1, 3) 4
+BELOW (6, 1, 1) 2
+BELOW (6, 1, 2) 2
+BELOW (6, 1, 3) 2
+BELOW (7, 1, 1) 2
+BELOW (7, 1, 2) 2
+BELOW (7, 1, 3) 2
+BELOW (8, 1, 1) 0
+BELOW (8, 1, 2) 0
+BELOW (8, 1, 3) 0
+BELOW (9, 1, 1) 0
+BELOW (9, 1, 2) 0
+BELOW (9, 1, 3) 0
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

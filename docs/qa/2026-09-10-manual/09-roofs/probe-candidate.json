@@ -1,0 +1,3699 @@
+{
+  "entries": [
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        501.0,
+        11.7578954696655,
+        -2077.001953125,
+        507.0,
+        12.0799999237061,
+        -2071.001953125
+      ],
+      "id": "spatial.fabric.spatial.maze_back.01.room00/floor.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-11.25, -0.161052, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        495.0,
+        11.7578954696655,
+        -2077.001953125,
+        501.0,
+        12.0799999237061,
+        -2071.001953125
+      ],
+      "id": "spatial.fabric.spatial.maze_back.01.room00/floor.1",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, -0.161052, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.rock.plain.002.miter1",
+      "bounds": [
+        505.672241210938,
+        12.0799999237061,
+        -2077.08520507812,
+        507.0,
+        18.0800018310547,
+        -2071.00903320312
+      ],
+      "id": "spatial.fabric.spatial.maze_back.01.room00/north",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-12.41806, 0.0, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.rock.window.010.miter2.course_open",
+      "bounds": [
+        500.914825439453,
+        12.0799999237061,
+        -2072.32763671875,
+        507.0,
+        18.0800018310547,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.maze_back.01.room00/east.0",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-11.25, 0.0, 2.581944)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.rock.window.010.course_open",
+      "bounds": [
+        494.914825439453,
+        12.0799999237061,
+        -2072.32763671875,
+        501.085174560547,
+        18.0800018310547,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.maze_back.01.room00/east.1",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-8.25, 0.0, 2.581944)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        501.0,
+        11.7578954696655,
+        -2083.001953125,
+        507.0,
+        12.0799999237061,
+        -2077.001953125
+      ],
+      "id": "spatial.fabric.spatial.maze_back.02.room00/floor",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-11.25, -0.161052, 6.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.048.miter2",
+      "bounds": [
+        505.808166503906,
+        12.0799999237061,
+        -2082.89038085938,
+        507.0,
+        18.0799999237061,
+        -2077.0
+      ],
+      "id": "spatial.fabric.spatial.maze_back.02.room00/north",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-12.46084, 0.0, 6.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.008.mirror_x.miter1",
+      "bounds": [
+        501.0,
+        12.0799999237061,
+        -2083.0,
+        506.915496826172,
+        18.0799999237061,
+        -2081.8935546875
+      ],
+      "id": "spatial.fabric.spatial.maze_back.02.room00/west",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-11.25, 0.0, 7.973419)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        495.0,
+        11.7578954696655,
+        -2089.001953125,
+        501.0,
+        12.0799999237061,
+        -2083.001953125
+      ],
+      "id": "spatial.fabric.spatial.maze_back.03.room00/floor",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, -0.161052, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.013.miter1",
+      "bounds": [
+        495.0,
+        12.0799999237061,
+        -2088.91552734375,
+        496.106323242188,
+        18.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.maze_back.03.room00/south",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-7.026583, 0.0, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.048.miter2",
+      "bounds": [
+        499.808166503906,
+        12.0799999237061,
+        -2088.89038085938,
+        501.0,
+        18.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.maze_back.03.room00/north",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-9.46084, 0.0, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.008.mirror_x.miter3",
+      "bounds": [
+        495.084503173828,
+        12.0799999237061,
+        -2089.0,
+        500.915496826172,
+        18.0799999237061,
+        -2087.8935546875
+      ],
+      "id": "spatial.fabric.spatial.maze_back.03.room00/west",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-8.25, 0.0, 10.97342)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        465.002044677734,
+        32.7578964233398,
+        -2089.0,
+        471.002044677734,
+        33.0800018310547,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.00.room00/floor",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 10.33895, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001.miter2",
+      "bounds": [
+        465.109649658203,
+        33.0800018310547,
+        -2089.0,
+        471.0,
+        39.0800018310547,
+        -2087.80810546875
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.00.room00/south",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 10.5, 10.96084)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.mirror_x.miter1",
+      "bounds": [
+        465.0,
+        33.0800018310547,
+        -2088.91552734375,
+        466.106323242188,
+        39.0800018310547,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.00.room00/east",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (7.973419, 10.5, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        465.002044677734,
+        32.7578964233398,
+        -2077.0,
+        471.002044677734,
+        33.0800018310547,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/floor",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 10.33895, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter3",
+      "bounds": [
+        465.109649658203,
+        33.0800018310547,
+        -2072.19189453125,
+        470.890350341797,
+        39.0800018310547,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/north",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (6.75, 10.5, 2.539159)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter1",
+      "bounds": [
+        469.893676757812,
+        33.0800018310547,
+        -2077.0,
+        471.0,
+        39.0800018310547,
+        -2071.08447265625
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/west",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (5.526583, 10.5, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.mirror_x.miter2",
+      "bounds": [
+        465.0,
+        33.0800018310547,
+        -2077.0,
+        466.106323242188,
+        39.0800018310547,
+        -2071.08447265625
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/east",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (7.973419, 10.5, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        489.002044677734,
+        38.7578964233398,
+        -2065.0,
+        495.002044677734,
+        39.0800018310547,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room00/floor",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 13.33895, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001.miter1",
+      "bounds": [
+        489.0,
+        39.0800018310547,
+        -2065.0,
+        494.890350341797,
+        45.0800018310547,
+        -2063.80810546875
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room00/south",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 13.5, -1.039159)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter2",
+      "bounds": [
+        489.0,
+        39.0800018310547,
+        -2060.19189453125,
+        494.890350341797,
+        45.0800018310547,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room00/north",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-5.25, 13.5, -3.460841)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter3",
+      "bounds": [
+        493.893676757812,
+        39.0800018310547,
+        -2064.91552734375,
+        495.0,
+        45.0800018310547,
+        -2059.08447265625
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room00/west",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-6.473417, 13.5, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        477.002044677734,
+        32.7578964233398,
+        -2065.0,
+        483.002044677734,
+        33.0800018310547,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room00/floor",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.75, 10.33895, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001.miter3.course_open",
+      "bounds": [
+        477.109649658203,
+        33.0800018310547,
+        -2065.0,
+        482.890350341797,
+        39.0800018310547,
+        -2063.80810546875
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room00/south",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.75, 10.5, -1.039159)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter3.course_open",
+      "bounds": [
+        477.109649658203,
+        33.0800018310547,
+        -2060.19189453125,
+        482.890350341797,
+        39.0800018310547,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room00/north",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (0.75, 10.5, -3.460841)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter3.course_open",
+      "bounds": [
+        481.893676757812,
+        33.0800018310547,
+        -2064.91552734375,
+        483.0,
+        39.0800018310547,
+        -2059.08447265625
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room00/west",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-0.473417, 10.5, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.mirror_x.miter3.course_open",
+      "bounds": [
+        477.0,
+        33.0800018310547,
+        -2064.91552734375,
+        478.106323242188,
+        39.0800018310547,
+        -2059.08447265625
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room00/east",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (1.973419, 10.5, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        465.002044677734,
+        17.7578964233398,
+        -2077.0,
+        471.002044677734,
+        18.0799999237061,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00/floor",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 2.838948, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.rock.window.010.miter3.course_open",
+      "bounds": [
+        465.0,
+        18.0799999237061,
+        -2077.0,
+        470.990966796875,
+        24.0800018310547,
+        -2075.67236328125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00/south",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 3.0, 4.918056)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.rock.plain.002.miter1.course_open",
+      "bounds": [
+        465.009033203125,
+        18.0799999237061,
+        -2072.32763671875,
+        471.085174560547,
+        24.0800018310547,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00/north",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (6.75, 3.0, 2.581944)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.rock.window.010.miter2.course_open",
+      "bounds": [
+        469.672241210938,
+        18.0799999237061,
+        -2077.0,
+        471.0,
+        24.0800018310547,
+        -2070.91479492188
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00/west",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (5.581944, 3.0, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.rock.window.m.016.miter3.course_open",
+      "bounds": [
+        465.0,
+        18.0799999237061,
+        -2076.99096679688,
+        466.327758789062,
+        24.0800018310547,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00/east",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (7.918056, 3.0, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        489.0,
+        23.7578964233398,
+        -2065.001953125,
+        495.0,
+        24.0799999237061,
+        -2059.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00/floor.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, 5.838948, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001.miter1.course_open",
+      "bounds": [
+        489.0,
+        24.0799999237061,
+        -2064.89038085938,
+        490.191833496094,
+        30.0799999237061,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00/front.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.039159, 6.0, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter2.course_open",
+      "bounds": [
+        493.808166503906,
+        24.0799999237061,
+        -2064.89038085938,
+        495.0,
+        30.0799999237061,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00/back.0",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-6.460841, 6.0, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        489.0,
+        23.7578964233398,
+        -2059.001953125,
+        495.0,
+        24.0799999237061,
+        -2053.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00/floor.1",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, 5.838948, -5.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001",
+      "bounds": [
+        489.0,
+        24.0799999237061,
+        -2059.0,
+        490.191833496094,
+        30.0799999237061,
+        -2053.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00/front.1",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.039159, 6.0, -5.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter1",
+      "bounds": [
+        493.808166503906,
+        24.0799999237061,
+        -2059.0,
+        495.0,
+        30.0799999237061,
+        -2053.10961914062
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00/back.1",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-6.460841, 6.0, -5.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter3.course_open",
+      "bounds": [
+        489.084503173828,
+        24.0799999237061,
+        -2065.0,
+        494.915496826172,
+        30.0799999237061,
+        -2063.8935546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00/west.0",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 6.0, -1.026583)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter2",
+      "bounds": [
+        489.0,
+        24.0799999237061,
+        -2054.1064453125,
+        494.915496826172,
+        30.0799999237061,
+        -2053.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00/east.0",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-5.25, 6.0, -6.473417)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        471.0,
+        23.7578964233398,
+        -2064.998046875,
+        477.0,
+        24.0799999237061,
+        -2058.998046875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00/floor.0",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (3.75, 5.838948, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        477.0,
+        23.7578964233398,
+        -2064.998046875,
+        483.0,
+        24.0799999237061,
+        -2058.998046875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00/floor.1",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (0.75, 5.838948, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001.miter3",
+      "bounds": [
+        481.808166503906,
+        24.0799999237061,
+        -2064.89038085938,
+        483.0,
+        30.0799999237061,
+        -2059.10961914062
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00/south",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-0.460841, 6.0, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter3.course_open",
+      "bounds": [
+        471.0,
+        24.0799999237061,
+        -2064.89038085938,
+        472.191833496094,
+        30.0799999237061,
+        -2059.10961914062
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00/north",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (4.960841, 6.0, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001.mirror_x.miter1.course_open",
+      "bounds": [
+        471.109649658203,
+        24.0799999237061,
+        -2060.19189453125,
+        477.0,
+        30.0799999237061,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00/west.0",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.75, 6.0, -3.460841)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter2.course_open",
+      "bounds": [
+        471.084503173828,
+        24.0799999237061,
+        -2065.0,
+        477.0,
+        30.0799999237061,
+        -2063.8935546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00/east.0",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (3.75, 6.0, -1.026583)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter2",
+      "bounds": [
+        477.0,
+        24.0799999237061,
+        -2060.1064453125,
+        482.915496826172,
+        30.0799999237061,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00/west.1",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (0.75, 6.0, -3.473417)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001.mirror_x.miter1",
+      "bounds": [
+        477.0,
+        24.0799999237061,
+        -2065.0,
+        482.890350341797,
+        30.0799999237061,
+        -2063.80810546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00/east.1",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.75, 6.0, -1.039159)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        471.0,
+        11.7578954696655,
+        -2070.998046875,
+        477.0,
+        12.0799999237061,
+        -2064.998046875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.000.part00.room00/floor",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (3.75, -0.161052, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.door.closed.001.course_open",
+      "bounds": [
+        474.858306884766,
+        12.0757627487183,
+        -2071.0,
+        477.0,
+        18.0799999237061,
+        -2065.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.000.part00.room00/south",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (2.758308, 0.0, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter3.course_open",
+      "bounds": [
+        471.0,
+        12.0799999237061,
+        -2070.89038085938,
+        472.191833496094,
+        18.0799999237061,
+        -2065.10961914062
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.000.part00.room00/north",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (4.960841, 0.0, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.miter.back1070858.course_open",
+      "bounds": [
+        471.084503173828,
+        12.0799999237061,
+        -2066.1064453125,
+        474.858276367188,
+        18.0799999237061,
+        -2065.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.000.part00.room00/west",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.75, 0.0, -0.473417)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.back1070859.miter.course_open",
+      "bounds": [
+        471.084503173828,
+        12.0799999237061,
+        -2071.0,
+        474.858276367188,
+        18.0799999237061,
+        -2069.8935546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.000.part00.room00/east",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (3.75, 0.0, 1.973419)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        489.0,
+        11.7578954696655,
+        -2071.001953125,
+        495.0,
+        12.0799999237061,
+        -2065.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part00.room00/floor.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, -0.161052, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        483.0,
+        11.7578954696655,
+        -2071.001953125,
+        489.0,
+        12.0799999237061,
+        -2065.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part00.room00/floor.1",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-2.25, -0.161052, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.door.closed.001",
+      "bounds": [
+        483.0,
+        12.0757627487183,
+        -2071.0,
+        485.141693115234,
+        18.0799999237061,
+        -2065.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part00.room00/south",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-1.258308, 0.0, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.048.miter1.course_open",
+      "bounds": [
+        493.808166503906,
+        12.0799999237061,
+        -2071.0,
+        495.0,
+        18.0799999237061,
+        -2065.10961914062
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part00.room00/north",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-6.460841, 0.0, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.008.mirror_x.miter2.course_open",
+      "bounds": [
+        489.0,
+        12.0799999237061,
+        -2066.1064453125,
+        494.915496826172,
+        18.0799999237061,
+        -2065.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part00.room00/east.0",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-5.25, 0.0, -0.473419)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.square.back1070858",
+      "bounds": [
+        485.141693115234,
+        12.0799999237061,
+        -2071.0,
+        489.0,
+        18.0799999237061,
+        -2069.8935546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part00.room00/west.1",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 0.0, 1.973417)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.back1070858.square",
+      "bounds": [
+        485.141723632812,
+        12.0799999237061,
+        -2066.1064453125,
+        489.0,
+        18.0799999237061,
+        -2065.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part00.room00/east.1",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 0.0, -0.473417)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        489.0,
+        11.7578954696655,
+        -2059.001953125,
+        495.0,
+        12.0799999237061,
+        -2053.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.002.part00.room00/floor.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, -0.161052, -5.25)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        483.0,
+        11.7578954696655,
+        -2059.001953125,
+        489.0,
+        12.0799999237061,
+        -2053.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.002.part00.room00/floor.1",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-2.25, -0.161052, -5.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.door.closed.001.course_open",
+      "bounds": [
+        483.0,
+        12.0757627487183,
+        -2059.0,
+        485.141693115234,
+        18.0799999237061,
+        -2053.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-1.258308, 0.0, -5.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter3.course_open",
+      "bounds": [
+        493.808166503906,
+        12.0799999237061,
+        -2058.89038085938,
+        495.0,
+        18.0799999237061,
+        -2053.10961914062
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.002.part00.room00/north",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-6.460841, 0.0, -5.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001.mirror_x.miter1.course_open",
+      "bounds": [
+        489.0,
+        12.0799999237061,
+        -2059.0,
+        494.890350341797,
+        18.0799999237061,
+        -2057.80810546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.002.part00.room00/west.0",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 0.0, -4.039159)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter2.course_open",
+      "bounds": [
+        489.0,
+        12.0799999237061,
+        -2054.1064453125,
+        494.915496826172,
+        18.0799999237061,
+        -2053.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.002.part00.room00/east.0",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-5.25, 0.0, -6.473417)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.square.back1070858.course_open",
+      "bounds": [
+        485.141693115234,
+        12.0799999237061,
+        -2059.0,
+        489.0,
+        18.0799999237061,
+        -2057.8935546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.002.part00.room00/west.1",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 0.0, -4.026583)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        453.0,
+        14.7578954696655,
+        -2076.998046875,
+        459.0,
+        15.0799999237061,
+        -2070.998046875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.004.part00.room00/floor",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (12.75, 1.338948, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001.miter3.course_open",
+      "bounds": [
+        457.808166503906,
+        15.0799999237061,
+        -2076.89038085938,
+        459.0,
+        21.0799999237061,
+        -2071.10961914062
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.004.part00.room00/south",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (11.53916, 1.5, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter3.course_open",
+      "bounds": [
+        453.084503173828,
+        15.0799999237061,
+        -2072.1064453125,
+        458.915496826172,
+        21.0799999237061,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.004.part00.room00/west",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (12.75, 1.5, 2.526583)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.mirror_x.miter3.course_open",
+      "bounds": [
+        453.084503173828,
+        15.0799999237061,
+        -2077.0,
+        458.915496826172,
+        21.0799999237061,
+        -2075.8935546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.004.part00.room00/east",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (12.75, 1.5, 4.973419)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        453.0,
+        17.7578964233398,
+        -2082.998046875,
+        459.0,
+        18.0799999237061,
+        -2076.998046875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.005.part00.room00/floor.0",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (12.75, 2.838948, 6.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.door.closed.001",
+      "bounds": [
+        456.858276367188,
+        18.0757637023926,
+        -2083.0,
+        458.999969482422,
+        24.0799999237061,
+        -2077.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.005.part00.room00/front.0",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (11.75831, 3.0, 6.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040",
+      "bounds": [
+        453.0,
+        18.0799999237061,
+        -2083.0,
+        454.191833496094,
+        24.0799999237061,
+        -2077.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.005.part00.room00/back.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (13.96084, 3.0, 6.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        453.0,
+        17.7578964233398,
+        -2088.998046875,
+        459.0,
+        18.0799999237061,
+        -2082.998046875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.005.part00.room00/floor.1",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (12.75, 2.838948, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter1",
+      "bounds": [
+        453.0,
+        18.0799999237061,
+        -2088.89038085938,
+        454.191833496094,
+        24.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.005.part00.room00/back.1",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (13.96084, 3.0, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter2",
+      "bounds": [
+        453.084503173828,
+        18.0799999237061,
+        -2089.0,
+        459.0,
+        24.0799999237061,
+        -2087.8935546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.005.part00.room00/east.0",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (12.75, 3.0, 10.97342)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        458.997955322266,
+        17.7578964233398,
+        -2089.0,
+        464.997955322266,
+        18.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.006.part00.room00/floor.0",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (9.75, 2.838948, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.door.closed.001.course_open",
+      "bounds": [
+        459.0,
+        18.0757637023926,
+        -2085.1416015625,
+        465.0,
+        24.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.006.part00.room00/front.0",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (9.75, 3.0, 8.758307)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.course_open",
+      "bounds": [
+        459.0,
+        18.0799999237061,
+        -2089.0,
+        465.0,
+        24.0799999237061,
+        -2087.80810546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.006.part00.room00/back.0",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (9.75, 3.0, 10.96084)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        464.997955322266,
+        17.7578964233398,
+        -2089.0,
+        470.997955322266,
+        18.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.006.part00.room00/floor.1",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (6.75, 2.838948, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001.miter2.course_open",
+      "bounds": [
+        465.0,
+        18.0799999237061,
+        -2084.19189453125,
+        470.890350341797,
+        24.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.006.part00.room00/front.1",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (6.75, 3.0, 8.539159)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter1.course_open",
+      "bounds": [
+        465.0,
+        18.0799999237061,
+        -2089.0,
+        470.890350341797,
+        24.0799999237061,
+        -2087.80810546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.006.part00.room00/back.1",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 3.0, 10.96084)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter3.course_open",
+      "bounds": [
+        469.893676757812,
+        18.0799999237061,
+        -2088.91552734375,
+        471.0,
+        24.0799999237061,
+        -2083.08447265625
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.006.part00.room00/east.0",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (5.526583, 3.0, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        470.997955322266,
+        20.7578964233398,
+        -2089.0,
+        476.997955322266,
+        21.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part00.room00/floor",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.75, 4.338948, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.door.closed.001.course_open",
+      "bounds": [
+        471.0,
+        21.0757637023926,
+        -2085.1416015625,
+        477.0,
+        27.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part00.room00/south",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.75, 4.5, 8.758308)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter1.course_open",
+      "bounds": [
+        471.0,
+        21.0799999237061,
+        -2089.0,
+        476.890350341797,
+        27.0799999237061,
+        -2087.80810546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part00.room00/north",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (3.75, 4.5, 10.96084)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.back1070859.miter.course_open",
+      "bounds": [
+        475.893676757812,
+        21.0799999237061,
+        -2088.91552734375,
+        477.0,
+        27.0799999237061,
+        -2085.1416015625
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part00.room00/east",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (2.526581, 4.5, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.door.closed.001",
+      "bounds": [
+        483.0,
+        24.0757637023926,
+        -2053.0,
+        489.0,
+        30.0799999237061,
+        -2050.8583984375
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.010.part00.room00/south",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 6.0, -7.258308)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        495.0,
+        11.7578954696655,
+        -2083.001953125,
+        501.0,
+        12.0799999237061,
+        -2077.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/floor.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, -0.161052, 6.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        489.0,
+        11.7578954696655,
+        -2083.001953125,
+        495.0,
+        12.0799999237061,
+        -2077.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/floor.1",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, -0.161052, 6.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.door.closed.001.course_open",
+      "bounds": [
+        489.0,
+        12.0757627487183,
+        -2083.0,
+        491.141693115234,
+        18.0799999237061,
+        -2077.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/south",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.258308, 0.0, 6.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.square.back1070858",
+      "bounds": [
+        491.141693115234,
+        12.0799999237061,
+        -2083.0,
+        495.0,
+        18.0799999237061,
+        -2081.8935546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/west.1",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 0.0, 7.973417)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        489.0,
+        11.7578954696655,
+        -2077.001953125,
+        495.0,
+        12.0799999237061,
+        -2071.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.012.part00.room00/floor",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, -0.161052, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.013.course_open",
+      "bounds": [
+        489.0,
+        12.0799999237061,
+        -2077.0,
+        490.106323242188,
+        18.0799999237061,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.012.part00.room00/south",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.026583, 0.0, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        465.002044677734,
+        32.7578964233398,
+        -2083.0,
+        471.002044677734,
+        33.0800018310547,
+        -2077.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge.00.room00/floor",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 10.33895, 6.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x",
+      "bounds": [
+        469.893676757812,
+        33.0800018310547,
+        -2083.0,
+        471.0,
+        39.0800018310547,
+        -2077.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge.00.room00/west",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (5.526583, 10.5, 6.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.mirror_x",
+      "bounds": [
+        465.0,
+        33.0800018310547,
+        -2083.0,
+        466.106323242188,
+        39.0800018310547,
+        -2077.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge.00.room00/east",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (7.973419, 10.5, 6.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        477.002044677734,
+        38.7578964233398,
+        -2065.0,
+        483.002044677734,
+        39.0800018310547,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room01/floor",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.75, 13.33895, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter2",
+      "bounds": [
+        477.109649658203,
+        39.0800018310547,
+        -2065.0,
+        483.0,
+        45.0800018310547,
+        -2063.80810546875
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room01/south",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.75, 13.5, -1.039159)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.miter1",
+      "bounds": [
+        477.084503173828,
+        39.0800018310547,
+        -2060.1064453125,
+        483.0,
+        45.0800018310547,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room01/north",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (0.75, 13.5, -3.473417)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.033.mirror_x.miter3",
+      "bounds": [
+        477.0,
+        39.0800018310547,
+        -2064.87084960938,
+        478.195617675781,
+        45.0800018310547,
+        -2059.12915039062
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room01/east",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (1.951091, 13.5, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.sign.tavern.001",
+      "bounds": [
+        477.871002197266,
+        42.6530609130859,
+        -2065.89086914062,
+        478.786529541016,
+        43.5157470703125,
+        -2065.63208007812
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.01.room01/facade.sign",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (1.6, 15.52, -0.37)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        464.997955322266,
+        23.7578964233398,
+        -2089.0,
+        470.997955322266,
+        24.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00/floor",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (6.75, 5.838948, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.miter1.course_open",
+      "bounds": [
+        465.084503173828,
+        24.0799999237061,
+        -2084.1064453125,
+        471.0,
+        30.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00/south",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (6.75, 6.0, 8.526581)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.033.miter2.course_open",
+      "bounds": [
+        465.129150390625,
+        24.0799999237061,
+        -2089.0,
+        471.0,
+        30.0799999237061,
+        -2087.80419921875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00/north",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 6.0, 10.95109)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.plain.005.mirror_x.miter3.course_open",
+      "bounds": [
+        465.0,
+        24.0799999237061,
+        -2089.0,
+        465.937316894531,
+        30.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00/west",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (8.015669, 6.0, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.planter.003",
+      "bounds": [
+        466.792327880859,
+        25.7200012207031,
+        -2083.06005859375,
+        469.207672119141,
+        27.5757160186768,
+        -2081.259765625
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00/facade.windowbox",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (6.75, 6.82, 7.83)]"
+    },
+    {
+      "asset": "lpfv.fabric.prop.plant.low.01",
+      "bounds": [
+        467.0146484375,
+        25.8699607849121,
+        -2083.033203125,
+        468.917510986328,
+        26.4871597290039,
+        -2081.326171875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00/facade.windowbox.plant",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (6.75, 6.9, 7.83)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        465.002044677734,
+        23.7578964233398,
+        -2077.0,
+        471.002044677734,
+        24.0799999237061,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.1.lower.part01.room00/floor",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 5.838948, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.plain.005.miter3.course_open",
+      "bounds": [
+        465.0,
+        24.0799999237061,
+        -2077.0,
+        471.0,
+        30.0799999237061,
+        -2076.0625
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.1.lower.part01.room00/south",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 6.0, 5.01567)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.052.miter3.course_open",
+      "bounds": [
+        465.448791503906,
+        24.0799999237061,
+        -2072.53100585938,
+        470.551208496094,
+        30.0799999237061,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.1.lower.part01.room00/north",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (6.75, 6.0, 2.70873)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.017.mirror_x.miter3.course_open",
+      "bounds": [
+        469.875946044922,
+        24.0799999237061,
+        -2076.90795898438,
+        471.0,
+        30.0799999237061,
+        -2071.09204101562
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.1.lower.part01.room00/west",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (5.530342, 6.0, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.plain.011.mirror_x.miter3.course_open",
+      "bounds": [
+        465.0,
+        24.0799999237061,
+        -2077.0,
+        465.937316894531,
+        30.0799999237061,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.1.lower.part01.room00/east",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (8.01567, 6.0, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.ivy.001",
+      "bounds": [
+        463.370025634766,
+        25.0687808990479,
+        -2077.84814453125,
+        467.055511474609,
+        28.6459865570068,
+        -2077.57836914062
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.00.end.1.lower.part01.room00/facade.ivy",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (7.85, 7.45, 5.59)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        489.002044677734,
+        29.7578964233398,
+        -2065.0,
+        495.002044677734,
+        30.0799999237061,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part01.room00/floor",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 8.838948, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.miter3.course_open",
+      "bounds": [
+        489.084503173828,
+        30.0799999237061,
+        -2065.0,
+        494.915496826172,
+        36.0800018310547,
+        -2063.8935546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part01.room00/south",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 9.0, -1.026581)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.033.miter3.course_open",
+      "bounds": [
+        489.129150390625,
+        30.0799999237061,
+        -2060.19580078125,
+        494.870849609375,
+        36.0800018310547,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part01.room00/north",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-5.25, 9.0, -3.451091)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.plain.005.mirror_x.miter3.course_open",
+      "bounds": [
+        494.062683105469,
+        30.0799999237061,
+        -2065.0,
+        495.0,
+        36.0800018310547,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part01.room00/west",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-6.515669, 9.0, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.052.mirror_x.miter3.course_open",
+      "bounds": [
+        489.0,
+        30.0799999237061,
+        -2064.55126953125,
+        490.530975341797,
+        36.0800018310547,
+        -2059.44873046875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part01.room00/east",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.20873, 9.0, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.planter.003",
+      "bounds": [
+        490.792327880859,
+        31.7199993133545,
+        -2066.740234375,
+        493.207672119141,
+        33.5757141113281,
+        -2064.93994140625
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part01.room00/facade.windowbox",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 9.82, -0.33)]"
+    },
+    {
+      "asset": "lpfv.fabric.prop.plant.low.01",
+      "bounds": [
+        491.082489013672,
+        31.8699588775635,
+        -2066.673828125,
+        492.9853515625,
+        32.4871597290039,
+        -2064.966796875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.0.lower.part01.room00/facade.windowbox.plant",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 9.9, -0.33)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        470.997955322266,
+        29.7578964233398,
+        -2065.0,
+        476.997955322266,
+        30.0799999237061,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part01.room00/floor.0",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.75, 8.838948, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        470.997955322266,
+        29.7578964233398,
+        -2059.0,
+        476.997955322266,
+        30.0799999237061,
+        -2053.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part01.room00/floor.1",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.75, 8.838948, -5.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.miter3",
+      "bounds": [
+        471.084503173828,
+        30.0799999237061,
+        -2065.0,
+        476.915496826172,
+        36.0800018310547,
+        -2063.8935546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part01.room00/north",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (3.75, 9.0, -1.026581)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter1",
+      "bounds": [
+        471.0,
+        30.0799999237061,
+        -2064.91552734375,
+        472.106323242188,
+        36.0800018310547,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part01.room00/west.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (4.973417, 9.0, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.033.mirror_x.miter2",
+      "bounds": [
+        475.804382324219,
+        30.0799999237061,
+        -2064.87084960938,
+        477.0,
+        36.0800018310547,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part01.room00/east.0",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (2.548909, 9.0, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter1",
+      "bounds": [
+        475.893676757812,
+        30.0799999237061,
+        -2059.0,
+        477.0,
+        36.0800018310547,
+        -2053.08447265625
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.bridge.01.end.1.lower.part01.room00/east.1",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (2.526583, 9.0, -5.25)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        471.0,
+        17.7578964233398,
+        -2070.998046875,
+        477.0,
+        18.0799999237061,
+        -2064.998046875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.000.part01.room00/floor",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (3.75, 2.838948, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.033.miter3",
+      "bounds": [
+        475.804382324219,
+        18.0799999237061,
+        -2070.87084960938,
+        477.0,
+        24.0799999237061,
+        -2065.12915039062
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.000.part01.room00/south",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (2.548909, 3.0, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.plain.005.miter2",
+      "bounds": [
+        471.0,
+        18.0799999237061,
+        -2071.0,
+        471.937316894531,
+        24.0799999237061,
+        -2065.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.000.part01.room00/north",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (5.015669, 3.0, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.052.mirror_x.miter3",
+      "bounds": [
+        471.448791503906,
+        18.0799999237061,
+        -2066.53100585938,
+        476.551208496094,
+        24.0799999237061,
+        -2065.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.000.part01.room00/west",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.75, 3.0, -0.29127)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.017.mirror_x.miter1",
+      "bounds": [
+        471.0,
+        18.0799999237061,
+        -2071.0,
+        476.907989501953,
+        24.0799999237061,
+        -2069.87573242188
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.000.part01.room00/east",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (3.75, 3.0, 1.969658)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        495.0,
+        17.7578964233398,
+        -2077.001953125,
+        501.0,
+        18.0799999237061,
+        -2071.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00/floor.0.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, 2.838948, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        495.0,
+        17.7578964233398,
+        -2071.001953125,
+        501.0,
+        18.0799999237061,
+        -2065.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00/floor.0.1",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, 2.838948, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        489.0,
+        17.7578964233398,
+        -2077.001953125,
+        495.0,
+        18.0799999237061,
+        -2071.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00/floor.1.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, 2.838948, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        489.0,
+        17.7578964233398,
+        -2071.001953125,
+        495.0,
+        18.0799999237061,
+        -2065.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00/floor.1.1",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, 2.838948, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.008.miter1",
+      "bounds": [
+        489.0,
+        18.0799999237061,
+        -2076.91552734375,
+        490.106323242188,
+        24.0799999237061,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00/front.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.026581, 3.0, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.058.miter2",
+      "bounds": [
+        499.469024658203,
+        18.0799999237061,
+        -2076.55126953125,
+        501.0,
+        24.0799999237061,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00/back.0",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-9.291269, 3.0, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.plain.009.mirror_x.miter1",
+      "bounds": [
+        495.0,
+        18.0799999237061,
+        -2077.0,
+        501.0,
+        24.0799999237061,
+        -2076.0625
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00/left.0",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-8.25, 3.0, 5.015669)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.064.mirror_x.miter2",
+      "bounds": [
+        495.0,
+        18.0799999237061,
+        -2066.55908203125,
+        500.523193359375,
+        24.0799999237061,
+        -2065.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00/right.0",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-8.25, 3.0, -0.27727)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.008.miter2",
+      "bounds": [
+        489.0,
+        18.0799999237061,
+        -2071.0,
+        490.106323242188,
+        24.0799999237061,
+        -2065.08447265625
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00/front.1",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.026581, 3.0, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.058.miter1",
+      "bounds": [
+        499.469024658203,
+        18.0799999237061,
+        -2071.0,
+        501.0,
+        24.0799999237061,
+        -2065.44873046875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00/back.1",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-9.291269, 3.0, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.plain.009.mirror_x.miter2",
+      "bounds": [
+        489.0,
+        18.0799999237061,
+        -2077.0,
+        495.0,
+        24.0799999237061,
+        -2076.0625
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00/left.1",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 3.0, 5.015669)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.064.mirror_x.miter1",
+      "bounds": [
+        489.476806640625,
+        18.0799999237061,
+        -2066.55908203125,
+        495.0,
+        24.0799999237061,
+        -2065.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00/right.1",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-5.25, 3.0, -0.27727)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        453.002044677734,
+        20.7578964233398,
+        -2077.0,
+        459.002044677734,
+        21.0799999237061,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.004.part01.room00/floor.1",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (12.75, 4.338948, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001.miter3",
+      "bounds": [
+        453.109649658203,
+        21.0799999237061,
+        -2077.0,
+        458.890350341797,
+        27.0799999237061,
+        -2075.80810546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.004.part01.room00/south",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (12.75, 4.5, 4.960841)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001.mirror_x.miter1.course_open",
+      "bounds": [
+        457.808166503906,
+        21.0799999237061,
+        -2071.0,
+        459.0,
+        27.0799999237061,
+        -2065.10961914062
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.004.part01.room00/west.0",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (11.53916, 4.5, 0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x.miter2",
+      "bounds": [
+        457.893676757812,
+        21.0799999237061,
+        -2076.91552734375,
+        459.0,
+        27.0799999237061,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.004.part01.room00/west.1",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (11.52658, 4.5, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        471.0,
+        26.7578964233398,
+        -2088.998046875,
+        477.0,
+        27.0799999237061,
+        -2082.998046875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00/floor.0",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (3.75, 7.338948, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        477.0,
+        26.7578964233398,
+        -2088.998046875,
+        483.0,
+        27.0799999237061,
+        -2082.998046875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00/floor.1",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (0.75, 7.338948, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter3",
+      "bounds": [
+        481.808166503906,
+        27.0799999237061,
+        -2088.89038085938,
+        483.0,
+        33.0800018310547,
+        -2083.10961914062
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00/south",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-0.460841, 7.5, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.miter3.course_open",
+      "bounds": [
+        471.0,
+        27.0799999237061,
+        -2088.91552734375,
+        472.106323242188,
+        33.0800018310547,
+        -2083.08447265625
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00/north",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (4.973417, 7.5, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.ivy.001",
+      "bounds": [
+        483.578521728516,
+        28.0687808990479,
+        -2090.6298828125,
+        483.848114013672,
+        31.6459865570068,
+        -2086.9443359375
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00/facade.ivy",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-1.09, 8.95, 10.85)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.mirror_x.miter1.course_open",
+      "bounds": [
+        471.109649658203,
+        27.0799999237061,
+        -2084.19189453125,
+        477.0,
+        33.0800018310547,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00/west.0",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.75, 7.5, 8.53916)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.mirror_x.miter2.course_open",
+      "bounds": [
+        471.084503173828,
+        27.0799999237061,
+        -2089.0,
+        477.0,
+        33.0800018310547,
+        -2087.8935546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00/east.0",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (3.75, 7.5, 10.97342)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.mirror_x.miter2",
+      "bounds": [
+        477.0,
+        27.0799999237061,
+        -2084.1064453125,
+        482.915496826172,
+        33.0800018310547,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00/west.1",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (0.75, 7.5, 8.526581)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.mirror_x.miter1",
+      "bounds": [
+        477.0,
+        27.0799999237061,
+        -2089.0,
+        482.890350341797,
+        33.0800018310547,
+        -2087.80810546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00/east.1",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.75, 7.5, 10.96084)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        483.0,
+        38.7578964233398,
+        -2065.001953125,
+        489.0,
+        39.0800018310547,
+        -2059.001953125
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge.01.room00/floor",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-2.25, 13.33895, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.010.mirror_x",
+      "bounds": [
+        483.0,
+        39.0800018310547,
+        -2065.0,
+        489.0,
+        45.0800018310547,
+        -2063.8935546875
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge.01.room00/west",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 13.5, -1.026583)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.mirror_x",
+      "bounds": [
+        483.0,
+        39.0800018310547,
+        -2060.1064453125,
+        489.0,
+        45.0800018310547,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge.01.room00/east",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-2.25, 13.5, -3.473419)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        470.997955322266,
+        32.7578964233398,
+        -2089.0,
+        476.997955322266,
+        33.0800018310547,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part02.room00/floor",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.75, 10.33895, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.001.miter2",
+      "bounds": [
+        471.0,
+        33.0800018310547,
+        -2084.19189453125,
+        476.890350341797,
+        39.0800018310547,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part02.room00/south",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.75, 10.5, 8.539159)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter1",
+      "bounds": [
+        471.0,
+        33.0800018310547,
+        -2089.0,
+        476.890350341797,
+        39.0800018310547,
+        -2087.80810546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part02.room00/north",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (3.75, 10.5, 10.96084)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.mirror_x.miter3",
+      "bounds": [
+        475.893676757812,
+        33.0800018310547,
+        -2088.91552734375,
+        477.0,
+        39.0800018310547,
+        -2083.08447265625
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part02.room00/east",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (2.526581, 10.5, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.gallery.floor.m.001",
+      "bounds": [
+        468.0,
+        29.7578964233398,
+        -2065.001953125,
+        471.0,
+        30.0799999237061,
+        -2059.001953125
+      ],
+      "id": "spatial.fabric.spatial.feature.balcony.01.component.00/floor.0.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (6.0, 8.838948, -2.25)]"
+    },
+    {
+      "asset": "sfv.deck.railing.s.001",
+      "bounds": [
+        467.865295410156,
+        30.0799999237061,
+        -2065.0,
+        468.134704589844,
+        31.9399013519287,
+        -2062.0
+      ],
+      "id": "spatial.fabric.spatial.feature.balcony.01.component.00/guard.front.left",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (6.75, 9.0, -1.5)]"
+    },
+    {
+      "asset": "sfv.deck.railing.s.001",
+      "bounds": [
+        468.0,
+        30.0799999237061,
+        -2065.134765625,
+        471.0,
+        31.9399013519287,
+        -2064.865234375
+      ],
+      "id": "spatial.fabric.spatial.feature.balcony.01.component.00/guard.left.0",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.0, 9.0, -0.75)]"
+    },
+    {
+      "asset": "sfv.fabric.planter.003",
+      "bounds": [
+        468.079986572266,
+        30.1599998474121,
+        -2064.70776367188,
+        469.880035400391,
+        32.0157165527344,
+        -2062.29223632812
+      ],
+      "id": "spatial.fabric.spatial.feature.balcony.01.component.00/balcony.planter",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (6.26, 9.04, -1.5)]"
+    },
+    {
+      "asset": "lpfv.flower.05",
+      "bounds": [
+        468.325622558594,
+        30.1364574432373,
+        -2064.3896484375,
+        469.966491699219,
+        32.226734161377,
+        -2062.14477539062
+      ],
+      "id": "spatial.fabric.spatial.feature.balcony.01.component.00/balcony.flowers",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (6.2, 9.04, -1.62)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        459.597137451172,
+        28.4799995422363,
+        -2067.78979492188,
+        460.778839111328,
+        31.2399997711182,
+        -2067.22729492188
+      ],
+      "id": "spatial.fabric.spatial.feature.facade-bay.00.component.00/bay.post.right",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 0.46, 0.0), Z: (-1.0, 0.0, 0.0), O: (10.656, 8.2, 0.5043)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.s.002",
+      "bounds": [
+        458.940002441406,
+        28.4799995422363,
+        -2067.72998046875,
+        460.739990234375,
+        31.2399997711182,
+        -2067.39794921875
+      ],
+      "id": "spatial.fabric.spatial.feature.facade-bay.00.component.00/bay.cheek.right",
+      "local": "[X: (0.6, 0.0, -0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 0.3), O: (10.83, 8.2, 0.532026)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.s.002",
+      "bounds": [
+        474.269989013672,
+        34.4799995422363,
+        -2090.73999023438,
+        476.730010986328,
+        37.2399978637695,
+        -2089.63354492188
+      ],
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.face",
+      "local": "[X: (0.82, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (3.0, 11.2, 11.84342)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        476.227233886719,
+        34.4799995422363,
+        -2090.77880859375,
+        476.789978027344,
+        37.2399978637695,
+        -2089.59716796875
+      ],
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.post.left",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (2.4957, 11.2, 11.844)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        474.210021972656,
+        34.4799995422363,
+        -2090.77880859375,
+        474.772766113281,
+        37.2399978637695,
+        -2089.59716796875
+      ],
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.post.right",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 0.46, 0.0), Z: (0.0, 0.0, 1.0), O: (3.5043, 11.2, 11.844)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.s.002.mirror_x",
+      "bounds": [
+        476.398101806641,
+        34.4799995422363,
+        -2090.73999023438,
+        476.730010986328,
+        37.2399978637695,
+        -2088.94018554688
+      ],
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.cheek.left",
+      "local": "[X: (0.0, 0.0, 0.6), Y: (0.0, 0.46, 0.0), Z: (-0.3, 0.0, 0.0), O: (2.467974, 11.2, 11.67)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.s.002",
+      "bounds": [
+        474.269989013672,
+        34.4799995422363,
+        -2090.73999023438,
+        474.601898193359,
+        37.2399978637695,
+        -2088.94018554688
+      ],
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.cheek.right",
+      "local": "[X: (0.0, 0.0, -0.6), Y: (0.0, 0.46, 0.0), Z: (0.3, 0.0, -0.0), O: (3.532026, 11.2, 11.67)]"
+    },
+    {
+      "asset": "sfv.deck.floor.s.001",
+      "bounds": [
+        474.006500244141,
+        34.1578979492188,
+        -2090.73999023438,
+        477.006500244141,
+        34.4800033569336,
+        -2088.94018554688
+      ],
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.sill",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 0.6), O: (3.75, 11.03895, 11.67)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.roof.004",
+      "bounds": [
+        473.980865478516,
+        37.047233581543,
+        -2090.40600585938,
+        477.163208007812,
+        37.7425689697266,
+        -2089.16577148438
+      ],
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00/bay.canopy",
+      "local": "[X: (0.52, 0.0, 0.0), Y: (0.0, 0.42, 0.0), Z: (0.0, 0.0, 0.4), O: (3.0, 12.65, 11.67)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.rear.end.tight",
+      "bounds": [
+        498.0,
+        18.0799980163574,
+        -2089.0,
+        501.0,
+        22.3703193664551,
+        -2083.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.03.room00/gable.00.00.00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, 2.972301, 9.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.06.front.end.tight",
+      "bounds": [
+        495.0,
+        18.0799999237061,
+        -2089.0,
+        498.0,
+        22.3703155517578,
+        -2083.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.03.room00/gable.00.00.01",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, 2.972301, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        489.0,
+        17.7578964233398,
+        -2059.001953125,
+        495.0,
+        18.0799999237061,
+        -2053.001953125
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.002.part00.room00/cap.0.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, 2.838948, -5.25)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        483.0,
+        17.7578964233398,
+        -2059.001953125,
+        489.0,
+        18.0799999237061,
+        -2053.001953125
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.002.part00.room00/cap.1.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-2.25, 2.838948, -5.25)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.room.orange.01",
+      "bounds": [
+        488.349853515625,
+        24.0799999237061,
+        -2076.869140625,
+        501.650146484375,
+        29.9702377319336,
+        -2065.130859375
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.001.part01.room00/roof",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-6.75, 6.0, 2.25)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.rear",
+      "bounds": [
+        452.343475341797,
+        24.0799999237061,
+        -2083.0,
+        459.656524658203,
+        28.4257164001465,
+        -2077.0
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.005.part00.room00/roof.left",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (12.75, 6.0, 6.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.06.front",
+      "bounds": [
+        452.343475341797,
+        24.0799999237061,
+        -2089.0,
+        459.656524658203,
+        28.4257125854492,
+        -2083.0
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.005.part00.room00/roof.right",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (12.75, 6.0, 9.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.chimney.orange.01",
+      "bounds": [
+        455.720794677734,
+        21.0799999237061,
+        -2082.29418945312,
+        458.079193115234,
+        30.837833404541,
+        -2080.70581054688
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.005.part00.room00/chimney",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (12.3, 4.5, 7.5)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        464.997955322266,
+        29.7578964233398,
+        -2089.0,
+        470.997955322266,
+        30.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00/cap.0.0",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (6.75, 8.838948, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.planter.003",
+      "bounds": [
+        466.792327880859,
+        30.1599998474121,
+        -2086.90014648438,
+        469.207672119141,
+        32.0157165527344,
+        -2085.09985351562
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00.garden/garden.planter",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (6.75, 9.04, 9.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.prop.plant.low.01",
+      "bounds": [
+        467.374633789062,
+        30.149959564209,
+        -2087.1533203125,
+        469.277496337891,
+        30.7671585083008,
+        -2085.4462890625
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00.garden/garden.plant",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (6.57, 9.04, 9.89)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        465.002044677734,
+        29.7578964233398,
+        -2077.0,
+        471.002044677734,
+        30.0799999237061,
+        -2071.0
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.00.end.1.lower.part01.room00/cap.0.0",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 8.838948, 3.75)]"
+    },
+    {
+      "asset": "sfv.fabric.planter.003",
+      "bounds": [
+        466.792327880859,
+        30.1599998474121,
+        -2074.90014648438,
+        469.207672119141,
+        32.0157165527344,
+        -2073.09985351562
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.00.end.1.lower.part01.room00.garden/garden.planter",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 9.04, 3.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.prop.plant.low.01",
+      "bounds": [
+        466.722503662109,
+        30.149959564209,
+        -2074.5537109375,
+        468.625366210938,
+        30.7671585083008,
+        -2072.8466796875
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.00.end.1.lower.part01.room00.garden/garden.plant",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.93, 9.04, 3.61)]"
+    },
+    {
+      "asset": "sfv.deck.floor.s.001",
+      "bounds": [
+        480.006500244141,
+        29.6778964996338,
+        -2062.0,
+        483.006500244141,
+        30.0,
+        -2059.0
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00.tile00/cap.00",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.75, 8.798948, -3.0)]"
+    },
+    {
+      "asset": "sfv.deck.floor.s.001",
+      "bounds": [
+        477.006500244141,
+        29.6778964996338,
+        -2062.0,
+        480.006500244141,
+        30.0,
+        -2059.0
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00.tile00/cap.01",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (2.25, 8.798948, -3.0)]"
+    },
+    {
+      "asset": "sfv.deck.floor.s.001",
+      "bounds": [
+        480.006500244141,
+        29.6778964996338,
+        -2065.0,
+        483.006500244141,
+        30.0,
+        -2062.0
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00.tile01/cap.00",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.75, 8.798948, -1.5)]"
+    },
+    {
+      "asset": "sfv.deck.floor.s.001",
+      "bounds": [
+        477.006500244141,
+        29.6778964996338,
+        -2065.0,
+        480.006500244141,
+        30.0,
+        -2062.0
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.1.lower.part00.room00.tile01/cap.01",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (2.25, 8.798948, -1.5)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        489.002044677734,
+        35.7578964233398,
+        -2065.0,
+        495.002044677734,
+        36.0800018310547,
+        -2059.0
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.0.lower.part01.room00/cap.0.0",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 11.83895, -2.25)]"
+    },
+    {
+      "asset": "sfv.fabric.planter.003",
+      "bounds": [
+        490.792327880859,
+        36.1599998474121,
+        -2062.90014648438,
+        493.207672119141,
+        38.0157165527344,
+        -2061.09985351562
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.0.lower.part01.room00.garden/garden.planter",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 12.04, -2.25)]"
+    },
+    {
+      "asset": "lpfv.fabric.prop.plant.low.01",
+      "bounds": [
+        490.722503662109,
+        36.149959564209,
+        -2062.5537109375,
+        492.625366210938,
+        36.7671585083008,
+        -2060.8466796875
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.0.lower.part01.room00.garden/garden.plant",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.07, 12.04, -2.39)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.rear.tight",
+      "bounds": [
+        471.0,
+        36.0800018310547,
+        -2065.0,
+        477.0,
+        40.3703231811523,
+        -2059.0
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.1.lower.part01.room00/gable.00.00.00",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.75, 11.9723, -2.25)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.rear.end.tight",
+      "bounds": [
+        471.0,
+        39.0800018310547,
+        -2089.0,
+        477.0,
+        43.3703231811523,
+        -2086.0
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.007.part02.room00/gable.00.00.00",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.75, 13.4723, 9.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.06.front.end.tight",
+      "bounds": [
+        471.0,
+        39.0800018310547,
+        -2086.0,
+        477.0,
+        43.3703155517578,
+        -2083.0
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.007.part02.room00/gable.00.00.01",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.75, 13.4723, 9.75)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        465.0,
+        29.7577991485596,
+        -2077.0,
+        465.559997558594,
+        32.7577972412109,
+        -2076.43994140625
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/ground-frame/0/0/post",
+      "local": "[X: (0.995146, 0.0, 0.0), Y: (0.0, 0.5, 0.0), Z: (0.0, 0.0, 0.47389), O: (8.11, 8.8389, 5.11)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        465.0,
+        29.7577991485596,
+        -2071.56005859375,
+        465.559997558594,
+        32.7577972412109,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/ground-frame/1/0/post",
+      "local": "[X: (-0.0, 0.0, -0.995146), Y: (0.0, 0.5, 0.0), Z: (0.47389, 0.0, -0.0), O: (8.11, 8.8389, 2.39)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        470.440002441406,
+        29.7577991485596,
+        -2071.56005859375,
+        471.0,
+        32.7577972412109,
+        -2071.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/ground-frame/2/0/post",
+      "local": "[X: (-0.995146, 0.0, 0.0), Y: (0.0, 0.5, 0.0), Z: (-0.0, 0.0, -0.47389), O: (5.39, 8.8389, 2.39)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        470.440002441406,
+        29.7577991485596,
+        -2077.0,
+        471.0,
+        32.7577972412109,
+        -2076.43994140625
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/ground-frame/3/0/post",
+      "local": "[X: (0.0, 0.0, 0.995146), Y: (0.0, 0.5, 0.0), Z: (-0.47389, 0.0, 0.0), O: (5.39, 8.8389, 5.11)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        489.0,
+        35.7577972412109,
+        -2065.0,
+        489.559997558594,
+        38.7577972412109,
+        -2064.43994140625
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room00/ground-frame/0/0/post",
+      "local": "[X: (0.995146, 0.0, 0.0), Y: (0.0, 0.5, 0.0), Z: (0.0, 0.0, 0.47389), O: (-3.89, 11.8389, -0.89)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        489.0,
+        35.7577972412109,
+        -2059.56005859375,
+        489.559997558594,
+        38.7577972412109,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room00/ground-frame/1/0/post",
+      "local": "[X: (-0.0, 0.0, -0.995146), Y: (0.0, 0.5, 0.0), Z: (0.47389, 0.0, -0.0), O: (-3.89, 11.8389, -3.61)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        494.440002441406,
+        35.7577972412109,
+        -2059.56005859375,
+        495.0,
+        38.7577972412109,
+        -2059.0
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room00/ground-frame/2/0/post",
+      "local": "[X: (-0.995146, 0.0, 0.0), Y: (0.0, 0.5, 0.0), Z: (-0.0, 0.0, -0.47389), O: (-6.61, 11.8389, -3.61)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        494.440002441406,
+        35.7577972412109,
+        -2065.0,
+        495.0,
+        38.7577972412109,
+        -2064.43994140625
+      ],
+      "id": "spatial.fabric.spatial.maze_bridge_end.01.00.room00/ground-frame/3/0/post",
+      "local": "[X: (0.0, 0.0, 0.995146), Y: (0.0, 0.5, 0.0), Z: (-0.47389, 0.0, 0.0), O: (-6.61, 11.8389, -0.89)]"
+    },
+    {
+      "asset": "lpfv.fabric.prop.lantern.table.01",
+      "bounds": [
+        475.623992919922,
+        16.6758346557617,
+        -2070.345703125,
+        476.180755615234,
+        17.6614818572998,
+        -2070.05419921875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.000.part00.room00/south/lantern",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (2.732534, 2.3, 1.85)]"
+    },
+    {
+      "asset": "lpfv.fabric.prop.lantern.table.01",
+      "bounds": [
+        483.819244384766,
+        16.6758346557617,
+        -2065.94580078125,
+        484.376007080078,
+        17.6614818572998,
+        -2065.654296875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part00.room00/south/lantern",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-1.232534, 2.3, -0.35)]"
+    },
+    {
+      "asset": "lpfv.fabric.prop.lantern.table.01",
+      "bounds": [
+        483.819244384766,
+        16.6758346557617,
+        -2053.94580078125,
+        484.376007080078,
+        17.6614818572998,
+        -2053.654296875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.002.part00.room00/south/lantern",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-1.232534, 2.3, -6.35)]"
+    },
+    {
+      "asset": "lpfv.fabric.prop.lantern.table.01",
+      "bounds": [
+        457.623992919922,
+        22.6758346557617,
+        -2082.345703125,
+        458.180755615234,
+        23.6614818572998,
+        -2082.05419921875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.005.part00.room00/front.0/lantern",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (11.73253, 5.3, 7.85)]"
+    },
+    {
+      "asset": "lpfv.fabric.prop.lantern.table.01",
+      "bounds": [
+        464.05419921875,
+        22.6758346557617,
+        -2084.3759765625,
+        464.345825195312,
+        23.6614818572998,
+        -2083.8193359375
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.006.part00.room00/front.0/lantern",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (8.65, 5.3, 8.732533)]"
+    },
+    {
+      "asset": "lpfv.fabric.prop.lantern.table.01",
+      "bounds": [
+        476.05419921875,
+        25.6758346557617,
+        -2084.3759765625,
+        476.345825195312,
+        26.6614818572998,
+        -2083.8193359375
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part00.room00/south/lantern",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (2.65, 6.8, 8.732534)]"
+    },
+    {
+      "asset": "lpfv.fabric.prop.lantern.table.01",
+      "bounds": [
+        489.819244384766,
+        16.6758346557617,
+        -2077.94580078125,
+        490.376007080078,
+        17.6614818572998,
+        -2077.654296875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/south/lantern",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.232534, 2.3, 5.65)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        485.771759033203,
+        12.0799999237061,
+        -2056.11669921875,
+        490.232452392578,
+        18.0799999237061,
+        -2051.85595703125
+      ],
+      "id": "facade-joint/-5/0/-9",
+      "local": "[X: (-6.498159, 0.0, 6.031941), Y: (0.0, 1.0, 0.0), Z: (-0.680326, 0.0, -0.73291), O: (-3.251055, 0.0, -6.256896)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        491.742004394531,
+        12.0799999237061,
+        -2074.439453125,
+        496.186767578125,
+        18.0799999237061,
+        -2069.677734375
+      ],
+      "id": "facade-joint/-9/0/3",
+      "local": "[X: (-6.335849, 0.0, 7.058501), Y: (0.0, 1.0, 0.0), Z: (-0.744174, 0.0, -0.667985), O: (-6.232192, 0.0, 2.779286)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        487.855987548828,
+        12.0799999237061,
+        -2072.14404296875,
+        492.085906982422,
+        18.0799999237061,
+        -2067.9140625
+      ],
+      "id": "facade-joint/-5/0/3",
+      "local": "[X: (6.031939, 0.0, -6.031941), Y: (0.0, 1.0, 0.0), Z: (0.707107, 0.0, 0.707107), O: (-4.235479, 0.0, 1.764519)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        497.771759033203,
+        12.0799999237061,
+        -2084.14428710938,
+        502.232452392578,
+        18.0799999237061,
+        -2079.88354492188
+      ],
+      "id": "facade-joint/-13/0/11",
+      "local": "[X: (6.498161, 0.0, 6.03194), Y: (0.0, 1.0, 0.0), Z: (-0.680326, 0.0, 0.73291), O: (-9.251053, 0.0, 7.756897)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        493.855987548828,
+        12.0799999237061,
+        -2084.14404296875,
+        498.085906982422,
+        18.0799999237061,
+        -2079.9140625
+      ],
+      "id": "facade-joint/-9/0/11",
+      "local": "[X: (6.03194, 0.0, -6.03194), Y: (0.0, 1.0, 0.0), Z: (0.707107, 0.0, 0.707107), O: (-7.235479, 0.0, 7.764519)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        470.335998535156,
+        18.0799999237061,
+        -2071.6640625,
+        471.664001464844,
+        24.0799999237061,
+        -2070.3359375
+      ],
+      "id": "facade-joint/7/2/3",
+      "local": "[X: (2.359919, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.123797), O: (5.25, 3.0, 2.25)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        454.360992431641,
+        18.0799999237061,
+        -2087.63916015625,
+        460.661712646484,
+        24.0799999237061,
+        -2081.33837890625
+      ],
+      "id": "facade-joint/15/2/11",
+      "local": "[X: (-9.711819, 0.0, 9.71181), Y: (0.0, 1.0, 0.0), Z: (-0.707106, 0.0, -0.707107), O: (11.99433, 3.0, 8.994328)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        488.335998535156,
+        24.0799999237061,
+        -2053.6640625,
+        489.664001464844,
+        30.0799999237061,
+        -2052.3359375
+      ],
+      "id": "facade-joint/-5/4/-9",
+      "local": "[X: (2.359919, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.123797), O: (-3.75, 6.0, -6.75)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        473.883575439453,
+        33.0800018310547,
+        -2062.22802734375,
+        478.144012451172,
+        36.0800018310547,
+        -2057.767578125
+      ],
+      "id": "facade-joint/3/7/-5",
+      "local": "[X: (-6.03194, 0.0, 6.498153), Y: (0.0, 0.5, 0.0), Z: (-0.732909, 0.0, -0.680326), O: (2.743102, 10.5, -3.251054)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        467.883575439453,
+        33.0800018310547,
+        -2086.22802734375,
+        472.144012451172,
+        39.0800018310547,
+        -2081.767578125
+      ],
+      "id": "facade-joint/7/7/11",
+      "local": "[X: (-6.03194, 0.0, 6.498151), Y: (0.0, 1.0, 0.0), Z: (-0.732909, 0.0, -0.680327), O: (5.743102, 10.5, 8.748946)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        483.040008544922,
+        12.0799999237061,
+        -2053.1201171875,
+        485.181732177734,
+        18.0799999237061,
+        -2052.8798828125
+      ],
+      "id": "facade-run-joint/-750/0/-6750/1/0",
+      "local": "[X: (-0.0, 0.0, -0.426491), Y: (0.0, 1.0, 0.0), Z: (1.812389, 0.0, -0.0), O: (-1.305429, 0.0, -6.75)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        505.632232666016,
+        12.0799999237061,
+        -2077.1201171875,
+        506.959991455078,
+        18.0799999237061,
+        -2076.8798828125
+      ],
+      "id": "facade-run-joint/-12750/0/5250/-1/0",
+      "local": "[X: (0.0, 0.0, 0.426491), Y: (0.0, 1.0, 0.0), Z: (-1.123606, 0.0, 0.0), O: (-12.39806, 0.0, 5.25)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        488.880004882812,
+        39.0800018310547,
+        -2064.9599609375,
+        489.119995117188,
+        45.0800018310547,
+        -2063.76806640625
+      ],
+      "id": "facade-run-joint/-3750/13500/-750/0/1",
+      "local": "[X: (0.426491, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.00857), O: (-3.75, 13.5, -1.067959)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        488.880004882812,
+        39.0800018310547,
+        -2060.23193359375,
+        489.119995117188,
+        45.0800018310547,
+        -2059.0400390625
+      ],
+      "id": "facade-run-joint/-3750/13500/-3750/0/-1",
+      "local": "[X: (-0.426491, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.00857), O: (-3.75, 13.5, -3.432041)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        458.880004882812,
+        18.0799999237061,
+        -2088.9599609375,
+        459.119995117188,
+        24.0799999237061,
+        -2087.76806640625
+      ],
+      "id": "facade-run-joint/11250/3000/11250/0/1",
+      "local": "[X: (0.426491, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.00857), O: (11.25, 3.0, 10.93204)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        489.040008544922,
+        12.0799999237061,
+        -2077.1201171875,
+        491.181732177734,
+        18.0799999237061,
+        -2076.8798828125
+      ],
+      "id": "facade-run-joint/-3750/0/5250/1/0",
+      "local": "[X: (-0.0, 0.0, -0.426491), Y: (0.0, 1.0, 0.0), Z: (1.812389, 0.0, -0.0), O: (-4.305429, 0.0, 5.25)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        482.880004882812,
+        39.0800018310547,
+        -2064.9599609375,
+        483.119995117188,
+        45.0800018310547,
+        -2063.76806640625
+      ],
+      "id": "facade-run-joint/-750/13500/-750/0/1",
+      "local": "[X: (0.426491, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.00857), O: (-0.75, 13.5, -1.067959)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.start.tight",
+      "bounds": [
+        465.0,
+        39.0800018310547,
+        -2072.5,
+        471.0,
+        43.3703231811523,
+        -2069.83618164062
+      ],
+      "id": "spatial.roof.spatial.maze_bridge_end.00.01.room00/continuous-roof/000/000",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 13.4723, 3.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "bounds": [
+        465.0,
+        39.0800018310547,
+        -2075.5,
+        471.0,
+        43.0744247436523,
+        -2072.5
+      ],
+      "id": "spatial.roof.spatial.maze_bridge_end.00.01.room00/continuous-roof/000/001",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 13.47156, 3.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight.mirror_z",
+      "bounds": [
+        465.0,
+        39.0800018310547,
+        -2078.5,
+        471.0,
+        43.0744247436523,
+        -2075.5
+      ],
+      "id": "spatial.roof.spatial.maze_bridge_end.00.01.room00/continuous-roof/000/002",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 13.47156, 5.25)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "bounds": [
+        465.0,
+        39.0800018310547,
+        -2081.5,
+        471.0,
+        43.0744247436523,
+        -2078.5
+      ],
+      "id": "spatial.roof.spatial.maze_bridge_end.00.01.room00/continuous-roof/000/003",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 13.47156, 6.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight.mirror_z",
+      "bounds": [
+        465.0,
+        39.0800018310547,
+        -2084.5,
+        471.0,
+        43.0744247436523,
+        -2081.5
+      ],
+      "id": "spatial.roof.spatial.maze_bridge_end.00.01.room00/continuous-roof/000/004",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 13.47156, 8.25)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "bounds": [
+        465.0,
+        39.0800018310547,
+        -2087.5,
+        471.0,
+        43.0744247436523,
+        -2084.5
+      ],
+      "id": "spatial.roof.spatial.maze_bridge_end.00.01.room00/continuous-roof/000/005",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 13.47156, 9.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.end.tight",
+      "bounds": [
+        465.0,
+        39.0800018310547,
+        -2090.16381835938,
+        471.0,
+        43.3703155517578,
+        -2087.5
+      ],
+      "id": "spatial.roof.spatial.maze_bridge_end.00.01.room00/continuous-roof/000/006",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (6.75, 13.4723, 9.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.start",
+      "bounds": [
+        493.5,
+        45.0800018310547,
+        -2065.6455078125,
+        496.163909912109,
+        49.4257202148438,
+        -2058.3544921875
+      ],
+      "id": "spatial.roof.spatial.maze_bridge_end.01.00.room00/continuous-roof/001/000",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, 16.5, -2.25)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle",
+      "bounds": [
+        490.5,
+        45.0800018310547,
+        -2065.65649414062,
+        493.5,
+        49.1313018798828,
+        -2058.34350585938
+      ],
+      "id": "spatial.roof.spatial.maze_bridge_end.01.00.room00/continuous-roof/001/001",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, 16.5, -2.25)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.mirror_z",
+      "bounds": [
+        487.5,
+        45.0800018310547,
+        -2065.65649414062,
+        490.5,
+        49.1313018798828,
+        -2058.34350585938
+      ],
+      "id": "spatial.roof.spatial.maze_bridge_end.01.00.room00/continuous-roof/001/002",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-3.75, 16.5, -2.25)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle",
+      "bounds": [
+        484.5,
+        45.0800018310547,
+        -2065.65649414062,
+        487.5,
+        49.1313018798828,
+        -2058.34350585938
+      ],
+      "id": "spatial.roof.spatial.maze_bridge_end.01.00.room00/continuous-roof/001/003",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-2.25, 16.5, -2.25)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.start.tight",
+      "bounds": [
+        501.0,
+        18.0799980163574,
+        -2072.5,
+        507.0,
+        22.3703193664551,
+        -2069.83618164062
+      ],
+      "id": "spatial.roof.spatial.maze_back.01.room00.tile00/continuous-roof/002/000",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-11.25, 2.972301, 3.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "bounds": [
+        501.0,
+        18.0799999237061,
+        -2075.5,
+        507.0,
+        22.074426651001,
+        -2072.5
+      ],
+      "id": "spatial.roof.spatial.maze_back.01.room00.tile00/continuous-roof/002/001",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-11.25, 2.971562, 3.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.end.tight.flush",
+      "bounds": [
+        501.0,
+        18.0799999237061,
+        -2077.0,
+        507.0,
+        22.3703155517578,
+        -2075.5
+      ],
+      "id": "spatial.roof.spatial.maze_back.01.room00.tile00/continuous-roof/002/002",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-11.25, 2.972301, 3.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.start.tight.flush",
+      "bounds": [
+        505.5,
+        18.0799980163574,
+        -2083.0,
+        507.0,
+        22.3703193664551,
+        -2077.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.02.room00/continuous-roof/003/000",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-11.25, 2.972301, 6.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "bounds": [
+        502.5,
+        18.0799999237061,
+        -2083.0,
+        505.5,
+        22.074426651001,
+        -2077.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.02.room00/continuous-roof/003/001",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-11.25, 2.971562, 6.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight.mirror_z",
+      "bounds": [
+        499.5,
+        18.0799999237061,
+        -2083.0,
+        502.5,
+        22.074426651001,
+        -2077.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.02.room00/continuous-roof/003/002",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-9.75, 2.971562, 6.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "bounds": [
+        496.5,
+        18.0799999237061,
+        -2083.0,
+        499.5,
+        22.074426651001,
+        -2077.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.02.room00/continuous-roof/003/003",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, 2.971562, 6.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight.mirror_z",
+      "bounds": [
+        493.5,
+        18.0799999237061,
+        -2083.0,
+        496.5,
+        22.074426651001,
+        -2077.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.02.room00/continuous-roof/003/004",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-6.75, 2.971562, 6.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "bounds": [
+        490.5,
+        18.0799999237061,
+        -2083.0,
+        493.5,
+        22.074426651001,
+        -2077.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.02.room00/continuous-roof/003/005",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, 2.971562, 6.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.end.tight",
+      "bounds": [
+        487.836090087891,
+        18.0799999237061,
+        -2083.0,
+        490.5,
+        22.3703155517578,
+        -2077.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.02.room00/continuous-roof/003/006",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, 2.972301, 6.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.start.tight",
+      "bounds": [
+        483.0,
+        18.0799980163574,
+        -2066.5,
+        489.0,
+        22.3703193664551,
+        -2063.83618164062
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.001.part00.room00.tile00/continuous-roof/004/000",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 2.972301, 0.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "bounds": [
+        483.0,
+        18.0799999237061,
+        -2069.5,
+        489.0,
+        22.074426651001,
+        -2066.5
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.001.part00.room00.tile00/continuous-roof/004/001",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 2.971562, 0.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.end.tight",
+      "bounds": [
+        483.0,
+        18.0799999237061,
+        -2072.16381835938,
+        489.0,
+        22.3703155517578,
+        -2069.5
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.001.part00.room00.tile00/continuous-roof/004/002",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-2.25, 2.972301, 0.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.start.tight",
+      "bounds": [
+        459.0,
+        24.0799980163574,
+        -2084.5,
+        465.0,
+        28.3703193664551,
+        -2081.83618164062
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.006.part00.room00.tile00/continuous-roof/006/000",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (9.75, 5.972301, 9.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "bounds": [
+        459.0,
+        24.0799999237061,
+        -2087.5,
+        465.0,
+        28.074426651001,
+        -2084.5
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.006.part00.room00.tile00/continuous-roof/006/001",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (9.75, 5.971562, 9.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.end.tight",
+      "bounds": [
+        459.0,
+        24.0799999237061,
+        -2090.16381835938,
+        465.0,
+        28.3703155517578,
+        -2087.5
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.006.part00.room00.tile00/continuous-roof/006/002",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (9.75, 5.972301, 9.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "bounds": [
+        453.0,
+        27.0799999237061,
+        -2075.5,
+        459.0,
+        31.074426651001,
+        -2072.5
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.004.part01.room00.tile00/continuous-roof/007/001",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (12.75, 7.471562, 3.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.end.tight.flush",
+      "bounds": [
+        453.0,
+        27.0799999237061,
+        -2077.0,
+        459.0,
+        31.3703155517578,
+        -2075.5
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.004.part01.room00.tile00/continuous-roof/007/002",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (12.75, 7.472301, 3.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.start.tight",
+      "bounds": [
+        489.0,
+        30.0800018310547,
+        -2054.5,
+        495.0,
+        34.3703193664551,
+        -2051.83618164062
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00.tile00/continuous-roof/008/000",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 8.972301, -5.25)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "bounds": [
+        489.0,
+        30.0799999237061,
+        -2057.5,
+        495.0,
+        34.0744247436523,
+        -2054.5
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00.tile00/continuous-roof/008/001",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 8.971562, -5.25)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.end.tight.flush",
+      "bounds": [
+        489.0,
+        30.0799999237061,
+        -2059.0,
+        495.0,
+        34.3703155517578,
+        -2057.5
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.bridge.01.end.0.lower.part00.room00.tile00/continuous-roof/008/002",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 8.972301, -5.25)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.start.tight",
+      "bounds": [
+        477.0,
+        33.0800018310547,
+        -2084.5,
+        483.0,
+        37.3703231811523,
+        -2081.83618164062
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.007.part01.room00.tile00/continuous-roof/009/000",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.75, 10.4723, 9.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "bounds": [
+        477.0,
+        33.0800018310547,
+        -2087.5,
+        483.0,
+        37.0744247436523,
+        -2084.5
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.007.part01.room00.tile00/continuous-roof/009/001",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.75, 10.47156, 9.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.end.tight",
+      "bounds": [
+        477.0,
+        33.0800018310547,
+        -2090.16381835938,
+        483.0,
+        37.3703155517578,
+        -2087.5
+      ],
+      "id": "spatial.roof.spatial.parcel.maze.house.007.part01.room00.tile00/continuous-roof/009/002",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.75, 10.4723, 9.75)]"
+    }
+  ],
+  "rooms": [
+    {
+      "cells": "[(-6, 2, 0), (-5, 2, 0), (-4, 2, 0), (-3, 2, 0), (-6, 2, 1), (-5, 2, 1), (-4, 2, 1), (-3, 2, 1), (-6, 2, 2), (-5, 2, 2), (-4, 2, 2), (-3, 2, 2), (-6, 2, 3), (-5, 2, 3), (-4, 2, 3), (-3, 2, 3), (-6, 3, 0), (-5, 3, 0), (-4, 3, 0), (-3, 3, 0), (-6, 3, 1), (-5, 3, 1), (-4, 3, 1), (-3, 3, 1), (-6, 3, 2), (-5, 3, 2), (-4, 3, 2), (-3, 3, 2), (-6, 3, 3), (-5, 3, 3), (-4, 3, 3), (-3, 3, 3)]",
+      "id": "spatial.parcel.maze.house.001.part01.room00",
+      "kind": "building",
+      "origin": "(-4, 2, 1)"
+    },
+    {
+      "cells": "[(2, 3, 6), (3, 3, 6), (2, 3, 7), (3, 3, 7), (2, 4, 6), (3, 4, 6), (2, 4, 7), (3, 4, 7)]",
+      "id": "spatial.parcel.maze.house.007.part00.room00",
+      "kind": "tower",
+      "origin": "(2, 3, 6)"
+    },
+    {
+      "cells": "[(0, 5, 6), (1, 5, 6), (2, 5, 6), (3, 5, 6), (0, 5, 7), (1, 5, 7), (2, 5, 7), (3, 5, 7), (0, 6, 6), (1, 6, 6), (2, 6, 6), (3, 6, 6), (0, 6, 7), (1, 6, 7), (2, 6, 7), (3, 6, 7)]",
+      "id": "spatial.parcel.maze.house.007.part01.room00",
+      "kind": "slim",
+      "origin": "(1, 5, 7)"
+    },
+    {
+      "cells": "[(2, 7, 6), (3, 7, 6), (2, 7, 7), (3, 7, 7), (2, 8, 6), (3, 8, 6), (2, 8, 7), (3, 8, 7)]",
+      "id": "spatial.parcel.maze.house.007.part02.room00",
+      "kind": "tower",
+      "origin": "(2, 7, 6)"
+    },
+    {
+      "cells": "[(-6, 0, 4), (-5, 0, 4), (-4, 0, 4), (-3, 0, 4), (-6, 0, 5), (-5, 0, 5), (-4, 0, 5), (-3, 0, 5), (-6, 1, 4), (-5, 1, 4), (-4, 1, 4), (-3, 1, 4), (-6, 1, 5), (-5, 1, 5), (-4, 1, 5), (-3, 1, 5)]",
+      "id": "spatial.parcel.maze.house.011.part00.room00",
+      "kind": "slim",
+      "origin": "(-4, 0, 4)"
+    },
+    {
+      "cells": "[(-4, 0, 2), (-3, 0, 2), (-4, 0, 3), (-3, 0, 3), (-4, 1, 2), (-3, 1, 2), (-4, 1, 3), (-3, 1, 3)]",
+      "id": "spatial.parcel.maze.house.012.part00.room00",
+      "kind": "tower",
+      "origin": "(-3, 0, 2)"
+    },
+    {
+      "cells": "[(-8, 0, 2), (-7, 0, 2), (-6, 0, 2), (-5, 0, 2), (-8, 0, 3), (-7, 0, 3), (-6, 0, 3), (-5, 0, 3), (-8, 1, 2), (-7, 1, 2), (-6, 1, 2), (-5, 1, 2), (-8, 1, 3), (-7, 1, 3), (-6, 1, 3), (-5, 1, 3)]",
+      "id": "spatial.maze_back.01.room00",
+      "kind": "slim",
+      "origin": "(-6, 0, 2)"
+    },
+    {
+      "cells": "[(-8, 0, 4), (-7, 0, 4), (-8, 0, 5), (-7, 0, 5), (-8, 1, 4), (-7, 1, 4), (-8, 1, 5), (-7, 1, 5)]",
+      "id": "spatial.maze_back.02.room00",
+      "kind": "tower",
+      "origin": "(-7, 0, 4)"
+    },
+    {
+      "cells": "[(-6, 0, 6), (-5, 0, 6), (-6, 0, 7), (-5, 0, 7), (-6, 1, 6), (-5, 1, 6), (-6, 1, 7), (-5, 1, 7)]",
+      "id": "spatial.maze_back.03.room00",
+      "kind": "tower",
+      "origin": "(-5, 0, 6)"
+    }
+  ],
+  "units": [
+    {
+      "id": "spatial.fabric.spatial.maze_back.01.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-9.0, 0.0, 3.0)]",
+      "recipe": "room.slim.base.rock.closed",
+      "world": "(499.5, 12.08, -2072.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.maze_back.02.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-10.5, 0.0, 6.0)]",
+      "recipe": "room.tower.base.amber.closed",
+      "world": "(502.5, 12.08, -2078.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.maze_back.03.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-7.5, 0.0, 9.0)]",
+      "recipe": "room.tower.base.amber.closed",
+      "world": "(496.5, 12.08, -2084.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part00.room00",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.0, 4.5, 9.0)]",
+      "recipe": "room.tower.base.blue",
+      "world": "(475.5, 21.08, -2084.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-6.0, 0.0, 6.0)]",
+      "recipe": "room.slim.base.amber",
+      "world": "(493.5, 12.08, -2078.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.parcel.maze.house.012.part00.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.5, 0.0, 3.0)]",
+      "recipe": "room.tower.base.amber.closed",
+      "world": "(490.5, 12.08, -2072.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-6.0, 3.0, 1.5)]",
+      "recipe": "room.upper.amber.c",
+      "world": "(493.5, 18.08, -2069.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (1.5, 7.5, 10.5)]",
+      "recipe": "room.slim.upper.blue.b",
+      "world": "(478.5, 27.08, -2087.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part02.room00",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.0, 10.5, 9.0)]",
+      "recipe": "room.tower.upper.blue",
+      "world": "(475.5, 33.08, -2084.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (3.0, 10.5, 12.0)]",
+      "recipe": "outcrop.embedded.blue",
+      "world": "(475.5, 33.08, -2090.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.feature.room_overhang.05.component.00",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (3.0, 7.5, 9.0)]",
+      "recipe": "outcrop.support.bracketed.2",
+      "world": "(475.5, 27.08, -2084.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.maze_back.01.room00.tile01",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-12.0, 3.0, 4.5)]",
+      "recipe": "roof.partial.gable.orange.2.negative",
+      "world": "(505.5, 18.08, -2075.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.maze_back.02.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-10.5, 3.0, 6.0)]",
+      "recipe": "roof.terminal.tight.tower.orange",
+      "world": "(502.5, 18.08, -2078.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.maze_back.03.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-7.5, 3.0, 9.0)]",
+      "recipe": "roof.terminal.tight.tower.orange",
+      "world": "(496.5, 18.08, -2084.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.parcel.maze.house.001.part00.room00.tile01",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-3.0, 3.0, 1.5)]",
+      "recipe": "roof.partial.gable.orange.2.positive",
+      "world": "(487.5, 18.08, -2069.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.parcel.maze.house.011.part00.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-6.0, 3.0, 6.0)]",
+      "recipe": "roof.terminal.tight.slim.orange",
+      "world": "(493.5, 18.08, -2078.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.parcel.maze.house.001.part01.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-6.0, 6.0, 1.5)]",
+      "recipe": "roof.square.01",
+      "world": "(493.5, 24.08, -2069.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.parcel.maze.house.007.part01.room00.tile00",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 10.5, 9.0)]",
+      "recipe": "roof.partial.gable.orange.2.positive",
+      "world": "(481.5, 33.08, -2084.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.parcel.maze.house.007.part01.room00.tile01",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 10.5, 10.5)]",
+      "recipe": "roof.partial.gable.orange.2.positive",
+      "world": "(481.5, 33.08, -2087.5)"
+    }
+  ]
+}

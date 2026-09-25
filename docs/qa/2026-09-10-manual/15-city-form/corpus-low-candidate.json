@@ -1,0 +1,413 @@
+{
+	"attempted": 48,
+	"fingerprint": "9c2cd8cf535c7b80ad30d79c87bf455ea080bc612c8ce8f5e0e0d3537271a2b6",
+	"rows": [
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 1836,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 1
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 6213,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 1
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 6161,
+			"scale": "large",
+			"sealed": true,
+			"seed": 1
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 9002,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 1
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2595,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 2
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 6196,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 2
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 18388,
+			"scale": "large",
+			"sealed": true,
+			"seed": 2
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 24439,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 2
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2273,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 3
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 9281,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 3
+		},
+		{
+			"failure": "maze fabric gate failed: macro setback roof 0 for spatial.parcel.maze.house.020.part01.room00 and its complete fallbacks were rejected: flat plate tiling: no topology-typed roof module fits the plate at (3, 3, 6) (public faces=2; source fac",
+			"gate": "maze fabric gate failed: macro setback roof 0 for spatial.parcel.maze.house.020.part01.room00 and its",
+			"ms": 7091,
+			"scale": "large",
+			"sealed": false,
+			"seed": 3
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 40503,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 3
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 660,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 4
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 5079,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 4
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 8981,
+			"scale": "large",
+			"sealed": true,
+			"seed": 4
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 16943,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 4
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 3063,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 5
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 3752,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 5
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 10831,
+			"scale": "large",
+			"sealed": true,
+			"seed": 5
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 11838,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 5
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 4415,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 6
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 7528,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 6
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 13376,
+			"scale": "large",
+			"sealed": true,
+			"seed": 6
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 27449,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 6
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 1286,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 7
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 6635,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 7
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 11901,
+			"scale": "large",
+			"sealed": true,
+			"seed": 7
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 20005,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 7
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 947,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 8
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 3380,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 8
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 4976,
+			"scale": "large",
+			"sealed": true,
+			"seed": 8
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 22290,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 8
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2624,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 9
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2984,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 9
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 6549,
+			"scale": "large",
+			"sealed": true,
+			"seed": 9
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 9765,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 9
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 3763,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 10
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 7602,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 10
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 10552,
+			"scale": "large",
+			"sealed": true,
+			"seed": 10
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 18013,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 10
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 1199,
+			"scale": "compact",
+			"sealed": true,
+			"seed": 11
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 6579,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 11
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 12932,
+			"scale": "large",
+			"sealed": true,
+			"seed": 11
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 23255,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 11
+		},
+		{
+			"failure": "maze fabric gate failed: terminal house crown spatial.parcel.maze.house.006.part01.room00 has no fitting authored gable: pitched roof.slim.orange/r0: visual envelope of spatial.roof.spatial.parcel.maze.house.006.part01.room00 (roof.slim.ora",
+			"gate": "maze fabric gate failed: terminal house crown spatial.parcel.maze.house.006.part01.room00 has no fitting authored",
+			"ms": 558,
+			"scale": "compact",
+			"sealed": false,
+			"seed": 12
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 2886,
+			"scale": "standard",
+			"sealed": true,
+			"seed": 12
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 4285,
+			"scale": "large",
+			"sealed": true,
+			"seed": 12
+		},
+		{
+			"failure": "",
+			"gate": "",
+			"ms": 10515,
+			"scale": "grand",
+			"sealed": true,
+			"seed": 12
+		}
+	],
+	"scales": [
+		"compact",
+		"standard",
+		"large",
+		"grand"
+	],
+	"sealed": 46,
+	"seeds": [
+		1,
+		2,
+		3,
+		4,
+		5,
+		6,
+		7,
+		8,
+		9,
+		10,
+		11,
+		12
+	],
+	"total_ms": 443374,
+	"unix_time": 1789159485
+}

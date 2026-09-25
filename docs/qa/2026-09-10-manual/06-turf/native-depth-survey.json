@@ -1,0 +1,71 @@
+{
+  "native-soil-survey-before.txt": {
+    "sampled_cells": 58,
+    "single_sheet_samples": [
+      {
+        "cell": "(-8, 3, -2)",
+        "retained_below": true,
+        "solid_below": false
+      },
+      {
+        "cell": "(-8, 3, -3)",
+        "retained_below": true,
+        "solid_below": false
+      },
+      {
+        "cell": "(-9, 3, -2)",
+        "retained_below": true,
+        "solid_below": false
+      },
+      {
+        "cell": "(-9, 3, -3)",
+        "retained_below": true,
+        "solid_below": false
+      },
+      {
+        "cell": "(1, 3, -3)",
+        "retained_below": false,
+        "solid_below": false
+      },
+      {
+        "cell": "(2, 3, -3)",
+        "retained_below": false,
+        "solid_below": false
+      },
+      {
+        "cell": "(1, 1, 8)",
+        "retained_below": true,
+        "solid_below": false
+      },
+      {
+        "cell": "(1, 1, 9)",
+        "retained_below": true,
+        "solid_below": false
+      },
+      {
+        "cell": "(2, 1, 8)",
+        "retained_below": true,
+        "solid_below": false
+      },
+      {
+        "cell": "(2, 1, 9)",
+        "retained_below": true,
+        "solid_below": false
+      },
+      {
+        "cell": "(1, 1, 10)",
+        "retained_below": true,
+        "solid_below": false
+      },
+      {
+        "cell": "(2, 1, 10)",
+        "retained_below": true,
+        "solid_below": false
+      }
+    ]
+  },
+  "skywalk-soil-survey-before.txt": {
+    "sampled_cells": 16,
+    "single_sheet_samples": []
+  }
+}

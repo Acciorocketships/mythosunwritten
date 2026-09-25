@@ -1,0 +1,65 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_prefab_floor.gd
+* test_prefab_bearings_have_a_continuous_native_floor
+* test_rotated_prefab_floor_owns_every_complete_supported_cell
+* test_prefab_platform_reserves_support_under_its_whole_floor
+* test_photographed_outer_ledge_sits_above_its_retaining_stone
+4/4 passed.
+
+
+res://tests/test_september7_floor_ownership.gd
+* test_private_floor_owns_the_photographed_retained_cap
+* test_retaining_wall_top_cannot_compete_with_the_photographed_floor
+* test_partially_covered_cap_retains_its_exposed_surface_and_collision
+3/3 passed.
+
+
+res://tests/test_september8_plank_placement.gd
+* test_door_course_top_participates_in_floor_ownership
+* test_photographed_balcony_and_door_have_no_shared_top_triangles
+* test_single_floor_module_is_centered_on_its_owned_cell
+* test_mixed_board_sizes_do_not_overlap_or_expose_half_cell_holes
+4/4 passed.
+
+
+res://tests/test_september8_baked_exteriors.gd
+* test_miter_cut_is_closed_without_changing_the_retained_stock
+* test_photographed_door_side_keeps_its_envelope_and_central_doorwork
+* test_retaining_stock_has_no_house_skirting_texels
+3/3 passed.
+
+
+res://tests/test_september10_wall_returns.gd
+* test_photographed_stone_inside_corner_closes_at_the_wall_ends
+* test_doorway_rear_recess_meets_its_return_wall_in_every_orientation
+* test_closed_door_housing_finishes_both_sides_of_the_projecting_frame
+* test_door_housing_retains_native_bounds_and_central_doorwork
+4/4 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               5
+Tests                18
+Passing Tests        18
+Asserts            1295
+Time              76.223s
+
+
+---- All tests passed! ----
+

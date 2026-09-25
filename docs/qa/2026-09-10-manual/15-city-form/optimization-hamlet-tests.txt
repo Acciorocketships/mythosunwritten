@@ -1,0 +1,42 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_roofability_work.gd
+[0m* test_band_index_retains_complete_original_roofability_queries
+* test_native_cap_cache_preserves_order_isolation_and_bounded_eviction
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september10_hamlets.gd
+[0m* test_default_population_includes_tiny_ground_settlements
+* test_small_square_has_complete_supported_houses_and_central_focus
+* test_crossroads_keep_all_real_road_handoffs_clear
+* test_canonical_records_publish_tiny_houses_without_a_second_outskirts_pass
+* test_distant_roads_do_not_enlarge_a_tiny_square
+[1m5/5 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 7
+Passing Tests         7
+Asserts            1237
+Time              40.048s
+
+
+[32m---- All tests passed! ----
+[0m

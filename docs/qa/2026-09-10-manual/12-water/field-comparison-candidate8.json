@@ -1,0 +1,39 @@
+[
+  {
+    "photo": "15",
+    "terrain_changed": 0,
+    "wet_before": 1263,
+    "wet_after": 1263,
+    "newly_wet": 0,
+    "newly_dry": []
+  },
+  {
+    "photo": "16",
+    "terrain_changed": 0,
+    "wet_before": 1047,
+    "wet_after": 1046,
+    "newly_wet": 0,
+    "newly_dry": [
+      [
+        684.0,
+        -1725.0
+      ]
+    ]
+  },
+  {
+    "photo": "18",
+    "terrain_changed": 0,
+    "wet_before": 1015,
+    "wet_after": 1015,
+    "newly_wet": 0,
+    "newly_dry": []
+  },
+  {
+    "photo": "19",
+    "terrain_changed": 0,
+    "wet_before": 1248,
+    "wet_after": 1248,
+    "newly_wet": 0,
+    "newly_dry": []
+  }
+]

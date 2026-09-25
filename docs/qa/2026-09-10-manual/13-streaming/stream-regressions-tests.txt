@@ -1,0 +1,135 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_stream_cancellation.gd
+* test_abandoned_context_does_not_publish_a_partial_plan
+* test_interrupted_context_resumes_from_complete_atomic_caches
+* test_teleport_releases_only_work_outside_the_complete_keep_halo
+* test_rejected_steep_road_site_does_not_solve_unneeded_water_domains
+4/4 passed.
+
+
+res://tests/test_path_plan_nodes.gd
+* test_nodes_are_deterministic_order_independent_and_minimal
+* test_node_cache_eviction_changes_work_not_answers
+* test_only_a_provisional_winner_materializes_exact_water
+* test_hillside_route_uses_only_rendered_walkable_slopes
+* test_route_never_cuts_through_an_exposed_cliff_face
+5/5 passed.
+
+
+res://tests/test_streaming_queue.gd
+* test_repeated_pending_requests_do_not_resort_or_duplicate_work
+* test_worker_handoff_still_owns_completed_components
+* test_travel_rebases_priorities_and_cancels_abandoned_chunks
+* test_near_feature_dependency_does_not_wait_for_far_terrain
+* test_widening_chunk_work_preserves_grass_with_the_same_parent
+* test_travel_rebases_and_cancels_components_waiting_behind_active_work
+6/6 passed.
+
+
+res://tests/test_field_streamer.gd
+* test_chunk_of_world_pos
+* test_startup_environment_resolves_visible_chunk_seams
+* test_startup_progress_counts_only_integrated_support_chunks
+* test_startup_completion_stays_latched_after_support_chunk_eviction
+[terrain-streamer] startup_complete seed=0 elapsed_ms=17775 chunks=9
+* test_shared_cold_plan_progress_is_not_diluted_across_feature_blocks
+* test_desired_chunks_within_radius
+* test_background_builds_populate_radius
+[terrain-streamer] startup_begin seed=4242 support_chunks=[(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 0), (0, 1), (1, -1), (1, 0), (1, 1)]
+[terrain-streamer] startup_plan seed=4242 feature_keys=25
+[terrain-streamer] worker_job_begin seed=4242 chunk=0,0 terrain=true features=true
+[terrain-streamer] worker_phase seed=4242 chunk=0,0 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] worker_phase seed=4242 chunk=0,0 phase=feature_placements previous=feature_context previous_ms=48245 job_ms=48245
+[terrain-streamer] worker_phase seed=4242 chunk=0,0 phase=heightfield_region previous=feature_placements previous_ms=1 job_ms=48246
+[terrain-streamer] worker_phase seed=4242 chunk=0,0 phase=water_context previous=heightfield_region previous_ms=6 job_ms=48252
+[terrain-streamer] worker_phase seed=4242 chunk=0,0 phase=terrain_mesh previous=water_context previous_ms=68 job_ms=48320
+[terrain-streamer] worker_phase seed=4242 chunk=0,0 phase=water_mesh previous=terrain_mesh previous_ms=607 job_ms=48927
+[terrain-streamer] worker_phase seed=4242 chunk=0,0 phase=dressing previous=water_mesh previous_ms=33 job_ms=48960
+[terrain-streamer] worker_phase seed=4242 chunk=0,0 phase=biome_fx previous=dressing previous_ms=107 job_ms=49067
+[terrain-streamer] worker_job_complete seed=4242 chunk=0,0 final_phase=biome_fx phase_ms=0 job_ms=49067
+[terrain-streamer] worker_job_begin seed=4242 chunk=-1,-1 terrain=false features=true
+[terrain-streamer] startup_heartbeat seed=4242 elapsed_ms=54087 progress=0.5573 ready=0/9 cold_plan=1.0000 chunk=0,0 phase=idle phase_ms=190 job_ms=0 queued=7 done=0 pending=1 built=0 feature_ready=1
+[terrain-streamer] worker_phase seed=4242 chunk=-1,-1 phase=feature_context previous=starting previous_ms=1 job_ms=1
+[terrain-streamer] startup_heartbeat seed=4242 elapsed_ms=59089 progress=0.5587 ready=0/9 cold_plan=1.0000 chunk=-1,-1 phase=feature_context phase_ms=5001 job_ms=5002 queued=7 done=0 pending=1 built=0 feature_ready=1
+[terrain-streamer] startup_heartbeat seed=4242 elapsed_ms=64091 progress=0.5587 ready=0/9 cold_plan=1.0000 chunk=-1,-1 phase=feature_context phase_ms=10003 job_ms=10004 queued=7 done=0 pending=1 built=0 feature_ready=1
+[terrain-streamer] startup_heartbeat seed=4242 elapsed_ms=69094 progress=0.5587 ready=0/9 cold_plan=1.0000 chunk=-1,-1 phase=feature_context phase_ms=15006 job_ms=15007 queued=7 done=0 pending=1 built=0 feature_ready=1
+[terrain-streamer] startup_heartbeat seed=4242 elapsed_ms=74095 progress=0.5594 ready=0/9 cold_plan=1.0000 chunk=-1,-1 phase=feature_context phase_ms=20007 job_ms=20008 queued=7 done=0 pending=1 built=0 feature_ready=1
+[terrain-streamer] worker_phase seed=4242 chunk=-1,-1 phase=feature_placements previous=feature_context previous_ms=23665 job_ms=23666
+[terrain-streamer] worker_job_complete seed=4242 chunk=-1,-1 final_phase=feature_placements phase_ms=0 job_ms=23666
+[terrain-streamer] worker_job_begin seed=4242 chunk=-1,0 terrain=true features=true
+[terrain-streamer] worker_phase seed=4242 chunk=-1,0 phase=feature_context previous=starting previous_ms=0 job_ms=0
+[terrain-streamer] startup_heartbeat seed=4242 elapsed_ms=79096 progress=0.5841 ready=0/9 cold_plan=1.0000 chunk=-1,0 phase=feature_context phase_ms=1342 job_ms=1342 queued=7 done=0 pending=1 built=0 feature_ready=2
+[terrain-streamer] startup_heartbeat seed=4242 elapsed_ms=84099 progress=0.5869 ready=0/9 cold_plan=1.0000 chunk=-1,0 phase=feature_context phase_ms=6345 job_ms=6345 queued=7 done=0 pending=1 built=0 feature_ready=2
+[terrain-streamer] startup_heartbeat seed=4242 elapsed_ms=89101 progress=0.5869 ready=0/9 cold_plan=1.0000 chunk=-1,0 phase=feature_context phase_ms=11347 job_ms=11347 queued=7 done=0 pending=1 built=0 feature_ready=2
+[terrain-streamer] startup_heartbeat seed=4242 elapsed_ms=94105 progress=0.5869 ready=0/9 cold_plan=1.0000 chunk=-1,0 phase=feature_context phase_ms=16351 job_ms=16351 queued=7 done=0 pending=1 built=0 feature_ready=2
+[terrain-streamer] startup_heartbeat seed=4242 elapsed_ms=99107 progress=0.5880 ready=0/9 cold_plan=1.0000 chunk=-1,0 phase=feature_context phase_ms=21353 job_ms=21353 queued=7 done=0 pending=1 built=0 feature_ready=2
+[terrain-streamer] startup_heartbeat seed=4242 elapsed_ms=104109 progress=0.5880 ready=0/9 cold_plan=1.0000 chunk=-1,0 phase=feature_context phase_ms=26355 job_ms=26355 queued=7 done=0 pending=1 built=0 feature_ready=2
+[terrain-streamer] startup_heartbeat seed=4242 elapsed_ms=109110 progress=0.5981 ready=0/9 cold_plan=1.0000 chunk=-1,0 phase=feature_context phase_ms=31356 job_ms=31356 queued=7 done=0 pending=1 built=0 feature_ready=2
+[terrain-streamer] worker_phase seed=4242 chunk=-1,0 phase=feature_placements previous=feature_context previous_ms=34571 job_ms=34571
+[terrain-streamer] worker_phase seed=4242 chunk=-1,0 phase=heightfield_region previous=feature_placements previous_ms=0 job_ms=34571
+[terrain-streamer] worker_phase seed=4242 chunk=-1,0 phase=water_context previous=heightfield_region previous_ms=7 job_ms=34578
+[terrain-streamer] worker_phase seed=4242 chunk=-1,0 phase=terrain_mesh previous=water_context previous_ms=111 job_ms=34689
+[terrain-streamer] worker_phase seed=4242 chunk=-1,0 phase=water_mesh previous=terrain_mesh previous_ms=640 job_ms=35329
+[terrain-streamer] worker_phase seed=4242 chunk=-1,0 phase=dressing previous=water_mesh previous_ms=387 job_ms=35716
+[terrain-streamer] worker_phase seed=4242 chunk=-1,0 phase=biome_fx previous=dressing previous_ms=104 job_ms=35820
+[terrain-streamer] worker_job_complete seed=4242 chunk=-1,0 final_phase=biome_fx phase_ms=0 job_ms=35820
+[terrain-streamer] worker_job_begin seed=4242 chunk=-1,1 terrain=true features=true
+[terrain-streamer] worker_phase seed=4242 chunk=-1,1 phase=feature_context previous=starting previous_ms=0 job_ms=0
+    [Failed]:  [0] expected to equal [9]:  radius-1 ring built in the background
+      at line 160
+    [Failed]:  [4] expected to equal [0]:  player released once their chunk landed
+      at line 163
+[terrain-streamer] worker_phase seed=4242 chunk=-1,1 phase=feature_placements previous=feature_context previous_ms=2494 job_ms=2494
+[terrain-streamer] worker_phase seed=4242 chunk=-1,1 phase=heightfield_region previous=feature_placements previous_ms=0 job_ms=2494
+[terrain-streamer] worker_phase seed=4242 chunk=-1,1 phase=water_context previous=heightfield_region previous_ms=6 job_ms=2500
+[terrain-streamer] worker_phase seed=4242 chunk=-1,1 phase=terrain_mesh previous=water_context previous_ms=207 job_ms=2707
+[terrain-streamer] worker_phase seed=4242 chunk=-1,1 phase=water_mesh previous=terrain_mesh previous_ms=644 job_ms=3351
+[terrain-streamer] worker_phase seed=4242 chunk=-1,1 phase=dressing previous=water_mesh previous_ms=1489 job_ms=4840
+[terrain-streamer] worker_phase seed=4242 chunk=-1,1 phase=biome_fx previous=dressing previous_ms=154 job_ms=4994
+[terrain-streamer] worker_job_complete seed=4242 chunk=-1,1 final_phase=biome_fx phase_ms=0 job_ms=4994
+* test_feature_halo_is_one_sorted_nine_key_square
+* test_queued_feature_request_widens_existing_terrain_job
+* test_typed_worker_priorities_protect_ground_without_starving_grass
+* test_grass_jobs_wait_for_their_committed_parent_terrain
+* test_collidable_dressing_becomes_shape_accurate_static_trample_stamps
+* test_static_dressing_publishes_a_persistent_layer_separate_from_footsteps
+* test_empty_feature_result_becomes_ready_without_scene_resources
+* test_loaded_storeys_use_committed_snapshots_across_signed_chunk_edges
+* test_coord_overlay_never_reads_worker_owned_plan
+15/16 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_field_streamer.gd
+- test_background_builds_populate_radius
+    [Failed]:  [0] expected to equal [9]:  radius-1 ring built in the background
+          at line 160
+    [Failed]:  [4] expected to equal [0]:  player released once their chunk landed
+          at line 163
+
+Totals
+------
+Scripts               4
+Tests                31
+Passing Tests        30
+Failing Tests         1
+Asserts           157/159
+Time              149.218s
+
+
+---- 1 failing tests ----
+

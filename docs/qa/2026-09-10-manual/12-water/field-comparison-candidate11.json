@@ -1,0 +1,43 @@
+[
+  {
+    "photo": "15",
+    "samples": 1681,
+    "terrain_changes": 0,
+    "changed_water_samples": 271,
+    "newly_wet": [],
+    "newly_dry": [],
+    "maximum_3m_flat_bed_level_difference": 0.9000000953674405
+  },
+  {
+    "photo": "16",
+    "samples": 1681,
+    "terrain_changes": 0,
+    "changed_water_samples": 54,
+    "newly_wet": [],
+    "newly_dry": [
+      [
+        684.0,
+        -1725.0
+      ]
+    ],
+    "maximum_3m_flat_bed_level_difference": 0.9000003814697024
+  },
+  {
+    "photo": "18",
+    "samples": 1681,
+    "terrain_changes": 0,
+    "changed_water_samples": 335,
+    "newly_wet": [],
+    "newly_dry": [],
+    "maximum_3m_flat_bed_level_difference": 0.9000002384185803
+  },
+  {
+    "photo": "19",
+    "samples": 1681,
+    "terrain_changes": 0,
+    "changed_water_samples": 369,
+    "newly_wet": [],
+    "newly_dry": [],
+    "maximum_3m_flat_bed_level_difference": 0.9000000953674405
+  }
+]

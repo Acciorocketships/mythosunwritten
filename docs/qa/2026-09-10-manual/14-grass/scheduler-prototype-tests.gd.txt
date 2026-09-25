@@ -1,0 +1,77 @@
+extends GutTest
+
+func _stream() -> FieldTerrainStreamer:
+	var stream := FieldTerrainStreamer.new()
+	stream._startup_completion_emitted = true
+	stream._queue_lod_origin = Vector2(12,12)
+	stream._profile_player_chunk = Vector2i.ZERO
+	return stream
+
+func test_visible_grass_precedes_future_terrain_but_never_current_ground() -> void:
+	var stream := _stream()
+	stream._request_job_locked(Vector2i(1,0),true,false,1,1)
+	stream._request_grass_job_locked(Vector2i(1,0),1,12000)
+	assert_eq(stream._jobs[0].kind,&"grass", "a visible tile cannot wait for long future terrain")
+	stream._request_job_locked(Vector2i.ZERO,true,true,0,0)
+	assert_eq(stream._jobs[0].kind,&"chunk", "physical current ground remains first")
+	assert_eq(stream._jobs[0].chunk,Vector2i.ZERO)
+	stream.free()
+
+func test_visual_completion_keeps_the_worker_awake_after_a_chunk_handoff() -> void:
+	var stream := _stream()
+	stream._request_grass_job_locked(Vector2i.ZERO,1,0)
+	stream._request_grass_job_locked(Vector2i(1,0),1,12000)
+	stream._worker_handoff_pending = true
+	stream._release_worker_handoff()
+	assert_true(stream._sem.try_wait(), "main-thread handoff wakes one dispatch")
+	var job := stream._take_job_locked()
+	stream._active_job = job
+	stream._publish_worker_result({"kind":&"grass","chunk":job.chunk},job)
+	assert_true(stream._sem.try_wait(), "remaining visual work cannot sleep with a nonempty queue")
+	stream.free()
+
+func test_background_planning_yields_to_new_visible_grass_at_atomic_boundaries() -> void:
+	var stream := _stream()
+	stream._grass_runtime_enabled = true
+	stream._feature_program = FeatureProgram.new()
+	stream._feature_program.geometry_halo = 1
+	stream._active_job = stream._new_job(Vector2i(2,0),true,true,2,3)
+	stream._request_grass_job_locked(Vector2i.ZERO,1,0)
+	assert_true(stream._worker_should_cancel(), "new visible work cannot wait for a whole background road context")
+	assert_false(stream._worker_should_cancel(false), "finished mesh work is not discarded for visual preemption")
+	stream._startup_completion_emitted = false
+	stream._startup_feature_keys = [Vector2i(2,0)]
+	assert_false(stream._worker_should_cancel(), "startup dependency ownership stays ahead of grass")
+	stream._startup_completion_emitted = true
+	stream._grass_runtime_enabled = false
+	assert_false(stream._worker_should_cancel(), "headless terrain scheduling has no visual preemption")
+	stream._grass_runtime_enabled = true
+	stream._active_job = stream._new_job(Vector2i(1,0),false,true,1,1)
+	stream._terrain_feature_parents[Vector2i.ZERO] = true
+	assert_false(stream._worker_should_cancel(), "a current-ground feature dependency cannot yield to visual work")
+	stream.free()
+
+func test_distant_grass_retains_background_priority_and_rebases_on_approach() -> void:
+	var stream := _stream()
+	stream._request_job_locked(Vector2i(1,0),true,false,1,1)
+	stream._request_grass_job_locked(Vector2i(3,0),1,70000)
+	assert_eq(stream._jobs[0].kind,&"chunk")
+	stream._refresh_job_priorities_locked(Vector2i.ZERO,Vector2(132,12))
+	assert_eq(stream._jobs[0].kind,&"grass", "the already queued tile becomes visibly urgent")
+	stream.free()
+
+func test_result_handoff_allows_main_thread_to_schedule_newly_eligible_grass() -> void:
+	var stream := _stream()
+	var finished := stream._new_job(Vector2i.ZERO,true,true,0,0)
+	stream._active_job = finished
+	stream._request_job_locked(Vector2i(1,0),true,true,1,1)
+	stream._publish_worker_result({"kind":&"chunk","chunk":Vector2i.ZERO},finished)
+	assert_true(stream._take_job_locked().is_empty(),
+		"dispatch waits for the main-thread commit/request handoff rather than starting another long job")
+	stream._release_worker_handoff()
+	assert_true(stream._take_job_locked().is_empty(), "an undrained result still owns the handoff")
+	stream._done.clear() # Simulate this frame's main-thread result drain.
+	stream._request_grass_job_locked(Vector2i.ZERO,1,0)
+	stream._release_worker_handoff()
+	assert_eq(stream._take_job_locked().kind,&"grass", "newly eligible visible work participates in dispatch")
+	stream.free()

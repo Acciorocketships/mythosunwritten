@@ -1,0 +1,24 @@
+{
+  "garden_side": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 17.84574505613938,
+    "roi_mean_abs_rgb": 17.84574505613938,
+    "roi_changed_over_20_fraction": 0.32346493943972454
+  },
+  "garden_under": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 35.19842544034454,
+    "roi_mean_abs_rgb": 35.19842544034454,
+    "roi_changed_over_20_fraction": 0.6508287491865625
+  }
+}

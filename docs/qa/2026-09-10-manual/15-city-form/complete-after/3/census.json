@@ -1,0 +1,2044 @@
+{
+  "buildings": 70,
+  "columns": {
+    "(-7, -1)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-7, 0)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-7, 1)": {
+      "base": 0,
+      "terrace": 2,
+      "top": 2
+    },
+    "(-6, -3)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-6, -2)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-6, -1)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(-6, 0)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(-6, 1)": {
+      "base": 0,
+      "terrace": 6,
+      "top": 6
+    },
+    "(-6, 2)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-6, 3)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-5, -4)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-5, -3)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(-5, -2)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(-5, -1)": {
+      "base": 0,
+      "terrace": 10,
+      "top": 10
+    },
+    "(-5, 0)": {
+      "base": 0,
+      "terrace": 10,
+      "top": 10
+    },
+    "(-5, 1)": {
+      "base": 0,
+      "terrace": 10,
+      "top": 10
+    },
+    "(-5, 2)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(-5, 3)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(-5, 4)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-4, -4)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-4, -3)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(-4, -2)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-4, -1)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-4, 0)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-4, 1)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-4, 2)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-4, 3)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(-4, 4)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-3, -5)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-3, -4)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(-3, -3)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-3, -2)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-3, -1)": {
+      "base": 0,
+      "terrace": 14,
+      "top": 14
+    },
+    "(-3, 0)": {
+      "base": 0,
+      "terrace": 14,
+      "top": 14
+    },
+    "(-3, 1)": {
+      "base": 0,
+      "terrace": 14,
+      "top": 14
+    },
+    "(-3, 2)": {
+      "base": 0,
+      "terrace": 14,
+      "top": 14
+    },
+    "(-3, 3)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-3, 4)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(-3, 5)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-2, -5)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-2, -4)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(-2, -3)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-2, -2)": {
+      "base": 0,
+      "terrace": 14,
+      "top": 14
+    },
+    "(-2, -1)": {
+      "base": 0,
+      "terrace": 14,
+      "top": 14
+    },
+    "(-2, 0)": {
+      "base": 0,
+      "terrace": 16,
+      "top": 16
+    },
+    "(-2, 1)": {
+      "base": 0,
+      "terrace": 14,
+      "top": 14
+    },
+    "(-2, 2)": {
+      "base": 0,
+      "terrace": 14,
+      "top": 14
+    },
+    "(-2, 3)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-2, 4)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(-2, 5)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-1, -5)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(-1, -4)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(-1, -3)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-1, -2)": {
+      "base": 0,
+      "terrace": 14,
+      "top": 14
+    },
+    "(-1, -1)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-1, 0)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-1, 1)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-1, 2)": {
+      "base": 0,
+      "terrace": 14,
+      "top": 14
+    },
+    "(-1, 3)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(-1, 4)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(-1, 5)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(0, -5)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(0, -4)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(0, -3)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(0, -2)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(0, -1)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(0, 0)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(0, 1)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(0, 2)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(0, 3)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(0, 4)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(0, 5)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(1, -5)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(1, -4)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(1, -3)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(1, -2)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(1, -1)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(1, 0)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(1, 1)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(1, 2)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(1, 3)": {
+      "base": 0,
+      "terrace": 12,
+      "top": 12
+    },
+    "(1, 4)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(1, 5)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(2, -5)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(2, -4)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(2, -3)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(2, -2)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(2, 2)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(2, 3)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(2, 4)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(2, 5)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(3, -5)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(3, -4)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(3, -3)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(3, -2)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(3, 2)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(3, 3)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(3, 4)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(3, 5)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(4, -4)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(4, -3)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(4, -2)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(4, 2)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(4, 3)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(4, 4)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(5, -4)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(5, -3)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(5, -2)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(5, 2)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(5, 3)": {
+      "base": 0,
+      "terrace": 8,
+      "top": 8
+    },
+    "(5, 4)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(6, -3)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(6, -2)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(6, 2)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    },
+    "(6, 3)": {
+      "base": 0,
+      "terrace": 4,
+      "top": 4
+    }
+  },
+  "plots": [
+    {
+      "building_id": "asset.00",
+      "cells": [
+        "(-5, -4)",
+        "(-4, -4)",
+        "(-3, -4)",
+        "(-5, -3)",
+        "(-4, -3)",
+        "(-3, -3)",
+        "(-5, -2)",
+        "(-4, -2)",
+        "(-3, -2)"
+      ],
+      "door_walk": "(-6, 1, -3)",
+      "floor": 1,
+      "id": "asset.00",
+      "kind": "asset",
+      "top": 5
+    },
+    {
+      "building_id": "house.000",
+      "cells": [
+        "(-1, -2)",
+        "(-1, -1)",
+        "(0, -1)",
+        "(1, -1)"
+      ],
+      "door_walk": "(1, 0, 0)",
+      "floor": 0,
+      "id": "house.000",
+      "kind": "house",
+      "top": 4
+    },
+    {
+      "building_id": "house.002",
+      "cells": [
+        "(-2, 1)",
+        "(-1, 1)",
+        "(-2, 2)"
+      ],
+      "door_walk": "(-1, 0, 0)",
+      "floor": 0,
+      "id": "house.002",
+      "kind": "house",
+      "top": 5
+    },
+    {
+      "building_id": "house.024",
+      "cells": [
+        "(-1, 2)",
+        "(0, 2)",
+        "(1, 2)"
+      ],
+      "door_walk": "(1, 0, 1)",
+      "floor": 0,
+      "id": "house.024",
+      "kind": "house",
+      "top": 5
+    },
+    {
+      "building_id": "house.026",
+      "cells": [
+        "(-4, 1)"
+      ],
+      "door_walk": "(-5, 0, 1)",
+      "floor": 0,
+      "id": "house.026",
+      "kind": "house",
+      "top": 5
+    },
+    {
+      "building_id": "house.027",
+      "cells": [
+        "(-7, 1)",
+        "(-6, 1)"
+      ],
+      "door_walk": "(-5, 0, 1)",
+      "floor": 0,
+      "id": "house.027",
+      "kind": "house",
+      "top": 10
+    },
+    {
+      "building_id": "house.029",
+      "cells": [
+        "(-6, 2)"
+      ],
+      "door_walk": "(-5, 0, 2)",
+      "floor": 0,
+      "id": "house.029",
+      "kind": "house",
+      "top": 10
+    },
+    {
+      "building_id": "house.032",
+      "cells": [
+        "(-1, 3)",
+        "(-2, 4)",
+        "(-1, 4)"
+      ],
+      "door_walk": "(-3, 0, 4)",
+      "floor": 0,
+      "id": "house.032",
+      "kind": "house",
+      "top": 4
+    },
+    {
+      "building_id": "house.035",
+      "cells": [
+        "(4, 2)",
+        "(3, 3)",
+        "(4, 3)"
+      ],
+      "door_walk": "(3, 0, 4)",
+      "floor": 0,
+      "id": "house.035",
+      "kind": "house",
+      "top": 8
+    },
+    {
+      "building_id": "house.036",
+      "cells": [
+        "(5, 2)",
+        "(6, 2)",
+        "(5, 3)",
+        "(6, 3)",
+        "(5, 4)"
+      ],
+      "door_walk": "(4, 0, 4)",
+      "floor": 0,
+      "id": "house.036",
+      "kind": "house",
+      "top": 8
+    },
+    {
+      "building_id": "house.006",
+      "cells": [
+        "(-3, -5)",
+        "(-2, -5)"
+      ],
+      "door_walk": "(-2, 1, -4)",
+      "floor": 1,
+      "id": "house.006",
+      "kind": "house",
+      "top": 5
+    },
+    {
+      "building_id": "house.031",
+      "cells": [
+        "(-7, -1)"
+      ],
+      "door_walk": "(-6, 1, -1)",
+      "floor": 1,
+      "id": "house.031",
+      "kind": "house",
+      "top": 7
+    },
+    {
+      "building_id": "house.007",
+      "cells": [
+        "(2, -5)",
+        "(3, -5)",
+        "(2, -4)"
+      ],
+      "door_walk": "(1, 2, -4)",
+      "floor": 2,
+      "id": "house.007",
+      "kind": "house",
+      "top": 6
+    },
+    {
+      "building_id": "house.008",
+      "cells": [
+        "(1, -5)"
+      ],
+      "door_walk": "(1, 2, -4)",
+      "floor": 2,
+      "id": "house.008",
+      "kind": "house",
+      "top": 10
+    },
+    {
+      "building_id": "house.009",
+      "cells": [
+        "(3, -4)",
+        "(4, -4)",
+        "(5, -4)",
+        "(2, -3)",
+        "(3, -3)",
+        "(4, -3)",
+        "(5, -3)",
+        "(6, -3)"
+      ],
+      "door_walk": "(1, 2, -3)",
+      "floor": 2,
+      "id": "house.009",
+      "kind": "house",
+      "top": 8
+    },
+    {
+      "building_id": "house.010",
+      "cells": [
+        "(2, -2)",
+        "(3, -2)",
+        "(4, -2)",
+        "(5, -2)",
+        "(6, -2)"
+      ],
+      "door_walk": "(1, 3, -2)",
+      "floor": 3,
+      "id": "house.010",
+      "kind": "house",
+      "top": 7
+    },
+    {
+      "building_id": "house.021",
+      "cells": [
+        "(2, 2)",
+        "(3, 2)",
+        "(0, 3)",
+        "(1, 3)",
+        "(2, 3)"
+      ],
+      "door_walk": "(0, 3, 4)",
+      "floor": 3,
+      "id": "house.021",
+      "kind": "house",
+      "top": 7
+    },
+    {
+      "building_id": "house.022",
+      "cells": [
+        "(2, 4)"
+      ],
+      "door_walk": "(1, 3, 4)",
+      "floor": 3,
+      "id": "house.022",
+      "kind": "house",
+      "top": 7
+    },
+    {
+      "building_id": "house.011",
+      "cells": [
+        "(-1, -1)",
+        "(0, -1)",
+        "(1, -1)",
+        "(1, 0)",
+        "(1, 1)"
+      ],
+      "door_walk": "(-1, 4, -2)",
+      "floor": 4,
+      "id": "house.011",
+      "kind": "house",
+      "top": 8
+    },
+    {
+      "building_id": "house.012",
+      "cells": [
+        "(-3, -1)"
+      ],
+      "door_walk": "(-2, 4, -1)",
+      "floor": 4,
+      "id": "house.012",
+      "kind": "house",
+      "top": 8
+    },
+    {
+      "building_id": "house.018",
+      "cells": [
+        "(-1, 3)"
+      ],
+      "door_walk": "(-2, 4, 3)",
+      "floor": 4,
+      "id": "house.018",
+      "kind": "house",
+      "top": 8
+    },
+    {
+      "building_id": "house.019",
+      "cells": [
+        "(-3, 3)",
+        "(-3, 4)"
+      ],
+      "door_walk": "(-2, 4, 3)",
+      "floor": 4,
+      "id": "house.019",
+      "kind": "house",
+      "top": 12
+    },
+    {
+      "building_id": "house.013",
+      "cells": [
+        "(-1, 0)",
+        "(0, 0)",
+        "(0, 1)"
+      ],
+      "door_walk": "(-2, 5, 0)",
+      "floor": 5,
+      "id": "house.013",
+      "kind": "house",
+      "top": 11
+    },
+    {
+      "building_id": "house.014",
+      "cells": [
+        "(-1, 1)",
+        "(-1, 2)",
+        "(0, 2)",
+        "(1, 2)"
+      ],
+      "door_walk": "(-2, 5, 1)",
+      "floor": 5,
+      "id": "house.014",
+      "kind": "house",
+      "top": 9
+    },
+    {
+      "building_id": "house.015",
+      "cells": [
+        "(-4, 1)",
+        "(-3, 1)",
+        "(-4, 2)",
+        "(-4, 3)"
+      ],
+      "door_walk": "(-2, 5, 1)",
+      "floor": 5,
+      "id": "house.015",
+      "kind": "house",
+      "top": 11
+    },
+    {
+      "building_id": "house.017",
+      "cells": [
+        "(-3, 2)"
+      ],
+      "door_walk": "(-2, 5, 2)",
+      "floor": 5,
+      "id": "house.017",
+      "kind": "house",
+      "top": 9
+    },
+    {
+      "building_id": "bridge.00.end.0",
+      "cells": [
+        "(-1, -5)"
+      ],
+      "door_walk": "(-1, 1, -4)",
+      "floor": 1,
+      "id": "bridge.00.end.0.lower",
+      "kind": "house",
+      "top": 5
+    },
+    {
+      "building_id": "bridge.00.end.1",
+      "cells": [
+        "(-1, -3)"
+      ],
+      "door_walk": "(-1, 1, -4)",
+      "floor": 1,
+      "id": "bridge.00.end.1.lower",
+      "kind": "house",
+      "top": 5
+    },
+    {
+      "building_id": "bridge.00",
+      "cells": [
+        "(-1, -4)"
+      ],
+      "door_walk": "(-1, 1, -4)",
+      "floor": 5,
+      "id": "bridge.00",
+      "kind": "bridge",
+      "top": 7
+    },
+    {
+      "building_id": "bridge.01.end.0",
+      "cells": [
+        "(0, -5)"
+      ],
+      "door_walk": "(0, 2, -4)",
+      "floor": 2,
+      "id": "bridge.01.end.0.lower",
+      "kind": "house",
+      "top": 6
+    },
+    {
+      "building_id": "bridge.01.end.1",
+      "cells": [
+        "(0, -3)"
+      ],
+      "door_walk": "(0, 2, -4)",
+      "floor": 2,
+      "id": "bridge.01.end.1.lower",
+      "kind": "house",
+      "top": 6
+    },
+    {
+      "building_id": "bridge.01",
+      "cells": [
+        "(0, -4)"
+      ],
+      "door_walk": "(0, 2, -4)",
+      "floor": 6,
+      "id": "bridge.01",
+      "kind": "bridge",
+      "top": 8
+    },
+    {
+      "building_id": "bridge.02.end.0",
+      "cells": [
+        "(-4, 0)",
+        "(-3, 0)"
+      ],
+      "door_walk": "(-5, 1, 0)",
+      "floor": 1,
+      "id": "bridge.02.end.0.lower",
+      "kind": "house",
+      "top": 5
+    },
+    {
+      "building_id": "bridge.02.end.1",
+      "cells": [
+        "(-6, 0)",
+        "(-7, 0)"
+      ],
+      "door_walk": "(-5, 1, 0)",
+      "floor": 1,
+      "id": "bridge.02.end.1.lower",
+      "kind": "house",
+      "top": 5
+    },
+    {
+      "building_id": "bridge.02",
+      "cells": [
+        "(-5, 0)"
+      ],
+      "door_walk": "(-5, 1, 0)",
+      "floor": 5,
+      "id": "bridge.02",
+      "kind": "bridge",
+      "top": 7
+    }
+  ],
+  "prefabs": [
+    {
+      "audit": {
+        "construction_record_count": 1,
+        "endpoint_count": 1,
+        "endpoint_owner_count": 1,
+        "landmark_displaced_parcel_ids": [],
+        "landmark_entrance_cell": "(-10, 1, -6)",
+        "landmark_height_cell_count": 4,
+        "landmark_public_landing_cell": "(-11, 1, -6)",
+        "landmark_publicly_addressed": true,
+        "landmark_recipe_id": "anchor.prefab.10",
+        "landmark_source_family": "lpfv",
+        "landmark_terrain_bearing_cell_count": 24,
+        "landmark_terrain_rooted": true,
+        "landmark_visual_clearance_cell_count": 120,
+        "public_cell_count": 0,
+        "reserved_cell_count": 64,
+        "terrain_bearing_cell_count": 24
+      },
+      "construction": [
+        {
+          "origin": "(-8, 1, -5)",
+          "recipe_id": "anchor.prefab.10",
+          "role": "terrain_rooted_landmark",
+          "yaw_quarters": 3
+        }
+      ],
+      "id": "spatial.feature.landmark.00"
+    }
+  ],
+  "scale": "standard",
+  "seed": 3,
+  "source_audit": {
+    "addressed_column_ratio": 0.5375,
+    "alley_cell_count": 25,
+    "block_thickness_histogram": {
+      "2": 33,
+      "3": 16,
+      "4": 1
+    },
+    "covered_passage_ratio": 0.36,
+    "exterior_rock_ratio": {
+      "exterior_cells": 489,
+      "plot_cells": 399,
+      "ratio": 0.184049079754601,
+      "rock_cells": 90
+    },
+    "exterior_stone_band_profile": {
+      "band_histogram": {
+        "-3": 2,
+        "-2": 13,
+        "-1": 41,
+        "0": 37,
+        "1": 15,
+        "2": 9,
+        "3": 9
+      },
+      "faces": 126,
+      "grounded_faces": 17,
+      "high_face_ratio": 0.0,
+      "high_faces": 0,
+      "low_faces": 126,
+      "max_offset": 3,
+      "min_offset": -3,
+      "raised_shoulder_faces": 0,
+      "raised_shoulder_high_faces": 0,
+      "storey_histogram": {
+        "0": 93,
+        "1": 24,
+        "2": 9
+      }
+    },
+    "frontage_ratio": 0.88,
+    "fronted_house_column_count": 43,
+    "house_capable_column_count": 80,
+    "loop_join_count": 1,
+    "market_approach_cell_count": 4,
+    "market_cell_count": 6,
+    "market_square_cell_count": 4,
+    "max_alley_straight_run": 3,
+    "max_spine_straight_run": 6,
+    "passage_cell_count": 50,
+    "plot_outcomes": {
+      "asset_clearance_reservations": [
+        {
+          "columns": [
+            "(-2, -4)",
+            "(-6, -3)",
+            "(-2, -3)",
+            "(-6, -2)",
+            "(-2, -2)"
+          ],
+          "floor": 1,
+          "id": "asset.00",
+          "support_columns": [
+            "(-5, -4)",
+            "(-4, -4)",
+            "(-3, -4)",
+            "(-5, -3)",
+            "(-4, -3)",
+            "(-3, -3)",
+            "(-5, -2)",
+            "(-4, -2)",
+            "(-3, -2)"
+          ],
+          "top": 5
+        }
+      ],
+      "assets": [
+        {
+          "kind_id": "anchor.prefab.10",
+          "mirror": {
+            "bearing_off_ground": 0,
+            "body_outside_plot": 34,
+            "no_frontage": 0,
+            "realisable": 1,
+            "street_over_top": 0,
+            "tested": 35
+          },
+          "realisable": true,
+          "reason": "",
+          "site": {
+            "anchor": "(-5, -4)",
+            "clearance_column_count": 5,
+            "cost": 67,
+            "datum": 1,
+            "id": "asset.00",
+            "orientation": 0
+          }
+        },
+        {
+          "kind_id": "",
+          "mirror": {
+            "bearing_off_ground": 0,
+            "body_outside_plot": 29,
+            "no_frontage": 0,
+            "realisable": 0,
+            "street_over_top": 0,
+            "tested": 29
+          },
+          "realisable": false,
+          "reason": "no street-fronting supportable site remains",
+          "site": null
+        },
+        {
+          "kind_id": "",
+          "mirror": {
+            "bearing_off_ground": 0,
+            "body_outside_plot": 29,
+            "no_frontage": 0,
+            "realisable": 0,
+            "street_over_top": 0,
+            "tested": 29
+          },
+          "realisable": false,
+          "reason": "no street-fronting supportable site remains",
+          "site": null
+        },
+        {
+          "kind_id": "",
+          "mirror": {
+            "bearing_off_ground": 0,
+            "body_outside_plot": 29,
+            "no_frontage": 0,
+            "realisable": 0,
+            "street_over_top": 0,
+            "tested": 29
+          },
+          "realisable": false,
+          "reason": "no street-fronting supportable site remains",
+          "site": null
+        }
+      ],
+      "bridges": [
+        {
+          "building_id": "bridge.00",
+          "cells": 1,
+          "columns": [
+            "(-1, -4)"
+          ],
+          "door_walk": "(-1, 1, -4)",
+          "floor": 5,
+          "id": "bridge.00",
+          "reason": "",
+          "span": 0,
+          "top": 7
+        },
+        {
+          "building_id": "bridge.01",
+          "cells": 1,
+          "columns": [
+            "(0, -4)"
+          ],
+          "door_walk": "(0, 2, -4)",
+          "floor": 6,
+          "id": "bridge.01",
+          "reason": "",
+          "span": 1,
+          "top": 8
+        },
+        {
+          "building_id": "bridge.02",
+          "cells": 1,
+          "columns": [
+            "(-5, 0)"
+          ],
+          "door_walk": "(-5, 1, 0)",
+          "floor": 5,
+          "id": "bridge.02",
+          "reason": "",
+          "span": 2,
+          "top": 7
+        }
+      ],
+      "buildings": [
+        {
+          "cells": 4,
+          "floor": 0,
+          "id": "house.000",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": true,
+          "top": 4
+        },
+        {
+          "cells": 3,
+          "floor": 0,
+          "id": "house.002",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": true,
+          "top": 5
+        },
+        {
+          "cells": 3,
+          "floor": 0,
+          "id": "house.024",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": true,
+          "top": 5
+        },
+        {
+          "cells": 1,
+          "floor": 0,
+          "id": "house.026",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 5
+        },
+        {
+          "cells": 2,
+          "floor": 0,
+          "id": "house.027",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 10
+        },
+        {
+          "cells": 1,
+          "floor": 0,
+          "id": "house.029",
+          "reason": "",
+          "skyline_peak": true,
+          "tiered": false,
+          "top": 10
+        },
+        {
+          "cells": 3,
+          "floor": 0,
+          "id": "house.032",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": true,
+          "top": 4
+        },
+        {
+          "cells": 3,
+          "floor": 0,
+          "id": "house.035",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 8
+        },
+        {
+          "cells": 5,
+          "floor": 0,
+          "id": "house.036",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 8
+        },
+        {
+          "cells": 2,
+          "floor": 1,
+          "id": "house.006",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 5
+        },
+        {
+          "cells": 1,
+          "floor": 1,
+          "id": "house.031",
+          "reason": "",
+          "skyline_peak": true,
+          "tiered": false,
+          "top": 7
+        },
+        {
+          "cells": 3,
+          "floor": 2,
+          "id": "house.007",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 6
+        },
+        {
+          "cells": 1,
+          "floor": 2,
+          "id": "house.008",
+          "reason": "",
+          "skyline_peak": true,
+          "tiered": false,
+          "top": 10
+        },
+        {
+          "cells": 8,
+          "floor": 2,
+          "id": "house.009",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 8
+        },
+        {
+          "cells": 5,
+          "floor": 3,
+          "id": "house.010",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 7
+        },
+        {
+          "cells": 5,
+          "floor": 3,
+          "id": "house.021",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 7
+        },
+        {
+          "cells": 1,
+          "floor": 3,
+          "id": "house.022",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 7
+        },
+        {
+          "cells": 5,
+          "floor": 4,
+          "id": "house.011",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 8
+        },
+        {
+          "cells": 1,
+          "floor": 4,
+          "id": "house.012",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 8
+        },
+        {
+          "cells": 1,
+          "floor": 4,
+          "id": "house.018",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 8
+        },
+        {
+          "cells": 2,
+          "floor": 4,
+          "id": "house.019",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 12
+        },
+        {
+          "cells": 3,
+          "floor": 5,
+          "id": "house.013",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 11
+        },
+        {
+          "cells": 4,
+          "floor": 5,
+          "id": "house.014",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 9
+        },
+        {
+          "cells": 4,
+          "floor": 5,
+          "id": "house.015",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 11
+        },
+        {
+          "cells": 1,
+          "floor": 5,
+          "id": "house.017",
+          "reason": "",
+          "skyline_peak": false,
+          "tiered": false,
+          "top": 9
+        }
+      ],
+      "decks": [],
+      "decks_short": 1,
+      "leftover_columns": 32,
+      "orphan_sweep_joined": 13,
+      "seed_refusals": [
+        {
+          "band": 0,
+          "column": "(2, 0)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(1, 1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(0, 0)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(1, 0)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(0, 1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-1, 0)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-2, 0)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-3, 0)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-2, -1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-3, -1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-2, -2)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-3, -2)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-2, -3)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-1, -3)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-2, -2)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-3, -3)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-2, -4)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-1, -4)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-2, -3)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-3, -4)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(0, -4)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-1, -5)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 2,
+          "column": "(1, -4)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 2,
+          "column": "(0, -3)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 2,
+          "column": "(-1, -4)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 2,
+          "column": "(0, -5)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 2,
+          "column": "(1, -3)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 2,
+          "column": "(0, -4)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 2,
+          "column": "(1, -2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 3,
+          "column": "(1, -1)",
+          "reason": "claimed within MIN_HOUSE_BANDS"
+        },
+        {
+          "band": 3,
+          "column": "(0, -2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 3,
+          "column": "(1, -3)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 3,
+          "column": "(1, -2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 3,
+          "column": "(0, -1)",
+          "reason": "claimed within MIN_HOUSE_BANDS"
+        },
+        {
+          "band": 3,
+          "column": "(-1, -2)",
+          "reason": "claimed within MIN_HOUSE_BANDS"
+        },
+        {
+          "band": 3,
+          "column": "(0, -3)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 4,
+          "column": "(0, -2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 4,
+          "column": "(-2, -2)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 4,
+          "column": "(-1, -3)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 4,
+          "column": "(-1, -2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 4,
+          "column": "(-2, -1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 4,
+          "column": "(-3, -2)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 4,
+          "column": "(-2, -3)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 4,
+          "column": "(-2, 0)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 5,
+          "column": "(-2, 1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 5,
+          "column": "(-3, 0)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 5,
+          "column": "(-2, -1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 5,
+          "column": "(-2, 2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 5,
+          "column": "(-2, 0)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 5,
+          "column": "(-2, 3)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 4,
+          "column": "(-2, 4)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 4,
+          "column": "(-2, 2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 4,
+          "column": "(-1, 4)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 4,
+          "column": "(-2, 5)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 4,
+          "column": "(-2, 3)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 4,
+          "column": "(0, 4)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 4,
+          "column": "(-1, 5)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 3,
+          "column": "(1, 4)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 3,
+          "column": "(0, 5)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 3,
+          "column": "(-1, 4)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 3,
+          "column": "(1, 5)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 3,
+          "column": "(0, 4)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(2, 1)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-4, -1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 1,
+          "column": "(-3, -1)",
+          "reason": "claimed within MIN_HOUSE_BANDS"
+        },
+        {
+          "band": 1,
+          "column": "(-4, 0)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-5, -1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 1,
+          "column": "(-4, -2)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-4, -1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 1,
+          "column": "(-5, 0)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-6, -1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 1,
+          "column": "(-5, -2)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-5, 1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 1,
+          "column": "(-6, 0)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-5, 2)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-5, 0)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-5, 3)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-5, 1)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-5, 4)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-6, 3)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-4, 4)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-5, 5)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-6, 4)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-7, 3)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-6, -2)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-7, -2)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-6, -3)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-5, -3)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-7, -3)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 1,
+          "column": "(-6, -4)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-3, 4)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-4, 5)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-3, 5)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-2, 5)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-3, 6)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(-1, 5)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-2, 6)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(0, 5)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(-1, 6)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(1, 5)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(0, 6)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(0, 4)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(2, 5)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(1, 6)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(1, 4)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(3, 5)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(2, 6)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(2, 4)",
+          "reason": "claimed within MIN_HOUSE_BANDS"
+        },
+        {
+          "band": 0,
+          "column": "(4, 5)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(3, 6)",
+          "reason": "column already spoken for"
+        },
+        {
+          "band": 0,
+          "column": "(3, 4)",
+          "reason": "support rule refuses this floor"
+        },
+        {
+          "band": 0,
+          "column": "(4, 4)",
+          "reason": "support rule refuses this floor"
+        }
+      ],
+      "street_floor_gaps": 2
+    },
+    "route_span_bands": 5,
+    "source_solid_retention_ratio": 0.707126948775056,
+    "spine_cell_count": 25,
+    "spine_descent_bands": 2,
+    "spine_descent_cells": 6,
+    "spine_direction_changes": 6,
+    "spine_summit_index": 18,
+    "street_floor_gaps": 2,
+    "two_sided_passage_ratio": 0.46
+  }
+}

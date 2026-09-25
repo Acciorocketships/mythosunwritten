@@ -1,0 +1,124 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_grass_sampling.gd
+[0m* test_detached_sampling_does_not_retain_plans_or_share_mutable_grade_caches
+* test_detached_water_keeps_completed_fine_shores_without_source_or_memo_ownership
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september10_grass_latency.gd
+[0m* test_visible_grass_finishes_while_the_terrain_planner_is_occupied
+* test_teleport_cancels_queued_visual_work_and_shutdown_releases_sampling_data
+* test_idle_worker_does_not_keep_the_last_evicted_ground_sampler
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_grass_field.gd
+[0m* test_compiler_keeps_the_baked_asset_in_resource_free_metadata
+* test_baked_collection_5_is_one_1244_triangle_runtime_mesh
+* test_compiler_rejects_invalid_authored_settings
+ERROR: Grass coverage must contain exactly the canonical biome IDs
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail (res://scripts/terrain/grass/GrassProgram.gd:169)
+       [1] _coverage_array (res://scripts/terrain/grass/GrassProgram.gd:132)
+       [2] compile (res://scripts/terrain/grass/GrassProgram.gd:36)
+       [3] test_compiler_rejects_invalid_authored_settings (res://tests/test_grass_field.gd:109)
+       [4] _run_test (res://addons/gut/gut.gd:612)
+       [5] _test_the_scripts (res://addons/gut/gut.gd:815)
+[34m[ExpectedError][0mExpected push_error error containing 'exactly the canonical biome IDs'.  
+ERROR: Grass scale range must be finite, ordered, and positive
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail (res://scripts/terrain/grass/GrassProgram.gd:169)
+       [1] compile (res://scripts/terrain/grass/GrassProgram.gd:31)
+       [2] test_compiler_rejects_invalid_authored_settings (res://tests/test_grass_field.gd:114)
+       [3] _run_test (res://addons/gut/gut.gd:612)
+       [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+[34m[ExpectedError][0mExpected push_error error containing 'finite, ordered, and positive'.  
+ERROR: Grass asset variants must be non-empty and unique
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _fail (res://scripts/terrain/grass/GrassProgram.gd:169)
+       [1] compile (res://scripts/terrain/grass/GrassProgram.gd:42)
+       [2] test_compiler_rejects_invalid_authored_settings (res://tests/test_grass_field.gd:119)
+       [3] _run_test (res://addons/gut/gut.gd:612)
+       [4] _test_the_scripts (res://addons/gut/gut.gd:815)
+[34m[ExpectedError][0mExpected push_error error containing 'must be non-empty and unique'.  
+* test_projected_smooth_fields_are_bit_identical_on_tile_seams
+* test_carpet_curve_preserves_empty_ground_and_saturates_viable_habitat
+* test_field_is_deterministic_grounded_and_capped_at_one_batch
+* test_dropout_rank_is_an_exact_nested_prefix
+* test_path_reservation_removes_the_carpet_without_special_case_stamps
+* test_path_corridor_rejects_the_complete_patch_footprint
+* test_slope_surface_returns_normal_and_area_compensation
+* test_slopes_receive_more_patches_than_the_same_flat_habitat
+* test_exposed_cliff_lip_reduces_the_uniform_patch_scale
+* test_cliff_footprint_reaches_the_wall_without_a_clearance_band
+* test_cliff_lip_supplements_are_dense_but_bounded
+* test_packed_instance_matches_godot_multimesh_layout
+* test_worker_field_has_no_render_or_resource_loading_calls
+[1m16/16 passed.
+[0m[4m
+
+res://tests/test_grass_streamer.gd
+[0m* test_intersection_ring_has_no_square_holes_inside_the_fade
+* test_density_endpoints_and_tile_distance_are_exact
+* test_nearest_point_cpu_density_is_conservative_for_every_tile_anchor
+* test_commit_uses_one_buffer_assignment_per_selected_asset
+* test_stale_generation_cannot_resurrect_an_evicted_tile
+* test_single_batch_tile_commits_atomically_in_one_frame
+* test_stale_result_cannot_clear_a_newer_request
+[1m7/7 passed.
+[0m[4m
+
+res://tests/test_trample_field.gd
+[0m* test_stamp_direction_and_slow_recovery_round_trip
+* test_player_wake_is_wide_and_strong_enough_for_collection_5
+* test_rewalking_merges_direction_and_refreshes_strength
+* test_static_footprint_uses_the_asset_outline_instead_of_its_radius
+* test_player_trail_recovers_without_changing_the_persistent_crush
+* test_shader_blends_dynamic_direction_back_to_static_vertical_crush
+* test_epoch_rebase_preserves_effective_flatten
+* test_scrolling_preserves_world_anchored_trail_and_clears_new_border
+* test_scroll_origin_is_published_atomically_with_shifted_texture
+* test_segment_rasterization_leaves_no_fast_movement_gaps
+* test_uploads_coalesce_and_obey_thirty_hertz_ceiling
+[1m11/11 passed.
+[0m[4m
+
+res://tests/test_streaming_queue.gd
+[0m* test_repeated_pending_requests_do_not_resort_or_duplicate_work
+* test_worker_handoff_still_owns_completed_components
+* test_travel_rebases_priorities_and_cancels_abandoned_chunks
+* test_near_feature_dependency_does_not_wait_for_far_terrain
+* test_widening_chunk_work_has_one_shared_terrain_owner
+* test_travel_rebases_and_cancels_components_waiting_behind_active_work
+[1m6/6 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               6
+Tests                45
+Passing Tests        45
+Asserts             452
+Time              15.046s
+
+
+[32m---- All tests passed! ----
+[0m

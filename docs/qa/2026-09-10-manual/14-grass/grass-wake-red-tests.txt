@@ -1,0 +1,43 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_grass_latency.gd
+[0m* test_visible_grass_precedes_future_terrain_but_never_current_ground
+* test_visual_completion_keeps_the_worker_awake_after_a_chunk_handoff
+[31m    [Failed]:  [0mremaining visual work cannot sleep with a nonempty queue
+      at line 30
+* test_distant_grass_retains_background_priority_and_rebases_on_approach
+* test_result_handoff_allows_main_thread_to_schedule_newly_eligible_grass
+[1m3/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september10_grass_latency.gd
+[0m- test_visual_completion_keeps_the_worker_awake_after_a_chunk_handoff
+[31m    [Failed]:  [0mremaining visual work cannot sleep with a nonempty queue
+          at line 30
+
+Totals
+------
+Scripts               1
+Tests                 4
+Passing Tests         3
+Failing Tests         1
+Asserts            9/10
+Time              0.368s
+
+
+[31m---- 1 failing tests ----
+[0m

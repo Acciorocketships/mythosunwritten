@@ -1,0 +1,74 @@
+[
+  {
+    "source": "docs/qa/2026-09-10-manual/14-grass/crossing-before.json",
+    "status": "complete",
+    "startup_seconds": 170.307,
+    "peak_static_mb": 2969.237907,
+    "peak_prepared_buffer_mb": 0.0,
+    "max_prepared_tiles": 0,
+    "visits": [
+      {
+        "id": "far_grass",
+        "ready_seconds": 187.847,
+        "walk_meters": 780.993340998888,
+        "walk_frozen_seconds": 0.0,
+        "first_observed_underfoot_seconds": 0.591,
+        "first_observed_near_seconds": 0.591,
+        "sampled_walk_seconds": {
+          "missing_underfoot": 6.7059999999999995,
+          "missing_nonempty_underfoot": 6.7059999999999995,
+          "missing_near": 14.832000000000003,
+          "frozen": 0.0
+        },
+        "stats_after_30_seconds": {
+          "batches": 51,
+          "buffer_bytes": 654480,
+          "commit_max_usec": 283,
+          "committed_instances": 8181,
+          "lod_update_max_usec": 157,
+          "tiles": 52,
+          "visible_instances": 6484,
+          "worker_average_usec": 26166.1442307692,
+          "worker_max_usec": 33814,
+          "worker_results": 104
+        }
+      }
+    ]
+  },
+  {
+    "source": "docs/qa/2026-09-10-manual/14-grass/crossing-after4.json",
+    "status": "complete",
+    "startup_seconds": 169.477,
+    "peak_static_mb": 2968.315405,
+    "peak_prepared_buffer_mb": 0.0,
+    "max_prepared_tiles": 0,
+    "visits": [
+      {
+        "id": "far_grass",
+        "ready_seconds": 189.817,
+        "walk_meters": 775.333098560572,
+        "walk_frozen_seconds": 0.0,
+        "first_observed_underfoot_seconds": 0.589,
+        "first_observed_near_seconds": 0.589,
+        "sampled_walk_seconds": {
+          "missing_underfoot": 0.0,
+          "missing_nonempty_underfoot": 0.0,
+          "missing_near": 0.0,
+          "frozen": 0.0
+        },
+        "stats_after_30_seconds": {
+          "batches": 51,
+          "buffer_bytes": 654480,
+          "commit_max_usec": 259,
+          "committed_instances": 8181,
+          "lod_update_max_usec": 189,
+          "tiles": 52,
+          "visible_instances": 6484,
+          "worker_average_usec": 32102.5961538462,
+          "worker_max_usec": 45257,
+          "worker_results": 104
+        }
+      }
+    ]
+  }
+]

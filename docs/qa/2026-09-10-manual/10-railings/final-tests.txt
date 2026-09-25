@@ -1,0 +1,52 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_rail_shading.gd
+* test_guard_beams_and_posts_shade_their_outer_faces_in_all_orientations
+1/1 passed.
+
+
+res://tests/test_september9_turf_depth.gd
+* test_soil_follows_a_clipped_union_without_internal_walls
+* test_photographed_lawn_has_a_closed_bed_seated_in_the_actual_deck
+* test_inset_closes_concave_and_disconnected_lawns_without_degenerate_faces
+* test_border_closes_the_deck_to_lawn_layer_inside_the_existing_footprint
+4/4 passed.
+
+
+res://tests/test_september9_rail_attachment.gd
+* test_gate_rails_enter_actual_native_landing_posts_in_four_orientations
+* test_attachment_keeps_the_reserved_treads_and_lower_landing
+2/2 passed.
+
+
+res://tests/test_september10_turf_depth.gd
+* test_open_garden_bases_keep_their_actual_native_underside
+* test_ground_level_gardens_do_not_grow_an_exposed_timber_base
+2/2 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               4
+Tests                 9
+Passing Tests         9
+Asserts            4422
+Time              28.557s
+
+
+---- All tests passed! ----
+

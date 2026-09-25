@@ -1,0 +1,61 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_skywalk_bearing.gd
+[0m* test_photographed_skywalk_has_a_real_lower_bearing_at_its_free_end
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_village_september5_joints.gd
+[0m* test_outcrop_cover_bears_on_walls_instead_of_sharing_their_top_faces
+* test_ground_mass_connectivity_requires_faces_not_edges
+* test_ground_frame_courses_meet_without_surface_gaps
+* test_perpendicular_stone_facades_select_baked_corner_ends
+* test_straight_facade_repeat_keeps_square_ends
+* test_facade_alignment_always_presents_finished_side_outward
+* test_diagonal_stone_contact_has_one_closed_joint_per_band
+* test_diagonal_room_contact_without_masonry_does_not_get_rock_joint
+[1m8/8 passed.
+[0m[4m
+
+res://tests/test_roof_construction_reservations.gd
+[0m* test_roof_gardens_respect_reserved_ground_frame_columns
+* test_interstitial_infill_leaves_the_required_roof_space_open
+* test_connected_roof_retains_its_declared_eave_flashing
+* test_compound_roof_plate_with_a_square_return_gets_complete_roofing
+* test_joined_roof_preserves_only_the_named_market_canopy_seam
+* test_connected_roof_uses_actual_component_clearance
+* test_roofs_leave_space_for_ground_bearing_frames
+* test_joined_bridge_crown_uses_the_free_transverse_eave_space
+* test_bridge_crown_role_cannot_be_overridden_by_neighbor_silhouette
+* test_slim_bridge_endpoint_keeps_its_finite_party_profile
+* test_prospective_party_contacts_do_not_depend_on_emitted_grid_faces
+* test_terminal_roof_domain_starts_with_the_house_crown
+* test_terminal_roof_domain_preserves_the_bridge_seam_role
+[1m13/13 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               3
+Tests                22
+Passing Tests        22
+Asserts             111
+Time              114.503s
+
+
+[32m---- All tests passed! ----
+[0m

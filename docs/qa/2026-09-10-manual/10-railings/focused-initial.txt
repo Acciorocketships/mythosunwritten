@@ -1,0 +1,66 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_rail_shading.gd
+* test_guard_beams_and_posts_shade_their_outer_faces_in_all_orientations
+1/1 passed.
+
+
+res://tests/test_september9_rail_attachment.gd
+* test_gate_rails_enter_actual_native_landing_posts_in_four_orientations
+* test_attachment_keeps_the_reserved_treads_and_lower_landing
+2/2 passed.
+
+
+res://tests/test_september8_night_rails.gd
+* test_photographed_towns_do_not_fence_retained_walls
+* test_wall_socket_preserves_exposed_guard_and_collision_in_all_directions
+* test_photo14_lower_rail_respects_full_hanging_stone_course
+    [Failed]:  [14] expected to equal [0]:  The photographed lower rail must not cross the hanging stone course below its owning mass cell
+      at line 56
+2/3 passed.
+
+
+res://tests/test_september8_night_stair_clearance.gd
+* test_exterior_stair_approach_is_free_of_overhead_terrace_posts
+* test_gate_checks_the_lower_landing_beyond_the_first_exterior_cell
+* test_raised_gate_checks_full_run_in_all_directions_but_level_gate_needs_only_landing
+3/3 passed.
+
+
+res://tests/test_september10_platform_guards.gd
+* test_photographed_platform_keeps_guards_beside_the_sloping_roof
+* test_photographed_guard_has_baked_collision_in_four_orientations
+2/2 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september8_night_rails.gd
+- test_photo14_lower_rail_respects_full_hanging_stone_course
+    [Failed]:  [14] expected to equal [0]:  The photographed lower rail must not cross the hanging stone course below its owning mass cell
+          at line 56
+
+Totals
+------
+Scripts               5
+Tests                11
+Passing Tests        10
+Failing Tests         1
+Asserts           352/353
+Time              43.781s
+
+
+---- 1 failing tests ----
+

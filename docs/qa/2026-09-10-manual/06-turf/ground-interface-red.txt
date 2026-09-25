@@ -1,0 +1,109 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_turf_depth.gd
+[0m* test_open_garden_bases_keep_their_actual_native_underside
+* test_ground_level_gardens_do_not_grow_an_exposed_timber_base
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+      at line 40
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september10_turf_depth.gd
+[0m- test_ground_level_gardens_do_not_grow_an_exposed_timber_base
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+[31m    [Failed]:  [0mThe natural ground owns the base of a ground-level garden
+          at line 40
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts           11/29
+Time              20.649s
+
+
+[31m---- 1 failing tests ----
+[0m

@@ -1,0 +1,46 @@
+{
+  "skywalk-isolated": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.14584886088737672,
+    "roi_mean_abs_rgb": 0.14584886088737672,
+    "roi_changed_over_20_fraction": 0.0035633625532815586
+  },
+  "skywalk_back": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.4343365540576548,
+    "roi_mean_abs_rgb": 0.4343365540576548,
+    "roi_changed_over_20_fraction": 0.01092257877114093
+  },
+  "skywalk_front": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 10.23041032523236,
+    "roi_mean_abs_rgb": 10.23041032523236,
+    "roi_changed_over_20_fraction": 0.2131177902423537
+  },
+  "skywalk_other": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.2575112079855349,
+    "roi_mean_abs_rgb": 0.2575112079855349,
+    "roi_changed_over_20_fraction": 0.0049605609509505676
+  }
+}

@@ -1,0 +1,101 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_turf_depth.gd
+[0m* test_open_garden_bases_keep_their_actual_native_underside
+* test_ground_level_gardens_do_not_grow_an_exposed_timber_base
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september9_turf_depth.gd
+[0m* test_soil_follows_a_clipped_union_without_internal_walls
+* test_photographed_lawn_has_a_closed_bed_seated_in_the_actual_deck
+* test_inset_closes_concave_and_disconnected_lawns_without_degenerate_faces
+* test_border_closes_the_deck_to_lawn_layer_inside_the_existing_footprint
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_september7_garden_wall.gd
+[0m* test_roof_clearance_and_wall_enclosure_remain_separate_in_every_direction
+* test_reported_garden_wall_closes_air_above_neighbor_roof
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september8_garden_outcroppings.gd
+[0m* test_continuous_garden_wall_has_one_projection_depth
+* test_cover_depth_matches_its_wall_projection
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_warren_production_surfaces.gd
+[0m* test_production_surface_bundle_carries_stair_transition_meshes
+* test_patchwork_planks_have_one_exact_recessed_closure_skin
+* test_ground_finished_court_cells_are_not_hidden_by_patchwork_wood
+* test_town_streets_reuse_sparse_spots_without_rounding_their_edges
+* test_every_rendered_public_surface_suppresses_retained_stone_caps
+* test_borne_concave_court_corner_becomes_an_explicit_floor_claim
+* test_court_corner_cannot_claim_an_inhabited_room
+* test_terrain_cap_is_the_only_top_and_has_no_buried_stone_soffit
+* test_borne_three_sided_turf_corner_closes_once_without_spreading
+* test_turf_field_uses_only_level_cross_material_controls
+* test_selected_turf_alone_owns_its_datum
+* test_transition_mesh_owns_its_retained_riser_without_a_rock_wall
+* test_payload_surface_meshes_validate_and_respect_block_ownership
+* test_commit_queue_stages_surface_mesh_collision_and_visuals
+* test_a_bank_under_a_house_is_one_plinth_course_and_no_more
+* test_hollow_room_bearing_footprint_closes_all_four_plinth_sides
+* test_the_hill_substrate_renderer_is_gone_and_may_not_return
+* test_hill_no_building_stands_over_carries_no_stone_at_all
+* test_hill_standing_over_a_street_is_not_a_stone_vault
+* test_bare_stone_never_exceeds_one_storey_in_an_assembled_payload
+* test_plinth_walls_are_deterministic_and_uniquely_identified
+* test_rock_cladding_stops_at_the_ground_storey
+* test_the_facade_family_selector_can_never_return_rock
+[1m23/23 passed.
+[0m[4m
+
+res://tests/test_september9_city_props.gd
+[0m* test_private_garden_edge_has_a_supported_storage_pair
+* test_public_ground_entries_and_occupied_air_cannot_gain_furniture
+* test_frozen_towns_add_furniture_without_reusing_public_or_lamp_cells
+* test_sack_resting_height_uses_the_native_lid_not_the_crate_bounds
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_september9_city_lanterns.gd
+[0m* test_long_shared_walk_has_supported_lamps_before_random_planting
+* test_lights_cannot_consume_a_public_square_or_occupied_air
+* test_every_realized_closed_door_has_one_contained_native_wall_lamp
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_september10_bench_collision.gd
+[0m* test_both_native_benches_support_the_seat_in_every_orientation
+* test_character_cannot_walk_through_city_scale_bench_seats
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               8
+Tests                42
+Passing Tests        42
+Asserts            5652
+Time              83.29s
+
+
+[32m---- All tests passed! ----
+[0m

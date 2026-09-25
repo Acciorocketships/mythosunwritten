@@ -1,0 +1,324 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_roof_alignment.gd
+[0m* test_terminal_gables_close_above_the_actual_facade_plane
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+      at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+      at line 22
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september10_roof_alignment.gd
+[0m- test_terminal_gables_close_above_the_actual_facade_plane
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.06.front.end.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.06.rear.end.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at -0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at -0.5/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at 0.0/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at 0.0/1.2
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.4
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at 0.5/0.8
+          at line 22
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.front.end.tight: native gable must reach the wall's outer 5 cm at 0.5/1.2
+          at line 22
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts            0/72
+Time              1.264s
+
+
+[31m---- 1 failing tests ----
+[0m

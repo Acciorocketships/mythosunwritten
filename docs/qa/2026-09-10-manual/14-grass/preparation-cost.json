@@ -1,0 +1,34 @@
+[
+  {
+    "run": "baseline",
+    "terrain_commits": 59,
+    "grass_times": {
+      "worker/grass_feature_context": {
+        "count": 184,
+        "max_usec": 1000,
+        "total_usec": 3000
+      },
+      "worker/grass_fields": {
+        "count": 184,
+        "max_usec": 1000,
+        "total_usec": 3000
+      },
+      "worker/grass_placement": {
+        "count": 184,
+        "max_usec": 166000,
+        "total_usec": 10673000
+      }
+    }
+  },
+  {
+    "run": "candidate3",
+    "terrain_commits": 47,
+    "grass_times": {
+      "worker/grass_placement": {
+        "count": 48,
+        "max_usec": 6731000,
+        "total_usec": 164368000
+      }
+    }
+  }
+]

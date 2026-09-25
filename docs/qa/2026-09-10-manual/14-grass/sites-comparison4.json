@@ -1,0 +1,178 @@
+[
+  {
+    "source": "docs/qa/2026-09-10-manual/14-grass/baseline.json",
+    "status": "complete",
+    "startup_seconds": 169.2,
+    "peak_static_mb": 2688.095819,
+    "peak_prepared_buffer_mb": 0.0,
+    "max_prepared_tiles": 0,
+    "visits": [
+      {
+        "id": "11_forest",
+        "ready_seconds": 0.06,
+        "walk_meters": 41.3702392578125,
+        "walk_frozen_seconds": 0.0,
+        "first_observed_underfoot_seconds": 0.459,
+        "first_observed_near_seconds": 0.459,
+        "sampled_walk_seconds": {
+          "missing_underfoot": 0.0,
+          "missing_nonempty_underfoot": 0.0,
+          "missing_near": 0.0,
+          "frozen": 0.0
+        },
+        "stats_after_30_seconds": {
+          "batches": 52,
+          "buffer_bytes": 896320,
+          "commit_max_usec": 233,
+          "committed_instances": 11204,
+          "lod_update_max_usec": 15,
+          "tiles": 52,
+          "visible_instances": 8955,
+          "worker_average_usec": 26455.0,
+          "worker_max_usec": 32245,
+          "worker_results": 52
+        }
+      },
+      {
+        "id": "19_heath",
+        "ready_seconds": 168.302,
+        "walk_meters": 178.211890876293,
+        "walk_frozen_seconds": 0.0,
+        "first_observed_underfoot_seconds": 0.401,
+        "first_observed_near_seconds": 0.656,
+        "sampled_walk_seconds": {
+          "missing_underfoot": 15.688999999999998,
+          "missing_nonempty_underfoot": 9.738000000000001,
+          "missing_near": 20.287999999999997,
+          "frozen": 0.0
+        },
+        "stats_after_30_seconds": {
+          "batches": 33,
+          "buffer_bytes": 313600,
+          "commit_max_usec": 305,
+          "committed_instances": 3920,
+          "lod_update_max_usec": 277,
+          "tiles": 51,
+          "visible_instances": 2815,
+          "worker_average_usec": 49689.8706896552,
+          "worker_max_usec": 165171,
+          "worker_results": 116
+        }
+      },
+      {
+        "id": "meadow",
+        "ready_seconds": 123.221,
+        "walk_meters": 0.699159145355225,
+        "walk_frozen_seconds": 0.0,
+        "first_observed_underfoot_seconds": 0.388,
+        "first_observed_near_seconds": 0.654,
+        "sampled_walk_seconds": {
+          "missing_underfoot": 0.0,
+          "missing_nonempty_underfoot": 0.0,
+          "missing_near": 0.0,
+          "frozen": 0.0
+        },
+        "stats_after_30_seconds": {
+          "batches": 54,
+          "buffer_bytes": 1063760,
+          "commit_max_usec": 499,
+          "committed_instances": 13297,
+          "lod_update_max_usec": 308,
+          "tiles": 55,
+          "visible_instances": 10463,
+          "worker_average_usec": 57968.5326086957,
+          "worker_max_usec": 165171,
+          "worker_results": 184
+        }
+      }
+    ]
+  },
+  {
+    "source": "docs/qa/2026-09-10-manual/14-grass/sites-after4.json",
+    "status": "complete",
+    "startup_seconds": 198.927,
+    "peak_static_mb": 2706.871339,
+    "peak_prepared_buffer_mb": 0.0,
+    "max_prepared_tiles": 0,
+    "visits": [
+      {
+        "id": "11_forest",
+        "ready_seconds": 0.066,
+        "walk_meters": 41.3702392578125,
+        "walk_frozen_seconds": 0.0,
+        "first_observed_underfoot_seconds": 0.485,
+        "first_observed_near_seconds": 0.485,
+        "sampled_walk_seconds": {
+          "missing_underfoot": 0.0,
+          "missing_nonempty_underfoot": 0.0,
+          "missing_near": 0.0,
+          "frozen": 0.0
+        },
+        "stats_after_30_seconds": {
+          "batches": 52,
+          "buffer_bytes": 896320,
+          "commit_max_usec": 274,
+          "committed_instances": 11204,
+          "lod_update_max_usec": 3,
+          "tiles": 52,
+          "visible_instances": 8955,
+          "worker_average_usec": 39326.3076923077,
+          "worker_max_usec": 58684,
+          "worker_results": 52
+        }
+      },
+      {
+        "id": "19_heath",
+        "ready_seconds": 203.947,
+        "walk_meters": 176.334943190217,
+        "walk_frozen_seconds": 0.0,
+        "first_observed_underfoot_seconds": 0.538,
+        "first_observed_near_seconds": 0.538,
+        "sampled_walk_seconds": {
+          "missing_underfoot": 0.0,
+          "missing_nonempty_underfoot": 0.0,
+          "missing_near": 0.0,
+          "frozen": 0.0
+        },
+        "stats_after_30_seconds": {
+          "batches": 33,
+          "buffer_bytes": 313600,
+          "commit_max_usec": 274,
+          "committed_instances": 3920,
+          "lod_update_max_usec": 358,
+          "tiles": 51,
+          "visible_instances": 2815,
+          "worker_average_usec": 75295.1206896552,
+          "worker_max_usec": 218421,
+          "worker_results": 116
+        }
+      },
+      {
+        "id": "meadow",
+        "ready_seconds": 153.71,
+        "walk_meters": 257.507237672806,
+        "walk_frozen_seconds": 0.0,
+        "first_observed_underfoot_seconds": 0.647,
+        "first_observed_near_seconds": 0.647,
+        "sampled_walk_seconds": {
+          "missing_underfoot": 0.0,
+          "missing_nonempty_underfoot": 0.0,
+          "missing_near": 0.0,
+          "frozen": 0.0
+        },
+        "stats_after_30_seconds": {
+          "batches": 54,
+          "buffer_bytes": 1063760,
+          "commit_max_usec": 274,
+          "committed_instances": 13297,
+          "lod_update_max_usec": 468,
+          "tiles": 55,
+          "visible_instances": 10463,
+          "worker_average_usec": 93499.2610619469,
+          "worker_max_usec": 218421,
+          "worker_results": 226
+        }
+      }
+    ]
+  }
+]

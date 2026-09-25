@@ -1,0 +1,76 @@
+{
+  "audit": {
+    "focal_asset": "sfv.well.001",
+    "generation_source": "ground_hamlet",
+    "house_count": 3,
+    "square_radius": 12.0,
+    "target_houses": 3
+  },
+  "entries": [
+    {
+      "asset_id": "lpfv.building.house.07",
+      "stable_id": "hamlet.2.outskirts.house.00",
+      "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (20.90014, 0.05, -3.880863)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.01",
+      "stable_id": "hamlet.2.outskirts.house.00.component.closed_door",
+      "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (15.16214, 0.05, -1.258862)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.07",
+      "stable_id": "hamlet.2.outskirts.house.01",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-20.90014, 0.05, 3.880864)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.01",
+      "stable_id": "hamlet.2.outskirts.house.01.component.closed_door",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-15.16214, 0.05, 1.258864)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.02",
+      "stable_id": "hamlet.2.outskirts.house.02",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-3.606348, 0.05, -20.90014)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.02",
+      "stable_id": "hamlet.2.outskirts.house.02.component.closed_door",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-0.984348, 0.05, -15.16214)]"
+    },
+    {
+      "asset_id": "sfv.well.001",
+      "stable_id": "hamlet.2.square.focus",
+      "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.0, 0.0)]"
+    }
+  ],
+  "views": [
+    {
+      "eye": "(55.0, 48.0, 55.0)",
+      "fov": 50,
+      "id": "NE",
+      "path": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate1/2/NE.png",
+      "target": "(0,2,0)"
+    },
+    {
+      "eye": "(-55.0, 38.0, -55.0)",
+      "fov": 50,
+      "id": "SW",
+      "path": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate1/2/SW.png",
+      "target": "(0,2,0)"
+    },
+    {
+      "eye": "(0.0, 95.0, 0.1)",
+      "fov": 50,
+      "id": "plan",
+      "path": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate1/2/plan.png",
+      "target": "(0,2,0)"
+    },
+    {
+      "eye": "(20.0, 9.0, 20.0)",
+      "fov": 50,
+      "id": "square",
+      "path": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate1/2/square.png",
+      "target": "(0,2,0)"
+    }
+  ]
+}

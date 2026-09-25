@@ -1,0 +1,166 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_prefab_floor.gd
+* test_prefab_bearings_have_a_continuous_native_floor
+* test_rotated_prefab_floor_owns_every_complete_supported_cell
+* test_prefab_platform_reserves_support_under_its_whole_floor
+    [Failed]:  [54] expected to equal [0]:  anchor.prefab.00 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [97] expected to equal [0]:  anchor.prefab.01 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [58] expected to equal [0]:  anchor.prefab.02 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [553] expected to equal [0]:  anchor.prefab.03 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [95] expected to equal [0]:  anchor.prefab.04 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [95] expected to equal [0]:  anchor.prefab.05 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [166] expected to equal [0]:  anchor.prefab.06 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [166] expected to equal [0]:  anchor.prefab.07 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [97] expected to equal [0]:  anchor.prefab.08 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [54] expected to equal [0]:  anchor.prefab.09 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [10] expected to equal [0]:  anchor.prefab.10 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [19] expected to equal [0]:  anchor.prefab.11 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.12 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.13 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.14 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.15 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [8] expected to equal [0]:  anchor.prefab.16 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [133] expected to equal [0]:  anchor.prefab.17 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [133] expected to equal [0]:  anchor.prefab.18 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [109] expected to equal [0]:  anchor.prefab.19 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [105] expected to equal [0]:  anchor.prefab.20 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [44] expected to equal [0]:  anchor.prefab.21 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [44] expected to equal [0]:  anchor.prefab.22 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [131] expected to equal [0]:  anchor.prefab.23 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [140] expected to equal [0]:  anchor.prefab.24 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [625] expected to equal [0]:  anchor.prefab.25 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [630] expected to equal [0]:  anchor.prefab.26 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [635] expected to equal [0]:  anchor.prefab.27 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [562] expected to equal [0]:  anchor.prefab.28 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [550] expected to equal [0]:  anchor.prefab.29 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [562] expected to equal [0]:  anchor.prefab.30 must reserve every platform cell before placement
+      at line 57
+    [Failed]:  [32] expected to equal [0]:  anchor.prefab.31 must reserve every platform cell before placement
+      at line 57
+2/3 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september10_prefab_floor.gd
+- test_prefab_platform_reserves_support_under_its_whole_floor
+    [Failed]:  [54] expected to equal [0]:  anchor.prefab.00 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [97] expected to equal [0]:  anchor.prefab.01 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [58] expected to equal [0]:  anchor.prefab.02 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [553] expected to equal [0]:  anchor.prefab.03 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [95] expected to equal [0]:  anchor.prefab.04 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [95] expected to equal [0]:  anchor.prefab.05 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [166] expected to equal [0]:  anchor.prefab.06 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [166] expected to equal [0]:  anchor.prefab.07 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [97] expected to equal [0]:  anchor.prefab.08 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [54] expected to equal [0]:  anchor.prefab.09 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [10] expected to equal [0]:  anchor.prefab.10 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [19] expected to equal [0]:  anchor.prefab.11 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.12 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.13 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.14 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [24] expected to equal [0]:  anchor.prefab.15 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [8] expected to equal [0]:  anchor.prefab.16 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [133] expected to equal [0]:  anchor.prefab.17 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [133] expected to equal [0]:  anchor.prefab.18 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [109] expected to equal [0]:  anchor.prefab.19 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [105] expected to equal [0]:  anchor.prefab.20 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [44] expected to equal [0]:  anchor.prefab.21 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [44] expected to equal [0]:  anchor.prefab.22 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [131] expected to equal [0]:  anchor.prefab.23 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [140] expected to equal [0]:  anchor.prefab.24 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [625] expected to equal [0]:  anchor.prefab.25 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [630] expected to equal [0]:  anchor.prefab.26 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [635] expected to equal [0]:  anchor.prefab.27 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [562] expected to equal [0]:  anchor.prefab.28 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [550] expected to equal [0]:  anchor.prefab.29 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [562] expected to equal [0]:  anchor.prefab.30 must reserve every platform cell before placement
+          at line 57
+    [Failed]:  [32] expected to equal [0]:  anchor.prefab.31 must reserve every platform cell before placement
+          at line 57
+
+Totals
+------
+Scripts               1
+Tests                 3
+Passing Tests         2
+Failing Tests         1
+Asserts           132/164
+Time              20.811s
+
+
+---- 1 failing tests ----
+

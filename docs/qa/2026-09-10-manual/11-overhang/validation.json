@@ -1,0 +1,16 @@
+{
+  "status": "accepted",
+  "focused_tests": 20,
+  "focused_assertions": 700,
+  "game_pairs_inspected": 6,
+  "native_pairs_inspected": 5,
+  "camera_metadata_identical": true,
+  "walking_cells": 112,
+  "crossings": 164,
+  "clearance_identical": true,
+  "historic_bay_count_change": {
+    "before": 3,
+    "after": 1,
+    "rejected_unborne_parent_faces": 2
+  }
+}

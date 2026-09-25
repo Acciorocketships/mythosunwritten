@@ -1,0 +1,7 @@
+{
+  "forest_heath_pairs": 12,
+  "fixed_records_equal": true,
+  "meadow_iteration_pairs": 6,
+  "meadow_candidate3_to4_equal": true,
+  "initial_meadow_baseline_invalid": true
+}

@@ -1,0 +1,112 @@
+{
+  "far_grass_near_-8": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.8187014048542793,
+    "roi_mean_abs_rgb": 1.8187014048542793,
+    "roi_changed_over_20_fraction": 0.008125367313438549
+  },
+  "far_grass_near_8": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.6764031467174656,
+    "roi_mean_abs_rgb": 1.6764031467174656,
+    "roi_changed_over_20_fraction": 0.0062204038252387395
+  },
+  "far_grass_t00": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 2.6659083966257078,
+    "roi_mean_abs_rgb": 2.6659083966257078,
+    "roi_changed_over_20_fraction": 0.01541083937735165
+  },
+  "far_grass_t02": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.295860607411644,
+    "roi_mean_abs_rgb": 1.295860607411644,
+    "roi_changed_over_20_fraction": 0.004018774923835237
+  },
+  "far_grass_t10": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.49514602093058,
+    "roi_mean_abs_rgb": 1.49514602093058,
+    "roi_changed_over_20_fraction": 0.004372859449271903
+  },
+  "far_grass_t30": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.7327397398051052,
+    "roi_mean_abs_rgb": 1.7327397398051052,
+    "roi_changed_over_20_fraction": 0.007313618687556716
+  },
+  "far_walk_t20": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.2303142514236562,
+    "roi_mean_abs_rgb": 1.2303142514236562,
+    "roi_changed_over_20_fraction": 0.007770156923056138
+  },
+  "far_walk_t40": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 4.752694382459325,
+    "roi_mean_abs_rgb": 4.752694382459325,
+    "roi_changed_over_20_fraction": 0.08022294377655634
+  },
+  "far_walk_t60": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 8.654087940560336,
+    "roi_mean_abs_rgb": 8.654087940560336,
+    "roi_changed_over_20_fraction": 0.11626863587951444
+  },
+  "far_walk_t80": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 6.482073978333855,
+    "roi_mean_abs_rgb": 6.482073978333855,
+    "roi_changed_over_20_fraction": 0.11939797749621146
+  }
+}

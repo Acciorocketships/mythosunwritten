@@ -1,0 +1,35 @@
+[
+  {
+    "source": "docs/qa/2026-09-10-manual/14-grass/long-before.json",
+    "status": "complete",
+    "startup_seconds": 169.32,
+    "visits": [
+      {
+        "id": "far_grass",
+        "ready_seconds": 187.066,
+        "walk_meters": 792.150503113866,
+        "walk_frozen_seconds": 0.0,
+        "first_observed_underfoot_seconds": 0.652,
+        "first_observed_near_seconds": 0.652,
+        "sampled_walk_seconds": {
+          "missing_underfoot": 4.872999999999999,
+          "missing_nonempty_underfoot": 4.872999999999999,
+          "missing_near": 11.589000000000002,
+          "frozen": 0.0
+        },
+        "stats_after_30_seconds": {
+          "batches": 51,
+          "buffer_bytes": 654480,
+          "commit_max_usec": 295,
+          "committed_instances": 8181,
+          "lod_update_max_usec": 92,
+          "tiles": 52,
+          "visible_instances": 6484,
+          "worker_average_usec": 26596.5384615385,
+          "worker_max_usec": 36082,
+          "worker_results": 104
+        }
+      }
+    ]
+  }
+]

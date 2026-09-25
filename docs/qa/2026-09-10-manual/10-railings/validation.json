@@ -1,0 +1,12 @@
+{
+  "focused_distinct_tests": 17,
+  "focused_distinct_assertions": 4490,
+  "new_face_orientation_assertions": 144,
+  "transition_meshes_with_identical_vertices_uvs_collision": 11,
+  "native_pairs_inspected": 2,
+  "photo12_game_pairs_inspected": 6,
+  "legacy_expectation_updated_to_actual_emitted_masonry": true,
+  "photo1_game_pairs_inspected": 6,
+  "camera_metadata_identical": true,
+  "status": "accepted"
+}

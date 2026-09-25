@@ -1,0 +1,67 @@
+{
+  "failure_assertions_identical_to_documented_baseline": true,
+  "new_failure_assertions": [],
+  "changed_or_absent_baseline_assertions": [],
+  "failures": [
+    [
+      "res://tests/test_water_contour.gd",
+      "test_pond_yields_smooth_closed_curve",
+      "[Failed]:  pinned pond exercises the short rounded-wall-corner bridge path"
+    ],
+    [
+      "res://tests/test_water_contour.gd",
+      "test_border_curves_weld",
+      "[Failed]:  (0, -7)|(1, -7) (seed 2697992464): border point (192.0, -1171.617) matches the neighbour within 1e-4 (dist 0.000122070)"
+    ],
+    [
+      "res://tests/test_water_contour.gd",
+      "test_reported_saddle_outward_frame_does_not_reverse",
+      "[Failed]:  reported saddle exercises several adjacent contour frames"
+    ],
+    [
+      "res://tests/test_water_skin.gd",
+      "test_reported_exact_bank_rim_reaches_recessed_cliff_face",
+      "[Failed]:  a contour sample exists at the exact long-bank wall (nearest 7.53m)"
+    ],
+    [
+      "res://tests/test_water_skin.gd",
+      "test_reported_exact_corner_wet_region_has_connected_skin_coverage",
+      "[Failed]:  exact upper corner probe remains dry cliff top instead of being flooded"
+    ],
+    [
+      "res://tests/test_water_skin.gd",
+      "test_reported_exact_corner_wet_region_has_connected_skin_coverage",
+      "[Failed]:  a contour sample exists beside the exact dry corner tip"
+    ],
+    [
+      "res://tests/test_water_skin.gd",
+      "test_skin_handles_closed_and_border_exit_curves",
+      "[Failed]:  closed + border-exit curves stitch watertight: [\"(-688.0, 11.0, -3344.0) near={ \\\"dist\\\": 3.4720139503479, \\\"level\\\": 11.0 } ok=false - (-688.0, 11.0, -3342.0) near={ \\\"dist\\\": 3.51516532897949, \\\"level\\\": 11.0 } ok=false\", \"(-688.0, 11.0, -3324.0) near={ \\\"dist\\\": 3.41262364387512, \\\"level\\\": 10.9308757781982 } ok=false - (-688.0, 10.9, -3322.0) near={ \\\"dist\\\": 2.88365125656128, \\\"level\\\": 10.831467628479 } ok=false\", \"(-686.0, 11.0, -3324.0) near={ \\\"dist\\\": 3.6591854095459, \\\"level\\\": 11.0 } ok=false - (-686.0, 10.95, -3322.0) near={ \\\"dist\\\": 2.66304063796997, \\\"level\\\": 11.0 } ok=false\", \"(-688.0, 10.9, -3322.0) near={ \\\"dist\\\": 2.88365125656128, \\\"level\\\": 10.831467628479 } ok=false - (-688.0, 11.0, -3324.5) near={ \\\"dist\\\": 3.45135307312012, \\\"level\\\": 11.0 } ok=false\", \"(-688.0, 11.0, -3327.0) near={ \\\"dist\\\": 3.51500725746155, \\\"level\\\": 11.0 } ok=false - (-688.0, 11.0, -3324.5) near={ \\\"dist\\\": 3.45135307312012, \\\"level\\\": 11.0 } ok=false\", \"(-688.0, 11.0, -3327.0) near={ \\\"dist\\\": 3.51500725746155, \\\"level\\\": 11.0 } ok=false - (-688.0, 11.0, -3329.5) near={ \\\"dist\\\": 3.56455039978027, \\\"level\\\": 11.0 } ok=false\", \"(-688.0, 11.0, -3332.0) near={ \\\"dist\\\": 3.50437474250793, \\\"level\\\": 11.0 } ok=false - (-688.0, 11.0, -3329.5) near={ \\\"dist\\\": 3.56455039978027, \\\"level\\\": 11.0 } ok=false\", \"(-688.0, 11.0, -3332.0) near={ \\\"dist\\\": 3.50437474250793, \\\"level\\\": 11.0 } ok=false - (-688.0, 11.0, -3334.5) near={ \\\"dist\\\": 3.51507496833801, \\\"level\\\": 11.0 } ok=false\", \"(-688.0, 11.0, -3337.0) near={ \\\"dist\\\": 3.56441187858582, \\\"level\\\": 11.0 } ok=false - (-688.0, 11.0, -3334.5) near={ \\\"dist\\\": 3.51507496833801, \\\"level\\\": 11.0 } ok=false\", \"(-688.0, 11.0, -3337.0) near={ \\\"dist\\\": 3.56441187858582, \\\"level\\\": 11.0 } ok=false - (-688.0, 11.0, -3339.5) near={ \\\"dist\\\": 3.5043261051178, \\\"level\\\": 11.0 } ok=false\"]"
+    ],
+    [
+      "res://tests/test_water_skin.gd",
+      "test_s_is_continuous_along_river",
+      "[Failed]:  pts[0] sits within the brief's own river gate (site precondition)"
+    ],
+    [
+      "res://tests/test_water_skin.gd",
+      "test_s_is_continuous_along_river",
+      "[Failed]:  pts[1] sits within the brief's own river gate (site precondition)"
+    ],
+    [
+      "res://tests/test_water_skin.gd",
+      "test_s_is_continuous_along_river",
+      "[Failed]:  bend pts[0..30]: s strictly increases and tracks the real spatial step along the river: [\"bend pts[0..30] k=1 |\u0394s(0.6738) - step(1.4242)|=0.7504 >= 0.5\", \"bend pts[0..30] k=2 s not strictly increasing: 81.1915 -> 80.9896\", \"bend pts[0..30] k=3 s not strictly increasing: 80.9896 -> 80.7878\", \"bend pts[0..30] k=4 s not strictly increasing: 80.7878 -> 80.5863\", \"bend pts[0..30] k=5 s not strictly increasing: 80.5863 -> 80.4984\", \"bend pts[0..30] k=28 s not strictly increasing: 111.4591 -> 0.0000\", \"bend pts[0..30] k=29 s not strictly increasing: 0.0000 -> 0.0000\"]"
+    ],
+    [
+      "res://tests/test_water_skin.gd",
+      "test_s_is_continuous_along_river",
+      "[Failed]:  clean pts[6..36]: s strictly increases and tracks the real spatial step along the river: [\"clean pts[6..36] k=7 |\u0394s(0.6738) - step(1.4242)|=0.7504 >= 0.5\", \"clean pts[6..36] k=8 s not strictly increasing: 81.1915 -> 80.9896\", \"clean pts[6..36] k=9 s not strictly increasing: 80.9896 -> 80.7878\", \"clean pts[6..36] k=10 s not strictly increasing: 80.7878 -> 80.5863\", \"clean pts[6..36] k=11 s not strictly increasing: 80.5863 -> 80.4984\"]"
+    ],
+    [
+      "res://tests/test_water_skin.gd",
+      "test_wall_rim_reaches_the_face",
+      "[Failed]:  the nearest wall point sits close to the R5-B frame's own wall reach (dist=28.87)"
+    ]
+  ]
+}

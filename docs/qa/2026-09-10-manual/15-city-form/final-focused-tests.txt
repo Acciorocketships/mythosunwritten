@@ -1,0 +1,61 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_city_form.gd
+[0m* test_town_rims_step_down_to_one_storey_and_admit_open_ground_streets
+* test_source_city_shapes_include_courts_open_bays_and_low_ridges
+* test_enclosed_court_is_not_a_world_road_exit
+* test_reserved_native_houses_have_real_public_doorsteps
+* test_new_shapes_preserve_complete_roof_construction
+* test_optional_bay_supports_clear_the_crossing_between_public_cells
+* test_declared_court_does_not_hide_unrelated_holes
+* test_native_foundation_clearance_has_an_exterior_band_below_ground
+* test_frontage_subtraction_discards_inverted_empty_intervals
+* test_native_houses_share_inner_and_outer_town_street_frontage
+[1m10/10 passed.
+[0m[4m
+
+res://tests/test_september10_roof_valley.gd
+[0m* test_t_valley_has_actual_roof_triangles_across_the_complete_join
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_september10_roofability_work.gd
+[0m* test_band_index_retains_complete_original_roofability_queries
+* test_native_cap_cache_preserves_order_isolation_and_bounded_eviction
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september10_hamlets.gd
+[0m* test_default_population_includes_tiny_ground_settlements
+* test_small_square_has_complete_supported_houses_and_central_focus
+* test_crossroads_keep_all_real_road_handoffs_clear
+* test_canonical_records_publish_tiny_houses_without_a_second_outskirts_pass
+* test_distant_roads_do_not_enlarge_a_tiny_square
+[1m5/5 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               4
+Tests                18
+Passing Tests        18
+Asserts            7560
+Time              116.182s
+
+
+[32m---- All tests passed! ----
+[0m

@@ -1,0 +1,40 @@
+{
+  "before": false,
+  "fixture": "/Users/ryko/story/docs/qa/2026-09-10-manual/02-orbs/fixture/world.scn",
+  "fixture_sha256": "ed8825d7e64dff3d0bb9fa60073d569e0f82b66f91380a82debf77d6873159be",
+  "rows": [
+    {
+      "camera": "[X: (0.316079, 0.0, 0.948733), Y: (0.502828, 0.847998, -0.167522), Z: (-0.804523, 0.53, 0.268034), O: (1610.41, 17.0, -568.4714)]",
+      "gpu_median_ms": 0.0,
+      "gpu_p95_ms": 0.0,
+      "median_ms": 15.551,
+      "nodes": 2467.0,
+      "omni_lights": 57,
+      "p95_ms": 16.033,
+      "render_cpu_median_ms": 1.14400005340576,
+      "samples": 300
+    },
+    {
+      "camera": "[X: (0.316079, 0.0, 0.948733), Y: (0.502828, 0.847998, -0.167522), Z: (-0.804523, 0.53, 0.268034), O: (1630.41, 17.0, -558.4714)]",
+      "gpu_median_ms": 0.0,
+      "gpu_p95_ms": 0.0,
+      "median_ms": 14.729,
+      "nodes": 2469.0,
+      "omni_lights": 59,
+      "p95_ms": 15.203,
+      "render_cpu_median_ms": 1.20700001716614,
+      "samples": 300
+    },
+    {
+      "camera": "[X: (0.316079, 0.0, 0.948733), Y: (0.502828, 0.847998, -0.167522), Z: (-0.804523, 0.53, 0.268034), O: (1595.41, 17.0, -588.4714)]",
+      "gpu_median_ms": 0.0,
+      "gpu_p95_ms": 0.0,
+      "median_ms": 15.48,
+      "nodes": 2472.0,
+      "omni_lights": 62,
+      "p95_ms": 15.971,
+      "render_cpu_median_ms": 1.24500000476837,
+      "samples": 300
+    }
+  ]
+}

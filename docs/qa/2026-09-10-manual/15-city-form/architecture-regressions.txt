@@ -1,0 +1,85 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_wall_returns.gd
+[0m* test_photographed_stone_inside_corner_closes_at_the_wall_ends
+* test_doorway_rear_recess_meets_its_return_wall_in_every_orientation
+* test_closed_door_housing_finishes_both_sides_of_the_projecting_frame
+* test_door_housing_retains_native_bounds_and_central_doorwork
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_september10_prefab_floor.gd
+[0m* test_prefab_bearings_have_a_continuous_native_floor
+* test_rotated_prefab_floor_owns_every_complete_supported_cell
+* test_prefab_platform_reserves_support_under_its_whole_floor
+* test_photographed_outer_ledge_sits_above_its_retaining_stone
+[1m4/4 passed.
+[0m[4m
+
+res://tests/test_september10_platform_guards.gd
+[0m* test_photographed_platform_keeps_guards_beside_the_sloping_roof
+* test_photographed_guard_has_baked_collision_in_four_orientations
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september10_turf_depth.gd
+[0m* test_open_garden_bases_keep_their_actual_native_underside
+* test_ground_level_gardens_do_not_grow_an_exposed_timber_base
+[1m2/2 passed.
+[0m[4m
+
+res://tests/test_september10_skywalk_bearing.gd
+[0m* test_photographed_skywalk_has_a_real_lower_bearing_at_its_free_end
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_september10_ceiling_courses.gd
+[0m* test_photographed_stone_courses_do_not_hang_below_their_owned_band
+* test_garden_tunnel_turn_uses_city_stone_inside_the_native_grass_lip
+* test_a_short_neighbor_course_cannot_own_a_full_facade_miter
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_september10_roof_alignment.gd
+[0m* test_terminal_gables_close_above_the_actual_facade_plane
+* test_joined_partial_crown_keeps_its_original_end_boundaries
+* test_bounded_continuous_gables_reach_the_facade_without_an_inset_shelf
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_september10_rail_shading.gd
+[0m* test_guard_beams_and_posts_shade_their_outer_faces_in_all_orientations
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_september10_overhang.gd
+[0m* test_photographed_entrance_does_not_stack_a_bay_on_a_room_cantilever
+* test_bay_bearing_rejects_partial_edges_and_empty_roof_bands_in_four_orientations
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               9
+Tests                22
+Passing Tests        22
+Asserts             736
+Time              156.485s
+
+
+[32m---- All tests passed! ----
+[0m

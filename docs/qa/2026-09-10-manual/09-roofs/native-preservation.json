@@ -1,0 +1,74 @@
+{
+  "lpfv.fabric.roof.compact.orange.03.rear.end.tight": {
+    "degenerate_triangles": 0,
+    "longitudinal_vertices_moved": 3112,
+    "native_stream_vertices": 3504,
+    "xy_uv_boundaries_preserved": true
+  },
+  "lpfv.fabric.roof.compact.orange.03.rear.tight": {
+    "degenerate_triangles": 0,
+    "longitudinal_vertices_moved": 3070,
+    "native_stream_vertices": 5805,
+    "xy_uv_boundaries_preserved": true
+  },
+  "lpfv.fabric.roof.compact.orange.03.run.end.tight.flush": {
+    "degenerate_triangles": 0,
+    "longitudinal_vertices_moved": 2936,
+    "native_stream_vertices": 3339,
+    "xy_uv_boundaries_preserved": true
+  },
+  "lpfv.fabric.roof.compact.orange.03.run.start.tight.flush": {
+    "degenerate_triangles": 0,
+    "longitudinal_vertices_moved": 2938,
+    "native_stream_vertices": 3345,
+    "xy_uv_boundaries_preserved": true
+  },
+  "lpfv.fabric.roof.compact.orange.06.front.end.tight": {
+    "degenerate_triangles": 0,
+    "longitudinal_vertices_moved": 3110,
+    "native_stream_vertices": 3504,
+    "xy_uv_boundaries_preserved": true
+  },
+  "lpfv.fabric.roof.compact.orange.06.front.tight": {
+    "degenerate_triangles": 0,
+    "longitudinal_vertices_moved": 3066,
+    "native_stream_vertices": 5799,
+    "xy_uv_boundaries_preserved": true
+  },
+  "lpfv.fabric.roof.compact.slate.03.front.end.tight": {
+    "degenerate_triangles": 0,
+    "longitudinal_vertices_moved": 3110,
+    "native_stream_vertices": 3504,
+    "xy_uv_boundaries_preserved": true
+  },
+  "lpfv.fabric.roof.compact.slate.03.front.tight": {
+    "degenerate_triangles": 0,
+    "longitudinal_vertices_moved": 3066,
+    "native_stream_vertices": 5799,
+    "xy_uv_boundaries_preserved": true
+  },
+  "lpfv.fabric.roof.compact.slate.03.run.end.tight.flush": {
+    "degenerate_triangles": 0,
+    "longitudinal_vertices_moved": 2936,
+    "native_stream_vertices": 3339,
+    "xy_uv_boundaries_preserved": true
+  },
+  "lpfv.fabric.roof.compact.slate.03.run.start.tight.flush": {
+    "degenerate_triangles": 0,
+    "longitudinal_vertices_moved": 2938,
+    "native_stream_vertices": 3345,
+    "xy_uv_boundaries_preserved": true
+  },
+  "lpfv.fabric.roof.compact.slate.06.rear.end.tight": {
+    "degenerate_triangles": 0,
+    "longitudinal_vertices_moved": 3112,
+    "native_stream_vertices": 3504,
+    "xy_uv_boundaries_preserved": true
+  },
+  "lpfv.fabric.roof.compact.slate.06.rear.tight": {
+    "degenerate_triangles": 0,
+    "longitudinal_vertices_moved": 3070,
+    "native_stream_vertices": 5805,
+    "xy_uv_boundaries_preserved": true
+  }
+}

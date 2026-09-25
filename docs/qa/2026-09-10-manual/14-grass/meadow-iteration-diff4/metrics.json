@@ -1,0 +1,68 @@
+{
+  "meadow_near_-8": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 5.009667427000793,
+    "roi_mean_abs_rgb": 5.009667427000793,
+    "roi_changed_over_20_fraction": 0.06814860516591871
+  },
+  "meadow_near_8": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 4.122812350588339,
+    "roi_mean_abs_rgb": 4.122812350588339,
+    "roi_changed_over_20_fraction": 0.037024631673283
+  },
+  "meadow_t00": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 3.6359172309126486,
+    "roi_mean_abs_rgb": 3.6359172309126486,
+    "roi_changed_over_20_fraction": 0.03662776427990804
+  },
+  "meadow_t02": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 3.9899083095588184,
+    "roi_mean_abs_rgb": 3.9899083095588184,
+    "roi_changed_over_20_fraction": 0.04085200955634166
+  },
+  "meadow_t10": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 3.022248404837016,
+    "roi_mean_abs_rgb": 3.022248404837016,
+    "roi_changed_over_20_fraction": 0.009114439668275152
+  },
+  "meadow_t30": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 4.458860894882493,
+    "roi_mean_abs_rgb": 4.458860894882493,
+    "roi_changed_over_20_fraction": 0.051731242527071425
+  }
+}

@@ -1,0 +1,74 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_ceiling_courses.gd
+[0m* test_photographed_stone_courses_do_not_hang_below_their_owned_band
+* test_garden_tunnel_turn_uses_city_stone_inside_the_native_grass_lip
+* test_a_short_neighbor_course_cannot_own_a_full_facade_miter
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_warren_production_surfaces.gd
+[0m* test_production_surface_bundle_carries_stair_transition_meshes
+* test_patchwork_planks_have_one_exact_recessed_closure_skin
+* test_ground_finished_court_cells_are_not_hidden_by_patchwork_wood
+* test_town_streets_reuse_sparse_spots_without_rounding_their_edges
+* test_every_rendered_public_surface_suppresses_retained_stone_caps
+* test_borne_concave_court_corner_becomes_an_explicit_floor_claim
+* test_court_corner_cannot_claim_an_inhabited_room
+* test_terrain_cap_is_the_only_top_and_has_no_buried_stone_soffit
+* test_borne_three_sided_turf_corner_closes_once_without_spreading
+* test_turf_field_uses_only_level_cross_material_controls
+* test_selected_turf_alone_owns_its_datum
+* test_transition_mesh_owns_its_retained_riser_without_a_rock_wall
+* test_payload_surface_meshes_validate_and_respect_block_ownership
+* test_commit_queue_stages_surface_mesh_collision_and_visuals
+* test_a_bank_under_a_house_is_one_plinth_course_and_no_more
+* test_hollow_room_bearing_footprint_closes_all_four_plinth_sides
+* test_the_hill_substrate_renderer_is_gone_and_may_not_return
+* test_hill_no_building_stands_over_carries_no_stone_at_all
+* test_hill_standing_over_a_street_is_not_a_stone_vault
+* test_bare_stone_never_exceeds_one_storey_in_an_assembled_payload
+* test_plinth_walls_are_deterministic_and_uniquely_identified
+* test_rock_cladding_stops_at_the_ground_storey
+* test_the_facade_family_selector_can_never_return_rock
+[1m23/23 passed.
+[0m[4m
+
+res://tests/test_september10_skywalk_bearing.gd
+[0m* test_photographed_skywalk_has_a_real_lower_bearing_at_its_free_end
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_september10_prefab_floor.gd
+[0m* test_prefab_bearings_have_a_continuous_native_floor
+* test_rotated_prefab_floor_owns_every_complete_supported_cell
+* test_prefab_platform_reserves_support_under_its_whole_floor
+* test_photographed_outer_ledge_sits_above_its_retaining_stone
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               4
+Tests                31
+Passing Tests        31
+Asserts            1131
+Time              85.362s
+
+
+[32m---- All tests passed! ----
+[0m

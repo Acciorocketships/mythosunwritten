@@ -1,0 +1,7 @@
+{
+  "paired_views": 14,
+  "fixed_camera_player_crosshair_equal": true,
+  "physical_player_is_live_and_not_locked": true,
+  "maximum_sampling_chunks": 28,
+  "maximum_visual_queue": 51
+}

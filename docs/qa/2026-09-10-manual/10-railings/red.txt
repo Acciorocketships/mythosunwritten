@@ -1,0 +1,612 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_rail_shading.gd
+[0m* test_guard_beams_and_posts_shade_their_outer_faces_in_all_orientations
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.67705094814301] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.67705082893372] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.081169269979] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.08116928488016] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.08116924017668] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.67705094814301] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.67705082893372] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.081169269979] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.08116928488016] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.11000000685453] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.08116924017668] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.11000000685453] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.67705094814301] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.08116924017668] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.67705082893372] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.081169269979] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.08116928488016] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.08116924017668] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.67705094814301] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.67705082893372] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.081169269979] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.08116928488016] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.08116924017668] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+      at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+      at line 19
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september10_rail_shading.gd
+[0m- test_guard_beams_and_posts_shade_their_outer_faces_in_all_orientations
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.67705094814301] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.67705082893372] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.081169269979] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.08116928488016] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.08116924017668] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.67705094814301] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.67705082893372] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.081169269979] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.08116928488016] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.11000000685453] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.08116924017668] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.11000000685453] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.67705094814301] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.08116924017668] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.67705082893372] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.081169269979] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.08116928488016] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.08116924017668] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.75] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0362999998033] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.67705094814301] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.67705082893372] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.081169269979] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.08116928488016] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.08116924017668] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999995470047] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.0811692327261] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-1.5] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+[31m    [Failed]:  [0m[-0.10999999940395] expected to be > than [0.0]:  Every exposed timber side/end must shade outward
+          at line 14
+[31m    [Failed]:  [0m[-0.07259999960661] expected to be > than [0.0]:  Godot's clockwise front face must face outside the solid timber
+          at line 19
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts           0/144
+Time              0.412s
+
+
+[31m---- 1 failing tests ----
+[0m

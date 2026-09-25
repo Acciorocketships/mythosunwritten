@@ -1,0 +1,54 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_orbs.gd
+* test_small_glows_have_moving_ground_lights_and_spherical_cores
+    [Failed]:  Expected [fireflies:<GPUParticles3D#60867741456>] to be NULL:  The photographed static particle emitter must be replaced by moving lit orbs
+      at line 15
+    [Failed]:  Expected [<null>] to be anything but NULL:  Original ground-following small-orb anchors need an owned render adapter
+      at line 17
+* test_large_orb_uses_spherical_core_and_restrained_halo
+    [Failed]:  Expected [<null>] to be anything but NULL:  The large orb needs a 3D core, not only an additive flat disc
+      at line 34
+    [Failed]:  [3.20000004768371582031] expected to be between [1.0] and [2.4]:  Halo falls between the two formerly separate appearances
+      at line 37
+0/2 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september10_orbs.gd
+- test_small_glows_have_moving_ground_lights_and_spherical_cores
+    [Failed]:  Expected [fireflies:<GPUParticles3D#60867741456>] to be NULL:  The photographed static particle emitter must be replaced by moving lit orbs
+          at line 15
+    [Failed]:  Expected [<null>] to be anything but NULL:  Original ground-following small-orb anchors need an owned render adapter
+          at line 17
+- test_large_orb_uses_spherical_core_and_restrained_halo
+    [Failed]:  Expected [<null>] to be anything but NULL:  The large orb needs a 3D core, not only an additive flat disc
+          at line 34
+    [Failed]:  [3.20000004768371582031] expected to be between [1.0] and [2.4]:  Halo falls between the two formerly separate appearances
+          at line 37
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests      none
+Failing Tests         2
+Asserts             0/4
+Time              0.425s
+
+
+---- 2 failing tests ----
+

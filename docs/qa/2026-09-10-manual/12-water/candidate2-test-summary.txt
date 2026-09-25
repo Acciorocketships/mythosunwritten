@@ -1,0 +1,56 @@
+= Run Summary
+==============================================
+
+res://tests/test_water_field.gd
+- test_reported_rendered_field_follows_one_continuous_descent
+    [Failed]:  the final rendered water field follows the one continuous descent curve: ["i=0 p=(46.02181, -1048.456) field=11.830 curve=15.000 err=3.170", "i=1 p=(47.48925, -1051.981) field=11.496 curve=14.917 err=3.421", "i=2 p=(48.9567, -1055.506) field=11.081 curve=14.679 err=3.598", "i=3 p=(50.42414, -1059.031) field=10.622 curve=14.300 err=3.678", "i=4 p=(51.67561, -1062.636) field=10.140 curve=13.797 err=3.657", "i=5 p=(52.89109, -1066.256) field=9.655 curve=13.186 err=3.531", "i=6 p=(54.10657, -1069.876) field=9.165 curve=12.481 err=3.316", "i=7 p=(55.18416, -1073.537) field=8.615 curve=11.698 err=3.082", "i=8 p=(56.2066, -1077.216) field=8.064 curve=10.853 err=2.789", "i=9 p=(57.22903, -1080.895) field=7.512 curve=9.961 err=2.449", "i=10 p=(57.90269, -1084.641) field=6.950 curve=9.038 err=2.088", "i=11 p=(58.31476, -1088.437) field=6.381 curve=8.100 err=1.719", "i=12 p=(58.72683, -1092.232) field=5.811 curve=7.162 err=1.351", "i=13 p=(58.56215, -1095.988) field=5.248 curve=6.239 err=0.991", "i=14 p=(57.62848, -1099.69) field=4.692 curve=5.347 err=0.655", "i=15 p=(56.69481, -1103.393) field=4.137 curve=4.502 err=0.365"]
+          at line 276
+
+res://tests/test_water_contour.gd
+- test_pond_yields_smooth_closed_curve
+    [Failed]:  pinned pond exercises the short rounded-wall-corner bridge path
+          at line 271
+- test_border_curves_weld
+    [Failed]:  (0, -7)|(1, -7) (seed 2697992464): border point (192.0, -1171.617) matches the neighbour within 1e-4 (dist 0.000122070)
+          at line 401
+- test_reported_saddle_outward_frame_does_not_reverse
+    [Failed]:  reported saddle exercises several adjacent contour frames
+          at line 530
+
+res://tests/test_water_skin.gd
+- test_reported_exact_bank_rim_reaches_recessed_cliff_face
+    [Failed]:  a contour sample exists at the exact long-bank wall (nearest 7.53m)
+          at line 700
+- test_reported_exact_corner_wet_region_has_connected_skin_coverage
+    [Failed]:  exact upper corner probe remains dry cliff top instead of being flooded
+          at line 778
+    [Failed]:  a contour sample exists beside the exact dry corner tip
+          at line 781
+- test_skin_handles_closed_and_border_exit_curves
+    [Failed]:  closed + border-exit curves stitch watertight: ["(-688.0, 11.0, -3344.0) near={ \"dist\": 3.4720139503479, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3342.0) near={ \"dist\": 3.51516532897949, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3324.0) near={ \"dist\": 3.41262364387512, \"level\": 10.9308757781982 } ok=false - (-688.0, 10.9, -3322.0) near={ \"dist\": 2.88365125656128, \"level\": 10.831467628479 } ok=false", "(-686.0, 11.0, -3324.0) near={ \"dist\": 3.6591854095459, \"level\": 11.0 } ok=false - (-686.0, 10.95, -3322.0) near={ \"dist\": 2.66304063796997, \"level\": 11.0 } ok=false", "(-688.0, 10.9, -3322.0) near={ \"dist\": 2.88365125656128, \"level\": 10.831467628479 } ok=false - (-688.0, 11.0, -3324.5) near={ \"dist\": 3.45135307312012, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3327.0) near={ \"dist\": 3.51500725746155, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3324.5) near={ \"dist\": 3.45135307312012, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3327.0) near={ \"dist\": 3.51500725746155, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3329.5) near={ \"dist\": 3.56455039978027, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3332.0) near={ \"dist\": 3.50437474250793, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3329.5) near={ \"dist\": 3.56455039978027, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3332.0) near={ \"dist\": 3.50437474250793, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3334.5) near={ \"dist\": 3.51507496833801, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3337.0) near={ \"dist\": 3.56441187858582, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3334.5) near={ \"dist\": 3.51507496833801, \"level\": 11.0 } ok=false", "(-688.0, 11.0, -3337.0) near={ \"dist\": 3.56441187858582, \"level\": 11.0 } ok=false - (-688.0, 11.0, -3339.5) near={ \"dist\": 3.5043261051178, \"level\": 11.0 } ok=false"]
+          at line 1401
+- test_s_is_continuous_along_river
+    [Failed]:  pts[0] sits within the brief's own river gate (site precondition)
+          at line 1512
+    [Failed]:  pts[1] sits within the brief's own river gate (site precondition)
+          at line 1512
+    [Failed]:  bend pts[0..30]: s strictly increases and tracks the real spatial step along the river: ["bend pts[0..30] k=1 |Δs(0.6738) - step(1.4242)|=0.7504 >= 0.5", "bend pts[0..30] k=2 s not strictly increasing: 81.1915 -> 80.9896", "bend pts[0..30] k=3 s not strictly increasing: 80.9896 -> 80.7878", "bend pts[0..30] k=4 s not strictly increasing: 80.7878 -> 80.5863", "bend pts[0..30] k=5 s not strictly increasing: 80.5863 -> 80.4984", "bend pts[0..30] k=28 s not strictly increasing: 111.4591 -> 0.0000", "bend pts[0..30] k=29 s not strictly increasing: 0.0000 -> 0.0000"]
+          at line 1514
+    [Failed]:  clean pts[6..36]: s strictly increases and tracks the real spatial step along the river: ["clean pts[6..36] k=7 |Δs(0.6738) - step(1.4242)|=0.7504 >= 0.5", "clean pts[6..36] k=8 s not strictly increasing: 81.1915 -> 80.9896", "clean pts[6..36] k=9 s not strictly increasing: 80.9896 -> 80.7878", "clean pts[6..36] k=10 s not strictly increasing: 80.7878 -> 80.5863", "clean pts[6..36] k=11 s not strictly increasing: 80.5863 -> 80.4984"]
+          at line 1515
+- test_wall_rim_reaches_the_face
+    [Failed]:  the nearest wall point sits close to the R5-B frame's own wall reach (dist=28.87)
+          at line 1791
+
+Totals
+------
+Scripts               3
+Tests                66
+Passing Tests        57
+Failing Tests         9
+Asserts           23407/23420
+Time              256.92s
+
+
+---- 9 failing tests ----
+

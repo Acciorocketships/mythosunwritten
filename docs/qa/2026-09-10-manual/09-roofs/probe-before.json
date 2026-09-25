@@ -1,0 +1,501 @@
+{
+  "entries": [
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        495.0,
+        11.7578954696655,
+        -2089.001953125,
+        501.0,
+        12.0799999237061,
+        -2083.001953125
+      ],
+      "id": "spatial.fabric.spatial.maze_back.03.room00/floor",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, -0.161052, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.013.miter1",
+      "bounds": [
+        495.0,
+        12.0799999237061,
+        -2088.91552734375,
+        496.106323242188,
+        18.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.maze_back.03.room00/south",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-7.026583, 0.0, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.048.miter2",
+      "bounds": [
+        499.808166503906,
+        12.0799999237061,
+        -2088.89038085938,
+        501.0,
+        18.0799999237061,
+        -2083.0
+      ],
+      "id": "spatial.fabric.spatial.maze_back.03.room00/north",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-9.46084, 0.0, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.008.mirror_x.miter3",
+      "bounds": [
+        495.084503173828,
+        12.0799999237061,
+        -2089.0,
+        500.915496826172,
+        18.0799999237061,
+        -2087.8935546875
+      ],
+      "id": "spatial.fabric.spatial.maze_back.03.room00/west",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-8.25, 0.0, 10.97342)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.004.mirror_x.doorreturn.back1070859.miter.course_open",
+      "bounds": [
+        475.893676757812,
+        21.0799999237061,
+        -2088.91552734375,
+        477.0,
+        27.0799999237061,
+        -2085.1416015625
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part00.room00/east",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (2.526581, 4.5, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        495.0,
+        11.7578954696655,
+        -2083.001953125,
+        501.0,
+        12.0799999237061,
+        -2077.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/floor.0",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, -0.161052, 6.75)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        489.0,
+        11.7578954696655,
+        -2083.001953125,
+        495.0,
+        12.0799999237061,
+        -2077.001953125
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/floor.1",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, -0.161052, 6.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.door.closed.001.course_open",
+      "bounds": [
+        489.0,
+        12.0757627487183,
+        -2083.0,
+        491.141693115234,
+        18.0799999237061,
+        -2077.0
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/south",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.258308, 0.0, 6.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.013.mirror_x.doorreturn.square.back1070858",
+      "bounds": [
+        491.141693115234,
+        12.0799999237061,
+        -2083.0,
+        495.0,
+        18.0799999237061,
+        -2081.8935546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/west.1",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 0.0, 7.973417)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.plain.009.mirror_x.miter2",
+      "bounds": [
+        489.0,
+        18.0799999237061,
+        -2077.0,
+        495.0,
+        24.0799999237061,
+        -2076.0625
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00/left.1",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-5.25, 3.0, 5.015669)]"
+    },
+    {
+      "asset": "sfv.fabric.floor.l.001",
+      "bounds": [
+        477.0,
+        26.7578964233398,
+        -2088.998046875,
+        483.0,
+        27.0799999237061,
+        -2082.998046875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00/floor.1",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (0.75, 7.338948, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.miter3",
+      "bounds": [
+        481.808166503906,
+        27.0799999237061,
+        -2088.89038085938,
+        483.0,
+        33.0800018310547,
+        -2083.10961914062
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00/south",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-0.460841, 7.5, 9.75)]"
+    },
+    {
+      "asset": "sfv.fabric.ivy.001",
+      "bounds": [
+        483.578521728516,
+        28.0687808990479,
+        -2090.6298828125,
+        483.848114013672,
+        31.6459865570068,
+        -2086.9443359375
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00/facade.ivy",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (-1.09, 8.95, 10.85)]"
+    },
+    {
+      "asset": "sfv.fabric.wall.wood.window.040.mirror_x.miter1",
+      "bounds": [
+        477.0,
+        27.0799999237061,
+        -2089.0,
+        482.890350341797,
+        33.0800018310547,
+        -2087.80810546875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00/east.1",
+      "local": "[X: (1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.75, 7.5, 10.96084)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.rear.end.tight",
+      "bounds": [
+        498.0,
+        18.0799980163574,
+        -2089.0,
+        501.0,
+        22.3703193664551,
+        -2083.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.03.room00/gable.00.00.00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, 2.972301, 9.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.06.front.end.tight",
+      "bounds": [
+        495.0,
+        18.0799999237061,
+        -2089.0,
+        498.0,
+        22.3703155517578,
+        -2083.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.03.room00/gable.00.00.01",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, 2.972301, 9.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.prop.lantern.table.01",
+      "bounds": [
+        489.819244384766,
+        16.6758346557617,
+        -2077.94580078125,
+        490.376007080078,
+        17.6614818572998,
+        -2077.654296875
+      ],
+      "id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00/south/lantern",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.232534, 2.3, 5.65)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        497.771759033203,
+        12.0799999237061,
+        -2084.14428710938,
+        502.232452392578,
+        18.0799999237061,
+        -2079.88354492188
+      ],
+      "id": "facade-joint/-13/0/11",
+      "local": "[X: (6.498161, 0.0, 6.03194), Y: (0.0, 1.0, 0.0), Z: (-0.680326, 0.0, 0.73291), O: (-9.251053, 0.0, 7.756897)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        493.855987548828,
+        12.0799999237061,
+        -2084.14404296875,
+        498.085906982422,
+        18.0799999237061,
+        -2079.9140625
+      ],
+      "id": "facade-joint/-9/0/11",
+      "local": "[X: (6.03194, 0.0, -6.03194), Y: (0.0, 1.0, 0.0), Z: (0.707107, 0.0, 0.707107), O: (-7.235479, 0.0, 7.764519)]"
+    },
+    {
+      "asset": "sfv.deck.pillar.001",
+      "bounds": [
+        489.040008544922,
+        12.0799999237061,
+        -2077.1201171875,
+        491.181732177734,
+        18.0799999237061,
+        -2076.8798828125
+      ],
+      "id": "facade-run-joint/-3750/0/5250/1/0",
+      "local": "[X: (-0.0, 0.0, -0.426491), Y: (0.0, 1.0, 0.0), Z: (1.812389, 0.0, -0.0), O: (-4.305429, 0.0, 5.25)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight.mirror_z",
+      "bounds": [
+        499.5,
+        18.0799999237061,
+        -2083.0,
+        502.5,
+        22.074426651001,
+        -2077.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.02.room00/continuous-roof/003/002",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-9.75, 2.971562, 6.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "bounds": [
+        496.5,
+        18.0799999237061,
+        -2083.0,
+        499.5,
+        22.074426651001,
+        -2077.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.02.room00/continuous-roof/003/003",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-8.25, 2.971562, 6.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight.mirror_z",
+      "bounds": [
+        493.5,
+        18.0799999237061,
+        -2083.0,
+        496.5,
+        22.074426651001,
+        -2077.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.02.room00/continuous-roof/003/004",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-6.75, 2.971562, 6.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.middle.tight",
+      "bounds": [
+        490.5,
+        18.0799999237061,
+        -2083.0,
+        493.5,
+        22.074426651001,
+        -2077.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.02.room00/continuous-roof/003/005",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, 2.971562, 6.75)]"
+    },
+    {
+      "asset": "lpfv.fabric.roof.compact.orange.03.run.end.tight",
+      "bounds": [
+        487.836090087891,
+        18.0799999237061,
+        -2083.0,
+        490.5,
+        22.3703155517578,
+        -2077.0
+      ],
+      "id": "spatial.roof.spatial.maze_back.02.room00/continuous-roof/003/006",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-5.25, 2.972301, 6.75)]"
+    }
+  ],
+  "rooms": [
+    {
+      "cells": "[(-6, 2, 0), (-5, 2, 0), (-4, 2, 0), (-3, 2, 0), (-6, 2, 1), (-5, 2, 1), (-4, 2, 1), (-3, 2, 1), (-6, 2, 2), (-5, 2, 2), (-4, 2, 2), (-3, 2, 2), (-6, 2, 3), (-5, 2, 3), (-4, 2, 3), (-3, 2, 3), (-6, 3, 0), (-5, 3, 0), (-4, 3, 0), (-3, 3, 0), (-6, 3, 1), (-5, 3, 1), (-4, 3, 1), (-3, 3, 1), (-6, 3, 2), (-5, 3, 2), (-4, 3, 2), (-3, 3, 2), (-6, 3, 3), (-5, 3, 3), (-4, 3, 3), (-3, 3, 3)]",
+      "id": "spatial.parcel.maze.house.001.part01.room00",
+      "kind": "building",
+      "origin": "(-4, 2, 1)"
+    },
+    {
+      "cells": "[(2, 3, 6), (3, 3, 6), (2, 3, 7), (3, 3, 7), (2, 4, 6), (3, 4, 6), (2, 4, 7), (3, 4, 7)]",
+      "id": "spatial.parcel.maze.house.007.part00.room00",
+      "kind": "tower",
+      "origin": "(2, 3, 6)"
+    },
+    {
+      "cells": "[(0, 5, 6), (1, 5, 6), (2, 5, 6), (3, 5, 6), (0, 5, 7), (1, 5, 7), (2, 5, 7), (3, 5, 7), (0, 6, 6), (1, 6, 6), (2, 6, 6), (3, 6, 6), (0, 6, 7), (1, 6, 7), (2, 6, 7), (3, 6, 7)]",
+      "id": "spatial.parcel.maze.house.007.part01.room00",
+      "kind": "slim",
+      "origin": "(1, 5, 7)"
+    },
+    {
+      "cells": "[(2, 7, 6), (3, 7, 6), (2, 7, 7), (3, 7, 7), (2, 8, 6), (3, 8, 6), (2, 8, 7), (3, 8, 7)]",
+      "id": "spatial.parcel.maze.house.007.part02.room00",
+      "kind": "tower",
+      "origin": "(2, 7, 6)"
+    },
+    {
+      "cells": "[(-6, 0, 4), (-5, 0, 4), (-4, 0, 4), (-3, 0, 4), (-6, 0, 5), (-5, 0, 5), (-4, 0, 5), (-3, 0, 5), (-6, 1, 4), (-5, 1, 4), (-4, 1, 4), (-3, 1, 4), (-6, 1, 5), (-5, 1, 5), (-4, 1, 5), (-3, 1, 5)]",
+      "id": "spatial.parcel.maze.house.011.part00.room00",
+      "kind": "slim",
+      "origin": "(-4, 0, 4)"
+    },
+    {
+      "cells": "[(-4, 0, 2), (-3, 0, 2), (-4, 0, 3), (-3, 0, 3), (-4, 1, 2), (-3, 1, 2), (-4, 1, 3), (-3, 1, 3)]",
+      "id": "spatial.parcel.maze.house.012.part00.room00",
+      "kind": "tower",
+      "origin": "(-3, 0, 2)"
+    },
+    {
+      "cells": "[(-8, 0, 2), (-7, 0, 2), (-6, 0, 2), (-5, 0, 2), (-8, 0, 3), (-7, 0, 3), (-6, 0, 3), (-5, 0, 3), (-8, 1, 2), (-7, 1, 2), (-6, 1, 2), (-5, 1, 2), (-8, 1, 3), (-7, 1, 3), (-6, 1, 3), (-5, 1, 3)]",
+      "id": "spatial.maze_back.01.room00",
+      "kind": "slim",
+      "origin": "(-6, 0, 2)"
+    },
+    {
+      "cells": "[(-8, 0, 4), (-7, 0, 4), (-8, 0, 5), (-7, 0, 5), (-8, 1, 4), (-7, 1, 4), (-8, 1, 5), (-7, 1, 5)]",
+      "id": "spatial.maze_back.02.room00",
+      "kind": "tower",
+      "origin": "(-7, 0, 4)"
+    },
+    {
+      "cells": "[(-6, 0, 6), (-5, 0, 6), (-6, 0, 7), (-5, 0, 7), (-6, 1, 6), (-5, 1, 6), (-6, 1, 7), (-5, 1, 7)]",
+      "id": "spatial.maze_back.03.room00",
+      "kind": "tower",
+      "origin": "(-5, 0, 6)"
+    }
+  ],
+  "units": [
+    {
+      "id": "spatial.fabric.spatial.maze_back.01.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-9.0, 0.0, 3.0)]",
+      "recipe": "room.slim.base.rock.closed",
+      "world": "(499.5, 12.08, -2072.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.maze_back.02.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-10.5, 0.0, 6.0)]",
+      "recipe": "room.tower.base.amber.closed",
+      "world": "(502.5, 12.08, -2078.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.maze_back.03.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-7.5, 0.0, 9.0)]",
+      "recipe": "room.tower.base.amber.closed",
+      "world": "(496.5, 12.08, -2084.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part00.room00",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.0, 4.5, 9.0)]",
+      "recipe": "room.tower.base.blue",
+      "world": "(475.5, 21.08, -2084.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.parcel.maze.house.011.part00.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-6.0, 0.0, 6.0)]",
+      "recipe": "room.slim.base.amber",
+      "world": "(493.5, 12.08, -2078.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.parcel.maze.house.012.part00.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-4.5, 0.0, 3.0)]",
+      "recipe": "room.tower.base.amber.closed",
+      "world": "(490.5, 12.08, -2072.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.parcel.maze.house.001.part01.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-6.0, 3.0, 1.5)]",
+      "recipe": "room.upper.amber.c",
+      "world": "(493.5, 18.08, -2069.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part01.room00",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (1.5, 7.5, 10.5)]",
+      "recipe": "room.slim.upper.blue.b",
+      "world": "(478.5, 27.08, -2087.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.parcel.maze.house.007.part02.room00",
+      "local": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (3.0, 10.5, 9.0)]",
+      "recipe": "room.tower.upper.blue",
+      "world": "(475.5, 33.08, -2084.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.feature.facade-bay.01.component.00",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (3.0, 10.5, 12.0)]",
+      "recipe": "outcrop.embedded.blue",
+      "world": "(475.5, 33.08, -2090.5)"
+    },
+    {
+      "id": "spatial.fabric.spatial.feature.room_overhang.05.component.00",
+      "local": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (3.0, 7.5, 9.0)]",
+      "recipe": "outcrop.support.bracketed.2",
+      "world": "(475.5, 27.08, -2084.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.maze_back.01.room00.tile01",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-12.0, 3.0, 4.5)]",
+      "recipe": "roof.partial.gable.orange.2.negative",
+      "world": "(505.5, 18.08, -2075.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.maze_back.02.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-10.5, 3.0, 6.0)]",
+      "recipe": "roof.terminal.tight.tower.orange",
+      "world": "(502.5, 18.08, -2078.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.maze_back.03.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-7.5, 3.0, 9.0)]",
+      "recipe": "roof.terminal.tight.tower.orange",
+      "world": "(496.5, 18.08, -2084.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.parcel.maze.house.001.part00.room00.tile01",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-3.0, 3.0, 1.5)]",
+      "recipe": "roof.partial.gable.orange.2.positive",
+      "world": "(487.5, 18.08, -2069.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.parcel.maze.house.011.part00.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-6.0, 3.0, 6.0)]",
+      "recipe": "roof.terminal.tight.slim.orange",
+      "world": "(493.5, 18.08, -2078.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.parcel.maze.house.001.part01.room00",
+      "local": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-6.0, 6.0, 1.5)]",
+      "recipe": "roof.square.01",
+      "world": "(493.5, 24.08, -2069.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.parcel.maze.house.007.part01.room00.tile00",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 10.5, 9.0)]",
+      "recipe": "roof.partial.gable.orange.2.positive",
+      "world": "(481.5, 33.08, -2084.5)"
+    },
+    {
+      "id": "spatial.roof.spatial.parcel.maze.house.007.part01.room00.tile01",
+      "local": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 10.5, 10.5)]",
+      "recipe": "roof.partial.gable.orange.2.positive",
+      "world": "(481.5, 33.08, -2087.5)"
+    }
+  ]
+}

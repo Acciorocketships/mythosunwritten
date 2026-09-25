@@ -1,0 +1,229 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_prefab_floor.gd
+* test_prefab_bearings_have_a_continuous_native_floor
+* test_rotated_prefab_floor_owns_every_complete_supported_cell
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -6)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -6)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -5)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -5)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -3)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -3)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -1)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -1)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-6, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-6, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-5, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-5, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-3, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-3, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-1, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-1, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, 0)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, 0)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -1)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -1)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -3)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -3)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -5)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -5)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (0, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (0, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-1, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-1, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-3, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-3, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -2)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-5, 4, -4)
+      at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-5, 4, -2)
+      at line 42
+1/2 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september10_prefab_floor.gd
+- test_rotated_prefab_floor_owns_every_complete_supported_cell
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -6)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -6)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -5)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -5)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -3)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -3)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -1)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -1)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-6, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-6, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-5, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-5, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-3, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-3, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-1, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-1, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, 0)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, 0)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -1)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -1)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -3)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -3)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -5)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -5)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (0, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (0, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-1, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-1, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-2, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-3, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-3, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-4, 4, -2)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-5, 4, -4)
+          at line 42
+    [Failed]:  Rotated native floor must own the complete cell (-5, 4, -2)
+          at line 42
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts           84/132
+Time              17.382s
+
+
+---- 1 failing tests ----
+

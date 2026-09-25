@@ -1,0 +1,57 @@
+{
+  "roof": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.4275813643831874,
+    "roi_mean_abs_rgb": 1.4275813643831874,
+    "roi_changed_over_20_fraction": 0.022067515869066412
+  },
+  "roof_left": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.3724119179559697,
+    "roi_mean_abs_rgb": 1.3724119179559697,
+    "roi_changed_over_20_fraction": 0.022153081604942997
+  },
+  "roof_overhead": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 2.4853159064451265,
+    "roi_mean_abs_rgb": 2.4853159064451265,
+    "roi_changed_over_20_fraction": 0.05488366437515621
+  },
+  "roof_rear": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 3.788939540301837,
+    "roi_mean_abs_rgb": 3.788939540301837,
+    "roi_changed_over_20_fraction": 0.055780978736914635
+  },
+  "roof_right": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 1.3736608774691157,
+    "roi_mean_abs_rgb": 1.3736608774691157,
+    "roi_changed_over_20_fraction": 0.020255436238890527
+  }
+}

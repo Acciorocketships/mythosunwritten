@@ -1,0 +1,398 @@
+{
+  "01_rail_exact": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.10292075637108208,
+    "roi_mean_abs_rgb": 0.10292075637108208,
+    "roi_changed_over_20_fraction": 8.16252085664812e-05
+  },
+  "01_rail_gameplay_camera": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.24168248506915438,
+    "roi_mean_abs_rgb": 0.24168248506915438,
+    "roi_changed_over_20_fraction": 0.00013566672596222049
+  },
+  "01_rail_jitter_0": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.08488177292204736,
+    "roi_mean_abs_rgb": 0.08488177292204736,
+    "roi_changed_over_20_fraction": 0.0001987151629239163
+  },
+  "01_rail_jitter_1": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.11173327658974007,
+    "roi_mean_abs_rgb": 0.11173327658974007,
+    "roi_changed_over_20_fraction": 9.232092555105459e-05
+  },
+  "01_rail_near_left": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.1342729051593887,
+    "roi_mean_abs_rgb": 0.1342729051593887,
+    "roi_changed_over_20_fraction": 0.00015874695734998412
+  },
+  "01_rail_near_right": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.0866514449726002,
+    "roi_mean_abs_rgb": 0.0866514449726002,
+    "roi_changed_over_20_fraction": 5.291565244999471e-05
+  },
+  "02_prefab_base_exact": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.02385689055616978,
+    "roi_mean_abs_rgb": 0.02385689055616978,
+    "roi_changed_over_20_fraction": 0.0002763998441802915
+  },
+  "02_prefab_base_gameplay_camera": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.01966754709305424,
+    "roi_mean_abs_rgb": 0.01966754709305424,
+    "roi_changed_over_20_fraction": 0.00023980923344359305
+  },
+  "02_prefab_base_jitter_0": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.02919292746652616,
+    "roi_mean_abs_rgb": 0.02919292746652616,
+    "roi_changed_over_20_fraction": 0.00034676640328932704
+  },
+  "02_prefab_base_jitter_1": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.023177243417255307,
+    "roi_mean_abs_rgb": 0.023177243417255307,
+    "roi_changed_over_20_fraction": 0.0002668299921414627
+  },
+  "02_prefab_base_near_left": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.025311132777756512,
+    "roi_mean_abs_rgb": 0.025311132777756512,
+    "roi_changed_over_20_fraction": 0.00032537496932018024
+  },
+  "02_prefab_base_near_right": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.028356034523522696,
+    "roi_mean_abs_rgb": 0.028356034523522696,
+    "roi_changed_over_20_fraction": 0.0003383224161962428
+  },
+  "03_skywalk_exact": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.08843762970902395,
+    "roi_mean_abs_rgb": 0.08843762970902395,
+    "roi_changed_over_20_fraction": 0.00010808303479147855
+  },
+  "03_skywalk_gameplay_camera": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.1540429059625057,
+    "roi_mean_abs_rgb": 0.1540429059625057,
+    "roi_changed_over_20_fraction": 0.00012778567134200848
+  },
+  "03_skywalk_jitter_0": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.06818650928575878,
+    "roi_mean_abs_rgb": 0.06818650928575878,
+    "roi_changed_over_20_fraction": 0.00033156722652177536
+  },
+  "03_skywalk_jitter_1": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.29483381858112495,
+    "roi_mean_abs_rgb": 0.29483381858112495,
+    "roi_changed_over_20_fraction": 0.00014692537541966615
+  },
+  "03_skywalk_near_left": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.07803444996618653,
+    "roi_mean_abs_rgb": 0.07803444996618653,
+    "roi_changed_over_20_fraction": 0.00017619786400902492
+  },
+  "03_skywalk_near_right": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.17495753612712966,
+    "roi_mean_abs_rgb": 0.17495753612712966,
+    "roi_changed_over_20_fraction": 0.0002471273555909327
+  },
+  "07_bench_exact": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.1591408224368371,
+    "roi_mean_abs_rgb": 0.1591408224368371,
+    "roi_changed_over_20_fraction": 9.738731780690515e-05
+  },
+  "07_bench_gameplay_camera": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.44908069374296805,
+    "roi_mean_abs_rgb": 0.44908069374296805,
+    "roi_changed_over_20_fraction": 0.00010864596726435084
+  },
+  "07_bench_jitter_0": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.1276432494263718,
+    "roi_mean_abs_rgb": 0.1276432494263718,
+    "roi_changed_over_20_fraction": 0.00010414250748137256
+  },
+  "07_bench_jitter_1": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.07800817978411916,
+    "roi_mean_abs_rgb": 0.07800817978411916,
+    "roi_changed_over_20_fraction": 9.738731780690515e-05
+  },
+  "07_bench_near_left": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.20350046423164597,
+    "roi_mean_abs_rgb": 0.20350046423164597,
+    "roi_changed_over_20_fraction": 8.894333071382089e-05
+  },
+  "07_bench_near_right": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.23300750801803485,
+    "roi_mean_abs_rgb": 0.23300750801803485,
+    "roi_changed_over_20_fraction": 0.00010695716984573398
+  },
+  "12_rail_texture_exact": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.11727178154617285,
+    "roi_mean_abs_rgb": 0.11727178154617285,
+    "roi_changed_over_20_fraction": 5.5730314814356126e-05
+  },
+  "12_rail_texture_gameplay_camera": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.16936817960398076,
+    "roi_mean_abs_rgb": 0.16936817960398076,
+    "roi_changed_over_20_fraction": 7.149242405478009e-05
+  },
+  "12_rail_texture_jitter_0": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.121022037680448,
+    "roi_mean_abs_rgb": 0.121022037680448,
+    "roi_changed_over_20_fraction": 6.135963954307897e-05
+  },
+  "12_rail_texture_jitter_1": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.1811132027179881,
+    "roi_mean_abs_rgb": 0.1811132027179881,
+    "roi_changed_over_20_fraction": 7.318122147339694e-05
+  },
+  "12_rail_texture_near_left": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.23371942995206066,
+    "roi_mean_abs_rgb": 0.23371942995206066,
+    "roi_changed_over_20_fraction": 3.096128600797563e-05
+  },
+  "12_rail_texture_near_right": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.23043284253127466,
+    "roi_mean_abs_rgb": 0.23043284253127466,
+    "roi_changed_over_20_fraction": 3.0398353535103342e-05
+  },
+  "17_prefab_support_exact": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.2920906486408183,
+    "roi_mean_abs_rgb": 0.2920906486408183,
+    "roi_changed_over_20_fraction": 0.001220437601187112
+  },
+  "17_prefab_support_gameplay_camera": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.1379891977011339,
+    "roi_mean_abs_rgb": 0.1379891977011339,
+    "roi_changed_over_20_fraction": 0.0013499120699477373
+  },
+  "17_prefab_support_jitter_0": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.26609930579167446,
+    "roi_mean_abs_rgb": 0.26609930579167446,
+    "roi_changed_over_20_fraction": 0.001291930025241892
+  },
+  "17_prefab_support_jitter_1": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.20375960081332484,
+    "roi_mean_abs_rgb": 0.20375960081332484,
+    "roi_changed_over_20_fraction": 0.0012654721990168947
+  },
+  "17_prefab_support_near_left": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.4894622793961461,
+    "roi_mean_abs_rgb": 0.4894622793961461,
+    "roi_changed_over_20_fraction": 0.0026260799859492054
+  },
+  "17_prefab_support_near_right": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 0.4974767490124288,
+    "roi_mean_abs_rgb": 0.4974767490124288,
+    "roi_changed_over_20_fraction": 0.00046498222259250667
+  }
+}

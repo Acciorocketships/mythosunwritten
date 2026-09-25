@@ -1,0 +1,61 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_grass_latency.gd
+[0m* test_committed_ground_supplies_grass_without_waiting_for_the_terrain_worker
+[1m1/1 passed.
+[0m[4m
+
+res://tests/test_streaming_queue.gd
+[0m* test_repeated_pending_requests_do_not_resort_or_duplicate_work
+* test_worker_handoff_still_owns_completed_components
+* test_travel_rebases_priorities_and_cancels_abandoned_chunks
+* test_near_feature_dependency_does_not_wait_for_far_terrain
+* test_widening_chunk_work_has_one_shared_terrain_owner
+* test_travel_rebases_and_cancels_components_waiting_behind_active_work
+[1m6/6 passed.
+[0m[4m
+
+res://tests/test_september10_stream_cancellation.gd
+[0m* test_abandoned_context_does_not_publish_a_partial_plan
+* test_cancelled_road_context_does_not_evict_a_completed_cache_entry
+* test_interrupted_context_resumes_from_complete_atomic_caches
+* test_teleport_releases_only_work_outside_the_complete_keep_halo
+* test_rejected_steep_road_site_does_not_solve_unneeded_water_domains
+* test_unsupported_roadside_prop_does_not_solve_water_before_rejection
+* test_absent_endpoint_does_not_materialize_its_irrelevant_partner
+* test_terrain_rejected_bridge_does_not_start_exact_water_queries
+* test_full_feature_cache_evicts_one_old_context_and_preserves_recent_work
+* test_return_teleport_during_cancellation_cannot_lose_its_request
+[terrain-streamer] worker_job_complete seed=0 chunk=8,0 final_phase=idle phase_ms=31718 job_ms=31718
+* test_feature_followup_cannot_lend_its_urgent_priority_to_distant_terrain
+[terrain-streamer] worker_job_complete seed=0 chunk=9,-2 final_phase=idle phase_ms=37927 job_ms=37927
+* test_far_teleport_waits_for_surrounding_ground_before_releasing_player
+* test_ordinary_chunk_crossing_does_not_start_a_teleport_gate
+[1m13/13 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               3
+Tests                20
+Passing Tests        20
+Asserts              62
+Time              40.636s
+
+
+[32m---- All tests passed! ----
+[0m

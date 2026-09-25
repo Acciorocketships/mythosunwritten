@@ -1,0 +1,327 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_turf_depth.gd
+* test_soil_follows_a_clipped_union_without_internal_walls
+* test_photographed_lawn_has_a_closed_bed_seated_in_the_actual_deck
+* test_inset_closes_concave_and_disconnected_lawns_without_degenerate_faces
+* test_border_closes_the_deck_to_lawn_layer_inside_the_existing_footprint
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+      at line 107
+3/4 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september9_turf_depth.gd
+- test_border_closes_the_deck_to_lawn_layer_inside_the_existing_footprint
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+    [Failed]:  [-1.0] expected to be > than [0.99]:  The visible timber top faces outward
+          at line 107
+
+Totals
+------
+Scripts               1
+Tests                 4
+Passing Tests         3
+Failing Tests         1
+Asserts           4035/4107
+Time              7.585s
+
+
+---- 1 failing tests ----
+

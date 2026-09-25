@@ -1,0 +1,82 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_orbs.gd
+* test_small_glows_have_moving_ground_lights_and_spherical_cores
+* test_large_orb_uses_spherical_core_and_restrained_halo
+* test_light_pool_is_bounded_and_distant_visits_release_it
+* test_native_small_core_halo_and_light_follow_same_slow_path_after_revisit
+    [Pending]:  MultiMesh transform readback needs a real rendering server; run this test graphically
+3/4 passed.
+
+
+res://tests/test_september9_spirit_orbs.gd
+* test_orb_motion_is_slow_bounded_and_keeps_its_light_attached
+1/1 passed.
+
+
+res://tests/test_biome_chunk_fx.gd
+* test_marsh_builds_fog_two_emitters_and_orbs
+* test_meadow_no_fog_no_orbs_one_emitter
+* test_glow_recipes_are_soft_billboards
+* test_petals_keep_alpha_but_get_the_soft_texture
+* test_emitter_aabb_contains_emission_box
+* test_emission_band_follows_surface_heights
+6/6 passed.
+
+
+res://tests/test_september9_biome_mood.gd
+* test_biomes_have_distinct_light_levels_and_a_twilight_endpoint
+1/1 passed.
+
+
+res://tests/test_atmosphere_field.gd
+* test_neighbouring_fog_chunks_have_identical_edges
+* test_atmosphere_is_resource_free_deterministic_and_grounded
+* test_biome_boundaries_are_continuous_at_walking_speed
+* test_landforms_have_distinct_structural_silhouettes
+* test_landform_provinces_do_not_introduce_grid_seams
+* test_islands_preserve_ground_without_raising_or_flooding_it
+* test_every_new_biome_has_a_distinct_name_and_complete_ecology
+* test_scrolling_ground_lookup_preserves_overlapping_world_samples
+* test_rivers_and_ground_share_the_new_production_height_input
+* test_wetland_particles_float_above_water_instead_of_the_lake_bed
+10/10 passed.
+
+
+res://tests/test_atmosphere_director.gd
+* test_apply_grade_sets_render_stack
+* test_biome_lighting_changes_gradually_without_rotating_shadows
+* test_mood_response_is_independent_of_frame_partition
+3/3 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september10_orbs.gd
+- test_native_small_core_halo_and_light_follow_same_slow_path_after_revisit
+    [Pending]:  MultiMesh transform readback needs a real rendering server; run this test graphically
+
+Totals
+------
+Scripts               6
+Tests                25
+Passing Tests        24
+Risky/Pending         1
+Asserts            1980
+Time              0.904s
+
+
+---- 1 pending/risky tests. ----
+

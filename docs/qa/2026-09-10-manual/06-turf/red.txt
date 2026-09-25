@@ -1,0 +1,52 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_turf_depth.gd
+[0m* test_open_garden_bases_keep_their_actual_native_underside
+[31m    [Failed]:  [0mAn open lower cell cannot be classified as buried ground
+      at line 22
+[31m    [Failed]:  [0m[0] expected to be >= than [2]:  Actual timber must close the underside, not merely a logical solid cell
+      at line 29
+[31m    [Failed]:  [0mAn open lower cell cannot be classified as buried ground
+      at line 22
+[31m    [Failed]:  [0m[0] expected to be >= than [2]:  Actual timber must close the underside, not merely a logical solid cell
+      at line 29
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september10_turf_depth.gd
+[0m- test_open_garden_bases_keep_their_actual_native_underside
+[31m    [Failed]:  [0mAn open lower cell cannot be classified as buried ground
+          at line 22
+[31m    [Failed]:  [0m[0] expected to be >= than [2]:  Actual timber must close the underside, not merely a logical solid cell
+          at line 29
+[31m    [Failed]:  [0mAn open lower cell cannot be classified as buried ground
+          at line 22
+[31m    [Failed]:  [0m[0] expected to be >= than [2]:  Actual timber must close the underside, not merely a logical solid cell
+          at line 29
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             4/8
+Time              7.102s
+
+
+[31m---- 1 failing tests ----
+[0m

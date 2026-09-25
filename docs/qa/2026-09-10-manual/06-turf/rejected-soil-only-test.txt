@@ -1,0 +1,23 @@
+extends GutTest
+
+func test_ordinary_raised_gardens_have_a_closed_soil_layer() -> void:
+	var catalog := EnvironmentCatalog.load_default()
+	var program := SettlementFabricProgram.compile(catalog)
+	var frozen := preload("res://tests/fixtures/frozen_maze_source.gd")
+	var fabric := frozen.spatial(frozen.read("res://tests/fixtures/september10-stone-source.txt"),program).compiled_fabric_cache()
+	var tx := SettlementFabricAssembler.maze_ground_skin_transaction(fabric)
+	var payload := SettlementFabricAssembler.terrace_retaining_payload(fabric)
+	var faces := PackedVector3Array()
+	for mesh: Dictionary in payload.surface_meshes:
+		if not mesh.get("soil_bed",false): continue
+		for index: int in mesh.indices: faces.append(mesh.vertices[index])
+	for cell: Vector3i in [Vector3i(0,3,-4),Vector3i(1,3,-4),Vector3i(0,3,1),Vector3i(1,3,1)]:
+		assert_true(tx.capped_ground.has(cell))
+		var point := Vector3(cell)*1.5+Vector3(.13,1.5,.17)
+		var levels: Array[float] = []
+		for i in range(0,faces.size(),3):
+			var hit: Variant = Geometry3D.segment_intersects_triangle(point+Vector3.UP*.02,point-Vector3.UP*.5,faces[i],faces[i+1],faces[i+2])
+			if hit!=null: levels.append(hit.y)
+		levels.sort()
+		assert_gte(levels.size(),2,"The actual ordinary garden must close above and below its soil, at %s" % cell)
+		if levels.size()>=2: assert_gt(levels[-1]-levels[0],.15)

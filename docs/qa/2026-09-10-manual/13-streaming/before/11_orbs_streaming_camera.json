@@ -1,0 +1,23 @@
+{
+  "built_at_release": [
+    "(8, -4)",
+    "(7, -3)",
+    "(8, -3)"
+  ],
+  "capture_event": "production movement release after return teleport",
+  "crosshair": "(1617.7, 12.2, -570.9)",
+  "original_precision_recoverable": false,
+  "player": "(1618.0, 12.0, -571.0)",
+  "poses": {
+    "exact": "(1610.41, 17.0, -568.4714)",
+    "gameplay_camera": "(1610.41, 17.0, -568.4714)",
+    "jitter_0": "(1610.41, 17.0, -568.4714)",
+    "jitter_1": "(1610.425, 17.0, -568.4714)",
+    "near_left": "(1610.132, 17.0, -569.5523)",
+    "near_right": "(1610.836, 17.0, -567.4397)"
+  },
+  "ready_msec": 120651,
+  "reconstructed_camera": "(1610.41, 17.0, -568.4714)",
+  "seed": 2697992464,
+  "startup_msec": 222340
+}

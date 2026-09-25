@@ -1,0 +1,179 @@
+{
+  "audit": [
+    {
+      "available": 7,
+      "branches": 22,
+      "construction_method": "shared_frontage_availability",
+      "domains": 67
+    },
+    {
+      "accepted": true,
+      "asset_id": "lpfv.building.house.04",
+      "construction_method": "frontage_domain",
+      "contact": "perimeter.side.0.inward",
+      "placement_count": 1,
+      "slot": "outskirts.house.00"
+    },
+    {
+      "accepted": true,
+      "asset_id": "lpfv.building.house.01",
+      "construction_method": "frontage_domain",
+      "contact": "perimeter.side.3.inward",
+      "placement_count": 1,
+      "slot": "outskirts.house.01"
+    },
+    {
+      "accepted": true,
+      "asset_id": "lpfv.building.house.06",
+      "construction_method": "frontage_domain",
+      "contact": "perimeter.side.0.inward",
+      "placement_count": 1,
+      "slot": "outskirts.house.02"
+    },
+    {
+      "accepted": true,
+      "asset_id": "lpfv.building.house.01",
+      "construction_method": "frontage_domain",
+      "contact": "perimeter.side.3.inward",
+      "placement_count": 1,
+      "slot": "outskirts.house.03"
+    },
+    {
+      "accepted": true,
+      "asset_id": "lpfv.building.house.07",
+      "construction_method": "frontage_domain",
+      "contact": "perimeter.side.0.inward",
+      "placement_count": 1,
+      "slot": "outskirts.house.04"
+    },
+    {
+      "accepted": true,
+      "asset_id": "lpfv.building.house.01",
+      "construction_method": "frontage_domain",
+      "contact": "perimeter.side.3.inward",
+      "placement_count": 1,
+      "slot": "outskirts.house.05"
+    },
+    {
+      "accepted": true,
+      "asset_id": "lpfv.building.house.07",
+      "construction_method": "frontage_domain",
+      "contact": "perimeter.side.0.inward",
+      "placement_count": 1,
+      "slot": "outskirts.house.06"
+    },
+    {
+      "accepted": true,
+      "asset_id": "lpfv.building.house.02",
+      "construction_method": "frontage_domain",
+      "contact": "perimeter.side.0",
+      "placement_count": 1,
+      "slot": "outskirts.house.07"
+    },
+    {
+      "accepted": true,
+      "asset_id": "lpfv.building.house.02",
+      "construction_method": "frontage_domain",
+      "contact": "perimeter.side.3",
+      "placement_count": 1,
+      "slot": "outskirts.house.08"
+    }
+  ],
+  "cross_conflict": "{  }",
+  "entries": [
+    {
+      "asset_id": "lpfv.building.house.04",
+      "stable_id": "form.4.outskirts.house.00",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (24.09986, 0.05, 53.88932)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.01",
+      "stable_id": "form.4.outskirts.house.00.component.closed_door",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (29.83786, 0.05, 51.26732)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.01",
+      "stable_id": "form.4.outskirts.house.01",
+      "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (20.88086, 0.05, -21.09986)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.01",
+      "stable_id": "form.4.outskirts.house.01.component.closed_door",
+      "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (18.25886, 0.05, -26.83786)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.06",
+      "stable_id": "form.4.outskirts.house.02",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (24.09986, 0.05, 35.6351)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.01",
+      "stable_id": "form.4.outskirts.house.02.component.closed_door",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (29.83786, 0.05, 33.0131)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.01",
+      "stable_id": "form.4.outskirts.house.03",
+      "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (8.892693, 0.05, -21.09986)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.01",
+      "stable_id": "form.4.outskirts.house.03.component.closed_door",
+      "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (6.270692, 0.05, -26.83786)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.07",
+      "stable_id": "form.4.outskirts.house.04",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (24.09986, 0.05, 4.880861)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.01",
+      "stable_id": "form.4.outskirts.house.04.component.closed_door",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (29.83786, 0.05, 2.258861)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.01",
+      "stable_id": "form.4.outskirts.house.05",
+      "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-8.119138, 0.05, -21.09986)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.01",
+      "stable_id": "form.4.outskirts.house.05.component.closed_door",
+      "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-10.74114, 0.05, -26.83786)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.07",
+      "stable_id": "form.4.outskirts.house.06",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (24.09986, 0.05, -7.107309)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.01",
+      "stable_id": "form.4.outskirts.house.06.component.closed_door",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (29.83786, 0.05, -9.729309)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.02",
+      "stable_id": "form.4.outskirts.house.07",
+      "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (41.90014, 0.05, -17.85635)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.02",
+      "stable_id": "form.4.outskirts.house.07.component.closed_door",
+      "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (36.16214, 0.05, -15.23435)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.02",
+      "stable_id": "form.4.outskirts.house.08",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-38.85635, 0.05, -38.90014)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.02",
+      "stable_id": "form.4.outskirts.house.08.component.closed_door",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-36.23434, 0.05, -33.16214)]"
+    }
+  ],
+  "houses": 9,
+  "seed": 4,
+  "shared_houses": 7,
+  "world_transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-10.5, 0.08, 21.5)]"
+}

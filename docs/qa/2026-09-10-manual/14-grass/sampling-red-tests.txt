@@ -1,0 +1,64 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_grass_sampling.gd
+[0m* test_detached_sampling_does_not_retain_plans_or_share_mutable_grade_caches
+[31m    [Failed]:  [0mExpected [<RefCounted#-9223371961860618486>(HeightfieldPlan.gd)] to be NULL:  a grass sampler cannot retain the canonical planning cache
+      at line 18
+[31m    [Failed]:  [0mExpected [<RefCounted#-9223371961860618486>(HeightfieldPlan.gd)] to be NULL:  
+      at line 19
+[31m    [Failed]:  [0m[<RefCounted#-9223371961759955169>(HeightfieldRegion.gd)] expected to not be same as  [<RefCounted#-9223371961759955169>(HeightfieldRegion.gd)]:  
+      at line 20
+[31m    [Failed]:  [0m[<RefCounted#-9223371961743177954>(WaterFieldContext.gd)] expected to not be same as  [<RefCounted#-9223371961743177954>(WaterFieldContext.gd)]:  
+      at line 21
+[31m    [Failed]:  [0m[<RefCounted#-9223371961793509600>(TerrainGradePatch.gd)] expected to not be same as  [<RefCounted#-9223371961793509600>(TerrainGradePatch.gd)]:  
+      at line 22
+[31m    [Failed]:  [0m[<RefCounted#-9223371961827064036>(TerrainGradePatch.gd)] expected to not be same as  [<RefCounted#-9223371961827064036>(TerrainGradePatch.gd)]:  
+      at line 23
+[31m    [Failed]:  [0mprivate cache mutation cannot change the canonical cache
+      at line 32
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september10_grass_sampling.gd
+[0m- test_detached_sampling_does_not_retain_plans_or_share_mutable_grade_caches
+[31m    [Failed]:  [0mExpected [<RefCounted#-9223371961860618486>(HeightfieldPlan.gd)] to be NULL:  a grass sampler cannot retain the canonical planning cache
+          at line 18
+[31m    [Failed]:  [0mExpected [<RefCounted#-9223371961860618486>(HeightfieldPlan.gd)] to be NULL:  
+          at line 19
+[31m    [Failed]:  [0m[<RefCounted#-9223371961759955169>(HeightfieldRegion.gd)] expected to not be same as  [<RefCounted#-9223371961759955169>(HeightfieldRegion.gd)]:  
+          at line 20
+[31m    [Failed]:  [0m[<RefCounted#-9223371961743177954>(WaterFieldContext.gd)] expected to not be same as  [<RefCounted#-9223371961743177954>(WaterFieldContext.gd)]:  
+          at line 21
+[31m    [Failed]:  [0m[<RefCounted#-9223371961793509600>(TerrainGradePatch.gd)] expected to not be same as  [<RefCounted#-9223371961793509600>(TerrainGradePatch.gd)]:  
+          at line 22
+[31m    [Failed]:  [0m[<RefCounted#-9223371961827064036>(TerrainGradePatch.gd)] expected to not be same as  [<RefCounted#-9223371961827064036>(TerrainGradePatch.gd)]:  
+          at line 23
+[31m    [Failed]:  [0mprivate cache mutation cannot change the canonical cache
+          at line 32
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             1/8
+Time              0.456s
+
+
+[31m---- 1 failing tests ----
+[0m

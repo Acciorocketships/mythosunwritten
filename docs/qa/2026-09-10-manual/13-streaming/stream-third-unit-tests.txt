@@ -1,0 +1,72 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_stream_cancellation.gd
+* test_abandoned_context_does_not_publish_a_partial_plan
+* test_interrupted_context_resumes_from_complete_atomic_caches
+* test_teleport_releases_only_work_outside_the_complete_keep_halo
+* test_rejected_steep_road_site_does_not_solve_unneeded_water_domains
+* test_terrain_rejected_bridge_does_not_start_exact_water_queries
+* test_full_feature_cache_evicts_one_old_context_and_preserves_recent_work
+* test_return_teleport_during_cancellation_cannot_lose_its_request
+[terrain-streamer] worker_job_complete seed=0 chunk=8,0 final_phase=idle phase_ms=23576 job_ms=23576
+* test_feature_followup_cannot_lend_its_urgent_priority_to_distant_terrain
+[terrain-streamer] worker_job_complete seed=0 chunk=9,-2 final_phase=idle phase_ms=28590 job_ms=28590
+* test_far_teleport_waits_for_surrounding_ground_before_releasing_player
+* test_ordinary_chunk_crossing_does_not_start_a_teleport_gate
+10/10 passed.
+
+
+res://tests/test_path_bridge_sites.gd
+* test_site_discovery_is_canonical_from_either_bank
+* test_profiled_bridge_transform_is_the_placement_transform
+2/2 passed.
+
+
+res://tests/test_september10_water_relaxation_work.gd
+* test_a_settled_lake_needs_no_priority_queue_work
+* test_sparse_initial_front_matches_the_frozen_complete_heap
+2/2 passed.
+
+
+res://tests/test_september10_water_surface.gd
+* test_photographed_connected_water_does_not_form_a_cliff_over_flat_ground
+* test_surface_reconciliation_preserves_lakes_dry_barriers_and_wet_beds
+* test_surface_reconciliation_is_symmetric_and_idempotent
+* test_an_existing_gentle_descent_is_not_a_conflicting_head_break
+* test_photo16_water_enters_the_ledge_at_ground_height
+* test_photo16_fine_support_boundary_has_no_vertical_water_step
+* test_photo16_entire_ledge_has_continuous_wet_entries_and_refinement_seams
+* test_shore_correction_preserves_a_real_fine_channel_across_a_coarse_dry_edge
+8/8 passed.
+
+
+res://tests/test_september10_water_shore.gd
+* test_photo16_actual_free_shore_closes_into_ground_or_connected_water
+1/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               5
+Tests                23
+Passing Tests        23
+Asserts             526
+Time              98.444s
+
+
+---- All tests passed! ----
+

@@ -1,0 +1,38 @@
+[
+  [
+    {
+      "build_features": true,
+      "build_terrain": false,
+      "centre": "(9, -2)",
+      "chunk": "(8, 0)",
+      "event": "start",
+      "feature_generation": 1,
+      "kind": "chunk",
+      "msec": 172992,
+      "priority_distance": 1,
+      "priority_tier": 0,
+      "profile_id": 81,
+      "queue_wait_msec": 947,
+      "queued_msec": 172045,
+      "serial": 377,
+      "terrain_generation": 1
+    },
+    {
+      "build_features": true,
+      "build_terrain": false,
+      "centre": "(9, -2)",
+      "chunk": "(8, 0)",
+      "event": "start",
+      "feature_generation": 1,
+      "kind": "chunk",
+      "msec": 541819,
+      "priority_distance": 1,
+      "priority_tier": 0,
+      "profile_id": 419,
+      "queue_wait_msec": 24548,
+      "queued_msec": 517271,
+      "serial": 1410,
+      "terrain_generation": 1
+    }
+  ]
+]

@@ -1,0 +1,310 @@
+[
+  {
+    "id": "city-1-north-east",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/1/seed-001-north-east.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-1/seed-001-north-east.png",
+    "rgb_mae": 9.721689493312757,
+    "changed_percent": 25.115788966049386
+  },
+  {
+    "id": "city-1-south-west",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/1/seed-001-south-west.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-1/seed-001-south-west.png",
+    "rgb_mae": 9.116094714506174,
+    "changed_percent": 24.70095486111111
+  },
+  {
+    "id": "city-1-north-west",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/1/seed-001-north-west.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-1/seed-001-north-west.png",
+    "rgb_mae": 9.212006655092592,
+    "changed_percent": 26.829041280864196
+  },
+  {
+    "id": "city-1-south-east",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/1/seed-001-south-east.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-1/seed-001-south-east.png",
+    "rgb_mae": 8.791071727109054,
+    "changed_percent": 24.63647762345679
+  },
+  {
+    "id": "city-1-plan",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/1/seed-001-plan.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-1/seed-001-plan.png",
+    "rgb_mae": 12.066190039866255,
+    "changed_percent": 33.853925540123456
+  },
+  {
+    "id": "city-2-north-east",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/2/seed-002-north-east.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-2/seed-002-north-east.png",
+    "rgb_mae": 7.460797003600823,
+    "changed_percent": 16.436583719135804
+  },
+  {
+    "id": "city-2-south-west",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/2/seed-002-south-west.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-2/seed-002-south-west.png",
+    "rgb_mae": 7.193248135288066,
+    "changed_percent": 17.57320601851852
+  },
+  {
+    "id": "city-2-north-west",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/2/seed-002-north-west.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-2/seed-002-north-west.png",
+    "rgb_mae": 7.320420846193415,
+    "changed_percent": 16.663290895061728
+  },
+  {
+    "id": "city-2-south-east",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/2/seed-002-south-east.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-2/seed-002-south-east.png",
+    "rgb_mae": 7.173468846450617,
+    "changed_percent": 19.552613811728396
+  },
+  {
+    "id": "city-2-plan",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/2/seed-002-plan.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-2/seed-002-plan.png",
+    "rgb_mae": 9.326644965277778,
+    "changed_percent": 18.31814236111111
+  },
+  {
+    "id": "city-3-north-east",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/3/seed-003-north-east.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-3/seed-003-north-east.png",
+    "rgb_mae": 8.764920910493828,
+    "changed_percent": 25.028549382716047
+  },
+  {
+    "id": "city-3-south-west",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/3/seed-003-south-west.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-3/seed-003-south-west.png",
+    "rgb_mae": 8.987297292952675,
+    "changed_percent": 27.154176311728396
+  },
+  {
+    "id": "city-3-north-west",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/3/seed-003-north-west.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-3/seed-003-north-west.png",
+    "rgb_mae": 8.391159014917696,
+    "changed_percent": 29.137490354938272
+  },
+  {
+    "id": "city-3-south-east",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/3/seed-003-south-east.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-3/seed-003-south-east.png",
+    "rgb_mae": 9.256016428755144,
+    "changed_percent": 26.020592206790123
+  },
+  {
+    "id": "city-3-plan",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/3/seed-003-plan.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-3/seed-003-plan.png",
+    "rgb_mae": 11.269139660493828,
+    "changed_percent": 28.37287808641975
+  },
+  {
+    "id": "city-4-north-east",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/4/seed-004-north-east.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-4/seed-004-north-east.png",
+    "rgb_mae": 3.1810910172325104,
+    "changed_percent": 5.513213734567901
+  },
+  {
+    "id": "city-4-south-west",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/4/seed-004-south-west.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-4/seed-004-south-west.png",
+    "rgb_mae": 3.0769410686728396,
+    "changed_percent": 5.249565972222222
+  },
+  {
+    "id": "city-4-north-west",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/4/seed-004-north-west.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-4/seed-004-north-west.png",
+    "rgb_mae": 3.4782830182613167,
+    "changed_percent": 6.24242862654321
+  },
+  {
+    "id": "city-4-south-east",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/4/seed-004-south-east.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-4/seed-004-south-east.png",
+    "rgb_mae": 2.230193704989712,
+    "changed_percent": 4.245563271604938
+  },
+  {
+    "id": "city-4-plan",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/4/seed-004-plan.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-final/standard-4/seed-004-plan.png",
+    "rgb_mae": 4.420890560699588,
+    "changed_percent": 7.90600887345679
+  },
+  {
+    "id": "valley-blue-NE",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/before/blue/NE.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/after/blue/NE.png",
+    "rgb_mae": 0.35185940715020575,
+    "changed_percent": 0.8452449845679012
+  },
+  {
+    "id": "valley-blue-SW",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/before/blue/SW.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/after/blue/SW.png",
+    "rgb_mae": 0.2596024627057613,
+    "changed_percent": 0.7374614197530864
+  },
+  {
+    "id": "valley-blue-NW",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/before/blue/NW.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/after/blue/NW.png",
+    "rgb_mae": 0.18284239969135802,
+    "changed_percent": 0.5016396604938271
+  },
+  {
+    "id": "valley-blue-SE",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/before/blue/SE.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/after/blue/SE.png",
+    "rgb_mae": 0.4050925925925926,
+    "changed_percent": 0.9967206790123457
+  },
+  {
+    "id": "valley-blue-plan",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/before/blue/plan.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/after/blue/plan.png",
+    "rgb_mae": 0.5365687692901234,
+    "changed_percent": 1.5366030092592593
+  },
+  {
+    "id": "valley-blue-close",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/before/blue/close.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/after/blue/close.png",
+    "rgb_mae": 1.5838482188786007,
+    "changed_percent": 3.7621045524691357
+  },
+  {
+    "id": "valley-orange-NE",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/before/orange/NE.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/after/orange/NE.png",
+    "rgb_mae": 0.26884677211934155,
+    "changed_percent": 0.8344907407407407
+  },
+  {
+    "id": "valley-orange-SW",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/before/orange/SW.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/after/orange/SW.png",
+    "rgb_mae": 0.269819637345679,
+    "changed_percent": 0.7406925154320987
+  },
+  {
+    "id": "valley-orange-NW",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/before/orange/NW.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/after/orange/NW.png",
+    "rgb_mae": 0.1846799447016461,
+    "changed_percent": 0.5782214506172839
+  },
+  {
+    "id": "valley-orange-SE",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/before/orange/SE.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/after/orange/SE.png",
+    "rgb_mae": 0.3749736368312757,
+    "changed_percent": 1.0597511574074074
+  },
+  {
+    "id": "valley-orange-plan",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/before/orange/plan.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/after/orange/plan.png",
+    "rgb_mae": 0.5249530606995885,
+    "changed_percent": 1.6533564814814814
+  },
+  {
+    "id": "valley-orange-close",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/before/orange/close.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/roof-valley/after/orange/close.png",
+    "rgb_mae": 1.195658114711934,
+    "changed_percent": 3.7019193672839505
+  },
+  {
+    "id": "hamlet-1-NE",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate3/1/NE.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/1/NE.png",
+    "rgb_mae": 7.228769129372428,
+    "changed_percent": 13.1343074845679
+  },
+  {
+    "id": "hamlet-1-SW",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate3/1/SW.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/1/SW.png",
+    "rgb_mae": 3.90885641718107,
+    "changed_percent": 6.626832561728395
+  },
+  {
+    "id": "hamlet-1-plan",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate3/1/plan.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/1/plan.png",
+    "rgb_mae": 2.860543499228395,
+    "changed_percent": 5.634982638888889
+  },
+  {
+    "id": "hamlet-1-square",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate3/1/square.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/1/square.png",
+    "rgb_mae": 13.846215760030864,
+    "changed_percent": 17.534288194444443
+  },
+  {
+    "id": "hamlet-3-NE",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate3/3/NE.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/3/NE.png",
+    "rgb_mae": 0.5779697145061728,
+    "changed_percent": 0.7595968364197531
+  },
+  {
+    "id": "hamlet-3-SW",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate3/3/SW.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/3/SW.png",
+    "rgb_mae": 0.5821154835390947,
+    "changed_percent": 0.7789834104938271
+  },
+  {
+    "id": "hamlet-3-plan",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate3/3/plan.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/3/plan.png",
+    "rgb_mae": 0.5767554012345679,
+    "changed_percent": 0.7259355709876544
+  },
+  {
+    "id": "hamlet-3-square",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate3/3/square.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/3/square.png",
+    "rgb_mae": 4.581741255144033,
+    "changed_percent": 6.8177565586419755
+  },
+  {
+    "id": "hamlet-4-NE",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate3/4/NE.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/4/NE.png",
+    "rgb_mae": 7.170265239197531,
+    "changed_percent": 13.133584104938272
+  },
+  {
+    "id": "hamlet-4-SW",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate3/4/SW.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/4/SW.png",
+    "rgb_mae": 3.8863114068930042,
+    "changed_percent": 6.627604166666666
+  },
+  {
+    "id": "hamlet-4-plan",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate3/4/plan.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/4/plan.png",
+    "rgb_mae": 2.836517650462963,
+    "changed_percent": 5.605806327160494
+  },
+  {
+    "id": "hamlet-4-square",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate3/4/square.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/4/square.png",
+    "rgb_mae": 13.799606159979424,
+    "changed_percent": 17.48017939814815
+  }
+]

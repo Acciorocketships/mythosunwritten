@@ -1,0 +1,42 @@
+{
+  "terrain_changes": 0,
+  "sites": [
+    {
+      "photo": "15",
+      "changed_wet_samples": 271,
+      "newly_dry": [],
+      "max_level_change_over_3m_equal_bed": 0.9000000953674405,
+      "wet_before": 1263,
+      "wet_after": 1263
+    },
+    {
+      "photo": "16",
+      "changed_wet_samples": 52,
+      "newly_dry": [
+        [
+          684.0,
+          -1725.0
+        ]
+      ],
+      "max_level_change_over_3m_equal_bed": 0.9000003814697024,
+      "wet_before": 1047,
+      "wet_after": 1046
+    },
+    {
+      "photo": "18",
+      "changed_wet_samples": 335,
+      "newly_dry": [],
+      "max_level_change_over_3m_equal_bed": 0.9000002384185803,
+      "wet_before": 1015,
+      "wet_after": 1015
+    },
+    {
+      "photo": "19",
+      "changed_wet_samples": 369,
+      "newly_dry": [],
+      "max_level_change_over_3m_equal_bed": 0.9000000953674405,
+      "wet_before": 1248,
+      "wet_after": 1248
+    }
+  ]
+}

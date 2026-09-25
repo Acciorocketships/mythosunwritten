@@ -1,0 +1,20 @@
+{
+  "after_side_-1_offset_-6": {
+    "mean_abs_rgb": 1.8746223661327814
+  },
+  "after_side_-1_offset_0": {
+    "mean_abs_rgb": 1.7426831913617638
+  },
+  "after_side_-1_offset_6": {
+    "mean_abs_rgb": 1.5276364191790344
+  },
+  "after_side_1_offset_-6": {
+    "mean_abs_rgb": 1.9513213526291573
+  },
+  "after_side_1_offset_0": {
+    "mean_abs_rgb": 1.8879905112102373
+  },
+  "after_side_1_offset_6": {
+    "mean_abs_rgb": 1.7972446707182794
+  }
+}

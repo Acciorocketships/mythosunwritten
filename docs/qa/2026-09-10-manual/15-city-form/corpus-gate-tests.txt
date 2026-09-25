@@ -1,0 +1,46 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_warren_maze_composition.gd
+[0m* test_corpus_composes
+PLANNER_MEASURE seed=12 scale=compact ms=640
+MACHINE_FACTOR reference_ms=[156, 158, 167] median=158 calibration=137 raw=1.153 applied=1.153
+PLANNER_MEASURE seed=9 scale=compact ms=1755
+PLANNER_MEASURE seed=3 scale=standard ms=5418
+PLANNER_MEASURE seed=9 scale=standard ms=2542
+MAZE_STAGE_MS seed 12/compact spatial=350 { &"parcels": 4, &"hero_beam": 11, &"room_composition": 76, &"bridge_stamping": 30, &"directed_back_rooms": 41, &"residual_rooms": 12, &"partition_rooms": 178, &"feature_solver": 31, &"room_gate": 50 }
+MAZE_STAGE_MS seed 9/compact spatial=1005 { &"parcels": 6, &"hero_beam": 12, &"room_composition": 56, &"bridge_stamping": 98, &"directed_back_rooms": 132, &"residual_rooms": 410, &"partition_rooms": 719, &"feature_solver": 57, &"room_gate": 60 }
+MAZE_STAGE_MS seed 3/standard spatial=3403 { &"parcels": 21, &"hero_beam": 35, &"room_composition": 969, &"bridge_stamping": 739, &"directed_back_rooms": 819, &"residual_rooms": 46, &"partition_rooms": 2632, &"feature_solver": 228, &"room_gate": 131 }
+MAZE_STAGE_MS seed 9/standard spatial=1345 { &"parcels": 14, &"hero_beam": 30, &"room_composition": 234, &"bridge_stamping": 348, &"directed_back_rooms": 202, &"residual_rooms": 69, &"partition_rooms": 902, &"feature_solver": 92, &"room_gate": 80 }
+MAZE_CORPUS compact sealed=12/12 failures=
+MAZE_CORPUS standard sealed=12/12 failures=
+MAZE_CORPUS large sealed=12/12 failures=
+MAZE_CORPUS grand sealed=12/12 failures=
+[1m1/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests         1
+Asserts              95
+Time              16.443s
+
+
+Ran Tests matching "test_corpus_composes"
+[32m---- All tests passed! ----
+[0m

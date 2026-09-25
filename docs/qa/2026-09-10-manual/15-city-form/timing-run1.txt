@@ -1,0 +1,49 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_warren_maze_composition.gd
+[0m* test_corpus_composes
+MACHINE_FACTOR reference_ms=[155, 156, 156] median=156 calibration=137 raw=1.139 applied=1.139
+[31m    [Failed]:  [0m[5397] expected to be <= than [4555]:  seed 3/standard solved in 5397 ms against a 4000 ms ceiling; name the stage with tests/harness/warren_maze_stage_probe.gd before re-pinning [machine x1.14 (reference 156 ms vs 137 calibrated): 4000 ms ceiling scaled to 4555]
+      at line 9476
+MAZE_STAGE_MS seed 12/compact spatial=353 { &"parcels": 4, &"hero_beam": 10, &"room_composition": 79, &"bridge_stamping": 29, &"directed_back_rooms": 41, &"residual_rooms": 13, &"partition_rooms": 179, &"feature_solver": 31, &"room_gate": 51 }
+MAZE_STAGE_MS seed 9/compact spatial=1084 { &"parcels": 7, &"hero_beam": 13, &"room_composition": 57, &"bridge_stamping": 101, &"directed_back_rooms": 137, &"residual_rooms": 473, &"partition_rooms": 791, &"feature_solver": 58, &"room_gate": 64 }
+MAZE_STAGE_MS seed 3/standard spatial=3348 { &"parcels": 19, &"hero_beam": 35, &"room_composition": 923, &"bridge_stamping": 751, &"directed_back_rooms": 794, &"residual_rooms": 46, &"partition_rooms": 2573, &"feature_solver": 228, &"room_gate": 136 }
+MAZE_STAGE_MS seed 9/standard spatial=1257 { &"parcels": 15, &"hero_beam": 32, &"room_composition": 180, &"bridge_stamping": 313, &"directed_back_rooms": 202, &"residual_rooms": 68, &"partition_rooms": 814, &"feature_solver": 92, &"room_gate": 80 }
+[33m    [Pending]:  [0mthe recorded 48-town corpus matrix is STALE -- it was measured against a different res://scripts/terrain/features/villages/fabric or res://tools/environment_bake/collision_sources. Re-run tests/harness/warren_maze_mode_sweep.gd -- --seeds 1,2,3,4,5,6,7,8,9,10,11,12 --scale compact,standard,large,grand
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_warren_maze_composition.gd
+[0m- test_corpus_composes
+[31m    [Failed]:  [0m[5397] expected to be <= than [4555]:  seed 3/standard solved in 5397 ms against a 4000 ms ceiling; name the stage with tests/harness/warren_maze_stage_probe.gd before re-pinning [machine x1.14 (reference 156 ms vs 137 calibrated): 4000 ms ceiling scaled to 4555]
+          at line 9476
+[33m    [Pending]:  [0mthe recorded 48-town corpus matrix is STALE -- it was measured against a different res://scripts/terrain/features/villages/fabric or res://tools/environment_bake/collision_sources. Re-run tests/harness/warren_maze_mode_sweep.gd -- --seeds 1,2,3,4,5,6,7,8,9,10,11,12 --scale compact,standard,large,grand
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Risky/Pending         1
+Asserts           84/85
+Time              16.672s
+
+
+Ran Tests matching "test_corpus_composes"
+[31m---- 1 failing tests ----
+[0m

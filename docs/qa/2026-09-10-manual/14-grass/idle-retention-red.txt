@@ -1,0 +1,41 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_grass_latency.gd
+[0m* test_idle_worker_does_not_keep_the_last_evicted_ground_sampler
+[31m    [Failed]:  [0mExpected [<RefCounted#-9223371599405640450>(GrassSamplingContext.gd)] to be NULL:  an idle visual worker must release the detached source after publication
+      at line 74
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september10_grass_latency.gd
+[0m- test_idle_worker_does_not_keep_the_last_evicted_ground_sampler
+[31m    [Failed]:  [0mExpected [<RefCounted#-9223371599405640450>(GrassSamplingContext.gd)] to be NULL:  an idle visual worker must release the detached source after publication
+          at line 74
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             2/3
+Time              1.36s
+
+
+Ran Tests matching "idle_worker"
+[31m---- 1 failing tests ----
+[0m

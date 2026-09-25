@@ -1,0 +1,165 @@
+{
+  "status": "rejected_startup_deadlock",
+  "last_sample": {
+    "active": {},
+    "built": 1,
+    "cache": {
+      "entries": 15,
+      "evictions": 0,
+      "features": {
+        "context_cache": 10,
+        "frame_cache": 1,
+        "paths": {
+          "bridge_profiles": 0,
+          "bridge_raw_cache": 0,
+          "bridge_resolved_cache": 0,
+          "context_builds": 10,
+          "context_cache": 10,
+          "evictions": 0,
+          "node_builds": 7,
+          "node_cache": 7,
+          "node_queries": 53,
+          "planning_point_cache": 0,
+          "route_cache": 0,
+          "route_exact_failures": 0,
+          "route_queries": 0,
+          "route_solves": 0
+        },
+        "villages": {
+          "builds": 1,
+          "cache": 1,
+          "evictions": 0,
+          "materialize_usec": 1861,
+          "outskirts_usec": 204712,
+          "queries": 4,
+          "urban_usec": 1035847
+        }
+      },
+      "height_samples": 139479,
+      "hydraulic_profiles": 37,
+      "region_build_usec": 1214576,
+      "region_builds": 15,
+      "region_hits": 556,
+      "source_solves": 8,
+      "trace_regions": 0,
+      "water_build_usec": 90337309,
+      "water_builds": 15,
+      "water_hits": 16,
+      "water_regions": 157,
+      "water_traces": 1394
+    },
+    "counts": {
+      "chunk_enqueues": 25,
+      "chunk_requests": 62,
+      "mesh/collision_triangles": 411462,
+      "mesh/fine_quads": 6390,
+      "mesh/graded_quads": 6164,
+      "mesh/vertices": 484911,
+      "queued_chunk_noops": 28,
+      "queued_chunk_updates": 8,
+      "started/chunk": 10,
+      "started/grass": 1,
+      "terrain_commits": 1,
+      "terrain_results": 9
+    },
+    "elapsed_ms": 344431,
+    "feature_pending": 0,
+    "frozen": true,
+    "memory": 1617619592.0,
+    "msec": 348661,
+    "pending": 8,
+    "phase": "startup",
+    "position": "(1618.0, 12.0, -571.0)",
+    "queue_head": [
+      {
+        "chunk": "(8, -3)",
+        "generation": 1,
+        "kind": "grass",
+        "priority_distance": 10000,
+        "priority_tier": 0,
+        "profile_id": 27,
+        "queued_msec": 127430,
+        "tile": "(66, -24)"
+      },
+      {
+        "chunk": "(8, -3)",
+        "generation": 1,
+        "kind": "grass",
+        "priority_distance": 14000,
+        "priority_tier": 0,
+        "profile_id": 28,
+        "queued_msec": 127430,
+        "tile": "(68, -24)"
+      },
+      {
+        "chunk": "(8, -3)",
+        "generation": 1,
+        "kind": "grass",
+        "priority_distance": 19000,
+        "priority_tier": 0,
+        "profile_id": 29,
+        "queued_msec": 127431,
+        "tile": "(67, -23)"
+      },
+      {
+        "chunk": "(8, -3)",
+        "generation": 1,
+        "kind": "grass",
+        "priority_distance": 21471,
+        "priority_tier": 0,
+        "profile_id": 30,
+        "queued_msec": 127431,
+        "tile": "(66, -23)"
+      },
+      {
+        "chunk": "(8, -3)",
+        "generation": 1,
+        "kind": "grass",
+        "priority_distance": 23601,
+        "priority_tier": 0,
+        "profile_id": 31,
+        "queued_msec": 127431,
+        "tile": "(68, -23)"
+      },
+      {
+        "chunk": "(8, -3)",
+        "generation": 1,
+        "kind": "grass",
+        "priority_distance": 34000,
+        "priority_tier": 0,
+        "profile_id": 32,
+        "queued_msec": 127431,
+        "tile": "(65, -24)"
+      },
+      {
+        "chunk": "(8, -3)",
+        "generation": 1,
+        "kind": "grass",
+        "priority_distance": 38000,
+        "priority_tier": 0,
+        "profile_id": 33,
+        "queued_msec": 127431,
+        "tile": "(69, -24)"
+      },
+      {
+        "chunk": "(8, -3)",
+        "generation": 1,
+        "kind": "grass",
+        "priority_distance": 38949,
+        "priority_tier": 0,
+        "profile_id": 34,
+        "queued_msec": 127431,
+        "tile": "(65, -23)"
+      }
+    ],
+    "queued": 40,
+    "site": -1,
+    "worker": {
+      "active": false,
+      "chunk": "(8, -3)",
+      "job_elapsed_msec": 0,
+      "phase": "idle",
+      "phase_elapsed_msec": 208782
+    }
+  }
+}

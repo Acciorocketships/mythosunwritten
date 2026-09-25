@@ -1,0 +1,53 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_path_decision_work.gd
+* test_selected_loop_does_not_solve_unrelated_incident_roads
+* test_selected_loops_supply_the_settlement_mask_without_remote_rankings
+* test_contexts_match_frozen_exhaustive_route_decisions
+3/3 passed.
+
+
+res://tests/test_september10_stream_cancellation.gd
+* test_abandoned_context_does_not_publish_a_partial_plan
+* test_cancelled_road_context_does_not_evict_a_completed_cache_entry
+* test_interrupted_context_resumes_from_complete_atomic_caches
+* test_teleport_releases_only_work_outside_the_complete_keep_halo
+* test_rejected_steep_road_site_does_not_solve_unneeded_water_domains
+* test_unsupported_roadside_prop_does_not_solve_water_before_rejection
+* test_absent_endpoint_does_not_materialize_its_irrelevant_partner
+* test_terrain_rejected_bridge_does_not_start_exact_water_queries
+* test_full_feature_cache_evicts_one_old_context_and_preserves_recent_work
+* test_return_teleport_during_cancellation_cannot_lose_its_request
+[terrain-streamer] worker_job_complete seed=0 chunk=8,0 final_phase=idle phase_ms=38414 job_ms=38414
+* test_feature_followup_cannot_lend_its_urgent_priority_to_distant_terrain
+[terrain-streamer] worker_job_complete seed=0 chunk=9,-2 final_phase=idle phase_ms=43631 job_ms=43631
+* test_far_teleport_waits_for_surrounding_ground_before_releasing_player
+* test_ordinary_chunk_crossing_does_not_start_a_teleport_gate
+13/13 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               2
+Tests                16
+Passing Tests        16
+Asserts             102
+Time              45.858s
+
+
+---- All tests passed! ----
+

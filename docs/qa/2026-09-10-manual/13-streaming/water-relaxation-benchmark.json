@@ -1,0 +1,47 @@
+[
+  {
+    "after_ms": [
+      164.525,
+      169.104,
+      166.739
+    ],
+    "before_ms": [
+      431.914,
+      442.901,
+      439.026
+    ],
+    "identical": true,
+    "initial_offers": 0,
+    "mode": "flat_lake"
+  },
+  {
+    "after_ms": [
+      190.062,
+      185.894,
+      186.33
+    ],
+    "before_ms": [
+      920.907,
+      905.136,
+      903.35
+    ],
+    "identical": true,
+    "initial_offers": 300,
+    "mode": "joined_heads"
+  },
+  {
+    "after_ms": [
+      51.162,
+      52.193,
+      52.089
+    ],
+    "before_ms": [
+      437.637,
+      439.65,
+      440.758
+    ],
+    "identical": true,
+    "initial_offers": 0,
+    "mode": "channels"
+  }
+]

@@ -1,0 +1,41 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september9_city_props.gd
+* test_private_garden_edge_has_a_supported_storage_pair
+* test_public_ground_entries_and_occupied_air_cannot_gain_furniture
+* test_frozen_towns_add_furniture_without_reusing_public_or_lamp_cells
+* test_sack_resting_height_uses_the_native_lid_not_the_crate_bounds
+4/4 passed.
+
+
+res://tests/test_september10_bench_collision.gd
+* test_both_native_benches_support_the_seat_in_every_orientation
+* test_character_cannot_walk_through_city_scale_bench_seats
+2/2 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               2
+Tests                 6
+Passing Tests         6
+Asserts             399
+Time              14.374s
+
+
+---- All tests passed! ----
+

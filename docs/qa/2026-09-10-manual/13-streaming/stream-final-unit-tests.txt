@@ -1,0 +1,42 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_stream_cancellation.gd
+* test_abandoned_context_does_not_publish_a_partial_plan
+* test_interrupted_context_resumes_from_complete_atomic_caches
+* test_teleport_releases_only_work_outside_the_complete_keep_halo
+* test_rejected_steep_road_site_does_not_solve_unneeded_water_domains
+* test_full_feature_cache_evicts_one_old_context_and_preserves_recent_work
+* test_return_teleport_during_cancellation_cannot_lose_its_request
+[terrain-streamer] worker_job_complete seed=0 chunk=8,0 final_phase=idle phase_ms=22444 job_ms=22444
+* test_feature_followup_cannot_lend_its_urgent_priority_to_distant_terrain
+[terrain-streamer] worker_job_complete seed=0 chunk=9,-2 final_phase=idle phase_ms=27362 job_ms=27362
+* test_far_teleport_waits_for_surrounding_ground_before_releasing_player
+* test_ordinary_chunk_crossing_does_not_start_a_teleport_gate
+9/9 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               1
+Tests                 9
+Passing Tests         9
+Asserts              30
+Time              29.639s
+
+
+---- All tests passed! ----
+

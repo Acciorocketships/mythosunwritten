@@ -1,0 +1,52 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_grass_latency.gd
+[0m* test_visible_grass_precedes_future_terrain_but_never_current_ground
+[31m    [Failed]:  [0m[STRING_NAME(chunk)] expected to equal [STRING_NAME(grass)]:  a visible tile cannot wait for long future terrain
+      at line 14
+* test_distant_grass_retains_background_priority_and_rebases_on_approach
+[31m    [Failed]:  [0m[STRING_NAME(chunk)] expected to equal [STRING_NAME(grass)]:  the already queued tile becomes visibly urgent
+      at line 26
+* test_result_handoff_allows_main_thread_to_schedule_newly_eligible_grass
+[31m    [Failed]:  [0mdispatch waits for the main-thread commit/request handoff rather than starting another long job
+      at line 35
+[1m0/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september10_grass_latency.gd
+[0m- test_visible_grass_precedes_future_terrain_but_never_current_ground
+[31m    [Failed]:  [0m[STRING_NAME(chunk)] expected to equal [STRING_NAME(grass)]:  a visible tile cannot wait for long future terrain
+          at line 14
+- test_distant_grass_retains_background_priority_and_rebases_on_approach
+[31m    [Failed]:  [0m[STRING_NAME(chunk)] expected to equal [STRING_NAME(grass)]:  the already queued tile becomes visibly urgent
+          at line 26
+- test_result_handoff_allows_main_thread_to_schedule_newly_eligible_grass
+[31m    [Failed]:  [0mdispatch waits for the main-thread commit/request handoff rather than starting another long job
+          at line 35
+
+Totals
+------
+Scripts               1
+Tests                 3
+Passing Tests      none
+Failing Tests         3
+Asserts             3/6
+Time              0.379s
+
+
+[31m---- 3 failing tests ----
+[0m

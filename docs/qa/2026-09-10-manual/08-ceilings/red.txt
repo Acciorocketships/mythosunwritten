@@ -1,0 +1,60 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_ceiling_courses.gd
+[0m* test_photographed_stone_courses_do_not_hang_below_their_owned_band
+[31m    [Failed]:  [0m[2.83894777297974] expected to be >= than [4.33]:  Actual masonry may meet the native board socket, but not hang an extra band below it: maze-stone/-2/3/-5/0
+      at line 27
+[31m    [Failed]:  [0m[2.83894777297974] expected to be >= than [4.33]:  Actual masonry may meet the native board socket, but not hang an extra band below it: maze-stone/-2/3/-5/1
+      at line 27
+[31m    [Failed]:  [0m[2.83894777297974] expected to be >= than [4.33]:  Actual masonry may meet the native board socket, but not hang an extra band below it: maze-stone/-2/3/-5/2
+      at line 27
+[31m    [Failed]:  [0m[2.83894777297974] expected to be >= than [4.33]:  Actual masonry may meet the native board socket, but not hang an extra band below it: maze-stone/-2/3/-5/3
+      at line 27
+[31m    [Failed]:  [0m[2.83894777297974] expected to be >= than [4.33]:  Actual masonry may meet the native board socket, but not hang an extra band below it: maze-stone/3/3/4/1
+      at line 27
+[31m    [Failed]:  [0m[2.83894777297974] expected to be >= than [4.33]:  Actual masonry may meet the native board socket, but not hang an extra band below it: maze-stone/3/3/5/1
+      at line 27
+[1m0/1 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september10_ceiling_courses.gd
+[0m- test_photographed_stone_courses_do_not_hang_below_their_owned_band
+[31m    [Failed]:  [0m[2.83894777297974] expected to be >= than [4.33]:  Actual masonry may meet the native board socket, but not hang an extra band below it: maze-stone/-2/3/-5/0
+          at line 27
+[31m    [Failed]:  [0m[2.83894777297974] expected to be >= than [4.33]:  Actual masonry may meet the native board socket, but not hang an extra band below it: maze-stone/-2/3/-5/1
+          at line 27
+[31m    [Failed]:  [0m[2.83894777297974] expected to be >= than [4.33]:  Actual masonry may meet the native board socket, but not hang an extra band below it: maze-stone/-2/3/-5/2
+          at line 27
+[31m    [Failed]:  [0m[2.83894777297974] expected to be >= than [4.33]:  Actual masonry may meet the native board socket, but not hang an extra band below it: maze-stone/-2/3/-5/3
+          at line 27
+[31m    [Failed]:  [0m[2.83894777297974] expected to be >= than [4.33]:  Actual masonry may meet the native board socket, but not hang an extra band below it: maze-stone/3/3/4/1
+          at line 27
+[31m    [Failed]:  [0m[2.83894777297974] expected to be >= than [4.33]:  Actual masonry may meet the native board socket, but not hang an extra band below it: maze-stone/3/3/5/1
+          at line 27
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts            7/13
+Time              6.713s
+
+
+[31m---- 1 failing tests ----
+[0m

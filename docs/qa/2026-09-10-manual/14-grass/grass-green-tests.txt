@@ -1,0 +1,44 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_grass_latency.gd
+[0m* test_visible_grass_precedes_future_terrain_but_never_current_ground
+* test_distant_grass_retains_background_priority_and_rebases_on_approach
+* test_result_handoff_allows_main_thread_to_schedule_newly_eligible_grass
+[1m3/3 passed.
+[0m[4m
+
+res://tests/test_streaming_queue.gd
+[0m* test_repeated_pending_requests_do_not_resort_or_duplicate_work
+* test_worker_handoff_still_owns_completed_components
+* test_travel_rebases_priorities_and_cancels_abandoned_chunks
+* test_near_feature_dependency_does_not_wait_for_far_terrain
+* test_widening_chunk_work_preserves_grass_with_the_same_parent
+* test_travel_rebases_and_cancels_components_waiting_behind_active_work
+[1m6/6 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               2
+Tests                 9
+Passing Tests         9
+Asserts              29
+Time              0.375s
+
+
+[32m---- All tests passed! ----
+[0m

@@ -1,0 +1,68 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_bench_collision.gd
+* test_both_native_benches_support_the_seat_in_every_orientation
+    [Failed]:  lpfv.fabric.prop.bench.02 yaw 0 must have a physical seat
+      at line 24
+    [Failed]:  lpfv.fabric.prop.bench.02 yaw 1 must have a physical seat
+      at line 24
+    [Failed]:  lpfv.fabric.prop.bench.02 yaw 2 must have a physical seat
+      at line 24
+    [Failed]:  lpfv.fabric.prop.bench.02 yaw 3 must have a physical seat
+      at line 24
+    [Failed]:  lpfv.fabric.prop.bench.01 yaw 0 must have a physical seat
+      at line 24
+    [Failed]:  lpfv.fabric.prop.bench.01 yaw 1 must have a physical seat
+      at line 24
+    [Failed]:  lpfv.fabric.prop.bench.01 yaw 2 must have a physical seat
+      at line 24
+    [Failed]:  lpfv.fabric.prop.bench.01 yaw 3 must have a physical seat
+      at line 24
+0/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september10_bench_collision.gd
+- test_both_native_benches_support_the_seat_in_every_orientation
+    [Failed]:  lpfv.fabric.prop.bench.02 yaw 0 must have a physical seat
+          at line 24
+    [Failed]:  lpfv.fabric.prop.bench.02 yaw 1 must have a physical seat
+          at line 24
+    [Failed]:  lpfv.fabric.prop.bench.02 yaw 2 must have a physical seat
+          at line 24
+    [Failed]:  lpfv.fabric.prop.bench.02 yaw 3 must have a physical seat
+          at line 24
+    [Failed]:  lpfv.fabric.prop.bench.01 yaw 0 must have a physical seat
+          at line 24
+    [Failed]:  lpfv.fabric.prop.bench.01 yaw 1 must have a physical seat
+          at line 24
+    [Failed]:  lpfv.fabric.prop.bench.01 yaw 2 must have a physical seat
+          at line 24
+    [Failed]:  lpfv.fabric.prop.bench.01 yaw 3 must have a physical seat
+          at line 24
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             0/8
+Time              1.143s
+
+
+---- 1 failing tests ----
+

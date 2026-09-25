@@ -1,0 +1,2417 @@
+{
+  "passed": true,
+  "routes": [
+    {
+      "distance": 23.33251953125,
+      "end": "(831.2303, -1820.286)",
+      "frozen_ticks": 0,
+      "passed": true,
+      "route": "15_downstream",
+      "start": "(831.8227, -1796.954)",
+      "swim_ticks": 424,
+      "target": "(831.0, -1821.0)",
+      "ticks": 443,
+      "trace": [
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.8503, 3.165169, -1796.954)",
+          "surface": 5.11676981991743,
+          "swimming": true,
+          "tick": 0
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.0237, 3.331238, -1796.988)",
+          "surface": 5.18153617349368,
+          "swimming": true,
+          "tick": 6
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.2078, 3.531978, -1797.07)",
+          "surface": 5.22895449672439,
+          "swimming": true,
+          "tick": 12
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.3993, 3.762811, -1797.193)",
+          "surface": 5.26030824433561,
+          "swimming": true,
+          "tick": 18
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.5949, 4.012255, -1797.352)",
+          "surface": 5.27479422588178,
+          "swimming": true,
+          "tick": 24
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.7924, 4.256249, -1797.542)",
+          "surface": 5.27578120219927,
+          "swimming": true,
+          "tick": 30
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.9894, 4.462893, -1797.758)",
+          "surface": 5.26404633768026,
+          "swimming": true,
+          "tick": 36
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.1811, 4.593923, -1798.004)",
+          "surface": 5.25069260804086,
+          "swimming": false,
+          "tick": 42
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.3365, 4.562145, -1798.346)",
+          "surface": 5.25069260804086,
+          "swimming": false,
+          "tick": 48
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.4476, 4.350368, -1798.8)",
+          "surface": 5.25069260804086,
+          "swimming": false,
+          "tick": 54
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.5162, 3.96972, -1799.358)",
+          "surface": 4.90909212783551,
+          "swimming": true,
+          "tick": 60
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.614, 3.594519, -1799.854)",
+          "surface": 4.76927414623039,
+          "swimming": true,
+          "tick": 66
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.7538, 3.286263, -1800.288)",
+          "surface": 4.66967475975335,
+          "swimming": true,
+          "tick": 72
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.8907, 3.067402, -1800.712)",
+          "surface": 4.57165404789769,
+          "swimming": true,
+          "tick": 78
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.0226, 2.934029, -1801.126)",
+          "surface": 4.47210339688179,
+          "swimming": true,
+          "tick": 84
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.1491, 2.874879, -1801.533)",
+          "surface": 4.2955538913805,
+          "swimming": true,
+          "tick": 90
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.27, 2.874949, -1801.933)",
+          "surface": 4.12142021729975,
+          "swimming": true,
+          "tick": 96
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.3853, 2.901589, -1802.328)",
+          "surface": 3.95124952812246,
+          "swimming": true,
+          "tick": 102
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.4946, 2.920043, -1802.718)",
+          "surface": 3.78573536749186,
+          "swimming": true,
+          "tick": 108
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.598, 2.902198, -1803.105)",
+          "surface": 3.62583843007993,
+          "swimming": true,
+          "tick": 114
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.6956, 2.83032, -1803.488)",
+          "surface": 3.47096768117508,
+          "swimming": true,
+          "tick": 120
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.7873, 2.698529, -1803.868)",
+          "surface": 3.32211012946751,
+          "swimming": true,
+          "tick": 126
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.8733, 2.512159, -1804.245)",
+          "surface": 3.17824071171964,
+          "swimming": true,
+          "tick": 132
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.9536, 2.285317, -1804.621)",
+          "surface": 3.03844860515966,
+          "swimming": true,
+          "tick": 138
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(835.028, 2.037297, -1804.994)",
+          "surface": 2.9011285698473,
+          "swimming": true,
+          "tick": 144
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(835.0966, 1.78863, -1805.366)",
+          "surface": 2.76591097556227,
+          "swimming": true,
+          "tick": 150
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(835.1593, 1.557551, -1805.736)",
+          "surface": 2.63273045922382,
+          "swimming": true,
+          "tick": 156
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(835.2161, 1.357432, -1806.105)",
+          "surface": 2.50518267905871,
+          "swimming": true,
+          "tick": 162
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(835.2635, 1.196722, -1806.471)",
+          "surface": 2.40356833098028,
+          "swimming": true,
+          "tick": 168
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(835.2958, 1.079682, -1806.83)",
+          "surface": 2.31174472292133,
+          "swimming": true,
+          "tick": 174
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(835.3107, 1.00484, -1807.181)",
+          "surface": 2.23067180982402,
+          "swimming": true,
+          "tick": 180
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(835.3076, 0.965949, -1807.523)",
+          "surface": 2.16155782530975,
+          "swimming": true,
+          "tick": 186
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(835.2869, 0.953749, -1807.856)",
+          "surface": 2.10564440066596,
+          "swimming": true,
+          "tick": 192
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(835.2491, 0.957973, -1808.179)",
+          "surface": 2.06131070874288,
+          "swimming": true,
+          "tick": 198
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(835.1953, 0.968943, -1808.495)",
+          "surface": 2.02668137868995,
+          "swimming": true,
+          "tick": 204
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(835.126, 0.97863, -1808.802)",
+          "surface": 1.99938021193208,
+          "swimming": true,
+          "tick": 210
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(835.0423, 0.981244, -1809.103)",
+          "surface": 1.97169843815707,
+          "swimming": true,
+          "tick": 216
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.948, 0.972792, -1809.4)",
+          "surface": 1.93773621866623,
+          "swimming": true,
+          "tick": 222
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.8489, 0.950245, -1809.696)",
+          "surface": 1.89020834710982,
+          "swimming": true,
+          "tick": 228
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.7475, 0.911208, -1809.992)",
+          "surface": 1.82915080245272,
+          "swimming": true,
+          "tick": 234
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.6448, 0.854157, -1810.291)",
+          "surface": 1.75853453558671,
+          "swimming": true,
+          "tick": 240
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.5411, 0.77927, -1810.591)",
+          "surface": 1.68402467778144,
+          "swimming": true,
+          "tick": 246
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.4366, 0.689056, -1810.895)",
+          "surface": 1.61112280478653,
+          "swimming": true,
+          "tick": 252
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.3312, 0.588259, -1811.202)",
+          "surface": 1.53950316407895,
+          "swimming": true,
+          "tick": 258
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.2249, 0.482868, -1811.512)",
+          "surface": 1.46760876239218,
+          "swimming": true,
+          "tick": 264
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.1175, 0.378801, -1811.826)",
+          "surface": 1.39382617507749,
+          "swimming": true,
+          "tick": 270
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.0091, 0.280827, -1812.143)",
+          "surface": 1.34330375676821,
+          "swimming": true,
+          "tick": 276
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.8997, 0.198487, -1812.464)",
+          "surface": 1.35845911312905,
+          "swimming": true,
+          "tick": 282
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.7898, 0.144784, -1812.786)",
+          "surface": 1.3694152566816,
+          "swimming": true,
+          "tick": 288
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.6799, 0.126138, -1813.106)",
+          "surface": 1.37575066695401,
+          "swimming": true,
+          "tick": 294
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.5705, 0.141779, -1813.422)",
+          "surface": 1.37690773715296,
+          "swimming": true,
+          "tick": 300
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.4621, 0.18478, -1813.735)",
+          "surface": 1.37385932600834,
+          "swimming": true,
+          "tick": 306
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.3549, 0.24413, -1814.043)",
+          "surface": 1.36791415358504,
+          "swimming": true,
+          "tick": 312
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.2493, 0.307234, -1814.346)",
+          "surface": 1.36062353376792,
+          "swimming": true,
+          "tick": 318
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.1454, 0.362378, -1814.643)",
+          "surface": 1.3534500109266,
+          "swimming": true,
+          "tick": 324
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.0434, 0.400703, -1814.934)",
+          "surface": 1.3473856049043,
+          "swimming": true,
+          "tick": 330
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.9432, 0.417385, -1815.22)",
+          "surface": 1.34284647367245,
+          "swimming": true,
+          "tick": 336
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.8447, 0.411948, -1815.502)",
+          "surface": 1.33969888927795,
+          "swimming": true,
+          "tick": 342
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.7474, 0.387721, -1815.781)",
+          "surface": 1.33801597005084,
+          "swimming": true,
+          "tick": 348
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.6512, 0.350802, -1816.058)",
+          "surface": 1.3374339159337,
+          "swimming": true,
+          "tick": 354
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.5557, 0.308682, -1816.334)",
+          "surface": 1.33770245609244,
+          "swimming": true,
+          "tick": 360
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.4606, 0.268821, -1816.61)",
+          "surface": 1.33862708453404,
+          "swimming": true,
+          "tick": 366
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.3658, 0.237421, -1816.887)",
+          "surface": 1.33941987424886,
+          "swimming": true,
+          "tick": 372
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.2709, 0.218496, -1817.164)",
+          "surface": 1.33991380878168,
+          "swimming": true,
+          "tick": 378
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.176, 0.213477, -1817.443)",
+          "surface": 1.33967619373324,
+          "swimming": true,
+          "tick": 384
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.0808, 0.221246, -1817.725)",
+          "surface": 1.3379110595823,
+          "swimming": true,
+          "tick": 390
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.9852, 0.23859, -1818.008)",
+          "surface": 1.33527900984822,
+          "swimming": true,
+          "tick": 396
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.889, 0.261045, -1818.294)",
+          "surface": 1.33206270511148,
+          "swimming": true,
+          "tick": 402
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.7923, 0.28384, -1818.583)",
+          "surface": 1.32887728394261,
+          "swimming": true,
+          "tick": 408
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.6949, 0.302804, -1818.876)",
+          "surface": 1.32635039543746,
+          "swimming": true,
+          "tick": 414
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.5969, 0.315047, -1819.171)",
+          "surface": 1.32497355971252,
+          "swimming": true,
+          "tick": 420
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.498, 0.319319, -1819.47)",
+          "surface": 1.32505503611286,
+          "swimming": true,
+          "tick": 426
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.3984, 0.316029, -1819.773)",
+          "surface": 1.32639584197929,
+          "swimming": true,
+          "tick": 432
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.2979, 0.306942, -1820.08)",
+          "surface": 1.32889223054626,
+          "swimming": true,
+          "tick": 438
+        }
+      ]
+    },
+    {
+      "distance": 24.0692138671875,
+      "end": "(879.7455, -1796.931)",
+      "frozen_ticks": 0,
+      "passed": true,
+      "route": "19_upstream",
+      "start": "(879.0, -1821.0)",
+      "swim_ticks": 661,
+      "target": "(879.0, -1797.0)",
+      "ticks": 668,
+      "trace": [
+        {
+          "frozen": false,
+          "grounded": true,
+          "position": "(879.0, 0.413711, -1820.861)",
+          "surface": 1.33105189456026,
+          "swimming": false,
+          "tick": 0
+        },
+        {
+          "frozen": false,
+          "grounded": true,
+          "position": "(879.0, 0.391299, -1819.875)",
+          "surface": 1.33105189456026,
+          "swimming": false,
+          "tick": 6
+        },
+        {
+          "frozen": false,
+          "grounded": true,
+          "position": "(879.0, 0.284163, -1818.997)",
+          "surface": 1.09461130154643,
+          "swimming": true,
+          "tick": 12
+        },
+        {
+          "frozen": false,
+          "grounded": true,
+          "position": "(879.0, 0.258809, -1818.305)",
+          "surface": 1.09257043369345,
+          "swimming": true,
+          "tick": 18
+        },
+        {
+          "frozen": false,
+          "grounded": true,
+          "position": "(879.0, 0.226826, -1817.771)",
+          "surface": 1.09241457381934,
+          "swimming": true,
+          "tick": 24
+        },
+        {
+          "frozen": false,
+          "grounded": true,
+          "position": "(879.0, 0.174405, -1817.334)",
+          "surface": 1.09400204261626,
+          "swimming": true,
+          "tick": 30
+        },
+        {
+          "frozen": false,
+          "grounded": true,
+          "position": "(879.0, 0.122784, -1816.91)",
+          "surface": 1.09555141609229,
+          "swimming": true,
+          "tick": 36
+        },
+        {
+          "frozen": false,
+          "grounded": true,
+          "position": "(879.0, 0.114233, -1816.494)",
+          "surface": 1.09747944038264,
+          "swimming": true,
+          "tick": 42
+        },
+        {
+          "frozen": false,
+          "grounded": true,
+          "position": "(879.0, 0.105993, -1816.086)",
+          "surface": 1.10010983995689,
+          "swimming": true,
+          "tick": 48
+        },
+        {
+          "frozen": false,
+          "grounded": true,
+          "position": "(879.0, 0.08203, -1815.684)",
+          "surface": 1.10360716649858,
+          "swimming": true,
+          "tick": 54
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.058246, -1815.288)",
+          "surface": 1.10833929041564,
+          "swimming": true,
+          "tick": 60
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.0586, -1814.897)",
+          "surface": 1.11443010288958,
+          "swimming": true,
+          "tick": 66
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.060247, -1814.509)",
+          "surface": 1.12270742540312,
+          "swimming": true,
+          "tick": 72
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.064103, -1814.125)",
+          "surface": 1.13172573735855,
+          "swimming": true,
+          "tick": 78
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.07075, -1813.744)",
+          "surface": 1.14145695298451,
+          "swimming": true,
+          "tick": 84
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.080326, -1813.365)",
+          "surface": 1.15158744859064,
+          "swimming": true,
+          "tick": 90
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.092494, -1812.988)",
+          "surface": 1.16105086080204,
+          "swimming": true,
+          "tick": 96
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.106489, -1812.613)",
+          "surface": 1.16939672492761,
+          "swimming": true,
+          "tick": 102
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.121142, -1812.239)",
+          "surface": 1.1764939671137,
+          "swimming": true,
+          "tick": 108
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.135076, -1811.867)",
+          "surface": 1.18105573487936,
+          "swimming": true,
+          "tick": 114
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.146857, -1811.496)",
+          "surface": 1.183518317285,
+          "swimming": true,
+          "tick": 120
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.155198, -1811.126)",
+          "surface": 1.1832916493802,
+          "swimming": true,
+          "tick": 126
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.159103, -1810.756)",
+          "surface": 1.18050942217156,
+          "swimming": true,
+          "tick": 132
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.157986, -1810.387)",
+          "surface": 1.17493462065556,
+          "swimming": true,
+          "tick": 138
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.151711, -1810.019)",
+          "surface": 1.16709863757444,
+          "swimming": true,
+          "tick": 144
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.140652, -1809.651)",
+          "surface": 1.15750358381008,
+          "swimming": true,
+          "tick": 150
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0, 0.12563, -1809.284)",
+          "surface": 1.14718360874209,
+          "swimming": true,
+          "tick": 156
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0001, 0.107842, -1808.917)",
+          "surface": 1.14188892876938,
+          "swimming": true,
+          "tick": 162
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0056, 0.093925, -1808.551)",
+          "surface": 1.23732886414393,
+          "swimming": true,
+          "tick": 168
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0274, 0.099595, -1808.185)",
+          "surface": 1.33267775118903,
+          "swimming": true,
+          "tick": 174
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.0703, 0.136514, -1807.822)",
+          "surface": 1.42743021127002,
+          "swimming": true,
+          "tick": 180
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.1354, 0.209749, -1807.46)",
+          "surface": 1.52234979313515,
+          "swimming": true,
+          "tick": 186
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.2231, 0.317871, -1807.099)",
+          "surface": 1.61587846387889,
+          "swimming": true,
+          "tick": 192
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.333, 0.453962, -1806.738)",
+          "surface": 1.70908903892336,
+          "swimming": true,
+          "tick": 198
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.4644, 0.607481, -1806.376)",
+          "surface": 1.80197628344339,
+          "swimming": true,
+          "tick": 204
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.6165, 0.766425, -1806.013)",
+          "surface": 1.89510554713433,
+          "swimming": true,
+          "tick": 210
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.7863, 0.919633, -1805.647)",
+          "surface": 1.99085094066346,
+          "swimming": true,
+          "tick": 216
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.9639, 1.058721, -1805.279)",
+          "surface": 2.08794240540503,
+          "swimming": true,
+          "tick": 222
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.1421, 1.178927, -1804.909)",
+          "surface": 2.18687328532272,
+          "swimming": true,
+          "tick": 228
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.3171, 1.279402, -1804.536)",
+          "surface": 2.28749706624986,
+          "swimming": true,
+          "tick": 234
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.4871, 1.362845, -1804.163)",
+          "surface": 2.38996048099333,
+          "swimming": true,
+          "tick": 240
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.6506, 1.434594, -1803.788)",
+          "surface": 2.49441159628396,
+          "swimming": true,
+          "tick": 246
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.8066, 1.501465, -1803.414)",
+          "surface": 2.60110148429868,
+          "swimming": true,
+          "tick": 252
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.9545, 1.57048, -1803.041)",
+          "surface": 2.70927283810019,
+          "swimming": true,
+          "tick": 258
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.0934, 1.647648, -1802.669)",
+          "surface": 2.81911727750669,
+          "swimming": true,
+          "tick": 264
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.2231, 1.737138, -1802.3)",
+          "surface": 2.9303007448994,
+          "swimming": true,
+          "tick": 270
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.3431, 1.840812, -1801.933)",
+          "surface": 3.04224925863307,
+          "swimming": true,
+          "tick": 276
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.4526, 1.958147, -1801.57)",
+          "surface": 3.15453928628358,
+          "swimming": true,
+          "tick": 282
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.5513, 2.086525, -1801.212)",
+          "surface": 3.26632474269271,
+          "swimming": true,
+          "tick": 288
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.6384, 2.221809, -1800.861)",
+          "surface": 3.37678025482985,
+          "swimming": true,
+          "tick": 294
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.7136, 2.359067, -1800.518)",
+          "surface": 3.48511396853676,
+          "swimming": true,
+          "tick": 300
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.7766, 2.493343, -1800.184)",
+          "surface": 3.59047151081128,
+          "swimming": true,
+          "tick": 306
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.8271, 2.62033, -1799.862)",
+          "surface": 3.69242069224351,
+          "swimming": true,
+          "tick": 312
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.8656, 2.736885, -1799.553)",
+          "surface": 3.79045564867816,
+          "swimming": true,
+          "tick": 318
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.8922, 2.841324, -1799.257)",
+          "surface": 3.88460792666501,
+          "swimming": true,
+          "tick": 324
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.9073, 2.933481, -1798.978)",
+          "surface": 3.97477108243505,
+          "swimming": true,
+          "tick": 330
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.9122, 3.014544, -1798.716)",
+          "surface": 4.06127150699224,
+          "swimming": true,
+          "tick": 336
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.9074, 3.086716, -1798.472)",
+          "surface": 4.14439488672111,
+          "swimming": true,
+          "tick": 342
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.8943, 3.152812, -1798.248)",
+          "surface": 4.22504057127529,
+          "swimming": true,
+          "tick": 348
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.874, 3.215858, -1798.042)",
+          "surface": 4.30407015312476,
+          "swimming": true,
+          "tick": 354
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.8477, 3.278704, -1797.856)",
+          "surface": 4.38184884937385,
+          "swimming": true,
+          "tick": 360
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.8165, 3.343652, -1797.689)",
+          "surface": 4.45820296185222,
+          "swimming": true,
+          "tick": 366
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.7814, 3.412124, -1797.54)",
+          "surface": 4.53173397491913,
+          "swimming": true,
+          "tick": 372
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.7435, 3.484277, -1797.408)",
+          "surface": 4.59918298332855,
+          "swimming": true,
+          "tick": 378
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.7035, 3.558617, -1797.293)",
+          "surface": 4.65590633951261,
+          "swimming": true,
+          "tick": 384
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.6619, 3.631678, -1797.194)",
+          "surface": 4.69586344417207,
+          "swimming": true,
+          "tick": 390
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.6194, 3.697922, -1797.108)",
+          "surface": 4.71429438335706,
+          "swimming": true,
+          "tick": 396
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.5763, 3.750178, -1797.034)",
+          "surface": 4.70952122621093,
+          "swimming": true,
+          "tick": 402
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.5331, 3.780864, -1796.972)",
+          "surface": 4.6859432199296,
+          "swimming": true,
+          "tick": 408
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.4899, 3.784064, -1796.92)",
+          "surface": 4.65455309817393,
+          "swimming": true,
+          "tick": 414
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.4467, 3.758044, -1796.877)",
+          "surface": 4.62994484250545,
+          "swimming": true,
+          "tick": 420
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.4037, 3.70728, -1796.842)",
+          "surface": 4.62613481707448,
+          "swimming": true,
+          "tick": 426
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.3609, 3.643016, -1796.814)",
+          "surface": 4.65072591151103,
+          "swimming": true,
+          "tick": 432
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.3184, 3.581599, -1796.791)",
+          "surface": 4.70148204372011,
+          "swimming": true,
+          "tick": 438
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.2762, 3.540686, -1796.774)",
+          "surface": 4.76642684994812,
+          "swimming": true,
+          "tick": 444
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.2343, 3.534267, -1796.761)",
+          "surface": 4.82803886012817,
+          "swimming": true,
+          "tick": 450
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.1926, 3.568179, -1796.751)",
+          "surface": 4.86933606645168,
+          "swimming": true,
+          "tick": 456
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.1512, 3.637676, -1796.745)",
+          "surface": 4.87952929615397,
+          "swimming": true,
+          "tick": 462
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.1099, 3.728028, -1796.741)",
+          "surface": 4.85685559174431,
+          "swimming": true,
+          "tick": 468
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.0688, 3.818078, -1796.74)",
+          "surface": 4.8087420820791,
+          "swimming": true,
+          "tick": 474
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(881.0278, 3.885705, -1796.74)",
+          "surface": 4.74850891838465,
+          "swimming": true,
+          "tick": 480
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.987, 3.913619, -1796.742)",
+          "surface": 4.69133534071988,
+          "swimming": true,
+          "tick": 486
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.9464, 3.89385, -1796.745)",
+          "surface": 4.65044069787764,
+          "swimming": true,
+          "tick": 492
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.9057, 3.829788, -1796.75)",
+          "surface": 4.63436326437743,
+          "swimming": true,
+          "tick": 498
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.8651, 3.735392, -1796.755)",
+          "surface": 4.64540310416558,
+          "swimming": true,
+          "tick": 504
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.8244, 3.631862, -1796.76)",
+          "surface": 4.68062480802523,
+          "swimming": true,
+          "tick": 510
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.7838, 3.542768, -1796.766)",
+          "surface": 4.73284222399927,
+          "swimming": true,
+          "tick": 516
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.7431, 3.488813, -1796.773)",
+          "surface": 4.7930323439428,
+          "swimming": true,
+          "tick": 522
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.7025, 3.483477, -1796.779)",
+          "surface": 4.85163385317258,
+          "swimming": true,
+          "tick": 528
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.6618, 3.530302, -1796.787)",
+          "surface": 4.89967697553762,
+          "swimming": true,
+          "tick": 534
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.6212, 3.622263, -1796.794)",
+          "surface": 4.93041208528188,
+          "swimming": true,
+          "tick": 540
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.5805, 3.743218, -1796.801)",
+          "surface": 4.93882434959567,
+          "swimming": true,
+          "tick": 546
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.5398, 3.870997, -1796.809)",
+          "surface": 4.92362100141195,
+          "swimming": true,
+          "tick": 552
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.4988, 3.981507, -1796.816)",
+          "surface": 4.88537357478458,
+          "swimming": true,
+          "tick": 558
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.4578, 4.053022, -1796.823)",
+          "surface": 4.82838303748331,
+          "swimming": true,
+          "tick": 564
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.4167, 4.070053, -1796.831)",
+          "surface": 4.75999263829922,
+          "swimming": true,
+          "tick": 570
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.3757, 4.026183, -1796.838)",
+          "surface": 4.68934734985868,
+          "swimming": true,
+          "tick": 576
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.3347, 3.925398, -1796.844)",
+          "surface": 4.62717521421667,
+          "swimming": true,
+          "tick": 582
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.2935, 3.781757, -1796.851)",
+          "surface": 4.58374401386917,
+          "swimming": true,
+          "tick": 588
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.2521, 3.617344, -1796.858)",
+          "surface": 4.56534655871863,
+          "swimming": true,
+          "tick": 594
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.2108, 3.458679, -1796.864)",
+          "surface": 4.57460105268379,
+          "swimming": true,
+          "tick": 600
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.1694, 3.332141, -1796.871)",
+          "surface": 4.60717771372471,
+          "swimming": true,
+          "tick": 606
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.128, 3.259045, -1796.877)",
+          "surface": 4.65352335815299,
+          "swimming": true,
+          "tick": 612
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.0866, 3.249362, -1796.884)",
+          "surface": 4.70049093483671,
+          "swimming": true,
+          "tick": 618
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.045, 3.297566, -1796.891)",
+          "surface": 4.73502582857787,
+          "swimming": true,
+          "tick": 624
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(880.0033, 3.395764, -1796.896)",
+          "surface": 4.74827302466165,
+          "swimming": true,
+          "tick": 630
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.9615, 3.528546, -1796.902)",
+          "surface": 4.73857690583432,
+          "swimming": true,
+          "tick": 636
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.9198, 3.668725, -1796.908)",
+          "surface": 4.71199854668174,
+          "swimming": true,
+          "tick": 642
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.8781, 3.788723, -1796.914)",
+          "surface": 4.67969100322723,
+          "swimming": true,
+          "tick": 648
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.8363, 3.867018, -1796.92)",
+          "surface": 4.65072292252647,
+          "swimming": true,
+          "tick": 654
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.7946, 3.892246, -1796.925)",
+          "surface": 4.6323393711965,
+          "swimming": true,
+          "tick": 660
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(879.7525, 3.864672, -1796.93)",
+          "surface": 4.62587099950326,
+          "swimming": true,
+          "tick": 666
+        }
+      ]
+    },
+    {
+      "distance": 23.275634765625,
+      "end": "(831.1906, -1758.68)",
+      "frozen_ticks": 0,
+      "passed": true,
+      "route": "18_channel",
+      "start": "(831.8315, -1781.955)",
+      "swim_ticks": 256,
+      "target": "(831.0, -1758.0)",
+      "ticks": 337,
+      "trace": [
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.8594, 4.629142, -1781.953)",
+          "surface": 5.97857106995467,
+          "swimming": true,
+          "tick": 0
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.0348, 4.823164, -1781.904)",
+          "surface": 5.96969774766196,
+          "swimming": true,
+          "tick": 6
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.221, 5.006256, -1781.808)",
+          "surface": 5.94581189486893,
+          "swimming": true,
+          "tick": 12
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.4039, 5.112155, -1781.649)",
+          "surface": 5.93489741089217,
+          "swimming": false,
+          "tick": 18
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.5546, 5.041715, -1781.377)",
+          "surface": 5.93489741089217,
+          "swimming": false,
+          "tick": 24
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.6708, 4.791276, -1780.99)",
+          "surface": 5.93489741089217,
+          "swimming": false,
+          "tick": 30
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.7544, 4.378409, -1780.495)",
+          "surface": 5.57653719140314,
+          "swimming": true,
+          "tick": 36
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.8785, 4.02792, -1780.042)",
+          "surface": 5.43665627527834,
+          "swimming": true,
+          "tick": 42
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.0454, 3.774203, -1779.628)",
+          "surface": 5.31256406600271,
+          "swimming": true,
+          "tick": 48
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.2119, 3.610605, -1779.223)",
+          "surface": 5.19159661846126,
+          "swimming": true,
+          "tick": 54
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.373, 3.525222, -1778.825)",
+          "surface": 5.07287281010468,
+          "swimming": true,
+          "tick": 60
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.5282, 3.507724, -1778.436)",
+          "surface": 4.95664822765857,
+          "swimming": true,
+          "tick": 66
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.6773, 3.547182, -1778.053)",
+          "surface": 4.84217682892855,
+          "swimming": true,
+          "tick": 72
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.8204, 3.617288, -1777.675)",
+          "surface": 4.72941822423549,
+          "swimming": true,
+          "tick": 78
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.9574, 3.684884, -1777.303)",
+          "surface": 4.61786452022916,
+          "swimming": true,
+          "tick": 84
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.0696, 3.663447, -1776.889)",
+          "surface": 4.59930589223708,
+          "swimming": false,
+          "tick": 90
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.1303, 3.462009, -1776.366)",
+          "surface": 4.59930589223708,
+          "swimming": false,
+          "tick": 96
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.1378, 3.080572, -1775.735)",
+          "surface": 4.59930589223708,
+          "swimming": false,
+          "tick": 102
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.1212, 2.659716, -1775.073)",
+          "surface": 3.94390864985668,
+          "swimming": true,
+          "tick": 108
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.154, 2.351326, -1774.554)",
+          "surface": 3.77670582956299,
+          "swimming": true,
+          "tick": 114
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.2289, 2.136921, -1774.132)",
+          "surface": 3.64591659956094,
+          "swimming": true,
+          "tick": 120
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.3041, 2.007442, -1773.726)",
+          "surface": 3.52324043319443,
+          "swimming": true,
+          "tick": 126
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.3751, 1.951673, -1773.331)",
+          "surface": 3.40503329356679,
+          "swimming": true,
+          "tick": 132
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.4418, 1.958872, -1772.944)",
+          "surface": 3.29072155793029,
+          "swimming": true,
+          "tick": 138
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.5005, 2.006742, -1772.566)",
+          "surface": 3.17988304266818,
+          "swimming": true,
+          "tick": 144
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.5445, 2.064782, -1772.197)",
+          "surface": 3.07291296094458,
+          "swimming": true,
+          "tick": 150
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.5694, 2.093251, -1771.827)",
+          "surface": 3.00359915401718,
+          "swimming": false,
+          "tick": 156
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.55, 1.967227, -1771.367)",
+          "surface": 3.00359915401718,
+          "swimming": false,
+          "tick": 162
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.4797, 1.661202, -1770.799)",
+          "surface": 3.00359915401718,
+          "swimming": false,
+          "tick": 168
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.3702, 1.246917, -1770.168)",
+          "surface": 2.4964959674994,
+          "swimming": true,
+          "tick": 174
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.2686, 0.922996, -1769.665)",
+          "surface": 2.3403523084143,
+          "swimming": true,
+          "tick": 180
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.154, 0.693861, -1769.247)",
+          "surface": 2.21354267231562,
+          "swimming": true,
+          "tick": 186
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(834.0399, 0.551598, -1768.84)",
+          "surface": 2.09086513941731,
+          "swimming": true,
+          "tick": 192
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.928, 0.484732, -1768.441)",
+          "surface": 1.96936369619998,
+          "swimming": true,
+          "tick": 198
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.8182, 0.48307, -1768.049)",
+          "surface": 1.84877002733272,
+          "swimming": true,
+          "tick": 204
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.71, 0.527843, -1767.664)",
+          "surface": 1.72864659192372,
+          "swimming": true,
+          "tick": 210
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.6033, 0.587271, -1767.283)",
+          "surface": 1.60889387944227,
+          "swimming": true,
+          "tick": 216
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.4951, 0.618752, -1766.897)",
+          "surface": 1.52905542848715,
+          "swimming": false,
+          "tick": 222
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.3599, 0.495781, -1766.415)",
+          "surface": 1.52905542848715,
+          "swimming": false,
+          "tick": 228
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.2047, 0.232575, -1765.862)",
+          "surface": 1.49767808473499,
+          "swimming": true,
+          "tick": 234
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(833.0797, 0.021816, -1765.416)",
+          "surface": 1.49728838756248,
+          "swimming": true,
+          "tick": 240
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.9637, 0.025046, -1765.003)",
+          "surface": 1.49720154742016,
+          "swimming": true,
+          "tick": 246
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.8503, 0.102688, -1764.598)",
+          "surface": 1.49680283789931,
+          "swimming": true,
+          "tick": 252
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.7392, 0.223065, -1764.202)",
+          "surface": 1.49628719640234,
+          "swimming": true,
+          "tick": 258
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.6299, 0.363126, -1763.812)",
+          "surface": 1.49543592094219,
+          "swimming": true,
+          "tick": 264
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.5222, 0.497784, -1763.428)",
+          "surface": 1.49424981089457,
+          "swimming": true,
+          "tick": 270
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.4159, 0.60607, -1763.049)",
+          "surface": 1.49256243233581,
+          "swimming": true,
+          "tick": 276
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.2912, 0.594191, -1762.604)",
+          "surface": 1.49256243233581,
+          "swimming": false,
+          "tick": 282
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(832.1341, 0.402313, -1762.044)",
+          "surface": 1.49256243233581,
+          "swimming": false,
+          "tick": 288
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.9757, 0.132211, -1761.479)",
+          "surface": 1.48216037214387,
+          "swimming": true,
+          "tick": 294
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.8525, 0.005801, -1761.04)",
+          "surface": 1.47813625387462,
+          "swimming": true,
+          "tick": 300
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.7369, 0.057685, -1760.628)",
+          "surface": 1.47411740332172,
+          "swimming": true,
+          "tick": 306
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.624, 0.157829, -1760.225)",
+          "surface": 1.46981265216381,
+          "swimming": true,
+          "tick": 312
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.5132, 0.286392, -1759.83)",
+          "surface": 1.46520679055868,
+          "swimming": true,
+          "tick": 318
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.4041, 0.41838, -1759.441)",
+          "surface": 1.46029146580763,
+          "swimming": true,
+          "tick": 324
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.2967, 0.531499, -1759.058)",
+          "surface": 1.45503678350718,
+          "swimming": true,
+          "tick": 330
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(831.1906, 0.60936, -1758.68)",
+          "surface": 1.4495750840949,
+          "swimming": true,
+          "tick": 336
+        }
+      ]
+    },
+    {
+      "distance": 23.4853515625,
+      "end": "(671.8097, -1722.719)",
+      "frozen_ticks": 0,
+      "passed": true,
+      "route": "16_ledge",
+      "start": "(695.295, -1721.649)",
+      "swim_ticks": 260,
+      "target": "(672.0, -1722.0)",
+      "ticks": 308,
+      "trace": [
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(695.2698, 17.42991, -1721.638)",
+          "surface": 18.7099209864811,
+          "swimming": true,
+          "tick": 0
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(695.0823, 17.57724, -1721.563)",
+          "surface": 18.6696949861075,
+          "swimming": true,
+          "tick": 6
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(694.8395, 17.71059, -1721.485)",
+          "surface": 18.6204640858829,
+          "swimming": true,
+          "tick": 12
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(694.5495, 17.80236, -1721.403)",
+          "surface": 18.5612216957139,
+          "swimming": true,
+          "tick": 18
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(694.2194, 17.83384, -1721.318)",
+          "surface": 18.4954607103108,
+          "swimming": true,
+          "tick": 24
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(693.8552, 17.79727, -1721.233)",
+          "surface": 18.4238331099801,
+          "swimming": true,
+          "tick": 30
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(693.4619, 17.69592, -1721.147)",
+          "surface": 18.3480175285401,
+          "swimming": true,
+          "tick": 36
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(693.0439, 17.54226, -1721.062)",
+          "surface": 18.2678968175281,
+          "swimming": true,
+          "tick": 42
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(692.6051, 17.35485, -1720.977)",
+          "surface": 18.1845028867601,
+          "swimming": true,
+          "tick": 48
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(692.1484, 17.15473, -1720.893)",
+          "surface": 18.0997093043278,
+          "swimming": true,
+          "tick": 54
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(691.6768, 16.96186, -1720.811)",
+          "surface": 18.0124781547512,
+          "swimming": true,
+          "tick": 60
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(691.1923, 16.79214, -1720.731)",
+          "surface": 17.9243789862258,
+          "swimming": true,
+          "tick": 66
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(690.6972, 16.6555, -1720.654)",
+          "surface": 17.8355443912698,
+          "swimming": true,
+          "tick": 72
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(690.1931, 16.55511, -1720.578)",
+          "surface": 17.7451883021189,
+          "swimming": true,
+          "tick": 78
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(689.6813, 16.48744, -1720.506)",
+          "surface": 17.63170362819,
+          "swimming": true,
+          "tick": 84
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(689.1638, 16.43969, -1720.435)",
+          "surface": 17.4897313558169,
+          "swimming": true,
+          "tick": 90
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(688.6418, 16.39421, -1720.366)",
+          "surface": 17.3460958822044,
+          "swimming": true,
+          "tick": 96
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(688.1169, 16.335, -1720.297)",
+          "surface": 17.2009103247099,
+          "swimming": true,
+          "tick": 102
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(687.5902, 16.25009, -1720.23)",
+          "surface": 17.0537103394229,
+          "swimming": true,
+          "tick": 108
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(687.0627, 16.13294, -1720.164)",
+          "surface": 16.9058118667884,
+          "swimming": true,
+          "tick": 114
+        },
+        {
+          "frozen": false,
+          "grounded": true,
+          "position": "(686.535, 16.00082, -1720.1)",
+          "surface": 16.764673407125,
+          "swimming": true,
+          "tick": 120
+        },
+        {
+          "frozen": false,
+          "grounded": true,
+          "position": "(686.0076, 16.00089, -1720.041)",
+          "surface": 16.6268402632921,
+          "swimming": true,
+          "tick": 126
+        },
+        {
+          "frozen": false,
+          "grounded": true,
+          "position": "(685.4421, 16.0009, -1720.004)",
+          "surface": 16.5351473944364,
+          "swimming": false,
+          "tick": 132
+        },
+        {
+          "frozen": false,
+          "grounded": true,
+          "position": "(684.5317, 16.0009, -1720.118)",
+          "surface": 16.5351473944364,
+          "swimming": false,
+          "tick": 138
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(683.5428, 15.97448, -1720.267)",
+          "surface": 16.5351473944364,
+          "swimming": false,
+          "tick": 144
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(682.5541, 15.83948, -1720.415)",
+          "surface": 16.5351473944364,
+          "swimming": false,
+          "tick": 150
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(681.5653, 15.52448, -1720.564)",
+          "surface": 16.5351473944364,
+          "swimming": false,
+          "tick": 156
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(680.5765, 15.02948, -1720.713)",
+          "surface": 16.5351473944364,
+          "swimming": false,
+          "tick": 162
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(679.5878, 14.35448, -1720.861)",
+          "surface": 16.5351473944364,
+          "swimming": false,
+          "tick": 168
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(678.599, 13.49948, -1721.01)",
+          "surface": 16.5351473944364,
+          "swimming": false,
+          "tick": 174
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(677.6273, 12.69615, -1721.16)",
+          "surface": 13.3735652469888,
+          "swimming": true,
+          "tick": 180
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(676.8159, 12.30344, -1721.329)",
+          "surface": 13.3665826626253,
+          "swimming": true,
+          "tick": 186
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(676.1699, 11.9648, -1721.522)",
+          "surface": 13.3675439863339,
+          "swimming": true,
+          "tick": 192
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(675.655, 11.71962, -1721.749)",
+          "surface": 13.3704550663609,
+          "swimming": true,
+          "tick": 198
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(675.1817, 11.56342, -1721.986)",
+          "surface": 13.3745661293934,
+          "swimming": true,
+          "tick": 204
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(674.7211, 11.48447, -1722.202)",
+          "surface": 13.3858934511937,
+          "swimming": true,
+          "tick": 210
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(674.2743, 11.47255, -1722.393)",
+          "surface": 13.3994160538954,
+          "swimming": true,
+          "tick": 216
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(673.8438, 11.51881, -1722.558)",
+          "surface": 13.413253823028,
+          "swimming": true,
+          "tick": 222
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(673.4341, 11.61557, -1722.692)",
+          "surface": 13.426205870977,
+          "swimming": true,
+          "tick": 228
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(673.0521, 11.75616, -1722.793)",
+          "surface": 13.4361501591907,
+          "swimming": true,
+          "tick": 234
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(672.706, 11.93478, -1722.862)",
+          "surface": 13.441467486781,
+          "swimming": true,
+          "tick": 240
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(672.4048, 12.14581, -1722.901)",
+          "surface": 13.4401388150559,
+          "swimming": true,
+          "tick": 246
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(672.1555, 12.3672, -1722.917)",
+          "surface": 13.4346271782038,
+          "swimming": true,
+          "tick": 252
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(671.9608, 12.56206, -1722.918)",
+          "surface": 13.4267799120567,
+          "swimming": true,
+          "tick": 258
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(671.82, 12.70165, -1722.91)",
+          "surface": 13.4217221134233,
+          "swimming": true,
+          "tick": 264
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(671.7288, 12.77019, -1722.899)",
+          "surface": 13.4210180752325,
+          "swimming": true,
+          "tick": 270
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(671.6806, 12.76612, -1722.884)",
+          "surface": 13.4266379866851,
+          "swimming": true,
+          "tick": 276
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(671.6679, 12.70071, -1722.867)",
+          "surface": 13.4388812352793,
+          "swimming": true,
+          "tick": 282
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(671.6823, 12.59451, -1722.845)",
+          "surface": 13.4566410421335,
+          "swimming": true,
+          "tick": 288
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(671.7149, 12.47274, -1722.815)",
+          "surface": 13.4780510484513,
+          "swimming": true,
+          "tick": 294
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(671.7574, 12.36037, -1722.777)",
+          "surface": 13.5017923033029,
+          "swimming": true,
+          "tick": 300
+        },
+        {
+          "frozen": false,
+          "grounded": false,
+          "position": "(671.8024, 12.2778, -1722.728)",
+          "surface": 13.5247067283648,
+          "swimming": true,
+          "tick": 306
+        }
+      ]
+    }
+  ]
+}

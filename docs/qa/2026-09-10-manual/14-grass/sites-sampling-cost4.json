@@ -1,0 +1,19 @@
+{
+  "sampling_copies": 53,
+  "total_msec": 364,
+  "maximum_msec": 34,
+  "maximum_sampling_chunks": 20,
+  "maximum_queued_tiles": 31,
+  "final_worker_stats": {
+    "batches": 58,
+    "buffer_bytes": 841760,
+    "commit_max_usec": 323,
+    "committed_instances": 10522,
+    "lod_update_max_usec": 504,
+    "tiles": 62,
+    "visible_instances": 6651,
+    "worker_average_usec": 97831.8038585209,
+    "worker_max_usec": 218421,
+    "worker_results": 311
+  }
+}

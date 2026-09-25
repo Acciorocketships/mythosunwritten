@@ -1,0 +1,92 @@
+[
+  {
+    "seed": 1,
+    "view": "north-east",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/1/seed-001-north-east.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-after/1/seed-001-north-east.png",
+    "rgb_mae": 9.659017007458848,
+    "pixels_changed_gt8": 518414,
+    "changed_percent": 25.00067515432099
+  },
+  {
+    "seed": 1,
+    "view": "south-west",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/1/seed-001-south-west.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-after/1/seed-001-south-west.png",
+    "rgb_mae": 9.278722511574074,
+    "pixels_changed_gt8": 517739,
+    "changed_percent": 24.968123070987655
+  },
+  {
+    "seed": 1,
+    "view": "north-west",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/1/seed-001-north-west.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-after/1/seed-001-north-west.png",
+    "rgb_mae": 9.325215727880659,
+    "pixels_changed_gt8": 559280,
+    "changed_percent": 26.97145061728395
+  },
+  {
+    "seed": 1,
+    "view": "south-east",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/1/seed-001-south-east.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-after/1/seed-001-south-east.png",
+    "rgb_mae": 8.738391846707819,
+    "pixels_changed_gt8": 507976,
+    "changed_percent": 24.49729938271605
+  },
+  {
+    "seed": 1,
+    "view": "plan",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/1/seed-001-plan.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-after/1/seed-001-plan.png",
+    "rgb_mae": 12.279777681327161,
+    "pixels_changed_gt8": 709637,
+    "changed_percent": 34.22246334876543
+  },
+  {
+    "seed": 2,
+    "view": "north-east",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/2/seed-002-north-east.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-after/2/seed-002-north-east.png",
+    "rgb_mae": 7.5367513824588475,
+    "pixels_changed_gt8": 343439,
+    "changed_percent": 16.562451774691358
+  },
+  {
+    "seed": 2,
+    "view": "south-west",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/2/seed-002-south-west.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-after/2/seed-002-south-west.png",
+    "rgb_mae": 7.339227109053498,
+    "pixels_changed_gt8": 369480,
+    "changed_percent": 17.818287037037038
+  },
+  {
+    "seed": 2,
+    "view": "north-west",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/2/seed-002-north-west.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-after/2/seed-002-north-west.png",
+    "rgb_mae": 7.425845389660494,
+    "pixels_changed_gt8": 349587,
+    "changed_percent": 16.85894097222222
+  },
+  {
+    "seed": 2,
+    "view": "south-east",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/2/seed-002-south-east.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-after/2/seed-002-south-east.png",
+    "rgb_mae": 7.29315731095679,
+    "pixels_changed_gt8": 407845,
+    "changed_percent": 19.66845100308642
+  },
+  {
+    "seed": 2,
+    "view": "plan",
+    "before": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-before/2/seed-002-plan.png",
+    "after": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/complete-after/2/seed-002-plan.png",
+    "rgb_mae": 9.503477687757202,
+    "pixels_changed_gt8": 385513,
+    "changed_percent": 18.59148341049383
+  }
+]

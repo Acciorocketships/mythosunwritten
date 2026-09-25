@@ -1,0 +1,68 @@
+{
+  "11_orbs_streaming_exact": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 3.0898070567713645,
+    "roi_mean_abs_rgb": 3.0898070567713645,
+    "roi_changed_over_20_fraction": 0.013267192520653993
+  },
+  "11_orbs_streaming_gameplay_camera": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 3.1650000112586496,
+    "roi_mean_abs_rgb": 3.1650000112586496,
+    "roi_changed_over_20_fraction": 0.013287458089677394
+  },
+  "11_orbs_streaming_jitter_0": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 3.0600977325830567,
+    "roi_mean_abs_rgb": 3.0600977325830567,
+    "roi_changed_over_20_fraction": 0.01266260304478916
+  },
+  "11_orbs_streaming_jitter_1": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 3.034634420393467,
+    "roi_mean_abs_rgb": 3.034634420393467,
+    "roi_changed_over_20_fraction": 0.013170931067792832
+  },
+  "11_orbs_streaming_near_left": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 2.701110815884303,
+    "roi_mean_abs_rgb": 2.701110815884303,
+    "roi_changed_over_20_fraction": 0.012194243227359418
+  },
+  "11_orbs_streaming_near_right": {
+    "roi": [
+      0,
+      0,
+      1718,
+      1034
+    ],
+    "mean_abs_rgb": 3.4203458056652023,
+    "roi_mean_abs_rgb": 3.4203458056652023,
+    "roi_changed_over_20_fraction": 0.015739029009036194
+  }
+}

@@ -1,0 +1,277 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_wall_returns.gd
+* test_closed_door_housing_finishes_both_sides_of_the_projecting_frame
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand -1 y 0.4 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand -1 y 0.4 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand -1 y 1.5 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand -1 y 1.5 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand -1 y 2.8 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand -1 y 2.8 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 0.4 z -0.45: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 0.4 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 0.4 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 1.5 z -0.45: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 1.5 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 1.5 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 2.8 z -0.45: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 2.8 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 2.8 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 0.4 z -0.45: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 0.4 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 0.4 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 1.5 z -0.45: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 1.5 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 1.5 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 2.8 z -0.45: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 2.8 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 2.8 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand 1 y 0.4 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand 1 y 0.4 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand 1 y 1.5 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand 1 y 1.5 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand 1 y 2.8 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand 1 y 2.8 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand -1 y 0.4 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand -1 y 0.4 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand -1 y 1.5 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand -1 y 1.5 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand -1 y 2.8 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand -1 y 2.8 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 0.4 z -0.45: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 0.4 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 0.4 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 1.5 z -0.45: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 1.5 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 1.5 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 2.8 z -0.45: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 2.8 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 2.8 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 0.4 z -0.45: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 0.4 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 0.4 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 1.5 z -0.45: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 1.5 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 1.5 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 2.8 z -0.45: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 2.8 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 2.8 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand 1 y 0.4 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand 1 y 0.4 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand 1 y 1.5 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand 1 y 1.5 z 0.30: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand 1 y 2.8 z 0.00: native frame side must close its projecting housing
+      at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand 1 y 2.8 z 0.30: native frame side must close its projecting housing
+      at line 84
+0/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september10_wall_returns.gd
+- test_closed_door_housing_finishes_both_sides_of_the_projecting_frame
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand -1 y 0.4 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand -1 y 0.4 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand -1 y 1.5 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand -1 y 1.5 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand -1 y 2.8 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand -1 y 2.8 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 0.4 z -0.45: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 0.4 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 0.4 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 1.5 z -0.45: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 1.5 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 1.5 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 2.8 z -0.45: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 2.8 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001 hand 1 y 2.8 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 0.4 z -0.45: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 0.4 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 0.4 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 1.5 z -0.45: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 1.5 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 1.5 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 2.8 z -0.45: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 2.8 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand -1 y 2.8 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand 1 y 0.4 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand 1 y 0.4 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand 1 y 1.5 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand 1 y 1.5 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand 1 y 2.8 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x hand 1 y 2.8 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand -1 y 0.4 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand -1 y 0.4 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand -1 y 1.5 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand -1 y 1.5 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand -1 y 2.8 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand -1 y 2.8 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 0.4 z -0.45: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 0.4 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 0.4 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 1.5 z -0.45: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 1.5 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 1.5 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 2.8 z -0.45: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 2.8 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.course_open hand 1 y 2.8 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 0.4 z -0.45: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 0.4 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 0.4 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 1.5 z -0.45: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 1.5 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 1.5 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 2.8 z -0.45: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 2.8 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand -1 y 2.8 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand 1 y 0.4 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand 1 y 0.4 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand 1 y 1.5 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand 1 y 1.5 z 0.30: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand 1 y 2.8 z 0.00: native frame side must close its projecting housing
+          at line 84
+    [Failed]:  sfv.fabric.wall.wood.door.closed.001.mirror_x.course_open hand 1 y 2.8 z 0.30: native frame side must close its projecting housing
+          at line 84
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts           12/72
+Time              1.423s
+
+
+Ran Tests matching "closed_door_housing"
+---- 1 failing tests ----
+

@@ -1,0 +1,69 @@
+extends GutTest
+
+func test_committed_ground_supplies_grass_without_waiting_for_the_terrain_worker() -> void:
+	var stream := FieldTerrainStreamer.new()
+	var program := GrassProgram.new()
+	var cache := EnvironmentRenderCache.new(EnvironmentCatalog.load_default())
+	stream._grass_streamer = GrassStreamer.new(program, cache)
+	stream._grass_streamer.begin_frame(Vector2(12,12))
+	var ground := Node3D.new()
+	var payload := GrassPayload.new()
+	payload.tile = Vector2i.ZERO
+	ground.set_meta(&"grass_tiles", {Vector2i.ZERO: {"payload": payload, "compute_usec": 1}})
+	stream._built[Vector2i.ZERO] = ground
+	# A long background road context already occupies the sole worker.
+	stream._active_job = stream._new_job(Vector2i(3,-13),false,true,3,3)
+	stream._queue_grass_jobs(Vector2(12,12))
+	assert_true(stream._grass_streamer._pending_tiles.has(Vector2i.ZERO),
+		"ground-owned grass must reach visual commits even while road planning runs")
+	assert_true(stream._jobs.is_empty(), "no new CPU grass work waits behind that active job")
+	stream._queue_grass_jobs(Vector2(12,12))
+	assert_eq(stream._grass_streamer._pending.size(), 1, "frames do not duplicate prepared tiles")
+	stream._grass_streamer.begin_frame(Vector2(500,500))
+	stream._grass_streamer.begin_frame(Vector2(12,12))
+	stream._queue_grass_jobs(Vector2(12,12))
+	assert_eq(stream._grass_streamer._pending.size(),1)
+	assert_same(stream._grass_streamer._pending[0].payload,payload,
+		"returning inside the ground lifetime reuses the exact prepared buffer")
+	assert_true(stream._jobs.is_empty(),"visual eviction does not resubmit field computation")
+	stream._built.clear()
+	ground.free()
+	stream.free()
+
+func test_chunk_preparation_preserves_each_tile_field_and_negative_ownership() -> void:
+	var catalog := EnvironmentCatalog.load_default()
+	var cache := EnvironmentRenderCache.new(catalog)
+	var program := GrassProgram.compile(load("res://terrain/grass/settings.tres"),catalog,cache)
+	var plan := HeightfieldPlan.new(4242,1.0,1,"mean")
+	for chunk: Vector2i in [Vector2i.ZERO,Vector2i(-1,-1)]:
+		var centre := chunk*64+Vector2i(32,32)
+		var region := plan.compute_region(centre.x,centre.y,38)
+		var water := WaterFieldContext.new()
+		water._ctx = {"ponds":[],"rivers":[],"buckets":{},"region":region}
+		water._region = region
+		water._coverage = Rect2(Vector2(chunk)*192.0,Vector2.ONE*192.0).grow(12)
+		water._shore_limit = program.shore_distance_limit
+		water._shore_curves_ready = true
+		var prepared := GrassField.compute_chunk(program,4242,chunk,region,water)
+		assert_eq(prepared.size(),64)
+		var valid := true
+		for tile: Vector2i in prepared:
+			var payload: GrassPayload = prepared[tile].payload
+			valid = valid and GrassField.parent_chunk(tile)==chunk and payload.tile==tile and payload.validate()
+		assert_true(valid,"every complete child buffer belongs to exactly this ground chunk")
+		for offset: Vector2i in [Vector2i.ZERO,Vector2i(7,7),Vector2i(3,4)]:
+			var tile := chunk*8+offset
+			var expected := GrassField.compute(program,4242,tile,region,water)
+			var actual: GrassPayload = prepared[tile].payload
+			assert_eq(actual.instance_count,expected.instance_count)
+			assert_eq(actual.batches,expected.batches,"buffer, bounds, tint and order remain exact")
+
+func test_grass_payload_lifetime_follows_the_ground_owner() -> void:
+	var ground := Node3D.new()
+	var payload := GrassPayload.new()
+	var witness := weakref(payload)
+	ground.set_meta(&"grass_tiles", {Vector2i.ZERO:{"payload":payload,"compute_usec":1}})
+	payload = null
+	assert_not_null(witness.get_ref())
+	ground.free()
+	assert_null(witness.get_ref(),"eviction cannot retain a sampler or CPU population cache")

@@ -1,0 +1,97 @@
+{
+  "audit": {
+    "focal_asset": "sfbp.campfire.001",
+    "generation_source": "ground_hamlet",
+    "house_count": 5,
+    "square_radius": 15.0,
+    "target_houses": 5
+  },
+  "entries": [
+    {
+      "asset_id": "lpfv.building.house.07",
+      "stable_id": "hamlet.1.outskirts.house.00",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-23.90014, 0.05, 6.880864)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.01",
+      "stable_id": "hamlet.1.outskirts.house.00.component.closed_door",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-18.16214, 0.05, 4.258863)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.02",
+      "stable_id": "hamlet.1.outskirts.house.01",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-6.606348, 0.05, -23.90014)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.02",
+      "stable_id": "hamlet.1.outskirts.house.01.component.closed_door",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-3.984348, 0.05, -18.16214)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.01",
+      "stable_id": "hamlet.1.outskirts.house.02",
+      "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (23.90014, 0.05, -6.880863)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.01",
+      "stable_id": "hamlet.1.outskirts.house.02.component.closed_door",
+      "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (18.16214, 0.05, -4.258862)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.07",
+      "stable_id": "hamlet.1.outskirts.house.03",
+      "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (23.90014, 0.05, 5.107311)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.01",
+      "stable_id": "hamlet.1.outskirts.house.03.component.closed_door",
+      "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (18.16214, 0.05, 7.729312)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.01",
+      "stable_id": "hamlet.1.outskirts.house.04",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-23.90014, 0.05, -5.107308)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.01",
+      "stable_id": "hamlet.1.outskirts.house.04.component.closed_door",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-18.16214, 0.05, -7.729308)]"
+    },
+    {
+      "asset_id": "sfbp.campfire.001",
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "hamlet.1.square.focus",
+      "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (0.0, 0.00539, 0.0)]"
+    }
+  ],
+  "views": [
+    {
+      "eye": "(55.0, 48.0, 55.0)",
+      "fov": 50,
+      "id": "NE",
+      "path": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/1/NE.png",
+      "target": "(0,2,0)"
+    },
+    {
+      "eye": "(-55.0, 38.0, -55.0)",
+      "fov": 50,
+      "id": "SW",
+      "path": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/1/SW.png",
+      "target": "(0,2,0)"
+    },
+    {
+      "eye": "(0.0, 95.0, 0.1)",
+      "fov": 50,
+      "id": "plan",
+      "path": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/1/plan.png",
+      "target": "(0,2,0)"
+    },
+    {
+      "eye": "(20.0, 9.0, 20.0)",
+      "fov": 50,
+      "id": "square",
+      "path": "/Users/ryko/story/docs/qa/2026-09-10-manual/15-city-form/hamlet-candidate4/1/square.png",
+      "target": "(0,2,0)"
+    }
+  ]
+}

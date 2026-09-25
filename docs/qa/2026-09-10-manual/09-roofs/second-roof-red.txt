@@ -1,0 +1,95 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_september10_roof_alignment.gd
+[0m* test_terminal_gables_close_above_the_actual_facade_plane
+* test_joined_partial_crown_keeps_its_original_end_boundaries
+[31m    [Failed]:  [0m[-1.33195233345032] expected to be >= than [-0.75001]:  The photographed half-crown's joined roof may not invent an outward end
+      at line 40
+[31m    [Failed]:  [0m[2.83195447921753] expected to be <= than [2.25001]:  The photographed half-crown's joined roof may not invent an outward end
+      at line 41
+* test_bounded_continuous_gables_reach_the_facade_without_an_inset_shelf
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.run.start.tight.flush must retain its gable at the supporting wall
+      at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.run.start.tight.flush must retain its gable at the supporting wall
+      at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.run.start.tight.flush must retain its gable at the supporting wall
+      at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.run.end.tight.flush must retain its gable at the supporting wall
+      at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.run.end.tight.flush must retain its gable at the supporting wall
+      at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.run.end.tight.flush must retain its gable at the supporting wall
+      at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.run.start.tight.flush must retain its gable at the supporting wall
+      at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.run.start.tight.flush must retain its gable at the supporting wall
+      at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.run.start.tight.flush must retain its gable at the supporting wall
+      at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.run.end.tight.flush must retain its gable at the supporting wall
+      at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.run.end.tight.flush must retain its gable at the supporting wall
+      at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.run.end.tight.flush must retain its gable at the supporting wall
+      at line 58
+[1m1/3 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_september10_roof_alignment.gd
+[0m- test_joined_partial_crown_keeps_its_original_end_boundaries
+[31m    [Failed]:  [0m[-1.33195233345032] expected to be >= than [-0.75001]:  The photographed half-crown's joined roof may not invent an outward end
+          at line 40
+[31m    [Failed]:  [0m[2.83195447921753] expected to be <= than [2.25001]:  The photographed half-crown's joined roof may not invent an outward end
+          at line 41
+- test_bounded_continuous_gables_reach_the_facade_without_an_inset_shelf
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.run.start.tight.flush must retain its gable at the supporting wall
+          at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.run.start.tight.flush must retain its gable at the supporting wall
+          at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.run.start.tight.flush must retain its gable at the supporting wall
+          at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.run.end.tight.flush must retain its gable at the supporting wall
+          at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.run.end.tight.flush must retain its gable at the supporting wall
+          at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.orange.03.run.end.tight.flush must retain its gable at the supporting wall
+          at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.run.start.tight.flush must retain its gable at the supporting wall
+          at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.run.start.tight.flush must retain its gable at the supporting wall
+          at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.run.start.tight.flush must retain its gable at the supporting wall
+          at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.run.end.tight.flush must retain its gable at the supporting wall
+          at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.run.end.tight.flush must retain its gable at the supporting wall
+          at line 58
+[31m    [Failed]:  [0mlpfv.fabric.roof.compact.slate.03.run.end.tight.flush must retain its gable at the supporting wall
+          at line 58
+
+Totals
+------
+Scripts               1
+Tests                 3
+Passing Tests         1
+Failing Tests         2
+Asserts           77/91
+Time              8.777s
+
+
+[31m---- 2 failing tests ----
+[0m

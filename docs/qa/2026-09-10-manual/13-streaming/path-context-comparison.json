@@ -1,0 +1,108 @@
+{
+  "after_stats": {
+    "bridge_profiles": 81,
+    "bridge_raw_cache": 81,
+    "bridge_resolved_cache": 66,
+    "context_builds": 7,
+    "context_cache": 7,
+    "evictions": 0,
+    "node_builds": 36,
+    "node_cache": 36,
+    "node_queries": 131,
+    "planning_point_cache": 5102,
+    "route_cache": 28,
+    "route_exact_failures": 0,
+    "route_queries": 71,
+    "route_solves": 28
+  },
+  "before_stats": {
+    "bridge_profiles": 111,
+    "bridge_raw_cache": 111,
+    "bridge_resolved_cache": 91,
+    "context_builds": 7,
+    "context_cache": 7,
+    "evictions": 0,
+    "node_builds": 43,
+    "node_cache": 43,
+    "node_queries": 238,
+    "planning_point_cache": 7590,
+    "route_cache": 40,
+    "route_exact_failures": 0,
+    "route_queries": 131,
+    "route_solves": 40
+  },
+  "identical": true,
+  "note": "Shared canonical fields; elapsed times are not a speed comparison.",
+  "sites": [
+    {
+      "bridges_identical": true,
+      "chunk": "(1, -2)",
+      "elapsed_msec": 154510,
+      "mask_cells": 108,
+      "masks_identical": true,
+      "nodes_identical": true,
+      "placements_identical": true,
+      "settlement_masks_identical": true
+    },
+    {
+      "bridges_identical": true,
+      "chunk": "(9, -2)",
+      "elapsed_msec": 165512,
+      "mask_cells": 0,
+      "masks_identical": true,
+      "nodes_identical": true,
+      "placements_identical": true,
+      "settlement_masks_identical": true
+    },
+    {
+      "bridges_identical": true,
+      "chunk": "(10, -6)",
+      "elapsed_msec": 239724,
+      "mask_cells": 0,
+      "masks_identical": true,
+      "nodes_identical": true,
+      "placements_identical": true,
+      "settlement_masks_identical": true
+    },
+    {
+      "bridges_identical": true,
+      "chunk": "(5, -11)",
+      "elapsed_msec": 340063,
+      "mask_cells": 22,
+      "masks_identical": true,
+      "nodes_identical": true,
+      "placements_identical": true,
+      "settlement_masks_identical": true
+    },
+    {
+      "bridges_identical": true,
+      "chunk": "(2, -11)",
+      "elapsed_msec": 358498,
+      "mask_cells": 22,
+      "masks_identical": true,
+      "nodes_identical": true,
+      "placements_identical": true,
+      "settlement_masks_identical": true
+    },
+    {
+      "bridges_identical": true,
+      "chunk": "(8, -3)",
+      "elapsed_msec": 358498,
+      "mask_cells": 0,
+      "masks_identical": true,
+      "nodes_identical": true,
+      "placements_identical": true,
+      "settlement_masks_identical": true
+    },
+    {
+      "bridges_identical": true,
+      "chunk": "(-8, -21)",
+      "elapsed_msec": 543379,
+      "mask_cells": 63,
+      "masks_identical": true,
+      "nodes_identical": true,
+      "placements_identical": true,
+      "settlement_masks_identical": true
+    }
+  ]
+}

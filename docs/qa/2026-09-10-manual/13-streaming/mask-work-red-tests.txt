@@ -1,0 +1,41 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september10_path_decision_work.gd
+* test_selected_loops_supply_the_settlement_mask_without_remote_rankings
+    [Failed]:  [20] expected to equal [4]:  the four selected incident loops already determine every mask bit
+      at line 39
+0/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september10_path_decision_work.gd
+- test_selected_loops_supply_the_settlement_mask_without_remote_rankings
+    [Failed]:  [20] expected to equal [4]:  the four selected incident loops already determine every mask bit
+          at line 39
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             1/2
+Time              1.277s
+
+
+Ran Tests matching "selected_loops_supply"
+---- 1 failing tests ----
+

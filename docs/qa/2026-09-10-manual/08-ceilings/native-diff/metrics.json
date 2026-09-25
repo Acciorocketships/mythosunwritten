@@ -1,0 +1,112 @@
+{
+  "ceiling01": {
+    "roi": [
+      172,
+      0,
+      1581,
+      827
+    ],
+    "mean_abs_rgb": 0.014625173289379565,
+    "roi_mean_abs_rgb": 0.02229606471211012,
+    "roi_changed_over_20_fraction": 0.00024029322639140506
+  },
+  "ceiling02": {
+    "roi": [
+      172,
+      0,
+      1581,
+      827
+    ],
+    "mean_abs_rgb": 0.1502175921651809,
+    "roi_mean_abs_rgb": 0.22900659633512782,
+    "roi_changed_over_20_fraction": 0.005510438595211471
+  },
+  "ceiling03": {
+    "roi": [
+      172,
+      0,
+      1581,
+      827
+    ],
+    "mean_abs_rgb": 0.0,
+    "roi_mean_abs_rgb": 0.0,
+    "roi_changed_over_20_fraction": 0.0
+  },
+  "ceiling04": {
+    "roi": [
+      172,
+      0,
+      1581,
+      827
+    ],
+    "mean_abs_rgb": 1.4607587278927037,
+    "roi_mean_abs_rgb": 2.2269254853565594,
+    "roi_changed_over_20_fraction": 0.04882758360273351
+  },
+  "ceiling05": {
+    "roi": [
+      172,
+      0,
+      1581,
+      827
+    ],
+    "mean_abs_rgb": 0.2207406465016749,
+    "roi_mean_abs_rgb": 0.0,
+    "roi_changed_over_20_fraction": 0.0
+  },
+  "ceiling07": {
+    "roi": [
+      172,
+      0,
+      1581,
+      827
+    ],
+    "mean_abs_rgb": 0.0013433445244308941,
+    "roi_mean_abs_rgb": 0.0020479276282572246,
+    "roi_changed_over_20_fraction": 5.320778584381112e-05
+  },
+  "ceiling08": {
+    "roi": [
+      172,
+      0,
+      1581,
+      827
+    ],
+    "mean_abs_rgb": 4.767964864006773,
+    "roi_mean_abs_rgb": 7.26875853362775,
+    "roi_changed_over_20_fraction": 0.12805397672416827
+  },
+  "ceiling09": {
+    "roi": [
+      172,
+      0,
+      1581,
+      827
+    ],
+    "mean_abs_rgb": 1.8136599692713928,
+    "roi_mean_abs_rgb": 2.764923139064842,
+    "roi_changed_over_20_fraction": 0.07174211730943675
+  },
+  "ceiling12": {
+    "roi": [
+      172,
+      0,
+      1581,
+      827
+    ],
+    "mean_abs_rgb": 8.067596368410031,
+    "roi_mean_abs_rgb": 3.263825656965972,
+    "roi_changed_over_20_fraction": 0.09656269121548038
+  },
+  "ceiling17": {
+    "roi": [
+      172,
+      0,
+      1581,
+      827
+    ],
+    "mean_abs_rgb": 0.5446418586078755,
+    "roi_mean_abs_rgb": 0.3461938840224743,
+    "roi_changed_over_20_fraction": 0.011724593067712057
+  }
+}
