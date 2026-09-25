@@ -9,6 +9,9 @@ extends Node
 @export var streamer: FieldTerrainStreamer
 @export var player: Node3D
 
+var _underwater:Node
+var _frontier: Node
+
 var _ground_map := BiomeGroundMap.new()
 var _mood_weights: Dictionary = {}
 const MOOD_RESPONSE_SECONDS := 3.0
@@ -21,6 +24,10 @@ const GLOW_BLOOM := 0.035
 const GLOW_HDR_THRESHOLD := 1.15
 
 func _ready() -> void:
+	_underwater=preload("res://scripts/camera/UnderwaterView.gd").new()
+	add_child(_underwater)
+	_frontier = preload("res://scripts/terrain/diagnostics/LoadingFrontierFog.gd").new()
+	add_child(_frontier)
 	set_process(not Helper.is_headless())
 	if not Helper.is_headless():
 		_apply_grade()
@@ -73,8 +80,12 @@ func _apply_grade() -> void:
 
 func _process(dt: float) -> void:
 	if not Helper.is_headless() and streamer != null and player != null:
+		_underwater.camera=camera
+		_underwater.world_seed=streamer.world_seed
+		_underwater.update_view()
 		_ground_map.update(player.global_position, streamer.world_seed)
 		_update_mood(dt, Helper.biome_weights5(player.global_position,streamer.world_seed))
+		_frontier.update_view(camera, streamer._built, environment_node.environment.fog_light_color)
 
 func _update_mood(dt: float, target: Dictionary) -> void:
 	if _mood_weights.is_empty():

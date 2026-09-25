@@ -10,7 +10,7 @@ func test_orb_motion_is_slow_bounded_and_keeps_its_light_attached() -> void:
 	var orb := fx.find_child("SpiritOrb",true,false) as SpiritOrb
 	var sprite := orb.get_child(0) as MeshInstance3D
 	var light := orb.get_child(1) as OmniLight3D
-	assert_gt((sprite.mesh as QuadMesh).size.x,3.0,"The luminous sprite must be larger than the former 2.2m quad")
+	assert_between((sprite.mesh as QuadMesh).size.x,1.0,2.4,"September 10 requests a softer intermediate halo at both sizes")
 	var low := Vector3(INF,INF,INF)
 	var high := -low
 	orb._process(0.0)

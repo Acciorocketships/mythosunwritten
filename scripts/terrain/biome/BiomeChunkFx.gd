@@ -1,7 +1,8 @@
 # scripts/terrain/biome/BiomeChunkFx.gd
 # Main-thread render adapter for BiomeAtmosphereField's world-space arrays.
 # Fog samples cross chunk edges continuously. Particle anchors follow the exact
-# ground/water field; a spirit sprite and its moving light share one parent.
+# ground/water field. Both orb sizes share motion, spherical cores and halos;
+# small geometry is batched with a bounded nearby ground-light pool.
 # The profile-only build() helper below is an isolated recipe preview for tests;
 # production calls build_field(), never dominant-biome chunk selection.
 class_name BiomeChunkFx
@@ -9,13 +10,10 @@ extends RefCounted
 
 const CHUNK := 192.0
 
-# Per-recipe particle configuration. Every field has a default in _emitter, so
-# entries only list what differs. EVERY recipe renders as a billboard quad
-# carrying the shared radial soft-glow texture — additive for glows (no hard
-# silhouette at any size; owner: "much more glowy so you cant see a hard
-# outline", "tiny 2d squares ... move to the floating orb version"), alpha for
-# solid-ish drifters ("soft_alpha": petals). Unknown recipe names warn loudly
-# instead of rendering an invisible default emitter.
+# Particle recipes remain available for the isolated preview helper. Production
+# firefly anchors use SmallSpiritOrbs; other atmospheric particles use _emitter.
+const SmallOrbRenderer := preload("res://scripts/terrain/biome/SmallSpiritOrbs.gd")
+
 const RECIPES := {
 	&"fireflies": {
 		"size": 0.35, "albedo": Color(1.0, 0.85, 0.45, 0.9),
@@ -221,6 +219,11 @@ static func build_field(data: Dictionary) -> Node3D:
 		var points: PackedVector3Array = data.points[recipe]
 		if points.is_empty():
 			continue
+		if recipe == &"fireflies":
+			var batch := SmallOrbRenderer.new()
+			batch.setup(points)
+			root.add_child(batch)
+			continue
 		var emitter := _emitter(recipe, 1.0, data.lo, data.hi)
 		emitter.amount = clampi(points.size() * 5, 8, 240)
 		emitter.preprocess = 5.0
@@ -235,31 +238,5 @@ static func build_field(data: Dictionary) -> Node3D:
 		process.emission_point_texture = ImageTexture.create_from_image(positions)
 		root.add_child(emitter)
 	for point: Vector3 in data.orbs:
-		var orb := SpiritOrb.new()
-		orb.name = "SpiritOrb"
-		orb.anchor = point
-		orb.position = point
-		orb.phase = fposmod(point.x * 0.37 + point.z * 0.71, TAU)
-		var sprite := MeshInstance3D.new()
-		var mesh := QuadMesh.new()
-		mesh.size = Vector2(3.2, 3.2)
-		var material := ShaderMaterial.new()
-		material.shader = load("res://terrain/materials/spirit_orb.gdshader")
-		material.set_shader_parameter("phase", orb.phase)
-		var color := Color("ffbf73").lerp(Color("ffe0a3"), (sin(orb.phase) + 1.0) * 0.5)
-		material.set_shader_parameter("glow_color", color)
-		mesh.material = material
-		sprite.mesh = mesh
-		sprite.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		orb.add_child(sprite)
-		var light := OmniLight3D.new()
-		light.light_color = color
-		light.light_energy = 1.3
-		light.omni_range = 18.0
-		light.light_volumetric_fog_energy = 0.45
-		light.distance_fade_enabled = true
-		light.distance_fade_begin = 65.0
-		light.distance_fade_length = 25.0
-		orb.add_child(light)
-		root.add_child(orb)
+		root.add_child(SpiritOrb.create(point))
 	return root
