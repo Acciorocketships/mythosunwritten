@@ -10,6 +10,13 @@ const CLIFF_VISUAL := "res://terrain/environment/visuals/kaykit/kaykit_cliff_wal
 # Sampling the island centre leaves a full 1/8 UV of filter/mipmap padding.
 const PATH_UV := Vector2(0.625, 0.375)
 const PATH_SPOT_UV := PATH_UV + Vector2(0.0, 0.008)
+const PATH_SPOT_DARKEN := 0.94
+
+## Earth keeps the atlas's tan swatch. Biome ground multipliers compensate
+## green turf and can turn this swatch pink; they do not belong on a path.
+static func path_tint(spot: bool = false) -> Color:
+	return Color(PATH_SPOT_DARKEN, PATH_SPOT_DARKEN, PATH_SPOT_DARKEN, 1.0) \
+		if spot else Color.WHITE
 
 static func path_uv() -> Vector2:
 	return PATH_UV

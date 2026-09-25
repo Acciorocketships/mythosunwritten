@@ -173,8 +173,24 @@ static func is_exposed_edge(region, cx: int, cz: int, d: Vector2i) -> bool:
 # storey/level slopes remain legal, while cliffs, inner-corner walls, diagonal
 # cliff shoulders, and edges facing a higher flat cell are rejected without a
 # second terrain classifier that could drift from the mesh.
-static func is_walkable_edge(region, cell: Vector2i, d: Vector2i) -> bool:
+static func is_walkable_edge(region, cell: Vector2i, d: Vector2i,
+		half_width: float = -1.0) -> bool:
 	assert(absi(d.x) + absi(d.y) == 1, "walkability requires a cardinal unit direction")
+	if half_width >= 0.0:
+		assert(is_finite(half_width) and half_width <= tile_size(region) * 0.5)
+		var boundary := (Vector2(cell) + Vector2(d) * 0.5) * tile_size(region)
+		var tangent := Vector2(-d.y, d.x)
+		# Both owners use the same monotone quadrant interpolation. Along each
+		# half of a shared edge their height difference has its extrema at the
+		# interval ends. Check the complete requested strip, split at its centre;
+		# a distant corner wall does not block an otherwise walkable narrow road.
+		for offset: float in [-half_width, 0.0, half_width]:
+			var point := boundary + tangent * offset
+			var a := surface_y_in_cell(region, point.x, point.y, cell.x, cell.y)
+			var b := surface_y_in_cell(region, point.x, point.y, cell.x + d.x, cell.y + d.y)
+			if absf(a - b) > EXPOSE_EPS:
+				return false
+		return true
 	return not is_exposed_edge(region, cell.x, cell.y, d) \
 		and not is_exposed_edge(region, cell.x + d.x, cell.y + d.y, -d)
 
@@ -229,7 +245,18 @@ static func height_bounds(region, footprint: Rect2) -> Vector2:
 	return natural
 
 
-static func _natural_height_bounds(region, footprint: Rect2) -> Vector2:
+## One-sided support at a deliberately multi-valued cliff boundary. The
+## footprint must remain inside this owner; neighboring vertical faces do
+## not contribute a second top to its surface interval.
+static func height_bounds_in_cell(region, footprint: Rect2, owner: Vector2i) -> Vector2:
+	var span := tile_size(region)
+	var cell_bounds := Rect2(Vector2(owner) * span - Vector2.ONE * span * 0.5, Vector2.ONE * span)
+	assert(cell_bounds.encloses(footprint))
+	var natural := _natural_height_bounds(region, footprint, owner)
+	return region.graded_height_bounds(footprint, natural) if region.has_method("graded_height_bounds") else natural
+
+
+static func _natural_height_bounds(region, footprint: Rect2, owner: Variant = null) -> Vector2:
 	assert(region != null)
 	assert(is_finite(footprint.position.x) and is_finite(footprint.position.y))
 	assert(is_finite(footprint.size.x) and is_finite(footprint.size.y))
@@ -246,6 +273,7 @@ static func _natural_height_bounds(region, footprint: Rect2) -> Vector2:
 	var maximum := -INF
 	for cz in range(min_cell.y, max_cell.y + 1):
 		for cx in range(min_cell.x, max_cell.x + 1):
+			if owner != null and owner != Vector2i(cx, cz): continue
 			var centre := Vector2(float(cx) * span, float(cz) * span)
 			for z_sign: int in [-1, 1]:
 				var quadrant_min_z := centre.y \

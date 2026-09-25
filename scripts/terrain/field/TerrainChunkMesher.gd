@@ -4,6 +4,10 @@
 class_name TerrainChunkMesher
 extends RefCounted
 
+const TERRACES := preload("res://scripts/terrain/field/CliffRockDressing.gd")
+const CLIFF_VEGETATION := preload("res://scripts/terrain/field/CliffVegetation.gd")
+const ARCHES := preload("res://scripts/terrain/field/NaturalArches.gd")
+
 const TILE := 24.0
 const CELLS_PER_CHUNK := 8
 # 12 samples/cell (2 m resolution) tessellates the smootherstep slope band finely
@@ -28,6 +32,8 @@ const APRON := 2.4        # ground/skirt continuation depth under a HIGHER flat 
 
 var _material: Material = null
 var profile_enabled := false
+## Complete deterministic operations only; observer never owns geometry.
+var phase_callback := Callable()
 var _fine_vertices_usec := 0
 var _fine_paint_usec := 0
 var _ground_tinted: Material = null
@@ -299,6 +305,8 @@ func _origin(chunk: Vector2i) -> Vector2:
 func prepare_resources() -> void:
 	_ensure_skirt_style()
 	_ground_tinted_mat()
+	TERRACES.prepare()
+	CLIFF_VEGETATION.prepare()
 
 
 ## Worker-safe half of chunk generation. Returns CPU-side mesh arrays,
@@ -508,6 +516,15 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 			"surface": surface_finished - profile_started, "paths": path_usec,
 			"normals": normals_finished - normals_started,
 			"aprons_and_walls": Time.get_ticks_usec() - normals_finished}
+	if phase_callback.is_valid(): phase_callback.call(chunk, &"terrain_arches")
+	var arches := ARCHES.compute(region,lo_cx,lo_cz,CELLS_PER_CHUNK,_water_seed,features,_skirt_uv)
+	var cliffs := CliffDressing.compute(region,lo_cx,lo_cz,CELLS_PER_CHUNK)
+	if phase_callback.is_valid(): phase_callback.call(chunk, &"cliff_formations")
+	var terraces := TERRACES.compute(region,lo_cx,lo_cz,CELLS_PER_CHUNK,_water_seed,features,water)
+	if phase_callback.is_valid(): phase_callback.call(chunk, &"cliff_vegetation")
+	var vegetation := CLIFF_VEGETATION.compute(cliffs,terraces,region,_water_seed,features,water)
+	if phase_callback.is_valid(): phase_callback.call(chunk, &"graded_cliffs")
+	var graded_cliffs := CliffDressing.compute_graded_faces(region,lo_cx,lo_cz,CELLS_PER_CHUNK,_water_seed)
 	return {
 		"profile": timings,
 		"profile_counts": {"fine_quads": fine_quads, "graded_quads": graded_quads,
@@ -518,8 +535,12 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 		"apron_arrays": apron_arrays,
 		"wall_arrays": wall_arrays,
 		"wall_collision_arrays": wall_collision_arrays,
-		"cliffs": CliffDressing.compute(region, lo_cx, lo_cz, CELLS_PER_CHUNK),
-		"graded_cliff_arrays": CliffDressing.compute_graded_faces(region, lo_cx, lo_cz, CELLS_PER_CHUNK, _water_seed),
+		"cliffs": cliffs,
+		"cliff_terraces": terraces,
+		"cliff_vegetation": vegetation,
+		"natural_arches": arches,
+		"structure_clearance": arches.clearance,
+		"graded_cliff_arrays": graded_cliffs,
 		"world_seed": _water_seed,
 	}
 
@@ -534,6 +555,7 @@ func commit_chunk(data: Dictionary) -> Node3D:
 
 	var mi := MeshInstance3D.new()
 	mi.name = "Surface"
+	mi.add_to_group("tactical_solid_earth", true)
 	mi.mesh = _mesh_from_arrays(data["surface_arrays"], _ground_tinted_mat())
 	root.add_child(mi)
 
@@ -543,10 +565,21 @@ func commit_chunk(data: Dictionary) -> Node3D:
 		apron_mesh = _mesh_from_arrays(apron_arrays, _ground_tinted_mat())
 		var am := MeshInstance3D.new()
 		am.name = "Aprons"
+		am.add_to_group("tactical_solid_earth", true)
 		am.mesh = apron_mesh
 		root.add_child(am)
 
 	root.add_child(CliffDressing.build_from_data(data["cliffs"], data["world_seed"]))
+	var terrace_data: Dictionary = data.get("cliff_terraces",{})
+	root.add_child(TERRACES.build(terrace_data,data["world_seed"]))
+	root.add_child(CLIFF_VEGETATION.build(data.get("cliff_vegetation",[])))
+	var arch_data: Dictionary = data.get("natural_arches",{})
+	var arch_arrays: Array = arch_data.get("arrays",[])
+	if not arch_arrays.is_empty():
+		var arch_mesh := MeshInstance3D.new()
+		arch_mesh.name = "NaturalArches"
+		arch_mesh.mesh = _mesh_from_arrays(arch_arrays,_skirt_material)
+		root.add_child(arch_mesh)
 	var graded_cliffs: Array = data.get("graded_cliff_arrays", [])
 	if not graded_cliffs.is_empty():
 		var graded_skin := MeshInstance3D.new()
@@ -559,10 +592,27 @@ func commit_chunk(data: Dictionary) -> Node3D:
 	body.name = "Body"
 	var cs := CollisionShape3D.new()
 	cs.name = "CollisionShape3D"
+	cs.add_to_group("tactical_terrain_volume", true)
 	var col_shape := ConcavePolygonShape3D.new()
 	col_shape.set_faces(data["collision_faces"])
 	cs.shape = col_shape
 	body.add_child(cs)
+	var arch_faces: PackedVector3Array = arch_data.get("collision_faces",PackedVector3Array())
+	if not arch_faces.is_empty():
+		var arch_shape := ConcavePolygonShape3D.new()
+		arch_shape.set_faces(arch_faces)
+		var arch_collision := CollisionShape3D.new()
+		arch_collision.name = "NaturalArches"
+		arch_collision.shape = arch_shape
+		body.add_child(arch_collision)
+	var terrace_faces: PackedVector3Array = terrace_data.get("collision_faces",PackedVector3Array())
+	if not terrace_faces.is_empty():
+		var terrace_shape := ConcavePolygonShape3D.new()
+		terrace_shape.set_faces(terrace_faces)
+		var terrace_collision := CollisionShape3D.new()
+		terrace_collision.name = "CliffRocks"
+		terrace_collision.shape = terrace_shape
+		body.add_child(terrace_collision)
 	if apron_mesh != null:
 		var cs3 := CollisionShape3D.new()
 		cs3.name = "CollisionShape3D_aprons"
@@ -612,9 +662,10 @@ func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, uv: Vector2) -> v
 		st.add_vertex(v)
 
 func _tri_tinted(st: SurfaceTool, vs: Array[Vector3], uv: Vector2, cs: Array[Color]) -> void:
+	var earth := uv == _path_uv or uv == _path_spot_uv
 	for i in 3:
 		st.set_uv(uv)
-		st.set_color(cs[i])
+		st.set_color(SlopeAtlas.path_tint(uv == _path_spot_uv) if earth else cs[i])
 		st.add_vertex(vs[i])
 
 const PATH_OVERLAY_DIVISIONS := 8
@@ -623,7 +674,7 @@ const PATH_SPOT_RADIUS_MIN := 0.24
 const PATH_SPOT_RADIUS_MAX := 0.72
 const PATH_SPOT_JITTER := 0.26
 const PATH_SPOT_LIFT := 0.030
-const PATH_SPOT_DARKEN := 0.94
+const PATH_SPOT_DARKEN := SlopeAtlas.PATH_SPOT_DARKEN
 const PATH_SPOT_SIDES := 12
 
 # Emit one finely subdivided ground surface where a path may be present. Each
@@ -929,6 +980,12 @@ const LIP_LIFT := 0.05    # matches CliffDressing.LIP_LIFT — clipped sheet edg
 # always agree). Slots are ordered along pdir=(dir.y,dir.x). Returns {"dirs": {dir: {"lips",
 # "prof"}}, "corners": {cdir: kind}}, or null when nothing on this cell is lipped.
 static func _cell_clip_info(region, cache: Dictionary, cx: int, cz: int):
+	# Grading deforms the complete native rim below; its original topology still
+	# owns the sheet boundary, including where a cliff flattens into a street.
+	if region is HeightfieldRegion and not region.terrain_grades.is_empty():
+		if not cache.has("natural_region"):
+			cache["natural_region"] = region.without_terrain_grades()
+		region = cache["natural_region"]
 	var key := Vector2i(cx, cz)
 	if cache.has(key):
 		return cache[key]
@@ -1060,6 +1117,33 @@ static func _inner_corner_vertex(region, cache: Dictionary, qcx: int, qcz: int,
 #    threshold, scaled by (1-w): sub-lip dips weld instead of opening a hairline slit at the
 #    boundary (the owner's dark dashes where a slope flattens out).
 static func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3) -> Vector3:
+	if region is HeightfieldRegion and not region.terrain_grades.is_empty():
+		# Fine triangles and edge-normal probes revisit the exact same owned
+		# vertex. This cache lives for one chunk and preserves the full float key.
+		if not cache.has("graded_vertices"): cache["graded_vertices"] = {}
+		var owner := Vector2i(qcx,qcz)
+		var vertices:Dictionary=cache["graded_vertices"]
+		if not vertices.has(owner): vertices[owner]={}
+		var owned:Dictionary=vertices[owner]
+		if owned.has(v): return owned[v]
+		if not cache.has("natural_region"):
+			cache["natural_region"] = region.without_terrain_grades()
+			cache["natural_clip"] = {}
+		if not cache.has("natural_clip"): cache["natural_clip"] = {}
+		var natural: HeightfieldRegion = cache["natural_region"]
+		# Most vertices are interior or outside a lip run. Their graded input
+		# already is the final surface: do not resample those points.
+		var clipped := _clip_vert(natural, cache["natural_clip"], qcx, qcz, v)
+		if clipped == v:
+			owned[v]=v
+			return v
+		var height := TerrainSurfaceField._natural_surface_y_in_cell(natural, v.x, v.z, qcx, qcz)
+		var offset: float = v.y - region.graded_height(v.x, v.z, height)
+		clipped.y = height + clipped.y - v.y
+		clipped = CliffDressing.graded_rim_point(region, clipped)
+		clipped.y += offset
+		owned[v]=clipped
+		return clipped
 	var info = _cell_clip_info(region, cache, qcx, qcz)
 	if info == null:
 		return v
@@ -1145,6 +1229,32 @@ static func _clip_vert(region, cache: Dictionary, qcx: int, qcz: int, v: Vector3
 func _emit_aprons(st: SurfaceTool, region, clip_cache: Dictionary, cx: int, cz: int,
 		tint: Color, water: WaterFieldContext, features: FeatureContext,
 		edge_appearance: Dictionary) -> bool:
+	if region is HeightfieldRegion and not region.terrain_grades.is_empty():
+		if not clip_cache.has("natural_region"):
+			clip_cache["natural_region"] = region.without_terrain_grades()
+		if not clip_cache.has("natural_clip"): clip_cache["natural_clip"] = {}
+		if not edge_appearance.has("natural"): edge_appearance["natural"] = {}
+		if not region.has_grade_effect_in(Rect2(Vector2(cx,cz)*TILE-Vector2.ONE*(TILE*.5+APRON),Vector2.ONE*(TILE+2*APRON))):
+			return _emit_aprons(st, clip_cache["natural_region"], clip_cache["natural_clip"],
+				cx, cz, tint, water, features, edge_appearance["natural"])
+		var native := SurfaceTool.new()
+		native.begin(Mesh.PRIMITIVE_TRIANGLES)
+		if not _emit_aprons(native, clip_cache["natural_region"], clip_cache["natural_clip"],
+			cx, cz, tint, water, features, edge_appearance["natural"]): return false
+		var arrays := native.commit_to_arrays()
+		var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		for i in vertices.size():
+			vertices[i] = CliffDressing.graded_rim_point(region, vertices[i])
+		for i in range(0,vertices.size(),3):
+			var normal := (vertices[i+2]-vertices[i]).cross(vertices[i+1]-vertices[i])
+			if normal.length_squared()<0.00000001: continue
+			normal = normal.normalized()
+			for j in range(i,i+3):
+				st.set_normal(normal)
+				st.set_uv(arrays[Mesh.ARRAY_TEX_UV][j])
+				st.set_color(arrays[Mesh.ARRAY_COLOR][j])
+				st.add_vertex(vertices[j])
+		return true
 	var emitted := false
 	var active := {}
 	for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
@@ -1310,7 +1420,7 @@ func _apron_quad(st: SurfaceTool, p0: Vector3, p1: Vector3, q0: Vector3,
 				var appearance: Array = edge_appearance.get(source, [Vector3.UP, tint])
 				st.set_normal((appearance[0] as Vector3) * side)
 				st.set_uv(uv)
-				st.set_color(appearance[1])
+				st.set_color(SlopeAtlas.path_tint() if uv == _path_uv else appearance[1])
 				st.add_vertex(v + (drop if side < 0.0 else Vector3.ZERO))
 
 # Clamp a point's ALONG coordinates by cell (ncx,ncz)'s clip on its two edges perpendicular to

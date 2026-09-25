@@ -1,0 +1,1 @@
+Isolated rejected ground-edge candidate: first-surface depth is present, but the original corridor selection and missing raised-grass root protection remain. Used to falsify both edge invariants; this is not represented as the original September 12 build.

@@ -123,6 +123,12 @@ static func _compile_set(source: DressingSet,
 			and source.surface_mode == DressingSet.SurfaceMode.WATER_SURFACE:
 		_fail("Ground-rooted wet set %s cannot use WATER_SURFACE" % set_id)
 		return {}
+	if not is_finite(source.relief_radius) or source.relief_radius < 0.0 \
+			or not _ordered_finite(source.relief_range) or source.relief_range.x < 0.0 \
+			or ((source.relief_radius > 0.0) != (source.relief_range.y > 0.0)) \
+			or (source.relief_radius > 0.0 and source.surface_mode == DressingSet.SurfaceMode.WATER_SURFACE):
+		_fail("Dressing set %s requires a bounded ground relief habitat" % set_id)
+		return {}
 	var biome_ids := BiomeRegistry.biome_ids()
 	var fill := _affinity_array(source.fill_per_cell, biome_ids, "set %s fill" % set_id)
 	if fill.is_empty() or _maximum(fill) <= 0.0:
@@ -155,7 +161,7 @@ static func _compile_set(source: DressingSet,
 		return {}
 	var choices: Array[Dictionary] = []
 	var compiled_spacing_radius := source.spacing_radius
-	var query_support_radius := source.support_radius
+	var query_support_radius := maxf(source.support_radius,source.relief_radius)
 	var query_feature_radius := 0.0
 	var authored_choices: Array[DressingChoice] = source.choices.duplicate()
 	authored_choices.sort_custom(func(a: DressingChoice, b: DressingChoice) -> bool:
@@ -256,6 +262,8 @@ static func _compile_set(source: DressingSet,
 			if source.surface_mode == DressingSet.SurfaceMode.GROUND_SUPPORT \
 			else AUTO_SUPPORT_HEIGHT_SPAN,
 		"max_grade": source.max_grade,
+		"relief_radius": source.relief_radius,
+		"relief_range": source.relief_range,
 		"feature_clearance": source.feature_clearance,
 		"spacing_group": resolved_group,
 		"spacing_radius": compiled_spacing_radius,

@@ -37,11 +37,28 @@ func visual(asset_id: StringName) -> EnvironmentVisual:
 	var loaded := load(descriptor_value.visual_path) as EnvironmentVisual
 	if not _validate_visual(asset_id, loaded):
 		return null
+	# Ambient stone shares the cliff stone palette; source geometry, UV detail
+	# and collision remain authored. Duplicate only the prepared visual wrapper.
+	if String(asset_id).begins_with("kaykit.rock.") or String(asset_id).begins_with("lpfv.rock.") or String(asset_id).begins_with("lpfv.big_rock."):
+		loaded = loaded.duplicate(true)
+		for piece: EnvironmentVisualPiece in loaded.pieces:
+			piece.mesh = piece.mesh.duplicate()
+			for surface in piece.mesh.get_surface_count():
+				var source := piece.mesh.surface_get_material(surface) as StandardMaterial3D
+				if source == null: continue
+				var stone := ShaderMaterial.new()
+				stone.shader = load("res://terrain/materials/field_rock.gdshader")
+				stone.set_shader_parameter("albedo_texture", source.albedo_texture)
+				stone.set_shader_parameter("source_color_value", source.albedo_color)
+				piece.mesh.surface_set_material(surface, stone)
 	_visuals[asset_id] = loaded
 	return loaded
 
 func is_prepared(asset_id: StringName) -> bool:
 	return _visuals.has(asset_id)
+
+func descriptor(asset_id: StringName) -> EnvironmentAssetDescriptor:
+	return _catalog.descriptor(asset_id)
 
 func prepared_ids() -> Array[StringName]:
 	var out: Array[StringName] = []

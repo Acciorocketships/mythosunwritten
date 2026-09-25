@@ -1,4 +1,5 @@
 // Shared by the terrain, rolled lips and actual grass blades.
+#define TACTICAL_TERRAIN_MATERIAL
 global uniform sampler2D biome_ground_a;
 global uniform sampler2D biome_ground_b;
 global uniform vec2 biome_ground_origin;

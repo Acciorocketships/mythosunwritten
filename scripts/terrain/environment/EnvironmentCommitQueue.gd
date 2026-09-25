@@ -39,6 +39,7 @@ func enqueue(chunk: Vector2i, generation: int, parent: Node3D,
 				"piece_index": piece_index,
 				"transforms": batch.transforms,
 				"colors": batch.colors,
+				"visibility_owners": batch.get("visibility_owners", []),
 			})
 
 func drain(max_batches: int, max_usec: int = 0) -> int:
@@ -79,15 +80,27 @@ func _commit_batch(parent: Node3D, item: Dictionary) -> void:
 	var colors: Array = item.colors
 	assert(transforms.size() == colors.size())
 	var multimesh := MultiMesh.new()
+	var tags := _render_cache.descriptor(item.asset_id).tags
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	multimesh.use_colors = piece.use_instance_color
+	multimesh.use_custom_data = true
 	multimesh.mesh = piece.mesh
 	multimesh.instance_count = transforms.size()
 	var composed := compose_transforms(transforms, piece)
+	# Complete prefab assets own all native pieces. Modular assets instead
+	# carry the room envelope assigned by their construction plan.
+	var native_bounds := AABB()
+	for native_piece: EnvironmentVisualPiece in visual.pieces:
+		var box := native_piece.local_transform * native_piece.mesh.get_aabb()
+		native_bounds = native_bounds.merge(box) if native_bounds.has_volume() else box
+	var owners: Array = item.get("visibility_owners", [])
 	for index in composed.size():
 		multimesh.set_instance_transform(index, composed[index])
 		if piece.use_instance_color:
 			multimesh.set_instance_color(index, colors[index])
+		var owner: AABB = owners[index] if index < owners.size() else AABB()
+		if not owner.has_volume(): owner = (transforms[index] as Transform3D) * native_bounds
+		multimesh.set_instance_custom_data(index, Color(owner.position.x,owner.position.z,owner.end.x,owner.end.z))
 	var container := parent.get_node_or_null(String(_container_name)) as Node3D
 	if container == null:
 		container = Node3D.new()
@@ -96,6 +109,13 @@ func _commit_batch(parent: Node3D, item: Dictionary) -> void:
 	var instance := MultiMeshInstance3D.new()
 	instance.name = "%s_%02d" % [String(item.asset_id).replace(".", "_"), item.piece_index]
 	instance.multimesh = multimesh
+	instance.set_meta("tactical_owner_footprints", true)
+	if &"deck" in tags:
+		instance.add_to_group("tactical_deck_surface", true)
+	if &"building" in tags or &"deck" in tags:
+		instance.add_to_group("tactical_closed_shell", true)
+	if &"cliff" in tags:
+		instance.add_to_group("tactical_solid_earth", true)
 	instance.material_override = LANTERN_LIGHTS.glass_material(item.asset_id, piece)
 	container.add_child(instance)
 	if int(item.piece_index) == 0:

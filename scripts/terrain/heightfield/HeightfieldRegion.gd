@@ -12,15 +12,29 @@ var _storeys: Dictionary  # Vector2i -> int
 var _levels: Dictionary   # Vector2i -> int
 var _carved: Dictionary   # Vector2i -> true (water carve removed ground here)
 var terrain_grades: Array[TerrainGradePatch] = []
+# Only this inner domain is certified independent of the finite clamp edges.
+# Scratch margins and hand-built fixtures must not be reused as complete fields.
+var certified_cells := Rect2i()
+var native_control_heights: Dictionary = {}
+var _native_grade_views: Dictionary = {}
 
 func with_terrain_grades(grades: Array[TerrainGradePatch]) -> HeightfieldRegion:
 	if grades.is_empty():
 		return self
+	if _native_grade_views.has(grades): return _native_grade_views[grades]
 	var result := HeightfieldRegion.new(_storeys, _levels, _carved, plan)
-	result.terrain_grades.assign(grades)
+	result.native_control_heights = native_control_heights.duplicate()
+	for grade: TerrainGradePatch in grades:
+		result.native_control_heights.merge(preload("res://scripts/terrain/field/NativeTerrainGrade.gd").controls(grade,self),true)
+	# The selected controls now go through ordinary terrain classification.
+	# There is no post-classification warp of the crown, corner or side face.
+	if _native_grade_views.size() >= 8: _native_grade_views.erase(_native_grade_views.keys()[0])
+	_native_grade_views[grades.duplicate()] = result
 	return result
 
 func without_terrain_grades() -> HeightfieldRegion:
+	# Remove only the legacy post-classification warp. Native controls are
+	# already the final terrain lattice and must survive native piece selection.
 	return self if terrain_grades.is_empty() else HeightfieldRegion.new(
 		_storeys, _levels, _carved, plan)
 
@@ -82,6 +96,8 @@ func _init(storeys: Dictionary, levels: Dictionary, carved: Dictionary = {}, p_p
 
 
 func storey_at(cx: int, cz: int) -> int:
+	if native_control_heights.has(Vector2i(cx,cz)):
+		return floori(float(native_control_heights[Vector2i(cx,cz)])/STOREY_HEIGHT)
 	return int(_storeys.get(Vector2i(cx, cz), 0))
 
 
@@ -92,6 +108,8 @@ func is_carved(cx: int, cz: int) -> bool:
 
 
 func level_at(cx: int, cz: int) -> int:
+	if native_control_heights.has(Vector2i(cx,cz)):
+		return floori(fposmod(float(native_control_heights[Vector2i(cx,cz)]),STOREY_HEIGHT))
 	return int(_levels.get(Vector2i(cx, cz), 0))
 
 
@@ -100,6 +118,8 @@ func has_surface_cell(cx: int, cz: int) -> bool:
 
 
 func surface_height(cx: int, cz: int) -> float:
+	if native_control_heights.has(Vector2i(cx,cz)):
+		return float(native_control_heights[Vector2i(cx,cz)])
 	# Level terraces are IN the rendered surface (HeightfieldPlan.RENDER_LEVELS, owner 2026-07-15):
 	# each 1m level step ramps through the same half-cell slope profile as the 4m storey slopes —
 	# short slope tiles, no KayKit dressing (walls/lips/skirts key off storey_at only).
@@ -112,4 +132,4 @@ func surface_height(cx: int, cz: int) -> float:
 func tile_plan(cx: int, cz: int) -> Dictionary:
 	var s: int = storey_at(cx, cz)
 	var l: int = level_at(cx, cz)
-	return {"storey": s, "level": l, "height": float(s) * STOREY_HEIGHT + float(l) * LEVEL_HEIGHT}
+	return {"storey": s, "level": l, "height": surface_height(cx, cz)}

@@ -3,6 +3,9 @@ extends RefCounted
 
 ## Worker-safe, render-resource-free instances grouped by stable asset ID.
 ## A batch is either entirely anonymous or carries one stable ID per transform.
+## Optional visibility_owners are construction envelopes in the same frame as
+## transforms. They travel with each placement through copies and chunk cuts;
+## an empty owner lets the renderer use the complete native asset's bounds.
 var batches: Dictionary = {}
 var instance_count := 0
 ## Plain worker-side box colliders for generated structures whose reviewed
@@ -44,10 +47,11 @@ static func _surface_mesh_is_valid(mesh: Dictionary) -> bool:
 	return true
 
 func add(asset_id: StringName, transform: Transform3D, color: Color,
-		stable_id: StringName = &"", collision_enabled: bool = true) -> void:
+		stable_id: StringName = &"", collision_enabled: bool = true,
+		visibility_owner: AABB = AABB()) -> void:
 	if not batches.has(asset_id):
 		batches[asset_id] = {"transforms": [], "colors": [], "ids": [],
-			"collision_enabled": []}
+			"collision_enabled": [], "visibility_owners": []}
 	var batch: Dictionary = batches[asset_id]
 	var identified := not stable_id.is_empty()
 	assert(batch.transforms.is_empty() or identified == not batch.ids.is_empty(),
@@ -60,6 +64,10 @@ func add(asset_id: StringName, transform: Transform3D, color: Color,
 	batch.colors.append(color)
 	collision_flags.append(collision_enabled)
 	batch["collision_enabled"] = collision_flags
+	var owners: Array = batch.get("visibility_owners", [])
+	while owners.size() < batch.transforms.size() - 1: owners.append(AABB())
+	owners.append(visibility_owner)
+	batch["visibility_owners"] = owners
 	if identified:
 		batch.ids.append(stable_id)
 	instance_count += 1
@@ -87,6 +95,9 @@ func validate() -> bool:
 		if not batch.ids.is_empty() and batch.ids.size() != batch.transforms.size():
 			return false
 		var collision_flags: Array = batch.get("collision_enabled", [])
+		var owners: Array = batch.get("visibility_owners", [])
+		if not owners.is_empty() and owners.size() != batch.transforms.size():
+			return false
 		if not collision_flags.is_empty() \
 				and collision_flags.size() != batch.transforms.size():
 			return false
@@ -120,7 +131,7 @@ func append_from(other: EnvironmentInstancePayload,
 			var collision_enabled := collision_flags.is_empty() \
 				or bool(collision_flags[index])
 			add(asset_id, transform, batch.colors[index], stable_id,
-				collision_enabled)
+				collision_enabled, batch.visibility_owners[index] if batch.has("visibility_owners") else AABB())
 	for mesh: Dictionary in other.surface_meshes:
 		var anchor := mesh.get("anchor", Vector3.ZERO) as Vector3
 		if filter_by_owner and not _half_open_has_point(ownership,

@@ -16,12 +16,12 @@ const SALT_BRIGHTNESS := 0x082EFA98
 
 static func compute(program: DressingProgram, world_seed: int, core: Rect2,
 		region: HeightfieldRegion, water: WaterFieldContext,
-		features: FeatureContext = null) -> EnvironmentInstancePayload:
+		features: FeatureContext = null, terrain_reservations: Array[Rect2] = []) -> EnvironmentInstancePayload:
 	assert(program != null and region != null and water != null)
 	var eligible: Array[Dictionary] = []
 	for set_data: Dictionary in program.sets:
 		eligible.append_array(_eligible_for_set(set_data, world_seed, core, region,
-			water, features))
+			water, features,terrain_reservations))
 	var winners: Array[Dictionary] = []
 	for candidate: Dictionary in eligible:
 		var survives := true
@@ -46,7 +46,7 @@ static func compute(program: DressingProgram, world_seed: int, core: Rect2,
 
 static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2,
 		region: HeightfieldRegion, water: WaterFieldContext,
-		features: FeatureContext = null) -> Array[Dictionary]:
+		features: FeatureContext = null, terrain_reservations: Array[Rect2] = []) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var query: Rect2 = core.grow(float(set_data.group_radius))
 	var min_cell := Vector2i(int(floor(query.position.x / PROPOSAL_CELL)),
@@ -92,7 +92,7 @@ static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2
 				var tint: Color = BiomeRegistry.blended_environment_tint(weights, choice.tint_group)
 				var basis: Basis = Basis(Vector3.UP, yaw).scaled(Vector3.ONE * scale)
 				var qualification: Dictionary = _qualify(set_data, anchor, region, water,
-					features, choice, basis)
+					features, choice, basis,terrain_reservations)
 				if qualification.is_empty():
 					continue
 				out.append({
@@ -114,7 +114,7 @@ static func _eligible_for_set(set_data: Dictionary, world_seed: int, core: Rect2
 static func _qualify(set_data: Dictionary, anchor: Vector2,
 		region: HeightfieldRegion, water: WaterFieldContext,
 		features: FeatureContext = null, choice: Dictionary = {},
-		basis: Basis = Basis.IDENTITY) -> Dictionary:
+		basis: Basis = Basis.IDENTITY, terrain_reservations: Array[Rect2] = []) -> Dictionary:
 	if features != null:
 		var footprint_half: Vector2 = choice.get(
 			"feature_footprint_half_extents", Vector2.ZERO)
@@ -147,6 +147,12 @@ static func _qualify(set_data: Dictionary, anchor: Vector2,
 	for local_point: Vector2 in choice.get("support_points", PackedVector2Array()):
 		var offset := basis * Vector3(local_point.x, 0.0, local_point.y)
 		points.append(anchor + Vector2(offset.x, offset.z))
+	# Native terrain additions reserve their complete footprints before ambient
+	# placement. Query the supported base, not an unrelated high canopy.
+	var base_bounds := Rect2(anchor,Vector2.ZERO)
+	for point: Vector2 in points: base_bounds=base_bounds.expand(point)
+	for reserved: Rect2 in terrain_reservations:
+		if reserved.intersects(base_bounds.grow(.1)): return {}
 	for point: Vector2 in points:
 		if not water.covers(point) or not _water_ok(set_data, water, point):
 			return {}
@@ -180,6 +186,14 @@ static func _qualify(set_data: Dictionary, anchor: Vector2,
 			- TerrainSurfaceField.surface_y(region, anchor.x, anchor.y - step)
 		if Vector2(hx, hz).length() / (2.0 * step) > set_data.max_grade:
 			return {}
+	var relief_radius: float = set_data.get("relief_radius",0.0)
+	if relief_radius > 0.0:
+		var rise := 0.0
+		for index in 16:
+			var point := anchor+Vector2.RIGHT.rotated(index*TAU/16.0)*relief_radius
+			rise=maxf(rise,TerrainSurfaceField.surface_y(region,point.x,point.y)-heights[0])
+		var relief: Vector2 = set_data.relief_range
+		if rise < relief.x or rise > relief.y: return {}
 	return {"y": heights[0]}
 
 static func _water_ok(set_data: Dictionary, water: WaterFieldContext, point: Vector2) -> bool:

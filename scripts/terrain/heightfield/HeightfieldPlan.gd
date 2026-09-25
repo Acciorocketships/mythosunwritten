@@ -83,7 +83,7 @@ func _init(
 	p_max_step: int = 1
 ) -> void:
 	assert(p_height_amplitude > 0.0, "HeightfieldPlan: height_amplitude must be positive")
-	# max_storeys is the clamp window margin; a non-positive value collapses the
+	# max_storeys bounds the derived clamp dependency radius; a non-positive value collapses the
 	# window to a single cell and silently breaks the churn-free guarantee.
 	assert(p_max_storeys > 0, "HeightfieldPlan: max_storeys must be positive")
 	assert(p_aggregation == "min" or p_aggregation == "mean" \
@@ -126,34 +126,23 @@ func uncarved_height(cx: int, cz: int) -> float:
 	return _sample(cx, cz)[2]
 
 
-## Layered terrain height in [0, 1]: broad landforms + rolling hills + fine
-## detail (the fine octave's local gradient is what the clamp turns into cliff
-## steps on steep ground). Rocky highlands rise much taller/steeper — with a
-## ridged spine for mountain ranges — while meadows stay low and flat. A flat
-## clearing near the world origin keeps the spawn gentle.
+## Biome-owned geological shapes and relief, with a small fine octave.
+## Mountain ranges, mesas and sheltered lowlands share continuous biome weights.
+## A flat clearing near the world origin keeps the spawn gentle.
 ##
 ## Shared landform field in [0, 1]. include_detail=false is the SMOOTH field
-## (macro + hills + rocky/ridge shaping, origin falloff — no fine octave):
+## (biome geology and origin falloff, without the fine octave):
 ## river tracing descends it so channels follow the rendered mountains
 ## without jittering on the detail noise. include_detail=true is the exact
 ## rendered terrain field (used by _height01 / raw_height).
 static func height01(pos: Vector3, p_world_seed: int, include_detail: bool = true) -> float:
-	var base: float = Helper._value_noise01(pos, p_world_seed, 320.0)
-	var hills: float = Helper._value_noise01(pos, p_world_seed + 5, 120.0)
-	var h: float
+	var weights := Helper.biome_weights5(pos,p_world_seed)
+	var h := LandformField.height01(pos,p_world_seed,weights)
 	if include_detail:
-		var detail: float = Helper._value_noise01(pos, p_world_seed + 9, 46.0)
-		h = (base + hills * 0.5 + detail * 0.25) / 1.75
-	else:
-		h = (base + hills * 0.5) / 1.5
-	var rocky: float = Helper.biome_rocky01(pos, p_world_seed)
-	h *= 0.35 + 1.5 * rocky
-	if rocky > 0.5:
-		# Ridged noise (sharp peaks) for mountain spines in rocky cores.
-		var n: float = Helper._value_noise01(pos, p_world_seed + 17, 190.0)
-		var ridge: float = 1.0 - absf(2.0 * n - 1.0)
-		h += ridge * ridge * (rocky - 0.5) * 0.9
-	h = lerpf(h, LandformField.height01(pos, p_world_seed), 0.7)
+		var relief := 0.0
+		for biome: StringName in weights:
+			relief += float(LandformField.PROFILES[biome][1])*weights[biome]
+		h += (Helper._value_noise01(pos,p_world_seed+9,46.0)-.5)*.015*relief
 	var falloff: float = SlopeProfile.smootherstep(clampf((Vector2(pos.x, pos.z).length() - 60.0) / 180.0, 0.0, 1.0))
 	return clampf(h * falloff, 0.0, 1.0)
 
@@ -233,11 +222,11 @@ static func clamp_field(targets: Dictionary, max_step: int = 1) -> Dictionary:
 	return out
 
 
-## Clamp influence fans out one storey per tile, and storeys are capped at
-## max_storeys, so a window margin of max_storeys guarantees the center cell's
-## clamped value equals the global (infinite-window) result.
+## A source q contributes target(q) + max_step * ManhattanDistance(p,q).
+## Targets lie in [0,max_storeys]; beyond this radius even zero cannot lower
+## the query. The same bound applies to both reference and batched compilers.
 func storey_margin() -> int:
-	return max_storeys
+	return ceili(float(max_storeys) / max_step)
 
 
 ## Final clamped storey for a cell. Reference implementation: builds a window of
@@ -352,11 +341,11 @@ func level_margin() -> int:
 
 
 ## Final (clamped) storeys over [cx +/- radius]. Quantizes a window padded by
-## max_storeys (the clamp's influence distance) so the inner `radius` storeys are
+## storey_margin() (the clamp's influence distance) so the inner `radius` storeys are
 ## settled, then runs the storey clamp once. Reused by level_at to avoid per-cell
 ## storey windows.
 func _build_storey_map(cx: int, cz: int, radius: int) -> Dictionary:
-	var outer: int = radius + max_storeys
+	var outer: int = radius + storey_margin()
 	var targets: Dictionary = {}
 	for dz in range(-outer, outer + 1):
 		for dx in range(-outer, outer + 1):
@@ -431,30 +420,41 @@ static func _cliff_distance_field(storeys: Dictionary, max_r: int) -> Dictionary
 ## Cliff distances use one BFS field. Returns values equal to the per-cell
 ## reference.
 func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldRegion:
-	var level_r := radius + 1 + LEVELS_PER_STOREY
-	var outer := level_r + _CLIFF_SEARCH_MAX + max_storeys
-	var width := outer * 2 + 1
-	var count := width * width
-	var lo := Vector2i(center_cx - outer, center_cz - outer)
+	return compute_rect_region(Rect2i(Vector2i(center_cx-radius,center_cz-radius),Vector2i.ONE*(radius*2+1)))
+
+
+## Same certified terrain computation on a rectangular requested interior.
+## Long river corridors need the complete clamp halo, not an unrelated square
+## extending equally far in the narrow direction. Square callers retain their
+## exact former buffer extents, iteration order and output dictionaries.
+func compute_rect_region(interior: Rect2i) -> HeightfieldRegion:
+	assert(interior.size.x > 0 and interior.size.y > 0)
+	var level_rect := interior.grow(1 + LEVELS_PER_STOREY)
+	var inset := _CLIFF_SEARCH_MAX + storey_margin()
+	var outer_rect := level_rect.grow(inset)
+	var width := outer_rect.size.x
+	var rows := outer_rect.size.y
+	var count := width * rows
+	var lo := outer_rect.position
 	var storeys := PackedInt32Array()
 	storeys.resize(count)
-	for z in width:
+	for z in rows:
 		for x in width:
 			storeys[z*width+x] = quantize_storey(_sample(lo.x+x,lo.y+z)[0])
 	# The rectangular cardinal clamp is the minimum of target(q) plus
 	# max_step * ManhattanDistance(p,q). Its two separable distance transforms
 	# reach exactly the old monotone fixpoint, including finite outer edges.
-	for z in width:
+	for z in rows:
 		var row := z*width
 		for x in range(1,width):
 			storeys[row+x] = mini(storeys[row+x],storeys[row+x-1]+max_step)
 		for x in range(width-2,-1,-1):
 			storeys[row+x] = mini(storeys[row+x],storeys[row+x+1]+max_step)
-	for z in range(1,width):
+	for z in range(1,rows):
 		for x in width:
 			var idx := z*width+x
 			storeys[idx] = mini(storeys[idx],storeys[idx-width]+max_step)
-	for z in range(width-2,-1,-1):
+	for z in range(rows-2,-1,-1):
 		for x in width:
 			var idx := z*width+x
 			storeys[idx] = mini(storeys[idx],storeys[idx+width]+max_step)
@@ -462,12 +462,12 @@ func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldR
 	distances.resize(count)
 	distances.fill(_NO_CLIFF)
 	var queue := PackedInt32Array()
-	for z in width:
+	for z in rows:
 		for x in width:
 			var idx := z*width+x
 			var here := storeys[idx]
 			if (x>0 and storeys[idx-1]!=here) or (x+1<width and storeys[idx+1]!=here) \
-					or (z>0 and storeys[idx-width]!=here) or (z+1<width and storeys[idx+width]!=here):
+					or (z>0 and storeys[idx-width]!=here) or (z+1<rows and storeys[idx+width]!=here):
 				distances[idx]=1
 				queue.append(idx)
 	var head := 0
@@ -487,11 +487,11 @@ func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldR
 	var levels := PackedInt32Array()
 	levels.resize(count)
 	levels.fill(-1) # the original level map excludes the outer storey margin
-	var inset := outer-level_r
-	var end := width-inset
+	var end_x := width-inset
+	var end_z := rows-inset
 	var carved: Dictionary = {}
-	for z in range(inset,end):
-		for x in range(inset,end):
+	for z in range(inset,end_z):
+		for x in range(inset,end_x):
 			var idx := z*width+x
 			var here := storeys[idx]
 			var smp := _sample(lo.x+x,lo.y+z)
@@ -508,8 +508,8 @@ func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldR
 	var changed := true
 	while changed:
 		changed=false
-		for z in range(inset,end):
-			for x in range(inset,end):
+		for z in range(inset,end_z):
+			for x in range(inset,end_x):
 				var idx := z*width+x
 				var here := levels[idx]
 				for offset in offsets:
@@ -521,10 +521,12 @@ func compute_region(center_cx: int, center_cz: int, radius: int) -> HeightfieldR
 				levels[idx]=here
 	var storey_map: Dictionary = {}
 	var level_map: Dictionary = {}
-	for z in width:
+	for z in rows:
 		for x in width:
 			storey_map[Vector2i(lo.x+x,lo.y+z)]=storeys[z*width+x]
-	for z in range(inset,end):
-		for x in range(inset,end):
+	for z in range(inset,end_z):
+		for x in range(inset,end_x):
 			level_map[Vector2i(lo.x+x,lo.y+z)]=levels[z*width+x]
-	return HeightfieldRegion.new(storey_map,level_map,carved,self)
+	var result := HeightfieldRegion.new(storey_map,level_map,carved,self)
+	result.certified_cells = interior
+	return result

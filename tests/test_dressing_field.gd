@@ -50,7 +50,7 @@ func _signature(payload: EnvironmentInstancePayload, filter_rect: Rect2 = Rect2(
 func test_compiler_produces_resource_free_bounded_program() -> void:
 	var program := _program()
 	assert_not_null(program)
-	assert_eq(program.sets.size(), 10)
+	assert_eq(program.sets.size(), 12)
 	assert_false(&"kaykit.grass.01" in program.referenced_asset_ids,
 		"dense GrassField is the sole runtime owner of grass ground cover")
 	assert_lte(program.maximum_spacing_radius, DressingCompiler.LOCAL_SPACING_CAP)

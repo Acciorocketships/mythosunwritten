@@ -5,8 +5,8 @@ extends RefCounted
 ## production-representative corpus/review harnesses must read these values
 ## instead of copying literals, or a valid pin in a harness may not exist in
 ## the rendered world at all.
-const HEIGHTFIELD_AMPLITUDE := 32.0
-const HEIGHTFIELD_MAX_STOREYS := 8
+const HEIGHTFIELD_AMPLITUDE := 128.0
+const HEIGHTFIELD_MAX_STOREYS := 32
 const MAX_CLIFF_STEP := 3
 
 

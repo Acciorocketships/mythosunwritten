@@ -24,6 +24,10 @@ enum WaterMode { LAND, SHORE, SHALLOW, EMERGENT, FLOATING }
 @export var support_radius: float = 0.0
 @export var max_support_height_span: float = 0.0
 @export var max_grade: float = 1.0
+## Optional positive relief above the supported anchor. This distinguishes
+## lower cliff feet from open flats and the high side of a drop.
+@export var relief_radius: float = 0.0
+@export var relief_range: Vector2 = Vector2.ZERO
 ## Extra distance beyond path/feature footprints. Zero still rejects anchors
 ## inside a reservation; this is authored per population, never inferred from tags.
 @export var feature_clearance: float = 0.0
