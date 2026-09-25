@@ -2,6 +2,8 @@ shader_type spatial;
 render_mode cull_disabled;
 #include "res://terrain/materials/ground_style.gdshaderinc"
 varying vec2 ground_style_position;
+#define TACTICAL_GRASS_ROOT
+varying vec3 tactical_grass_root;
 
 global uniform vec2 grass_lod_origin;
 global uniform vec2 wind_direction;
@@ -87,6 +89,7 @@ void vertex() {
 	// snapping the entire 2.6 m patch as a rigid tuft.
 	vec3 blade_root_world = (MODEL_MATRIX
 		* vec4(UV2.x, local_base_y, UV2.y, 1.0)).xyz;
+	tactical_grass_root = blade_root_world;
 	vec2 trample_xz = blade_root_world.xz;
 	ground_style_position = blade_root_world.xz;
 	float inside = step(grass_trample_origin.x, trample_xz.x)

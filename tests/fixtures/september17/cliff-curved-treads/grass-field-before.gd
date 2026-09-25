@@ -1,4 +1,3 @@
-class_name GrassField
 extends RefCounted
 
 const TILE_WORLD := TerrainChunkMesher.TILE
@@ -56,10 +55,6 @@ const CLIFF_MIN_VISIBLE_SCALE := 0.08
 ## without bound. Four total layers close the reviewed 55% edge patches while
 ## keeping slope/cliff junctions within a predictable visual and CPU budget.
 const MAX_DENSITY_MULTIPLIER := 4.0
-## Narrow native ledges need finer candidate spacing after a patch shrinks.
-## One twice-resolution layer supplies only density the ordinary four layers
-## cannot represent. It never adds population to ordinary terrain.
-const SUPPORT_SLOT_MULTIPLIER := 2
 const SALT_TILE_X := 0x1F123BB5
 const SALT_TILE_Z := 0x05491333
 const SALT_SLOT := 0x6C8E9CF5
@@ -94,7 +89,6 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 	var tile_fields := _bake_tile_fields(program, origin, world_seed)
 	var surface_cache: Dictionary = {}
 	var cliff_edge_cache: Dictionary = {}
-	var support_index := GrassSupportSurfaces.spatial_index(supports)
 	var asset: Dictionary = program.assets[asset_id]
 	var maximum_slope_extra := minf(MAX_SLOPE_EXTRA,
 		sqrt(1.0 + program.max_grade * program.max_grade) - 1.0)
@@ -111,22 +105,16 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 		minimum_tile_scale = minf(minimum_tile_scale, CLIFF_EDGE_MIN_SCALE)
 	var layer_count := 1 + ceili(_density_extra(
 		minimum_tile_scale, maximum_slope_extra))
-	for layer in layer_count + (1 if not supports.is_empty() else 0):
-		var support_layer := layer == layer_count
-		var slot_side := SLOT_SIDE * SUPPORT_SLOT_MULTIPLIER if support_layer else SLOT_SIDE
-		var slot_pitch := TILE_WORLD / float(slot_side)
-		for slot_index in slot_side * slot_side:
-			var sx := slot_index % slot_side
-			var sz := slot_index / slot_side
+	for layer in layer_count:
+		for slot_index in SLOT_COUNT:
+			var sx := slot_index % SLOT_SIDE
+			var sz := slot_index / SLOT_SIDE
 			var identity := Helper._mix64(tile_identity \
 				^ Helper._mix64(slot_index ^ SALT_SLOT))
 			identity = _layer_identity(identity, layer)
 			var anchor := origin + Vector2(
-				(float(sx) + _roll(identity, SALT_JITTER_X)) * slot_pitch,
-				(float(sz) + _roll(identity, SALT_JITTER_Z)) * slot_pitch)
-			var support := GrassSupportSurfaces.at_index(support_index,anchor)
-			if support_layer and support.is_empty():
-				continue
+				(float(sx) + _roll(identity, SALT_JITTER_X)) * SLOT_PITCH,
+				(float(sz) + _roll(identity, SALT_JITTER_Z)) * SLOT_PITCH)
 			var field_sample := _sample_tile_fields(tile_fields, anchor - origin)
 			var eligibility := _roll(identity, SALT_ELIGIBILITY)
 			var preliminary_coverage: float = field_sample.coverage
@@ -138,13 +126,12 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 			var footprint_radius := float(asset.footprint_radius) * scale
 			var physical_edge_scale := _cliff_scale(region, anchor, footprint_radius,
 				cliff_edge_cache)
+			var support := GrassSupportSurfaces.at_point(supports,anchor)
 			if not support.is_empty():
 				if support.y <= _surface_y(region,surface_cache,anchor.x,anchor.y)+.05:
 					support = {} # The higher ground hides this part of the native cap.
 				else:
 					physical_edge_scale = clampf((support.edge_distance-CLIFF_FOOTPRINT_MARGIN)/footprint_radius,0.0,1.0)
-			if support_layer and support.is_empty():
-				continue
 			if layer >= ordinary_layer_count and support.is_empty():
 				continue
 			if physical_edge_scale < CLIFF_MIN_VISIBLE_SCALE:
@@ -155,8 +142,6 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 				maximum_slope_extra)
 			var maximum_weight := 1.0 if layer == 0 \
 				else _supplement_weight(maximum_extra, layer)
-			if support_layer:
-				maximum_weight = _support_weight(preliminary_edge_scale, maximum_slope_extra)
 			if maximum_weight <= 0.0 or eligibility >= \
 					preliminary_carpet * maximum_weight:
 				continue
@@ -179,8 +164,6 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 				float(surface.area_extra))
 			var actual_weight := 1.0 if layer == 0 \
 				else _supplement_weight(actual_extra, layer)
-			if support_layer:
-				actual_weight = _support_weight(edge_scale, float(surface.area_extra))
 			if actual_weight <= 0.0 or eligibility >= coverage * actual_weight:
 				continue
 			var yaw := _roll(identity, SALT_YAW) * TAU
@@ -243,10 +226,6 @@ static func _density_extra(edge_scale: float, surface_area_extra: float) -> floa
 static func _supplement_weight(total_extra: float, layer: int) -> float:
 	assert(layer > 0)
 	return clampf(total_extra - float(layer - 1), 0.0, 1.0)
-
-static func _support_weight(edge_scale: float, surface_area_extra: float) -> float:
-	var needed := (1.0 + surface_area_extra) / maxf(edge_scale * edge_scale, 0.000001)
-	return clampf((needed - MAX_DENSITY_MULTIPLIER) / float(SUPPORT_SLOT_MULTIPLIER * SUPPORT_SLOT_MULTIPLIER), 0.0, 1.0)
 
 static func _layer_identity(base_identity: int, layer: int) -> int:
 	if layer == 0:
@@ -317,17 +296,10 @@ static func _qualified_surface(program: GrassProgram, anchor: Vector2,
 		if _footprint_overlaps_feature_surface(features, anchor,
 				footprint_radius + PATH_FOOTPRINT_CLEARANCE):
 			return {}
-	# Raised native ledges can sit above a wet XZ footprint. Their actual
-	# support plane owns clearance; ordinary ground keeps the signed shore rule.
-	if support.is_empty():
-		if water.shore_distance_at(anchor) < program.shore_clearance:
-			return {}
-	else:
-		var support_radius := footprint_radius * (clampf(known_physical_edge_scale, 0.0, 1.0)
-			if known_physical_edge_scale >= 0.0 else 1.0)
-		if not _support_clears_water(support, anchor, water, support_radius,
-				program.shore_clearance):
-			return {}
+	# Signed shoreline distance is negative on wet ground, so this one canonical
+	# query replaces a redundant wet() + shore_distance_at() pair.
+	if water.shore_distance_at(anchor) < program.shore_clearance:
+		return {}
 	var gradient := _surface_gradient(region, anchor, surface_cache,
 		cliff_edge_cache) if support.is_empty() else Vector2.ZERO
 	if gradient.length() > program.max_grade:
@@ -344,26 +316,6 @@ static func _qualified_surface(program: GrassProgram, anchor: Vector2,
 		"area_extra": minf(MAX_SLOPE_EXTRA, 1.0 / normal.y - 1.0),
 		"physical_edge_scale": physical_edge_scale,
 	}
-
-static func _support_clears_water(support: Dictionary, anchor: Vector2,
-		water: WaterFieldContext, radius: float, clearance: float) -> bool:
-	if not water.has_sources():
-		return true
-	var normal: Vector3 = support.get("normal", Vector3.UP)
-	if normal.y <= 0.0:
-		return false
-	# Use the same conservative eight-direction footprint as public clearance.
-	# Sloping treads evaluate their plane at every probe, not only the root.
-	for i in FOOTPRINT_DIRECTIONS.size() + 1:
-		var offset: Vector2 = Vector2.ZERO if i == 0 else FOOTPRINT_DIRECTIONS[i - 1] * radius
-		var point := anchor + offset
-		if not water.covers(point):
-			return false
-		var level := water.level_at(point)
-		var height: float = support.y - Vector2(normal.x, normal.z).dot(offset) / normal.y
-		if is_finite(level) and height < level + clearance - 0.00001:
-			return false
-	return true
 
 static func _surface_basis(normal: Vector3) -> Basis:
 	var tangent_x := (Vector3.RIGHT - normal * normal.x).normalized()

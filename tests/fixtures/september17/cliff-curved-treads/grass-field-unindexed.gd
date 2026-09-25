@@ -1,4 +1,3 @@
-class_name GrassField
 extends RefCounted
 
 const TILE_WORLD := TerrainChunkMesher.TILE
@@ -94,7 +93,6 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 	var tile_fields := _bake_tile_fields(program, origin, world_seed)
 	var surface_cache: Dictionary = {}
 	var cliff_edge_cache: Dictionary = {}
-	var support_index := GrassSupportSurfaces.spatial_index(supports)
 	var asset: Dictionary = program.assets[asset_id]
 	var maximum_slope_extra := minf(MAX_SLOPE_EXTRA,
 		sqrt(1.0 + program.max_grade * program.max_grade) - 1.0)
@@ -124,7 +122,7 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 			var anchor := origin + Vector2(
 				(float(sx) + _roll(identity, SALT_JITTER_X)) * slot_pitch,
 				(float(sz) + _roll(identity, SALT_JITTER_Z)) * slot_pitch)
-			var support := GrassSupportSurfaces.at_index(support_index,anchor)
+			var support := GrassSupportSurfaces.at_point(supports,anchor)
 			if support_layer and support.is_empty():
 				continue
 			var field_sample := _sample_tile_fields(tile_fields, anchor - origin)
@@ -317,17 +315,10 @@ static func _qualified_surface(program: GrassProgram, anchor: Vector2,
 		if _footprint_overlaps_feature_surface(features, anchor,
 				footprint_radius + PATH_FOOTPRINT_CLEARANCE):
 			return {}
-	# Raised native ledges can sit above a wet XZ footprint. Their actual
-	# support plane owns clearance; ordinary ground keeps the signed shore rule.
-	if support.is_empty():
-		if water.shore_distance_at(anchor) < program.shore_clearance:
-			return {}
-	else:
-		var support_radius := footprint_radius * (clampf(known_physical_edge_scale, 0.0, 1.0)
-			if known_physical_edge_scale >= 0.0 else 1.0)
-		if not _support_clears_water(support, anchor, water, support_radius,
-				program.shore_clearance):
-			return {}
+	# Signed shoreline distance is negative on wet ground, so this one canonical
+	# query replaces a redundant wet() + shore_distance_at() pair.
+	if water.shore_distance_at(anchor) < program.shore_clearance:
+		return {}
 	var gradient := _surface_gradient(region, anchor, surface_cache,
 		cliff_edge_cache) if support.is_empty() else Vector2.ZERO
 	if gradient.length() > program.max_grade:
@@ -344,26 +335,6 @@ static func _qualified_surface(program: GrassProgram, anchor: Vector2,
 		"area_extra": minf(MAX_SLOPE_EXTRA, 1.0 / normal.y - 1.0),
 		"physical_edge_scale": physical_edge_scale,
 	}
-
-static func _support_clears_water(support: Dictionary, anchor: Vector2,
-		water: WaterFieldContext, radius: float, clearance: float) -> bool:
-	if not water.has_sources():
-		return true
-	var normal: Vector3 = support.get("normal", Vector3.UP)
-	if normal.y <= 0.0:
-		return false
-	# Use the same conservative eight-direction footprint as public clearance.
-	# Sloping treads evaluate their plane at every probe, not only the root.
-	for i in FOOTPRINT_DIRECTIONS.size() + 1:
-		var offset: Vector2 = Vector2.ZERO if i == 0 else FOOTPRINT_DIRECTIONS[i - 1] * radius
-		var point := anchor + offset
-		if not water.covers(point):
-			return false
-		var level := water.level_at(point)
-		var height: float = support.y - Vector2(normal.x, normal.z).dot(offset) / normal.y
-		if is_finite(level) and height < level + clearance - 0.00001:
-			return false
-	return true
 
 static func _surface_basis(normal: Vector3) -> Basis:
 	var tangent_x := (Vector3.RIGHT - normal * normal.x).normalized()
