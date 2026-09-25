@@ -1,0 +1,140 @@
+{
+  "photo": {
+    "rooms_before": 28,
+    "rooms_after": 28,
+    "room_records_identical": true,
+    "prefabs_before": {
+      "spatial.fabric.spatial.feature.landmark.00.component.00": "anchor.prefab.10",
+      "spatial.fabric.spatial.feature.landmark.01.component.00": "anchor.prefab.11"
+    },
+    "prefabs_after": {
+      "spatial.fabric.spatial.feature.landmark.00.component.00": "anchor.prefab.16",
+      "spatial.fabric.spatial.feature.landmark.01.component.00": "anchor.prefab.11"
+    },
+    "withdrawn_units": {},
+    "added_units": {},
+    "changed_recipes": {
+      "spatial.fabric.spatial.feature.landmark.00.component.00": [
+        "anchor.prefab.10",
+        "anchor.prefab.16"
+      ]
+    }
+  },
+  "seed11": {
+    "rooms_before": 27,
+    "rooms_after": 18,
+    "room_records_identical": false,
+    "prefabs_before": {
+      "spatial.fabric.spatial.feature.landmark.00.component.00": "anchor.prefab.10"
+    },
+    "prefabs_after": {
+      "spatial.fabric.spatial.feature.landmark.00.component.00": "anchor.prefab.16",
+      "spatial.fabric.spatial.feature.landmark.01.component.00": "anchor.prefab.11"
+    },
+    "withdrawn_units": {
+      "spatial.fabric.spatial.maze_back.05.room00": "room.row.base.rock.closed",
+      "spatial.fabric.spatial.maze_back.06.room00": "room.tower.base.amber.closed",
+      "spatial.fabric.spatial.maze_back.07.room00": "room.tower.base.rock.closed",
+      "spatial.fabric.spatial.maze_back.08.room00": "room.tower.base.amber.closed",
+      "spatial.fabric.spatial.maze_back.09.room00": "room.slim.base.blue.closed",
+      "spatial.fabric.spatial.maze_back.10.room00": "room.tower.base.blue.closed",
+      "spatial.fabric.spatial.maze_back.11.room00": "room.tower.base.amber",
+      "spatial.fabric.spatial.parcel.maze.house.005.part00.room00": "room.row.base.amber",
+      "spatial.fabric.spatial.parcel.maze.house.007.part00.room00": "room.slim.base.blue",
+      "spatial.fabric.spatial.parcel.maze.house.008.part00.room00": "room.base.rock.closed",
+      "spatial.roof.spatial.maze_back.03.room00": "roof.terminal.tight.tower.blue",
+      "spatial.roof.spatial.maze_back.05.room00": "roof.row.short.blue",
+      "spatial.roof.spatial.maze_back.06.room00": "roof.terminal.tight.tower.orange",
+      "spatial.roof.spatial.maze_back.07.room00": "roof.terminal.tight.tower.orange",
+      "spatial.roof.spatial.maze_back.08.room00": "roof.terminal.tight.tower.orange",
+      "spatial.roof.spatial.maze_back.09.room00": "roof.slim.blue.dormer.left",
+      "spatial.roof.spatial.maze_back.10.room00": "roof.terminal.tight.tower.blue",
+      "spatial.roof.spatial.parcel.maze.house.004.part00.room00": "roof.slim.orange",
+      "spatial.roof.spatial.parcel.maze.house.007.part00.room00": "roof.slim.short.blue",
+      "spatial.roof.spatial.parcel.maze.house.008.part00.room00": "roof.terminal.tight.building.blue",
+      "spatial.roof.spatial.maze_back.11.room00": "roof.terminal.tight.tower.orange",
+      "spatial.roof.spatial.parcel.maze.house.005.part00.room00": "roof.row.short.orange"
+    },
+    "added_units": {
+      "spatial.fabric.spatial.parcel.maze.house.004.part01.room00": "room.upper.blue.b.portal.2",
+      "spatial.fabric.spatial.feature.balcony.00.component.00": "balcony.bracketed.left.amber.planted",
+      "spatial.fabric.spatial.feature.facade-bay.01.component.00": "outcrop.embedded.amber",
+      "spatial.fabric.spatial.feature.landmark.01.component.00": "anchor.prefab.11",
+      "spatial.roof.spatial.parcel.maze.house.004.part01.room00": "roof.square.blue.dormer.left"
+    },
+    "changed_recipes": {
+      "spatial.fabric.spatial.maze_back.00.room00": [
+        "room.slim.base.amber.closed",
+        "room.tower.base.amber.closed"
+      ],
+      "spatial.fabric.spatial.maze_back.01.room00": [
+        "room.slim.base.amber.closed",
+        "room.tower.base.amber.closed"
+      ],
+      "spatial.fabric.spatial.maze_back.02.room00": [
+        "room.base.amber.closed",
+        "room.slim.base.blue.closed"
+      ],
+      "spatial.fabric.spatial.maze_back.04.room00": [
+        "room.tower.base.amber.closed",
+        "room.tower.base.blue.closed"
+      ],
+      "spatial.fabric.spatial.parcel.maze.house.001.part00.room00": [
+        "room.base.rock.closed",
+        "room.row.base.rock"
+      ],
+      "spatial.fabric.spatial.parcel.maze.house.002.part00.room00": [
+        "room.slim.base.rock",
+        "room.tower.base.rock"
+      ],
+      "spatial.fabric.spatial.parcel.maze.house.003.part00.room00": [
+        "room.slim.base.amber",
+        "room.slim.base.blue"
+      ],
+      "spatial.fabric.spatial.parcel.maze.house.004.part00.room00": [
+        "room.slim.base.amber.closed",
+        "room.base.blue.closed"
+      ],
+      "spatial.fabric.spatial.feature.facade-bay.00.component.00": [
+        "outcrop.embedded.amber",
+        "outcrop.embedded.blue"
+      ],
+      "spatial.fabric.spatial.feature.landmark.00.component.00": [
+        "anchor.prefab.10",
+        "anchor.prefab.16"
+      ],
+      "spatial.roof.spatial.maze_back.00.room00": [
+        "roof.slim.blue.dormer.right",
+        "roof.terminal.tight.tower.orange"
+      ],
+      "spatial.roof.spatial.maze_back.01.room00": [
+        "roof.slim.blue",
+        "roof.terminal.tight.tower.orange"
+      ],
+      "spatial.roof.spatial.maze_back.02.room00": [
+        "roof.terminal.tight.building.blue",
+        "roof.slim.blue.dormer.left"
+      ],
+      "spatial.roof.spatial.parcel.maze.house.000.part00.room00": [
+        "roof.slim.blue",
+        "roof.slim.orange.dormer.right"
+      ],
+      "spatial.roof.spatial.parcel.maze.house.003.part00.room00": [
+        "roof.terminal.tight.slim.orange",
+        "roof.slim.short.blue"
+      ],
+      "spatial.roof.spatial.parcel.maze.house.001.part00.room00": [
+        "roof.terminal.tight.building.blue",
+        "roof.row.short.orange"
+      ],
+      "spatial.roof.spatial.parcel.maze.house.002.part00.room00": [
+        "roof.terminal.tight.slim.blue",
+        "roof.terminal.tight.tower.orange"
+      ],
+      "spatial.roof.spatial.maze_back.04.room00": [
+        "roof.terminal.tight.tower.blue",
+        "roof.tower.short.blue"
+      ]
+    }
+  }
+}

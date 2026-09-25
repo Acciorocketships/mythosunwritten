@@ -1,0 +1,208 @@
+--- before/SettlementFabricProgram.gd
++++ after/SettlementFabricProgram.gd
+@@ -1135,6 +1135,8 @@
+ 		{"kind": "long", "minimum": Vector3i(-2, 0, -3),
+ 			"size": Vector3i(4, 1, 6), "family": &"long_building"},
+ 	]:
++		candidates.append(_masonry_course_recipe(StringName(flat_spec.kind),
++			flat_spec.minimum as Vector3i,flat_spec.size as Vector3i,modules))
+ 		for micro_index in 4:
+ 			var micro_offset := [
+ 				Vector2(-0.65, -0.65), Vector2(0.65, -0.65),
+@@ -5898,3 +5900,53 @@
+ static func _scaled_pose(origin: Vector3, yaw: float,
+ 		scale_value: Vector3) -> Transform3D:
+ 	return Transform3D(Basis(Vector3.UP, yaw).scaled(scale_value), origin)
++
++
++static func _masonry_course_recipe(kind: StringName, minimum: Vector3i,
++		size: Vector3i, modules: FabricModuleProgram) -> FabricRecipe:
++	var recipe := FabricRecipe.new(StringName("foundation.masonry.course.%s" % kind),
++		[&"visual_attachment", &"grounded_frame_member", &"grounded_masonry_course"], 0)
++	# The lower slab and upper floor retain their native thickness and ownership.
++	# Complete masonry panels join those same interfaces as the former posts.
++	var wall := &"sfv.fabric.wall.rock.plain.002"
++	var stock := modules.contract(wall).visual_bounds
++	var height_scale := CELL / stock.size.y
++	var bottom := -0.1611 - stock.position.y * height_scale
++	var bounds := FabricRecipe._bounds_for_cells(FabricRecipe.box_cells(minimum,size))
++	for direction: Vector3i in [Vector3i.BACK,Vector3i.FORWARD,Vector3i.LEFT,Vector3i.RIGHT]:
++		var along_x := direction.z != 0
++		var run := size.x if along_x else size.z
++		for index in range(0,run,2):
++			var position := Vector3.ZERO
++			position.y = bottom
++			var boundary := 0.0
++			if along_x:
++				position.x = bounds.position.x + (float(index)+1.0)*CELL
++				boundary = bounds.end.z if direction.z > 0 else bounds.position.z
++				position.z = boundary
++			else:
++				position.z = bounds.position.z + (float(index)+1.0)*CELL
++				boundary = bounds.end.x if direction.x > 0 else bounds.position.x
++				position.x = boundary
++			var yaw := atan2(float(direction.x),float(direction.z))
++			var pose := _scaled_pose(position,yaw,Vector3(1.0,height_scale,1.0))
++			recipe.add_placement(StringName("wall.%d.%d.%d" % [direction.x,direction.z,index]),
++				wall,modules.facade_aligned_transform(wall,pose,direction,boundary))
++	# Native timber quoins continue the upper and lower facade corner members.
++	# Retain the same measured corner members as the earlier open frame, now
++	# joined by complete masonry panels rather than standing around an empty bay.
++	var post := modules.contract(DECK_PILLAR).visual_bounds
++	var post_basis := Basis.from_scale(Vector3(.28/post.size.x,CELL/post.size.y,.28/post.size.z))
++	var high := minimum+size-Vector3i.ONE
++	var corners: Array[Vector3i] = [Vector3i(high.x,0,high.z),
++		Vector3i(high.x,0,minimum.z),Vector3i(minimum.x,0,minimum.z),
++		Vector3i(minimum.x,0,high.z)]
++	for corner in 4:
++		recipe.add_placement(StringName("corner.%d" % corner),DECK_PILLAR,
++			FabricRecipe.lattice_transform(corners[corner],corner)*
++			Transform3D(post_basis,Vector3(.61,-.1611,.61)))
++	# Closed construction shares the lower slab's semantic band. Like the native
++	# frame members it replaces, collision comes from the actual wall meshes;
++	# claiming the slab's solid voxels again would create duplicate ownership.
++	recipe.occluder_cells = FabricRecipe.box_cells(minimum,size)
++	return recipe
+--- before/WarrenSpatialFabricCompiler.gd
++++ after/WarrenSpatialFabricCompiler.gd
+@@ -304,7 +304,7 @@
+ 	var foundation_audit := _foundation_shell_audit(foundation_result, result) \
+ 		if collect_diagnostics else {}
+ 	stage_ms = _trace_stage("foundation", stage_ms)
+-	var frame_audit := _construct_ground_bearing_frames(source, result)
++	var frame_audit := _construct_ground_bearing_frames(source, result, program)
+ 	# The typed green precedes the surface transaction: guard construction needs
+ 	# its exact mouths, so declaring it after the surface sealed made the topology
+ 	# and the later render audit observe different squares.
+@@ -402,6 +402,7 @@
+ 	lineage.merge(foundation_audit, true)
+ 	lineage["final_ground_frame_room_ids"] = frame_audit.final_ground_frame_room_ids
+ 	lineage["final_ground_frame_member_count"] = frame_audit.final_ground_frame_member_count
++	lineage["final_ground_masonry_room_ids"] = frame_audit.final_ground_masonry_room_ids
+ 	lineage.merge(suppression_audit, true)
+ 	lineage.merge(stone_audit, true)
+ 	# TASK H1. The wall metric rides beside the rock metric, never instead of
+@@ -621,7 +622,7 @@
+ 
+ 
+ static func _construct_ground_bearing_frames(source: WarrenSpatialPlan,
+-		plan: SettlementFabricPlan) -> Dictionary:
++		plan: SettlementFabricPlan, program: SettlementFabricProgram) -> Dictionary:
+ 	## Derive load paths from the retained and inhabited mass, bottom-up. Each
+ 	## disconnected root component receives its fixed corner frame once. Exact
+ 	## frame/roof space is reserved before crown selection; overlap and public
+@@ -657,6 +658,29 @@
+ 				body_owner[cell] = unit_id
+ 	var grounded := _ground_connected_mass(source, body_union)
+ 	var framed_bearings: Dictionary = {}
++	var masonry_room_ids: Array[StringName] = []
++	for course: Dictionary in _ground_bearing_masonry_courses(source,program):
++		var all_bases_grounded := true
++		for cell: Vector3i in course.cells:
++			all_bases_grounded = all_bases_grounded and grounded.has(cell+Vector3i.DOWN)
++		if not all_bases_grounded:
++			continue
++		var upper := course.room as WarrenRoomStamp
++		var seams: Array[StringName] = [StringName("spatial.fabric.%s" % upper.stable_id)]
++		for base: StringName in course.bases:
++			var base_id := StringName("spatial.fabric.%s" % base)
++			seams.append(base_id)
++			for built: FabricUnit in plan.units:
++				if built.parent_ids.has(base_id) and plan.recipe(built.recipe_id).has_tag(&"roof"):
++					seams.append(built.stable_id)
++		var member := FabricUnit.new(StringName("spatial.fabric.%s/ground-masonry" % upper.stable_id),
++			(course.recipe as FabricRecipe).recipe_id,upper.lattice_origin+Vector3i.DOWN,
++			upper.yaw_quarters,[],[],&"",seams)
++		plan.append_constructed_unit(member)
++		masonry_room_ids.append(upper.stable_id)
++		for cell: Vector3i in course.cells:
++			body_union[cell] = true
++	grounded = _ground_connected_mass(source,body_union)
+ 	var roots := plan.units.duplicate()
+ 	# Transfer load upward from the lowest room first. A frame supports the
+ 	# complete face-connected building mass, not only the room that named it.
+@@ -758,7 +782,8 @@
+ 			framed_bearings[cell] = true
+ 		grounded = _ground_connected_mass(source, body_union, framed_bearings)
+ 	return {"final_ground_frame_room_ids":room_ids,
+-		"final_ground_frame_member_count":member_count}
++		"final_ground_frame_member_count":member_count,
++		"final_ground_masonry_room_ids":masonry_room_ids}
+ 
+ 
+ static func _ground_connected_mass(source: WarrenSpatialPlan,
+@@ -4888,10 +4913,16 @@
+ 				body[cell] = true
+ 	var grounded := _ground_connected_mass(source, body)
+ 	var out: Array[AABB] = []
++	var masonry_rooms: Dictionary = {}
++	for course: Dictionary in _ground_bearing_masonry_courses(source,program):
++		var upper := course.room as WarrenRoomStamp
++		masonry_rooms[StringName("spatial.fabric.%s" % upper.stable_id)] = true
++		out.append(FabricRecipe.lattice_transform(upper.lattice_origin+Vector3i.DOWN,
++			upper.yaw_quarters)*(course.recipe as FabricRecipe).local_bounds)
+ 	var envelope := source.source_volume.envelope
+ 	for room: FabricUnit in room_units:
+ 		var recipe := program.recipe(room.recipe_id)
+-		if not recipe.has_tag(&"terrain_bearing"):
++		if not recipe.has_tag(&"terrain_bearing") or masonry_rooms.has(room.stable_id):
+ 			continue
+ 		var low := Vector2i(2147483647, 2147483647)
+ 		var high := Vector2i(-2147483647, -2147483647)
+@@ -9953,3 +9984,44 @@
+ 
+ static func _source_level_key(parcel_id: StringName, level: int) -> String:
+ 	return "%s/%d" % [String(parcel_id), level]
++
++
++static func _ground_bearing_masonry_courses(source: WarrenSpatialPlan,
++		program: SettlementFabricProgram) -> Array[Dictionary]:
++	var out: Array[Dictionary] = []
++	var room_by_cell: Dictionary = {}
++	for building: WarrenBuildingVolume in source.buildings:
++		for room: WarrenRoomStamp in building.room_records:
++			for cell: Vector3i in room.private_cells:
++				room_by_cell[cell] = room
++	for building: WarrenBuildingVolume in source.buildings:
++		for room: WarrenRoomStamp in building.room_records:
++			if not room.terrain_bearing:
++				continue
++			var recipe_id := StringName("foundation.masonry.course.%s" %
++				("square" if room.kind == &"building" else String(room.kind)))
++			var recipe := program.recipe(recipe_id)
++			if recipe == null: continue
++			var cells: Array[Vector3i] = []
++			var bases: Dictionary = {}
++			var eligible := true
++			for cell: Vector3i in room.private_cells:
++				if cell.y != room.lattice_origin.y: continue
++				var gap := cell+Vector3i.DOWN
++				var lower := gap+Vector3i.DOWN
++				if room_by_cell.has(gap) or not room_by_cell.has(lower) \
++						or not source.grid.contains(gap) \
++						or source.grid.use_at(gap) in [
++							WarrenSpatialGrid.Use.PUBLIC_AIR,WarrenSpatialGrid.Use.DAYLIGHT_AIR] \
++						or (source.grid.reservation_bits_at(gap) &
++							(WarrenSpatialGrid.Reservation.PUBLIC_CLEARANCE |
++							WarrenSpatialGrid.Reservation.DAYLIGHT |
++							WarrenSpatialGrid.Reservation.PRIVATE_CONNECTION |
++							WarrenSpatialGrid.Reservation.FEATURE)) != 0:
++					eligible = false
++					break
++				bases[(room_by_cell[lower] as WarrenRoomStamp).stable_id] = true
++				cells.append(gap)
++			if eligible and not cells.is_empty():
++				out.append({"room":room,"recipe":recipe,"cells":cells,"bases":bases.keys()})
++	return out
+--- before/FabricModuleProgram.gd
++++ after/FabricModuleProgram.gd
+@@ -239,7 +239,8 @@
+ 	## slabs. Straight repeats keep their uncut ends. Select a baked subset of
+ 	## each original panel; the already-compiled conservative envelope remains
+ 	## unchanged, so this finish cannot change parcel admission or public air.
+-	if not recipe.has_tag(&"room") or not recipe.has_tag(&"generated_building"):
++	if not recipe.has_tag(&"grounded_masonry_course") \
++			and (not recipe.has_tag(&"room") or not recipe.has_tag(&"generated_building")):
+ 		return
+ 	var original := recipe.placements.duplicate(true)
+ 	for index in original.size():

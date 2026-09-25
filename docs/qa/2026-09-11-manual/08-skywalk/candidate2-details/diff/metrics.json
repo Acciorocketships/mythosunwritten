@@ -1,0 +1,134 @@
+{
+  "course0_close_front": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 6.151518454218107,
+    "roi_mean_abs_rgb": 6.151518454218107,
+    "roi_changed_over_20_fraction": 0.10911940586419754
+  },
+  "course0_close_underside": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 9.207226080246913,
+    "roi_mean_abs_rgb": 9.207226080246913,
+    "roi_changed_over_20_fraction": 0.17277102623456791
+  },
+  "course0_front": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 1.4988197659465021,
+    "roi_mean_abs_rgb": 1.4988197659465021,
+    "roi_changed_over_20_fraction": 0.035570023148148146
+  },
+  "course0_left": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 1.8319568222736626,
+    "roi_mean_abs_rgb": 1.8319568222736626,
+    "roi_changed_over_20_fraction": 0.043567226080246914
+  },
+  "course0_right": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 2.0036775012860084,
+    "roi_mean_abs_rgb": 2.0036775012860084,
+    "roi_changed_over_20_fraction": 0.04267409336419753
+  },
+  "course0_underside": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.0034149948559670782,
+    "roi_mean_abs_rgb": 0.0034149948559670782,
+    "roi_changed_over_20_fraction": 0.00010127314814814815
+  },
+  "course1_close_front": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 6.948499871399177,
+    "roi_mean_abs_rgb": 6.948499871399177,
+    "roi_changed_over_20_fraction": 0.14346354166666667
+  },
+  "course1_close_underside": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 6.834566454475309,
+    "roi_mean_abs_rgb": 6.834566454475309,
+    "roi_changed_over_20_fraction": 0.13537037037037036
+  },
+  "course1_front": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 1.4736678562242798,
+    "roi_mean_abs_rgb": 1.4736678562242798,
+    "roi_changed_over_20_fraction": 0.031157889660493827
+  },
+  "course1_left": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 1.061952321244856,
+    "roi_mean_abs_rgb": 1.061952321244856,
+    "roi_changed_over_20_fraction": 0.029945987654320987
+  },
+  "course1_right": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 1.6908043981481482,
+    "roi_mean_abs_rgb": 1.6908043981481482,
+    "roi_changed_over_20_fraction": 0.0354711612654321
+  },
+  "course1_underside": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.8231032986111111,
+    "roi_mean_abs_rgb": 0.8231032986111111,
+    "roi_changed_over_20_fraction": 0.025524209104938272
+  }
+}

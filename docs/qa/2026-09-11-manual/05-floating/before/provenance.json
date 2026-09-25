@@ -1,0 +1,9 @@
+{
+  "source": "04-black/photo-pairs/after",
+  "why_valid": "Same current production source before any issue-5 geometry edits; new circular bubble and camera roles already applied.",
+  "snapshot": "04-black/live-full/village-mist.scn",
+  "render_resolution": [
+    1920,
+    1080
+  ]
+}

@@ -1,0 +1,193 @@
+
+september11-bubble-circle-red
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september11_bubble_shape.gd
+* test_actual_coverage_has_no_lower_horizontal_cutoff
+    [Failed]:  [0.0] expected to be > than [0.99]:  The complete projected circle covers angle 5, including its lower half
+      at line 32
+    [Failed]:  [0.0] expected to be > than [0.99]:  The complete projected circle covers angle 6, including its lower half
+      at line 32
+    [Failed]:  [0.0] expected to be > than [0.99]:  The complete projected circle covers angle 7, including its lower half
+      at line 32
+    [Failed]:  [0.0] expected to be > than [0.99]:  The complete projected circle covers angle 8, including its lower half
+      at line 32
+    [Failed]:  [0.0] expected to be > than [0.99]:  The complete projected circle covers angle 9, including its lower half
+      at line 32
+    [Failed]:  [0.0] expected to be > than [0.99]:  The complete projected circle covers angle 10, including its lower half
+      at line 32
+    [Failed]:  [0.0] expected to be > than [0.99]:  The complete projected circle covers angle 11, including its lower half
+      at line 32
+0/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_september11_bubble_shape.gd
+- test_actual_coverage_has_no_lower_horizontal_cutoff
+    [Failed]:  [0.0] expected to be > than [0.99]:  The complete projected circle covers angle 5, including its lower half
+          at line 32
+    [Failed]:  [0.0] expected to be > than [0.99]:  The complete projected circle covers angle 6, including its lower half
+          at line 32
+    [Failed]:  [0.0] expected to be > than [0.99]:  The complete projected circle covers angle 7, including its lower half
+          at line 32
+    [Failed]:  [0.0] expected to be > than [0.99]:  The complete projected circle covers angle 8, including its lower half
+          at line 32
+    [Failed]:  [0.0] expected to be > than [0.99]:  The complete projected circle covers angle 9, including its lower half
+          at line 32
+    [Failed]:  [0.0] expected to be > than [0.99]:  The complete projected circle covers angle 10, including its lower half
+          at line 32
+    [Failed]:  [0.0] expected to be > than [0.99]:  The complete projected circle covers angle 11, including its lower half
+          at line 32
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts            9/16
+Time              0.662s
+
+
+---- 1 failing tests ----
+
+
+september11-bubble-airborne-red
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_visibility_projection.gd
+* test_actual_shader_protects_rising_ground_and_tapers_toward_the_camera
+    [Failed]:  [1.0] expected to be < than [0.01]:  Nearby ground stays opaque beneath an airborne character
+      at line 47
+0/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_visibility_projection.gd
+- test_actual_shader_protects_rising_ground_and_tapers_toward_the_camera
+    [Failed]:  [1.0] expected to be < than [0.01]:  Nearby ground stays opaque beneath an airborne character
+          at line 47
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts             8/9
+Time              0.59s
+
+
+---- 1 failing tests ----
+
+
+september11-bubble-final-native
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september11_visibility_work.gd
+* test_shared_source_is_sampled_once_when_installing_multiple_components
+* test_shared_material_keeps_independent_geometry_fades_and_restores_overrides
+* test_turning_away_and_back_reuses_the_same_compiled_shader
+* test_shader_history_is_bounded_and_does_not_retain_source_materials
+* test_single_surface_batch_fades_without_copying_its_instance_buffer
+* test_multiple_surfaces_keep_distinct_materials_and_restore_the_source
+6/6 passed.
+
+
+res://tests/test_visibility_bubble.gd
+* test_generic_material_adapter_restores_shared_resources_and_batch
+* test_corridor_selects_neighbours_but_excludes_floor_and_distant_objects
+* test_shader_adapter_preserves_existing_vertex_fragment_and_light_code
+* test_comments_and_early_returns_cannot_bypass_the_bubble
+* test_step_smoothed_focus_never_lowers_the_protected_physical_floor
+* test_faded_materials_follow_live_source_uniforms_and_resets
+6/6 passed.
+
+
+res://tests/test_visibility_projection.gd
+* test_actual_shader_protects_rising_ground_and_tapers_toward_the_camera
+1/1 passed.
+
+
+res://tests/test_september11_visibility_render.gd
+* test_shared_render_mesh_fades_only_selected_geometry_and_restores_pixels
+1/1 passed.
+
+
+res://tests/test_september11_bubble_shape.gd
+* test_actual_coverage_has_no_lower_horizontal_cutoff
+* test_radius_projects_to_half_the_viewport_width_in_both_camera_aspect_modes
+2/2 passed.
+
+
+res://tests/test_camera_obstruction.gd
+* test_f7_switches_original_and_wider_tactical_views_without_key_repeat
+* test_unobstructed_boom_reaches_the_requested_pose
+* test_swept_sphere_stops_the_boom_before_a_wall
+* test_ceiling_probe_lowers_the_pivot_but_preserves_head_level
+* test_excluded_body_cannot_collapse_its_own_camera_boom
+* test_world_camera_uses_visibility_bubble_without_collapsing_tactical_orbit
+6/6 passed.
+
+
+res://tests/test_tactical_controls.gd
+* test_native_capture_begins_in_the_free_centre_before_any_edge_can_lose_focus
+* test_player_input_preserves_original_speed_independent_of_facing
+* test_drag_starts_only_beyond_the_actual_edge_and_counts_overflow
+* test_drag_gain_tracks_field_of_view_and_viewport_scaling
+* test_virtual_cursor_keeps_raw_input_across_edges_inward_motion_and_clicks
+* test_camera_relative_wasd_and_diagonal_speed_in_every_quadrant
+* test_facing_is_independent_of_travel_and_uses_global_camera_transform
+* test_directional_blend_addresses_model_right_and_adjacent_diagonals
+* test_character_faces_aim_while_standing_and_strafes_without_changing_travel
+9/9 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               7
+Tests                31
+Passing Tests        31
+Asserts             289
+Time              24.866s
+
+
+---- All tests passed! ----
+

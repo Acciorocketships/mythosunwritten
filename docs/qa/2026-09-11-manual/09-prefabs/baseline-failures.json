@@ -1,0 +1,33 @@
+{
+  "identical": true,
+  "before": [
+    "[Failed]:  [1] expected to equal [3]:  1 of the four planner towns site a plaza; the pin is 3 -- a siting rule that stops finding sites leaves every other assertion in this file green",
+    "[Failed]:  [4] expected to equal [5]:  seed 5 standard adds no floating street",
+    "[Failed]:  Expected [<null>] to be anything but NULL:  ramp 12/compact must seal: carve: single spine DFS exhausted 3 visits",
+    "[Failed]:  [0] expected to equal [1]:  ramp 3/standard adds no floating street on real ground",
+    "[Failed]:  Expected [<RefCounted#ID>(WarrenMazeSourcePlan.gd)] to be NULL:  step 3/standard is a pinned sloped refusal and it sealed; take it out of SLOPED_REFUSED_ROWS",
+    "[Failed]:  [2] expected to equal [3]:  every sloped row except the pinned refusals must seal far enough to check its street floors",
+    "[Failed]:  [312] expected to be > than [380]:  the sweep must cover a real town",
+    "[Failed]:  [0] expected to be > than [0]:  the town really has something standing on a roof",
+    "[Failed]:  Expected [<null>] to be anything but NULL:  ramp 12/compact must seal on real ground: carve: single spine DFS exhausted 3 visits",
+    "[Failed]:  [0.19047619047619] expected to be >= than [0.55]:  step 12/compact addresses only 0.190 of its passage cells",
+    "[Failed]:  Expected [<RefCounted#ID>(WarrenMazeSourcePlan.gd)] to be NULL:  step 3/standard is a pinned sloped refusal and it carved; take it out of SLOPED_REFUSED_ROWS",
+    "[Failed]:  [2] expected to equal [3]:  every sloped row except the pinned refusals must seal",
+    "[Failed]:  [1] expected to be > than [1]:  step 12/compact must stand its houses on more than one floor band; a single-level town on relief means the streets ignored the ground"
+  ],
+  "after": [
+    "[Failed]:  [1] expected to equal [3]:  1 of the four planner towns site a plaza; the pin is 3 -- a siting rule that stops finding sites leaves every other assertion in this file green",
+    "[Failed]:  [4] expected to equal [5]:  seed 5 standard adds no floating street",
+    "[Failed]:  Expected [<null>] to be anything but NULL:  ramp 12/compact must seal: carve: single spine DFS exhausted 3 visits",
+    "[Failed]:  [0] expected to equal [1]:  ramp 3/standard adds no floating street on real ground",
+    "[Failed]:  Expected [<RefCounted#ID>(WarrenMazeSourcePlan.gd)] to be NULL:  step 3/standard is a pinned sloped refusal and it sealed; take it out of SLOPED_REFUSED_ROWS",
+    "[Failed]:  [2] expected to equal [3]:  every sloped row except the pinned refusals must seal far enough to check its street floors",
+    "[Failed]:  [312] expected to be > than [380]:  the sweep must cover a real town",
+    "[Failed]:  [0] expected to be > than [0]:  the town really has something standing on a roof",
+    "[Failed]:  Expected [<null>] to be anything but NULL:  ramp 12/compact must seal on real ground: carve: single spine DFS exhausted 3 visits",
+    "[Failed]:  [0.19047619047619] expected to be >= than [0.55]:  step 12/compact addresses only 0.190 of its passage cells",
+    "[Failed]:  Expected [<RefCounted#ID>(WarrenMazeSourcePlan.gd)] to be NULL:  step 3/standard is a pinned sloped refusal and it carved; take it out of SLOPED_REFUSED_ROWS",
+    "[Failed]:  [2] expected to equal [3]:  every sloped row except the pinned refusals must seal",
+    "[Failed]:  [1] expected to be > than [1]:  step 12/compact must stand its houses on more than one floor band; a single-level town on relief means the streets ignored the ground"
+  ]
+}

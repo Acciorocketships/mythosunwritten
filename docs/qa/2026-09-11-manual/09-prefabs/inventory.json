@@ -1,0 +1,761 @@
+{
+  "17:12:23:23:16:15:23:16:15": {
+    "profile": {
+      "bearing_forward": 23,
+      "bearing_left": 16,
+      "bearing_right": 15,
+      "depth": 12,
+      "height_bands": 23,
+      "kind_id": "anchor.prefab.03",
+      "reach_forward": 23,
+      "reach_left": 16,
+      "reach_right": 15,
+      "width": 17
+    },
+    "recipes": [
+      {
+        "assets": [
+          "sft.building.001",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-24.75, -0.161052, -18.75), S: (48.0, 34.1271, 36.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 11)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.03"
+      },
+      {
+        "assets": [
+          "sft.building.005",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-24.75, -0.161052, -18.75), S: (48.0, 34.1271, 36.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 11)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.28"
+      },
+      {
+        "assets": [
+          "sft.building.006",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-24.75, -0.161052, -18.75), S: (48.0, 34.1271, 36.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 11)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.29"
+      },
+      {
+        "assets": [
+          "sft.building.007",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-24.75, -0.161052, -18.75), S: (48.0, 34.1271, 36.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 11)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.30"
+      }
+    ]
+  },
+  "17:13:28:25:16:15:25:16:15": {
+    "profile": {
+      "bearing_forward": 25,
+      "bearing_left": 16,
+      "bearing_right": 15,
+      "depth": 13,
+      "height_bands": 28,
+      "kind_id": "anchor.prefab.25",
+      "reach_forward": 25,
+      "reach_left": 16,
+      "reach_right": 15,
+      "width": 17
+    },
+    "recipes": [
+      {
+        "assets": [
+          "sft.building.002",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-24.75, -0.161052, -20.30882), S: (48.0, 41.26554, 39.11763)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 12)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.25"
+      },
+      {
+        "assets": [
+          "sft.building.003",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-24.75, -0.161052, -20.30883), S: (48.0, 41.26554, 39.11765)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 12)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.26"
+      },
+      {
+        "assets": [
+          "sft.building.004",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-24.75, -0.161052, -20.30882), S: (48.0, 41.26554, 39.11763)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 12)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.27"
+      }
+    ]
+  },
+  "3:3:4:5:2:1:5:2:1": {
+    "profile": {
+      "bearing_forward": 5,
+      "bearing_left": 2,
+      "bearing_right": 1,
+      "depth": 3,
+      "height_bands": 4,
+      "kind_id": "anchor.prefab.10",
+      "reach_forward": 5,
+      "reach_left": 2,
+      "reach_right": 1,
+      "width": 3
+    },
+    "recipes": [
+      {
+        "assets": [
+          "lpfv.building.house.01",
+          "lpfv.fabric.door.closed.02",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-3.834518, -0.161052, -5.25), S: (6.169035, 5.621027, 9.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 2)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.10"
+      },
+      {
+        "assets": [
+          "lpfv.building.house.07",
+          "lpfv.fabric.door.closed.02",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-3.834518, -0.161052, -5.25), S: (6.169035, 5.626699, 9.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 2)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.16"
+      }
+    ]
+  },
+  "4:3:4:5:3:2:5:3:2": {
+    "profile": {
+      "bearing_forward": 5,
+      "bearing_left": 3,
+      "bearing_right": 2,
+      "depth": 3,
+      "height_bands": 4,
+      "kind_id": "anchor.prefab.11",
+      "reach_forward": 5,
+      "reach_left": 3,
+      "reach_right": 2,
+      "width": 4
+    },
+    "recipes": [
+      {
+        "assets": [
+          "lpfv.building.house.02",
+          "lpfv.fabric.door.closed.01",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-5.25, -0.161052, -5.25), S: (9.0, 5.577072, 9.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 2)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.11"
+      }
+    ]
+  },
+  "4:5:9:9:3:2:9:3:2": {
+    "profile": {
+      "bearing_forward": 9,
+      "bearing_left": 3,
+      "bearing_right": 2,
+      "depth": 5,
+      "height_bands": 9,
+      "kind_id": "anchor.prefab.31",
+      "reach_forward": 9,
+      "reach_left": 3,
+      "reach_right": 2,
+      "width": 4
+    },
+    "recipes": [
+      {
+        "assets": [
+          "lpfv.building.church.01",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-5.25, -0.161052, -8.25), S: (9.0, 12.7376, 15.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 4)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.31"
+      }
+    ]
+  },
+  "5:3:4:5:4:3:5:4:3": {
+    "profile": {
+      "bearing_forward": 5,
+      "bearing_left": 4,
+      "bearing_right": 3,
+      "depth": 3,
+      "height_bands": 4,
+      "kind_id": "anchor.prefab.12",
+      "reach_forward": 5,
+      "reach_left": 4,
+      "reach_right": 3,
+      "width": 5
+    },
+    "recipes": [
+      {
+        "assets": [
+          "lpfv.building.house.03",
+          "lpfv.fabric.door.closed.02",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-6.75, -0.161052, -5.25), S: (12.0, 5.632082, 9.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 2)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.12"
+      },
+      {
+        "assets": [
+          "lpfv.building.house.04",
+          "lpfv.fabric.door.closed.01",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-6.75, -0.161052, -5.25), S: (12.0, 5.588125, 9.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 2)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.13"
+      }
+    ]
+  },
+  "5:3:6:5:4:3:5:4:3": {
+    "profile": {
+      "bearing_forward": 5,
+      "bearing_left": 4,
+      "bearing_right": 3,
+      "depth": 3,
+      "height_bands": 6,
+      "kind_id": "anchor.prefab.14",
+      "reach_forward": 5,
+      "reach_left": 4,
+      "reach_right": 3,
+      "width": 5
+    },
+    "recipes": [
+      {
+        "assets": [
+          "lpfv.building.house.05",
+          "lpfv.fabric.door.closed.02",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-6.75, -0.161052, -5.25), S: (12.0, 8.62821, 9.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 2)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.14"
+      },
+      {
+        "assets": [
+          "lpfv.building.house.06",
+          "lpfv.fabric.door.closed.01",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-6.75, -0.161052, -5.25), S: (12.0, 7.693173, 9.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 2)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.15"
+      }
+    ]
+  },
+  "5:6:8:11:4:3:11:4:3": {
+    "profile": {
+      "bearing_forward": 11,
+      "bearing_left": 4,
+      "bearing_right": 3,
+      "depth": 6,
+      "height_bands": 8,
+      "kind_id": "anchor.prefab.00",
+      "reach_forward": 11,
+      "reach_left": 4,
+      "reach_right": 3,
+      "width": 5
+    },
+    "recipes": [
+      {
+        "assets": [
+          "sfv.building.interior.blue.001",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-6.75, -0.161052, -9.75), S: (12.0, 11.10966, 18.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 5)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.00"
+      },
+      {
+        "assets": [
+          "sfv.building.interior.orange.001",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-6.75, -0.161052, -9.75), S: (12.0, 11.10966, 18.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 5)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.09"
+      }
+    ]
+  },
+  "6:5:13:9:5:4:9:5:4": {
+    "profile": {
+      "bearing_forward": 9,
+      "bearing_left": 5,
+      "bearing_right": 4,
+      "depth": 5,
+      "height_bands": 13,
+      "kind_id": "anchor.prefab.22",
+      "reach_forward": 9,
+      "reach_left": 5,
+      "reach_right": 4,
+      "width": 6
+    },
+    "recipes": [
+      {
+        "assets": [
+          "aws.building.002",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-8.25, -0.161052, -8.25), S: (15.0, 18.19742, 15.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 4)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.22"
+      }
+    ]
+  },
+  "6:5:7:9:5:4:9:5:4": {
+    "profile": {
+      "bearing_forward": 9,
+      "bearing_left": 5,
+      "bearing_right": 4,
+      "depth": 5,
+      "height_bands": 7,
+      "kind_id": "anchor.prefab.21",
+      "reach_forward": 9,
+      "reach_left": 5,
+      "reach_right": 4,
+      "width": 6
+    },
+    "recipes": [
+      {
+        "assets": [
+          "aws.building.001",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-8.25, -0.161052, -8.25), S: (15.0, 10.60977, 15.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 4)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.21"
+      }
+    ]
+  },
+  "6:6:13:11:5:4:11:5:4": {
+    "profile": {
+      "bearing_forward": 11,
+      "bearing_left": 5,
+      "bearing_right": 4,
+      "depth": 6,
+      "height_bands": 13,
+      "kind_id": "anchor.prefab.02",
+      "reach_forward": 11,
+      "reach_left": 5,
+      "reach_right": 4,
+      "width": 6
+    },
+    "recipes": [
+      {
+        "assets": [
+          "aws.building.003",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-8.25, -0.161052, -9.75), S: (15.0, 18.19742, 18.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 5)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.02"
+      }
+    ]
+  },
+  "7:5:12:9:6:5:9:6:5": {
+    "profile": {
+      "bearing_forward": 9,
+      "bearing_left": 6,
+      "bearing_right": 5,
+      "depth": 5,
+      "height_bands": 12,
+      "kind_id": "anchor.prefab.04",
+      "reach_forward": 9,
+      "reach_left": 6,
+      "reach_right": 5,
+      "width": 7
+    },
+    "recipes": [
+      {
+        "assets": [
+          "sfv.building.interior.blue.002",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-9.75, -0.161052, -8.25), S: (18.0, 17.68547, 15.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 4)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.04"
+      },
+      {
+        "assets": [
+          "sfv.building.interior.orange.002",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-9.75, -0.161052, -8.25), S: (18.0, 17.68547, 15.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 4)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.05"
+      }
+    ]
+  },
+  "7:6:10:11:6:5:11:6:5": {
+    "profile": {
+      "bearing_forward": 11,
+      "bearing_left": 6,
+      "bearing_right": 5,
+      "depth": 6,
+      "height_bands": 10,
+      "kind_id": "anchor.prefab.19",
+      "reach_forward": 11,
+      "reach_left": 6,
+      "reach_right": 5,
+      "width": 7
+    },
+    "recipes": [
+      {
+        "assets": [
+          "sfv.building.interior.blue.004",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-9.75, -0.161052, -9.75), S: (18.0, 15.12291, 18.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 5)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.19"
+      },
+      {
+        "assets": [
+          "sfv.building.interior.orange.004",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-9.75, -0.161052, -9.75), S: (18.0, 15.05291, 18.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 5)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.20"
+      }
+    ]
+  },
+  "7:6:7:11:6:5:11:6:5": {
+    "profile": {
+      "bearing_forward": 11,
+      "bearing_left": 6,
+      "bearing_right": 5,
+      "depth": 6,
+      "height_bands": 7,
+      "kind_id": "anchor.prefab.01",
+      "reach_forward": 11,
+      "reach_left": 6,
+      "reach_right": 5,
+      "width": 7
+    },
+    "recipes": [
+      {
+        "assets": [
+          "sfv.building.interior.orange.006",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-9.75, -0.161052, -9.75), S: (18.0, 9.602654, 18.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 5)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.01"
+      },
+      {
+        "assets": [
+          "sfv.building.interior.blue.006",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-9.75, -0.161052, -9.75), S: (18.0, 9.602654, 18.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 5)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.08"
+      }
+    ]
+  },
+  "8:8:11:15:7:6:15:7:6": {
+    "profile": {
+      "bearing_forward": 15,
+      "bearing_left": 7,
+      "bearing_right": 6,
+      "depth": 8,
+      "height_bands": 11,
+      "kind_id": "anchor.prefab.23",
+      "reach_forward": 15,
+      "reach_left": 7,
+      "reach_right": 6,
+      "width": 8
+    },
+    "recipes": [
+      {
+        "assets": [
+          "sffa.building.001",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-11.25, -0.161052, -12.75), S: (21.0, 16.02867, 24.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 7)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.23"
+      },
+      {
+        "assets": [
+          "sffa.building.002",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-11.25, -0.161052, -12.75), S: (21.0, 16.02867, 24.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 7)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.24"
+      }
+    ]
+  },
+  "9:6:8:11:8:7:11:8:7": {
+    "profile": {
+      "bearing_forward": 11,
+      "bearing_left": 8,
+      "bearing_right": 7,
+      "depth": 6,
+      "height_bands": 8,
+      "kind_id": "anchor.prefab.17",
+      "reach_forward": 11,
+      "reach_left": 8,
+      "reach_right": 7,
+      "width": 9
+    },
+    "recipes": [
+      {
+        "assets": [
+          "sfv.building.interior.blue.003",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-12.75, -0.161052, -9.75), S: (24.0, 11.13302, 18.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 5)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.17"
+      },
+      {
+        "assets": [
+          "sfv.building.interior.orange.003",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-12.75, -0.161052, -9.75), S: (24.0, 11.13302, 18.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 5)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.18"
+      }
+    ]
+  },
+  "9:7:11:13:8:7:13:8:7": {
+    "profile": {
+      "bearing_forward": 13,
+      "bearing_left": 8,
+      "bearing_right": 7,
+      "depth": 7,
+      "height_bands": 11,
+      "kind_id": "anchor.prefab.06",
+      "reach_forward": 13,
+      "reach_left": 8,
+      "reach_right": 7,
+      "width": 9
+    },
+    "recipes": [
+      {
+        "assets": [
+          "sfv.building.interior.blue.005",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-12.75, -0.161052, -11.25), S: (24.0, 16.38999, 21.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 6)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.06"
+      },
+      {
+        "assets": [
+          "sfv.building.interior.orange.005",
+          "sfv.fabric.floor.l.001"
+        ],
+        "bounds": "[P: (-12.75, -0.161052, -11.25), S: (24.0, 16.38999, 21.0)]",
+        "entrances": [
+          {
+            "cell": "(-1, 0, 6)",
+            "facing": "(0, 0, 1)",
+            "id": "front"
+          }
+        ],
+        "id": "anchor.prefab.07"
+      }
+    ]
+  }
+}

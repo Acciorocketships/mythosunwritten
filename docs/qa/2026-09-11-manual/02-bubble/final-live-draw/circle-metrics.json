@@ -1,0 +1,74 @@
+{
+  "01_black_-8": {
+    "mean_abs_rgb": 0.0,
+    "changed_over_20_fraction": 0.0,
+    "outside_circle_over_20": 0,
+    "after_black_fraction": 1.0
+  },
+  "01_black_0": {
+    "mean_abs_rgb": 9.467207272376543,
+    "changed_over_20_fraction": 0.18181086033950616,
+    "outside_circle_over_20": 13,
+    "after_black_fraction": 1.4467592592592592e-06
+  },
+  "01_black_8": {
+    "mean_abs_rgb": 0.0,
+    "changed_over_20_fraction": 0.0,
+    "outside_circle_over_20": 0,
+    "after_black_fraction": 1.0
+  },
+  "02_bubble_-8": {
+    "mean_abs_rgb": 7.655874485596708,
+    "changed_over_20_fraction": 0.14423659336419753,
+    "outside_circle_over_20": 2,
+    "after_black_fraction": 4.822530864197531e-07
+  },
+  "02_bubble_0": {
+    "mean_abs_rgb": 6.647748360339506,
+    "changed_over_20_fraction": 0.13093315972222222,
+    "outside_circle_over_20": 1,
+    "after_black_fraction": 4.822530864197531e-07
+  },
+  "02_bubble_8": {
+    "mean_abs_rgb": 7.082005529835391,
+    "changed_over_20_fraction": 0.14288049768518518,
+    "outside_circle_over_20": 37,
+    "after_black_fraction": 4.822530864197531e-07
+  },
+  "03_block_-8": {
+    "mean_abs_rgb": 1.6781389853395061,
+    "changed_over_20_fraction": 0.03718557098765432,
+    "outside_circle_over_20": 40,
+    "after_black_fraction": 0.0
+  },
+  "03_block_0": {
+    "mean_abs_rgb": 1.5640295460390947,
+    "changed_over_20_fraction": 0.03354600694444444,
+    "outside_circle_over_20": 57,
+    "after_black_fraction": 0.0
+  },
+  "03_block_8": {
+    "mean_abs_rgb": 1.5100162358539095,
+    "changed_over_20_fraction": 0.03076437114197531,
+    "outside_circle_over_20": 53,
+    "after_black_fraction": 0.0
+  },
+  "04_village_-8": {
+    "mean_abs_rgb": 0.4856280542695473,
+    "changed_over_20_fraction": 0.009695216049382716,
+    "outside_circle_over_20": 213,
+    "after_black_fraction": 0.0
+  },
+  "04_village_0": {
+    "mean_abs_rgb": 0.5387037037037037,
+    "changed_over_20_fraction": 0.010975597993827161,
+    "outside_circle_over_20": 104,
+    "after_black_fraction": 0.0
+  },
+  "04_village_8": {
+    "mean_abs_rgb": 0.6728483474794239,
+    "changed_over_20_fraction": 0.012698206018518518,
+    "outside_circle_over_20": 157,
+    "after_black_fraction": 0.0
+  }
+}

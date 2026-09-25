@@ -1,0 +1,92 @@
+{
+  "amphitheatre": {
+    "biome": "deep_forest",
+    "core": {
+      "x": 3840.0,
+      "z": -3072.0
+    },
+    "kind": 1,
+    "score": 1.035
+  },
+  "cleft": {
+    "biome": "amber_heath",
+    "core": {
+      "x": -768.0,
+      "z": -768.0
+    },
+    "kind": 6,
+    "score": 1.05
+  },
+  "delta_fan": {
+    "biome": "jade_wetlands",
+    "core": {
+      "x": 4608.0,
+      "z": -768.0
+    },
+    "kind": 9,
+    "score": 1.015
+  },
+  "escarpment": {
+    "biome": "amber_heath",
+    "core": {
+      "x": 4608.0,
+      "z": -1536.0
+    },
+    "kind": 0,
+    "score": 1.01644841314848
+  },
+  "hanging_valley": {
+    "biome": "highland",
+    "core": {
+      "x": 3072.0,
+      "z": -3840.0
+    },
+    "kind": 8,
+    "score": 1.085
+  },
+  "mesa": {
+    "biome": "amber_heath",
+    "core": {
+      "x": 768.0,
+      "z": -1536.0
+    },
+    "kind": 3,
+    "score": 1.05
+  },
+  "mountain_range": {
+    "biome": "highland",
+    "core": {
+      "x": -3072.0,
+      "z": 3072.0
+    },
+    "kind": 7,
+    "score": 1.06256293107135
+  },
+  "ridgeline": {
+    "biome": "highland",
+    "core": {
+      "x": -4608.0,
+      "z": -4608.0
+    },
+    "kind": 4,
+    "score": 1.0701776684237
+  },
+  "sheltered_hollow": {
+    "biome": "deep_forest",
+    "core": {
+      "x": 1536.0,
+      "z": -768.0
+    },
+    "kind": 5,
+    "score": 1.035
+  },
+  "terraced_valley": {
+    "biome": "deep_forest",
+    "core": {
+      "x": 4608.0,
+      "z": -3072.0
+    },
+    "kind": 2,
+    "score": 1.035
+  }
+}

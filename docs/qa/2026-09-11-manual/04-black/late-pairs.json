@@ -1,0 +1,32 @@
+[
+  {
+    "tick": 5400,
+    "same_camera": true,
+    "mean_rgb_delta_excluding_marker": 0.4724291760591611,
+    "percent_over_20_excluding_marker": 0.007146353697671467
+  },
+  {
+    "tick": 5580,
+    "same_camera": true,
+    "mean_rgb_delta_excluding_marker": 0.2837769209539753,
+    "percent_over_20_excluding_marker": 0.00843058216342638
+  },
+  {
+    "tick": 5760,
+    "same_camera": true,
+    "mean_rgb_delta_excluding_marker": 0.2051118839984126,
+    "percent_over_20_excluding_marker": 0.01417183883386012
+  },
+  {
+    "tick": 5940,
+    "same_camera": true,
+    "mean_rgb_delta_excluding_marker": 0.1822966336091151,
+    "percent_over_20_excluding_marker": 0.025669460744912942
+  },
+  {
+    "tick": 6120,
+    "same_camera": true,
+    "mean_rgb_delta_excluding_marker": 0.44140382790734217,
+    "percent_over_20_excluding_marker": 0.0078111307858269525
+  }
+]

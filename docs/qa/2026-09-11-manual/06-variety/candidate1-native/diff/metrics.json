@@ -1,0 +1,112 @@
+{
+  "03_block_-30": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 1.7544253150720164,
+    "roi_mean_abs_rgb": 1.7544253150720164,
+    "roi_changed_over_20_fraction": 0.026791087962962964
+  },
+  "03_block_-8": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 1.2365211869855968,
+    "roi_mean_abs_rgb": 1.2365211869855968,
+    "roi_changed_over_20_fraction": 0.018466917438271606
+  },
+  "03_block_0": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.9793312757201647,
+    "roi_mean_abs_rgb": 0.9793312757201647,
+    "roi_changed_over_20_fraction": 0.014451195987654321
+  },
+  "03_block_30": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.3917065329218107,
+    "roi_mean_abs_rgb": 0.3917065329218107,
+    "roi_changed_over_20_fraction": 0.005045331790123456
+  },
+  "03_block_8": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.7507614776234568,
+    "roi_mean_abs_rgb": 0.7507614776234568,
+    "roi_changed_over_20_fraction": 0.01058400848765432
+  },
+  "04_village_-30": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.22452353395061728,
+    "roi_mean_abs_rgb": 0.22452353395061728,
+    "roi_changed_over_20_fraction": 0.0032648533950617284
+  },
+  "04_village_-8": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.18203993055555556,
+    "roi_mean_abs_rgb": 0.18203993055555556,
+    "roi_changed_over_20_fraction": 0.002998167438271605
+  },
+  "04_village_0": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.17639773019547325,
+    "roi_mean_abs_rgb": 0.17639773019547325,
+    "roi_changed_over_20_fraction": 0.003171296296296296
+  },
+  "04_village_30": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.052369791666666665,
+    "roi_mean_abs_rgb": 0.052369791666666665,
+    "roi_changed_over_20_fraction": 0.0009456983024691358
+  },
+  "04_village_8": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.19202755272633745,
+    "roi_mean_abs_rgb": 0.19202755272633745,
+    "roi_changed_over_20_fraction": 0.003523341049382716
+  }
+}

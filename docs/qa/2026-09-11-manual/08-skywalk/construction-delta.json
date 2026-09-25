@@ -1,0 +1,52 @@
+{
+  "all_28_room_records_identical": true,
+  "removed_units": [
+    {
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/ground-frame/2/0",
+      "recipe": "foundation.timber.post.1"
+    },
+    {
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.00.room00/ground-frame/0/0",
+      "recipe": "foundation.timber.post.1"
+    },
+    {
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/ground-frame/3/0",
+      "recipe": "foundation.timber.post.1"
+    },
+    {
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.00.room00/ground-frame/3/0",
+      "recipe": "foundation.timber.post.1"
+    },
+    {
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/ground-frame/0/0",
+      "recipe": "foundation.timber.post.1"
+    },
+    {
+      "id": "spatial.roof.spatial.parcel.maze.bridge.00.end.0.lower.part01.room00.garden",
+      "recipe": "roof.flat.tower.garden"
+    },
+    {
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.00.room00/ground-frame/1/0",
+      "recipe": "foundation.timber.post.1"
+    },
+    {
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/ground-frame/1/0",
+      "recipe": "foundation.timber.post.1"
+    },
+    {
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.00.room00/ground-frame/2/0",
+      "recipe": "foundation.timber.post.1"
+    }
+  ],
+  "added_units": [
+    {
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.01.room00/ground-masonry",
+      "recipe": "foundation.masonry.course.tower"
+    },
+    {
+      "id": "spatial.fabric.spatial.maze_bridge_end.00.00.room00/ground-masonry",
+      "recipe": "foundation.masonry.course.tower"
+    }
+  ],
+  "changed_common_units": []
+}

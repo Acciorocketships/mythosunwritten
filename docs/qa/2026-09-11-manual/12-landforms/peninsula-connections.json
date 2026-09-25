@@ -1,0 +1,263 @@
+[
+  {
+    "center": "(-1124.092, 1933.115)",
+    "passed": true,
+    "peninsula": true,
+    "samples": [
+      {
+        "ground": 4.0,
+        "level": null,
+        "point": "(-1124.092, 1933.115)",
+        "wet": false
+      },
+      {
+        "ground": 4.0,
+        "level": null,
+        "point": "(-1120.843, 1941.603)",
+        "wet": false
+      },
+      {
+        "ground": 4.0,
+        "level": null,
+        "point": "(-1117.594, 1950.092)",
+        "wet": false
+      },
+      {
+        "ground": 4.0,
+        "level": null,
+        "point": "(-1114.345, 1958.581)",
+        "wet": false
+      },
+      {
+        "ground": 4.0,
+        "level": null,
+        "point": "(-1111.095, 1967.07)",
+        "wet": false
+      },
+      {
+        "ground": 4.0,
+        "level": null,
+        "point": "(-1107.846, 1975.559)",
+        "wet": false
+      },
+      {
+        "ground": 4.0,
+        "level": null,
+        "point": "(-1104.597, 1984.047)",
+        "wet": false
+      },
+      {
+        "ground": 4.0,
+        "level": null,
+        "point": "(-1101.348, 1992.536)",
+        "wet": false
+      },
+      {
+        "ground": 4.0,
+        "level": null,
+        "point": "(-1098.099, 2001.025)",
+        "wet": false
+      },
+      {
+        "ground": 4.0,
+        "level": null,
+        "point": "(-1094.849, 2009.514)",
+        "wet": false
+      },
+      {
+        "ground": 4.00140611491299,
+        "level": null,
+        "point": "(-1091.6, 2018.003)",
+        "wet": false
+      },
+      {
+        "ground": 4.67406311931129,
+        "level": null,
+        "point": "(-1088.351, 2026.491)",
+        "wet": false
+      },
+      {
+        "ground": 12.0,
+        "level": null,
+        "point": "(-1085.102, 2034.98)",
+        "wet": false
+      }
+    ],
+    "seed": 2697992464,
+    "source": "(-3, -1)"
+  },
+  {
+    "center": "(-868.142, 1152.096)",
+    "passed": true,
+    "peninsula": true,
+    "samples": [
+      {
+        "ground": 8.0,
+        "level": null,
+        "point": "(-868.142, 1152.096)",
+        "wet": false
+      },
+      {
+        "ground": 8.0,
+        "level": null,
+        "point": "(-876.8555, 1153.584)",
+        "wet": false
+      },
+      {
+        "ground": 8.0,
+        "level": null,
+        "point": "(-885.569, 1155.072)",
+        "wet": false
+      },
+      {
+        "ground": 8.0,
+        "level": null,
+        "point": "(-894.2826, 1156.56)",
+        "wet": false
+      },
+      {
+        "ground": 8.4126904012494,
+        "level": null,
+        "point": "(-902.9961, 1158.048)",
+        "wet": false
+      },
+      {
+        "ground": 11.9994534503259,
+        "level": null,
+        "point": "(-911.7096, 1159.536)",
+        "wet": false
+      },
+      {
+        "ground": 12.0,
+        "level": null,
+        "point": "(-920.4231, 1161.025)",
+        "wet": false
+      },
+      {
+        "ground": 13.4677761516519,
+        "level": null,
+        "point": "(-929.1366, 1162.513)",
+        "wet": false
+      },
+      {
+        "ground": 16.0,
+        "level": null,
+        "point": "(-937.8501, 1164.001)",
+        "wet": false
+      },
+      {
+        "ground": 16.0,
+        "level": null,
+        "point": "(-946.5636, 1165.489)",
+        "wet": false
+      },
+      {
+        "ground": 16.0,
+        "level": null,
+        "point": "(-955.2772, 1166.977)",
+        "wet": false
+      },
+      {
+        "ground": 16.0,
+        "level": null,
+        "point": "(-963.9907, 1168.465)",
+        "wet": false
+      },
+      {
+        "ground": 16.0,
+        "level": null,
+        "point": "(-972.7042, 1169.953)",
+        "wet": false
+      }
+    ],
+    "seed": 991177,
+    "source": "(-2, 4)"
+  },
+  {
+    "center": "(21.08339, 3462.402)",
+    "passed": true,
+    "peninsula": true,
+    "samples": [
+      {
+        "ground": 8.0,
+        "level": null,
+        "point": "(21.08339, 3462.402)",
+        "wet": false
+      },
+      {
+        "ground": 8.0,
+        "level": null,
+        "point": "(30.11856, 3461.73)",
+        "wet": false
+      },
+      {
+        "ground": 12.0,
+        "level": null,
+        "point": "(39.15374, 3461.059)",
+        "wet": false
+      },
+      {
+        "ground": 12.0,
+        "level": null,
+        "point": "(48.18892, 3460.388)",
+        "wet": false
+      },
+      {
+        "ground": 12.0,
+        "level": null,
+        "point": "(57.22409, 3459.717)",
+        "wet": false
+      },
+      {
+        "ground": 16.0,
+        "level": null,
+        "point": "(66.25926, 3459.046)",
+        "wet": false
+      },
+      {
+        "ground": 16.0,
+        "level": null,
+        "point": "(75.29445, 3458.375)",
+        "wet": false
+      },
+      {
+        "ground": 16.0,
+        "level": null,
+        "point": "(84.32962, 3457.703)",
+        "wet": false
+      },
+      {
+        "ground": 16.0,
+        "level": null,
+        "point": "(93.36481, 3457.032)",
+        "wet": false
+      },
+      {
+        "ground": 16.0,
+        "level": null,
+        "point": "(102.4, 3456.361)",
+        "wet": false
+      },
+      {
+        "ground": 16.581452899322,
+        "level": null,
+        "point": "(111.4352, 3455.69)",
+        "wet": false
+      },
+      {
+        "ground": 19.9807134517071,
+        "level": null,
+        "point": "(120.4703, 3455.019)",
+        "wet": false
+      },
+      {
+        "ground": 19.9159183763231,
+        "level": null,
+        "point": "(129.5055, 3454.347)",
+        "wet": false
+      }
+    ],
+    "seed": 314159,
+    "source": "(-3, 3)"
+  }
+]

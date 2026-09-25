@@ -1,0 +1,5270 @@
+[
+  {
+    "accepted": true,
+    "audit": {
+      "allocatable_cell_count": 0,
+      "allocated_facade_clearance_envelope_count": 135,
+      "alternate_pitched_roof_count": 42,
+      "arcade_overhang_support_count": 1,
+      "arcade_overhang_support_feature_count": 1,
+      "atomic_neighborhood_roof_count": 0,
+      "authored_room_envelope_gate_count": 135,
+      "awning_flat_roof_terrace_count": 0,
+      "balcony_building_count": 8,
+      "balcony_feature_count": 8,
+      "balcony_target_count": 14,
+      "bare_flat_roof_count": 0,
+      "bounded_stone_base_lineage_count": 22,
+      "bracketed_overhang_feature_count": 2,
+      "bracketless_overhang_feature_count": 0,
+      "broken_atomic_roof_neighborhood_count": 0,
+      "building_count": 131,
+      "building_count_below_reference": false,
+      "building_stack_count": 132,
+      "building_variant_count": 22,
+      "building_variant_counts": {
+        "building.blue.0": 2,
+        "long.amber.0": 1,
+        "long.blue.0": 1,
+        "row.amber.0": 5,
+        "row.blue.0": 7,
+        "row.blue.1": 1,
+        "row.blue.2": 3,
+        "row.rock.0": 5,
+        "slim.amber.0": 2,
+        "slim.amber.1": 2,
+        "slim.blue.0": 17,
+        "slim.blue.1": 1,
+        "slim.blue.2": 3,
+        "slim.orange.0": 2,
+        "slim.rock.0": 3,
+        "tower.amber.0": 3,
+        "tower.amber.1": 1,
+        "tower.blue.0": 45,
+        "tower.blue.1": 8,
+        "tower.blue.2": 8,
+        "tower.orange.0": 1,
+        "tower.rock.0": 14
+      },
+      "cantilever_measured_support_conflict_count": 0,
+      "cantilever_measured_support_conflict_kinds": {
+
+      },
+      "cantilever_rejection_counts": {
+        "full_scale_overlap_required": 4
+      },
+      "cantilever_support_assignment_node_count": 0,
+      "cantilever_support_assignment_peak_count": 0,
+      "collision_flatten_trigger_details": [],
+      "collision_flattened_roof_component_count": 0,
+      "collision_flattened_roof_room_count": 0,
+      "composed_courtyard_side_count": 0,
+      "composed_courtyard_side_mask": 0,
+      "connected_building_stack_count": 132,
+      "construction_diagnostics_collected": false,
+      "construction_record_count": 1,
+      "construction_region_count": 1012,
+      "construction_signature": "ba07609bdf98804173494c4e68ba1842b1db1dda343a4e39d431363a70e81638",
+      "continuous_ridge_join_count": 16,
+      "continuous_roof_component_count": 21,
+      "continuous_roof_eligible_run_count": 92,
+      "continuous_roof_flush_endpoint_count": 30,
+      "continuous_roof_internal_gable_count": 50,
+      "continuous_roof_joined_run_count": 46,
+      "continuous_roof_normalized_repeat_count": 8,
+      "continuous_roof_tight_cross_component_count": 0,
+      "court_displaced_parcel_count": 0,
+      "courtyard_bridge_house_count": 0,
+      "courtyard_bridge_house_feature_count": 0,
+      "covered_market_count": 1,
+      "covered_market_feature_count": 1,
+      "daylight_air_cell_count": 0,
+      "desired_facade_phase_b_count": 19,
+      "detached_building_stack_count": 0,
+      "directly_borne_integrated_cantilever_count": 0,
+      "directly_borne_irregular_projection_count": 2,
+      "door_region_count": 52,
+      "dormered_pitched_roof_count": 11,
+      "dormered_roof_unit_count": 11,
+      "elevated_courtyard_count": 0,
+      "enclosed_skywalk_count": 0,
+      "endpoint_count": 1,
+      "endpoint_owner_count": 1,
+      "exposed_roof_feature_counts": {
+        "0": 15,
+        "1": 31,
+        "2": 23,
+        "3": 20,
+        "4": 1
+      },
+      "exposed_roof_room_kind_counts": {
+        "building": 2,
+        "long": 2,
+        "row": 18,
+        "slim": 23,
+        "tower": 45
+      },
+      "extra_diagonal_outcrop_diagnostic": {
+
+      },
+      "facade_bay_count": 16,
+      "facade_bay_diagnostic": {
+        "body_rejection_count": 109,
+        "candidate_count": 48,
+        "clearance_rejection_count": 8,
+        "commit_rejection_count": 1,
+        "eligible_endpoint_count": 140,
+        "endpoint_count": 156,
+        "feature_kind": "facade_bay",
+        "feature_overlap_rejection_count": 26,
+        "overhanging_face_rejection_count": 3,
+        "partial_roof_rejection_count": 2,
+        "recipe_attempt_count": 840,
+        "refreshed_rejection_count": 0,
+        "required_roof_rejection_count": 89,
+        "room_envelope_rejection_count": 0,
+        "selected_count": 16,
+        "target_source_count": 28
+      },
+      "facade_bay_feature_count": 16,
+      "facade_bay_source_count": 28,
+      "facade_bay_target_count": 28,
+      "facade_entrance_owners": {
+        "spatial.parcel.maze.bridge.00.end.0.lower.part00.room00": "spatial.parcel.maze.bridge.01.end.0.lower.part00.room00",
+        "spatial.parcel.maze.bridge.00.end.1.lower.part00.room00": "spatial.parcel.maze.bridge.00.end.1.lower.part00.room00",
+        "spatial.parcel.maze.bridge.01.end.0.lower.part00.room00": "spatial.parcel.maze.bridge.01.end.0.lower.part00.room00",
+        "spatial.parcel.maze.bridge.02.end.1.lower.part00.room00": "spatial.parcel.maze.bridge.03.end.1.lower.part00.room00",
+        "spatial.parcel.maze.bridge.03.end.1.lower.part00.room00": "spatial.parcel.maze.bridge.03.end.1.lower.part00.room00",
+        "spatial.parcel.maze.house.031.part00.room00": "spatial.parcel.maze.bridge.00.end.1.lower.part00.room00",
+        "spatial.parcel.maze.house.051.part00.room00": "spatial.parcel.maze.house.052.part00.room00",
+        "spatial.parcel.maze.house.052.part00.room00": "spatial.parcel.maze.house.052.part00.room00"
+      },
+      "facade_family_counts": {
+        "amber": 14,
+        "blue": 96,
+        "orange": 3,
+        "rock": 22
+      },
+      "facade_phase_a_count": 119,
+      "facade_phase_fallback_count": 3,
+      "facade_region_count": 452,
+      "facade_style_count": 11,
+      "facade_style_counts": {
+        "building.0": 2,
+        "long.0": 2,
+        "row.0": 17,
+        "row.1": 1,
+        "row.2": 3,
+        "slim.0": 24,
+        "slim.1": 3,
+        "slim.2": 3,
+        "tower.0": 63,
+        "tower.1": 9,
+        "tower.2": 8
+      },
+      "feature_clearance_displaced_parcel_count": 0,
+      "feature_construction_unit_count": 31,
+      "feature_count": 28,
+      "feature_portal_opening_count": 8,
+      "feature_portal_room_count": 8,
+      "feature_reserved_cell_count": 258,
+      "final_ground_frame_member_count": 6,
+      "final_ground_frame_room_ids": [
+        "spatial.fabric.spatial.parcel.maze.house.010.part00.room00"
+      ],
+      "final_ground_masonry_room_ids": [],
+      "flat_roof_count": 9,
+      "flat_roof_garden_count": 0,
+      "flat_roof_garden_rejections": [],
+      "flat_roof_recipe_counts": {
+        "roof.flat.slim": 2,
+        "roof.flat.tower": 7
+      },
+      "flat_roof_terrace_count": 0,
+      "frontier_gateway_direct_bearing_count": 0,
+      "frontier_gateway_support_count": 0,
+      "frontier_gateway_support_feature_count": 0,
+      "full_scale_diagonal_overlap_count": 0,
+      "full_scale_diagonal_overlap_source_count": 0,
+      "furnished_flat_roof_terrace_count": 0,
+      "gateway_supported_perimeter_parcel_count": 0,
+      "generation_source": "spatial_volumetric_warren",
+      "ground_building_allocation": "shared_source",
+      "grounded_perimeter_parcel_count": 35,
+      "grounded_perimeter_parcel_ratio": 1.0,
+      "hero_feature_facade_fallback_count": 0,
+      "integrated_bridge_roof_count": 2,
+      "integrated_cantilever_candidate_count": 0,
+      "interstitial_join_class_counts": {
+
+      },
+      "interstitial_join_count": 0,
+      "interstitial_join_feature_count": 0,
+      "lamped_flat_roof_terrace_count": 0,
+      "landmark_skywalk_connected_count": 0,
+      "landmark_skywalk_connection_ratio": 0.0,
+      "legacy_unit_group_building_stack_count": 132,
+      "legacy_unit_group_connected_building_stack_count": 132,
+      "legacy_unit_group_detached_building_stack_count": 0,
+      "lived_in_flat_roof_terrace_count": 0,
+      "market_aisle_cell_count": 8,
+      "market_aisle_extension_cell_count": 4,
+      "market_backing_building_id": "spatial.parcel.maze.house.055.part00",
+      "market_backing_parcel_id": "parcel.maze.house.055",
+      "market_backing_room_id": "spatial.parcel.maze.house.055.part00.room00",
+      "market_continuous_canopy": true,
+      "market_core_radius_squared": 241.0,
+      "market_covered_aisle_cell_count": 4,
+      "market_new_public_cell_count": 8,
+      "market_open_horizon_max_cells": 7,
+      "market_open_horizon_total_cells": 26,
+      "market_overhead_public_floor_seam_count": 0,
+      "market_recipe_id": "market.covered.01.garden",
+      "market_stocked_bay_count": 2,
+      "market_street_entrance_edge_count": 2,
+      "market_street_entrance_width": 2,
+      "market_terrain_bearing_cell_count": 8,
+      "maze_asset_clearance_reservations": [
+        {
+          "columns": [
+            "(-2, 0)",
+            "(-1, 0)",
+            "(0, 0)",
+            "(1, 0)",
+            "(-2, 1)",
+            "(-1, 1)",
+            "(0, 1)",
+            "(1, 1)",
+            "(-2, 2)",
+            "(-1, 2)",
+            "(-2, 3)",
+            "(-1, 3)",
+            "(-2, 4)",
+            "(-1, 4)",
+            "(-2, 5)",
+            "(-1, 5)"
+          ],
+          "floor": 4,
+          "id": "asset.00",
+          "support_columns": [
+            "(-2, 2)",
+            "(-1, 2)",
+            "(0, 2)",
+            "(1, 2)",
+            "(-2, 3)",
+            "(-1, 3)",
+            "(0, 3)",
+            "(1, 3)",
+            "(-2, 4)",
+            "(-1, 4)",
+            "(0, 4)",
+            "(1, 4)"
+          ],
+          "top": 8
+        }
+      ],
+      "maze_asset_outcomes": [
+        {
+          "cells": [
+            "(0, 2)",
+            "(1, 2)",
+            "(2, 2)",
+            "(0, 3)",
+            "(1, 3)",
+            "(2, 3)",
+            "(0, 4)",
+            "(1, 4)",
+            "(2, 4)",
+            "(0, 5)",
+            "(1, 5)",
+            "(2, 5)"
+          ],
+          "door_walk": "(0, 4, 1)",
+          "floor": 4,
+          "id": "asset.00",
+          "kind_id": "anchor.prefab.11",
+          "placed": true,
+          "reason": ""
+        }
+      ],
+      "maze_asset_source_plots": [
+        {
+          "building_id": "asset.00",
+          "cells": [
+            "(0, 2)",
+            "(1, 2)",
+            "(2, 2)",
+            "(0, 3)",
+            "(1, 3)",
+            "(2, 3)",
+            "(0, 4)",
+            "(1, 4)",
+            "(2, 4)",
+            "(0, 5)",
+            "(1, 5)",
+            "(2, 5)"
+          ],
+          "door_walk": "(0, 4, 1)",
+          "floor": 4,
+          "id": "asset.00",
+          "kind": "asset",
+          "top": 8
+        }
+      ],
+      "maze_back_room_building_count": 42,
+      "maze_back_room_cell_count": 656,
+      "maze_back_room_record_count": 14,
+      "maze_back_room_rectangle_count": 36,
+      "maze_back_room_refusals": {
+        "authored envelope does not fit": 1,
+        "mass already spent or feature-reserved": 1,
+        "parcel volume has no frontage yaw or access root": 3,
+        "storey is not whole allocatable mass": 1
+      },
+      "maze_back_room_stamped_cell_count": 640,
+      "maze_back_room_unstamped_cells": {
+        "cells": [
+          "(-4, 2, -16)",
+          "(-3, 2, -16)",
+          "(-4, 2, -15)",
+          "(-3, 2, -15)",
+          "(-4, 3, -16)",
+          "(-3, 3, -16)",
+          "(-4, 3, -15)",
+          "(-3, 3, -15)",
+          "(-4, 6, -8)",
+          "(-3, 6, -8)",
+          "(-4, 6, -7)",
+          "(-3, 6, -7)",
+          "(-4, 7, -8)",
+          "(-3, 7, -8)",
+          "(-4, 7, -7)",
+          "(-3, 7, -7)"
+        ],
+        "count": 16
+      },
+      "maze_back_rooms_addressed": 3,
+      "maze_back_rooms_private": 39,
+      "maze_back_rooms_unstamped_cells": 16,
+      "maze_bare_crown_count": 2,
+      "maze_bridge_open_deck_cell_count": 0,
+      "maze_bridge_open_decks": 0,
+      "maze_bridge_outcomes": [
+        {
+          "flat_flank_columns": -1,
+          "flat_flank_sides": -1,
+          "id": "bridge.00",
+          "outcome": "stamped",
+          "reason": "",
+          "span_counts": {
+            "flank_contacts": 2,
+            "flank_rooms_probed": 2,
+            "sample_miss": {
+              "candidate_min": "(-12, 6, 6)",
+              "facing": "(1, 0, 0)",
+              "flank_kind": "tower",
+              "flank_room": "spatial.maze_bridge_end.00.00.room01",
+              "socket": "bearing.east",
+              "socket_cell": "(-9, 6, 7)"
+            },
+            "unproved_flank_column": 8
+          }
+        },
+        {
+          "detail": "r1: endpoint authored envelope or bridge socket does not fit (endpoint=0 envelope=false bridge_socket=true; candidate has no exact roof envelope that clears existing rooms); r0: endpoint authored envelope or bridge socket does not fit (endpoint=0 envelope=false bridge_socket=true; candidate has no exact roof envelope that clears existing rooms); r2: endpoint authored envelope or bridge socket does not fit (endpoint=0 envelope=false bridge_socket=true; candidate has no exact roof envelope that clears existing rooms); r3: endpoint authored envelope or bridge socket does not fit (endpoint=0 envelope=false bridge_socket=true; candidate has no exact roof envelope that clears existing rooms)",
+          "flat_flank_columns": 0,
+          "flat_flank_sides": 0,
+          "id": "bridge.01",
+          "outcome": "released",
+          "reason": "endpoint authored envelope or bridge socket does not fit",
+          "span_counts": {
+            "unproved_flank_column": 8
+          }
+        },
+        {
+          "flat_flank_columns": -1,
+          "flat_flank_sides": -1,
+          "id": "bridge.02",
+          "outcome": "stamped",
+          "reason": "",
+          "span_counts": {
+            "flank_contacts": 2,
+            "flank_rooms_probed": 2,
+            "sample_miss": {
+              "candidate_min": "(-12, 5, -4)",
+              "facing": "(1, 0, 0)",
+              "flank_kind": "tower",
+              "flank_room": "spatial.maze_bridge_end.02.01.room01",
+              "socket": "bearing.east",
+              "socket_cell": "(-9, 5, -3)"
+            },
+            "unproved_flank_column": 8
+          }
+        },
+        {
+          "detail": "r1: endpoint authored envelope or bridge socket does not fit (endpoint=0 envelope=false bridge_socket=true; candidate has no exact roof envelope that clears existing rooms); r0: endpoint authored envelope or bridge socket does not fit (endpoint=0 envelope=false bridge_socket=true; candidate has no exact roof envelope that clears existing rooms); r2: endpoint authored envelope or bridge socket does not fit (endpoint=0 envelope=false bridge_socket=true; candidate has no exact roof envelope that clears existing rooms); r3: endpoint authored envelope or bridge socket does not fit (endpoint=0 envelope=false bridge_socket=true; candidate has no exact roof envelope that clears existing rooms)",
+          "flat_flank_columns": 0,
+          "flat_flank_sides": 0,
+          "id": "bridge.03",
+          "outcome": "released",
+          "reason": "endpoint authored envelope or bridge socket does not fit",
+          "span_counts": {
+            "unproved_flank_column": 8
+          }
+        }
+      ],
+      "maze_bridge_rooms": 2,
+      "maze_construction_crown_unit_ids": [
+        "spatial.roof.spatial.maze_back.27.room00",
+        "spatial.roof.spatial.parcel.maze.bridge.02.end.0.lower.part00.room00.tile00",
+        "spatial.roof.spatial.parcel.maze.bridge.02.end.0.lower.part00.room00.tile01",
+        "spatial.roof.spatial.parcel.maze.bridge.02.end.1.lower.part00.room00.tile00",
+        "spatial.roof.spatial.parcel.maze.bridge.02.end.1.lower.part00.room00.tile01",
+        "spatial.roof.spatial.parcel.maze.house.001.part00.room00",
+        "spatial.roof.spatial.parcel.maze.house.002.part00.room00",
+        "spatial.roof.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00.tile00",
+        "spatial.roof.spatial.parcel.maze.bridge.00.end.0.lower.part00.room00.tile01",
+        "spatial.roof.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00.tile00",
+        "spatial.roof.spatial.parcel.maze.bridge.00.end.1.lower.part00.room00.tile01",
+        "spatial.roof.spatial.parcel.maze.house.003.part00.room00",
+        "spatial.roof.spatial.parcel.maze.house.005.part00.room00",
+        "spatial.roof.spatial.parcel.maze.house.038.part01.room00",
+        "spatial.roof.spatial.parcel.maze.house.006.part00.room00",
+        "spatial.roof.spatial.parcel.maze.house.008.part00.room00",
+        "spatial.roof.spatial.parcel.maze.house.035.part01.room00",
+        "spatial.roof.spatial.parcel.maze.house.010.part00.room00.tile00",
+        "spatial.roof.spatial.parcel.maze.house.010.part00.room00.tile01",
+        "spatial.roof.spatial.parcel.maze.house.016.part00.room00.tile00",
+        "spatial.roof.spatial.parcel.maze.house.016.part00.room00.tile01",
+        "spatial.roof.spatial.parcel.maze.house.021.part01.room00.tile00",
+        "spatial.roof.spatial.parcel.maze.house.021.part01.room00.tile01"
+      ],
+      "maze_cross_lineage_repairs": 0,
+      "maze_crown_awning_count": 0,
+      "maze_crown_chimney_count": 4,
+      "maze_crown_dressing_recipe_counts": {
+        "roof.flat.slim.garden": 1,
+        "roof.flat.slim.garden.rich": 1,
+        "roof.flat.tower.garden": 2,
+        "roof.flat.tower.garden.rich": 3
+      },
+      "maze_crown_fell_through_count": 0,
+      "maze_crown_planter_count": 7,
+      "maze_deck_addressed_parcel_count": 0,
+      "maze_deck_cell_count": 16,
+      "maze_declared_stack_count": 5,
+      "maze_dressed_crown_count": 7,
+      "maze_dressed_crown_ratio": 0.777777777777778,
+      "maze_flat_crown_lineage_count": 13,
+      "maze_flat_roof_count": 9,
+      "maze_isolated_flat_crown_count": 2,
+      "maze_isolated_flat_crown_details": [
+        {
+          "lineage": "parcel.maze.bridge.00.end.1.lower",
+          "pitched_neighbours": 1
+        },
+        {
+          "lineage": "parcel.maze.bridge.02.end.1.lower",
+          "pitched_neighbours": 3
+        }
+      ],
+      "maze_lid_repair_cap_count": 0,
+      "maze_lid_repair_cell_count": 0,
+      "maze_parcel_count": 55,
+      "maze_partial_plate_refused_count": 0,
+      "maze_partial_plate_tile_count": 14,
+      "maze_partial_plate_tile_recipe_counts": {
+        "roof.partial.gable.blue.2.negative": 2,
+        "roof.partial.gable.blue.2.positive": 4,
+        "roof.partial.gable.orange.2.negative": 4,
+        "roof.partial.gable.orange.2.positive": 4
+      },
+      "maze_partial_plate_tiled_count": 7,
+      "maze_partial_stack_count": 6,
+      "maze_pitched_crown_lineage_count": 65,
+      "maze_pitched_partial_plate_count": 0,
+      "maze_pitched_preference_count": 38,
+      "maze_pitched_preference_parcels": [
+        "parcel.maze.house.000",
+        "parcel.maze.house.027",
+        "parcel.maze.house.028",
+        "parcel.maze.house.029",
+        "parcel.maze.house.042",
+        "parcel.maze.house.049",
+        "parcel.maze.house.051",
+        "parcel.maze.house.052",
+        "parcel.maze.house.053",
+        "parcel.maze.house.055",
+        "parcel.maze.house.057",
+        "parcel.maze.house.033",
+        "parcel.maze.house.036",
+        "parcel.maze.house.043",
+        "parcel.maze.house.031",
+        "parcel.maze.house.034",
+        "parcel.maze.house.009",
+        "parcel.maze.house.010",
+        "parcel.maze.house.023",
+        "parcel.maze.house.024",
+        "parcel.maze.house.025",
+        "parcel.maze.house.012",
+        "parcel.maze.house.013",
+        "parcel.maze.house.014",
+        "parcel.maze.house.019",
+        "parcel.maze.house.021",
+        "parcel.maze.house.022",
+        "parcel.maze.house.016",
+        "parcel.maze.house.017",
+        "parcel.maze.house.018",
+        "parcel.maze.bridge.00.end.0.lower",
+        "parcel.maze.bridge.00.end.1.lower",
+        "parcel.maze.bridge.01.end.0.lower",
+        "parcel.maze.bridge.01.end.1.lower",
+        "parcel.maze.bridge.02.end.0.lower",
+        "parcel.maze.bridge.02.end.1.lower",
+        "parcel.maze.bridge.03.end.0.lower",
+        "parcel.maze.bridge.03.end.1.lower"
+      ],
+      "maze_pitched_preferred_room_count": 68,
+      "maze_pitched_preferred_rooms": [
+        "spatial.maze_back.00.room00",
+        "spatial.maze_back.01.room00",
+        "spatial.maze_back.02.room00",
+        "spatial.maze_back.03.room00",
+        "spatial.maze_back.04.room00",
+        "spatial.maze_back.05.room00",
+        "spatial.maze_back.06.room00",
+        "spatial.maze_back.07.room00",
+        "spatial.maze_back.08.room00",
+        "spatial.maze_back.09.room00",
+        "spatial.maze_back.10.room00",
+        "spatial.maze_back.11.room00",
+        "spatial.maze_back.12.room00",
+        "spatial.maze_back.13.room00",
+        "spatial.maze_back.14.room00",
+        "spatial.maze_back.15.room00",
+        "spatial.maze_back.16.room00",
+        "spatial.maze_back.17.room00",
+        "spatial.maze_back.18.room00",
+        "spatial.maze_back.19.room00",
+        "spatial.maze_back.20.room00",
+        "spatial.maze_back.23.room00",
+        "spatial.maze_back.24.room00",
+        "spatial.maze_back.25.room00",
+        "spatial.maze_back.26.room00",
+        "spatial.maze_back.28.room00",
+        "spatial.maze_back.29.room00",
+        "spatial.maze_back.30.room00",
+        "spatial.maze_back.31.room00",
+        "spatial.maze_back.32.room00",
+        "spatial.maze_back.33.room00",
+        "spatial.maze_back.34.room00",
+        "spatial.maze_back.35.room00",
+        "spatial.maze_back.39.room00",
+        "spatial.maze_back.41.room00",
+        "spatial.parcel.maze.bridge.01.end.0.lower.part00.room00",
+        "spatial.parcel.maze.bridge.03.end.1.lower.part00.room00",
+        "spatial.parcel.maze.house.000.part00.room00",
+        "spatial.parcel.maze.house.004.part00.room00",
+        "spatial.parcel.maze.house.009.part02.room00",
+        "spatial.parcel.maze.house.010.part01.room00",
+        "spatial.parcel.maze.house.012.part02.room00",
+        "spatial.parcel.maze.house.014.part03.room00",
+        "spatial.parcel.maze.house.016.part01.room00",
+        "spatial.parcel.maze.house.017.part02.room00",
+        "spatial.parcel.maze.house.019.part01.room00",
+        "spatial.parcel.maze.house.021.part02.room00",
+        "spatial.parcel.maze.house.022.part01.room00",
+        "spatial.parcel.maze.house.027.part01.room00",
+        "spatial.parcel.maze.house.028.part03.room00",
+        "spatial.parcel.maze.house.029.part00.room00",
+        "spatial.parcel.maze.house.030.part00.room00",
+        "spatial.parcel.maze.house.031.part02.room00",
+        "spatial.parcel.maze.house.032.part01.room00",
+        "spatial.parcel.maze.house.033.part00.room00",
+        "spatial.parcel.maze.house.034.part00.room00",
+        "spatial.parcel.maze.house.036.part01.room00",
+        "spatial.parcel.maze.house.039.part01.room00",
+        "spatial.parcel.maze.house.040.part01.room00",
+        "spatial.parcel.maze.house.041.part01.room00",
+        "spatial.parcel.maze.house.042.part01.room00",
+        "spatial.parcel.maze.house.043.part00.room00",
+        "spatial.parcel.maze.house.044.part00.room00",
+        "spatial.parcel.maze.house.049.part00.room00",
+        "spatial.parcel.maze.house.051.part00.room00",
+        "spatial.parcel.maze.house.052.part02.room00",
+        "spatial.parcel.maze.house.055.part00.room00",
+        "spatial.parcel.maze.house.057.part01.room00"
+      ],
+      "maze_pitched_refused_count": 0,
+      "maze_pitched_refused_details": [],
+      "maze_pitched_roof_count": 68,
+      "maze_pitched_roof_rooms": [
+        "spatial.maze_back.00.room00",
+        "spatial.maze_back.01.room00",
+        "spatial.maze_back.02.room00",
+        "spatial.maze_back.03.room00",
+        "spatial.maze_back.04.room00",
+        "spatial.maze_back.05.room00",
+        "spatial.maze_back.06.room00",
+        "spatial.maze_back.07.room00",
+        "spatial.maze_back.08.room00",
+        "spatial.maze_back.09.room00",
+        "spatial.maze_back.10.room00",
+        "spatial.maze_back.11.room00",
+        "spatial.maze_back.12.room00",
+        "spatial.maze_back.13.room00",
+        "spatial.maze_back.14.room00",
+        "spatial.maze_back.15.room00",
+        "spatial.maze_back.16.room00",
+        "spatial.maze_back.17.room00",
+        "spatial.maze_back.18.room00",
+        "spatial.maze_back.19.room00",
+        "spatial.maze_back.20.room00",
+        "spatial.maze_back.23.room00",
+        "spatial.maze_back.24.room00",
+        "spatial.maze_back.25.room00",
+        "spatial.maze_back.26.room00",
+        "spatial.parcel.maze.house.000.part00.room00",
+        "spatial.parcel.maze.house.029.part00.room00",
+        "spatial.parcel.maze.house.049.part00.room00",
+        "spatial.parcel.maze.house.051.part00.room00",
+        "spatial.parcel.maze.house.055.part00.room00",
+        "spatial.maze_back.28.room00",
+        "spatial.maze_back.29.room00",
+        "spatial.maze_back.30.room00",
+        "spatial.maze_back.31.room00",
+        "spatial.parcel.maze.bridge.03.end.1.lower.part00.room00",
+        "spatial.parcel.maze.house.033.part00.room00",
+        "spatial.parcel.maze.house.043.part00.room00",
+        "spatial.parcel.maze.house.044.part00.room00",
+        "spatial.maze_back.32.room00",
+        "spatial.maze_back.33.room00",
+        "spatial.maze_back.34.room00",
+        "spatial.parcel.maze.bridge.01.end.0.lower.part00.room00",
+        "spatial.parcel.maze.house.004.part00.room00",
+        "spatial.parcel.maze.house.027.part01.room00",
+        "spatial.parcel.maze.house.030.part00.room00",
+        "spatial.parcel.maze.house.034.part00.room00",
+        "spatial.parcel.maze.house.039.part01.room00",
+        "spatial.parcel.maze.house.040.part01.room00",
+        "spatial.parcel.maze.house.041.part01.room00",
+        "spatial.parcel.maze.house.042.part01.room00",
+        "spatial.parcel.maze.house.057.part01.room00",
+        "spatial.parcel.maze.house.032.part01.room00",
+        "spatial.parcel.maze.house.036.part01.room00",
+        "spatial.maze_back.35.room00",
+        "spatial.parcel.maze.house.052.part02.room00",
+        "spatial.parcel.maze.house.028.part03.room00",
+        "spatial.parcel.maze.house.031.part02.room00",
+        "spatial.parcel.maze.house.010.part01.room00",
+        "spatial.parcel.maze.house.019.part01.room00",
+        "spatial.parcel.maze.house.022.part01.room00",
+        "spatial.maze_back.39.room00",
+        "spatial.parcel.maze.house.009.part02.room00",
+        "spatial.parcel.maze.house.016.part01.room00",
+        "spatial.parcel.maze.house.012.part02.room00",
+        "spatial.parcel.maze.house.021.part02.room00",
+        "spatial.parcel.maze.house.017.part02.room00",
+        "spatial.maze_back.41.room00",
+        "spatial.parcel.maze.house.014.part03.room00"
+      ],
+      "maze_plaza_deck_column_count": 4,
+      "maze_refused_unroomed_plot_trims": 0,
+      "maze_released_asset_envelope_cells": 148,
+      "maze_released_parapet_cell_count": 924,
+      "maze_released_required_roof_band_cells": 92,
+      "maze_released_required_roof_derived_cells": 71,
+      "maze_released_required_roof_envelope_cells": 260,
+      "maze_released_required_roof_unroomed_plot_cells": 97,
+      "maze_released_singleton_derived_rock_cells": 4,
+      "maze_released_singleton_rock_crown_cells": 8,
+      "maze_released_singleton_roof_band_cells": 0,
+      "maze_released_singleton_unroomed_plot_cells": 4,
+      "maze_remaining_singleton_rock_crown_count": 0,
+      "maze_retained_rock_cell_count": 780,
+      "maze_retained_rock_cells": 697,
+      "maze_retained_rock_skipped_reserved": 0,
+      "maze_retained_rock_stone_roof_cells": 0,
+      "maze_retained_stone_cell_count": 876,
+      "maze_retained_unroomed_plot_stone_cells": 83,
+      "maze_slab_course_cell_count": 96,
+      "maze_source_bridge_plot_outcomes": [
+        {
+          "building_id": "bridge.00",
+          "cells": 1,
+          "columns": [
+            "(-6, 3)"
+          ],
+          "door_walk": "(-6, 2, 3)",
+          "floor": 6,
+          "id": "bridge.00",
+          "reason": "",
+          "span": 0,
+          "top": 8
+        },
+        {
+          "building_id": "bridge.01",
+          "cells": 1,
+          "columns": [
+            "(-6, 2)"
+          ],
+          "door_walk": "(-6, 2, 2)",
+          "floor": 6,
+          "id": "bridge.01",
+          "reason": "",
+          "span": 1,
+          "top": 8
+        },
+        {
+          "building_id": "bridge.02",
+          "cells": 1,
+          "columns": [
+            "(-6, -2)"
+          ],
+          "door_walk": "(-6, 1, -2)",
+          "floor": 5,
+          "id": "bridge.02",
+          "reason": "",
+          "span": 2,
+          "top": 7
+        },
+        {
+          "building_id": "bridge.03",
+          "cells": 1,
+          "columns": [
+            "(-6, -3)"
+          ],
+          "door_walk": "(-6, 1, -3)",
+          "floor": 5,
+          "id": "bridge.03",
+          "reason": "",
+          "span": 3,
+          "top": 7
+        }
+      ],
+      "maze_source_bridge_refusals": [
+        {
+          "cells": [
+            "(0, 0, 1)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            []
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [],
+          "floor": 4,
+          "reason": "span column (0, 1) has carved air at band 4 inside the occupied bridge clearance [4, 8)",
+          "room_flanks": [],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-1, 0, 1)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            []
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [],
+          "floor": 4,
+          "reason": "span column (-1, 1) has carved air at band 4 inside the occupied bridge clearance [4, 8)",
+          "room_flanks": [],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-2, 1, 1)"
+          ],
+          "endpoint_foundation_floor": 1,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            []
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [],
+          "floor": 5,
+          "reason": "span column (-2, 1) has carved air at band 5 inside the occupied bridge clearance [5, 9)",
+          "room_flanks": [],
+          "top": 7
+        },
+        {
+          "cells": [
+            "(-3, 1, 1)"
+          ],
+          "endpoint_foundation_floor": 1,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            []
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [],
+          "floor": 5,
+          "reason": "span column (-3, 1) has carved air at band 5 inside the occupied bridge clearance [5, 9)",
+          "room_flanks": [],
+          "top": 7
+        },
+        {
+          "cells": [
+            "(-3, 1, 0)"
+          ],
+          "endpoint_foundation_floor": 1,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            []
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [],
+          "floor": 5,
+          "reason": "span column (-3, 0) has carved air at band 5 inside the occupied bridge clearance [5, 9)",
+          "room_flanks": [],
+          "top": 7
+        },
+        {
+          "cells": [
+            "(-3, 2, -1)"
+          ],
+          "endpoint_foundation_floor": 2,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            []
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [],
+          "floor": 6,
+          "reason": "span column (-3, -1) has carved air at band 6 inside the occupied bridge clearance [6, 10)",
+          "room_flanks": [],
+          "top": 8
+        },
+        {
+          "cells": [
+            "(-3, 2, -2)"
+          ],
+          "endpoint_foundation_floor": 2,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            []
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [],
+          "floor": 6,
+          "reason": "span column (-3, -2) has carved air at band 6 inside the occupied bridge clearance [6, 10)",
+          "room_flanks": [],
+          "top": 8
+        },
+        {
+          "cells": [
+            "(-2, 2, -2)"
+          ],
+          "endpoint_foundation_floor": 2,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            []
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [],
+          "floor": 6,
+          "reason": "span column (-2, -2) has carved air at band 6 inside the occupied bridge clearance [6, 10)",
+          "room_flanks": [],
+          "top": 8
+        },
+        {
+          "cells": [
+            "(-1, 3, -2)"
+          ],
+          "endpoint_foundation_floor": 3,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            []
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [],
+          "floor": 7,
+          "reason": "span column (-1, -2) has carved air at band 7 inside the occupied bridge clearance [7, 11)",
+          "room_flanks": [],
+          "top": 9
+        },
+        {
+          "cells": [
+            "(0, 3, -1)"
+          ],
+          "endpoint_foundation_floor": 3,
+          "endpoint_foundation_groups": [
+            [
+              "(1, -1)"
+            ],
+            [
+              "(-1, -1)",
+              "(-2, -1)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(1, -1)"
+            ],
+            [
+              "(-1, -1)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "direct_house_wide"
+          ],
+          "flanks": [
+            "(1, -1)",
+            "(-1, -1)"
+          ],
+          "floor": 7,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(1, -1)",
+            "(-1, -1)"
+          ],
+          "top": 9
+        },
+        {
+          "cells": [
+            "(0, 4, 1)"
+          ],
+          "endpoint_foundation_floor": 4,
+          "endpoint_foundation_groups": [
+            [
+              "(1, 1)"
+            ],
+            [
+              "(-1, 1)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(1, 1)"
+            ],
+            [
+              "(-1, 1)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "direct_house_narrow",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(1, 1)",
+            "(-1, 1)"
+          ],
+          "floor": 8,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(1, 1)",
+            "(-1, 1)"
+          ],
+          "top": 10
+        },
+        {
+          "cells": [
+            "(-3, 5, 1)"
+          ],
+          "endpoint_foundation_floor": 5,
+          "endpoint_foundation_groups": [
+            [
+              "(-3, 2)",
+              "(-3, 3)"
+            ],
+            [
+              "(-3, 0)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-3, 2)"
+            ],
+            [
+              "(-3, 0)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "direct_house_wide",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-3, 2)",
+            "(-3, 0)"
+          ],
+          "floor": 9,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-3, 2)",
+            "(-3, 0)"
+          ],
+          "top": 11
+        },
+        {
+          "cells": [
+            "(-3, 6, -2)"
+          ],
+          "endpoint_foundation_floor": 6,
+          "endpoint_foundation_groups": [
+            [
+              "(-4, -2)",
+              "(-5, -2)"
+            ],
+            [
+              "(-2, -2)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-4, -2)"
+            ],
+            [
+              "(-2, -2)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "direct_house_wide",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-4, -2)",
+            "(-2, -2)"
+          ],
+          "floor": 10,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-4, -2)",
+            "(-2, -2)"
+          ],
+          "top": 12
+        },
+        {
+          "cells": [
+            "(-1, 7, -2)"
+          ],
+          "endpoint_foundation_floor": 7,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, -3)"
+            ],
+            [
+              "(-1, -1)",
+              "(-1, 0)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, -3)"
+            ],
+            [
+              "(-1, -1)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "direct_house_wide"
+          ],
+          "flanks": [
+            "(-1, -3)",
+            "(-1, -1)"
+          ],
+          "floor": 11,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, -3)",
+            "(-1, -1)"
+          ],
+          "top": 13
+        },
+        {
+          "cells": [
+            "(-1, 6, -5)"
+          ],
+          "endpoint_foundation_floor": 6,
+          "endpoint_foundation_groups": [
+            [
+              "(-2, -5)",
+              "(-3, -5)"
+            ],
+            [
+              "(0, -5)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-2, -5)"
+            ],
+            [
+              "(0, -5)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "direct_house_wide",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-2, -5)",
+            "(0, -5)"
+          ],
+          "floor": 10,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-2, -5)",
+            "(0, -5)"
+          ],
+          "top": 12
+        },
+        {
+          "cells": [
+            "(1, 0, 1)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(1, 0)"
+            ],
+            [
+              "(1, 2)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(1, 0)"
+            ],
+            [
+              "(1, 2)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(1, 0)",
+            "(1, 2)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(1, 0)",
+            "(1, 2)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(1, 0, 0)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            [
+              "(2, 0)"
+            ]
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [
+            "(0, 0)",
+            "(2, 0)"
+          ],
+          "floor": 4,
+          "reason": "bridge storey [4, 6) has endpoint coverage 0/1 on one side and 1/1 on the other",
+          "room_flanks": [
+            "(2, 0)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(1, 0, -1)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            [
+              "(2, -1)"
+            ]
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [
+            "(0, -1)",
+            "(2, -1)"
+          ],
+          "floor": 4,
+          "reason": "bridge storey [4, 6) has endpoint coverage 0/1 on one side and 1/1 on the other",
+          "room_flanks": [
+            "(2, -1)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(2, 0, 1)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(2, 0)"
+            ],
+            [
+              "(2, 2)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(2, 0)"
+            ],
+            [
+              "(2, 2)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(2, 0)",
+            "(2, 2)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(2, 0)",
+            "(2, 2)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(2, 0, -1)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(2, -2)"
+            ],
+            [
+              "(2, 0)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(2, -2)"
+            ],
+            [
+              "(2, 0)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(2, -2)",
+            "(2, 0)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(2, -2)",
+            "(2, 0)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-6, 2, 1)"
+          ],
+          "endpoint_foundation_floor": 2,
+          "endpoint_foundation_groups": [
+            [
+              "(-6, 2)"
+            ],
+            [
+              "(-6, 0)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-6, 2)"
+            ],
+            [
+              "(-6, 0)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-6, 2)",
+            "(-6, 0)"
+          ],
+          "floor": 6,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-6, 2)",
+            "(-6, 0)"
+          ],
+          "top": 8
+        },
+        {
+          "cells": [
+            "(-3, 1, -5)"
+          ],
+          "endpoint_foundation_floor": 1,
+          "endpoint_foundation_groups": [
+            [
+              "(-4, -5)"
+            ],
+            [
+              "(-2, -5)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-4, -5)"
+            ],
+            [
+              "(-2, -5)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-4, -5)",
+            "(-2, -5)"
+          ],
+          "floor": 5,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-4, -5)",
+            "(-2, -5)"
+          ],
+          "top": 7
+        },
+        {
+          "cells": [
+            "(-1, 0, -5)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            []
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [],
+          "floor": 4,
+          "reason": "span column (-1, -5) has carved air at band 6 inside the occupied bridge clearance [4, 8)",
+          "room_flanks": [],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(0, 0, -5)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            []
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [],
+          "floor": 4,
+          "reason": "span column (0, -5) has carved air at band 6 inside the occupied bridge clearance [4, 8)",
+          "room_flanks": [],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(1, 0, -5)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            []
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [],
+          "floor": 4,
+          "reason": "span column (1, -5) has carved air at band 5 inside the occupied bridge clearance [4, 8)",
+          "room_flanks": [],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(2, 0, -5)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            []
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [],
+          "floor": 4,
+          "reason": "span column (2, -5) has carved air at band 5 inside the occupied bridge clearance [4, 8)",
+          "room_flanks": [],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(3, 0, -4)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(3, -5)"
+            ],
+            [
+              "(3, -3)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(3, -5)"
+            ],
+            [
+              "(3, -3)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(3, -5)",
+            "(3, -3)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(3, -5)",
+            "(3, -3)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(2, 0, -3)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(3, -3)"
+            ],
+            [
+              "(1, -3)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(3, -3)"
+            ],
+            [
+              "(1, -3)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(3, -3)",
+            "(1, -3)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(3, -3)",
+            "(1, -3)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(1, 0, -3)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(1, -2)"
+            ],
+            [
+              "(1, -4)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(1, -2)"
+            ],
+            [
+              "(1, -4)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(1, -2)",
+            "(1, -4)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(1, -2)",
+            "(1, -4)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(2, 0, -6)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(1, -6)"
+            ],
+            [
+              "(3, -6)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(1, -6)"
+            ],
+            [
+              "(3, -6)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(1, -6)",
+            "(3, -6)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(1, -6)",
+            "(3, -6)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(0, 0, -6)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, -6)"
+            ],
+            [
+              "(1, -6)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, -6)"
+            ],
+            [
+              "(1, -6)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-1, -6)",
+            "(1, -6)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, -6)",
+            "(1, -6)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(0, 0, -7)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, -7)"
+            ],
+            [
+              "(1, -7)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, -7)"
+            ],
+            [
+              "(1, -7)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-1, -7)",
+            "(1, -7)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, -7)",
+            "(1, -7)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-1, 0, -7)",
+            "(-2, 0, -7)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, -6)",
+              "(-2, -6)"
+            ],
+            [
+              "(-1, -8)",
+              "(-2, -8)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, -6)",
+              "(-2, -6)"
+            ],
+            [
+              "(-1, -8)",
+              "(-2, -8)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-1, -6)",
+            "(-1, -8)",
+            "(-2, -6)",
+            "(-2, -8)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, -6)",
+            "(-1, -8)",
+            "(-2, -6)",
+            "(-2, -8)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-1, 0, -7)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, -6)"
+            ],
+            [
+              "(-1, -8)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, -6)"
+            ],
+            [
+              "(-1, -8)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-1, -6)",
+            "(-1, -8)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, -6)",
+            "(-1, -8)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-2, 0, -7)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-2, -6)"
+            ],
+            [
+              "(-2, -8)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-2, -6)"
+            ],
+            [
+              "(-2, -8)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-2, -6)",
+            "(-2, -8)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-2, -6)",
+            "(-2, -8)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-2, 0, -6)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, -6)"
+            ],
+            [
+              "(-3, -6)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, -6)"
+            ],
+            [
+              "(-3, -6)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-1, -6)",
+            "(-3, -6)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, -6)",
+            "(-3, -6)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-3, 0, -6)",
+            "(-4, 0, -6)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-3, -5)",
+              "(-4, -5)"
+            ],
+            [
+              "(-3, -7)",
+              "(-4, -7)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-3, -5)",
+              "(-4, -5)"
+            ],
+            [
+              "(-3, -7)",
+              "(-4, -7)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-3, -5)",
+            "(-3, -7)",
+            "(-4, -5)",
+            "(-4, -7)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-3, -5)",
+            "(-3, -7)",
+            "(-4, -5)",
+            "(-4, -7)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-3, 0, -6)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-3, -5)"
+            ],
+            [
+              "(-3, -7)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-3, -5)"
+            ],
+            [
+              "(-3, -7)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-3, -5)",
+            "(-3, -7)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-3, -5)",
+            "(-3, -7)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-4, 0, -6)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-4, -5)"
+            ],
+            [
+              "(-4, -7)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-4, -5)"
+            ],
+            [
+              "(-4, -7)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-4, -5)",
+            "(-4, -7)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-4, -5)",
+            "(-4, -7)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-4, 0, -5)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-3, -5)"
+            ],
+            [
+              "(-5, -5)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-3, -5)"
+            ],
+            [
+              "(-5, -5)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-3, -5)",
+            "(-5, -5)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-3, -5)",
+            "(-5, -5)"
+          ],
+          "top": 6
+        }
+      ],
+      "maze_source_bridge_refused_count": 40,
+      "maze_source_bridge_seeded_count": 4,
+      "maze_source_bridge_seeds": [
+        {
+          "cells": [
+            "(-6, 2, 3)"
+          ],
+          "endpoint_foundation_floor": 2,
+          "endpoint_foundation_groups": [
+            [
+              "(-5, 3)",
+              "(-4, 3)"
+            ],
+            [
+              "(-7, 3)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-5, 3)"
+            ],
+            [
+              "(-7, 3)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "direct_house_wide",
+            "direct_house_narrow"
+          ],
+          "exterior_depth_cells": 1,
+          "flanks": [
+            "(-5, 3)",
+            "(-7, 3)"
+          ],
+          "floor": 6,
+          "reason": "",
+          "room_flanks": [
+            "(-5, 3)",
+            "(-7, 3)"
+          ],
+          "top": 8
+        },
+        {
+          "cells": [
+            "(-6, 2, 2)"
+          ],
+          "endpoint_foundation_floor": 2,
+          "endpoint_foundation_groups": [
+            [
+              "(-5, 2)",
+              "(-4, 2)"
+            ],
+            [
+              "(-7, 2)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-5, 2)"
+            ],
+            [
+              "(-7, 2)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "direct_house_wide",
+            "direct_house_narrow"
+          ],
+          "exterior_depth_cells": 1,
+          "flanks": [
+            "(-5, 2)",
+            "(-7, 2)"
+          ],
+          "floor": 6,
+          "reason": "",
+          "room_flanks": [
+            "(-5, 2)",
+            "(-7, 2)"
+          ],
+          "top": 8
+        },
+        {
+          "cells": [
+            "(-6, 1, -2)"
+          ],
+          "endpoint_foundation_floor": 1,
+          "endpoint_foundation_groups": [
+            [
+              "(-7, -2)"
+            ],
+            [
+              "(-5, -2)",
+              "(-4, -2)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-7, -2)"
+            ],
+            [
+              "(-5, -2)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "direct_house_narrow",
+            "direct_house_wide"
+          ],
+          "exterior_depth_cells": 1,
+          "flanks": [
+            "(-7, -2)",
+            "(-5, -2)"
+          ],
+          "floor": 5,
+          "reason": "",
+          "room_flanks": [
+            "(-7, -2)",
+            "(-5, -2)"
+          ],
+          "top": 7
+        },
+        {
+          "cells": [
+            "(-6, 1, -3)"
+          ],
+          "endpoint_foundation_floor": 1,
+          "endpoint_foundation_groups": [
+            [
+              "(-7, -3)"
+            ],
+            [
+              "(-5, -3)",
+              "(-4, -3)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-7, -3)"
+            ],
+            [
+              "(-5, -3)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "direct_house_narrow",
+            "direct_house_wide"
+          ],
+          "exterior_depth_cells": 1,
+          "flanks": [
+            "(-7, -3)",
+            "(-5, -3)"
+          ],
+          "floor": 5,
+          "reason": "",
+          "room_flanks": [
+            "(-7, -3)",
+            "(-5, -3)"
+          ],
+          "top": 7
+        }
+      ],
+      "maze_source_bridge_span_count": 4,
+      "maze_stack_parents": {
+        "parcel.maze.house.009": "parcel.maze.house.001",
+        "parcel.maze.house.012": "parcel.maze.house.003",
+        "parcel.maze.house.017": "parcel.maze.house.006",
+        "parcel.maze.house.022": "parcel.maze.house.038",
+        "parcel.maze.house.024": "parcel.maze.house.040"
+      },
+      "maze_stack_refusal_count": 0,
+      "maze_stack_refusals": {
+
+      },
+      "maze_stack_slab_gap_count": 0,
+      "maze_stacked_plot_count": 5,
+      "maze_stone_withdrawn_for_roof_cell_keys": [
+        "(-6, 4, 10)",
+        "(-6, 4, 11)",
+        "(-5, 4, 11)",
+        "(-3, 5, -1)",
+        "(-2, 6, -1)"
+      ],
+      "maze_stone_withdrawn_for_roof_cells": 5,
+      "maze_stranded_release_repair_count": 44,
+      "maze_street_borne_full_plate_count": 0,
+      "maze_street_borne_plate_count": 0,
+      "maze_trimmed_roof_band_stone_cells": 0,
+      "maze_trimmed_unroomed_plot_stone_cells": 96,
+      "maze_uncomposed_parcel_count": 7,
+      "maze_uncomposed_parcel_gates": {
+        "exact_composition_unsolved": 5,
+        "structural_yielded_lineage": 2
+      },
+      "maze_uncomposed_parcels": [
+        {
+          "area": 1,
+          "detail": "",
+          "floor": 2,
+          "gate": "structural_yielded_lineage",
+          "parcel_id": "parcel.maze.bridge.01.end.1.lower",
+          "top": 6
+        },
+        {
+          "area": 1,
+          "detail": "",
+          "floor": 1,
+          "gate": "structural_yielded_lineage",
+          "parcel_id": "parcel.maze.bridge.03.end.0.lower",
+          "top": 5
+        },
+        {
+          "area": 2,
+          "detail": "storey 0 cell (-10, 6, -2) is claimed by [&\"parcel.maze.house.032\"]",
+          "floor": 6,
+          "gate": "exact_composition_unsolved",
+          "parcel_id": "parcel.maze.house.013",
+          "top": 12
+        },
+        {
+          "area": 1,
+          "detail": "storey 0 cell (2, 5, -8) is claimed by [&\"parcel.maze.house.039\"]",
+          "floor": 5,
+          "gate": "exact_composition_unsolved",
+          "parcel_id": "parcel.maze.house.023",
+          "top": 15
+        },
+        {
+          "area": 1,
+          "detail": "storey 0 cell (2, 5, -12) is claimed by [&\"parcel.maze.house.040\"]",
+          "floor": 5,
+          "gate": "exact_composition_unsolved",
+          "parcel_id": "parcel.maze.house.024",
+          "top": 15
+        },
+        {
+          "area": 2,
+          "detail": "storey 0 cell (6, 5, -10) is claimed by [&\"parcel.maze.house.041\"]",
+          "floor": 5,
+          "gate": "exact_composition_unsolved",
+          "parcel_id": "parcel.maze.house.025",
+          "top": 13
+        },
+        {
+          "area": 2,
+          "detail": "storey 0 cell (-6, 0, -16) is use 2 owned by spatial.feature.market.00",
+          "floor": 0,
+          "gate": "exact_composition_unsolved",
+          "parcel_id": "parcel.maze.house.053",
+          "top": 4
+        }
+      ],
+      "maze_uncomposed_stack_count": 1,
+      "maze_unrooted_terrain_bearing_count": 3,
+      "maze_unrooted_terrain_bearing_details": [
+        {
+          "base_band": 5,
+          "origin": "(-7, 5, 1)",
+          "parcel_id": "parcel.maze.house.010"
+        },
+        {
+          "base_band": 6,
+          "origin": "(-4, 6, -5)",
+          "parcel_id": "parcel.maze.house.014"
+        },
+        {
+          "base_band": 7,
+          "origin": "(1, 7, -3)",
+          "parcel_id": "parcel.maze.house.016"
+        }
+      ],
+      "maze_unsupported_stone_cell_keys": [
+        "(5, 3, -8)",
+        "(5, 3, -7)",
+        "(-4, 4, -10)",
+        "(-4, 5, -10)",
+        "(-12, 5, -5)",
+        "(-11, 5, -5)",
+        "(6, 6, -10)",
+        "(7, 6, -10)",
+        "(8, 6, -10)",
+        "(9, 6, -10)",
+        "(6, 6, -9)",
+        "(7, 6, -9)",
+        "(8, 6, -9)",
+        "(9, 6, -9)",
+        "(5, 6, -8)",
+        "(5, 6, -7)",
+        "(-10, 6, 1)",
+        "(-9, 6, 1)",
+        "(-12, 6, 4)",
+        "(-11, 6, 4)",
+        "(-12, 6, 5)",
+        "(-11, 6, 5)",
+        "(2, 7, -8)",
+        "(3, 7, -8)",
+        "(4, 7, -8)",
+        "(2, 7, -7)",
+        "(3, 7, -7)",
+        "(4, 7, -7)",
+        "(-8, 7, -2)",
+        "(-7, 7, -2)",
+        "(-10, 7, -1)",
+        "(-9, 7, -1)",
+        "(-8, 7, -1)",
+        "(-7, 7, -1)",
+        "(-10, 7, 0)",
+        "(-9, 7, 0)",
+        "(1, 7, 0)",
+        "(-10, 7, 1)",
+        "(0, 7, 1)",
+        "(1, 7, 1)",
+        "(-12, 7, 4)",
+        "(-11, 7, 4)"
+      ],
+      "maze_unsupported_stone_cells_removed": 42,
+      "maze_unsupported_stone_components_removed": 9,
+      "merged_base_composition_count": 2,
+      "micro_flat_roof_count": 0,
+      "micro_flat_roof_garden_count": 0,
+      "micro_setback_cap_unit_count": 0,
+      "missing_roof_face_count": 0,
+      "missing_source_route_floor_count": 0,
+      "noncantilever_outcropping_candidate_count": 4,
+      "offset_composition_block_count": 6,
+      "one_storey_chimney_roof_count": 10,
+      "outcrop_diagonal_support_course_count": 0,
+      "overhang_bracket_recipe_counts": {
+        "overhang.support.arcade.rock.6": 4,
+        "overhang.support.arcade.rock.8": 1
+      },
+      "overhang_bracket_unit_count": 5,
+      "owner_count": 160,
+      "ownership_handoff_count": 35,
+      "paired_dormer_roof_count": 0,
+      "parallel_valley_join_count": 27,
+      "partial_gable_roof_count": 14,
+      "partial_plate_pitched_roof_count": 0,
+      "partition_variant": -1,
+      "perimeter_gateway_support_records": [],
+      "perimeter_load_path_ratio": 1.0,
+      "perimeter_parcel_count": 35,
+      "perpendicular_valley_join_count": 19,
+      "physical_support_redirect_count": 0,
+      "pitched_roof_count": 74,
+      "pitched_roof_family_counts": {
+        "blue": 30,
+        "boarded": 0,
+        "orange": 42
+      },
+      "pitched_roof_recipe_counts": {
+        "roof.row.blue": 1,
+        "roof.row.blue.dormer.left": 1,
+        "roof.row.blue.dormer.right": 1,
+        "roof.row.orange.dormer.left": 1,
+        "roof.row.orange.dormer.right": 2,
+        "roof.row.short.blue": 1,
+        "roof.row.short.orange": 4,
+        "roof.slim.blue.dormer.right": 1,
+        "roof.slim.orange": 1,
+        "roof.slim.orange.dormer.left": 1,
+        "roof.slim.orange.dormer.right": 1,
+        "roof.slim.short.blue": 2,
+        "roof.slim.short.orange": 2,
+        "roof.terminal.tight.building.orange": 2,
+        "roof.terminal.tight.long.blue": 1,
+        "roof.terminal.tight.long.orange": 1,
+        "roof.terminal.tight.row.blue": 3,
+        "roof.terminal.tight.row.orange": 1,
+        "roof.terminal.tight.slim.blue": 1,
+        "roof.terminal.tight.slim.orange": 8,
+        "roof.terminal.tight.tower.blue": 11,
+        "roof.terminal.tight.tower.orange": 10,
+        "roof.tower.blue": 2,
+        "roof.tower.blue.dormer.left": 1,
+        "roof.tower.chimney.blue": 2,
+        "roof.tower.orange": 3,
+        "roof.tower.orange.dormer.left": 1,
+        "roof.tower.orange.dormer.right": 1,
+        "roof.tower.party.blue": 2,
+        "roof.tower.party.orange": 2,
+        "roof.tower.short.orange": 1
+      },
+      "plot_flat_roof_count": 9,
+      "plot_flat_roof_partial_plate_count": 0,
+      "plot_flat_roof_pitched_count": 68,
+      "plot_flat_roof_rejected_count": 0,
+      "plot_flat_roof_room_count": 84,
+      "prefab_landmark_count": 1,
+      "prefab_landmark_feature_count": 1,
+      "preplanned_landmark_count": 1,
+      "preplanned_skywalk_count": 0,
+      "preplanned_skywalk_marginal_route_cover_count": 0,
+      "preplanned_skywalk_unique_route_cover_count": 0,
+      "private_partial_plank_roof_count": 0,
+      "private_volume_cell_count": 1826,
+      "projected_mass_cell_count": 5484,
+      "public_air_cell_count": 1572,
+      "public_cell_count": 8,
+      "public_route_floor_count": 324,
+      "quarter_turned_square_roof_count": 9,
+      "realized_constructed_feature_count": 28,
+      "realized_roof_face_count": 560,
+      "rejected_flat_count": 0,
+      "rejected_optional_roof_trim_count": 0,
+      "rejected_optional_roof_trim_details": [],
+      "rejected_pitched_count": 0,
+      "rejected_pitched_details": [],
+      "rejected_unfloored_address_count": 0,
+      "required_roof_clearance_envelope_count": 97,
+      "required_roof_closure_group_count": 97,
+      "required_room_clearance_envelope_count": 135,
+      "required_room_facade_fallback_count": 0,
+      "required_room_facade_yields": [],
+      "required_tower_annex_relief_unit_count": 0,
+      "reserved_cell_count": 16,
+      "residual_backfill_bridge_counts": {
+        "flank_contacts": 1,
+        "flank_rooms_probed": 1,
+        "one_side_bound": 1,
+        "route_covering_candidates": 1,
+        "sample_miss": {
+          "candidate_min": "(2, 6, -8)",
+          "facing": "(0, 0, 1)",
+          "flank_kind": "tower",
+          "flank_room": "spatial.parcel.maze.house.019.part00.room00",
+          "socket": "bearing.east",
+          "socket_cell": "(0, 6, -7)"
+        },
+        "span_unbound": 1
+      },
+      "residual_backfill_building_count": 0,
+      "residual_backfill_frontage_side_count": 0,
+      "residual_backfill_kind_counts": {
+
+      },
+      "residual_backfill_massif_edge_contact_count": 0,
+      "residual_backfill_massif_edge_room_count": 0,
+      "residual_backfill_overhead_route_cell_count": 0,
+      "residual_backfill_private_cell_count": 0,
+      "residual_backfill_terrain_root_count": 0,
+      "residual_backfill_terrain_rooted_established_access_count": 0,
+      "retained_foundation_built_in_cell_count": 0,
+      "retained_foundation_cell_count": 761,
+      "retained_foundation_column_count": 164,
+      "retained_foundation_max_depth_bands": 2,
+      "retained_private_mass_cell_count": 1826,
+      "retained_private_mass_ratio": 0.332968636032093,
+      "retained_stone_bearing_room_count": 4,
+      "retained_support_rebind_count": 0,
+      "rich_flat_roof_garden_count": 0,
+      "rich_flat_roof_garden_fallback_count": 0,
+      "roof_clearance_facade_fallback_count": 3,
+      "roof_junction_trim_unit_count": 0,
+      "roof_neighborhood_flattened_room_count": 47,
+      "roof_neighborhood_join_count": 125,
+      "roof_region_count": 108,
+      "roof_unit_count": 102,
+      "roofed_room_count": 90,
+      "room_composition_diagnostics_collected": false,
+      "room_composition_pass_count": 1,
+      "room_outcropping_candidate_count": 4,
+      "room_outcropping_count": 0,
+      "room_outcropping_support_feature_count": 0,
+      "room_overhang_support_count": 1,
+      "room_overhang_support_feature_count": 1,
+      "room_pair_displaced_parcel_count": 0,
+      "room_stamp_count": 125,
+      "room_support_crown_exclusion_cell_count": 0,
+      "room_volume_budget_max": 50,
+      "room_volume_budget_min": 18,
+      "route_connected_rooftop_court_audit": {
+
+      },
+      "route_connected_rooftop_court_count": 0,
+      "route_connected_rooftop_court_floor_cell_count": 0,
+      "route_vertical_span_bands": 7,
+      "scale_profile_id": "large",
+      "scale_profile_signature": "large/r7/core-floor12/target14-18/route16-26/span6-9/lanes10:40/rooms18-50/residual8:3/sky3-4/bal3-4/cant0-0/land8-9/over0.380/court1/market1",
+      "selected_directly_borne_integrated_cantilever_count": 0,
+      "selected_facade_phase_b_count": 16,
+      "selected_integrated_cantilever_count": 0,
+      "setback_cap_recipe_unit_count": 0,
+      "setback_dressed_unit_count": 0,
+      "setback_garden_fallback_count": 0,
+      "setback_garden_unit_count": 0,
+      "setback_lean_to_unit_count": 0,
+      "setback_macro_gable_fallback_count": 0,
+      "setback_macro_gable_unit_count": 0,
+      "setback_plain_cap_unit_count": 0,
+      "setback_shed_unit_count": 0,
+      "setback_terminal_macro_fallback_count": 0,
+      "setback_terrace_fallback_count": 0,
+      "setback_terrace_unit_count": 0,
+      "setback_vocabulary_unit_count": 0,
+      "shared_entrance_room_ids": [
+        "spatial.parcel.maze.bridge.00.end.0.lower.part00.room00",
+        "spatial.parcel.maze.bridge.02.end.1.lower.part00.room00",
+        "spatial.parcel.maze.house.031.part00.room00",
+        "spatial.parcel.maze.house.051.part00.room00"
+      ],
+      "skywalk_feature_count": 0,
+      "source_constructed_feature_count": 28,
+      "source_courtyard_macro_cell_count": 0,
+      "source_courtyard_parcel_side_count": 0,
+      "source_face_count": 4442,
+      "source_macro_walk_count": 48,
+      "source_roof_face_count": 560,
+      "source_route_floor_count": 300,
+      "spatial_addressed_building_volume_count": 51,
+      "spatial_building_volume_count": 131,
+      "spatial_detached_building_volume_count": 0,
+      "spatial_missing_private_parent_count": 0,
+      "spatial_prefab_landmark_building_count": 1,
+      "spatial_private_access_edge_count": 80,
+      "spatial_signature": "75e0a644e0a2c662710a1bf8a9008ba2fa81dcb28785a0ab0befa04b14340b59",
+      "stair_blocked_door_ids": [
+        "spatial.parcel.maze.house.002.part00.room00",
+        "spatial.parcel.maze.house.003.part00.room00",
+        "spatial.parcel.maze.house.004.part00.room00",
+        "spatial.parcel.maze.house.005.part00.room00",
+        "spatial.parcel.maze.house.006.part00.room00",
+        "spatial.parcel.maze.house.007.part00.room00",
+        "spatial.parcel.maze.house.018.part00.room00",
+        "spatial.parcel.maze.house.019.part00.room00",
+        "spatial.parcel.maze.house.030.part00.room00",
+        "spatial.parcel.maze.house.032.part00.room00",
+        "spatial.parcel.maze.house.035.part00.room00",
+        "spatial.parcel.maze.house.036.part00.room00",
+        "spatial.parcel.maze.house.037.part00.room00",
+        "spatial.parcel.maze.house.038.part00.room00",
+        "spatial.parcel.maze.house.042.part00.room00",
+        "spatial.parcel.maze.house.043.part00.room00",
+        "spatial.parcel.maze.house.044.part00.room00",
+        "spatial.parcel.maze.house.012.part00.room00"
+      ],
+      "structural_volume_cell_count": 892,
+      "styled_building_lineage_count": 96,
+      "supplemental_route_floor_count": 24,
+      "support_clearance_terminated_storey_count": 0,
+      "support_parent_rebind_count": 0,
+      "support_required_integrated_cantilever_count": 0,
+      "supported_irregular_projection_count": 2,
+      "suppressed_buried_decor_module_count": 6,
+      "suppressed_exterior_traversal_decor_module_count": 2,
+      "suppressed_intruding_module_details": [
+        "spatial.fabric.spatial.parcel.maze.house.019.part01.room00/facade.ivy sfv.fabric.ivy.001 exterior_traversal (-1, 7, -6)",
+        "spatial.fabric.spatial.parcel.maze.house.027.part01.room00/facade.ivy sfv.fabric.ivy.001 buried panel(-3.75,4.50,14.25)",
+        "spatial.fabric.spatial.feature.market.00.component.00/stocked.counter sfm.table.fishmonger.001 buried panel(-9.75,0.00,-20.25)",
+        "spatial.fabric.spatial.feature.market.00.component.00/stocked.hanging sfm.stall.veg_string.001 exterior_traversal (-6, 0, -16)",
+        "spatial.fabric.spatial.feature.market.00.component.00/stocked.barrel lpfv.fabric.prop.barrel.02 buried panel(-9.75,0.00,-27.75)",
+        "spatial.fabric.spatial.feature.market.00.component.00/stocked.lantern lpfv.fabric.prop.lantern.table.01 buried panel(-7.08,1.50,-27.75)",
+        "spatial.fabric.spatial.feature.market.00.component.00/stocked.crate lpfv.fabric.prop.crate.01 buried panel(-9.75,0.00,-27.75)",
+        "spatial.fabric.spatial.feature.market.00.component.00/stocked.flower.east lpfv.flower.05 buried panel(-9.75,0.00,-27.75)"
+      ],
+      "suppressed_party_wall_module_count": 209,
+      "suppressed_street_collider_module_count": 0,
+      "terrain_bearing_cell_count": 0,
+      "threshold_face_mismatch_count": 0,
+      "tower_annex_count": 0,
+      "tower_annex_diagnostic": {
+        "feature_kind": "tower_annex",
+        "target_source_count": 0
+      },
+      "tower_annex_feature_count": 0,
+      "tower_annex_relief_unit_count": 0,
+      "tower_annex_source_count": 0,
+      "tower_relief_structural_outcropping_count": 0,
+      "unassigned_mass_cell_count": 2216,
+      "unclassified_public_private_face_count": 0,
+      "ungrounded_perimeter_parcel_count": 0,
+      "unresolved_integrated_cantilever_count": 0,
+      "unsupported_irregular_projection_count": 0,
+      "unsupported_irregular_projection_details": [],
+      "unsupported_perimeter_parcel_count": 0,
+      "usable_balcony_count": 8,
+      "vertical_floorplate_outcropping_count": 0,
+      "world_road_connections": [
+        {
+          "owner": "settlement.09b764dc8d69ed79.world-road.(-1842.0, -1104.0)",
+          "points": [
+            "(-1848.0, -1104.0)",
+            "(-1842.0, -1104.0)",
+            "(-1842.0, -1110.0)",
+            "(-1776.0, -1110.0)",
+            "(-1776.0, -1102.0)"
+          ]
+        }
+      ],
+      "wraparound_balcony_count": 3
+    },
+    "building_count": 132,
+    "cell": "(-74, -46)",
+    "instances": 2198,
+    "ms": 8979,
+    "outskirts": false,
+    "reason": "accepted",
+    "super_cell": "(-3, -2)",
+    "tier": "village",
+    "valid": false,
+    "world_transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-1774.5, 12.08, -1058.5)]"
+  },
+  {
+    "accepted": true,
+    "audit": {
+      "focal_asset": "lpfv.tree.01",
+      "generation_source": "ground_hamlet",
+      "house_count": 6,
+      "square_radius": 18.0,
+      "target_houses": 6
+    },
+    "building_count": 0,
+    "cell": "(10, -16)",
+    "instances": 13,
+    "ms": 55,
+    "outskirts": false,
+    "reason": "accepted",
+    "super_cell": "(0, -1)",
+    "tier": "hamlet",
+    "valid": true,
+    "world_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (240.0, 8.08, -384.0)]"
+  },
+  {
+    "accepted": true,
+    "audit": {
+      "allocatable_cell_count": 0,
+      "allocated_facade_clearance_envelope_count": 14,
+      "alternate_pitched_roof_count": 3,
+      "arcade_overhang_support_count": 0,
+      "arcade_overhang_support_feature_count": 0,
+      "atomic_neighborhood_roof_count": 0,
+      "authored_room_envelope_gate_count": 14,
+      "awning_flat_roof_terrace_count": 0,
+      "balcony_building_count": 0,
+      "balcony_feature_count": 0,
+      "balcony_target_count": 1,
+      "bare_flat_roof_count": 0,
+      "bounded_stone_base_lineage_count": 2,
+      "bracketed_overhang_feature_count": 0,
+      "bracketless_overhang_feature_count": 0,
+      "broken_atomic_roof_neighborhood_count": 0,
+      "building_count": 14,
+      "building_count_below_reference": false,
+      "building_stack_count": 16,
+      "building_variant_count": 8,
+      "building_variant_counts": {
+        "building.blue.0": 1,
+        "long.rock.0": 1,
+        "row.blue.0": 2,
+        "slim.amber.0": 1,
+        "slim.blue.0": 2,
+        "tower.blue.0": 4,
+        "tower.blue.2": 2,
+        "tower.rock.0": 1
+      },
+      "cantilever_measured_support_conflict_count": 0,
+      "cantilever_measured_support_conflict_kinds": {
+
+      },
+      "cantilever_rejection_counts": {
+
+      },
+      "cantilever_support_assignment_node_count": 0,
+      "cantilever_support_assignment_peak_count": 0,
+      "collision_flatten_trigger_details": [],
+      "collision_flattened_roof_component_count": 0,
+      "collision_flattened_roof_room_count": 0,
+      "composed_courtyard_side_count": 0,
+      "composed_courtyard_side_mask": 0,
+      "connected_building_stack_count": 16,
+      "construction_diagnostics_collected": false,
+      "construction_region_count": 108,
+      "construction_signature": "98a2ac9774779bfc24b405ec06d7eb3140788dc151869cb22ee3f42e42f0dd6b",
+      "continuous_ridge_join_count": 4,
+      "continuous_roof_component_count": 3,
+      "continuous_roof_eligible_run_count": 14,
+      "continuous_roof_flush_endpoint_count": 6,
+      "continuous_roof_internal_gable_count": 6,
+      "continuous_roof_joined_run_count": 6,
+      "continuous_roof_normalized_repeat_count": 0,
+      "continuous_roof_tight_cross_component_count": 0,
+      "court_displaced_parcel_count": 0,
+      "courtyard_bridge_house_count": 0,
+      "courtyard_bridge_house_feature_count": 0,
+      "covered_market_count": 0,
+      "covered_market_feature_count": 0,
+      "daylight_air_cell_count": 0,
+      "desired_facade_phase_b_count": 1,
+      "detached_building_stack_count": 0,
+      "directly_borne_integrated_cantilever_count": 0,
+      "directly_borne_irregular_projection_count": 0,
+      "door_region_count": 8,
+      "dormered_pitched_roof_count": 1,
+      "dormered_roof_unit_count": 1,
+      "elevated_courtyard_count": 0,
+      "enclosed_skywalk_count": 0,
+      "exposed_roof_feature_counts": {
+        "0": 2,
+        "1": 2,
+        "2": 3,
+        "3": 5
+      },
+      "exposed_roof_room_kind_counts": {
+        "building": 1,
+        "long": 1,
+        "row": 2,
+        "slim": 3,
+        "tower": 5
+      },
+      "extra_diagonal_outcrop_diagnostic": {
+
+      },
+      "facade_bay_count": 1,
+      "facade_bay_diagnostic": {
+        "body_rejection_count": 6,
+        "candidate_count": 3,
+        "clearance_rejection_count": 1,
+        "commit_rejection_count": 0,
+        "eligible_endpoint_count": 8,
+        "endpoint_count": 8,
+        "feature_kind": "facade_bay",
+        "feature_overlap_rejection_count": 0,
+        "overhanging_face_rejection_count": 0,
+        "partial_roof_rejection_count": 0,
+        "recipe_attempt_count": 48,
+        "refreshed_rejection_count": 0,
+        "required_roof_rejection_count": 6,
+        "room_envelope_rejection_count": 0,
+        "selected_count": 1,
+        "target_source_count": 1
+      },
+      "facade_bay_feature_count": 1,
+      "facade_bay_source_count": 1,
+      "facade_bay_target_count": 1,
+      "facade_entrance_owners": {
+        "spatial.maze_back.04.room00": "spatial.maze_back.04.room00",
+        "spatial.parcel.maze.house.001.part00.room00": "spatial.maze_back.04.room00"
+      },
+      "facade_family_counts": {
+        "amber": 1,
+        "blue": 11,
+        "rock": 2
+      },
+      "facade_phase_a_count": 13,
+      "facade_phase_fallback_count": 0,
+      "facade_region_count": 53,
+      "facade_style_count": 6,
+      "facade_style_counts": {
+        "building.0": 1,
+        "long.0": 1,
+        "row.0": 2,
+        "slim.0": 3,
+        "tower.0": 5,
+        "tower.2": 2
+      },
+      "feature_clearance_displaced_parcel_count": 0,
+      "feature_construction_unit_count": 3,
+      "feature_count": 3,
+      "feature_portal_opening_count": 0,
+      "feature_portal_room_count": 0,
+      "feature_reserved_cell_count": 162,
+      "final_ground_frame_member_count": 0,
+      "final_ground_frame_room_ids": [],
+      "final_ground_masonry_room_ids": [],
+      "flat_roof_count": 1,
+      "flat_roof_garden_count": 0,
+      "flat_roof_garden_rejections": [],
+      "flat_roof_recipe_counts": {
+        "roof.flat.long.terrace.north.lived": 1
+      },
+      "flat_roof_terrace_count": 1,
+      "frontier_gateway_direct_bearing_count": 0,
+      "frontier_gateway_support_count": 0,
+      "frontier_gateway_support_feature_count": 0,
+      "full_scale_diagonal_overlap_count": 0,
+      "full_scale_diagonal_overlap_source_count": 0,
+      "furnished_flat_roof_terrace_count": 0,
+      "gateway_supported_perimeter_parcel_count": 0,
+      "generation_source": "spatial_volumetric_warren",
+      "ground_building_allocation": "shared_source",
+      "grounded_perimeter_parcel_count": 4,
+      "grounded_perimeter_parcel_ratio": 1.0,
+      "hero_feature_facade_fallback_count": 0,
+      "integrated_bridge_roof_count": 0,
+      "integrated_cantilever_candidate_count": 0,
+      "interstitial_join_class_counts": {
+
+      },
+      "interstitial_join_count": 0,
+      "interstitial_join_feature_count": 0,
+      "lamped_flat_roof_terrace_count": 0,
+      "landmark_skywalk_connected_count": 0,
+      "landmark_skywalk_connection_ratio": 0.0,
+      "legacy_unit_group_building_stack_count": 16,
+      "legacy_unit_group_connected_building_stack_count": 16,
+      "legacy_unit_group_detached_building_stack_count": 0,
+      "lived_in_flat_roof_terrace_count": 1,
+      "maze_asset_clearance_reservations": [
+        {
+          "columns": [
+            "(1, -6)",
+            "(2, -6)",
+            "(3, -6)",
+            "(1, -5)",
+            "(1, -4)",
+            "(1, -3)",
+            "(1, -2)",
+            "(2, -2)",
+            "(3, -2)",
+            "(1, -1)",
+            "(2, -1)",
+            "(3, -1)"
+          ],
+          "floor": 1,
+          "id": "asset.00",
+          "support_columns": [
+            "(1, -5)",
+            "(2, -5)",
+            "(3, -5)",
+            "(1, -4)",
+            "(2, -4)",
+            "(3, -4)",
+            "(1, -3)",
+            "(2, -3)",
+            "(3, -3)"
+          ],
+          "top": 5
+        },
+        {
+          "columns": [
+            "(-2, 0)",
+            "(-1, 0)",
+            "(0, 0)",
+            "(1, 0)",
+            "(2, 0)",
+            "(-2, 1)",
+            "(-1, 1)",
+            "(0, 1)",
+            "(1, 1)",
+            "(2, 1)",
+            "(-2, 2)",
+            "(-1, 2)",
+            "(-2, 3)",
+            "(-1, 3)",
+            "(-2, 4)",
+            "(-1, 4)",
+            "(-1, 5)"
+          ],
+          "floor": 0,
+          "id": "asset.01",
+          "support_columns": [
+            "(-2, 2)",
+            "(-1, 2)",
+            "(0, 2)",
+            "(1, 2)",
+            "(-2, 3)",
+            "(-1, 3)",
+            "(0, 3)",
+            "(1, 3)",
+            "(-2, 4)",
+            "(-1, 4)",
+            "(0, 4)",
+            "(1, 4)"
+          ],
+          "top": 4
+        }
+      ],
+      "maze_asset_outcomes": [
+        {
+          "cells": [
+            "(2, -5)",
+            "(3, -5)",
+            "(4, -5)",
+            "(2, -4)",
+            "(3, -4)",
+            "(4, -4)",
+            "(2, -3)",
+            "(3, -3)",
+            "(4, -3)"
+          ],
+          "door_walk": "(2, 1, -2)",
+          "floor": 1,
+          "id": "asset.00",
+          "kind_id": "anchor.prefab.16",
+          "placed": true,
+          "reason": ""
+        },
+        {
+          "cells": [
+            "(0, 2)",
+            "(1, 2)",
+            "(2, 2)",
+            "(0, 3)",
+            "(1, 3)",
+            "(2, 3)",
+            "(0, 4)",
+            "(1, 4)",
+            "(2, 4)",
+            "(0, 5)",
+            "(1, 5)",
+            "(2, 5)",
+            "(0, 6)",
+            "(1, 6)",
+            "(2, 6)"
+          ],
+          "door_walk": "(0, 0, 1)",
+          "floor": 0,
+          "id": "asset.01",
+          "kind_id": "anchor.prefab.12",
+          "placed": true,
+          "reason": ""
+        }
+      ],
+      "maze_asset_source_plots": [
+        {
+          "building_id": "asset.00",
+          "cells": [
+            "(2, -5)",
+            "(3, -5)",
+            "(4, -5)",
+            "(2, -4)",
+            "(3, -4)",
+            "(4, -4)",
+            "(2, -3)",
+            "(3, -3)",
+            "(4, -3)"
+          ],
+          "door_walk": "(2, 1, -2)",
+          "floor": 1,
+          "id": "asset.00",
+          "kind": "asset",
+          "top": 5
+        },
+        {
+          "building_id": "asset.01",
+          "cells": [
+            "(0, 2)",
+            "(1, 2)",
+            "(2, 2)",
+            "(0, 3)",
+            "(1, 3)",
+            "(2, 3)",
+            "(0, 4)",
+            "(1, 4)",
+            "(2, 4)",
+            "(0, 5)",
+            "(1, 5)",
+            "(2, 5)",
+            "(0, 6)",
+            "(1, 6)",
+            "(2, 6)"
+          ],
+          "door_walk": "(0, 0, 1)",
+          "floor": 0,
+          "id": "asset.01",
+          "kind": "asset",
+          "top": 4
+        }
+      ],
+      "maze_back_room_building_count": 5,
+      "maze_back_room_cell_count": 72,
+      "maze_back_room_record_count": 2,
+      "maze_back_room_rectangle_count": 5,
+      "maze_back_room_refusals": {
+
+      },
+      "maze_back_room_stamped_cell_count": 72,
+      "maze_back_room_unstamped_cells": {
+        "cells": [],
+        "count": 0
+      },
+      "maze_back_rooms_addressed": 2,
+      "maze_back_rooms_private": 3,
+      "maze_back_rooms_unstamped_cells": 0,
+      "maze_bare_crown_count": 0,
+      "maze_bridge_open_deck_cell_count": 0,
+      "maze_bridge_open_decks": 0,
+      "maze_bridge_outcomes": [],
+      "maze_bridge_rooms": 0,
+      "maze_construction_crown_unit_ids": [],
+      "maze_cross_lineage_repairs": 0,
+      "maze_crown_awning_count": 0,
+      "maze_crown_chimney_count": 0,
+      "maze_crown_dressing_recipe_counts": {
+
+      },
+      "maze_crown_fell_through_count": 0,
+      "maze_crown_planter_count": 0,
+      "maze_deck_addressed_parcel_count": 0,
+      "maze_deck_cell_count": 0,
+      "maze_declared_stack_count": 0,
+      "maze_dressed_crown_count": 0,
+      "maze_dressed_crown_ratio": 0.0,
+      "maze_flat_crown_lineage_count": 0,
+      "maze_flat_roof_count": 0,
+      "maze_isolated_flat_crown_count": 0,
+      "maze_isolated_flat_crown_details": [],
+      "maze_lid_repair_cap_count": 0,
+      "maze_lid_repair_cell_count": 0,
+      "maze_parcel_count": 4,
+      "maze_partial_plate_refused_count": 0,
+      "maze_partial_plate_tile_count": 0,
+      "maze_partial_plate_tile_recipe_counts": {
+
+      },
+      "maze_partial_plate_tiled_count": 0,
+      "maze_partial_stack_count": 0,
+      "maze_pitched_crown_lineage_count": 9,
+      "maze_pitched_partial_plate_count": 0,
+      "maze_pitched_preference_count": 4,
+      "maze_pitched_preference_parcels": [
+        "parcel.maze.house.004",
+        "parcel.maze.house.005",
+        "parcel.maze.house.000",
+        "parcel.maze.house.001"
+      ],
+      "maze_pitched_preferred_room_count": 9,
+      "maze_pitched_preferred_rooms": [
+        "spatial.maze_back.00.room00",
+        "spatial.maze_back.01.room00",
+        "spatial.maze_back.02.room00",
+        "spatial.maze_back.03.room00",
+        "spatial.maze_back.04.room00",
+        "spatial.parcel.maze.house.000.part02.room00",
+        "spatial.parcel.maze.house.001.part00.room00",
+        "spatial.parcel.maze.house.004.part00.room00",
+        "spatial.parcel.maze.house.005.part00.room00"
+      ],
+      "maze_pitched_refused_count": 0,
+      "maze_pitched_refused_details": [],
+      "maze_pitched_roof_count": 9,
+      "maze_pitched_roof_rooms": [
+        "spatial.maze_back.00.room00",
+        "spatial.maze_back.01.room00",
+        "spatial.maze_back.02.room00",
+        "spatial.parcel.maze.house.004.part00.room00",
+        "spatial.parcel.maze.house.005.part00.room00",
+        "spatial.maze_back.03.room00",
+        "spatial.maze_back.04.room00",
+        "spatial.parcel.maze.house.001.part00.room00",
+        "spatial.parcel.maze.house.000.part02.room00"
+      ],
+      "maze_plaza_deck_column_count": 0,
+      "maze_refused_unroomed_plot_trims": 0,
+      "maze_released_asset_envelope_cells": 152,
+      "maze_released_parapet_cell_count": 128,
+      "maze_released_required_roof_band_cells": 0,
+      "maze_released_required_roof_derived_cells": 0,
+      "maze_released_required_roof_envelope_cells": 72,
+      "maze_released_required_roof_unroomed_plot_cells": 72,
+      "maze_released_singleton_derived_rock_cells": 0,
+      "maze_released_singleton_rock_crown_cells": 0,
+      "maze_released_singleton_roof_band_cells": 0,
+      "maze_released_singleton_unroomed_plot_cells": 0,
+      "maze_remaining_singleton_rock_crown_count": 0,
+      "maze_retained_rock_cell_count": 180,
+      "maze_retained_rock_cells": 180,
+      "maze_retained_rock_skipped_reserved": 0,
+      "maze_retained_rock_stone_roof_cells": 0,
+      "maze_retained_stone_cell_count": 180,
+      "maze_retained_unroomed_plot_stone_cells": 0,
+      "maze_slab_course_cell_count": 0,
+      "maze_source_bridge_plot_outcomes": [],
+      "maze_source_bridge_refusals": [
+        {
+          "cells": [
+            "(2, 0, 0)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(2, -1)"
+            ],
+            [
+              "(2, 1)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(2, -1)"
+            ],
+            [
+              "(2, 1)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(2, -1)",
+            "(2, 1)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(2, -1)",
+            "(2, 1)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(2, 0, -1)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            [
+              "(3, -1)"
+            ]
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [
+            "(1, -1)",
+            "(3, -1)"
+          ],
+          "floor": 5,
+          "reason": "bridge storey [5, 7) has endpoint coverage 0/1 on one side and 1/1 on the other",
+          "room_flanks": [
+            "(3, -1)"
+          ],
+          "top": 7
+        },
+        {
+          "cells": [
+            "(2, 1, -2)"
+          ],
+          "endpoint_foundation_floor": 1,
+          "endpoint_foundation_groups": [
+            [
+              "(1, -2)"
+            ],
+            [
+              "(3, -2)",
+              "(4, -2)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(1, -2)"
+            ],
+            [
+              "(3, -2)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "direct_house_wide"
+          ],
+          "flanks": [
+            "(1, -2)",
+            "(3, -2)"
+          ],
+          "floor": 5,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(1, -2)",
+            "(3, -2)"
+          ],
+          "top": 7
+        },
+        {
+          "cells": [
+            "(1, 1, -2)"
+          ],
+          "endpoint_foundation_floor": 1,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            [
+              "(1, -3)"
+            ]
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [
+            "(1, -1)",
+            "(1, -3)"
+          ],
+          "floor": 5,
+          "reason": "bridge storey [5, 7) has endpoint coverage 0/1 on one side and 1/1 on the other",
+          "room_flanks": [
+            "(1, -3)"
+          ],
+          "top": 7
+        },
+        {
+          "cells": [
+            "(0, 1, -2)"
+          ],
+          "endpoint_foundation_floor": 1,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            [
+              "(0, -3)"
+            ]
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [
+            "(0, -1)",
+            "(0, -3)"
+          ],
+          "floor": 5,
+          "reason": "bridge storey [5, 7) has endpoint coverage 0/1 on one side and 1/1 on the other",
+          "room_flanks": [
+            "(0, -3)"
+          ],
+          "top": 7
+        },
+        {
+          "cells": [
+            "(-1, 1, -2)"
+          ],
+          "endpoint_foundation_floor": 1,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, -1)"
+            ],
+            [
+              "(-1, -3)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, -1)"
+            ],
+            [
+              "(-1, -3)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "direct_house_narrow"
+          ],
+          "flanks": [
+            "(-1, -1)",
+            "(-1, -3)"
+          ],
+          "floor": 6,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, -1)",
+            "(-1, -3)"
+          ],
+          "top": 8
+        },
+        {
+          "cells": [
+            "(-2, 2, -2)"
+          ],
+          "endpoint_foundation_floor": 2,
+          "endpoint_foundation_groups": [
+            [
+              "(-2, -1)"
+            ],
+            [
+              "(-2, -3)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-2, -1)"
+            ],
+            [
+              "(-2, -3)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "direct_house_narrow"
+          ],
+          "flanks": [
+            "(-2, -1)",
+            "(-2, -3)"
+          ],
+          "floor": 6,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-2, -1)",
+            "(-2, -3)"
+          ],
+          "top": 8
+        },
+        {
+          "cells": [
+            "(-2, 2, -1)"
+          ],
+          "endpoint_foundation_floor": 2,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, -1)"
+            ],
+            [
+              "(-3, -1)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, -1)"
+            ],
+            [
+              "(-3, -1)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "direct_house_narrow"
+          ],
+          "flanks": [
+            "(-1, -1)",
+            "(-3, -1)"
+          ],
+          "floor": 6,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, -1)",
+            "(-3, -1)"
+          ],
+          "top": 8
+        },
+        {
+          "cells": [
+            "(-1, 2, -1)"
+          ],
+          "endpoint_foundation_floor": 2,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, -2)"
+            ],
+            [
+              "(-1, 0)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, -2)"
+            ],
+            [
+              "(-1, 0)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-1, -2)",
+            "(-1, 0)"
+          ],
+          "floor": 7,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, -2)",
+            "(-1, 0)"
+          ],
+          "top": 9
+        },
+        {
+          "cells": [
+            "(0, 3, -1)"
+          ],
+          "endpoint_foundation_floor": 3,
+          "endpoint_foundation_groups": [
+            [
+              "(0, -2)"
+            ],
+            [
+              "(0, 0)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(0, -2)"
+            ],
+            [
+              "(0, 0)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(0, -2)",
+            "(0, 0)"
+          ],
+          "floor": 7,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(0, -2)",
+            "(0, 0)"
+          ],
+          "top": 9
+        },
+        {
+          "cells": [
+            "(1, 3, -1)"
+          ],
+          "endpoint_foundation_floor": 3,
+          "endpoint_foundation_groups": [
+            [
+              "(1, -2)"
+            ],
+            [
+              "(1, 0)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(1, -2)"
+            ],
+            [
+              "(1, 0)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(1, -2)",
+            "(1, 0)"
+          ],
+          "floor": 7,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(1, -2)",
+            "(1, 0)"
+          ],
+          "top": 9
+        },
+        {
+          "cells": [
+            "(3, 0, 0)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(3, -1)"
+            ],
+            [
+              "(3, 1)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(3, -1)"
+            ],
+            [
+              "(3, 1)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(3, -1)",
+            "(3, 1)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(3, -1)",
+            "(3, 1)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(3, 0, 1)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            [
+              "(2, 1)"
+            ]
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [
+            "(4, 1)",
+            "(2, 1)"
+          ],
+          "floor": 4,
+          "reason": "bridge storey [4, 6) has endpoint coverage 0/1 on one side and 1/1 on the other",
+          "room_flanks": [
+            "(2, 1)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(0, 0, -3)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, -3)"
+            ],
+            [
+              "(1, -3)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, -3)"
+            ],
+            [
+              "(1, -3)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-1, -3)",
+            "(1, -3)"
+          ],
+          "floor": 5,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, -3)",
+            "(1, -3)"
+          ],
+          "top": 7
+        },
+        {
+          "cells": [
+            "(0, 0, -4)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            [
+              "(1, -4)"
+            ]
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [
+            "(-1, -4)",
+            "(1, -4)"
+          ],
+          "floor": 4,
+          "reason": "bridge storey [4, 6) has endpoint coverage 0/1 on one side and 1/1 on the other",
+          "room_flanks": [
+            "(1, -4)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(0, 0, -5)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            [
+              "(1, -5)"
+            ]
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [
+            "(-1, -5)",
+            "(1, -5)"
+          ],
+          "floor": 4,
+          "reason": "bridge storey [4, 6) has endpoint coverage 0/1 on one side and 1/1 on the other",
+          "room_flanks": [
+            "(1, -5)"
+          ],
+          "top": 6
+        }
+      ],
+      "maze_source_bridge_refused_count": 16,
+      "maze_source_bridge_seeded_count": 0,
+      "maze_source_bridge_seeds": [],
+      "maze_source_bridge_span_count": 0,
+      "maze_stack_parents": {
+
+      },
+      "maze_stack_refusal_count": 0,
+      "maze_stack_refusals": {
+
+      },
+      "maze_stack_slab_gap_count": 0,
+      "maze_stacked_plot_count": 0,
+      "maze_stone_withdrawn_for_roof_cell_keys": [],
+      "maze_stone_withdrawn_for_roof_cells": 0,
+      "maze_stranded_release_repair_count": 0,
+      "maze_street_borne_full_plate_count": 0,
+      "maze_street_borne_plate_count": 0,
+      "maze_trimmed_roof_band_stone_cells": 0,
+      "maze_trimmed_unroomed_plot_stone_cells": 0,
+      "maze_uncomposed_parcel_count": 0,
+      "maze_uncomposed_parcel_gates": {
+
+      },
+      "maze_uncomposed_parcels": [],
+      "maze_uncomposed_stack_count": 0,
+      "maze_unrooted_terrain_bearing_count": 0,
+      "maze_unrooted_terrain_bearing_details": [],
+      "maze_unsupported_stone_cell_keys": [],
+      "maze_unsupported_stone_cells_removed": 0,
+      "maze_unsupported_stone_components_removed": 0,
+      "merged_base_composition_count": 0,
+      "micro_flat_roof_count": 0,
+      "micro_flat_roof_garden_count": 0,
+      "micro_setback_cap_unit_count": 0,
+      "missing_roof_face_count": 0,
+      "missing_source_route_floor_count": 0,
+      "noncantilever_outcropping_candidate_count": 0,
+      "offset_composition_block_count": 0,
+      "one_storey_chimney_roof_count": 4,
+      "outcrop_diagonal_support_course_count": 0,
+      "overhang_bracket_recipe_counts": {
+
+      },
+      "overhang_bracket_unit_count": 0,
+      "owner_count": 19,
+      "ownership_handoff_count": 2,
+      "paired_dormer_roof_count": 0,
+      "parallel_valley_join_count": 4,
+      "partial_gable_roof_count": 4,
+      "partial_plate_pitched_roof_count": 0,
+      "partition_variant": -1,
+      "perimeter_gateway_support_records": [],
+      "perimeter_load_path_ratio": 1.0,
+      "perimeter_parcel_count": 4,
+      "perpendicular_valley_join_count": 4,
+      "physical_support_redirect_count": 0,
+      "pitched_roof_count": 9,
+      "pitched_roof_family_counts": {
+        "blue": 5,
+        "boarded": 0,
+        "orange": 4
+      },
+      "pitched_roof_recipe_counts": {
+        "roof.row.short.blue": 1,
+        "roof.slim.short.blue": 1,
+        "roof.slim.short.orange": 1,
+        "roof.square.04": 1,
+        "roof.terminal.tight.slim.orange": 1,
+        "roof.terminal.tight.tower.blue": 1,
+        "roof.terminal.tight.tower.orange": 1,
+        "roof.tower.blue.dormer.right": 1,
+        "roof.tower.short.blue": 1
+      },
+      "plot_flat_roof_count": 0,
+      "plot_flat_roof_partial_plate_count": 0,
+      "plot_flat_roof_pitched_count": 9,
+      "plot_flat_roof_rejected_count": 0,
+      "plot_flat_roof_room_count": 9,
+      "prefab_landmark_count": 2,
+      "prefab_landmark_feature_count": 2,
+      "preplanned_landmark_count": 2,
+      "preplanned_skywalk_count": 0,
+      "preplanned_skywalk_marginal_route_cover_count": 0,
+      "preplanned_skywalk_unique_route_cover_count": 0,
+      "private_partial_plank_roof_count": 0,
+      "private_volume_cell_count": 378,
+      "projected_mass_cell_count": 1212,
+      "public_air_cell_count": 376,
+      "public_route_floor_count": 92,
+      "quarter_turned_square_roof_count": 0,
+      "realized_constructed_feature_count": 3,
+      "realized_roof_face_count": 100,
+      "rejected_flat_count": 0,
+      "rejected_optional_roof_trim_count": 0,
+      "rejected_optional_roof_trim_details": [],
+      "rejected_pitched_count": 3,
+      "rejected_pitched_details": [
+        {
+          "attempts": [],
+          "room_id": "spatial.residual.00.room00"
+        },
+        {
+          "attempts": [],
+          "room_id": "spatial.residual.01.room00"
+        },
+        {
+          "attempts": [],
+          "room_id": "spatial.residual.02.room00"
+        }
+      ],
+      "rejected_unfloored_address_count": 0,
+      "required_roof_clearance_envelope_count": 12,
+      "required_roof_closure_group_count": 12,
+      "required_room_clearance_envelope_count": 14,
+      "required_room_facade_fallback_count": 0,
+      "required_room_facade_yields": [],
+      "required_tower_annex_relief_unit_count": 0,
+      "residual_backfill_bridge_counts": {
+
+      },
+      "residual_backfill_building_count": 3,
+      "residual_backfill_frontage_side_count": 0,
+      "residual_backfill_kind_counts": {
+        "long": 1,
+        "row": 1,
+        "tower": 1
+      },
+      "residual_backfill_massif_edge_contact_count": 8,
+      "residual_backfill_massif_edge_room_count": 1,
+      "residual_backfill_overhead_route_cell_count": 0,
+      "residual_backfill_private_cell_count": 72,
+      "residual_backfill_terrain_root_count": 3,
+      "residual_backfill_terrain_rooted_established_access_count": 3,
+      "retained_foundation_built_in_cell_count": 0,
+      "retained_foundation_cell_count": 180,
+      "retained_foundation_column_count": 20,
+      "retained_foundation_max_depth_bands": 2,
+      "retained_private_mass_cell_count": 378,
+      "retained_private_mass_ratio": 0.311881188118812,
+      "retained_stone_bearing_room_count": 0,
+      "retained_support_rebind_count": 0,
+      "rich_flat_roof_garden_count": 0,
+      "rich_flat_roof_garden_fallback_count": 0,
+      "roof_clearance_facade_fallback_count": 0,
+      "roof_junction_trim_unit_count": 0,
+      "roof_neighborhood_flattened_room_count": 10,
+      "roof_neighborhood_join_count": 13,
+      "roof_region_count": 15,
+      "roof_unit_count": 14,
+      "roofed_room_count": 12,
+      "room_composition_diagnostics_collected": false,
+      "room_composition_pass_count": 1,
+      "room_outcropping_candidate_count": 0,
+      "room_outcropping_count": 0,
+      "room_outcropping_support_feature_count": 0,
+      "room_overhang_support_count": 0,
+      "room_overhang_support_feature_count": 0,
+      "room_pair_displaced_parcel_count": 0,
+      "room_stamp_count": 14,
+      "room_support_crown_exclusion_cell_count": 0,
+      "room_volume_budget_max": 20,
+      "room_volume_budget_min": 6,
+      "route_connected_rooftop_court_audit": {
+        "available_room_crown_cell_count": 100,
+        "candidate_count": 0,
+        "rejection": "no_broad_route_connected_crown",
+        "room_crown_component_details": [
+          {
+            "maximum": "(9, 2, 13)",
+            "minimum": "(0, 2, 4)",
+            "nearest_route_cell": "(6, 0, 3)",
+            "nearest_route_distance": 3,
+            "size": 72
+          },
+          {
+            "maximum": "(-3, 4, -1)",
+            "minimum": "(-6, 4, -6)",
+            "nearest_route_cell": "(-4, 2, -1)",
+            "nearest_route_distance": 3,
+            "size": 16
+          },
+          {
+            "maximum": "(9, 2, -1)",
+            "minimum": "(8, 2, -4)",
+            "nearest_route_cell": "(8, 0, 0)",
+            "nearest_route_distance": 3,
+            "size": 8
+          },
+          {
+            "maximum": "(-1, 7, -5)",
+            "minimum": "(-2, 7, -6)",
+            "nearest_route_cell": "(-2, 2, -4)",
+            "nearest_route_distance": 6,
+            "size": 4
+          }
+        ],
+        "room_crown_component_sizes": [
+          72,
+          16,
+          8,
+          4
+        ],
+        "route_adjacent_room_crown_by_band": {
+
+        },
+        "route_adjacent_room_crown_cell_count": 0
+      },
+      "route_connected_rooftop_court_count": 0,
+      "route_connected_rooftop_court_floor_cell_count": 0,
+      "route_vertical_span_bands": 3,
+      "scale_profile_id": "compact",
+      "scale_profile_signature": "compact/r5/core-floor6/target10-14/route8-14/span3-5/lanes5:20/rooms6-20/residual4:1/sky1-2/bal0-1/cant0-0/land5-6/over0.290/court0/market0",
+      "selected_directly_borne_integrated_cantilever_count": 0,
+      "selected_facade_phase_b_count": 1,
+      "selected_integrated_cantilever_count": 0,
+      "setback_cap_recipe_unit_count": 0,
+      "setback_dressed_unit_count": 0,
+      "setback_garden_fallback_count": 0,
+      "setback_garden_unit_count": 0,
+      "setback_lean_to_unit_count": 0,
+      "setback_macro_gable_fallback_count": 2,
+      "setback_macro_gable_unit_count": 0,
+      "setback_plain_cap_unit_count": 0,
+      "setback_shed_unit_count": 0,
+      "setback_terminal_macro_fallback_count": 2,
+      "setback_terrace_fallback_count": 0,
+      "setback_terrace_unit_count": 0,
+      "setback_vocabulary_unit_count": 4,
+      "shared_entrance_room_ids": [
+        "spatial.parcel.maze.house.001.part00.room00"
+      ],
+      "skywalk_feature_count": 0,
+      "source_constructed_feature_count": 3,
+      "source_courtyard_macro_cell_count": 0,
+      "source_courtyard_parcel_side_count": 0,
+      "source_face_count": 932,
+      "source_macro_walk_count": 19,
+      "source_roof_face_count": 100,
+      "source_route_floor_count": 92,
+      "spatial_addressed_building_volume_count": 6,
+      "spatial_building_volume_count": 14,
+      "spatial_detached_building_volume_count": 0,
+      "spatial_missing_private_parent_count": 0,
+      "spatial_prefab_landmark_building_count": 2,
+      "spatial_private_access_edge_count": 8,
+      "spatial_signature": "a804d57f369c2d81c357739fbc148a84f99d0f4a9822a642d685a31fec64c9a0",
+      "stair_blocked_door_ids": [
+        "spatial.parcel.maze.house.000.part00.room00"
+      ],
+      "structural_volume_cell_count": 180,
+      "styled_building_lineage_count": 12,
+      "supplemental_route_floor_count": 0,
+      "support_clearance_terminated_storey_count": 0,
+      "support_parent_rebind_count": 0,
+      "support_required_integrated_cantilever_count": 0,
+      "supported_irregular_projection_count": 0,
+      "suppressed_buried_decor_module_count": 0,
+      "suppressed_exterior_traversal_decor_module_count": 0,
+      "suppressed_intruding_module_details": [],
+      "suppressed_party_wall_module_count": 29,
+      "suppressed_street_collider_module_count": 0,
+      "threshold_face_mismatch_count": 0,
+      "tower_annex_count": 0,
+      "tower_annex_diagnostic": {
+        "feature_kind": "tower_annex",
+        "target_source_count": 0
+      },
+      "tower_annex_feature_count": 0,
+      "tower_annex_relief_unit_count": 0,
+      "tower_annex_source_count": 0,
+      "tower_relief_structural_outcropping_count": 0,
+      "unassigned_mass_cell_count": 532,
+      "unclassified_public_private_face_count": 0,
+      "ungrounded_perimeter_parcel_count": 0,
+      "unresolved_integrated_cantilever_count": 0,
+      "unsupported_irregular_projection_count": 0,
+      "unsupported_irregular_projection_details": [],
+      "unsupported_perimeter_parcel_count": 0,
+      "usable_balcony_count": 0,
+      "vertical_floorplate_outcropping_count": 0,
+      "world_road_connections": [
+        {
+          "owner": "settlement.45e145055531090d.world-road.(312.0, 468.836)",
+          "points": [
+            "(312.0, 468.0)",
+            "(312.0, 468.8361)",
+            "(360.0, 468.8361)",
+            "(360.0, 482.0)"
+          ]
+        },
+        {
+          "owner": "settlement.45e145055531090d.world-road.(360.0, 468.836)",
+          "points": [
+            "(360.0, 468.0)",
+            "(360.0, 468.8361)",
+            "(360.0, 482.0)"
+          ]
+        }
+      ],
+      "wraparound_balcony_count": 0
+    },
+    "building_count": 16,
+    "cell": "(15, 20)",
+    "instances": 444,
+    "ms": 1178,
+    "outskirts": false,
+    "reason": "accepted",
+    "super_cell": "(0, 0)",
+    "tier": "village",
+    "valid": false,
+    "world_transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (361.5, 20.08, 498.5)]"
+  },
+  {
+    "accepted": true,
+    "audit": {
+      "allocatable_cell_count": 0,
+      "allocated_facade_clearance_envelope_count": 36,
+      "alternate_pitched_roof_count": 11,
+      "arcade_overhang_support_count": 0,
+      "arcade_overhang_support_feature_count": 0,
+      "atomic_neighborhood_roof_count": 0,
+      "authored_room_envelope_gate_count": 36,
+      "awning_flat_roof_terrace_count": 0,
+      "balcony_building_count": 1,
+      "balcony_feature_count": 1,
+      "balcony_target_count": 3,
+      "bare_flat_roof_count": 0,
+      "bounded_stone_base_lineage_count": 6,
+      "bracketed_overhang_feature_count": 0,
+      "bracketless_overhang_feature_count": 0,
+      "broken_atomic_roof_neighborhood_count": 0,
+      "building_count": 34,
+      "building_count_below_reference": false,
+      "building_stack_count": 35,
+      "building_variant_count": 13,
+      "building_variant_counts": {
+        "long.rock.0": 1,
+        "row.amber.0": 3,
+        "row.orange.0": 4,
+        "row.rock.0": 4,
+        "slim.blue.0": 1,
+        "slim.orange.0": 3,
+        "tower.amber.0": 6,
+        "tower.amber.1": 4,
+        "tower.amber.2": 1,
+        "tower.blue.0": 3,
+        "tower.orange.0": 4,
+        "tower.orange.2": 1,
+        "tower.rock.0": 1
+      },
+      "cantilever_measured_support_conflict_count": 0,
+      "cantilever_measured_support_conflict_kinds": {
+
+      },
+      "cantilever_rejection_counts": {
+        "full_scale_overlap_required": 2
+      },
+      "cantilever_support_assignment_node_count": 0,
+      "cantilever_support_assignment_peak_count": 0,
+      "collision_flatten_trigger_details": [],
+      "collision_flattened_roof_component_count": 0,
+      "collision_flattened_roof_room_count": 0,
+      "composed_courtyard_side_count": 0,
+      "composed_courtyard_side_mask": 0,
+      "connected_building_stack_count": 35,
+      "construction_diagnostics_collected": false,
+      "construction_region_count": 241,
+      "construction_signature": "466683cc0a8e0beacfc72e294af9b15862bbd6a277dd31955cf0569720992b89",
+      "continuous_ridge_join_count": 4,
+      "continuous_roof_component_count": 8,
+      "continuous_roof_eligible_run_count": 31,
+      "continuous_roof_flush_endpoint_count": 7,
+      "continuous_roof_internal_gable_count": 18,
+      "continuous_roof_joined_run_count": 17,
+      "continuous_roof_normalized_repeat_count": 1,
+      "continuous_roof_tight_cross_component_count": 1,
+      "court_displaced_parcel_count": 0,
+      "courtyard_bridge_house_count": 0,
+      "courtyard_bridge_house_feature_count": 0,
+      "covered_market_count": 0,
+      "covered_market_feature_count": 0,
+      "daylight_air_cell_count": 0,
+      "desired_facade_phase_b_count": 5,
+      "detached_building_stack_count": 0,
+      "directly_borne_integrated_cantilever_count": 0,
+      "directly_borne_irregular_projection_count": 2,
+      "door_region_count": 12,
+      "dormered_pitched_roof_count": 7,
+      "dormered_roof_unit_count": 7,
+      "elevated_courtyard_count": 0,
+      "enclosed_skywalk_count": 0,
+      "exposed_roof_feature_counts": {
+        "0": 5,
+        "1": 6,
+        "2": 11,
+        "3": 4
+      },
+      "exposed_roof_room_kind_counts": {
+        "long": 1,
+        "row": 9,
+        "slim": 3,
+        "tower": 13
+      },
+      "extra_diagonal_outcrop_diagnostic": {
+
+      },
+      "facade_bay_count": 3,
+      "facade_bay_diagnostic": {
+        "body_rejection_count": 27,
+        "candidate_count": 9,
+        "clearance_rejection_count": 2,
+        "commit_rejection_count": 0,
+        "eligible_endpoint_count": 27,
+        "endpoint_count": 28,
+        "feature_kind": "facade_bay",
+        "feature_overlap_rejection_count": 4,
+        "overhanging_face_rejection_count": 0,
+        "partial_roof_rejection_count": 0,
+        "recipe_attempt_count": 162,
+        "refreshed_rejection_count": 1,
+        "required_roof_rejection_count": 11,
+        "room_envelope_rejection_count": 1,
+        "selected_count": 3,
+        "target_source_count": 5
+      },
+      "facade_bay_feature_count": 3,
+      "facade_bay_source_count": 5,
+      "facade_bay_target_count": 5,
+      "facade_entrance_owners": {
+        "spatial.parcel.maze.house.004.part00.room00": "spatial.parcel.maze.house.004.part00.room00",
+        "spatial.parcel.maze.house.007.part00.room00": "spatial.parcel.maze.house.004.part00.room00"
+      },
+      "facade_family_counts": {
+        "amber": 14,
+        "blue": 4,
+        "orange": 12,
+        "rock": 6
+      },
+      "facade_phase_a_count": 33,
+      "facade_phase_fallback_count": 2,
+      "facade_region_count": 104,
+      "facade_style_count": 6,
+      "facade_style_counts": {
+        "long.0": 1,
+        "row.0": 11,
+        "slim.0": 4,
+        "tower.0": 14,
+        "tower.1": 4,
+        "tower.2": 2
+      },
+      "feature_clearance_displaced_parcel_count": 0,
+      "feature_construction_unit_count": 5,
+      "feature_count": 5,
+      "feature_portal_opening_count": 1,
+      "feature_portal_room_count": 1,
+      "feature_reserved_cell_count": 110,
+      "final_ground_frame_member_count": 0,
+      "final_ground_frame_room_ids": [],
+      "final_ground_masonry_room_ids": [],
+      "flat_roof_count": 0,
+      "flat_roof_garden_count": 0,
+      "flat_roof_garden_rejections": [],
+      "flat_roof_recipe_counts": {
+
+      },
+      "flat_roof_terrace_count": 0,
+      "frontier_gateway_direct_bearing_count": 0,
+      "frontier_gateway_support_count": 0,
+      "frontier_gateway_support_feature_count": 0,
+      "full_scale_diagonal_overlap_count": 0,
+      "full_scale_diagonal_overlap_source_count": 0,
+      "furnished_flat_roof_terrace_count": 0,
+      "gateway_supported_perimeter_parcel_count": 0,
+      "generation_source": "spatial_volumetric_warren",
+      "ground_building_allocation": "shared_source",
+      "grounded_perimeter_parcel_count": 9,
+      "grounded_perimeter_parcel_ratio": 1.0,
+      "hero_feature_facade_fallback_count": 0,
+      "integrated_bridge_roof_count": 1,
+      "integrated_cantilever_candidate_count": 0,
+      "interstitial_join_class_counts": {
+
+      },
+      "interstitial_join_count": 0,
+      "interstitial_join_feature_count": 0,
+      "lamped_flat_roof_terrace_count": 0,
+      "landmark_skywalk_connected_count": 0,
+      "landmark_skywalk_connection_ratio": 0.0,
+      "legacy_unit_group_building_stack_count": 35,
+      "legacy_unit_group_connected_building_stack_count": 35,
+      "legacy_unit_group_detached_building_stack_count": 0,
+      "lived_in_flat_roof_terrace_count": 0,
+      "maze_asset_clearance_reservations": [
+        {
+          "columns": [
+            "(0, -1)",
+            "(1, -1)",
+            "(5, -1)",
+            "(0, 0)",
+            "(1, 0)",
+            "(5, 0)",
+            "(0, 1)",
+            "(1, 1)",
+            "(0, 2)",
+            "(1, 2)"
+          ],
+          "floor": 0,
+          "id": "asset.00",
+          "support_columns": [
+            "(2, 0)",
+            "(3, 0)",
+            "(4, 0)",
+            "(2, 1)",
+            "(3, 1)",
+            "(4, 1)",
+            "(2, 2)",
+            "(3, 2)",
+            "(4, 2)"
+          ],
+          "top": 4
+        }
+      ],
+      "maze_asset_outcomes": [
+        {
+          "cells": [
+            "(2, -1)",
+            "(3, -1)",
+            "(4, -1)",
+            "(2, 0)",
+            "(3, 0)",
+            "(4, 0)",
+            "(2, 1)",
+            "(3, 1)",
+            "(4, 1)",
+            "(2, 2)",
+            "(3, 2)",
+            "(4, 2)"
+          ],
+          "door_walk": "(1, 0, 1)",
+          "floor": 0,
+          "id": "asset.00",
+          "kind_id": "anchor.prefab.11",
+          "placed": true,
+          "reason": ""
+        }
+      ],
+      "maze_asset_source_plots": [
+        {
+          "building_id": "asset.00",
+          "cells": [
+            "(2, -1)",
+            "(3, -1)",
+            "(4, -1)",
+            "(2, 0)",
+            "(3, 0)",
+            "(4, 0)",
+            "(2, 1)",
+            "(3, 1)",
+            "(4, 1)",
+            "(2, 2)",
+            "(3, 2)",
+            "(4, 2)"
+          ],
+          "door_walk": "(1, 0, 1)",
+          "floor": 0,
+          "id": "asset.00",
+          "kind": "asset",
+          "top": 4
+        }
+      ],
+      "maze_back_room_building_count": 14,
+      "maze_back_room_cell_count": 208,
+      "maze_back_room_record_count": 5,
+      "maze_back_room_rectangle_count": 14,
+      "maze_back_room_refusals": {
+
+      },
+      "maze_back_room_stamped_cell_count": 208,
+      "maze_back_room_unstamped_cells": {
+        "cells": [],
+        "count": 0
+      },
+      "maze_back_rooms_addressed": 1,
+      "maze_back_rooms_private": 13,
+      "maze_back_rooms_unstamped_cells": 0,
+      "maze_bare_crown_count": 0,
+      "maze_bridge_open_deck_cell_count": 0,
+      "maze_bridge_open_decks": 0,
+      "maze_bridge_outcomes": [
+        {
+          "flat_flank_columns": -1,
+          "flat_flank_sides": -1,
+          "id": "bridge.00",
+          "outcome": "stamped",
+          "reason": "",
+          "span_counts": {
+            "flank_contacts": 2,
+            "flank_rooms_probed": 2,
+            "sample_miss": {
+              "candidate_min": "(-4, 5, -6)",
+              "facing": "(1, 0, 0)",
+              "flank_kind": "tower",
+              "flank_room": "spatial.maze_bridge_end.00.01.room01",
+              "socket": "bearing.east",
+              "socket_cell": "(-1, 5, -5)"
+            },
+            "unproved_flank_column": 8
+          }
+        }
+      ],
+      "maze_bridge_rooms": 1,
+      "maze_construction_crown_unit_ids": [
+        "spatial.roof.spatial.parcel.maze.house.004.part00.room00.tile00",
+        "spatial.roof.spatial.parcel.maze.house.004.part00.room00.tile01"
+      ],
+      "maze_cross_lineage_repairs": 0,
+      "maze_crown_awning_count": 0,
+      "maze_crown_chimney_count": 0,
+      "maze_crown_dressing_recipe_counts": {
+
+      },
+      "maze_crown_fell_through_count": 0,
+      "maze_crown_planter_count": 0,
+      "maze_deck_addressed_parcel_count": 0,
+      "maze_deck_cell_count": 16,
+      "maze_declared_stack_count": 0,
+      "maze_dressed_crown_count": 0,
+      "maze_dressed_crown_ratio": 0.0,
+      "maze_flat_crown_lineage_count": 0,
+      "maze_flat_roof_count": 0,
+      "maze_isolated_flat_crown_count": 0,
+      "maze_isolated_flat_crown_details": [],
+      "maze_lid_repair_cap_count": 0,
+      "maze_lid_repair_cell_count": 0,
+      "maze_parcel_count": 11,
+      "maze_partial_plate_refused_count": 0,
+      "maze_partial_plate_tile_count": 2,
+      "maze_partial_plate_tile_recipe_counts": {
+        "roof.partial.gable.blue.2.negative": 2
+      },
+      "maze_partial_plate_tiled_count": 1,
+      "maze_partial_stack_count": 0,
+      "maze_pitched_crown_lineage_count": 19,
+      "maze_pitched_partial_plate_count": 0,
+      "maze_pitched_preference_count": 11,
+      "maze_pitched_preference_parcels": [
+        "parcel.maze.house.000",
+        "parcel.maze.house.004",
+        "parcel.maze.house.005",
+        "parcel.maze.house.007",
+        "parcel.maze.house.010",
+        "parcel.maze.house.001",
+        "parcel.maze.house.002",
+        "parcel.maze.house.009",
+        "parcel.maze.house.003",
+        "parcel.maze.bridge.00.end.0.lower",
+        "parcel.maze.bridge.00.end.1.lower"
+      ],
+      "maze_pitched_preferred_room_count": 20,
+      "maze_pitched_preferred_rooms": [
+        "spatial.maze_back.00.room00",
+        "spatial.maze_back.01.room00",
+        "spatial.maze_back.02.room00",
+        "spatial.maze_back.03.room00",
+        "spatial.maze_back.04.room00",
+        "spatial.maze_back.05.room00",
+        "spatial.maze_back.06.room00",
+        "spatial.maze_back.07.room00",
+        "spatial.maze_back.08.room00",
+        "spatial.maze_back.09.room00",
+        "spatial.maze_back.10.room00",
+        "spatial.maze_back.11.room00",
+        "spatial.parcel.maze.house.000.part00.room00",
+        "spatial.parcel.maze.house.001.part02.room00",
+        "spatial.parcel.maze.house.002.part02.room00",
+        "spatial.parcel.maze.house.003.part00.room00",
+        "spatial.parcel.maze.house.004.part01.room00",
+        "spatial.parcel.maze.house.005.part00.room00",
+        "spatial.parcel.maze.house.007.part00.room00",
+        "spatial.parcel.maze.house.010.part00.room00"
+      ],
+      "maze_pitched_refused_count": 0,
+      "maze_pitched_refused_details": [],
+      "maze_pitched_roof_count": 20,
+      "maze_pitched_roof_rooms": [
+        "spatial.maze_back.00.room00",
+        "spatial.maze_back.01.room00",
+        "spatial.maze_back.02.room00",
+        "spatial.maze_back.03.room00",
+        "spatial.maze_back.04.room00",
+        "spatial.maze_back.05.room00",
+        "spatial.maze_back.06.room00",
+        "spatial.maze_back.07.room00",
+        "spatial.maze_back.08.room00",
+        "spatial.maze_back.09.room00",
+        "spatial.maze_back.10.room00",
+        "spatial.maze_back.11.room00",
+        "spatial.parcel.maze.house.000.part00.room00",
+        "spatial.parcel.maze.house.005.part00.room00",
+        "spatial.parcel.maze.house.007.part00.room00",
+        "spatial.parcel.maze.house.010.part00.room00",
+        "spatial.parcel.maze.house.003.part00.room00",
+        "spatial.parcel.maze.house.004.part01.room00",
+        "spatial.parcel.maze.house.001.part02.room00",
+        "spatial.parcel.maze.house.002.part02.room00"
+      ],
+      "maze_plaza_deck_column_count": 4,
+      "maze_refused_unroomed_plot_trims": 0,
+      "maze_released_asset_envelope_cells": 64,
+      "maze_released_parapet_cell_count": 288,
+      "maze_released_required_roof_band_cells": 0,
+      "maze_released_required_roof_derived_cells": 2,
+      "maze_released_required_roof_envelope_cells": 34,
+      "maze_released_required_roof_unroomed_plot_cells": 32,
+      "maze_released_singleton_derived_rock_cells": 4,
+      "maze_released_singleton_rock_crown_cells": 4,
+      "maze_released_singleton_roof_band_cells": 0,
+      "maze_released_singleton_unroomed_plot_cells": 0,
+      "maze_remaining_singleton_rock_crown_count": 0,
+      "maze_retained_rock_cell_count": 134,
+      "maze_retained_rock_cells": 134,
+      "maze_retained_rock_skipped_reserved": 0,
+      "maze_retained_rock_stone_roof_cells": 0,
+      "maze_retained_stone_cell_count": 134,
+      "maze_retained_unroomed_plot_stone_cells": 0,
+      "maze_slab_course_cell_count": 0,
+      "maze_source_bridge_plot_outcomes": [
+        {
+          "building_id": "bridge.00",
+          "cells": 1,
+          "columns": [
+            "(-2, -3)"
+          ],
+          "door_walk": "(-2, 1, -3)",
+          "floor": 5,
+          "id": "bridge.00",
+          "reason": "",
+          "span": 0,
+          "top": 7
+        }
+      ],
+      "maze_source_bridge_refusals": [
+        {
+          "cells": [
+            "(0, 0, -2)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, -2)"
+            ],
+            [
+              "(1, -2)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, -2)"
+            ],
+            [
+              "(1, -2)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-1, -2)",
+            "(1, -2)"
+          ],
+          "floor": 9,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, -2)",
+            "(1, -2)"
+          ],
+          "top": 11
+        },
+        {
+          "cells": [
+            "(-1, 0, -2)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, -1)"
+            ],
+            [
+              "(-1, -3)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, -1)"
+            ],
+            [
+              "(-1, -3)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-1, -1)",
+            "(-1, -3)"
+          ],
+          "floor": 9,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, -1)",
+            "(-1, -3)"
+          ],
+          "top": 11
+        },
+        {
+          "cells": [
+            "(-2, 1, -2)"
+          ],
+          "endpoint_foundation_floor": 1,
+          "endpoint_foundation_groups": [
+            [
+              "(-2, -1)"
+            ],
+            [
+              "(-2, -3)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-2, -1)"
+            ],
+            [
+              "(-2, -3)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-2, -1)",
+            "(-2, -3)"
+          ],
+          "floor": 5,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-2, -1)",
+            "(-2, -3)"
+          ],
+          "top": 7
+        },
+        {
+          "cells": [
+            "(-2, 1, -1)"
+          ],
+          "endpoint_foundation_floor": 1,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [],
+            [
+              "(-3, -1)"
+            ]
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [
+            "(-1, -1)",
+            "(-3, -1)"
+          ],
+          "floor": 5,
+          "reason": "bridge storey [5, 7) has endpoint coverage 0/1 on one side and 1/1 on the other",
+          "room_flanks": [
+            "(-3, -1)"
+          ],
+          "top": 7
+        },
+        {
+          "cells": [
+            "(-2, 1, 0)"
+          ],
+          "endpoint_foundation_floor": 1,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, 0)"
+            ],
+            [
+              "(-3, 0)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, 0)"
+            ],
+            [
+              "(-3, 0)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "direct_house_narrow"
+          ],
+          "flanks": [
+            "(-1, 0)",
+            "(-3, 0)"
+          ],
+          "floor": 6,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, 0)",
+            "(-3, 0)"
+          ],
+          "top": 8
+        },
+        {
+          "cells": [
+            "(-2, 2, 1)"
+          ],
+          "endpoint_foundation_floor": 2,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, 1)"
+            ],
+            [
+              "(-3, 1)",
+              "(-4, 1)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, 1)"
+            ],
+            [
+              "(-3, 1)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "direct_house_wide"
+          ],
+          "flanks": [
+            "(-1, 1)",
+            "(-3, 1)"
+          ],
+          "floor": 6,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, 1)",
+            "(-3, 1)"
+          ],
+          "top": 8
+        },
+        {
+          "cells": [
+            "(-1, 2, 1)"
+          ],
+          "endpoint_foundation_floor": 2,
+          "endpoint_foundation_groups": [
+            [
+              "(-1, 0)"
+            ],
+            [
+              "(-1, 2)",
+              "(-1, 3)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-1, 0)"
+            ],
+            [
+              "(-1, 2)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "direct_house_wide"
+          ],
+          "flanks": [
+            "(-1, 0)",
+            "(-1, 2)"
+          ],
+          "floor": 6,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-1, 0)",
+            "(-1, 2)"
+          ],
+          "top": 8
+        },
+        {
+          "cells": [
+            "(-1, 2, 0)"
+          ],
+          "endpoint_foundation_floor": 2,
+          "endpoint_foundation_groups": [
+            [
+              "(-2, 0)"
+            ],
+            [
+              "(0, 0)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-2, 0)"
+            ],
+            [
+              "(0, 0)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-2, 0)",
+            "(0, 0)"
+          ],
+          "floor": 7,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-2, 0)",
+            "(0, 0)"
+          ],
+          "top": 9
+        },
+        {
+          "cells": [
+            "(-3, 0, -1)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-3, 0)"
+            ],
+            [
+              "(-3, -2)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-3, 0)"
+            ],
+            [
+              "(-3, -2)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-3, 0)",
+            "(-3, -2)"
+          ],
+          "floor": 5,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-3, 0)",
+            "(-3, -2)"
+          ],
+          "top": 7
+        },
+        {
+          "cells": [
+            "(-4, 0, -1)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-4, 0)"
+            ],
+            [
+              "(-4, -2)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-4, 0)"
+            ],
+            [
+              "(-4, -2)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-4, 0)",
+            "(-4, -2)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-4, 0)",
+            "(-4, -2)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-4, 0, 0)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-3, 0)"
+            ],
+            [
+              "(-5, 0)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-3, 0)"
+            ],
+            [
+              "(-5, 0)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-3, 0)",
+            "(-5, 0)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-3, 0)",
+            "(-5, 0)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-5, 0, 0)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-5, 1)"
+            ],
+            [
+              "(-5, -1)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-5, 1)"
+            ],
+            [
+              "(-5, -1)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-5, 1)",
+            "(-5, -1)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-5, 1)",
+            "(-5, -1)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-5, 0, 1)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [],
+            []
+          ],
+          "endpoint_groups": [
+            [
+              "(-4, 1)"
+            ],
+            []
+          ],
+          "endpoint_support_modes": [],
+          "flanks": [
+            "(-4, 1)",
+            "(-6, 1)"
+          ],
+          "floor": 4,
+          "reason": "bridge storey [4, 6) has endpoint coverage 1/1 on one side and 0/1 on the other",
+          "room_flanks": [
+            "(-4, 1)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-4, 0, -2)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-5, -2)"
+            ],
+            [
+              "(-3, -2)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-5, -2)"
+            ],
+            [
+              "(-3, -2)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-5, -2)",
+            "(-3, -2)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-5, -2)",
+            "(-3, -2)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(-4, 0, -3)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(-5, -3)"
+            ],
+            [
+              "(-3, -3)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-5, -3)"
+            ],
+            [
+              "(-3, -3)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(-5, -3)",
+            "(-3, -3)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(-5, -3)",
+            "(-3, -3)"
+          ],
+          "top": 6
+        },
+        {
+          "cells": [
+            "(1, 0, -2)"
+          ],
+          "endpoint_foundation_floor": 0,
+          "endpoint_foundation_groups": [
+            [
+              "(1, -3)"
+            ],
+            [
+              "(1, -1)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(1, -3)"
+            ],
+            [
+              "(1, -1)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "terrain_arcade",
+            "terrain_arcade"
+          ],
+          "flanks": [
+            "(1, -3)",
+            "(1, -1)"
+          ],
+          "floor": 4,
+          "reason": "bridge lacks two ground-borne endpoint houses",
+          "room_flanks": [
+            "(1, -3)",
+            "(1, -1)"
+          ],
+          "top": 6
+        }
+      ],
+      "maze_source_bridge_refused_count": 16,
+      "maze_source_bridge_seeded_count": 1,
+      "maze_source_bridge_seeds": [
+        {
+          "cells": [
+            "(-2, 1, -3)"
+          ],
+          "endpoint_foundation_floor": 1,
+          "endpoint_foundation_groups": [
+            [
+              "(-3, -3)"
+            ],
+            [
+              "(-1, -3)",
+              "(0, -3)"
+            ]
+          ],
+          "endpoint_groups": [
+            [
+              "(-3, -3)"
+            ],
+            [
+              "(-1, -3)"
+            ]
+          ],
+          "endpoint_support_modes": [
+            "direct_house_narrow",
+            "direct_house_wide"
+          ],
+          "exterior_depth_cells": 1,
+          "flanks": [
+            "(-3, -3)",
+            "(-1, -3)"
+          ],
+          "floor": 5,
+          "reason": "",
+          "room_flanks": [
+            "(-3, -3)",
+            "(-1, -3)"
+          ],
+          "top": 7
+        }
+      ],
+      "maze_source_bridge_span_count": 1,
+      "maze_stack_parents": {
+
+      },
+      "maze_stack_refusal_count": 0,
+      "maze_stack_refusals": {
+
+      },
+      "maze_stack_slab_gap_count": 0,
+      "maze_stacked_plot_count": 0,
+      "maze_stone_withdrawn_for_roof_cell_keys": [],
+      "maze_stone_withdrawn_for_roof_cells": 0,
+      "maze_stranded_release_repair_count": 0,
+      "maze_street_borne_full_plate_count": 0,
+      "maze_street_borne_plate_count": 0,
+      "maze_trimmed_roof_band_stone_cells": 0,
+      "maze_trimmed_unroomed_plot_stone_cells": 0,
+      "maze_uncomposed_parcel_count": 1,
+      "maze_uncomposed_parcel_gates": {
+        "structural_yielded_lineage": 1
+      },
+      "maze_uncomposed_parcels": [
+        {
+          "area": 1,
+          "detail": "",
+          "floor": 1,
+          "gate": "structural_yielded_lineage",
+          "parcel_id": "parcel.maze.bridge.00.end.0.lower",
+          "top": 5
+        }
+      ],
+      "maze_uncomposed_stack_count": 0,
+      "maze_unrooted_terrain_bearing_count": 0,
+      "maze_unrooted_terrain_bearing_details": [],
+      "maze_unsupported_stone_cell_keys": [],
+      "maze_unsupported_stone_cells_removed": 0,
+      "maze_unsupported_stone_components_removed": 0,
+      "merged_base_composition_count": 1,
+      "micro_flat_roof_count": 0,
+      "micro_flat_roof_garden_count": 0,
+      "micro_setback_cap_unit_count": 0,
+      "missing_roof_face_count": 0,
+      "missing_source_route_floor_count": 0,
+      "noncantilever_outcropping_candidate_count": 2,
+      "offset_composition_block_count": 2,
+      "one_storey_chimney_roof_count": 1,
+      "outcrop_diagonal_support_course_count": 0,
+      "overhang_bracket_recipe_counts": {
+
+      },
+      "overhang_bracket_unit_count": 0,
+      "owner_count": 43,
+      "ownership_handoff_count": 5,
+      "paired_dormer_roof_count": 0,
+      "parallel_valley_join_count": 9,
+      "partial_gable_roof_count": 6,
+      "partial_plate_pitched_roof_count": 0,
+      "partition_variant": -1,
+      "perimeter_gateway_support_records": [],
+      "perimeter_load_path_ratio": 1.0,
+      "perimeter_parcel_count": 9,
+      "perpendicular_valley_join_count": 13,
+      "physical_support_redirect_count": 0,
+      "pitched_roof_count": 23,
+      "pitched_roof_family_counts": {
+        "blue": 10,
+        "boarded": 0,
+        "orange": 12
+      },
+      "pitched_roof_recipe_counts": {
+        "roof.long.orange.dormer.left": 1,
+        "roof.row.blue": 1,
+        "roof.row.orange.dormer.left": 1,
+        "roof.row.orange.dormer.right": 2,
+        "roof.row.short.blue": 1,
+        "roof.slim.orange": 1,
+        "roof.slim.orange.dormer.left": 1,
+        "roof.terminal.tight.row.blue": 1,
+        "roof.terminal.tight.row.orange": 1,
+        "roof.terminal.tight.slim.orange": 1,
+        "roof.terminal.tight.tower.blue": 5,
+        "roof.terminal.tight.tower.orange": 2,
+        "roof.tower.blue.dormer.right": 1,
+        "roof.tower.orange.dormer.right": 1,
+        "roof.tower.party.blue": 1,
+        "roof.tower.party.orange": 1
+      },
+      "plot_flat_roof_count": 0,
+      "plot_flat_roof_partial_plate_count": 0,
+      "plot_flat_roof_pitched_count": 20,
+      "plot_flat_roof_rejected_count": 0,
+      "plot_flat_roof_room_count": 21,
+      "prefab_landmark_count": 1,
+      "prefab_landmark_feature_count": 1,
+      "preplanned_landmark_count": 1,
+      "preplanned_skywalk_count": 0,
+      "preplanned_skywalk_marginal_route_cover_count": 0,
+      "preplanned_skywalk_unique_route_cover_count": 0,
+      "private_partial_plank_roof_count": 0,
+      "private_volume_cell_count": 558,
+      "projected_mass_cell_count": 1548,
+      "public_air_cell_count": 544,
+      "public_route_floor_count": 148,
+      "quarter_turned_square_roof_count": 2,
+      "realized_constructed_feature_count": 5,
+      "realized_roof_face_count": 168,
+      "rejected_flat_count": 0,
+      "rejected_optional_roof_trim_count": 0,
+      "rejected_optional_roof_trim_details": [],
+      "rejected_pitched_count": 2,
+      "rejected_pitched_details": [
+        {
+          "attempts": [],
+          "room_id": "spatial.residual.00.room00"
+        },
+        {
+          "attempts": [],
+          "room_id": "spatial.residual.01.room00"
+        }
+      ],
+      "rejected_unfloored_address_count": 0,
+      "required_roof_clearance_envelope_count": 27,
+      "required_roof_closure_group_count": 27,
+      "required_room_clearance_envelope_count": 36,
+      "required_room_facade_fallback_count": 2,
+      "required_room_facade_yields": [
+        {
+          "chosen_recipe_id": "room.tower.upper.amber.e",
+          "desired_recipe_id": "room.tower.upper.amber.f",
+          "required": "spatial.parcel.maze.house.001.part02.room00/room.tower.upper.amber.c",
+          "room_id": "spatial.maze_bridge_end.00.00.room01"
+        },
+        {
+          "chosen_recipe_id": "room.tower.upper.amber.c",
+          "desired_recipe_id": "room.tower.upper.amber.d",
+          "required": "spatial.maze_bridge.00.room00/room.bridge.tower.blue",
+          "room_id": "spatial.parcel.maze.house.001.part02.room00"
+        }
+      ],
+      "required_tower_annex_relief_unit_count": 0,
+      "residual_backfill_bridge_counts": {
+
+      },
+      "residual_backfill_building_count": 2,
+      "residual_backfill_frontage_side_count": 0,
+      "residual_backfill_kind_counts": {
+        "row": 1,
+        "tower": 1
+      },
+      "residual_backfill_massif_edge_contact_count": 0,
+      "residual_backfill_massif_edge_room_count": 0,
+      "residual_backfill_overhead_route_cell_count": 0,
+      "residual_backfill_private_cell_count": 24,
+      "residual_backfill_terrain_root_count": 2,
+      "residual_backfill_terrain_rooted_established_access_count": 2,
+      "retained_foundation_built_in_cell_count": 0,
+      "retained_foundation_cell_count": 135,
+      "retained_foundation_column_count": 40,
+      "retained_foundation_max_depth_bands": 2,
+      "retained_private_mass_cell_count": 558,
+      "retained_private_mass_ratio": 0.36046511627907,
+      "retained_stone_bearing_room_count": 0,
+      "retained_support_rebind_count": 0,
+      "rich_flat_roof_garden_count": 0,
+      "rich_flat_roof_garden_fallback_count": 0,
+      "roof_clearance_facade_fallback_count": 0,
+      "roof_junction_trim_unit_count": 0,
+      "roof_neighborhood_flattened_room_count": 19,
+      "roof_neighborhood_join_count": 30,
+      "roof_region_count": 30,
+      "roof_unit_count": 28,
+      "roofed_room_count": 26,
+      "room_composition_diagnostics_collected": false,
+      "room_composition_pass_count": 1,
+      "room_outcropping_candidate_count": 2,
+      "room_outcropping_count": 0,
+      "room_outcropping_support_feature_count": 0,
+      "room_overhang_support_count": 0,
+      "room_overhang_support_feature_count": 0,
+      "room_pair_displaced_parcel_count": 0,
+      "room_stamp_count": 31,
+      "room_support_crown_exclusion_cell_count": 0,
+      "room_volume_budget_max": 20,
+      "room_volume_budget_min": 6,
+      "route_connected_rooftop_court_audit": {
+        "candidate_count": 2,
+        "combined_floor_cell_count": 20,
+        "enclosing_facade_cell_count": 6,
+        "floor_band": 3,
+        "floor_cell_count": 20,
+        "is_irregular": true,
+        "route_inside_cell_count": 0,
+        "route_seam_cell_count": 2,
+        "route_seam_direction": "(0, 0, 1)",
+        "shape": "(0, 0)",
+        "supporting_building_count": 4
+      },
+      "route_connected_rooftop_court_count": 1,
+      "route_connected_rooftop_court_floor_cell_count": 20,
+      "route_vertical_span_bands": 3,
+      "scale_profile_id": "compact",
+      "scale_profile_signature": "compact/r5/core-floor6/target10-14/route8-14/span3-5/lanes5:20/rooms6-20/residual4:1/sky1-2/bal0-1/cant0-0/land5-6/over0.290/court0/market0",
+      "selected_directly_borne_integrated_cantilever_count": 0,
+      "selected_facade_phase_b_count": 3,
+      "selected_integrated_cantilever_count": 0,
+      "setback_cap_recipe_unit_count": 0,
+      "setback_dressed_unit_count": 0,
+      "setback_garden_fallback_count": 0,
+      "setback_garden_unit_count": 0,
+      "setback_lean_to_unit_count": 0,
+      "setback_macro_gable_fallback_count": 2,
+      "setback_macro_gable_unit_count": 0,
+      "setback_plain_cap_unit_count": 0,
+      "setback_shed_unit_count": 0,
+      "setback_terminal_macro_fallback_count": 2,
+      "setback_terrace_fallback_count": 0,
+      "setback_terrace_unit_count": 0,
+      "setback_vocabulary_unit_count": 4,
+      "shared_entrance_room_ids": [
+        "spatial.parcel.maze.house.007.part00.room00"
+      ],
+      "skywalk_feature_count": 0,
+      "source_constructed_feature_count": 5,
+      "source_courtyard_macro_cell_count": 0,
+      "source_courtyard_parcel_side_count": 0,
+      "source_face_count": 1368,
+      "source_macro_walk_count": 24,
+      "source_roof_face_count": 168,
+      "source_route_floor_count": 112,
+      "spatial_addressed_building_volume_count": 11,
+      "spatial_building_volume_count": 34,
+      "spatial_detached_building_volume_count": 0,
+      "spatial_missing_private_parent_count": 0,
+      "spatial_prefab_landmark_building_count": 1,
+      "spatial_private_access_edge_count": 23,
+      "spatial_signature": "860ccfe0669b1a7b663547d2d7977d5da6f33ea48c011535e956023b6bde9c9a",
+      "stair_blocked_door_ids": [
+        "spatial.parcel.maze.house.002.part00.room00"
+      ],
+      "structural_volume_cell_count": 134,
+      "styled_building_lineage_count": 29,
+      "supplemental_route_floor_count": 36,
+      "support_clearance_terminated_storey_count": 0,
+      "support_parent_rebind_count": 0,
+      "support_required_integrated_cantilever_count": 0,
+      "supported_irregular_projection_count": 0,
+      "suppressed_buried_decor_module_count": 0,
+      "suppressed_exterior_traversal_decor_module_count": 0,
+      "suppressed_intruding_module_details": [],
+      "suppressed_party_wall_module_count": 74,
+      "suppressed_street_collider_module_count": 0,
+      "threshold_face_mismatch_count": 0,
+      "tower_annex_count": 0,
+      "tower_annex_diagnostic": {
+        "feature_kind": "tower_annex",
+        "target_source_count": 0
+      },
+      "tower_annex_feature_count": 0,
+      "tower_annex_relief_unit_count": 0,
+      "tower_annex_source_count": 0,
+      "tower_relief_structural_outcropping_count": 0,
+      "unassigned_mass_cell_count": 524,
+      "unclassified_public_private_face_count": 0,
+      "ungrounded_perimeter_parcel_count": 0,
+      "unresolved_integrated_cantilever_count": 0,
+      "unsupported_irregular_projection_count": 0,
+      "unsupported_irregular_projection_details": [],
+      "unsupported_perimeter_parcel_count": 0,
+      "usable_balcony_count": 1,
+      "vertical_floorplate_outcropping_count": 0,
+      "world_road_connections": [
+        {
+          "owner": "settlement.086d41361c6ad2f0.world-road.(1270.97, 408.0)",
+          "points": [
+            "(1260.0, 408.0)",
+            "(1270.97, 408.0)",
+            "(1270.97, 422.4869)",
+            "(1314.0, 422.4869)",
+            "(1314.0, 404.0)"
+          ]
+        },
+        {
+          "owner": "settlement.086d41361c6ad2f0.world-road.(1320.0, 422.487)",
+          "points": [
+            "(1320.0, 432.0)",
+            "(1320.0, 422.4869)",
+            "(1314.0, 422.4869)",
+            "(1314.0, 404.0)"
+          ]
+        }
+      ],
+      "wraparound_balcony_count": 1
+    },
+    "building_count": 35,
+    "cell": "(55, 15)",
+    "instances": 673,
+    "ms": 1622,
+    "outskirts": false,
+    "reason": "accepted",
+    "super_cell": "(1, 0)",
+    "tier": "village",
+    "valid": false,
+    "world_transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (1321.5, 17.08, 381.5)]"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "asset": "sfv.deck.pillar.001",
+    "id": "spatial.fabric.spatial.feature.room_overhang.00.component.00/knee.0",
+    "world": "[X: (0.0, 0.0, 1.421638), Y: (-0.953333, 0.386667, 0.0), Z: (-0.254449, -0.627348, 0.0), O: (-398.84, 23.78, -281.5)]"
+  },
+  {
+    "asset": "sfv.deck.pillar.001",
+    "id": "spatial.fabric.spatial.feature.room_overhang.00.component.00/knee.1",
+    "world": "[X: (0.0, 0.0, 1.421638), Y: (-0.953333, 0.386667, 0.0), Z: (-0.254449, -0.627348, 0.0), O: (-398.84, 23.78, -278.5)]"
+  },
+  {
+    "asset": "sfv.deck.pillar.001",
+    "id": "spatial.fabric.spatial.feature.room_overhang.01.component.00/knee.0",
+    "world": "[X: (1.421638, 0.0, 0.0), Y: (0.0, 0.386667, 0.953333), Z: (0.0, -0.627348, 0.254449), O: (-397.5, 20.78, -241.16)]"
+  },
+  {
+    "asset": "sfv.deck.pillar.001",
+    "id": "spatial.fabric.spatial.feature.room_overhang.01.component.00/knee.1",
+    "world": "[X: (1.421638, 0.0, 0.0), Y: (0.0, 0.386667, 0.953333), Z: (0.0, -0.627348, 0.254449), O: (-394.5, 20.78, -241.16)]"
+  }
+]

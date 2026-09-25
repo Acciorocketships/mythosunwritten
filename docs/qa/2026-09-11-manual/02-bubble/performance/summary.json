@@ -1,0 +1,31 @@
+[
+  {
+    "spot": "01_black",
+    "bubble": true,
+    "implementation": "after",
+    "camera_median_ms": 2.145,
+    "camera_p95_ms": 4.26,
+    "camera_max_ms": 42.595,
+    "total_motion_m": 79.26676940871403,
+    "stopped_ticks": 114,
+    "frozen_ticks": 0,
+    "stopped_contacts": [
+      [
+        "/root/September11MovementQA/FrozenVillage/@StaticBody3D@760",
+        67
+      ],
+      [
+        "/root/September11MovementQA/FrozenVillage/@StaticBody3D@599",
+        47
+      ],
+      [
+        "/root/September11MovementQA/FrozenVillage/@StaticBody3D@598",
+        3
+      ]
+    ],
+    "wall_interval_p95_ms": 30.17,
+    "wall_interval_max_ms": 43.085,
+    "intervals_over_100ms": 0,
+    "zero_requested_motion_ticks": 0
+  }
+]

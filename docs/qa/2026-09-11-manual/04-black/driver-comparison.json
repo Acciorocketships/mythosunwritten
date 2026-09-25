@@ -1,0 +1,22 @@
+[
+  {
+    "tick": 0,
+    "mean_rgb_delta": 0.003549494546903873,
+    "changed_over_20_percent": 0.005419882362887544
+  },
+  {
+    "tick": 180,
+    "mean_rgb_delta": 0.004600810818427399,
+    "changed_over_20_percent": 0.004710315591144607
+  },
+  {
+    "tick": 360,
+    "mean_rgb_delta": 0.004960022706136696,
+    "changed_over_20_percent": 0.004891481575419399
+  },
+  {
+    "tick": 540,
+    "mean_rgb_delta": 0.003849273926994134,
+    "changed_over_20_percent": 0.005827505827505828
+  }
+]

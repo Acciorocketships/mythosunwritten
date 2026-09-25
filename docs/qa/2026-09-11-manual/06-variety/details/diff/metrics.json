@@ -1,0 +1,112 @@
+{
+  "porch0_front": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 13.30086869855967,
+    "roi_mean_abs_rgb": 13.30086869855967,
+    "roi_changed_over_20_fraction": 0.18712721836419752
+  },
+  "porch0_left": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 14.591695119598766,
+    "roi_mean_abs_rgb": 14.591695119598766,
+    "roi_changed_over_20_fraction": 0.2055642361111111
+  },
+  "porch0_right": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 9.702670717592593,
+    "roi_mean_abs_rgb": 9.702670717592593,
+    "roi_changed_over_20_fraction": 0.1478028549382716
+  },
+  "porch0_underside": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 9.937849954989712,
+    "roi_mean_abs_rgb": 9.937849954989712,
+    "roi_changed_over_20_fraction": 0.13497974537037036
+  },
+  "porch1_close_front": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 13.976281667952675,
+    "roi_mean_abs_rgb": 13.976281667952675,
+    "roi_changed_over_20_fraction": 0.2159399112654321
+  },
+  "porch1_close_underside": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 12.419445730452676,
+    "roi_mean_abs_rgb": 12.419445730452676,
+    "roi_changed_over_20_fraction": 0.19743489583333335
+  },
+  "porch1_front": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 5.977605613425926,
+    "roi_mean_abs_rgb": 5.977605613425926,
+    "roi_changed_over_20_fraction": 0.08928096064814815
+  },
+  "porch1_left": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 7.675353330761317,
+    "roi_mean_abs_rgb": 7.675353330761317,
+    "roi_changed_over_20_fraction": 0.10333863811728396
+  },
+  "porch1_right": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.723905446244856,
+    "roi_mean_abs_rgb": 0.723905446244856,
+    "roi_changed_over_20_fraction": 0.015852141203703703
+  },
+  "porch1_underside": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 5.106471354166667,
+    "roi_mean_abs_rgb": 5.106471354166667,
+    "roi_changed_over_20_fraction": 0.08073398919753086
+  }
+}

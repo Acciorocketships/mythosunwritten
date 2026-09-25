@@ -1,0 +1,1090 @@
+[
+  {
+    "group": "native-pairs",
+    "image": "03_block_-30",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.0,
+      "roi_mean_abs_rgb": 0.0,
+      "roi_changed_over_20_fraction": 0.0
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "03_block_-8",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.09055860982510289,
+      "roi_mean_abs_rgb": 0.09055860982510289,
+      "roi_changed_over_20_fraction": 0.0015244020061728396
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "03_block_-90",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.17268486368312758,
+      "roi_mean_abs_rgb": 0.17268486368312758,
+      "roi_changed_over_20_fraction": 0.004368248456790124
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "03_block_0",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.2153396669238683,
+      "roi_mean_abs_rgb": 0.2153396669238683,
+      "roi_changed_over_20_fraction": 0.0040750385802469135
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "03_block_180",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.0,
+      "roi_mean_abs_rgb": 0.0,
+      "roi_changed_over_20_fraction": 0.0
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "03_block_30",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.6518838413065844,
+      "roi_mean_abs_rgb": 0.6518838413065844,
+      "roi_changed_over_20_fraction": 0.01564284336419753
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "03_block_8",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.314965920781893,
+      "roi_mean_abs_rgb": 0.314965920781893,
+      "roi_changed_over_20_fraction": 0.007214023919753086
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "03_block_90",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.49761783050411523,
+      "roi_mean_abs_rgb": 0.49761783050411523,
+      "roi_changed_over_20_fraction": 0.01066550925925926
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "04_village_-30",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.6349654385288066,
+      "roi_mean_abs_rgb": 0.6349654385288066,
+      "roi_changed_over_20_fraction": 0.014703414351851851
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "04_village_-8",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.5356970164609054,
+      "roi_mean_abs_rgb": 0.5356970164609054,
+      "roi_changed_over_20_fraction": 0.012174479166666667
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "04_village_-90",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.21407327031893003,
+      "roi_mean_abs_rgb": 0.21407327031893003,
+      "roi_changed_over_20_fraction": 0.004069251543209877
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "04_village_0",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.4953433641975309,
+      "roi_mean_abs_rgb": 0.4953433641975309,
+      "roi_changed_over_20_fraction": 0.010600405092592592
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "04_village_180",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.17161779835390947,
+      "roi_mean_abs_rgb": 0.17161779835390947,
+      "roi_changed_over_20_fraction": 0.00433449074074074
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "04_village_30",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.20965711805555556,
+      "roi_mean_abs_rgb": 0.20965711805555556,
+      "roi_changed_over_20_fraction": 0.0046566358024691355
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "04_village_8",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.3949422903806584,
+      "roi_mean_abs_rgb": 0.3949422903806584,
+      "roi_changed_over_20_fraction": 0.008409047067901234
+    }
+  },
+  {
+    "group": "native-pairs",
+    "image": "04_village_90",
+    "verdict": "pass",
+    "judgment": "Photo-context regression: warren, garden, roofs and platforms retained. Changes confined to the selected native prefab where visible; zero difference when hidden.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.0,
+      "roi_mean_abs_rgb": 0.0,
+      "roi_changed_over_20_fraction": 0.0
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "lower_-30",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 2.7223384452160495,
+      "roi_mean_abs_rgb": 2.7223384452160495,
+      "roi_changed_over_20_fraction": 0.0494555362654321
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "lower_-8",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 2.5557005529835393,
+      "roi_mean_abs_rgb": 2.5557005529835393,
+      "roi_changed_over_20_fraction": 0.04322193287037037
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "lower_-90",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 3.8853036586934158,
+      "roi_mean_abs_rgb": 3.8853036586934158,
+      "roi_changed_over_20_fraction": 0.06837528935185185
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "lower_0",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 2.593691004372428,
+      "roi_mean_abs_rgb": 2.593691004372428,
+      "roi_changed_over_20_fraction": 0.04272328317901235
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "lower_180",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 3.096371367026749,
+      "roi_mean_abs_rgb": 3.096371367026749,
+      "roi_changed_over_20_fraction": 0.05703462577160494
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "lower_30",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 3.1014620306069958,
+      "roi_mean_abs_rgb": 3.1014620306069958,
+      "roi_changed_over_20_fraction": 0.045989583333333334
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "lower_8",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 2.742549029063786,
+      "roi_mean_abs_rgb": 2.742549029063786,
+      "roi_changed_over_20_fraction": 0.04319637345679012
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "lower_90",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 2.0683587319958847,
+      "roi_mean_abs_rgb": 2.0683587319958847,
+      "roi_changed_over_20_fraction": 0.03684268904320988
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "overview_-30",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 2.3788433963477367,
+      "roi_mean_abs_rgb": 2.3788433963477367,
+      "roi_changed_over_20_fraction": 0.04796826774691358
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "overview_-8",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 2.1338269997427983,
+      "roi_mean_abs_rgb": 2.1338269997427983,
+      "roi_changed_over_20_fraction": 0.04179060570987654
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "overview_-90",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 3.2899138374485597,
+      "roi_mean_abs_rgb": 3.2899138374485597,
+      "roi_changed_over_20_fraction": 0.06013261959876543
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "overview_0",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 2.086446920010288,
+      "roi_mean_abs_rgb": 2.086446920010288,
+      "roi_changed_over_20_fraction": 0.039643132716049384
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "overview_180",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 2.959442193930041,
+      "roi_mean_abs_rgb": 2.959442193930041,
+      "roi_changed_over_20_fraction": 0.05623746141975309
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "overview_30",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 2.0004539609053498,
+      "roi_mean_abs_rgb": 2.0004539609053498,
+      "roi_changed_over_20_fraction": 0.03598186728395062
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "overview_8",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 2.0767107124485595,
+      "roi_mean_abs_rgb": 2.0767107124485595,
+      "roi_changed_over_20_fraction": 0.03822579089506173
+    }
+  },
+  {
+    "group": "seed11-native",
+    "image": "overview_90",
+    "verdict": "pass",
+    "judgment": "Layout: two complete native houses share the source street layout with retained central vertical buildings; lower modular density and changed roofs follow the extra reserved site. No new detached roof/cell or obstructed street visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 1.831844135802469,
+      "roi_mean_abs_rgb": 1.831844135802469,
+      "roi_changed_over_20_fraction": 0.03707368827160494
+    }
+  },
+  {
+    "group": "photo-details",
+    "image": "prefab0_base",
+    "verdict": "context-only",
+    "judgment": "Market awning or neighboring building obscures the complete target/interface. Do not credit this as a clear prefab connection view.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 2.0230750064300413,
+      "roi_mean_abs_rgb": 2.0230750064300413,
+      "roi_changed_over_20_fraction": 0.021963252314814816
+    }
+  },
+  {
+    "group": "photo-details",
+    "image": "prefab0_front",
+    "verdict": "context-only",
+    "judgment": "Market awning or neighboring building obscures the complete target/interface. Do not credit this as a clear prefab connection view.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.8132640496399177,
+      "roi_mean_abs_rgb": 0.8132640496399177,
+      "roi_changed_over_20_fraction": 0.015457658179012346
+    }
+  },
+  {
+    "group": "photo-details",
+    "image": "prefab0_left",
+    "verdict": "pass",
+    "judgment": "Oblique side: native wall, roof and timber floor stay seated; variant chimney/roof changes belong to the prefab. The unchanged second house remains intact.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 3.8162559477880658,
+      "roi_mean_abs_rgb": 3.8162559477880658,
+      "roi_changed_over_20_fraction": 0.054196566358024695
+    }
+  },
+  {
+    "group": "photo-details",
+    "image": "prefab0_rear",
+    "verdict": "context-only",
+    "judgment": "Market awning or neighboring building obscures the complete target/interface. Do not credit this as a clear prefab connection view.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.5722011638374486,
+      "roi_mean_abs_rgb": 0.5722011638374486,
+      "roi_changed_over_20_fraction": 0.00773341049382716
+    }
+  },
+  {
+    "group": "photo-details",
+    "image": "prefab0_right",
+    "verdict": "pass",
+    "judgment": "Oblique side: native wall, roof and timber floor stay seated; variant chimney/roof changes belong to the prefab. The unchanged second house remains intact.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 2.3816607188786008,
+      "roi_mean_abs_rgb": 2.3816607188786008,
+      "roi_changed_over_20_fraction": 0.039849054783950615
+    }
+  },
+  {
+    "group": "photo-details",
+    "image": "prefab1_base",
+    "verdict": "context-only",
+    "judgment": "Market awning or neighboring building obscures the complete target/interface. Do not credit this as a clear prefab connection view.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.0026961162551440328,
+      "roi_mean_abs_rgb": 0.0026961162551440328,
+      "roi_changed_over_20_fraction": 5.4494598765432097e-05
+    }
+  },
+  {
+    "group": "photo-details",
+    "image": "prefab1_front",
+    "verdict": "context-only",
+    "judgment": "Market awning or neighboring building obscures the complete target/interface. Do not credit this as a clear prefab connection view.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.0,
+      "roi_mean_abs_rgb": 0.0,
+      "roi_changed_over_20_fraction": 0.0
+    }
+  },
+  {
+    "group": "photo-details",
+    "image": "prefab1_left",
+    "verdict": "pass",
+    "judgment": "Oblique side: native wall, roof and timber floor stay seated; variant chimney/roof changes belong to the prefab. The unchanged second house remains intact.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.0,
+      "roi_mean_abs_rgb": 0.0,
+      "roi_changed_over_20_fraction": 0.0
+    }
+  },
+  {
+    "group": "photo-details",
+    "image": "prefab1_rear",
+    "verdict": "context-only",
+    "judgment": "Market awning or neighboring building obscures the complete target/interface. Do not credit this as a clear prefab connection view.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.5137078832304527,
+      "roi_mean_abs_rgb": 0.5137078832304527,
+      "roi_changed_over_20_fraction": 0.00892650462962963
+    }
+  },
+  {
+    "group": "photo-details",
+    "image": "prefab1_right",
+    "verdict": "pass",
+    "judgment": "Oblique side: native wall, roof and timber floor stay seated; variant chimney/roof changes belong to the prefab. The unchanged second house remains intact.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.19038210519547324,
+      "roi_mean_abs_rgb": 0.19038210519547324,
+      "roi_changed_over_20_fraction": 0.003880690586419753
+    }
+  },
+  {
+    "group": "seed11-details",
+    "image": "prefab0_base",
+    "verdict": "context-only",
+    "judgment": "Awning obscures part of the prefab; inspect the clear door and side views for complete interface evidence.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 12.518772183641975,
+      "roi_mean_abs_rgb": 12.518772183641975,
+      "roi_changed_over_20_fraction": 0.1969945987654321
+    }
+  },
+  {
+    "group": "seed11-details",
+    "image": "prefab0_front",
+    "verdict": "context-only",
+    "judgment": "Awning obscures part of the prefab; inspect the clear door and side views for complete interface evidence.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 13.370690425668725,
+      "roi_mean_abs_rgb": 13.370690425668725,
+      "roi_changed_over_20_fraction": 0.24089457947530865
+    }
+  },
+  {
+    "group": "seed11-details",
+    "image": "prefab0_left",
+    "verdict": "pass",
+    "judgment": "Native door/side, roof and floor contacts pass. Added house occupies the source reservation formerly partitioned into modular rooms. All public capsule positions/crossings remain identical.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 8.81189252186214,
+      "roi_mean_abs_rgb": 8.81189252186214,
+      "roi_changed_over_20_fraction": 0.16219087577160493
+    }
+  },
+  {
+    "group": "seed11-details",
+    "image": "prefab0_rear",
+    "verdict": "pass",
+    "judgment": "Native door/side, roof and floor contacts pass. Added house occupies the source reservation formerly partitioned into modular rooms. All public capsule positions/crossings remain identical.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 10.773912037037038,
+      "roi_mean_abs_rgb": 10.773912037037038,
+      "roi_changed_over_20_fraction": 0.21288676697530864
+    }
+  },
+  {
+    "group": "seed11-details",
+    "image": "prefab0_right",
+    "verdict": "pass",
+    "judgment": "Native door/side, roof and floor contacts pass. Added house occupies the source reservation formerly partitioned into modular rooms. All public capsule positions/crossings remain identical.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 28.53325987011317,
+      "roi_mean_abs_rgb": 28.53325987011317,
+      "roi_changed_over_20_fraction": 0.44797984182098766
+    }
+  },
+  {
+    "group": "seed11-details",
+    "image": "prefab1_base",
+    "verdict": "context-only",
+    "judgment": "Awning obscures part of the prefab; inspect the clear door and side views for complete interface evidence.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 42.01987702546296,
+      "roi_mean_abs_rgb": 42.01987702546296,
+      "roi_changed_over_20_fraction": 0.6734784915123457
+    }
+  },
+  {
+    "group": "seed11-details",
+    "image": "prefab1_front",
+    "verdict": "context-only",
+    "judgment": "Awning obscures part of the prefab; inspect the clear door and side views for complete interface evidence.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 42.95032439557613,
+      "roi_mean_abs_rgb": 42.95032439557613,
+      "roi_changed_over_20_fraction": 0.7367197145061728
+    }
+  },
+  {
+    "group": "seed11-details",
+    "image": "prefab1_left",
+    "verdict": "pass",
+    "judgment": "Native door/side, roof and floor contacts pass. Added house occupies the source reservation formerly partitioned into modular rooms. All public capsule positions/crossings remain identical.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 40.48870949074074,
+      "roi_mean_abs_rgb": 40.48870949074074,
+      "roi_changed_over_20_fraction": 0.709242862654321
+    }
+  },
+  {
+    "group": "seed11-details",
+    "image": "prefab1_rear",
+    "verdict": "pass",
+    "judgment": "Native door/side, roof and floor contacts pass. Added house occupies the source reservation formerly partitioned into modular rooms. All public capsule positions/crossings remain identical.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 41.70291313014403,
+      "roi_mean_abs_rgb": 41.70291313014403,
+      "roi_changed_over_20_fraction": 0.8525554591049382
+    }
+  },
+  {
+    "group": "seed11-details",
+    "image": "prefab1_right",
+    "verdict": "pass",
+    "judgment": "Native door/side, roof and floor contacts pass. Added house occupies the source reservation formerly partitioned into modular rooms. All public capsule positions/crossings remain identical.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 30.98748521090535,
+      "roi_mean_abs_rgb": 30.98748521090535,
+      "roi_changed_over_20_fraction": 0.5371797839506173
+    }
+  },
+  {
+    "group": "live",
+    "image": "01_black_-8",
+    "verdict": "pass",
+    "judgment": "Matched production camera: selected prefab roof/chimney change where visible, unchanged warren/ground/skywalk courses. Small light/dither residuals remain outside the prefab. No new black corruption, unsupported native shell or broken street handoff visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.4531251607510288,
+      "roi_mean_abs_rgb": 0.4531251607510288,
+      "roi_changed_over_20_fraction": 0.00047405478395061727
+    }
+  },
+  {
+    "group": "live",
+    "image": "01_black_0",
+    "verdict": "pass",
+    "judgment": "Matched production camera: selected prefab roof/chimney change where visible, unchanged warren/ground/skywalk courses. Small light/dither residuals remain outside the prefab. No new black corruption, unsupported native shell or broken street handoff visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.5680664866255144,
+      "roi_mean_abs_rgb": 0.5680664866255144,
+      "roi_changed_over_20_fraction": 0.0002907986111111111
+    }
+  },
+  {
+    "group": "live",
+    "image": "01_black_8",
+    "verdict": "pass",
+    "judgment": "Matched production camera: selected prefab roof/chimney change where visible, unchanged warren/ground/skywalk courses. Small light/dither residuals remain outside the prefab. No new black corruption, unsupported native shell or broken street handoff visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.4735728523662551,
+      "roi_mean_abs_rgb": 0.4735728523662551,
+      "roi_changed_over_20_fraction": 0.00030140817901234566
+    }
+  },
+  {
+    "group": "live",
+    "image": "02_bubble_-8",
+    "verdict": "pass",
+    "judgment": "Matched production camera: selected prefab roof/chimney change where visible, unchanged warren/ground/skywalk courses. Small light/dither residuals remain outside the prefab. No new black corruption, unsupported native shell or broken street handoff visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.38761831275720166,
+      "roi_mean_abs_rgb": 0.38761831275720166,
+      "roi_changed_over_20_fraction": 0.00022858796296296296
+    }
+  },
+  {
+    "group": "live",
+    "image": "02_bubble_0",
+    "verdict": "pass",
+    "judgment": "Matched production camera: selected prefab roof/chimney change where visible, unchanged warren/ground/skywalk courses. Small light/dither residuals remain outside the prefab. No new black corruption, unsupported native shell or broken street handoff visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.5730055619855967,
+      "roi_mean_abs_rgb": 0.5730055619855967,
+      "roi_changed_over_20_fraction": 6.558641975308642e-05
+    }
+  },
+  {
+    "group": "live",
+    "image": "02_bubble_8",
+    "verdict": "pass",
+    "judgment": "Matched production camera: selected prefab roof/chimney change where visible, unchanged warren/ground/skywalk courses. Small light/dither residuals remain outside the prefab. No new black corruption, unsupported native shell or broken street handoff visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.39642955889917697,
+      "roi_mean_abs_rgb": 0.39642955889917697,
+      "roi_changed_over_20_fraction": 0.00014515817901234569
+    }
+  },
+  {
+    "group": "live",
+    "image": "03_block_-8",
+    "verdict": "pass",
+    "judgment": "Matched production camera: selected prefab roof/chimney change where visible, unchanged warren/ground/skywalk courses. Small light/dither residuals remain outside the prefab. No new black corruption, unsupported native shell or broken street handoff visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.6077081725823045,
+      "roi_mean_abs_rgb": 0.6077081725823045,
+      "roi_changed_over_20_fraction": 0.0019000771604938272
+    }
+  },
+  {
+    "group": "live",
+    "image": "03_block_0",
+    "verdict": "pass",
+    "judgment": "Matched production camera: selected prefab roof/chimney change where visible, unchanged warren/ground/skywalk courses. Small light/dither residuals remain outside the prefab. No new black corruption, unsupported native shell or broken street handoff visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.648500675154321,
+      "roi_mean_abs_rgb": 0.648500675154321,
+      "roi_changed_over_20_fraction": 0.004180652006172839
+    }
+  },
+  {
+    "group": "live",
+    "image": "03_block_8",
+    "verdict": "pass",
+    "judgment": "Matched production camera: selected prefab roof/chimney change where visible, unchanged warren/ground/skywalk courses. Small light/dither residuals remain outside the prefab. No new black corruption, unsupported native shell or broken street handoff visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.7527748842592593,
+      "roi_mean_abs_rgb": 0.7527748842592593,
+      "roi_changed_over_20_fraction": 0.006440489969135803
+    }
+  },
+  {
+    "group": "live",
+    "image": "04_village_-8",
+    "verdict": "pass",
+    "judgment": "Matched production camera: selected prefab roof/chimney change where visible, unchanged warren/ground/skywalk courses. Small light/dither residuals remain outside the prefab. No new black corruption, unsupported native shell or broken street handoff visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 1.002414480452675,
+      "roi_mean_abs_rgb": 1.002414480452675,
+      "roi_changed_over_20_fraction": 0.013220486111111112
+    }
+  },
+  {
+    "group": "live",
+    "image": "04_village_0",
+    "verdict": "pass",
+    "judgment": "Matched production camera: selected prefab roof/chimney change where visible, unchanged warren/ground/skywalk courses. Small light/dither residuals remain outside the prefab. No new black corruption, unsupported native shell or broken street handoff visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.9434005272633745,
+      "roi_mean_abs_rgb": 0.9434005272633745,
+      "roi_changed_over_20_fraction": 0.011751543209876543
+    }
+  },
+  {
+    "group": "live",
+    "image": "04_village_8",
+    "verdict": "pass",
+    "judgment": "Matched production camera: selected prefab roof/chimney change where visible, unchanged warren/ground/skywalk courses. Small light/dither residuals remain outside the prefab. No new black corruption, unsupported native shell or broken street handoff visible.",
+    "metrics": {
+      "roi": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "mean_abs_rgb": 0.8940436921296296,
+      "roi_mean_abs_rgb": 0.8940436921296296,
+      "roi_changed_over_20_fraction": 0.009740065586419754
+    }
+  }
+]

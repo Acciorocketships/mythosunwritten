@@ -1,0 +1,30 @@
+{
+  "arguments": [
+    "--frozen",
+    "--snapshot",
+    "res://docs/qa/2026-09-11-manual/10-unified-city/tower-live/village.scn",
+    "--window",
+    "--gpu-watch",
+    "--frame-marker",
+    "--mixed",
+    "--photo-route",
+    "--ticks",
+    "720",
+    "--spot",
+    "03_block",
+    "--output",
+    "res://docs/qa/2026-09-11-manual/10-unified-city/tower-gpu"
+  ],
+  "embedded": false,
+  "version": {
+    "build": "official",
+    "hash": "f62fdbde15035c5576dad93e586201f4d41ef0cb",
+    "hex": 263425,
+    "major": 4,
+    "minor": 5,
+    "patch": 1,
+    "status": "stable",
+    "string": "4.5.1-stable (official)",
+    "timestamp": 0
+  }
+}

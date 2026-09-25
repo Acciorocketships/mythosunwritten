@@ -1,0 +1,8 @@
+{
+  "frames": 3601,
+  "max_black": 0,
+  "max_invalid_rgb": 0,
+  "matched": 3569,
+  "mismatched": 32,
+  "run": "second embedded original-adapter baseline; completed before next aborted original launch"
+}

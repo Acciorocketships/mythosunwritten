@@ -1,0 +1,112 @@
+{
+  "prefab0_base": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 2.0230750064300413,
+    "roi_mean_abs_rgb": 2.0230750064300413,
+    "roi_changed_over_20_fraction": 0.021963252314814816
+  },
+  "prefab0_front": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.8132640496399177,
+    "roi_mean_abs_rgb": 0.8132640496399177,
+    "roi_changed_over_20_fraction": 0.015457658179012346
+  },
+  "prefab0_left": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 3.8162559477880658,
+    "roi_mean_abs_rgb": 3.8162559477880658,
+    "roi_changed_over_20_fraction": 0.054196566358024695
+  },
+  "prefab0_rear": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.5722011638374486,
+    "roi_mean_abs_rgb": 0.5722011638374486,
+    "roi_changed_over_20_fraction": 0.00773341049382716
+  },
+  "prefab0_right": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 2.3816607188786008,
+    "roi_mean_abs_rgb": 2.3816607188786008,
+    "roi_changed_over_20_fraction": 0.039849054783950615
+  },
+  "prefab1_base": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.0026961162551440328,
+    "roi_mean_abs_rgb": 0.0026961162551440328,
+    "roi_changed_over_20_fraction": 5.4494598765432097e-05
+  },
+  "prefab1_front": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.0,
+    "roi_mean_abs_rgb": 0.0,
+    "roi_changed_over_20_fraction": 0.0
+  },
+  "prefab1_left": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.0,
+    "roi_mean_abs_rgb": 0.0,
+    "roi_changed_over_20_fraction": 0.0
+  },
+  "prefab1_rear": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.5137078832304527,
+    "roi_mean_abs_rgb": 0.5137078832304527,
+    "roi_changed_over_20_fraction": 0.00892650462962963
+  },
+  "prefab1_right": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.19038210519547324,
+    "roi_mean_abs_rgb": 0.19038210519547324,
+    "roi_changed_over_20_fraction": 0.003880690586419753
+  }
+}

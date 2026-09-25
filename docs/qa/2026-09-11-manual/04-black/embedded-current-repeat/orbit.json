@@ -1,0 +1,98 @@
+[
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.38105, 0.866186, -0.323301), Z: (-0.660486, 0.499723, 0.560388), O: (-428.8256, 41.1, -245.879)]",
+    "partial": false,
+    "player": "(-409.0, 25.1, -262.55)",
+    "selected": 44,
+    "shaders": 9,
+    "tick": 0,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.336247, 0.897523, -0.285288), Z: (-0.684382, 0.440967, 0.580663), O: (-415.1459, 30.06, -257.4855)]",
+    "partial": false,
+    "player": "(-409.1159, 25.1, -262.6088)",
+    "selected": 20,
+    "shaders": 10,
+    "tick": 180,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.336247, 0.897523, -0.285288), Z: (-0.684382, 0.440967, 0.580663), O: (-395.2459, 23.46, -263.2855)]",
+    "partial": false,
+    "player": "(-389.2471, 18.5, -268.539)",
+    "selected": 99,
+    "shaders": 11,
+    "tick": 360,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.23662, 0.0, 0.971602), Y: (0.485531, 0.866186, 0.118244), Z: (-0.841588, 0.499722, -0.204957), O: (-414.5605, 35.09651, -280.2196)]",
+    "partial": false,
+    "player": "(-389.3318, 19.09651, -274.1771)",
+    "selected": 95,
+    "shaders": 11,
+    "tick": 531,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.133762, 0.0, 0.991013), Y: (0.495232, 0.866185, 0.066844), Z: (-0.858401, 0.499723, -0.115863), O: (-415.0654, 35.09732, -277.5528)]",
+    "partial": false,
+    "player": "(-389.3365, 19.09732, -274.1886)",
+    "selected": 95,
+    "shaders": 11,
+    "tick": 532,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.38105, 0.866186, -0.323301), Z: (-0.660486, 0.499723, 0.560388), O: (-409.1256, 35.1, -257.279)]",
+    "partial": false,
+    "player": "(-389.3708, 19.1, -274.2387)",
+    "selected": 102,
+    "shaders": 11,
+    "tick": 540,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.38105, 0.866186, -0.323301), Z: (-0.660486, 0.499723, 0.560388), O: (-428.8256, 41.1, -245.879)]",
+    "partial": false,
+    "player": "(-408.9428, 25.1, -262.8298)",
+    "selected": 44,
+    "shaders": 11,
+    "tick": 720,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.336247, 0.897523, -0.285288), Z: (-0.684382, 0.440967, 0.580663), O: (-415.1459, 30.06, -257.4855)]",
+    "partial": false,
+    "player": "(-408.8565, 25.1, -262.7192)",
+    "selected": 20,
+    "shaders": 11,
+    "tick": 900,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  }
+]

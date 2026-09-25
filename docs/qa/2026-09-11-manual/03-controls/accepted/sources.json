@@ -1,0 +1,130 @@
+{
+  "before/04_village_pin.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/before/04_village_pin.png",
+    "sha256": "b15ae90a3be18d2f069aa8a6d3284dc04a94bffa69700d019e44e7aaf3ae2519"
+  },
+  "after/04_village_pin.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/after/04_village_pin.png",
+    "sha256": "5397c4f61f8f9e998b4781e5a2d1d319f84d381372f0d799e04bc36b9111761f"
+  },
+  "before/04_village_tactical_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/before/04_village_tactical_strafe.png",
+    "sha256": "5d422ca8a5d7b2f46752b1bd3e9008a458db81d77abb4a65cca6e088f7bb1df8"
+  },
+  "after/04_village_tactical_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/after/04_village_tactical_strafe.png",
+    "sha256": "96f1642d6d0fc364530b4f626d75f43fe785e752b57183f81ed22b7e2fe1575a"
+  },
+  "before/04_village_close_mouse.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/mouse-replay/before/04_village_close_mouse.png",
+    "sha256": "5ea2688649ab44c4914e0ad4df923a106443e0935fb4e429f9d322d5ef3c3f83"
+  },
+  "after/04_village_close_mouse.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/mouse-replay/after/04_village_close_mouse.png",
+    "sha256": "739e270eb09281e2ba051e998c5baafb59f5e6a089ba7233b8d637c0015262c4"
+  },
+  "before/04_village_close_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/before/04_village_close_strafe.png",
+    "sha256": "47a2183c48cb2c699f7b8999df5a00f8f6dbe5c4d54769d22943af84b8b89720"
+  },
+  "after/04_village_close_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/after/04_village_close_strafe.png",
+    "sha256": "636f0e98a0debeaa4fffde9d5e9ebcadea0472c19a0d2088c9b77fa8bc01fcea"
+  },
+  "before/03_block_pin.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/before/03_block_pin.png",
+    "sha256": "04e0aa9cfa2dfc19a8947e9b3f96eb87c6a54e44376ff1dd5364124c2ed60f7c"
+  },
+  "after/03_block_pin.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/after/03_block_pin.png",
+    "sha256": "d6372c6748484fa8d1800028bd1a4fc3034f7815db56fca4062387279e253dc6"
+  },
+  "before/03_block_tactical_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/before/03_block_tactical_strafe.png",
+    "sha256": "60c5ba42fdc046f9832f2cc883149557fcfae9b564a90754b76ae94c816d69a6"
+  },
+  "after/03_block_tactical_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/after/03_block_tactical_strafe.png",
+    "sha256": "0e08fc1ae6993a4855f0aad138f2b36bd51e6b23137a9c7373ee085dc69bbd62"
+  },
+  "before/03_block_close_mouse.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/mouse-replay/before/03_block_close_mouse.png",
+    "sha256": "ca1b0cc2cdf81e10cb3137535e5405091507dd28207dbe128e5515231610a444"
+  },
+  "after/03_block_close_mouse.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/mouse-replay/after/03_block_close_mouse.png",
+    "sha256": "7135cfe8fcd8ef0bb4c56ef4b5dad5e3a28e59e4629f47a91d55c8ab58e5289d"
+  },
+  "before/03_block_close_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/before/03_block_close_strafe.png",
+    "sha256": "8b5d24551e87ee59eccc38a864f05125dc69427ea2c00beada65427445c9de1f"
+  },
+  "after/03_block_close_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/after/03_block_close_strafe.png",
+    "sha256": "693b4089f1271efec160290a320d3133fabb1d18a8df8fe894ccbd2c0713051b"
+  },
+  "before/02_bubble_pin.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/before/02_bubble_pin.png",
+    "sha256": "909197faa7726553eda364ab8ac1df093902e968f81eadf6a19e61d6f2870506"
+  },
+  "after/02_bubble_pin.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/after/02_bubble_pin.png",
+    "sha256": "8b3ccd13fedc65cda59e9bfbf915e156e91c571ba20eb17c64aa8e918c4ee559"
+  },
+  "before/02_bubble_tactical_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/before/02_bubble_tactical_strafe.png",
+    "sha256": "c790d4b0a3975735c620d9192644487e3ad5a4f769caf525dbc3648b9938f7d6"
+  },
+  "after/02_bubble_tactical_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/after/02_bubble_tactical_strafe.png",
+    "sha256": "5489f4ec4ca40165686f2ac5438125e2f857b8ab6b0b60d4a030278a69103668"
+  },
+  "before/02_bubble_close_mouse.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/mouse-replay/before/02_bubble_close_mouse.png",
+    "sha256": "273a60403eb863379793094c8ea4857079c5bb6936e8a3910cffe916330be75f"
+  },
+  "after/02_bubble_close_mouse.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/mouse-replay/after/02_bubble_close_mouse.png",
+    "sha256": "4b1bd7f8aefd5a0c6fed17716ac3a458df27b7ee2ba2a07be16fd743a2b32ec7"
+  },
+  "before/02_bubble_close_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/before/02_bubble_close_strafe.png",
+    "sha256": "f8aa7a206ec20440b3a8d44b63210527cd0d76c7608e6ef1bd2da3aa09958f4b"
+  },
+  "after/02_bubble_close_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/after/02_bubble_close_strafe.png",
+    "sha256": "2fd191ad5b7bbaabf46d87706b289f60de00aed8803bdf14818449bb13bb5c0d"
+  },
+  "before/01_black_pin.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/before/01_black_pin.png",
+    "sha256": "a65d22a8debe35efb524c06114878acb2698662ce7b66b585eb6aa5c2a44e4b2"
+  },
+  "after/01_black_pin.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/after/01_black_pin.png",
+    "sha256": "4e6b50a8df85b91227143f5cf02a513a220484dd6632730c4c7bcf50c1c48b62"
+  },
+  "before/01_black_tactical_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/before/01_black_tactical_strafe.png",
+    "sha256": "72967cf31409d4a49fe8dce7f3f3e62d1f27681a37a4ceafd4116f1aca0799dc"
+  },
+  "after/01_black_tactical_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/after/01_black_tactical_strafe.png",
+    "sha256": "28676148d06b06af38c35a6f33002259a1044764d7c689998b1e845f9ce56884"
+  },
+  "before/01_black_close_mouse.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/mouse-replay/before/01_black_close_mouse.png",
+    "sha256": "c28066797528103d281bf68c7adcb113edc1877456eb775a875c1998b044febb"
+  },
+  "after/01_black_close_mouse.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/mouse-replay/after/01_black_close_mouse.png",
+    "sha256": "978cd877d2aa6b2abafa76b6c2cb739b0dc89423c1c662e7462927143fb5fb38"
+  },
+  "before/01_black_close_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/before/01_black_close_strafe.png",
+    "sha256": "b5db8fe5804437b3dd2592dd3fcefb90c8ab3ac11e3c2a644eefd685ec5b44dd"
+  },
+  "after/01_black_close_strafe.png": {
+    "source": "docs/qa/2026-09-11-manual/03-controls/final/after/01_black_close_strafe.png",
+    "sha256": "d18dbe3171d61b4718135ffd743837281096e93f96bbed086d5375cb65668db9"
+  }
+}

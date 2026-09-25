@@ -1,0 +1,62 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_september11_camera_roles.gd
+* test_tactical_left_right_motion_turns_the_orbit_and_idle_does_not
+* test_close_view_mouse_look_crosshair_and_release
+* test_close_view_travel_does_not_override_mouse_heading
+* test_tactical_heading_matches_original_close_follow_at_multiple_tick_rates
+* test_close_pitch_limits_and_above_horizon_facing_remain_finite
+* test_heading_survives_switches_and_focus_pause_release
+* test_mouse_boom_resolves_walls_and_ground_in_four_orientations
+* test_reset_uses_explicitly_relocated_eye
+* test_close_crosshair_clears_avatar_hat_in_initial_framing
+9/9 passed.
+
+
+res://tests/test_tactical_controls.gd
+* test_native_capture_begins_in_the_free_centre_before_any_edge_can_lose_focus
+* test_player_input_preserves_original_speed_independent_of_facing
+* test_drag_starts_only_beyond_the_actual_edge_and_counts_overflow
+* test_drag_gain_tracks_field_of_view_and_viewport_scaling
+* test_virtual_cursor_keeps_raw_input_across_edges_inward_motion_and_clicks
+* test_camera_relative_wasd_and_diagonal_speed_in_every_quadrant
+* test_facing_is_independent_of_travel_and_uses_global_camera_transform
+* test_directional_blend_addresses_model_right_and_adjacent_diagonals
+* test_character_faces_aim_while_standing_and_strafes_without_changing_travel
+9/9 passed.
+
+
+res://tests/test_camera_obstruction.gd
+* test_f7_switches_original_and_wider_tactical_views_without_key_repeat
+* test_unobstructed_boom_reaches_the_requested_pose
+* test_swept_sphere_stops_the_boom_before_a_wall
+* test_ceiling_probe_lowers_the_pivot_but_preserves_head_level
+* test_excluded_body_cannot_collapse_its_own_camera_boom
+* test_world_camera_uses_visibility_bubble_without_collapsing_tactical_orbit
+6/6 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               3
+Tests                24
+Passing Tests        24
+Asserts             166
+Time              6.594s
+
+
+---- All tests passed! ----
+

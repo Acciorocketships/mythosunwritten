@@ -1,0 +1,73 @@
+[
+  {
+    "assets": {
+      "kaykit.terrace.2x2x2": 1,
+      "kaykit.terrace.2x2x8": 6,
+      "kaykit.terrace.4x2x2": 2,
+      "kaykit.terrace.4x2x4": 2,
+      "kaykit.terrace.8x4x4": 2
+    },
+    "kinds": {
+      "face": 13
+    },
+    "native_collision_triangles": 6804,
+    "shape": "face",
+    "unchanged": {
+      "apron_arrays": true,
+      "cliffs": true,
+      "collision_faces": true,
+      "surface_arrays": true,
+      "wall_arrays": true,
+      "wall_collision_arrays": true
+    }
+  },
+  {
+    "assets": {
+      "kaykit.terrace.2x2x2": 1,
+      "kaykit.terrace.2x2x4": 1,
+      "kaykit.terrace.2x2x8": 4,
+      "kaykit.terrace.4x2x2": 3,
+      "kaykit.terrace.4x2x4": 2,
+      "kaykit.terrace.4x4x2": 1,
+      "kaykit.terrace.8x4x4": 1
+    },
+    "kinds": {
+      "face": 12,
+      "outer": 1
+    },
+    "native_collision_triangles": 6580,
+    "shape": "outer",
+    "unchanged": {
+      "apron_arrays": true,
+      "cliffs": true,
+      "collision_faces": true,
+      "surface_arrays": true,
+      "wall_arrays": true,
+      "wall_collision_arrays": true
+    }
+  },
+  {
+    "assets": {
+      "kaykit.terrace.2x2x2": 1,
+      "kaykit.terrace.2x2x8": 4,
+      "kaykit.terrace.4x2x2": 1,
+      "kaykit.terrace.4x2x4": 3,
+      "kaykit.terrace.4x2x8": 1,
+      "kaykit.terrace.8x4x4": 2
+    },
+    "kinds": {
+      "face": 11,
+      "inner": 1
+    },
+    "native_collision_triangles": 6624,
+    "shape": "inner",
+    "unchanged": {
+      "apron_arrays": true,
+      "cliffs": true,
+      "collision_faces": true,
+      "surface_arrays": true,
+      "wall_arrays": true,
+      "wall_collision_arrays": true
+    }
+  }
+]

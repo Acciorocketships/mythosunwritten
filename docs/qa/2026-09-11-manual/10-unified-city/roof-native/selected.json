@@ -1,0 +1,14 @@
+[
+  {
+    "bounds": "[P: (13.92174, 3.0, -24.75), S: (3.843346, 2.172858, 6.0)]",
+    "id": "spatial.roof.spatial.maze_back.01.room00",
+    "recipe": "roof.row.orange.dormer.left",
+    "transform": "[X: (0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, 0.0), O: (15.0, 3.0, -21.0)]"
+  },
+  {
+    "bounds": "[P: (11.25, 3.0, -27.75), S: (3.0, 2.14516, 6.0)]",
+    "id": "spatial.roof.spatial.residual.01.room00",
+    "recipe": "roof.terminal.tight.slim.orange",
+    "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (13.5, 3.0, -24.0)]"
+  }
+]

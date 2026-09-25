@@ -1,0 +1,170 @@
+{
+  "01_black_0/Original": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "01_black_0/Current": {
+    "black_fraction": 1.4467592592592592e-06,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "02_bubble_0/Original": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "02_bubble_0/Current": {
+    "black_fraction": 4.822530864197531e-07,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "03_block_0/Original": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "03_block_0/Current": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "04_village_0/Original": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "04_village_0/Current": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "01_black_-8/Original": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "01_black_-8/Current": {
+    "black_fraction": 4.822530864197531e-07,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "02_bubble_-8/Original": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "02_bubble_-8/Current": {
+    "black_fraction": 4.822530864197531e-07,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "03_block_-8/Original": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "03_block_-8/Current": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "04_village_-8/Original": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "04_village_-8/Current": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "01_black_8/Original": {
+    "black_fraction": 9.645061728395062e-07,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "01_black_8/Current": {
+    "black_fraction": 9.645061728395062e-07,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "02_bubble_8/Original": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "02_bubble_8/Current": {
+    "black_fraction": 4.822530864197531e-07,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "03_block_8/Original": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "03_block_8/Current": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "04_village_8/Original": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  "04_village_8/Current": {
+    "black_fraction": 0.0,
+    "size": [
+      1920,
+      1080
+    ]
+  }
+}

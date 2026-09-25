@@ -1,0 +1,39 @@
+{
+  "status": "reproduced; stopped after persistent GPU presentation failure",
+  "native_game_window": "visibly fully black after failure; editor toolbar remains visible",
+  "fresh_anomalies": [
+    {
+      "frame": 532,
+      "black": 7762,
+      "invalid": 0,
+      "samples": 9216,
+      "camera": "[X: (-0.23662, 0.0, 0.971602), Y: (0.485531, 0.866186, 0.118244), Z: (-0.841588, 0.499722, -0.204957), O: (-414.5605, 35.09651, -280.2196)]",
+      "camera_origin": [
+        -414.560485839844,
+        35.0965118408203,
+        -280.219573974609
+      ],
+      "invalid_rgb": 0,
+      "rendered_tick": 531,
+      "expected_tick": 531,
+      "tag_matches": true
+    },
+    {
+      "frame": 533,
+      "black": 6606,
+      "invalid": 2598,
+      "samples": 9216,
+      "camera": "[X: (-0.133762, 0.0, 0.991013), Y: (0.495232, 0.866185, 0.066844), Z: (-0.858401, 0.499723, -0.115863), O: (-415.0654, 35.09732, -277.5528)]",
+      "camera_origin": [
+        -415.0654296875,
+        35.0973167419434,
+        -277.552795410156
+      ],
+      "invalid_rgb": 2598,
+      "rendered_tick": 532,
+      "expected_tick": 532,
+      "tag_matches": true
+    }
+  ],
+  "later_stale_results_excluded": true
+}

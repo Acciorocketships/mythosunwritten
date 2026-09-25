@@ -1,0 +1,79 @@
+[
+  {
+    "source": "gpu-original",
+    "frame": 481,
+    "same_camera": true,
+    "before_black": 9210,
+    "after_black": 0,
+    "before_invalid": 0,
+    "after_invalid": 0,
+    "invalid_marker_pixels": 0,
+    "finite_preview_mean_rgb_delta": 26.419017650462962
+  },
+  {
+    "source": "gpu-original-repeat",
+    "frame": 5357,
+    "same_camera": true,
+    "before_black": 0,
+    "after_black": 0,
+    "before_invalid": 12,
+    "after_invalid": 0,
+    "invalid_marker_pixels": 12,
+    "finite_preview_mean_rgb_delta": 3.0726857887874837
+  },
+  {
+    "source": "gpu-original-repeat",
+    "frame": 5358,
+    "same_camera": true,
+    "before_black": 0,
+    "after_black": 0,
+    "before_invalid": 11,
+    "after_invalid": 0,
+    "invalid_marker_pixels": 11,
+    "finite_preview_mean_rgb_delta": 3.2297664312873438
+  },
+  {
+    "source": "gpu-original-repeat",
+    "frame": 5359,
+    "same_camera": true,
+    "before_black": 0,
+    "after_black": 0,
+    "before_invalid": 8,
+    "after_invalid": 0,
+    "invalid_marker_pixels": 8,
+    "finite_preview_mean_rgb_delta": 3.4161960613958877
+  },
+  {
+    "source": "gpu-original-repeat",
+    "frame": 5360,
+    "same_camera": true,
+    "before_black": 0,
+    "after_black": 0,
+    "before_invalid": 5,
+    "after_invalid": 0,
+    "invalid_marker_pixels": 5,
+    "finite_preview_mean_rgb_delta": 3.4034306807078494
+  },
+  {
+    "source": "gpu-original-repeat",
+    "frame": 6108,
+    "same_camera": true,
+    "before_black": 0,
+    "after_black": 0,
+    "before_invalid": 411,
+    "after_invalid": 0,
+    "invalid_marker_pixels": 411,
+    "finite_preview_mean_rgb_delta": 4.173575619912929
+  },
+  {
+    "source": "gpu-original-repeat",
+    "frame": 6110,
+    "same_camera": true,
+    "before_black": 0,
+    "after_black": 0,
+    "before_invalid": 207,
+    "after_invalid": 0,
+    "invalid_marker_pixels": 207,
+    "finite_preview_mean_rgb_delta": 4.137825137825137
+  }
+]

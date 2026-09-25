@@ -1,0 +1,130 @@
+[
+  {
+    "spot": "04_village",
+    "bubble": true,
+    "camera_median_ms": 0.608,
+    "camera_p95_ms": 12.183,
+    "camera_max_ms": 34.155,
+    "total_motion_m": 24.89569127932191,
+    "stopped_ticks": 26,
+    "frozen_ticks": 0,
+    "stopped_contacts": [
+      [
+        "/root/September11MovementQA/World/FieldTerrain/ManmadeFeatures/FeatureBlock_-3_-2/FeatureCollision",
+        44
+      ]
+    ]
+  },
+  {
+    "spot": "04_village",
+    "bubble": false,
+    "camera_median_ms": 0.023,
+    "camera_p95_ms": 0.046,
+    "camera_max_ms": 0.888,
+    "total_motion_m": 24.895843133330345,
+    "stopped_ticks": 26,
+    "frozen_ticks": 0,
+    "stopped_contacts": [
+      [
+        "/root/September11MovementQA/World/FieldTerrain/ManmadeFeatures/FeatureBlock_-3_-2/FeatureCollision",
+        44
+      ]
+    ]
+  },
+  {
+    "spot": "03_block",
+    "bubble": true,
+    "camera_median_ms": 0.8545,
+    "camera_p95_ms": 8.726,
+    "camera_max_ms": 25.551,
+    "total_motion_m": 23.698418870568275,
+    "stopped_ticks": 12,
+    "frozen_ticks": 0,
+    "stopped_contacts": [
+      [
+        "/root/September11MovementQA/World/FieldTerrain/ManmadeFeatures/FeatureBlock_-3_-2/FeatureCollision",
+        12
+      ]
+    ]
+  },
+  {
+    "spot": "03_block",
+    "bubble": false,
+    "camera_median_ms": 0.023,
+    "camera_p95_ms": 0.057,
+    "camera_max_ms": 1.51,
+    "total_motion_m": 23.698262363672256,
+    "stopped_ticks": 12,
+    "frozen_ticks": 0,
+    "stopped_contacts": [
+      [
+        "/root/September11MovementQA/World/FieldTerrain/ManmadeFeatures/FeatureBlock_-3_-2/FeatureCollision",
+        12
+      ]
+    ]
+  },
+  {
+    "spot": "02_bubble",
+    "bubble": true,
+    "camera_median_ms": 1.0925,
+    "camera_p95_ms": 7.275,
+    "camera_max_ms": 16.81,
+    "total_motion_m": 22.573702133260664,
+    "stopped_ticks": 4,
+    "frozen_ticks": 0,
+    "stopped_contacts": [
+      [
+        "/root/September11MovementQA/World/FieldTerrain/ManmadeFeatures/FeatureBlock_-3_-2/FeatureCollision",
+        5
+      ]
+    ]
+  },
+  {
+    "spot": "02_bubble",
+    "bubble": false,
+    "camera_median_ms": 0.023,
+    "camera_p95_ms": 0.046,
+    "camera_max_ms": 1.647,
+    "total_motion_m": 22.722744446247816,
+    "stopped_ticks": 11,
+    "frozen_ticks": 0,
+    "stopped_contacts": [
+      [
+        "/root/September11MovementQA/World/FieldTerrain/ManmadeFeatures/FeatureBlock_-3_-2/FeatureCollision",
+        11
+      ]
+    ]
+  },
+  {
+    "spot": "01_black",
+    "bubble": true,
+    "camera_median_ms": 1.1125,
+    "camera_p95_ms": 7.135,
+    "camera_max_ms": 28.1,
+    "total_motion_m": 17.969457625411454,
+    "stopped_ticks": 36,
+    "frozen_ticks": 0,
+    "stopped_contacts": [
+      [
+        "/root/September11MovementQA/World/FieldTerrain/ManmadeFeatures/FeatureBlock_-3_-2/FeatureCollision",
+        37
+      ]
+    ]
+  },
+  {
+    "spot": "01_black",
+    "bubble": false,
+    "camera_median_ms": 0.023,
+    "camera_p95_ms": 0.033,
+    "camera_max_ms": 1.344,
+    "total_motion_m": 17.970241103321317,
+    "stopped_ticks": 36,
+    "frozen_ticks": 0,
+    "stopped_contacts": [
+      [
+        "/root/September11MovementQA/World/FieldTerrain/ManmadeFeatures/FeatureBlock_-3_-2/FeatureCollision",
+        37
+      ]
+    ]
+  }
+]

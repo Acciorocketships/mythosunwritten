@@ -1,0 +1,62 @@
+{
+  "01_black_-8": {
+    "changed_inside_circle": 363074,
+    "changed_outside_circle": 0,
+    "outside_fraction": 0.0
+  },
+  "01_black_0": {
+    "changed_inside_circle": 375231,
+    "changed_outside_circle": 51,
+    "outside_fraction": 2.4594907407407408e-05
+  },
+  "01_black_8": {
+    "changed_inside_circle": 379695,
+    "changed_outside_circle": 0,
+    "outside_fraction": 0.0
+  },
+  "02_bubble_-8": {
+    "changed_inside_circle": 298737,
+    "changed_outside_circle": 2,
+    "outside_fraction": 9.645061728395062e-07
+  },
+  "02_bubble_0": {
+    "changed_inside_circle": 270033,
+    "changed_outside_circle": 7,
+    "outside_fraction": 3.375771604938272e-06
+  },
+  "02_bubble_8": {
+    "changed_inside_circle": 291761,
+    "changed_outside_circle": 46,
+    "outside_fraction": 2.218364197530864e-05
+  },
+  "03_block_-8": {
+    "changed_inside_circle": 87133,
+    "changed_outside_circle": 43,
+    "outside_fraction": 2.0736882716049384e-05
+  },
+  "03_block_0": {
+    "changed_inside_circle": 81093,
+    "changed_outside_circle": 42,
+    "outside_fraction": 2.025462962962963e-05
+  },
+  "03_block_8": {
+    "changed_inside_circle": 72673,
+    "changed_outside_circle": 71,
+    "outside_fraction": 3.423996913580247e-05
+  },
+  "04_village_-8": {
+    "changed_inside_circle": 20990,
+    "changed_outside_circle": 213,
+    "outside_fraction": 0.00010271990740740741
+  },
+  "04_village_0": {
+    "changed_inside_circle": 23707,
+    "changed_outside_circle": 108,
+    "outside_fraction": 5.208333333333334e-05
+  },
+  "04_village_8": {
+    "changed_inside_circle": 27281,
+    "changed_outside_circle": 197,
+    "outside_fraction": 9.500385802469136e-05
+  }
+}

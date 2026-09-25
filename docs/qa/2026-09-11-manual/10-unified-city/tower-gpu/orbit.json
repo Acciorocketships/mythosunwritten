@@ -1,0 +1,74 @@
+[
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.000407, 0.0, 1.0), Y: (0.499722, 0.866186, 0.000204), Z: (-0.866186, 0.499722, -0.000353), O: (-435.0, 41.1, -262.7106)]",
+    "partial": false,
+    "player": "(-409.0, 25.1, -262.55)",
+    "selected": 70,
+    "shaders": 10,
+    "tick": 0,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.000409, 0.0, 1.0), Y: (0.440967, 0.897523, 0.00018), Z: (-0.897523, 0.440967, -0.000367), O: (-417.06, 30.06, -262.7033)]",
+    "partial": false,
+    "player": "(-409.1159, 25.1, -262.6088)",
+    "selected": 34,
+    "shaders": 10,
+    "tick": 180,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.000409, 0.0, 1.0), Y: (0.440967, 0.897523, 0.00018), Z: (-0.897523, 0.440967, -0.000367), O: (-397.16, 23.46, -268.5033)]",
+    "partial": false,
+    "player": "(-389.2471, 18.5, -268.539)",
+    "selected": 64,
+    "shaders": 11,
+    "tick": 360,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.809257, 0.0, 0.587455), Y: (0.293564, 0.866186, 0.404404), Z: (-0.508845, 0.499722, -0.700967), O: (-404.5727, 35.09651, -295.1081)]",
+    "partial": false,
+    "player": "(-389.3318, 19.09651, -274.1771)",
+    "selected": 48,
+    "shaders": 11,
+    "tick": 531,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.743416, 0.0, 0.668829), Y: (0.334229, 0.866186, 0.371502), Z: (-0.57933, 0.499722, -0.643936), O: (-406.6887, 35.09732, -293.4038)]",
+    "partial": false,
+    "player": "(-389.3365, 19.09732, -274.1886)",
+    "selected": 49,
+    "shaders": 11,
+    "tick": 532,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.000407, 0.0, 1.0), Y: (0.499722, 0.866186, 0.000204), Z: (-0.866186, 0.499722, -0.000353), O: (-415.3, 35.1, -274.1106)]",
+    "partial": false,
+    "player": "(-389.3708, 19.1, -274.2387)",
+    "selected": 60,
+    "shaders": 11,
+    "tick": 540,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  }
+]

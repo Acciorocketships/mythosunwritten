@@ -1,0 +1,3327 @@
+[
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -2775.03979492188,
+      -2444.37548828125
+    ],
+    "island_radius": 24.2867593324234,
+    "joined": false,
+    "length": 3864,
+    "peninsula": true,
+    "pond": [
+      -2623.60107421875,
+      -4816.8935546875
+    ],
+    "seed": 2697992464,
+    "source": [
+      -4,
+      -4
+    ],
+    "width": 25.3666667938232
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -1934.25744628906,
+      -2557.23681640625
+    ],
+    "island_radius": 26.8395532849232,
+    "joined": false,
+    "length": 3648,
+    "peninsula": false,
+    "pond": [
+      -1120.76843261719,
+      -401.069610595703
+    ],
+    "seed": 2697992464,
+    "source": [
+      -3,
+      -4
+    ],
+    "width": 25.0666675567627
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -1278.40954589844,
+      -2555.833984375
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 552,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      -2,
+      -4
+    ],
+    "width": 20.7666664123535
+  },
+  {
+    "bars": [
+      {
+        "x": -946.9365234375,
+        "z": -3450.994140625
+      }
+    ],
+    "drop": 4.0,
+    "drop_point": [
+      255.523986816406,
+      -2549.15625
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 2724,
+    "peninsula": false,
+    "pond": [
+      -1329.55859375,
+      -3503.06494140625
+    ],
+    "seed": 2697992464,
+    "source": [
+      0,
+      -4
+    ],
+    "width": 96.0
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1489.74816894531,
+      -2617.04345703125
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 768,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      1,
+      -4
+    ],
+    "width": 21.0666675567627
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1795.20642089844,
+      -2568.63330078125
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 3264,
+    "peninsula": false,
+    "pond": [
+      1144.95288085938,
+      -321.870971679688
+    ],
+    "seed": 2697992464,
+    "source": [
+      2,
+      -4
+    ],
+    "width": 24.533332824707
+  },
+  {
+    "bars": [],
+    "drop": 3.88514614105225,
+    "drop_point": [
+      2259.69653320312,
+      -2972.8505859375
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 2820,
+    "peninsula": false,
+    "pond": [
+      1704.32397460938,
+      -5250.03076171875
+    ],
+    "seed": 2697992464,
+    "source": [
+      3,
+      -4
+    ],
+    "width": 23.9166660308838
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      3567.00463867188,
+      -2874.20678710938
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 2700,
+    "peninsula": false,
+    "pond": [
+      4293.3544921875,
+      -4420.640625
+    ],
+    "seed": 2697992464,
+    "source": [
+      4,
+      -4
+    ],
+    "width": 23.75
+  },
+  {
+    "bars": [],
+    "drop": 28.0,
+    "drop_point": [
+      -2429.73901367188,
+      -2195.9853515625
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 360,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      -4,
+      -3
+    ],
+    "width": 20.5
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -463.837982177734,
+      -1855.59973144531
+    ],
+    "island_radius": 25.1247709157243,
+    "joined": false,
+    "length": 2808,
+    "peninsula": false,
+    "pond": [
+      720.750671386719,
+      -246.854385375977
+    ],
+    "seed": 2697992464,
+    "source": [
+      -1,
+      -3
+    ],
+    "width": 23.8999996185303
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1464.98120117188,
+      -1702.45922851562
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 2508,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      1,
+      -3
+    ],
+    "width": 23.4833335876465
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1898.75756835938,
+      -2496.49682617188
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 312,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      2,
+      -3
+    ],
+    "width": 20.4333324432373
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      2847.72998046875,
+      -2028.02746582031
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 2484,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      3,
+      -3
+    ],
+    "width": 23.4500007629395
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      4031.06372070312,
+      -2149.63159179688
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 2940,
+    "peninsula": false,
+    "pond": [
+      5028.505859375,
+      -3206.87084960938
+    ],
+    "seed": 2697992464,
+    "source": [
+      4,
+      -3
+    ],
+    "width": 24.0833339691162
+  },
+  {
+    "bars": [],
+    "drop": 3.73789978027344,
+    "drop_point": [
+      -1725.13928222656,
+      -1071.00939941406
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 396,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      -3,
+      -2
+    ],
+    "width": 20.5499992370605
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      -936.840576171875,
+      -942.951416015625
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 684,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      -2,
+      -2
+    ],
+    "width": 20.9500007629395
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -418.582000732422,
+      -1349.5693359375
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 432,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      -1,
+      -2
+    ],
+    "width": 20.6000003814697
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1431.94897460938,
+      -1420.099609375
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 996,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      2,
+      -2
+    ],
+    "width": 21.3833332061768
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      3338.548828125,
+      -738.588134765625
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 768,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      4,
+      -2
+    ],
+    "width": 21.0666675567627
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -2413.79150390625,
+      -778.995727539062
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1188,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      -4,
+      -1
+    ],
+    "width": 21.6499996185303
+  },
+  {
+    "bars": [
+      {
+        "x": -1417.03674316406,
+        "z": 1604.94287109375
+      },
+      {
+        "x": -1222.91381835938,
+        "z": 1578.91015625
+      }
+    ],
+    "drop": 12.0,
+    "drop_point": [
+      -1316.63488769531,
+      -354.345520019531
+    ],
+    "island_radius": 27.2232779641747,
+    "joined": false,
+    "length": 3096,
+    "peninsula": true,
+    "pond": [
+      -1146.39379882812,
+      1874.85021972656
+    ],
+    "seed": 2697992464,
+    "source": [
+      -3,
+      -1
+    ],
+    "width": 96.0
+  },
+  {
+    "bars": [],
+    "drop": 11.4491729736328,
+    "drop_point": [
+      -860.296752929688,
+      -354.362762451172
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 3444,
+    "peninsula": false,
+    "pond": [
+      -1566.72082519531,
+      -2638.12060546875
+    ],
+    "seed": 2697992464,
+    "source": [
+      -2,
+      -1
+    ],
+    "width": 24.783332824707
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      487.210998535156,
+      -199.721801757812
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 648,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      0,
+      -1
+    ],
+    "width": 20.8999996185303
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1197.31762695312,
+      -7.71365880966187
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 2244,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      1,
+      -1
+    ],
+    "width": 23.1166667938232
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1911.78601074219,
+      -626.058471679688
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 708,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      2,
+      -1
+    ],
+    "width": 20.9833335876465
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      3199.11059570312,
+      -1002.43499755859
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 900,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      3,
+      -1
+    ],
+    "width": 21.25
+  },
+  {
+    "bars": [],
+    "drop": 1.87980079650879,
+    "drop_point": [
+      3199.08959960938,
+      -440.900543212891
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 444,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      4,
+      -1
+    ],
+    "width": 20.6166667938232
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -2297.27905273438,
+      328.806701660156
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 2904,
+    "peninsula": false,
+    "pond": [
+      -3032.77807617188,
+      -1417.28698730469
+    ],
+    "seed": 2697992464,
+    "source": [
+      -3,
+      0
+    ],
+    "width": 24.033332824707
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -548.632995605469,
+      184.686920166016
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1968,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      -1,
+      0
+    ],
+    "width": 22.7333335876465
+  },
+  {
+    "bars": [
+      {
+        "x": 1985.79089355469,
+        "z": 1889.88830566406
+      },
+      {
+        "x": 2143.26977539062,
+        "z": 1835.65246582031
+      }
+    ],
+    "drop": 4.0,
+    "drop_point": [
+      508.485382080078,
+      545.778015136719
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 3264,
+    "peninsula": false,
+    "pond": [
+      2404.23779296875,
+      1813.5986328125
+    ],
+    "seed": 2697992464,
+    "source": [
+      0,
+      0
+    ],
+    "width": 96.0
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      871.986938476562,
+      422.607391357422
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 936,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      1,
+      0
+    ],
+    "width": 21.2999992370605
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      1694.09509277344,
+      637.441467285156
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1404,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      2,
+      0
+    ],
+    "width": 21.9500007629395
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -2896.53540039062,
+      1420.8017578125
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1932,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      -4,
+      1
+    ],
+    "width": 22.6833324432373
+  },
+  {
+    "bars": [],
+    "drop": 16.0,
+    "drop_point": [
+      -2238.93994140625,
+      1083.74011230469
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      -2293.3349609375,
+      1061.73767089844
+    ],
+    "seed": 2697992464,
+    "source": [
+      -3,
+      1
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 16.0,
+    "drop_point": [
+      534.997192382812,
+      895.9111328125
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      556.470153808594,
+      885.022888183594
+    ],
+    "seed": 2697992464,
+    "source": [
+      0,
+      1
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 40.0,
+    "drop_point": [
+      829.075378417969,
+      1389.84265136719
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 552,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      1,
+      1
+    ],
+    "width": 20.7666664123535
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -1656.58959960938,
+      1618.73620605469
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 2124,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      -3,
+      2
+    ],
+    "width": 68.5216979980469
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      -867.557189941406,
+      2041.64184570312
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      -846.999877929688,
+      2085.83276367188
+    ],
+    "seed": 2697992464,
+    "source": [
+      -2,
+      2
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -428.608154296875,
+      2157.58032226562
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 3012,
+    "peninsula": true,
+    "pond": [
+      717.924865722656,
+      4261.294921875
+    ],
+    "seed": 2697992464,
+    "source": [
+      -1,
+      2
+    ],
+    "width": 96.0
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      521.539794921875,
+      1757.69201660156
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 516,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      0,
+      2
+    ],
+    "width": 20.716667175293
+  },
+  {
+    "bars": [],
+    "drop": 1.94787502288818,
+    "drop_point": [
+      2168.54858398438,
+      2123.08740234375
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 636,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      2,
+      2
+    ],
+    "width": 20.8833332061768
+  },
+  {
+    "bars": [],
+    "drop": 17.7143669128418,
+    "drop_point": [
+      3166.2177734375,
+      1873.74096679688
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 2556,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      4,
+      2
+    ],
+    "width": 23.5499992370605
+  },
+  {
+    "bars": [],
+    "drop": 16.0,
+    "drop_point": [
+      -3170.15087890625,
+      2613.24243164062
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1572,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      -4,
+      3
+    ],
+    "width": 22.1833324432373
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      -1579.69250488281,
+      2978.310546875
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 312,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      -3,
+      3
+    ],
+    "width": 20.4333324432373
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -622.480407714844,
+      2921.83154296875
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 2988,
+    "peninsula": false,
+    "pond": [
+      253.840423583984,
+      4555.88818359375
+    ],
+    "seed": 2697992464,
+    "source": [
+      -1,
+      3
+    ],
+    "width": 24.1499996185303
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      214.571212768555,
+      2957.0908203125
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1116,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      0,
+      3
+    ],
+    "width": 21.5499992370605
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      1025.21130371094,
+      3018.11694335938
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 3600,
+    "peninsula": false,
+    "pond": [
+      -604.193664550781,
+      1878.43212890625
+    ],
+    "seed": 2697992464,
+    "source": [
+      1,
+      3
+    ],
+    "width": 25.0
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      2155.9287109375,
+      2877.94262695312
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 3324,
+    "peninsula": false,
+    "pond": [
+      363.605865478516,
+      1377.91882324219
+    ],
+    "seed": 2697992464,
+    "source": [
+      2,
+      3
+    ],
+    "width": 24.6166667938232
+  },
+  {
+    "bars": [],
+    "drop": 28.0,
+    "drop_point": [
+      2604.27954101562,
+      2972.22631835938
+    ],
+    "island_radius": 24.8397298112176,
+    "joined": false,
+    "length": 3516,
+    "peninsula": false,
+    "pond": [
+      3853.50805664062,
+      1172.625
+    ],
+    "seed": 2697992464,
+    "source": [
+      3,
+      3
+    ],
+    "width": 24.8833332061768
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -2954.58715820312,
+      3582.37548828125
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 588,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      -4,
+      4
+    ],
+    "width": 20.8166675567627
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -1415.33227539062,
+      3058.30126953125
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1584,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      -3,
+      4
+    ],
+    "width": 22.2000007629395
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -1022.15130615234,
+      3222.22973632812
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      -992.934692382812,
+      3274.26000976562
+    ],
+    "seed": 2697992464,
+    "source": [
+      -2,
+      4
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -392.348480224609,
+      3216.86206054688
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1248,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      -1,
+      4
+    ],
+    "width": 21.7333335876465
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      205.091018676758,
+      3096.80029296875
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1092,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      0,
+      4
+    ],
+    "width": 21.5166664123535
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      2019.97839355469,
+      3010.6455078125
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 816,
+    "peninsula": false,
+    "pond": null,
+    "seed": 2697992464,
+    "source": [
+      2,
+      4
+    ],
+    "width": 21.1333332061768
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      -1647.32177734375,
+      -2641.01171875
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      -1577.90173339844,
+      -2626.89208984375
+    ],
+    "seed": 991177,
+    "source": [
+      -3,
+      -4
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 2.76781558990479,
+    "drop_point": [
+      -1427.73303222656,
+      -2809.10375976562
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 3228,
+    "peninsula": false,
+    "pond": [
+      136.719207763672,
+      -999.798278808594
+    ],
+    "seed": 991177,
+    "source": [
+      -2,
+      -4
+    ],
+    "width": 24.4833335876465
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -675.690551757812,
+      -2644.38354492188
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 936,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      -1,
+      -4
+    ],
+    "width": 21.2999992370605
+  },
+  {
+    "bars": [
+      {
+        "x": 3741.6181640625,
+        "z": -1223.65234375
+      },
+      {
+        "x": 3908.57934570312,
+        "z": -1287.17236328125
+      }
+    ],
+    "drop": 8.0,
+    "drop_point": [
+      2244.50219726562,
+      -2455.77368164062
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 3048,
+    "peninsula": false,
+    "pond": [
+      4018.58862304688,
+      -1090.6083984375
+    ],
+    "seed": 991177,
+    "source": [
+      2,
+      -4
+    ],
+    "width": 96.0
+  },
+  {
+    "bars": [],
+    "drop": 16.0,
+    "drop_point": [
+      2839.482421875,
+      -2527.27001953125
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      2838.27685546875,
+      -2586.9296875
+    ],
+    "seed": 991177,
+    "source": [
+      3,
+      -4
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -386.040344238281,
+      -1958.68676757812
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      -375.042846679688,
+      -1953.88513183594
+    ],
+    "seed": 991177,
+    "source": [
+      -1,
+      -3
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1526.62451171875,
+      -1662.12194824219
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 3252,
+    "peninsula": true,
+    "pond": [
+      616.68115234375,
+      413.837097167969
+    ],
+    "seed": 991177,
+    "source": [
+      2,
+      -3
+    ],
+    "width": 24.5166664123535
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      -3021.6748046875,
+      -1381.41625976562
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 432,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      -4,
+      -2
+    ],
+    "width": 20.6000003814697
+  },
+  {
+    "bars": [],
+    "drop": 16.0,
+    "drop_point": [
+      -2062.23608398438,
+      -829.494567871094
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1224,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      -3,
+      -2
+    ],
+    "width": 21.7000007629395
+  },
+  {
+    "bars": [],
+    "drop": 3.71212005615234,
+    "drop_point": [
+      -1392.00305175781,
+      -915.175537109375
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 336,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      -2,
+      -2
+    ],
+    "width": 20.466667175293
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -367.720611572266,
+      -1544.203125
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 960,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      -1,
+      -2
+    ],
+    "width": 21.3333339691162
+  },
+  {
+    "bars": [],
+    "drop": 28.0,
+    "drop_point": [
+      404.391448974609,
+      -1208.18103027344
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1392,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      0,
+      -2
+    ],
+    "width": 21.9333324432373
+  },
+  {
+    "bars": [],
+    "drop": 16.0,
+    "drop_point": [
+      1460.17919921875,
+      -1283.80822753906
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 648,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      1,
+      -2
+    ],
+    "width": 20.8999996185303
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      3363.21923828125,
+      -1232.26586914062
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 2892,
+    "peninsula": false,
+    "pond": [
+      2201.45361328125,
+      -2724.154296875
+    ],
+    "seed": 991177,
+    "source": [
+      4,
+      -2
+    ],
+    "width": 24.0166664123535
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      -2930.37915039062,
+      -666.175537109375
+    ],
+    "island_radius": 25.7471417310337,
+    "joined": false,
+    "length": 3360,
+    "peninsula": false,
+    "pond": [
+      -4911.11962890625,
+      -681.786315917969
+    ],
+    "seed": 991177,
+    "source": [
+      -4,
+      -1
+    ],
+    "width": 24.6666660308838
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -1727.39147949219,
+      -271.797119140625
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 3396,
+    "peninsula": false,
+    "pond": [
+      -4083.43798828125,
+      171.154968261719
+    ],
+    "seed": 991177,
+    "source": [
+      -3,
+      -1
+    ],
+    "width": 24.716667175293
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -1054.78125,
+      -710.142578125
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 3300,
+    "peninsula": false,
+    "pond": [
+      -1287.66088867188,
+      -3143.32202148438
+    ],
+    "seed": 991177,
+    "source": [
+      -2,
+      -1
+    ],
+    "width": 24.5833339691162
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1473.16345214844,
+      -588.848388671875
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 360,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      1,
+      -1
+    ],
+    "width": 20.5
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      1395.3642578125,
+      -564.093505859375
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 2148,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      2,
+      -1
+    ],
+    "width": 22.9833335876465
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      2709.75708007812,
+      -372.045623779297
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 2064,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      3,
+      -1
+    ],
+    "width": 22.8666667938232
+  },
+  {
+    "bars": [],
+    "drop": 0.0,
+    "drop_point": [
+      0.0,
+      0.0
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      3814.69067382812,
+      -492.484375
+    ],
+    "seed": 991177,
+    "source": [
+      4,
+      -1
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -355.586975097656,
+      501.294830322266
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1200,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      -1,
+      0
+    ],
+    "width": 21.6666660308838
+  },
+  {
+    "bars": [],
+    "drop": 28.0,
+    "drop_point": [
+      957.858215332031,
+      524.609313964844
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 2580,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      1,
+      0
+    ],
+    "width": 23.5833339691162
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1942.79052734375,
+      196.46794128418
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 504,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      2,
+      0
+    ],
+    "width": 20.7000007629395
+  },
+  {
+    "bars": [],
+    "drop": 0.0,
+    "drop_point": [
+      0.0,
+      0.0
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 0,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      3,
+      0
+    ],
+    "width": 20.0
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      2853.16040039062,
+      298.261596679688
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 2976,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      4,
+      0
+    ],
+    "width": 24.1333332061768
+  },
+  {
+    "bars": [],
+    "drop": 0.0,
+    "drop_point": [
+      0.0,
+      0.0
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 0,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      -1,
+      1
+    ],
+    "width": 20.0
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      394.494384765625,
+      1079.02917480469
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1032,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      0,
+      1
+    ],
+    "width": 21.4333324432373
+  },
+  {
+    "bars": [],
+    "drop": 2.69642448425293,
+    "drop_point": [
+      1887.33203125,
+      972.515441894531
+    ],
+    "island_radius": 24.5669555079018,
+    "joined": false,
+    "length": 3192,
+    "peninsula": false,
+    "pond": [
+      -235.303558349609,
+      1165.203125
+    ],
+    "seed": 991177,
+    "source": [
+      2,
+      1
+    ],
+    "width": 24.4333324432373
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      2734.63940429688,
+      1217.9892578125
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1500,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      3,
+      1
+    ],
+    "width": 22.0833339691162
+  },
+  {
+    "bars": [
+      {
+        "x": 2437.55004882812,
+        "z": 1994.68603515625
+      },
+      {
+        "x": 2328.87646484375,
+        "z": 2129.73413085938
+      }
+    ],
+    "drop": 4.0,
+    "drop_point": [
+      3402.6162109375,
+      809.196960449219
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 2760,
+    "peninsula": false,
+    "pond": [
+      2073.32739257812,
+      2245.80517578125
+    ],
+    "seed": 991177,
+    "source": [
+      4,
+      1
+    ],
+    "width": 96.0
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -1990.26000976562,
+      2090.24609375
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      -1948.72253417969,
+      2104.224609375
+    ],
+    "seed": 991177,
+    "source": [
+      -3,
+      2
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -313.544921875,
+      1650.78723144531
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1320,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      -1,
+      2
+    ],
+    "width": 21.8333339691162
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      591.428100585938,
+      2118.2373046875
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 3540,
+    "peninsula": true,
+    "pond": [
+      2826.86376953125,
+      2990.72412109375
+    ],
+    "seed": 991177,
+    "source": [
+      0,
+      2
+    ],
+    "width": 24.9166660308838
+  },
+  {
+    "bars": [],
+    "drop": 16.377197265625,
+    "drop_point": [
+      1134.25073242188,
+      1728.90832519531
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 2652,
+    "peninsula": false,
+    "pond": [
+      -315.118011474609,
+      2429.580078125
+    ],
+    "seed": 991177,
+    "source": [
+      1,
+      2
+    ],
+    "width": 23.6833324432373
+  },
+  {
+    "bars": [],
+    "drop": 24.0,
+    "drop_point": [
+      1593.65295410156,
+      1643.0439453125
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 2712,
+    "peninsula": true,
+    "pond": [
+      3517.27587890625,
+      2454.15502929688
+    ],
+    "seed": 991177,
+    "source": [
+      2,
+      2
+    ],
+    "width": 23.7666664123535
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      2367.18408203125,
+      1724.26977539062
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 828,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      3,
+      2
+    ],
+    "width": 21.1499996185303
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      3471.318359375,
+      2148.951171875
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 348,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      4,
+      2
+    ],
+    "width": 20.4833335876465
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -3212.00610351562,
+      2618.1279296875
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1092,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      -4,
+      3
+    ],
+    "width": 21.5166664123535
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -1581.77075195312,
+      2535.16162109375
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1524,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      -3,
+      3
+    ],
+    "width": 22.1166667938232
+  },
+  {
+    "bars": [],
+    "drop": 0.0,
+    "drop_point": [
+      0.0,
+      0.0
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 0,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      -2,
+      3
+    ],
+    "width": 20.0
+  },
+  {
+    "bars": [],
+    "drop": 16.0,
+    "drop_point": [
+      -9.25284576416016,
+      2435.64086914062
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1056,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      -1,
+      3
+    ],
+    "width": 21.466667175293
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      59.0430221557617,
+      2487.59887695312
+    ],
+    "island_radius": 26.4241638666615,
+    "joined": false,
+    "length": 3432,
+    "peninsula": false,
+    "pond": [
+      -1125.18566894531,
+      4603.923828125
+    ],
+    "seed": 991177,
+    "source": [
+      0,
+      3
+    ],
+    "width": 24.7666664123535
+  },
+  {
+    "bars": [],
+    "drop": 0.0,
+    "drop_point": [
+      0.0,
+      0.0
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 0,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      2,
+      3
+    ],
+    "width": 20.0
+  },
+  {
+    "bars": [],
+    "drop": 20.0,
+    "drop_point": [
+      2310.64038085938,
+      2510.77661132812
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 624,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      3,
+      3
+    ],
+    "width": 20.8666667938232
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -2525.36352539062,
+      3440.44702148438
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 2808,
+    "peninsula": false,
+    "pond": [
+      -2716.96630859375,
+      1415.17932128906
+    ],
+    "seed": 991177,
+    "source": [
+      -4,
+      4
+    ],
+    "width": 23.8999996185303
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -2106.6181640625,
+      3442.400390625
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1320,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      -3,
+      4
+    ],
+    "width": 21.8333339691162
+  },
+  {
+    "bars": [],
+    "drop": 6.79632759094238,
+    "drop_point": [
+      -776.802185058594,
+      2719.05029296875
+    ],
+    "island_radius": 26.2643026720919,
+    "joined": false,
+    "length": 2844,
+    "peninsula": true,
+    "pond": [
+      -808.811950683594,
+      1141.96398925781
+    ],
+    "seed": 991177,
+    "source": [
+      -2,
+      4
+    ],
+    "width": 23.9500007629395
+  },
+  {
+    "bars": [],
+    "drop": 20.0,
+    "drop_point": [
+      -372.966888427734,
+      3548.2099609375
+    ],
+    "island_radius": 27.6947784761588,
+    "joined": false,
+    "length": 3000,
+    "peninsula": false,
+    "pond": [
+      -1420.43481445312,
+      5284.17529296875
+    ],
+    "seed": 991177,
+    "source": [
+      -1,
+      4
+    ],
+    "width": 24.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 16.0,
+    "drop_point": [
+      840.109436035156,
+      3769.1279296875
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1236,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      1,
+      4
+    ],
+    "width": 21.716667175293
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1936.02722167969,
+      3264.37866210938
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 3372,
+    "peninsula": false,
+    "pond": [
+      371.322906494141,
+      5113.31689453125
+    ],
+    "seed": 991177,
+    "source": [
+      2,
+      4
+    ],
+    "width": 24.6833324432373
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      2649.5703125,
+      3243.2412109375
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 2004,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      3,
+      4
+    ],
+    "width": 22.783332824707
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      3869.111328125,
+      3468.47119140625
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 552,
+    "peninsula": false,
+    "pond": null,
+    "seed": 991177,
+    "source": [
+      4,
+      4
+    ],
+    "width": 20.7666664123535
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      -1707.712890625,
+      -2835.466796875
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1272,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      -3,
+      -4
+    ],
+    "width": 21.7666664123535
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -840.092834472656,
+      -3012.40209960938
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1188,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      -2,
+      -4
+    ],
+    "width": 21.6499996185303
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1824.90283203125,
+      -3035.93334960938
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      1837.73461914062,
+      -2977.82592773438
+    ],
+    "seed": 314159,
+    "source": [
+      2,
+      -4
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 3.91816425323486,
+    "drop_point": [
+      3422.35473632812,
+      -3152.21850585938
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 300,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      4,
+      -4
+    ],
+    "width": 20.4166660308838
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -2604.81762695312,
+      -2298.3466796875
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 2784,
+    "peninsula": true,
+    "pond": [
+      -3137.40551757812,
+      -3720.48559570312
+    ],
+    "seed": 314159,
+    "source": [
+      -4,
+      -3
+    ],
+    "width": 23.8666667938232
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -922.702880859375,
+      -2218.89770507812
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 2604,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      -2,
+      -3
+    ],
+    "width": 23.6166667938232
+  },
+  {
+    "bars": [],
+    "drop": 0.0,
+    "drop_point": [
+      0.0,
+      0.0
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 0,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      0,
+      -3
+    ],
+    "width": 20.0
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      1689.33349609375,
+      -1913.13146972656
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 3108,
+    "peninsula": false,
+    "pond": [
+      3066.43359375,
+      -3873.93041992188
+    ],
+    "seed": 314159,
+    "source": [
+      2,
+      -3
+    ],
+    "width": 24.3166675567627
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      2653.95336914062,
+      -1613.7265625
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1044,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      3,
+      -3
+    ],
+    "width": 21.4500007629395
+  },
+  {
+    "bars": [
+      {
+        "x": 1626.23193359375,
+        "z": -2527.32495117188
+      }
+    ],
+    "drop": 3.06932258605957,
+    "drop_point": [
+      3197.34204101562,
+      -2167.15014648438
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 3168,
+    "peninsula": true,
+    "pond": [
+      1232.28186035156,
+      -2581.00927734375
+    ],
+    "seed": 314159,
+    "source": [
+      4,
+      -3
+    ],
+    "width": 96.0
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -1491.38879394531,
+      -1361.0546875
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 3168,
+    "peninsula": false,
+    "pond": [
+      -3220.79565429688,
+      171.22233581543
+    ],
+    "seed": 314159,
+    "source": [
+      -2,
+      -2
+    ],
+    "width": 24.3999996185303
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      415.989715576172,
+      -1680.88354492188
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 3312,
+    "peninsula": false,
+    "pond": [
+      1756.42956542969,
+      -3056.28979492188
+    ],
+    "seed": 314159,
+    "source": [
+      0,
+      -2
+    ],
+    "width": 24.6000003814697
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1695.81689453125,
+      -1246.41845703125
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      1632.83728027344,
+      -1272.25646972656
+    ],
+    "seed": 314159,
+    "source": [
+      2,
+      -2
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      3028.75268554688,
+      -1009.93920898438
+    ],
+    "island_radius": 25.2107265771925,
+    "joined": false,
+    "length": 2760,
+    "peninsula": true,
+    "pond": [
+      5202.45458984375,
+      -1094.09387207031
+    ],
+    "seed": 314159,
+    "source": [
+      3,
+      -2
+    ],
+    "width": 23.8333339691162
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      3436.3818359375,
+      -802.4306640625
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1188,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      4,
+      -2
+    ],
+    "width": 21.6499996185303
+  },
+  {
+    "bars": [],
+    "drop": 6.82420349121094,
+    "drop_point": [
+      -3035.20654296875,
+      -242.40966796875
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1668,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      -4,
+      -1
+    ],
+    "width": 22.3166675567627
+  },
+  {
+    "bars": [],
+    "drop": 11.0527286529541,
+    "drop_point": [
+      -650.073608398438,
+      -238.902893066406
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1212,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      -1,
+      -1
+    ],
+    "width": 21.6833324432373
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      145.345779418945,
+      -472.498474121094
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1620,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      0,
+      -1
+    ],
+    "width": 22.25
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      1441.25695800781,
+      -245.56867980957
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 72,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      1,
+      -1
+    ],
+    "width": 20.1000003814697
+  },
+  {
+    "bars": [],
+    "drop": 0.0,
+    "drop_point": [
+      0.0,
+      0.0
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 0,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      3,
+      -1
+    ],
+    "width": 20.0
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      -2562.39794921875,
+      32.6654396057129
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 2820,
+    "peninsula": false,
+    "pond": [
+      -712.365234375,
+      -1494.13244628906
+    ],
+    "seed": 314159,
+    "source": [
+      -4,
+      0
+    ],
+    "width": 23.9166660308838
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -2291.14624023438,
+      279.871765136719
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 252,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      -3,
+      0
+    ],
+    "width": 20.3500003814697
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -822.958312988281,
+      296.237487792969
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 3444,
+    "peninsula": false,
+    "pond": [
+      1446.45422363281,
+      -360.203338623047
+    ],
+    "seed": 314159,
+    "source": [
+      -2,
+      0
+    ],
+    "width": 24.783332824707
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      -323.974731445312,
+      578.433410644531
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1752,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      -1,
+      0
+    ],
+    "width": 22.4333324432373
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      401.160430908203,
+      520.986755371094
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 972,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      0,
+      0
+    ],
+    "width": 21.3500003814697
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      2374.41650390625,
+      15.4109354019165
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 576,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      3,
+      0
+    ],
+    "width": 20.7999992370605
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      3420.98754882812,
+      596.132446289062
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1968,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      4,
+      0
+    ],
+    "width": 22.7333335876465
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      -2218.009765625,
+      1036.98657226562
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      -2249.48608398438,
+      988.406616210938
+    ],
+    "seed": 314159,
+    "source": [
+      -4,
+      1
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -1758.17236328125,
+      1257.25830078125
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      -1755.50708007812,
+      1296.67553710938
+    ],
+    "seed": 314159,
+    "source": [
+      -3,
+      1
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -710.582153320312,
+      1323.09448242188
+    ],
+    "island_radius": 28.8904662964232,
+    "joined": false,
+    "length": 3444,
+    "peninsula": true,
+    "pond": [
+      -2939.333984375,
+      438.215179443359
+    ],
+    "seed": 314159,
+    "source": [
+      -1,
+      1
+    ],
+    "width": 24.783332824707
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      821.397888183594,
+      1308.23583984375
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      828.139038085938,
+      1366.20971679688
+    ],
+    "seed": 314159,
+    "source": [
+      0,
+      1
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1482.8681640625,
+      843.188354492188
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 2784,
+    "peninsula": false,
+    "pond": [
+      2172.390625,
+      -1057.59326171875
+    ],
+    "seed": 314159,
+    "source": [
+      1,
+      1
+    ],
+    "width": 23.8666667938232
+  },
+  {
+    "bars": [
+      {
+        "x": 3347.50854492188,
+        "z": -132.865905761719
+      },
+      {
+        "x": 3485.35864257812,
+        "z": -229.440521240234
+      }
+    ],
+    "drop": 4.0,
+    "drop_point": [
+      1778.41320800781,
+      1223.61437988281
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 3036,
+    "peninsula": false,
+    "pond": [
+      3740.55346679688,
+      -132.006500244141
+    ],
+    "seed": 314159,
+    "source": [
+      2,
+      1
+    ],
+    "width": 96.0
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      3660.49169921875,
+      1516.06164550781
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 3132,
+    "peninsula": false,
+    "pond": [
+      4349.30322265625,
+      3097.89990234375
+    ],
+    "seed": 314159,
+    "source": [
+      4,
+      1
+    ],
+    "width": 24.3500003814697
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -2882.36791992188,
+      2119.97631835938
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 3804,
+    "peninsula": false,
+    "pond": [
+      -3441.79711914062,
+      -121.512687683105
+    ],
+    "seed": 314159,
+    "source": [
+      -4,
+      2
+    ],
+    "width": 25.283332824707
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -1628.353515625,
+      1726.60009765625
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1188,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      -3,
+      2
+    ],
+    "width": 21.6499996185303
+  },
+  {
+    "bars": [
+      {
+        "x": 1427.09509277344,
+        "z": 2546.22436523438
+      }
+    ],
+    "drop": 4.0,
+    "drop_point": [
+      -530.049499511719,
+      1981.54956054688
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 2988,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      -2,
+      2
+    ],
+    "width": 96.0
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -330.294372558594,
+      2192.72412109375
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 2760,
+    "peninsula": false,
+    "pond": [
+      -1020.13543701172,
+      4050.31689453125
+    ],
+    "seed": 314159,
+    "source": [
+      -1,
+      2
+    ],
+    "width": 23.8333339691162
+  },
+  {
+    "bars": [
+      {
+        "x": -734.705139160156,
+        "z": 1671.99914550781
+      },
+      {
+        "x": -889.963684082031,
+        "z": 1626.53161621094
+      }
+    ],
+    "drop": 4.0,
+    "drop_point": [
+      721.22705078125,
+      1516.92614746094
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 3000,
+    "peninsula": true,
+    "pond": [
+      -1038.31640625,
+      1406.13903808594
+    ],
+    "seed": 314159,
+    "source": [
+      0,
+      2
+    ],
+    "width": 96.0
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      1365.43908691406,
+      1887.97521972656
+    ],
+    "island_radius": 25.6611298232128,
+    "joined": false,
+    "length": 3216,
+    "peninsula": false,
+    "pond": [
+      3462.41040039062,
+      1935.5166015625
+    ],
+    "seed": 314159,
+    "source": [
+      1,
+      2
+    ],
+    "width": 24.466667175293
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      3164.03564453125,
+      1903.29455566406
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 2820,
+    "peninsula": false,
+    "pond": [
+      1191.08056640625,
+      1506.01721191406
+    ],
+    "seed": 314159,
+    "source": [
+      4,
+      2
+    ],
+    "width": 23.9166660308838
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -1932.55749511719,
+      2816.97192382812
+    ],
+    "island_radius": 27.1106755927876,
+    "joined": false,
+    "length": 3132,
+    "peninsula": true,
+    "pond": [
+      -40.8745269775391,
+      3467.00415039062
+    ],
+    "seed": 314159,
+    "source": [
+      -3,
+      3
+    ],
+    "width": 24.3500003814697
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      -1114.095703125,
+      2593.0615234375
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1008,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      -2,
+      3
+    ],
+    "width": 21.3999996185303
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -170.704666137695,
+      3015.82568359375
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      -207.259674072266,
+      2957.0380859375
+    ],
+    "seed": 314159,
+    "source": [
+      -1,
+      3
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      269.28564453125,
+      2538.75390625
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 120,
+    "peninsula": false,
+    "pond": [
+      252.645721435547,
+      2579.84619140625
+    ],
+    "seed": 314159,
+    "source": [
+      0,
+      3
+    ],
+    "width": 20.1666660308838
+  },
+  {
+    "bars": [],
+    "drop": 12.0,
+    "drop_point": [
+      2411.58447265625,
+      2984.18286132812
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 612,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      3,
+      3
+    ],
+    "width": 20.8500003814697
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      3268.568359375,
+      3119.89624023438
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 2784,
+    "peninsula": false,
+    "pond": [
+      1851.22180175781,
+      3552.7275390625
+    ],
+    "seed": 314159,
+    "source": [
+      4,
+      3
+    ],
+    "width": 23.8666667938232
+  },
+  {
+    "bars": [],
+    "drop": 16.0,
+    "drop_point": [
+      -2492.40649414062,
+      4000.42724609375
+    ],
+    "island_radius": 29.6550387540534,
+    "joined": false,
+    "length": 3948,
+    "peninsula": false,
+    "pond": [
+      -4664.6611328125,
+      5079.3056640625
+    ],
+    "seed": 314159,
+    "source": [
+      -4,
+      4
+    ],
+    "width": 25.4833335876465
+  },
+  {
+    "bars": [],
+    "drop": 4.0,
+    "drop_point": [
+      -2145.06225585938,
+      3736.52563476562
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 1164,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      -3,
+      4
+    ],
+    "width": 21.6166667938232
+  },
+  {
+    "bars": [],
+    "drop": 0.0,
+    "drop_point": [
+      0.0,
+      0.0
+    ],
+    "island_radius": 0,
+    "joined": true,
+    "length": 0,
+    "peninsula": false,
+    "pond": null,
+    "seed": 314159,
+    "source": [
+      -1,
+      4
+    ],
+    "width": 20.0
+  },
+  {
+    "bars": [],
+    "drop": 8.0,
+    "drop_point": [
+      101.463432312012,
+      3597.80322265625
+    ],
+    "island_radius": 24.0,
+    "joined": false,
+    "length": 2652,
+    "peninsula": false,
+    "pond": [
+      1935.29211425781,
+      3916.94360351562
+    ],
+    "seed": 314159,
+    "source": [
+      0,
+      4
+    ],
+    "width": 23.6833324432373
+  },
+  {
+    "bars": [],
+    "drop": 17.1477813720703,
+    "drop_point": [
+      3198.73803710938,
+      3597.67993164062
+    ],
+    "island_radius": 0.0,
+    "joined": false,
+    "length": 3168,
+    "peninsula": false,
+    "pond": [
+      2171.625,
+      5013.46435546875
+    ],
+    "seed": 314159,
+    "source": [
+      4,
+      4
+    ],
+    "width": 24.3999996185303
+  }
+]

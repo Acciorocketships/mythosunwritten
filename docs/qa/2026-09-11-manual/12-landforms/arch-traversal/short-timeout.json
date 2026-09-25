@@ -1,0 +1,2171 @@
+[
+  {
+    "camera": "[X: (0.141421, 0.0, -0.98995), Y: (-0.509325, 0.857493, -0.072761), Z: (0.848875, 0.514496, 0.121268), O: (-680.402, 39.0, 53.65685)]",
+    "direction": -1.0,
+    "offset": -2.0,
+    "passed": false,
+    "samples": [
+      {
+        "position": "(-714.3443, 18.12037, 56.48413)",
+        "progress": -9.99837303161621,
+        "swimming": true,
+        "tick": 0
+      },
+      {
+        "position": "(-714.3466, 18.12626, 56.48187)",
+        "progress": -9.99517726898193,
+        "swimming": true,
+        "tick": 1
+      },
+      {
+        "position": "(-714.3499, 18.13369, 56.47852)",
+        "progress": -9.99043464660645,
+        "swimming": true,
+        "tick": 2
+      },
+      {
+        "position": "(-714.3543, 18.14261, 56.47411)",
+        "progress": -9.98420906066895,
+        "swimming": true,
+        "tick": 3
+      },
+      {
+        "position": "(-714.3597, 18.15299, 56.46868)",
+        "progress": -9.97652435302734,
+        "swimming": true,
+        "tick": 4
+      },
+      {
+        "position": "(-714.3662, 18.16479, 56.46224)",
+        "progress": -9.96739673614502,
+        "swimming": true,
+        "tick": 5
+      },
+      {
+        "position": "(-714.3736, 18.17799, 56.45482)",
+        "progress": -9.95693016052246,
+        "swimming": true,
+        "tick": 6
+      },
+      {
+        "position": "(-714.382, 18.19254, 56.44646)",
+        "progress": -9.94510269165039,
+        "swimming": true,
+        "tick": 7
+      },
+      {
+        "position": "(-714.3912, 18.20842, 56.43717)",
+        "progress": -9.93197441101074,
+        "swimming": true,
+        "tick": 8
+      },
+      {
+        "position": "(-714.4014, 18.2256, 56.42698)",
+        "progress": -9.91756248474121,
+        "swimming": true,
+        "tick": 9
+      },
+      {
+        "position": "(-714.4125, 18.24404, 56.41592)",
+        "progress": -9.90192794799805,
+        "swimming": true,
+        "tick": 10
+      },
+      {
+        "position": "(-714.4244, 18.26372, 56.404)",
+        "progress": -9.885085105896,
+        "swimming": true,
+        "tick": 11
+      },
+      {
+        "position": "(-714.4371, 18.2846, 56.39125)",
+        "progress": -9.86705303192139,
+        "swimming": true,
+        "tick": 12
+      },
+      {
+        "position": "(-714.4507, 18.30667, 56.3777)",
+        "progress": -9.84788799285889,
+        "swimming": true,
+        "tick": 13
+      },
+      {
+        "position": "(-714.465, 18.32989, 56.36336)",
+        "progress": -9.82760620117188,
+        "swimming": true,
+        "tick": 14
+      },
+      {
+        "position": "(-714.4801, 18.35423, 56.34826)",
+        "progress": -9.80626678466797,
+        "swimming": true,
+        "tick": 15
+      },
+      {
+        "position": "(-714.496, 18.37967, 56.33241)",
+        "progress": -9.78384113311768,
+        "swimming": true,
+        "tick": 16
+      },
+      {
+        "position": "(-714.5126, 18.40618, 56.31584)",
+        "progress": -9.76038455963135,
+        "swimming": true,
+        "tick": 17
+      },
+      {
+        "position": "(-714.5298, 18.43374, 56.29856)",
+        "progress": -9.73595428466797,
+        "swimming": true,
+        "tick": 18
+      },
+      {
+        "position": "(-714.5478, 18.46222, 56.2806)",
+        "progress": -9.71056365966797,
+        "swimming": true,
+        "tick": 19
+      },
+      {
+        "position": "(-714.5664, 18.49147, 56.26197)",
+        "progress": -9.68422603607178,
+        "swimming": true,
+        "tick": 20
+      },
+      {
+        "position": "(-714.5857, 18.52132, 56.24269)",
+        "progress": -9.65695571899414,
+        "swimming": true,
+        "tick": 21
+      },
+      {
+        "position": "(-714.6056, 18.55162, 56.22278)",
+        "progress": -9.62880516052246,
+        "swimming": true,
+        "tick": 22
+      },
+      {
+        "position": "(-714.6261, 18.58222, 56.20225)",
+        "progress": -9.59978675842285,
+        "swimming": true,
+        "tick": 23
+      },
+      {
+        "position": "(-714.6472, 18.61296, 56.18112)",
+        "progress": -9.56991291046143,
+        "swimming": true,
+        "tick": 24
+      },
+      {
+        "position": "(-714.6689, 18.64371, 56.1594)",
+        "progress": -9.53919506072998,
+        "swimming": true,
+        "tick": 25
+      },
+      {
+        "position": "(-714.6912, 18.6743, 56.13712)",
+        "progress": -9.50768661499023,
+        "swimming": true,
+        "tick": 26
+      },
+      {
+        "position": "(-714.7141, 18.70461, 56.11429)",
+        "progress": -9.47539901733398,
+        "swimming": true,
+        "tick": 27
+      },
+      {
+        "position": "(-714.7374, 18.73449, 56.09092)",
+        "progress": -9.44234275817871,
+        "swimming": true,
+        "tick": 28
+      },
+      {
+        "position": "(-714.7614, 18.76382, 56.06702)",
+        "progress": -9.40852737426758,
+        "swimming": true,
+        "tick": 29
+      },
+      {
+        "position": "(-714.7858, 18.79247, 56.04261)",
+        "progress": -9.3740062713623,
+        "swimming": true,
+        "tick": 30
+      },
+      {
+        "position": "(-714.8107, 18.82031, 56.01771)",
+        "progress": -9.33878898620605,
+        "swimming": true,
+        "tick": 31
+      },
+      {
+        "position": "(-714.8361, 18.84725, 55.99232)",
+        "progress": -9.30288410186768,
+        "swimming": true,
+        "tick": 32
+      },
+      {
+        "position": "(-714.8619, 18.87316, 55.96647)",
+        "progress": -9.26630210876465,
+        "swimming": true,
+        "tick": 33
+      },
+      {
+        "position": "(-714.8882, 18.89796, 55.94016)",
+        "progress": -9.22909355163574,
+        "swimming": true,
+        "tick": 34
+      },
+      {
+        "position": "(-714.915, 18.92155, 55.91339)",
+        "progress": -9.19126892089844,
+        "swimming": true,
+        "tick": 35
+      },
+      {
+        "position": "(-714.9422, 18.94385, 55.8862)",
+        "progress": -9.15279293060303,
+        "swimming": true,
+        "tick": 36
+      },
+      {
+        "position": "(-714.9698, 18.96478, 55.85859)",
+        "progress": -9.1137580871582,
+        "swimming": true,
+        "tick": 37
+      },
+      {
+        "position": "(-714.9978, 18.98428, 55.83056)",
+        "progress": -9.07413101196289,
+        "swimming": true,
+        "tick": 38
+      },
+      {
+        "position": "(-715.0262, 19.00229, 55.80214)",
+        "progress": -9.03392124176025,
+        "swimming": true,
+        "tick": 39
+      },
+      {
+        "position": "(-715.0551, 19.01876, 55.77333)",
+        "progress": -8.99317741394043,
+        "swimming": true,
+        "tick": 40
+      },
+      {
+        "position": "(-715.0842, 19.03365, 55.74413)",
+        "progress": -8.951904296875,
+        "swimming": true,
+        "tick": 41
+      },
+      {
+        "position": "(-715.1138, 19.04692, 55.71457)",
+        "progress": -8.91011333465576,
+        "swimming": true,
+        "tick": 42
+      },
+      {
+        "position": "(-715.1437, 19.05856, 55.68465)",
+        "progress": -8.8678092956543,
+        "swimming": true,
+        "tick": 43
+      },
+      {
+        "position": "(-715.174, 19.06853, 55.65438)",
+        "progress": -8.82499980926514,
+        "swimming": true,
+        "tick": 44
+      },
+      {
+        "position": "(-715.2045, 19.07685, 55.62378)",
+        "progress": -8.78173351287842,
+        "swimming": true,
+        "tick": 45
+      },
+      {
+        "position": "(-715.2355, 19.08349, 55.59283)",
+        "progress": -8.7379732131958,
+        "swimming": true,
+        "tick": 46
+      },
+      {
+        "position": "(-715.2667, 19.08849, 55.56157)",
+        "progress": -8.69377136230469,
+        "swimming": true,
+        "tick": 47
+      },
+      {
+        "position": "(-715.2983, 19.09184, 55.53)",
+        "progress": -8.64913177490234,
+        "swimming": true,
+        "tick": 48
+      },
+      {
+        "position": "(-715.3301, 19.09356, 55.49812)",
+        "progress": -8.60406112670898,
+        "swimming": true,
+        "tick": 49
+      },
+      {
+        "position": "(-715.3623, 19.09371, 55.46594)",
+        "progress": -8.55856418609619,
+        "swimming": true,
+        "tick": 50
+      },
+      {
+        "position": "(-715.3948, 19.09229, 55.43348)",
+        "progress": -8.51264667510986,
+        "swimming": true,
+        "tick": 51
+      },
+      {
+        "position": "(-715.4276, 19.08937, 55.40073)",
+        "progress": -8.46631336212158,
+        "swimming": true,
+        "tick": 52
+      },
+      {
+        "position": "(-715.4606, 19.08499, 55.36771)",
+        "progress": -8.41961574554443,
+        "swimming": true,
+        "tick": 53
+      },
+      {
+        "position": "(-715.4938, 19.0792, 55.33442)",
+        "progress": -8.37255668640137,
+        "swimming": true,
+        "tick": 54
+      },
+      {
+        "position": "(-715.5274, 19.07207, 55.30087)",
+        "progress": -8.32509899139404,
+        "swimming": true,
+        "tick": 55
+      },
+      {
+        "position": "(-715.5612, 19.06365, 55.26707)",
+        "progress": -8.27729034423828,
+        "swimming": true,
+        "tick": 56
+      },
+      {
+        "position": "(-715.5953, 19.05402, 55.23303)",
+        "progress": -8.22913360595703,
+        "swimming": true,
+        "tick": 57
+      },
+      {
+        "position": "(-715.6296, 19.04325, 55.19874)",
+        "progress": -8.18063449859619,
+        "swimming": true,
+        "tick": 58
+      },
+      {
+        "position": "(-715.6641, 19.03143, 55.16422)",
+        "progress": -8.13179779052734,
+        "swimming": true,
+        "tick": 59
+      },
+      {
+        "position": "(-715.6989, 19.01862, 55.12948)",
+        "progress": -8.08267307281494,
+        "swimming": true,
+        "tick": 60
+      },
+      {
+        "position": "(-715.7338, 19.00491, 55.09451)",
+        "progress": -8.03321838378906,
+        "swimming": true,
+        "tick": 61
+      },
+      {
+        "position": "(-715.769, 18.99038, 55.05933)",
+        "progress": -7.98348426818848,
+        "swimming": true,
+        "tick": 62
+      },
+      {
+        "position": "(-715.8044, 18.97513, 55.02394)",
+        "progress": -7.93342876434326,
+        "swimming": true,
+        "tick": 63
+      },
+      {
+        "position": "(-715.84, 18.95924, 54.98835)",
+        "progress": -7.88310050964355,
+        "swimming": true,
+        "tick": 64
+      },
+      {
+        "position": "(-715.8757, 18.94279, 54.95256)",
+        "progress": -7.83250284194946,
+        "swimming": true,
+        "tick": 65
+      },
+      {
+        "position": "(-715.9117, 18.92589, 54.91658)",
+        "progress": -7.78159523010254,
+        "swimming": true,
+        "tick": 66
+      },
+      {
+        "position": "(-715.9479, 18.90861, 54.88041)",
+        "progress": -7.73042488098145,
+        "swimming": true,
+        "tick": 67
+      },
+      {
+        "position": "(-715.9843, 18.89104, 54.84406)",
+        "progress": -7.67899608612061,
+        "swimming": true,
+        "tick": 68
+      },
+      {
+        "position": "(-716.0209, 18.87328, 54.80753)",
+        "progress": -7.62731409072876,
+        "swimming": true,
+        "tick": 69
+      },
+      {
+        "position": "(-716.0576, 18.85541, 54.77082)",
+        "progress": -7.57542181015015,
+        "swimming": true,
+        "tick": 70
+      },
+      {
+        "position": "(-716.0944, 18.83751, 54.73395)",
+        "progress": -7.52328109741211,
+        "swimming": true,
+        "tick": 71
+      },
+      {
+        "position": "(-716.1315, 18.81967, 54.69691)",
+        "progress": -7.4708948135376,
+        "swimming": true,
+        "tick": 72
+      },
+      {
+        "position": "(-716.1686, 18.80197, 54.65972)",
+        "progress": -7.41831207275391,
+        "swimming": true,
+        "tick": 73
+      },
+      {
+        "position": "(-716.206, 18.78448, 54.62237)",
+        "progress": -7.36548900604248,
+        "swimming": true,
+        "tick": 74
+      },
+      {
+        "position": "(-716.2435, 18.76727, 54.58487)",
+        "progress": -7.31247138977051,
+        "swimming": true,
+        "tick": 75
+      },
+      {
+        "position": "(-716.2811, 18.75043, 54.54722)",
+        "progress": -7.25922203063965,
+        "swimming": true,
+        "tick": 76
+      },
+      {
+        "position": "(-716.3189, 18.73402, 54.50943)",
+        "progress": -7.20578384399414,
+        "swimming": true,
+        "tick": 77
+      },
+      {
+        "position": "(-716.3568, 18.7181, 54.4715)",
+        "progress": -7.15216207504272,
+        "swimming": true,
+        "tick": 78
+      },
+      {
+        "position": "(-716.3949, 18.70273, 54.43343)",
+        "progress": -7.09831428527832,
+        "swimming": true,
+        "tick": 79
+      },
+      {
+        "position": "(-716.4331, 18.68797, 54.39523)",
+        "progress": -7.04428815841675,
+        "swimming": true,
+        "tick": 80
+      },
+      {
+        "position": "(-716.4714, 18.67386, 54.35691)",
+        "progress": -6.99008369445801,
+        "swimming": true,
+        "tick": 81
+      },
+      {
+        "position": "(-716.5099, 18.66046, 54.31845)",
+        "progress": -6.93570423126221,
+        "swimming": true,
+        "tick": 82
+      },
+      {
+        "position": "(-716.5485, 18.64781, 54.27988)",
+        "progress": -6.88115215301514,
+        "swimming": true,
+        "tick": 83
+      },
+      {
+        "position": "(-716.5872, 18.63594, 54.24119)",
+        "progress": -6.82643032073975,
+        "swimming": true,
+        "tick": 84
+      },
+      {
+        "position": "(-716.626, 18.62489, 54.20238)",
+        "progress": -6.77154064178467,
+        "swimming": true,
+        "tick": 85
+      },
+      {
+        "position": "(-716.6649, 18.61469, 54.16346)",
+        "progress": -6.71648645401001,
+        "swimming": true,
+        "tick": 86
+      },
+      {
+        "position": "(-716.7039, 18.60535, 54.12444)",
+        "progress": -6.66131114959717,
+        "swimming": true,
+        "tick": 87
+      },
+      {
+        "position": "(-716.743, 18.5969, 54.0853)",
+        "progress": -6.6059741973877,
+        "swimming": true,
+        "tick": 88
+      },
+      {
+        "position": "(-716.7823, 18.58935, 54.04606)",
+        "progress": -6.55047798156738,
+        "swimming": true,
+        "tick": 89
+      },
+      {
+        "position": "(-716.8217, 18.58271, 54.00672)",
+        "progress": -6.49482250213623,
+        "swimming": true,
+        "tick": 90
+      },
+      {
+        "position": "(-716.8611, 18.57698, 53.96729)",
+        "progress": -6.43905639648438,
+        "swimming": true,
+        "tick": 91
+      },
+      {
+        "position": "(-716.9006, 18.57216, 53.92775)",
+        "progress": -6.38313674926758,
+        "swimming": true,
+        "tick": 92
+      },
+      {
+        "position": "(-716.9402, 18.56825, 53.88813)",
+        "progress": -6.32710647583008,
+        "swimming": true,
+        "tick": 93
+      },
+      {
+        "position": "(-716.98, 18.56524, 53.84841)",
+        "progress": -6.27092742919922,
+        "swimming": true,
+        "tick": 94
+      },
+      {
+        "position": "(-717.0198, 18.5631, 53.80861)",
+        "progress": -6.21464395523071,
+        "swimming": true,
+        "tick": 95
+      },
+      {
+        "position": "(-717.0597, 18.56184, 53.76872)",
+        "progress": -6.15821170806885,
+        "swimming": true,
+        "tick": 96
+      },
+      {
+        "position": "(-717.0997, 18.56141, 53.72874)",
+        "progress": -6.10167694091797,
+        "swimming": true,
+        "tick": 97
+      },
+      {
+        "position": "(-717.1397, 18.56181, 53.68869)",
+        "progress": -6.04504203796387,
+        "swimming": true,
+        "tick": 98
+      },
+      {
+        "position": "(-717.1799, 18.563, 53.64856)",
+        "progress": -5.98826456069946,
+        "swimming": true,
+        "tick": 99
+      },
+      {
+        "position": "(-717.2201, 18.56494, 53.60835)",
+        "progress": -5.93138980865479,
+        "swimming": true,
+        "tick": 100
+      },
+      {
+        "position": "(-717.2604, 18.56761, 53.56806)",
+        "progress": -5.87442111968994,
+        "swimming": true,
+        "tick": 101
+      },
+      {
+        "position": "(-717.3007, 18.57097, 53.52771)",
+        "progress": -5.81735754013062,
+        "swimming": true,
+        "tick": 102
+      },
+      {
+        "position": "(-717.3411, 18.57497, 53.48728)",
+        "progress": -5.76019954681396,
+        "swimming": true,
+        "tick": 103
+      },
+      {
+        "position": "(-717.3817, 18.57957, 53.44678)",
+        "progress": -5.7029070854187,
+        "swimming": true,
+        "tick": 104
+      },
+      {
+        "position": "(-717.4222, 18.58474, 53.40622)",
+        "progress": -5.6455225944519,
+        "swimming": true,
+        "tick": 105
+      },
+      {
+        "position": "(-717.4629, 18.59042, 53.36559)",
+        "progress": -5.58804893493652,
+        "swimming": true,
+        "tick": 106
+      },
+      {
+        "position": "(-717.5036, 18.59656, 53.32489)",
+        "progress": -5.53048658370972,
+        "swimming": true,
+        "tick": 107
+      },
+      {
+        "position": "(-717.5444, 18.60312, 53.28413)",
+        "progress": -5.47283744812012,
+        "swimming": true,
+        "tick": 108
+      },
+      {
+        "position": "(-717.5852, 18.61006, 53.24332)",
+        "progress": -5.41510248184204,
+        "swimming": true,
+        "tick": 109
+      },
+      {
+        "position": "(-717.6261, 18.61731, 53.20244)",
+        "progress": -5.35728359222412,
+        "swimming": true,
+        "tick": 110
+      },
+      {
+        "position": "(-717.6671, 18.62483, 53.16151)",
+        "progress": -5.29938125610352,
+        "swimming": true,
+        "tick": 111
+      },
+      {
+        "position": "(-717.7081, 18.63257, 53.12052)",
+        "progress": -5.24139547348022,
+        "swimming": true,
+        "tick": 112
+      },
+      {
+        "position": "(-717.7491, 18.64047, 53.07948)",
+        "progress": -5.18337154388428,
+        "swimming": true,
+        "tick": 113
+      },
+      {
+        "position": "(-717.7902, 18.6485, 53.03838)",
+        "progress": -5.12526702880859,
+        "swimming": true,
+        "tick": 114
+      },
+      {
+        "position": "(-717.8313, 18.65659, 52.99724)",
+        "progress": -5.06708431243896,
+        "swimming": true,
+        "tick": 115
+      },
+      {
+        "position": "(-717.8725, 18.6647, 52.95604)",
+        "progress": -5.00882339477539,
+        "swimming": true,
+        "tick": 116
+      },
+      {
+        "position": "(-717.9138, 18.67279, 52.9148)",
+        "progress": -4.95048379898071,
+        "swimming": true,
+        "tick": 117
+      },
+      {
+        "position": "(-717.9551, 18.6808, 52.87351)",
+        "progress": -4.89206886291504,
+        "swimming": true,
+        "tick": 118
+      },
+      {
+        "position": "(-717.9964, 18.68869, 52.83217)",
+        "progress": -4.83362150192261,
+        "swimming": true,
+        "tick": 119
+      },
+      {
+        "position": "(-718.0378, 18.69642, 52.79079)",
+        "progress": -4.77509880065918,
+        "swimming": true,
+        "tick": 120
+      },
+      {
+        "position": "(-718.0792, 18.70395, 52.74937)",
+        "progress": -4.71650314331055,
+        "swimming": true,
+        "tick": 121
+      },
+      {
+        "position": "(-718.1207, 18.71124, 52.7079)",
+        "progress": -4.65787792205811,
+        "swimming": true,
+        "tick": 122
+      },
+      {
+        "position": "(-718.1622, 18.71824, 52.66639)",
+        "progress": -4.59918022155762,
+        "swimming": true,
+        "tick": 123
+      },
+      {
+        "position": "(-718.2037, 18.72494, 52.62484)",
+        "progress": -4.54040908813477,
+        "swimming": true,
+        "tick": 124
+      },
+      {
+        "position": "(-718.2453, 18.73129, 52.58326)",
+        "progress": -4.48161125183105,
+        "swimming": true,
+        "tick": 125
+      },
+      {
+        "position": "(-718.2869, 18.73726, 52.54163)",
+        "progress": -4.42274332046509,
+        "swimming": true,
+        "tick": 126
+      },
+      {
+        "position": "(-718.3286, 18.74283, 52.49997)",
+        "progress": -4.36380529403687,
+        "swimming": true,
+        "tick": 127
+      },
+      {
+        "position": "(-718.3703, 18.74797, 52.45827)",
+        "progress": -4.30484247207642,
+        "swimming": true,
+        "tick": 128
+      },
+      {
+        "position": "(-718.412, 18.75266, 52.41653)",
+        "progress": -4.24581241607666,
+        "swimming": true,
+        "tick": 129
+      },
+      {
+        "position": "(-718.4538, 18.75688, 52.37477)",
+        "progress": -4.18675899505615,
+        "swimming": true,
+        "tick": 130
+      },
+      {
+        "position": "(-718.4956, 18.76062, 52.33297)",
+        "progress": -4.12763690948486,
+        "swimming": true,
+        "tick": 131
+      },
+      {
+        "position": "(-718.5374, 18.76386, 52.29113)",
+        "progress": -4.06849145889282,
+        "swimming": true,
+        "tick": 132
+      },
+      {
+        "position": "(-718.5793, 18.76659, 52.24926)",
+        "progress": -4.00928068161011,
+        "swimming": true,
+        "tick": 133
+      },
+      {
+        "position": "(-718.6212, 18.76881, 52.20737)",
+        "progress": -3.95004844665527,
+        "swimming": true,
+        "tick": 134
+      },
+      {
+        "position": "(-718.6631, 18.7705, 52.16544)",
+        "progress": -3.89075136184692,
+        "swimming": true,
+        "tick": 135
+      },
+      {
+        "position": "(-718.705, 18.77167, 52.12349)",
+        "progress": -3.8314356803894,
+        "swimming": true,
+        "tick": 136
+      },
+      {
+        "position": "(-718.747, 18.77231, 52.0815)",
+        "progress": -3.77205514907837,
+        "swimming": true,
+        "tick": 137
+      },
+      {
+        "position": "(-718.789, 18.77244, 52.03949)",
+        "progress": -3.71265602111816,
+        "swimming": true,
+        "tick": 138
+      },
+      {
+        "position": "(-718.8311, 18.77205, 51.99745)",
+        "progress": -3.65319418907166,
+        "swimming": true,
+        "tick": 139
+      },
+      {
+        "position": "(-718.8731, 18.77116, 51.95539)",
+        "progress": -3.59371399879456,
+        "swimming": true,
+        "tick": 140
+      },
+      {
+        "position": "(-718.9152, 18.76977, 51.9133)",
+        "progress": -3.53417444229126,
+        "swimming": true,
+        "tick": 141
+      },
+      {
+        "position": "(-718.9573, 18.76791, 51.87119)",
+        "progress": -3.47461581230164,
+        "swimming": true,
+        "tick": 142
+      },
+      {
+        "position": "(-718.9995, 18.76557, 51.82905)",
+        "progress": -3.41504096984863,
+        "swimming": true,
+        "tick": 143
+      },
+      {
+        "position": "(-719.0416, 18.76279, 51.78689)",
+        "progress": -3.35540676116943,
+        "swimming": true,
+        "tick": 144
+      },
+      {
+        "position": "(-719.0838, 18.75958, 51.74471)",
+        "progress": -3.29575657844543,
+        "swimming": true,
+        "tick": 145
+      },
+      {
+        "position": "(-719.126, 18.75597, 51.7025)",
+        "progress": -3.23604726791382,
+        "swimming": true,
+        "tick": 146
+      },
+      {
+        "position": "(-719.1683, 18.75196, 51.66027)",
+        "progress": -3.17632150650024,
+        "swimming": true,
+        "tick": 147
+      },
+      {
+        "position": "(-719.2105, 18.7476, 51.61802)",
+        "progress": -3.11658191680908,
+        "swimming": true,
+        "tick": 148
+      },
+      {
+        "position": "(-719.2528, 18.74291, 51.57575)",
+        "progress": -3.05678343772888,
+        "swimming": true,
+        "tick": 149
+      },
+      {
+        "position": "(-719.2951, 18.73791, 51.53346)",
+        "progress": -2.99697113037109,
+        "swimming": true,
+        "tick": 150
+      },
+      {
+        "position": "(-719.3374, 18.73263, 51.49115)",
+        "progress": -2.93714570999146,
+        "swimming": true,
+        "tick": 151
+      },
+      {
+        "position": "(-719.3797, 18.7271, 51.44883)",
+        "progress": -2.87730646133423,
+        "swimming": true,
+        "tick": 152
+      },
+      {
+        "position": "(-719.4221, 18.72136, 51.40648)",
+        "progress": -2.81741094589233,
+        "swimming": true,
+        "tick": 153
+      },
+      {
+        "position": "(-719.4644, 18.71542, 51.36412)",
+        "progress": -2.7575044631958,
+        "swimming": true,
+        "tick": 154
+      },
+      {
+        "position": "(-719.5068, 18.70933, 51.32174)",
+        "progress": -2.69758439064026,
+        "swimming": true,
+        "tick": 155
+      },
+      {
+        "position": "(-719.5492, 18.70312, 51.27934)",
+        "progress": -2.63761043548584,
+        "swimming": true,
+        "tick": 156
+      },
+      {
+        "position": "(-719.5916, 18.69681, 51.23692)",
+        "progress": -2.57762289047241,
+        "swimming": true,
+        "tick": 157
+      },
+      {
+        "position": "(-719.634, 18.69044, 51.19449)",
+        "progress": -2.5176248550415,
+        "swimming": true,
+        "tick": 158
+      },
+      {
+        "position": "(-719.6765, 18.68403, 51.15205)",
+        "progress": -2.45761585235596,
+        "swimming": true,
+        "tick": 159
+      },
+      {
+        "position": "(-719.7189, 18.67764, 51.10958)",
+        "progress": -2.39755272865295,
+        "swimming": true,
+        "tick": 160
+      },
+      {
+        "position": "(-719.7614, 18.67127, 51.06711)",
+        "progress": -2.33747911453247,
+        "swimming": true,
+        "tick": 161
+      },
+      {
+        "position": "(-719.8039, 18.66496, 51.02462)",
+        "progress": -2.27739453315735,
+        "swimming": true,
+        "tick": 162
+      },
+      {
+        "position": "(-719.8464, 18.65875, 50.98211)",
+        "progress": -2.21730184555054,
+        "swimming": true,
+        "tick": 163
+      },
+      {
+        "position": "(-719.8889, 18.65265, 50.93959)",
+        "progress": -2.15715527534485,
+        "swimming": true,
+        "tick": 164
+      },
+      {
+        "position": "(-719.9315, 18.64671, 50.89706)",
+        "progress": -2.09700059890747,
+        "swimming": true,
+        "tick": 165
+      },
+      {
+        "position": "(-719.974, 18.64094, 50.85452)",
+        "progress": -2.03683495521545,
+        "swimming": true,
+        "tick": 166
+      },
+      {
+        "position": "(-720.0165, 18.63536, 50.81196)",
+        "progress": -1.97666156291962,
+        "swimming": true,
+        "tick": 167
+      },
+      {
+        "position": "(-720.0591, 18.63002, 50.76939)",
+        "progress": -1.9164799451828,
+        "swimming": true,
+        "tick": 168
+      },
+      {
+        "position": "(-720.1017, 18.62492, 50.72681)",
+        "progress": -1.85624706745148,
+        "swimming": true,
+        "tick": 169
+      },
+      {
+        "position": "(-720.1443, 18.62009, 50.68422)",
+        "progress": -1.79600608348846,
+        "swimming": true,
+        "tick": 170
+      },
+      {
+        "position": "(-720.1869, 18.61555, 50.64162)",
+        "progress": -1.73575699329376,
+        "swimming": true,
+        "tick": 171
+      },
+      {
+        "position": "(-720.2295, 18.61132, 50.59901)",
+        "progress": -1.67549979686737,
+        "swimming": true,
+        "tick": 172
+      },
+      {
+        "position": "(-720.2721, 18.60741, 50.55638)",
+        "progress": -1.61523449420929,
+        "swimming": true,
+        "tick": 173
+      },
+      {
+        "position": "(-720.3148, 18.60385, 50.51374)",
+        "progress": -1.5549179315567,
+        "swimming": true,
+        "tick": 174
+      },
+      {
+        "position": "(-720.3574, 18.60063, 50.4711)",
+        "progress": -1.49459600448608,
+        "swimming": true,
+        "tick": 175
+      },
+      {
+        "position": "(-720.4001, 18.59779, 50.42844)",
+        "progress": -1.43426609039307,
+        "swimming": true,
+        "tick": 176
+      },
+      {
+        "position": "(-720.4427, 18.59532, 50.38578)",
+        "progress": -1.37392783164978,
+        "swimming": true,
+        "tick": 177
+      },
+      {
+        "position": "(-720.4854, 18.59323, 50.3431)",
+        "progress": -1.31358432769775,
+        "swimming": true,
+        "tick": 178
+      },
+      {
+        "position": "(-720.5281, 18.59154, 50.30042)",
+        "progress": -1.25323557853699,
+        "swimming": true,
+        "tick": 179
+      },
+      {
+        "position": "(-720.5707, 18.59023, 50.25772)",
+        "progress": -1.19287848472595,
+        "swimming": true,
+        "tick": 180
+      },
+      {
+        "position": "(-720.6135, 18.58933, 50.21502)",
+        "progress": -1.13247299194336,
+        "swimming": true,
+        "tick": 181
+      },
+      {
+        "position": "(-720.6562, 18.58883, 50.17231)",
+        "progress": -1.07206201553345,
+        "swimming": true,
+        "tick": 182
+      },
+      {
+        "position": "(-720.6989, 18.58873, 50.1296)",
+        "progress": -1.01164567470551,
+        "swimming": true,
+        "tick": 183
+      },
+      {
+        "position": "(-720.7416, 18.58903, 50.08687)",
+        "progress": -0.951223969459534,
+        "swimming": true,
+        "tick": 184
+      },
+      {
+        "position": "(-720.7844, 18.58972, 50.04414)",
+        "progress": -0.890796899795532,
+        "swimming": true,
+        "tick": 185
+      },
+      {
+        "position": "(-720.8271, 18.5908, 50.0014)",
+        "progress": -0.830364346504211,
+        "swimming": true,
+        "tick": 186
+      },
+      {
+        "position": "(-720.8698, 18.59227, 49.95865)",
+        "progress": -0.769926428794861,
+        "swimming": true,
+        "tick": 187
+      },
+      {
+        "position": "(-720.9126, 18.59411, 49.9159)",
+        "progress": -0.709439992904663,
+        "swimming": true,
+        "tick": 188
+      },
+      {
+        "position": "(-720.9554, 18.59631, 49.87313)",
+        "progress": -0.648948192596436,
+        "swimming": true,
+        "tick": 189
+      },
+      {
+        "position": "(-720.9982, 18.59887, 49.83036)",
+        "progress": -0.588450849056244,
+        "swimming": true,
+        "tick": 190
+      },
+      {
+        "position": "(-721.041, 18.60177, 49.78759)",
+        "progress": -0.527950942516327,
+        "swimming": true,
+        "tick": 191
+      },
+      {
+        "position": "(-721.0837, 18.60501, 49.74481)",
+        "progress": -0.46744567155838,
+        "swimming": true,
+        "tick": 192
+      },
+      {
+        "position": "(-721.1265, 18.60855, 49.70202)",
+        "progress": -0.406934916973114,
+        "swimming": true,
+        "tick": 193
+      },
+      {
+        "position": "(-721.1693, 18.6124, 49.65923)",
+        "progress": -0.346421480178833,
+        "swimming": true,
+        "tick": 194
+      },
+      {
+        "position": "(-721.2121, 18.61653, 49.61642)",
+        "progress": -0.285902619361877,
+        "swimming": true,
+        "tick": 195
+      },
+      {
+        "position": "(-721.2549, 18.62093, 49.57362)",
+        "progress": -0.225381135940552,
+        "swimming": true,
+        "tick": 196
+      },
+      {
+        "position": "(-721.2977, 18.62558, 49.53081)",
+        "progress": -0.164854168891907,
+        "swimming": true,
+        "tick": 197
+      },
+      {
+        "position": "(-721.3405, 18.63046, 49.48799)",
+        "progress": -0.104281425476074,
+        "swimming": true,
+        "tick": 198
+      },
+      {
+        "position": "(-721.3834, 18.63554, 49.44517)",
+        "progress": -0.0437032580375671,
+        "swimming": true,
+        "tick": 199
+      },
+      {
+        "position": "(-721.4262, 18.64083, 49.40234)",
+        "progress": 0.0168776512145996,
+        "swimming": true,
+        "tick": 200
+      },
+      {
+        "position": "(-721.4691, 18.64652, 49.35951)",
+        "progress": 0.0774612426757812,
+        "swimming": true,
+        "tick": 201
+      },
+      {
+        "position": "(-721.5119, 18.65259, 49.31667)",
+        "progress": 0.138050198554993,
+        "swimming": true,
+        "tick": 202
+      },
+      {
+        "position": "(-721.5547, 18.659, 49.27383)",
+        "progress": 0.198641836643219,
+        "swimming": true,
+        "tick": 203
+      },
+      {
+        "position": "(-721.5976, 18.66572, 49.23098)",
+        "progress": 0.25923615694046,
+        "swimming": true,
+        "tick": 204
+      },
+      {
+        "position": "(-721.6404, 18.67272, 49.18813)",
+        "progress": 0.319833159446716,
+        "swimming": true,
+        "tick": 205
+      },
+      {
+        "position": "(-721.6833, 18.67996, 49.14528)",
+        "progress": 0.380432903766632,
+        "swimming": true,
+        "tick": 206
+      },
+      {
+        "position": "(-721.7261, 18.68741, 49.10241)",
+        "progress": 0.441038131713867,
+        "swimming": true,
+        "tick": 207
+      },
+      {
+        "position": "(-721.769, 18.69502, 49.05955)",
+        "progress": 0.501645982265472,
+        "swimming": true,
+        "tick": 208
+      },
+      {
+        "position": "(-721.8118, 18.70277, 49.01668)",
+        "progress": 0.562256515026093,
+        "swimming": true,
+        "tick": 209
+      },
+      {
+        "position": "(-721.8547, 18.71062, 48.9738)",
+        "progress": 0.622869729995728,
+        "swimming": true,
+        "tick": 210
+      },
+      {
+        "position": "(-721.8975, 18.71854, 48.93093)",
+        "progress": 0.683485627174377,
+        "swimming": true,
+        "tick": 211
+      },
+      {
+        "position": "(-721.9404, 18.72651, 48.88805)",
+        "progress": 0.744147419929504,
+        "swimming": true,
+        "tick": 212
+      },
+      {
+        "position": "(-721.9833, 18.73448, 48.84516)",
+        "progress": 0.804811894893646,
+        "swimming": true,
+        "tick": 213
+      },
+      {
+        "position": "(-722.0262, 18.74244, 48.80227)",
+        "progress": 0.865479171276093,
+        "swimming": true,
+        "tick": 214
+      },
+      {
+        "position": "(-722.0692, 18.75036, 48.75938)",
+        "progress": 0.926146328449249,
+        "swimming": true,
+        "tick": 215
+      },
+      {
+        "position": "(-722.1121, 18.75821, 48.71649)",
+        "progress": 0.986816167831421,
+        "swimming": true,
+        "tick": 216
+      },
+      {
+        "position": "(-722.155, 18.76595, 48.6736)",
+        "progress": 1.04748868942261,
+        "swimming": true,
+        "tick": 217
+      },
+      {
+        "position": "(-722.1979, 18.77357, 48.6307)",
+        "progress": 1.10816395282745,
+        "swimming": true,
+        "tick": 218
+      },
+      {
+        "position": "(-722.2408, 18.78104, 48.58779)",
+        "progress": 1.16884207725525,
+        "swimming": true,
+        "tick": 219
+      },
+      {
+        "position": "(-722.2837, 18.78833, 48.54488)",
+        "progress": 1.22952270507812,
+        "swimming": true,
+        "tick": 220
+      },
+      {
+        "position": "(-722.3266, 18.79542, 48.50198)",
+        "progress": 1.290203332901,
+        "swimming": true,
+        "tick": 221
+      },
+      {
+        "position": "(-722.3695, 18.8023, 48.45906)",
+        "progress": 1.35088670253754,
+        "swimming": true,
+        "tick": 222
+      },
+      {
+        "position": "(-722.4124, 18.80894, 48.41615)",
+        "progress": 1.41157269477844,
+        "swimming": true,
+        "tick": 223
+      },
+      {
+        "position": "(-722.4553, 18.81531, 48.37323)",
+        "progress": 1.47226142883301,
+        "swimming": true,
+        "tick": 224
+      },
+      {
+        "position": "(-722.4982, 18.82142, 48.33031)",
+        "progress": 1.53295040130615,
+        "swimming": true,
+        "tick": 225
+      },
+      {
+        "position": "(-722.5411, 18.82723, 48.28739)",
+        "progress": 1.59364175796509,
+        "swimming": true,
+        "tick": 226
+      },
+      {
+        "position": "(-722.584, 18.83274, 48.24446)",
+        "progress": 1.65433597564697,
+        "swimming": true,
+        "tick": 227
+      },
+      {
+        "position": "(-722.627, 18.83792, 48.20153)",
+        "progress": 1.71503007411957,
+        "swimming": true,
+        "tick": 228
+      },
+      {
+        "position": "(-722.6699, 18.84278, 48.1586)",
+        "progress": 1.77572691440582,
+        "swimming": true,
+        "tick": 229
+      },
+      {
+        "position": "(-722.7128, 18.8473, 48.11567)",
+        "progress": 1.83642387390137,
+        "swimming": true,
+        "tick": 230
+      },
+      {
+        "position": "(-722.7557, 18.85147, 48.07274)",
+        "progress": 1.89712333679199,
+        "swimming": true,
+        "tick": 231
+      },
+      {
+        "position": "(-722.7986, 18.85529, 48.0298)",
+        "progress": 1.95782566070557,
+        "swimming": true,
+        "tick": 232
+      },
+      {
+        "position": "(-722.8416, 18.85875, 47.98686)",
+        "progress": 2.01857089996338,
+        "swimming": true,
+        "tick": 233
+      },
+      {
+        "position": "(-722.8845, 18.86185, 47.94392)",
+        "progress": 2.07931923866272,
+        "swimming": true,
+        "tick": 234
+      },
+      {
+        "position": "(-722.9275, 18.86459, 47.90098)",
+        "progress": 2.1400671005249,
+        "swimming": true,
+        "tick": 235
+      },
+      {
+        "position": "(-722.9705, 18.86696, 47.85803)",
+        "progress": 2.20081806182861,
+        "swimming": true,
+        "tick": 236
+      },
+      {
+        "position": "(-723.0134, 18.86897, 47.81509)",
+        "progress": 2.26156902313232,
+        "swimming": true,
+        "tick": 237
+      },
+      {
+        "position": "(-723.0564, 18.87062, 47.77214)",
+        "progress": 2.32232236862183,
+        "swimming": true,
+        "tick": 238
+      },
+      {
+        "position": "(-723.0994, 18.87192, 47.72919)",
+        "progress": 2.38307595252991,
+        "swimming": true,
+        "tick": 239
+      },
+      {
+        "position": "(-723.1423, 18.87286, 47.68623)",
+        "progress": 2.44383192062378,
+        "swimming": true,
+        "tick": 240
+      },
+      {
+        "position": "(-723.1853, 18.87346, 47.64328)",
+        "progress": 2.50458812713623,
+        "swimming": true,
+        "tick": 241
+      },
+      {
+        "position": "(-723.2283, 18.87373, 47.60033)",
+        "progress": 2.56534457206726,
+        "swimming": true,
+        "tick": 242
+      },
+      {
+        "position": "(-723.2712, 18.87366, 47.55737)",
+        "progress": 2.62610340118408,
+        "swimming": true,
+        "tick": 243
+      },
+      {
+        "position": "(-723.3142, 18.87328, 47.51441)",
+        "progress": 2.6868622303009,
+        "swimming": true,
+        "tick": 244
+      },
+      {
+        "position": "(-723.3572, 18.8726, 47.47145)",
+        "progress": 2.74762368202209,
+        "swimming": true,
+        "tick": 245
+      },
+      {
+        "position": "(-723.4001, 18.87162, 47.42849)",
+        "progress": 2.80838537216187,
+        "swimming": true,
+        "tick": 246
+      },
+      {
+        "position": "(-723.4431, 18.87036, 47.38553)",
+        "progress": 2.86914706230164,
+        "swimming": true,
+        "tick": 247
+      },
+      {
+        "position": "(-723.4861, 18.86883, 47.34256)",
+        "progress": 2.9299111366272,
+        "swimming": true,
+        "tick": 248
+      },
+      {
+        "position": "(-723.5291, 18.86705, 47.2996)",
+        "progress": 2.99067568778992,
+        "swimming": true,
+        "tick": 249
+      },
+      {
+        "position": "(-723.572, 18.86504, 47.25663)",
+        "progress": 3.05144238471985,
+        "swimming": true,
+        "tick": 250
+      },
+      {
+        "position": "(-723.615, 18.86279, 47.21366)",
+        "progress": 3.11220955848694,
+        "swimming": true,
+        "tick": 251
+      },
+      {
+        "position": "(-723.658, 18.86035, 47.17069)",
+        "progress": 3.17297649383545,
+        "swimming": true,
+        "tick": 252
+      },
+      {
+        "position": "(-723.7009, 18.85771, 47.12772)",
+        "progress": 3.23374605178833,
+        "swimming": true,
+        "tick": 253
+      },
+      {
+        "position": "(-723.7439, 18.8549, 47.08475)",
+        "progress": 3.29451608657837,
+        "swimming": true,
+        "tick": 254
+      },
+      {
+        "position": "(-723.7869, 18.85193, 47.04177)",
+        "progress": 3.35528540611267,
+        "swimming": true,
+        "tick": 255
+      },
+      {
+        "position": "(-723.8298, 18.84882, 46.9988)",
+        "progress": 3.41605520248413,
+        "swimming": true,
+        "tick": 256
+      },
+      {
+        "position": "(-723.8728, 18.84559, 46.95583)",
+        "progress": 3.47682762145996,
+        "swimming": true,
+        "tick": 257
+      },
+      {
+        "position": "(-723.9158, 18.84225, 46.91285)",
+        "progress": 3.53760004043579,
+        "swimming": true,
+        "tick": 258
+      },
+      {
+        "position": "(-723.9587, 18.83882, 46.86987)",
+        "progress": 3.59837245941162,
+        "swimming": true,
+        "tick": 259
+      },
+      {
+        "position": "(-724.0017, 18.83531, 46.82689)",
+        "progress": 3.6591477394104,
+        "swimming": true,
+        "tick": 260
+      },
+      {
+        "position": "(-724.0447, 18.83175, 46.78391)",
+        "progress": 3.71992254257202,
+        "swimming": true,
+        "tick": 261
+      },
+      {
+        "position": "(-724.0876, 18.82815, 46.74093)",
+        "progress": 3.7806978225708,
+        "swimming": true,
+        "tick": 262
+      },
+      {
+        "position": "(-724.1306, 18.82452, 46.69795)",
+        "progress": 3.84147262573242,
+        "swimming": true,
+        "tick": 263
+      },
+      {
+        "position": "(-724.1736, 18.82089, 46.65497)",
+        "progress": 3.90225052833557,
+        "swimming": true,
+        "tick": 264
+      },
+      {
+        "position": "(-724.2166, 18.81725, 46.61198)",
+        "progress": 3.96302843093872,
+        "swimming": true,
+        "tick": 265
+      },
+      {
+        "position": "(-724.2595, 18.81364, 46.569)",
+        "progress": 4.02380609512329,
+        "swimming": true,
+        "tick": 266
+      },
+      {
+        "position": "(-724.3025, 18.81005, 46.52602)",
+        "progress": 4.08458375930786,
+        "swimming": true,
+        "tick": 267
+      },
+      {
+        "position": "(-724.3455, 18.80651, 46.48303)",
+        "progress": 4.14536142349243,
+        "swimming": true,
+        "tick": 268
+      },
+      {
+        "position": "(-724.3884, 18.80303, 46.44004)",
+        "progress": 4.20614194869995,
+        "swimming": true,
+        "tick": 269
+      },
+      {
+        "position": "(-724.4314, 18.79961, 46.39706)",
+        "progress": 4.26692295074463,
+        "swimming": true,
+        "tick": 270
+      },
+      {
+        "position": "(-724.4744, 18.79628, 46.35407)",
+        "progress": 4.32770299911499,
+        "swimming": true,
+        "tick": 271
+      },
+      {
+        "position": "(-724.5173, 18.79303, 46.31108)",
+        "progress": 4.38848352432251,
+        "swimming": true,
+        "tick": 272
+      },
+      {
+        "position": "(-724.5603, 18.78988, 46.26809)",
+        "progress": 4.44926404953003,
+        "swimming": true,
+        "tick": 273
+      },
+      {
+        "position": "(-724.6033, 18.78683, 46.2251)",
+        "progress": 4.51004695892334,
+        "swimming": true,
+        "tick": 274
+      },
+      {
+        "position": "(-724.6462, 18.7839, 46.18211)",
+        "progress": 4.57083034515381,
+        "swimming": true,
+        "tick": 275
+      },
+      {
+        "position": "(-724.6892, 18.78109, 46.13912)",
+        "progress": 4.63161373138428,
+        "swimming": true,
+        "tick": 276
+      },
+      {
+        "position": "(-724.7322, 18.77841, 46.09613)",
+        "progress": 4.69239664077759,
+        "swimming": true,
+        "tick": 277
+      },
+      {
+        "position": "(-724.7751, 18.77585, 46.05313)",
+        "progress": 4.75318002700806,
+        "swimming": true,
+        "tick": 278
+      },
+      {
+        "position": "(-724.8181, 18.77343, 46.01014)",
+        "progress": 4.81396293640137,
+        "swimming": true,
+        "tick": 279
+      },
+      {
+        "position": "(-724.8611, 18.77115, 45.96715)",
+        "progress": 4.87474918365479,
+        "swimming": true,
+        "tick": 280
+      },
+      {
+        "position": "(-724.9041, 18.769, 45.92415)",
+        "progress": 4.93553447723389,
+        "swimming": true,
+        "tick": 281
+      },
+      {
+        "position": "(-724.947, 18.76701, 45.88116)",
+        "progress": 4.9963207244873,
+        "swimming": true,
+        "tick": 282
+      },
+      {
+        "position": "(-724.99, 18.76515, 45.83816)",
+        "progress": 5.05710649490356,
+        "swimming": true,
+        "tick": 283
+      },
+      {
+        "position": "(-725.033, 18.76344, 45.79517)",
+        "progress": 5.11789226531982,
+        "swimming": true,
+        "tick": 284
+      },
+      {
+        "position": "(-725.0759, 18.76187, 45.75217)",
+        "progress": 5.17867851257324,
+        "swimming": true,
+        "tick": 285
+      },
+      {
+        "position": "(-725.1189, 18.76044, 45.70918)",
+        "progress": 5.23946380615234,
+        "swimming": true,
+        "tick": 286
+      },
+      {
+        "position": "(-725.1619, 18.75915, 45.66618)",
+        "progress": 5.30025291442871,
+        "swimming": true,
+        "tick": 287
+      },
+      {
+        "position": "(-725.2048, 18.758, 45.62318)",
+        "progress": 5.36104106903076,
+        "swimming": true,
+        "tick": 288
+      },
+      {
+        "position": "(-725.2478, 18.75698, 45.58018)",
+        "progress": 5.42182970046997,
+        "swimming": true,
+        "tick": 289
+      },
+      {
+        "position": "(-725.2908, 18.75609, 45.53718)",
+        "progress": 5.48261833190918,
+        "swimming": true,
+        "tick": 290
+      },
+      {
+        "position": "(-725.3338, 18.75533, 45.49418)",
+        "progress": 5.54344987869263,
+        "swimming": true,
+        "tick": 291
+      },
+      {
+        "position": "(-725.3768, 18.75468, 45.45118)",
+        "progress": 5.60428190231323,
+        "swimming": true,
+        "tick": 292
+      },
+      {
+        "position": "(-725.4199, 18.75416, 45.40818)",
+        "progress": 5.66511344909668,
+        "swimming": true,
+        "tick": 293
+      },
+      {
+        "position": "(-725.4629, 18.75374, 45.36518)",
+        "progress": 5.72594547271729,
+        "swimming": true,
+        "tick": 294
+      },
+      {
+        "position": "(-725.5059, 18.75343, 45.32218)",
+        "progress": 5.78677988052368,
+        "swimming": true,
+        "tick": 295
+      },
+      {
+        "position": "(-725.549, 18.75321, 45.27917)",
+        "progress": 5.84761428833008,
+        "swimming": true,
+        "tick": 296
+      },
+      {
+        "position": "(-725.592, 18.75309, 45.23617)",
+        "progress": 5.90844869613647,
+        "swimming": true,
+        "tick": 297
+      },
+      {
+        "position": "(-725.635, 18.75305, 45.19317)",
+        "progress": 5.96928310394287,
+        "swimming": true,
+        "tick": 298
+      },
+      {
+        "position": "(-725.678, 18.75308, 45.15017)",
+        "progress": 6.03011751174927,
+        "swimming": true,
+        "tick": 299
+      },
+      {
+        "position": "(-725.7211, 18.75319, 45.10716)",
+        "progress": 6.09095191955566,
+        "swimming": true,
+        "tick": 300
+      },
+      {
+        "position": "(-725.7641, 18.75336, 45.06416)",
+        "progress": 6.1517858505249,
+        "swimming": true,
+        "tick": 301
+      },
+      {
+        "position": "(-725.8071, 18.75359, 45.02116)",
+        "progress": 6.21262073516846,
+        "swimming": true,
+        "tick": 302
+      },
+      {
+        "position": "(-725.8502, 18.75386, 44.97815)",
+        "progress": 6.27345514297485,
+        "swimming": true,
+        "tick": 303
+      },
+      {
+        "position": "(-725.8932, 18.75417, 44.93515)",
+        "progress": 6.33428955078125,
+        "swimming": true,
+        "tick": 304
+      },
+      {
+        "position": "(-725.9362, 18.75452, 44.89215)",
+        "progress": 6.3951244354248,
+        "swimming": true,
+        "tick": 305
+      },
+      {
+        "position": "(-725.9792, 18.7549, 44.84914)",
+        "progress": 6.45595836639404,
+        "swimming": true,
+        "tick": 306
+      },
+      {
+        "position": "(-726.0223, 18.75529, 44.80614)",
+        "progress": 6.51679515838623,
+        "swimming": true,
+        "tick": 307
+      },
+      {
+        "position": "(-726.0653, 18.7557, 44.76313)",
+        "progress": 6.57763290405273,
+        "swimming": true,
+        "tick": 308
+      },
+      {
+        "position": "(-726.1083, 18.75612, 44.72012)",
+        "progress": 6.63846969604492,
+        "swimming": true,
+        "tick": 309
+      },
+      {
+        "position": "(-726.1514, 18.75653, 44.67712)",
+        "progress": 6.69930648803711,
+        "swimming": true,
+        "tick": 310
+      },
+      {
+        "position": "(-726.1944, 18.75694, 44.63411)",
+        "progress": 6.76014423370361,
+        "swimming": true,
+        "tick": 311
+      },
+      {
+        "position": "(-726.2374, 18.75735, 44.5911)",
+        "progress": 6.8209810256958,
+        "swimming": true,
+        "tick": 312
+      },
+      {
+        "position": "(-726.2805, 18.75773, 44.5481)",
+        "progress": 6.88181781768799,
+        "swimming": true,
+        "tick": 313
+      },
+      {
+        "position": "(-726.3235, 18.75809, 44.50509)",
+        "progress": 6.94265508651733,
+        "swimming": true,
+        "tick": 314
+      },
+      {
+        "position": "(-726.3665, 18.75843, 44.46208)",
+        "progress": 7.00349235534668,
+        "swimming": true,
+        "tick": 315
+      },
+      {
+        "position": "(-726.4095, 18.75874, 44.41908)",
+        "progress": 7.06432962417603,
+        "swimming": true,
+        "tick": 316
+      },
+      {
+        "position": "(-726.4526, 18.75901, 44.37607)",
+        "progress": 7.12516641616821,
+        "swimming": true,
+        "tick": 317
+      },
+      {
+        "position": "(-726.4956, 18.75924, 44.33306)",
+        "progress": 7.18600368499756,
+        "swimming": true,
+        "tick": 318
+      },
+      {
+        "position": "(-726.5386, 18.75944, 44.29005)",
+        "progress": 7.2468409538269,
+        "swimming": true,
+        "tick": 319
+      },
+      {
+        "position": "(-726.5817, 18.75959, 44.24705)",
+        "progress": 7.30767822265625,
+        "swimming": true,
+        "tick": 320
+      },
+      {
+        "position": "(-726.6247, 18.7597, 44.20404)",
+        "progress": 7.36851501464844,
+        "swimming": true,
+        "tick": 321
+      },
+      {
+        "position": "(-726.6677, 18.75977, 44.16103)",
+        "progress": 7.42935228347778,
+        "swimming": true,
+        "tick": 322
+      },
+      {
+        "position": "(-726.7108, 18.75978, 44.11802)",
+        "progress": 7.49019193649292,
+        "swimming": true,
+        "tick": 323
+      },
+      {
+        "position": "(-726.7538, 18.75975, 44.07501)",
+        "progress": 7.55103206634521,
+        "swimming": true,
+        "tick": 324
+      },
+      {
+        "position": "(-726.7968, 18.75966, 44.032)",
+        "progress": 7.61187171936035,
+        "swimming": true,
+        "tick": 325
+      },
+      {
+        "position": "(-726.8398, 18.75953, 43.98899)",
+        "progress": 7.67271137237549,
+        "swimming": true,
+        "tick": 326
+      },
+      {
+        "position": "(-726.8829, 18.75935, 43.94598)",
+        "progress": 7.73355150222778,
+        "swimming": true,
+        "tick": 327
+      },
+      {
+        "position": "(-726.9259, 18.75913, 43.90297)",
+        "progress": 7.79439115524292,
+        "swimming": true,
+        "tick": 328
+      },
+      {
+        "position": "(-726.9689, 18.75885, 43.85996)",
+        "progress": 7.85523128509521,
+        "swimming": true,
+        "tick": 329
+      },
+      {
+        "position": "(-727.012, 18.75854, 43.81695)",
+        "progress": 7.91607093811035,
+        "swimming": true,
+        "tick": 330
+      },
+      {
+        "position": "(-727.055, 18.75817, 43.77394)",
+        "progress": 7.97691059112549,
+        "swimming": true,
+        "tick": 331
+      },
+      {
+        "position": "(-727.098, 18.75777, 43.73093)",
+        "progress": 8.03775024414062,
+        "swimming": true,
+        "tick": 332
+      },
+      {
+        "position": "(-727.1411, 18.75734, 43.68792)",
+        "progress": 8.09858989715576,
+        "swimming": true,
+        "tick": 333
+      },
+      {
+        "position": "(-727.1841, 18.75686, 43.64491)",
+        "progress": 8.15943050384521,
+        "swimming": true,
+        "tick": 334
+      },
+      {
+        "position": "(-727.2271, 18.75636, 43.60189)",
+        "progress": 8.22027015686035,
+        "swimming": true,
+        "tick": 335
+      },
+      {
+        "position": "(-727.2701, 18.75583, 43.55888)",
+        "progress": 8.28110980987549,
+        "swimming": true,
+        "tick": 336
+      },
+      {
+        "position": "(-727.3132, 18.75527, 43.51587)",
+        "progress": 8.34194946289062,
+        "swimming": true,
+        "tick": 337
+      },
+      {
+        "position": "(-727.3562, 18.75469, 43.47286)",
+        "progress": 8.40278911590576,
+        "swimming": true,
+        "tick": 338
+      },
+      {
+        "position": "(-727.3992, 18.7541, 43.42985)",
+        "progress": 8.4636287689209,
+        "swimming": true,
+        "tick": 339
+      },
+      {
+        "position": "(-727.4423, 18.75349, 43.38684)",
+        "progress": 8.52446937561035,
+        "swimming": true,
+        "tick": 340
+      },
+      {
+        "position": "(-727.4853, 18.75288, 43.34383)",
+        "progress": 8.58530902862549,
+        "swimming": true,
+        "tick": 341
+      },
+      {
+        "position": "(-727.5283, 18.75226, 43.30082)",
+        "progress": 8.64614868164062,
+        "swimming": true,
+        "tick": 342
+      },
+      {
+        "position": "(-727.5714, 18.75164, 43.25781)",
+        "progress": 8.70698833465576,
+        "swimming": true,
+        "tick": 343
+      },
+      {
+        "position": "(-727.6144, 18.75103, 43.2148)",
+        "progress": 8.7678279876709,
+        "swimming": true,
+        "tick": 344
+      },
+      {
+        "position": "(-727.6574, 18.75043, 43.17179)",
+        "progress": 8.82866859436035,
+        "swimming": true,
+        "tick": 345
+      },
+      {
+        "position": "(-727.7004, 18.74984, 43.12878)",
+        "progress": 8.88950824737549,
+        "swimming": true,
+        "tick": 346
+      },
+      {
+        "position": "(-727.7435, 18.74927, 43.08577)",
+        "progress": 8.95034790039062,
+        "swimming": true,
+        "tick": 347
+      },
+      {
+        "position": "(-727.7865, 18.74873, 43.04276)",
+        "progress": 9.01118755340576,
+        "swimming": true,
+        "tick": 348
+      },
+      {
+        "position": "(-727.8295, 18.74821, 42.99974)",
+        "progress": 9.0720272064209,
+        "swimming": true,
+        "tick": 349
+      },
+      {
+        "position": "(-727.8726, 18.74772, 42.95673)",
+        "progress": 9.13286781311035,
+        "swimming": true,
+        "tick": 350
+      },
+      {
+        "position": "(-727.9156, 18.74727, 42.91372)",
+        "progress": 9.19370651245117,
+        "swimming": true,
+        "tick": 351
+      },
+      {
+        "position": "(-727.9586, 18.74686, 42.87071)",
+        "progress": 9.25454711914062,
+        "swimming": true,
+        "tick": 352
+      },
+      {
+        "position": "(-728.0016, 18.74649, 42.8277)",
+        "progress": 9.31538963317871,
+        "swimming": true,
+        "tick": 353
+      },
+      {
+        "position": "(-728.0447, 18.74616, 42.78468)",
+        "progress": 9.3762321472168,
+        "swimming": true,
+        "tick": 354
+      },
+      {
+        "position": "(-728.0877, 18.74589, 42.74167)",
+        "progress": 9.43707466125488,
+        "swimming": true,
+        "tick": 355
+      },
+      {
+        "position": "(-728.1307, 18.74567, 42.69865)",
+        "progress": 9.49791717529297,
+        "swimming": true,
+        "tick": 356
+      },
+      {
+        "position": "(-728.1738, 18.7455, 42.65564)",
+        "progress": 9.55875968933105,
+        "swimming": true,
+        "tick": 357
+      },
+      {
+        "position": "(-728.2168, 18.74539, 42.61263)",
+        "progress": 9.61960220336914,
+        "swimming": true,
+        "tick": 358
+      },
+      {
+        "position": "(-728.2598, 18.74534, 42.56961)",
+        "progress": 9.68044471740723,
+        "swimming": true,
+        "tick": 359
+      }
+    ],
+    "start": "(-714.3431, 18.11603, 56.48528)"
+  }
+]

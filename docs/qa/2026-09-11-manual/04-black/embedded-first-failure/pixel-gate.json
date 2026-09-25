@@ -1,0 +1,13 @@
+{
+  "passed": false,
+  "frames": 2,
+  "minimum_frames": 1,
+  "sample_counts_valid": true,
+  "stale_or_missing_markers": [],
+  "corrupt_frames": [
+    532,
+    533
+  ],
+  "max_black_samples": 7762,
+  "max_invalid_rgb_samples": 2598
+}

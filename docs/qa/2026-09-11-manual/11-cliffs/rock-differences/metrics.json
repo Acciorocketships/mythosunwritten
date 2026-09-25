@@ -1,0 +1,200 @@
+{
+  "face_14_-20": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.34837094907407407,
+    "roi_mean_abs_rgb": 0.34837094907407407,
+    "roi_changed_over_20_fraction": 0.00838059413580247
+  },
+  "face_14_0": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.41651282793209876,
+    "roi_mean_abs_rgb": 0.41651282793209876,
+    "roi_changed_over_20_fraction": 0.009694251543209877
+  },
+  "face_14_20": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.4398947080761317,
+    "roi_mean_abs_rgb": 0.4398947080761317,
+    "roi_changed_over_20_fraction": 0.010432098765432099
+  },
+  "face_28_-20": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.3461689814814815,
+    "roi_mean_abs_rgb": 0.3461689814814815,
+    "roi_changed_over_20_fraction": 0.008252314814814815
+  },
+  "face_28_0": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.6247117734053498,
+    "roi_mean_abs_rgb": 0.6247117734053498,
+    "roi_changed_over_20_fraction": 0.014965760030864198
+  },
+  "face_28_20": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.64928610468107,
+    "roi_mean_abs_rgb": 0.64928610468107,
+    "roi_changed_over_20_fraction": 0.015446566358024692
+  },
+  "inner_14_-20": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.6604861111111111,
+    "roi_mean_abs_rgb": 0.6604861111111111,
+    "roi_changed_over_20_fraction": 0.01464699074074074
+  },
+  "inner_14_0": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.8202420910493827,
+    "roi_mean_abs_rgb": 0.8202420910493827,
+    "roi_changed_over_20_fraction": 0.017921006944444446
+  },
+  "inner_14_20": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.7564039994855967,
+    "roi_mean_abs_rgb": 0.7564039994855967,
+    "roi_changed_over_20_fraction": 0.015450424382716049
+  },
+  "inner_28_-20": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.5379938271604938,
+    "roi_mean_abs_rgb": 0.5379938271604938,
+    "roi_changed_over_20_fraction": 0.011448206018518519
+  },
+  "inner_28_0": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.8188896926440329,
+    "roi_mean_abs_rgb": 0.8188896926440329,
+    "roi_changed_over_20_fraction": 0.018115837191358026
+  },
+  "inner_28_20": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.6754589441872428,
+    "roi_mean_abs_rgb": 0.6754589441872428,
+    "roi_changed_over_20_fraction": 0.015021219135802469
+  },
+  "outer_14_-20": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.299433191872428,
+    "roi_mean_abs_rgb": 0.299433191872428,
+    "roi_changed_over_20_fraction": 0.0066951195987654324
+  },
+  "outer_14_0": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.297227366255144,
+    "roi_mean_abs_rgb": 0.297227366255144,
+    "roi_changed_over_20_fraction": 0.006618441358024692
+  },
+  "outer_14_20": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.3010866769547325,
+    "roi_mean_abs_rgb": 0.3010866769547325,
+    "roi_changed_over_20_fraction": 0.006846064814814815
+  },
+  "outer_28_-20": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.30618328832304526,
+    "roi_mean_abs_rgb": 0.30618328832304526,
+    "roi_changed_over_20_fraction": 0.006877893518518518
+  },
+  "outer_28_0": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.30363200874485596,
+    "roi_mean_abs_rgb": 0.30363200874485596,
+    "roi_changed_over_20_fraction": 0.006736111111111111
+  },
+  "outer_28_20": {
+    "roi": [
+      0,
+      0,
+      1920,
+      1080
+    ],
+    "mean_abs_rgb": 0.29175282921810697,
+    "roi_mean_abs_rgb": 0.29175282921810697,
+    "roi_changed_over_20_fraction": 0.0065658757716049385
+  }
+}

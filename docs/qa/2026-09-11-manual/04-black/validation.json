@@ -1,0 +1,15 @@
+{
+  "native_tests": 13,
+  "assertions": 143,
+  "exit_code": 0,
+  "test_suites": [
+    "test_visibility_bubble",
+    "test_september11_visibility_work",
+    "test_september11_visibility_render"
+  ],
+  "marked_embedded_current_frames": 4682,
+  "unmarked_standalone_current_frames": 7201,
+  "photo_pairs": 12,
+  "fresh_failure_pose_pairs": 2,
+  "project_settings_restored_sha256": "7fc4cfdab9570925f688f0b6a6ff0602c5d8153ad9f536cbb2668593043437e4"
+}

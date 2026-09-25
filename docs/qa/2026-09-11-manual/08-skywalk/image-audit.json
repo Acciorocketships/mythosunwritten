@@ -1,0 +1,322 @@
+[
+  {
+    "family": "live",
+    "view": "01_black_-8",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 2.788143004115226,
+    "changed_over_20_fraction": 0.05170621141975309,
+    "judgement": "Pass: both support bands join the house mass; planter removed; street, roofs and character visibility retained. Small unrelated animated-light/dither residuals remain."
+  },
+  {
+    "family": "live",
+    "view": "01_black_0",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 2.8989506172839508,
+    "changed_over_20_fraction": 0.04811921296296296,
+    "judgement": "Pass: both support bands join the house mass; planter removed; street, roofs and character visibility retained. Small unrelated animated-light/dither residuals remain."
+  },
+  {
+    "family": "live",
+    "view": "01_black_8",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 2.5616153870884775,
+    "changed_over_20_fraction": 0.04185426311728395,
+    "judgement": "Pass: both support bands join the house mass; planter removed; street, roofs and character visibility retained. Small unrelated animated-light/dither residuals remain."
+  },
+  {
+    "family": "live",
+    "view": "02_bubble_-8",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 2.681535654578189,
+    "changed_over_20_fraction": 0.05107542438271605,
+    "judgement": "Pass: both support bands join the house mass; planter removed; street, roofs and character visibility retained. Small unrelated animated-light/dither residuals remain."
+  },
+  {
+    "family": "live",
+    "view": "02_bubble_0",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 2.574799864969136,
+    "changed_over_20_fraction": 0.0454639274691358,
+    "judgement": "Pass: both support bands join the house mass; planter removed; street, roofs and character visibility retained. Small unrelated animated-light/dither residuals remain."
+  },
+  {
+    "family": "live",
+    "view": "02_bubble_8",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 2.1913991769547323,
+    "changed_over_20_fraction": 0.04221257716049383,
+    "judgement": "Pass: both support bands join the house mass; planter removed; street, roofs and character visibility retained. Small unrelated animated-light/dither residuals remain."
+  },
+  {
+    "family": "live",
+    "view": "03_block_-8",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 1.0926356738683127,
+    "changed_over_20_fraction": 0.014835551697530864,
+    "judgement": "Pass: both support bands join the house mass; planter removed; street, roofs and character visibility retained. Small unrelated animated-light/dither residuals remain."
+  },
+  {
+    "family": "live",
+    "view": "03_block_0",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.9526485339506173,
+    "changed_over_20_fraction": 0.013579764660493827,
+    "judgement": "Pass: both support bands join the house mass; planter removed; street, roofs and character visibility retained. Small unrelated animated-light/dither residuals remain."
+  },
+  {
+    "family": "live",
+    "view": "03_block_8",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.893067611882716,
+    "changed_over_20_fraction": 0.013152970679012346,
+    "judgement": "Pass: both support bands join the house mass; planter removed; street, roofs and character visibility retained. Small unrelated animated-light/dither residuals remain."
+  },
+  {
+    "family": "live",
+    "view": "04_village_-8",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.652795942644033,
+    "changed_over_20_fraction": 0.010837191358024691,
+    "judgement": "Pass: both support bands join the house mass; planter removed; street, roofs and character visibility retained. Small unrelated animated-light/dither residuals remain."
+  },
+  {
+    "family": "live",
+    "view": "04_village_0",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.6479067001028807,
+    "changed_over_20_fraction": 0.009974922839506174,
+    "judgement": "Pass: both support bands join the house mass; planter removed; street, roofs and character visibility retained. Small unrelated animated-light/dither residuals remain."
+  },
+  {
+    "family": "live",
+    "view": "04_village_8",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.7130025077160493,
+    "changed_over_20_fraction": 0.010629340277777777,
+    "judgement": "Pass: both support bands join the house mass; planter removed; street, roofs and character visibility retained. Small unrelated animated-light/dither residuals remain."
+  },
+  {
+    "family": "native",
+    "view": "03_block_-30",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.9767181069958848,
+    "changed_over_20_fraction": 0.020360243055555557,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "03_block_-8",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.7784545396090535,
+    "changed_over_20_fraction": 0.01548562885802469,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "03_block_-90",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 1.1453197337962964,
+    "changed_over_20_fraction": 0.02345389660493827,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "03_block_0",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.7121394354423868,
+    "changed_over_20_fraction": 0.01384934413580247,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "03_block_180",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 1.425782857510288,
+    "changed_over_20_fraction": 0.03659191743827161,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "03_block_30",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.6390385480967078,
+    "changed_over_20_fraction": 0.012291666666666666,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "03_block_8",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.6801824524176955,
+    "changed_over_20_fraction": 0.013235918209876543,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "03_block_90",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.657999453446502,
+    "changed_over_20_fraction": 0.013160686728395063,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "04_village_-30",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.6644912229938271,
+    "changed_over_20_fraction": 0.012584394290123457,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "04_village_-8",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.6690817901234568,
+    "changed_over_20_fraction": 0.012956693672839506,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "04_village_-90",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.7167452739197531,
+    "changed_over_20_fraction": 0.013950135030864197,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "04_village_0",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.6552755272633745,
+    "changed_over_20_fraction": 0.01308497299382716,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "04_village_180",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 1.146019804526749,
+    "changed_over_20_fraction": 0.023449556327160493,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "04_village_30",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.807839023919753,
+    "changed_over_20_fraction": 0.017099247685185184,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "04_village_8",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.6544110082304527,
+    "changed_over_20_fraction": 0.013196373456790124,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "native",
+    "view": "04_village_90",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 1.4238691165123456,
+    "changed_over_20_fraction": 0.036571180555555555,
+    "judgement": "Pass: differences confined to filled support bands and removed inaccessible planter; roofs, neighboring rooms, decks and gardens retained."
+  },
+  {
+    "family": "detail",
+    "view": "course0_close_front",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 4.76717528292181,
+    "changed_over_20_fraction": 0.09620997299382716,
+    "judgement": "Pass: native infill meets upper/lower timber interfaces, with closed face/corner joints; no unsupported extension."
+  },
+  {
+    "family": "detail",
+    "view": "course0_close_underside",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 8.355766300154322,
+    "changed_over_20_fraction": 0.14086612654320987,
+    "judgement": "Pass: native infill meets upper/lower timber interfaces, with closed face/corner joints; no unsupported extension."
+  },
+  {
+    "family": "detail",
+    "view": "course0_front",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 1.215970775462963,
+    "changed_over_20_fraction": 0.02761815200617284,
+    "judgement": "Pass: native infill meets upper/lower timber interfaces, with closed face/corner joints; no unsupported extension."
+  },
+  {
+    "family": "detail",
+    "view": "course0_left",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 1.4875586741255145,
+    "changed_over_20_fraction": 0.03506799768518518,
+    "judgement": "Pass: native infill meets upper/lower timber interfaces, with closed face/corner joints; no unsupported extension."
+  },
+  {
+    "family": "detail",
+    "view": "course0_right",
+    "accepted_evidence": false,
+    "mean_abs_rgb_255": 1.5888088348765432,
+    "changed_over_20_fraction": 0.03905815972222222,
+    "judgement": "Excluded: target obscured by adjacent building; use close views."
+  },
+  {
+    "family": "detail",
+    "view": "course0_underside",
+    "accepted_evidence": false,
+    "mean_abs_rgb_255": 0.003690843621399177,
+    "changed_over_20_fraction": 9.886188271604939e-05,
+    "judgement": "Excluded: target obscured by adjacent building; use close views."
+  },
+  {
+    "family": "detail",
+    "view": "course1_close_front",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 5.952773759002057,
+    "changed_over_20_fraction": 0.12204475308641975,
+    "judgement": "Pass: native infill meets upper/lower timber interfaces, with closed face/corner joints; no unsupported extension."
+  },
+  {
+    "family": "detail",
+    "view": "course1_close_underside",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 5.746133134002058,
+    "changed_over_20_fraction": 0.10945360725308642,
+    "judgement": "Pass: native infill meets upper/lower timber interfaces, with closed face/corner joints; no unsupported extension."
+  },
+  {
+    "family": "detail",
+    "view": "course1_front",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 1.185250932355967,
+    "changed_over_20_fraction": 0.02555025077160494,
+    "judgement": "Pass: native infill meets upper/lower timber interfaces, with closed face/corner joints; no unsupported extension."
+  },
+  {
+    "family": "detail",
+    "view": "course1_left",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.9345167824074074,
+    "changed_over_20_fraction": 0.027337962962962963,
+    "judgement": "Pass: native infill meets upper/lower timber interfaces, with closed face/corner joints; no unsupported extension."
+  },
+  {
+    "family": "detail",
+    "view": "course1_right",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 1.3987784529320988,
+    "changed_over_20_fraction": 0.030166377314814814,
+    "judgement": "Pass: native infill meets upper/lower timber interfaces, with closed face/corner joints; no unsupported extension."
+  },
+  {
+    "family": "detail",
+    "view": "course1_underside",
+    "accepted_evidence": true,
+    "mean_abs_rgb_255": 0.6462119020061728,
+    "changed_over_20_fraction": 0.020815007716049383,
+    "judgement": "Pass: native infill meets upper/lower timber interfaces, with closed face/corner joints; no unsupported extension."
+  }
+]

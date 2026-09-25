@@ -1,0 +1,30 @@
+[
+  {
+    "file": "gpu-00532.png",
+    "sha256": "1f7613446db43132bad3a9b7fe1ccc2f3a724d9c1a6b2196793ca9c528dec007"
+  },
+  {
+    "file": "gpu-00533.png",
+    "sha256": "6d3af063b28cd5bb69afc17f26846dbd6a74c5b3cfc5f762f841860248d85dde"
+  },
+  {
+    "file": "verified-failure.json",
+    "sha256": "867d75eec8eeea3bb7db1239f165e17bec5606c82b599c496d3a54cc186c8446"
+  },
+  {
+    "file": "engine.log",
+    "sha256": "fa4a4c232bf73640e5813da9c65b29e3adebb8c8c17634884f62cd342cb356c4"
+  },
+  {
+    "file": "0532.png",
+    "sha256": "22d997258ec30371e326d5fa80bef6204ef0a002be91b4987c8a4800027de7b9"
+  },
+  {
+    "file": "0533.png",
+    "sha256": "22d997258ec30371e326d5fa80bef6204ef0a002be91b4987c8a4800027de7b9"
+  },
+  {
+    "file": "0534.png",
+    "sha256": "22d997258ec30371e326d5fa80bef6204ef0a002be91b4987c8a4800027de7b9"
+  }
+]

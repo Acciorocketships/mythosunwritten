@@ -1,0 +1,32 @@
+[
+  {
+    "case": 0,
+    "mean_abs_rgb": 0.322875832517941,
+    "passed": true,
+    "pixel": "(890, 359)"
+  },
+  {
+    "case": 1,
+    "mean_abs_rgb": 0.0,
+    "passed": true,
+    "pixel": "(765, 360)"
+  },
+  {
+    "case": 2,
+    "mean_abs_rgb": 0.0,
+    "passed": true,
+    "pixel": "(639, 360)"
+  },
+  {
+    "case": 3,
+    "mean_abs_rgb": 0.0,
+    "passed": true,
+    "pixel": "(514, 360)"
+  },
+  {
+    "case": 4,
+    "mean_abs_rgb": 0.0,
+    "passed": true,
+    "pixel": "(389, 360)"
+  }
+]

@@ -1,0 +1,1535 @@
+[
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1
+    },
+    "orientation": 0,
+    "seed": 0,
+    "stepped": false,
+    "triangles": 6624,
+    "usec": 10249
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "rock": 2
+    },
+    "orientation": 0,
+    "seed": 1,
+    "stepped": false,
+    "triangles": 7060,
+    "usec": 10384
+  },
+  {
+    "kinds": {
+      "face": 14,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 0,
+    "seed": 2,
+    "stepped": false,
+    "triangles": 8470,
+    "usec": 10869
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1
+    },
+    "orientation": 0,
+    "seed": 3,
+    "stepped": false,
+    "triangles": 6926,
+    "usec": 10054
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1
+    },
+    "orientation": 0,
+    "seed": 4,
+    "stepped": false,
+    "triangles": 4608,
+    "usec": 9578
+  },
+  {
+    "kinds": {
+      "face": 13,
+      "inner": 1
+    },
+    "orientation": 0,
+    "seed": 5,
+    "stepped": false,
+    "triangles": 8736,
+    "usec": 10652
+  },
+  {
+    "kinds": {
+      "face": 14,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 0,
+    "seed": 6,
+    "stepped": false,
+    "triangles": 7462,
+    "usec": 10846
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1
+    },
+    "orientation": 0,
+    "seed": 7,
+    "stepped": false,
+    "triangles": 7170,
+    "usec": 10005
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 0,
+    "seed": 8,
+    "stepped": false,
+    "triangles": 7442,
+    "usec": 10218
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1
+    },
+    "orientation": 0,
+    "seed": 9,
+    "stepped": false,
+    "triangles": 6120,
+    "usec": 9756
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1
+    },
+    "orientation": 0,
+    "seed": 10,
+    "stepped": false,
+    "triangles": 8012,
+    "usec": 10328
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 0,
+    "seed": 11,
+    "stepped": false,
+    "triangles": 6196,
+    "usec": 10359
+  },
+  {
+    "kinds": {
+      "face": 13,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 0,
+    "seed": 12,
+    "stepped": false,
+    "triangles": 7436,
+    "usec": 10432
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1
+    },
+    "orientation": 0,
+    "seed": 13,
+    "stepped": false,
+    "triangles": 5876,
+    "usec": 10422
+  },
+  {
+    "kinds": {
+      "face": 14,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 0,
+    "seed": 14,
+    "stepped": false,
+    "triangles": 7456,
+    "usec": 10790
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 0,
+    "seed": 15,
+    "stepped": false,
+    "triangles": 7352,
+    "usec": 10451
+  },
+  {
+    "kinds": {
+      "face": 14,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 0,
+    "seed": 0,
+    "stepped": true,
+    "triangles": 7664,
+    "usec": 10675
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 0,
+    "seed": 1,
+    "stepped": true,
+    "triangles": 7176,
+    "usec": 10114
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 0,
+    "seed": 2,
+    "stepped": true,
+    "triangles": 7074,
+    "usec": 9916
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 0,
+    "seed": 3,
+    "stepped": true,
+    "triangles": 8420,
+    "usec": 10778
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 0,
+    "seed": 4,
+    "stepped": true,
+    "triangles": 5902,
+    "usec": 10011
+  },
+  {
+    "kinds": {
+      "face": 13,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 0,
+    "seed": 5,
+    "stepped": true,
+    "triangles": 7992,
+    "usec": 10796
+  },
+  {
+    "kinds": {
+      "face": 15,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 0,
+    "seed": 6,
+    "stepped": true,
+    "triangles": 9980,
+    "usec": 11730
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 0,
+    "seed": 7,
+    "stepped": true,
+    "triangles": 7092,
+    "usec": 10334
+  },
+  {
+    "kinds": {
+      "face": 15,
+      "inner": 1,
+      "outer": 1,
+      "rock": 2
+    },
+    "orientation": 0,
+    "seed": 8,
+    "stepped": true,
+    "triangles": 10262,
+    "usec": 11583
+  },
+  {
+    "kinds": {
+      "face": 13,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 0,
+    "seed": 9,
+    "stepped": true,
+    "triangles": 7238,
+    "usec": 10355
+  },
+  {
+    "kinds": {
+      "face": 14,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 0,
+    "seed": 10,
+    "stepped": true,
+    "triangles": 9986,
+    "usec": 11408
+  },
+  {
+    "kinds": {
+      "face": 13,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 0,
+    "seed": 11,
+    "stepped": true,
+    "triangles": 8392,
+    "usec": 11023
+  },
+  {
+    "kinds": {
+      "face": 13,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 0,
+    "seed": 12,
+    "stepped": true,
+    "triangles": 7716,
+    "usec": 10580
+  },
+  {
+    "kinds": {
+      "face": 13,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 0,
+    "seed": 13,
+    "stepped": true,
+    "triangles": 7710,
+    "usec": 11034
+  },
+  {
+    "kinds": {
+      "face": 14,
+      "inner": 1,
+      "outer": 1,
+      "rock": 2
+    },
+    "orientation": 0,
+    "seed": 14,
+    "stepped": true,
+    "triangles": 9730,
+    "usec": 11651
+  },
+  {
+    "kinds": {
+      "face": 14,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 0,
+    "seed": 15,
+    "stepped": true,
+    "triangles": 9026,
+    "usec": 11284
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1
+    },
+    "orientation": 1,
+    "seed": 0,
+    "stepped": false,
+    "triangles": 6860,
+    "usec": 15712
+  },
+  {
+    "kinds": {
+      "face": 7,
+      "inner": 1
+    },
+    "orientation": 1,
+    "seed": 1,
+    "stepped": false,
+    "triangles": 5442,
+    "usec": 8270
+  },
+  {
+    "kinds": {
+      "face": 13,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 1,
+    "seed": 2,
+    "stepped": false,
+    "triangles": 7974,
+    "usec": 10516
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1
+    },
+    "orientation": 1,
+    "seed": 3,
+    "stepped": false,
+    "triangles": 6742,
+    "usec": 9434
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 1,
+    "seed": 4,
+    "stepped": false,
+    "triangles": 5818,
+    "usec": 9886
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1
+    },
+    "orientation": 1,
+    "seed": 5,
+    "stepped": false,
+    "triangles": 5904,
+    "usec": 9737
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 1,
+    "seed": 6,
+    "stepped": false,
+    "triangles": 8176,
+    "usec": 10021
+  },
+  {
+    "kinds": {
+      "face": 8,
+      "inner": 1
+    },
+    "orientation": 1,
+    "seed": 7,
+    "stepped": false,
+    "triangles": 4494,
+    "usec": 9165
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1
+    },
+    "orientation": 1,
+    "seed": 8,
+    "stepped": false,
+    "triangles": 5618,
+    "usec": 9404
+  },
+  {
+    "kinds": {
+      "face": 6,
+      "inner": 1
+    },
+    "orientation": 1,
+    "seed": 9,
+    "stepped": false,
+    "triangles": 3172,
+    "usec": 8129
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1
+    },
+    "orientation": 1,
+    "seed": 10,
+    "stepped": false,
+    "triangles": 7058,
+    "usec": 10314
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1
+    },
+    "orientation": 1,
+    "seed": 11,
+    "stepped": false,
+    "triangles": 5242,
+    "usec": 9871
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 1,
+    "seed": 12,
+    "stepped": false,
+    "triangles": 6224,
+    "usec": 9891
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "rock": 3
+    },
+    "orientation": 1,
+    "seed": 13,
+    "stepped": false,
+    "triangles": 8240,
+    "usec": 10236
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 1,
+    "seed": 14,
+    "stepped": false,
+    "triangles": 6910,
+    "usec": 9648
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "rock": 2
+    },
+    "orientation": 1,
+    "seed": 15,
+    "stepped": false,
+    "triangles": 6924,
+    "usec": 9817
+  },
+  {
+    "kinds": {
+      "face": 13,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 1,
+    "seed": 0,
+    "stepped": true,
+    "triangles": 8496,
+    "usec": 10574
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 1,
+    "seed": 1,
+    "stepped": true,
+    "triangles": 7120,
+    "usec": 9439
+  },
+  {
+    "kinds": {
+      "face": 14,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 1,
+    "seed": 2,
+    "stepped": true,
+    "triangles": 8596,
+    "usec": 10349
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 1,
+    "seed": 3,
+    "stepped": true,
+    "triangles": 6784,
+    "usec": 10104
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 1,
+    "seed": 4,
+    "stepped": true,
+    "triangles": 7266,
+    "usec": 10347
+  },
+  {
+    "kinds": {
+      "face": 13,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 1,
+    "seed": 5,
+    "stepped": true,
+    "triangles": 9152,
+    "usec": 10623
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 1,
+    "seed": 6,
+    "stepped": true,
+    "triangles": 8698,
+    "usec": 10037
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 1,
+    "seed": 7,
+    "stepped": true,
+    "triangles": 6556,
+    "usec": 10249
+  },
+  {
+    "kinds": {
+      "face": 13,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 1,
+    "seed": 8,
+    "stepped": true,
+    "triangles": 8072,
+    "usec": 10138
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "outer": 1,
+      "rock": 2
+    },
+    "orientation": 1,
+    "seed": 9,
+    "stepped": true,
+    "triangles": 8176,
+    "usec": 9572
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 1,
+    "seed": 10,
+    "stepped": true,
+    "triangles": 6320,
+    "usec": 10051
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 1,
+    "seed": 11,
+    "stepped": true,
+    "triangles": 6220,
+    "usec": 10480
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 1,
+    "seed": 12,
+    "stepped": true,
+    "triangles": 7354,
+    "usec": 10256
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1,
+      "outer": 1,
+      "rock": 2
+    },
+    "orientation": 1,
+    "seed": 13,
+    "stepped": true,
+    "triangles": 6076,
+    "usec": 9483
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 1,
+    "seed": 14,
+    "stepped": true,
+    "triangles": 8146,
+    "usec": 9883
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1,
+      "rock": 2
+    },
+    "orientation": 1,
+    "seed": 15,
+    "stepped": true,
+    "triangles": 8320,
+    "usec": 10529
+  },
+  {
+    "kinds": {
+      "face": 7,
+      "inner": 1
+    },
+    "orientation": 2,
+    "seed": 0,
+    "stepped": false,
+    "triangles": 3730,
+    "usec": 7992
+  },
+  {
+    "kinds": {
+      "face": 8,
+      "inner": 1
+    },
+    "orientation": 2,
+    "seed": 1,
+    "stepped": false,
+    "triangles": 4824,
+    "usec": 8557
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 2,
+    "seed": 2,
+    "stepped": false,
+    "triangles": 6246,
+    "usec": 9434
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1
+    },
+    "orientation": 2,
+    "seed": 3,
+    "stepped": false,
+    "triangles": 6064,
+    "usec": 9302
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "rock": 2
+    },
+    "orientation": 2,
+    "seed": 4,
+    "stepped": false,
+    "triangles": 7628,
+    "usec": 9588
+  },
+  {
+    "kinds": {
+      "face": 7,
+      "inner": 1,
+      "rock": 2
+    },
+    "orientation": 2,
+    "seed": 5,
+    "stepped": false,
+    "triangles": 5650,
+    "usec": 8644
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 2,
+    "seed": 6,
+    "stepped": false,
+    "triangles": 5666,
+    "usec": 9011
+  },
+  {
+    "kinds": {
+      "face": 7,
+      "inner": 1
+    },
+    "orientation": 2,
+    "seed": 7,
+    "stepped": false,
+    "triangles": 4538,
+    "usec": 8462
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1
+    },
+    "orientation": 2,
+    "seed": 8,
+    "stepped": false,
+    "triangles": 5700,
+    "usec": 8737
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1
+    },
+    "orientation": 2,
+    "seed": 9,
+    "stepped": false,
+    "triangles": 5842,
+    "usec": 8567
+  },
+  {
+    "kinds": {
+      "face": 8,
+      "inner": 1
+    },
+    "orientation": 2,
+    "seed": 10,
+    "stepped": false,
+    "triangles": 4678,
+    "usec": 8581
+  },
+  {
+    "kinds": {
+      "face": 8,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 2,
+    "seed": 11,
+    "stepped": false,
+    "triangles": 5148,
+    "usec": 8401
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1
+    },
+    "orientation": 2,
+    "seed": 12,
+    "stepped": false,
+    "triangles": 7336,
+    "usec": 9357
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1
+    },
+    "orientation": 2,
+    "seed": 13,
+    "stepped": false,
+    "triangles": 6116,
+    "usec": 9108
+  },
+  {
+    "kinds": {
+      "face": 7,
+      "inner": 1
+    },
+    "orientation": 2,
+    "seed": 14,
+    "stepped": false,
+    "triangles": 4662,
+    "usec": 8191
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1
+    },
+    "orientation": 2,
+    "seed": 15,
+    "stepped": false,
+    "triangles": 4936,
+    "usec": 8926
+  },
+  {
+    "kinds": {
+      "face": 8,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 2,
+    "seed": 0,
+    "stepped": true,
+    "triangles": 4722,
+    "usec": 8576
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 2,
+    "seed": 1,
+    "stepped": true,
+    "triangles": 6342,
+    "usec": 9059
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 2,
+    "seed": 2,
+    "stepped": true,
+    "triangles": 6756,
+    "usec": 9419
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 2,
+    "seed": 3,
+    "stepped": true,
+    "triangles": 5492,
+    "usec": 8842
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 2,
+    "seed": 4,
+    "stepped": true,
+    "triangles": 8064,
+    "usec": 9908
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "outer": 1,
+      "rock": 2
+    },
+    "orientation": 2,
+    "seed": 5,
+    "stepped": true,
+    "triangles": 7846,
+    "usec": 9502
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 2,
+    "seed": 6,
+    "stepped": true,
+    "triangles": 7704,
+    "usec": 9748
+  },
+  {
+    "kinds": {
+      "face": 8,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 2,
+    "seed": 7,
+    "stepped": true,
+    "triangles": 6044,
+    "usec": 8944
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 2,
+    "seed": 8,
+    "stepped": true,
+    "triangles": 6690,
+    "usec": 8878
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 2,
+    "seed": 9,
+    "stepped": true,
+    "triangles": 5770,
+    "usec": 9189
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "outer": 1,
+      "rock": 2
+    },
+    "orientation": 2,
+    "seed": 10,
+    "stepped": true,
+    "triangles": 8492,
+    "usec": 9422
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 2,
+    "seed": 11,
+    "stepped": true,
+    "triangles": 6412,
+    "usec": 9323
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 2,
+    "seed": 12,
+    "stepped": true,
+    "triangles": 7668,
+    "usec": 9451
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 2,
+    "seed": 13,
+    "stepped": true,
+    "triangles": 8202,
+    "usec": 9834
+  },
+  {
+    "kinds": {
+      "face": 8,
+      "inner": 1,
+      "outer": 1,
+      "rock": 2
+    },
+    "orientation": 2,
+    "seed": 14,
+    "stepped": true,
+    "triangles": 7540,
+    "usec": 9078
+  },
+  {
+    "kinds": {
+      "face": 7,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 2,
+    "seed": 15,
+    "stepped": true,
+    "triangles": 4652,
+    "usec": 8155
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1
+    },
+    "orientation": 3,
+    "seed": 0,
+    "stepped": false,
+    "triangles": 6686,
+    "usec": 9675
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 3,
+    "seed": 1,
+    "stepped": false,
+    "triangles": 5974,
+    "usec": 9629
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1
+    },
+    "orientation": 3,
+    "seed": 2,
+    "stepped": false,
+    "triangles": 6586,
+    "usec": 9656
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1
+    },
+    "orientation": 3,
+    "seed": 3,
+    "stepped": false,
+    "triangles": 6900,
+    "usec": 9654
+  },
+  {
+    "kinds": {
+      "face": 7,
+      "inner": 1
+    },
+    "orientation": 3,
+    "seed": 4,
+    "stepped": false,
+    "triangles": 4236,
+    "usec": 8673
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1
+    },
+    "orientation": 3,
+    "seed": 5,
+    "stepped": false,
+    "triangles": 5438,
+    "usec": 9201
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1
+    },
+    "orientation": 3,
+    "seed": 6,
+    "stepped": false,
+    "triangles": 5144,
+    "usec": 9392
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 3,
+    "seed": 7,
+    "stepped": false,
+    "triangles": 8592,
+    "usec": 10254
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 3,
+    "seed": 8,
+    "stepped": false,
+    "triangles": 8654,
+    "usec": 10162
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1
+    },
+    "orientation": 3,
+    "seed": 9,
+    "stepped": false,
+    "triangles": 6832,
+    "usec": 9780
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 3,
+    "seed": 10,
+    "stepped": false,
+    "triangles": 6316,
+    "usec": 9327
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 3,
+    "seed": 11,
+    "stepped": false,
+    "triangles": 7332,
+    "usec": 9676
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1
+    },
+    "orientation": 3,
+    "seed": 12,
+    "stepped": false,
+    "triangles": 5942,
+    "usec": 9586
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1
+    },
+    "orientation": 3,
+    "seed": 13,
+    "stepped": false,
+    "triangles": 6022,
+    "usec": 9709
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1,
+      "rock": 1
+    },
+    "orientation": 3,
+    "seed": 14,
+    "stepped": false,
+    "triangles": 7140,
+    "usec": 9487
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "rock": 2
+    },
+    "orientation": 3,
+    "seed": 15,
+    "stepped": false,
+    "triangles": 8522,
+    "usec": 9988
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 3,
+    "seed": 0,
+    "stepped": true,
+    "triangles": 7074,
+    "usec": 10209
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 3,
+    "seed": 1,
+    "stepped": true,
+    "triangles": 6902,
+    "usec": 9726
+  },
+  {
+    "kinds": {
+      "face": 13,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 3,
+    "seed": 2,
+    "stepped": true,
+    "triangles": 8002,
+    "usec": 10632
+  },
+  {
+    "kinds": {
+      "face": 9,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 3,
+    "seed": 3,
+    "stepped": true,
+    "triangles": 5646,
+    "usec": 9299
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 3,
+    "seed": 4,
+    "stepped": true,
+    "triangles": 6742,
+    "usec": 9745
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 3,
+    "seed": 5,
+    "stepped": true,
+    "triangles": 7554,
+    "usec": 10212
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 3,
+    "seed": 6,
+    "stepped": true,
+    "triangles": 7920,
+    "usec": 10253
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1,
+      "outer": 1,
+      "rock": 2
+    },
+    "orientation": 3,
+    "seed": 7,
+    "stepped": true,
+    "triangles": 10346,
+    "usec": 10547
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 3,
+    "seed": 8,
+    "stepped": true,
+    "triangles": 6984,
+    "usec": 9940
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 3,
+    "seed": 9,
+    "stepped": true,
+    "triangles": 6248,
+    "usec": 9720
+  },
+  {
+    "kinds": {
+      "face": 14,
+      "inner": 1,
+      "outer": 1,
+      "rock": 1
+    },
+    "orientation": 3,
+    "seed": 10,
+    "stepped": true,
+    "triangles": 9832,
+    "usec": 10989
+  },
+  {
+    "kinds": {
+      "face": 12,
+      "inner": 1,
+      "outer": 1,
+      "rock": 2
+    },
+    "orientation": 3,
+    "seed": 11,
+    "stepped": true,
+    "triangles": 8668,
+    "usec": 10055
+  },
+  {
+    "kinds": {
+      "face": 10,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 3,
+    "seed": 12,
+    "stepped": true,
+    "triangles": 6814,
+    "usec": 10237
+  },
+  {
+    "kinds": {
+      "face": 8,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 3,
+    "seed": 13,
+    "stepped": true,
+    "triangles": 4930,
+    "usec": 9389
+  },
+  {
+    "kinds": {
+      "face": 11,
+      "inner": 1,
+      "outer": 1,
+      "rock": 2
+    },
+    "orientation": 3,
+    "seed": 14,
+    "stepped": true,
+    "triangles": 7840,
+    "usec": 10180
+  },
+  {
+    "kinds": {
+      "face": 14,
+      "inner": 1,
+      "outer": 1
+    },
+    "orientation": 3,
+    "seed": 15,
+    "stepped": true,
+    "triangles": 8660,
+    "usec": 11010
+  }
+]

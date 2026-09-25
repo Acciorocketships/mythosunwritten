@@ -1,0 +1,56 @@
+{
+  "status": "accepted_reported_visual_and_construction_scope",
+  "focused": {
+    "tests": 46,
+    "assertions": 357,
+    "exit_code": 0
+  },
+  "native_recipe_inventory": {
+    "tests": 1,
+    "assertions": 70929,
+    "exit_code": 0
+  },
+  "photographed_public_clearance": {
+    "before_after_identical": true,
+    "cells": 88,
+    "crossings": 124
+  },
+  "corpus": {
+    "constructed": 48,
+    "attempted": 48,
+    "clear_positions": 11112,
+    "clear_crossings": 15923,
+    "off_centre_pillar_contacts": 27,
+    "construction_ms": 432969,
+    "exit_code": 0
+  },
+  "visual": {
+    "live_pairs": 12,
+    "native_pairs": 16,
+    "frozen_world_control_pairs": 12,
+    "all_pair_poses_equal": true,
+    "circled_region_changed_over_20_fraction": 0.308936170212766
+  },
+  "timing_gates": [
+    {
+      "assertions_passed": 94,
+      "assertions_total": 95,
+      "machine_factor": 2.96,
+      "invalid_timing_environment": true
+    },
+    {
+      "assertions_passed": 93,
+      "assertions_total": 95,
+      "machine_factor": 3.15,
+      "invalid_timing_environment": true
+    }
+  ],
+  "timing_acceptance": "unresolved: invalid calibrated timing environment on original and candidate; no performance equivalence claimed",
+  "baseline_timing": {
+    "machine_factor": 3.88,
+    "standard_3_ms": 21133,
+    "standard_9_ms": 9038,
+    "exit_code": 1,
+    "candidate_matrix_scoring": "correctly pending due to original fingerprint"
+  }
+}

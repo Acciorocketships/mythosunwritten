@@ -1,0 +1,74 @@
+[
+  {
+    "below": "spatial.parcel.maze.bridge.00.end.0.lower.part01.room00",
+    "below_grounded": false,
+    "bits": 32,
+    "cell": "(4, 7, -2)",
+    "gap_use": 0,
+    "grounded": false,
+    "room": "spatial.maze_bridge_end.00.00.room00"
+  },
+  {
+    "below": "spatial.parcel.maze.bridge.00.end.0.lower.part01.room00",
+    "below_grounded": false,
+    "bits": 32,
+    "cell": "(5, 7, -2)",
+    "gap_use": 0,
+    "grounded": false,
+    "room": "spatial.maze_bridge_end.00.00.room00"
+  },
+  {
+    "below": "spatial.parcel.maze.bridge.00.end.0.lower.part01.room00",
+    "below_grounded": false,
+    "bits": 32,
+    "cell": "(4, 7, -1)",
+    "gap_use": 0,
+    "grounded": false,
+    "room": "spatial.maze_bridge_end.00.00.room00"
+  },
+  {
+    "below": "spatial.parcel.maze.bridge.00.end.0.lower.part01.room00",
+    "below_grounded": false,
+    "bits": 32,
+    "cell": "(5, 7, -1)",
+    "gap_use": 0,
+    "grounded": false,
+    "room": "spatial.maze_bridge_end.00.00.room00"
+  },
+  {
+    "below": "spatial.parcel.maze.bridge.00.end.1.lower.part01.room00",
+    "below_grounded": false,
+    "bits": 32,
+    "cell": "(4, 7, -6)",
+    "gap_use": 0,
+    "grounded": false,
+    "room": "spatial.maze_bridge_end.00.01.room00"
+  },
+  {
+    "below": "spatial.parcel.maze.bridge.00.end.1.lower.part01.room00",
+    "below_grounded": false,
+    "bits": 32,
+    "cell": "(5, 7, -6)",
+    "gap_use": 0,
+    "grounded": false,
+    "room": "spatial.maze_bridge_end.00.01.room00"
+  },
+  {
+    "below": "spatial.parcel.maze.bridge.00.end.1.lower.part01.room00",
+    "below_grounded": false,
+    "bits": 32,
+    "cell": "(4, 7, -5)",
+    "gap_use": 0,
+    "grounded": false,
+    "room": "spatial.maze_bridge_end.00.01.room00"
+  },
+  {
+    "below": "spatial.parcel.maze.bridge.00.end.1.lower.part01.room00",
+    "below_grounded": false,
+    "bits": 32,
+    "cell": "(5, 7, -5)",
+    "gap_use": 0,
+    "grounded": false,
+    "room": "spatial.maze_bridge_end.00.01.room00"
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "before": {
+    "massif": 12,
+    "carve": 307,
+    "plots": 1050,
+    "adapt": 63,
+    "compose": 37979,
+    "fabric": 17786,
+    "total_primary_ms": 57197
+  },
+  "after": {
+    "massif": 12,
+    "carve": 268,
+    "plots": 1304,
+    "adapt": 59,
+    "compose": 32582,
+    "fabric": 21751,
+    "total_primary_ms": 55976
+  }
+}

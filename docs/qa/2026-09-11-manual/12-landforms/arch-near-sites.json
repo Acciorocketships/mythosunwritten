@@ -1,0 +1,542 @@
+[
+  {
+    "accepted": true,
+    "axis": "(1, -1)",
+    "cell": "(-30, 2)",
+    "difference": 0.0,
+    "flat_a": true,
+    "flat_b": true,
+    "rise": 8.0,
+    "roll": 0.929237664211541
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(-34, -2)",
+    "difference": 12.0,
+    "flat_a": true,
+    "flat_b": true,
+    "rise": 8.0,
+    "roll": 0.472877507098019
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 0)",
+    "cell": "(34, 14)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.766877838410437
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 1)",
+    "cell": "(34, 14)",
+    "difference": 0.0,
+    "flat_a": true,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.766877838410437
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 1)",
+    "cell": "(78, 14)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.435337028000504
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 1)",
+    "cell": "(34, 18)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.212734874337912
+  },
+  {
+    "accepted": false,
+    "axis": "(0, 1)",
+    "cell": "(-90, 26)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.256856255233288
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(-90, 26)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.256856255233288
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 1)",
+    "cell": "(110, 30)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.716970181558281
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(-26, 34)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.91501890681684
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(-54, 42)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.902076461818069
+  },
+  {
+    "accepted": false,
+    "axis": "(0, 1)",
+    "cell": "(14, 46)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.124219651333988
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 1)",
+    "cell": "(14, 46)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.124219651333988
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(14, 46)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.124219651333988
+  },
+  {
+    "accepted": false,
+    "axis": "(0, 1)",
+    "cell": "(26, 46)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.182968851644546
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(26, 46)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.182968851644546
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(58, 46)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.758432813920081
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 1)",
+    "cell": "(86, 46)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.411221933085471
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 0)",
+    "cell": "(26, 50)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.0506642782129347
+  },
+  {
+    "accepted": false,
+    "axis": "(0, 1)",
+    "cell": "(42, 54)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.0216174181550741
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(42, 54)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.0216174181550741
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(-30, 58)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.818932128604501
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 0)",
+    "cell": "(-102, 74)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.37110034795478
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 1)",
+    "cell": "(-102, 74)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.37110034795478
+  },
+  {
+    "accepted": false,
+    "axis": "(0, 1)",
+    "cell": "(-58, 78)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.27071745088324
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 1)",
+    "cell": "(26, 78)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.505907749757171
+  },
+  {
+    "accepted": false,
+    "axis": "(0, 1)",
+    "cell": "(30, 82)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.295915325172246
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(-14, 86)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.897445557639003
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 1)",
+    "cell": "(-94, -102)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.430115298368037
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(78, -94)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.0737711852416396
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 0)",
+    "cell": "(-90, -82)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.626253494992852
+  },
+  {
+    "accepted": false,
+    "axis": "(0, 1)",
+    "cell": "(14, -82)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.581235786434263
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 1)",
+    "cell": "(14, -82)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.581235786434263
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 1)",
+    "cell": "(78, -78)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.430540347471833
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(-62, -62)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.702038350515068
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(-54, -54)",
+    "difference": 0.0,
+    "flat_a": true,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.65329192718491
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(-54, -42)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.205352142453194
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 1)",
+    "cell": "(10, -42)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.518356145359576
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(-50, -38)",
+    "difference": 4.0,
+    "flat_a": false,
+    "flat_b": true,
+    "rise": 4.0,
+    "roll": 0.140030520968139
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 0)",
+    "cell": "(34, -38)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.32316763792187
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(34, -38)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.32316763792187
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 1)",
+    "cell": "(70, -38)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.181026765611023
+  },
+  {
+    "accepted": false,
+    "axis": "(0, 1)",
+    "cell": "(-46, -34)",
+    "difference": 4.0,
+    "flat_a": true,
+    "flat_b": true,
+    "rise": 4.0,
+    "roll": 0.975193363148719
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(-18, -30)",
+    "difference": 4.0,
+    "flat_a": true,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.673859498929232
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(78, -18)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.60900490777567
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(-30, -6)",
+    "difference": 0.0,
+    "flat_a": true,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.415802346076816
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 0)",
+    "cell": "(-58, -2)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.32151833223179
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 1)",
+    "cell": "(-58, -2)",
+    "difference": 4.0,
+    "flat_a": true,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.32151833223179
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(-58, -2)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.32151833223179
+  },
+  {
+    "accepted": false,
+    "axis": "(0, 1)",
+    "cell": "(54, -2)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.123688991647214
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(10, 2)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.208420450799167
+  },
+  {
+    "accepted": false,
+    "axis": "(1, -1)",
+    "cell": "(46, 2)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.76146740745753
+  },
+  {
+    "accepted": false,
+    "axis": "(0, 1)",
+    "cell": "(54, 2)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.594822885002941
+  },
+  {
+    "accepted": false,
+    "axis": "(1, 0)",
+    "cell": "(26, 14)",
+    "difference": 0.0,
+    "flat_a": false,
+    "flat_b": false,
+    "rise": 4.0,
+    "roll": 0.13784544588998
+  }
+]

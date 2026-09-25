@@ -1,0 +1,33 @@
+{
+  "arguments": [
+    "--frozen",
+    "--snapshot",
+    "res://docs/qa/2026-09-11-manual/04-black/live-full/village-mist.scn",
+    "--retina",
+    "--window",
+    "--mixed",
+    "--photo-route",
+    "--gpu-watch",
+    "--frame-marker",
+    "--natural-draw",
+    "--uncapped",
+    "--spot",
+    "01_black",
+    "--ticks",
+    "1080",
+    "--output",
+    "/Users/ryko/story/docs/qa/2026-09-11-manual/04-black/embedded-current-repeat"
+  ],
+  "embedded": true,
+  "version": {
+    "build": "official",
+    "hash": "f62fdbde15035c5576dad93e586201f4d41ef0cb",
+    "hex": 263425,
+    "major": 4,
+    "minor": 5,
+    "patch": 1,
+    "status": "stable",
+    "string": "4.5.1-stable (official)",
+    "timestamp": 0
+  }
+}

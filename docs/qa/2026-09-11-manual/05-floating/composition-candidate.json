@@ -1,0 +1,660 @@
+{
+  "audit": {
+    "annex_relieved_tall_tower_only_lineage_ids": [],
+    "conflicts": [],
+    "consecutive_floorplate_pair_count": 4,
+    "coupled_upper_composition_count": 0,
+    "details": [],
+    "exact_macro_tower_pair_details": [
+      {
+        "disposition": "unresolved",
+        "left_lineage_id": "parcel.maze.bridge.00.end.1.lower",
+        "left_origin": "(5, 4, -5)",
+        "left_source_block": 1,
+        "macro_kind": "slim",
+        "macro_origin": "(6, 4, -6)",
+        "macro_yaw_quarters": 1,
+        "right_lineage_id": "parcel.maze.house.004",
+        "right_origin": "(7, 4, -5)",
+        "right_source_block": 1
+      }
+    ],
+    "exact_macro_tower_pair_disposition_counts": {
+      "unresolved": 1
+    },
+    "expanded_upper_composition_count": 1,
+    "exposed_tower_room_count": 6,
+    "exposed_tower_room_details": [
+      {
+        "exposed_directions": [
+          "(-1, 0, 0)",
+          "(1, 0, 0)",
+          "(0, 0, -1)",
+          "(0, 0, 1)"
+        ],
+        "lineage_id": "parcel.maze.bridge.00.end.0.lower",
+        "optional": false,
+        "origin": "(4, 2, -2)",
+        "source_block_index": 0
+      },
+      {
+        "exposed_directions": [
+          "(-1, 0, 0)",
+          "(1, 0, 0)",
+          "(0, 0, -1)",
+          "(0, 0, 1)"
+        ],
+        "lineage_id": "parcel.maze.bridge.00.end.0.lower",
+        "optional": true,
+        "origin": "(4, 4, -2)",
+        "source_block_index": 1
+      },
+      {
+        "exposed_directions": [
+          "(-1, 0, 0)",
+          "(0, 0, -1)",
+          "(0, 0, 1)"
+        ],
+        "lineage_id": "parcel.maze.bridge.00.end.1.lower",
+        "optional": true,
+        "origin": "(5, 4, -5)",
+        "source_block_index": 1
+      },
+      {
+        "exposed_directions": [
+          "(-1, 0, 0)",
+          "(1, 0, 0)",
+          "(0, 0, -1)",
+          "(0, 0, 1)"
+        ],
+        "lineage_id": "parcel.maze.house.000",
+        "optional": false,
+        "origin": "(2, 0, -5)",
+        "source_block_index": 0
+      },
+      {
+        "exposed_directions": [
+          "(1, 0, 0)",
+          "(0, 0, -1)",
+          "(0, 0, 1)"
+        ],
+        "lineage_id": "parcel.maze.house.004",
+        "optional": true,
+        "origin": "(7, 4, -5)",
+        "source_block_index": 1
+      },
+      {
+        "exposed_directions": [
+          "(-1, 0, 0)",
+          "(1, 0, 0)",
+          "(0, 0, -1)",
+          "(0, 0, 1)"
+        ],
+        "lineage_id": "parcel.maze.house.006",
+        "optional": false,
+        "origin": "(10, 1, 5)",
+        "source_block_index": 0
+      }
+    ],
+    "exposed_tower_side_count": 22,
+    "extruded_tall_lineage_count": 0,
+    "extruded_tall_lineage_ids": [],
+    "four_storey_tower_run_details": [],
+    "four_storey_tower_run_lineage_ids": [],
+    "input_room_storey_count": 15,
+    "macro_private_cell_ratio": 0.7,
+    "max_identical_tower_floorplate_run_storeys": 2,
+    "max_tower_only_lineage_storeys": 2,
+    "merged_base_composition_count": 2,
+    "merged_upper_composition_count": 0,
+    "merged_upper_room_block_count": 2,
+    "mixed_kind_tall_lineage_count": 0,
+    "optional_exposed_tower_room_count": 3,
+    "output_room_storey_count": 13,
+    "overlap_cell_count": 0,
+    "overlong_tower_run_details": [],
+    "overlong_tower_run_lineage_ids": [],
+    "private_cell_count_by_room_kind": {
+      "row": 48,
+      "slim": 64,
+      "tower": 48
+    },
+    "refused_exact_macro_tower_pair_count": 0,
+    "registered_facade_plane_count": 13,
+    "relieved_tall_tower_only_lineage_ids": [],
+    "retained_support_rebind_count": 0,
+    "room_composition_diagnostics_collected": true,
+    "room_storey_kind_counts": {
+      "row": 3,
+      "slim": 4,
+      "tower": 6
+    },
+    "room_support_transition_count": 5,
+    "same_kind_floorplate_pair_count": 2,
+    "same_ridge_axis_floorplate_pair_count": 3,
+    "source_composition_lineage_count": 9,
+    "strongly_registered_floorplate_pair_count": 4,
+    "support_clearance_terminated_storey_count": 0,
+    "support_parent_rebind_count": 0,
+    "tall_tower_only_lineage_details": [],
+    "tall_tower_only_lineage_ids": [],
+    "tower_only_lineage_ids": [
+      "parcel.maze.bridge.00.end.0.lower",
+      "parcel.maze.house.000",
+      "parcel.maze.house.006"
+    ],
+    "tower_relief_annex_target_by_lineage": {
+
+    },
+    "truncated_tower_storey_count": 0,
+    "unclaimed_exact_macro_tower_pair_count": 1,
+    "unresolved_overlong_tower_run_details": [],
+    "unresolved_support_identity_details": [],
+    "unroofable_global_roof_component_count": 0,
+    "unroofable_global_roof_component_details": [],
+    "unroofable_shoulder_count": 0,
+    "unroofable_shoulder_details": [],
+    "unsupported_room_transition_count": 0,
+    "unsupported_transition_count": 0,
+    "unsupported_transition_details": [],
+    "upper_recomposition_count": 1,
+    "varied_room_block_count": 3
+  },
+  "features": [
+    {
+      "audit": {
+        "construction_record_count": 2,
+        "endpoint_count": 1,
+        "endpoint_owner_count": 1,
+        "overhang_attachment_span_cells": 4,
+        "overhang_extension_column_count": 4,
+        "overhang_is_supported": true,
+        "overhang_lower_room_id": "spatial.parcel.maze.house.001.part00.room00",
+        "overhang_opening_mask": 0,
+        "overhang_projection_depth_cells": 1,
+        "overhang_projection_direction": "(-1, 0)",
+        "overhang_support_course_count": 2,
+        "overhang_support_face_count": 2,
+        "overhang_support_material": "timber",
+        "overhang_support_neighbor_room_ids": [],
+        "overhang_upper_room_id": "spatial.parcel.maze.house.001.part01.room00",
+        "public_cell_count": 0,
+        "reserved_cell_count": 16,
+        "terrain_bearing_cell_count": 0
+      },
+      "id": "spatial.feature.room_overhang.00"
+    }
+  ],
+  "rooms": [
+    {
+      "audit": {
+        "address_door_phase": 1,
+        "addressed": true,
+        "flat_roof": true,
+        "private_cell_count": 8,
+        "roof_feature": 3,
+        "roof_preference": "pitched",
+        "terrain_bearing": true
+      },
+      "cells": "[(4, 2, -2), (5, 2, -2), (4, 2, -1), (5, 2, -1), (4, 3, -2), (5, 3, -2), (4, 3, -1), (5, 3, -1)]",
+      "id": "spatial.parcel.maze.bridge.00.end.0.lower.part00.room00",
+      "kind": "tower",
+      "origin": "(4, 2, -2)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "flat_roof": true,
+        "private_cell_count": 8,
+        "roof_feature": 3,
+        "roof_preference": "pitched",
+        "terrain_bearing": false
+      },
+      "cells": "[(4, 4, -2), (5, 4, -2), (4, 4, -1), (5, 4, -1), (4, 5, -2), (5, 5, -2), (4, 5, -1), (5, 5, -1)]",
+      "id": "spatial.parcel.maze.bridge.00.end.0.lower.part01.room00",
+      "kind": "tower",
+      "origin": "(4, 4, -2)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": true,
+        "flat_roof": true,
+        "private_cell_count": 16,
+        "roof_feature": 1,
+        "roof_preference": "pitched",
+        "terrain_bearing": true
+      },
+      "cells": "[(4, 2, -6), (5, 2, -6), (6, 2, -6), (7, 2, -6), (4, 2, -5), (5, 2, -5), (6, 2, -5), (7, 2, -5), (4, 3, -6), (5, 3, -6), (6, 3, -6), (7, 3, -6), (4, 3, -5), (5, 3, -5), (6, 3, -5), (7, 3, -5)]",
+      "id": "spatial.parcel.maze.bridge.00.end.1.lower.part00.room00",
+      "kind": "row",
+      "origin": "(6, 2, -5)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "flat_roof": true,
+        "private_cell_count": 8,
+        "roof_feature": 1,
+        "roof_preference": "pitched",
+        "terrain_bearing": false
+      },
+      "cells": "[(4, 4, -6), (5, 4, -6), (4, 4, -5), (5, 4, -5), (4, 5, -6), (5, 5, -6), (4, 5, -5), (5, 5, -5)]",
+      "id": "spatial.parcel.maze.bridge.00.end.1.lower.part01.room00",
+      "kind": "tower",
+      "origin": "(5, 4, -5)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": true,
+        "flat_roof": true,
+        "private_cell_count": 16,
+        "roof_feature": 2,
+        "roof_preference": "pitched",
+        "terrain_bearing": true
+      },
+      "cells": "[(8, 1, 0), (9, 1, 0), (8, 1, 1), (9, 1, 1), (8, 1, 2), (9, 1, 2), (8, 1, 3), (9, 1, 3), (8, 2, 0), (9, 2, 0), (8, 2, 1), (9, 2, 1), (8, 2, 2), (9, 2, 2), (8, 2, 3), (9, 2, 3)]",
+      "id": "spatial.parcel.maze.bridge.01.end.0.lower.part00.room00",
+      "kind": "slim",
+      "origin": "(9, 1, 2)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": true,
+        "flat_roof": true,
+        "private_cell_count": 16,
+        "roof_feature": 2,
+        "roof_preference": "pitched",
+        "terrain_bearing": true
+      },
+      "cells": "[(6, 1, 6), (7, 1, 6), (8, 1, 6), (9, 1, 6), (6, 1, 7), (7, 1, 7), (8, 1, 7), (9, 1, 7), (6, 2, 6), (7, 2, 6), (8, 2, 6), (9, 2, 6), (6, 2, 7), (7, 2, 7), (8, 2, 7), (9, 2, 7)]",
+      "id": "spatial.parcel.maze.bridge.01.end.1.lower.part00.room00",
+      "kind": "row",
+      "origin": "(7, 1, 6)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": true,
+        "flat_roof": true,
+        "private_cell_count": 8,
+        "roof_feature": 1,
+        "roof_preference": "pitched",
+        "terrain_bearing": true
+      },
+      "cells": "[(2, 0, -6), (3, 0, -6), (2, 0, -5), (3, 0, -5), (2, 1, -6), (3, 1, -6), (2, 1, -5), (3, 1, -5)]",
+      "id": "spatial.parcel.maze.house.000.part00.room00",
+      "kind": "tower",
+      "origin": "(2, 0, -5)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": true,
+        "flat_roof": true,
+        "private_cell_count": 16,
+        "roof_feature": 1,
+        "roof_preference": "pitched",
+        "terrain_bearing": true
+      },
+      "cells": "[(4, 1, 4), (5, 1, 4), (4, 1, 5), (5, 1, 5), (4, 1, 6), (5, 1, 6), (4, 1, 7), (5, 1, 7), (4, 2, 4), (5, 2, 4), (4, 2, 5), (5, 2, 5), (4, 2, 6), (5, 2, 6), (4, 2, 7), (5, 2, 7)]",
+      "id": "spatial.parcel.maze.house.001.part00.room00",
+      "kind": "slim",
+      "origin": "(4, 1, 5)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "flat_roof": true,
+        "private_cell_count": 16,
+        "roof_feature": 1,
+        "roof_preference": "pitched",
+        "terrain_bearing": false
+      },
+      "cells": "[(3, 3, 4), (4, 3, 4), (3, 3, 5), (4, 3, 5), (3, 3, 6), (4, 3, 6), (3, 3, 7), (4, 3, 7), (3, 4, 4), (4, 4, 4), (3, 4, 5), (4, 4, 5), (3, 4, 6), (4, 4, 6), (3, 4, 7), (4, 4, 7)]",
+      "id": "spatial.parcel.maze.house.001.part01.room00",
+      "kind": "row",
+      "origin": "(3, 3, 6)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": true,
+        "flat_roof": true,
+        "private_cell_count": 16,
+        "roof_feature": 3,
+        "roof_preference": "pitched",
+        "terrain_bearing": true
+      },
+      "cells": "[(8, 2, -2), (9, 2, -2), (10, 2, -2), (11, 2, -2), (8, 2, -1), (9, 2, -1), (10, 2, -1), (11, 2, -1), (8, 3, -2), (9, 3, -2), (10, 3, -2), (11, 3, -2), (8, 3, -1), (9, 3, -1), (10, 3, -1), (11, 3, -1)]",
+      "id": "spatial.parcel.maze.house.002.part00.room00",
+      "kind": "slim",
+      "origin": "(9, 2, -1)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "flat_roof": true,
+        "private_cell_count": 16,
+        "roof_feature": 3,
+        "roof_preference": "pitched",
+        "terrain_bearing": false
+      },
+      "cells": "[(8, 4, -2), (9, 4, -2), (10, 4, -2), (11, 4, -2), (8, 4, -1), (9, 4, -1), (10, 4, -1), (11, 4, -1), (8, 5, -2), (9, 5, -2), (10, 5, -2), (11, 5, -2), (8, 5, -1), (9, 5, -1), (10, 5, -1), (11, 5, -1)]",
+      "id": "spatial.parcel.maze.house.002.part01.room00",
+      "kind": "slim",
+      "origin": "(9, 4, -1)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "flat_roof": true,
+        "private_cell_count": 8,
+        "roof_feature": 2,
+        "roof_preference": "pitched",
+        "terrain_bearing": false
+      },
+      "cells": "[(6, 4, -6), (7, 4, -6), (6, 4, -5), (7, 4, -5), (6, 5, -6), (7, 5, -6), (6, 5, -5), (7, 5, -5)]",
+      "id": "spatial.parcel.maze.house.004.part00.room00",
+      "kind": "tower",
+      "origin": "(7, 4, -5)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": true,
+        "flat_roof": true,
+        "private_cell_count": 8,
+        "roof_feature": 2,
+        "roof_preference": "pitched",
+        "terrain_bearing": true
+      },
+      "cells": "[(10, 1, 4), (11, 1, 4), (10, 1, 5), (11, 1, 5), (10, 2, 4), (11, 2, 4), (10, 2, 5), (11, 2, 5)]",
+      "id": "spatial.parcel.maze.house.006.part00.room00",
+      "kind": "tower",
+      "origin": "(10, 1, 5)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "bridge_endpoint_roof": true,
+        "bridge_party_roof_yaw_quarters": 0,
+        "flat_roof": false,
+        "private_cell_count": 8,
+        "roof_feature": 3,
+        "roof_party_allowed_room_ids": [
+          "spatial.maze_bridge.00.room00"
+        ],
+        "roof_preference": "",
+        "terrain_bearing": true
+      },
+      "cells": "[(4, 7, -2), (5, 7, -2), (4, 7, -1), (5, 7, -1), (4, 8, -2), (5, 8, -2), (4, 8, -1), (5, 8, -1)]",
+      "id": "spatial.maze_bridge_end.00.00.room00",
+      "kind": "tower",
+      "origin": "(5, 7, -1)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "bridge_endpoint_roof": true,
+        "bridge_party_roof_yaw_quarters": 0,
+        "flat_roof": false,
+        "private_cell_count": 8,
+        "roof_feature": 1,
+        "roof_party_allowed_room_ids": [
+          "spatial.maze_bridge.00.room00"
+        ],
+        "roof_preference": "",
+        "terrain_bearing": true
+      },
+      "cells": "[(4, 7, -6), (5, 7, -6), (4, 7, -5), (5, 7, -5), (4, 8, -6), (5, 8, -6), (4, 8, -5), (5, 8, -5)]",
+      "id": "spatial.maze_bridge_end.00.01.room00",
+      "kind": "tower",
+      "origin": "(5, 7, -5)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "bridge_is_bracketed_jetty": false,
+        "bridge_is_terrain_arcade": false,
+        "bridge_support_building_ids": [
+          "spatial.maze_bridge_end.00.01",
+          "spatial.maze_bridge_end.00.00"
+        ],
+        "bridge_support_directions": [
+          "(0, 0, -1)",
+          "(0, 0, 1)"
+        ],
+        "bridge_support_records": [],
+        "bridge_support_room_ids": [
+          "spatial.maze_bridge_end.00.01.room00",
+          "spatial.maze_bridge_end.00.00.room00"
+        ],
+        "flat_roof": false,
+        "private_cell_count": 8,
+        "roof_feature": 3,
+        "roof_preference": "",
+        "terrain_bearing": false
+      },
+      "cells": "[(4, 7, -4), (5, 7, -4), (4, 7, -3), (5, 7, -3), (4, 8, -4), (5, 8, -4), (4, 8, -3), (5, 8, -3)]",
+      "id": "spatial.maze_bridge.00.room00",
+      "kind": "tower",
+      "origin": "(5, 7, -3)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "flat_roof": false,
+        "private_cell_count": 8,
+        "roof_feature": 0,
+        "roof_preference": "",
+        "terrain_bearing": true
+      },
+      "cells": "[(8, 3, 2), (9, 3, 2), (8, 3, 3), (9, 3, 3), (8, 4, 2), (9, 4, 2), (8, 4, 3), (9, 4, 3)]",
+      "id": "spatial.maze_bridge_end.01.00.room00",
+      "kind": "tower",
+      "origin": "(9, 3, 3)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "bridge_endpoint_roof": true,
+        "bridge_party_roof_yaw_quarters": 0,
+        "flat_roof": false,
+        "private_cell_count": 8,
+        "roof_feature": 1,
+        "roof_party_allowed_room_ids": [
+          "spatial.maze_bridge.01.room00"
+        ],
+        "roof_preference": "",
+        "terrain_bearing": false
+      },
+      "cells": "[(8, 5, 2), (9, 5, 2), (8, 5, 3), (9, 5, 3), (8, 6, 2), (9, 6, 2), (8, 6, 3), (9, 6, 3)]",
+      "id": "spatial.maze_bridge_end.01.00.room01",
+      "kind": "tower",
+      "origin": "(9, 5, 3)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "flat_roof": false,
+        "private_cell_count": 8,
+        "roof_feature": 0,
+        "roof_preference": "",
+        "terrain_bearing": true
+      },
+      "cells": "[(8, 3, 6), (9, 3, 6), (8, 3, 7), (9, 3, 7), (8, 4, 6), (9, 4, 6), (8, 4, 7), (9, 4, 7)]",
+      "id": "spatial.maze_bridge_end.01.01.room00",
+      "kind": "tower",
+      "origin": "(9, 3, 7)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "bridge_endpoint_roof": true,
+        "bridge_party_roof_yaw_quarters": 0,
+        "flat_roof": false,
+        "private_cell_count": 8,
+        "roof_feature": 1,
+        "roof_party_allowed_room_ids": [
+          "spatial.maze_bridge.01.room00"
+        ],
+        "roof_preference": "",
+        "terrain_bearing": false
+      },
+      "cells": "[(8, 5, 6), (9, 5, 6), (8, 5, 7), (9, 5, 7), (8, 6, 6), (9, 6, 6), (8, 6, 7), (9, 6, 7)]",
+      "id": "spatial.maze_bridge_end.01.01.room01",
+      "kind": "tower",
+      "origin": "(9, 5, 7)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "bridge_is_bracketed_jetty": false,
+        "bridge_is_terrain_arcade": false,
+        "bridge_support_building_ids": [
+          "spatial.maze_bridge_end.01.00",
+          "spatial.maze_bridge_end.01.01"
+        ],
+        "bridge_support_directions": [
+          "(0, 0, -1)",
+          "(0, 0, 1)"
+        ],
+        "bridge_support_records": [],
+        "bridge_support_room_ids": [
+          "spatial.maze_bridge_end.01.00.room01",
+          "spatial.maze_bridge_end.01.01.room01"
+        ],
+        "flat_roof": false,
+        "private_cell_count": 8,
+        "roof_feature": 1,
+        "roof_preference": "",
+        "terrain_bearing": false
+      },
+      "cells": "[(8, 5, 4), (9, 5, 4), (8, 5, 5), (9, 5, 5), (8, 6, 4), (9, 6, 4), (8, 6, 5), (9, 6, 5)]",
+      "id": "spatial.maze_bridge.01.room00",
+      "kind": "tower",
+      "origin": "(9, 5, 5)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "flat_roof": true,
+        "private_cell_count": 32,
+        "roof_feature": 3,
+        "roof_preference": "",
+        "terrain_bearing": true
+      },
+      "cells": "[(10, 1, 0), (11, 1, 0), (12, 1, 0), (13, 1, 0), (10, 1, 1), (11, 1, 1), (12, 1, 1), (13, 1, 1), (10, 1, 2), (11, 1, 2), (12, 1, 2), (13, 1, 2), (10, 1, 3), (11, 1, 3), (12, 1, 3), (13, 1, 3), (10, 2, 0), (11, 2, 0), (12, 2, 0), (13, 2, 0), (10, 2, 1), (11, 2, 1), (12, 2, 1), (13, 2, 1), (10, 2, 2), (11, 2, 2), (12, 2, 2), (13, 2, 2), (10, 2, 3), (11, 2, 3), (12, 2, 3), (13, 2, 3)]",
+      "id": "spatial.maze_back.00.room00",
+      "kind": "building",
+      "origin": "(11, 1, 2)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "flat_roof": true,
+        "private_cell_count": 16,
+        "roof_feature": 0,
+        "roof_preference": "",
+        "terrain_bearing": true
+      },
+      "cells": "[(8, 2, -6), (9, 2, -6), (8, 2, -5), (9, 2, -5), (8, 2, -4), (9, 2, -4), (8, 2, -3), (9, 2, -3), (8, 3, -6), (9, 3, -6), (8, 3, -5), (9, 3, -5), (8, 3, -4), (9, 3, -4), (8, 3, -3), (9, 3, -3)]",
+      "id": "spatial.maze_back.01.room00",
+      "kind": "row",
+      "origin": "(8, 2, -4)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "flat_roof": true,
+        "private_cell_count": 8,
+        "roof_feature": 3,
+        "roof_preference": "",
+        "terrain_bearing": true
+      },
+      "cells": "[(10, 2, -4), (11, 2, -4), (10, 2, -3), (11, 2, -3), (10, 3, -4), (11, 3, -4), (10, 3, -3), (11, 3, -3)]",
+      "id": "spatial.maze_back.02.room00",
+      "kind": "tower",
+      "origin": "(10, 2, -3)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "flat_roof": true,
+        "private_cell_count": 8,
+        "roof_feature": 1,
+        "roof_preference": "",
+        "terrain_bearing": true
+      },
+      "cells": "[(12, 2, -2), (13, 2, -2), (12, 2, -1), (13, 2, -1), (12, 3, -2), (13, 3, -2), (12, 3, -1), (13, 3, -1)]",
+      "id": "spatial.maze_back.03.room00",
+      "kind": "tower",
+      "origin": "(12, 2, -1)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "flat_roof": true,
+        "private_cell_count": 16,
+        "roof_feature": 2,
+        "roof_preference": "",
+        "terrain_bearing": true
+      },
+      "cells": "[(8, 4, -6), (9, 4, -6), (8, 4, -5), (9, 4, -5), (8, 4, -4), (9, 4, -4), (8, 4, -3), (9, 4, -3), (8, 5, -6), (9, 5, -6), (8, 5, -5), (9, 5, -5), (8, 5, -4), (9, 5, -4), (8, 5, -3), (9, 5, -3)]",
+      "id": "spatial.maze_back.04.room00",
+      "kind": "row",
+      "origin": "(8, 4, -4)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "flat_roof": true,
+        "private_cell_count": 8,
+        "roof_feature": 1,
+        "roof_preference": "",
+        "terrain_bearing": true
+      },
+      "cells": "[(10, 4, -4), (11, 4, -4), (10, 4, -3), (11, 4, -3), (10, 5, -4), (11, 5, -4), (10, 5, -3), (11, 5, -3)]",
+      "id": "spatial.maze_back.05.room00",
+      "kind": "tower",
+      "origin": "(10, 4, -3)"
+    },
+    {
+      "audit": {
+        "address_door_phase": 0,
+        "addressed": false,
+        "flat_roof": true,
+        "private_cell_count": 8,
+        "roof_feature": 2,
+        "roof_preference": "",
+        "terrain_bearing": true
+      },
+      "cells": "[(12, 4, -2), (13, 4, -2), (12, 4, -1), (13, 4, -1), (12, 5, -2), (13, 5, -2), (12, 5, -1), (13, 5, -1)]",
+      "id": "spatial.maze_back.06.room00",
+      "kind": "tower",
+      "origin": "(12, 4, -1)"
+    }
+  ]
+}

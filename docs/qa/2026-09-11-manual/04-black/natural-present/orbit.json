@@ -1,0 +1,434 @@
+[
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.38105, 0.866186, -0.323301), Z: (-0.660486, 0.499723, 0.560388), O: (-409.1256, 35.1, -257.279)]",
+    "partial": false,
+    "tick": 0,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.762523, 0.0, -0.646961), Y: (-0.323301, 0.866186, -0.38105), Z: (0.560388, 0.499723, 0.660486), O: (-372.479, 35.1, -254.2744)]",
+    "partial": false,
+    "tick": 15,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.646961, 0.0, -0.762523), Y: (-0.38105, 0.866186, 0.323301), Z: (0.660486, 0.499723, -0.560388), O: (-369.4744, 35.1, -290.921)]",
+    "partial": false,
+    "tick": 30,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.762523, 0.0, 0.646961), Y: (0.323301, 0.866186, 0.38105), Z: (-0.560388, 0.499723, -0.660487), O: (-406.121, 35.1, -293.9256)]",
+    "partial": false,
+    "tick": 45,
+    "window_focus": true,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.38105, 0.866186, -0.323301), Z: (-0.660486, 0.499723, 0.560388), O: (-409.1256, 35.1, -257.279)]",
+    "partial": false,
+    "tick": 60,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.762523, 0.0, -0.646961), Y: (-0.323301, 0.866186, -0.38105), Z: (0.560388, 0.499723, 0.660486), O: (-372.479, 35.1, -254.2744)]",
+    "partial": false,
+    "tick": 75,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.646961, 0.0, -0.762523), Y: (-0.38105, 0.866186, 0.323301), Z: (0.660486, 0.499723, -0.560388), O: (-369.4744, 35.1, -290.921)]",
+    "partial": false,
+    "tick": 90,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.762523, 0.0, 0.646961), Y: (0.323301, 0.866186, 0.38105), Z: (-0.560388, 0.499723, -0.660487), O: (-406.121, 35.1, -293.9256)]",
+    "partial": false,
+    "tick": 105,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.336247, 0.897523, -0.285288), Z: (-0.684382, 0.440967, 0.580663), O: (-395.4459, 24.06, -268.8855)]",
+    "partial": false,
+    "tick": 120,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.762523, 0.0, -0.646961), Y: (-0.285288, 0.897523, -0.336247), Z: (0.580663, 0.440967, 0.684382), O: (-384.0855, 24.06, -267.9541)]",
+    "partial": false,
+    "tick": 135,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.646961, 0.0, -0.762523), Y: (-0.336247, 0.897523, 0.285288), Z: (0.684382, 0.440967, -0.580663), O: (-383.1541, 24.06, -279.3145)]",
+    "partial": false,
+    "tick": 150,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.762523, 0.0, 0.646961), Y: (0.285288, 0.897523, 0.336247), Z: (-0.580663, 0.440967, -0.684382), O: (-394.5145, 24.06, -280.2459)]",
+    "partial": false,
+    "tick": 165,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.336247, 0.897523, -0.285288), Z: (-0.684382, 0.440967, 0.580663), O: (-395.4459, 24.06, -268.8855)]",
+    "partial": false,
+    "tick": 180,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.762523, 0.0, -0.646961), Y: (-0.285288, 0.897523, -0.336247), Z: (0.580663, 0.440967, 0.684382), O: (-384.0855, 24.06, -267.9541)]",
+    "partial": false,
+    "tick": 195,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.646961, 0.0, -0.762523), Y: (-0.336247, 0.897523, 0.285288), Z: (0.684382, 0.440967, -0.580663), O: (-383.1541, 24.06, -279.3145)]",
+    "partial": false,
+    "tick": 210,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.762523, 0.0, 0.646961), Y: (0.285288, 0.897523, 0.336247), Z: (-0.580663, 0.440967, -0.684382), O: (-394.5145, 24.06, -280.2459)]",
+    "partial": false,
+    "tick": 225,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.38105, 0.866186, -0.323301), Z: (-0.660486, 0.499723, 0.560388), O: (-409.1256, 35.1, -257.279)]",
+    "partial": false,
+    "tick": 240,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.762523, 0.0, -0.646961), Y: (-0.323301, 0.866186, -0.38105), Z: (0.560388, 0.499722, 0.660487), O: (-372.479, 35.1, -254.2744)]",
+    "partial": false,
+    "tick": 255,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.646961, 0.0, -0.762523), Y: (-0.38105, 0.866186, 0.323301), Z: (0.660486, 0.499723, -0.560388), O: (-369.4744, 35.1, -290.921)]",
+    "partial": false,
+    "tick": 270,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.762523, 0.0, 0.646961), Y: (0.323301, 0.866186, 0.38105), Z: (-0.560388, 0.499723, -0.660487), O: (-406.121, 35.1, -293.9256)]",
+    "partial": false,
+    "tick": 285,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.38105, 0.866186, -0.323301), Z: (-0.660486, 0.499723, 0.560388), O: (-409.1256, 35.1, -257.279)]",
+    "partial": false,
+    "tick": 300,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.762524, 0.0, -0.64696), Y: (-0.3233, 0.866186, -0.38105), Z: (0.560387, 0.499723, 0.660487), O: (-372.479, 35.1, -254.2744)]",
+    "partial": false,
+    "tick": 315,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.64696, 0.0, -0.762524), Y: (-0.38105, 0.866186, 0.3233), Z: (0.660487, 0.499723, -0.560387), O: (-369.4744, 35.1, -290.921)]",
+    "partial": false,
+    "tick": 330,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.762523, 0.0, 0.646961), Y: (0.323301, 0.866186, 0.38105), Z: (-0.560388, 0.499723, -0.660487), O: (-406.121, 35.1, -293.9256)]",
+    "partial": false,
+    "tick": 345,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.336247, 0.897523, -0.285288), Z: (-0.684382, 0.440967, 0.580663), O: (-395.4459, 24.06, -268.8855)]",
+    "partial": false,
+    "tick": 360,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.762523, 0.0, -0.646961), Y: (-0.285288, 0.897523, -0.336247), Z: (0.580663, 0.440967, 0.684382), O: (-384.0855, 24.06, -267.9541)]",
+    "partial": false,
+    "tick": 375,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.646961, 0.0, -0.762523), Y: (-0.336247, 0.897523, 0.285288), Z: (0.684382, 0.440967, -0.580663), O: (-383.1541, 24.06, -279.3145)]",
+    "partial": false,
+    "tick": 390,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.762523, 0.0, 0.646961), Y: (0.285288, 0.897523, 0.336247), Z: (-0.580663, 0.440967, -0.684382), O: (-394.5145, 24.06, -280.2459)]",
+    "partial": false,
+    "tick": 405,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.336247, 0.897523, -0.285288), Z: (-0.684382, 0.440967, 0.580663), O: (-395.4459, 24.06, -268.8855)]",
+    "partial": false,
+    "tick": 420,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.762523, 0.0, -0.646961), Y: (-0.285288, 0.897523, -0.336247), Z: (0.580663, 0.440967, 0.684382), O: (-384.0855, 24.06, -267.9541)]",
+    "partial": false,
+    "tick": 435,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.646961, 0.0, -0.762523), Y: (-0.336247, 0.897523, 0.285288), Z: (0.684382, 0.440967, -0.580663), O: (-383.1541, 24.06, -279.3145)]",
+    "partial": false,
+    "tick": 450,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (-0.762523, 0.0, 0.646961), Y: (0.285288, 0.897523, 0.336247), Z: (-0.580663, 0.440967, -0.684382), O: (-394.5145, 24.06, -280.2459)]",
+    "partial": false,
+    "tick": 465,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 0.0,
+    "camera": "[X: (0.646962, 0.0, 0.762522), Y: (0.381049, 0.866186, -0.323302), Z: (-0.660485, 0.499723, 0.560389), O: (-409.1255, 35.1, -257.279)]",
+    "partial": false,
+    "tick": 480,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (0.762524, 0.0, -0.64696), Y: (-0.3233, 0.866186, -0.38105), Z: (0.560387, 0.499723, 0.660487), O: (-372.479, 35.1, -254.2744)]",
+    "partial": false,
+    "tick": 495,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (-0.64696, 0.0, -0.762524), Y: (-0.38105, 0.866186, 0.3233), Z: (0.660487, 0.499723, -0.560387), O: (-369.4744, 35.1, -290.921)]",
+    "partial": false,
+    "tick": 510,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (-0.762523, 0.0, 0.646961), Y: (0.323301, 0.866186, 0.38105), Z: (-0.560388, 0.499723, -0.660487), O: (-406.121, 35.1, -293.9256)]",
+    "partial": false,
+    "tick": 525,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.38105, 0.866186, -0.323301), Z: (-0.660486, 0.499723, 0.560388), O: (-409.1256, 35.1, -257.279)]",
+    "partial": false,
+    "tick": 540,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (0.762523, 0.0, -0.646961), Y: (-0.323301, 0.866185, -0.38105), Z: (0.560389, 0.499723, 0.660486), O: (-372.479, 35.1, -254.2744)]",
+    "partial": false,
+    "tick": 555,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (-0.646962, 0.0, -0.762522), Y: (-0.381049, 0.866186, 0.323302), Z: (0.660485, 0.499723, -0.56039), O: (-369.4744, 35.1, -290.921)]",
+    "partial": false,
+    "tick": 570,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (-0.762524, 0.0, 0.64696), Y: (0.3233, 0.866186, 0.38105), Z: (-0.560387, 0.499723, -0.660487), O: (-406.1209, 35.1, -293.9256)]",
+    "partial": false,
+    "tick": 585,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (0.646961, 0.0, 0.762523), Y: (0.336247, 0.897523, -0.285288), Z: (-0.684382, 0.440967, 0.580663), O: (-395.4459, 24.06, -268.8855)]",
+    "partial": false,
+    "tick": 600,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (0.762523, 0.0, -0.646961), Y: (-0.285288, 0.897523, -0.336247), Z: (0.580663, 0.440967, 0.684382), O: (-384.0855, 24.06, -267.9541)]",
+    "partial": false,
+    "tick": 615,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (-0.646957, 0.0, -0.762526), Y: (-0.336249, 0.897524, 0.285287), Z: (0.684385, 0.440967, -0.580659), O: (-383.154, 24.06, -279.3145)]",
+    "partial": false,
+    "tick": 630,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (-0.762523, 0.0, 0.646961), Y: (0.285288, 0.897523, 0.336247), Z: (-0.580663, 0.440967, -0.684382), O: (-394.5145, 24.06, -280.2459)]",
+    "partial": false,
+    "tick": 645,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (0.646959, 0.0, 0.762525), Y: (0.336249, 0.897523, -0.285288), Z: (-0.684384, 0.440968, 0.580661), O: (-395.4459, 24.06, -268.8855)]",
+    "partial": false,
+    "tick": 660,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (0.762523, 0.0, -0.646961), Y: (-0.285288, 0.897523, -0.336247), Z: (0.580663, 0.440967, 0.684382), O: (-384.0855, 24.06, -267.9541)]",
+    "partial": false,
+    "tick": 675,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (-0.646961, 0.0, -0.762523), Y: (-0.336247, 0.897523, 0.285288), Z: (0.684382, 0.440967, -0.580663), O: (-383.1541, 24.06, -279.3145)]",
+    "partial": false,
+    "tick": 690,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  },
+  {
+    "black_fraction": 1.0,
+    "camera": "[X: (-0.762519, 0.0, 0.646965), Y: (0.28529, 0.897523, 0.336246), Z: (-0.580667, 0.440967, -0.684379), O: (-394.5145, 24.06, -280.2459)]",
+    "partial": false,
+    "tick": 705,
+    "window_focus": false,
+    "window_mode": 0,
+    "window_visible": true
+  }
+]

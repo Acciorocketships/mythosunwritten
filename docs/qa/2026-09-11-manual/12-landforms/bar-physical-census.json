@@ -1,0 +1,170 @@
+[
+  {
+    "passed": true,
+    "points": [
+      {
+        "ground": 4.0,
+        "level": null,
+        "offset": 0.0,
+        "point": "(-1424.087, 1614.653)",
+        "wet": false
+      },
+      {
+        "ground": 0.0,
+        "level": 1.70000004768372,
+        "offset": -54.0,
+        "point": "(-1392.361, 1570.956)",
+        "wet": true
+      },
+      {
+        "ground": 0.0,
+        "level": 1.70000004768372,
+        "offset": 54.0,
+        "point": "(-1455.813, 1658.35)",
+        "wet": true
+      }
+    ],
+    "seed": 2697992464,
+    "source": "(-3, -1)"
+  },
+  {
+    "passed": true,
+    "points": [
+      {
+        "ground": 4.0,
+        "level": null,
+        "offset": 0.0,
+        "point": "(-1214.656, 1570.203)",
+        "wet": false
+      },
+      {
+        "ground": 0.0,
+        "level": 1.70000004768372,
+        "offset": -54.0,
+        "point": "(-1177.498, 1531.021)",
+        "wet": true
+      },
+      {
+        "ground": 0.0,
+        "level": 1.70000004768372,
+        "offset": 54.0,
+        "point": "(-1251.815, 1609.385)",
+        "wet": true
+      }
+    ],
+    "seed": 2697992464,
+    "source": "(-3, -1)"
+  },
+  {
+    "passed": true,
+    "points": [
+      {
+        "ground": 4.0,
+        "level": null,
+        "offset": 0.0,
+        "point": "(3734.407, -1214.06)",
+        "wet": false
+      },
+      {
+        "ground": 0.0,
+        "level": 1.20000004768372,
+        "offset": -54.0,
+        "point": "(3766.856, -1257.224)",
+        "wet": true
+      },
+      {
+        "ground": 0.0,
+        "level": 1.20000004768372,
+        "offset": 54.0,
+        "point": "(3701.958, -1170.897)",
+        "wet": true
+      }
+    ],
+    "seed": 991177,
+    "source": "(2, -4)"
+  },
+  {
+    "passed": true,
+    "points": [
+      {
+        "ground": 4.0,
+        "level": null,
+        "offset": 0.0,
+        "point": "(3908.461, -1299.172)",
+        "wet": false
+      },
+      {
+        "ground": 0.0,
+        "level": 1.20000004768372,
+        "offset": -54.0,
+        "point": "(3907.928, -1353.169)",
+        "wet": true
+      },
+      {
+        "ground": 0.0,
+        "level": 1.20000004768372,
+        "offset": 54.0,
+        "point": "(3908.994, -1245.174)",
+        "wet": true
+      }
+    ],
+    "seed": 991177,
+    "source": "(2, -4)"
+  },
+  {
+    "passed": true,
+    "points": [
+      {
+        "ground": 4.0,
+        "level": null,
+        "offset": 0.0,
+        "point": "(3348.09, -120.88)",
+        "wet": false
+      },
+      {
+        "ground": 0.0,
+        "level": 1.70000004768372,
+        "offset": -54.0,
+        "point": "(3345.475, -174.8167)",
+        "wet": true
+      },
+      {
+        "ground": 0.0,
+        "level": 1.70000004768372,
+        "offset": 54.0,
+        "point": "(3350.704, -66.94328)",
+        "wet": true
+      }
+    ],
+    "seed": 314159,
+    "source": "(2, 1)"
+  },
+  {
+    "passed": true,
+    "points": [
+      {
+        "ground": 4.0,
+        "level": null,
+        "offset": 0.0,
+        "point": "(3484.778, -241.4265)",
+        "wet": false
+      },
+      {
+        "ground": 0.0,
+        "level": 1.70000004768372,
+        "offset": -54.0,
+        "point": "(3482.164, -295.3632)",
+        "wet": true
+      },
+      {
+        "ground": 0.0,
+        "level": 1.70000004768372,
+        "offset": 54.0,
+        "point": "(3487.392, -187.4897)",
+        "wet": true
+      }
+    ],
+    "seed": 314159,
+    "source": "(2, 1)"
+  }
+]
