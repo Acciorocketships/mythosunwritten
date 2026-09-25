@@ -1,0 +1,432 @@
+[
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/after/P10/audit.json",
+    "bytes": 2225,
+    "sha256": "8fabbf140a849adcac7f6a213c588c1ad91b156994f07e9bd68bb56df01c80b2"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/after/P10/geometry.scn",
+    "bytes": 1052708782,
+    "sha256": "a506971af200ef551b11910a3a3f40257af4764add72ab7c74c9920143b86e8c"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/after/P10/overview.png",
+    "bytes": 429041,
+    "sha256": "a878b98a591ce3b7df7fbcd241e0f2d3c7c76d0d8c8a6caf2252c0878a4eff10"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/after/P10/view_-8.png",
+    "bytes": 307709,
+    "sha256": "acb39382a847881e32f5bf71831b9e6787134530eec2ad7613e237f4221ad883"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/after/P10/view_0.png",
+    "bytes": 304216,
+    "sha256": "e777a8b40cb031c14e74884d4844b50a68e882a2d522dd6dd93b1b15f3af864e"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/after/P10/view_8.png",
+    "bytes": 329833,
+    "sha256": "a1a81affd2c439f4115184f74c0181a6554e717b12b8b392620115a2294a968f"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/after/P10/view_90.png",
+    "bytes": 458996,
+    "sha256": "bff7b7a239d05759e37b1b5be9a871ddd8610a8aa7b3f2e4db660520b11ee218"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/after/P21/audit.json",
+    "bytes": 2159,
+    "sha256": "b14cdddb7498b4090c065a16038c5991e55f431979abf6a098699b09fea17905"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/after/P21/geometry.scn",
+    "bytes": 912899696,
+    "sha256": "de9092621c8d8cf814201eaa95bde3dae1d25a423f072b453fd462be473feba7"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/after/P21/overview.png",
+    "bytes": 361086,
+    "sha256": "07bd82b8a139310081747ae84e6ae5f63addade60bf401305f0769fcb750ef7e"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/after/P21/view_-8.png",
+    "bytes": 321328,
+    "sha256": "2fdb8991b2703b4e99b593bcbb17d86a64e885fb82ec5afb1a6b448e2ba549dd"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/after/P21/view_0.png",
+    "bytes": 307367,
+    "sha256": "7c7df2765f4cfb8f24ddad41c334a9cc15648f19484951bdf283602e4bfb33df"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/after/P21/view_8.png",
+    "bytes": 310102,
+    "sha256": "7bbf91d51af62b91a525f68f642d430b01fcbed3b28fe6bfd82185bcbc7886d8"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/after/P21/view_90.png",
+    "bytes": 378387,
+    "sha256": "336f2aec028218fcfd1014b6bbaae55fc1f94a2fa5ceb81965c581c05abdfa6c"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/audit.json",
+    "bytes": 562,
+    "sha256": "bf93cf3d82815fcadc7adcf6b441b670a97d80150f95e6c7529e2472faa9f5a7"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/candidate-samples.json",
+    "bytes": 4967,
+    "sha256": "377ad98cb9b515ba1e1f1011d2acdcd08e504d45013d65bf9b2f53adf70d6f0d"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/contain.bin",
+    "bytes": 2966068,
+    "sha256": "1777be23ef281fb3b06446a9d9b97a597d99b78940b2397a7e29a6598a2bd412"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/contain.json",
+    "bytes": 4321,
+    "sha256": "b01893ea6b09d56fb2ac4f328005a7e3eba6f499e342c7c9b593f590b809a5c3"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/crest.bin",
+    "bytes": 2966068,
+    "sha256": "516f19e9be146515930e74c0e1a9468f91cee6e047c4c7bf95f0ad5d5da6e591"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/crest.json",
+    "bytes": 4322,
+    "sha256": "c9be873aa18f0ba1ff74158a73ef438fd2cd728494c2c51d69e7b4af35f35d71"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/eight-coarse.bin",
+    "bytes": 988652,
+    "sha256": "d47fba2cd4f6a86065d297ea41e17c245c8182cfd9a97730e83ad19afb69e254"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/eight-fine.bin",
+    "bytes": 7892580,
+    "sha256": "45d4dfcc1cae36a49e36897d2ec6bd48dea112b4de46b078a205453bb1f881cb"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/first-eight-coarse.bin",
+    "bytes": 988652,
+    "sha256": "d47fba2cd4f6a86065d297ea41e17c245c8182cfd9a97730e83ad19afb69e254"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/first-eight-fine.bin",
+    "bytes": 7892580,
+    "sha256": "45d4dfcc1cae36a49e36897d2ec6bd48dea112b4de46b078a205453bb1f881cb"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/first-replay.json",
+    "bytes": 13503,
+    "sha256": "90307976d17dc7aaf53f2dec6f32480202ef373592019cd9a994665616932e85"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/four-coarse.bin",
+    "bytes": 988652,
+    "sha256": "ac6ef0463a6e8e1ca15b4a14475dd17701ca6d9884b19ec47aa7f962779cf76f"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/four-fine.bin",
+    "bytes": 7892580,
+    "sha256": "5db5faf918ec17dcf6fbdba4b01d6e9f4ff54b54d75b0ad0c096549ce7a8863e"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/geometry-P10-P21.json",
+    "bytes": 700,
+    "sha256": "8f05a1340fc40760e8fd2125ea472c0189bbe6759778e576699703fab51f8a50"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/grade.bin",
+    "bytes": 2966068,
+    "sha256": "3cd91f2dcb66b355e2e480def3949ebf0868ed15df3bab394f50886b6ebc1297"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/grade.json",
+    "bytes": 4322,
+    "sha256": "857ba92cdcdef097d4a2ebbc3ab00e8f74df51381a22410e25c497df243e9955"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/input-hashes.json",
+    "bytes": 145,
+    "sha256": "cec5368dbd83e30dc2a3d12fec53d8f430d08705b327bb3edd54344158b1dfb8"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/claims.log",
+    "bytes": 195,
+    "sha256": "f55e4b233819649086ce7ca0098b0ecaae573c7074cd6d93c6f9c5f81ac6580f"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/downhill-field-red.log",
+    "bytes": 1303,
+    "sha256": "46cd1480a1de1b21c1ae61b26a4efa0641d1488a618b0fe37d09bb5e49bd88c8"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/downhill-mesh-red.log",
+    "bytes": 735,
+    "sha256": "1d09a5c515ba64617fa7fba2e6e5c91239ed198e552d86228894b087c89239f3"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/grade-first.log",
+    "bytes": 1413,
+    "sha256": "686e37e929a078d9bc1240a5e1fc8c41c91c3472f8b6b47b8842ffdaf8ad8799"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/grade-green.log",
+    "bytes": 935,
+    "sha256": "22b1b9aa22bd7b05641ce95b7edf007a3d64726a7f10cc5ea56b73998d612beb"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/grade-red.log",
+    "bytes": 1392,
+    "sha256": "e359b824700e00c0ac356f1d478c54b09c7387e1e7c16996c189d6fa7e1e95c2"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/identity.log",
+    "bytes": 749,
+    "sha256": "3fbc1997df2a9db4c5518ef5178b9c1f7782282f194f6ff3b9084456c8de2cae"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/local.log",
+    "bytes": 195,
+    "sha256": "f55e4b233819649086ce7ca0098b0ecaae573c7074cd6d93c6f9c5f81ac6580f"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/native-audit.log",
+    "bytes": 575,
+    "sha256": "1054598aa4769187163adb46992252d104b2a02ec260bcb8c18098dd1b02f826"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/native-final.log",
+    "bytes": 1755,
+    "sha256": "4c8f4f334311cfe4486c850ad286d8f15a37b4c14093fa8b1a6270a62235de5e"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/native.log",
+    "bytes": 175,
+    "sha256": "262a2fdadf609710ff96f4e30686f2dab9c470dd6dd44c1fc4c98009a708bb06"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/primary-green.log",
+    "bytes": 865,
+    "sha256": "7b42aa5f77246d93be6dd1aeae195907f596f1e520d172fb2a13e7302af0ad32"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/primary-red.log",
+    "bytes": 1315,
+    "sha256": "9e235b8d5c52145c306c7642b59f46e16a5ed5b5c5566d34a5eaf70b572e847a"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/recover.log",
+    "bytes": 323,
+    "sha256": "dc751e7471a2b0b4b391da06ffdde8c8aa29b01e3e4ccbbaf620af3106516c33"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/replay-final.log",
+    "bytes": 244,
+    "sha256": "b3ac13f4d1f5b74898f79586277701a7a6af2bdf6dcc1578a8152fac6965dd96"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/replay.log",
+    "bytes": 244,
+    "sha256": "b3ac13f4d1f5b74898f79586277701a7a6af2bdf6dcc1578a8152fac6965dd96"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/stages.log",
+    "bytes": 6903,
+    "sha256": "abaeaa604d43f5afa6d5fbd6381874b99738f1a8183cbaeb075ebdbc4112a358"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/supply.log",
+    "bytes": 316,
+    "sha256": "7fa71ce6b56343e2e21fbb0e2796b60dee869f6e00d4863be3a039e727ac8d19"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/logs/survey.log",
+    "bytes": 437,
+    "sha256": "9ada97980445e598c7c1a0e32aa73e96311379cf9a33e2e9b75c0e20d6f19d83"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/mouth-cells.json",
+    "bytes": 11498,
+    "sha256": "209af0cb475e358cd50244776bb6fb15bf07c0321d1aa194d7561ab751a4a2d7"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/mouth-claims.json",
+    "bytes": 20581,
+    "sha256": "8a649ed5c938c7528f118342383696981df6451ee25e3c403b5d859572556fd0"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/production-hashes.json",
+    "bytes": 482,
+    "sha256": "4e2f2bb37109e13d5d1310504ff1d91d66d140d4dc3107e72179b1d159e4c99c"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/profiles.bin",
+    "bytes": 250408,
+    "sha256": "2b0d47aaec9f2a495abaaedb6e0ed4f4a29a313f539d81998a19dcb35ff51545"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/progress.md",
+    "bytes": 387,
+    "sha256": "78e2331f5cc55ce0cbded0656ae1676eb6fe0f86e603a015200db5a5b572be95"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/relax.bin",
+    "bytes": 2966068,
+    "sha256": "db7733d4b429be162fe35975d4c414c7dac711af85d47d1ac022c80f1520475d"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/relax.json",
+    "bytes": 4321,
+    "sha256": "c30370b8367e434512d20620e8eae3bc7dc14241c381f162e0c5179df89d0617"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/replay.json",
+    "bytes": 13503,
+    "sha256": "90307976d17dc7aaf53f2dec6f32480202ef373592019cd9a994665616932e85"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/result.md",
+    "bytes": 7321,
+    "sha256": "30569e3af5b64fe12b2caff268ee6faabbba7020f30658fe0cb44c5445ede3e6"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/seed.bin",
+    "bytes": 2966068,
+    "sha256": "94729da3e19572170631fcb6740dd26f2cd583d839683d36f4c2d50de689aa4e"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/seed.json",
+    "bytes": 3915,
+    "sha256": "71b124266908b271f415fdee7ec7ad425375e0414c17f748c25a6a6480a7dc54"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/smooth.bin",
+    "bytes": 2966068,
+    "sha256": "4c20c320e8a7b727b3296b27648cc520783541af09f4eee14eb915af66e9c3f0"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/smooth.json",
+    "bytes": 4321,
+    "sha256": "b01893ea6b09d56fb2ac4f328005a7e3eba6f499e342c7c9b593f590b809a5c3"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/stage-audit.json",
+    "bytes": 852,
+    "sha256": "d88f9051ed6fe9792786771141833f4ce2525153fd5b01abfedbce0738cdd8b5"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/supply-P10.json",
+    "bytes": 73755,
+    "sha256": "e0fa8470e84994fc115f93e60965d156120e214ffd4dba17b0a626d156f62b08"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/supply-audit.json",
+    "bytes": 1906,
+    "sha256": "2e894f0372832f9b990941fb20d5b7bb0e62e310f5ce25b02fb0f983331eaa96"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/supply-route.json",
+    "bytes": 10612,
+    "sha256": "92f56003f585c4b85245628e805d699d47f0a703299f0e03f43b01a232dcfd10"
+  },
+  {
+    "path": "docs/qa/2026-09-19-manual/115-hillside-fill-stages/survey-P10-P21.json",
+    "bytes": 226086,
+    "sha256": "09ea020a9cffd6bcc361a4075270e3c655c7bafac55bb1099e9b7bbcc512141b"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/audit.py",
+    "bytes": 1701,
+    "sha256": "30ef9dafde42af50481580fd90118c44067d23674b933a612af2827ad1e48b85"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/candidate_cache.gd",
+    "bytes": 776,
+    "sha256": "01314b2a0d818376d956e3c5aeeb6fe63e555d2a5f9faa62f1e52e0f0df24cb2"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/eight_candidate.gd",
+    "bytes": 136384,
+    "sha256": "017da4ea79d9eb5d3300896bc176b38cc9ebaf46e3589b314b9c93af3cebcdd5"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/eight_field.gd",
+    "bytes": 136043,
+    "sha256": "bfbccd706f9df8c76d478cfef578dc65a3ec2ae46e0df867b4d08821ac7c289f"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/geometry_identity.gd",
+    "bytes": 2663,
+    "sha256": "e94150fc00938ebf60d4c254bd64138423a19c473d7d88384962458090b2dccd"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/local_cells.gd",
+    "bytes": 1075,
+    "sha256": "29b27fad92efb21fbe2595bf07c761c305a46d4d9a505f538141795ecd0c1e1a"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/mouth_claims.gd",
+    "bytes": 1606,
+    "sha256": "6098f3940915ded1e751d4aa0e55b09345f1b9afce3f180087b2450512654c11"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/native.gd",
+    "bytes": 6472,
+    "sha256": "d8a5a62a4e4a89a50182ed6b3aeabb89f3b4d44c9039c0d5a3166d23896feea8"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/native_audit.py",
+    "bytes": 1604,
+    "sha256": "af5c2049696b9ed241bbfd81b5e1af8837227bdc054cfb72df7f7b820dc4bb8d"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/observed_field.gd",
+    "bytes": 136616,
+    "sha256": "7933ebce8d468d926712b75d6ceb9e81570049e3506a25ec4ee2234cfa582ad8"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/physical_samples.gd",
+    "bytes": 4499,
+    "sha256": "462a8979e8be61dfe946b9a13e35180f79c14c918a742f45b76f738e19565cd2"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/prepare.py",
+    "bytes": 1371,
+    "sha256": "c07a81b52c699224e1d8d2958d2e425fdb4529e311eaf5dfab4fd806d6d06ef7"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/prepare_eight.py",
+    "bytes": 1558,
+    "sha256": "139a4b05d55d8617b5d899e68a160391a46231c165366e050260ca2963a8329e"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/probe.gd",
+    "bytes": 2212,
+    "sha256": "3818c2e7bdc98ca0240beb3abfe2aedf87366f06ca0b6780e03227027f5d5ffa"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/recover_reports.gd",
+    "bytes": 1208,
+    "sha256": "74a424b249ee17713dfe10f27ea8804721283a86b1bde3b7badebc8222572c46"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/replay.gd",
+    "bytes": 2809,
+    "sha256": "73b0b74e98e06bac7e6b6da3fb99193ad061e1668a73bd46360139be867f4b6b"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/supply_audit.py",
+    "bytes": 1408,
+    "sha256": "15c090655e660976a75f2048db1790b97bf7f0e840e6e78f7fcef16e0df7081d"
+  },
+  {
+    "path": "tests/fixtures/september19/hillside-fill-stages/test_grade.gd",
+    "bytes": 1583,
+    "sha256": "ab344a14d2f89db5524ed75589baaa92bbbea415b96f8aac9874defba8a8b1d2"
+  }
+]

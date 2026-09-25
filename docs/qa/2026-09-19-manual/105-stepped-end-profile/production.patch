@@ -1,0 +1,404 @@
+--- before/scripts/terrain/field/CliffStepSurface.gd
++++ after/scripts/terrain/field/CliffStepSurface.gd
+@@ -0,0 +1,232 @@
++extends RefCounted
++## A raised collinear run hands over at the actual end of its taller neighbor.
++## Continue their measured profiles above the supporting terrace, rather than
++## leaving an independent basal outcrop across the lower corner's crown.
++const PROFILE=preload("res://scripts/terrain/field/CliffInnerSurface.gd")
++const LEDGES=preload("res://scripts/terrain/field/CliffLedgeJoin.gd")
++const LENGTH:=3.0
++static func apply(forms:Array,region:HeightfieldRegion=null,features:FeatureContext=null,reject:Callable=Callable())->int:
++ var ordered:Array=forms.duplicate()
++ ordered.sort_custom(func(a:Dictionary,b:Dictionary)->bool:return a.anchor<b.anchor)
++ var changed:=0
++ for tall:Dictionary in ordered:
++  var tr:Dictionary=tall.get("replay_recipe",{})
++  if tr.get("kind","")!="wall" or not tr.has("inner_connections"):continue
++  for raised:Dictionary in ordered:
++   var rr:Dictionary=raised.get("replay_recipe",{})
++   if rr.get("kind","")!="wall" or rr.has("step_surface") or raised.id==tall.id:continue
++   var relative:Transform3D=tall.transform.affine_inverse()*raised.transform
++   if relative.basis.x.dot(Vector3.RIGHT)<.999 or relative.basis.z.dot(Vector3.BACK)<.999 or absf(relative.origin.z)>.001:continue
++   var rise:float=relative.origin.y
++   if rise<3.999 or absf(rise+rr.height-tr.height)>.001:continue
++   var side:float=signf(relative.origin.x)
++   var edge:float=side*tr.width*.5
++   # Both runs use the same quarter-metre native sampling lattice. Remove only
++   # cardinal-transform roundoff before selecting/clipping a lattice section.
++   var start:float=snappedf(edge-relative.origin.x,.25)
++   var overlap:float=rr.width*.5+side*start
++   if overlap<.25 or overlap>3.01:continue
++   var finish:float=start+side*LENGTH
++   if absf(finish)>rr.width*.5-.25:continue
++   var a:=_section(tall,edge)
++   var floor_y:=INF
++   for p:Vector3 in raised.faces:floor_y=minf(floor_y,p.y)
++   var clipped:=PackedVector2Array()
++   for p:Vector2 in a:
++    p.y-=rise
++    if p.y>=floor_y:clipped.append(p)
++    else:
++     if not clipped.is_empty() and clipped[-1].y>floor_y:clipped.append(clipped[-1].lerp(p,(floor_y-clipped[-1].y)/(p.y-clipped[-1].y)))
++     break
++   a=clipped
++   var b:=_section(raised,finish)
++   var at:Array=[]
++   for group:Array in LEDGES.nearest_row(LEDGES.columns(tall),edge):
++    if group[-1].y<floor_y+rise:continue
++    if at.is_empty() or group[-1].x-group[0].x>at[-1].x-at[0].x:at=group.duplicate()
++   for i in at.size():at[i]-=Vector2(0,rise)
++   var bt:=PROFILE.main_tread(raised,Vector3(finish,0,0),rr.height)
++   var ad:=PROFILE.parameters(a,at);var bd:=PROFILE.parameters(b,bt)
++   if ad.is_empty() or bd.is_empty():continue
++   var recipe:Dictionary={"a":a,"b":b,"ad":ad,"bd":bd,"start":start,"finish":finish,"side":side}
++   var candidate:Dictionary=raised.duplicate(true)
++   rebuild(candidate,recipe)
++   var box:AABB=candidate.bounds
++   var footprint:=Rect2(Vector2(box.position.x,box.position.z),Vector2(box.size.x,box.size.z))
++   if region!=null and region.has_grade_effect_in(footprint.grow(.1)):continue
++   if features!=null and features.overlaps_clearance(FeatureGroundShape.axis_rect(footprint),.3):continue
++   if reject.is_valid() and reject.call(candidate):continue
++   forms[forms.find(raised)]=candidate
++   ordered[ordered.find(raised)]=candidate
++   changed+=1
++ return changed
++
++static func _section(form:Dictionary,x:float)->PackedVector2Array:
++ # Follow real surface edges; sorting vertices by height shortcuts small
++ # overhangs and leaves an unmatched section when joined to the original skin.
++ var adjacency:Dictionary={}
++ for i in range(0,form.faces.size(),3):
++  var tri:Array=[form.faces[i],form.faces[i+1],form.faces[i+2]]
++  if absf(tri[0].x-x)<.00001 and absf(tri[1].x-x)<.00001 and absf(tri[2].x-x)<.00001:continue
++  for j in 3:
++   var a:Vector3=tri[j];var b:Vector3=tri[(j+1)%3]
++   if absf(a.x-x)>.00001 or absf(b.x-x)>.00001 or minf(a.z,b.z)<-1.1999:continue
++   var pair:Array=[Vector2(a.z,a.y),Vector2(b.z,b.y)]
++   for k in 2:
++    if not adjacency.has(pair[k]):adjacency[pair[k]]=[]
++    if pair[1-k] not in adjacency[pair[k]]:adjacency[pair[k]].append(pair[1-k])
++ var ends:Array=[]
++ for p:Vector2 in adjacency:
++  if adjacency[p].size()==1:ends.append(p)
++  elif adjacency[p].size()!=2:return PackedVector2Array()
++ if ends.size()!=2:return PackedVector2Array()
++ ends.sort_custom(func(a:Vector2,b:Vector2)->bool:return a.y>b.y)
++ var result:=PackedVector2Array();var p:Vector2=ends[0];var previous:=Vector2(INF,INF)
++ for i in adjacency.size():
++  result.append(p)
++  if p==ends[1]:break
++  var next:Vector2=adjacency[p][0]
++  if next==previous:next=adjacency[p][1]
++  previous=p;p=next
++ return result if result.size()==adjacency.size() else PackedVector2Array()
++
++static func rebuild(form:Dictionary,recipe:Dictionary)->void:
++ var a:PackedVector2Array=recipe.a;var b:PackedVector2Array=recipe.b
++ var ad:PackedFloat32Array=recipe.ad;var bd:PackedFloat32Array=recipe.bd
++ var side:float=recipe.side;var finish:float=recipe.finish
++ var samples:Array[float]=[]
++ for values:PackedFloat32Array in [ad,bd]:
++  for value:float in values:
++   if value not in samples:samples.append(value)
++ samples.sort()
++ var front:Array=[];var back:Array=[]
++ for i in 41:
++  var t:=i/40.0;var blend:=smoothstep(0,1,t)
++  var row:=PackedVector3Array();var rear:=PackedVector3Array()
++  for s:float in samples:
++   var p:=PROFILE.at(a,ad,s).lerp(PROFILE.at(b,bd,s),blend)
++   var x:=lerpf(recipe.start,finish,t)
++   row.append(Vector3(x,p.y,p.x).snapped(Vector3.ONE*.0001))
++   rear.append(Vector3(x,p.y,-1.2).snapped(Vector3.ONE*.0001))
++  front.append(row);back.append(rear)
++ var faces:=PackedVector3Array();var green:=PackedVector3Array()
++ for i in 40:
++  for j in samples.size()-1:
++   var turf:bool=samples[j]>=.4-.00001 and samples[j+1]<=.6+.00001
++   _tri(faces,green,front[i][j],front[i+1][j],front[i][j+1],turf,side)
++   _tri(faces,green,front[i+1][j],front[i+1][j+1],front[i][j+1],turf,side)
++   _tri(faces,green,back[i][j],back[i][j+1],back[i+1][j],false,side)
++   _tri(faces,green,back[i+1][j],back[i][j+1],back[i+1][j+1],false,side)
++  _tri(faces,green,front[i][0],back[i][0],front[i+1][0],false,side)
++  _tri(faces,green,front[i+1][0],back[i][0],back[i+1][0],false,side)
++  _tri(faces,green,front[i][-1],front[i+1][-1],back[i][-1],false,side)
++  _tri(faces,green,front[i+1][-1],back[i+1][-1],back[i][-1],false,side)
++ faces.append_array(_cap(front[0],back[0],-side))
++ # Join the two skins directly. The measured section has extra samples from
++ # the incoming profile; split both skins there so no T-junction or internal
++ # collision wall survives the handoff.
++ var body:=_clip(form.faces,finish,side)
++ var body_green:=_clip(form.green,finish,side)
++ faces.append_array(body);green.append_array(body_green)
++ var stitched:=_stitch(faces,green,finish)
++ faces=stitched[0];green=stitched[1]
++ form.faces=faces;form.green=green
++ form.replay_recipe["step_surface"]=recipe.duplicate(true)
++ var box:=AABB(faces[0],Vector3.ZERO)
++ for p:Vector3 in faces:box=box.expand(p)
++ form.bounds=form.transform*box;form.base=form.bounds.position.y;form.top=form.bounds.end.y
++
++static func _tri(faces:PackedVector3Array,green:PackedVector3Array,a:Vector3,b:Vector3,c:Vector3,turf:bool,side:float)->void:
++ if side<0:var swap:=b;b=c;c=swap
++ if (b-a).cross(c-a).length_squared()<1e-14:return
++ PROFILE.tri(faces,green,a,b,c,turf)
++
++static func _stitch(faces:PackedVector3Array,green:PackedVector3Array,x:float)->Array:
++ var unique:Dictionary={};var turf:Dictionary={}
++ for i in faces.size():faces[i]=faces[i].snapped(Vector3.ONE*.0001)
++ for i in green.size():green[i]=green[i].snapped(Vector3.ONE*.0001)
++ for p:Vector3 in faces:
++  if absf(p.x-x)<.00001:unique[p]=true
++ for i in range(0,green.size(),3):turf[[green[i],green[i+1],green[i+2]]]=true
++ var result:=PackedVector3Array();var planted:=PackedVector3Array()
++ for i in range(0,faces.size(),3):
++  var tri:Array[Vector3]=[faces[i],faces[i+1],faces[i+2]];var split:=false
++  if (tri[1]-tri[0]).cross(tri[2]-tri[0]).length_squared()<1e-14:continue
++  var is_turf:bool=turf.has(tri)
++  for j in 3:
++   var a:=tri[j];var b:=tri[(j+1)%3];var opposite:=tri[(j+2)%3]
++   if absf(a.x-x)>.00001 or absf(b.x-x)>.00001:continue
++   var ab:=b-a;var length2:=ab.length_squared();var chain:Array=[a,b]
++   for p:Vector3 in unique:
++    var t:float=(p-a).dot(ab)/maxf(length2,1e-20)
++    if t<=.000001 or t>=.999999:continue
++    if p.distance_squared_to(a+t*ab)<1e-8:chain.append(p)
++   chain.sort_custom(func(p:Vector3,q:Vector3)->bool:return (p-a).dot(ab)<(q-a).dot(ab))
++   for k in chain.size()-1:_emit(result,planted,chain[k],chain[k+1],opposite,is_turf)
++   split=true;break
++  if not split:_emit(result,planted,tri[0],tri[1],tri[2],is_turf)
++ return [result,planted]
++
++static func _emit(faces:PackedVector3Array,green:PackedVector3Array,a:Vector3,b:Vector3,c:Vector3,turf:bool)->void:
++ if (b-a).cross(c-a).length_squared()<1e-14:return
++ # These triangles already have an authored material classification. Stitching
++ # must not reclassify existing, steeper patches elsewhere on the same run.
++ var tri:=PackedVector3Array([a,b,c]);faces.append_array(tri)
++ if turf:green.append_array(tri)
++
++static func _cap(front:PackedVector3Array,back:PackedVector3Array,normal:float)->PackedVector3Array:
++ # A flat ledge is a horizontal edge of this polygon, not a zero-height strip.
++ # Retain its intermediate boundary samples when closing the physical solid.
++ var outline:=PackedVector2Array();var reversed:=back.duplicate();reversed.reverse()
++ for row:PackedVector3Array in [front,reversed]:
++  for p:Vector3 in row:
++   var q:=Vector2(p.z,p.y)
++   if outline.is_empty() or q!=outline[-1]:outline.append(q)
++ if outline[-1]==outline[0]:outline.resize(outline.size()-1)
++ var clean:=PackedVector2Array()
++ for i in outline.size():
++  var a:=outline[posmod(i-1,outline.size())];var b:=outline[i];var c:=outline[(i+1)%outline.size()]
++  if absf((b-a).cross(c-b))>.0000001:clean.append(b)
++ var indices:=Geometry2D.triangulate_polygon(clean)
++ assert(not indices.is_empty(),"The shared step section must close as a simple polygon")
++ var triangles:Array=[]
++ for i in range(0,indices.size(),3):triangles.append([clean[indices[i]],clean[indices[i+1]],clean[indices[i+2]]])
++ for i in clean.size():
++  var start:=outline.find(clean[i]);var finish:=outline.find(clean[(i+1)%clean.size()])
++  var chain:Array[Vector2]=[outline[start]]
++  while start!=finish:
++   start=(start+1)%outline.size();chain.append(outline[start])
++  if chain.size()<3:continue
++  var found:=false
++  for t in triangles.size():
++   var tri:Array=triangles[t]
++   for j in 3:
++    var reverse:bool=tri[j]==chain[-1] and tri[(j+1)%3]==chain[0]
++    if not reverse and not (tri[j]==chain[0] and tri[(j+1)%3]==chain[-1]):continue
++    if reverse:chain.reverse()
++    var other:Vector2=tri[(j+2)%3];triangles.remove_at(t)
++    for n in chain.size()-1:triangles.append([chain[n],chain[n+1],other])
++    found=true;break
++   if found:break
++  assert(found)
++ var result:=PackedVector3Array()
++ for tri:Array in triangles:
++  var a:=Vector3(front[0].x,tri[0].y,tri[0].x);var b:=Vector3(front[0].x,tri[1].y,tri[1].x);var c:=Vector3(front[0].x,tri[2].y,tri[2].x)
++  if (c-a).cross(b-a).x*normal<0:var swap:=b;b=c;c=swap
++  result.append_array(PackedVector3Array([a,b,c]))
++ return result
++
++static func _clip(source:PackedVector3Array,x:float,side:float)->PackedVector3Array:
++ var result:=PackedVector3Array()
++ for i in range(0,source.size(),3):
++  var polygon:Array[Vector3]=[]
++  for j in 3:
++   var a:=source[i+j];var b:=source[i+(j+1)%3]
++   var inside:bool=(a.x-x)*side>=-.00001
++   var next_inside:bool=(b.x-x)*side>=-.00001
++   if inside:polygon.append(a)
++   if inside!=next_inside:polygon.append(a.lerp(b,(x-a.x)/(b.x-a.x)).snapped(Vector3.ONE*.0001))
++  for j in range(1,polygon.size()-1):
++   if (polygon[j]-polygon[0]).cross(polygon[j+1]-polygon[0]).length_squared()<1e-16:continue
++   result.append_array(PackedVector3Array([polygon[0],polygon[j],polygon[j+1]]))
++ return result
+--- before/scripts/terrain/field/CliffInnerConnections.gd
++++ after/scripts/terrain/field/CliffInnerConnections.gd
+@@ -63,7 +63,8 @@
+   for i in parents.size():forms[parents[i][0]]=candidates[i]
+   forms.erase(corner);changed+=2;connections+=1
+  var surfaces:=SURFACE.apply(forms,region,features,reject)
+- return {"connections":connections+surfaces,"changed_walls":changed,"surface_connections":surfaces}
++ var steps:=preload("res://scripts/terrain/field/CliffStepSurface.gd").apply(forms,region,features,reject)
++ return {"connections":connections+surfaces,"changed_walls":changed,"surface_connections":surfaces,"step_surfaces":steps}
+ static func _upper_wall_backs_extension(original:Dictionary,left:bool,corner_height:float,forms:Array)->bool:
+  # A taller end can cross a lower terrace only when the same native wall
+  # continues above that terrace. Otherwise its upper rock would cross a turf lip.
+--- before/tests/fixtures/cliff_snapshot_replay.gd
++++ after/tests/fixtures/cliff_snapshot_replay.gd
+@@ -20,6 +20,7 @@
+    result=wall.make(pose,recipe.width,recipe.height,seed_value,null,recipe.left_end,recipe.right_end)[0]
+  if recipe.has("inner_connections"):result.replay_recipe["inner_connections"]=recipe.inner_connections.duplicate()
+  _restore_floor(result,box.position.y)
++ if recipe.has("step_surface"):preload("res://scripts/terrain/field/CliffStepSurface.gd").rebuild(result,recipe.step_surface)
+  return result
+ 
+ static func _bounds(faces:PackedVector3Array)->AABB:
+--- before/tests/test_september19_step_surface.gd
++++ after/tests/test_september19_step_surface.gd
+@@ -0,0 +1,144 @@
++extends GutTest
++const JOIN=preload("res://scripts/terrain/field/CliffInnerConnections.gd")
++const SOURCE="res://docs/qa/2026-09-19-manual/104-three-way-surface/raster/before-forms.bin"
++const STEP=preload("res://scripts/terrain/field/CliffStepSurface.gd")
++const REPLAY=preload("res://tests/fixtures/cliff_snapshot_replay.gd")
++const CRAGS=preload("res://scripts/terrain/field/CliffRockCrags.gd")
++const CORNER=preload("res://scripts/terrain/field/CliffCornerCrags.gd")
++func test_raised_neighbor_meets_the_actual_tall_wall_end_without_an_upper_blade()->void:
++ var forms:Array=FileAccess.open(SOURCE,FileAccess.READ).get_var()
++ JOIN.apply(forms)
++ var tall:Dictionary={};var raised:Dictionary={}
++ for form:Dictionary in forms:
++  if form.transform.origin.distance_to(Vector3(-445.5,28,-267))<.01:tall=form
++  if form.transform.origin.distance_to(Vector3(-445.5,32,-289.5))<.01:raised=form
++ assert_false(tall.is_empty());assert_false(raised.is_empty())
++ var misses:=0;var gaps:=0
++ for y:float in [33.5,34,35,36,37,38,39]:
++  var a:=depth(tall,Vector3(-445.5,y,-278.9999))
++  var b:=depth(raised,Vector3(-445.5,y,-279.0001))
++  if not is_finite(a) or not is_finite(b):misses+=1
++  elif absf(a-b)>.002:gaps+=1
++ assert_eq(misses,0,"Both sides must retain their real rock surface at the handoff")
++ assert_eq(gaps,0,"An independent raised-base formation cannot project beyond the adjoining tall profile at the seam")
++func test_only_the_raised_run_changes_and_its_saved_recipe_replays_exactly()->void:
++ var before:Array=FileAccess.open(SOURCE,FileAccess.READ).get_var()
++ var forms:Array=before.duplicate(true)
++ assert_eq(STEP.apply(forms),1)
++ var changed:=0
++ for i in forms.size():
++  if forms[i].faces==before[i].faces:continue
++  changed+=1
++  var f:Dictionary=forms[i]
++  assert_eq(f.id,before[i].id);assert_eq(f.anchor,before[i].anchor)
++  assert_eq(f.transform,before[i].transform)
++  var rebuilt:=REPLAY.rebuild(f.transform,f.faces,f.replay_recipe,CRAGS,CORNER)
++  assert_true(rebuilt.faces==f.faces,"Saved geometry must not silently reconstruct the old overlapping end")
++  assert_true(rebuilt.green==f.green)
++ assert_eq(changed,1)
++ assert_eq(STEP.apply(forms),0)
++func test_native_rotation_and_reversed_input_keep_the_same_local_surface()->void:
++ var original:Array=FileAccess.open(SOURCE,FileAccess.READ).get_var()
++ var reference:Array=original.duplicate(true);STEP.apply(reference)
++ var expected:Dictionary={}
++ for f:Dictionary in reference:
++  if f.replay_recipe.has("step_surface"):expected=f
++ for quarter in 4:
++  var basis:=Basis(Vector3.UP,quarter*PI*.5)
++  var turn:=Transform3D(Basis(basis.x.round(),basis.y.round(),basis.z.round()),Vector3(96,0,-144))
++  var forms:Array=original.duplicate(true);forms.reverse()
++  for f:Dictionary in forms:
++   f.transform=turn*f.transform;f.anchor=turn*f.anchor;f.bounds=turn*f.bounds
++  assert_eq(STEP.apply(forms),1)
++  for f:Dictionary in forms:
++   if not f.replay_recipe.has("step_surface"):continue
++   assert_true(f.faces==expected.faces)
++   assert_true(f.green==expected.green)
++func test_rejected_candidate_does_not_cut_the_original_run()->void:
++ var original:Array=FileAccess.open(SOURCE,FileAccess.READ).get_var()
++ var forms:Array=original.duplicate(true);var rejected:Array=[]
++ assert_eq(STEP.apply(forms,null,null,func(f:Dictionary)->bool:rejected.append(f.id);return true),0)
++ assert_eq(rejected.size(),1)
++ assert_true(forms==original)
++func test_turf_is_backed_and_crowns_and_feet_keep_their_original_limits()->void:
++ var original:Array=FileAccess.open(SOURCE,FileAccess.READ).get_var()
++ var forms:Array=original.duplicate(true);STEP.apply(forms)
++ var violations:=0;var green_missing:=0
++ for index in forms.size():
++  var f:Dictionary=forms[index]
++  if not f.replay_recipe.has("step_surface"):continue
++  var low:=INF;var high:=-INF;var triangles:Dictionary={}
++  for p:Vector3 in original[index].faces:low=minf(low,p.y);high=maxf(high,p.y)
++  for i in range(0,f.faces.size(),3):
++   var tri:Array=[f.faces[i],f.faces[i+1],f.faces[i+2]];tri.sort();triangles[tri]=true
++   for p:Vector3 in tri:
++    if p.y<low-.0001 or p.y>high+.0001:violations+=1
++  for i in range(0,f.green.size(),3):
++   var tri:Array=[f.green[i],f.green[i+1],f.green[i+2]];tri.sort()
++   if not triangles.has(tri):green_missing+=1
++ assert_eq(violations,0);assert_eq(green_missing,0)
++func test_flat_ledge_samples_do_not_leave_unpaired_closing_edges()->void:
++ var forms:Array=FileAccess.open(SOURCE,FileAccess.READ).get_var();STEP.apply(forms)
++ var open_edges:=0
++ for f:Dictionary in forms:
++  if not f.replay_recipe.has("step_surface"):continue
++  var edges:Dictionary={}
++  for i in range(0,f.faces.size(),3):
++   for j in 3:
++    var a:Vector3=f.faces[i+j].snapped(Vector3.ONE*.0001);var b:Vector3=f.faces[i+(j+1)%3].snapped(Vector3.ONE*.0001)
++    if a==b:continue
++    var edge:Array=[a,b];edge.sort();edges[edge]=edges.get(edge,0)+1
++  for count:int in edges.values():
++   if count!=2:open_edges+=1
++ assert_eq(open_edges,0,"Every physical boundary edge must belong to exactly two faces")
++func test_existing_turf_outside_the_join_is_preserved()->void:
++ var original:Array=FileAccess.open(SOURCE,FileAccess.READ).get_var();var forms:Array=original.duplicate(true)
++ STEP.apply(forms)
++ var missing:=0;var checked:=0
++ for index in forms.size():
++  var f:Dictionary=forms[index]
++  if not f.replay_recipe.has("step_surface"):continue
++  var r:Dictionary=f.replay_recipe.step_surface;var current:Dictionary={}
++  for i in range(0,f.green.size(),3):
++   var tri:Array=[]
++   for j in 3:tri.append(f.green[i+j].snapped(Vector3.ONE*.0001))
++   tri.sort();current[tri]=true
++  var old:PackedVector3Array=original[index].green
++  for i in range(0,old.size(),3):
++   if minf((old[i].x-r.finish)*r.side,minf((old[i+1].x-r.finish)*r.side,(old[i+2].x-r.finish)*r.side))<.001:continue
++   var tri:Array=[]
++   for j in 3:tri.append(old[i+j].snapped(Vector3.ONE*.0001))
++   tri.sort();checked+=1
++   if not current.has(tri):missing+=1
++ assert_gt(checked,50);assert_eq(missing,0)
++func test_left_handed_step_has_the_same_supported_front_profile()->void:
++ var original:Array=FileAccess.open(SOURCE,FileAccess.READ).get_var();var pair:Array=[]
++ for f:Dictionary in original:
++  if minf(f.transform.origin.distance_to(Vector3(-445.5,28,-267)),f.transform.origin.distance_to(Vector3(-445.5,32,-289.5)))<.01:pair.append(f)
++ pair.sort_custom(func(a:Dictionary,b:Dictionary)->bool:return a.transform.origin.y<b.transform.origin.y)
++ pair[0].transform=Transform3D.IDENTITY
++ pair[1].transform=Transform3D(Basis.IDENTITY,Vector3(22.5,4,0))
++ var mirrored:Array=pair.duplicate(true)
++ for f:Dictionary in mirrored:
++  f.transform.origin.x=-f.transform.origin.x
++  for channel:String in ["faces","green"]:
++   var values:PackedVector3Array=f[channel]
++   for i in range(0,values.size(),3):
++    for j in 3:values[i+j].x=-values[i+j].x
++    var swap:=values[i+1];values[i+1]=values[i+2];values[i+2]=swap
++   f[channel]=values
++ assert_eq(STEP.apply(pair),1);assert_eq(STEP.apply(mirrored),1)
++ var mismatch:=0
++ for x:float in [12.01,12.5,13,14,14.99]:
++  for y:float in [4.2,5,6,8,10,11.5]:
++   var a:=depth(pair[1],Vector3(x,y,0));var b:=depth(mirrored[1],Vector3(-x,y,0))
++   if not is_finite(a) or not is_finite(b) or absf(a-b)>.001:mismatch+=1
++ assert_eq(mismatch,0)
++func depth(form:Dictionary,world:Vector3)->float:
++ var inverse:Transform3D=form.transform.affine_inverse()
++ var origin:Vector3=inverse*(world+form.transform.basis.z*20)
++ var result:=-INF
++ for i in range(0,form.faces.size(),3):
++  var hit=Geometry3D.ray_intersects_triangle(origin,Vector3.FORWARD,form.faces[i],form.faces[i+1],form.faces[i+2])
++  if hit!=null:result=maxf(result,hit.z)
++ return result

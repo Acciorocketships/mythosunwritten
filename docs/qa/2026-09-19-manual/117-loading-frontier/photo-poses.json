@@ -1,0 +1,82 @@
+[
+  {
+    "id": "N01",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-19 at 12.27.46\u202fPM.png",
+    "sha256": "18e21fe9570f678990f91d3b7a8f6bdd224ae8fb41e2c4ed620c5ba48b4227c9",
+    "seed": 2697992464,
+    "player": [
+      -566.9,
+      32,
+      127.4
+    ],
+    "crosshair": [
+      -568.9,
+      32,
+      130.9
+    ],
+    "issues": [
+      "S01",
+      "S02",
+      "S03"
+    ]
+  },
+  {
+    "id": "N02",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-19 at 1.22.17\u202fPM.png",
+    "sha256": "4ca5e990f39f660b48914bf218b9753ae0d795448b367e12e02d2d1b512c3e62",
+    "seed": 2697992464,
+    "player": [
+      -231.7,
+      18.1,
+      422.5
+    ],
+    "crosshair": [
+      -233.5,
+      18.1,
+      424.2
+    ],
+    "issues": [
+      "T10",
+      "T11"
+    ]
+  },
+  {
+    "id": "N03",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-19 at 1.22.59\u202fPM.png",
+    "sha256": "aa21bde97c42b3fe3736478dc23465e2610e55d5c5d36271c84046a7b271612f",
+    "seed": 2697992464,
+    "player": [
+      -441.4,
+      20,
+      494.7
+    ],
+    "crosshair": [
+      -444.2,
+      20,
+      492.5
+    ],
+    "issues": [
+      "C05"
+    ]
+  },
+  {
+    "id": "N04",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-19 at 12.25.17\u202fPM.png",
+    "sha256": "16fb4674e6eaa35c608b9521c5de693d6e3291f1611d61ede8f697bade252804",
+    "seed": 2697992464,
+    "player": [
+      -519.5,
+      20,
+      326.4
+    ],
+    "crosshair": [
+      -499.7,
+      8,
+      306.5
+    ],
+    "issues": [
+      "C06",
+      "W09"
+    ]
+  }
+]

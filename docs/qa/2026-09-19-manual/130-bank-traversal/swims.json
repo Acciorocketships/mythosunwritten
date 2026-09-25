@@ -1,0 +1,1270 @@
+[
+  {
+    "bend": 0,
+    "candidate": false,
+    "end": "(-521.4977, 12.65, 322.0067)",
+    "passed": true,
+    "reverse": false,
+    "rock_contacts": 0,
+    "samples": [
+      {
+        "position": "(-538.0, 12.65, 308.0016)",
+        "swimming": true,
+        "tick": 0
+      },
+      {
+        "position": "(-538.0, 12.65, 308.1938)",
+        "swimming": true,
+        "tick": 15
+      },
+      {
+        "position": "(-538.0, 12.65, 308.626)",
+        "swimming": true,
+        "tick": 30
+      },
+      {
+        "position": "(-538.0, 12.65, 309.2183)",
+        "swimming": true,
+        "tick": 45
+      },
+      {
+        "position": "(-538.0, 12.65, 309.9174)",
+        "swimming": true,
+        "tick": 60
+      },
+      {
+        "position": "(-538.0, 12.65, 310.6876)",
+        "swimming": true,
+        "tick": 75
+      },
+      {
+        "position": "(-538.0, 12.65, 311.5052)",
+        "swimming": true,
+        "tick": 90
+      },
+      {
+        "position": "(-538.0, 12.65, 312.3545)",
+        "swimming": true,
+        "tick": 105
+      },
+      {
+        "position": "(-538.0, 12.65, 313.2248)",
+        "swimming": true,
+        "tick": 120
+      },
+      {
+        "position": "(-538.0, 12.65, 314.1093)",
+        "swimming": true,
+        "tick": 135
+      },
+      {
+        "position": "(-538.0, 12.65, 315.0031)",
+        "swimming": true,
+        "tick": 150
+      },
+      {
+        "position": "(-538.0, 12.65, 315.903)",
+        "swimming": true,
+        "tick": 165
+      },
+      {
+        "position": "(-538.0, 12.65, 316.8072)",
+        "swimming": true,
+        "tick": 180
+      },
+      {
+        "position": "(-538.0, 12.65, 317.7142)",
+        "swimming": true,
+        "tick": 195
+      },
+      {
+        "position": "(-538.0, 12.65, 318.623)",
+        "swimming": true,
+        "tick": 210
+      },
+      {
+        "position": "(-538.0, 12.65, 319.533)",
+        "swimming": true,
+        "tick": 225
+      },
+      {
+        "position": "(-537.8284, 12.65, 320.2809)",
+        "swimming": true,
+        "tick": 240
+      },
+      {
+        "position": "(-537.4203, 12.65, 320.853)",
+        "swimming": true,
+        "tick": 255
+      },
+      {
+        "position": "(-536.8715, 12.65, 321.3593)",
+        "swimming": true,
+        "tick": 270
+      },
+      {
+        "position": "(-536.2404, 12.65, 321.8321)",
+        "swimming": true,
+        "tick": 285
+      },
+      {
+        "position": "(-535.5648, 12.65, 322.0635)",
+        "swimming": true,
+        "tick": 300
+      },
+      {
+        "position": "(-534.8264, 12.65, 322.127)",
+        "swimming": true,
+        "tick": 315
+      },
+      {
+        "position": "(-534.0323, 12.65, 322.1359)",
+        "swimming": true,
+        "tick": 330
+      },
+      {
+        "position": "(-533.1987, 12.65, 322.1305)",
+        "swimming": true,
+        "tick": 345
+      },
+      {
+        "position": "(-532.3391, 12.65, 322.1219)",
+        "swimming": true,
+        "tick": 360
+      },
+      {
+        "position": "(-531.4618, 12.65, 322.1125)",
+        "swimming": true,
+        "tick": 375
+      },
+      {
+        "position": "(-530.5727, 12.65, 322.1029)",
+        "swimming": true,
+        "tick": 390
+      },
+      {
+        "position": "(-529.6758, 12.65, 322.0933)",
+        "swimming": true,
+        "tick": 405
+      },
+      {
+        "position": "(-528.7739, 12.65, 322.0837)",
+        "swimming": true,
+        "tick": 420
+      },
+      {
+        "position": "(-527.8684, 12.65, 322.0741)",
+        "swimming": true,
+        "tick": 435
+      },
+      {
+        "position": "(-526.9594, 12.65, 322.0645)",
+        "swimming": true,
+        "tick": 450
+      },
+      {
+        "position": "(-526.0435, 12.65, 322.0549)",
+        "swimming": true,
+        "tick": 465
+      },
+      {
+        "position": "(-525.1182, 12.65, 322.0453)",
+        "swimming": true,
+        "tick": 480
+      },
+      {
+        "position": "(-524.1817, 12.65, 322.0356)",
+        "swimming": true,
+        "tick": 495
+      },
+      {
+        "position": "(-523.2337, 12.65, 322.0255)",
+        "swimming": true,
+        "tick": 510
+      },
+      {
+        "position": "(-522.274, 12.65, 322.0153)",
+        "swimming": true,
+        "tick": 525
+      }
+    ],
+    "swimming_frames": 538
+  },
+  {
+    "bend": 0,
+    "candidate": true,
+    "end": "(-521.4977, 12.65, 322.0067)",
+    "passed": true,
+    "reverse": false,
+    "rock_contacts": 0,
+    "samples": [
+      {
+        "position": "(-538.0, 12.65, 308.0016)",
+        "swimming": true,
+        "tick": 0
+      },
+      {
+        "position": "(-538.0, 12.65, 308.1938)",
+        "swimming": true,
+        "tick": 15
+      },
+      {
+        "position": "(-538.0, 12.65, 308.626)",
+        "swimming": true,
+        "tick": 30
+      },
+      {
+        "position": "(-538.0, 12.65, 309.2183)",
+        "swimming": true,
+        "tick": 45
+      },
+      {
+        "position": "(-538.0, 12.65, 309.9174)",
+        "swimming": true,
+        "tick": 60
+      },
+      {
+        "position": "(-538.0, 12.65, 310.6876)",
+        "swimming": true,
+        "tick": 75
+      },
+      {
+        "position": "(-538.0, 12.65, 311.5052)",
+        "swimming": true,
+        "tick": 90
+      },
+      {
+        "position": "(-538.0, 12.65, 312.3545)",
+        "swimming": true,
+        "tick": 105
+      },
+      {
+        "position": "(-538.0, 12.65, 313.2248)",
+        "swimming": true,
+        "tick": 120
+      },
+      {
+        "position": "(-538.0, 12.65, 314.1093)",
+        "swimming": true,
+        "tick": 135
+      },
+      {
+        "position": "(-538.0, 12.65, 315.0031)",
+        "swimming": true,
+        "tick": 150
+      },
+      {
+        "position": "(-538.0, 12.65, 315.903)",
+        "swimming": true,
+        "tick": 165
+      },
+      {
+        "position": "(-538.0, 12.65, 316.8072)",
+        "swimming": true,
+        "tick": 180
+      },
+      {
+        "position": "(-538.0, 12.65, 317.7142)",
+        "swimming": true,
+        "tick": 195
+      },
+      {
+        "position": "(-538.0, 12.65, 318.623)",
+        "swimming": true,
+        "tick": 210
+      },
+      {
+        "position": "(-538.0, 12.65, 319.533)",
+        "swimming": true,
+        "tick": 225
+      },
+      {
+        "position": "(-537.8284, 12.65, 320.2809)",
+        "swimming": true,
+        "tick": 240
+      },
+      {
+        "position": "(-537.4203, 12.65, 320.853)",
+        "swimming": true,
+        "tick": 255
+      },
+      {
+        "position": "(-536.8715, 12.65, 321.3593)",
+        "swimming": true,
+        "tick": 270
+      },
+      {
+        "position": "(-536.2404, 12.65, 321.8321)",
+        "swimming": true,
+        "tick": 285
+      },
+      {
+        "position": "(-535.5648, 12.65, 322.0635)",
+        "swimming": true,
+        "tick": 300
+      },
+      {
+        "position": "(-534.8264, 12.65, 322.127)",
+        "swimming": true,
+        "tick": 315
+      },
+      {
+        "position": "(-534.0323, 12.65, 322.1359)",
+        "swimming": true,
+        "tick": 330
+      },
+      {
+        "position": "(-533.1987, 12.65, 322.1305)",
+        "swimming": true,
+        "tick": 345
+      },
+      {
+        "position": "(-532.3391, 12.65, 322.1219)",
+        "swimming": true,
+        "tick": 360
+      },
+      {
+        "position": "(-531.4618, 12.65, 322.1125)",
+        "swimming": true,
+        "tick": 375
+      },
+      {
+        "position": "(-530.5727, 12.65, 322.1029)",
+        "swimming": true,
+        "tick": 390
+      },
+      {
+        "position": "(-529.6758, 12.65, 322.0933)",
+        "swimming": true,
+        "tick": 405
+      },
+      {
+        "position": "(-528.7739, 12.65, 322.0837)",
+        "swimming": true,
+        "tick": 420
+      },
+      {
+        "position": "(-527.8684, 12.65, 322.0741)",
+        "swimming": true,
+        "tick": 435
+      },
+      {
+        "position": "(-526.9594, 12.65, 322.0645)",
+        "swimming": true,
+        "tick": 450
+      },
+      {
+        "position": "(-526.0435, 12.65, 322.0549)",
+        "swimming": true,
+        "tick": 465
+      },
+      {
+        "position": "(-525.1182, 12.65, 322.0453)",
+        "swimming": true,
+        "tick": 480
+      },
+      {
+        "position": "(-524.1817, 12.65, 322.0356)",
+        "swimming": true,
+        "tick": 495
+      },
+      {
+        "position": "(-523.2337, 12.65, 322.0255)",
+        "swimming": true,
+        "tick": 510
+      },
+      {
+        "position": "(-522.274, 12.65, 322.0153)",
+        "swimming": true,
+        "tick": 525
+      }
+    ],
+    "swimming_frames": 538
+  },
+  {
+    "bend": 0,
+    "candidate": false,
+    "end": "(-538.0064, 12.65, 308.4721)",
+    "passed": true,
+    "reverse": true,
+    "rock_contacts": 0,
+    "samples": [
+      {
+        "position": "(-520.8792, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 0
+      },
+      {
+        "position": "(-521.0009, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 15
+      },
+      {
+        "position": "(-521.3557, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 30
+      },
+      {
+        "position": "(-521.8665, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 45
+      },
+      {
+        "position": "(-522.4823, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 60
+      },
+      {
+        "position": "(-523.1702, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 75
+      },
+      {
+        "position": "(-523.9091, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 90
+      },
+      {
+        "position": "(-524.6851, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 105
+      },
+      {
+        "position": "(-525.489, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 120
+      },
+      {
+        "position": "(-526.3155, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 135
+      },
+      {
+        "position": "(-527.1617, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 150
+      },
+      {
+        "position": "(-528.0256, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 165
+      },
+      {
+        "position": "(-528.9051, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 180
+      },
+      {
+        "position": "(-529.7955, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 195
+      },
+      {
+        "position": "(-530.6932, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 210
+      },
+      {
+        "position": "(-531.5959, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 225
+      },
+      {
+        "position": "(-532.502, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 240
+      },
+      {
+        "position": "(-533.4101, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 255
+      },
+      {
+        "position": "(-534.3197, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 270
+      },
+      {
+        "position": "(-535.2303, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 285
+      },
+      {
+        "position": "(-536.0604, 12.65, 321.9177)",
+        "swimming": true,
+        "tick": 300
+      },
+      {
+        "position": "(-536.6746, 12.65, 321.5758)",
+        "swimming": true,
+        "tick": 315
+      },
+      {
+        "position": "(-537.1952, 12.65, 321.0655)",
+        "swimming": true,
+        "tick": 330
+      },
+      {
+        "position": "(-537.6842, 12.65, 320.4564)",
+        "swimming": true,
+        "tick": 345
+      },
+      {
+        "position": "(-538.0145, 12.65, 319.7954)",
+        "swimming": true,
+        "tick": 360
+      },
+      {
+        "position": "(-538.1157, 12.65, 319.0783)",
+        "swimming": true,
+        "tick": 375
+      },
+      {
+        "position": "(-538.1343, 12.65, 318.3008)",
+        "swimming": true,
+        "tick": 390
+      },
+      {
+        "position": "(-538.1296, 12.65, 317.4788)",
+        "swimming": true,
+        "tick": 405
+      },
+      {
+        "position": "(-538.1191, 12.65, 316.6267)",
+        "swimming": true,
+        "tick": 420
+      },
+      {
+        "position": "(-538.1072, 12.65, 315.7546)",
+        "swimming": true,
+        "tick": 435
+      },
+      {
+        "position": "(-538.0953, 12.65, 314.869)",
+        "swimming": true,
+        "tick": 450
+      },
+      {
+        "position": "(-538.0826, 12.65, 313.9746)",
+        "swimming": true,
+        "tick": 465
+      },
+      {
+        "position": "(-538.0698, 12.65, 313.0741)",
+        "swimming": true,
+        "tick": 480
+      },
+      {
+        "position": "(-538.057, 12.65, 312.1697)",
+        "swimming": true,
+        "tick": 495
+      },
+      {
+        "position": "(-538.0443, 12.65, 311.2626)",
+        "swimming": true,
+        "tick": 510
+      },
+      {
+        "position": "(-538.032, 12.65, 310.3537)",
+        "swimming": true,
+        "tick": 525
+      },
+      {
+        "position": "(-538.0196, 12.65, 309.4436)",
+        "swimming": true,
+        "tick": 540
+      },
+      {
+        "position": "(-538.0073, 12.65, 308.5328)",
+        "swimming": true,
+        "tick": 555
+      }
+    ],
+    "swimming_frames": 557
+  },
+  {
+    "bend": 0,
+    "candidate": true,
+    "end": "(-538.0064, 12.65, 308.4721)",
+    "passed": true,
+    "reverse": true,
+    "rock_contacts": 0,
+    "samples": [
+      {
+        "position": "(-520.8792, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 0
+      },
+      {
+        "position": "(-521.0009, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 15
+      },
+      {
+        "position": "(-521.3557, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 30
+      },
+      {
+        "position": "(-521.8665, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 45
+      },
+      {
+        "position": "(-522.4823, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 60
+      },
+      {
+        "position": "(-523.1702, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 75
+      },
+      {
+        "position": "(-523.9091, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 90
+      },
+      {
+        "position": "(-524.6851, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 105
+      },
+      {
+        "position": "(-525.489, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 120
+      },
+      {
+        "position": "(-526.3155, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 135
+      },
+      {
+        "position": "(-527.1617, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 150
+      },
+      {
+        "position": "(-528.0256, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 165
+      },
+      {
+        "position": "(-528.9051, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 180
+      },
+      {
+        "position": "(-529.7955, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 195
+      },
+      {
+        "position": "(-530.6932, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 210
+      },
+      {
+        "position": "(-531.5959, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 225
+      },
+      {
+        "position": "(-532.502, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 240
+      },
+      {
+        "position": "(-533.4101, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 255
+      },
+      {
+        "position": "(-534.3197, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 270
+      },
+      {
+        "position": "(-535.2303, 12.65, 322.0)",
+        "swimming": true,
+        "tick": 285
+      },
+      {
+        "position": "(-536.0604, 12.65, 321.9177)",
+        "swimming": true,
+        "tick": 300
+      },
+      {
+        "position": "(-536.6746, 12.65, 321.5758)",
+        "swimming": true,
+        "tick": 315
+      },
+      {
+        "position": "(-537.1952, 12.65, 321.0655)",
+        "swimming": true,
+        "tick": 330
+      },
+      {
+        "position": "(-537.6842, 12.65, 320.4564)",
+        "swimming": true,
+        "tick": 345
+      },
+      {
+        "position": "(-538.0145, 12.65, 319.7954)",
+        "swimming": true,
+        "tick": 360
+      },
+      {
+        "position": "(-538.1157, 12.65, 319.0783)",
+        "swimming": true,
+        "tick": 375
+      },
+      {
+        "position": "(-538.1343, 12.65, 318.3008)",
+        "swimming": true,
+        "tick": 390
+      },
+      {
+        "position": "(-538.1296, 12.65, 317.4788)",
+        "swimming": true,
+        "tick": 405
+      },
+      {
+        "position": "(-538.1191, 12.65, 316.6267)",
+        "swimming": true,
+        "tick": 420
+      },
+      {
+        "position": "(-538.1072, 12.65, 315.7546)",
+        "swimming": true,
+        "tick": 435
+      },
+      {
+        "position": "(-538.0953, 12.65, 314.869)",
+        "swimming": true,
+        "tick": 450
+      },
+      {
+        "position": "(-538.0826, 12.65, 313.9746)",
+        "swimming": true,
+        "tick": 465
+      },
+      {
+        "position": "(-538.0698, 12.65, 313.0741)",
+        "swimming": true,
+        "tick": 480
+      },
+      {
+        "position": "(-538.057, 12.65, 312.1697)",
+        "swimming": true,
+        "tick": 495
+      },
+      {
+        "position": "(-538.0443, 12.65, 311.2626)",
+        "swimming": true,
+        "tick": 510
+      },
+      {
+        "position": "(-538.032, 12.65, 310.3537)",
+        "swimming": true,
+        "tick": 525
+      },
+      {
+        "position": "(-538.0196, 12.65, 309.4436)",
+        "swimming": true,
+        "tick": 540
+      },
+      {
+        "position": "(-538.0073, 12.65, 308.5328)",
+        "swimming": true,
+        "tick": 555
+      }
+    ],
+    "swimming_frames": 557
+  },
+  {
+    "bend": 1,
+    "candidate": false,
+    "end": "(-469.9853, 12.65, 290.4589)",
+    "passed": true,
+    "reverse": false,
+    "rock_contacts": 0,
+    "samples": [
+      {
+        "position": "(-479.9984, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 0
+      },
+      {
+        "position": "(-479.8062, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 15
+      },
+      {
+        "position": "(-479.374, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 30
+      },
+      {
+        "position": "(-478.7817, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 45
+      },
+      {
+        "position": "(-478.0826, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 60
+      },
+      {
+        "position": "(-477.3124, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 75
+      },
+      {
+        "position": "(-476.4948, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 90
+      },
+      {
+        "position": "(-475.6455, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 105
+      },
+      {
+        "position": "(-474.7752, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 120
+      },
+      {
+        "position": "(-473.8907, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 135
+      },
+      {
+        "position": "(-472.9969, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 150
+      },
+      {
+        "position": "(-472.1296, 12.65, 297.9674)",
+        "swimming": true,
+        "tick": 165
+      },
+      {
+        "position": "(-471.4756, 12.65, 297.6875)",
+        "swimming": true,
+        "tick": 180
+      },
+      {
+        "position": "(-470.9402, 12.65, 297.2143)",
+        "swimming": true,
+        "tick": 195
+      },
+      {
+        "position": "(-470.4463, 12.65, 296.6275)",
+        "swimming": true,
+        "tick": 210
+      },
+      {
+        "position": "(-470.0435, 12.65, 295.9771)",
+        "swimming": true,
+        "tick": 225
+      },
+      {
+        "position": "(-469.8993, 12.65, 295.2769)",
+        "swimming": true,
+        "tick": 240
+      },
+      {
+        "position": "(-469.8729, 12.65, 294.515)",
+        "swimming": true,
+        "tick": 255
+      },
+      {
+        "position": "(-469.8856, 12.65, 293.7047)",
+        "swimming": true,
+        "tick": 270
+      },
+      {
+        "position": "(-469.9094, 12.65, 292.8606)",
+        "swimming": true,
+        "tick": 285
+      },
+      {
+        "position": "(-469.9364, 12.65, 291.9939)",
+        "swimming": true,
+        "tick": 300
+      },
+      {
+        "position": "(-469.9645, 12.65, 291.1122)",
+        "swimming": true,
+        "tick": 315
+      }
+    ],
+    "swimming_frames": 327
+  },
+  {
+    "bend": 1,
+    "candidate": true,
+    "end": "(-469.9853, 12.65, 290.4589)",
+    "passed": true,
+    "reverse": false,
+    "rock_contacts": 0,
+    "samples": [
+      {
+        "position": "(-479.9984, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 0
+      },
+      {
+        "position": "(-479.8062, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 15
+      },
+      {
+        "position": "(-479.374, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 30
+      },
+      {
+        "position": "(-478.7817, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 45
+      },
+      {
+        "position": "(-478.0826, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 60
+      },
+      {
+        "position": "(-477.3124, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 75
+      },
+      {
+        "position": "(-476.4948, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 90
+      },
+      {
+        "position": "(-475.6455, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 105
+      },
+      {
+        "position": "(-474.7752, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 120
+      },
+      {
+        "position": "(-473.8907, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 135
+      },
+      {
+        "position": "(-472.9969, 12.65, 298.0)",
+        "swimming": true,
+        "tick": 150
+      },
+      {
+        "position": "(-472.1296, 12.65, 297.9674)",
+        "swimming": true,
+        "tick": 165
+      },
+      {
+        "position": "(-471.4756, 12.65, 297.6875)",
+        "swimming": true,
+        "tick": 180
+      },
+      {
+        "position": "(-470.9402, 12.65, 297.2143)",
+        "swimming": true,
+        "tick": 195
+      },
+      {
+        "position": "(-470.4463, 12.65, 296.6275)",
+        "swimming": true,
+        "tick": 210
+      },
+      {
+        "position": "(-470.0435, 12.65, 295.9771)",
+        "swimming": true,
+        "tick": 225
+      },
+      {
+        "position": "(-469.8993, 12.65, 295.2769)",
+        "swimming": true,
+        "tick": 240
+      },
+      {
+        "position": "(-469.8729, 12.65, 294.515)",
+        "swimming": true,
+        "tick": 255
+      },
+      {
+        "position": "(-469.8856, 12.65, 293.7047)",
+        "swimming": true,
+        "tick": 270
+      },
+      {
+        "position": "(-469.9094, 12.65, 292.8606)",
+        "swimming": true,
+        "tick": 285
+      },
+      {
+        "position": "(-469.9364, 12.65, 291.9939)",
+        "swimming": true,
+        "tick": 300
+      },
+      {
+        "position": "(-469.9645, 12.65, 291.1122)",
+        "swimming": true,
+        "tick": 315
+      }
+    ],
+    "swimming_frames": 327
+  },
+  {
+    "bend": 1,
+    "candidate": false,
+    "end": "(-479.5531, 12.65, 298.0096)",
+    "passed": true,
+    "reverse": true,
+    "rock_contacts": 0,
+    "samples": [
+      {
+        "position": "(-470.0, 12.65, 290.0016)",
+        "swimming": true,
+        "tick": 0
+      },
+      {
+        "position": "(-470.0, 12.65, 290.1938)",
+        "swimming": true,
+        "tick": 15
+      },
+      {
+        "position": "(-470.0, 12.65, 290.626)",
+        "swimming": true,
+        "tick": 30
+      },
+      {
+        "position": "(-470.0, 12.65, 291.2183)",
+        "swimming": true,
+        "tick": 45
+      },
+      {
+        "position": "(-470.0, 12.65, 291.9174)",
+        "swimming": true,
+        "tick": 60
+      },
+      {
+        "position": "(-470.0, 12.65, 292.6876)",
+        "swimming": true,
+        "tick": 75
+      },
+      {
+        "position": "(-470.0, 12.65, 293.5052)",
+        "swimming": true,
+        "tick": 90
+      },
+      {
+        "position": "(-470.0, 12.65, 294.3545)",
+        "swimming": true,
+        "tick": 105
+      },
+      {
+        "position": "(-470.0, 12.65, 295.2248)",
+        "swimming": true,
+        "tick": 120
+      },
+      {
+        "position": "(-470.0822, 12.65, 296.0315)",
+        "swimming": true,
+        "tick": 135
+      },
+      {
+        "position": "(-470.4222, 12.65, 296.6399)",
+        "swimming": true,
+        "tick": 150
+      },
+      {
+        "position": "(-470.9283, 12.65, 297.1643)",
+        "swimming": true,
+        "tick": 165
+      },
+      {
+        "position": "(-471.5309, 12.65, 297.6622)",
+        "swimming": true,
+        "tick": 180
+      },
+      {
+        "position": "(-472.186, 12.65, 298.0024)",
+        "swimming": true,
+        "tick": 195
+      },
+      {
+        "position": "(-472.8983, 12.65, 298.1081)",
+        "swimming": true,
+        "tick": 210
+      },
+      {
+        "position": "(-473.672, 12.65, 298.1254)",
+        "swimming": true,
+        "tick": 225
+      },
+      {
+        "position": "(-474.4911, 12.65, 298.1159)",
+        "swimming": true,
+        "tick": 240
+      },
+      {
+        "position": "(-475.3411, 12.65, 298.0994)",
+        "swimming": true,
+        "tick": 255
+      },
+      {
+        "position": "(-476.2119, 12.65, 298.081)",
+        "swimming": true,
+        "tick": 270
+      },
+      {
+        "position": "(-477.0964, 12.65, 298.0622)",
+        "swimming": true,
+        "tick": 285
+      },
+      {
+        "position": "(-477.9903, 12.65, 298.043)",
+        "swimming": true,
+        "tick": 300
+      },
+      {
+        "position": "(-478.8904, 12.65, 298.0237)",
+        "swimming": true,
+        "tick": 315
+      }
+    ],
+    "swimming_frames": 327
+  },
+  {
+    "bend": 1,
+    "candidate": true,
+    "end": "(-479.5531, 12.65, 298.0096)",
+    "passed": true,
+    "reverse": true,
+    "rock_contacts": 0,
+    "samples": [
+      {
+        "position": "(-470.0, 12.65, 290.0016)",
+        "swimming": true,
+        "tick": 0
+      },
+      {
+        "position": "(-470.0, 12.65, 290.1938)",
+        "swimming": true,
+        "tick": 15
+      },
+      {
+        "position": "(-470.0, 12.65, 290.626)",
+        "swimming": true,
+        "tick": 30
+      },
+      {
+        "position": "(-470.0, 12.65, 291.2183)",
+        "swimming": true,
+        "tick": 45
+      },
+      {
+        "position": "(-470.0, 12.65, 291.9174)",
+        "swimming": true,
+        "tick": 60
+      },
+      {
+        "position": "(-470.0, 12.65, 292.6876)",
+        "swimming": true,
+        "tick": 75
+      },
+      {
+        "position": "(-470.0, 12.65, 293.5052)",
+        "swimming": true,
+        "tick": 90
+      },
+      {
+        "position": "(-470.0, 12.65, 294.3545)",
+        "swimming": true,
+        "tick": 105
+      },
+      {
+        "position": "(-470.0, 12.65, 295.2248)",
+        "swimming": true,
+        "tick": 120
+      },
+      {
+        "position": "(-470.0822, 12.65, 296.0315)",
+        "swimming": true,
+        "tick": 135
+      },
+      {
+        "position": "(-470.4222, 12.65, 296.6399)",
+        "swimming": true,
+        "tick": 150
+      },
+      {
+        "position": "(-470.9283, 12.65, 297.1643)",
+        "swimming": true,
+        "tick": 165
+      },
+      {
+        "position": "(-471.5309, 12.65, 297.6622)",
+        "swimming": true,
+        "tick": 180
+      },
+      {
+        "position": "(-472.186, 12.65, 298.0024)",
+        "swimming": true,
+        "tick": 195
+      },
+      {
+        "position": "(-472.8983, 12.65, 298.1081)",
+        "swimming": true,
+        "tick": 210
+      },
+      {
+        "position": "(-473.672, 12.65, 298.1254)",
+        "swimming": true,
+        "tick": 225
+      },
+      {
+        "position": "(-474.4911, 12.65, 298.1159)",
+        "swimming": true,
+        "tick": 240
+      },
+      {
+        "position": "(-475.3411, 12.65, 298.0994)",
+        "swimming": true,
+        "tick": 255
+      },
+      {
+        "position": "(-476.2119, 12.65, 298.081)",
+        "swimming": true,
+        "tick": 270
+      },
+      {
+        "position": "(-477.0964, 12.65, 298.0622)",
+        "swimming": true,
+        "tick": 285
+      },
+      {
+        "position": "(-477.9903, 12.65, 298.043)",
+        "swimming": true,
+        "tick": 300
+      },
+      {
+        "position": "(-478.8904, 12.65, 298.0237)",
+        "swimming": true,
+        "tick": 315
+      }
+    ],
+    "swimming_frames": 327
+  }
+]

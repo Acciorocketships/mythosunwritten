@@ -1,0 +1,10 @@
+{
+  "cases": [
+    {
+      "checked_cap_triangles": 3204,
+      "degenerate_caps": 0,
+      "escaped_cap_triangles": 8,
+      "variant": "production97"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+BANK_FIELD begin region (-3, 1) 0
+BANK_FIELD end region (-3, 1) 43345872
+BANK_FIELD begin water (-3, 1) 0
+BANK_FIELD end water (-3, 1) 3905231
+SHORE_REJECT (-541.5, 20.0, 217.5) wall clearance=536
+SHORE_REJECT (-586.5, 20.0, 205.5) corner clearance=16
+BANK_VALIDATED 40 plants=57 mismatches=0

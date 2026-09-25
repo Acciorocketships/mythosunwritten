@@ -1,0 +1,7 @@
+{
+  "scripts/terrain/features/villages/VillageWarrenRoadConnections.gd": "dd66f8be97cbd8d83729ae2004f481c302a63acb0eabb1513217402d6c0fcfa9",
+  "scripts/terrain/features/villages/VillageWarrenFabricSolver.gd": "9596f3c02b693db243e4fc98e4e788d3cd100f4b751b38be0a91c5354ec5af5b",
+  "tests/test_september19_road_bend_ownership.gd": "ddf1a3ccee1462677466fb8d1d578da258bf70cdc086ff749f07efa36b3834f1",
+  "tests/fixtures/september19/town-road-corner/review.gd": "bbc6da86c054de38b310032887798c7dcf4fd60cf424a8f07f1ed7f987940a79",
+  "tests/fixtures/september19/town-road-corner/source.gd": "75bb994c342f5200de8f7fbf85a0f79f68beb00f11949af3c2ddd6df5d7ab740"
+}

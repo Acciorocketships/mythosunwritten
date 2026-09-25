@@ -1,0 +1,44 @@
+[
+  {
+    "lateral": -0.75,
+    "passed": true,
+    "position": "(-1993.5, 28.13002, 1781.868)",
+    "reverse": false,
+    "ticks": 128
+  },
+  {
+    "lateral": -0.75,
+    "passed": true,
+    "position": "(-1993.5, 31.12977, 1768.141)",
+    "reverse": true,
+    "ticks": 128
+  },
+  {
+    "lateral": 0.0,
+    "passed": true,
+    "position": "(-1992.0, 28.13076, 1781.862)",
+    "reverse": false,
+    "ticks": 128
+  },
+  {
+    "lateral": 0.0,
+    "passed": true,
+    "position": "(-1992.0, 31.13014, 1768.141)",
+    "reverse": true,
+    "ticks": 128
+  },
+  {
+    "lateral": 0.75,
+    "passed": true,
+    "position": "(-1990.5, 28.13062, 1781.863)",
+    "reverse": false,
+    "ticks": 128
+  },
+  {
+    "lateral": 0.75,
+    "passed": true,
+    "position": "(-1990.5, 31.12977, 1768.141)",
+    "reverse": true,
+    "ticks": 128
+  }
+]

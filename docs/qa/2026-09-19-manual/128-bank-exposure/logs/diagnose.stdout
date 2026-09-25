@@ -1,0 +1,5 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+BANK_EXPOSURE [{ "id": "corner_crag/(-442.5, 8.0, 370.5)/[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0)]/plant/(-443.2065, 14.1, 366.625)", "owner": "corner_crag/(-442.5, 8.0, 370.5)/[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0)]", "root": (-443.2067, 14.10013, 366.6249), "contact": { "id": "worn_crag/(-442.5, 8.0, 358.5)/(-1.0, 0.0, -0.0)", "point": (-443.2555, 14.13908, 366.6073), "distance": 0.13512335717678, "root_gap": 0.0648825392127 }, "valid": false }]
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)

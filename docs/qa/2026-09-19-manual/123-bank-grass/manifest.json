@@ -1,0 +1,147 @@
+[
+  {
+    "file": "admitted.bin",
+    "bytes": 22690056,
+    "sha256": "3c68e6ada827802fc8e4111fdbdcdfe4b1201ecac642bb738d2b0ea217cd7b1e"
+  },
+  {
+    "file": "logs/broader.log",
+    "bytes": 1725,
+    "sha256": "95f27cb22a46a494cd821559ff5350e54b5b34b5b31e07281df9a0cb50818c1a"
+  },
+  {
+    "file": "logs/native.log",
+    "bytes": 764,
+    "sha256": "157870e732e486fca64bee500042d8d5249bb810c2fc92e612f13cb107db9cdb"
+  },
+  {
+    "file": "logs/tests-final.log",
+    "bytes": 1101,
+    "sha256": "5d38d260c06f1bd841b1e1131587f917e44e535b698a2da0610b09af8721b512"
+  },
+  {
+    "file": "margins.json",
+    "bytes": 60,
+    "sha256": "9a880825efb4bab37b8239fcf4272faf7e52c08245490a911118a501010bc8d3"
+  },
+  {
+    "file": "narrow-control/admitted.bin",
+    "bytes": 22695408,
+    "sha256": "71fb4dc6b2691b5fd6615157807810a0793b1ac29450d0370c7fe5c53b8d89e1"
+  },
+  {
+    "file": "narrow-control/payloads.bin",
+    "bytes": 82076,
+    "sha256": "d1657e425c1970fe1d339323f94cf67f8c222a5c39496d17a7d880439f78bfc6"
+  },
+  {
+    "file": "narrow-control/root-audit-all.json",
+    "bytes": 127,
+    "sha256": "67befefcfeb97fd0023176fe58d9df8b63b11a0edf0fcaa47fa29e3f7c4af200"
+  },
+  {
+    "file": "narrow-control/root-audit.json",
+    "bytes": 124,
+    "sha256": "2e77f072100e197bad3075c29388c7b90e59b43d6ea9299486bb358a0ac28014"
+  },
+  {
+    "file": "narrow-control/sampling.json",
+    "bytes": 997,
+    "sha256": "e8fe6e2229c0a123fb2834399c474a26652ed4c15840048a8d1123e27975ae8c"
+  },
+  {
+    "file": "narrow-control/supports.bin",
+    "bytes": 154176,
+    "sha256": "d6fb91de756b03e4717da023632eea5303da34d3e1e63064f8a18d7039c71eaf"
+  },
+  {
+    "file": "native-contact.json",
+    "bytes": 79,
+    "sha256": "5999cd1db740e4325a780fbf224ebd826e7cdf3fa20106660b0b79ffec590f67"
+  },
+  {
+    "file": "payloads.bin",
+    "bytes": 82076,
+    "sha256": "d1657e425c1970fe1d339323f94cf67f8c222a5c39496d17a7d880439f78bfc6"
+  },
+  {
+    "file": "photo--10-after.png",
+    "bytes": 729817,
+    "sha256": "89cdb55871f2fc7189867512ce5b7962c55b217f9cc84c6f5ea7cf1c45a36c8c"
+  },
+  {
+    "file": "photo--10-before.png",
+    "bytes": 729670,
+    "sha256": "d323d2d01eac29f73bf59b32d6c86f0b41d61c497bb707e273dae01a3e0ecb11"
+  },
+  {
+    "file": "photo--35-after.png",
+    "bytes": 760008,
+    "sha256": "5f3132c4f9e0f9281e0fab2d83c943bf3ea502987a68d02de061910c1b3610b3"
+  },
+  {
+    "file": "photo--35-before.png",
+    "bytes": 758203,
+    "sha256": "d53fae5258a5e35219493574e834fb8c41c17122d5fab030b24a124750cd4397"
+  },
+  {
+    "file": "photo-0-after.png",
+    "bytes": 728501,
+    "sha256": "eba94ee7c847365940e5c787fe54a3d09dac878aa8aa49e109110260be99674f"
+  },
+  {
+    "file": "photo-0-before.png",
+    "bytes": 728413,
+    "sha256": "479374731d05a6e39a4b453dc89986c65e006edbb46397d4c520a0d6ddd3fd56"
+  },
+  {
+    "file": "photo-10-after.png",
+    "bytes": 739855,
+    "sha256": "1ccc3c3fba38fd07d4f6166cf99ac14a444a80b3abf9d244ba9b67b480220e7e"
+  },
+  {
+    "file": "photo-10-before.png",
+    "bytes": 738166,
+    "sha256": "166e943d9d4de70a4052a3660b04861c0ac74a01b495d9a8ebb3aa7bd89c5b71"
+  },
+  {
+    "file": "photo-35-after.png",
+    "bytes": 743781,
+    "sha256": "626bbc5ff89be370b632c643b8c59ecb7692af57e38847032df1fb73e5f5d245"
+  },
+  {
+    "file": "photo-35-before.png",
+    "bytes": 744828,
+    "sha256": "b36ac25bc964b310dd60523a723a22701f2a22355ea5de8918652631ad0bfe91"
+  },
+  {
+    "file": "plants.bin",
+    "bytes": 6968,
+    "sha256": "9e25e9aa2dea18207a388ca3695ee464f6cc86434fb36cd0bfeb45ff24d01954"
+  },
+  {
+    "file": "profile-after.png",
+    "bytes": 728863,
+    "sha256": "b86b0d114530a1640fad1ef2ea34a51d46045f65553baa287716f486c123a359"
+  },
+  {
+    "file": "profile-before.png",
+    "bytes": 735812,
+    "sha256": "7f81198f84aba33a39bb9f27d2c0aa51273855567cfe9088b1cdd30b3d0ff49d"
+  },
+  {
+    "file": "progress.md",
+    "bytes": 1507,
+    "sha256": "7ae48f8290d2f326fae501c7a2e4f8aea06dad42e1368938e1f5f633c937e54a"
+  },
+  {
+    "file": "sampling.json",
+    "bytes": 997,
+    "sha256": "489fcfe69eae4873899ac57148b7afada866f555ff0654bc6091cd51113ee0db"
+  },
+  {
+    "file": "supports.bin",
+    "bytes": 155056,
+    "sha256": "b23df7906b330584ae9ed5a336ac54d1083fa52e27351c5af729094b411df570"
+  }
+]

@@ -1,0 +1,5 @@
+{
+  "scripts/terrain/features/villages/fabric/PublicRealmSurfaceSolver.gd": "793758edccc79520a6e59e96f1be11074cde490bb919c65ccddc7ef4aa950616",
+  "scripts/terrain/features/villages/fabric/WarrenTransitionSurfaceBuilder.gd": "d51a8608c187ac6f315a86a00b955757995ee3667dc08010ef602f565c13f9a0",
+  "tests/test_september19_rail_floor_joint.gd": "09e17685823fbbdeb1d0d91d04adb482df72cb27d5bdf3fd302825089856e3a7"
+}

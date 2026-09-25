@@ -1,0 +1,477 @@
+{
+  "additions": 0,
+  "admitted": 40,
+  "dry_forms": 50,
+  "geometry_mismatches": 0,
+  "plants": 60,
+  "rows": [
+    {
+      "accepted": true,
+      "id": "worn_crag/(-490.5, 8.0, 312.0)/(-1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-466.5, 8.0, 192.0)/(-1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-466.5, 8.0, 216.0)/(-1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-466.5, 8.0, 240.0)/(-1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-466.5, 8.0, 264.0)/(-1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-466.5, 8.0, 288.0)/(-1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-466.5, 8.0, 334.5)/(-1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": false,
+      "conflicts": [],
+      "id": "worn_crag/(-528.0, 8.0, 181.5)/(-0.0, 0.0, -1.0)",
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-517.5, 8.0, 337.5)/(1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-517.5, 8.0, 286.5)/(1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-517.5, 8.0, 262.5)/(1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-517.5, 8.0, 240.0)/(1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-517.5, 8.0, 216.0)/(1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-517.5, 8.0, 193.5)/(1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": false,
+      "conflicts": [],
+      "id": "worn_crag/(-538.5, 8.0, 187.5)/(-1.0, 0.0, -0.0)",
+      "studied": true
+    },
+    {
+      "accepted": false,
+      "conflicts": [],
+      "id": "worn_crag/(-538.5, 12.0, 198.0)/(-1.0, 0.0, -0.0)",
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-442.5, 8.0, 358.5)/(-1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-553.5, 12.0, 205.5)/(-0.0, 0.0, -1.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-574.5, 12.0, 205.5)/(-0.0, 0.0, -1.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-541.5, 8.0, 312.0)/(1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": false,
+      "conflicts": [
+        {
+          "clear": "(-533.8614, 221.0)",
+          "ground": 20.0,
+          "level": 20.1249824523926,
+          "point": "(-534.2364, 20.2, 221.0)",
+          "receiver": 20.1116993189557
+        },
+        {
+          "clear": "(-533.4864, 221.0)",
+          "ground": 20.0,
+          "level": 20.1249824523926,
+          "point": "(-534.2364, 20.2, 221.0)",
+          "receiver": 20.0757629156811
+        },
+        {
+          "clear": "(-533.1114, 221.0)",
+          "ground": 20.0,
+          "level": 20.1249824523926,
+          "point": "(-534.2364, 20.2, 221.0)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-532.7364, 221.0)",
+          "ground": 20.0,
+          "level": 20.1249824523926,
+          "point": "(-534.2364, 20.2, 221.0)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-532.3614, 221.0)",
+          "ground": 20.0,
+          "level": 20.1249824523926,
+          "point": "(-534.2364, 20.2, 221.0)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-531.9864, 221.0)",
+          "ground": 20.0,
+          "level": 20.1249824523926,
+          "point": "(-534.2364, 20.2, 221.0)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-531.6114, 221.0)",
+          "ground": 20.0,
+          "level": 20.1249824523926,
+          "point": "(-534.2364, 20.2, 221.0)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-531.2364, 221.0)",
+          "ground": 20.0,
+          "level": 20.1249824523926,
+          "point": "(-534.2364, 20.2, 221.0)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-533.7675, 221.0834)",
+          "ground": 20.0,
+          "level": 20.0770599365234,
+          "point": "(-534.1425, 20.13333, 221.0834)",
+          "receiver": 20.0566378652118
+        },
+        {
+          "clear": "(-533.3925, 221.0834)",
+          "ground": 20.0,
+          "level": 20.0770599365234,
+          "point": "(-534.1425, 20.13333, 221.0834)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-533.0175, 221.0834)",
+          "ground": 20.0,
+          "level": 20.0770599365234,
+          "point": "(-534.1425, 20.13333, 221.0834)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-532.6425, 221.0834)",
+          "ground": 20.0,
+          "level": 20.0770599365234,
+          "point": "(-534.1425, 20.13333, 221.0834)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-532.2675, 221.0834)",
+          "ground": 20.0,
+          "level": 20.0770599365234,
+          "point": "(-534.1425, 20.13333, 221.0834)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-531.8925, 221.0834)",
+          "ground": 20.0,
+          "level": 20.0770599365234,
+          "point": "(-534.1425, 20.13333, 221.0834)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-531.5175, 221.0834)",
+          "ground": 20.0,
+          "level": 20.0770599365234,
+          "point": "(-534.1425, 20.13333, 221.0834)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-531.1425, 221.0834)",
+          "ground": 20.0,
+          "level": 20.0770599365234,
+          "point": "(-534.1425, 20.13333, 221.0834)",
+          "receiver": nan
+        }
+      ],
+      "id": "worn_crag/(-541.5, 20.0, 217.5)/(1.0, 0.0, -0.0)",
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-529.5, 8.0, 298.5)/(0.0, 0.0, 1.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-478.5, 8.0, 301.5)/(-0.0, 0.0, -1.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-478.5, 8.0, 322.5)/(0.0, 0.0, 1.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-454.5, 8.0, 346.5)/(0.0, 0.0, 1.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-529.5, 8.0, 325.5001)/(-0.0, 0.0, -1.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-505.5, 8.0, 349.5)/(-0.0, 0.0, -1.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-493.5, 8.0, 361.5)/(1.0, 0.0, -0.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "worn_crag/(-430.5, 8.0, 370.5)/(0.0, 0.0, 1.0)",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "corner_crag/(-517.5, 8.0, 181.5)/[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": false,
+      "conflicts": [],
+      "id": "corner_crag/(-538.5, 8.0, 181.5)/[X: (-1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -1.0)]",
+      "studied": true
+    },
+    {
+      "accepted": false,
+      "conflicts": [
+        {
+          "clear": "(-588.0349, 198.6806)",
+          "ground": 24.0,
+          "level": 15.4018144607544,
+          "point": "(-587.1353, 14.53333, 201.1467)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-588.1634, 198.3283)",
+          "ground": 24.0,
+          "level": 15.4018144607544,
+          "point": "(-587.1353, 14.53333, 201.1467)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-588.0964, 201.0562)",
+          "ground": 24.0,
+          "level": 15.4018144607544,
+          "point": "(-587.9231, 14.53333, 201.3887)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-588.2696, 200.7236)",
+          "ground": 24.0,
+          "level": 15.4018144607544,
+          "point": "(-587.9231, 14.53333, 201.3887)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-588.4429, 200.391)",
+          "ground": 24.0,
+          "level": 15.4018144607544,
+          "point": "(-587.9231, 14.53333, 201.3887)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-588.6161, 200.0584)",
+          "ground": 24.0,
+          "level": 15.4018144607544,
+          "point": "(-587.9231, 14.53333, 201.3887)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-588.7894, 199.7258)",
+          "ground": 24.0,
+          "level": 15.4018144607544,
+          "point": "(-587.9231, 14.53333, 201.3887)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-588.9626, 199.3933)",
+          "ground": 24.0,
+          "level": 15.4018144607544,
+          "point": "(-587.9231, 14.53333, 201.3887)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-589.1359, 199.0607)",
+          "ground": 24.0,
+          "level": 15.4018144607544,
+          "point": "(-587.9231, 14.53333, 201.3887)",
+          "receiver": nan
+        },
+        {
+          "clear": "(-589.3091, 198.7281)",
+          "ground": 24.0,
+          "level": 15.4018144607544,
+          "point": "(-587.9231, 14.53333, 201.3887)",
+          "receiver": nan
+        }
+      ],
+      "id": "corner_crag/(-586.5, 20.0, 205.5)/[X: (-1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -1.0)]",
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "corner_crag/(-541.5, 20.0, 205.5)/[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "corner_crag/(-517.5, 16.0, 274.5)/[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "corner_crag/(-541.5, 20.0, 298.5)/[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "corner_crag/(-517.5, 8.0, 298.5)/[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "corner_crag/(-517.5, 8.0, 274.5)/[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "corner_crag/(-541.5, 16.0, 298.5)/[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "corner_crag/(-490.5, 8.0, 322.5)/[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "corner_crag/(-490.5, 8.0, 301.5)/[X: (-1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -1.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "corner_crag/(-541.5, 20.0, 325.5)/[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "corner_crag/(-517.5, 8.0, 325.5)/[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "corner_crag/(-466.5, 8.0, 346.5)/[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "corner_crag/(-493.5, 8.0, 349.5)/[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "corner_crag/(-442.5, 8.0, 370.5)/[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    },
+    {
+      "accepted": false,
+      "conflicts": [],
+      "id": "inner_corner_crag/(-538.5, 12.0, 205.5)/[X: (-1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -1.0)]",
+      "studied": true
+    },
+    {
+      "accepted": true,
+      "id": "inner_corner_crag/(-541.5, 8.0, 298.5)/[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0)]",
+      "same_studied_geometry": true,
+      "studied": true
+    }
+  ],
+  "studied": 147,
+  "wet_candidates": 47
+}

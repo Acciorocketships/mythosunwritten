@@ -1,0 +1,10 @@
+{
+  "groups": [
+    "Walls",
+    "InnerWalls"
+  ],
+  "max_error": 0.000003814697265625,
+  "missing": 0,
+  "samples": 48,
+  "tiles": 7
+}

@@ -1,0 +1,267 @@
+[
+  {
+    "file": "SlopeAtlas.gd.before.txt",
+    "bytes": 2161,
+    "sha256": "dd54d787fea4b61f4a7c00f280293a24381c02833a6fa0acc55166e87e03b422"
+  },
+  {
+    "file": "TerrainChunkMesher.gd.before.txt",
+    "bytes": 78607,
+    "sha256": "f2d17fd8916e53d5beeb5246ec1284db8f650b8d53aedeef61f784c647cd1d5e"
+  },
+  {
+    "file": "VillageWarrenFabricSolver.gd.before.txt",
+    "bytes": 51864,
+    "sha256": "9596f3c02b693db243e4fc98e4e788d3cd100f4b751b38be0a91c5354ec5af5b"
+  },
+  {
+    "file": "WarrenMazeSitePlanner.gd.before.txt",
+    "bytes": 8904,
+    "sha256": "c400edeb6e99126e307eb5425d58a70593ee59d0c78102579ebd5ab35a9159ad"
+  },
+  {
+    "file": "deck-clearance.json",
+    "bytes": 11489,
+    "sha256": "01e3ce551e1fba26dfcacdb90aba37b66790a2fd3cafd96a230a5ebee0abb185"
+  },
+  {
+    "file": "deck-native/after/detail_-8.png",
+    "bytes": 248646,
+    "sha256": "79c43cdda95310cff5271644e2ada82ab08056bc26bf01f2e63093d5f97b09e9"
+  },
+  {
+    "file": "deck-native/after/detail_0.png",
+    "bytes": 281619,
+    "sha256": "ab48ca1d81e24cb14c8055051a19bca5bfdb013623f1b7e47d6e83545300da0f"
+  },
+  {
+    "file": "deck-native/after/detail_8.png",
+    "bytes": 281488,
+    "sha256": "7ef984333de2dfe51dab8863b340023189d79b3a60f6df47148d1316d83f1136"
+  },
+  {
+    "file": "deck-native/before/detail_-8.png",
+    "bytes": 258752,
+    "sha256": "702f4b972734a29b8183b7d2acd1b9ecd513a1bdd383bab72b71836f0b6c9a31"
+  },
+  {
+    "file": "deck-native/before/detail_0.png",
+    "bytes": 289790,
+    "sha256": "89a295f96172200455c50507596886ecf18d046da6a23cbca78b2cfea6686c8d"
+  },
+  {
+    "file": "deck-native/before/detail_8.png",
+    "bytes": 290900,
+    "sha256": "d42df2c7b50499838bc931bdd0088809c175cc640a88a0b9d4a85c9ee395e86b"
+  },
+  {
+    "file": "deck-native/poses.json",
+    "bytes": 664,
+    "sha256": "131930c9b12dfdfa6b9c3fe0b02b179aedca483960ae6c7fa308a2eaf3767553"
+  },
+  {
+    "file": "deck-wide/after/detail_-30.png",
+    "bytes": 372272,
+    "sha256": "a032c7e350a9ab791302ebc1285f0a7d5e2bfe354c54163d9c3464c340fa8035"
+  },
+  {
+    "file": "deck-wide/after/detail_-90.png",
+    "bytes": 416299,
+    "sha256": "fe2da0604f12088dcd8734b49529301b3c420d2a2246c7719d7f1d93a2cddfc9"
+  },
+  {
+    "file": "deck-wide/after/detail_0.png",
+    "bytes": 432280,
+    "sha256": "174de82634135fde6d120c9e9d8bbfcd33c68ce7a589d89153866cf5da864436"
+  },
+  {
+    "file": "deck-wide/after/detail_180.png",
+    "bytes": 323906,
+    "sha256": "d64e34de49743f523a1d96eaecbb0b81faa40506dbbe88eca3c5e7aa854fe275"
+  },
+  {
+    "file": "deck-wide/after/detail_30.png",
+    "bytes": 381027,
+    "sha256": "5a1c726b779f5194fe40220006768502194a037fa59ef9fb9eddf69a55c50a27"
+  },
+  {
+    "file": "deck-wide/after/detail_90.png",
+    "bytes": 337957,
+    "sha256": "d15a81b5562e00a7627e94308c11c96b271521ab02f4dcfbb7bcb3d21d4258ed"
+  },
+  {
+    "file": "deck-wide/before/detail_-30.png",
+    "bytes": 374354,
+    "sha256": "ff3760746b76d5c9fd116e54ac9f9b6e252ff133e0407d6e8d91786aef8d4500"
+  },
+  {
+    "file": "deck-wide/before/detail_-90.png",
+    "bytes": 423698,
+    "sha256": "471e58e5bcd5461909d1c6a004bbc1c5861d2199e9860b432b0998b4a579c1c8"
+  },
+  {
+    "file": "deck-wide/before/detail_0.png",
+    "bytes": 432280,
+    "sha256": "174de82634135fde6d120c9e9d8bbfcd33c68ce7a589d89153866cf5da864436"
+  },
+  {
+    "file": "deck-wide/before/detail_180.png",
+    "bytes": 330812,
+    "sha256": "8c511ed95bb8f528666dd91273d520dea9dc4309e1ae05f6995b42b84ca053ae"
+  },
+  {
+    "file": "deck-wide/before/detail_30.png",
+    "bytes": 385490,
+    "sha256": "1b55e32722c82123f363214cd2c3ae2df59d0ac998b4d2056bfbe2d933bd7afd"
+  },
+  {
+    "file": "deck-wide/before/detail_90.png",
+    "bytes": 341065,
+    "sha256": "776559da9350d56d199b61c00e2aa76eb8e71907e332b05addfa548d396417e2"
+  },
+  {
+    "file": "deck-wide/poses.json",
+    "bytes": 1318,
+    "sha256": "f924f7b43ea4cb3eb7f5b8d3179eafb1611058c1c142c6ba1c8c677cc7d92097"
+  },
+  {
+    "file": "live-final.json",
+    "bytes": 241873,
+    "sha256": "9a6b82f000a74736cf0ccac087a2d06b2e438e740b4ec6553525fe360064b36c"
+  },
+  {
+    "file": "live-first-ground.png",
+    "bytes": 689069,
+    "sha256": "6d63f48e8c327b9ad436038aed3d7e2c4c9d2cd9876f242e36e4f895062d0802"
+  },
+  {
+    "file": "live-loaded.png",
+    "bytes": 690320,
+    "sha256": "b97c5ab5eafc32f6fc4c2a9d322e8b28095821ea7fae00d8fe9eff23454b37a1"
+  },
+  {
+    "file": "logs/deck119-clearance.log",
+    "bytes": 951,
+    "sha256": "e18a715470e04cd4ca25b9459a8457c336e812e011b11527294703743c9e2919"
+  },
+  {
+    "file": "logs/deck119-composition.log",
+    "bytes": 2194,
+    "sha256": "65a233f1d3cb55ad926ad9fee9311869d043856ce86d541e7345d01b2b74ae43"
+  },
+  {
+    "file": "logs/deck119-green.log",
+    "bytes": 1100,
+    "sha256": "ab23f50d76132948ac4eb6f16f204e1e2bb798d8728b42c5aed998143592b06b"
+  },
+  {
+    "file": "logs/deck119-matrix.log",
+    "bytes": 86536,
+    "sha256": "23b84fb4d9c77f8b4cd52f4d31798aeecb353df12cb3e46ac28c57688a5218ac"
+  },
+  {
+    "file": "logs/deck119-native.log",
+    "bytes": 821,
+    "sha256": "93be1f79fccb0ee322ace48cf2df6edb7d5b82e43a0abf20d8f95639daf88675"
+  },
+  {
+    "file": "logs/deck119-payload.log",
+    "bytes": 584,
+    "sha256": "e30ddfd151e72ee6a52e38c0710a2d758ac124af8a17ff226244687ced75964d"
+  },
+  {
+    "file": "logs/deck119-red.log",
+    "bytes": 1337,
+    "sha256": "449e9c95564cd6d4719ca54b66a57fb23b971e2032d775d6a3072aa14094dcfc"
+  },
+  {
+    "file": "logs/deck119-wide.log",
+    "bytes": 821,
+    "sha256": "93be1f79fccb0ee322ace48cf2df6edb7d5b82e43a0abf20d8f95639daf88675"
+  },
+  {
+    "file": "logs/path119-green.log",
+    "bytes": 1323,
+    "sha256": "70cda5e3c5d55f3a3a71bcb9fc2e99628b9b4403eea076713d27c2327d2fe63c"
+  },
+  {
+    "file": "logs/path119-native-final.log",
+    "bytes": 648,
+    "sha256": "69dc6703fa63c8f4b5f1bd5b7baa2246970d6b9d539b03eea351207658e2d028"
+  },
+  {
+    "file": "logs/path119-red-full.log",
+    "bytes": 2283,
+    "sha256": "983ce3df4434171e6974d0eab7b4c31ba291e6b32ed0fe8be202970de98f81a9"
+  },
+  {
+    "file": "logs/town119-live.log",
+    "bytes": 101296,
+    "sha256": "a77efc8b89ac5d9675e491887490098a9a8251ae3addfdaae730d667a1ca7016"
+  },
+  {
+    "file": "matrix.json",
+    "bytes": 5678,
+    "sha256": "dd6c29b43e833a6f082f6146d5546886b06cdccc3b629cb4632ca4cfba117e98"
+  },
+  {
+    "file": "path-after--12.png",
+    "bytes": 587733,
+    "sha256": "94ec2e78bc4b24f5bb9b58dbd056dd75486f98fe616a0a2de8f5cdd5c5c80c37"
+  },
+  {
+    "file": "path-after-0.png",
+    "bytes": 614684,
+    "sha256": "0b284e791a8e78bf84ea1efbcdc4227ded4202b68cf8749afd8b4ec8d01898fc"
+  },
+  {
+    "file": "path-after-12.png",
+    "bytes": 609089,
+    "sha256": "e7d7b74d936f4da9810ef78d4d76fad713fa557ec8fa65cec8e7d956a5bd187a"
+  },
+  {
+    "file": "path-before--12.png",
+    "bytes": 590079,
+    "sha256": "e971ddd06cdb2d4d562b5e576253d4e65dbe790c899e9e85b6432fe99208086d"
+  },
+  {
+    "file": "path-before-0.png",
+    "bytes": 614668,
+    "sha256": "c4242d5d4dfb9ba171ab27058b9c5d80fab68eb58ae2bec52323cacecab1de5e"
+  },
+  {
+    "file": "path-before-12.png",
+    "bytes": 611006,
+    "sha256": "ae75e7203cce82fe71be65d26c6abc032a8692b7c2b418725c9438bcf1558690"
+  },
+  {
+    "file": "path-replay.json",
+    "bytes": 104,
+    "sha256": "7a0ba4bc3547bceea0e80fb88c3294fb232e914f2682331ae9b464aae0eecf54"
+  },
+  {
+    "file": "production-hashes.json",
+    "bytes": 1345,
+    "sha256": "a1965624d6f2a3eee17c7e9dad6fb350248298456feb4a621339b1d748ba46b3"
+  },
+  {
+    "file": "progress.md",
+    "bytes": 391,
+    "sha256": "faf0417cf2f50931ac542fff78bfb7850aca12e2927c885d8a789721279be153"
+  },
+  {
+    "file": "result.md",
+    "bytes": 3461,
+    "sha256": "6e298a02aa5e53ca6ba1ba4154b844b3cb21ad59b558a338f78dc9b0b1c2b0b9"
+  },
+  {
+    "file": "source.json",
+    "bytes": 160655,
+    "sha256": "2061e279695392c7b19b3b02a8326bc81300fa3e10ebeced65fb504fa32d5890"
+  },
+  {
+    "file": "source.txt",
+    "bytes": 37743,
+    "sha256": "98ee2cb3e964c29ad86726aa90be76de2ed4961de18e6022cf2f25c9f923d110"
+  }
+]

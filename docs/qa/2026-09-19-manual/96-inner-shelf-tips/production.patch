@@ -1,0 +1,82 @@
+--- before/CliffRockCrags.gd
++++ after/CliffRockCrags.gd
+@@ -343,34 +343,63 @@
+   if band[2] and left[band[1]].z-left[band[0]].z>.0001:a.append(band)
+  for band:Array in right_bands:
+   if band[2] and right[band[1]].z-right[band[0]].z>.0001:b.append(band)
+- var result:Array=[];var i:=0;var j:=0;var from_left:=0;var from_right:=0
+- while i<a.size() and j<b.size():
+-  var delta:float=left[a[i][0]].y-right[b[j][0]].y
+-  if absf(delta)<.75:
+-   result.append([[from_left,a[i][0],false],[from_right,b[j][0],false]])
+-   result.append([a[i],b[j]])
+-   from_left=a[i][1];from_right=b[j][1];i+=1;j+=1
+-  elif delta>0:i+=1
+-  else:j+=1
++ # Align the whole ordered sequence. A greedy first-height match lets an
++ # emerging hairline steal the continuation of a broad neighboring tread.
++ var costs:Array=[];var moves:Array=[]
++ for i in a.size()+1:
++  var row:Array=[];var choices:Array=[]
++  for j in b.size()+1:row.append(INF);choices.append(0)
++  costs.append(row);moves.append(choices)
++ costs[0][0]=0.0
++ for i in a.size()+1:
++  for j in b.size()+1:
++   var cost:float=costs[i][j]
++   if i<a.size():
++    var skip:float=cost+.05+.8*minf(1.0,left[a[i][1]].z-left[a[i][0]].z)
++    if skip<costs[i+1][j]:costs[i+1][j]=skip;moves[i+1][j]=1
++   if j<b.size():
++    var skip:float=cost+.05+.8*minf(1.0,right[b[j][1]].z-right[b[j][0]].z)
++    if skip<costs[i][j+1]:costs[i][j+1]=skip;moves[i][j+1]=2
++   if i<a.size() and j<b.size():
++    var delta:float=absf(left[a[i][0]].y-right[b[j][0]].y)
++    if delta>=.75:continue
++    var width_delta:float=absf((left[a[i][1]].z-left[a[i][0]].z)-(right[b[j][1]].z-right[b[j][0]].z))
++    var match_cost:float=cost+delta/.75+width_delta*.25
++    if match_cost<costs[i+1][j+1]:costs[i+1][j+1]=match_cost;moves[i+1][j+1]=3
++ var matches:Array=[];var i:=a.size();var j:=b.size()
++ while i>0 or j>0:
++  var move:int=moves[i][j]
++  if move==3:matches.push_front([a[i-1],b[j-1]]);i-=1;j-=1
++  elif move==1:i-=1
++  else:j-=1
++ var result:Array=[];var from_left:=0;var from_right:=0
++ for pair:Array in matches:
++  result.append([[from_left,pair[0][0],false],[from_right,pair[1][0],false]])
++  result.append(pair)
++  from_left=pair[0][1];from_right=pair[1][1]
+  result.append([[from_left,left.size()-1,false],[from_right,right.size()-1,false]])
+  return result
+ 
+ static func _merge_close_ledges(cuts:Array)->void:
+- # Two overlapping shelves close in height are one broad ledge, not a pair
+- # of thin channels. Transfer support continuously and preserve total depth.
++ # A vanishing receiver must not interrupt an established merge. Pass its
++ # unused share onward; substantial receivers keep the original local merge.
++ # This makes the transition continuous as a new finite shelf enters the wall.
+  for i in range(cuts.size()-2,-1,-1):
+   if cuts[i][1]<=0.0:continue
++  var available:float=cuts[i][1];var transferred:=0.0
+   for j in range(i+1,cuts.size()):
+    var gap:float=cuts[j][0]-cuts[i][0]
+-   if gap>=1.4:break
+-   if cuts[j][1]<=.000001:continue
++   if gap>=1.4 or cuts[j][1]<=.000001:continue
+    var weight:float=1.0-smoothstep(.7,1.4,gap)
+-   var transfer:float=cuts[i][1]*weight
++   var presence:float=smoothstep(0.0,.3,cuts[j][1])
++   var transfer:float=available*weight*presence
++   available*=1.0-presence
+    if transfer>0.0:
+     for property in [0,2,3]:
+      cuts[j][property]=(cuts[j][property]*cuts[j][1]+cuts[i][property]*transfer)/(cuts[j][1]+transfer)
+-   cuts[j][1]+=transfer;cuts[i][1]-=transfer
+-   break
++    cuts[j][1]+=transfer;transferred+=transfer
++   if available<=.000001:break
++  cuts[i][1]=maxf(0.0,cuts[i][1]-transferred)
+ 
+ static func _turf_without_dashes(green:PackedVector3Array,width:float,left_end:bool,right_end:bool,broad_seeds:Dictionary={},require_broad:bool=false)->PackedVector3Array:
+  # Measure connected native triangles, rather than their convex hull. Tiny

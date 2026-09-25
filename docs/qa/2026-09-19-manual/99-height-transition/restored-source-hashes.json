@@ -1,0 +1,27 @@
+[
+  {
+    "path": "scripts/terrain/field/CliffRockCrags.gd",
+    "sha256": "5e295890e1ffe26a115f02e853cf4b9c7af8b250404bfbd82fb9149f84add948",
+    "matches_pre_study": true
+  },
+  {
+    "path": "scripts/terrain/field/CliffRockRelief.gd",
+    "sha256": "9e07b0de9477c2b7c8ffa04f834d5ebb8160ad500e1ecd7ac5a9c652da69ea90",
+    "matches_pre_study": true
+  },
+  {
+    "path": "scripts/terrain/field/CliffRockDressing.gd",
+    "sha256": "0804e42de1815e365f5985a301bebf3bfacdcd33291c9a9d0f71f59b2dc464e8",
+    "matches_pre_study": true
+  },
+  {
+    "path": "scripts/terrain/field/CliffInnerConnections.gd",
+    "sha256": "5f4361664b7219fe6f68497f3b0110f201f3ae14b2dd8bcf5809e5f6e99a0df1",
+    "matches_pre_study": true
+  },
+  {
+    "path": "tests/fixtures/cliff_snapshot_replay.gd",
+    "sha256": "37dba07110edf30507179e109ce49cdffc0ffb1fdbe43333e40562dfce2cd800",
+    "matches_pre_study": true
+  }
+]

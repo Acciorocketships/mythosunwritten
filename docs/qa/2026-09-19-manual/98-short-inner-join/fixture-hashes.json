@@ -1,0 +1,54 @@
+{
+  "tests/fixtures/september19/short-inner-join/dressing-before.gd": {
+    "bytes": 21404,
+    "sha256": "0804e42de1815e365f5985a301bebf3bfacdcd33291c9a9d0f71f59b2dc464e8"
+  },
+  "tests/fixtures/september19/short-inner-join/native-walls.bin": {
+    "bytes": 2560,
+    "sha256": "853d71cdb8e6e26450c76e3710ae0fc644da81dd0ece9785d9dadb846b323c51"
+  },
+  "tests/fixtures/september19/short-inner-join/dressing-narrow.gd": {
+    "bytes": 21521,
+    "sha256": "709f5e14a265d88589c8c0c6ec239397233b9a14ff34164aa4a309ae26786512"
+  },
+  "tests/fixtures/september19/short-inner-join/inspect.gd": {
+    "bytes": 387,
+    "sha256": "8ece1fce801785c1620a1095a36f69f9bf757b9736a50ab6c5bc1354305edd82"
+  },
+  "tests/fixtures/september19/short-inner-join/context.gd": {
+    "bytes": 13347,
+    "sha256": "f32766a59e6fadb39b60748ecdd0e2035d8f59d5513bc32979a981a1279bacee"
+  },
+  "tests/fixtures/september19/short-inner-join/blend-offset.gd": {
+    "bytes": 5651,
+    "sha256": "e82b487217a05b85ec77d5e6ea349d714bfa9a6c572c1995fb757b2c6807e529"
+  },
+  "tests/fixtures/september19/short-inner-join/join-before.gd": {
+    "bytes": 5729,
+    "sha256": "5f4361664b7219fe6f68497f3b0110f201f3ae14b2dd8bcf5809e5f6e99a0df1"
+  },
+  "tests/fixtures/september19/short-inner-join/blend-overlap.gd": {
+    "bytes": 5586,
+    "sha256": "683179da0d038221ba5eb40353eb865b6852f0663831f724f0578840f86f6e01"
+  },
+  "tests/fixtures/september19/short-inner-join/join-contained.gd": {
+    "bytes": 6214,
+    "sha256": "6a394394df6277f97918b5738a7013a60df05b1970dd204cd8982c3176804847"
+  },
+  "tests/fixtures/september19/short-inner-join/regression.gd": {
+    "bytes": 1363,
+    "sha256": "5db101518a7e24d3b042befcdb856f7fef379d318c9f1db7246782eceda130c5"
+  },
+  "tests/fixtures/september19/short-inner-join/blend.gd": {
+    "bytes": 6060,
+    "sha256": "1e3c5e03875f417d25e0b5c305bdb79ba36a89af19d99f7d4f018dc21a0683c9"
+  },
+  "tests/fixtures/september19/short-inner-join/native.gd": {
+    "bytes": 995,
+    "sha256": "b68fddf05434377f7d465c7811d3c41032bcb7c5b3388de1ad1d6755b25f4c4e"
+  },
+  "tests/fixtures/september19/short-inner-join/context.tscn": {
+    "bytes": 199,
+    "sha256": "b39bab63ee10894dee4f124f38c9a2f14e58e6d6cdd9e5d7acf9931ce6f078c2"
+  }
+}

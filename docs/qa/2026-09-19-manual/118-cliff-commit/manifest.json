@@ -1,0 +1,52 @@
+[
+  {
+    "file": "CliffRockDressing.gd.before.txt",
+    "bytes": 21404,
+    "sha256": "0804e42de1815e365f5985a301bebf3bfacdcd33291c9a9d0f71f59b2dc464e8"
+  },
+  {
+    "file": "after.png",
+    "bytes": 1133274,
+    "sha256": "6a4ec24b21e198111de4768d73777ece9d9eabae17217b28c1add86a7cf96f24"
+  },
+  {
+    "file": "before.png",
+    "bytes": 1130901,
+    "sha256": "972bfa7f711e97a606bd8218ab99638f03ec74b915bedd75d5d0efa386730c45"
+  },
+  {
+    "file": "logs/cliff118-green-supported.log",
+    "bytes": 835,
+    "sha256": "df8bc97e8a4869d411f178ef116d919a78276dc8f26c8b75e98764e108bac668"
+  },
+  {
+    "file": "logs/cliff118-native-final.log",
+    "bytes": 969,
+    "sha256": "319ca0e16d06ec4ca88a663e089cca2cf2a619322bbb09d4d726e15cd45f70ba"
+  },
+  {
+    "file": "logs/cliff118-red-valid.log",
+    "bytes": 1425,
+    "sha256": "988e7ded540f94e6bbbe2fa7c8d262d991276f7f6070b35fcdd614bbbdc832ca"
+  },
+  {
+    "file": "logs/cliff118-related.log",
+    "bytes": 1798,
+    "sha256": "45b8206c9813f5c6ca5ada5f302fb9260f7d0b36ca76cb571713b2d84aee53f3"
+  },
+  {
+    "file": "native.json",
+    "bytes": 338,
+    "sha256": "8d64ca03c79dff891f17ff63f34508fe347dd042363bef5be0e4ec264ebf372f"
+  },
+  {
+    "file": "progress.md",
+    "bytes": 286,
+    "sha256": "4f4a12ae77f6069937d37767b1a1454a11ede4a829aef7892e031afb514c976a"
+  },
+  {
+    "file": "result.md",
+    "bytes": 2226,
+    "sha256": "cd21cfe74cef2eaaf9688e823d90b1b8abecf3176c9ebb99c69cc59cc00a7e7d"
+  }
+]

@@ -1,0 +1,17 @@
+--- pass94/CliffRockCrags.gd
++++ pass95/CliffRockCrags.gd
+@@ -686,7 +686,13 @@
+     colors.append(Color(1,1,1,independent))
+    arrays[Mesh.ARRAY_NORMAL]=normals;arrays[Mesh.ARRAY_COLOR]=colors
+    result.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+-  else:st.commit(result)
++  else:
++   # Curved turf is one connected surface. Flat per-triangle normals reveal
++   # every narrow sampling strip as a light band across the ledge. Keep the
++   # physical triangles and sharp folds, sharing normals only within each fan.
++   var arrays:=st.commit_to_arrays()
++   arrays[Mesh.ARRAY_NORMAL]=_connected_normals(arrays[Mesh.ARRAY_VERTEX])
++   result.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+   if grass:result.surface_set_material(1,CliffDressing.shared_material())
+   else:
+    var material:=ShaderMaterial.new();material.shader=load("res://terrain/materials/cliff_crag.gdshader")

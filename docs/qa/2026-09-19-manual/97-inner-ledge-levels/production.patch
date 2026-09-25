@@ -1,0 +1,194 @@
+--- tests/fixtures/september19/inner-ledge-levels/production-before-CliffRockCrags.gd
++++ scripts/terrain/field/CliffRockCrags.gd
+@@ -6,6 +6,7 @@
+ static var _nature_bodies:Array=[]
+ static var _wall_depth:=PackedFloat32Array()
+ static var _wall_normals:=PackedVector3Array()
++const LEDGE_JOIN=preload("res://scripts/terrain/field/CliffLedgeJoin.gd")
+ const LEDGE_RELIEF_BLEND_RADIUS:=1.25
+ const MASS_FOOT_WIDENING:=.38
+ const MASS_SIDE_VARIATION:=.36
+@@ -79,7 +80,7 @@
+  var i:=floori(x);var t:=smoothstep(0.0,1.0,x-i)
+  return lerpf(Helper.position_hash01(Vector3(i,salt,0),salt),Helper.position_hash01(Vector3(i+1,salt,0),salt),t)
+ 
+-static func make(pose:Transform3D,width:float,height:float,seed_value:int,region:HeightfieldRegion=null,left_end:bool=false,right_end:bool=false)->Array[Dictionary]:
++static func make(pose:Transform3D,width:float,height:float,seed_value:int,region:HeightfieldRegion=null,left_end:bool=false,right_end:bool=false,ledge_joins:Array=[])->Array[Dictionary]:
+  if _wall_depth.is_empty():prepare()
+  var steps:=maxi(2,roundi(width/.25));var columns:Array=[];var column_bands:Array=[]
+  var faces:=PackedVector3Array();var green:=PackedVector3Array();var broad_turf:Dictionary={}
+@@ -331,9 +332,13 @@
+  _shape_stone_faces(faces,green,tread_edges,coordinate,width,height,salt,left_end,right_end)
+  var bounds:=AABB(faces[0],Vector3.ZERO)
+  for p:Vector3 in faces:bounds=bounds.expand(p)
+- return [{"faces":faces,"green":green,"bounds":pose*bounds,"transform":pose,"anchor":pose.origin,
++ var form:Dictionary={"faces":faces,"green":green,"bounds":pose*bounds,"transform":pose,"anchor":pose.origin,
+   "replay_recipe":{"kind":"wall","width":width,"height":height,"left_end":left_end,"right_end":right_end,"seed":seed_value},
+-  "id":"worn_crag/%s/%s"%[pose.origin,pose.basis.z],"asset":&"cliff.native_crag","kind":"rock","native_crag":true,"top":(pose*bounds).end.y,"base":(pose*bounds).position.y}]
++  "id":"worn_crag/%s/%s"%[pose.origin,pose.basis.z],"asset":&"cliff.native_crag","kind":"rock","native_crag":true,"top":(pose*bounds).end.y,"base":(pose*bounds).position.y}
++ if not ledge_joins.is_empty():
++  LEDGE_JOIN.apply(form,ledge_joins)
++  form.replay_recipe["ledge_joins"]=ledge_joins.duplicate(true)
++ return [form]
+ 
+ static func _matched_bands(left:PackedVector3Array,right:PackedVector3Array,left_bands:Array,right_bands:Array)->Array:
+  # Sampling-only cuts have no tread. They must not determine correspondence:
+--- tests/fixtures/september19/inner-ledge-levels/production-before-CliffInnerConnections.gd
++++ scripts/terrain/field/CliffInnerConnections.gd
+@@ -2,6 +2,7 @@
+ ## Continue actual adjoining formations through a concave native junction.
+ ## Taller ends may continue only where an existing upper wall backs the extension.
+ const CRAGS=preload("res://scripts/terrain/field/CliffRockCrags.gd")
++const LEDGE_JOIN=preload("res://scripts/terrain/field/CliffLedgeJoin.gd")
+ const EXTENSION:=3.0
+ static func apply(forms:Array,region:HeightfieldRegion=null,features:FeatureContext=null,reject:Callable=Callable())->Dictionary:
+  var corners:Array=[]
+@@ -37,19 +38,26 @@
+    var original:Dictionary=forms[parent[0]];var recipe:Dictionary=original.replay_recipe
+    var left:bool=parent[1];var pose:Transform3D=original.transform
+    pose.origin+=pose.basis.x*(-1.0 if left else 1.0)*EXTENSION*.5
+-   var fresh:Dictionary=CRAGS.make(pose,recipe.width+EXTENSION,recipe.height,recipe.seed,region,recipe.left_end and not left,recipe.right_end and left)[0]
++   var fresh:Dictionary=CRAGS.make(pose,recipe.width+EXTENSION,recipe.height,recipe.seed,region,recipe.left_end and not left,recipe.right_end and left,recipe.get("ledge_joins",[]))[0]
+    # Keep the canonical source owner. Shifting a mesh centre across a cell
+    # boundary must not transfer its publication to a different chunk.
+    fresh.anchor=original.anchor;fresh.id=original.id
+    fresh.replay_recipe["inner_connections"]=recipe.get("inner_connections",[]).duplicate()
+    fresh.replay_recipe.inner_connections.append(corner.anchor)
+    if region==null:_restore_floor(fresh,original)
++   candidates.append(fresh)
++  var ledges:=LEDGE_JOIN.controls(candidates,corner.anchor)
++  for i in candidates.size():
++   var fresh:Dictionary=candidates[i]
++   if not ledges.is_empty():
++    LEDGE_JOIN.apply(fresh,[ledges[i]])
++    fresh.replay_recipe["ledge_joins"]=fresh.replay_recipe.get("ledge_joins",[]).duplicate(true)
++    fresh.replay_recipe.ledge_joins.append(ledges[i])
+    var box:AABB=fresh.bounds
+    var footprint:=Rect2(Vector2(box.position.x,box.position.z),Vector2(box.size.x,box.size.z))
+    if region!=null and region.has_grade_effect_in(footprint.grow(.1)):admitted=false
+    if features!=null and features.overlaps_clearance(FeatureGroundShape.axis_rect(footprint),.3):admitted=false
+    if reject.is_valid() and reject.call(fresh):admitted=false
+-   candidates.append(fresh)
+   if not admitted:continue
+   for i in parents.size():forms[parents[i][0]]=candidates[i]
+   forms.erase(corner);changed+=2;connections+=1
+--- tests/fixtures/september19/inner-ledge-levels/replay-before.gd
++++ tests/fixtures/cliff_snapshot_replay.gd
+@@ -12,7 +12,10 @@
+   result=corner.make(pose,recipe.height,seed_value)
+  else:
+   assert(recipe.kind=="wall","Unknown cliff snapshot construction")
+-  result=wall.make(pose,recipe.width,recipe.height,seed_value,null,recipe.left_end,recipe.right_end)[0]
++  if recipe.has("ledge_joins"):
++   result=wall.make(pose,recipe.width,recipe.height,seed_value,null,recipe.left_end,recipe.right_end,recipe.ledge_joins)[0]
++  else:
++   result=wall.make(pose,recipe.width,recipe.height,seed_value,null,recipe.left_end,recipe.right_end)[0]
+  if recipe.has("inner_connections"):result.replay_recipe["inner_connections"]=recipe.inner_connections.duplicate()
+  _restore_floor(result,box.position.y)
+  return result
+--- /dev/null
++++ scripts/terrain/field/CliffLedgeJoin.gd
+@@ -0,0 +1,103 @@
++extends RefCounted
++## Shared elevations for existing turf ledges at admitted concave joins.
++static func columns(form:Dictionary)->Dictionary:
++ var rows:Dictionary={}
++ for p:Vector3 in form.green:
++  if not rows.has(p.x):rows[p.x]={}
++  rows[p.x][Vector2(p.z,p.y)]=true
++ var result:Dictionary={}
++ for x:float in rows:
++  var points:Array=rows[x].keys()
++  points.sort_custom(func(a:Vector2,b:Vector2)->bool:return a.y<b.y)
++  var groups:Array=[]
++  for p:Vector2 in points:
++   if groups.is_empty() or p.y-groups[-1][-1].y>.55:groups.append([])
++   groups[-1].append(p)
++  result[x]=[]
++  for group:Array in groups:
++   group.sort_custom(func(a:Vector2,b:Vector2)->bool:return a.x<b.x)
++   if group[-1].x-group[0].x>.01:result[x].append(group)
++ return result
++static func nearest_row(rows:Dictionary,x:float,target:float=INF)->Array:
++ var chosen:float=INF;var distance:=INF
++ for key:float in rows:
++  if not rows[key].is_empty() and absf(key-x)<distance:chosen=key;distance=absf(key-x)
++ if not is_finite(chosen):return []
++ if not is_finite(target):return rows[chosen]
++ var best:Array=[];var gap:=INF
++ for group:Array in rows[chosen]:
++  var height:float=(group[0].y+group[-1].y)*.5
++  if absf(height-target)<gap:gap=absf(height-target);best=group
++ return best if gap<1.0 else []
++## Select an existing tread on each admitted perpendicular wall. Controls use
++## world anchors so extending either mesh later cannot shift the join.
++static func controls(pair:Array,corner:Vector3)->Array:
++ var profiles:Array=[columns(pair[0]),columns(pair[1])]
++ var samples:Array=[]
++ for n in 2:
++  var local:Vector3=pair[n].transform.affine_inverse()*corner
++  samples.append(nearest_row(profiles[n],local.x-signf(local.x)*3.0))
++ var best:=0.0;var target:=0.0
++ for a:Array in samples[0]:
++  for b:Array in samples[1]:
++   var ay:float=(a[0].y+a[-1].y)*.5;var by:float=(b[0].y+b[-1].y)*.5
++   if absf(ay-by)>1.0:continue
++   var score:float=minf(a[-1].x-a[0].x,b[-1].x-b[0].x)/(1.0+absf(ay-by))
++   if score>best:best=score;target=(ay+by)*.5
++ if best<=0.0:return []
++ var reaches:Array=[]
++ for n in 2:
++  var f:Dictionary=pair[n];var local:Vector3=f.transform.affine_inverse()*corner
++  var reach:=1.5
++  for p:Vector3 in f.green:
++   if absf(p.x-local.x)<6.0 and absf(p.y-target)<.6:reach=maxf(reach,p.z)
++  reaches.append(reach)
++ var result:Array=[]
++ for n in 2:
++  result.append({"corner":corner,"target":target,"inner_radius":reaches[1-n]+.3,"radius":reaches[1-n]+4.0})
++ return result
++
++## Move the existing connected surface vertically; never project its footprint
++## or change its topology. A bounded vertical feather retains adjacent shelves,
++## the buried closing floor and the flush native crown.
++static func apply(form:Dictionary,settings:Array)->void:
++ for control:Dictionary in settings:
++  warp(form,control.corner,control.target,control.inner_radius,control.radius,columns(form))
++
++static func interpolate(group:Array,z:float)->float:
++ if z<=group[0].x:return group[0].y
++ for i in range(1,group.size()):
++  if z<=group[i].x:
++   var span:float=group[i].x-group[i-1].x
++   return lerpf(group[i-1].y,group[i].y,(z-group[i-1].x)/span) if span>.0001 else group[i].y
++ return group[-1].y
++static func warp(form:Dictionary,corner:Vector3,target:float,inner_radius:float,radius:float,rows:Dictionary)->void:
++ var local:Vector3=form.transform.affine_inverse()*corner
++ var selected:Dictionary={}
++ for x:float in rows:
++  var group:=nearest_row(rows,x,target)
++  if not group.is_empty():selected[x]=group
++ var keys:Array=selected.keys();keys.sort()
++ var mapping:Dictionary={}
++ for p:Vector3 in form.faces:
++  if mapping.has(p):continue
++  var q:=p
++  var w:float=1.0-smoothstep(inner_radius,radius,absf(p.x-local.x))
++  w*=smoothstep(0.0,.5,p.z)*smoothstep(0.0,.6,p.y)*(1.0-smoothstep(float(form.replay_recipe.height)-1.0,float(form.replay_recipe.height)-.25,p.y))
++  if w>0.0 and not keys.is_empty():
++   var hi:int=keys.bsearch(p.x);var lo:int=maxi(0,hi-1);hi=mini(hi,keys.size()-1)
++   var a:float=keys[lo];var b:float=keys[hi]
++   var row_y:float=lerpf(interpolate(selected[a],p.z),interpolate(selected[b],p.z),(p.x-a)/(b-a)) if b>a else interpolate(selected[a],p.z)
++   var dy:float=clampf(target-row_y,-.55,.55)
++   w*=1.0-smoothstep(.25,1.45,absf(p.y-row_y))
++   q.y+=dy*w
++  if q.y!=p.y:q.y=snappedf(q.y,.0001)
++  mapping[p]=q
++ for field:String in ["faces","green"]:
++  var values:PackedVector3Array=form[field]
++  for i in values.size():values[i]=mapping[values[i]]
++  form[field]=values
++ var box:=AABB(form.faces[0],Vector3.ZERO)
++ for p:Vector3 in form.faces:box=box.expand(p)
++ form.bounds=form.transform*box
++ form.base=form.bounds.position.y;form.top=form.bounds.end.y

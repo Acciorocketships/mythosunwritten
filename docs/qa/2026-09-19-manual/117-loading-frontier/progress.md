@@ -1,0 +1,1 @@
+Scoped opaque loading-frontier fog and diagnostics implemented. Five native GPU controls and three-angle controlled replay pass. Source and logs are listed in result.md. Extended moving/underwater arrivals and overall generation performance remain open. Continue the original judging scope.

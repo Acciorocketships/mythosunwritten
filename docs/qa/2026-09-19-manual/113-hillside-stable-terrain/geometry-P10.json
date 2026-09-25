@@ -1,0 +1,16 @@
+[
+  {
+    "after": {
+      "collision": 38,
+      "geometry": 787,
+      "sha256": "5442dcecedda45a1ff6636c34313bc9b35d6b1825a64feca82911fb20dbae7f4"
+    },
+    "before": {
+      "collision": 38,
+      "geometry": 787,
+      "sha256": "5442dcecedda45a1ff6636c34313bc9b35d6b1825a64feca82911fb20dbae7f4"
+    },
+    "equal": true,
+    "spot": "P10"
+  }
+]

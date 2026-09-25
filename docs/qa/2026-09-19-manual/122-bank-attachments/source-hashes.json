@@ -1,0 +1,18 @@
+{
+  "tests/fixtures/september19/bank-attachments/attachments.gd": "3c993f67a05331cb2f7b7d1e15377fdb9ff095c2bd3a7b3288dc610a474ef54c",
+  "tests/fixtures/september19/bank-attachments/audit_margins.gd": "8da99789665136d94289c1f42854d496997ba2c70542e0627b26324698131b7d",
+  "tests/fixtures/september19/bank-attachments/build_plants.gd": "062f19b4c0e1231db940c48ff7a8b378fb3c6a61de220952d24ef83fc87b251d",
+  "tests/fixtures/september19/bank-attachments/build_source.gd": "edcbe788fedf673bf405f5aa8b03ac39ecc985e6137ec7a73fc7e001f0f1505e",
+  "tests/fixtures/september19/bank-attachments/fit.gd": "70de5ef905f69b1e951249292ccf4d3e577b2b4862907a354f0e32af826b795a",
+  "tests/fixtures/september19/bank-attachments/replay.gd": "6cd5d01cb7f0531e01be326cda148a00f7b4fcea4800e062458519d18a4ed0fc",
+  "tests/fixtures/september19/bank-attachments/shape.gd": "9be2e581e838c2602166a4c0f8fd092637f8cbf0055633c0b8c72088470abbae",
+  "tests/fixtures/september19/bank-attachments/test_attachments.gd": "b140622e3b53b9aea22b018a7b628c402bcc2025b84a0cca6badfab34e743838",
+  "scripts/terrain/field/CliffRockDressing.gd": "5abbc50da83edf5076d465b773f6820d932ef65316fd180177a0c7a706958be1",
+  "scripts/terrain/field/CliffLedgeJoin.gd": "6e5ab582ee987a3db844d8f148b864bc3c2e7f47737f3e9b1f46816de2a805c6",
+  "scripts/terrain/field/CliffRockCrags.gd": "9dc48f5f987c1b6e756313579cf9cde352d29c1f2296a1d63630f2bce69a80b3",
+  "scripts/terrain/field/CliffCornerCrags.gd": "64306f0f988ef1b67639e856edac329f04db5114c1071747855b392044b2b24e",
+  "scripts/terrain/field/CliffRockRelief.gd": "9e07b0de9477c2b7c8ffa04f834d5ebb8160ad500e1ecd7ac5a9c652da69ea90",
+  "scripts/terrain/field/CliffInnerConnections.gd": "deaeab4be03e3b45ba3c5325c10e0d899f43fc62fdfb24046e97c7ab5c9040b2",
+  "scripts/terrain/field/CliffInnerSurface.gd": "0deffacd7861e828190029cc1fed6cf639560c479c4a3f8ddea393aeab380b68",
+  "scripts/terrain/field/CliffStepSurface.gd": "aee24c39cc1d7d21ce0b871ee79fa51b7cab5ee96f74312331174cf5ead5f22f"
+}

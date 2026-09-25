@@ -1,0 +1,6 @@
+{
+  "scripts/terrain/field/CliffStepSurface.gd": "aee24c39cc1d7d21ce0b871ee79fa51b7cab5ee96f74312331174cf5ead5f22f",
+  "scripts/terrain/field/CliffInnerConnections.gd": "deaeab4be03e3b45ba3c5325c10e0d899f43fc62fdfb24046e97c7ab5c9040b2",
+  "tests/fixtures/cliff_snapshot_replay.gd": "46b749ca4da88cd3fd772b6e1cb6612296827c27c1dd4e820ec13b15266728d7",
+  "tests/test_september19_step_surface.gd": "0ee51156bc98054de732c6f129c40f9df652209d5925557adfd1226bcc8be025"
+}

@@ -1,0 +1,59 @@
+--- pass93/CliffInnerConnections.gd
++++ pass94/CliffInnerConnections.gd
+@@ -1,6 +1,6 @@
+ extends RefCounted
+ ## Continue actual adjoining formations through a concave native junction.
+-## Unequal-height or reserved joins retain their independently rooted corner.
++## Taller ends may continue only where an existing upper wall backs the extension.
+ const CRAGS=preload("res://scripts/terrain/field/CliffRockCrags.gd")
+ const EXTENSION:=3.0
+ static func apply(forms:Array,region:HeightfieldRegion=null,features:FeatureContext=null,reject:Callable=Callable())->Dictionary:
+@@ -15,16 +15,23 @@
+    var other:Dictionary=forms[index]
+    if other.get("replay_recipe",{}).get("kind","")!="wall":continue
+    var local:Transform3D=(corner.transform as Transform3D).affine_inverse()*other.transform
+-   if absf(local.origin.y)>.001 or absf(float(other.replay_recipe.height)-float(corner.replay_recipe.height))>.001:continue
++   if absf(local.origin.y)>.001 or float(other.replay_recipe.height)<float(corner.replay_recipe.height)-.001:continue
+    var normal:Vector3=local.basis.z
+    if not ((normal.dot(Vector3.BACK)>.99 and absf(local.origin.z)<.01) or (normal.dot(Vector3.RIGHT)>.99 and absf(local.origin.x)<.01)):continue
+    var relative:Vector3=(other.transform as Transform3D).affine_inverse()*corner.transform.origin
+    var width:float=other.replay_recipe.width
+    var left:bool=relative.x<0
+-   if absf(absf(relative.x)-width*.5)>2.0:continue
+-   if not bool(other.replay_recipe.left_end if left else other.replay_recipe.right_end):continue
++   var gap:=absf(relative.x)-width*.5
++   if gap<.01 or gap>2.0:continue
++   if float(other.replay_recipe.height)>float(corner.replay_recipe.height)+.001 and not _upper_wall_backs_extension(other,left,float(corner.replay_recipe.height),forms):continue
+    parents.append([index,left]);directions[normal.round()]=true
+   if parents.size()!=2 or directions.size()!=2:continue
++  var stepped:=false;var all_terminal:=true
++  for parent:Array in parents:
++   var recipe:Dictionary=forms[parent[0]].replay_recipe
++   stepped=stepped or float(recipe.height)>float(corner.replay_recipe.height)+.001
++   all_terminal=all_terminal and bool(recipe.left_end if parent[1] else recipe.right_end)
++  if not stepped and not all_terminal:continue
+   var candidates:Array=[];var admitted:=true
+   for parent:Array in parents:
+    var original:Dictionary=forms[parent[0]];var recipe:Dictionary=original.replay_recipe
+@@ -47,6 +54,21 @@
+   for i in parents.size():forms[parents[i][0]]=candidates[i]
+   forms.erase(corner);changed+=2;connections+=1
+  return {"connections":connections,"changed_walls":changed}
++static func _upper_wall_backs_extension(original:Dictionary,left:bool,corner_height:float,forms:Array)->bool:
++ # A taller end can cross a lower terrace only when the same native wall
++ # continues above that terrace. Otherwise its upper rock would cross a turf lip.
++ var recipe:Dictionary=original.replay_recipe
++ var edge:float=(-1.0 if left else 1.0)*float(recipe.width)*.5
++ var far_edge:float=edge+(-EXTENSION if left else EXTENSION)
++ for other:Dictionary in forms:
++  if other.id==original.id or other.get("replay_recipe",{}).get("kind","")!="wall":continue
++  var local:Transform3D=(original.transform as Transform3D).affine_inverse()*other.transform
++  if local.basis.z.dot(Vector3.BACK)<.99 or local.basis.x.dot(Vector3.RIGHT)<.99 or absf(local.origin.z)>.01:continue
++  if local.origin.y>corner_height+.001 or local.origin.y+float(other.replay_recipe.height)<float(recipe.height)-.001:continue
++  var half_width:float=float(other.replay_recipe.width)*.5
++  if local.origin.x-half_width<=minf(edge,far_edge)+.01 and local.origin.x+half_width>=maxf(edge,far_edge)-.01:return true
++ return false
++
+ static func _restore_floor(fresh:Dictionary,original:Dictionary)->void:
+  var floor_y:=0.0;var min_y:=0.0
+  for p:Vector3 in original.faces:floor_y=minf(floor_y,p.y)

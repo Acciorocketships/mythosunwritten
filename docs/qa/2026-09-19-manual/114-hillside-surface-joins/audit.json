@@ -1,0 +1,30 @@
+{
+  "P10": {
+    "ground_changed": 0,
+    "points": 441,
+    "water_before": 99,
+    "water_after": 100,
+    "wet_to_dry": 0,
+    "dry_to_wet": 1,
+    "water_change_min": -2.7376861572265394,
+    "water_change_max": 0.15304565429689987,
+    "water_controls": [
+      6,
+      6
+    ]
+  },
+  "P21": {
+    "ground_changed": 0,
+    "points": 441,
+    "water_before": 203,
+    "water_after": 196,
+    "wet_to_dry": 7,
+    "dry_to_wet": 0,
+    "water_change_min": -3.9470367431641,
+    "water_change_max": 0.005485534667997172,
+    "water_controls": [
+      6,
+      6
+    ]
+  }
+}

@@ -1,0 +1,172 @@
+[
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/attachment-detail-after.png",
+    "bytes": 324762,
+    "sha256": "82af0ad947f3d5a261b148ab40ab260d4c3a352d08fc740bb3142eed130560fb"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/attachment-detail-before.png",
+    "bytes": 329098,
+    "sha256": "b41bb65e155efaad6f25326199e67911baa1106a646bf6b0714ac6f7de402a36"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/contacts-before.json",
+    "bytes": 28900,
+    "sha256": "f493ae695322d907e1b155effea52e0d18174652437446e841e9fd565cfa0680"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/logs/build.log",
+    "bytes": 221,
+    "sha256": "e105c7288a525a060e33a2e2c33d307e3128979c8f4baeae20c7a2be3036e8b7"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/logs/build.stdout",
+    "bytes": 221,
+    "sha256": "e105c7288a525a060e33a2e2c33d307e3128979c8f4baeae20c7a2be3036e8b7"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/logs/diagnose.log",
+    "bytes": 693,
+    "sha256": "dd1de3bb272bb91c75c533bb46017b6e1e4e0911eb0b0efaa812308ddf784b68"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/logs/diagnose.stdout",
+    "bytes": 693,
+    "sha256": "dd1de3bb272bb91c75c533bb46017b6e1e4e0911eb0b0efaa812308ddf784b68"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/logs/green.log",
+    "bytes": 875,
+    "sha256": "73acfe1db3f9203dd63c281a8282b4041014dda9ed797f805b406dcd58729ca0"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/logs/green.stdout",
+    "bytes": 935,
+    "sha256": "eb6800487bfc75f6ebd8b58d8bcd34a732e6fd1e44f86c1896edb0b2764a5655"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/logs/native.log",
+    "bytes": 770,
+    "sha256": "fe606230d9fe2cae96b38ce93d8d5a2e70b0ba02200583799fa12f54ab5fc8e6"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/logs/native.stdout",
+    "bytes": 776,
+    "sha256": "d13a1d783eb65aebd3f5bb6c6b1bd5c4f4bcd79768844782fac83df0c740be23"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/logs/red.log",
+    "bytes": 1208,
+    "sha256": "4feb3d0368bbbbdb50f9d44d81a889bfd1fbc5dfeb6f427796ba07546da6f87c"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/logs/red.stdout",
+    "bytes": 1294,
+    "sha256": "266e308099b7eb3d9e7f98ffa77fe3204c2fbc06e5ba27fc44ff4ced5698cf8f"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/native-plants.json",
+    "bytes": 89,
+    "sha256": "c4d353de539b7c8bb9f33eaa7434c433f4a2dc3ae7dcefff5a61580c6fa0e4a3"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/photo--10-after.png",
+    "bytes": 717971,
+    "sha256": "8f4a8662b09132d501c069a92be3a90c1ccb77776aaa7f16b4fef8f3329eac12"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/photo--10-before.png",
+    "bytes": 718510,
+    "sha256": "a033a8f655dac0b643fb53d1b633da92808edd52116d5c55e8b89c0a1ed04769"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/photo--35-after.png",
+    "bytes": 745738,
+    "sha256": "1b3986c6f14bc451723d53da1b2f632b9a69219fabe76cbf48dd3b4532ab2046"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/photo--35-before.png",
+    "bytes": 743565,
+    "sha256": "09452c6ba5477943fc3510a8ebca4f126b25f701a0aad2f88025b3edd60a6882"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/photo-0-after.png",
+    "bytes": 717614,
+    "sha256": "9bbf25dc292963422e9f6211780b0d2430b408ac7c16f2e741c4bb3b84acf775"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/photo-0-before.png",
+    "bytes": 716342,
+    "sha256": "9f08d369edcc99dbd0bab44d33b3d03b15b9829d5ac810c9e684d4c4ed32af4a"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/photo-10-after.png",
+    "bytes": 730057,
+    "sha256": "cad02622b859524561ec894a069a31c84799cb60a6332f5790c126495eda635f"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/photo-10-before.png",
+    "bytes": 729073,
+    "sha256": "42ffcccefee0bc94b135bfb64fe33fa492792f3d53e12da83bcef183a8a27e78"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/photo-35-after.png",
+    "bytes": 736838,
+    "sha256": "0261ec46d3331af1c68d48579d3a2fc60b86a5726fc7a91d27137c81e2419438"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/photo-35-before.png",
+    "bytes": 738993,
+    "sha256": "23d3680eb269c110a6cbd8d3f39b436feaad2041def62fc7af3050ef04e1de80"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/plants.bin",
+    "bytes": 30508,
+    "sha256": "ebfae54ba4e048ab8fcff30553ff5287cdd98d39e9f1a4c5a34bd2dea9f2576c"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/result.md",
+    "bytes": 1889,
+    "sha256": "b1a17648d37e3c99004f5896d19a6b1fd16c24da77514a93d22e8f8c9901e49c"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/128-bank-exposure/selection.json",
+    "bytes": 259,
+    "sha256": "34fffa325553973c0870115e7e206b4419a648b83f6dea2da7f97fac93e846f8"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-exposure/attachments.gd",
+    "bytes": 456,
+    "sha256": "bc8ecab7b81f6967b1962ec2365b3afd9f90a1f8d0e0f4ba21283e8b39509926"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-exposure/build.gd",
+    "bytes": 1242,
+    "sha256": "2f22cde58a307ae1c6fae40d4ab4ff8803a3392dcc4525a43fbca7a643f2a759"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-exposure/diagnose.gd",
+    "bytes": 928,
+    "sha256": "f1549eee81424b3bee92ea981e1d9f87d9f5993deb3ae5fbee1bfd573d5d1662"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-exposure/exposure.gd",
+    "bytes": 1612,
+    "sha256": "3074da5efd433960a63e6c5009aeb49c2138bd561ef226c312f39246823953cb"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-exposure/replay.gd",
+    "bytes": 4390,
+    "sha256": "b4082fd51cfe9cbb7f23c1f9f0f6277689f38a84090a8bab6a711c501f819624"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-exposure/test_exposure.gd",
+    "bytes": 2043,
+    "sha256": "e37987654593d7a7dcb626d1c1c57fc9d72946248624c4cdb2e556348bd875fb"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-exposure/trace.gd",
+    "bytes": 1003,
+    "sha256": "1f6a990de15920d751b74640e457e65b764a1f65371501963d28b40f26cf6cab"
+  }
+]

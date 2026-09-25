@@ -1,0 +1,58 @@
+--- before/CliffCornerCrags.gd
++++ after/CliffCornerCrags.gd
+@@ -145,15 +145,27 @@
+ 
+ static var _inner_depth:=PackedFloat32Array()
+ static var _inner_normal:=PackedVector3Array()
++const INNER_COLUMNS:=481
++const INNER_HALF_WIDTH:=6.0
++const INNER_STEP:=.025
++const INNER_ROWS:=41
++const INNER_VERTICAL_STEP:=.1
+ static func _prepare_inner()->void:
+  if not _inner_depth.is_empty():return
+  assert(OS.get_thread_caller_id()==OS.get_main_thread_id())
+  var faces:PackedVector3Array=load("res://terrain/environment/meshes/kaykit/kaykit_cliff_inner_wall_piece_00.res").get_faces()
++ # The diagonal sweep also advances along each straight wall. Sample that
++ # actual intersection together with the native corner, rather than switching
++ # to a perpendicular sample at |u|=1 (which made a visible depth jump).
++ var wall:PackedVector3Array=load("res://terrain/environment/meshes/kaykit/kaykit_cliff_wall_piece_00.res").get_faces()
++ for center:float in [3,6,9]:
++  for p:Vector3 in wall:faces.append(Vector3(center+p.x,p.y,p.z))
++  for p:Vector3 in wall:faces.append(Vector3(p.z,p.y,center-p.x))
+  var depths:=PackedFloat32Array();var normals:=PackedVector3Array()
+- for row in 41:
+-  var y:=clampf(-.3+row*.1,-.29999,3.69999)
+-  for column in 31:
+-   var u:=clampf(-1.0+float(column)/15.0,-.99999,.99999)
++ for row in INNER_ROWS:
++  var y:=clampf(-.3+row*INNER_VERTICAL_STEP,-.29999,3.69999)
++  for column in INNER_COLUMNS:
++   var u:float=-INNER_HALF_WIDTH+float(column)*INNER_STEP
+    var base:=Vector3(maxf(u,0),y,maxf(-u,0))
+    var depth:=-INF;var normal:=Vector3(1,0,1).normalized()
+    for offset:float in [0.0,.0001,-.0001]:
+@@ -167,16 +179,13 @@
+    depths.append(depth);normals.append(normal)
+  _inner_depth=depths;_inner_normal=normals
+ 
+-static func _inner_native(u:float,y:float,pose:Transform3D)->Array:
+- if absf(u)>=1.0:
+-  var phase:float=pose.origin.dot(pose.basis.x)+u if u>0 else -pose.origin.dot(pose.basis.z)+u
+-  var n:=CRAGS._native_normal(phase,y)
+-  return [CRAGS._native_depth(phase,y),n if u>0 else Vector3(n.z,n.y,-n.x)]
+- var x:float=(u+1.0)*15.0;var v:float=fposmod(y+.3,4.0)*10.0
+- var ix:=mini(29,floori(x));var iy:=mini(39,floori(v))
+- var tx:=x-ix;var ty:=v-iy;var i:=iy*31+ix
+- return [lerpf(lerpf(_inner_depth[i],_inner_depth[i+1],tx),lerpf(_inner_depth[i+31],_inner_depth[i+32],tx),ty),
+-  _inner_normal[i].lerp(_inner_normal[i+1],tx).lerp(_inner_normal[i+31].lerp(_inner_normal[i+32],tx),ty).normalized()]
++static func _inner_native(u:float,y:float,_pose:Transform3D)->Array:
++ var x:float=(clampf(u,-INNER_HALF_WIDTH,INNER_HALF_WIDTH)+INNER_HALF_WIDTH)/INNER_STEP
++ var v:float=fposmod(y+.3,4.0)/INNER_VERTICAL_STEP
++ var ix:=mini(INNER_COLUMNS-2,floori(x));var iy:=mini(INNER_ROWS-2,floori(v))
++ var tx:=x-ix;var ty:=v-iy;var i:=iy*INNER_COLUMNS+ix
++ return [lerpf(lerpf(_inner_depth[i],_inner_depth[i+1],tx),lerpf(_inner_depth[i+INNER_COLUMNS],_inner_depth[i+INNER_COLUMNS+1],tx),ty),
++  _inner_normal[i].lerp(_inner_normal[i+1],tx).lerp(_inner_normal[i+INNER_COLUMNS].lerp(_inner_normal[i+INNER_COLUMNS+1],tx),ty).normalized()]
+ 
+ static func make_inner(pose:Transform3D,height:float,seed_value:int,region:HeightfieldRegion=null)->Dictionary:
+  prepare();CRAGS.prepare()

@@ -1,0 +1,39 @@
+{
+  "status": "experimental; no production changes",
+  "seed": 2697992464,
+  "feet": [
+    -519.5,
+    20,
+    326.4
+  ],
+  "crosshair": [
+    -499.7,
+    8,
+    306.5
+  ],
+  "tests": 5,
+  "assertions": 36,
+  "native_root_contacts": 20,
+  "native_root_failures": 0,
+  "artifacts": {
+    "docs/qa/2026-09-19-manual/122-bank-attachments/attachment-detail-after.png": "f49195d2e5bd170ae6c2f55d681b2eaeacc3ec767b2204421fc369f1c9842eb6",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/attachment-detail-before.png": "537da0226a8005203281ac05163db9b64d8a4c9c416908b6e7f422e64930f24b",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/margins.json": "ad7e7c9ae6204b794210918fad8868d4ef9078f9d23d8cbfbc98f89011c17bc1",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/native-contact.json": "dfe584347f381d48c61643afaaee33c0699734b742f87315fcc8685f78cb71f5",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/photo--10-after.png": "f0a1713f3d790aca63d0a7ef3a92cf8db3c5bdfd9935ce54dc1bf644c4403d61",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/photo--10-before.png": "396c0967077c103cb4136088936d4e73f8de21fe665f848c2e531235a6dd95b7",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/photo--35-after.png": "7a0abf88c9b8032d3e1eef5b53193350c5e761439e9b23d8c4b31fe0ffc01de0",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/photo--35-before.png": "f5530679e074c3dc74f5713f7c927a7b97d568f1f0fa55dc8cb509d1e1e1364f",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/photo-0-after.png": "a5b3f90d3c70405bfb8b7b610ca080fac4c8f7b4b6325ab1ae56f7081453a815",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/photo-0-before.png": "55d70de641bcfc577bb1dd1b57e659f2b9ac827e25660f2303f2b5b7d191da7a",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/photo-10-after.png": "715426376b2916daa5dfe64e0a626e8d97d1f730cdc5f04f7ffc97754ed38f24",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/photo-10-before.png": "13d774afc58b1ec2c40611b9cf66e9f0c0e95e3189b9d88354789f1897feef8f",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/photo-35-after.png": "e6020f2915d25111e205855c7c132ddf09b3e97c0df71f9c1f7cd45e1da379c6",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/photo-35-before.png": "bc5dcebf7f37fa9c0a10c6004e3e07ae28cc9598e7f807722fcf378dc8ec446b",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/plants.bin": "9bfa0adc80acf88914976b3acfe69c4eb77c443f9b321583caca86f94e04d0ce",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/plants.json": "b5bbc715deb69a28e1a9fc37f541ecfc15a4a2f1e625f5a7ab177776ce117556",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/source-hashes.json": "e3eaf3c80d5342d5318e9962a48a6eb7a5b2636653d02d641254ddb236201d4c",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/source-plants.bin": "db17a993befecc9f8b1fa5c346ac149550191bcae8c2616bddebeda92aab9e24",
+    "docs/qa/2026-09-19-manual/122-bank-attachments/sources.bin": "60cf60862cda6a099ad9cd409a4311bfffb38cfc44875e677404dacf0eb3c06e"
+  }
+}

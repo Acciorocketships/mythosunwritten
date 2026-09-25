@@ -1,0 +1,18 @@
+{
+  "cases": [
+    {
+      "checked_cap_triangles": 2827,
+      "degenerate_caps": 7,
+      "escaped_cap_triangles": 150,
+      "variant": "section"
+    },
+    {
+      "checked_cap_triangles": 2834,
+      "degenerate_caps": 0,
+      "escaped_cap_triangles": 0,
+      "variant": "section-caps"
+    }
+  ],
+  "repaired": true,
+  "reproduced": true
+}

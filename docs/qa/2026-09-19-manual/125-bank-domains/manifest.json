@@ -1,0 +1,32 @@
+[
+  {
+    "file": "comparison.json",
+    "bytes": 5543,
+    "sha256": "65f6e5ff48737642e1d52c97d63763c19192d0998d8a18d8c8912061c8450a4a"
+  },
+  {
+    "file": "differences.json",
+    "bytes": 3005,
+    "sha256": "4055378c5dd41b991ad76b1265b966af1402ad013ce7d4f0695a5b18ee61b95c"
+  },
+  {
+    "file": "domain-0.bin",
+    "bytes": 23196468,
+    "sha256": "8757ac50a1155b1abb25abb09f02b2150274bccc335db91a0c18346f3a00b9dd"
+  },
+  {
+    "file": "domain-1.bin",
+    "bytes": 23196472,
+    "sha256": "8cdfb3e4cb55dc34156212457bf1a8e23c1ab047ff9e8df4ac94cdea964b4b8e"
+  },
+  {
+    "file": "prepared.log",
+    "bytes": 5233,
+    "sha256": "9a9c7bb72b623b51c2d4b475f2aad196e2db980a809f1a0af697ab2feb840b73"
+  },
+  {
+    "file": "result.md",
+    "bytes": 1521,
+    "sha256": "9e5383e58ccd29f183c5ab8158f68ae090bedf76e464f3e4c3b096fd1b7ebd21"
+  }
+]

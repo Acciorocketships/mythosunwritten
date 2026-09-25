@@ -1,0 +1,42 @@
+[
+  {
+    "file": "docs/qa/2026-09-19-manual/131-water-query-cost/comparison.json",
+    "bytes": 1474,
+    "sha256": "b0f5a1f1546e205484ef1fec9449ad6e48794de03b162639bbca409be795401d"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/131-water-query-cost/logs/compare.log",
+    "bytes": 260,
+    "sha256": "4f96ae638a01b19575bc2cb00a6d49f71fab6e20b953552b4ab35a12a4c0fcda"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/131-water-query-cost/logs/compare.stdout",
+    "bytes": 260,
+    "sha256": "4f96ae638a01b19575bc2cb00a6d49f71fab6e20b953552b4ab35a12a4c0fcda"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/131-water-query-cost/logs/tests.log",
+    "bytes": 749,
+    "sha256": "2393e99ec943243bdb9b7e19d868b1f1c2501549b4db7a974932ff779ec9077f"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/131-water-query-cost/logs/tests.stdout",
+    "bytes": 809,
+    "sha256": "2c23a96c13ebb79a80cf5b7097f07a3943c0aa4c042120177c0d651a45afa6dd"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/131-water-query-cost/result.md",
+    "bytes": 1349,
+    "sha256": "e8082d92c7f7b3fc17a75262c5b22d1c3a7dcd589b8b5924a73a3143ccc2d35a"
+  },
+  {
+    "file": "scripts/terrain/water/WaterFieldContext.gd",
+    "bytes": 7113,
+    "sha256": "952f50745c9af4680e669611f2aff58a645d0050bb9bfa77567db01d3903e0b5"
+  },
+  {
+    "file": "tests/fixtures/september19/water-query-cost/compare.gd",
+    "bytes": 2391,
+    "sha256": "40382e51be099dc55d0e254403313e54924474ad051c2d8e430dc4fdc9af7ea0"
+  }
+]

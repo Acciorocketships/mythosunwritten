@@ -1,0 +1,10 @@
+{
+  "baseline_main_usec": 2795843,
+  "camera": "[X: (-0.868011, 0.0, -0.496545), Y: (-0.308722, 0.783223, 0.539678), Z: (0.388905, 0.621741, -0.679847), O: (-563.711, 40.29827, 121.8253)]",
+  "formations": 16,
+  "prepared_main_usec": 20300,
+  "surfaces": 32,
+  "unchanged_collision": true,
+  "vertices": 755472,
+  "worker_usec": 2701196
+}

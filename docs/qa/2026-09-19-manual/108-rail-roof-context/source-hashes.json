@@ -1,0 +1,9 @@
+{
+  "scripts/terrain/features/villages/fabric/PublicRealmSurfaceSolver.gd": "f9a925dfca1ab11b86be4eebd6a5cd79387346dae48990898499bb61109fe029",
+  "tests/test_september19_prefab_stair_guards.gd": "af7dede0ecf6bf6bf474ac50e0d425c1bcb0eb59ffb6c0daa457d93cd1d5dbaa",
+  "tests/fixtures/september19/rail-roof-context/probe.gd": "5fd1667a594c0ab337c81d827a417d276850f643d325a50ecbab1812839508d4",
+  "tests/fixtures/september19/rail-roof-context/source.gd": "120c0083b29332daee4ac0c1d341c805e522e1bc76507f891e44df6a2dfd2e61",
+  "tests/fixtures/september19/rail-roof-context/clearance.gd": "0910b85f01eb9409aab199e93d2220bcc2b7b45ff0b1a6acc311299dc47bfb68",
+  "tests/fixtures/september19/rail-roof-context/native.gd": "c2c05ac2e50d1d20366a227880d5414dacf62837f4be9498b62c9d44d2574138",
+  "tests/fixtures/september19/rail-roof-context/review.gd": "2876fd447cfc4d244c019e78329357dcae3c7ad4a23d9308bedc997f8efb2de6"
+}

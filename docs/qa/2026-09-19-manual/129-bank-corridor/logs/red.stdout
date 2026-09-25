@@ -1,0 +1,43 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/fixtures/september19/bank-corridor/test_corridor.gd
+[0m* test_clear_sloping_water_can_keep_its_cliff_dressing
+SHORE_REJECT (-541.5, 20.0, 205.5) corner clearance=122
+[31m    [Failed]:  [0mA changing water level alone is not a blocked channel
+      at line 18
+* test_neighboring_dry_bank_still_limits_rock_projection
+SHORE_REJECT (-586.5, 20.0, 205.5) corner clearance=5
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/fixtures/september19/bank-corridor/test_corridor.gd
+[0m- test_clear_sloping_water_can_keep_its_cliff_dressing
+[31m    [Failed]:  [0mA changing water level alone is not a blocked channel
+          at line 18
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts             1/2
+Time              50.698s
+
+
+[31m---- 1 failing tests ----
+[0m

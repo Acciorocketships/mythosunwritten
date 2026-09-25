@@ -1,0 +1,10 @@
+{
+  "batches_identical": true,
+  "boxes_identical": true,
+  "changed_meshes": [
+    90,
+    94
+  ],
+  "mesh_count_after": 101,
+  "mesh_count_before": 101
+}

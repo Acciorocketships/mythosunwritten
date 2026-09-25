@@ -1,0 +1,30 @@
+[
+  {
+    "after": {
+      "collision": 38,
+      "geometry": 787,
+      "sha256": "5d331f59d76970baa4abfe405683d0e45dc4af0a0bffe0761cc63ad917ad3695"
+    },
+    "before": {
+      "collision": 38,
+      "geometry": 787,
+      "sha256": "5d331f59d76970baa4abfe405683d0e45dc4af0a0bffe0761cc63ad917ad3695"
+    },
+    "equal": true,
+    "spot": "P10"
+  },
+  {
+    "after": {
+      "collision": 36,
+      "geometry": 720,
+      "sha256": "249a465049404a9e425b6e6bd4ba89bf997e148f78004987182a8f71cf1a7f52"
+    },
+    "before": {
+      "collision": 36,
+      "geometry": 720,
+      "sha256": "249a465049404a9e425b6e6bd4ba89bf997e148f78004987182a8f71cf1a7f52"
+    },
+    "equal": true,
+    "spot": "P21"
+  }
+]

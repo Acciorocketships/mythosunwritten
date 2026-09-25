@@ -1,0 +1,9 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+WARNING: 'res://terrain/environment/meshes/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_piece_00.res': In external resource #0, invalid UID: 'uid://bx62nwk14mngf' - using text path instead: 'res://terrain/environment/materials/fantasy_village_fabric/sfv_fabric_wall_wood_door_closed_001_piece_00_surface_00.tres'.
+     at: open (core/io/resource_format_binary.cpp:1089)
+     GDScript backtrace (most recent call first):
+         [0] run (res://tests/fixtures/september19/bank-preserved-relief/replay_plants.gd:8)
+BANK_PLANT_CONTACT { "plants": 58, "failures": [{ "root": (-443.2067, 14.10013, 366.6249), "hit": (-443.2555, 14.13908, 366.6073), "reason": "wrong support" }], "maximum_root_contact_gap": 0.06489256024361 }
+BANK_PLANT_RENDER done

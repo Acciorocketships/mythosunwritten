@@ -1,0 +1,207 @@
+{
+  "bank_forms": 14,
+  "candidates": 28,
+  "elapsed_ms": [
+    97771,
+    72360
+  ],
+  "failures": 7,
+  "rows": [
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": true,
+      "id": "worn_crag/(-589.5, 8.0, 187.5)/(1.0, 0.0, -0.0)",
+      "same": false
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": true,
+      "id": "worn_crag/(-589.5, 12.0, 196.5)/(1.0, 0.0, -0.0)",
+      "same": false
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": true,
+      "id": "worn_crag/(-478.5, 8.0, 178.5)/(0.0, 0.0, 1.0)",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": false,
+      "id": "worn_crag/(-456.0, 20.0, 178.5)/(0.0, 0.0, 1.0)",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": true,
+      "id": "worn_crag/(-466.5, 8.0, 192.0)/(-1.0, 0.0, -0.0)",
+      "same": true
+    },
+    {
+      "accepted_a": false,
+      "accepted_b": false,
+      "bank_a": false,
+      "id": "worn_crag/(-528.0, 8.0, 181.5)/(-0.0, 0.0, -1.0)",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": false,
+      "id": "worn_crag/(-436.5, 20.0, 181.5)/(-0.0, 0.0, -1.0)",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": false,
+      "id": "worn_crag/(-427.5, 24.0, 181.5)/(-0.0, 0.0, -1.0)",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": true,
+      "id": "worn_crag/(-517.5, 8.0, 193.5)/(1.0, 0.0, -0.0)",
+      "same": true
+    },
+    {
+      "accepted_a": false,
+      "accepted_b": false,
+      "bank_a": false,
+      "id": "worn_crag/(-538.5, 8.0, 187.5)/(-1.0, 0.0, -0.0)",
+      "same": true
+    },
+    {
+      "accepted_a": false,
+      "accepted_b": false,
+      "bank_a": false,
+      "id": "worn_crag/(-538.5, 12.0, 198.0)/(-1.0, 0.0, -0.0)",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": false,
+      "id": "worn_crag/(-421.5, 24.0, 193.5)/(1.0, 0.0, -0.0)",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": false,
+      "id": "worn_crag/(-442.5, 20.0, 193.5)/(-1.0, 0.0, -0.0)",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": true,
+      "id": "worn_crag/(-553.5, 12.0, 205.5)/(-0.0, 0.0, -1.0)",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": true,
+      "id": "worn_crag/(-574.5, 12.0, 205.5)/(-0.0, 0.0, -1.0)",
+      "same": false
+    },
+    {
+      "accepted_a": false,
+      "accepted_b": false,
+      "bank_a": false,
+      "id": "corner_crag/(-589.5, 8.0, 181.5)/[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0)]",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": true,
+      "id": "corner_crag/(-490.5, 8.0, 178.5)/[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0)]",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": false,
+      "id": "corner_crag/(-445.5, 20.0, 178.5)/[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0)]",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": true,
+      "id": "corner_crag/(-466.5, 20.0, 178.5)/[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0)]",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": true,
+      "id": "corner_crag/(-589.5, 20.0, 202.5)/[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0)]",
+      "same": false
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": true,
+      "id": "corner_crag/(-589.5, 20.0, 181.5)/[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0)]",
+      "same": false
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": true,
+      "id": "corner_crag/(-517.5, 8.0, 181.5)/[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0)]",
+      "same": false
+    },
+    {
+      "accepted_a": false,
+      "accepted_b": false,
+      "bank_a": false,
+      "id": "corner_crag/(-538.5, 8.0, 181.5)/[X: (-1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -1.0)]",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": false,
+      "id": "corner_crag/(-421.5, 24.0, 181.5)/[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0)]",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": false,
+      "id": "corner_crag/(-442.5, 20.0, 181.5)/[X: (-1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -1.0)]",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": true,
+      "id": "corner_crag/(-586.5, 20.0, 205.5)/[X: (-1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -1.0)]",
+      "same": true
+    },
+    {
+      "accepted_a": true,
+      "accepted_b": true,
+      "bank_a": true,
+      "id": "corner_crag/(-541.5, 20.0, 205.5)/[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0)]",
+      "same": false
+    },
+    {
+      "accepted_a": false,
+      "accepted_b": false,
+      "bank_a": false,
+      "id": "inner_corner_crag/(-538.5, 12.0, 205.5)/[X: (-1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -1.0)]",
+      "same": true
+    }
+  ]
+}

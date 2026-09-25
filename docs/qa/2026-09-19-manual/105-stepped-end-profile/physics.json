@@ -1,0 +1,11 @@
+{
+  "collision_misses": 0,
+  "collision_samples": 534,
+  "connections": 1,
+  "exposed_roots": 0,
+  "joined_surfaces": 1,
+  "max_error": 0.0000307550726574846,
+  "misses": [],
+  "missing_ground": 0,
+  "native_ground_samples": 250
+}

@@ -1,0 +1,129 @@
+{
+  "blocked": [],
+  "capsule_samples": 468,
+  "control": false,
+  "route": [
+    "(-1056.0, 1044.0)",
+    "(-1056.0, 1052.0)",
+    "(-1032.0, 1052.0)",
+    "(-1032.0, 1082.0)"
+  ],
+  "walks": [
+    {
+      "passed": true,
+      "position": "(-1032.0, 9.000384, 1081.904)",
+      "reached": 68,
+      "reverse": false,
+      "segments": 67,
+      "ticks": 474,
+      "trace": [
+        {
+          "floor": false,
+          "point": "(-1056.0, 8.049999, 1044.0)",
+          "segment": 1,
+          "tick": 0
+        },
+        {
+          "floor": true,
+          "point": "(-1052.429, 8.790572, 1051.983)",
+          "segment": 32,
+          "tick": 60
+        },
+        {
+          "floor": true,
+          "point": "(-1045.717, 8.792592, 1052.0)",
+          "segment": 34,
+          "tick": 120
+        },
+        {
+          "floor": true,
+          "point": "(-1039.22, 8.792592, 1052.0)",
+          "segment": 34,
+          "tick": 180
+        },
+        {
+          "floor": true,
+          "point": "(-1031.999, 9.000384, 1056.567)",
+          "segment": 67,
+          "tick": 240
+        },
+        {
+          "floor": true,
+          "point": "(-1031.999, 9.000384, 1063.064)",
+          "segment": 67,
+          "tick": 300
+        },
+        {
+          "floor": true,
+          "point": "(-1031.999, 9.000384, 1069.56)",
+          "segment": 67,
+          "tick": 360
+        },
+        {
+          "floor": true,
+          "point": "(-1031.999, 9.000384, 1076.057)",
+          "segment": 67,
+          "tick": 420
+        }
+      ]
+    },
+    {
+      "passed": true,
+      "position": "(-1056.0, 8.002056, 1044.094)",
+      "reached": 68,
+      "reverse": true,
+      "segments": 67,
+      "ticks": 474,
+      "trace": [
+        {
+          "floor": true,
+          "point": "(-1032.0, 9.000391, 1082.0)",
+          "segment": 1,
+          "tick": 0
+        },
+        {
+          "floor": true,
+          "point": "(-1032.0, 9.000391, 1075.503)",
+          "segment": 1,
+          "tick": 60
+        },
+        {
+          "floor": true,
+          "point": "(-1032.0, 9.000391, 1069.007)",
+          "segment": 1,
+          "tick": 120
+        },
+        {
+          "floor": true,
+          "point": "(-1032.0, 9.000391, 1062.51)",
+          "segment": 1,
+          "tick": 180
+        },
+        {
+          "floor": true,
+          "point": "(-1032.005, 8.99678, 1055.797)",
+          "segment": 3,
+          "tick": 240
+        },
+        {
+          "floor": true,
+          "point": "(-1039.773, 8.791838, 1052.0)",
+          "segment": 34,
+          "tick": 300
+        },
+        {
+          "floor": true,
+          "point": "(-1046.27, 8.791838, 1052.0)",
+          "segment": 34,
+          "tick": 360
+        },
+        {
+          "floor": true,
+          "point": "(-1053.88, 8.726469, 1051.531)",
+          "segment": 45,
+          "tick": 420
+        }
+      ]
+    }
+  ]
+}

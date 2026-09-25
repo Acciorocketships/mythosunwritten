@@ -1,0 +1,16 @@
+{
+  "tests/fixtures/september19/hillside-surface-joins/probe.gd": "96bf271dba35acadbc9af4eba7d5e5832aa9e68d80d10f8bba2e403411434406",
+  "tests/fixtures/september19/hillside-surface-joins/test_profile_grade.gd": "f074d5e33e4c447130f60f1186eeeb240f3abbd4a0ad95edf459d938a34c06ee",
+  "tests/fixtures/september19/hillside-surface-joins/profile_grade.gd": "744d654b1671b2fb2e2d32e17301b51033d050ac88bbe057bd325e3d5ee09319",
+  "tests/fixtures/september19/hillside-surface-joins/candidate_probe.gd": "73281265c10a48c1665f9b79fbf6f6d6dd4bab2fc6c3ec7f6062f7491f004541",
+  "tests/fixtures/september19/hillside-surface-joins/geometry_identity.gd": "2d1bf1c03894cd22e764290f1266b50afb5ead6fcf465512b421c65b024d615e",
+  "tests/fixtures/september19/hillside-surface-joins/physical_samples.gd": "f100a1eca4bd15555457bd59a43b29bea60fa5dbd43bbcba09a0bf662b12cb87",
+  "tests/fixtures/september19/hillside-surface-joins/candidate_cache.gd": "e8a97b26773d52f524b99f0f3f7298d3324a95c94f38de738f0ab2a5e5cc72fe",
+  "tests/fixtures/september19/hillside-surface-joins/claims.gd": "c788abfec27970f918c67364ef98827c3e0a53cb06dc66df21dc2c8dc738482d",
+  "tests/fixtures/september19/hillside-surface-joins/native.gd": "e9fe18a2ee64e63cbeedfc1ad315e8e5c8ed35c585df29f1ced9dbeadc9ad416",
+  "tests/fixtures/september19/hillside-surface-joins/candidate_field.gd": "f943a5be100f13e6a131d7f513f274ab240c69280cdb03433874482c071461bc",
+  "tests/fixtures/september19/hillside-surface-joins/native_audit.py": "203675364984f23684db8cae234b9e36389865ddc1aec0b657cea1bebd08e3bc",
+  "tests/fixtures/september19/hillside-surface-joins/supply_audit.py": "49e6e305c514bb87378453d02b7b9391698cb0c11b6c357e0b0811502281bd54",
+  "tests/fixtures/september19/hillside-surface-joins/audit.py": "d9b0e3971c440d162c64d8ea77fba8747b12e2f1bdb8eb28cb8159eac8e4eb15",
+  "tests/fixtures/september19/hillside-surface-joins/prepare.py": "31c27e52bc7952dcb5d5d7d0d664ac5f0d1fe081de213af6a800ab19c223083e"
+}

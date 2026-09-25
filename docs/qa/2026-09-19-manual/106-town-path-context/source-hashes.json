@@ -1,0 +1,7 @@
+{
+  "scripts/terrain/features/villages/VillageWarrenFabricSolver.gd": "0e8b97725b689f0a6dfaf5f5a66ffb70da13d82baba941b6573cdb507c080ccc",
+  "tests/test_september19_retained_road_bounds.gd": "57e7c6f9d1a359e21aea6f8c54b6523a7c78e2a9dc852e4e1231883e2f349b98",
+  "tests/fixtures/september19/town-path-context/walk.gd": "fbde7b81a0dde64cb1f2e0f8291930efb70ec1492a2dbfecfc77e96e9f51c33d",
+  "tests/fixtures/september19/town-path-context/source.gd": "adf219d3ad0ecc45ca93643d26212f30bb0af172b79e14db41209277c26adf3f",
+  "tests/fixtures/september19/town-path-context/world-source.gd": "05465d545ce8d270f3b476926a721896db20486166d560528dade8745fa53624"
+}

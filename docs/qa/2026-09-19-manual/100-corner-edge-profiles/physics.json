@@ -1,0 +1,11 @@
+{
+  "changed_walls": 31,
+  "collision_misses": 0,
+  "collision_samples": 6533,
+  "connections": 2,
+  "exposed_roots": 0,
+  "max_error": 0.00006103515625,
+  "misses": [],
+  "missing_ground": 0,
+  "native_ground_samples": 3470
+}

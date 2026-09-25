@@ -1,0 +1,11 @@
+{
+  "failures": [
+    {
+      "hit": "(-443.2555, 14.1391, 366.6073)",
+      "reason": "wrong support",
+      "root": "(-443.2065, 14.1, 366.625)"
+    }
+  ],
+  "maximum_root_contact_gap": 0.0651298835873604,
+  "plants": 60
+}

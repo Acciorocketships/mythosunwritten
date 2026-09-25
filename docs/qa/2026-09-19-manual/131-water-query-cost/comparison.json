@@ -1,0 +1,88 @@
+{
+  "dry": 13005,
+  "mismatches": 0,
+  "points": 18820,
+  "timings": [
+    {
+      "candidate": false,
+      "microseconds": 338912,
+      "repeat": 0
+    },
+    {
+      "candidate": true,
+      "microseconds": 280212,
+      "repeat": 0
+    },
+    {
+      "candidate": true,
+      "microseconds": 281427,
+      "repeat": 1
+    },
+    {
+      "candidate": false,
+      "microseconds": 346217,
+      "repeat": 1
+    },
+    {
+      "candidate": false,
+      "microseconds": 340822,
+      "repeat": 2
+    },
+    {
+      "candidate": true,
+      "microseconds": 276687,
+      "repeat": 2
+    },
+    {
+      "candidate": true,
+      "microseconds": 279884,
+      "repeat": 3
+    },
+    {
+      "candidate": false,
+      "microseconds": 346670,
+      "repeat": 3
+    },
+    {
+      "candidate": false,
+      "microseconds": 345595,
+      "repeat": 4
+    },
+    {
+      "candidate": true,
+      "microseconds": 281006,
+      "repeat": 4
+    },
+    {
+      "candidate": true,
+      "microseconds": 281211,
+      "repeat": 5
+    },
+    {
+      "candidate": false,
+      "microseconds": 343116,
+      "repeat": 5
+    },
+    {
+      "candidate": false,
+      "microseconds": 339689,
+      "repeat": 6
+    },
+    {
+      "candidate": true,
+      "microseconds": 276162,
+      "repeat": 6
+    },
+    {
+      "candidate": true,
+      "microseconds": 281738,
+      "repeat": 7
+    },
+    {
+      "candidate": false,
+      "microseconds": 345754,
+      "repeat": 7
+    }
+  ],
+  "wet": 5815
+}

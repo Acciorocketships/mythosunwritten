@@ -1,0 +1,38 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/fixtures/september19/bank-relief/test_attachments.gd
+[0m* test_ferns_follow_the_same_bank_triangles_as_the_solid
+BANK_ATTACHMENT count=66 mapped=66 floating=0 maximum=0.00008904933929
+* test_point_mapping_preserves_the_judged_bank_geometry
+* test_bank_plant_ownership_does_not_change_selection
+BANK_PUBLISHED 56
+* test_bank_plants_query_only_admitted_owner_water
+* test_adapted_canopies_respect_public_clearance_without_mutating_sources
+[1m5/5 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 5
+Passing Tests         5
+Asserts              37
+Time              21.156s
+
+
+[32m---- All tests passed! ----
+[0m

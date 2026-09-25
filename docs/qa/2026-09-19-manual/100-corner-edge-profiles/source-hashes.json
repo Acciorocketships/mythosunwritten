@@ -1,0 +1,7 @@
+{
+  "scripts/terrain/field/CliffRockCrags.gd": "607d5690d9aca5eaf2749a3b805931e9724de708e555586043bbc70a4454d810",
+  "scripts/terrain/field/CliffLedgeJoin.gd": "6d4833e12b08e29bc6257ba0d76db056e8c4612079b5fff0e53aab60513ba88d",
+  "scripts/terrain/field/CliffRockEndCaps.gd": "42ea0fe22d4fdfbe2b3da1f7b1af3b1c5c47643e43137368ca77f3a5c51f20dc",
+  "tests/test_september19_cliff_end_caps.gd": "4a795227c689136d55432f4e726c63cbd97b7aa9f78ec8143f0b5a71f185ee0d",
+  "tests/fixtures/cliff_snapshot_replay.gd": "37dba07110edf30507179e109ce49cdffc0ffb1fdbe43333e40562dfce2cd800"
+}

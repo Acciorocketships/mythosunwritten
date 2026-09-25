@@ -1,0 +1,404 @@
+[
+  {
+    "accepted": true,
+    "anchor": "(-490.5, 8.0, 312.0)",
+    "bounds": "[P: (-493.3284, 7.8, 303.0), S: (4.028381, 8.2, 18.0)]",
+    "kind": "wall",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 8.0,
+      "kind": "wall",
+      "left_end": true,
+      "right_end": true,
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3,
+      "width": 18.0
+    },
+    "source_bounds": "[P: (-493.3284, 7.8, 303.0), S: (4.028381, 8.2, 18.0)]",
+    "tiny_triangles": 0,
+    "triangles": 14076,
+    "turf_triangles": 0
+  },
+  {
+    "accepted": true,
+    "anchor": "(-517.5, 8.0, 337.5)",
+    "bounds": "[P: (-518.7, 7.8, 327.0), S: (4.175842, 12.2, 24.0)]",
+    "kind": "wall",
+    "open_edges": 2,
+    "original_open_edges": 2,
+    "recipe": {
+      "height": 12.0,
+      "inner_connections": [
+        "(-517.5, 8.0, 349.5)"
+      ],
+      "kind": "wall",
+      "ledge_joins": [
+        {
+          "corner": "(-517.5, 8.0, 349.5)",
+          "inner_radius": 5.33739976882935,
+          "radius": 9.03739976882935,
+          "target": 1.54237493872643
+        }
+      ],
+      "left_end": false,
+      "right_end": true,
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3,
+      "width": 24.0
+    },
+    "source_bounds": "[P: (-518.7, 7.8, 327.0), S: (4.175842, 12.2, 24.0)]",
+    "tiny_triangles": 2,
+    "triangles": 26700,
+    "turf_triangles": 11
+  },
+  {
+    "accepted": true,
+    "anchor": "(-517.5, 8.0, 286.5)",
+    "bounds": "[P: (-518.7, 7.8, 276.0), S: (4.148865, 8.2, 21.0)]",
+    "kind": "wall",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 8.0,
+      "kind": "wall",
+      "left_end": true,
+      "right_end": false,
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3,
+      "width": 21.0
+    },
+    "source_bounds": "[P: (-518.7, 7.8, 276.0), S: (4.148865, 8.2, 21.0)]",
+    "tiny_triangles": 0,
+    "triangles": 15944,
+    "turf_triangles": 0
+  },
+  {
+    "accepted": true,
+    "anchor": "(-541.5, 8.0, 312.0)",
+    "bounds": "[P: (-542.7, 7.8, 300.0), S: (4.189087, 12.2, 27.0)]",
+    "kind": "wall",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 12.0,
+      "inner_connections": [
+        "(-541.5, 8.0, 325.5)"
+      ],
+      "kind": "wall",
+      "ledge_joins": [
+        {
+          "corner": "(-541.5, 8.0, 325.5)",
+          "inner_radius": 4.46260004043579,
+          "radius": 8.16260004043579,
+          "target": 4.25977492332458
+        }
+      ],
+      "left_end": false,
+      "right_end": true,
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3,
+      "width": 27.0
+    },
+    "source_bounds": "[P: (-542.7, 7.8, 300.0), S: (4.189087, 12.2, 27.0)]",
+    "tiny_triangles": 0,
+    "triangles": 30086,
+    "turf_triangles": 36
+  },
+  {
+    "accepted": true,
+    "anchor": "(-529.5, 8.0, 298.5)",
+    "bounds": "[P: (-540.0, 7.8, 297.3), S: (21.0, 8.2, 3.526764)]",
+    "kind": "wall",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 8.0,
+      "kind": "wall",
+      "left_end": true,
+      "right_end": true,
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3,
+      "width": 21.0
+    },
+    "source_bounds": "[P: (-540.0, 7.8, 297.3), S: (21.0, 8.2, 3.526764)]",
+    "tiny_triangles": 0,
+    "triangles": 15984,
+    "turf_triangles": 0
+  },
+  {
+    "accepted": true,
+    "anchor": "(-478.5, 8.0, 322.5)",
+    "bounds": "[P: (-489.0, 7.8, 321.3), S: (24.0, 8.2, 4.142365)]",
+    "kind": "wall",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 8.0,
+      "inner_connections": [
+        "(-466.5, 8.0, 322.5)"
+      ],
+      "kind": "wall",
+      "ledge_joins": [
+        {
+          "corner": "(-466.5, 8.0, 322.5)",
+          "inner_radius": 6.78819971084595,
+          "radius": 10.4881997108459,
+          "target": 2.8169749379158
+        }
+      ],
+      "left_end": true,
+      "right_end": false,
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3,
+      "width": 24.0
+    },
+    "source_bounds": "[P: (-489.0, 7.8, 321.3), S: (24.0, 8.2, 4.142365)]",
+    "tiny_triangles": 0,
+    "triangles": 19624,
+    "turf_triangles": 51
+  },
+  {
+    "accepted": true,
+    "anchor": "(-529.5, 8.0, 325.5001)",
+    "bounds": "[P: (-543.0, 7.8, 322.9307), S: (24.0, 12.2, 3.769379)]",
+    "kind": "wall",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 12.0,
+      "inner_connections": [
+        "(-541.5, 8.0, 325.5)"
+      ],
+      "kind": "wall",
+      "ledge_joins": [
+        {
+          "corner": "(-541.5, 8.0, 325.5)",
+          "inner_radius": 7.75549964904785,
+          "radius": 11.4554996490479,
+          "target": 4.25977492332458
+        }
+      ],
+      "left_end": true,
+      "right_end": false,
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3,
+      "width": 24.0
+    },
+    "source_bounds": "[P: (-543.0, 7.8, 322.9307), S: (24.0, 12.2, 3.769379)]",
+    "tiny_triangles": 0,
+    "triangles": 26656,
+    "turf_triangles": 59
+  },
+  {
+    "accepted": true,
+    "anchor": "(-505.5, 8.0, 349.5)",
+    "bounds": "[P: (-519.0, 7.8, 346.5937), S: (24.00003, 8.2, 4.106323)]",
+    "kind": "wall",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 8.0,
+      "inner_connections": [
+        "(-517.5, 8.0, 349.5)"
+      ],
+      "kind": "wall",
+      "ledge_joins": [
+        {
+          "corner": "(-517.5, 8.0, 349.5)",
+          "inner_radius": 9.64429931640625,
+          "radius": 13.3442993164062,
+          "target": 1.54237493872643
+        }
+      ],
+      "left_end": true,
+      "right_end": false,
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3,
+      "width": 24.0
+    },
+    "source_bounds": "[P: (-519.0, 7.8, 346.5937), S: (24.00003, 8.2, 4.106323)]",
+    "tiny_triangles": 0,
+    "triangles": 18570,
+    "turf_triangles": 0
+  },
+  {
+    "accepted": true,
+    "anchor": "(-541.5, 20.0, 298.5)",
+    "bounds": "[P: (-547.5, 7.8, 292.5), S: (8.617676, 16.2, 7.537231)]",
+    "kind": "corner",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 4.0,
+      "kind": "corner",
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3
+    },
+    "source_bounds": "[P: (-547.5, 7.8, 292.5), S: (8.617676, 16.2, 7.537231)]",
+    "tiny_triangles": 0,
+    "triangles": 5204,
+    "turf_triangles": 132
+  },
+  {
+    "accepted": true,
+    "anchor": "(-517.5, 8.0, 298.5)",
+    "bounds": "[P: (-523.5, 7.8, 292.5), S: (8.775452, 8.2, 7.687592)]",
+    "kind": "corner",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 8.0,
+      "kind": "corner",
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3
+    },
+    "source_bounds": "[P: (-523.5, 7.8, 292.5), S: (8.775452, 8.2, 7.687592)]",
+    "tiny_triangles": 0,
+    "triangles": 9100,
+    "turf_triangles": 0
+  },
+  {
+    "accepted": true,
+    "anchor": "(-541.5, 16.0, 298.5)",
+    "bounds": "[P: (-547.5, 7.8, 297.0948), S: (7.691345, 12.2, 7.405212)]",
+    "kind": "corner",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 4.0,
+      "kind": "corner",
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3
+    },
+    "source_bounds": "[P: (-547.5, 7.8, 297.0948), S: (7.691345, 12.2, 7.405212)]",
+    "tiny_triangles": 0,
+    "triangles": 5194,
+    "turf_triangles": 108
+  },
+  {
+    "accepted": true,
+    "anchor": "(-490.5, 8.0, 322.5)",
+    "bounds": "[P: (-493.4346, 7.8, 316.5), S: (8.93457, 8.2, 8.831177)]",
+    "kind": "corner",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 8.0,
+      "kind": "corner",
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3
+    },
+    "source_bounds": "[P: (-493.4346, 7.8, 316.5), S: (8.93457, 8.2, 8.831177)]",
+    "tiny_triangles": 0,
+    "triangles": 9288,
+    "turf_triangles": 0
+  },
+  {
+    "accepted": true,
+    "anchor": "(-490.5, 8.0, 301.5)",
+    "bounds": "[P: (-492.8825, 7.8, 299.2047), S: (8.382507, 8.2, 8.295258)]",
+    "kind": "corner",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 8.0,
+      "kind": "corner",
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3
+    },
+    "source_bounds": "[P: (-492.8825, 7.8, 299.2047), S: (8.382507, 8.2, 8.295258)]",
+    "tiny_triangles": 0,
+    "triangles": 9474,
+    "turf_triangles": 0
+  },
+  {
+    "accepted": true,
+    "anchor": "(-541.5, 20.0, 325.5)",
+    "bounds": "[P: (-547.5, 7.8, 323.7822), S: (7.704773, 16.2, 7.717834)]",
+    "kind": "corner",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 4.0,
+      "kind": "corner",
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3
+    },
+    "source_bounds": "[P: (-547.5, 7.8, 323.7822), S: (7.704773, 16.2, 7.717834)]",
+    "tiny_triangles": 0,
+    "triangles": 5290,
+    "turf_triangles": 149
+  },
+  {
+    "accepted": true,
+    "anchor": "(-517.5, 8.0, 325.5)",
+    "bounds": "[P: (-523.5, 7.8, 322.6641), S: (8.988159, 12.2, 8.835907)]",
+    "kind": "corner",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 12.0,
+      "kind": "corner",
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3
+    },
+    "source_bounds": "[P: (-523.5, 7.8, 322.6641), S: (8.988159, 12.2, 8.835907)]",
+    "tiny_triangles": 0,
+    "triangles": 13258,
+    "turf_triangles": 0
+  },
+  {
+    "accepted": true,
+    "anchor": "(-493.5, 8.0, 349.5)",
+    "bounds": "[P: (-499.5, 7.8, 346.633), S: (8.981842, 8.2, 8.866974)]",
+    "kind": "corner",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 8.0,
+      "kind": "corner",
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3
+    },
+    "source_bounds": "[P: (-499.5, 7.8, 346.633), S: (8.981842, 8.2, 8.866974)]",
+    "tiny_triangles": 0,
+    "triangles": 10252,
+    "turf_triangles": 0
+  },
+  {
+    "accepted": true,
+    "anchor": "(-541.5, 8.0, 298.5)",
+    "bounds": "[P: (-542.7, 7.8, 297.3), S: (7.372742, 8.2, 7.596283)]",
+    "kind": "inner_corner",
+    "open_edges": 0,
+    "original_open_edges": 0,
+    "recipe": {
+      "height": 8.0,
+      "kind": "inner_corner",
+      "seed": 2697992464,
+      "shore_level": 13.6999998092651,
+      "shore_rise": 0.3
+    },
+    "source_bounds": "[P: (-542.7, 7.8, 297.3), S: (7.372742, 8.2, 7.596283)]",
+    "tiny_triangles": 0,
+    "triangles": 9052,
+    "turf_triangles": 0
+  }
+]

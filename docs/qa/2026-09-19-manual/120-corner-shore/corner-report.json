@@ -1,0 +1,10 @@
+{
+  "added_formations": 1,
+  "bounds": "[P: (-451.5, 19.8, 484.5), S: (8.71109, 4.200001, 10.49039)]",
+  "collision_contacts": 15,
+  "floating_roots": 0,
+  "native_storeys": 1,
+  "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-445.5, 20.0, 490.5)]",
+  "production_faces_identical": true,
+  "root_samples": 98
+}

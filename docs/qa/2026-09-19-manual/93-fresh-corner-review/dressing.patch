@@ -1,0 +1,14 @@
+--- docs/qa/2026-09-19-manual/93-fresh-corner-review/dressing-before.txt	2026-09-19 01:57:11
++++ scripts/terrain/field/CliffRockDressing.gd	2026-09-19 01:57:11
+@@ -93,7 +93,10 @@
+  var neighbors:=formations(cliffs.wall,seed_value,region,features)
+  neighbors.append_array(CORNERS.formations(cliffs.outer_wall,seed_value,region,features))
+  neighbors.append_array(CORNERS.formations(cliffs.inner_wall,seed_value,region,features,true))
+- INNER_CONNECTIONS.apply(neighbors,region,features,func(form:Dictionary)->bool:return _wet_formation(form,water))
++ # Join the canonical dry geometry before publication. Hydraulic admission
++ # belongs to each complete owned solid below; checking both halo parents
++ # here can escape the prepared water domain and make joins query-dependent.
++ INNER_CONNECTIONS.apply(neighbors,region,features)
+  var placements:Array[Dictionary]=[]
+  for p:Dictionary in neighbors:
+   var owner:=Vector2i(floori((p.anchor.x+12)/24),floori((p.anchor.z+12)/24))

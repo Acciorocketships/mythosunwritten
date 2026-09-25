@@ -1,0 +1,6 @@
+{
+  "scripts/terrain/field/CliffInnerSurface.gd": "0deffacd7861e828190029cc1fed6cf639560c479c4a3f8ddea393aeab380b68",
+  "scripts/terrain/field/CliffInnerConnections.gd": "eeeace75fd813cc6b6c7d80704aa6af0bf66ae0561750c4b0f60d332e713d9c6",
+  "tests/fixtures/cliff_snapshot_replay.gd": "396597422ebb1624e20ba54d3e99268d7f94207a8bfa808826ea3be559abab31",
+  "tests/test_september19_inner_surface.gd": "2d33beb692f4649ac5163a0f33ba206b5c4b8d74ce9c2431a6ac9c4283fbb898"
+}

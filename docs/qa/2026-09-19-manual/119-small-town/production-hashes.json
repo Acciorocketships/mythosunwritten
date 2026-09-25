@@ -1,0 +1,13 @@
+{
+  "scripts/terrain/diagnostics/LoadedTerrainBoundary.gd": "6ee42a99a970eaeb00ead8774b2167e9e8036d5b317b904c904696e35094de9a",
+  "scripts/terrain/diagnostics/LoadingFrontierFog.gd": "4775c470fbd049c42835465653450a4e0ff58d6109b3a7f25a54787690d58023",
+  "scripts/terrain/diagnostics/loading_frontier.gdshader": "ded46ad8f8e81195a103744a4b738a59b8d19b386cdfd9c057d4f8a704220125",
+  "scripts/terrain/biome/AtmosphereDirector.gd": "aa8293c132f8c3e27a8dbc3fd6552f618b1845727008b2167e636342cc81226e",
+  "scripts/terrain/field/FieldTerrainStreamer.gd": "1a4c4e79087bde6a2241a45b101b8e9cd70ad134e848e97a8f97f43426efca7b",
+  "scripts/terrain/field/TerrainChunkMesher.gd": "214b7788e5cb1a58244a71237d3120f7a69a7def60a3b77ae08c5f85ea06d96c",
+  "scripts/terrain/field/CliffRockCrags.gd": "9dc48f5f987c1b6e756313579cf9cde352d29c1f2296a1d63630f2bce69a80b3",
+  "scripts/terrain/field/CliffRockDressing.gd": "5abbc50da83edf5076d465b773f6820d932ef65316fd180177a0c7a706958be1",
+  "scripts/terrain/tools/SlopeAtlas.gd": "4a4c46e55a517006c5f52f6020300eceffe7380bde55c2cb52e597e125c044f0",
+  "scripts/terrain/features/villages/VillageWarrenFabricSolver.gd": "9b892ab6dc9e11b3dc34ee5f7e7fa6c4337e9fc74216c69cf6e9faf65ae9860c",
+  "scripts/terrain/features/villages/fabric/WarrenMazeSitePlanner.gd": "3f71b3e7f170169cc6bcaa6a1899ee730eb40746bff5746b81d7eb5dac5f0e7d"
+}

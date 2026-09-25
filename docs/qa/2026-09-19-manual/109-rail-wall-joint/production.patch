@@ -1,0 +1,59 @@
+--- before/PublicRealmSurfaceSolver.gd
++++ scripts/terrain/features/villages/fabric/PublicRealmSurfaceSolver.gd
+@@ -191,7 +191,10 @@
+ 	var footprints := SettlementFabricAssembler.maze_module_footprints(fabric_plan)
+ 	for index in (footprints.boxes as Array).size():
+ 		var asset := String(footprints.assets[index])
+-		if asset.begins_with("sfv.fabric.wall.") and not ".door." in asset:
++		# Timber floors hang below their room's wall datum. An ascending rail
++		# meets that actual underside before it reaches the wall above it.
++		if (asset.begins_with("sfv.fabric.wall.") and not ".door." in asset) \
++				or asset == String(SettlementFabricProgram.FLOOR):
+ 			module_walls.append(footprints.boxes[index])
+ 	if not result.finish_transition_guards(guard_boxes,module_walls): return null
+ 	if not result.seal(required, other_classified, guard_solids, entrances,
+--- before/WarrenTransitionSurfaceBuilder.gd
++++ scripts/terrain/features/villages/fabric/WarrenTransitionSurfaceBuilder.gd
+@@ -207,18 +207,38 @@
+ 		var side_offset: Vector3 = lateral * MACRO_SIZE * 0.5 * side
+ 		var inset := ((end-start)*Vector3(1,0,1)).normalized()*start_inset
+ 		var rails: Array[PackedVector3Array] = []
++		var upper_rails: Array[PackedVector3Array] = []
+ 		for fraction in [0.52, 1.0]:
+-			rails.append_array(_exposed_guard_spans(
++			var exposed := _exposed_guard_spans(
+ 				start + side_offset - inset + Vector3.UP * start_rail_height * fraction,
+-				end + side_offset + Vector3.UP * GUARD_HEIGHT * fraction, wall_boxes))
++				end + side_offset + Vector3.UP * GUARD_HEIGHT * fraction, wall_boxes)
++			rails.append_array(exposed)
++			if fraction == 1.0: upper_rails = exposed
+ 		for rail: PackedVector3Array in rails:
+ 			_append_beam(payload,rail[0],rail[1],GUARD_BEAM)
++		var post_ratios: Array[float] = []
+ 		for post_index in range(0 if owns_start_posts else 1,post_intervals + 1):
+-			var ratio := float(post_index) / float(post_intervals)
++			post_ratios.append(float(post_index) / float(post_intervals))
++		var regular_count := post_ratios.size()
++		var run := (end-start)*Vector3(1,0,1)
++		# Clipping can create a new rail end between the original posts. Seat
++		# its support on the same flight, then clip it against the same building.
++		for rail: PackedVector3Array in upper_rails:
++			for tip: Vector3 in rail:
++				var ratio := (tip-start-side_offset).dot(run)/maxf(run.length_squared(),0.000001)
++				if ratio <= 0.00001 or ratio >= 0.99999: continue
++				var supported := false
++				for existing: float in post_ratios:
++					if absf(existing-ratio)*horizontal_length < END_POST_WIDTH:
++						supported = true
++						break
++				if not supported: post_ratios.append(ratio)
++		for post_index in post_ratios.size():
++			var ratio := post_ratios[post_index]
+ 			var foot: Vector3 = start.lerp(end, ratio) + side_offset
+ 			# A free beam end is housed inside a visibly wider post. Its head
+ 			# stands above the rail instead of ending at the rail centreline.
+-			var endpoint := post_index == 0 or post_index == post_intervals
++			var endpoint := ratio == 0.0 or ratio == 1.0 or post_index >= regular_count
+ 			var height := GUARD_HEIGHT + (END_POST_HEADROOM if endpoint else 0.0)
+ 			var width := END_POST_WIDTH if endpoint else GUARD_BEAM
+ 			for post: PackedVector3Array in _exposed_guard_spans(foot,foot+Vector3.UP*height,wall_boxes):

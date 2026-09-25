@@ -1,0 +1,11 @@
+{
+  "tests/fixtures/september19/hillside-stable-terrain/geometry_identity.gd": "d19bb0743a88aee75bbc1de2ae6bcd5ebf7442fc35416517ed258084991c33c2",
+  "tests/fixtures/september19/hillside-stable-terrain/physical_samples.gd": "34e45b0b12919651a36aef26e052e52542c8c2525d536f0d8dc538dd7f8a0956",
+  "tests/fixtures/september19/hillside-stable-terrain/native.gd": "3002f4625843402bb33832a2fa161aa0253f22b46a3c20162269ac010fb51734",
+  "tests/fixtures/september19/hillside-stable-terrain/supply_audit.py": "d89395f58699e03ab9dbd06de6f91f73527b88767c4d1c8a7caf18ca1da415c9",
+  "tests/fixtures/september19/hillside-stable-terrain/audit.py": "8d56fc2fedcd85757c093728fc74f4301a739f749d9efc91dc15ed0a42dee951",
+  "scripts/terrain/water/WaterPlan.gd": "3e5c0d458c99b696476b5a58ecee69ba2436b578ff74d6994a553c86db2e4b3a",
+  "scripts/terrain/water/WaterField.gd": "571b4df15e6f177d0932d84f97ccbe395e407a76b6042bd34f8c26684d50b97f",
+  "scripts/terrain/water/WaterSurfaceBuilder.gd": "24272ee3303ac3df95a478f0d4333b0e1b42019994bf1266d9e60f391fbef926",
+  "scripts/terrain/heightfield/HeightfieldPlan.gd": "1402dadf1f20f50988fc3ffa573baddb9d918db49b4c8c21ed61f0b608ac5ac8"
+}

@@ -1,0 +1,869 @@
+{
+  "N03": {
+    "formations": [
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-469.5, 20.0, 465.0)",
+        "bounds": "[P: (-470.7, 19.8, 462.0), S: (5.368622, 4.200001, 6.0)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 6.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-445.5, 16.0, 460.5)",
+        "bounds": "[P: (-446.7, 15.8, 453.0), S: (8.965698, 4.2, 15.0)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 15.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-445.5, 20.0, 523.5)",
+        "bounds": "[P: (-446.7, 19.8, 519.0), S: (7.938416, 8.200001, 9.0)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 8.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 9.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-445.5, 20.0, 480.0)",
+        "bounds": "[P: (-446.7, 19.8, 471.0), S: (8.532806, 4.200001, 18.0)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 18.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-445.5, 24.0, 532.5)",
+        "bounds": "[P: (-446.7, 23.8, 528.0), S: (5.015106, 4.200001, 9.0)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 9.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-421.5, 8.0, 463.5)",
+        "bounds": "[P: (-422.7, 7.8, 459.0), S: (10.82401, 8.2, 9.0)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 9.0
+        },
+        "submerged_vertices": 708,
+        "wet_rejected": true,
+        "wet_vertices": 708
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-421.5, 16.0, 481.5)",
+        "bounds": "[P: (-422.7, 15.8, 471.0), S: (10.9451, 4.2, 21.0)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 21.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-451.5, 20.0, 490.5)",
+        "bounds": "[P: (-456.0, 19.8, 489.3), S: (9.0, 4.200001, 9.412109)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 9.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-414.0, 8.0, 469.5)",
+        "bounds": "[P: (-420.0, 7.8, 463.1284), S: (12.0, 8.2, 7.571625)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 12.0
+        },
+        "submerged_vertices": 839,
+        "wet_rejected": true,
+        "wet_vertices": 839
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-433.5, 16.0, 469.5)",
+        "bounds": "[P: (-444.0, 15.8, 463.7924), S: (21.0, 4.2, 6.907623)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 21.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-457.5, 20.0, 469.5)",
+        "bounds": "[P: (-468.0, 19.8, 460.41), S: (21.0, 4.200001, 10.29001)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 21.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-409.5, 16.0, 493.5)",
+        "bounds": "[P: (-420.0, 15.8, 487.7702), S: (21.0, 4.2, 6.92981)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 21.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-466.5, 24.0, 523.5)",
+        "bounds": "[P: (-468.3203, 23.8, 519.0), S: (3.020325, 4.200001, 9.0)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 9.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-451.5, 20.0, 517.5001)",
+        "bounds": "[P: (-456.0, 19.8, 508.387), S: (9.0, 8.200001, 10.31311)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 8.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 9.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-460.5, 24.0, 517.5001)",
+        "bounds": "[P: (-465.0, 23.8, 510.5211), S: (9.0, 4.200001, 8.179016)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 9.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-445.5, 20.0, 490.5)",
+        "bounds": "[P: (-451.5, 19.8, 484.5), S: (8.71109, 4.200001, 10.49039)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-445.5, 20.0, 469.5)",
+        "bounds": "[P: (-451.5, 19.8, 467.4799), S: (9.926514, 4.200001, 8.020111)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 13,
+        "anchor": "(-421.5, 16.0, 469.5)",
+        "bounds": "[P: (-427.5, 7.8, 463.3061), S: (10.85739, 12.2, 12.19391)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 4.0,
+          "kind": "corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 3,
+        "wet_rejected": true,
+        "wet_vertices": 16
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-445.5, 20.0, 517.5)",
+        "bounds": "[P: (-451.5, 19.8, 511.9891), S: (11.9498, 8.200001, 11.51089)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 8.0,
+          "kind": "corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-466.5, 24.0, 517.5)",
+        "bounds": "[P: (-469.2445, 23.8, 514.1684), S: (8.744507, 4.200001, 9.331604)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-445.5, 16.0, 469.5)",
+        "bounds": "[P: (-446.7, 15.8, 461.7565), S: (11.2388, 4.2, 8.943512)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "inner_corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-421.5, 8.0, 469.5)",
+        "bounds": "[P: (-422.7, 7.8, 459.3766), S: (12.9718, 8.2, 11.32343)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "inner_corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 1151,
+        "wet_rejected": true,
+        "wet_vertices": 1151
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-469.5, 20.0, 469.5)",
+        "bounds": "[P: (-470.7, 19.8, 461.5376), S: (10.67151, 4.200001, 9.162415)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "inner_corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-421.5, 16.0, 493.5)",
+        "bounds": "[P: (-422.7, 15.8, 485.7838), S: (8.338104, 4.2, 8.916199)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "inner_corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      }
+    ],
+    "native_matches": 90,
+    "native_mismatches": []
+  },
+  "N04": {
+    "formations": [
+      {
+        "above_water_vertices": 820,
+        "anchor": "(-541.5, 8.0, 312.0)",
+        "bounds": "[P: (-542.7, 7.8, 300.0), S: (12.38812, 12.2, 24.0)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 12.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 24.0
+        },
+        "submerged_vertices": 3204,
+        "wet_rejected": true,
+        "wet_vertices": 4024
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-541.5, 16.0, 294.0)",
+        "bounds": "[P: (-542.7, 15.8, 291.0), S: (8.133301, 8.2, 6.0)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 8.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 6.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-541.5, 20.0, 336.0)",
+        "bounds": "[P: (-542.7, 19.8, 327.0), S: (5.496338, 4.200001, 18.0)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 18.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-529.5, 8.0, 298.5)",
+        "bounds": "[P: (-540.0, 7.8, 297.3), S: (21.0, 8.2, 7.555817)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 21.0
+        },
+        "submerged_vertices": 1808,
+        "wet_rejected": true,
+        "wet_vertices": 1808
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-547.5, 20.0, 298.5)",
+        "bounds": "[P: (-552.0, 19.8, 297.3), S: (9.0, 4.200001, 5.687714)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 9.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 695,
+        "anchor": "(-517.5, 8.0, 337.5)",
+        "bounds": "[P: (-518.7, 7.8, 327.0), S: (12.12982, 12.2, 21.0)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 12.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 21.0
+        },
+        "submerged_vertices": 2784,
+        "wet_rejected": true,
+        "wet_vertices": 3479
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-517.5, 8.0, 291.0)",
+        "bounds": "[P: (-518.7, 7.8, 285.0), S: (9.295715, 8.2, 12.0)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 12.0
+        },
+        "submerged_vertices": 1028,
+        "wet_rejected": true,
+        "wet_vertices": 1028
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-517.5, 16.0, 358.5)",
+        "bounds": "[P: (-518.7, 15.8, 348.0), S: (6.738617, 4.2, 21.0)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 21.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-490.5, 8.0, 312.0)",
+        "bounds": "[P: (-498.8949, 7.8, 303.0), S: (9.59491, 8.2, 18.0)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 18.0
+        },
+        "submerged_vertices": 1787,
+        "wet_rejected": true,
+        "wet_vertices": 1787
+      },
+      {
+        "above_water_vertices": 5,
+        "anchor": "(-483.0, 8.0, 322.5)",
+        "bounds": "[P: (-489.0, 7.8, 321.3), S: (12.0, 8.2, 11.04932)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 12.0
+        },
+        "submerged_vertices": 1373,
+        "wet_rejected": true,
+        "wet_vertices": 1378
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-549.0, 20.0, 346.5)",
+        "bounds": "[P: (-555.0, 19.8, 345.3), S: (12.0, 4.200001, 4.767822)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 12.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 620,
+        "anchor": "(-529.5, 8.0, 325.5001)",
+        "bounds": "[P: (-540.0, 7.8, 318.499), S: (21.0, 12.2, 8.201111)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 12.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 21.0
+        },
+        "submerged_vertices": 2737,
+        "wet_rejected": true,
+        "wet_vertices": 3357
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-552.0, 20.0, 325.5001)",
+        "bounds": "[P: (-561.0, 19.8, 319.586), S: (18.0, 4.200001, 7.114105)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 18.0
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-505.5, 8.0, 349.5)",
+        "bounds": "[P: (-516.0, 7.8, 340.2982), S: (21.00003, 8.2, 10.40182)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": false,
+          "seed": 2697992464,
+          "width": 21.0
+        },
+        "submerged_vertices": 2254,
+        "wet_rejected": true,
+        "wet_vertices": 2254
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-493.5, 8.0, 355.5)",
+        "bounds": "[P: (-494.7, 7.8, 351.0), S: (11.82001, 8.2, 9.0)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "wall",
+          "left_end": true,
+          "right_end": true,
+          "seed": 2697992464,
+          "width": 9.0
+        },
+        "submerged_vertices": 822,
+        "wet_rejected": true,
+        "wet_vertices": 822
+      },
+      {
+        "above_water_vertices": 7,
+        "anchor": "(-541.5, 20.0, 298.5)",
+        "bounds": "[P: (-547.5, 7.8, 292.5), S: (13.3269, 16.2, 9.724091)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 4.0,
+          "kind": "corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 2,
+        "wet_rejected": true,
+        "wet_vertices": 9
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-517.5, 8.0, 298.5)",
+        "bounds": "[P: (-523.5, 7.8, 292.5), S: (14.03659, 8.2, 10.2356)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 848,
+        "wet_rejected": true,
+        "wet_vertices": 848
+      },
+      {
+        "above_water_vertices": 175,
+        "anchor": "(-541.5, 16.0, 298.5)",
+        "bounds": "[P: (-547.5, 7.8, 295.216), S: (10.23792, 12.2, 9.283997)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 4.0,
+          "kind": "corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 14,
+        "wet_rejected": true,
+        "wet_vertices": 189
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-490.5, 8.0, 322.5)",
+        "bounds": "[P: (-500.1805, 7.8, 316.5), S: (15.68051, 8.2, 14.66281)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 1066,
+        "wet_rejected": true,
+        "wet_vertices": 1066
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-490.5, 8.0, 301.5)",
+        "bounds": "[P: (-497.0417, 7.8, 295.2491), S: (12.54169, 8.2, 12.25092)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 1215,
+        "wet_rejected": true,
+        "wet_vertices": 1215
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-541.5, 20.0, 346.5)",
+        "bounds": "[P: (-547.5, 19.8, 340.5), S: (11.4505, 4.200001, 9.484497)]",
+        "maximum_water": null,
+        "minimum_water": null,
+        "recipe": {
+          "height": 4.0,
+          "kind": "corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 0,
+        "wet_rejected": false,
+        "wet_vertices": 0
+      },
+      {
+        "above_water_vertices": 5,
+        "anchor": "(-541.5, 20.0, 325.5)",
+        "bounds": "[P: (-547.5, 7.8, 321.1739), S: (10.28259, 16.2, 10.32611)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 4.0,
+          "kind": "corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 3,
+        "wet_rejected": true,
+        "wet_vertices": 8
+      },
+      {
+        "above_water_vertices": 229,
+        "anchor": "(-517.5, 8.0, 325.5)",
+        "bounds": "[P: (-523.5, 7.8, 316.8426), S: (17.95789, 12.2, 14.65741)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 12.0,
+          "kind": "corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 1350,
+        "wet_rejected": true,
+        "wet_vertices": 1579
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-493.5, 8.0, 349.5)",
+        "bounds": "[P: (-499.5, 7.8, 340.721), S: (17.38931, 8.2, 14.77899)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 1375,
+        "wet_rejected": true,
+        "wet_vertices": 1375
+      },
+      {
+        "above_water_vertices": 342,
+        "anchor": "(-541.5, 8.0, 325.5)",
+        "bounds": "[P: (-542.7, 7.8, 310.6188), S: (13.88599, 12.2, 16.08121)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 12.0,
+          "kind": "inner_corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 1534,
+        "wet_rejected": true,
+        "wet_vertices": 1876
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-541.5, 8.0, 298.5)",
+        "bounds": "[P: (-542.7, 7.8, 297.3), S: (10.74884, 8.2, 12.061)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "inner_corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 1085,
+        "wet_rejected": true,
+        "wet_vertices": 1085
+      },
+      {
+        "above_water_vertices": 0,
+        "anchor": "(-517.5, 8.0, 349.5)",
+        "bounds": "[P: (-518.7, 7.8, 336.5234), S: (14.8085, 8.2, 14.17661)]",
+        "maximum_water": 13.6999998092651,
+        "minimum_water": 13.6999998092651,
+        "recipe": {
+          "height": 8.0,
+          "kind": "inner_corner",
+          "seed": 2697992464
+        },
+        "submerged_vertices": 1174,
+        "wet_rejected": true,
+        "wet_vertices": 1174
+      }
+    ],
+    "native_matches": 187,
+    "native_mismatches": []
+  }
+}

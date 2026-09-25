@@ -1,0 +1,102 @@
+[
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/bend-0-after-0.png",
+    "bytes": 399830,
+    "sha256": "f89b635777bacddcade70dd9b131d19f1b9d0afa6868a565daac40ef36ca2009"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/bend-0-after-180.png",
+    "bytes": 397486,
+    "sha256": "07d4bd0a72229560055498a55c3bbf15b708e4a7fe33d7d5a387eefe32632f1d"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/bend-0-before-0.png",
+    "bytes": 438222,
+    "sha256": "b4b7ba0fffb9dc58b011156988df2d5ad2ff78f4f4e18e8d160e89fe6f258836"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/bend-0-before-180.png",
+    "bytes": 437043,
+    "sha256": "b2db34e54784e5b938565bcdcad921111e7be479ea9a4b84f1bee762facd0e54"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/bend-1-after-0.png",
+    "bytes": 520947,
+    "sha256": "5840d36918b177da1d083c852ce82485b5a4eb9ab8a3f1b163520a145e3da5b7"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/bend-1-after-180.png",
+    "bytes": 520526,
+    "sha256": "2665f816db0d3ceb9ba163bd9cda8ff4f7ef38ba0d94e064a269a24777119b33"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/bend-1-before-0.png",
+    "bytes": 581256,
+    "sha256": "11c126a8f159af9ac0f9d9adc527e8b61582b0ac79fdea417c7ba027dd047beb"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/bend-1-before-180.png",
+    "bytes": 578854,
+    "sha256": "b5e6c928ec51026533e182844838a62929b5bcf6297bd60ccf95ba248c1a1847"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/clearance.json",
+    "bytes": 105771,
+    "sha256": "73152eaf3d87f4a1c5d03abd7765d890cff803358770e9ecb0c79e2070b6d3c1"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/logs/survey.log",
+    "bytes": 788,
+    "sha256": "4447211a445a8607d52f6d4b4e46a996ee77a5af26698683d91a32d5766e0b9f"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/logs/survey.stdout",
+    "bytes": 794,
+    "sha256": "a255a422db11b2c81ad82b0020ebaa76678cb54aa1a4ef3754f1ac9f7430049a"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/logs/swim-final.log",
+    "bytes": 1330,
+    "sha256": "b2c18d2067698315bc03d4199525f90f90fbf22f28fe885ed99ffca304acb881"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/logs/swim-final.stdout",
+    "bytes": 1336,
+    "sha256": "cdcbd8935da00ffe6874b2cdd4258f2ec9fddcce13844e3a2f4608bb1b4453ad"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/logs/swim.log",
+    "bytes": 1330,
+    "sha256": "b2c18d2067698315bc03d4199525f90f90fbf22f28fe885ed99ffca304acb881"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/logs/swim.stdout",
+    "bytes": 1336,
+    "sha256": "cdcbd8935da00ffe6874b2cdd4258f2ec9fddcce13844e3a2f4608bb1b4453ad"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/result.md",
+    "bytes": 2158,
+    "sha256": "81ccd41bd85525479deeb485c27cac1bea3a9a038bee7e19427720ac40890d1e"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/swims.json",
+    "bytes": 28352,
+    "sha256": "3c00ab9c4ad62b2f2e74a95bdef79d7745a2a674bf268f067b1e024c52c81289"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/130-bank-traversal/water.bin",
+    "bytes": 689000,
+    "sha256": "15c5059ef11890951b746d3632a840fffe556e335a64b3e6e8f2836de7f7279e"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-traversal/survey.gd",
+    "bytes": 3076,
+    "sha256": "a943a6d036fba14bff3ecb30a1c74b3e660b204494aa2674a20a554571d7318b"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-traversal/swim.gd",
+    "bytes": 5284,
+    "sha256": "971bdb8d7b94ab87668be40215b4331948bbebb4e572f370c3d2b8f9aedebce3"
+  }
+]

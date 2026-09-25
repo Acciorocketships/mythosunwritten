@@ -1,0 +1,17 @@
+{
+  "scripts/terrain/field/CliffLedgeJoin.gd": "6e5ab582ee987a3db844d8f148b864bc3c2e7f47737f3e9b1f46816de2a805c6",
+  "tests/test_september19_ledge_join_collapse.gd": "a710e1c603ee706cf71d2dec6f9753fbcdf17c0e9c9d3ec932da2228e27c3812",
+  "tests/fixtures/september19/shoreline-rock/owned_adapter.gd": "45be416d823fabb6d7f73fa3e14719529e0a9f624b7ee135a13c69a5eb6543a6",
+  "tests/fixtures/september19/shoreline-rock/replay.gd": "9c6755be74d8364e91242d01b9983b498ff4bb200cfd74c021aa2ec2efa5c07f",
+  "tests/fixtures/september19/shoreline-rock/fit_above_water.gd": "924c941f63f4f5ed4d37fcf39bb6e638c358d6c3f644275b220fecdee11f032b",
+  "tests/fixtures/september19/shoreline-rock/fit_bank.gd": "a3f8ae5291932d8bec99375e32596ae14e493808c3c6c77649e58ba7b37e3dc4",
+  "tests/fixtures/september19/shoreline-rock/test_owned_controls.gd": "7c6477a101dc9e60cdffe609dcd2441c6ca4acbd63b8f678a407d6d26f5ea266",
+  "tests/fixtures/september19/shoreline-rock/collapse_native.gd": "a340d1f611864a80da6a38f256174230bf27eeb265d1f720cf6278dc0ccddbe4",
+  "tests/fixtures/september19/shoreline-rock/replay_owned.gd": "c54e0e8fa926aae6c05c691e1570a7cbad7ae8dde6db28215cd1ba78660aa6d2",
+  "tests/fixtures/september19/shoreline-rock/fit.gd": "924c941f63f4f5ed4d37fcf39bb6e638c358d6c3f644275b220fecdee11f032b",
+  "tests/fixtures/september19/shoreline-rock/build.gd": "2e4255164d82611ee860bc9df942fc573502f4b49d04b4da60cb68615f00f447",
+  "tests/fixtures/september19/shoreline-rock/build_owned.gd": "15bc1c3d5e2288fb06adfa527202249dbdad935d29c213c3449b9a640d08f920",
+  "tests/fixtures/september19/shoreline-rock/test_bank_reach.gd": "377d186152e05d79115471792d5a8662a2af83df49248433a1f430eb7338f958",
+  "tests/fixtures/september19/shoreline-rock/fit_impl.gd": "d6dc0fe1a0131c0a20a203ed9e34323df4477401a8f0869cd9f5a0b42d84f1d1",
+  "tests/fixtures/september19/shoreline-rock/test_bank.gd": "dd246dbe7ff3cb8b8044977823d4a0b9a9c0262e1680bb7000c72e2ef3b2d944"
+}

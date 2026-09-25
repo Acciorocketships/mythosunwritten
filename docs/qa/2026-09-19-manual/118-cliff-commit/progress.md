@@ -1,0 +1,1 @@
+Cliff render-array preparation moved to the CPU worker. All 32 native surfaces / 755,472 vertices in the 16-formation comparison are byte-identical; prepared main-thread upload is 20.3 ms versus 2.796 s original. Worker cost remains. See result.md. Continue the original judging scope.

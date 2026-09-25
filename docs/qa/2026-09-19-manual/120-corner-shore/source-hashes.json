@@ -1,0 +1,11 @@
+{
+  "scripts/terrain/field/CliffCornerCrags.gd": "64306f0f988ef1b67639e856edac329f04db5114c1071747855b392044b2b24e",
+  "scripts/terrain/field/CliffRockDressing.gd": "5abbc50da83edf5076d465b773f6820d932ef65316fd180177a0c7a706958be1",
+  "scripts/terrain/water/WaterField.gd": "571b4df15e6f177d0932d84f97ccbe395e407a76b6042bd34f8c26684d50b97f",
+  "tests/test_september19_short_cliff_corners.gd": "882ad5dbbf7b2562c440689549e25f8421bb695aabd80da1f0309016ea7df2b8",
+  "tests/fixtures/september19/corner-shore/inspect.gd": "805be184ed613225d6d60effe89eaf37dc83a262b19ad8aba75801538b386832",
+  "tests/fixtures/september19/corner-shore/corner.gd": "0a16d2bea4de35b51ad668eb2a3c9483e3fb81cd11c0c631be8f06245e3c74e1",
+  "tests/fixtures/september19/corner-shore/test_red.gd": "6c1acce013807affd69712164783474ef531f4e13eae9d8594af1c1c67c58edc",
+  "tests/fixtures/september19/corner-shore/field.gd": "1181727f7da04117ca302e73efaa2615ea96075fd6906aee18f52a6d60cb47b9",
+  "tests/fixtures/september19/corner-shore/before_corner.gd": "4db26035fd44cbf3f3d33346b0b3623575de8cbfd2ffc127bcb02a6cd5c4db53"
+}

@@ -1,0 +1,34 @@
+{
+  "P10": {
+    "points": 441,
+    "ground_changed": 204,
+    "ground_delta_min": -7.640213012695298,
+    "ground_delta_max": 40.0,
+    "water_before": 238,
+    "water_after": 99,
+    "wet_to_dry": 139,
+    "dry_to_wet": 0,
+    "retained_water_delta_min": -7.6500091552734295,
+    "retained_water_delta_max": 0.6998596191406001,
+    "water_controls": [
+      9,
+      8
+    ]
+  },
+  "P21": {
+    "points": 441,
+    "ground_changed": 21,
+    "ground_delta_min": -6.786087036132819,
+    "ground_delta_max": 0.8813934326171893,
+    "water_before": 226,
+    "water_after": 211,
+    "wet_to_dry": 27,
+    "dry_to_wet": 12,
+    "retained_water_delta_min": -11.45748901367186,
+    "retained_water_delta_max": 4.2497711181641,
+    "water_controls": [
+      8,
+      7
+    ]
+  }
+}

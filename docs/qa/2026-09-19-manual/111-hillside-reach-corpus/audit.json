@@ -1,0 +1,58 @@
+{
+  "candidate_cells": 147,
+  "sources": 103,
+  "stations": 14885,
+  "seeds": [
+    {
+      "seed": 2697992464,
+      "sources": 36,
+      "before_counts": {
+        "native_terminal": 35,
+        "station_budget": 1
+      },
+      "after_counts": {
+        "native_terminal": 36
+      },
+      "query_order_equal": true,
+      "changed_sources": [
+        "(-4, -3)",
+        "(-4, -4)",
+        "(-6, -4)"
+      ],
+      "max_join_drop": 52.283497095108,
+      "max_radius": 2357.98754882812,
+      "routes_revisiting_a_channel": 4
+    },
+    {
+      "seed": 1,
+      "sources": 30,
+      "before_counts": {
+        "native_terminal": 30
+      },
+      "after_counts": {
+        "native_terminal": 30
+      },
+      "query_order_equal": true,
+      "changed_sources": [],
+      "max_join_drop": 28.5,
+      "max_radius": 2399.69897460938,
+      "routes_revisiting_a_channel": 4
+    },
+    {
+      "seed": 9,
+      "sources": 37,
+      "before_counts": {
+        "native_terminal": 37
+      },
+      "after_counts": {
+        "native_terminal": 37
+      },
+      "query_order_equal": true,
+      "changed_sources": [],
+      "max_join_drop": 49.5752301216125,
+      "max_radius": 2392.41723632812,
+      "routes_revisiting_a_channel": 2
+    }
+  ],
+  "production_water_and_pass110_sources_unchanged": true
+}

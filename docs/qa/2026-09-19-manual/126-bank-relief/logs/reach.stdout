@@ -1,0 +1,36 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/fixtures/september19/bank-relief/test_reach.gd
+[0m* test_bank_dressing_continues_through_visible_waterline
+* test_fully_wet_cliff_does_not_admit_a_bank_under_a_fall
+* test_narrow_channel_cannot_receive_the_bank_projection
+SHORE_REJECT (-490.5, 8.0, 312.0) wall clearance=9636
+* test_dry_formation_keeps_exact_original_geometry
+[1m4/4 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 4
+Passing Tests         4
+Asserts               6
+Time              51.903s
+
+
+[32m---- All tests passed! ----
+[0m

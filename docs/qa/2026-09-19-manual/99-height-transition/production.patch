@@ -1,0 +1,213 @@
+--- a/scripts/terrain/field/CliffRockCrags.gd
++++ b/scripts/terrain/field/CliffRockCrags.gd
+@@ -80,7 +80,7 @@
+  var i:=floori(x);var t:=smoothstep(0.0,1.0,x-i)
+  return lerpf(Helper.position_hash01(Vector3(i,salt,0),salt),Helper.position_hash01(Vector3(i+1,salt,0),salt),t)
+ 
+-static func make(pose:Transform3D,width:float,height:float,seed_value:int,region:HeightfieldRegion=null,left_end:bool=false,right_end:bool=false,ledge_joins:Array=[])->Array[Dictionary]:
++static func make(pose:Transform3D,width:float,height:float,seed_value:int,region:HeightfieldRegion=null,left_end:bool=false,right_end:bool=false,ledge_joins:Array=[],edge_heights:Vector2=Vector2.ZERO,buried_floors:Dictionary={})->Array[Dictionary]:
+  if _wall_depth.is_empty():prepare()
+  var steps:=maxi(2,roundi(width/.25));var columns:Array=[];var column_bands:Array=[]
+  var faces:=PackedVector3Array();var green:=PackedVector3Array();var broad_turf:Dictionary={}
+@@ -90,9 +90,7 @@
+ 
+  for ix in steps+1:
+   var x:float=-width*.5+width*float(ix)/steps;var u:=coordinate+x
+-  var fade:=1.0
+-  if left_end:fade*=smoothstep(0.0,2.5,x+width*.5)
+-  if right_end:fade*=smoothstep(0.0,2.5,width*.5-x)
++  var fade:=_end_fade(x,0.0,width,left_end,right_end,edge_heights)
+   var core:=lerpf(1.6,2.0,_noise(u/13.0,salt+53))*clampf(height/10.0,.35,1.15)
+   var boulder:=2.5*smoothstep(.38,.84,_noise(u/5.7,salt+83))*clampf(height/16.0,.25,1.0)
+   var crest:=height-.08-minf(2.6,height*.25)*pow(_noise(u/3.7,salt+91),12.0)
+@@ -155,11 +153,11 @@
+    var samples:=_height_samples(previous_y,top)
+    for y:float in samples:
+     var depth:float=_surface_depth(u,y,core,crest,boulder,salt,fractures,masses,cuts,cut+1,detail_cache)
+-    points.append(Vector3(x,y,_attach(depth,u,y,fade)))
++    points.append(Vector3(x,y,_attach(depth,u,y,_end_fade(x,y,width,left_end,right_end,edge_heights))))
+    bands.append([band_start,points.size()-1,false])
+    band_start=points.size()-1
+    var depth:float=_surface_depth(u,top-cut_drop,core,crest,boulder,salt,fractures,masses,cuts,cut,detail_cache)
+-   var front:=_attach(depth,u,top-cut_drop,fade)
++   var front:=_attach(depth,u,top-cut_drop,_end_fade(x,top-cut_drop,width,left_end,right_end,edge_heights))
+    var outward:=maxf(0.0,front-points[-1].z)
+    var available:float=top-float(cuts[cut-1][0]) if cut>0 else top
+    # Keep the measured front depth: re-sampling it at the lowered lip makes
+@@ -184,10 +182,12 @@
+    for z:float in [0.0,total_foot*.5,total_foot]:
+     var foot:Vector3=pose*Vector3(x,0,z)
+     floor_y=minf(floor_y,TerrainSurfaceField.surface_y(region,foot.x,foot.z)-pose.origin.y-.2)
++  # Snapshot replay retains each sampled column's actual ground support.
++  if region==null and buried_floors.has(x):floor_y=buried_floors[x]
+   var band_start:=points.size()-1
+   for y:float in _height_samples(previous_y,floor_y):
+    var depth:float=_surface_depth(u,y,core,crest,boulder,salt,fractures,masses,cuts,0,detail_cache)
+-   points.append(Vector3(x,y,_attach(depth,u,y,fade)))
++   points.append(Vector3(x,y,_attach(depth,u,y,_end_fade(x,y,width,left_end,right_end,edge_heights))))
+   bands.append([band_start,points.size()-1,false])
+   # A shallow independent face covers the periodic backing away from actual
+   # joins. Broad continuous relief gives it variation without a crack network.
+@@ -197,6 +197,7 @@
+   for i in range(2,points.size()):
+    points[i]=points[i].snapped(Vector3.ONE*.0001)
+    var p:Vector3=points[i]
++   fade=_end_fade(x,p.y,width,left_end,right_end,edge_heights)
+    var native:=_native_depth(coordinate+p.x,p.y)
+    var drop:=height-p.y
+    var collar:=smoothstep(1.05,minf(3.0,height*.7),drop)
+@@ -329,12 +330,13 @@
+    var outward:Vector3=Vector3.LEFT if ix==0 else Vector3.RIGHT
+    if (tri[2]-tri[0]).cross(tri[1]-tri[0]).dot(outward)>0:_triangle(faces,tri[0],tri[1],tri[2])
+    else:_triangle(faces,tri[0],tri[2],tri[1])
+- _shape_stone_faces(faces,green,tread_edges,coordinate,width,height,salt,left_end,right_end)
++ _shape_stone_faces(faces,green,tread_edges,coordinate,width,height,salt,left_end,right_end,edge_heights)
+  var bounds:=AABB(faces[0],Vector3.ZERO)
+  for p:Vector3 in faces:bounds=bounds.expand(p)
+  var form:Dictionary={"faces":faces,"green":green,"bounds":pose*bounds,"transform":pose,"anchor":pose.origin,
+   "replay_recipe":{"kind":"wall","width":width,"height":height,"left_end":left_end,"right_end":right_end,"seed":seed_value},
+   "id":"worn_crag/%s/%s"%[pose.origin,pose.basis.z],"asset":&"cliff.native_crag","kind":"rock","native_crag":true,"top":(pose*bounds).end.y,"base":(pose*bounds).position.y}
++ if edge_heights!=Vector2.ZERO:form.replay_recipe["edge_heights"]=edge_heights
+  if not ledge_joins.is_empty():
+   LEDGE_JOIN.apply(form,ledge_joins)
+   form.replay_recipe["ledge_joins"]=ledge_joins.duplicate(true)
+@@ -953,7 +955,7 @@
+ 
+ # Shape the completed physical shell. The finished turf and tread topology owns
+ # its bearing vertices, including tapered tips stitched into adjoining risers.
+-static func _shape_stone_faces(faces:PackedVector3Array,green:PackedVector3Array,tread_edges:Dictionary,coordinate:float,width:float,height:float,salt:int,left_end:bool,right_end:bool)->void:
++static func _shape_stone_faces(faces:PackedVector3Array,green:PackedVector3Array,tread_edges:Dictionary,coordinate:float,width:float,height:float,salt:int,left_end:bool,right_end:bool,edge_heights:Vector2=Vector2.ZERO)->void:
+  var unshaped:=faces.duplicate()
+  var caps:Dictionary={};var roots:Dictionary={};var feet:Dictionary={}
+  var bearing:Dictionary={}
+@@ -1004,8 +1006,7 @@
+   # full-strength lower formations still grow with descent.
+   # Broad shelf transitions keep new shoulders below the usable turf surface.
+   var weight:=smoothstep(.15,LEDGE_RELIEF_BLEND_RADIUS,cap_distance)*maxf(smoothstep(.25,.5,descent),.4*smoothstep(1.3,4.0,drop))*smoothstep(0.0,.8,p.y-roots[p.x])
+-  if left_end:weight*=smoothstep(0.0,2.5,p.x+width*.5)
+-  if right_end:weight*=smoothstep(0.0,2.5,width*.5-p.x)
++  weight*=_end_fade(p.x,p.y,width,left_end,right_end,edge_heights)
+   var shapes:Array=columns[p.x]
+   var detail:=_shoulder_depth(p.y,height,shapes[0])
+   var existing:=_shoulder_depth(p.y,height,shapes[1])
+@@ -1091,3 +1092,13 @@
+     var h:=maxf(radius-absf(result[row]-support),0.0)/radius if radius>0.0 else 0.0
+     result[row]=maxf(result[row],support)+h*h*radius*.25
+  return result
++
++static func _end_fade(x:float,y:float,width:float,left_end:bool,right_end:bool,heights:Vector2)->float:
++ var result:=1.0
++ if left_end:
++  var connected:=1.0-smoothstep(maxf(0.0,heights.x-1.0),heights.x,y) if heights.x>0.0 else 0.0
++  result*=lerpf(smoothstep(0.0,2.5,x+width*.5),1.0,connected)
++ if right_end:
++  var connected:=1.0-smoothstep(maxf(0.0,heights.y-1.0),heights.y,y) if heights.y>0.0 else 0.0
++  result*=lerpf(smoothstep(0.0,2.5,width*.5-x),1.0,connected)
++ return result
+--- a/scripts/terrain/field/CliffRockRelief.gd
++++ b/scripts/terrain/field/CliffRockRelief.gd
+@@ -185,8 +185,15 @@
+    for j in length:runs.erase(run+Vector3i(j,0,0))
+    var width:=length*3.0;var bottom:=float(run.y)/1000.0;var height:=float(run.z-run.y)/1000.0
+    var origin:Vector3=plane.basis.x*(run.x*3.0+width*.5)+plane.basis.z*float(plane.depth);origin.y=bottom
++   var left_end:=not all_runs.has(run-Vector3i(1,0,0))
++   var right_end:=not all_runs.has(run+Vector3i(length,0,0))
++   # A height change is only an exposed end above the adjoining wall. Read
++   # the actual adjacent native column, independent of canonical panel width.
++   var shared:=Vector2.ZERO
++   if left_end:shared.x=_shared_column_height(plane.columns.get(run.x-1,[]),bottom,height)
++   if right_end:shared.y=_shared_column_height(plane.columns.get(run.x+length,[]),bottom,height)
+    result.append({"pose":Transform3D(plane.basis,origin),"width":width,"height":height,
+-    "left_end":not all_runs.has(run-Vector3i(1,0,0)),"right_end":not all_runs.has(run+Vector3i(length,0,0))})
++    "left_end":left_end,"right_end":right_end,"edge_heights":shared})
+  return result
+ 
+ static func grass_supports(rock:Dictionary,neighbors:Array)->Array[Dictionary]:
+@@ -313,3 +320,8 @@
+    var direction:Vector3=(normal+prior.normal).normalized()
+    result.append({"point":entry.point,"normal":direction,"kind":"crag"})
+  return result
++
++static func _shared_column_height(ys:Array,bottom:float,height:float)->float:
++ var shared:=0.0
++ while shared<height and ys.has(bottom+shared):shared+=4.0
++ return minf(shared,height)
+--- a/scripts/terrain/field/CliffRockDressing.gd
++++ b/scripts/terrain/field/CliffRockDressing.gd
+@@ -172,8 +172,8 @@
+  var out:Array[Dictionary]=[]
+  var panels:=RELIEF.panels(walls)
+  for record:Dictionary in panels:
+-  if record.width<6:continue
+-  for rock:Dictionary in CRAGS.make(record.pose,record.width,record.height,seed_value,region,record.left_end,record.right_end):
++  if record.width<6 and record.left_end and record.right_end and record.edge_heights==Vector2.ZERO:continue
++  for rock:Dictionary in CRAGS.make(record.pose,record.width,record.height,seed_value,region,record.left_end,record.right_end,[],record.edge_heights):
+    var footprint:=_footprint(rock.bounds)
+    if region!=null and region.has_grade_effect_in(footprint.grow(.1)):continue
+    if features!=null and features.overlaps_clearance(FeatureGroundShape.axis_rect(footprint),.3):continue
+--- a/scripts/terrain/field/CliffInnerConnections.gd
++++ b/scripts/terrain/field/CliffInnerConnections.gd
+@@ -23,22 +23,30 @@
+    var width:float=other.replay_recipe.width
+    var left:bool=relative.x<0
+    var gap:=absf(relative.x)-width*.5
+-   if gap<.01 or gap>2.0:continue
+-   if float(other.replay_recipe.height)>float(corner.replay_recipe.height)+.001 and not _upper_wall_backs_extension(other,left,float(corner.replay_recipe.height),forms):continue
+-   parents.append([index,left]);directions[normal.round()]=true
+-  if parents.size()!=2 or directions.size()!=2:continue
++   if gap< -1.501 or gap>2.0:continue
++   var extension:float=0.0 if gap<=0.0 else EXTENSION
++   if extension>0.0 and float(other.replay_recipe.height)>float(corner.replay_recipe.height)+.001 and not _upper_wall_backs_extension(other,left,float(corner.replay_recipe.height),forms):continue
++   # A native panel may already cross the corner coordinate. Use that bearing
++   # before extending a more distant panel through the same space.
++   var direction:=normal.round()
++   var score:=maxf(0.0,gap)
++   if not directions.has(direction) or score<float(directions[direction][3]) or (is_equal_approx(score,float(directions[direction][3])) and str(other.id)<str(forms[directions[direction][0]].id)):
++    directions[direction]=[index,left,extension,score]
++  var ordered:Array=directions.keys();ordered.sort()
++  for direction:Vector3 in ordered:parents.append(directions[direction])
++  if parents.size()!=2:continue
+   var stepped:=false;var all_terminal:=true
+   for parent:Array in parents:
+    var recipe:Dictionary=forms[parent[0]].replay_recipe
+    stepped=stepped or float(recipe.height)>float(corner.replay_recipe.height)+.001
+-   all_terminal=all_terminal and bool(recipe.left_end if parent[1] else recipe.right_end)
++   all_terminal=all_terminal and (float(parent[2])==0.0 or bool(recipe.left_end if parent[1] else recipe.right_end))
+   if not stepped and not all_terminal:continue
+   var candidates:Array=[];var admitted:=true
+   for parent:Array in parents:
+    var original:Dictionary=forms[parent[0]];var recipe:Dictionary=original.replay_recipe
+-   var left:bool=parent[1];var pose:Transform3D=original.transform
+-   pose.origin+=pose.basis.x*(-1.0 if left else 1.0)*EXTENSION*.5
+-   var fresh:Dictionary=CRAGS.make(pose,recipe.width+EXTENSION,recipe.height,recipe.seed,region,recipe.left_end and not left,recipe.right_end and left,recipe.get("ledge_joins",[]))[0]
++   var left:bool=parent[1];var extension:float=parent[2];var pose:Transform3D=original.transform
++   pose.origin+=pose.basis.x*(-1.0 if left else 1.0)*extension*.5
++   var fresh:Dictionary=CRAGS.make(pose,recipe.width+extension,recipe.height,recipe.seed,region,recipe.left_end and (extension==0.0 or not left),recipe.right_end and (extension==0.0 or left),recipe.get("ledge_joins",[]),recipe.get("edge_heights",Vector2.ZERO))[0]
+    # Keep the canonical source owner. Shifting a mesh centre across a cell
+    # boundary must not transfer its publication to a different chunk.
+    fresh.anchor=original.anchor;fresh.id=original.id
+--- a/tests/fixtures/cliff_snapshot_replay.gd
++++ b/tests/fixtures/cliff_snapshot_replay.gd
+@@ -12,13 +12,20 @@
+   result=corner.make(pose,recipe.height,seed_value)
+  else:
+   assert(recipe.kind=="wall","Unknown cliff snapshot construction")
+-  if recipe.has("ledge_joins"):
++  if recipe.has("edge_heights"):
++   result=wall.make(pose,recipe.width,recipe.height,seed_value,null,recipe.left_end,recipe.right_end,recipe.get("ledge_joins",[]),recipe.edge_heights,_column_floors(faces))[0]
++  elif recipe.has("ledge_joins"):
+    result=wall.make(pose,recipe.width,recipe.height,seed_value,null,recipe.left_end,recipe.right_end,recipe.ledge_joins)[0]
+   else:
+    result=wall.make(pose,recipe.width,recipe.height,seed_value,null,recipe.left_end,recipe.right_end)[0]
+  if recipe.has("inner_connections"):result.replay_recipe["inner_connections"]=recipe.inner_connections.duplicate()
+- _restore_floor(result,box.position.y)
++ if not recipe.has("edge_heights"):_restore_floor(result,box.position.y)
+  return result
++
++static func _column_floors(faces:PackedVector3Array)->Dictionary:
++ var floors:Dictionary={}
++ for point:Vector3 in faces:floors[point.x]=minf(floors.get(point.x,INF),point.y)
++ return floors
+ 
+ static func _bounds(faces:PackedVector3Array)->AABB:
+  assert(not faces.is_empty())

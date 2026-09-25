@@ -1,0 +1,10 @@
+{
+  "points": 441,
+  "ground_changed": 204,
+  "ground_delta_min": -7.640213012695298,
+  "ground_delta_max": 40.0,
+  "water_before": 0,
+  "water_after": 0,
+  "wet_to_dry": 0,
+  "dry_to_wet": 0
+}

@@ -1,0 +1,20 @@
+--- before/scripts/terrain/features/villages/VillageWarrenFabricSolver.gd
++++ after/scripts/terrain/features/villages/VillageWarrenFabricSolver.gd
+@@ -968,6 +968,17 @@
+ 				Vector3.ONE * FabricRecipe.CELL_SIZE)
+ 			bounds = cell_bounds if not initialized else bounds.merge(cell_bounds)
+ 			initialized = true
++	# The finished retained ground is built town mass too. In particular a
++	# raised garden can extend beyond every room and public floor. Omitting it
++	# let the external road run through its stone base. Use the same transaction
++	# as the renderer, so withdrawn suspended support markers stay withdrawn.
++	var skin := SettlementFabricAssembler.maze_ground_skin_transaction(fabric)
++	for cell: Vector3i in skin.retained:
++		var corner := (Vector3(cell) - Vector3(0.5, 0.0, 0.5)) \
++			* FabricRecipe.CELL_SIZE
++		var cell_bounds := AABB(corner, Vector3.ONE * FabricRecipe.CELL_SIZE)
++		bounds = cell_bounds if not initialized else bounds.merge(cell_bounds)
++		initialized = true
+ 	assert(initialized)
+ 	return bounds
+ 

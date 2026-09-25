@@ -1,0 +1,48 @@
+{
+  "max_patch_radius": 2.40828906847195,
+  "mismatches": 0,
+  "new_instances": 0,
+  "tiles": [
+    {
+      "after": 76,
+      "before": 76,
+      "identical_whole_split": true,
+      "local_caps": 70,
+      "local_rocks": 6,
+      "outside_queries": 0,
+      "queries": 487229,
+      "tile": "(-22, 13)"
+    },
+    {
+      "after": 79,
+      "before": 79,
+      "identical_whole_split": true,
+      "local_caps": 51,
+      "local_rocks": 6,
+      "outside_queries": 0,
+      "queries": 432403,
+      "tile": "(-21, 13)"
+    },
+    {
+      "after": 214,
+      "before": 214,
+      "identical_whole_split": true,
+      "local_caps": 43,
+      "local_rocks": 5,
+      "outside_queries": 0,
+      "queries": 285838,
+      "tile": "(-22, 14)"
+    },
+    {
+      "after": 134,
+      "before": 134,
+      "identical_whole_split": true,
+      "local_caps": 0,
+      "local_rocks": 8,
+      "outside_queries": 0,
+      "queries": 549445,
+      "tile": "(-21, 14)"
+    }
+  ],
+  "whole_outside_queries": 0
+}

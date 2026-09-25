@@ -1,0 +1,57 @@
+--- before/SettlementFabricAssembler.gd
++++ after/SettlementFabricAssembler.gd
+@@ -1806,7 +1806,8 @@
+ 	var room_volume := plan.inhabited_room_cells()
+ 	var enclosed := solids.duplicate()
+ 	enclosed.merge(room_volume)
+-	out.append_from(masonry_corner_joints(retained, enclosed))
++	out.append_from(masonry_corner_joints(retained, enclosed, plan.world_seed,
++		plan.asset_wall_interfaces))
+ 	out.append_from(masonry_room_returns(retained, room_volume, walked))
+ 	out.append_from(masonry_room_seams(retained, room_volume, walked, shell.treatments))
+ 	# Terrain-parity surface: grass is one exact procedural cell union, never a
+@@ -3205,11 +3206,12 @@
+ 	return out
+ 
+ 
+-static func masonry_corner_joints(retained: Dictionary, solids: Dictionary) \
+-		-> EnvironmentInstancePayload:
++static func masonry_corner_joints(retained: Dictionary, solids: Dictionary,
++		world_seed: int = 0, wall_interfaces: Dictionary = {}) -> EnvironmentInstancePayload:
+ 	## Recessed wall skins leave an open joint at a three-cell concave corner
+-	## or a two-cell diagonal contact. One timber member owns that lattice vertex
+-	## through each occupied band. Straight runs and buried four-cell vertices
++	## or a two-cell diagonal contact. Retaining-only contacts share the native
++	## stone and district tint. Contacts with an inhabited room keep their timber
++	## member. Straight runs and buried four-cell vertices
+ 	## need no extra member. All owners discover the same integer key.
+ 	var occupied := solids.duplicate()
+ 	occupied.merge(retained)
+@@ -3232,6 +3234,27 @@
+ 	for key: Vector3i in keys:
+ 		var position := Vector3(key.x * FabricRecipe.CELL_SIZE * 0.5,
+ 			key.y * FabricRecipe.CELL_SIZE, key.z * FabricRecipe.CELL_SIZE * 0.5)
++		var stone_only := true
++		var owner := Vector3i(2147483647, key.y, 2147483647)
++		for dx: int in [-1,1]:
++			for dz: int in [-1,1]:
++				var cell := Vector3i((key.x + dx)/2, key.y, (key.z + dz)/2)
++				if retained.has(cell):
++					if cell < owner: owner = cell
++				elif solids.has(cell):
++					stone_only = false
++		if stone_only:
++			var stock: AABB = wall_interfaces.get(MAZE_STONE_MODULE, {}).get(
++				"visual_bounds", AABB(Vector3(-0.8810776,0,-0.3319437),
++					Vector3(1.7701733,3.0001225,0.66388714)))
++			var basis := Basis.from_scale(Vector3(width/stock.size.x,
++				FabricRecipe.CELL_SIZE/stock.size.y,width/stock.size.z))
++			var pose := Transform3D(basis, position - basis*Vector3(
++				stock.get_center().x, stock.position.y, stock.get_center().z))
++			out.add(MAZE_STONE_MODULE,pose,
++				maze_masonry_tint(Vector4i(owner.x,owner.y,owner.z,0),world_seed),
++				StringName("masonry-joint/%d/%d/%d" % [key.x,key.y,key.z]))
++			continue
+ 		out.add(TIMBER_SUPPORT, Transform3D(Basis.from_scale(Vector3(
+ 			width / 0.28136563, FabricRecipe.CELL_SIZE / 3.0,
+ 			width / 0.5908542)), position), Color.WHITE,

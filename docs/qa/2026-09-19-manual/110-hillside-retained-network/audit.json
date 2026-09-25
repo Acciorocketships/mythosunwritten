@@ -1,0 +1,62 @@
+{
+  "forward_reverse_identical": true,
+  "total_stations": 1326,
+  "routes": [
+    {
+      "source": "(-2, -1)",
+      "stations": 64,
+      "arc": 759.579459190369,
+      "max_distance_from_source": 396.7956808157655,
+      "uphill_steps": 0,
+      "terminal": "native_terminal"
+    },
+    {
+      "source": "(-2, -2)",
+      "stations": 31,
+      "arc": 440.903240203857,
+      "max_distance_from_source": 353.37640036576386,
+      "uphill_steps": 0,
+      "terminal": "native_terminal"
+    },
+    {
+      "source": "(-3, -1)",
+      "stations": 259,
+      "arc": 3096.00048542023,
+      "max_distance_from_source": 2312.498177998108,
+      "uphill_steps": 0,
+      "terminal": "native_terminal"
+    },
+    {
+      "source": "(-3, -2)",
+      "stations": 308,
+      "arc": 3711.59373855591,
+      "max_distance_from_source": 863.4922038742463,
+      "uphill_steps": 0,
+      "terminal": "native_terminal"
+    },
+    {
+      "source": "(-3, -4)",
+      "stations": 154,
+      "arc": 1875.43271446228,
+      "max_distance_from_source": 1292.075133964121,
+      "uphill_steps": 0,
+      "terminal": "native_terminal"
+    },
+    {
+      "source": "(-4, -1)",
+      "stations": 180,
+      "arc": 2152.44267654419,
+      "max_distance_from_source": 1347.1216770409712,
+      "uphill_steps": 0,
+      "terminal": "native_terminal"
+    },
+    {
+      "source": "(-4, -3)",
+      "stations": 330,
+      "arc": 3959.14245223999,
+      "max_distance_from_source": 2628.0681702968427,
+      "uphill_steps": 0,
+      "terminal": "native_terminal"
+    }
+  ]
+}

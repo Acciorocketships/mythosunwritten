@@ -1,0 +1,47 @@
+{
+  "collar": {
+    "degenerate": 0,
+    "edge_incidence": {
+      "2": 20274
+    },
+    "green_triangles": 332,
+    "minimum_area": 0.000120298507681582,
+    "triangles": 13516
+  },
+  "loft": {
+    "degenerate": 0,
+    "edge_incidence": {
+      "2": 21054
+    },
+    "green_triangles": 4730,
+    "minimum_area": 0.000016697849787306,
+    "triangles": 14036
+  },
+  "semantic": {
+    "degenerate": 0,
+    "edge_incidence": {
+      "2": 20274
+    },
+    "green_triangles": 512,
+    "minimum_area": 0.00023109299945645,
+    "triangles": 13516
+  },
+  "tangent": {
+    "degenerate": 0,
+    "edge_incidence": {
+      "2": 20268
+    },
+    "green_triangles": 384,
+    "minimum_area": 0.0000120176491691382,
+    "triangles": 13512
+  },
+  "tread": {
+    "degenerate": 0,
+    "edge_incidence": {
+      "2": 20274
+    },
+    "green_triangles": 384,
+    "minimum_area": 0.00023109299945645,
+    "triangles": 13516
+  }
+}

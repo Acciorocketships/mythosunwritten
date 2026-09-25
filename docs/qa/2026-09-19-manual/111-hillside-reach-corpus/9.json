@@ -1,0 +1,928 @@
+{
+  "candidate_cells": 49,
+  "counts": {
+    "native_terminal": 37
+  },
+  "elapsed_ms": 61832,
+  "failures": [],
+  "routes": [
+    {
+      "arc": 1446.69957923889,
+      "jumps": [
+        {
+          "from_bed": 7.5,
+          "from_owner": "(-6, -6)",
+          "from_station": 119,
+          "to_bed": 2.68076920509338,
+          "to_owner": "(-3, -8)",
+          "to_station": 273
+        }
+      ],
+      "max_drop": 4.81923079490662,
+      "max_radius": 1032.642578125,
+      "nodes": 121,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-6, -6)",
+      "terminal_owner": "(-3, -8)",
+      "terminal_station": 273,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 1201.28470993042,
+      "jumps": [
+        {
+          "from_bed": 7.5,
+          "from_owner": "(-5, -6)",
+          "from_station": 41,
+          "to_bed": 7.5,
+          "to_owner": "(-6, -6)",
+          "to_station": 63
+        },
+        {
+          "from_bed": 7.5,
+          "from_owner": "(-6, -6)",
+          "from_station": 119,
+          "to_bed": 2.68076920509338,
+          "to_owner": "(-3, -8)",
+          "to_station": 273
+        }
+      ],
+      "max_drop": 4.81923079490662,
+      "max_radius": 1004.91552734375,
+      "nodes": 100,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-5, -6)",
+      "terminal_owner": "(-3, -8)",
+      "terminal_station": 273,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 2641.71588516235,
+      "jumps": [
+        {
+          "from_bed": 21.2936820983887,
+          "from_owner": "(-3, -6)",
+          "from_station": 99,
+          "to_bed": -1.0,
+          "to_owner": "(-1, -7)",
+          "to_station": 119
+        }
+      ],
+      "max_drop": 22.2936820983887,
+      "max_radius": 1063.12524414062,
+      "nodes": 221,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-3, -6)",
+      "terminal_owner": "(-1, -7)",
+      "terminal_station": 239,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 1459.64090061188,
+      "jumps": [
+        {
+          "from_bed": 3.36337161064148,
+          "from_owner": "(-2, -6)",
+          "from_station": 105,
+          "to_bed": -0.5,
+          "to_owner": "(0, -9)",
+          "to_station": 207
+        }
+      ],
+      "max_drop": 3.86337161064148,
+      "max_radius": 1038.93811035156,
+      "nodes": 122,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-2, -6)",
+      "terminal_owner": "(0, -9)",
+      "terminal_station": 222,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 122.263814926147,
+      "jumps": [
+        {
+          "from_bed": 111.5,
+          "from_owner": "(0, -6)",
+          "from_station": 0,
+          "to_bed": 107.5,
+          "to_owner": "(0, -7)",
+          "to_station": 1
+        }
+      ],
+      "max_drop": 4.0,
+      "max_radius": 41.9445724487305,
+      "nodes": 11,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(0, -6)",
+      "terminal_owner": "(0, -7)",
+      "terminal_station": 10,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 1489.83661460876,
+      "jumps": [
+        {
+          "from_bed": 14.8491525650024,
+          "from_owner": "(-5, -5)",
+          "from_station": 43,
+          "to_bed": 1.48140120506287,
+          "to_owner": "(-3, -5)",
+          "to_station": 251
+        },
+        {
+          "from_bed": 1.40975177288055,
+          "from_owner": "(-3, -5)",
+          "from_station": 327,
+          "to_bed": -0.5,
+          "to_owner": "(-9, -6)",
+          "to_station": 218
+        },
+        {
+          "from_bed": -0.5,
+          "from_owner": "(-9, -6)",
+          "from_station": 218,
+          "to_bed": -0.5,
+          "to_owner": "(-3, -5)",
+          "to_station": 330
+        }
+      ],
+      "max_drop": 13.3677513599396,
+      "max_radius": 871.583312988281,
+      "nodes": 123,
+      "repeated_owners": 1,
+      "rises": 0,
+      "source": "(-5, -5)",
+      "terminal_owner": "(-3, -5)",
+      "terminal_station": 330,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 2645.33213877678,
+      "jumps": [
+        {
+          "from_bed": 39.5,
+          "from_owner": "(-3, -5)",
+          "from_station": 0,
+          "to_bed": 35.5,
+          "to_owner": "(-3, -6)",
+          "to_station": 0
+        },
+        {
+          "from_bed": 21.2936820983887,
+          "from_owner": "(-3, -6)",
+          "from_station": 99,
+          "to_bed": -1.0,
+          "to_owner": "(-1, -7)",
+          "to_station": 119
+        }
+      ],
+      "max_drop": 22.2936820983887,
+      "max_radius": 1060.34387207031,
+      "nodes": 222,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-3, -5)",
+      "terminal_owner": "(-1, -7)",
+      "terminal_station": 239,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 3489.63633823395,
+      "jumps": [
+        {
+          "from_bed": 7.5,
+          "from_owner": "(0, -5)",
+          "from_station": 51,
+          "to_bed": 6.01504898071289,
+          "to_owner": "(1, -5)",
+          "to_station": 36
+        },
+        {
+          "from_bed": 6.01504898071289,
+          "from_owner": "(1, -5)",
+          "from_station": 36,
+          "to_bed": 5.98497676849365,
+          "to_owner": "(0, -5)",
+          "to_station": 53
+        },
+        {
+          "from_bed": 5.98497676849365,
+          "from_owner": "(0, -5)",
+          "from_station": 53,
+          "to_bed": 5.47739553451538,
+          "to_owner": "(1, -5)",
+          "to_station": 38
+        },
+        {
+          "from_bed": 5.47739553451538,
+          "from_owner": "(1, -5)",
+          "from_station": 38,
+          "to_bed": 4.55003213882446,
+          "to_owner": "(0, -5)",
+          "to_station": 55
+        },
+        {
+          "from_bed": 4.55003213882446,
+          "from_owner": "(0, -5)",
+          "from_station": 55,
+          "to_bed": 3.5,
+          "to_owner": "(1, -5)",
+          "to_station": 39
+        },
+        {
+          "from_bed": 0.336809903383255,
+          "from_owner": "(1, -5)",
+          "from_station": 124,
+          "to_bed": -1.0,
+          "to_owner": "(-1, -3)",
+          "to_station": 142
+        }
+      ],
+      "max_drop": 1.48495101928711,
+      "max_radius": 864.223754882812,
+      "nodes": 290,
+      "repeated_owners": 4,
+      "rises": 0,
+      "source": "(0, -5)",
+      "terminal_owner": "(-1, -3)",
+      "terminal_station": 289,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 120.001494407654,
+      "jumps": [],
+      "max_drop": 0.0,
+      "max_radius": 71.6591949462891,
+      "nodes": 11,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-6, -4)",
+      "terminal_owner": "(-6, -4)",
+      "terminal_station": 10,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 2524.96071338654,
+      "jumps": [
+        {
+          "from_bed": -0.647401034832001,
+          "from_owner": "(-5, -4)",
+          "from_station": 113,
+          "to_bed": -0.704615712165833,
+          "to_owner": "(-7, -4)",
+          "to_station": 156
+        }
+      ],
+      "max_drop": 0.0572146773338318,
+      "max_radius": 1837.67333984375,
+      "nodes": 211,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-5, -4)",
+      "terminal_owner": "(-7, -4)",
+      "terminal_station": 252,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 119.99992275238,
+      "jumps": [],
+      "max_drop": 0.0,
+      "max_radius": 70.8416976928711,
+      "nodes": 11,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-3, -4)",
+      "terminal_owner": "(-3, -4)",
+      "terminal_station": 10,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 1924.59010410309,
+      "jumps": [
+        {
+          "from_bed": 3.5,
+          "from_owner": "(-2, -4)",
+          "from_station": 57,
+          "to_bed": 3.5,
+          "to_owner": "(0, -4)",
+          "to_station": 145
+        },
+        {
+          "from_bed": 2.86281728744507,
+          "from_owner": "(0, -4)",
+          "from_station": 243,
+          "to_bed": -1.0,
+          "to_owner": "(-1, -7)",
+          "to_station": 237
+        }
+      ],
+      "max_drop": 3.86281728744507,
+      "max_radius": 699.463562011719,
+      "nodes": 160,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-2, -4)",
+      "terminal_owner": "(-1, -7)",
+      "terminal_station": 239,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 119.999953269958,
+      "jumps": [],
+      "max_drop": 0.0,
+      "max_radius": 44.483757019043,
+      "nodes": 11,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-1, -4)",
+      "terminal_owner": "(-1, -4)",
+      "terminal_station": 10,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 2550.64991760254,
+      "jumps": [
+        {
+          "from_bed": 7.5,
+          "from_owner": "(0, -4)",
+          "from_station": 66,
+          "to_bed": 1.88481366634369,
+          "to_owner": "(-2, -4)",
+          "to_station": 155
+        }
+      ],
+      "max_drop": 5.61518633365631,
+      "max_radius": 2001.6953125,
+      "nodes": 213,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(0, -4)",
+      "terminal_owner": "(-2, -4)",
+      "terminal_station": 300,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 3417.51277256012,
+      "jumps": [
+        {
+          "from_bed": 7.5,
+          "from_owner": "(-6, -3)",
+          "from_station": 126,
+          "to_bed": -0.5,
+          "to_owner": "(-9, -4)",
+          "to_station": 149
+        }
+      ],
+      "max_drop": 8.0,
+      "max_radius": 1989.02905273438,
+      "nodes": 285,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-6, -3)",
+      "terminal_owner": "(-9, -4)",
+      "terminal_station": 306,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 120.000514984131,
+      "jumps": [],
+      "max_drop": 0.0,
+      "max_radius": 60.2517433166504,
+      "nodes": 11,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-5, -3)",
+      "terminal_owner": "(-5, -3)",
+      "terminal_station": 10,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 2110.91849499941,
+      "jumps": [
+        {
+          "from_bed": 47.5,
+          "from_owner": "(-4, -3)",
+          "from_station": 0,
+          "to_bed": 47.5,
+          "to_owner": "(-4, -2)",
+          "to_station": 0
+        },
+        {
+          "from_bed": -0.5,
+          "from_owner": "(-4, -2)",
+          "from_station": 136,
+          "to_bed": -1.0,
+          "to_owner": "(-1, -2)",
+          "to_station": 246
+        }
+      ],
+      "max_drop": 0.5,
+      "max_radius": 1227.53344726562,
+      "nodes": 169,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-4, -3)",
+      "terminal_owner": "(-1, -2)",
+      "terminal_station": 276,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 1109.77945995331,
+      "jumps": [
+        {
+          "from_bed": 51.5,
+          "from_owner": "(-3, -3)",
+          "from_station": 1,
+          "to_bed": 1.92476987838745,
+          "to_owner": "(-3, 0)",
+          "to_station": 215
+        },
+        {
+          "from_bed": 1.72842276096344,
+          "from_owner": "(-3, 0)",
+          "from_station": 271,
+          "to_bed": -1.0,
+          "to_owner": "(0, -3)",
+          "to_station": 208
+        }
+      ],
+      "max_drop": 49.5752301216125,
+      "max_radius": 676.257263183594,
+      "nodes": 84,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-3, -3)",
+      "terminal_owner": "(0, -3)",
+      "terminal_station": 232,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 2286.58708286285,
+      "jumps": [
+        {
+          "from_bed": 23.5,
+          "from_owner": "(-2, -3)",
+          "from_station": 5,
+          "to_bed": 2.05364608764648,
+          "to_owner": "(-3, -1)",
+          "to_station": 194
+        },
+        {
+          "from_bed": 2.05364608764648,
+          "from_owner": "(-3, -1)",
+          "from_station": 321,
+          "to_bed": -1.0,
+          "to_owner": "(0, -3)",
+          "to_station": 178
+        }
+      ],
+      "max_drop": 21.4463539123535,
+      "max_radius": 879.599426269531,
+      "nodes": 189,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-2, -3)",
+      "terminal_owner": "(0, -3)",
+      "terminal_station": 232,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 1421.6487159729,
+      "jumps": [
+        {
+          "from_bed": 43.5,
+          "from_owner": "(-1, -3)",
+          "from_station": 12,
+          "to_bed": 7.5,
+          "to_owner": "(-3, -3)",
+          "to_station": 161
+        },
+        {
+          "from_bed": 3.5,
+          "from_owner": "(-3, -3)",
+          "from_station": 216,
+          "to_bed": -1.0,
+          "to_owner": "(-1, -1)",
+          "to_station": 186
+        }
+      ],
+      "max_drop": 36.0,
+      "max_radius": 903.838562011719,
+      "nodes": 118,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-1, -3)",
+      "terminal_owner": "(-1, -1)",
+      "terminal_station": 234,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 2954.18505096436,
+      "jumps": [
+        {
+          "from_bed": 3.5,
+          "from_owner": "(0, -3)",
+          "from_station": 44,
+          "to_bed": 0.336809903383255,
+          "to_owner": "(1, -5)",
+          "to_station": 156
+        },
+        {
+          "from_bed": -0.5,
+          "from_owner": "(1, -5)",
+          "from_station": 165,
+          "to_bed": -1.0,
+          "to_owner": "(-1, -3)",
+          "to_station": 99
+        }
+      ],
+      "max_drop": 3.16319009661674,
+      "max_radius": 1789.01623535156,
+      "nodes": 246,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(0, -3)",
+      "terminal_owner": "(-1, -3)",
+      "terminal_station": 289,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 1949.32520484924,
+      "jumps": [
+        {
+          "from_bed": 35.5,
+          "from_owner": "(-6, -2)",
+          "from_station": 25,
+          "to_bed": 11.5,
+          "to_owner": "(-6, -1)",
+          "to_station": 84
+        }
+      ],
+      "max_drop": 24.0,
+      "max_radius": 1665.23327636719,
+      "nodes": 163,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-6, -2)",
+      "terminal_owner": "(-6, -1)",
+      "terminal_station": 220,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 119.999853134155,
+      "jumps": [],
+      "max_drop": 0.0,
+      "max_radius": 38.4046516418457,
+      "nodes": 11,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-5, -2)",
+      "terminal_owner": "(-5, -2)",
+      "terminal_station": 10,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 2110.60942173004,
+      "jumps": [
+        {
+          "from_bed": -0.5,
+          "from_owner": "(-4, -2)",
+          "from_station": 136,
+          "to_bed": -1.0,
+          "to_owner": "(-1, -2)",
+          "to_station": 246
+        }
+      ],
+      "max_drop": 0.5,
+      "max_radius": 1227.77429199219,
+      "nodes": 168,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-4, -2)",
+      "terminal_owner": "(-1, -2)",
+      "terminal_station": 276,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 2741.1198348999,
+      "jumps": [
+        {
+          "from_bed": 15.5,
+          "from_owner": "(-3, -2)",
+          "from_station": 1,
+          "to_bed": 7.5,
+          "to_owner": "(-2, -3)",
+          "to_station": 87
+        },
+        {
+          "from_bed": 3.5,
+          "from_owner": "(-2, -3)",
+          "from_station": 109,
+          "to_bed": 2.05364608764648,
+          "to_owner": "(-3, -1)",
+          "to_station": 92
+        },
+        {
+          "from_bed": 2.05364608764648,
+          "from_owner": "(-3, -1)",
+          "from_station": 163,
+          "to_bed": 1.92476987838745,
+          "to_owner": "(-3, 0)",
+          "to_station": 175
+        },
+        {
+          "from_bed": 1.72842276096344,
+          "from_owner": "(-3, 0)",
+          "from_station": 271,
+          "to_bed": -1.0,
+          "to_owner": "(0, -3)",
+          "to_station": 208
+        }
+      ],
+      "max_drop": 8.0,
+      "max_radius": 1112.48803710938,
+      "nodes": 219,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-3, -2)",
+      "terminal_owner": "(0, -3)",
+      "terminal_station": 232,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 1814.7544336319,
+      "jumps": [
+        {
+          "from_bed": 35.5,
+          "from_owner": "(-1, -2)",
+          "from_station": 25,
+          "to_bed": 7.5,
+          "to_owner": "(-3, -3)",
+          "to_station": 141
+        },
+        {
+          "from_bed": 3.5,
+          "from_owner": "(-3, -3)",
+          "from_station": 216,
+          "to_bed": -1.0,
+          "to_owner": "(-1, -1)",
+          "to_station": 186
+        }
+      ],
+      "max_drop": 28.0,
+      "max_radius": 914.42822265625,
+      "nodes": 151,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-1, -2)",
+      "terminal_owner": "(-1, -1)",
+      "terminal_station": 234,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 2640.00725269318,
+      "jumps": [],
+      "max_drop": 0.0,
+      "max_radius": 1561.15490722656,
+      "nodes": 221,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-6, -1)",
+      "terminal_owner": "(-6, -1)",
+      "terminal_station": 220,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 3083.99967956543,
+      "jumps": [],
+      "max_drop": 0.0,
+      "max_radius": 2392.41723632812,
+      "nodes": 258,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-5, -1)",
+      "terminal_owner": "(-5, -1)",
+      "terminal_station": 257,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 501.665318489075,
+      "jumps": [
+        {
+          "from_bed": 15.5,
+          "from_owner": "(-4, -1)",
+          "from_station": 9,
+          "to_bed": 1.52299189567566,
+          "to_owner": "(-2, -3)",
+          "to_station": 200
+        }
+      ],
+      "max_drop": 13.9770081043243,
+      "max_radius": 266.643524169922,
+      "nodes": 42,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-4, -1)",
+      "terminal_owner": "(-2, -3)",
+      "terminal_station": 231,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 3670.39646339417,
+      "jumps": [
+        {
+          "from_bed": 2.59156465530396,
+          "from_owner": "(-3, -1)",
+          "from_station": 34,
+          "to_bed": 1.98397076129913,
+          "to_owner": "(-6, -2)",
+          "to_station": 236
+        },
+        {
+          "from_bed": 1.98397076129913,
+          "from_owner": "(-6, -2)",
+          "from_station": 296,
+          "to_bed": 1.92476987838745,
+          "to_owner": "(-3, 0)",
+          "to_station": 95
+        },
+        {
+          "from_bed": 1.72842276096344,
+          "from_owner": "(-3, 0)",
+          "from_station": 271,
+          "to_bed": -1.0,
+          "to_owner": "(0, -3)",
+          "to_station": 208
+        }
+      ],
+      "max_drop": 2.72842276096344,
+      "max_radius": 1994.98559570312,
+      "nodes": 298,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-3, -1)",
+      "terminal_owner": "(0, -3)",
+      "terminal_station": 232,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 1379.14065742493,
+      "jumps": [
+        {
+          "from_bed": 10.2315111160278,
+          "from_owner": "(-2, -1)",
+          "from_station": 113,
+          "to_bed": -0.5,
+          "to_owner": "(-1, 1)",
+          "to_station": 291
+        }
+      ],
+      "max_drop": 10.7315111160278,
+      "max_radius": 1057.03247070312,
+      "nodes": 115,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-2, -1)",
+      "terminal_owner": "(-1, 1)",
+      "terminal_station": 291,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 2807.99900436401,
+      "jumps": [],
+      "max_drop": 0.0,
+      "max_radius": 2167.0693359375,
+      "nodes": 235,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-1, -1)",
+      "terminal_owner": "(-1, -1)",
+      "terminal_station": 234,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 2944.22330284119,
+      "jumps": [
+        {
+          "from_bed": 11.5,
+          "from_owner": "(-6, 0)",
+          "from_station": 75,
+          "to_bed": 1.92687010765076,
+          "to_owner": "(-4, 0)",
+          "to_station": 135
+        },
+        {
+          "from_bed": 1.92687010765076,
+          "from_owner": "(-4, 0)",
+          "from_station": 193,
+          "to_bed": 1.25052881240845,
+          "to_owner": "(-8, 1)",
+          "to_station": 214
+        },
+        {
+          "from_bed": 1.25052881240845,
+          "from_owner": "(-8, 1)",
+          "from_station": 230,
+          "to_bed": -1.0,
+          "to_owner": "(-7, 4)",
+          "to_station": 189
+        }
+      ],
+      "max_drop": 9.57312989234924,
+      "max_radius": 975.700561523438,
+      "nodes": 237,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-6, 0)",
+      "terminal_owner": "(-7, 4)",
+      "terminal_station": 273,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 119.999917984009,
+      "jumps": [],
+      "max_drop": 0.0,
+      "max_radius": 44.2469711303711,
+      "nodes": 11,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-5, 0)",
+      "terminal_owner": "(-5, 0)",
+      "terminal_station": 10,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 1929.80499076843,
+      "jumps": [
+        {
+          "from_bed": 3.5,
+          "from_owner": "(-4, 0)",
+          "from_station": 20,
+          "to_bed": 3.5,
+          "to_owner": "(-3, 1)",
+          "to_station": 114
+        }
+      ],
+      "max_drop": 0.0,
+      "max_radius": 1364.36218261719,
+      "nodes": 161,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-4, 0)",
+      "terminal_owner": "(-3, 1)",
+      "terminal_station": 253,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 548.674143791199,
+      "jumps": [
+        {
+          "from_bed": 7.5,
+          "from_owner": "(-3, 0)",
+          "from_station": 18,
+          "to_bed": -0.5,
+          "to_owner": "(-5, -1)",
+          "to_station": 231
+        }
+      ],
+      "max_drop": 8.0,
+      "max_radius": 273.903533935547,
+      "nodes": 46,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(-3, 0)",
+      "terminal_owner": "(-5, -1)",
+      "terminal_station": 257,
+      "termination": "native_terminal"
+    },
+    {
+      "arc": 1125.84354972839,
+      "jumps": [
+        {
+          "from_bed": 23.5,
+          "from_owner": "(0, 0)",
+          "from_station": 45,
+          "to_bed": -0.5,
+          "to_owner": "(2, 1)",
+          "to_station": 228
+        }
+      ],
+      "max_drop": 24.0,
+      "max_radius": 819.347290039062,
+      "nodes": 87,
+      "repeated_owners": 0,
+      "rises": 0,
+      "source": "(0, 0)",
+      "terminal_owner": "(2, 1)",
+      "terminal_station": 268,
+      "termination": "native_terminal"
+    }
+  ],
+  "seed": 9
+}

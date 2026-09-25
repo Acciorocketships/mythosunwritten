@@ -1,0 +1,287 @@
+[
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/admission.json",
+    "bytes": 15249,
+    "sha256": "74e38d6e01aaa0e53b8248c583aeef09d1721caec6c541a2fea63fd3013e3644"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/attachment-detail-after.png",
+    "bytes": 274990,
+    "sha256": "9a1c1052bb06449464cd9065578b500b2e41caaa5a0a1ff7dfac50f7676e5d5f"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/attachment-detail-before.png",
+    "bytes": 251733,
+    "sha256": "f0eb2fadd4bc94f8951bd134e0c3e6606ff2f60fb9dc6d187230dd461c813d7b"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/bank-after--10.png",
+    "bytes": 715689,
+    "sha256": "9fbcbe06e37e82f79633b9386043faeac5995efc5709d3469f1a90e79a8c7e4a"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/bank-after--35.png",
+    "bytes": 745989,
+    "sha256": "dca2d3d3c7d62bc48082a5812d254b293843d472602f2344102cf5293a6e05ab"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/bank-after-0.png",
+    "bytes": 717411,
+    "sha256": "7fadd09f48f32b006935a4510321cc898be61d9b27eab880d6d413ab496aac51"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/bank-after-10.png",
+    "bytes": 728070,
+    "sha256": "dce9c0403fa47f433dde896bcf5358998061a3bd657c94bc66cabb6b0c0295c9"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/bank-after-35.png",
+    "bytes": 732117,
+    "sha256": "2483fa54e78c374465d1429eaacbdc8216a9438d63af955023b4f6b65fe8d169"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/bank-before--10.png",
+    "bytes": 716320,
+    "sha256": "ec3b3c6417c3964dd19178da3a32efed572c9fc0c2eb50e69f604fe48b6b36d2"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/bank-before--35.png",
+    "bytes": 744695,
+    "sha256": "3ea1760df5c4be7c871372a7280f43449eac74e8fa567cbc07cd17fdb63412c5"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/bank-before-0.png",
+    "bytes": 715790,
+    "sha256": "e906f69e1bc8ea9f0df56149e6f16002757b250bea0c6163a57c4f4d7dd3e248"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/bank-before-10.png",
+    "bytes": 726281,
+    "sha256": "13d2c72751ba7c068d7884a6ee669587d4ccc5c2b0583bc8ba631f9c7bdf91e4"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/bank-before-35.png",
+    "bytes": 734442,
+    "sha256": "0ae0c10f86d231c725bc0afca58b32d35b175561ad362df7f9529c67db743988"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/bank-highlight.png",
+    "bytes": 638738,
+    "sha256": "f20058015f488f203cc1a32ecabdf356bf8f5fa423d6dd9c1d6d21cdcb90691f"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/detail-0-after.png",
+    "bytes": 528880,
+    "sha256": "fbd1da7a4e0b1bcb9da08613caaa1d8f96d9e6b8a84d085c0028ac98101cf9d9"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/detail-0-before.png",
+    "bytes": 528739,
+    "sha256": "e78f7818c7b845fb985f005bfe858b1c15e1ae3dd47463d0539b91d7b951f1ef"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/detail-1-after.png",
+    "bytes": 444008,
+    "sha256": "86ac7e72a3adcdde6c0fa3fa58129644a137c1cf8fb334971a5dfcb94661db69"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/detail-1-before.png",
+    "bytes": 443072,
+    "sha256": "71a81ecbe3a9fb8693d25824ea6796911de42b43377582c385ffeef0ff91ae03"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/controls.log",
+    "bytes": 1073,
+    "sha256": "38325447e3abaa3234d9f56c44295aed97be1dd77c92b911cd8f72721c52945e"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/controls.stdout",
+    "bytes": 1133,
+    "sha256": "971e4d668fb2fc3642a010f9bd5c7abe0c9478ded149613f41e1ff14fb2671fc"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/green.log",
+    "bytes": 879,
+    "sha256": "b15c1c587f15d8f12ec54becca538f6e41e2f8f64f97d560dbfa3040c1e7959e"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/green.stdout",
+    "bytes": 939,
+    "sha256": "ec5c589a90b569ea62b47931e526fac937575b5cbdd67c9ae2672452cbfa0c42"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/native.log",
+    "bytes": 6092,
+    "sha256": "9d479f7f8c899ecf201ce7f31cc2b0bb5f2cc55c00bfd79313ddf98faa55590e"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/native.stdout",
+    "bytes": 6098,
+    "sha256": "bb345991b3b2b285b4467b830d6521d16027bbcaf8e9cbdc2d0356f7f6286ba2"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/overlaps.log",
+    "bytes": 3413,
+    "sha256": "fb9830ebb5a1da9d9f192d0927f2768b395dc0228bcc5bd70b7fff83bc6ddb24"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/overlaps.stdout",
+    "bytes": 3413,
+    "sha256": "fb9830ebb5a1da9d9f192d0927f2768b395dc0228bcc5bd70b7fff83bc6ddb24"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/plants.log",
+    "bytes": 777,
+    "sha256": "c28ae529f2cd1ff80f62b92d5c2e6eed7ae6fbad51af29eb94999f22335a85cb"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/plants.stdout",
+    "bytes": 783,
+    "sha256": "e1cc292dc8f1e050d09601450b9a1aa99996831ec23edb3f497ef820d88b4377"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/red.log",
+    "bytes": 1253,
+    "sha256": "184863c7ca285d4978776c03b14e7932f501aaddc612472f8d5b16bc2aa63dd4"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/red.stdout",
+    "bytes": 1339,
+    "sha256": "11b1759ce0f44179aa067231a14435c361c3ae7fdd5dc9961fcb686c7db5c70a"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/union.log",
+    "bytes": 6350,
+    "sha256": "75029e5688b49dbff529c188b48fdc301c4afe28cfedb2b889dda1f1276f211f"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/union.stdout",
+    "bytes": 6356,
+    "sha256": "dd8d0e40e9a5d136ee9ce90ffbd4f707246098ab28e2e65cbf724f4dafc972bb"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/validation.log",
+    "bytes": 488,
+    "sha256": "d2b0e35feebd2e39fa18e3cd99afc5637847623925b7f513b8d77893eab10343"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/logs/validation.stdout",
+    "bytes": 488,
+    "sha256": "d2b0e35feebd2e39fa18e3cd99afc5637847623925b7f513b8d77893eab10343"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/native-contact-unfiltered.json",
+    "bytes": 6233,
+    "sha256": "5a46bb39398ca679b816af3c7ae0f458fcf6f85ed8e6f633a48e6883a4f193e2"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/native-contact.json",
+    "bytes": 6844,
+    "sha256": "b834da15ee5e5eb70966c58b19348c1b549dd404be391a361141acb0fdd15df9"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/native-plants.json",
+    "bytes": 89,
+    "sha256": "c4d353de539b7c8bb9f33eaa7434c433f4a2dc3ae7dcefff5a61580c6fa0e4a3"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/overlap-diagnosis.json",
+    "bytes": 3851,
+    "sha256": "483ffb0beddea99f3ca07246adf589f5acc9c3da3d327b7088fbcf48f3a34cd2"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/photo--10-after.png",
+    "bytes": 717520,
+    "sha256": "f5b1c62cd7e594463b1bf430469d0a4891463f5a201ae08b3ad83664e17bdbd0"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/photo--10-before.png",
+    "bytes": 715306,
+    "sha256": "9e36add9574dc65b3698d23c7ae0ef7e7d2ebfb1f0ccd4698cf2c73284c1949f"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/photo--35-after.png",
+    "bytes": 745780,
+    "sha256": "1656094aeee14006179e27e38f6e012b03e61b6f720aa8e755e1851512172a7b"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/photo--35-before.png",
+    "bytes": 743655,
+    "sha256": "03cd848eb664e237c893b3b16f2664fc5ea44a4631e00f90674b1fd9457a8995"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/photo-0-after.png",
+    "bytes": 716841,
+    "sha256": "4a6571997716de2b2702276545fd3b988e11c5acaaf92bb620bc032fb2677bce"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/photo-0-before.png",
+    "bytes": 714483,
+    "sha256": "882cc5504e73aaad187c2205f47b4bd054016a36b158eae3882178e8df824e09"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/photo-10-after.png",
+    "bytes": 729319,
+    "sha256": "a62d578020d79ab89f86fc6d6dc978d848f39ce606793bc69512bcd78659e4e5"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/photo-10-before.png",
+    "bytes": 726486,
+    "sha256": "30c658504e8d237f5993a949bd9363635baaf20c395f5d2da338c5ad823a177b"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/photo-35-after.png",
+    "bytes": 736847,
+    "sha256": "00d70ecd28052380fc0729b0b98864e5decef191a3ea403f2f574539e4fe7060"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/photo-35-before.png",
+    "bytes": 734318,
+    "sha256": "6f7224ec4d4be661a040ae36f08b2477a2c19962a6b32bcd693ca7c21e14aaa8"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/plants.bin",
+    "bytes": 30508,
+    "sha256": "ebfae54ba4e048ab8fcff30553ff5287cdd98d39e9f1a4c5a34bd2dea9f2576c"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/result.md",
+    "bytes": 2416,
+    "sha256": "36352417192465b433559f6cd8ce9752566a8a6c64779ebb65df914e6754eaad"
+  },
+  {
+    "file": "docs/qa/2026-09-19-manual/129-bank-corridor/validated-banks.bin",
+    "bytes": 166066640,
+    "sha256": "7fd4986212766da815bf79e9d4ea9c76409af714edb7e9897871dd485fed4f0e"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-corridor/diagnose_overlaps.gd",
+    "bytes": 1181,
+    "sha256": "4cc94653a82d684a4843d307345300e2f1467199a7ea28e782e855c01fc966c0"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-corridor/fit.gd",
+    "bytes": 4279,
+    "sha256": "a8f03897b4cf5a843a8a0a1bbe2908f4792920ef8306e8408e99ee87bfe16253"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-corridor/replay.gd",
+    "bytes": 7759,
+    "sha256": "e68db7da266dd1561b9233e88313f3b847ebfd4039c18954c50aa6c2cac71773"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-corridor/replay_plants.gd",
+    "bytes": 4010,
+    "sha256": "939171fda58bb02b6a9153af6d12c755904af07d5ed2b16d784632f39e6f9b3e"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-corridor/test_corridor.gd",
+    "bytes": 2323,
+    "sha256": "7772fd897650920feda1ec6c14f277e16088d9ca751364ed9526ee63cce532f7"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-corridor/validate.gd",
+    "bytes": 2874,
+    "sha256": "9dbeb73edef7c56021333f227820aa8638f3ffb153ae028db996e7edcd12ce1a"
+  }
+]

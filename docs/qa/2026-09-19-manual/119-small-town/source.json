@@ -1,0 +1,3941 @@
+{
+  "audit": {
+    "allocatable_cell_count": 0,
+    "allocated_facade_clearance_envelope_count": 4,
+    "alternate_pitched_roof_count": 2,
+    "arcade_overhang_support_count": 0,
+    "arcade_overhang_support_feature_count": 0,
+    "atomic_neighborhood_roof_count": 0,
+    "authored_room_envelope_gate_count": 4,
+    "awning_flat_roof_terrace_count": 0,
+    "balcony_building_count": 0,
+    "balcony_feature_count": 0,
+    "balcony_target_count": 1,
+    "bare_flat_roof_count": 0,
+    "bounded_stone_base_lineage_count": 1,
+    "bracketed_overhang_feature_count": 0,
+    "bracketless_overhang_feature_count": 0,
+    "broken_atomic_roof_neighborhood_count": 0,
+    "building_count": 4,
+    "building_count_below_reference": true,
+    "building_stack_count": 7,
+    "building_variant_count": 3,
+    "building_variant_counts": {
+      "slim.orange.0": 1,
+      "tower.orange.0": 2,
+      "tower.rock.0": 1
+    },
+    "cantilever_measured_support_conflict_count": 0,
+    "cantilever_measured_support_conflict_kinds": {
+
+    },
+    "cantilever_rejection_counts": {
+
+    },
+    "cantilever_support_assignment_node_count": 0,
+    "cantilever_support_assignment_peak_count": 0,
+    "collision_flatten_trigger_details": [],
+    "collision_flattened_roof_component_count": 0,
+    "collision_flattened_roof_room_count": 0,
+    "composed_courtyard_side_count": 0,
+    "composed_courtyard_side_mask": 0,
+    "connected_building_stack_count": 7,
+    "construction_diagnostics_collected": false,
+    "construction_region_count": 62,
+    "construction_signature": "a8c09bc62f7d37626032ca0951f556cbf21cad7773065b31a57b681ce4ef7a41",
+    "continuous_ridge_join_count": 1,
+    "continuous_roof_component_count": 0,
+    "continuous_roof_eligible_run_count": 3,
+    "continuous_roof_flush_endpoint_count": 0,
+    "continuous_roof_internal_gable_count": 0,
+    "continuous_roof_joined_run_count": 0,
+    "continuous_roof_normalized_repeat_count": 0,
+    "continuous_roof_tight_cross_component_count": 0,
+    "court_displaced_parcel_count": 0,
+    "courtyard_bridge_house_count": 0,
+    "courtyard_bridge_house_feature_count": 0,
+    "covered_market_count": 0,
+    "covered_market_feature_count": 0,
+    "daylight_air_cell_count": 0,
+    "desired_facade_phase_b_count": 0,
+    "detached_building_stack_count": 0,
+    "directly_borne_integrated_cantilever_count": 0,
+    "directly_borne_irregular_projection_count": 0,
+    "door_region_count": 5,
+    "dormered_pitched_roof_count": 1,
+    "dormered_roof_unit_count": 1,
+    "elevated_courtyard_count": 0,
+    "enclosed_skywalk_count": 0,
+    "exposed_roof_feature_counts": {
+      "0": 2,
+      "1": 2
+    },
+    "exposed_roof_room_kind_counts": {
+      "slim": 1,
+      "tower": 3
+    },
+    "extra_diagonal_outcrop_diagnostic": {
+
+    },
+    "facade_bay_count": 0,
+    "facade_bay_diagnostic": {
+      "feature_kind": "facade_bay",
+      "target_source_count": 0
+    },
+    "facade_bay_feature_count": 0,
+    "facade_bay_source_count": 0,
+    "facade_bay_target_count": 0,
+    "facade_entrance_owners": {
+
+    },
+    "facade_family_counts": {
+      "orange": 3,
+      "rock": 1
+    },
+    "facade_phase_a_count": 4,
+    "facade_phase_fallback_count": 0,
+    "facade_region_count": 37,
+    "facade_style_count": 2,
+    "facade_style_counts": {
+      "slim.0": 1,
+      "tower.0": 3
+    },
+    "feature_clearance_displaced_parcel_count": 0,
+    "feature_construction_unit_count": 3,
+    "feature_count": 3,
+    "feature_portal_opening_count": 0,
+    "feature_portal_room_count": 0,
+    "feature_reserved_cell_count": 288,
+    "final_ground_frame_member_count": 0,
+    "final_ground_frame_room_ids": [],
+    "final_ground_masonry_room_ids": [],
+    "flat_roof_count": 0,
+    "flat_roof_garden_count": 0,
+    "flat_roof_garden_rejections": [],
+    "flat_roof_recipe_counts": {
+
+    },
+    "flat_roof_terrace_count": 0,
+    "frontier_gateway_direct_bearing_count": 0,
+    "frontier_gateway_support_count": 0,
+    "frontier_gateway_support_feature_count": 0,
+    "full_scale_diagonal_overlap_count": 0,
+    "full_scale_diagonal_overlap_source_count": 0,
+    "furnished_flat_roof_terrace_count": 0,
+    "gateway_supported_perimeter_parcel_count": 0,
+    "generation_source": "spatial_volumetric_warren",
+    "grounded_perimeter_parcel_count": 2,
+    "grounded_perimeter_parcel_ratio": 1.0,
+    "hero_feature_facade_fallback_count": 0,
+    "integrated_bridge_roof_count": 0,
+    "integrated_cantilever_candidate_count": 0,
+    "interstitial_join_class_counts": {
+
+    },
+    "interstitial_join_count": 0,
+    "interstitial_join_feature_count": 0,
+    "lamped_flat_roof_terrace_count": 0,
+    "landmark_skywalk_connected_count": 0,
+    "landmark_skywalk_connection_ratio": 0.0,
+    "legacy_unit_group_building_stack_count": 7,
+    "legacy_unit_group_connected_building_stack_count": 7,
+    "legacy_unit_group_detached_building_stack_count": 0,
+    "lived_in_flat_roof_terrace_count": 0,
+    "maze_asset_clearance_reservations": [
+      {
+        "columns": [
+          "(-1, -3)",
+          "(0, -3)",
+          "(-1, -2)",
+          "(0, -2)",
+          "(-3, -1)",
+          "(-2, -1)",
+          "(-1, -1)",
+          "(0, -1)"
+        ],
+        "floor": 2,
+        "id": "asset.00",
+        "support_columns": [
+          "(-4, -3)",
+          "(-3, -3)",
+          "(-2, -3)",
+          "(-4, -2)",
+          "(-3, -2)",
+          "(-2, -2)"
+        ],
+        "top": 6
+      },
+      {
+        "columns": [
+          "(1, -4)",
+          "(2, -4)",
+          "(1, -3)",
+          "(2, -3)",
+          "(1, -2)",
+          "(2, -2)",
+          "(1, -1)",
+          "(2, -1)",
+          "(3, -1)",
+          "(4, -1)",
+          "(5, -1)",
+          "(1, 0)",
+          "(2, 0)",
+          "(3, 0)",
+          "(4, 0)"
+        ],
+        "floor": 1,
+        "id": "asset.01",
+        "support_columns": [
+          "(3, -3)",
+          "(4, -3)",
+          "(5, -3)",
+          "(3, -2)",
+          "(4, -2)",
+          "(5, -2)",
+          "(3, -1)",
+          "(4, -1)",
+          "(5, -1)"
+        ],
+        "top": 5
+      },
+      {
+        "columns": [
+          "(-2, 1)",
+          "(-1, 1)",
+          "(0, 1)",
+          "(1, 1)",
+          "(2, 1)",
+          "(3, 1)",
+          "(-2, 2)",
+          "(-1, 2)",
+          "(0, 2)",
+          "(1, 2)",
+          "(2, 2)",
+          "(3, 3)",
+          "(3, 4)",
+          "(3, 5)",
+          "(-2, 6)",
+          "(-1, 6)",
+          "(0, 6)",
+          "(1, 6)",
+          "(2, 6)",
+          "(3, 6)"
+        ],
+        "floor": 0,
+        "id": "asset.02",
+        "support_columns": [
+          "(-1, 3)",
+          "(0, 3)",
+          "(1, 3)",
+          "(2, 3)",
+          "(-1, 4)",
+          "(0, 4)",
+          "(1, 4)",
+          "(2, 4)",
+          "(-1, 5)",
+          "(0, 5)",
+          "(1, 5)",
+          "(2, 5)"
+        ],
+        "top": 6
+      }
+    ],
+    "maze_asset_outcomes": [
+      {
+        "cells": [
+          "(-4, -4)",
+          "(-3, -4)",
+          "(-2, -4)",
+          "(-4, -3)",
+          "(-3, -3)",
+          "(-2, -3)",
+          "(-4, -2)",
+          "(-3, -2)",
+          "(-2, -2)"
+        ],
+        "door_walk": "(-1, 2, -2)",
+        "floor": 2,
+        "id": "asset.00",
+        "kind_id": "anchor.prefab.16",
+        "placed": true,
+        "reason": ""
+      },
+      {
+        "cells": [
+          "(3, -4)",
+          "(4, -4)",
+          "(5, -4)",
+          "(6, -4)",
+          "(3, -3)",
+          "(4, -3)",
+          "(5, -3)",
+          "(6, -3)",
+          "(3, -2)",
+          "(4, -2)",
+          "(5, -2)",
+          "(6, -2)"
+        ],
+        "door_walk": "(2, 1, -2)",
+        "floor": 1,
+        "id": "asset.01",
+        "kind_id": "anchor.prefab.11",
+        "placed": true,
+        "reason": ""
+      },
+      {
+        "cells": [
+          "(-2, 3)",
+          "(-1, 3)",
+          "(0, 3)",
+          "(1, 3)",
+          "(2, 3)",
+          "(-2, 4)",
+          "(-1, 4)",
+          "(0, 4)",
+          "(1, 4)",
+          "(2, 4)",
+          "(-2, 5)",
+          "(-1, 5)",
+          "(0, 5)",
+          "(1, 5)",
+          "(2, 5)"
+        ],
+        "door_walk": "(1, 0, 2)",
+        "floor": 0,
+        "id": "asset.02",
+        "kind_id": "anchor.prefab.14",
+        "placed": true,
+        "reason": ""
+      }
+    ],
+    "maze_asset_source_plots": [
+      {
+        "building_id": "asset.00",
+        "cells": [
+          "(-4, -4)",
+          "(-3, -4)",
+          "(-2, -4)",
+          "(-4, -3)",
+          "(-3, -3)",
+          "(-2, -3)",
+          "(-4, -2)",
+          "(-3, -2)",
+          "(-2, -2)"
+        ],
+        "door_walk": "(-1, 2, -2)",
+        "floor": 2,
+        "id": "asset.00",
+        "kind": "asset",
+        "top": 6
+      },
+      {
+        "building_id": "asset.01",
+        "cells": [
+          "(3, -4)",
+          "(4, -4)",
+          "(5, -4)",
+          "(6, -4)",
+          "(3, -3)",
+          "(4, -3)",
+          "(5, -3)",
+          "(6, -3)",
+          "(3, -2)",
+          "(4, -2)",
+          "(5, -2)",
+          "(6, -2)"
+        ],
+        "door_walk": "(2, 1, -2)",
+        "floor": 1,
+        "id": "asset.01",
+        "kind": "asset",
+        "top": 5
+      },
+      {
+        "building_id": "asset.02",
+        "cells": [
+          "(-2, 3)",
+          "(-1, 3)",
+          "(0, 3)",
+          "(1, 3)",
+          "(2, 3)",
+          "(-2, 4)",
+          "(-1, 4)",
+          "(0, 4)",
+          "(1, 4)",
+          "(2, 4)",
+          "(-2, 5)",
+          "(-1, 5)",
+          "(0, 5)",
+          "(1, 5)",
+          "(2, 5)"
+        ],
+        "door_walk": "(1, 0, 2)",
+        "floor": 0,
+        "id": "asset.02",
+        "kind": "asset",
+        "top": 6
+      }
+    ],
+    "maze_back_room_building_count": 2,
+    "maze_back_room_cell_count": 16,
+    "maze_back_room_record_count": 1,
+    "maze_back_room_rectangle_count": 2,
+    "maze_back_room_refusals": {
+
+    },
+    "maze_back_room_stamped_cell_count": 16,
+    "maze_back_room_unstamped_cells": {
+      "cells": [],
+      "count": 0
+    },
+    "maze_back_rooms_addressed": 0,
+    "maze_back_rooms_private": 2,
+    "maze_back_rooms_unstamped_cells": 0,
+    "maze_bare_crown_count": 0,
+    "maze_bridge_open_deck_cell_count": 0,
+    "maze_bridge_open_decks": 0,
+    "maze_bridge_outcomes": [],
+    "maze_bridge_rooms": 0,
+    "maze_construction_crown_unit_ids": [],
+    "maze_cross_lineage_repairs": 0,
+    "maze_crown_awning_count": 0,
+    "maze_crown_chimney_count": 0,
+    "maze_crown_dressing_recipe_counts": {
+
+    },
+    "maze_crown_fell_through_count": 0,
+    "maze_crown_planter_count": 0,
+    "maze_deck_addressed_parcel_count": 0,
+    "maze_deck_cell_count": 0,
+    "maze_declared_stack_count": 0,
+    "maze_dressed_crown_count": 0,
+    "maze_dressed_crown_ratio": 0.0,
+    "maze_flat_crown_lineage_count": 0,
+    "maze_flat_roof_count": 0,
+    "maze_isolated_flat_crown_count": 0,
+    "maze_isolated_flat_crown_details": [],
+    "maze_lid_repair_cap_count": 0,
+    "maze_lid_repair_cell_count": 0,
+    "maze_parcel_count": 2,
+    "maze_partial_plate_refused_count": 0,
+    "maze_partial_plate_tile_count": 0,
+    "maze_partial_plate_tile_recipe_counts": {
+
+    },
+    "maze_partial_plate_tiled_count": 0,
+    "maze_partial_stack_count": 0,
+    "maze_pitched_crown_lineage_count": 4,
+    "maze_pitched_partial_plate_count": 0,
+    "maze_pitched_preference_count": 2,
+    "maze_pitched_preference_parcels": [
+      "parcel.maze.house.000",
+      "parcel.maze.house.001"
+    ],
+    "maze_pitched_preferred_room_count": 4,
+    "maze_pitched_preferred_rooms": [
+      "spatial.maze_back.00.room00",
+      "spatial.maze_back.01.room00",
+      "spatial.parcel.maze.house.000.part00.room00",
+      "spatial.parcel.maze.house.001.part00.room00"
+    ],
+    "maze_pitched_refused_count": 0,
+    "maze_pitched_refused_details": [],
+    "maze_pitched_roof_count": 4,
+    "maze_pitched_roof_rooms": [
+      "spatial.maze_back.00.room00",
+      "spatial.maze_back.01.room00",
+      "spatial.parcel.maze.house.000.part00.room00",
+      "spatial.parcel.maze.house.001.part00.room00"
+    ],
+    "maze_plaza_deck_column_count": 0,
+    "maze_refused_unroomed_plot_trims": 0,
+    "maze_released_asset_envelope_cells": 418,
+    "maze_released_parapet_cell_count": 40,
+    "maze_released_required_roof_band_cells": 0,
+    "maze_released_required_roof_derived_cells": 0,
+    "maze_released_required_roof_envelope_cells": 22,
+    "maze_released_required_roof_unroomed_plot_cells": 22,
+    "maze_released_singleton_derived_rock_cells": 4,
+    "maze_released_singleton_rock_crown_cells": 4,
+    "maze_released_singleton_roof_band_cells": 0,
+    "maze_released_singleton_unroomed_plot_cells": 0,
+    "maze_remaining_singleton_rock_crown_count": 0,
+    "maze_retained_rock_cell_count": 172,
+    "maze_retained_rock_cells": 172,
+    "maze_retained_rock_skipped_reserved": 0,
+    "maze_retained_rock_stone_roof_cells": 0,
+    "maze_retained_stone_cell_count": 172,
+    "maze_retained_unroomed_plot_stone_cells": 0,
+    "maze_slab_course_cell_count": 0,
+    "maze_source_bridge_plot_outcomes": [],
+    "maze_source_bridge_refusals": [
+      {
+        "cells": [
+          "(2, 0, 0)"
+        ],
+        "endpoint_foundation_floor": 0,
+        "endpoint_foundation_groups": [
+          [
+            "(2, -1)"
+          ],
+          [
+            "(2, 1)"
+          ]
+        ],
+        "endpoint_groups": [
+          [
+            "(2, -1)"
+          ],
+          [
+            "(2, 1)"
+          ]
+        ],
+        "endpoint_support_modes": [
+          "terrain_arcade",
+          "terrain_arcade"
+        ],
+        "flanks": [
+          "(2, -1)",
+          "(2, 1)"
+        ],
+        "floor": 9,
+        "reason": "bridge endpoint rises above its connected neighborhood",
+        "room_flanks": [
+          "(2, -1)",
+          "(2, 1)"
+        ],
+        "top": 11
+      },
+      {
+        "cells": [
+          "(2, 0, -1)"
+        ],
+        "endpoint_foundation_floor": 0,
+        "endpoint_foundation_groups": [
+          [
+            "(1, -1)"
+          ],
+          [
+            "(3, -1)"
+          ]
+        ],
+        "endpoint_groups": [
+          [
+            "(1, -1)"
+          ],
+          [
+            "(3, -1)"
+          ]
+        ],
+        "endpoint_support_modes": [
+          "terrain_arcade",
+          "terrain_arcade"
+        ],
+        "flanks": [
+          "(1, -1)",
+          "(3, -1)"
+        ],
+        "floor": 9,
+        "reason": "bridge endpoint rises above its connected neighborhood",
+        "room_flanks": [
+          "(1, -1)",
+          "(3, -1)"
+        ],
+        "top": 11
+      },
+      {
+        "cells": [
+          "(2, 1, -2)"
+        ],
+        "endpoint_foundation_floor": 1,
+        "endpoint_foundation_groups": [
+          [
+            "(1, -2)"
+          ],
+          [
+            "(3, -2)",
+            "(4, -2)"
+          ]
+        ],
+        "endpoint_groups": [
+          [
+            "(1, -2)"
+          ],
+          [
+            "(3, -2)"
+          ]
+        ],
+        "endpoint_support_modes": [
+          "terrain_arcade",
+          "direct_house_wide"
+        ],
+        "flanks": [
+          "(1, -2)",
+          "(3, -2)"
+        ],
+        "floor": 5,
+        "reason": "bridge endpoint rises above its connected neighborhood",
+        "room_flanks": [
+          "(1, -2)",
+          "(3, -2)"
+        ],
+        "top": 7
+      },
+      {
+        "cells": [
+          "(1, 1, -2)"
+        ],
+        "endpoint_foundation_floor": 1,
+        "endpoint_foundation_groups": [
+          [],
+          []
+        ],
+        "endpoint_groups": [
+          [],
+          [
+            "(1, -3)"
+          ]
+        ],
+        "endpoint_support_modes": [],
+        "flanks": [
+          "(1, -1)",
+          "(1, -3)"
+        ],
+        "floor": 5,
+        "reason": "bridge storey [5, 7) has endpoint coverage 0/1 on one side and 1/1 on the other",
+        "room_flanks": [
+          "(1, -3)"
+        ],
+        "top": 7
+      },
+      {
+        "cells": [
+          "(0, 1, -2)"
+        ],
+        "endpoint_foundation_floor": 1,
+        "endpoint_foundation_groups": [
+          [
+            "(0, -1)"
+          ],
+          [
+            "(0, -3)"
+          ]
+        ],
+        "endpoint_groups": [
+          [
+            "(0, -1)"
+          ],
+          [
+            "(0, -3)"
+          ]
+        ],
+        "endpoint_support_modes": [
+          "terrain_arcade",
+          "direct_house_narrow"
+        ],
+        "flanks": [
+          "(0, -1)",
+          "(0, -3)"
+        ],
+        "floor": 6,
+        "reason": "bridge endpoint rises above its connected neighborhood",
+        "room_flanks": [
+          "(0, -1)",
+          "(0, -3)"
+        ],
+        "top": 8
+      },
+      {
+        "cells": [
+          "(-1, 2, -2)"
+        ],
+        "endpoint_foundation_floor": 2,
+        "endpoint_foundation_groups": [
+          [
+            "(-1, -1)"
+          ],
+          [
+            "(-1, -3)"
+          ]
+        ],
+        "endpoint_groups": [
+          [
+            "(-1, -1)"
+          ],
+          [
+            "(-1, -3)"
+          ]
+        ],
+        "endpoint_support_modes": [
+          "terrain_arcade",
+          "direct_house_narrow"
+        ],
+        "flanks": [
+          "(-1, -1)",
+          "(-1, -3)"
+        ],
+        "floor": 6,
+        "reason": "bridge lacks two ground-borne endpoint houses",
+        "room_flanks": [
+          "(-1, -1)",
+          "(-1, -3)"
+        ],
+        "top": 8
+      },
+      {
+        "cells": [
+          "(-1, 2, -1)"
+        ],
+        "endpoint_foundation_floor": 2,
+        "endpoint_foundation_groups": [
+          [
+            "(0, -1)"
+          ],
+          [
+            "(-2, -1)",
+            "(-3, -1)"
+          ]
+        ],
+        "endpoint_groups": [
+          [
+            "(0, -1)"
+          ],
+          [
+            "(-2, -1)"
+          ]
+        ],
+        "endpoint_support_modes": [
+          "terrain_arcade",
+          "direct_house_wide"
+        ],
+        "flanks": [
+          "(0, -1)",
+          "(-2, -1)"
+        ],
+        "floor": 6,
+        "reason": "bridge endpoint rises above its connected neighborhood",
+        "room_flanks": [
+          "(0, -1)",
+          "(-2, -1)"
+        ],
+        "top": 8
+      },
+      {
+        "cells": [
+          "(0, 2, -1)"
+        ],
+        "endpoint_foundation_floor": 2,
+        "endpoint_foundation_groups": [
+          [
+            "(0, -2)"
+          ],
+          [
+            "(0, 0)"
+          ]
+        ],
+        "endpoint_groups": [
+          [
+            "(0, -2)"
+          ],
+          [
+            "(0, 0)"
+          ]
+        ],
+        "endpoint_support_modes": [
+          "terrain_arcade",
+          "terrain_arcade"
+        ],
+        "flanks": [
+          "(0, -2)",
+          "(0, 0)"
+        ],
+        "floor": 7,
+        "reason": "bridge endpoint rises above its connected neighborhood",
+        "room_flanks": [
+          "(0, -2)",
+          "(0, 0)"
+        ],
+        "top": 9
+      },
+      {
+        "cells": [
+          "(3, 0, 0)",
+          "(4, 0, 0)"
+        ],
+        "endpoint_foundation_floor": 0,
+        "endpoint_foundation_groups": [
+          [],
+          []
+        ],
+        "endpoint_groups": [
+          [
+            "(3, -1)",
+            "(4, -1)"
+          ],
+          [
+            "(3, 1)"
+          ]
+        ],
+        "endpoint_support_modes": [],
+        "flanks": [
+          "(3, -1)",
+          "(3, 1)",
+          "(4, -1)",
+          "(4, 1)"
+        ],
+        "floor": 4,
+        "reason": "bridge storey [4, 6) has endpoint coverage 2/2 on one side and 1/2 on the other",
+        "room_flanks": [
+          "(3, -1)",
+          "(3, 1)",
+          "(4, -1)"
+        ],
+        "top": 6
+      },
+      {
+        "cells": [
+          "(3, 0, 0)"
+        ],
+        "endpoint_foundation_floor": 0,
+        "endpoint_foundation_groups": [
+          [
+            "(3, -1)"
+          ],
+          [
+            "(3, 1)"
+          ]
+        ],
+        "endpoint_groups": [
+          [
+            "(3, -1)"
+          ],
+          [
+            "(3, 1)"
+          ]
+        ],
+        "endpoint_support_modes": [
+          "terrain_arcade",
+          "terrain_arcade"
+        ],
+        "flanks": [
+          "(3, -1)",
+          "(3, 1)"
+        ],
+        "floor": 4,
+        "reason": "bridge lacks two ground-borne endpoint houses",
+        "room_flanks": [
+          "(3, -1)",
+          "(3, 1)"
+        ],
+        "top": 6
+      },
+      {
+        "cells": [
+          "(4, 0, 0)"
+        ],
+        "endpoint_foundation_floor": 0,
+        "endpoint_foundation_groups": [
+          [],
+          []
+        ],
+        "endpoint_groups": [
+          [
+            "(4, -1)"
+          ],
+          []
+        ],
+        "endpoint_support_modes": [],
+        "flanks": [
+          "(4, -1)",
+          "(4, 1)"
+        ],
+        "floor": 4,
+        "reason": "bridge storey [4, 6) has endpoint coverage 1/1 on one side and 0/1 on the other",
+        "room_flanks": [
+          "(4, -1)"
+        ],
+        "top": 6
+      },
+      {
+        "cells": [
+          "(3, 0, 1)"
+        ],
+        "endpoint_foundation_floor": 0,
+        "endpoint_foundation_groups": [
+          [],
+          []
+        ],
+        "endpoint_groups": [
+          [],
+          [
+            "(2, 1)"
+          ]
+        ],
+        "endpoint_support_modes": [],
+        "flanks": [
+          "(4, 1)",
+          "(2, 1)"
+        ],
+        "floor": 4,
+        "reason": "bridge storey [4, 6) has endpoint coverage 0/1 on one side and 1/1 on the other",
+        "room_flanks": [
+          "(2, 1)"
+        ],
+        "top": 6
+      },
+      {
+        "cells": [
+          "(2, 0, -3)"
+        ],
+        "endpoint_foundation_floor": 0,
+        "endpoint_foundation_groups": [
+          [
+            "(1, -3)"
+          ],
+          [
+            "(3, -3)"
+          ]
+        ],
+        "endpoint_groups": [
+          [
+            "(1, -3)"
+          ],
+          [
+            "(3, -3)"
+          ]
+        ],
+        "endpoint_support_modes": [
+          "terrain_arcade",
+          "terrain_arcade"
+        ],
+        "flanks": [
+          "(1, -3)",
+          "(3, -3)"
+        ],
+        "floor": 5,
+        "reason": "bridge endpoint rises above its connected neighborhood",
+        "room_flanks": [
+          "(1, -3)",
+          "(3, -3)"
+        ],
+        "top": 7
+      },
+      {
+        "cells": [
+          "(2, 0, -4)"
+        ],
+        "endpoint_foundation_floor": 0,
+        "endpoint_foundation_groups": [
+          [
+            "(1, -4)"
+          ],
+          [
+            "(3, -4)"
+          ]
+        ],
+        "endpoint_groups": [
+          [
+            "(1, -4)"
+          ],
+          [
+            "(3, -4)"
+          ]
+        ],
+        "endpoint_support_modes": [
+          "terrain_arcade",
+          "terrain_arcade"
+        ],
+        "flanks": [
+          "(1, -4)",
+          "(3, -4)"
+        ],
+        "floor": 4,
+        "reason": "bridge lacks two ground-borne endpoint houses",
+        "room_flanks": [
+          "(1, -4)",
+          "(3, -4)"
+        ],
+        "top": 6
+      },
+      {
+        "cells": [
+          "(1, 0, -4)"
+        ],
+        "endpoint_foundation_floor": 0,
+        "endpoint_foundation_groups": [
+          [
+            "(1, -3)"
+          ],
+          [
+            "(1, -5)"
+          ]
+        ],
+        "endpoint_groups": [
+          [
+            "(1, -3)"
+          ],
+          [
+            "(1, -5)"
+          ]
+        ],
+        "endpoint_support_modes": [
+          "terrain_arcade",
+          "terrain_arcade"
+        ],
+        "flanks": [
+          "(1, -3)",
+          "(1, -5)"
+        ],
+        "floor": 4,
+        "reason": "bridge endpoint rises above its connected neighborhood",
+        "room_flanks": [
+          "(1, -3)",
+          "(1, -5)"
+        ],
+        "top": 6
+      },
+      {
+        "cells": [
+          "(2, 0, -5)"
+        ],
+        "endpoint_foundation_floor": 0,
+        "endpoint_foundation_groups": [
+          [
+            "(1, -5)"
+          ],
+          [
+            "(3, -5)"
+          ]
+        ],
+        "endpoint_groups": [
+          [
+            "(1, -5)"
+          ],
+          [
+            "(3, -5)"
+          ]
+        ],
+        "endpoint_support_modes": [
+          "terrain_arcade",
+          "terrain_arcade"
+        ],
+        "flanks": [
+          "(1, -5)",
+          "(3, -5)"
+        ],
+        "floor": 4,
+        "reason": "bridge endpoint rises above its connected neighborhood",
+        "room_flanks": [
+          "(1, -5)",
+          "(3, -5)"
+        ],
+        "top": 6
+      },
+      {
+        "cells": [
+          "(1, 0, 2)"
+        ],
+        "endpoint_foundation_floor": 0,
+        "endpoint_foundation_groups": [
+          [
+            "(2, 2)"
+          ],
+          [
+            "(0, 2)"
+          ]
+        ],
+        "endpoint_groups": [
+          [
+            "(2, 2)"
+          ],
+          [
+            "(0, 2)"
+          ]
+        ],
+        "endpoint_support_modes": [
+          "terrain_arcade",
+          "terrain_arcade"
+        ],
+        "flanks": [
+          "(2, 2)",
+          "(0, 2)"
+        ],
+        "floor": 4,
+        "reason": "bridge lacks two ground-borne endpoint houses",
+        "room_flanks": [
+          "(2, 2)",
+          "(0, 2)"
+        ],
+        "top": 6
+      }
+    ],
+    "maze_source_bridge_refused_count": 17,
+    "maze_source_bridge_seeded_count": 0,
+    "maze_source_bridge_seeds": [],
+    "maze_source_bridge_span_count": 0,
+    "maze_stack_parents": {
+
+    },
+    "maze_stack_refusal_count": 0,
+    "maze_stack_refusals": {
+
+    },
+    "maze_stack_slab_gap_count": 0,
+    "maze_stacked_plot_count": 0,
+    "maze_stone_withdrawn_for_roof_cell_keys": [],
+    "maze_stone_withdrawn_for_roof_cells": 0,
+    "maze_stranded_release_repair_count": 0,
+    "maze_street_borne_full_plate_count": 0,
+    "maze_street_borne_plate_count": 0,
+    "maze_trimmed_roof_band_stone_cells": 0,
+    "maze_trimmed_unroomed_plot_stone_cells": 0,
+    "maze_uncomposed_parcel_count": 0,
+    "maze_uncomposed_parcel_gates": {
+
+    },
+    "maze_uncomposed_parcels": [],
+    "maze_uncomposed_stack_count": 0,
+    "maze_unrooted_terrain_bearing_count": 0,
+    "maze_unrooted_terrain_bearing_details": [],
+    "maze_unsupported_stone_cell_keys": [
+      "(-2, 3, 0)",
+      "(-1, 3, 0)",
+      "(0, 3, 0)",
+      "(1, 3, 0)",
+      "(-2, 3, 1)",
+      "(-1, 3, 1)",
+      "(0, 3, 1)",
+      "(1, 3, 1)",
+      "(-2, 3, 2)",
+      "(-1, 3, 2)",
+      "(-2, 3, 3)",
+      "(-1, 3, 3)"
+    ],
+    "maze_unsupported_stone_cells_removed": 12,
+    "maze_unsupported_stone_components_removed": 1,
+    "merged_base_composition_count": 0,
+    "micro_flat_roof_count": 0,
+    "micro_flat_roof_garden_count": 0,
+    "micro_setback_cap_unit_count": 0,
+    "missing_roof_face_count": 0,
+    "missing_source_route_floor_count": 0,
+    "noncantilever_outcropping_candidate_count": 0,
+    "offset_composition_block_count": 0,
+    "one_storey_chimney_roof_count": 2,
+    "outcrop_diagonal_support_course_count": 0,
+    "overhang_bracket_recipe_counts": {
+
+    },
+    "overhang_bracket_unit_count": 0,
+    "owner_count": 9,
+    "ownership_handoff_count": 0,
+    "paired_dormer_roof_count": 0,
+    "parallel_valley_join_count": 1,
+    "partial_gable_roof_count": 0,
+    "partial_plate_pitched_roof_count": 0,
+    "partition_variant": -1,
+    "perimeter_gateway_support_records": [],
+    "perimeter_load_path_ratio": 1.0,
+    "perimeter_parcel_count": 2,
+    "perpendicular_valley_join_count": 0,
+    "physical_support_redirect_count": 0,
+    "pitched_roof_count": 4,
+    "pitched_roof_family_counts": {
+      "blue": 4,
+      "boarded": 0,
+      "orange": 0
+    },
+    "pitched_roof_recipe_counts": {
+      "roof.terminal.tight.slim.blue": 1,
+      "roof.tower.blue.dormer.left": 1,
+      "roof.tower.short.blue": 2
+    },
+    "plot_flat_roof_count": 0,
+    "plot_flat_roof_partial_plate_count": 0,
+    "plot_flat_roof_pitched_count": 4,
+    "plot_flat_roof_rejected_count": 0,
+    "plot_flat_roof_room_count": 4,
+    "prefab_landmark_count": 3,
+    "prefab_landmark_feature_count": 3,
+    "preplanned_landmark_count": 3,
+    "preplanned_skywalk_count": 0,
+    "preplanned_skywalk_marginal_route_cover_count": 0,
+    "preplanned_skywalk_unique_route_cover_count": 0,
+    "private_partial_plank_roof_count": 0,
+    "private_volume_cell_count": 328,
+    "projected_mass_cell_count": 1444,
+    "public_air_cell_count": 420,
+    "public_route_floor_count": 96,
+    "quarter_turned_square_roof_count": 1,
+    "realized_constructed_feature_count": 3,
+    "realized_roof_face_count": 20,
+    "rejected_flat_count": 0,
+    "rejected_optional_roof_trim_count": 0,
+    "rejected_optional_roof_trim_details": [],
+    "rejected_pitched_count": 0,
+    "rejected_pitched_details": [],
+    "rejected_unfloored_address_count": 0,
+    "required_roof_clearance_envelope_count": 4,
+    "required_roof_closure_group_count": 4,
+    "required_room_clearance_envelope_count": 4,
+    "required_room_facade_fallback_count": 0,
+    "required_room_facade_yields": [],
+    "required_tower_annex_relief_unit_count": 0,
+    "residual_backfill_bridge_counts": {
+
+    },
+    "residual_backfill_building_count": 0,
+    "residual_backfill_frontage_side_count": 0,
+    "residual_backfill_kind_counts": {
+
+    },
+    "residual_backfill_massif_edge_contact_count": 0,
+    "residual_backfill_massif_edge_room_count": 0,
+    "residual_backfill_overhead_route_cell_count": 0,
+    "residual_backfill_private_cell_count": 0,
+    "residual_backfill_terrain_root_count": 0,
+    "residual_backfill_terrain_rooted_established_access_count": 0,
+    "retained_foundation_built_in_cell_count": 0,
+    "retained_foundation_cell_count": 160,
+    "retained_foundation_column_count": 0,
+    "retained_foundation_max_depth_bands": 0,
+    "retained_private_mass_cell_count": 328,
+    "retained_private_mass_ratio": 0.227146814404432,
+    "retained_stone_bearing_room_count": 0,
+    "retained_support_rebind_count": 0,
+    "rich_flat_roof_garden_count": 0,
+    "rich_flat_roof_garden_fallback_count": 0,
+    "roof_clearance_facade_fallback_count": 0,
+    "roof_junction_trim_unit_count": 0,
+    "roof_neighborhood_flattened_room_count": 2,
+    "roof_neighborhood_join_count": 2,
+    "roof_region_count": 7,
+    "roof_unit_count": 4,
+    "roofed_room_count": 4,
+    "room_composition_diagnostics_collected": false,
+    "room_composition_pass_count": 1,
+    "room_outcropping_candidate_count": 0,
+    "room_outcropping_count": 0,
+    "room_outcropping_support_feature_count": 0,
+    "room_overhang_support_count": 0,
+    "room_overhang_support_feature_count": 0,
+    "room_pair_displaced_parcel_count": 0,
+    "room_stamp_count": 4,
+    "room_support_crown_exclusion_cell_count": 0,
+    "room_volume_budget_max": 20,
+    "room_volume_budget_min": 6,
+    "route_connected_rooftop_court_audit": {
+      "available_room_crown_cell_count": 20,
+      "candidate_count": 0,
+      "rejection": "no_broad_route_connected_crown",
+      "room_crown_component_details": [
+        {
+          "maximum": "(11, 2, -9)",
+          "minimum": "(6, 2, -12)",
+          "nearest_route_cell": "(5, 0, -10)",
+          "nearest_route_distance": 3,
+          "size": 16
+        },
+        {
+          "maximum": "(3, 2, -9)",
+          "minimum": "(2, 2, -10)",
+          "nearest_route_cell": "(2, 0, -8)",
+          "nearest_route_distance": 3,
+          "size": 4
+        }
+      ],
+      "room_crown_component_sizes": [
+        16,
+        4
+      ],
+      "route_adjacent_room_crown_by_band": {
+
+      },
+      "route_adjacent_room_crown_cell_count": 0
+    },
+    "route_connected_rooftop_court_count": 0,
+    "route_connected_rooftop_court_floor_cell_count": 0,
+    "route_vertical_span_bands": 2,
+    "scale_profile_id": "compact",
+    "scale_profile_signature": "compact/r5/core-floor6/target10-14/route8-14/span3-5/lanes5:20/rooms6-20/residual4:1/sky1-2/bal0-1/cant0-0/land5-6/over0.290/court0/market0",
+    "selected_directly_borne_integrated_cantilever_count": 0,
+    "selected_facade_phase_b_count": 0,
+    "selected_integrated_cantilever_count": 0,
+    "setback_cap_recipe_unit_count": 0,
+    "setback_dressed_unit_count": 0,
+    "setback_garden_fallback_count": 0,
+    "setback_garden_unit_count": 0,
+    "setback_lean_to_unit_count": 0,
+    "setback_macro_gable_fallback_count": 0,
+    "setback_macro_gable_unit_count": 0,
+    "setback_plain_cap_unit_count": 0,
+    "setback_shed_unit_count": 0,
+    "setback_terminal_macro_fallback_count": 0,
+    "setback_terrace_fallback_count": 0,
+    "setback_terrace_unit_count": 0,
+    "setback_vocabulary_unit_count": 0,
+    "shared_entrance_room_ids": [],
+    "skywalk_feature_count": 0,
+    "source_constructed_feature_count": 3,
+    "source_courtyard_macro_cell_count": 0,
+    "source_courtyard_parcel_side_count": 0,
+    "source_face_count": 896,
+    "source_macro_walk_count": 21,
+    "source_roof_face_count": 20,
+    "source_route_floor_count": 96,
+    "spatial_addressed_building_volume_count": 2,
+    "spatial_building_volume_count": 4,
+    "spatial_detached_building_volume_count": 0,
+    "spatial_missing_private_parent_count": 0,
+    "spatial_prefab_landmark_building_count": 3,
+    "spatial_private_access_edge_count": 2,
+    "spatial_signature": "880f5eb7a771897da02240a94ddbd5ad74bfcd924653319f4fe00f5467d81954",
+    "stair_blocked_door_ids": [],
+    "structural_volume_cell_count": 172,
+    "styled_building_lineage_count": 4,
+    "supplemental_route_floor_count": 0,
+    "support_clearance_terminated_storey_count": 0,
+    "support_parent_rebind_count": 0,
+    "support_required_integrated_cantilever_count": 0,
+    "supported_irregular_projection_count": 0,
+    "suppressed_buried_decor_module_count": 0,
+    "suppressed_exterior_traversal_decor_module_count": 0,
+    "suppressed_intruding_module_details": [],
+    "suppressed_party_wall_module_count": 4,
+    "suppressed_street_collider_module_count": 0,
+    "threshold_face_mismatch_count": 0,
+    "tower_annex_count": 0,
+    "tower_annex_diagnostic": {
+      "feature_kind": "tower_annex",
+      "target_source_count": 0
+    },
+    "tower_annex_feature_count": 0,
+    "tower_annex_relief_unit_count": 0,
+    "tower_annex_source_count": 0,
+    "tower_relief_structural_outcropping_count": 0,
+    "unassigned_mass_cell_count": 728,
+    "unclassified_public_private_face_count": 0,
+    "ungrounded_perimeter_parcel_count": 0,
+    "unresolved_integrated_cantilever_count": 0,
+    "unsupported_irregular_projection_count": 0,
+    "unsupported_irregular_projection_details": [],
+    "unsupported_perimeter_parcel_count": 0,
+    "usable_balcony_count": 0,
+    "vertical_floorplate_outcropping_count": 0,
+    "wraparound_balcony_count": 0
+  },
+  "centre": "(-240.0, 408.0)",
+  "entries": [
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/facade-joint/15/0/-21",
+      "transform": "[X: (12.06388, 0.0, -17.13058), Y: (0.0, 2.0, 0.0), Z: (1.635207, 0.0, 1.151563), O: (-208.0363, 12.08, 447.8743)]",
+      "visibility_owner": "[P: (-210.2165, 12.08, 445.1241), S: (4.360519, 6.0, 5.500336)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/facade-run-joint/14250/0/-12750/0/1",
+      "transform": "[X: (0.0, 0.0, 0.852983), Y: (0.0, 2.0, 0.0), Z: (-2.247212, 0.0, 0.0), O: (-212.2961, 12.08, 455.0)]",
+      "visibility_owner": "[P: (-212.96, 12.08, 454.88), S: (1.327759, 6.0, 0.23999)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/facade-run-joint/14250/0/-15750/0/-1",
+      "transform": "[X: (-0.0, 0.0, -0.852983), Y: (0.0, 2.0, 0.0), Z: (2.247212, 0.0, -0.0), O: (-207.7039, 12.08, 455.0)]",
+      "visibility_owner": "[P: (-208.3678, 12.08, 454.88), S: (1.327759, 6.0, 0.23999)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/facade-run-joint/8250/0/-15750/-1/0",
+      "transform": "[X: (-0.852983, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -3.624779), O: (-207.0, 12.08, 444.1109)]",
+      "visibility_owner": "[P: (-207.12, 12.08, 443.04), S: (0.23999, 6.0, 2.141693)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/masonry-joint/-1/0/-5",
+      "transform": "[X: (-0.0, 0.0, 0.750209), Y: (0.0, 0.999959, 0.0), Z: (-2.00034, 0.0, -0.0), O: (-231.0, 12.08, 424.997)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/masonry-joint/-5/0/-5",
+      "transform": "[X: (-0.0, 0.0, 0.750209), Y: (0.0, 0.999959, 0.0), Z: (-2.00034, 0.0, -0.0), O: (-231.0, 12.08, 418.997)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/masonry-joint/-5/0/-9",
+      "transform": "[X: (-0.0, 0.0, 0.750209), Y: (0.0, 0.999959, 0.0), Z: (-2.00034, 0.0, -0.0), O: (-225.0, 12.08, 418.997)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/masonry-joint/-5/1/-5",
+      "transform": "[X: (-0.0, 0.0, 0.750209), Y: (0.0, 0.999959, 0.0), Z: (-2.00034, 0.0, -0.0), O: (-231.0, 15.08, 418.997)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/masonry-joint/-5/1/-9",
+      "transform": "[X: (-0.0, 0.0, 0.750209), Y: (0.0, 0.999959, 0.0), Z: (-2.00034, 0.0, -0.0), O: (-225.0, 15.08, 418.997)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/masonry-joint/11/0/-5",
+      "transform": "[X: (-0.0, 0.0, 0.750209), Y: (0.0, 0.999959, 0.0), Z: (-2.00034, 0.0, -0.0), O: (-231.0, 12.08, 442.997)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/masonry-joint/11/0/-9",
+      "transform": "[X: (-0.0, 0.0, 0.750209), Y: (0.0, 0.999959, 0.0), Z: (-2.00034, 0.0, -0.0), O: (-225.0, 12.08, 442.997)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/masonry-joint/23/0/-17",
+      "transform": "[X: (-0.0, 0.0, 4.719837), Y: (0.0, 1.0, 0.0), Z: (-2.247593, 0.0, -0.0), O: (-213.0, 12.08, 461.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/masonry-joint/23/0/-5",
+      "transform": "[X: (-0.0, 0.0, 0.750209), Y: (0.0, 0.999959, 0.0), Z: (-2.00034, 0.0, -0.0), O: (-231.0, 12.08, 460.997)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/masonry-room-seam/11/0/-17/0",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -2.247593), O: (-213.0, 12.08, 443.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfm.stall.variant.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-frontage/-2/0/11/0",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-268.5, 12.08, 415.8011)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.awning.blue.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-frontage/-2/0/8/0",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-259.5, 12.08, 415.97)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.awning.blue.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-frontage/13/0/-8/1",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-217.5, 12.08, 471.136)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.flower.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/-4/1/-8",
+      "transform": "[X: (-1.750363, 0.0, -0.967589), Y: (0.0, 2.0, 0.0), Z: (0.967589, 0.0, -1.750363), O: (-214.842, 18.09, 414.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.flower.03",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/-5/1/-7",
+      "transform": "[X: (-1.999782, 0.0, -0.029515), Y: (0.0, 2.0, 0.0), Z: (0.029515, 0.0, -1.999782), O: (-217.5, 18.09, 411.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.mushroom.03",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/-5/1/-8",
+      "transform": "[X: (1.841699, 0.0, -0.779837), Y: (0.0, 2.0, 0.0), Z: (0.779837, 0.0, 1.841699), O: (-214.842, 18.09, 411.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.flower.03",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/-7/1/-8",
+      "transform": "[X: (1.322521, 0.0, 1.500313), Y: (0.0, 2.0, 0.0), Z: (-1.500313, 0.0, 1.322521), O: (-214.842, 18.09, 405.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.flower.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/-8/1/-7",
+      "transform": "[X: (0.917024, 0.0, 1.777376), Y: (0.0, 2.0, 0.0), Z: (-1.777376, 0.0, 0.917024), O: (-217.5, 18.09, 402.842)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.flower.04",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/12/0/-5",
+      "transform": "[X: (-1.488011, 0.0, 1.336347), Y: (0.0, 2.0, 0.0), Z: (-1.336347, 0.0, -1.488011), O: (-223.5, 15.09, 462.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.bench.02",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/12/0/-6/1/0/station/0",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-219.92, 15.09, 463.658)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.bucket.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/12/0/-6/1/0/station/1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-221.3, 15.09, 464.818)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.crate.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/13/0/-3/0/0/station/0",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-229.158, 15.09, 465.158)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.bag.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/13/0/-3/0/0/station/1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-229.158, 16.54669, 465.158)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.flower.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/13/0/-5",
+      "transform": "[X: (0.971827, 0.0, 1.748014), Y: (0.0, 2.0, 0.0), Z: (-1.748014, 0.0, 0.971827), O: (-223.5, 15.09, 465.158)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.bench.02",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/6/0/-7/1/0/station/0",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-216.92, 15.09, 446.342)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.bucket.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/6/0/-7/1/0/station/1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-218.3, 15.09, 447.502)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.plant.low.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/8/0/-7",
+      "transform": "[X: (1.664209, 0.0, 1.109238), Y: (0.0, 2.0, 0.0), Z: (-1.109238, 0.0, 1.664209), O: (-217.5, 15.09, 450.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.bench.02",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/9/0/-8/0/1/station/0",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-216.342, 15.09, 454.08)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.bucket.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-garden/9/0/-8/0/1/station/1",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-217.502, 15.09, 452.7)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.outer_lip",
+      "collision_enabled": true,
+      "color": "(0.647, 0.6019, 1.094, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim-corner/-3/1/-7/3",
+      "transform": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-217.5, 18.1, 417.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.outer_lip",
+      "collision_enabled": true,
+      "color": "(0.6435, 0.5997, 1.0959, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim-corner/-3/1/-8/1",
+      "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-214.5, 18.1, 417.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.outer_lip",
+      "collision_enabled": true,
+      "color": "(0.6348, 0.5977, 1.1138, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim-corner/-8/1/-7/2",
+      "transform": "[X: (-1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -1.0), O: (-217.5, 18.1, 402.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.outer_lip",
+      "collision_enabled": true,
+      "color": "(0.6313, 0.5955, 1.1156, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim-corner/-8/1/-8/0",
+      "transform": "[X: (0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, 0.0), O: (-214.5, 18.1, 402.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.outer_lip",
+      "collision_enabled": true,
+      "color": "(0.6993, 0.6335, 1.0553, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim-corner/12/0/-3/2",
+      "transform": "[X: (-1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -1.0), O: (-229.5, 15.1, 462.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.outer_lip",
+      "collision_enabled": true,
+      "color": "(0.6941, 0.6285, 1.0729, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim-corner/12/0/-8/0",
+      "transform": "[X: (0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, 0.0), O: (-214.5, 15.1, 462.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.outer_lip",
+      "collision_enabled": true,
+      "color": "(0.7025, 0.6358, 1.0551, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim-corner/13/0/-3/3",
+      "transform": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-229.5, 15.1, 465.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.outer_lip",
+      "collision_enabled": true,
+      "color": "(0.6979, 0.6311, 1.073, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim-corner/13/0/-8/1",
+      "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-214.5, 15.1, 465.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.outer_lip",
+      "collision_enabled": true,
+      "color": "(0.6754, 0.6166, 1.0741, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim-corner/6/0/-7/2",
+      "transform": "[X: (-1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -1.0), O: (-217.5, 15.1, 444.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.outer_lip",
+      "collision_enabled": true,
+      "color": "(0.6719, 0.6143, 1.076, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim-corner/6/0/-8/0",
+      "transform": "[X: (0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, 0.0), O: (-214.5, 15.1, 444.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.outer_lip",
+      "collision_enabled": true,
+      "color": "(0.6828, 0.6211, 1.0736, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim-corner/9/0/-8/1",
+      "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-214.5, 15.1, 453.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.6444, 0.6009, 1.0975, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/-4/1/-7/3",
+      "transform": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-217.5, 18.1, 414.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.6409, 0.5987, 1.0994, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/-4/1/-8/2",
+      "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-214.5, 18.1, 414.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.6419, 0.6, 1.1013, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/-5/1/-7/3",
+      "transform": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-217.5, 18.1, 411.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.6384, 0.5977, 1.1032, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/-5/1/-8/2",
+      "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-214.5, 18.1, 411.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.6395, 0.5992, 1.1053, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/-6/1/-7/3",
+      "transform": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-217.5, 18.1, 408.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.636, 0.5969, 1.1072, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/-6/1/-8/2",
+      "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-214.5, 18.1, 408.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.6371, 0.5984, 1.1095, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/-7/1/-7/3",
+      "transform": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-217.5, 18.1, 405.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.6336, 0.5961, 1.1113, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/-7/1/-8/2",
+      "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-214.5, 18.1, 405.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.7026, 0.6347, 1.0618, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/12/0/-4/0",
+      "transform": "[X: (-1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -1.0), O: (-226.5, 15.1, 462.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.7033, 0.6345, 1.0664, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/12/0/-5/0",
+      "transform": "[X: (-1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -1.0), O: (-223.5, 15.1, 462.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.7011, 0.6329, 1.0692, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/12/0/-6/0",
+      "transform": "[X: (-1.0, 0.0, -0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, -1.0), O: (-220.5, 15.1, 462.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.7061, 0.6371, 1.0617, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/13/0/-4/1",
+      "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-226.5, 15.1, 465.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.7069, 0.637, 1.0664, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/13/0/-5/1",
+      "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-223.5, 15.1, 465.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.7049, 0.6355, 1.0693, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/13/0/-6/1",
+      "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-220.5, 15.1, 465.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.7014, 0.6333, 1.0711, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/13/0/-7/1",
+      "transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-217.5, 15.1, 465.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.679, 0.6187, 1.0731, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/7/0/-7/3",
+      "transform": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-217.5, 15.1, 447.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.6755, 0.6165, 1.075, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/7/0/-8/2",
+      "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-214.5, 15.1, 447.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.6827, 0.621, 1.0723, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/8/0/-7/3",
+      "transform": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-217.5, 15.1, 450.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "kaykit.cliff.lip",
+      "collision_enabled": true,
+      "color": "(0.6791, 0.6188, 1.0742, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/8/0/-8/2",
+      "transform": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-214.5, 15.1, 450.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfm.table.fishmonger.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stall-goods/-2/0/11/0/counter",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-268.5, 12.08, 414.9011)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.bucket.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stall-goods/-2/0/11/0/goods0",
+      "transform": "[X: (-1.1655, 0.0, -1.625303), Y: (0.0, 2.0, 0.0), Z: (1.625303, 0.0, -1.1655), O: (-265.6, 12.08, 417.4011)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.barrel.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stall-goods/-2/0/11/0/goods1",
+      "transform": "[X: (-0.677807, 0.0, -1.881642), Y: (0.0, 2.0, 0.0), Z: (1.881642, 0.0, -0.677807), O: (-268.5, 12.08, 417.4011)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.crate.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stall-goods/-2/0/11/0/goods2",
+      "transform": "[X: (-1.719044, 0.0, 1.022197), Y: (0.0, 2.0, 0.0), Z: (-1.022197, 0.0, -1.719044), O: (-271.4, 12.08, 417.4011)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfm.stall.veg_string.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stall-goods/-2/0/11/0/hanging",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-268.5, 19.88, 413.1011)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfm.table.fishmonger.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stall-goods/-2/0/8/0/counter",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-259.5, 12.08, 415.07)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.bag.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stall-goods/-2/0/8/0/goods0",
+      "transform": "[X: (-0.346466, 0.0, -1.969762), Y: (0.0, 2.0, 0.0), Z: (1.969762, 0.0, -0.346466), O: (-256.6, 12.08, 417.57)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.bucket.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stall-goods/-2/0/8/0/goods1",
+      "transform": "[X: (-1.340639, 0.0, -1.484146), Y: (0.0, 2.0, 0.0), Z: (1.484146, 0.0, -1.340639), O: (-259.5, 12.08, 417.57)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.barrel.02",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stall-goods/-2/0/8/0/goods2",
+      "transform": "[X: (1.934259, 0.0, -0.508569), Y: (0.0, 2.0, 0.0), Z: (0.508569, 0.0, 1.934259), O: (-262.4, 12.08, 417.57)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfm.table.fishmonger.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stall-goods/13/0/-8/1/counter",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-217.5, 12.08, 472.036)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.crate.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stall-goods/13/0/-8/1/goods0",
+      "transform": "[X: (0.100522, 0.0, -1.997472), Y: (0.0, 2.0, 0.0), Z: (1.997472, 0.0, 0.100522), O: (-220.4, 12.08, 469.536)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.bag.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stall-goods/13/0/-8/1/goods1",
+      "transform": "[X: (0.465797, 0.0, 1.945002), Y: (0.0, 2.0, 0.0), Z: (-1.945002, 0.0, 0.465797), O: (-217.5, 12.08, 469.536)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.bucket.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stall-goods/13/0/-8/1/goods2",
+      "transform": "[X: (1.693669, 0.0, 1.063713), Y: (0.0, 2.0, 0.0), Z: (-1.063713, 0.0, 1.693669), O: (-214.6, 12.08, 469.536)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-1/1/-1/1",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-235.5, 11.84, 424.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-1/1/-1/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-236.336, 11.84, 423.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-1/1/-2/1",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-232.5, 11.84, 424.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-1/1/-3/1",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-229.5, 14.84, 424.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-1/1/-4/1",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-226.5, 14.84, 424.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-1/1/-4/2",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.664, 11.84, 423.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-2/1/-1/0",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-235.5, 11.84, 419.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-2/1/-1/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-236.336, 11.84, 420.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-2/1/-2/0",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-232.5, 11.84, 419.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-2/1/-4/2",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.664, 11.84, 420.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-3/1/-3/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 11.7579, 417.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-3/1/-5/1",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-223.5, 11.7579, 418.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-3/1/-6/1",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-220.5, 11.7579, 418.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-3/1/-7/1",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 1.999918, 0.0), Z: (0.0, 0.0, 2.0), O: (-217.5068, 11.98, 417.8361)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-4/1/-3/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 11.7579, 414.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-4/1/-8/2",
+      "transform": "[X: (-0.0, 0.0, -1.694749), Y: (0.0, 1.999918, 0.0), Z: (2.0, 0.0, -0.0), O: (-214.1639, 11.98, 414.5068)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-5/1/-3/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 11.7579, 411.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-5/1/-8/2",
+      "transform": "[X: (-0.0, 0.0, -1.694749), Y: (0.0, 1.999918, 0.0), Z: (2.0, 0.0, -0.0), O: (-214.1639, 11.98, 411.5068)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-6/1/-3/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 11.7579, 408.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-6/1/-8/2",
+      "transform": "[X: (-0.0, 0.0, -1.694749), Y: (0.0, 1.999918, 0.0), Z: (2.0, 0.0, -0.0), O: (-214.1639, 11.98, 408.5068)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-7/1/-3/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 11.7579, 405.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-7/1/-8/2",
+      "transform": "[X: (-0.0, 0.0, -1.694749), Y: (0.0, 1.999918, 0.0), Z: (2.0, 0.0, -0.0), O: (-214.1639, 11.98, 405.5068)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-8/1/-3/0",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-229.5, 11.7579, 401.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-8/1/-3/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 11.7579, 402.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-8/1/-4/0",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-226.5, 11.7579, 401.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-8/1/-5/0",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-223.5, 11.7579, 401.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-8/1/-6/0",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-220.5, 11.7579, 401.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-8/1/-7/0",
+      "transform": "[X: (-1.694749, 0.0, -0.0), Y: (0.0, 1.999918, 0.0), Z: (0.0, 0.0, -2.0), O: (-217.4932, 11.98, 402.1639)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/0/0/-3/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 8.757895, 426.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/0/0/-4/2",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.664, 8.757895, 426.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.gallery.floor.m.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/0/0/-4/4",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-227.998, 14.7579, 426.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/1/0/-3/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 9.08, 429.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.48, 0.6, 0.68, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/1/0/-4/2",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.664, 9.08, 429.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/10/0/-1/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-236.336, 8.757895, 456.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/10/0/-8/2",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-213.664, 8.757895, 456.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.gallery.floor.m.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/10/0/-8/4",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-214.5, 14.7579, 458.002)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/11/0/-1/1",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-235.5, 8.757895, 460.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/11/0/-1/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-236.336, 8.757895, 459.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/11/0/-2/1",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-232.5, 8.757895, 460.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/11/0/-8/2",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-213.664, 8.757895, 459.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/12/0/-3/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 1.999918, 0.0), Z: (-2.0, 0.0, -0.0), O: (-229.8361, 8.98, 462.4932)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/12/0/-8/2",
+      "transform": "[X: (-0.0, 0.0, -1.694749), Y: (0.0, 1.999918, 0.0), Z: (2.0, 0.0, -0.0), O: (-214.1639, 8.98, 462.5068)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/13/0/-4/1",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 1.999918, 0.0), Z: (0.0, 0.0, 2.0), O: (-226.5068, 8.98, 465.8361)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/13/0/-5/1",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 1.999918, 0.0), Z: (0.0, 0.0, 2.0), O: (-223.5068, 8.98, 465.8361)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/13/0/-6/1",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 1.999918, 0.0), Z: (0.0, 0.0, 2.0), O: (-220.5068, 8.98, 465.8361)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/13/0/-7/1",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 1.999918, 0.0), Z: (0.0, 0.0, 2.0), O: (-217.5068, 8.98, 465.8361)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/2/0/-3/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 8.84, 432.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/2/0/-4/2",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.664, 8.84, 432.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/3/0/-3/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 8.84, 435.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/3/0/-4/2",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.664, 8.84, 435.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/4/0/-3/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 8.84, 438.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/4/0/-4/2",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.664, 8.84, 438.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/5/0/-3/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 8.84, 441.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/5/0/-4/2",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.664, 8.84, 441.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/6/0/-1/0",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-235.5, 8.757895, 443.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/6/0/-1/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-236.336, 8.757895, 444.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/6/0/-2/0",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-232.5, 8.757895, 443.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/6/0/-5/0",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-223.5, 8.757895, 443.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/6/0/-6/0",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-220.5, 8.757895, 443.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/6/0/-7/0",
+      "transform": "[X: (-1.694749, 0.0, -0.0), Y: (0.0, 1.999918, 0.0), Z: (0.0, 0.0, -2.0), O: (-217.4932, 8.98, 444.1639)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/7/0/-1/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-236.336, 8.757895, 447.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/7/0/-8/2",
+      "transform": "[X: (-0.0, 0.0, -1.694749), Y: (0.0, 1.999918, 0.0), Z: (2.0, 0.0, -0.0), O: (-214.1639, 8.98, 447.5068)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/8/0/-1/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-236.336, 8.757895, 450.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/8/0/-8/2",
+      "transform": "[X: (-0.0, 0.0, -1.694749), Y: (0.0, 1.999918, 0.0), Z: (2.0, 0.0, -0.0), O: (-214.1639, 8.98, 450.5068)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": true,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/9/0/-1/3",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-236.336, 8.757895, 453.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "collision_enabled": false,
+      "color": "(0.62, 0.54, 0.46, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/9/0/-8/2",
+      "transform": "[X: (-0.0, 0.0, -1.694749), Y: (0.0, 1.999918, 0.0), Z: (2.0, 0.0, -0.0), O: (-214.1639, 8.98, 453.5068)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.railing.s.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-guard/-1:2:-1:0:1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-237.0, 18.13, 423.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.railing.s.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-guard/-1:2:-1:1:0",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-235.5, 18.13, 425.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.railing.s.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-guard/-1:2:-2:1:0",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-232.5, 18.13, 425.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.railing.m.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-guard/-1:2:-4:0:-1+-2:2:-4:0:-1",
+      "transform": "[X: (0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, 0.0), O: (-225.0, 18.13, 422.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.railing.s.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-guard/-2:2:-1:-1:0",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-235.5, 18.13, 419.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.railing.s.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-guard/-2:2:-1:0:1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-237.0, 18.13, 420.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.railing.s.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-guard/-2:2:-2:-1:0",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-232.5, 18.13, 419.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.railing.s.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-guard/2:1:-3:0:1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-231.0, 15.13, 432.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.railing.s.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-guard/2:1:-4:0:-1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.0, 15.13, 432.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.railing.s.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-guard/3:1:-3:0:1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-231.0, 15.13, 435.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.railing.s.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-guard/3:1:-4:0:-1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.0, 15.13, 435.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": false,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-surface/1/-3/4/-3/sfv.fabric.floor.l.001",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-234.0, 17.84, 422.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": false,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-surface/1/-3/4/-7/sfv.fabric.floor.l.001",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-228.0, 17.84, 422.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": false,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-surface/1/5/2/-7/sfv.fabric.floor.l.001",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-228.0, 14.84, 434.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": false,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/public-surface/1/9/2/-7/sfv.fabric.floor.l.001",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-228.0, 14.84, 440.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.plain.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/retaining-wall/2/1/-3/-1/0",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-229.5, 8.84, 431.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.plain.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/retaining-wall/2/1/-3/0/1",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 8.84, 432.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.plain.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/retaining-wall/2/1/-4/-1/0",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-226.5, 8.84, 431.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.plain.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/retaining-wall/2/1/-4/0/-1",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.664, 8.84, 432.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.plain.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/retaining-wall/3/1/-3/0/1",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 8.84, 435.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.plain.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/retaining-wall/3/1/-4/0/-1",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.664, 8.84, 435.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.plain.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/retaining-wall/4/1/-3/0/1",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 8.84, 438.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.plain.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/retaining-wall/4/1/-4/0/-1",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.664, 8.84, 438.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.plain.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/retaining-wall/5/1/-3/0/1",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-230.336, 8.84, 441.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.plain.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/retaining-wall/5/1/-4/0/-1",
+      "transform": "[X: (-0.0, 0.0, 1.694749), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.664, 8.84, 441.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.plain.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/retaining-wall/5/1/-4/1/0",
+      "transform": "[X: (1.694749, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-226.5, 8.84, 442.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.07",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.00.component.00/building",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-225.0, 18.09206, 410.1947)]",
+      "visibility_owner": "[P: (-231.0, 17.7579, 401.0), S: (12.0, 11.2534, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.00.component.00/floor.0.0",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-227.998, 17.7579, 404.0)]",
+      "visibility_owner": "[P: (-231.0, 17.7579, 401.0), S: (12.0, 11.2534, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.00.component.00/floor.0.1",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-221.998, 17.7579, 404.0)]",
+      "visibility_owner": "[P: (-231.0, 17.7579, 401.0), S: (12.0, 11.2534, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.00.component.00/floor.1.0",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-227.998, 17.7579, 410.0)]",
+      "visibility_owner": "[P: (-231.0, 17.7579, 401.0), S: (12.0, 11.2534, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.00.component.00/floor.1.1",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-221.998, 17.7579, 410.0)]",
+      "visibility_owner": "[P: (-231.0, 17.7579, 401.0), S: (12.0, 11.2534, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.00.component.00/floor.2.0",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-227.998, 17.7579, 416.0)]",
+      "visibility_owner": "[P: (-231.0, 17.7579, 401.0), S: (12.0, 11.2534, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.00.component.00/floor.2.1",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-221.998, 17.7579, 416.0)]",
+      "visibility_owner": "[P: (-231.0, 17.7579, 401.0), S: (12.0, 11.2534, 18.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.02",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.00.component.00/front.closed_door",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-222.378, 18.09206, 415.9327)]",
+      "visibility_owner": "[P: (-231.0, 17.7579, 401.0), S: (12.0, 11.2534, 18.0)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.02",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.01.component.00/building",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-228.0, 15.08072, 452.0)]",
+      "visibility_owner": "[P: (-237.0, 14.7579, 443.0), S: (18.0, 11.15414, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.01.component.00/floor.0.0",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-222.002, 14.7579, 458.0)]",
+      "visibility_owner": "[P: (-237.0, 14.7579, 443.0), S: (18.0, 11.15414, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.01.component.00/floor.0.1",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-228.002, 14.7579, 458.0)]",
+      "visibility_owner": "[P: (-237.0, 14.7579, 443.0), S: (18.0, 11.15414, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.01.component.00/floor.0.2",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-234.002, 14.7579, 458.0)]",
+      "visibility_owner": "[P: (-237.0, 14.7579, 443.0), S: (18.0, 11.15414, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.01.component.00/floor.1.0",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-222.002, 14.7579, 452.0)]",
+      "visibility_owner": "[P: (-237.0, 14.7579, 443.0), S: (18.0, 11.15414, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.01.component.00/floor.1.1",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-228.002, 14.7579, 452.0)]",
+      "visibility_owner": "[P: (-237.0, 14.7579, 443.0), S: (18.0, 11.15414, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.01.component.00/floor.1.2",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-234.002, 14.7579, 452.0)]",
+      "visibility_owner": "[P: (-237.0, 14.7579, 443.0), S: (18.0, 11.15414, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.01.component.00/floor.2.0",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-222.002, 14.7579, 446.0)]",
+      "visibility_owner": "[P: (-237.0, 14.7579, 443.0), S: (18.0, 11.15414, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.01.component.00/floor.2.1",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-228.002, 14.7579, 446.0)]",
+      "visibility_owner": "[P: (-237.0, 14.7579, 443.0), S: (18.0, 11.15414, 18.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.01.component.00/floor.2.2",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-234.002, 14.7579, 446.0)]",
+      "visibility_owner": "[P: (-237.0, 14.7579, 443.0), S: (18.0, 11.15414, 18.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.01.component.00/front.closed_door",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-230.622, 15.08072, 446.262)]",
+      "visibility_owner": "[P: (-237.0, 14.7579, 443.0), S: (18.0, 11.15414, 18.0)]"
+    },
+    {
+      "asset_id": "lpfv.building.house.05",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.02.component.00/building",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-263.7665, 12.10283, 428.0104)]",
+      "visibility_owner": "[P: (-273.0, 11.7579, 419.0), S: (18.0, 17.25642, 24.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.02.component.00/floor.0.0",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-270.0, 11.7579, 439.998)]",
+      "visibility_owner": "[P: (-273.0, 11.7579, 419.0), S: (18.0, 17.25642, 24.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.02.component.00/floor.0.1",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-270.0, 11.7579, 433.998)]",
+      "visibility_owner": "[P: (-273.0, 11.7579, 419.0), S: (18.0, 17.25642, 24.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.02.component.00/floor.0.2",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-270.0, 11.7579, 427.998)]",
+      "visibility_owner": "[P: (-273.0, 11.7579, 419.0), S: (18.0, 17.25642, 24.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.02.component.00/floor.0.3",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-270.0, 11.7579, 421.998)]",
+      "visibility_owner": "[P: (-273.0, 11.7579, 419.0), S: (18.0, 17.25642, 24.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.02.component.00/floor.1.0",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-264.0, 11.7579, 439.998)]",
+      "visibility_owner": "[P: (-273.0, 11.7579, 419.0), S: (18.0, 17.25642, 24.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.02.component.00/floor.1.1",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-264.0, 11.7579, 433.998)]",
+      "visibility_owner": "[P: (-273.0, 11.7579, 419.0), S: (18.0, 17.25642, 24.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.02.component.00/floor.1.2",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-264.0, 11.7579, 427.998)]",
+      "visibility_owner": "[P: (-273.0, 11.7579, 419.0), S: (18.0, 17.25642, 24.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.02.component.00/floor.1.3",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-264.0, 11.7579, 421.998)]",
+      "visibility_owner": "[P: (-273.0, 11.7579, 419.0), S: (18.0, 17.25642, 24.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.02.component.00/floor.2.0",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-258.0, 11.7579, 439.998)]",
+      "visibility_owner": "[P: (-273.0, 11.7579, 419.0), S: (18.0, 17.25642, 24.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.02.component.00/floor.2.1",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-258.0, 11.7579, 433.998)]",
+      "visibility_owner": "[P: (-273.0, 11.7579, 419.0), S: (18.0, 17.25642, 24.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.02.component.00/floor.2.2",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-258.0, 11.7579, 427.998)]",
+      "visibility_owner": "[P: (-273.0, 11.7579, 419.0), S: (18.0, 17.25642, 24.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.02.component.00/floor.2.3",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-258.0, 11.7579, 421.998)]",
+      "visibility_owner": "[P: (-273.0, 11.7579, 419.0), S: (18.0, 17.25642, 24.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.door.closed.02",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.feature.landmark.02.component.00/front.closed_door",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-258.0285, 12.10283, 425.3885)]",
+      "visibility_owner": "[P: (-273.0, 11.7579, 419.0), S: (18.0, 17.25642, 24.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.maze_back.00.room00/floor",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-204.0, 11.7579, 446.0)]",
+      "visibility_owner": "[P: (-207.0, 11.7579, 443.0), S: (6.002045, 6.322104, 6.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.wood.window.060.miter2",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.maze_back.00.room00/north",
+      "transform": "[X: (2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-204.0, 12.08, 448.0425)]",
+      "visibility_owner": "[P: (-207.0, 11.7579, 443.0), S: (6.002045, 6.322104, 6.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.wood.window.020.miter1",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.maze_back.00.room00/south",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-204.0, 12.08, 443.5607)]",
+      "visibility_owner": "[P: (-207.0, 11.7579, 443.0), S: (6.002045, 6.322104, 6.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.wood.window.010.mirror_x.miter3",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.maze_back.00.room00/west",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-201.5532, 12.08, 446.0)]",
+      "visibility_owner": "[P: (-207.0, 11.7579, 443.0), S: (6.002045, 6.322104, 6.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.window.m.016.miter2",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.maze_back.01.room00/east",
+      "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (-212.3361, 12.08, 458.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 455.0), S: (6.002045, 6.322106, 6.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.maze_back.01.room00/floor",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-210.0, 11.7579, 458.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 455.0), S: (6.002045, 6.322106, 6.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.plain.002.miter3",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.maze_back.01.room00/north",
+      "transform": "[X: (2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-210.0, 12.08, 460.3361)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 455.0), S: (6.002045, 6.322106, 6.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.rock.window.010.miter1",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.maze_back.01.room00/west",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-207.6639, 12.08, 458.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 455.0), S: (6.002045, 6.322106, 6.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.wood.window.024.mirror_x.doorreturn.back1070859.miter",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.parcel.maze.house.000.part00.room00/east",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-210.0, 12.08, 436.4393)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 430.998), S: (6.0, 6.322104, 6.002045)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.parcel.maze.house.000.part00.room00/floor",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-210.0, 11.7579, 434.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 430.998), S: (6.0, 6.322104, 6.002045)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.wood.window.060.miter3",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.parcel.maze.house.000.part00.room00/north",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-207.9575, 12.08, 434.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 430.998), S: (6.0, 6.322104, 6.002045)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.wood.door.closed.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.parcel.maze.house.000.part00.room00/south",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-211.9834, 12.08, 434.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 430.998), S: (6.0, 6.322104, 6.002045)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.lantern.table.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.parcel.maze.house.000.part00.room00/south/lantern",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-212.0349, 16.68, 436.2)]",
+      "visibility_owner": "[P: (-212.1807, 16.67583, 436.0542), S: (0.556763, 0.985645, 0.291595)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.miter.back1070858",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.parcel.maze.house.000.part00.room00/west",
+      "transform": "[X: (-2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (-0.0, 0.0, -2.0), O: (-210.0, 12.08, 431.5532)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 430.998), S: (6.0, 6.322104, 6.002045)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.wood.window.020.mirror_x",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.parcel.maze.house.001.part00.room00/east.0",
+      "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (-212.4393, 12.08, 452.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 443.0), S: (6.002045, 6.322104, 12.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.wood.window.010.mirror_x.doorreturn.back1070858.square",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.parcel.maze.house.001.part00.room00/east.1",
+      "transform": "[X: (0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, 0.0), O: (-212.4468, 12.08, 446.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 443.0), S: (6.002045, 6.322104, 12.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.parcel.maze.house.001.part00.room00/floor.0",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-210.0, 11.7579, 452.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 443.0), S: (6.002045, 6.322104, 12.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.floor.l.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.parcel.maze.house.001.part00.room00/floor.1",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-210.0, 11.7579, 446.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 443.0), S: (6.002045, 6.322104, 12.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.wood.door.closed.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.parcel.maze.house.001.part00.room00/south",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-210.0, 12.08, 444.0166)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 443.0), S: (6.002045, 6.322104, 12.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.prop.lantern.table.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.parcel.maze.house.001.part00.room00/south/lantern",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-212.2, 16.68, 443.9651)]",
+      "visibility_owner": "[P: (-212.3458, 16.67583, 443.8193), S: (0.291611, 0.985645, 0.556732)]"
+    },
+    {
+      "asset_id": "sfv.fabric.wall.wood.window.010.mirror_x",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.fabric.spatial.parcel.maze.house.001.part00.room00/west.0",
+      "transform": "[X: (-0.0, 0.0, -2.0), Y: (0.0, 2.0, 0.0), Z: (2.0, 0.0, -0.0), O: (-207.5532, 12.08, 452.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 443.0), S: (6.002045, 6.322104, 12.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.chimney.orange.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.roof.spatial.maze_back.00.room00/chimney",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-205.3, 15.08, 446.5)]",
+      "visibility_owner": "[P: (-207.0, 11.7579, 443.0), S: (6.002045, 6.322104, 6.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_positive.branch",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.roof.spatial.maze_back.00.room00/roof",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-210.0, 18.08, 446.0)]",
+      "visibility_owner": "[P: (-207.0, 11.7579, 443.0), S: (6.002045, 6.322104, 6.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.chimney.orange.01",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.roof.spatial.maze_back.01.room00/chimney",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-209.5, 15.08, 459.3)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 455.0), S: (6.002045, 6.322106, 6.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.roof.compact.slate.03",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.roof.spatial.maze_back.01.room00/roof",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-210.0, 18.08, 458.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 455.0), S: (6.002045, 6.322106, 6.0)]"
+    },
+    {
+      "asset_id": "sfv.fabric.roof.window.002",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.roof.spatial.parcel.maze.house.000.part00.room00/dormer",
+      "transform": "[X: (-1.12, 0.0, -0.0), Y: (0.0, 1.12, 0.0), Z: (0.0, 0.0, -1.12), O: (-210.0, 18.28, 431.7)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 430.998), S: (6.0, 6.322104, 6.002045)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.roof.compact.slate.03",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.roof.spatial.parcel.maze.house.000.part00.room00/roof",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-210.0, 18.08, 434.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 430.998), S: (6.0, 6.322104, 6.002045)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_positive.adjacent",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.roof.spatial.parcel.maze.house.001.part00.room00/roof.adjacent",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-210.0, 18.08, 449.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 443.0), S: (6.002045, 6.322104, 12.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_positive.end",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.roof.spatial.parcel.maze.house.001.part00.room00/roof.end",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-210.0, 18.08, 446.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 443.0), S: (6.002045, 6.322104, 12.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.roof.compact.slate.03.run.middle.tight",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.roof.spatial.parcel.maze.house.001.part00.room00/roof.negative",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-210.0, 18.02312, 452.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 443.0), S: (6.002045, 6.322104, 12.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.roof.compact.slate.03.valley.tight.eave_negative.end_positive.middle",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.roof.spatial.parcel.maze.house.001.part00.room00/roof.positive",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-210.0, 18.08, 446.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 443.0), S: (6.002045, 6.322104, 12.0)]"
+    },
+    {
+      "asset_id": "lpfv.fabric.roof.compact.slate.03.run.start.tight.flush",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/spatial.roof.spatial.parcel.maze.house.001.part00.room00/roof.start",
+      "transform": "[X: (-2.0, 0.0, -0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, -2.0), O: (-210.0, 18.0246, 452.0)]",
+      "visibility_owner": "[P: (-213.0, 11.7579, 443.0), S: (6.002045, 6.322104, 12.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/10/0/-10/2",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-207.664, 6.08, 456.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/10/0/-9/3",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-212.336, 6.08, 456.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/11/0/-10/1",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-208.5, 6.08, 460.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/11/0/-10/2",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-207.664, 6.08, 459.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/11/0/-9/1",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-211.5, 6.08, 460.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/11/0/-9/3",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-212.336, 6.08, 459.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/2/0/-10/0",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-208.5, 6.08, 431.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/2/0/-10/2",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-207.664, 6.08, 432.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/2/0/-9/0",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-211.5, 6.08, 431.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/2/0/-9/3",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-212.336, 6.08, 432.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/3/0/-10/1",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-208.5, 6.08, 436.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/3/0/-10/2",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-207.664, 6.08, 435.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/3/0/-9/1",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-211.5, 6.08, 436.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/3/0/-9/3",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-212.336, 6.08, 435.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/6/0/-10/0",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-208.5, 6.08, 443.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/6/0/-11/0",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-205.5, 6.08, 443.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/6/0/-12/0",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-202.5, 6.08, 443.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/6/0/-12/2",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-201.664, 6.08, 444.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/6/0/-9/0",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-211.5, 6.08, 443.664)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/6/0/-9/3",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-212.336, 6.08, 444.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/7/0/-11/1",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-205.5, 6.08, 448.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/7/0/-12/1",
+      "transform": "[X: (2.0, 0.0, 0.0), Y: (0.0, 2.0, 0.0), Z: (0.0, 0.0, 2.0), O: (-202.5, 6.08, 448.336)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/7/0/-12/2",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-201.664, 6.08, 447.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/7/0/-9/3",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-212.336, 6.08, 447.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/8/0/-10/2",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-207.664, 6.08, 450.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/8/0/-9/3",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-212.336, 6.08, 450.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/9/0/-10/2",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-207.664, 6.08, 453.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.foundation.rock.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-foundation/9/0/-9/3",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-212.336, 6.08, 453.5)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-support/-1/2/-3/0",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-234.0, 12.08, 425.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-support/-1/2/-3/1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-234.0, 6.08, 425.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-support/-1/2/-7/0",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-228.0, 12.08, 425.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-support/-1/2/-7/1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-228.0, 6.08, 425.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-support/-1/2/-9/0",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.0, 12.08, 425.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-support/-1/2/-9/1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.0, 6.08, 425.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-support/-3/2/-9/0",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.0, 12.08, 422.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-support/-3/2/-9/1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.0, 6.08, 422.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-support/-5/2/-3/0",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-234.0, 12.08, 419.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-support/-5/2/-3/1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-234.0, 6.08, 419.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-support/-5/2/-7/0",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-228.0, 12.08, 419.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-support/-5/2/-7/1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-228.0, 6.08, 419.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-support/-5/2/-9/0",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.0, 12.08, 419.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    },
+    {
+      "asset_id": "sfv.deck.pillar.001",
+      "collision_enabled": true,
+      "color": "(1.0, 1.0, 1.0, 1.0)",
+      "stable_id": "settlement.268015fe3e243631/terrain-support/-5/2/-9/1",
+      "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-225.0, 6.08, 419.0)]",
+      "visibility_owner": "[P: (0.0, 0.0, 0.0), S: (0.0, 0.0, 0.0)]"
+    }
+  ],
+  "frame_cell": "(-10, 17)",
+  "generation_kind": 2,
+  "surfaces": [
+    {
+      "anchor": "(-226.5, 15.08, 432.5)",
+      "collision_faces": "336 values",
+      "indices": "336 values",
+      "kind": 1,
+      "logical_cells": [
+        "(2, 1, -4)",
+        "(3, 1, -4)",
+        "(4, 1, -4)",
+        "(5, 1, -4)",
+        "(2, 1, -3)",
+        "(3, 1, -3)",
+        "(4, 1, -3)",
+        "(5, 1, -3)",
+        "(-2, 2, -4)",
+        "(-1, 2, -4)",
+        "(-2, 2, -3)",
+        "(-1, 2, -3)",
+        "(-2, 2, -2)",
+        "(-1, 2, -2)",
+        "(-2, 2, -1)",
+        "(-1, 2, -1)"
+      ],
+      "normals": "224 values",
+      "stable_id": "settlement.268015fe3e243631/public-structural-skin/1",
+      "structural_plank": true,
+      "uvs": "224 values",
+      "vertices": "224 values"
+    },
+    {
+      "anchor": "(-237.0, 12.08, 440.0)",
+      "claim_cells": [
+        "(4, 0, -1)",
+        "(5, 0, -1)",
+        "(4, 1, -2)",
+        "(5, 1, -2)"
+      ],
+      "collision_faces": "558 values",
+      "indices": "558 values",
+      "is_transition": true,
+      "kind": 3,
+      "normals": "372 values",
+      "run_direction": "(0, 0, -1)",
+      "stable_id": "settlement.268015fe3e243631/public-transition/volume.transition.04.mesh",
+      "uvs": "372 values",
+      "vertices": "372 values"
+    },
+    {
+      "anchor": "(-228.0, 15.08, 431.0)",
+      "claim_cells": [
+        "(1, 1, -4)",
+        "(1, 1, -3)",
+        "(0, 2, -4)",
+        "(0, 2, -3)"
+      ],
+      "collision_faces": "558 values",
+      "indices": "558 values",
+      "is_transition": true,
+      "kind": 3,
+      "normals": "372 values",
+      "run_direction": "(-1, 0, 0)",
+      "stable_id": "settlement.268015fe3e243631/public-transition/volume.transition.06.mesh",
+      "uvs": "372 values",
+      "vertices": "372 values"
+    },
+    {
+      "anchor": "(-225.0, 15.08, 440.0)",
+      "claim_cells": [
+        "(4, 1, -5)",
+        "(5, 1, -5)",
+        "(4, 0, -6)",
+        "(5, 0, -6)"
+      ],
+      "collision_faces": "558 values",
+      "indices": "558 values",
+      "is_transition": true,
+      "kind": 3,
+      "normals": "372 values",
+      "run_direction": "(0, 0, -1)",
+      "stable_id": "settlement.268015fe3e243631/public-transition/volume.transition.13.mesh",
+      "uvs": "372 values",
+      "vertices": "372 values"
+    },
+    {
+      "anchor": "(-214.7443, 8.98, 444.1639)",
+      "collision_faces": "0 values",
+      "colors": "1254 values",
+      "indices": "1254 values",
+      "material_asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "1254 values",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/6/0/-8/0/rounded/0.0",
+      "uvs": "1254 values",
+      "vertices": "1254 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-214.1639, 8.98, 444.7557)",
+      "collision_faces": "0 values",
+      "colors": "1254 values",
+      "indices": "1254 values",
+      "material_asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "1254 values",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/6/0/-8/2/rounded/0.0",
+      "uvs": "1254 values",
+      "vertices": "1254 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-214.7557, 8.98, 465.8361)",
+      "collision_faces": "0 values",
+      "colors": "1254 values",
+      "indices": "1254 values",
+      "material_asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "1254 values",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/13/0/-8/1/rounded/0.0",
+      "uvs": "1254 values",
+      "vertices": "1254 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-214.1639, 8.98, 465.2557)",
+      "collision_faces": "0 values",
+      "colors": "1254 values",
+      "indices": "1254 values",
+      "material_asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "1254 values",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/13/0/-8/2/rounded/0.0",
+      "uvs": "1254 values",
+      "vertices": "1254 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-229.2557, 8.98, 465.8361)",
+      "collision_faces": "0 values",
+      "colors": "1254 values",
+      "indices": "1254 values",
+      "material_asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "1254 values",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/13/0/-3/1/rounded/0.0",
+      "uvs": "1254 values",
+      "vertices": "1254 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-229.8361, 8.98, 465.2443)",
+      "collision_faces": "0 values",
+      "colors": "1254 values",
+      "indices": "1254 values",
+      "material_asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "1254 values",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/13/0/-3/3/rounded/0.0",
+      "uvs": "1254 values",
+      "vertices": "1254 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-214.7443, 11.98, 402.1639)",
+      "collision_faces": "0 values",
+      "colors": "1254 values",
+      "indices": "1254 values",
+      "material_asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "1254 values",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-8/1/-8/0/rounded/0.0",
+      "uvs": "1254 values",
+      "vertices": "1254 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-214.1639, 11.98, 402.7557)",
+      "collision_faces": "0 values",
+      "colors": "1254 values",
+      "indices": "1254 values",
+      "material_asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "1254 values",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-8/1/-8/2/rounded/0.0",
+      "uvs": "1254 values",
+      "vertices": "1254 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-214.7557, 11.98, 417.8361)",
+      "collision_faces": "0 values",
+      "colors": "1254 values",
+      "indices": "1254 values",
+      "material_asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "1254 values",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-3/1/-8/1/rounded/0.0",
+      "uvs": "1254 values",
+      "vertices": "1254 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-214.1639, 11.98, 417.2557)",
+      "collision_faces": "0 values",
+      "colors": "1254 values",
+      "indices": "1254 values",
+      "material_asset_id": "sfv.fabric.wall.rock.retaining.001",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "1254 values",
+      "stable_id": "settlement.268015fe3e243631/maze-stone/-3/1/-8/2/rounded/0.0",
+      "uvs": "1254 values",
+      "vertices": "1254 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-215.352, 15.09, 445.352)",
+      "collision_faces": "816 values",
+      "colors": "556 values",
+      "indices": "816 values",
+      "logical_cells": [
+        "(6, 0, -8)",
+        "(7, 0, -8)",
+        "(8, 0, -8)",
+        "(9, 0, -8)",
+        "(12, 0, -8)",
+        "(13, 0, -8)",
+        "(6, 0, -7)",
+        "(7, 0, -7)",
+        "(8, 0, -7)",
+        "(9, 0, -7)",
+        "(10, 0, -7)",
+        "(11, 0, -7)",
+        "(12, 0, -7)",
+        "(13, 0, -7)",
+        "(12, 0, -6)",
+        "(13, 0, -6)",
+        "(12, 0, -5)",
+        "(13, 0, -5)",
+        "(12, 0, -4)",
+        "(13, 0, -4)",
+        "(12, 0, -3)",
+        "(13, 0, -3)",
+        "(-8, 1, -8)",
+        "(-7, 1, -8)",
+        "(-6, 1, -8)",
+        "(-5, 1, -8)",
+        "(-4, 1, -8)",
+        "(-3, 1, -8)",
+        "(-8, 1, -7)",
+        "(-7, 1, -7)",
+        "(-6, 1, -7)",
+        "(-5, 1, -7)",
+        "(-4, 1, -7)",
+        "(-3, 1, -7)"
+      ],
+      "normals": "556 values",
+      "stable_id": "settlement.268015fe3e243631/maze-ground-turf",
+      "terrain_ground": true,
+      "terrain_rock_vertices": [
+        544,
+        545,
+        546,
+        547,
+        548,
+        549,
+        550,
+        551,
+        552,
+        553,
+        554,
+        555
+      ],
+      "uvs": "556 values",
+      "vertices": "556 values",
+      "visual_only": false
+    },
+    {
+      "anchor": "(-217.5, 15.1, 453.5)",
+      "collision_faces": "0 values",
+      "colors": "333 values",
+      "indices": "333 values",
+      "material_asset_id": "kaykit.cliff.lip",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "333 values",
+      "rim_owner": "maze-rim/9/0/-7/3",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/9/0/-7/3/owned.0.0",
+      "uvs": "333 values",
+      "vertices": "333 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-217.5, 15.1, 456.5)",
+      "collision_faces": "0 values",
+      "colors": "333 values",
+      "indices": "333 values",
+      "material_asset_id": "kaykit.cliff.lip",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "333 values",
+      "rim_owner": "maze-rim/10/0/-7/2",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/10/0/-7/2/owned.0.0",
+      "uvs": "333 values",
+      "vertices": "333 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-217.5, 15.1, 456.5)",
+      "collision_faces": "0 values",
+      "colors": "333 values",
+      "indices": "333 values",
+      "material_asset_id": "kaykit.cliff.lip",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "333 values",
+      "rim_owner": "maze-rim/10/0/-7/3",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/10/0/-7/3/owned.0.0",
+      "uvs": "333 values",
+      "vertices": "333 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-217.5, 15.1, 459.5)",
+      "collision_faces": "0 values",
+      "colors": "333 values",
+      "indices": "333 values",
+      "material_asset_id": "kaykit.cliff.lip",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "333 values",
+      "rim_owner": "maze-rim/11/0/-7/2",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/11/0/-7/2/owned.0.0",
+      "uvs": "333 values",
+      "vertices": "333 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-217.5, 15.1, 459.5)",
+      "collision_faces": "0 values",
+      "colors": "333 values",
+      "indices": "333 values",
+      "material_asset_id": "kaykit.cliff.lip",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "333 values",
+      "rim_owner": "maze-rim/11/0/-7/3",
+      "stable_id": "settlement.268015fe3e243631/maze-rim/11/0/-7/3/owned.0.0",
+      "uvs": "333 values",
+      "vertices": "333 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-217.5, 15.1, 453.5)",
+      "collision_faces": "0 values",
+      "colors": "81 values",
+      "indices": "81 values",
+      "material_asset_id": "kaykit.cliff.inner_lip",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "81 values",
+      "rim_owner": "maze-rim-inner/9/0/-7/1",
+      "stable_id": "settlement.268015fe3e243631/maze-rim-inner/9/0/-7/1/owned.0.0",
+      "uvs": "81 values",
+      "vertices": "81 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-217.5, 15.1, 462.5)",
+      "collision_faces": "0 values",
+      "colors": "78 values",
+      "indices": "78 values",
+      "material_asset_id": "kaykit.cliff.inner_lip",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "78 values",
+      "rim_owner": "maze-rim-inner/12/0/-7/0",
+      "stable_id": "settlement.268015fe3e243631/maze-rim-inner/12/0/-7/0/owned.0.0",
+      "uvs": "78 values",
+      "vertices": "78 values",
+      "visual_only": true
+    },
+    {
+      "anchor": "(-217.5, 15.1, 462.5)",
+      "collision_faces": "0 values",
+      "colors": "81 values",
+      "indices": "81 values",
+      "material_asset_id": "kaykit.cliff.inner_lip",
+      "material_piece": 0,
+      "material_surface": 0,
+      "normals": "81 values",
+      "rim_owner": "maze-rim-inner/12/0/-7/2",
+      "stable_id": "settlement.268015fe3e243631/maze-rim-inner/12/0/-7/2/owned.0.0",
+      "uvs": "81 values",
+      "vertices": "81 values",
+      "visual_only": true
+    }
+  ],
+  "tier": "village",
+  "transform": "[X: (-0.0, 0.0, 2.0), Y: (0.0, 2.0, 0.0), Z: (-2.0, 0.0, -0.0), O: (-238.5, 12.08, 426.5)]"
+}

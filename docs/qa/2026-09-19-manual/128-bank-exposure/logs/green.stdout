@@ -1,0 +1,34 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:991)
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/fixtures/september19/bank-exposure/test_exposure.gd
+[0m* test_bank_plants_are_exposed_on_the_actual_fitted_surface
+BANK_EXPOSE selected=57 failures=0
+* test_exposure_does_not_depend_on_owner_partition_or_mutate_plants
+[1m2/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         2
+Asserts               5
+Time              5.321s
+
+
+[32m---- All tests passed! ----
+[0m

@@ -1,0 +1,61 @@
+extends RefCounted
+## Continue actual adjoining formations through a concave native junction.
+## Unequal-height or reserved joins retain their independently rooted corner.
+const CRAGS=preload("res://scripts/terrain/field/CliffRockCrags.gd")
+const EXTENSION:=3.0
+static func apply(forms:Array,region:HeightfieldRegion=null,features:FeatureContext=null,reject:Callable=Callable())->Dictionary:
+ var corners:Array=[]
+ for form:Dictionary in forms:
+  if form.get("replay_recipe",{}).get("kind","")=="inner_corner":corners.append(form)
+ corners.sort_custom(func(a:Dictionary,b:Dictionary)->bool:return a.anchor<b.anchor)
+ var changed:=0;var connections:=0
+ for corner:Dictionary in corners:
+  var parents:Array=[];var directions:Dictionary={}
+  for index in forms.size():
+   var other:Dictionary=forms[index]
+   if other.get("replay_recipe",{}).get("kind","")!="wall":continue
+   var local:Transform3D=(corner.transform as Transform3D).affine_inverse()*other.transform
+   if absf(local.origin.y)>.001 or absf(float(other.replay_recipe.height)-float(corner.replay_recipe.height))>.001:continue
+   var normal:Vector3=local.basis.z
+   if not ((normal.dot(Vector3.BACK)>.99 and absf(local.origin.z)<.01) or (normal.dot(Vector3.RIGHT)>.99 and absf(local.origin.x)<.01)):continue
+   var relative:Vector3=(other.transform as Transform3D).affine_inverse()*corner.transform.origin
+   var width:float=other.replay_recipe.width
+   var left:bool=relative.x<0
+   if absf(absf(relative.x)-width*.5)>2.0:continue
+   if not bool(other.replay_recipe.left_end if left else other.replay_recipe.right_end):continue
+   parents.append([index,left]);directions[normal.round()]=true
+  if parents.size()!=2 or directions.size()!=2:continue
+  var candidates:Array=[];var admitted:=true
+  for parent:Array in parents:
+   var original:Dictionary=forms[parent[0]];var recipe:Dictionary=original.replay_recipe
+   var left:bool=parent[1];var pose:Transform3D=original.transform
+   pose.origin+=pose.basis.x*(-1.0 if left else 1.0)*EXTENSION*.5
+   var fresh:Dictionary=CRAGS.make(pose,recipe.width+EXTENSION,recipe.height,recipe.seed,region,recipe.left_end and not left,recipe.right_end and left)[0]
+   # Keep the canonical source owner. Shifting a mesh centre across a cell
+   # boundary must not transfer its publication to a different chunk.
+   fresh.anchor=original.anchor;fresh.id=original.id
+   fresh.replay_recipe["inner_connections"]=recipe.get("inner_connections",[]).duplicate()
+   fresh.replay_recipe.inner_connections.append(corner.anchor)
+   if region==null:_restore_floor(fresh,original)
+   var box:AABB=fresh.bounds
+   var footprint:=Rect2(Vector2(box.position.x,box.position.z),Vector2(box.size.x,box.size.z))
+   if region!=null and region.has_grade_effect_in(footprint.grow(.1)):admitted=false
+   if features!=null and features.overlaps_clearance(FeatureGroundShape.axis_rect(footprint),.3):admitted=false
+   if reject.is_valid() and reject.call(fresh):admitted=false
+   candidates.append(fresh)
+  if not admitted:continue
+  for i in parents.size():forms[parents[i][0]]=candidates[i]
+  forms.erase(corner);changed+=2;connections+=1
+ return {"connections":connections,"changed_walls":changed}
+static func _restore_floor(fresh:Dictionary,original:Dictionary)->void:
+ var floor_y:=0.0;var min_y:=0.0
+ for p:Vector3 in original.faces:floor_y=minf(floor_y,p.y)
+ for p:Vector3 in fresh.faces:min_y=minf(min_y,p.y)
+ for key:String in ["faces","green"]:
+  var faces:PackedVector3Array=fresh[key]
+  for i in faces.size():
+   if faces[i].y<=min_y+.001:faces[i].y=floor_y
+  fresh[key]=faces
+ var bounds:=AABB(fresh.faces[0],Vector3.ZERO)
+ for p:Vector3 in fresh.faces:bounds=bounds.expand(p)
+ fresh.bounds=fresh.transform*bounds;fresh.base=fresh.bounds.position.y

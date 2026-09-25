@@ -1,0 +1,402 @@
+[
+  {
+    "file": "admission.json",
+    "bytes": 8311,
+    "sha256": "20eef787d1feaf0b75b7c8af96aaf15085baa4d04ee651e25fb5c79079a78d41"
+  },
+  {
+    "file": "attachment-detail-after.png",
+    "bytes": 307608,
+    "sha256": "54bfd86a6f903556645b8df9a879d06c95fa915a9d1344cf9cbeabdf1db55585"
+  },
+  {
+    "file": "attachment-detail-before.png",
+    "bytes": 282351,
+    "sha256": "f36d81dc1ff630a0b1989d57b6e96f0e758252bb4129ea9eba36d5d072c6db21"
+  },
+  {
+    "file": "bank-after--10.png",
+    "bytes": 723544,
+    "sha256": "165f694ea2e89c828d2b0819c83f7a62b87c25456f04ba5dfa7a950b78d6074c"
+  },
+  {
+    "file": "bank-after--35.png",
+    "bytes": 754987,
+    "sha256": "f6e2fca35d129e76a4d1b4bf65634242878ce23631a9dd4d2d21e13353eb1401"
+  },
+  {
+    "file": "bank-after-0.png",
+    "bytes": 721040,
+    "sha256": "38267a08eebbee2b0e0ba3afdfcd6ba931edf29fc68d5ded4987325047fd4699"
+  },
+  {
+    "file": "bank-after-10.png",
+    "bytes": 734918,
+    "sha256": "bbb4c958f3db833bcc279f3806f3ae4c086f97d0219c0438bef21e6717117e12"
+  },
+  {
+    "file": "bank-after-35.png",
+    "bytes": 739982,
+    "sha256": "d4ae644ba02e587971a5d1545e06810a4e22aae44d355c2cf9111c7abd19f8e4"
+  },
+  {
+    "file": "bank-before--10.png",
+    "bytes": 726087,
+    "sha256": "4fe875a517f6f8bb9a360c513c7801f0b4cffe327c087f3a30e44a40f157840a"
+  },
+  {
+    "file": "bank-before--35.png",
+    "bytes": 756716,
+    "sha256": "688537ae79819e38e780d07ebb6de7b6202bb8a8d1ae7d29bebf74b79e8fa478"
+  },
+  {
+    "file": "bank-before-0.png",
+    "bytes": 726748,
+    "sha256": "be5f492687142693b98cbf72abd2446b81c9e0764093f0c1750025be402bc7eb"
+  },
+  {
+    "file": "bank-before-10.png",
+    "bytes": 736604,
+    "sha256": "47447e56c33c6882b5464eedca17cb8f06da8a3243ccb64b09209dfb5cef0414"
+  },
+  {
+    "file": "bank-before-35.png",
+    "bytes": 747599,
+    "sha256": "1cbb4393a9eefbd97d37e78702f806cb5f875e4686a2677f239b1f25bd36ebc5"
+  },
+  {
+    "file": "bank-highlight.png",
+    "bytes": 641857,
+    "sha256": "948efcbf281f3becf793b60e5a79536e309ad967323a9c2e9843d078de1365a4"
+  },
+  {
+    "file": "banks.bin",
+    "bytes": 167528736,
+    "sha256": "bdb5545273a7e6da816786b4fbc2ecc0d5f7dd559443f0f99f6a5a31c383b9ea"
+  },
+  {
+    "file": "detail-0-after.png",
+    "bytes": 553974,
+    "sha256": "a9990960f4915cba11615fc2646f9c53f0ad713f1aefaf1ff3a397e7a0934336"
+  },
+  {
+    "file": "detail-0-before.png",
+    "bytes": 564311,
+    "sha256": "362f96e567c721723b49b46bebdf8eb175f54e49ddaa89e3d6d94cdc2b235194"
+  },
+  {
+    "file": "detail-1-after.png",
+    "bytes": 472049,
+    "sha256": "2adff1bd48d0e4fedfea114288993a475058c0b9b62b2e26356582df735494e4"
+  },
+  {
+    "file": "detail-1-before.png",
+    "bytes": 479416,
+    "sha256": "02ff88066a53559c5559914c9a40105af989b34df1caa4c97c8f28574a28d1ba"
+  },
+  {
+    "file": "logs/attachments.log",
+    "bytes": 1095,
+    "sha256": "d938002b65d298c3f291dacf6419fda4dd4a73c33b5ac7ab562b0f5d4c180880"
+  },
+  {
+    "file": "logs/attachments.stdout",
+    "bytes": 1155,
+    "sha256": "578294ee7291c0bbbbf29b904eb2f9103b5a1f696946cc8b278764315445956f"
+  },
+  {
+    "file": "logs/contact-green.log",
+    "bytes": 858,
+    "sha256": "fd776821aa3331f2a898f78c10053766256e6989ec624abc4ac062d115183aff"
+  },
+  {
+    "file": "logs/contact-green.stdout",
+    "bytes": 918,
+    "sha256": "318504bd4f123cde0a6e1e18e203a9a059ff590e217f9271356795b6c087f046"
+  },
+  {
+    "file": "logs/contact-native.log",
+    "bytes": 3802,
+    "sha256": "c1905fbba0b29e5db39fe73f2dd68d3a5f76a2000d46d96bc5fbbf6fddb41483"
+  },
+  {
+    "file": "logs/contact-native.stdout",
+    "bytes": 3808,
+    "sha256": "c3e3723dce3cdc4121d1bdbba002648b41379a6175c487ec5b263f9c6752f578"
+  },
+  {
+    "file": "logs/contact-red.log",
+    "bytes": 1279,
+    "sha256": "0f3b606da27b7bb6f98fd988ff6f82166a93d98adeb0903ac8a51f0df3d33c4c"
+  },
+  {
+    "file": "logs/contact-red.stdout",
+    "bytes": 1365,
+    "sha256": "8a14761d5f27964c8336cfbd2bf119db4a8998f60750b9a8903d7dce425b5e27"
+  },
+  {
+    "file": "logs/contact-study.log",
+    "bytes": 277,
+    "sha256": "1584cfe86ca012215704c1921903d35876848a20fbfba74d78ba34f0cfd4e5f5"
+  },
+  {
+    "file": "logs/contact-study.stdout",
+    "bytes": 277,
+    "sha256": "1584cfe86ca012215704c1921903d35876848a20fbfba74d78ba34f0cfd4e5f5"
+  },
+  {
+    "file": "logs/plants-native.log",
+    "bytes": 776,
+    "sha256": "c5b5e4efef82e87fb41bde24b8c2d81c2052bb4c7db2e746e9ca811b1db93483"
+  },
+  {
+    "file": "logs/plants-native.stdout",
+    "bytes": 782,
+    "sha256": "6653110970df9ca66843bc1b361d46ab85e04725e8f3e0a2c3a41297027a671e"
+  },
+  {
+    "file": "logs/reach.log",
+    "bytes": 985,
+    "sha256": "b57077d32f92e0b6a33a54240ba1b3bd3405885117a213f1d8f17867acab3d03"
+  },
+  {
+    "file": "logs/reach.stdout",
+    "bytes": 1045,
+    "sha256": "846e4d732896cd18ab4a105de872e2bd596a54f11e8770ddce6153fef1803933"
+  },
+  {
+    "file": "logs/validation.log",
+    "bytes": 433,
+    "sha256": "cf92d827fb8dd389a70dd928557077757929bca2cbf8b1c5421ef1e7829d0eaa"
+  },
+  {
+    "file": "logs/validation.stdout",
+    "bytes": 433,
+    "sha256": "cf92d827fb8dd389a70dd928557077757929bca2cbf8b1c5421ef1e7829d0eaa"
+  },
+  {
+    "file": "native-contact.json",
+    "bytes": 3305,
+    "sha256": "02ef6270a0507ab5625fb227cf7433928537dfc328fc005c173a04dee2801492"
+  },
+  {
+    "file": "native-plants.json",
+    "bytes": 89,
+    "sha256": "16038a0be230e24d430f7b410071c6b5909fe422201fcac9c9c0d3148ef4cba3"
+  },
+  {
+    "file": "photo--10-after.png",
+    "bytes": 725690,
+    "sha256": "f88cdc3ecfd2667ae15e5fc32d1d4043e1462baf617c3e6c8804be83b3bf9361"
+  },
+  {
+    "file": "photo--10-before.png",
+    "bytes": 723698,
+    "sha256": "f1b6885854a1c018b89a189bc526838d64ae2e6bc85de34f2d338f796e1bbdc4"
+  },
+  {
+    "file": "photo--35-after.png",
+    "bytes": 755406,
+    "sha256": "dadd069bf866816d4bd3bcfe404559c3ec31db0a6af95e231ea9d8a46703893d"
+  },
+  {
+    "file": "photo--35-before.png",
+    "bytes": 752087,
+    "sha256": "b2388bd7ecffdd1af96454d0457b5d32b9cec45137ec625a2db24ac468431265"
+  },
+  {
+    "file": "photo-0-after.png",
+    "bytes": 724111,
+    "sha256": "b6d9b7b32d689b00785e027eb230f9b48a298f0f4eeec456e36a948b633335c7"
+  },
+  {
+    "file": "photo-0-before.png",
+    "bytes": 721482,
+    "sha256": "d16cde8aede41f80cf3dac77faa7d016ce33246b9cc7616617f6aebabc597ea8"
+  },
+  {
+    "file": "photo-10-after.png",
+    "bytes": 735659,
+    "sha256": "b0a2ee2fd433c6bce8374d1d5571c6aa9539b6f42611f119cfd0e03d54b02d77"
+  },
+  {
+    "file": "photo-10-before.png",
+    "bytes": 733226,
+    "sha256": "54f581b65387fc0f64794c7d33ff1fa2f641d4a1829755591e3c8cfc44595e12"
+  },
+  {
+    "file": "photo-35-after.png",
+    "bytes": 744137,
+    "sha256": "dedef7eb49f0fed5d9e260b051dd3d12c7128676dbf9d62c48301c327efc127d"
+  },
+  {
+    "file": "photo-35-before.png",
+    "bytes": 741196,
+    "sha256": "0bb94b5d37fa1bf0de054ee4b2c472d860fc031197129a9fbc88c8d974ce7f9a"
+  },
+  {
+    "file": "plants.bin",
+    "bytes": 29424,
+    "sha256": "11724807a25c0cf2ef656a47ad479fac544bb9225892395d50de68efdeebb696"
+  },
+  {
+    "file": "profile.json",
+    "bytes": 4079,
+    "sha256": "27ebc05c983d09c8f749efcec8c7348e36466201dbeb84fc7d689d208e96dadf"
+  },
+  {
+    "file": "rejected-exponential/bank-after--10.png",
+    "bytes": 715516,
+    "sha256": "4983dc1a4f1cd0827548d1bf662b6498d1dd9458d4ca48b51281cbd9788cdff0"
+  },
+  {
+    "file": "rejected-exponential/bank-after--35.png",
+    "bytes": 744359,
+    "sha256": "8d7f046f7b4b67333502ee9a23f003cf57e65b81270bcb97b9a54d8f464eaba9"
+  },
+  {
+    "file": "rejected-exponential/bank-after-0.png",
+    "bytes": 715032,
+    "sha256": "765eecb3a69e71eca933942ad3ec8a83f876920505480639bb546deec06fd7d5"
+  },
+  {
+    "file": "rejected-exponential/bank-after-10.png",
+    "bytes": 727563,
+    "sha256": "f650ea927b4ca6bc7db63a8b4d918d4188c42662fb2ce16c57e83510bc1a9ad3"
+  },
+  {
+    "file": "rejected-exponential/bank-after-35.png",
+    "bytes": 731471,
+    "sha256": "58e28ebfbc52ab66ad8761342da4a9e85f7d78410abf68fcba54a848658261b8"
+  },
+  {
+    "file": "rejected-exponential/bank-before--10.png",
+    "bytes": 726782,
+    "sha256": "fce83c6d0f4856160e48309a49e12c2bd3c9d3f8d35fd1415ca735de2d0bf4b5"
+  },
+  {
+    "file": "rejected-exponential/bank-before--35.png",
+    "bytes": 755955,
+    "sha256": "7fb02d53698abd9674310b382ec34cf10bd1488cfbdeb28d4b5e4d94949d0e32"
+  },
+  {
+    "file": "rejected-exponential/bank-before-0.png",
+    "bytes": 724850,
+    "sha256": "e24910f042ec29482a7b42b55918fb78dc85d91d2b9787f63ccb47bcb2fdddfe"
+  },
+  {
+    "file": "rejected-exponential/bank-before-10.png",
+    "bytes": 737567,
+    "sha256": "19ab9656e3097e3b126444810c9387767b0247c110adaa7b1545eec0ebbafdbb"
+  },
+  {
+    "file": "rejected-exponential/bank-before-35.png",
+    "bytes": 747320,
+    "sha256": "26002909f9f816a2f72111248c7d14fa2eee72461b47421a2de3b3c278ec6cb7"
+  },
+  {
+    "file": "rejected-exponential/bank-highlight.png",
+    "bytes": 640683,
+    "sha256": "04f079ed834fc29acf7959b5326b6616394a86e301113137c4598a0f1a6411c3"
+  },
+  {
+    "file": "rejected-exponential/banks.bin",
+    "bytes": 167446480,
+    "sha256": "4713495983015b11ed3fc4e3953533c1f069d9220308080a43569beb6d26eb2c"
+  },
+  {
+    "file": "rejected-exponential/detail-0-after.png",
+    "bytes": 529690,
+    "sha256": "86dd544e75eea8aca37d5859e7c0be15e2b98b3bdacb3055d2d38b90ba71102c"
+  },
+  {
+    "file": "rejected-exponential/detail-0-before.png",
+    "bytes": 564482,
+    "sha256": "a433a58797b839c6726b15bfa63f0267e352c5b7d6e8d31c951af625b3ae2e16"
+  },
+  {
+    "file": "rejected-exponential/detail-1-after.png",
+    "bytes": 444117,
+    "sha256": "2619e1ce5d5e27f5b98a65d33d07b932be63aebd861d09017546785ba3f3a288"
+  },
+  {
+    "file": "rejected-exponential/detail-1-before.png",
+    "bytes": 480322,
+    "sha256": "849dbadf9a31e4720643a6d0c8b06709ee627dc9240e416cc7d0c59eb8337a0a"
+  },
+  {
+    "file": "rejected-exponential/native-contact.json",
+    "bytes": 3305,
+    "sha256": "e7c3e4b42575d8c705151f494720e166a20160d27f89feaa39f04f55ed1498b6"
+  },
+  {
+    "file": "rejected-exponential/shape.gd.txt",
+    "bytes": 1695,
+    "sha256": "944c7a9579e5b68df50c3173570c84d558c32bf6ee1dc0887bd11fec95e6b6a7"
+  },
+  {
+    "file": "result.md",
+    "bytes": 3612,
+    "sha256": "b79a81a99bff615111f594cb9cdd533d81577ed2f703823081bc9cd055876963"
+  },
+  {
+    "file": "validated-banks.bin",
+    "bytes": 167528664,
+    "sha256": "da4b9a05de3a6aa086316783ac6f67073c62a17f12da27c43ce76cafa6de2fe7"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-relief/attachments.gd",
+    "bytes": 4854,
+    "sha256": "28d2040f2acba0b7c5f8e60cc1c41676d9c187d4549d0a3cd8abe89fe94c7ecf"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-relief/build_study.gd",
+    "bytes": 1920,
+    "sha256": "b44f16d84e3b8af5ceb9ac7e6c2484067eddfca1e657315827c28750da77c113"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-relief/fit.gd",
+    "bytes": 3975,
+    "sha256": "fd6d6f3655f4a3e3e3783b1d20828196186046e6214a1abbddca0804961f3d11"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-relief/profile.gd",
+    "bytes": 1562,
+    "sha256": "aeabd0af60277e1d4518ee2415454e22cd6234075a23796005e1a587df8187fc"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-relief/replay.gd",
+    "bytes": 6040,
+    "sha256": "500d8e878e8900d1f3a761c887a29af2dd4c6314e14cbdf7054868e70aa82fd7"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-relief/replay_plants.gd",
+    "bytes": 4008,
+    "sha256": "311c49fc52ab9d989eab6fbf756f48769ba9307d054561b3a08e8cec5af9d60c"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-relief/shape.gd",
+    "bytes": 2200,
+    "sha256": "4fdb9e8f652e141ea84a61a01c6fda4ab8ac1c34e516141b256e559a206c45ac"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-relief/test_attachments.gd",
+    "bytes": 6160,
+    "sha256": "3ebd605e27ace7baa1929afd155ff99666213a20a55c122f82ad0b76462eeb5d"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-relief/test_contact.gd",
+    "bytes": 1787,
+    "sha256": "d38665ceb3a0a3e40dc50f3d0abf5e4fed44131a1d3f6594a45f3a8358066aa0"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-relief/test_reach.gd",
+    "bytes": 2415,
+    "sha256": "5bf577de5fb33eefe8cecbcbb8015ee8cb503cdccd3aa918a7eb8744731d48b5"
+  },
+  {
+    "file": "tests/fixtures/september19/bank-relief/validate.gd",
+    "bytes": 2730,
+    "sha256": "3a21f574a243de240f717e69afba81b314ff9419e1b5aa36b942cab71a94aac0"
+  }
+]

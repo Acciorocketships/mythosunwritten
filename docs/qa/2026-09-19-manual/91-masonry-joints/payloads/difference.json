@@ -1,0 +1,20 @@
+{
+  "added": [],
+  "after_instances": 313,
+  "before_instances": 313,
+  "changed": [
+    "masonry-joint/-5/0/-13",
+    "masonry-joint/3/0/-13",
+    "masonry-joint/15/0/-13",
+    "masonry-joint/3/0/-9",
+    "masonry-joint/19/0/-9",
+    "masonry-joint/3/1/-13",
+    "masonry-joint/15/1/-13",
+    "masonry-joint/3/1/-9",
+    "masonry-joint/19/1/-9"
+  ],
+  "removed": [],
+  "same_collision_boxes": true,
+  "same_surfaces": true,
+  "same_walked": true
+}

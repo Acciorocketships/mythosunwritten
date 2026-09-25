@@ -1,0 +1,7 @@
+{
+  "scripts/terrain/field/CliffRockDressing.gd": "0804e42de1815e365f5985a301bebf3bfacdcd33291c9a9d0f71f59b2dc464e8",
+  "scripts/terrain/field/CliffInnerConnections.gd": "5f4361664b7219fe6f68497f3b0110f201f3ae14b2dd8bcf5809e5f6e99a0df1",
+  "scripts/terrain/field/CliffCornerCrags.gd": "4db26035fd44cbf3f3d33346b0b3623575de8cbfd2ffc127bcb02a6cd5c4db53",
+  "scripts/terrain/field/CliffRockCrags.gd": "5e295890e1ffe26a115f02e853cf4b9c7af8b250404bfbd82fb9149f84add948",
+  "scripts/terrain/field/CliffLedgeJoin.gd": "8585461fec0872ec513c486f2c701d1c87c934e17d57d360560952087ff35184"
+}

@@ -1,0 +1,42 @@
+--- before/scripts/terrain/features/villages/VillageWarrenRoadConnections.gd
++++ after/scripts/terrain/features/villages/VillageWarrenRoadConnections.gd
+@@ -14,6 +14,7 @@
+ 		VillagePlan.SURFACE_PRIORITY - 1,
+ 		StringName("%s.street-domain" % settlement_id))
+ 	var paths: Array[Dictionary] = []
++	var handoff_domains: Array[FeatureGroundShape] = []
+ 	for handoff: Dictionary in VillageOutskirtsConstruction._world_road_handoffs(
+ 			domain, ground, settlement_id):
+ 		var boundary: Vector2 = handoff.points[0]
+@@ -37,7 +38,20 @@
+ 			continue
+ 		selected.push_front(handoff.points[1])
+ 		paths.append({"points": selected, "owner": handoff.owner})
+-	return {"domain": domain, "paths": paths}
++		# The town route also owns the finite incoming segment it replaces.
++		# A fillet starts turning before the town boundary; leaving the old
++		# lattice stripe there squares off the outside of that curve. Withdraw
++		# only this handoff corridor, then the higher-priority route restores
++		# its complete walking width. Other exterior roads keep their owners.
++		var outside: Vector2 = handoff.points[1]
++		var incoming := boundary - outside
++		handoff_domains.append(FeatureGroundShape.oriented_rect(
++			(outside + boundary) * 0.5,
++			Vector2(incoming.length() * 0.5, PathProgram.PATH_HALF_WIDTH),
++			incoming.angle(), FeatureGroundField.NATURAL,
++			VillagePlan.SURFACE_PRIORITY - 1,
++			StringName("%s.incoming-domain" % handoff.owner)))
++	return {"domain": domain, "paths": paths, "handoff_domains": handoff_domains}
+ 
+ 
+ static func boundary_path(a: Vector2, b: Vector2, bounds: Rect2) -> Array[Vector2]:
+--- before/scripts/terrain/features/villages/VillageWarrenFabricSolver.gd
++++ after/scripts/terrain/features/villages/VillageWarrenFabricSolver.gd
+@@ -1087,6 +1087,7 @@
+ 	var topology := preload("res://scripts/terrain/features/villages/VillageWarrenRoadConnections.gd").topology(
+ 		occupied, contacts, ground, stable_id)
+ 	result.surfaces.append(topology.domain)
++	result.surfaces.append_array(topology.handoff_domains)
+ 	var paths: Array[Dictionary] = topology.paths
+ 	result.world_road_connections.assign(paths)
+ 	if result.volumetric_spatial != null and result.fabric_plan != null:

@@ -1,0 +1,266 @@
+{
+  "collision_shapes": 4,
+  "distinct_triangles": 320237,
+  "exact_replay_mismatches": 0,
+  "exposed_feet": 0,
+  "fallback_inner": 1,
+  "foot_probes": 3917,
+  "forms": [
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-421.5, 20.0, -235.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 8.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 7318
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-421.5, 24.0, -244.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 4.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 3820
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-421.5, 28.0, -289.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 21.0, \"height\": 4.0, \"left_end\": true, \"right_end\": false, \"seed\": 2697992464 }",
+      "triangles": 8886
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-421.5, 28.0, -313.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 21.0, \"height\": 12.0, \"left_end\": true, \"right_end\": false, \"seed\": 2697992464 }",
+      "triangles": 23276
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-421.5, 28.0, -334.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 21.0, \"height\": 12.0, \"left_end\": false, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 23588
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-397.5, 20.0, -283.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 8.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 6808
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-397.5, 24.0, -292.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 4.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 4184
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-442.5, 36.0, -340.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 4.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 3908
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-432.0, 36.0, -346.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 18.0, \"height\": 4.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 8028
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-435.0, 32.0, -301.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 24.0, \"height\": 8.0, \"left_end\": false, \"right_end\": true, \"seed\": 2697992464, \"inner_connections\": [(-445.5, 32.0, -301.5)], \"ledge_joins\": [{ \"corner\": (-445.5, 32.0, -301.5), \"target\": 2.7779249548912, \"inner_radius\": 5.77069978713989, \"radius\": 9.47069978713989 }] }",
+      "triangles": 18202
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-445.5, 28.0, -241.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 21.0, \"height\": 4.0, \"left_end\": true, \"right_end\": false, \"seed\": 2697992464 }",
+      "triangles": 9294
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-445.5, 28.0, -267.0)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 24.0, \"height\": 12.0, \"left_end\": true, \"right_end\": false, \"seed\": 2697992464, \"inner_connections\": [(-445.5, 28.0, -277.5)], \"ledge_joins\": [{ \"corner\": (-445.5, 28.0, -277.5), \"target\": 2.25044995546341, \"inner_radius\": 2.2831999540329, \"radius\": 5.9831999540329 }] }",
+      "triangles": 26112
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-445.5, 32.0, -289.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 27.0, \"height\": 8.0, \"left_end\": true, \"right_end\": false, \"seed\": 2697992464, \"inner_connections\": [(-445.5, 32.0, -301.5)], \"ledge_joins\": [{ \"corner\": (-445.5, 32.0, -301.5), \"target\": 2.7779249548912, \"inner_radius\": 4.16089992523193, \"radius\": 7.86089992523193 }] }",
+      "triangles": 21154
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-403.5, 20.0, -277.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 8.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 6724
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-427.5, 24.0, -277.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 8.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 7490
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-414.0, 24.0, -277.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 12.0, \"height\": 4.0, \"left_end\": false, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 5740
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-439.5, 28.0, -277.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 15.0, \"height\": 4.0, \"left_end\": false, \"right_end\": true, \"seed\": 2697992464, \"inner_connections\": [(-445.5, 28.0, -277.5)], \"ledge_joins\": [{ \"corner\": (-445.5, 28.0, -277.5), \"target\": 2.25044995546341, \"inner_radius\": 7.11349992752075, \"radius\": 10.8134999275208 }] }",
+      "triangles": 6968
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-403.5, 24.0, -298.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 4.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 4036
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-514.5, 36.0, -259.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 4.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 3654
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-498.0, 32.0, -253.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 12.0, \"height\": 8.0, \"left_end\": true, \"right_end\": false, \"seed\": 2697992464 }",
+      "triangles": 9398
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-480.0, 32.0, -253.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 24.0, \"height\": 8.0, \"left_end\": false, \"right_end\": false, \"seed\": 2697992464 }",
+      "triangles": 17938
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-457.5, 32.0, -253.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 21.0, \"height\": 8.0, \"left_end\": false, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 16456
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-508.5, 36.0, -253.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 4.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 4104
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-427.5, 20.0, -229.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 8.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 6574
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-451.5, 24.0, -229.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 8.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 6768
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-438.0, 24.0, -229.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 12.0, \"height\": 4.0, \"left_end\": false, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 6132
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-460.5, 28.0, -229.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 4.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 4082
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-427.5, 24.0, -250.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 4.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 4064
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-0.0, 0.0, 1.0), Y: (0.0, 1.0, 0.0), Z: (-1.0, 0.0, -0.0), O: (-466.5, 28.0, -235.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 4.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 3828
+    },
+    {
+      "exact_current": true,
+      "kind": "corner",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-421.5, 32.0, -301.5)]",
+      "recipe": "{ \"kind\": \"corner\", \"height\": 8.0, \"seed\": 2697992464 }",
+      "triangles": 9098
+    },
+    {
+      "exact_current": true,
+      "kind": "corner",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-397.5, 20.0, -277.5)]",
+      "recipe": "{ \"kind\": \"corner\", \"height\": 8.0, \"seed\": 2697992464 }",
+      "triangles": 8948
+    },
+    {
+      "exact_current": true,
+      "kind": "corner",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-445.5, 32.0, -253.5)]",
+      "recipe": "{ \"kind\": \"corner\", \"height\": 8.0, \"seed\": 2697992464 }",
+      "triangles": 8828
+    },
+    {
+      "exact_current": true,
+      "kind": "corner",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-421.5, 20.0, -229.5)]",
+      "recipe": "{ \"kind\": \"corner\", \"height\": 8.0, \"seed\": 2697992464 }",
+      "triangles": 8632
+    },
+    {
+      "exact_current": true,
+      "kind": "inner_corner",
+      "pose": "[X: (1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (0.0, 0.0, 1.0), O: (-421.5, 28.0, -349.5)]",
+      "recipe": "{ \"kind\": \"inner_corner\", \"height\": 4.0, \"seed\": 2697992464 }",
+      "triangles": 5000
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-1.0, 0.0, 0.0), Y: (0.0, 1.0, 0.0), Z: (-0.0, 0.0, -1.0), O: (-475.5, 28.0, -202.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 4.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 3858
+    },
+    {
+      "exact_current": true,
+      "kind": "wall",
+      "pose": "[X: (-0.0, 0.0, -1.0), Y: (0.0, 1.0, 0.0), Z: (1.0, 0.0, -0.0), O: (-469.5, 28.0, -196.5)]",
+      "recipe": "{ \"kind\": \"wall\", \"width\": 9.0, \"height\": 4.0, \"left_end\": true, \"right_end\": true, \"seed\": 2697992464 }",
+      "triangles": 4842
+    }
+  ],
+  "joined_walls": 4,
+  "missing_collision_triangles": 0,
+  "missing_ground": 0,
+  "outer": 4
+}
