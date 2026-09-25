@@ -83,11 +83,24 @@ float tactical_column_coverage(vec3 point) {
 		* (1.0 - smoothstep(boom_length, boom_length + 0.5, along));
 }
 
-float tactical_ground_foreground(vec3 point) {
-	// Height alone cannot move a bank behind the actor into the foreground.
-	vec2 direction = tactical_eye.xz - tactical_feet.xz;
-	direction /= max(length(direction), 0.001);
-	return smoothstep(-0.25, 0.25, dot(point.xz - tactical_feet.xz, direction));
+float tactical_ground_protection(vec3 point, vec3 normal) {
+#ifdef TACTICAL_TERRAIN_MATERIAL
+	// Real ground is protected by matching the receiver depth itself. Only
+	// grass needs its roots protected separately from its raised blade tips.
+#ifdef TACTICAL_GRASS_ROOT
+	if (tactical_grass_root.y <= tactical_floor_y + 0.15) { return 1.0; }
+#endif
+	return 0.0;
+#endif
+
+	// Protect actual nearby support surfaces, not a half-plane of the screen.
+	// The slope allowance follows rising/descending ground around physical feet;
+	// normals keep vertical walls inside the full circular cutout.
+	float distance_xz = length(point.xz - tactical_feet.xz);
+	float nearby = 1.0 - smoothstep(4.0, 5.0, distance_xz);
+	float support_height = 1.0 - smoothstep(0.65 + distance_xz * 0.65,
+		0.85 + distance_xz * 0.65, point.y - tactical_floor_y);
+	return nearby * support_height * step(0.55, normal.y);
 }
 
 float tactical_receiver_depth(vec2 uv) {
@@ -96,36 +109,7 @@ float tactical_receiver_depth(vec2 uv) {
 	return dot(bytes, vec3(1.0, 256.0, 65536.0)) * 0.001;
 }
 
-float tactical_visible_receiver_depth(vec2 uv, bool exterior) {
-	float depth = tactical_receiver_depth(uv);
-	if (!exterior) { return depth; }
-	vec3 bytes = floor(texture(tactical_front_depth, uv).rgb * 255.0 + 0.5);
-	// Foliage may reveal a genuine cliff face as well as an upward floor.
-	// Earth and closed buildings still require the proven lower receiver.
-	return max(depth, dot(bytes, vec3(1.0, 256.0, 65536.0)) * 0.001);
-}
-
-float tactical_earth_obstruction(mat4 inverse_view, mat4 inverse_projection) {
-	// A broad neighbourhood is useful only when earth actually hides the
-	// character. Otherwise it cuts unrelated banks beside a clear player.
-	float obstruction = 0.0;
-	mat4 projection = inverse(inverse_projection);
-	for (int sample_index = 0; sample_index < 3; sample_index++) {
-		vec3 target = tactical_feet + vec3(0.0,0.3 + float(sample_index)*0.7,0.0);
-		vec3 view_target = transpose(mat3(inverse_view)) * (target - tactical_eye);
-		vec4 projected = projection * vec4(view_target,1.0);
-		vec2 target_uv = projected.xy/projected.w*0.5+0.5;
-		if (any(lessThan(target_uv,vec2(0.0))) || any(greaterThanEqual(target_uv,vec2(1.0)))) { continue; }
-		vec3 encoded = floor(texture(tactical_front_depth,target_uv).rgb*255.0+0.5);
-		float depth = dot(encoded,vec3(1.0,256.0,65536.0))*0.001;
-		if (depth > 0.0) { obstruction = max(obstruction,smoothstep(0.10,0.35,-view_target.z-depth)); }
-	}
-	return obstruction;
-}
-
 float tactical_earth_coverage(vec3 point, vec2 uv, mat4 inverse_view, mat4 inverse_projection) {
-	float obstruction = tactical_earth_obstruction(inverse_view,inverse_projection);
-	if (obstruction <= 0.0) { return 0.0; }
 	vec3 bytes = floor(texture(tactical_front_depth, uv).rgb * 255.0 + 0.5);
 	float depth = dot(bytes, vec3(1.0, 256.0, 65536.0)) * 0.001;
 	if (depth <= 0.0) { return 0.0; }
@@ -142,13 +126,13 @@ float tactical_earth_coverage(vec3 point, vec2 uv, mat4 inverse_view, mat4 inver
 	// All skins of intervening earth use the FIRST actual terrain surface's
 	// projected coverage. A deeper reverse skin cannot survive its front cap
 	// at the feather. This pass supplies only a mask, never replacement color.
-	return tactical_column_coverage(first_world) * tactical_ground_foreground(first_world) * obstruction;
+	return tactical_column_coverage(first_world);
 }
 
-float tactical_receiver_mask_for_surface(vec2 uv, bool exterior) {
+float tactical_receiver_mask(vec2 uv) {
 	// A centre sample is mandatory: filtering must never extend the reveal
 	// into a pixel without ground. The surrounding samples feather INWARD.
-	if (tactical_visible_receiver_depth(uv, exterior) <= 0.0) { return 0.0; }
+	if (tactical_receiver_depth(uv) <= 0.0) { return 0.0; }
 	// About 1.5% of viewport width, bounded for small diagnostic views.
 	float feather_pixels = clamp(0.015 / tactical_receiver_texel.x, 8.0, 32.0);
 	vec2 step_uv = tactical_receiver_texel * feather_pixels;
@@ -160,13 +144,9 @@ float tactical_receiver_mask_for_surface(vec2 uv, bool exterior) {
 		// taps there; the mandatory centre still rejects every actual void.
 		vec2 sample_uv = clamp(uv + offset, tactical_receiver_texel * 0.5,
 			vec2(1.0) - tactical_receiver_texel * 0.5);
-		covered += step(0.001, tactical_visible_receiver_depth(sample_uv, exterior));
+		covered += step(0.001, tactical_receiver_depth(sample_uv));
 	}
 	return smoothstep(0.5, 1.0, covered / 13.0);
-}
-
-float tactical_receiver_mask(vec2 uv) {
-	return tactical_receiver_mask_for_surface(uv, false);
 }
 
 void tactical_cutout(vec3 view_position, vec3 view_normal, vec2 pixel, vec2 uv, mat4 inverse_view, mat4 inverse_projection, bool front_facing, vec2 surface_uv) {
@@ -175,7 +155,7 @@ void tactical_cutout(vec3 view_position, vec3 view_normal, vec2 pixel, vec2 uv, 
 	vec3 point = (inverse_view * vec4(view_position, 1.0)).xyz;
 	vec3 normal = normalize(mat3(inverse_view) * view_normal);
 	float coverage = tactical_coverage(point);
-	if (tactical_owner_footprints > 0.5 || tactical_shell > 0.5) { coverage = tactical_column_coverage(tactical_shell_mask_point(point, uv, inverse_view, inverse_projection)) * tactical_owner_front; }
+	if (tactical_shell > 0.5) { coverage = tactical_column_coverage(tactical_shell_mask_point(point, uv, inverse_view, inverse_projection)) * tactical_owner_front; }
 	if (tactical_ground_owner > 0.5) { coverage = tactical_earth_coverage(point, uv, inverse_view, inverse_projection); }
 #ifdef TACTICAL_TERRAIN_MATERIAL
 	// The rear side of a two-sided cliff skirt is still part of the intervening
@@ -188,9 +168,7 @@ void tactical_cutout(vec3 view_position, vec3 view_normal, vec2 pixel, vec2 uv, 
 #ifdef TACTICAL_TERRAIN_MATERIAL
 	remaining_opacity = 0.0;
 #endif
-	// Only an actual receiver proves support. Upward-facing leaves and
-	// branches are not ground, and their normals must not carve flat edges.
-	float protection = 0.0;
+	float protection = tactical_ground_protection(point, normal);
 #ifdef TACTICAL_GRASS_ROOT
 	// Tall blades project away from their support pixel. Protect them using
 	// the actual root's receiver depth, including raised ground behind a bank.
@@ -204,11 +182,7 @@ void tactical_cutout(vec3 view_position, vec3 view_normal, vec2 pixel, vec2 uv, 
 	// Most fragments in a selected batch lie outside the reveal. Avoid
 	// receiver texture work for those and for protected ground-cover roots.
 	if (coverage * (1.0 - protection) * tactical_strength <= 0.0) { return; }
-	bool exterior = tactical_ground_owner < 0.5 && tactical_shell < 0.5;
-#ifdef TACTICAL_TERRAIN_MATERIAL
-	exterior = false;
-#endif
-	float ground_depth = tactical_visible_receiver_depth(uv, exterior);
+	float ground_depth = tactical_receiver_depth(uv);
 	if (ground_depth <= 0.0 || -view_position.z > ground_depth + 0.01) { return; }
 	if (tactical_shell > 1.5 && normal.y > 0.001 && abs(-view_position.z - ground_depth) < 0.04) { return; }
 	if (tactical_ground_owner > 0.5) {
@@ -219,7 +193,7 @@ void tactical_cutout(vec3 view_position, vec3 view_normal, vec2 pixel, vec2 uv, 
 		}
 		if (upward_ground && abs(-view_position.z - ground_depth) < 0.04) { return; }
 	}
-	float receiver = tactical_receiver_mask_for_surface(uv, exterior);
+	float receiver = tactical_receiver_mask(uv);
 	float fade = coverage * (1.0 - protection)
 		* tactical_strength * (1.0 - remaining_opacity) * receiver;
 	// A cutaway must not expose the inner/back face of a removed shell. Keep

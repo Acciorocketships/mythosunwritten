@@ -1,10 +1,9 @@
-class_name CameraVisibilityBubble
 extends Node
 ## Render-space broad phase finds ALL nearby components, including visuals with
 ## no collision. Per-fragment coverage confines the fade inside large batches.
 
-const INCLUDE := '\n#include "res://scripts/camera/visibility_bubble.gdshaderinc"\n'
-const CUTOUT := '\n\ttactical_cutout(VERTEX, NORMAL, FRAGCOORD.xy, SCREEN_UV, INV_VIEW_MATRIX, INV_PROJECTION_MATRIX, FRONT_FACING, UV);\n'
+const INCLUDE := '\n#include "res://tests/fixtures/september13/visibility_bubble.gdshaderinc"\n'
+const CUTOUT := '\n\ttactical_cutout(VERTEX, NORMAL, FRAGCOORD.xy, SCREEN_UV, INV_VIEW_MATRIX, FRONT_FACING, UV);\n'
 const SHADER_CACHE_LIMIT := 32
 var _active: Dictionary = {}
 var _materials: Dictionary = {}
@@ -27,7 +26,7 @@ func update_bubble(camera: Camera3D, target: Node3D, feet: Vector3,
 		_last_eye = camera.global_position
 		_select(camera, target, feet, radius)
 	if _receivers == null:
-		_receivers = preload("res://scripts/camera/VisibilityGroundDepth.gd").new()
+		_receivers = preload("res://tests/fixtures/september13/VisibilityGroundDepth.gd").new()
 		add_child(_receivers)
 	_receivers.update_view(camera, feet, radius)
 	_sync_source_parameters()
@@ -39,7 +38,6 @@ func update_bubble(camera: Camera3D, target: Node3D, feet: Vector3,
 		material.set_shader_parameter("tactical_radius", radius)
 		material.set_shader_parameter("tactical_opacity", opacity)
 		material.set_shader_parameter("tactical_ground_depth", _receivers.texture())
-		material.set_shader_parameter("tactical_front_depth", _receivers.front_texture())
 		material.set_shader_parameter("tactical_receiver_texel", Vector2.ONE / Vector2(_receivers.view_size()))
 	for id: int in _active.keys():
 		var state: Dictionary = _active[id]
@@ -55,32 +53,18 @@ func update_bubble(camera: Camera3D, target: Node3D, feet: Vector3,
 		# Strength belongs to the geometry instance; one shared material serves
 		# every component using this source without flattening their fade times.
 		instance_from_id(id).set_instance_shader_parameter("tactical_strength", state.strength)
-		var node := instance_from_id(id) as GeometryInstance3D
-		if node.has_meta("tactical_owner_footprints"):
-			node.set_instance_shader_parameter("tactical_parent_origin", node.global_transform.origin)
-			node.set_instance_shader_parameter("tactical_parent_x", node.global_transform.basis.x)
-			node.set_instance_shader_parameter("tactical_parent_z", node.global_transform.basis.z)
 
 func _select(camera: Camera3D, target: Node3D, feet: Vector3, radius: float) -> void:
 	for state: Dictionary in _active.values(): state.wanted = false
 	var bounds := AABB(feet, Vector3.ZERO).expand(camera.global_position).grow(radius + 1.0)
 	var ids := RenderingServer.instances_cull_aabb(bounds, camera.get_world_3d().scenario)
-	# A reverse earth skin may lie beyond the actor-centred broad phase while
-	# sharing a screen ray with its foreground bank. Include visible ground
-	# owners through the full camera frustum; the receiver depth still bounds
-	# which fragments can actually be removed.
-	for id: int in RenderingServer.instances_cull_convex(camera.get_frustum(), camera.get_world_3d().scenario):
-		var earth := instance_from_id(id) as GeometryInstance3D
-		if earth != null and earth.is_in_group("tactical_solid_earth") and not ids.has(id): ids.append(id)
 	for id: int in ids:
 		var node := instance_from_id(id) as GeometryInstance3D
 		if node == null or not node.is_visible_in_tree() or target == node or target.is_ancestor_of(node):
 			continue
-		if node.is_in_group("tactical_preserve_surface"):
-			continue
 		if not (node is MeshInstance3D or node is MultiMeshInstance3D or node is CSGShape3D):
 			continue
-		if not node.is_in_group("tactical_solid_earth") and not _overlaps_corridor(node, camera.global_position, feet, radius): continue
+		if not _overlaps_corridor(node, camera.global_position, feet, radius): continue
 		if _active.has(id):
 			_active[id].wanted = true
 		else:
@@ -107,10 +91,6 @@ static func _overlaps_corridor(node: GeometryInstance3D, eye: Vector3, feet: Vec
 	return x*x + y*y <= radius*radius
 
 func _install(node: GeometryInstance3D) -> Dictionary:
-	node.set_instance_shader_parameter("tactical_owner_footprints", 1.0 if node.has_meta("tactical_owner_footprints") else 0.0)
-	if node.has_meta("tactical_owner_rect"):
-		node.set_instance_shader_parameter("tactical_owner_footprints", 2.0)
-		node.set_instance_shader_parameter("tactical_owner_rect",node.get_meta("tactical_owner_rect"))
 	node.set_instance_shader_parameter("tactical_ground_owner", 1.0 if node.is_in_group("tactical_solid_earth") else 0.0)
 	node.set_instance_shader_parameter("tactical_shell", 2.0 if node.is_in_group("tactical_deck_surface") else (1.0 if node.is_in_group("tactical_closed_shell") else 0.0))
 	node.set_instance_shader_parameter("tactical_native_turf", 1.0 if node is MultiMeshInstance3D and node.is_in_group("tactical_solid_earth") else 0.0)
@@ -262,35 +242,24 @@ func _sync_source_parameters() -> void:
 ## Insert at fragment entry so early returns cannot bypass visibility. Search
 ## without comments, retaining byte positions in the original shader source.
 static func instrument(code: String) -> String:
-	var stages := {"vertex": "\n\ttactical_owner_nearest = tactical_owner_setup(INSTANCE_CUSTOM);\n\ttactical_owner_front = smoothstep(-0.25, 0.25, tactical_owner_nearest);\n",
-		"fragment": CUTOUT}
-	for stage: String in stages:
-		var searchable := _without_shader_comments(code)
-		var expression := RegEx.new()
-		expression.compile("void\\s+" + stage + "\\s*\\(\\s*\\)\\s*\\{")
-		var found := expression.search(searchable)
-		if found == null:
-			code += "\nvoid " + stage + "() {" + stages[stage] + "}\n"
-		else:
-			code = code.insert(found.get_end(), stages[stage])
-	var functions := RegEx.new()
-	functions.compile("void\\s+(vertex|fragment)\\s*\\(\\s*\\)\\s*\\{")
-	return code.insert(functions.search(_without_shader_comments(code)).get_start(), INCLUDE)
-
-static func _without_shader_comments(code: String) -> String:
 	var comments := RegEx.new()
 	comments.compile("(?s)/\\*.*?\\*/|//[^\\n]*")
 	var searchable := code
 	for comment: RegExMatch in comments.search_all(code):
 		searchable = searchable.left(comment.get_start()) + " ".repeat(comment.get_end() - comment.get_start()) + searchable.substr(comment.get_end())
-	return searchable
+	var expression := RegEx.new()
+	expression.compile("void\\s+fragment\\s*\\(\\s*\\)\\s*\\{")
+	var found := expression.search(searchable)
+	if found == null:
+		return code + INCLUDE + "\nvoid fragment() {" + CUTOUT + "}\n"
+	return code.left(found.get_start()) + INCLUDE \
+		+ code.substr(found.get_start(), found.get_end() - found.get_start()) \
+		+ CUTOUT + code.substr(found.get_end())
 
 func _restore(node: GeometryInstance3D, state: Dictionary) -> void:
 	_release_mesh_binding(state)
 	# The adapter owns this private instance uniform; remove its override.
 	node.set_instance_shader_parameter("tactical_strength", null)
-	for parameter in ["tactical_owner_footprints", "tactical_owner_rect", "tactical_parent_origin", "tactical_parent_x", "tactical_parent_z"]:
-		node.set_instance_shader_parameter(parameter, null)
 	node.set_instance_shader_parameter("tactical_shell", null)
 	node.set_instance_shader_parameter("tactical_ground_owner", null)
 	node.set_instance_shader_parameter("tactical_native_turf", null)

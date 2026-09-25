@@ -1,9 +1,8 @@
-class_name CameraVisibilityBubble
 extends Node
 ## Render-space broad phase finds ALL nearby components, including visuals with
 ## no collision. Per-fragment coverage confines the fade inside large batches.
 
-const INCLUDE := '\n#include "res://scripts/camera/visibility_bubble.gdshaderinc"\n'
+const INCLUDE := '\n#include "res://tests/fixtures/september13/evening_before/visibility_bubble.gdshaderinc"\n'
 const CUTOUT := '\n\ttactical_cutout(VERTEX, NORMAL, FRAGCOORD.xy, SCREEN_UV, INV_VIEW_MATRIX, INV_PROJECTION_MATRIX, FRONT_FACING, UV);\n'
 const SHADER_CACHE_LIMIT := 32
 var _active: Dictionary = {}
@@ -27,7 +26,7 @@ func update_bubble(camera: Camera3D, target: Node3D, feet: Vector3,
 		_last_eye = camera.global_position
 		_select(camera, target, feet, radius)
 	if _receivers == null:
-		_receivers = preload("res://scripts/camera/VisibilityGroundDepth.gd").new()
+		_receivers = preload("res://tests/fixtures/september13/evening_before/VisibilityGroundDepth.gd").new()
 		add_child(_receivers)
 	_receivers.update_view(camera, feet, radius)
 	_sync_source_parameters()
@@ -75,8 +74,6 @@ func _select(camera: Camera3D, target: Node3D, feet: Vector3, radius: float) -> 
 	for id: int in ids:
 		var node := instance_from_id(id) as GeometryInstance3D
 		if node == null or not node.is_visible_in_tree() or target == node or target.is_ancestor_of(node):
-			continue
-		if node.is_in_group("tactical_preserve_surface"):
 			continue
 		if not (node is MeshInstance3D or node is MultiMeshInstance3D or node is CSGShape3D):
 			continue
@@ -181,7 +178,7 @@ func _adapt(source: Material, state: Dictionary) -> ShaderMaterial:
 	if custom != null and custom.shader != null:
 		code = custom.shader.code
 	else:
-		code = (load("res://scripts/camera/tactical_standard.gdshader") as Shader).code
+		code = (load("res://tests/fixtures/september13/evening_before/tactical_standard.gdshader") as Shader).code
 		if native != null:
 			var features := {"vertex_color_albedo": native.vertex_color_use_as_albedo,
 				"normal_enabled": native.normal_enabled, "emission_enabled": native.emission_enabled,

@@ -82,6 +82,8 @@ var body_model_base_pos: Vector3 = Vector3.ZERO
 var prev_body_global_y: float = 0.0
 var _ground_snap_grace := 0.0
 var in_water: bool = false
+var immersed: bool = false
+const IMMERSION=preload("res://scripts/terrain/water/WaterImmersion.gd")
 var water_current := Vector2.ZERO
 # wading: true whenever the probe is in water at all — the >=0.05m shallow
 # band OR full in_water (swimming is trivially "in water" too — see
@@ -114,7 +116,7 @@ func streaming_velocity() -> Vector3:
 	if controller != null:
 		var requested := controller.get_move_vector(self,0.0)
 		if requested.length_squared()>0.000001:
-			var speed := MAX_SPEED*SWIM_SPEED_FACTOR if in_water else MAX_SPEED
+			var speed := MAX_SPEED*SWIM_SPEED_FACTOR if in_water or immersed else MAX_SPEED
 			requested=requested.limit_length(1.0)*speed
 			return Vector3(requested.x,0,requested.y)
 	return Vector3(velocity.x,0,velocity.z)
@@ -145,6 +147,9 @@ func _physics_process(delta: float) -> void:
 	elif wants_jump: # TODO: add a mechanism to allow jump if we recently walked off a ledge (falling without having jumped, low negative vertical velocity)
 		velocity += Vector3(mv2.x / 3, 1.0, mv2.y / 3).normalized() * JUMP_VELOCITY
 
+	if immersed and not in_water:
+		velocity.y=maxf(-MAX_SWIM_SINK,velocity.y*exp(-WATER_LINEAR_DRAG*delta))
+
 	# desired direction & facing
 	var desired_dir := Vector3(mv2.x, 0.0, mv2.y)
 	var has_input := desired_dir.length() > 0.001
@@ -155,18 +160,18 @@ func _physics_process(delta: float) -> void:
 		facing = mv2
 	if facing.length_squared() > 0.000001:
 		var target_yaw := atan2(facing.x, facing.y)
-		var turn_speed: float = TURN_SPEED if (on_ground or in_water or controller is PlayerController) else TURN_SPEED_AIR
+		var turn_speed: float = TURN_SPEED if (on_ground or in_water or immersed or controller is PlayerController) else TURN_SPEED_AIR
 		global_rotation.y = lerp_angle(global_rotation.y, target_yaw, 1.0 - exp(-turn_speed * delta))
 
 	# Accel/friction on XZ. Swimming control is relative to the surrounding
 	# water: without input, no artificial brake fights the current. The shared
 	# drag force below carries the body toward WaterSampler.velocity_at().
-	var max_speed: float = MAX_SPEED * SWIM_SPEED_FACTOR if in_water else MAX_SPEED
+	var max_speed: float = MAX_SPEED * SWIM_SPEED_FACTOR if in_water or immersed else MAX_SPEED
 	var target_speed := max_speed * mv2.length()
 	var target_vxz := desired_dir * target_speed
 	var vxz := Vector2(velocity.x, velocity.z)
 	var tv := Vector2(target_vxz.x, target_vxz.z)
-	if in_water:
+	if in_water or immersed:
 		var relative_velocity := vxz - water_current
 		if has_input:
 			relative_velocity = relative_velocity.move_toward(tv, SWIM_ACCEL * delta)
@@ -324,6 +329,11 @@ func _update_in_water() -> void:
 	in_water = best_depth > swim_gate
 	wading = in_water or best_depth > wade_gate
 	water_current = best_current if in_water else Vector2.ZERO
+	var volume := IMMERSION.sample(get_tree().get_nodes_in_group("water_surface"),gp)
+	immersed = float(volume.get("depth",-INF)) > (0.6 if immersed else 0.8)
+	if immersed and not in_water:
+		water_current = (volume.sampler as WaterSampler).velocity_at(xz)
+	wading = wading or immersed
 	if in_water:
 		var dynamic_offset := _swell_offset(xz, t)
 		var water_dynamics: Node = get_tree().get_first_node_in_group("water_dynamics")

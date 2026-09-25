@@ -32,7 +32,8 @@ func get_facing_vector(character: CharacterBody3D, _dt: float) -> Vector2:
 		return _last_facing
 	# A plane through the feet makes aim independent of foreground roofs and
 	# walls (which may be transparent). It also behaves predictably on slopes.
-	var aim := cursor_direction(active_camera, cursor, character.global_position)
+	var aim: Vector2 = active_camera.facing_direction(character.global_position) \
+		if active_camera.has_method("facing_direction") else cursor_direction(active_camera,cursor,character.global_position)
 	if aim.length_squared() > 0.0:
 		_last_facing = aim
 	return _last_facing

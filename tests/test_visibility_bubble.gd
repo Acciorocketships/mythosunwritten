@@ -28,7 +28,8 @@ func test_generic_material_adapter_restores_shared_resources_and_batch() -> void
 	world.add_child(batch)
 	var original := batch.multimesh
 	var batch_state := bubble._install(batch)
-	assert_ne(batch.multimesh, original)
+	assert_same(batch.multimesh, original, "Single-surface fade retains the live instance buffer")
+	assert_true(batch.material_override is ShaderMaterial)
 	assert_eq(batch.multimesh.get_instance_transform(1), original.get_instance_transform(1))
 	if DisplayServer.get_name() != "headless":
 		assert_eq(batch.multimesh.get_instance_transform(1), transform)
@@ -109,6 +110,11 @@ func test_faded_materials_follow_live_source_uniforms_and_resets() -> void:
 		world.add_child(mesh)
 		bubble._active[mesh.get_instance_id()] = bubble._install(mesh)
 	source.set_shader_parameter("phase", 0.9)
+	var arriving := MeshInstance3D.new()
+	arriving.mesh = BoxMesh.new()
+	arriving.material_override = source
+	world.add_child(arriving)
+	bubble._active[arriving.get_instance_id()] = bubble._install(arriving)
 	bubble._sync_source_parameters()
 	for state: Dictionary in bubble._active.values():
 		assert_almost_eq(float(state.materials[0].get_shader_parameter("phase")), 0.9, 0.0001)
