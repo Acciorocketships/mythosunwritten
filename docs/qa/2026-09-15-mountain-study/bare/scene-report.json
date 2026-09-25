@@ -1,0 +1,24 @@
+{
+  "assets": {
+    "res://assets/MythosMountains/buttress_tall.glb": 2,
+    "res://assets/MythosMountains/buttress_wide.glb": 5,
+    "res://assets/MythosMountains/pillar_crown.glb": 3,
+    "res://assets/MythosMountains/pillar_slender.glb": 2,
+    "res://assets/MythosMountains/pillar_split.glb": 3,
+    "res://assets/MythosMountains/shelf_long.glb": 3
+  },
+  "bare": true,
+  "catalogue": true,
+  "formations": 18,
+  "physical_survey": {
+    "blocked_capsules": 0,
+    "missing_ground": 0,
+    "route_capsules": 41,
+    "scope": "Static native triangle and capsule queries, not a player traversal or production terrain test",
+    "surface_contacts": 18,
+    "surface_mismatches": 0
+  },
+  "poses": "[[\"wide\", (65.0, 32.0, 93.0), (-2.0, 26.0, -42.0), 58.0], [\"gameplay\", (9.0, 8.0, 32.0), (-3.0, 20.0, -38.0), 65.0], [\"left\", (-55.0, 19.0, 35.0), (-4.0, 25.0, -38.0), 62.0], [\"right\", (62.0, 16.0, 12.0), (-12.0, 26.0, -41.0), 62.0], [\"close\", (-17.0, 7.0, 3.0), (-25.0, 20.0, -25.0), 65.0], [\"overlook\", (-38.0, 46.0, -22.0), (8.0, 21.0, -45.0), 68.0], [\"hero\", (9.0, 9.0, 37.0), (-3.0, 17.0, -38.0), 65.0]]",
+  "revision": 6,
+  "seed": 15092026
+}

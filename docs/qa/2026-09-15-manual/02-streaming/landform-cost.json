@@ -1,0 +1,42 @@
+[
+  {
+    "candidate": false,
+    "hash": "c59039ccb647c904484d5b280466563b11c5cb05dd667924b9ea2cfeb2c9bff1",
+    "ms": 559.595
+  },
+  {
+    "candidate": true,
+    "hash": "c59039ccb647c904484d5b280466563b11c5cb05dd667924b9ea2cfeb2c9bff1",
+    "ms": 505.755
+  },
+  {
+    "candidate": true,
+    "hash": "c59039ccb647c904484d5b280466563b11c5cb05dd667924b9ea2cfeb2c9bff1",
+    "ms": 501.498
+  },
+  {
+    "candidate": false,
+    "hash": "c59039ccb647c904484d5b280466563b11c5cb05dd667924b9ea2cfeb2c9bff1",
+    "ms": 555.316
+  },
+  {
+    "candidate": false,
+    "hash": "c59039ccb647c904484d5b280466563b11c5cb05dd667924b9ea2cfeb2c9bff1",
+    "ms": 559.361
+  },
+  {
+    "candidate": true,
+    "hash": "c59039ccb647c904484d5b280466563b11c5cb05dd667924b9ea2cfeb2c9bff1",
+    "ms": 497.652
+  },
+  {
+    "candidate": true,
+    "hash": "c59039ccb647c904484d5b280466563b11c5cb05dd667924b9ea2cfeb2c9bff1",
+    "ms": 494.097
+  },
+  {
+    "candidate": false,
+    "hash": "c59039ccb647c904484d5b280466563b11c5cb05dd667924b9ea2cfeb2c9bff1",
+    "ms": 557.475
+  }
+]

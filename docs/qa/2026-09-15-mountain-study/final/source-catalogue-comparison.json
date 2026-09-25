@@ -1,0 +1,30 @@
+{
+  "wide": {
+    "mean_absolute_rgb_error_255": 0.0009472916666666667,
+    "fraction_pixels_any_channel_diff_gt_8": 2.0625e-05
+  },
+  "gameplay": {
+    "mean_absolute_rgb_error_255": 0.0025583333333333335,
+    "fraction_pixels_any_channel_diff_gt_8": 4.375e-05
+  },
+  "left": {
+    "mean_absolute_rgb_error_255": 0.002847708333333333,
+    "fraction_pixels_any_channel_diff_gt_8": 4.25e-05
+  },
+  "right": {
+    "mean_absolute_rgb_error_255": 0.0016652083333333334,
+    "fraction_pixels_any_channel_diff_gt_8": 2.875e-05
+  },
+  "close": {
+    "mean_absolute_rgb_error_255": 0.004195625,
+    "fraction_pixels_any_channel_diff_gt_8": 6.6875e-05
+  },
+  "overlook": {
+    "mean_absolute_rgb_error_255": 0.007629583333333334,
+    "fraction_pixels_any_channel_diff_gt_8": 0.0001475
+  },
+  "hero": {
+    "mean_absolute_rgb_error_255": 0.00261625,
+    "fraction_pixels_any_channel_diff_gt_8": 4.5625e-05
+  }
+}

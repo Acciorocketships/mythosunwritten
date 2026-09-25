@@ -1,0 +1,102 @@
+[
+  {
+    "image": "P12_300_-8.png",
+    "changed_fraction": 0.006827739197530864
+  },
+  {
+    "image": "P12_300_0.png",
+    "changed_fraction": 0.006532118055555556
+  },
+  {
+    "image": "P12_300_8.png",
+    "changed_fraction": 0.006723572530864198
+  },
+  {
+    "image": "P12_360_-8.png",
+    "changed_fraction": 0.006487750771604938
+  },
+  {
+    "image": "P12_360_0.png",
+    "changed_fraction": 0.0069487847222222225
+  },
+  {
+    "image": "P12_360_8.png",
+    "changed_fraction": 0.00738329475308642
+  },
+  {
+    "image": "P12_419_-8.png",
+    "changed_fraction": 0.005983796296296296
+  },
+  {
+    "image": "P12_419_0.png",
+    "changed_fraction": 0.0054832175925925925
+  },
+  {
+    "image": "P12_419_8.png",
+    "changed_fraction": 0.0055478395061728395
+  },
+  {
+    "image": "P12_450_-8.png",
+    "changed_fraction": 0.0038208912037037035
+  },
+  {
+    "image": "P12_450_0.png",
+    "changed_fraction": 0.0038913001543209877
+  },
+  {
+    "image": "P12_450_8.png",
+    "changed_fraction": 0.004069251543209877
+  },
+  {
+    "image": "P12_540_-8.png",
+    "changed_fraction": 0.0016849922839506173
+  },
+  {
+    "image": "P12_540_0.png",
+    "changed_fraction": 0.0017486496913580248
+  },
+  {
+    "image": "P12_540_8.png",
+    "changed_fraction": 0.002004243827160494
+  },
+  {
+    "image": "field_300_packets.png",
+    "changed_fraction": 0.0454559326171875
+  },
+  {
+    "image": "field_300_ripples.png",
+    "changed_fraction": 0.0
+  },
+  {
+    "image": "field_360_packets.png",
+    "changed_fraction": 0.032989501953125
+  },
+  {
+    "image": "field_360_ripples.png",
+    "changed_fraction": 0.0
+  },
+  {
+    "image": "field_419_packets.png",
+    "changed_fraction": 0.030364990234375
+  },
+  {
+    "image": "field_419_ripples.png",
+    "changed_fraction": 0.0
+  },
+  {
+    "image": "field_450_packets.png",
+    "changed_fraction": 0.025360107421875
+  },
+  {
+    "image": "field_450_ripples.png",
+    "changed_fraction": 0.0
+  },
+  {
+    "image": "field_540_packets.png",
+    "changed_fraction": 0.0157318115234375
+  },
+  {
+    "image": "field_540_ripples.png",
+    "changed_fraction": 0.0
+  }
+]

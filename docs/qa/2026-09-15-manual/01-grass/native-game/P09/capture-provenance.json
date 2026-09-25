@@ -1,0 +1,11 @@
+{
+  "camera_source": "candidate-07/P09/poses.json; transforms reconstructed from rounded original player/crosshair overlays",
+  "original_exact_camera_available": false,
+  "comparison": "Legacy fine grade versus native control compilation; common current feature/building context, materials, frozen clocks, separately regenerated grass",
+  "before_player_height_m": 36.6,
+  "after_player_height_m": 40.0,
+  "player_height_policy": "Keep photographed X/Z; raise feet only where new ground is above the old feet. Camera transform stays fixed.",
+  "poses_json_pivot_note": "The pivot field was recomputed against candidate collision but did not produce these captures. The saved camera transform and FOV are authoritative.",
+  "late_changes": "Fixed-pad lineage filtering yields identical controls at all three frozen sites (native-controls-compare log). Final record discovery adds the two-cell native-control influence margin; tested separately in test_september15_grade_topology. Captures predate that discovery-only change.",
+  "excluded_evidence": "topology-game used shared candidate grass and had an obstructed P08 camera; those images are not credited."
+}

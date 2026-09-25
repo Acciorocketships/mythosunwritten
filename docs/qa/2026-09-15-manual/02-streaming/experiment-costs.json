@@ -1,0 +1,42 @@
+[
+  {
+    "variant": "before",
+    "feature_ms": 180610.617,
+    "water_regions": 19,
+    "final_memory_bytes": 1334293094.0,
+    "sum_fill_ms": 114797.805,
+    "sum_region_ms": 26.984
+  },
+  {
+    "variant": "reuse",
+    "feature_ms": 184617.426,
+    "water_regions": 19,
+    "final_memory_bytes": 1334309766.0,
+    "sum_fill_ms": 117729.991,
+    "sum_region_ms": 27.208000000000002
+  },
+  {
+    "variant": "stencil",
+    "feature_ms": 188385.397,
+    "water_regions": 19,
+    "final_memory_bytes": 1334427002.0,
+    "sum_fill_ms": 119899.108,
+    "sum_region_ms": 29.345000000000002
+  },
+  {
+    "variant": "rect",
+    "feature_ms": 182272.894,
+    "water_regions": 19,
+    "final_memory_bytes": 1272440238.0,
+    "sum_fill_ms": 114943.329,
+    "sum_region_ms": 29.198
+  },
+  {
+    "variant": "sample",
+    "feature_ms": 176666.366,
+    "water_regions": 19,
+    "final_memory_bytes": 1279918278.0,
+    "sum_fill_ms": 112166.92300000001,
+    "sum_region_ms": 28.397000000000002
+  }
+]

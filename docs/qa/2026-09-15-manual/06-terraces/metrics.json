@@ -1,0 +1,30 @@
+[
+  {
+    "image": "close.png",
+    "changed_fraction": 0.458825
+  },
+  {
+    "image": "gameplay.png",
+    "changed_fraction": 0.405810625
+  },
+  {
+    "image": "hero.png",
+    "changed_fraction": 0.3862775
+  },
+  {
+    "image": "left.png",
+    "changed_fraction": 0.381645625
+  },
+  {
+    "image": "overlook.png",
+    "changed_fraction": 0.418266875
+  },
+  {
+    "image": "right.png",
+    "changed_fraction": 0.38353
+  },
+  {
+    "image": "wide.png",
+    "changed_fraction": 0.197525625
+  }
+]

@@ -1,0 +1,102 @@
+[
+  {
+    "image": "P12_300_-8.png",
+    "changed_fraction": 0.00794994212962963
+  },
+  {
+    "image": "P12_300_0.png",
+    "changed_fraction": 0.007618634259259259
+  },
+  {
+    "image": "P12_300_8.png",
+    "changed_fraction": 0.008429301697530865
+  },
+  {
+    "image": "P12_360_-8.png",
+    "changed_fraction": 0.007109375
+  },
+  {
+    "image": "P12_360_0.png",
+    "changed_fraction": 0.007958622685185185
+  },
+  {
+    "image": "P12_360_8.png",
+    "changed_fraction": 0.00853395061728395
+  },
+  {
+    "image": "P12_419_-8.png",
+    "changed_fraction": 0.006267843364197531
+  },
+  {
+    "image": "P12_419_0.png",
+    "changed_fraction": 0.0057074652777777775
+  },
+  {
+    "image": "P12_419_8.png",
+    "changed_fraction": 0.005852141203703704
+  },
+  {
+    "image": "P12_450_-8.png",
+    "changed_fraction": 0.003981963734567901
+  },
+  {
+    "image": "P12_450_0.png",
+    "changed_fraction": 0.003892746913580247
+  },
+  {
+    "image": "P12_450_8.png",
+    "changed_fraction": 0.004060570987654321
+  },
+  {
+    "image": "P12_540_-8.png",
+    "changed_fraction": 0.0023374807098765433
+  },
+  {
+    "image": "P12_540_0.png",
+    "changed_fraction": 0.0017283950617283952
+  },
+  {
+    "image": "P12_540_8.png",
+    "changed_fraction": 0.0016767939814814816
+  },
+  {
+    "image": "field_300_packets.png",
+    "changed_fraction": 0.0475006103515625
+  },
+  {
+    "image": "field_300_ripples.png",
+    "changed_fraction": 0.0
+  },
+  {
+    "image": "field_360_packets.png",
+    "changed_fraction": 0.034912109375
+  },
+  {
+    "image": "field_360_ripples.png",
+    "changed_fraction": 0.0
+  },
+  {
+    "image": "field_419_packets.png",
+    "changed_fraction": 0.0312347412109375
+  },
+  {
+    "image": "field_419_ripples.png",
+    "changed_fraction": 0.0
+  },
+  {
+    "image": "field_450_packets.png",
+    "changed_fraction": 0.025787353515625
+  },
+  {
+    "image": "field_450_ripples.png",
+    "changed_fraction": 0.0
+  },
+  {
+    "image": "field_540_packets.png",
+    "changed_fraction": 0.02032470703125
+  },
+  {
+    "image": "field_540_ripples.png",
+    "changed_fraction": 0.0
+  }
+]

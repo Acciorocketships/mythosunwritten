@@ -1,0 +1,38 @@
+[
+  {
+    "image": "P10_-8_t0.png",
+    "changed_fraction": 0.02607301311728395
+  },
+  {
+    "image": "P10_-8_t175.png",
+    "changed_fraction": 0.026042631172839507
+  },
+  {
+    "image": "P10_-8_t425.png",
+    "changed_fraction": 0.026166087962962964
+  },
+  {
+    "image": "P10_0_t0.png",
+    "changed_fraction": 0.02197048611111111
+  },
+  {
+    "image": "P10_0_t175.png",
+    "changed_fraction": 0.021850405092592593
+  },
+  {
+    "image": "P10_0_t425.png",
+    "changed_fraction": 0.02204668209876543
+  },
+  {
+    "image": "P10_8_t0.png",
+    "changed_fraction": 0.020006269290123457
+  },
+  {
+    "image": "P10_8_t175.png",
+    "changed_fraction": 0.020053530092592593
+  },
+  {
+    "image": "P10_8_t425.png",
+    "changed_fraction": 0.0201977237654321
+  }
+]

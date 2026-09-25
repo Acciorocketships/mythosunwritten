@@ -1,0 +1,32 @@
+[
+  {
+    "after_ms": 8687,
+    "all_terrain_visual_arrays_identical": true,
+    "before_ms": 9055,
+    "candidate_surface_vertices": 194735,
+    "collision_identical": true,
+    "original_surface_vertices": 194735,
+    "spot": "P09",
+    "wall_collision_identical": true
+  },
+  {
+    "after_ms": 6053,
+    "all_terrain_visual_arrays_identical": true,
+    "before_ms": 6277,
+    "candidate_surface_vertices": 126845,
+    "collision_identical": true,
+    "original_surface_vertices": 126845,
+    "spot": "P07",
+    "wall_collision_identical": true
+  },
+  {
+    "after_ms": 1426,
+    "all_terrain_visual_arrays_identical": true,
+    "before_ms": 2380,
+    "candidate_surface_vertices": 51284,
+    "collision_identical": true,
+    "original_surface_vertices": 51284,
+    "spot": "P08",
+    "wall_collision_identical": true
+  }
+]

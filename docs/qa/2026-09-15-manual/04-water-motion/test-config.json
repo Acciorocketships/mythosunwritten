@@ -1,0 +1,1 @@
+{"dirs": [], "tests": ["res://tests/test_september15_water_motion.gd", "res://tests/test_water_shader.gd", "res://tests/test_water_current_field.gd", "res://tests/test_water_wave_clearance.gd", "res://tests/test_september13_water_turf.gd", "res://tests/test_water_classification.gd"], "should_exit": true, "log_level": 1}

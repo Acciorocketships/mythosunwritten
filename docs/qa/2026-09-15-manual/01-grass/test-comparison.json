@@ -1,0 +1,17 @@
+{
+  "before": {
+    "res://tests/fixtures/september15/baseline-tests/baseline_cliff_dressing.gd::test_carved_pocket_with_unequal_arms_and_continuing_wall_gets_seam_walls": 2,
+    "res://tests/fixtures/september15/baseline-tests/baseline_cliff_dressing.gd::test_carved_pocket_level_diagonal_gets_a_pocket_cap": 10,
+    "res://tests/fixtures/september15/baseline-tests/baseline_cliff_dressing.gd::test_carved_flush_step_cap_sits_at_the_very_end": 6,
+    "res://tests/fixtures/september15/baseline-tests/baseline_september9_grass_lip.gd::test_reported_narrow_strip_and_end_keep_a_closed_rolled_edge_in_four_orientations": 2016,
+    "res://tests/fixtures/september15/baseline-tests/baseline_september9_grass_lip.gd::test_native_lip_collision_and_world_tint_contract_survive_surface_ownership": 2,
+    "res://tests/fixtures/september15/baseline-tests/baseline_september15_grass_lips.gd::test_reported_amber_cliff_retains_its_grass_edge_in_a_grade_collar": 4
+  },
+  "after": {
+    "res://tests/test_cliff_dressing.gd::test_carved_pocket_with_unequal_arms_and_continuing_wall_gets_seam_walls": 2,
+    "res://tests/test_cliff_dressing.gd::test_carved_pocket_level_diagonal_gets_a_pocket_cap": 10,
+    "res://tests/test_cliff_dressing.gd::test_carved_flush_step_cap_sits_at_the_very_end": 6,
+    "res://tests/test_september9_grass_lip.gd::test_reported_narrow_strip_and_end_keep_a_closed_rolled_edge_in_four_orientations": 2016,
+    "res://tests/test_september9_grass_lip.gd::test_native_lip_collision_and_world_tint_contract_survive_surface_ownership": 2
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "assets": {
+    "res://assets/Medieval Village MegaKit/glTF/Prop_Vine1.gltf": 256,
+    "res://assets/Medieval Village MegaKit/glTF/Prop_Vine2.gltf": 274,
+    "res://assets/Medieval Village MegaKit/glTF/Prop_Vine4.gltf": 276,
+    "res://assets/Medieval Village MegaKit/glTF/Prop_Vine5.gltf": 262,
+    "res://assets/Medieval Village MegaKit/glTF/Prop_Vine6.gltf": 244,
+    "res://assets/Medieval Village MegaKit/glTF/Prop_Vine9.gltf": 241,
+    "res://assets/MythosMountains/buttress_tall.glb": 2,
+    "res://assets/MythosMountains/buttress_wide.glb": 5,
+    "res://assets/MythosMountains/pillar_crown.glb": 3,
+    "res://assets/MythosMountains/pillar_slender.glb": 2,
+    "res://assets/MythosMountains/pillar_split.glb": 3,
+    "res://assets/MythosMountains/shelf_long.glb": 3,
+    "res://assets/StylizedNatureQuaternius/glTF/Bush_Common.gltf": 1320,
+    "res://assets/StylizedNatureQuaternius/glTF/Fern_1.gltf": 747,
+    "res://assets/StylizedNatureQuaternius/glTF/Grass_Common_Short.gltf": 37279,
+    "res://assets/StylizedNatureQuaternius/glTF/Rock_Medium_1.gltf": 9,
+    "res://assets/StylizedNatureQuaternius/glTF/Rock_Medium_2.gltf": 22,
+    "res://assets/StylizedNatureQuaternius/glTF/Rock_Medium_3.gltf": 14,
+    "res://assets/StylizedNatureQuaternius/glTF/TwistedTree_1.gltf": 15,
+    "res://assets/StylizedNatureQuaternius/glTF/TwistedTree_2.gltf": 20,
+    "res://assets/StylizedNatureQuaternius/glTF/TwistedTree_3.gltf": 12,
+    "res://assets/StylizedNatureQuaternius/glTF/TwistedTree_4.gltf": 16,
+    "res://assets/StylizedNatureQuaternius/glTF/TwistedTree_5.gltf": 16
+  },
+  "bare": false,
+  "catalogue": true,
+  "formations": 18,
+  "physical_survey": {
+    "blocked_capsules": 0,
+    "missing_ground": 0,
+    "route_capsules": 41,
+    "scope": "Static native triangle and capsule queries, not a player traversal or production terrain test",
+    "surface_contacts": 18,
+    "surface_mismatches": 0
+  },
+  "poses": "[[\"wide\", (65.0, 32.0, 93.0), (-2.0, 26.0, -42.0), 58.0], [\"gameplay\", (9.0, 8.0, 32.0), (-3.0, 20.0, -38.0), 65.0], [\"left\", (-55.0, 19.0, 35.0), (-4.0, 25.0, -38.0), 62.0], [\"right\", (62.0, 16.0, 12.0), (-12.0, 26.0, -41.0), 62.0], [\"close\", (-17.0, 7.0, 3.0), (-25.0, 20.0, -25.0), 65.0], [\"overlook\", (-38.0, 46.0, -22.0), (8.0, 21.0, -45.0), 68.0], [\"hero\", (9.0, 9.0, 37.0), (-3.0, 17.0, -38.0), 65.0]]",
+  "revision": 11,
+  "seed": 15092026
+}

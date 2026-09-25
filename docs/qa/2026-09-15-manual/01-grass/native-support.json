@@ -1,0 +1,26 @@
+[
+  {
+    "bad_examples": [],
+    "chunks": 2,
+    "max_datum_error_m": 0.00000000317611892342029,
+    "missing": 0,
+    "reserved_footprint_ray_count": 1745,
+    "site": "P07"
+  },
+  {
+    "bad_examples": [],
+    "chunks": 2,
+    "max_datum_error_m": 0.00000000317611892342029,
+    "missing": 0,
+    "reserved_footprint_ray_count": 1745,
+    "site": "P08"
+  },
+  {
+    "bad_examples": [],
+    "chunks": 1,
+    "max_datum_error_m": 0.00000132713466882706,
+    "missing": 0,
+    "reserved_footprint_ray_count": 1835,
+    "site": "P09"
+  }
+]

@@ -1,0 +1,63 @@
+{
+  "before-survey": {
+    "distance_m": 1440.06140136719,
+    "frozen_s": 36.2191756666659,
+    "first_travel_sample_ms": 409970,
+    "survey_frames": {
+      "frames": 6499,
+      "max_ms": 141.392,
+      "mean_ms": 27.7135428527465,
+      "p50_ms": 23.942,
+      "p95_ms": 46.604,
+      "p99_ms": 51.373
+    },
+    "priority_yields": 0,
+    "duplicate_starts": 0
+  },
+  "candidate-survey": {
+    "distance_m": 1688.46673583984,
+    "frozen_s": 11.2092543333335,
+    "first_travel_sample_ms": 437433,
+    "survey_frames": {
+      "frames": 5912,
+      "max_ms": 166.39,
+      "mean_ms": 30.4506896143438,
+      "p50_ms": 28.316,
+      "p95_ms": 46.93,
+      "p99_ms": 51.708
+    },
+    "priority_yields": 1,
+    "duplicate_starts": 0
+  },
+  "candidate2-survey": {
+    "distance_m": 1803.2646484375,
+    "frozen_s": 0.0,
+    "survey_frames": {
+      "frames": 5613,
+      "max_ms": 162.159,
+      "mean_ms": 32.1089148405487,
+      "p50_ms": 29.777,
+      "p95_ms": 46.908,
+      "p99_ms": 51.699
+    },
+    "priority_yields": 6,
+    "counts": {
+      "active_chunk_requests": 59,
+      "chunk_enqueues": 178,
+      "chunk_requests": 4184,
+      "feature_dependency_splits": 40,
+      "mesh/collision_triangles": 405504,
+      "mesh/fine_quads": 2568,
+      "mesh/graded_quads": 0,
+      "mesh/vertices": 360606,
+      "priority_yields": 6,
+      "queued_chunk_noops": 2324,
+      "queued_chunk_updates": 114,
+      "started/chunk": 81,
+      "terrain_commits": 22,
+      "terrain_evictions": 14,
+      "terrain_queue_cancels": 63,
+      "terrain_results": 22
+    }
+  }
+}

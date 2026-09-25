@@ -1,0 +1,26 @@
+[
+  {
+    "image": "legacy_-30.png",
+    "changed_fraction": 0.01099609375
+  },
+  {
+    "image": "legacy_0.png",
+    "changed_fraction": 0.0036176215277777778
+  },
+  {
+    "image": "legacy_180.png",
+    "changed_fraction": 0.0017328559027777778
+  },
+  {
+    "image": "legacy_270.png",
+    "changed_fraction": 0.0030707465277777777
+  },
+  {
+    "image": "legacy_30.png",
+    "changed_fraction": 0.003161892361111111
+  },
+  {
+    "image": "legacy_90.png",
+    "changed_fraction": 0.0011566840277777777
+  }
+]

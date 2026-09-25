@@ -1,0 +1,75 @@
+[
+  {
+    "after_ms": 7798,
+    "before_ms": 7580,
+    "candidate_surface_vertices": 194807,
+    "collision_identical": true,
+    "original_surface_vertices": 194735,
+    "physical_survey": {
+      "added_support": 0,
+      "height_changes": [],
+      "max_height_change": 0.0,
+      "removed_support": 0,
+      "samples": 5329
+    },
+    "spot": "P09",
+    "wall_collision_identical": true
+  },
+  {
+    "after_ms": 5121,
+    "before_ms": 4970,
+    "candidate_surface_vertices": 126872,
+    "collision_identical": true,
+    "original_surface_vertices": 126835,
+    "physical_survey": {
+      "added_support": 0,
+      "height_changes": [
+        {
+          "after": 22.8914184570312,
+          "before": 22.9335556030273,
+          "x": -528.0,
+          "z": -1958.09997558594
+        },
+        {
+          "after": 22.894905090332,
+          "before": 22.9439697265625,
+          "x": -528.0,
+          "z": -1957.59997558594
+        },
+        {
+          "after": 22.920654296875,
+          "before": 22.9543914794922,
+          "x": -528.0,
+          "z": -1957.09997558594
+        },
+        {
+          "after": 22.946403503418,
+          "before": 22.9648056030273,
+          "x": -528.0,
+          "z": -1956.59997558594
+        }
+      ],
+      "max_height_change": 0.0490646362304688,
+      "removed_support": 0,
+      "samples": 5329
+    },
+    "spot": "P07",
+    "wall_collision_identical": true
+  },
+  {
+    "after_ms": 1302,
+    "before_ms": 1680,
+    "candidate_surface_vertices": 51284,
+    "collision_identical": true,
+    "original_surface_vertices": 51280,
+    "physical_survey": {
+      "added_support": 0,
+      "height_changes": [],
+      "max_height_change": 0.0,
+      "removed_support": 0,
+      "samples": 5329
+    },
+    "spot": "P08",
+    "wall_collision_identical": true
+  }
+]

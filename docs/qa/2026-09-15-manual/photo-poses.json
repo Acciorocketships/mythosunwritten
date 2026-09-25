@@ -1,0 +1,182 @@
+[
+  {
+    "id": "P01",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-15 at 9.51.51\u202fAM.png",
+    "player": [
+      -201.6,
+      8,
+      -969.8
+    ],
+    "crosshair": [
+      -200.6,
+      10.1,
+      -967.1
+    ],
+    "observation": "Doorframe filled with stone; missing door"
+  },
+  {
+    "id": "P02",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-15 at 9.50.57\u202fAM.png",
+    "player": [
+      -169.4,
+      16.7,
+      -944.2
+    ],
+    "crosshair": [
+      -174.4,
+      8.5,
+      -944.7
+    ],
+    "observation": "T-roof finish and roof-to-wall edge gaps"
+  },
+  {
+    "id": "P03",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-15 at 9.49.33\u202fAM.png",
+    "player": [
+      -212.6,
+      8,
+      -896.6
+    ],
+    "crosshair": [
+      -213.5,
+      8,
+      -895.0
+    ],
+    "observation": "Town path gap and protruding corner"
+  },
+  {
+    "id": "P04",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-15 at 9.48.26\u202fAM.png",
+    "player": [
+      -521.8,
+      28,
+      -728.5
+    ],
+    "crosshair": [
+      -533.1,
+      16,
+      -755.8
+    ],
+    "observation": "Sparse repeated pyramid cliff dressing"
+  },
+  {
+    "id": "P05",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-15 at 9.47.14\u202fAM.png",
+    "player": [
+      -530.6,
+      44,
+      -377.2
+    ],
+    "crosshair": [
+      -528.3,
+      44,
+      -381.7
+    ],
+    "observation": "Missing streamed terrain ahead; player coordinate partially obscured"
+  },
+  {
+    "id": "P06",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-15 at 9.55.01\u202fAM.png",
+    "player": [
+      -458.8,
+      24,
+      -1888.8
+    ],
+    "crosshair": [
+      -458.1,
+      12,
+      -1860.3
+    ],
+    "observation": "Bare riverbank cliffs"
+  },
+  {
+    "id": "P07",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-15 at 9.55.19\u202fAM.png",
+    "player": [
+      -518,
+      20.3,
+      -1954.1
+    ],
+    "crosshair": [
+      -520.9,
+      21.4,
+      -1956
+    ],
+    "observation": "Town-adjacent folded grass sheet and exposed rock"
+  },
+  {
+    "id": "P08",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-15 at 9.55.51\u202fAM.png",
+    "player": [
+      -589.4,
+      22.3,
+      -2002.1
+    ],
+    "crosshair": [
+      -601.5,
+      24,
+      -1996.7
+    ],
+    "observation": "Grass sheet overhang and split lip"
+  },
+  {
+    "id": "P09",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-15 at 9.46.58\u202fAM.png",
+    "player": [
+      -492.4,
+      36.6,
+      -277.9
+    ],
+    "crosshair": [
+      -493.3,
+      38.4,
+      -276
+    ],
+    "observation": "Square grass plane replaces rounded cliff lip"
+  },
+  {
+    "id": "P10",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-15 at 9.53.41\u202fAM.png",
+    "player": [
+      -201,
+      8,
+      -1485.6
+    ],
+    "crosshair": [
+      -221.2,
+      0,
+      -1478.9
+    ],
+    "observation": "Water sinks into ledge instead of crossing exposed drop"
+  },
+  {
+    "id": "P11",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-15 at 9.44.34\u202fAM.png",
+    "player": [
+      6.7,
+      0,
+      -6.4
+    ],
+    "crosshair": [
+      7.1,
+      1.2,
+      -6.5
+    ],
+    "observation": "Spawn field partial water and abrupt floating surface cutoff"
+  },
+  {
+    "id": "P12",
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-15 at 9.52.49\u202fAM.png",
+    "player": [
+      -98.3,
+      4,
+      -1221
+    ],
+    "crosshair": [
+      -97.2,
+      4,
+      -1224.4
+    ],
+    "observation": "Abrupt short-distance animated-water transition"
+  }
+]
