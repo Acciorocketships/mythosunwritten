@@ -1,0 +1,481 @@
+{
+  "camera_checks": [
+    {
+      "view": "P05_0",
+      "max_transform_component_error": 0.0,
+      "fov_equal": true
+    },
+    {
+      "view": "P05_-8",
+      "max_transform_component_error": 0.0,
+      "fov_equal": true
+    },
+    {
+      "view": "P05_8",
+      "max_transform_component_error": 1.000000000001e-06,
+      "fov_equal": true
+    },
+    {
+      "view": "P12_0",
+      "max_transform_component_error": 0.0,
+      "fov_equal": true
+    },
+    {
+      "view": "P12_-8",
+      "max_transform_component_error": 1.0000000000287557e-06,
+      "fov_equal": true
+    },
+    {
+      "view": "P12_8",
+      "max_transform_component_error": 1.0000000000287557e-06,
+      "fov_equal": true
+    },
+    {
+      "view": "P17_0",
+      "max_transform_component_error": 0.0,
+      "fov_equal": true
+    },
+    {
+      "view": "P17_-8",
+      "max_transform_component_error": 1.0000000000287557e-06,
+      "fov_equal": true
+    },
+    {
+      "view": "P17_8",
+      "max_transform_component_error": 9.999999999732445e-07,
+      "fov_equal": true
+    },
+    {
+      "view": "P20_0",
+      "max_transform_component_error": 1.0000000000287557e-06,
+      "fov_equal": true
+    },
+    {
+      "view": "P20_-8",
+      "max_transform_component_error": 1.0000000000287557e-06,
+      "fov_equal": true
+    },
+    {
+      "view": "P20_8",
+      "max_transform_component_error": 0.0,
+      "fov_equal": true
+    },
+    {
+      "view": "P12_front",
+      "max_transform_component_error": 0.0,
+      "fov_equal": true
+    },
+    {
+      "view": "P12_side",
+      "max_transform_component_error": 0.0,
+      "fov_equal": true
+    },
+    {
+      "view": "P17_front",
+      "max_transform_component_error": 0.0,
+      "fov_equal": true
+    },
+    {
+      "view": "P20_oblique",
+      "max_transform_component_error": 0.0,
+      "fov_equal": true
+    },
+    {
+      "view": "P05_vines",
+      "max_transform_component_error": 0.0,
+      "fov_equal": true
+    }
+  ],
+  "files": [
+    {
+      "path": "assets/CliffOutcrops/boulder_0.glb",
+      "bytes": 58528,
+      "sha256": "918984e2240b14d84ff90c18abf20e2c3f8e81561ca453a5f9753e49d4083ca1"
+    },
+    {
+      "path": "assets/CliffOutcrops/boulder_1.glb",
+      "bytes": 58528,
+      "sha256": "4e0128f82f3b6e9bf0e37e045101d3060590c268309e56826765472e70168059"
+    },
+    {
+      "path": "assets/CliffOutcrops/boulder_2.glb",
+      "bytes": 58540,
+      "sha256": "90305fa24e893cbf6898b59c0b3f7a2d8ba8b4794863d02baf94d40d5c50c69d"
+    },
+    {
+      "path": "assets/CliffOutcrops/boulder_3.glb",
+      "bytes": 58540,
+      "sha256": "a0721f6ab8298cc8d0e7bdace593ffdf1b67a8249eed290ced871f2b50ed85b0"
+    },
+    {
+      "path": "assets/CliffOutcrops/boulder_4.glb",
+      "bytes": 58524,
+      "sha256": "9cb520f0a163191f0de9c84f4f54f392a354db7c6420b45d93f68740d492ddec"
+    },
+    {
+      "path": "assets/CliffOutcrops/boulder_5.glb",
+      "bytes": 58524,
+      "sha256": "f0a1b93f7bef4529cb82b3d1fbd35f30c13d68294455c76e974d9d9917ea1ae8"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/context-original/P05_vines.png",
+      "bytes": 1150497,
+      "sha256": "08bfb5de272911504d36e9eccf28dbefa0c288179df310dd8f579e21255c9a61"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/context-original/P12_front.png",
+      "bytes": 1389026,
+      "sha256": "f39a453ab2c6596a1188cf1da99def30aba5232304c0e026f37a53d52ddcef56"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/context-original/P12_side.png",
+      "bytes": 1134820,
+      "sha256": "18c07d085a89c71bfd89beef314af732fcaaf5626deb9e2ed68afe1a461d8cc8"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/context-original/P17_front.png",
+      "bytes": 1918096,
+      "sha256": "e0711298a556d7c42d3d9c8b7fefd382712e1939e3036bbf300ab10932645f95"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/context-original/P20_oblique.png",
+      "bytes": 1818601,
+      "sha256": "e3566bb063a775a6fd6157971299e9160a3dbb3d3f6fb563b6e979e0b99ee314"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/context-original/poses.json",
+      "bytes": 950,
+      "sha256": "ede043fc2bcf9d5993fb9b7236870166118745f517e24e4f6bac66989014776d"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/context-verified/P05_vines.png",
+      "bytes": 1166310,
+      "sha256": "cd13ab63c2088a72b445dd95b46445e88dbb1742a4d450204868d1caf926d6cf"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/context-verified/P12_front.png",
+      "bytes": 1477483,
+      "sha256": "fa48e6b55244f25ea02f36251c955eb63a48b7b7bd237ea463f80e5c78370a74"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/context-verified/P12_side.png",
+      "bytes": 1101586,
+      "sha256": "7089de2ee753c4e84cbdd226d237a16b476cef73d0c5308d1d12ddfba1192622"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/context-verified/P17_front.png",
+      "bytes": 1989865,
+      "sha256": "bee8c2603870c1645e005e3af3b4dfc61f595791e25240c23739c43ea6c29cd3"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/context-verified/P20_oblique.png",
+      "bytes": 2017152,
+      "sha256": "5e1a07f74de94dc7dd10ffbb14422364128cad48a9dd3f2b73aa389acfafcbad"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/context-verified/poses.json",
+      "bytes": 950,
+      "sha256": "ede043fc2bcf9d5993fb9b7236870166118745f517e24e4f6bac66989014776d"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/highland-final/P23_-8.png",
+      "bytes": 1920513,
+      "sha256": "893ff03b7ded408a66214c2bf512f61618b2d58b26e5bc55b5995f90a9b8a57e"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/highland-final/P23_0.png",
+      "bytes": 1919946,
+      "sha256": "2dae44ddc7ccda59c69ae0c4e9cbe76c345706b8eb004b9bbd9c471bbeb6afaa"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/highland-final/P23_8.png",
+      "bytes": 1892893,
+      "sha256": "28784c096588d7a1ccd1be28a67535508f0276482a1dde78513428e1fa19cd92"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/highland-final/poses.json",
+      "bytes": 1118,
+      "sha256": "d50c808fa889df4eb11edf971e5a21c93cfd5729bdb9c33274cbfb4efbc7f766"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P05/P05_-8.png",
+      "bytes": 790564,
+      "sha256": "f302fc06f86395e98db71b212caf68d455df6a1e427893410c2296ba03fe9d03"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P05/P05_0.png",
+      "bytes": 773797,
+      "sha256": "4abd764b463d9fb642a4cb56e9fd10399039d82ac5d4161e6135f004604948d0"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P05/P05_8.png",
+      "bytes": 755651,
+      "sha256": "b22d1799c6ea63ebd65c062885f13a6b183aced27d47b4f2aa881843512830a0"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P05/poses.json",
+      "bytes": 1032,
+      "sha256": "2d6b9abc6338f3d336266a5b1b3fea99179f61994be1b2c59f168203cbd79b5e"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P12/P12_-8.png",
+      "bytes": 1359692,
+      "sha256": "7de9a556551ef65766ed5f8d146cd8129a1b112473e2d52a30e834bbaa5feb1a"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P12/P12_0.png",
+      "bytes": 1360373,
+      "sha256": "71afd7a2689cb0d4918e26ca276e3d075e6cb797651096497981c7a1668fcc28"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P12/P12_8.png",
+      "bytes": 1569507,
+      "sha256": "fbb5a5e16fb926f05d584163e198d72e2eb74d4d112b3d308125bf8a67f800e0"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P12/poses.json",
+      "bytes": 1034,
+      "sha256": "05877e82e64c2eb12115be1c8a3155e61d6ba641c0d8b110ff3f51d93f02cccb"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P17/P17_-8.png",
+      "bytes": 2246195,
+      "sha256": "12ce17f87d4e4063b66777e26f232fc2150f1f7e6abf08c521ab49478c11ada5"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P17/P17_0.png",
+      "bytes": 2199098,
+      "sha256": "b4f9775ba6a5a9a5e4c80a488717c8d5a2b88d6199a36fdf0c549dfb393d318b"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P17/P17_8.png",
+      "bytes": 2149599,
+      "sha256": "c80ad300ced6a1246e07fac4239735a0ecab6a43a8f059b8698719027f7d9896"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P17/poses.json",
+      "bytes": 1015,
+      "sha256": "5279e36499fe1e4c8f3199c723c918cf2aa69db28abe52dbf32df4b5c10fca88"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P20/P20_-8.png",
+      "bytes": 1924738,
+      "sha256": "cf9a82e43c347595aa47309e782f090fd5b84785fff94d55d28ac258aeb75425"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P20/P20_0.png",
+      "bytes": 1867603,
+      "sha256": "3f1cfdec2472983e982184345d5499650f869998cba75aded68f67a77a660d4e"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P20/P20_8.png",
+      "bytes": 1806056,
+      "sha256": "cd44369e88a12ae010c494c74521121f703227d77b2645f7e4cde2ad7b8a20ed"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/P20/poses.json",
+      "bytes": 1014,
+      "sha256": "b618229ee508a319acaa8b2d3cb853fd359241e2d4e28f2111f24d3fe5ab3d13"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/matched-control-04/seated-poses.json",
+      "bytes": 1228,
+      "sha256": "fd4dd6a41d6d45fc7767091f319cecdb8da9bbee935cd0bca3e65bbb7132469e"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P05/P05_-8.png",
+      "bytes": 801521,
+      "sha256": "586983c99973c96d2682b04a212cd423937634d455a3ee8d34f208e58cf72073"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P05/P05_0.png",
+      "bytes": 767321,
+      "sha256": "9e24f06b97f12373e671d6f6de07cefa9c3e4b45b73bf12a90a5d3320f95878c"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P05/P05_8.png",
+      "bytes": 755914,
+      "sha256": "efd87bd3eee807715d80d21058a0a900bc6c0b589fa2fd573977a6c383249638"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P05/poses.json",
+      "bytes": 1143,
+      "sha256": "a3ab292d4fd832b807a7e150fe16ca4b5304bbb48629c3eca3087ef0c07d39be"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P12/P12_-8.png",
+      "bytes": 1523867,
+      "sha256": "67003b705a504ecf9e2af6128c0abfc4486ec83762bdcadfc149432124f00c61"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P12/P12_0.png",
+      "bytes": 1542327,
+      "sha256": "f0702c65dec9198b6b60c3183eadd8bd1ff8a662aa9380d076dfce7dc30c009a"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P12/P12_8.png",
+      "bytes": 1781443,
+      "sha256": "57065ff034ba392a88a95c59435033dc670e3f9fe968bf03a9275ef0375d1b90"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P12/poses.json",
+      "bytes": 1145,
+      "sha256": "643e9feb35159f6116b5e54504896c837b91f3e7f1fe1fd18abcdae91432d94d"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P17/P17_-8.png",
+      "bytes": 2355071,
+      "sha256": "7d743e99f26282a106d7d4f08b149d79227726f719a9cedf4abb305ad6c56a4b"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P17/P17_0.png",
+      "bytes": 2307560,
+      "sha256": "3f4b11fa25566d9787dccd1618ddca6f1481685bb7237237bc57426819077047"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P17/P17_8.png",
+      "bytes": 2225014,
+      "sha256": "c1f54bea63ea7c492925bf9c4d52007e54d3959145b6179a76123f4302a68879"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P17/poses.json",
+      "bytes": 1116,
+      "sha256": "4d5e075cd7e6113833e76230d9fcf24971b1506dddfc230f8d355b5526b61a0f"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P20/P20_-8.png",
+      "bytes": 2288709,
+      "sha256": "12192b6ef60672ba0b031a8efe847e43dbf8620a478808e3941664a1bfe2faae"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P20/P20_0.png",
+      "bytes": 2238177,
+      "sha256": "3bd503584dfc127820c76c7c9c634babacb50dbbc8f20a2f0480d8b247b0f0e4"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P20/P20_8.png",
+      "bytes": 2213605,
+      "sha256": "7b3d30eafbdddfe579b4fd266dccc1d97490bb731a60a66939ab48e9e83df069"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/P20/poses.json",
+      "bytes": 1116,
+      "sha256": "b1525567e967d7defaec85e2716d287daa1c87f74c38e72f0038e8336c6fd85d"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/production-04/seated-poses.json",
+      "bytes": 1228,
+      "sha256": "fd4dd6a41d6d45fc7767091f319cecdb8da9bbee935cd0bca3e65bbb7132469e"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/walks-04/ledge_01.png",
+      "bytes": 1522401,
+      "sha256": "07729d420754c5742fc0925a6dd1ee306dfc58a82932dcb37afcf6cc5a6aabbc"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/walks-04/ledge_02.png",
+      "bytes": 1519925,
+      "sha256": "19724a054085779429feaa2a8634d2d4d56a3b95e393b06f91da97ca69c5bf1f"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/walks-04/ledge_03.png",
+      "bytes": 1542737,
+      "sha256": "ca3bb604e8d648af572aee4713b27618274fd93738f4bb4e47f5aecedf59411f"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/walks-04/ledge_04.png",
+      "bytes": 1552038,
+      "sha256": "d6b8fc2fba82e25d3f7b483e37b88bf95fafa6bf62fb5b5f84db833ee5e23b6b"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/walks-04/ledge_05.png",
+      "bytes": 2102462,
+      "sha256": "32085faf420961ec01a0e6a576b2f481d88b2aec35da3fbe884cfb5b7d5ce0d6"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/walks-04/ledge_06.png",
+      "bytes": 2114467,
+      "sha256": "0e2534df1fd1d32e541dc724d7c6696f6e25f856d54d9a2c8008bd3ac583b93a"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/walks-04/ledge_07.png",
+      "bytes": 2229362,
+      "sha256": "7e68a9688b79a54a28ba6c13518b99d4fd7ab43635d0e3d820b2f140fca2ee7b"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/walks-04/ledge_08.png",
+      "bytes": 2219086,
+      "sha256": "ce2b68cd331ed9ab7ae5bb60946ab6dd2622d2b4998ea02a2ecbf628cdd479f5"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/walks-04/ledge_09.png",
+      "bytes": 2022612,
+      "sha256": "744202c879f60eef65f3ad7382854c0b70de735b5d5f4c998da25e8b2275e4df"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/walks-04/ledge_10.png",
+      "bytes": 2021086,
+      "sha256": "20209b1dd831bd4cbe3ab86bbf430e6e7b2818ae4f813c15fe31992949b59799"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/walks-04/ledge_11.png",
+      "bytes": 1418562,
+      "sha256": "98f1e7851420ac283297a035338c1526c0e008c62abef3a033389b5d6f4f0f27"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/walks-04/ledge_12.png",
+      "bytes": 1390649,
+      "sha256": "809d17381e13bb5a008e98ebf9562dbda5f7d0a9f538554cfaa1378a960a9fd9"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/walks-04/walks.json",
+      "bytes": 5071,
+      "sha256": "bf03e924a16d0f64aefef04487f375c61b0310fb5f62997d6640ee644cb4ee1f"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/wide-04/P11_-8.png",
+      "bytes": 1952167,
+      "sha256": "fe75431685c71a566c7649a5d7e9c02540c4349de549e79d25c629debfab0c04"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/wide-04/P11_0.png",
+      "bytes": 2023619,
+      "sha256": "2f4b245d53b3decf1a606735d613765f547a24a21d7fa3f5f09548640934dcde"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/wide-04/P11_8.png",
+      "bytes": 2093544,
+      "sha256": "9d64826f0893c750f86a82d5d16c19550d08c7bcc065f4ef8933ba259fc5b715"
+    },
+    {
+      "path": "docs/qa/2026-09-16-manual/06-cliff-rework/wide-04/poses.json",
+      "bytes": 1104,
+      "sha256": "2843a7608c193cb612e525e03547cee1ee1f646dbf47318b5d9332bbf13b809c"
+    },
+    {
+      "path": "scripts/terrain/field/CliffRockDressing.gd",
+      "bytes": 14129,
+      "sha256": "57a081dfe3baf974ee635f0efcb8d7fbadc588abae9a54d07a587c1d0919ed6a"
+    },
+    {
+      "path": "scripts/terrain/field/CliffVegetation.gd",
+      "bytes": 6452,
+      "sha256": "815810ddbc908650c75a5d20571b38acea93d9479d53bbe8d9c0cadadaa05577"
+    },
+    {
+      "path": "scripts/terrain/grass/GrassSupportSurfaces.gd",
+      "bytes": 2237,
+      "sha256": "8a6ac179ba913f3faa982ad56bfc128b061842723ee1a31a6f38dcb37884a2cc"
+    },
+    {
+      "path": "tools/environment_bake/manifests/cliff_outcrops.json",
+      "bytes": 1799,
+      "sha256": "451e4de83bca140987947bd5e50f7a3b48cdc13cea2163ca617994cd004b42ea"
+    },
+    {
+      "path": "tools/mountain_art/build_outcrop_boulders.gd",
+      "bytes": 5560,
+      "sha256": "5f978bc79344a1aafa71f03532a7a96a7047196126a825667bd6a7e0691ceb24"
+    }
+  ]
+}

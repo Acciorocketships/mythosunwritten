@@ -1,0 +1,62 @@
+{
+  "added": [],
+  "batches_identical": true,
+  "changed": [],
+  "changed_meshes": [
+    {
+      "after_vertices": 120,
+      "before_vertices": 168,
+      "index": 90
+    },
+    {
+      "after_vertices": 216,
+      "before_vertices": 240,
+      "index": 92
+    }
+  ],
+  "collision_boxes_identical": true,
+  "removed": [],
+  "spans": [
+    {
+      "cell": "(-9, 4, 2)",
+      "cross": "(0, 0, 0)",
+      "crosses_street": true,
+      "enclosed": true,
+      "gap": 2,
+      "step": "(1, 0, 0)",
+      "walk_width": 1,
+      "width": 1
+    },
+    {
+      "cell": "(-4, 4, 5)",
+      "cross": "(0, 0, 0)",
+      "crosses_street": true,
+      "enclosed": true,
+      "gap": 2,
+      "step": "(0, 0, 1)",
+      "walk_width": 1,
+      "width": 1
+    },
+    {
+      "cell": "(0, 5, 5)",
+      "cross": "(0, 0, 0)",
+      "crosses_street": true,
+      "enclosed": false,
+      "gap": 2,
+      "step": "(0, 0, 1)",
+      "walk_width": 1,
+      "width": 1
+    },
+    {
+      "cell": "(1, 5, 5)",
+      "cross": "(0, 0, 0)",
+      "crosses_street": true,
+      "enclosed": false,
+      "gap": 2,
+      "step": "(0, 0, 1)",
+      "walk_width": 1,
+      "width": 1
+    }
+  ],
+  "unchanged_meshes": 99
+}

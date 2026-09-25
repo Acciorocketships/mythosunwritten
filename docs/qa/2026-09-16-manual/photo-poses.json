@@ -1,0 +1,547 @@
+[
+  {
+    "id": "P01",
+    "attachment": 1,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.13.49\u202fPM.png",
+    "reference": "references/P01-12.13.49.png",
+    "seed": 2697992464,
+    "player": [
+      -1175.3,
+      8,
+      -731
+    ],
+    "crosshair": [
+      -1191,
+      8,
+      -717.2
+    ],
+    "biome": "Lanternwood",
+    "reported": "Underwater looks and plays like dry land.",
+    "issues": [
+      "W05",
+      "W06"
+    ],
+    "sha256": "ffdb992ff9c6b508a68b307183e0bc0c3d6d2fcfad72d31911595cb644b856e2"
+  },
+  {
+    "id": "P02",
+    "attachment": 2,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.22.41\u202fPM.png",
+    "reference": "references/P02-12.22.41.png",
+    "seed": 2697992464,
+    "player": [
+      -1050.8,
+      9,
+      1055.9
+    ],
+    "crosshair": [
+      -1048.7,
+      9,
+      1060.8
+    ],
+    "biome": "Jade Estuary",
+    "reported": "Town turf block obstructs path; stray boards; angular path corner.",
+    "issues": [
+      "T04",
+      "T05",
+      "T06"
+    ],
+    "sha256": "e47bfe831c80e40254955e337bd83520e76a2efee0219f33c607ef0c3cc4ff96"
+  },
+  {
+    "id": "P03",
+    "attachment": 3,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.21.43\u202fPM.png",
+    "reference": "references/P03-12.21.43.png",
+    "seed": 2697992464,
+    "player": [
+      -1068.3,
+      16.8,
+      579.9
+    ],
+    "crosshair": [
+      -1077.4,
+      21.6,
+      563.9
+    ],
+    "biome": "Lanternwood",
+    "reported": "Large repetitive flat building facade.",
+    "issues": [
+      "T01",
+      "T02"
+    ],
+    "sha256": "77a3a51ce71bdcaaee5c427c4e4af83f86f25330ffd2443a2d1f98f75c676c61"
+  },
+  {
+    "id": "P04",
+    "attachment": 4,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.28.43\u202fPM.png",
+    "reference": "references/P04-12.28.43.png",
+    "seed": 2697992464,
+    "player": [
+      -1992,
+      28.1,
+      1783.1
+    ],
+    "crosshair": [
+      -1995.1,
+      29.6,
+      1783.2
+    ],
+    "biome": "Cherryveil",
+    "reported": "Railing crosses doorway; second circled rail meets building awkwardly.",
+    "issues": [
+      "T07",
+      "T08"
+    ],
+    "sha256": "99bc1769ad950dad26f6e1f01f1866a90ec408c13b9c1766e509a16b2ac4e61b"
+  },
+  {
+    "id": "P05",
+    "attachment": 5,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.10.16\u202fPM.png",
+    "reference": "references/P05-12.10.16.png",
+    "seed": 2697992464,
+    "player": [
+      -443.6,
+      29.5,
+      -266
+    ],
+    "crosshair": [
+      -444,
+      32.8,
+      -266.1
+    ],
+    "biome": "Amber Heath",
+    "reported": "Vines too small and sparse.",
+    "issues": [
+      "C04"
+    ],
+    "sha256": "cfb7b50365ce313804954e9f0e752df47fb00d61e22d12b0823a56c0073291ee"
+  },
+  {
+    "id": "P06",
+    "attachment": 6,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.20.31\u202fPM.png",
+    "reference": "references/P06-12.20.31.png",
+    "seed": 2697992464,
+    "player": [
+      -1122.9,
+      25.9,
+      509.8
+    ],
+    "crosshair": [
+      -1154.6,
+      18.3,
+      569.5
+    ],
+    "biome": "Lanternwood",
+    "reported": "Repeated top-heavy isolated towers; prefer connections to other structures.",
+    "issues": [
+      "T03"
+    ],
+    "sha256": "3fd5a5725cc0c10c3e9e7f2d14562bb93ebb3957c109541a51f562977a17e3be"
+  },
+  {
+    "id": "P07",
+    "attachment": 7,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.15.46\u202fPM.png",
+    "reference": "references/P07-12.15.46.png",
+    "seed": 2697992464,
+    "player": [
+      -1289.8,
+      60.7,
+      -435.8
+    ],
+    "crosshair": [
+      -1285.6,
+      60,
+      -440.7
+    ],
+    "biome": "Opal Highlands",
+    "reported": "Angular water and steep drops hugging cliff sides.",
+    "issues": [
+      "W03",
+      "W04"
+    ],
+    "sha256": "57225d65839bdd5b4566fcaaf07e08cc47b5a9afd8957f6dae72110ab8478dc4"
+  },
+  {
+    "id": "P08",
+    "attachment": 8,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.26.22\u202fPM.png",
+    "reference": "references/P08-12.26.22.png",
+    "seed": 2697992464,
+    "player": [
+      -1593,
+      56,
+      1792.4
+    ],
+    "crosshair": [
+      -1595.9,
+      56,
+      1788
+    ],
+    "biome": "Amber Heath",
+    "reported": "No annotation. Context/control only; visible broad water and cliff setting.",
+    "issues": [],
+    "sha256": "12b5a7a3cfbd2f2541f11bc8c91f896bd67ade858768f70c48088246f6de97f1"
+  },
+  {
+    "id": "P09",
+    "attachment": 9,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.24.32\u202fPM.png",
+    "reference": "references/P09-12.24.32.png",
+    "seed": 2697992464,
+    "player": [
+      -1342.6,
+      4,
+      1440.1
+    ],
+    "crosshair": [
+      -1347.6,
+      0.8,
+      1448.1
+    ],
+    "biome": "Moonfen",
+    "reported": "Visible color boundary at water simulation horizon; smooth transition and consider larger horizon.",
+    "issues": [
+      "W07",
+      "W08"
+    ],
+    "sha256": "2f0a7b0717f98f6a5628ac6a8448fecc64bfbee731b63163fc5c6b423bf69d9c"
+  },
+  {
+    "id": "P10",
+    "attachment": 10,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.13.22\u202fPM.png",
+    "reference": "references/P10-12.13.22.png",
+    "seed": 2697992464,
+    "player": [
+      -1110.7,
+      24,
+      -757.5
+    ],
+    "crosshair": [
+      -1126.6,
+      11.9,
+      -742.7
+    ],
+    "biome": "Lanternwood",
+    "reported": "Hill water starts as tiny puddle, spreads broadly except at corner; river appears to flow uphill.",
+    "issues": [
+      "W01",
+      "W02",
+      "W03"
+    ],
+    "sha256": "2ae8f754546cfee396e2108d7e9e6bf23184aeb0a1c228565359bd1976b8c66a"
+  },
+  {
+    "id": "P11",
+    "attachment": 11,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.11.39\u202fPM.png",
+    "reference": "references/P11-12.11.39.png",
+    "seed": 2697992464,
+    "player": [
+      -581.2,
+      44,
+      -704.5
+    ],
+    "crosshair": [
+      -591.5,
+      24,
+      -747.1
+    ],
+    "biome": "Amber Heath",
+    "reported": "Evenly spaced individual outcrops; stripy and poorly integrated with walls; broaden and overlap.",
+    "issues": [
+      "C01",
+      "C02",
+      "C03"
+    ],
+    "sha256": "1824e50c11c235e56203d310b4feb1f34189b77ecf31adebde6bbb78b053ee41"
+  },
+  {
+    "id": "P12",
+    "attachment": 12,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.10.42\u202fPM.png",
+    "reference": "references/P12-12.10.42.png",
+    "seed": 2697992464,
+    "player": [
+      -439.6,
+      32,
+      -297.5
+    ],
+    "crosshair": [
+      -438.9,
+      34.8,
+      -298
+    ],
+    "biome": "Amber Heath",
+    "reported": "Grey shelf strips should carry green/turf.",
+    "issues": [
+      "C03"
+    ],
+    "sha256": "76f2275c0a883f1aa6225af5cf08af5ff82dbaac45fb4bc807d0fcdb2ebee1e3"
+  },
+  {
+    "id": "P13",
+    "attachment": 13,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.16.58\u202fPM.png",
+    "reference": "references/P13-12.16.58.png",
+    "seed": 2697992464,
+    "player": [
+      -1262.7,
+      60,
+      -537.6
+    ],
+    "crosshair": [
+      -1267.5,
+      60,
+      -532.7
+    ],
+    "biome": "Opal Highlands",
+    "reported": "More unrealistic water surrounding stepped terrain.",
+    "issues": [
+      "W03",
+      "W04"
+    ],
+    "sha256": "18cc07a37e71d51dbf08581d3d8b88091073dba5f45f947016b4579b715a5b4a"
+  },
+  {
+    "id": "P14",
+    "attachment": 14,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.27.17\u202fPM.png",
+    "reference": "references/P14-12.27.17.png",
+    "seed": 2697992464,
+    "player": [
+      -1920.1,
+      20,
+      1934.2
+    ],
+    "crosshair": null,
+    "biome": "Cherryveil",
+    "reported": "Player reaches loading edge; cliff borders before interiors; town before ground; suggests fog if no underlying bug.",
+    "issues": [
+      "S01",
+      "S02",
+      "S03"
+    ],
+    "sha256": "7b71b9a05b8d7edaf709223cce528a6712109c94950cffae47fb2e3e1cca0a8a"
+  },
+  {
+    "id": "P15",
+    "attachment": 15,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.28.55\u202fPM.png",
+    "reference": "references/P15-12.28.55.png",
+    "seed": 2697992464,
+    "player": [
+      -1999.3,
+      33.6,
+      1765.5
+    ],
+    "crosshair": [
+      -2002.6,
+      34.1,
+      1763.6
+    ],
+    "biome": "Cherryveil",
+    "reported": "Railing issues: isolated post cap and awkward stair/roof termination.",
+    "issues": [
+      "T08"
+    ],
+    "sha256": "69467d157b4fbe030535af46d85ae8c9213c3bea0deec64cc5501ab36a03ce28"
+  },
+  {
+    "id": "P16",
+    "attachment": 16,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.16.36\u202fPM.png",
+    "reference": "references/P16-12.16.36.png",
+    "seed": 2697992464,
+    "player": [
+      -1374.1,
+      76,
+      -470.3
+    ],
+    "crosshair": [
+      -1400.7,
+      64,
+      -444.6
+    ],
+    "biome": "Opal Highlands",
+    "reported": "Water spills over surrounding edges despite available channel.",
+    "issues": [
+      "W03",
+      "W04"
+    ],
+    "sha256": "a38c2bee3adcc4bc7ea60ea325f8a00b63406f8f49191afdfebc0978f0394a15"
+  },
+  {
+    "id": "P17",
+    "attachment": 17,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.09.43\u202fPM.png",
+    "reference": "references/P17-12.09.43.png",
+    "seed": 2697992464,
+    "player": [
+      -443.9,
+      32,
+      -247.9
+    ],
+    "crosshair": [
+      -446.1,
+      32,
+      -250.3
+    ],
+    "biome": "Amber Heath",
+    "reported": "Skinny long projections beside bare faces; prefer wide terraced roots.",
+    "issues": [
+      "C01",
+      "C02"
+    ],
+    "sha256": "7511c70699c9b676440c8dec5079c60730b18cfe94261b0258a3945731d7a802"
+  },
+  {
+    "id": "P18",
+    "attachment": 18,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.20.14\u202fPM.png",
+    "reference": "references/P18-12.20.14.png",
+    "seed": 2697992464,
+    "player": [
+      -1130.5,
+      17,
+      465
+    ],
+    "crosshair": [
+      -1118.6,
+      23.4,
+      484.5
+    ],
+    "biome": "Sunwash Meadows",
+    "reported": "Flat repetitive white/timber facades; wants siding variation, bays, balconies, dormers; suggests other packs.",
+    "issues": [
+      "T01",
+      "T02",
+      "T03"
+    ],
+    "sha256": "7ea1d3aa90b1d10cc6825eb9cc08c327459f26305ade23980e43bcc2630a2bca"
+  },
+  {
+    "id": "P19",
+    "attachment": 19,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.32.49\u202fPM.png",
+    "reference": "references/P19-12.32.49.png",
+    "seed": 2697992464,
+    "player": [
+      -2871.6,
+      60,
+      2289.7
+    ],
+    "crosshair": [
+      -2873.3,
+      60,
+      2292
+    ],
+    "biome": "Opal Highlands",
+    "reported": "Cliff perimeter strips appear before ground/grass at loading frontier.",
+    "issues": [
+      "S01",
+      "S02",
+      "S03"
+    ],
+    "sha256": "4ea13f96778f4ad6a3a9c1661b137ef9e03f4b3f469cf194a3fa2505049c6fed"
+  },
+  {
+    "id": "P20",
+    "attachment": 20,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.09.34\u202fPM.png",
+    "reference": "references/P20-12.09.34.png",
+    "seed": 2697992464,
+    "player": [
+      -482.8,
+      32,
+      -242.4
+    ],
+    "crosshair": [
+      -482.1,
+      32,
+      -244.9
+    ],
+    "biome": "Amber Heath",
+    "reported": "Moss/turf in rectangular stripes; wants broad upward-face coverage and less rectangular facets.",
+    "issues": [
+      "C02",
+      "C03"
+    ],
+    "sha256": "b95b0bdb63e4de4a3d7d8fde5f8a13bbbfb8a7895f7da2533509f1b0ef820fe8"
+  },
+  {
+    "id": "P21",
+    "attachment": 21,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.14.30\u202fPM.png",
+    "reference": "references/P21-12.14.30.png",
+    "seed": 2697992464,
+    "player": [
+      -1189.9,
+      20,
+      -609.4
+    ],
+    "crosshair": [
+      -1190.7,
+      20,
+      -604.5
+    ],
+    "biome": "Lanternwood",
+    "reported": "Another source-like tiny puddle on hillside feeding large flow.",
+    "issues": [
+      "W01"
+    ],
+    "sha256": "d55d33797dd8098f6c34ad5aac47cd91b0cd87a310388cfbb4c9d044734ab063"
+  },
+  {
+    "id": "P22",
+    "attachment": 22,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.18.37\u202fPM.png",
+    "reference": "references/P22-12.18.37.png",
+    "seed": 2697992464,
+    "player": [
+      -1301.8,
+      52,
+      -336.7
+    ],
+    "crosshair": [
+      -1307.5,
+      52,
+      -341.2
+    ],
+    "biome": "Opal Highlands",
+    "reported": "Steep cliff-hugging water, ground disappearance, angular shore artifacts; wants rounded free shores.",
+    "issues": [
+      "W03",
+      "W04"
+    ],
+    "sha256": "4c4959be2ce116f09a04a5ca61a94996ff79524f4ac8e073d6f881b3b18a2570"
+  },
+  {
+    "id": "P23",
+    "attachment": 23,
+    "source": "/Users/ryko/Desktop/Screenshot 2026-09-16 at 12.32.18\u202fPM.png",
+    "reference": "references/P23-12.32.18.png",
+    "seed": 2697992464,
+    "player": [
+      -2808.5,
+      52,
+      2266.2
+    ],
+    "crosshair": [
+      -2816.9,
+      52,
+      2257.3
+    ],
+    "biome": "Opal Highlands",
+    "reported": "Single-color biome looks flat; wants coordinated grass/shrub/ground palette variation.",
+    "issues": [
+      "B01"
+    ],
+    "sha256": "da834a93f12ba5a28c1dafb205dc110ebe91f51bdc2acade599b46916bcb11ab"
+  }
+]

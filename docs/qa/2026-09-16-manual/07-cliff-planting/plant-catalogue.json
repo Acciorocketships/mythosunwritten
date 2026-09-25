@@ -1,0 +1,92 @@
+[
+  {
+    "bounds": "[P: (-1.381242, -0.077334, -1.278536), S: (2.826934, 0.840243, 2.65232)]",
+    "name": "Stylized / Fern_1",
+    "preview_scale": 1.13196847099862,
+    "source": "res://assets/StylizedNatureQuaternius/glTF/Fern_1.gltf"
+  },
+  {
+    "bounds": "[P: (-0.710724, -0.035024, -0.763592), S: (1.273391, 1.01357, 1.386027)]",
+    "name": "Stylized / Plant_1",
+    "preview_scale": 2.30875657455022,
+    "source": "res://assets/StylizedNatureQuaternius/glTF/Plant_1.gltf"
+  },
+  {
+    "bounds": "[P: (-0.448151, 0.079105, -0.463866), S: (1.047835, 0.249515, 0.962121)]",
+    "name": "Stylized / Plant_7",
+    "preview_scale": 3.05391456380354,
+    "source": "res://assets/StylizedNatureQuaternius/glTF/Plant_7.gltf"
+  },
+  {
+    "bounds": "[P: (-0.923476, -0.234695, -0.974389), S: (1.914845, 1.581786, 1.965141)]",
+    "name": "Stylized / Bush_Common",
+    "preview_scale": 1.62838203153985,
+    "source": "res://assets/StylizedNatureQuaternius/glTF/Bush_Common.gltf"
+  },
+  {
+    "bounds": "[P: (-0.923476, -0.234695, -0.974389), S: (1.914845, 1.581786, 1.965141)]",
+    "name": "Stylized / Bush_Common_Flowers",
+    "preview_scale": 1.62838203153985,
+    "source": "res://assets/StylizedNatureQuaternius/glTF/Bush_Common_Flowers.gltf"
+  },
+  {
+    "bounds": "[P: (-0.492671, -0.00502, -0.436699), S: (0.951424, 0.308599, 0.853591)]",
+    "name": "Fantasy / Plant_01",
+    "preview_scale": 3.3633786715532,
+    "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_01.glb"
+  },
+  {
+    "bounds": "[P: (-0.405606, -0.001838, -0.352478), S: (0.869474, 0.546656, 0.807047)]",
+    "name": "Fantasy / Plant_02",
+    "preview_scale": 3.68038408043785,
+    "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_02.glb"
+  },
+  {
+    "bounds": "[P: (-0.405606, 0.007867, -0.337854), S: (0.880164, 0.335764, 0.767735)]",
+    "name": "Fantasy / Plant_03",
+    "preview_scale": 3.63568448702311,
+    "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_03.glb"
+  },
+  {
+    "bounds": "[P: (-0.457852, -0.019069, -0.353491), S: (0.970789, 0.560054, 0.809054)]",
+    "name": "Fantasy / Plant_04",
+    "preview_scale": 3.29628720573409,
+    "source": "res://assets/LowPolyFantasyVillage/Models/Nature/Plant_04.glb"
+  },
+  {
+    "bounds": "[P: (-0.783139, -2.120522, -0.044708), S: (1.535759, 2.602551, 0.218964)]",
+    "name": "Medieval / Vine1",
+    "preview_scale": 1.22956262300873,
+    "source": "res://assets/MedievalVillageQuaternius/glTF/Prop_Vine1.gltf"
+  },
+  {
+    "bounds": "[P: (-0.494052, -2.120522, -0.044708), S: (1.386113, 2.602551, 0.213845)]",
+    "name": "Medieval / Vine2",
+    "preview_scale": 1.22956262300873,
+    "source": "res://assets/MedievalVillageQuaternius/glTF/Prop_Vine2.gltf"
+  },
+  {
+    "bounds": "[P: (-0.718126, -1.013883, -0.026777), S: (1.016573, 1.588173, 0.150017)]",
+    "name": "Medieval / Vine4",
+    "preview_scale": 2.01489425679363,
+    "source": "res://assets/MedievalVillageQuaternius/glTF/Prop_Vine4.gltf"
+  },
+  {
+    "bounds": "[P: (-1.318353, -1.954821, -1.024165), S: (2.301085, 2.98572, 1.125839)]",
+    "name": "Medieval / Vine5",
+    "preview_scale": 1.07176839828361,
+    "source": "res://assets/MedievalVillageQuaternius/glTF/Prop_Vine5.gltf"
+  },
+  {
+    "bounds": "[P: (-2.035077, -1.071996, -1.368787), S: (4.136981, 2.468301, 1.470461)]",
+    "name": "Medieval / Vine6",
+    "preview_scale": 0.773510923044331,
+    "source": "res://assets/MedievalVillageQuaternius/glTF/Prop_Vine6.gltf"
+  },
+  {
+    "bounds": "[P: (-2.035077, -0.633371, -0.75221), S: (4.136981, 1.467185, 1.470461)]",
+    "name": "Medieval / Vine9",
+    "preview_scale": 0.773510923044331,
+    "source": "res://assets/MedievalVillageQuaternius/glTF/Prop_Vine9.gltf"
+  }
+]

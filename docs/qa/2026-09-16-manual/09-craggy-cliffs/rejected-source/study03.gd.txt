@@ -1,0 +1,81 @@
+extends RefCounted
+## Preserve the earlier native weathered rock shapes, with restrained depth,
+## broad buried joins and final-geometry turf ownership. Main-thread source load.
+static var _sources:Array=[]
+static func prepare()->void:
+ if not _sources.is_empty():return
+ assert(OS.get_thread_caller_id()==OS.get_main_thread_id())
+ for source:int in [1,2,3,4,5,6,7]:
+  var vertices:Array[Vector3]=[];var faces:=PackedVector3Array()
+  for line:String in FileAccess.get_file_as_string("res://assets/UltimateNaturePack/OBJ/Rock_Moss_%d.obj"%source).split("\n"):
+   var fields:=line.split(" ",false)
+   if fields.is_empty():continue
+   if fields[0]=="v":vertices.append(Vector3(float(fields[1]),float(fields[2]),float(fields[3])))
+   if fields[0]=="f":
+    for i in range(2,fields.size()-1):
+     for index:int in [1,i+1,i]:faces.append(vertices[int(fields[index].split("/")[0])-1])
+  var bounds:=AABB(faces[0],Vector3.ZERO)
+  for p:Vector3 in faces:bounds=bounds.expand(p)
+  for i in faces.size():faces[i]=(faces[i]-bounds.position)/bounds.size-Vector3(.5,0,.5)
+  _sources.append(faces)
+
+static func make(panel:Transform3D,width:float,height:float,seed_value:int,region:HeightfieldRegion=null)->Array[Dictionary]:
+ var out:Array[Dictionary]=[]
+ var count:=maxi(1,roundi(width/7));var bay:=width/count
+ for i in count:
+  var x:float=-width*.5+bay*(i+.5);var anchor:Vector3=panel*Vector3(x,0,0)
+  var rng:=RandomNumberGenerator.new()
+  rng.seed=hash([anchor,seed_value,9271])
+  var pieces:=rng.randi_range(2,3) if height>9.0 else 1
+  for piece in pieces:
+   var source:=rng.randi_range(0,_sources.size()-1)
+   var size:=Vector3(bay*rng.randf_range(1.05,1.65),minf(height,rng.randf_range(3.2,8.0)),minf(height*.8,rng.randf_range(3.2,6.4)))
+   var base:float=-.2 if piece==0 else rng.randf_range(2.0,maxf(2.0,height-size.y-.3))
+   var offset:=Vector3(x+bay*rng.randf_range(-.18,.18),base,.35)
+   var yaw:=Basis(Vector3.UP,rng.randf_range(-PI,PI))
+   var rotated:=PackedVector3Array()
+   for v:Vector3 in _sources[source]:rotated.append(yaw*v)
+   var source_bounds:=AABB(rotated[0],Vector3.ZERO)
+   for v:Vector3 in rotated:source_bounds=source_bounds.expand(v)
+   var faces:=PackedVector3Array()
+   for v:Vector3 in rotated:
+    var p:Vector3=(v-source_bounds.position)/source_bounds.size-Vector3(.5,0,.5)
+    p.x*=lerpf(1.08,1.0,p.y)
+    p.z+=.04*(1.0-p.y)
+    faces.append(p*size+offset)
+   var floor_y:=base
+   if region!=null and piece==0:
+    for p:Vector3 in faces:
+     var world:Vector3=panel*p
+     floor_y=minf(floor_y,TerrainSurfaceField.surface_y(region,world.x,world.z)-panel.origin.y-.15)
+   for j in faces.size():
+    var t:=clampf((faces[j].y-base)/size.y,0.0,1.0)
+    faces[j].y=lerpf(floor_y,base+size.y,t)
+   var green:=PackedVector3Array();var bounds:=AABB(faces[0],Vector3.ZERO)
+   for p:Vector3 in faces:bounds=bounds.expand(p)
+   for j in range(0,faces.size(),3):
+    var normal:Vector3=(faces[j+2]-faces[j]).cross(faces[j+1]-faces[j]).normalized()
+    if normal.y<.66 or minf(faces[j].z,minf(faces[j+1].z,faces[j+2].z))<.38:continue
+    green.append(faces[j]);green.append(faces[j+1]);green.append(faces[j+2])
+   out.append({"faces":faces,"green":green,"bounds":panel*bounds,"transform":panel,"anchor":anchor,
+    "id":"native_crag/%s/%s"%[anchor,piece],"asset":&"cliff.native_crag","kind":"rock","native_crag":true,"wall_rooted":piece>0,"top":(panel*bounds).end.y,"base":(panel*bounds).position.y})
+ return out
+
+static func mesh(rock:Dictionary)->ArrayMesh:
+ var result:=ArrayMesh.new();var turf:Dictionary={}
+ for i in range(0,rock.green.size(),3):turf[[rock.green[i],rock.green[i+1],rock.green[i+2]]]=true
+ for grass in [false,true]:
+  if grass and turf.is_empty():continue
+  var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES)
+  for i in range(0,rock.faces.size(),3):
+   var a:Vector3=rock.faces[i];var b:Vector3=rock.faces[i+1];var c:Vector3=rock.faces[i+2]
+   if turf.has([a,b,c])!=grass:continue
+   st.set_normal((c-a).cross(b-a).normalized());st.set_uv(CliffDressing.ground_uv())
+   st.add_vertex(a);st.add_vertex(b);st.add_vertex(c)
+  st.commit(result)
+  if grass:result.surface_set_material(result.get_surface_count()-1,CliffDressing.shared_material())
+  else:
+   var mat:=ShaderMaterial.new();mat.shader=load("res://terrain/materials/field_rock.gdshader")
+   mat.set_shader_parameter("use_texture",false);mat.set_shader_parameter("instance_variation",false)
+   result.surface_set_material(0,mat)
+ return result

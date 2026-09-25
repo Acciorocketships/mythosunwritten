@@ -1,0 +1,134 @@
+[
+  {
+    "asset": "cliff.outcrop.2",
+    "end": "(-440.712, 29.87673, -276.5045)",
+    "floor": true,
+    "ledge_y": 29.8282527923584,
+    "origin": "(-437.4664, 27.65, -277.75)",
+    "passed": false,
+    "side": -1.0,
+    "start": "(-440.7119, 29.87562, -276.5053)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.outcrop.2",
+    "end": "(-442.7119, 29.8292, -276.5053)",
+    "floor": true,
+    "ledge_y": 29.8282527923584,
+    "origin": "(-437.4664, 27.65, -277.75)",
+    "passed": false,
+    "side": 1.0,
+    "start": "(-442.7119, 29.82714, -276.5053)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.outcrop.2",
+    "end": "(-443.5872, 35.86673, -286.0505)",
+    "floor": true,
+    "ledge_y": 35.8667373657227,
+    "origin": "(-445.75, 31.65, -286.956)",
+    "passed": true,
+    "side": -1.0,
+    "start": "(-443.5872, 35.86797, -287.842)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.outcrop.2",
+    "end": "(-443.5872, 35.86635, -287.6336)",
+    "floor": true,
+    "ledge_y": 35.8667373657227,
+    "origin": "(-445.75, 31.65, -286.956)",
+    "passed": true,
+    "side": 1.0,
+    "start": "(-443.5872, 35.86797, -285.842)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.outcrop.4",
+    "end": "(-446.1018, 24.72298, -226.5579)",
+    "floor": true,
+    "ledge_y": 24.7229919433594,
+    "origin": "(-449.9424, 23.65, -229.75)",
+    "passed": true,
+    "side": -1.0,
+    "start": "(-444.3102, 24.72422, -226.5579)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.outcrop.4",
+    "end": "(-444.5187, 24.72298, -226.5579)",
+    "floor": true,
+    "ledge_y": 24.7229919433594,
+    "origin": "(-449.9424, 23.65, -229.75)",
+    "passed": true,
+    "side": 1.0,
+    "start": "(-446.3102, 24.72422, -226.5579)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.outcrop.4",
+    "end": "(-421.8715, 24.76267, -274.5579)",
+    "floor": true,
+    "ledge_y": 24.7626838684082,
+    "origin": "(-425.8123, 23.65, -277.75)",
+    "passed": true,
+    "side": -1.0,
+    "start": "(-420.0799, 24.76391, -274.5579)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.outcrop.4",
+    "end": "(-420.2883, 24.76267, -274.5579)",
+    "floor": true,
+    "ledge_y": 24.7626838684082,
+    "origin": "(-425.8123, 23.65, -277.75)",
+    "passed": true,
+    "side": 1.0,
+    "start": "(-422.0799, 24.76391, -274.5579)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.outcrop.4",
+    "end": "(-442.4785, 28.75589, -272.7945)",
+    "floor": true,
+    "ledge_y": 28.7559089660645,
+    "origin": "(-445.75, 27.65, -262.8956)",
+    "passed": true,
+    "side": -1.0,
+    "start": "(-442.4785, 28.75714, -274.5861)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.outcrop.4",
+    "end": "(-442.4785, 28.75589, -274.3776)",
+    "floor": true,
+    "ledge_y": 28.7559089660645,
+    "origin": "(-445.75, 27.65, -262.8956)",
+    "passed": true,
+    "side": 1.0,
+    "start": "(-442.4785, 28.75589, -272.5861)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.outcrop.0",
+    "end": "(-444.6095, 34.03149, -264.9801)",
+    "floor": true,
+    "ledge_y": 34.0314979553223,
+    "origin": "(-445.75, 27.76837, -261.1568)",
+    "passed": true,
+    "side": -1.0,
+    "start": "(-444.6095, 34.03149, -266.7717)",
+    "underside_contacts": 0
+  },
+  {
+    "asset": "cliff.outcrop.0",
+    "end": "(-444.6095, 34.03111, -266.5632)",
+    "floor": true,
+    "ledge_y": 34.0314979553223,
+    "origin": "(-445.75, 27.76837, -261.1568)",
+    "passed": true,
+    "side": 1.0,
+    "start": "(-444.6095, 34.03111, -264.7717)",
+    "underside_contacts": 0
+  }
+]

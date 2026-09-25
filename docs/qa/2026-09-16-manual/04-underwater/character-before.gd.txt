@@ -1,0 +1,567 @@
+extends CharacterBody3D
+
+const DEFAULT_MAX_STEP_HEIGHT := 0.5
+
+# ---------- Inspector ----------
+@export var MAX_SPEED := 10.0
+@export var TURN_SPEED := 14.0
+@export var TURN_SPEED_AIR := 1.0
+@export var ACCEL := 50.0
+@export var ACCEL_AIR := 12.0
+@export var FRICTION := 500.0
+@export var JUMP_VELOCITY := 13.0
+@export var MAX_STEP_HEIGHT := DEFAULT_MAX_STEP_HEIGHT
+
+# ---------- Swimming ----------
+# Water tiles expose an Area3D volume on WATER_LAYER. While the character's
+# probe point is inside one it swims with force-based control: buoyancy
+# proportional to the submerged fraction of the body counteracts gravity.
+# Full-submersion lift exceeds gravity, so an idle body settles partly
+# submerged without input. Holding jump adds a constant upward kick. The
+# body rising out of the water loses buoyancy and falls back in, so bobbing
+# emerges naturally. Pressing toward a nearby bank wall with jump launches
+# the character out of the water.
+const WATER_LAYER_MASK: int = 1 << 7
+# water_surface_y's own value before the character has ever touched water
+# this session (nothing reads it until in_water first goes true, which
+# always overwrites it — see _update_in_water). Not a "legacy volume"
+# fallback any more: r3 Task 9 deleted the last code path that could reach a
+# water Area3D without a sampler meta (see _update_in_water's own docstring).
+const WATER_SURFACE_Y: float = -1.5
+var water_surface_y: float = WATER_SURFACE_Y
+# CPU mirror of the water shader's swell so the floating body RIDES the waves
+# (buoyancy tracks the displaced surface — rocking, like a boat). Keep in sync
+# with water_wave_h in terrain/water/water_waves.gdshaderinc and the
+# wave_height/wave_speed uniform defaults in water_unified.gdshader. The
+# mirror is EXACT — every term is a travelling sine (no noise), so the CPU
+# and GPU surfaces agree everywhere.
+# Mirrors water_unified.gdshader's wave_height / wave_speed — keep in sync.
+const SWELL_HEIGHT: float = 0.38
+const SWELL_SPEED: float = 0.26
+# The slow ambient spectrum is mirrored below. WaterRippleSim separately
+# mirrors its persistent flow-transported packet height through
+# packet_height_at(), so buoyancy rides the broad river wavelets as well.
+@export var SWIM_SPEED_FACTOR := 0.45
+@export var SWIM_ACCEL := 6.0  # sluggish, momentum-y direction changes
+@export var BODY_HEIGHT := 1.4  # submersion span used for buoyancy
+@export var BUOYANCY := 24.0  # > gravity (18): stable idle float at 75% submersion
+@export var SWIM_THRUST := 8.0  # extra upward force while holding jump
+@export var WATER_LINEAR_DRAG := 1.4
+@export var WATER_CURRENT_DRAG := 1.6  # seconds^-1 coupling to WaterSampler velocity
+@export var MAX_SWIM_RISE := 2.5
+@export var MAX_SWIM_SINK := 4.0
+@export var WATER_EXIT_PROBE := 1.3  # how far ahead a bank wall triggers the leap
+
+# Bone names you expect (only used if your attachments don't already have one)
+@export var RIGHT_HAND_BONE := "handslot.r"
+@export var LEFT_HAND_BONE  := "handslot.l"
+@export var SPINE_BONE      := "spine"
+
+# Pluggable controller (see below: PlayerController / AIController)
+@export var controller: CharacterController
+
+# ---------- Node Refs ----------
+@onready var body_model_root: Node3D            = $Body
+@onready var anim_player: AnimationPlayer       = $AnimationPlayer
+@onready var anim_tree: AnimationTree           = $AnimationTree
+@onready var left_hand: BoneAttachment3D        = $Hands/LeftHand
+@onready var right_hand: BoneAttachment3D       = $Hands/RightHand
+@onready var spine: BoneAttachment3D            = $Spine
+@onready var spine_hitbox: Area3D               = $Spine/SpineHitbox
+
+# ---------- Runtime ----------
+var body: Node3D
+var skeleton: Skeleton3D
+var collision_shape: CollisionObject3D
+var raycast: RayCast3D
+var on_ground: bool = true
+var was_on_ground: bool = false
+var step_visual_offset_y: float = 0.0
+var _step_visual_velocity := 0.0
+var body_model_base_pos: Vector3 = Vector3.ZERO
+var prev_body_global_y: float = 0.0
+var _ground_snap_grace := 0.0
+var in_water: bool = false
+var water_current := Vector2.ZERO
+# wading: true whenever the probe is in water at all — the >=0.05m shallow
+# band OR full in_water (swimming is trivially "in water" too — see
+# _update_in_water's h-task-4 fix note). Does not affect movement.
+var wading: bool = false
+var _locomotion_amount := 0.0
+var _animation_direction := Vector2.UP
+var _animation_facing_basis := Basis.IDENTITY
+var _animation_forward_stride := DirectionalLocomotion.RUN_STRIDE
+var stride_modifier: SkeletonModifier3D
+var _animation_rate := 0.6
+var _movement_input := Vector2.ZERO
+
+func _ready() -> void:
+	_setup_player_controller()
+	_cache_body_and_skeleton()
+	_wire_animations()
+	_bind_all_attachments()
+	body_model_base_pos = body_model_root.position
+	prev_body_global_y = global_position.y
+	floor_snap_length = MAX_STEP_HEIGHT + 0.01
+
+# --------------------------------------------
+# Movement
+# --------------------------------------------
+## Streaming needs the requested travel direction before acceleration (and
+## while terrain readiness pauses physics). This query never advances motion
+## or consumes jump input; the ordinary controller still owns both.
+func streaming_velocity() -> Vector3:
+	if controller != null:
+		var requested := controller.get_move_vector(self,0.0)
+		if requested.length_squared()>0.000001:
+			var speed := MAX_SPEED*SWIM_SPEED_FACTOR if in_water else MAX_SPEED
+			requested=requested.limit_length(1.0)*speed
+			return Vector3(requested.x,0,requested.y)
+	return Vector3(velocity.x,0,velocity.z)
+
+
+func _physics_process(delta: float) -> void:
+	assert(controller, "Assign a controller")
+
+	# inputs (already camera-rotated by controller)
+	var mv2: Vector2 = controller.get_move_vector(self, delta)
+	_movement_input = mv2
+	var wants_jump := controller.wants_jump(self, delta)
+
+	_update_in_water()
+	_ground_snap_grace = 0.08 if is_on_floor() else maxf(0.0, _ground_snap_grace - delta)
+
+	# gravity + jump (or buoyancy while swimming)
+	on_ground = is_on_floor() or _get_ground_dist() < 0.2
+	var animation_grounded := on_ground or (_ground_snap_grace > 0.0 and velocity.y <= 0.0)
+	var started_animation: bool = !animation_grounded and was_on_ground and not in_water
+	was_on_ground = animation_grounded
+	
+	jump_animation(started_animation)
+	if in_water:
+		_swim_vertical(delta, wants_jump)
+	elif not is_on_floor():
+		velocity += get_gravity() * delta
+	elif wants_jump: # TODO: add a mechanism to allow jump if we recently walked off a ledge (falling without having jumped, low negative vertical velocity)
+		velocity += Vector3(mv2.x / 3, 1.0, mv2.y / 3).normalized() * JUMP_VELOCITY
+
+	# desired direction & facing
+	var desired_dir := Vector3(mv2.x, 0.0, mv2.y)
+	var has_input := desired_dir.length() > 0.001
+	if has_input:
+		desired_dir = desired_dir.normalized()
+	var facing := controller.get_facing_vector(self, delta)
+	if facing == Vector2.ZERO and not controller is PlayerController:
+		facing = mv2
+	if facing.length_squared() > 0.000001:
+		var target_yaw := atan2(facing.x, facing.y)
+		var turn_speed: float = TURN_SPEED if (on_ground or in_water or controller is PlayerController) else TURN_SPEED_AIR
+		global_rotation.y = lerp_angle(global_rotation.y, target_yaw, 1.0 - exp(-turn_speed * delta))
+
+	# Accel/friction on XZ. Swimming control is relative to the surrounding
+	# water: without input, no artificial brake fights the current. The shared
+	# drag force below carries the body toward WaterSampler.velocity_at().
+	var max_speed: float = MAX_SPEED * SWIM_SPEED_FACTOR if in_water else MAX_SPEED
+	var target_speed := max_speed * mv2.length()
+	var target_vxz := desired_dir * target_speed
+	var vxz := Vector2(velocity.x, velocity.z)
+	var tv := Vector2(target_vxz.x, target_vxz.z)
+	if in_water:
+		var relative_velocity := vxz - water_current
+		if has_input:
+			relative_velocity = relative_velocity.move_toward(tv, SWIM_ACCEL * delta)
+		vxz = water_current + relative_velocity
+		vxz += WaterForces.current_acceleration(
+			water_current, vxz, WATER_CURRENT_DRAG) * delta
+	else:
+		var changing_direction: bool = vxz.dot(tv) < 0.8
+		var rate: float = ACCEL_AIR if not on_ground else ACCEL
+		if on_ground and (!has_input or changing_direction):
+			rate = FRICTION
+		vxz = vxz.move_toward(tv, rate * delta)
+	velocity.x = vxz.x
+	velocity.z = vxz.y
+
+	var did_step: bool = _try_step_up(delta)
+	if not did_step:
+		move_and_slide()
+		# A capsule can touch the steep arc of a tread nose for one tick. Keep
+		# the previous floor witness briefly so the next walkable tread can snap
+		# within the same step limit. Jumps and real ledges still become airborne.
+		if not is_on_floor() and _ground_snap_grace > 0.0 \
+				and velocity.y <= 0.0 and not in_water:
+			apply_floor_snap()
+			if is_on_floor(): velocity.y = 0.0
+	_update_step_visual_smoothing(delta)
+	movement_animation(Vector2(velocity.x, velocity.z).length(), delta)
+
+
+# Swimming verticals, force based: gravity always pulls; reusable buoyancy
+# pushes up in proportion to displaced body height and wins at full
+# submersion, giving an idle body a stable partly-submerged equilibrium.
+# Holding jump adds a deliberate kick. Drag damps entry plunges and bobbing.
+func _swim_vertical(delta: float, wants_jump: bool) -> void:
+	if _try_water_exit(wants_jump, delta):
+		return
+	var gravity := get_gravity()
+	var submerged := WaterForces.submerged_fraction(
+		water_surface_y, global_position.y, BODY_HEIGHT)
+	var acceleration := gravity + WaterForces.buoyancy_acceleration(
+		gravity, BUOYANCY, submerged)
+	if controller.jump_held(self, delta):
+		acceleration += -gravity.normalized() * SWIM_THRUST
+	acceleration.y += WaterForces.vertical_drag_acceleration(
+		velocity.y, WATER_LINEAR_DRAG)
+	velocity += acceleration * delta
+	velocity.y = clampf(velocity.y, -MAX_SWIM_SINK, MAX_SWIM_RISE)
+
+
+# Mirrors _try_step_up's forward probe: while swimming near the surface and
+# pressing jump (held or fresh), probe along travel (or facing at rest). If a
+# bank wall blocks within WATER_EXIT_PROBE, launch out of the water like a
+# jump — no need to be touching the wall.
+func _try_water_exit(wants_jump: bool, delta: float) -> bool:
+	if not (wants_jump or controller.jump_held(self, delta)):
+		return false
+	if global_position.y < water_surface_y - BODY_HEIGHT:
+		return false
+	var facing := Vector3(_movement_input.x, 0.0, _movement_input.y)
+	if facing.length_squared() < 0.000001:
+		facing = global_transform.basis.z
+	facing.y = 0.0
+	if facing.length() < 0.001:
+		return false
+	var probe: Vector3 = facing.normalized() * WATER_EXIT_PROBE
+	if not test_move(global_transform, probe):
+		return false
+	velocity.y = JUMP_VELOCITY * 0.85
+	return true
+
+
+# The probe sits at knee height for HIT DETECTION only (finding which
+# trigger boxes overlap the character at all — unrelated to the depth math
+# below, which reads global_position.y directly; see the r3 Task 9 note).
+#
+# r3 Task 9 — SWIM FROM THE FIELD ITSELF: classification (in_water/wading)
+# is now STATIC field depth, full stop — `depth = sampler.level_at(xz) -
+# global_position.y`, the exact water column between the sampler's frozen
+# snapshot of WaterField and the character's own feet (global_position sits
+# at the CAPSULE'S BASE — see character.tscn's CollisionShape3D offset — so
+# this needs no separate ground raycast the way the pre-Task-9 bridge did).
+# Dynamic motion (_swell_offset plus WaterRippleSim's transported packet
+# mirror) contributes ONLY to water_surface_y, the float-height buoyancy/
+# animation chase — NEVER to this depth, per the controller's own
+# swell-entry redesign (r3-task-9-brief.md controller addition 1):
+#
+#   at (36.4, 2.82, -1108.7) [I4] static depth measures 0.7685 — correctly
+#   BELOW the 0.8 swim-enter gate — but the pond swell's own crest can add
+#   well over 0.1m at times, and mixing it into the GATE let a crest push
+#   depth past 0.8 on land's own edge: hysteresis then LATCHED swim there
+#   (in_water only exits below 0.6, so one crest-timed frame was enough to
+#   stick), regressing run 2's own verified false/true state at that exact
+#   spot. Gating on STATIC depth alone makes the hysteresis deterministic —
+#   whether I4 reads wading or swimming depends only on where the character
+#   stands, never on what phase the swell animation happens to be in when
+#   _update_in_water runs.
+#
+# Every overlapping trigger is tried; the one with the greatest STATIC depth
+# wins (both for the swim/wade classification and for which trigger's
+# sampler feeds water_surface_y) — "take the deepest reading" is the same
+# generous-toward-swimming rule the pre-Task-9 bridge's own `best = maxf(...)`
+# already applied, now over one number (depth) instead of a per-hit
+# contained/not-contained test (there is no more separate "containment" step:
+# a NAN sampler reading — the field itself reads dry at this (x,z), or the
+# point falls outside the trigger's own chunk snapshot — is the only way a
+# hit is skipped, exactly mirroring the pre-Task-9 bridge's own NAN-skip).
+#
+# HYSTERESIS unchanged (same thresholds, same enter/exit asymmetry — WaterRippleSim.gd
+# fires a splash ripple on every false->true edge of in_water, and a single
+# boundary re-evaluated fresh each frame would let depth dither by a few cm
+# across a shallow shelf lip and re-trigger it): swim ENTER > 0.8, EXIT >
+# 0.6; wading ENTER > 0.05, EXIT > 0.03; wading = in_water or a same-frame
+# hit independently cleared the shallow-only band (wading ⊇ swimming — a
+# swimming character is trivially also "in water", see the h-task-4 fix this
+# formula still carries).
+#
+# The legacy surface_c/surface_g/surface_y/bare-else branches (the old
+# marching-squares mesher's per-cell sampled-plane metas and the flat-sheet
+# fallback) are DELETED outright, not just the surface_c one controller
+# addition 4 name-checks: r3 Task 7 deleted every producer of ALL of them
+# (WaterSurfaceBuilder.build_chunk is the water layer's ONE Area3D producer
+# and always sets exactly `sampler`, verified by repo-wide grep this task —
+# see r3-task-9-report.md), so all three are equally, provably dead, not
+# just the one item 4 happened to name.
+func _update_in_water() -> void:
+	var params := PhysicsPointQueryParameters3D.new()
+	params.position = global_position + Vector3(0.0, 0.3, 0.0)
+	params.collide_with_areas = true
+	params.collide_with_bodies = false
+	params.collision_mask = WATER_LAYER_MASK
+	var hits: Array = get_world_3d().direct_space_state.intersect_point(params, 4)
+	var gp: Vector3 = global_position
+	var xz := Vector2(gp.x, gp.z)
+	var t: float = float(Time.get_ticks_msec()) / 1000.0 * SWELL_SPEED
+	var best_depth: float = -INF
+	var best_level: float = -INF
+	var best_wave_scale := 0.0
+	var best_current := Vector2.ZERO
+	for h in hits:
+		var collider: Object = h.get("collider")
+		if collider == null or not collider.has_meta("sampler"):
+			continue
+		var sampler: WaterSampler = collider.get_meta("sampler")
+		var lvl: float = sampler.level_at(xz)
+		if is_nan(lvl):
+			continue   # field itself reads dry here (or outside this chunk's snapshot) — same skip as every other miss
+		var depth: float = lvl - gp.y   # STATIC — no swell term, see this function's own docstring
+		if depth > best_depth:
+			best_depth = depth
+			best_level = lvl
+			best_wave_scale = sampler.wave_scale_at(xz)
+			best_current = sampler.velocity_at(xz)
+	var swim_gate: float = 0.6 if in_water else 0.8
+	var wade_gate: float = 0.03 if wading else 0.05
+	in_water = best_depth > swim_gate
+	wading = in_water or best_depth > wade_gate
+	water_current = best_current if in_water else Vector2.ZERO
+	if in_water:
+		var dynamic_offset := _swell_offset(xz, t)
+		var water_dynamics: Node = get_tree().get_first_node_in_group("water_dynamics")
+		if water_dynamics != null and water_dynamics.has_method("packet_height_at"):
+			dynamic_offset += float(water_dynamics.call("packet_height_at", xz))
+		water_surface_y = best_level + dynamic_offset * best_wave_scale
+
+
+# The water surface the buoyancy chases, displaced by the shader's travelling
+# swells at the character's position — floating bodies rock in the waves.
+# Exact mirror of water_wave_h in terrain/water/water_waves.gdshaderinc (two
+# long swells + three mid rollers, two of them envelope-modulated by slow
+# travelling sines) — KEEP IN SYNC. `t` is the caller's own TIME*SWELL_SPEED
+# (matches the shader's `t = TIME * wave_speed` exactly — computed ONCE per
+# _update_in_water call, not re-read here, so a frame's depth gate and its
+# water_surface_y agree on "now"). Persistent river packets are added by the
+# caller from WaterRippleSim's exact CPU mirror, not duplicated here.
+func _swell_offset(p: Vector2, t: float) -> float:
+	var h: float = 0.9 * sin(p.dot(Vector2(0.042, 0.016)) - t * 0.33)
+	h += 0.55 * sin(p.dot(Vector2(-0.023, 0.037)) - t * 0.26 + 1.7)
+	var e1: float = 0.75 + 0.45 * sin(p.dot(Vector2(0.052, 0.048)) - t * 0.21 + 0.9)
+	var e2: float = 0.75 + 0.45 * sin(p.dot(Vector2(-0.061, 0.036)) - t * 0.24 + 3.4)
+	h += 0.5 * e1 * sin(p.dot(Vector2(0.118, -0.112)) - t * 2.85 + 2.1)
+	h += 0.34 * e2 * sin(p.dot(Vector2(-0.15, 0.178)) - t * 3.1 + 4.6)
+	h += 0.22 * sin(p.dot(Vector2(0.27, 0.208)) - t * 3.45 + 1.3)
+	return h * 0.5 * SWELL_HEIGHT
+
+
+func jump_animation(started_animation: bool):
+	# Water entry ends the airborne overlay even over a deep channel where
+	# the landing ray never finds a floor. Otherwise JumpIdle remains latched
+	# indefinitely and holds the arms out while the body is swimming.
+	if in_water:
+		anim_tree.set("parameters/BlendTree/OneShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_ABORT)
+		return
+	var vertical_vel: float = velocity.y
+	var is_near_ground: bool = raycast.is_colliding()
+	var state_machine = anim_tree.get("parameters/BlendTree/OneShots/playback")
+	if started_animation:
+		state_machine.travel("JumpStart")
+		anim_tree.set("parameters/BlendTree/OneShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FIRE)
+	if vertical_vel < 0 and is_near_ground:
+		state_machine.travel("JumpLand")
+		
+	
+func movement_animation(speed: float, delta: float = 1.0 / 60.0) -> void:
+	var flat_velocity := Vector3(velocity.x, 0.0, velocity.z)
+	var run_stride := DirectionalLocomotion.stride_length(flat_velocity, global_basis)
+	var amount := clampf(speed / (DirectionalLocomotion.RUN_CADENCE * run_stride), 0.0, 1.0)
+	if anim_tree.get("parameters/BlendTree/OneShot/active") and amount > 0 and on_ground:
+		anim_tree.set("parameters/BlendTree/OneShot/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FADE_OUT)
+	var run_blend := clampf((amount - 0.4) / 0.6, 0.0, 1.0)
+	var forward_stride := lerpf(DirectionalLocomotion.WALK_STRIDE, DirectionalLocomotion.RUN_STRIDE, run_blend)
+	_animation_forward_stride = forward_stride
+	var direction := DirectionalLocomotion.blend_direction(flat_velocity, global_basis, forward_stride)
+	if direction != Vector2.ZERO:
+		# Carry the previous gait through the body's aim turn before smoothing
+		# travel changes. Otherwise the legs keep the previous facing frame.
+		if not global_basis.is_equal_approx(_animation_facing_basis):
+			var previous_travel := _animation_facing_basis * DirectionalLocomotion.travel_direction(_animation_direction, forward_stride)
+			_animation_direction = DirectionalLocomotion.blend_direction(previous_travel, global_basis, forward_stride)
+		_animation_direction = _animation_direction.lerp(direction, 1.0 - exp(-14.0 * delta))
+		anim_tree.set("parameters/BlendTree/Direction/blend_position", _animation_direction)
+	_animation_facing_basis = global_basis
+	_locomotion_amount = move_toward(_locomotion_amount, clampf(amount * 5.0, 0.0, 1.0), delta * 8.0)
+	anim_tree.set("parameters/BlendTree/IdleMotion/blend_amount", _locomotion_amount)
+	anim_tree.set("parameters/BlendTree/Direction/0/blend_position", run_blend)
+	var stride := DirectionalLocomotion.stride_length(flat_velocity, global_basis, forward_stride)
+	_animation_rate = lerpf(_animation_rate, clampf(speed / stride, 0.6, 2.5), 1.0 - exp(-14.0 * delta))
+	anim_tree.set("parameters/BlendTree/RunSpeed/scale", _animation_rate)
+
+
+
+# --------------------------------------------
+# Wiring
+# --------------------------------------------
+
+func _setup_player_controller():
+	assert(controller, "Assign a controller")
+	if controller is PlayerController:
+		controller = controller.duplicate() as PlayerController
+	
+
+func _cache_body_and_skeleton() -> void:
+	body = _first_child_node3d(body_model_root)
+	assert(body, "No model found under $Body. Put your Knight (or other) as a child of Body.")
+	skeleton = body.get_node("Rig_Medium/Skeleton3D") as Skeleton3D
+	assert(skeleton, "Model must contain a Skeleton3D (e.g. Rig_Medium/Skeleton3D).")
+	raycast = self.get_node("CollisionShape3D/RayCast3D")
+
+
+func _wire_animations() -> void:
+	# Make animation track paths resolve inside the actual model instance
+	anim_player.root_node = body.get_path()
+	# Tie the AnimationTree to this player
+	anim_tree.anim_player = anim_player.get_path()
+	if not anim_tree.has_meta("directional_locomotion"):
+		DirectionalLocomotion.install(anim_tree, anim_player)
+		anim_tree.set_meta("directional_locomotion", true)
+	anim_tree.active = true
+	if not is_instance_valid(stride_modifier) or stride_modifier.get_parent() != skeleton:
+		stride_modifier = preload("res://scripts/controllers/DirectionalStride.gd").new()
+		stride_modifier.actor = self
+		skeleton.add_child(stride_modifier)
+
+func _bind_all_attachments() -> void:
+	_bind_attachment(left_hand, LEFT_HAND_BONE)
+	_bind_attachment(right_hand, RIGHT_HAND_BONE)
+	_bind_attachment(spine,     SPINE_BONE)
+
+func _bind_attachment(att: BoneAttachment3D, bone_name: String) -> void:
+	if att == null: return
+	att.use_external_skeleton = true
+	att.external_skeleton = skeleton.get_path()
+	att.bone_name = bone_name
+
+# --------------------------------------------
+# Model swapping
+# --------------------------------------------
+func swap_model(new_model: PackedScene) -> void:
+	assert(new_model, "swap_model: new_model is required")
+
+	var old := _first_child_node3d(body_model_root)
+	var xform := old.transform if old else Transform3D.IDENTITY
+	if old:
+		body_model_root.remove_child(old)
+		old.queue_free()
+
+	var inst := new_model.instantiate() as Node3D
+	inst.transform = xform
+	body_model_root.add_child(inst)
+
+	_cache_body_and_skeleton()
+	_wire_animations()
+	_bind_all_attachments()
+
+# --------------------------------------------
+# Helpers
+# --------------------------------------------
+func _first_child_node3d(parent: Node) -> Node3D:
+	for c in parent.get_children():
+		if c is Node3D:
+			return c
+	return null
+	
+func _get_ground_dist() -> float:
+	var is_nearby: bool = raycast.is_colliding()
+	if is_nearby:
+		var point: Vector3 = raycast.get_collision_point()
+		var dist: float = (point - raycast.global_position).length()
+		return dist
+	return INF
+
+func _try_step_up(delta: float) -> bool:
+	var step_clearance: float = 0.05
+	var step_down_extra: float = 0.1
+	var step_height_epsilon: float = 0.01
+	var min_step_height: float = 0.005
+	var horizontal_motion: Vector3 = Vector3(velocity.x, 0.0, velocity.z) * delta
+	var current_tf: Transform3D = global_transform
+	var has_motion: bool = horizontal_motion.length() >= 0.001
+	var on_floor_now: bool = on_ground
+	var moving_down_or_flat: bool = velocity.y <= 0.0
+	# The landing must support the actual destination. A longer forward probe
+	# borrowed a future tread's height while leaving the body behind its edge.
+	var probe_motion: Vector3 = horizontal_motion
+
+	var blocked_short: bool = false
+	if on_floor_now and moving_down_or_flat and has_motion:
+		blocked_short = test_move(current_tf, horizontal_motion)
+
+	var raise_amount: float = MAX_STEP_HEIGHT + step_clearance
+	var raised_tf: Transform3D = current_tf.translated(Vector3.UP * raise_amount)
+	var can_step: bool = (
+		on_floor_now
+		and moving_down_or_flat
+		and has_motion
+		and blocked_short
+	)
+	if not can_step:
+		return false
+	if test_move(current_tf, Vector3.UP * raise_amount):
+		return false
+
+	if test_move(raised_tf, probe_motion):
+		return false
+
+	var raised_forward_tf: Transform3D = raised_tf.translated(probe_motion)
+	var downward_motion: Vector3 = Vector3.DOWN * (raise_amount + step_down_extra)
+	var down_collision: KinematicCollision3D = KinematicCollision3D.new()
+	if not test_move(raised_forward_tf, downward_motion, down_collision):
+		return false
+
+	var floor_angle: float = down_collision.get_normal().angle_to(Vector3.UP)
+	if floor_angle > floor_max_angle:
+		# At a tread nose the capsule's contact normal follows its round base,
+		# even though the supporting triangle is horizontal. Inspect that actual
+		# contact's top surface; never borrow the height of a later tread.
+		var contact := down_collision.get_position() + horizontal_motion.normalized() * 0.01
+		var query := PhysicsRayQueryParameters3D.create(contact + Vector3.UP * 0.02,
+			contact - Vector3.UP * 0.02, collision_mask, [get_rid()])
+		var top := get_world_3d().direct_space_state.intersect_ray(query)
+		if top.is_empty() or (top.normal as Vector3).angle_to(Vector3.UP) > floor_max_angle \
+				or (top.position as Vector3).y - current_tf.origin.y > MAX_STEP_HEIGHT + step_height_epsilon:
+			return false
+
+	var probe_origin: Vector3 = raised_forward_tf.origin + down_collision.get_travel()
+	var new_origin: Vector3 = current_tf.origin + horizontal_motion
+	new_origin.y = probe_origin.y
+	var climbed_height: float = new_origin.y - current_tf.origin.y
+	if climbed_height < min_step_height:
+		return false
+	if climbed_height <= 0.0 or climbed_height > MAX_STEP_HEIGHT + step_height_epsilon:
+		return false
+
+	global_position = new_origin
+	velocity.y = 0.0
+	apply_floor_snap()
+	return true
+
+func _update_step_visual_smoothing(delta: float) -> void:
+	var body_delta_y: float = global_position.y - prev_body_global_y
+	if absf(body_delta_y) > MAX_STEP_HEIGHT + 0.05:
+		# Teleports are new locations, not steps to ease across.
+		step_visual_offset_y = 0.0
+		_step_visual_velocity = 0.0
+	elif not in_water and velocity.y <= 0.0 and (on_ground or is_on_floor()):
+		step_visual_offset_y -= body_delta_y
+	prev_body_global_y = global_position.y
+	# Exact critically damped spring: position and velocity ease through each
+	# discrete support change, independently of the physics frame rate.
+	var frequency := 32.0
+	var decay := exp(-frequency * delta)
+	var travel := (_step_visual_velocity + frequency * step_visual_offset_y) * delta
+	step_visual_offset_y = (step_visual_offset_y + travel) * decay
+	_step_visual_velocity = (_step_visual_velocity - frequency * travel) * decay
+	body_model_root.position = body_model_base_pos + Vector3(0.0, step_visual_offset_y, 0.0)
+
+
+func camera_follow_position() -> Vector3:
+	return global_position + Vector3.UP * step_visual_offset_y

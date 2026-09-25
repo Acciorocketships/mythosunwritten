@@ -1,0 +1,12 @@
+{
+  "added": [],
+  "batches_identical": false,
+  "changed": [],
+  "changed_meshes": [],
+  "collision_boxes_identical": true,
+  "removed": [
+    "public-guard/-3:4:8:0:-1",
+    "public-guard/-4:4:8:0:-1"
+  ],
+  "unchanged_meshes": 101
+}

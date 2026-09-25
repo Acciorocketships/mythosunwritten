@@ -1,0 +1,51 @@
+extends SceneTree
+## Closed, weathered boulders. Uneven oval rings, broad planes and narrow
+## rounded shoulders share the modest detail scale of the native field rocks.
+func _initialize()->void:
+ DirAccess.make_dir_recursive_absolute("res://assets/CliffOutcrops")
+ for variant in 6:
+  var rng:=RandomNumberGenerator.new();rng.seed=9701+variant*173
+  var outline:Array[Vector2]=[]
+  var count:=12
+  for i in count:
+   var angle:=TAU*float(i)/count+rng.randf_range(-.055,.055)
+   var radius:=rng.randf_range(.43,.53)
+   outline.append(Vector2(cos(angle),sin(angle))*radius)
+  var rings:=[]
+  var heights:=[0.0,.07,.24,.70,.91,1.0]
+  var widths:=[.73,.95,1.0,.92,.82,.61]
+  var lean:=Vector2(rng.randf_range(-.12,.12),rng.randf_range(-.10,.10))
+  var warps:=[]
+  for i in count:warps.append(rng.randf_range(-.035,.035))
+  for k in heights.size():
+   var ring:=[]
+   for i in count:
+    var h:float=heights[k]
+    var p:Vector2=outline[i]*float(widths[k])+lean*h
+    ring.append(Vector3(p.x,h+(float(warps[i]) if k>0 and k<heights.size()-1 else 0.0),p.y))
+   rings.append(ring)
+  var triangles:=[]
+  for k in rings.size()-1:
+   for i in count:
+    var j:=(i+1)%count
+    triangles.append([rings[k][i],rings[k+1][i],rings[k][j],k>=4])
+    triangles.append([rings[k][j],rings[k+1][i],rings[k+1][j],k>=4])
+  for i in range(1,count-1):
+   triangles.append([rings[0][0],rings[0][i],rings[0][i+1],false])
+   triangles.append([rings[-1][0],rings[-1][i+1],rings[-1][i],true])
+  var mesh:=ArrayMesh.new()
+  for green in [false,true]:
+   var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES)
+   st.set_smooth_group(-1)
+   for tri in triangles:
+    if tri[3]!=green:continue
+    for j in [0,2,1]:st.add_vertex(tri[j])
+   st.generate_normals();st.commit(mesh)
+   var material:=StandardMaterial3D.new();material.roughness=1;material.metallic_specular=0
+   material.albedo_color=Color(.2,.5,.15) if green else Color(.40,.39,.42)
+   mesh.surface_set_material(mesh.get_surface_count()-1,material)
+  var root:=Node3D.new();var node:=MeshInstance3D.new();node.mesh=mesh;root.add_child(node);node.owner=root
+  var doc:=GLTFDocument.new();var state:=GLTFState.new();assert(doc.append_from_scene(root,state)==OK)
+  assert(doc.write_to_filesystem(state,"res://assets/CliffOutcrops/boulder_%d.glb"%variant)==OK)
+  root.free()
+ quit()

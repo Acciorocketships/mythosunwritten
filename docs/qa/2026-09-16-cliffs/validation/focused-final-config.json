@@ -1,0 +1,1 @@
+{"dirs": [], "tests": ["res://tests/test_september15_moss_rocks.gd", "res://tests/test_september16_outcrops.gd", "res://tests/test_september15_cliff_panels.gd", "res://tests/test_september15_cliff_vegetation.gd", "res://tests/test_terrain_chunk_mesher.gd", "res://tests/test_september15_cliff_siding.gd"], "should_exit": true, "log_level": 1}

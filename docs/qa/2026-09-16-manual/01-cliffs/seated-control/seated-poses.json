@@ -1,0 +1,54 @@
+{
+  "P05": {
+    "feet": [
+      -443.600006103516,
+      30.9122371673584,
+      -266.0
+    ],
+    "original_feet": [
+      -443.600006103516,
+      29.5,
+      -266.0
+    ],
+    "reason": "Native ray-supported stance after outcrop widening"
+  },
+  "P12": {
+    "feet": [
+      -439.600006103516,
+      32.0499992370605,
+      -297.5
+    ],
+    "original_feet": [
+      -439.600006103516,
+      32.0,
+      -297.5
+    ],
+    "reason": "Native ray-supported stance after outcrop widening"
+  },
+  "P17": {
+    "feet": [
+      -443.899993896484,
+      28.0499992370605,
+      -247.899993896484
+    ],
+    "original_feet": [
+      -443.899993896484,
+      32.0,
+      -247.899993896484
+    ],
+    "reason": "Native ray-supported stance after outcrop widening"
+  },
+  "P20": {
+    "feet": [
+      -482.799987792969,
+      32.9707336425781,
+      -242.399993896484
+    ],
+    "original_feet": [
+      -482.799987792969,
+      32.0,
+      -242.399993896484
+    ],
+    "reason": "Native ray-supported stance after outcrop widening"
+  }
+}

@@ -1,0 +1,209 @@
+extends RefCounted
+## Detached, continuous geological profiles. Adjacent canonical panels sample
+## the same world-coordinate ridges; their fronts never return to the wall at
+## arbitrary module boundaries. Only real exposed run ends taper into the wall.
+static func _noise(x:float,salt:int)->float:
+ var i:=floori(x);var t:=smoothstep(0.0,1.0,x-i)
+ return lerpf(Helper.position_hash01(Vector3(i,salt,0),salt),Helper.position_hash01(Vector3(i+1,salt,0),salt),t)
+
+static func make(pose:Transform3D,width:float,height:float,seed_value:int,left_end:bool,right_end:bool,region:HeightfieldRegion=null)->Dictionary:
+ var steps:=maxi(2,roundi(width/.75));var columns:Array=[]
+ var faces:=PackedVector3Array();var green:=PackedVector3Array()
+ var tangent:=pose.basis.x;var coordinate:=pose.origin.dot(tangent)
+ var salt:=seed_value+roundi(pose.origin.dot(pose.basis.z))*13+roundi(pose.origin.y)*71
+ var count:=15
+ var divisions:Array[int]=[3,2,1,1,3,3,2,1,1,2,2,2,1,1]
+ var turf_rows:Dictionary={}
+ var expanded_row:=0
+ for row in count-1:
+  if row in [3,8]:turf_rows[expanded_row]=true
+  expanded_row+=divisions[row]
+ for i in steps+1:
+  var x:float=-width*.5+width*float(i)/steps;var u:=coordinate+x
+  var high:float=height*lerpf(.58,.94,_noise(u/11.0,salt+17))
+  var low:float=minf(high-height*.23,height*lerpf(.13,.50,_noise(u/9.0,salt+31)))
+  var depth:float=lerpf(3.5,12.0,pow(_noise(u/17.0,salt+53),1.3))
+  depth*=clampf(height/10.0,.35,1.2)
+  depth+=1.5*_noise(u/4.0,salt+61)
+  var upper_strength:=smoothstep(.25,.75,_noise(u/8.0,salt+67))
+  var lower_strength:=smoothstep(.28,.72,_noise(u/7.0,salt+71))
+  var lip:float=lerpf(.28,1.0,_noise(u/5.0,salt+79))
+  var levels:Array[float]=[height,lerpf(high,height,.58),high+height*.025,high,high-lip*.3,
+   lerpf(low,high,.72),lerpf(low,high,.43),low+height*.045,low,low-lip*.5,
+   low*.72,low*.42,low*.15,0.0,-.20]
+  var depths:Array[float]=[-.35,.15,.45,depth*.34,depth*(.35+.21*upper_strength),depth*.59,depth*.67,depth*.71,depth*.74,depth*(.75+.18*lower_strength),depth*.96,depth,depth*1.04,depth*1.06,depth*1.06]
+  var fade:=1.0
+  if left_end:fade*=smoothstep(0.0,3.0,x+width*.5)
+  if right_end:fade*=smoothstep(0.0,3.0,width*.5-x)
+  var floor_y:=-.2
+  if region!=null:
+   var foot:Vector3=pose*Vector3(x,0,depth*1.06)
+   floor_y=minf(floor_y,TerrainSurfaceField.surface_y(region,foot.x,foot.z)-pose.origin.y-.2)
+  var points:=PackedVector3Array()
+  for row in count:
+   var y:float=levels[row];var z:float=depths[row]
+   # Shared crags have roughly the native wall's metre-scale relief. A
+   # coherent vertical fracture cuts through the intermediate rock faces.
+   var joint:float=_noise(u/2.7,salt+113)-.5
+   if row not in [0,3,4,8,9,13,14]:
+    z+=.30*(_noise(u/2.1,salt+row*31)-.5)+joint*.3
+    y+=.15*(_noise(u/2.8,salt+row*47)-.5)
+   if row in [3,4,8,9]:z+=joint*.3
+   if row>0 and row<13:y=minf(y,points[row-1].y-.04)
+   if y<low:y=lerpf(floor_y,low,clampf((y+.2)/(low+.2),0.0,1.0))
+   z=lerpf(-.35,z,fade)
+   points.append(Vector3(x,y,z))
+  var expanded:=PackedVector3Array()
+  for row in count-1:
+   for part in divisions[row]:
+    var p:Vector3=points[row].lerp(points[row+1],float(part)/divisions[row])
+    if row not in [3,8] and p.y>0.0 and p.y<height-.3:
+     var cx:=sin(PI*fposmod(u+.24*_noise(p.y/4.0,salt+139),3.0)/3.0)
+     var cy:=sin(PI*fposmod(p.y+pose.origin.y,4.0)/4.0)
+     p.z+=(.55*cx*cy-.24)*fade
+    expanded.append(p)
+  expanded.append(points[count-1])
+  columns.append(expanded)
+ count=columns[0].size()
+ for i in steps:
+  for row in count-1:
+   var a:Vector3=columns[i][row];var b:Vector3=columns[i+1][row]
+   var c:Vector3=columns[i][row+1];var d:Vector3=columns[i+1][row+1]
+   for tri:Array in [[a,b,c],[b,d,c]]:
+    _triangle(faces,tri[0],tri[1],tri[2])
+    var normal:Vector3=(tri[2]-tri[0]).cross(tri[1]-tri[0]).normalized()
+    if turf_rows.has(row) and normal.y>.82 and minf(tri[0].z,minf(tri[1].z,tri[2].z))>.65:
+     _triangle(green,tri[0],tri[1],tri[2])
+ # Close the solid behind the native wall, plus upper, lower and end skins.
+ for i in steps:
+  for row in count-1:
+   var a:Vector3=columns[i][row];var b:Vector3=columns[i+1][row]
+   var c:Vector3=columns[i][row+1];var d:Vector3=columns[i+1][row+1]
+   a.z=-1.2;b.z=-1.2;c.z=-1.2;d.z=-1.2
+   _triangle(faces,a,c,b);_triangle(faces,b,c,d)
+  for row:int in [0,count-1]:
+   var a:Vector3=columns[i][row];var b:Vector3=columns[i+1][row]
+   var c:=Vector3(a.x,a.y,-1.2);var d:=Vector3(b.x,b.y,-1.2)
+   if row==0:_triangle(faces,a,c,b);_triangle(faces,b,c,d)
+   else:_triangle(faces,a,b,c);_triangle(faces,b,d,c)
+ for i:int in [0,steps]:
+  for row in count-1:
+   var a:Vector3=columns[i][row];var b:Vector3=columns[i][row+1]
+   var c:=Vector3(a.x,a.y,-1.2);var d:=Vector3(b.x,b.y,-1.2)
+   if i==0:_triangle(faces,a,b,c);_triangle(faces,b,d,c)
+   else:_triangle(faces,a,c,b);_triangle(faces,b,c,d)
+ var bounds:=AABB(faces[0],Vector3.ZERO)
+ for p:Vector3 in faces:bounds=bounds.expand(p)
+ return {"faces":faces,"green":green,"bounds":pose*bounds,"transform":pose,"anchor":pose.origin,
+  "id":"relief/%s/%s"%[pose.origin,pose.basis.z],"asset":&"cliff.relief","kind":"rock","top":(pose*bounds).end.y,"base":(pose*bounds).position.y}
+
+static func _triangle(out:PackedVector3Array,a:Vector3,b:Vector3,c:Vector3)->void:
+ out.append(a);out.append(b);out.append(c)
+
+static func mesh(rock:Dictionary)->ArrayMesh:
+ assert(OS.get_thread_caller_id()==OS.get_main_thread_id())
+ var result:=ArrayMesh.new();var green:PackedVector3Array=rock.green
+ var turf:Dictionary={}
+ for i in range(0,green.size(),3):turf[[green[i],green[i+1],green[i+2]]]=true
+ for grass in [false,true]:
+  if grass and green.is_empty():continue
+  var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES);st.set_smooth_group(0)
+  var authored_normals:=PackedVector3Array()
+  var faces:PackedVector3Array=green if grass else rock.faces
+  for i in range(0,faces.size(),3):
+   if not grass and turf.has([faces[i],faces[i+1],faces[i+2]]):continue
+   var normal:Vector3=(faces[i+2]-faces[i]).cross(faces[i+1]-faces[i]).normalized()
+   for j in 3:
+    authored_normals.append(normal)
+    st.set_normal(normal)
+    st.set_uv(CliffDressing.ground_uv() if grass else Vector2.ZERO)
+    st.add_vertex(faces[i+j])
+  if not grass:
+   st.generate_normals()
+   var arrays:=st.commit_to_arrays();var normals:PackedVector3Array=arrays[Mesh.ARRAY_NORMAL]
+   for i in normals.size():normals[i]=authored_normals[i].lerp(normals[i],.62).normalized()
+   arrays[Mesh.ARRAY_NORMAL]=normals
+   result.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+  else:st.commit(result)
+  if grass:result.surface_set_material(1,CliffDressing.shared_material())
+  else:
+   var material:=ShaderMaterial.new();material.shader=load("res://terrain/materials/field_rock.gdshader")
+   material.set_shader_parameter("use_texture",false);material.set_shader_parameter("instance_variation",false)
+   result.surface_set_material(0,material)
+ return result
+
+static func panels(walls:Array)->Array[Dictionary]:
+ var planes:Dictionary={}
+ for pose:Transform3D in walls:
+  var key:=[pose.basis, snappedf(pose.origin.dot(pose.basis.z),.001),snappedf(fposmod(pose.origin.y,4),.001)]
+  if not planes.has(key):planes[key]={"basis":pose.basis,"depth":key[1],"phase":key[2],"columns":{}}
+  var x:=roundi(pose.origin.dot(pose.basis.x)/3.0-.5)
+  if not planes[key].columns.has(x):planes[key].columns[x]=[]
+  planes[key].columns[x].append(pose.origin.y)
+ var result:Array[Dictionary]=[]
+ for key:Array in planes:
+  var plane:Dictionary=planes[key];var runs:Dictionary={}
+  for x:int in plane.columns:
+   var ys:Array=plane.columns[x];ys.sort()
+   var start:float=ys[0];var end:float=start+4
+   for i in range(1,ys.size()):
+    if absf(ys[i]-end)>.01:
+     runs[Vector3i(x,roundi(start*1000),roundi(end*1000))]=true;start=ys[i]
+    end=ys[i]+4
+   runs[Vector3i(x,roundi(start*1000),roundi(end*1000))]=true
+  var all_runs:=runs.duplicate();var ordered:Array=runs.keys()
+  ordered.sort_custom(func(a:Vector3i,b:Vector3i)->bool:return a.y<b.y or (a.y==b.y and a.x<b.x))
+  for run:Vector3i in ordered:
+   if not runs.has(run):continue
+   var length:=1
+   while length<8 and floori(float(run.x+4)/8)==floori(float(run.x+length+4)/8) and runs.has(run+Vector3i(length,0,0)):
+    length+=1
+   for j in length:runs.erase(run+Vector3i(j,0,0))
+   var width:=length*3.0;var bottom:=float(run.y)/1000.0;var height:=float(run.z-run.y)/1000.0
+   var origin:Vector3=plane.basis.x*(run.x*3.0+width*.5)+plane.basis.z*float(plane.depth);origin.y=bottom
+   result.append({"pose":Transform3D(plane.basis,origin),"width":width,"height":height,
+    "left_end":not all_runs.has(run-Vector3i(1,0,0)),"right_end":not all_runs.has(run+Vector3i(length,0,0))})
+ return result
+
+static func grass_supports(rock:Dictionary,neighbors:Array)->Array[Dictionary]:
+ var result:Array[Dictionary]=[]
+ var green:PackedVector3Array=rock.green
+ var world_vertices:Array=[]
+ for other:Dictionary in neighbors:
+  if not (other.bounds as AABB).intersects(rock.bounds):continue
+  var unique:Dictionary={}
+  for p:Vector3 in other.faces:unique[other.transform*p]=true
+  world_vertices.append(unique.keys())
+ for i in range(0,green.size(),3):
+  var face:=PackedVector3Array([rock.transform*green[i],rock.transform*green[i+1],rock.transform*green[i+2]])
+  var normal:Vector3=(face[2]-face[0]).cross(face[1]-face[0]).normalized()
+  var tri:=PackedVector2Array([Vector2(face[0].x,face[0].z),Vector2(face[1].x,face[1].z),Vector2(face[2].x,face[2].z)])
+  var box:=Rect2(tri[0],Vector2.ZERO)
+  for p:Vector2 in tri:box=box.expand(p)
+  var polygons:Array=[]
+  for vertices:Array in world_vertices:
+   var above:=PackedVector2Array()
+   for p:Vector3 in vertices:
+    if (p-face[0]).dot(normal)>.09:above.append(Vector2(p.x,p.z))
+   if above.size()>2:polygons.append(Geometry2D.convex_hull(above))
+  result.append({"id":rock.id+"/turf/%d"%i,"height":maxf(face[0].y,maxf(face[1].y,face[2].y)),"normal":normal,"face":face,
+   "bounds":box,"triangles":tri,"border":PackedVector2Array([tri[0],tri[1],tri[1],tri[2],tri[2],tri[0]]),"obstacles":[],"polygon_obstacles":polygons,"foliage_managed":true})
+ return result
+
+static func crags(faces:PackedVector3Array)->Array[Dictionary]:
+ var edges:Dictionary={};var result:Array[Dictionary]=[]
+ for i in range(0,faces.size(),3):
+  var normal:Vector3=(faces[i+2]-faces[i]).cross(faces[i+1]-faces[i]).normalized()
+  if normal.z<.2:continue
+  for j in 3:
+   var a:Vector3=faces[i+j].snapped(Vector3.ONE*.001);var b:Vector3=faces[i+(j+1)%3].snapped(Vector3.ONE*.001)
+   var key:Array=[a,b] if a<b else [b,a]
+   var entry:Dictionary={"point":(a+b)*.5,"normal":normal,"opposite":faces[i+(j+2)%3]}
+   if not edges.has(key):edges[key]=entry;continue
+   var prior:Dictionary=edges[key]
+   if normal.dot(prior.normal)>.98 or normal.dot(prior.normal)<.1:continue
+   if (entry.opposite-prior.point).dot(prior.normal)<.01:continue
+   if a.distance_to(b)<.3:continue
+   var direction:Vector3=(normal+prior.normal).normalized()
+   result.append({"point":entry.point,"normal":direction,"kind":"crag"})
+ return result

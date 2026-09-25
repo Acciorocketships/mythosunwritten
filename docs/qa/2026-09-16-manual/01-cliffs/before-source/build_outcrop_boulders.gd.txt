@@ -1,0 +1,74 @@
+extends SceneTree
+## One bounded Loop smoothing pass rounds the chosen native moss outcrops.
+## Every face retains its stone/moss ownership; closed source solids stay closed.
+func _initialize()->void:
+ DirAccess.make_dir_recursive_absolute("res://assets/CliffOutcrops")
+ for variant in 6:
+  var source:int=[1,2,4,7,4,7][variant]
+  var vertices:Array[Vector3]=[];var triangles:=[];var green:=false
+  for line:String in FileAccess.get_file_as_string("res://assets/UltimateNaturePack/OBJ/Rock_Moss_%d.obj"%source).split("\n"):
+   var p:=line.split(" ",false)
+   if p.is_empty():continue
+   if p[0]=="v":vertices.append(Vector3(float(p[1]),float(p[2]),float(p[3])))
+   if p[0]=="usemtl":green=p[1]=="Green"
+   if p[0]=="f":
+    for i in range(2,p.size()-1):triangles.append([int(p[1].split("/")[0])-1,int(p[i+1].split("/")[0])-1,int(p[i].split("/")[0])-1,green])
+  # Weld OBJ vertices split at material/normal boundaries before subdivision.
+  var unique:Array[Vector3]=[];var mapping:=[]
+  for p:Vector3 in vertices:
+   var found:=-1
+   for i in unique.size():
+    if unique[i].distance_to(p)<.00001:found=i;break
+   if found<0:found=unique.size();unique.append(p)
+   mapping.append(found)
+  for tri in triangles:
+   for i in 3:tri[i]=mapping[tri[i]]
+  vertices=unique
+  var neighbors:={};var edges:={}
+  for tri in triangles:
+   for i in 3:
+    var a:int=tri[i];var b:int=tri[(i+1)%3];var opposite:int=tri[(i+2)%3]
+    var edge:=Vector2i(mini(a,b),maxi(a,b))
+    if not edges.has(edge):edges[edge]=[]
+    edges[edge].append(opposite)
+    if not neighbors.has(a):neighbors[a]={}
+    neighbors[a][b]=true
+    if not neighbors.has(b):neighbors[b]={}
+    neighbors[b][a]=true
+  var rounded:Array[Vector3]=[]
+  for i in vertices.size():
+   var count:int=neighbors[i].size();var beta:=3.0/16.0 if count==3 else 3.0/(8.0*count)
+   var p:Vector3=vertices[i]*(1.0-count*beta)
+   for j:int in neighbors[i]:p+=vertices[j]*beta
+   # Partial smoothing retains the source's broad rock planes and shelf lips.
+   rounded.append(vertices[i].lerp(p,.72))
+  var mids:={}
+  for edge:Vector2i in edges:
+   assert(edges[edge].size()==2,"Every rock is a closed solid")
+   var p:Vector3=(vertices[edge.x]+vertices[edge.y])*3.0/8.0+(vertices[edges[edge][0]]+vertices[edges[edge][1]])/8.0
+   mids[edge]=rounded.size();rounded.append((vertices[edge.x]+vertices[edge.y]).lerp(p*2,.72)*.5)
+  var split:=[]
+  for tri in triangles:
+   var a:int=tri[0];var b:int=tri[1];var c:int=tri[2]
+   var ab:int=mids[Vector2i(mini(a,b),maxi(a,b))];var bc:int=mids[Vector2i(mini(b,c),maxi(b,c))];var ca:int=mids[Vector2i(mini(c,a),maxi(c,a))]
+   split.append_array([[a,ab,ca,tri[3]],[ab,b,bc,tri[3]],[ca,bc,c,tri[3]],[ab,bc,ca,tri[3]]])
+  var bounds:=AABB(rounded[0],Vector3.ZERO)
+  for p:Vector3 in rounded:bounds=bounds.expand(p)
+  var mesh:=ArrayMesh.new()
+  for moss in [false,true]:
+   var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES);st.set_smooth_group(-1)
+   for tri in split:
+    if tri[3]!=moss:continue
+    for i in 3:
+     var p:Vector3=(rounded[tri[i]]-bounds.position)/bounds.size-Vector3(.5,0,.5)
+     if variant>=4:p=Basis(Vector3.UP,PI*.5)*p
+     st.add_vertex(p)
+   st.generate_normals();st.commit(mesh)
+   var mat:=StandardMaterial3D.new();mat.roughness=1;mat.metallic_specular=0
+   mat.albedo_color=Color(.2,.5,.15) if moss else Color(.40,.39,.42)
+   mesh.surface_set_material(mesh.get_surface_count()-1,mat)
+  var root:=Node3D.new();var node:=MeshInstance3D.new();node.mesh=mesh;root.add_child(node);node.owner=root
+  var doc:=GLTFDocument.new();var state:=GLTFState.new();assert(doc.append_from_scene(root,state)==OK)
+  assert(doc.write_to_filesystem(state,"res://assets/CliffOutcrops/boulder_%d.glb"%variant)==OK)
+  root.free()
+ quit()

@@ -1,0 +1,56 @@
+[
+  {
+    "all_packet_states_sha256": "d4d63c8c6f1c39485b1bb71b4279c3380003ef384d7f08ac12b271e055f36458",
+    "cycle": 0,
+    "frames": 600,
+    "mean_ms": 2.25702166666667,
+    "median_ms": 2.24,
+    "p95_ms": 2.449,
+    "phase": "prior"
+  },
+  {
+    "all_packet_states_sha256": "0273c6595c1ec557147f85a4bc60eee362056d3542760277a1492117cde4e03e",
+    "cycle": 0,
+    "frames": 600,
+    "mean_ms": 9.02054666666667,
+    "median_ms": 9.001,
+    "p95_ms": 9.559,
+    "phase": "unshared"
+  },
+  {
+    "all_packet_states_sha256": "0273c6595c1ec557147f85a4bc60eee362056d3542760277a1492117cde4e03e",
+    "cycle": 0,
+    "frames": 600,
+    "mean_ms": 6.52827333333333,
+    "median_ms": 6.515,
+    "p95_ms": 6.907,
+    "phase": "shared"
+  },
+  {
+    "all_packet_states_sha256": "0273c6595c1ec557147f85a4bc60eee362056d3542760277a1492117cde4e03e",
+    "cycle": 1,
+    "frames": 600,
+    "mean_ms": 6.56374833333333,
+    "median_ms": 6.563,
+    "p95_ms": 6.972,
+    "phase": "shared"
+  },
+  {
+    "all_packet_states_sha256": "0273c6595c1ec557147f85a4bc60eee362056d3542760277a1492117cde4e03e",
+    "cycle": 1,
+    "frames": 600,
+    "mean_ms": 9.03867166666665,
+    "median_ms": 9.026,
+    "p95_ms": 9.576,
+    "phase": "unshared"
+  },
+  {
+    "all_packet_states_sha256": "d4d63c8c6f1c39485b1bb71b4279c3380003ef384d7f08ac12b271e055f36458",
+    "cycle": 1,
+    "frames": 600,
+    "mean_ms": 2.221575,
+    "median_ms": 2.208,
+    "p95_ms": 2.42,
+    "phase": "prior"
+  }
+]

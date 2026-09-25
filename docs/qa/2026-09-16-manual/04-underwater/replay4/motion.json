@@ -1,0 +1,50 @@
+[
+  {
+    "feet": "(-1175.3, 8.0, -731.0)",
+    "immersed": false,
+    "input": "(0.0, 0.0)",
+    "phase": "before",
+    "swim": false,
+    "velocity": "(0.0, 0.0, 0.0)"
+  },
+  {
+    "feet": "(-1155.346, 8.0, -731.0)",
+    "immersed": false,
+    "input": "(1.0, 0.0)",
+    "phase": "before",
+    "swim": false,
+    "velocity": "(10.0, 0.0, 0.0)"
+  },
+  {
+    "feet": "(-1195.254, 8.0, -731.0)",
+    "immersed": false,
+    "input": "(-1.0, 0.0)",
+    "phase": "before",
+    "swim": false,
+    "velocity": "(-10.0, 0.0, 0.0)"
+  },
+  {
+    "feet": "(-1171.842, 8.0, -726.5709)",
+    "immersed": true,
+    "input": "(0.0, 0.0)",
+    "phase": "after",
+    "swim": false,
+    "velocity": "(2.428576, 0.0, 3.110483)"
+  },
+  {
+    "feet": "(-1166.732, 8.0, -725.6828)",
+    "immersed": true,
+    "input": "(1.0, 0.0)",
+    "phase": "after",
+    "swim": false,
+    "velocity": "(5.926473, 0.0, 3.219907)"
+  },
+  {
+    "feet": "(-1176.827, 8.0, -725.4133)",
+    "immersed": true,
+    "input": "(-1.0, 0.0)",
+    "phase": "after",
+    "swim": false,
+    "velocity": "(-1.339747, 0.0, 3.424875)"
+  }
+]

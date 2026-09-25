@@ -1,0 +1,25 @@
+extends GutTest
+
+# P20/P12: upward-facing bare shelves are a material ownership defect.
+# Inspect the actual baked triangles independently of the source mesh's labels.
+func test_broad_upward_faces_receive_turf_in_every_outcrop() -> void:
+	var rocks = preload("res://scripts/terrain/field/CliffRockDressing.gd")
+	rocks.prepare()
+	for asset: StringName in rocks._visuals:
+		if asset == rocks.BUSH: continue
+		var upward_area := 0.0
+		var bare_area := 0.0
+		for piece: EnvironmentVisualPiece in rocks._visuals[asset].pieces:
+			for surface in piece.mesh.get_surface_count():
+				var part := ArrayMesh.new()
+				part.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,piece.mesh.surface_get_arrays(surface))
+				var faces := part.get_faces()
+				for i in range(0,faces.size(),3):
+					var normal := (faces[i+2]-faces[i]).cross(faces[i+1]-faces[i])
+					if normal.normalized().y < 0.25: continue
+					upward_area += normal.length() * 0.5
+					if piece.mesh.surface_get_material(surface) != CliffDressing.shared_material():
+						bare_area += normal.length() * 0.5
+		assert_gt(upward_area,0.05,"A usable broad upper shoulder exists: " + str(asset))
+		assert_lt(bare_area/maxf(upward_area,0.001),0.05,
+			"P20/P12: upward shoulders must not inherit bare stripes: " + str(asset))

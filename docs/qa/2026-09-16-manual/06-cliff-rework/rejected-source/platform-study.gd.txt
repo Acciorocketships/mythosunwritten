@@ -1,0 +1,57 @@
+extends SceneTree
+## Original connected cliff buttresses. Each closed solid carries its own
+## descending terraces; its high rear ridge is buried in the native wall.
+const SECTORS := 14
+func _initialize()->void:
+ DirAccess.make_dir_recursive_absolute("res://assets/CliffOutcrops")
+ for variant in 6:
+  var vertices:Array[Vector3]=[]
+  var triangles:Array=[]
+  var phase:float=variant*1.37
+  var upper:float=.66+.045*sin(phase)
+  var lower:float=.30+.035*cos(phase)
+  var heights:Array[float]=[1.0,upper,upper-.012,lower,lower-.012,.018]
+  var radii:Array[float]=[.08,.36,.58,.65,.88,1.0]
+  var widths:Array[float]=[.79,.83,.96,.97,1.0,.92]
+  var count:=SECTORS+3
+  for row in heights.size():
+   for j in SECTORS+1:
+    var angle:float=PI*float(j)/SECTORS
+    # Uneven but shared contours keep every riser joined to its ledge.
+    var scallop:float=1.0+.045*sin(angle*5.0+phase)+.025*cos(angle*9.0-phase)
+    var x:float=cos(angle)*.5*widths[row]*scallop
+    var z:float=-.23+sin(angle)*radii[row]*scallop
+    var y:float=heights[row]+sin(angle)*.009*sin(angle*3.0+phase)
+    vertices.append(Vector3(x,y,z))
+   vertices.append(Vector3(-.5*widths[row],heights[row],-.48))
+   vertices.append(Vector3(.5*widths[row],heights[row],-.48))
+  for row in heights.size()-1:
+   for j in count:
+    var next:=(j+1)%count
+    var a:=row*count+j;var b:=row*count+next
+    var c:=(row+1)*count+j;var d:=(row+1)*count+next
+    # Broad near-horizontal ledges only. The two end sectors keep a gray
+    # collar where the outcrop intersects the wall; steep shoulders stay rock.
+    var turf:bool=row in [1,3] and j>=2 and j<SECTORS-2
+    triangles.append([a,b,c,turf]);triangles.append([b,d,c,turf])
+  var top:=vertices.size();vertices.append(Vector3(0,1,-.34))
+  var bottom:=vertices.size();vertices.append(Vector3(0,.018,-.34))
+  for j in count:
+   var next:=(j+1)%count
+   triangles.append([top,next,j,false])
+   triangles.append([bottom,(heights.size()-1)*count+j,(heights.size()-1)*count+next,false])
+  var mesh:=ArrayMesh.new()
+  for turf in [false,true]:
+   var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES);st.set_smooth_group(-1)
+   for tri in triangles:
+    if tri[3]!=turf:continue
+    for i in [0,2,1]:st.add_vertex(vertices[tri[i]])
+   st.generate_normals();st.commit(mesh)
+   var mat:=StandardMaterial3D.new();mat.roughness=1;mat.metallic_specular=0
+   mat.albedo_color=Color(.2,.5,.15) if turf else Color(.40,.39,.42)
+   mesh.surface_set_material(mesh.get_surface_count()-1,mat)
+  var root:=Node3D.new();var node:=MeshInstance3D.new();node.mesh=mesh;root.add_child(node);node.owner=root
+  var doc:=GLTFDocument.new();var state:=GLTFState.new();assert(doc.append_from_scene(root,state)==OK)
+  assert(doc.write_to_filesystem(state,"res://assets/CliffOutcrops/boulder_%d.glb"%variant)==OK)
+  root.free()
+ quit()

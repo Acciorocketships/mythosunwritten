@@ -1,0 +1,71 @@
+{
+  "added": [],
+  "batches_identical": false,
+  "changed": [
+    "maze-skywalk/-9/4/2/0/deck/00/floor",
+    "maze-skywalk/-4/4/5/1/deck/00/floor",
+    "maze-skywalk/-9/4/2/0/wall/00/north",
+    "maze-skywalk/-4/4/5/1/wall/00/north",
+    "maze-skywalk/-9/4/2/0/wall/00/south",
+    "maze-skywalk/-4/4/5/1/wall/00/south",
+    "maze-skywalk/-9/4/2/0/roof/00/roof",
+    "maze-skywalk/-4/4/5/1/roof/00/roof",
+    "maze-skywalk/-9/4/2/0/portal/00/east",
+    "maze-skywalk/-4/4/5/1/portal/00/east",
+    "maze-skywalk/-9/4/2/0/portal/00/west",
+    "maze-skywalk/-4/4/5/1/portal/00/west"
+  ],
+  "changed_meshes": [],
+  "collision_boxes_identical": false,
+  "removed": [
+    "maze-skywalk/-3/4/5/1/deck/00",
+    "maze-skywalk/-3/4/5/1/rail/00/0",
+    "maze-skywalk/-3/4/5/1/rail/00/1",
+    "maze-skywalk/-9/4/3/0/deck/00",
+    "maze-skywalk/-9/4/3/0/rail/00/0",
+    "maze-skywalk/-9/4/3/0/rail/00/1"
+  ],
+  "spans": [
+    {
+      "cell": "(-9, 4, 2)",
+      "cross": "(0, 0, 1)",
+      "crosses_street": true,
+      "enclosed": true,
+      "gap": 2,
+      "step": "(1, 0, 0)",
+      "walk_width": 2,
+      "width": 2
+    },
+    {
+      "cell": "(-4, 4, 5)",
+      "cross": "(1, 0, 0)",
+      "crosses_street": true,
+      "enclosed": true,
+      "gap": 2,
+      "step": "(0, 0, 1)",
+      "walk_width": 2,
+      "width": 2
+    },
+    {
+      "cell": "(0, 5, 5)",
+      "cross": "(0, 0, 0)",
+      "crosses_street": true,
+      "enclosed": false,
+      "gap": 2,
+      "step": "(0, 0, 1)",
+      "walk_width": 1,
+      "width": 1
+    },
+    {
+      "cell": "(1, 5, 5)",
+      "cross": "(0, 0, 0)",
+      "crosses_street": true,
+      "enclosed": false,
+      "gap": 2,
+      "step": "(0, 0, 1)",
+      "walk_width": 1,
+      "width": 1
+    }
+  ],
+  "unchanged_meshes": 101
+}

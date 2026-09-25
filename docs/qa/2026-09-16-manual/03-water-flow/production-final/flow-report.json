@@ -1,0 +1,11 @@
+{
+  "P01_immersed": true,
+  "P01_in_water": false,
+  "P01_levels": [
+    14.9999974568685
+  ],
+  "P01_trigger_hits": 0,
+  "P01_wading": true,
+  "samples": 12348,
+  "uphill": []
+}

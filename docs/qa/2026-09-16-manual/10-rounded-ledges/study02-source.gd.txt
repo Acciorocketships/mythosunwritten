@@ -1,0 +1,122 @@
+extends RefCounted
+## Continuous worn stone with finite recessed ledges and broader lower shoulders.
+## World-coordinate fields agree across chunk ownership; no course repeats by cell.
+static func prepare()->void:
+ pass
+
+static func _noise(x:float,salt:int)->float:
+ var i:=floori(x);var t:=smoothstep(0.0,1.0,x-i)
+ return lerpf(Helper.position_hash01(Vector3(i,salt,0),salt),Helper.position_hash01(Vector3(i+1,salt,0),salt),t)
+
+static func make(pose:Transform3D,width:float,height:float,seed_value:int,region:HeightfieldRegion=null,left_end:bool=false,right_end:bool=false)->Array[Dictionary]:
+ var steps:=maxi(2,roundi(width/.55));var columns:Array=[]
+ var faces:=PackedVector3Array();var green:=PackedVector3Array()
+ var coordinate:=pose.origin.dot(pose.basis.x)
+ var salt:=seed_value+roundi(pose.origin.dot(pose.basis.z))*13+roundi(pose.origin.y)*71
+ var turf_rows:Dictionary={}
+ for ix in steps+1:
+  var x:float=-width*.5+width*float(ix)/steps;var u:=coordinate+x
+  var fade:=1.0
+  if left_end:fade*=smoothstep(0.0,2.5,x+width*.5)
+  if right_end:fade*=smoothstep(0.0,2.5,width*.5-x)
+  var core:=lerpf(1.6,2.8,_noise(u/13.0,salt+53))*clampf(height/10.0,.35,1.15)
+  var boulder:=1.5*pow(_noise(u/7.7,salt+83),2.0)
+  var tops:Array[float]=[];var strengths:Array[float]=[]
+  for cut in 4:
+   tops.append(height*(float(cut+1)/5.0+lerpf(-.068,.068,_noise(u/8.0,salt+cut*71+131))))
+   strengths.append(smoothstep(.38,.72,_noise(u/6.5,salt+cut*97+149))*lerpf(.55,1.2,_noise(u/9.0,salt+cut*59+173)))
+  var points:=PackedVector3Array([Vector3(x,height,-.5),Vector3(x,height*.95,-.1)])
+  var accumulated:=0.0
+  var previous_y:=height*.95
+  for cut in range(3,-1,-1):
+   var top:=tops[cut];var strength:=strengths[cut]
+   for part in range(1,7):
+    var t:=float(part)/6.0;var y:=lerpf(previous_y,top,t)
+    var depth:float=core*pow(maxf(0,1.0-y/height),.40)+accumulated
+    # Worn vertical faces keep broad shapes; small irregular dents do not
+    # reproduce the native wall's repeating tile pattern.
+    depth+=.20*sin(t*PI)+.20*(_noise(u/2.6,salt+roundi(y*.5)*31+211)-.5)
+    depth+=boulder*exp(-pow((y/height-.15)/.22,2.0))
+    points.append(Vector3(x,y,lerpf(-.5,depth,fade)))
+   turf_rows[points.size()-1]=true
+   accumulated+=strength
+   var depth:float=core*pow(maxf(0,1.0-top/height),.40)+accumulated
+   depth+=boulder*exp(-pow((top/height-.15)/.22,2.0))
+   points.append(Vector3(x,top-.06,lerpf(-.5,depth,fade)))
+   previous_y=top-.06
+  var foot_depth:=core+accumulated+boulder*.63
+  var floor_y:=-.20
+  if region!=null:
+   for z:float in [0.0,foot_depth*.5,foot_depth]:
+    var foot:Vector3=pose*Vector3(x,0,z)
+    floor_y=minf(floor_y,TerrainSurfaceField.surface_y(region,foot.x,foot.z)-pose.origin.y-.2)
+  for part in range(1,7):
+   var t:=float(part)/6.0;var y:=lerpf(previous_y,floor_y,t)
+   var depth:float=core*pow(maxf(0,1.0-y/height),.40)+accumulated
+   depth+=boulder*exp(-pow((maxf(0,y)/height-.15)/.22,2.0))
+   points.append(Vector3(x,y,lerpf(-.5,depth,fade)))
+  columns.append(points)
+ var count:int=columns[0].size()
+ for ix in steps:
+  for row in count-1:
+   var a:Vector3=columns[ix][row];var b:Vector3=columns[ix+1][row];var c:Vector3=columns[ix][row+1];var d:Vector3=columns[ix+1][row+1]
+   for tri:Array in [[a,b,c],[b,d,c]]:
+    _triangle(faces,tri[0],tri[1],tri[2])
+    var normal:Vector3=(tri[2]-tri[0]).cross(tri[1]-tri[0]).normalized()
+    if turf_rows.has(row) and normal.y>.80 and minf(tri[0].z,minf(tri[1].z,tri[2].z))>.4:
+     _triangle(green,tri[0],tri[1],tri[2])
+ # Closed back, ends and feet; rendered and physical vertices are identical.
+ for ix in steps:
+  for row in count-1:
+   var a:Vector3=columns[ix][row];var b:Vector3=columns[ix+1][row];var c:Vector3=columns[ix][row+1];var d:Vector3=columns[ix+1][row+1]
+   a.z=-1.2;b.z=-1.2;c.z=-1.2;d.z=-1.2
+   _triangle(faces,a,c,b);_triangle(faces,b,c,d)
+  for row:int in [0,count-1]:
+   var a:Vector3=columns[ix][row];var b:Vector3=columns[ix+1][row];var c:=Vector3(a.x,a.y,-1.2);var d:=Vector3(b.x,b.y,-1.2)
+   if row==0:_triangle(faces,a,c,b);_triangle(faces,b,c,d)
+   else:_triangle(faces,a,b,c);_triangle(faces,b,d,c)
+ for ix:int in [0,steps]:
+  for row in count-1:
+   var a:Vector3=columns[ix][row];var b:Vector3=columns[ix][row+1];var c:=Vector3(a.x,a.y,-1.2);var d:=Vector3(b.x,b.y,-1.2)
+   if ix==0:_triangle(faces,a,b,c);_triangle(faces,b,d,c)
+   else:_triangle(faces,a,c,b);_triangle(faces,b,c,d)
+ var bounds:=AABB(faces[0],Vector3.ZERO)
+ for p:Vector3 in faces:bounds=bounds.expand(p)
+ return [{"faces":faces,"green":green,"bounds":pose*bounds,"transform":pose,"anchor":pose.origin,
+  "id":"worn_crag/%s/%s"%[pose.origin,pose.basis.z],"asset":&"cliff.native_crag","kind":"rock","native_crag":true,"top":(pose*bounds).end.y,"base":(pose*bounds).position.y}]
+
+static func _triangle(out:PackedVector3Array,a:Vector3,b:Vector3,c:Vector3)->void:
+ out.append(a);out.append(b);out.append(c)
+
+static func mesh(rock:Dictionary)->ArrayMesh:
+ assert(OS.get_thread_caller_id()==OS.get_main_thread_id())
+ var result:=ArrayMesh.new();var green:PackedVector3Array=rock.green
+ var turf:Dictionary={}
+ for i in range(0,green.size(),3):turf[[green[i],green[i+1],green[i+2]]]=true
+ for grass in [false,true]:
+  if grass and green.is_empty():continue
+  var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES);st.set_smooth_group(0)
+  var authored_normals:=PackedVector3Array()
+  var faces:PackedVector3Array=green if grass else rock.faces
+  for i in range(0,faces.size(),3):
+   if not grass and turf.has([faces[i],faces[i+1],faces[i+2]]):continue
+   var normal:Vector3=(faces[i+2]-faces[i]).cross(faces[i+1]-faces[i]).normalized()
+   for j in 3:
+    authored_normals.append(normal)
+    st.set_normal(normal)
+    st.set_uv(CliffDressing.ground_uv() if grass else Vector2.ZERO)
+    st.add_vertex(faces[i+j])
+  if not grass:
+   st.generate_normals()
+   var arrays:=st.commit_to_arrays();var normals:PackedVector3Array=arrays[Mesh.ARRAY_NORMAL]
+   for i in normals.size():normals[i]=authored_normals[i].lerp(normals[i],.62).normalized()
+   arrays[Mesh.ARRAY_NORMAL]=normals
+   result.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+  else:st.commit(result)
+  if grass:result.surface_set_material(1,CliffDressing.shared_material())
+  else:
+   var material:=ShaderMaterial.new();material.shader=load("res://terrain/materials/field_rock.gdshader")
+   material.set_shader_parameter("use_texture",false);material.set_shader_parameter("instance_variation",false)
+   result.surface_set_material(0,material)
+ return result
+

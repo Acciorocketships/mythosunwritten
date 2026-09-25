@@ -1,0 +1,18 @@
+[
+  {
+    "contacts": {
+      "/root/CliffContact/@SubViewport@190/FrozenVillage/@StaticBody3D@211/CliffRocks(-0.06, 0.8, 0.59)": "(-440.6895, 29.95445, -276.7411)"
+    },
+    "end": "(-440.712, 29.87702, -276.5049)",
+    "side": -1.0,
+    "start": "(-440.7119, 29.87634, -276.5053)"
+  },
+  {
+    "contacts": {
+      "/root/CliffContact/@SubViewport@190/FrozenVillage/@StaticBody3D@211/CliffRocks(0.0, 1.0, 0.0)": "(-442.7119, 29.82825, -276.5053)"
+    },
+    "end": "(-442.7119, 29.8292, -276.5053)",
+    "side": 1.0,
+    "start": "(-442.7119, 29.82736, -276.5053)"
+  }
+]

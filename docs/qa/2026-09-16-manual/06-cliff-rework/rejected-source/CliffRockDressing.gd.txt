@@ -1,0 +1,212 @@
+extends RefCounted
+## External closed rock formations on canonical native cliff faces. Baked
+## resources are prepared on the main thread; workers consume detached arrays.
+const PANELS=preload("res://scripts/terrain/field/CliffSiding.gd")
+const BUSH:=&"kaykit.bush.01"
+const FORMS:=[0,1,2,3,4,5]
+static var _definitions:Dictionary={}
+static var _visuals:Dictionary={}
+
+static func prepare()->void:
+ if not _definitions.is_empty():return
+ assert(OS.get_thread_caller_id()==OS.get_main_thread_id())
+ var catalog:=EnvironmentCatalog.load_default();var cache:=EnvironmentRenderCache.new(catalog)
+ var ids:Array[StringName]=[BUSH]
+ for form:int in FORMS:ids.append(StringName("cliff.outcrop.%d"%form))
+ assert(cache.prepare(ids))
+ for id:StringName in ids:
+  var visual:=cache.visual(id);var faces:=PackedVector3Array();var green:=PackedVector3Array()
+  for piece:EnvironmentVisualPiece in visual.pieces:
+   var source:=piece.mesh.get_faces()
+   for p:Vector3 in source:faces.append(piece.local_transform*p)
+   for surface in piece.mesh.get_surface_count():
+    var material:Material=piece.material_override if piece.material_override!=null else piece.mesh.surface_get_material(surface)
+    if not material is StandardMaterial3D:continue
+    var color:Color=material.albedo_color
+    if color.g<=color.r*1.15:continue
+    var part:=ArrayMesh.new();part.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,piece.mesh.surface_get_arrays(surface))
+    for p:Vector3 in part.get_faces():green.append(piece.local_transform*p)
+  var feet:Dictionary={}
+  for p:Vector3 in faces:feet[Vector3(p.x,0,p.z).snapped(Vector3.ONE*.00001)]=true
+  _definitions[id]={"feet":feet.keys(),"bounds":catalog.descriptor(id).measured_aabb,"faces":faces,"green":green}
+  if id!=BUSH:
+   visual=visual.duplicate(true)
+   for piece:EnvironmentVisualPiece in visual.pieces:
+    piece.mesh=piece.mesh.duplicate()
+    for surface in piece.mesh.get_surface_count():
+     var material:=piece.mesh.surface_get_material(surface) as StandardMaterial3D
+     if material!=null and material.albedo_color.g>material.albedo_color.r*1.15:
+      var arrays:=piece.mesh.surface_get_arrays(surface)
+      var uv:=PackedVector2Array();uv.resize((arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size());uv.fill(CliffDressing.ground_uv())
+      arrays[Mesh.ARRAY_TEX_UV]=uv
+      var rebuilt:=ArrayMesh.new()
+      for section in piece.mesh.get_surface_count():
+       rebuilt.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays if section==surface else piece.mesh.surface_get_arrays(section))
+       rebuilt.surface_set_material(section,CliffDressing.shared_material() if section==surface else piece.mesh.surface_get_material(section))
+      piece.mesh=rebuilt
+     elif material!=null:
+      var stone:=ShaderMaterial.new();stone.shader=load("res://terrain/materials/field_rock.gdshader")
+      stone.set_shader_parameter("use_texture",false)
+      stone.set_shader_parameter("instance_variation",false)
+      piece.mesh.surface_set_material(surface,stone)
+  _visuals[id]=visual
+
+static func compute(region:HeightfieldRegion,lo_x:int,lo_z:int,cells:int,seed_value:int,
+  features:FeatureContext=null,water:WaterFieldContext=null)->Dictionary:
+ var cliffs:=CliffDressing.compute(region,lo_x-1,lo_z-1,cells+2)
+ # Halo geometry is also a conservative plant/grass reservation. Water
+ # admission applies only after ownership, inside the prepared query margin.
+ var neighbors:=formations(cliffs.wall,seed_value,region,features)
+ var placements:Array[Dictionary]=[]
+ for p:Dictionary in neighbors:
+  var owner:=Vector2i(floori((p.anchor.x+12)/24),floori((p.anchor.z+12)/24))
+  if owner.x>=lo_x and owner.x<lo_x+cells and owner.y>=lo_z and owner.y<lo_z+cells:
+   if not _wet_rock(p.asset,p.transform,p.bounds,water):placements.append(p)
+ var collision:=PackedVector3Array();var reservations:Array[Rect2]=[]
+ for p:Dictionary in placements:
+  for vertex:Vector3 in _definitions[p.asset].faces:collision.append(p.transform*vertex)
+ for p:Dictionary in neighbors:reservations.append(_footprint(p.bounds))
+ var foliage:=plants(placements,region,seed_value,features,water,neighbors)
+ placements.append_array(foliage)
+ return {"placements":placements,"collision_faces":collision,"ground_reservations":reservations,"grass_supports":[]}
+
+static func formations(walls:Array,seed_value:int,region:HeightfieldRegion=null,features:FeatureContext=null)->Array[Dictionary]:
+ assert(not _definitions.is_empty())
+ var out:Array[Dictionary]=[]
+ var panels:=PANELS.panels(walls)
+ for key:String in panels:
+  var dimensions:=key.trim_prefix("wall_").split("x")
+  var width:=float(dimensions[0]);var height:=float(dimensions[1])
+  for panel:Transform3D in panels[key]:
+   var n:=maxi(1,roundi(width/10.5));var bay:=width/n
+   for i in n:
+    var x:float=-width*.5+bay*(i+.5)
+    var anchor:Vector3=panel*Vector3(x,0,0)
+    var roll:=Helper.position_hash01(anchor,seed_value+9271)
+    var spread:=Helper.position_hash01(anchor,seed_value+9293)
+    if roll<.14:continue
+    # A cluster is a whole buried boulder and (sometimes) a lower, wider
+    # shoulder. Neither is a backing panel; gaps expose the original wall.
+    var size:=Vector3(bay*lerpf(1.45,1.85,spread),height*lerpf(.50,.96,roll),lerpf(4.0,7.5,spread))
+    var local:=Transform3D(Basis(Vector3.UP,lerpf(-.45,.45,roll))*Basis.from_scale(size),Vector3(x+bay*lerpf(-.18,.18,spread),-.35,1.3))
+    _offer(out,mini(5,int(roll*6)),panel*local,anchor,region,features)
+    if height>=8 and spread>.32:
+     var size_low:=Vector3(bay*lerpf(1.6,2.2,roll),height*lerpf(.20,.46,spread),lerpf(7.0,10.0,spread))
+     var shoulder:=Transform3D(Basis(Vector3.UP,lerpf(-.6,.6,spread))*Basis.from_scale(size_low),
+      Vector3(x+bay*lerpf(-.22,.22,roll),-.35,lerpf(2.8,5.0,spread)))
+     _offer(out,(mini(5,int(roll*6))+2)%6,panel*shoulder,anchor,region,features)
+ return out
+
+static func _offer(out:Array[Dictionary],form:int,pose:Transform3D,anchor:Vector3,
+  region:HeightfieldRegion,features:FeatureContext)->void:
+ var asset:=StringName("cliff.outcrop.%d"%form)
+ var local:AABB=_definitions[asset].bounds
+ var box:AABB=pose*local
+ if region!=null:
+  # Extend each entire solid to its real exposed foot. Upper face bands may
+  # never turn into hanging slabs when the visible cliff is taller than 16 m.
+  var floor_y:=box.position.y
+  for vertex:Vector3 in _definitions[asset].feet:
+   var point:=pose*vertex
+   floor_y=minf(floor_y,TerrainSurfaceField.surface_y(region,point.x,point.z)-.15)
+  if floor_y<box.position.y-.01:
+   var top:=box.end.y;var old_height:=box.size.y
+   pose.origin.y-=box.position.y-floor_y
+   pose.basis.y*= (top-floor_y)/old_height
+   box=pose*local
+  if region.has_grade_effect_in(_footprint(box).grow(.1)):return
+ if features!=null and features.overlaps_clearance(FeatureGroundShape.axis_rect(_footprint(box)),.3):return
+ out.append({"id":"rock/%s/%d/%s"%[anchor,form,pose.origin],"asset":asset,"transform":pose,"bounds":box,
+  "kind":"rock","top":box.end.y,"base":box.position.y,"anchor":anchor})
+
+static func _wet_rock(asset:StringName,pose:Transform3D,box:AABB,water:WaterFieldContext)->bool:
+ # Rock dressing cannot displace the authoritative water field. Test the
+ # complete projected solid, including its interior, before emitting either
+ # visual geometry or collision. Dry bank faces and submerged native walls
+ # remain; no replacement water plane is invented around a decorative rock.
+ if water!=null and water.has_sources():
+  assert(water.coverage().encloses(_footprint(box)),"Owned rock exceeds the prepared water margin")
+  for vertex:Vector3 in _definitions[asset].feet:
+   var point:=pose*vertex
+   if water.is_wet(Vector2(point.x,point.z)):return true
+  var footprint:=_footprint(box)
+  var nx:=maxi(1,ceili(footprint.size.x/1.5));var nz:=maxi(1,ceili(footprint.size.y/1.5))
+  var inverse:=pose.affine_inverse()
+  for z in nz+1:
+   for x in nx+1:
+    var p:Vector2=footprint.position+footprint.size*Vector2(float(x)/nx,float(z)/nz)
+    if not water.is_wet(p):continue
+    var start:Vector3=inverse*Vector3(p.x,box.end.y+1,p.y)
+    var direction:Vector3=inverse.basis*Vector3.DOWN
+    var faces:PackedVector3Array=_definitions[asset].faces
+    for j in range(0,faces.size(),3):
+     if Geometry3D.ray_intersects_triangle(start,direction,faces[j],faces[j+1],faces[j+2])!=null:return true
+ return false
+
+static func plants(rocks:Array,region:HeightfieldRegion,seed_value:int,features:FeatureContext=null,
+  water:WaterFieldContext=null,neighbors:Array=[])->Array[Dictionary]:
+ var out:Array[Dictionary]=[]
+ if neighbors.is_empty():neighbors=rocks
+ for rock:Dictionary in rocks:
+  var roll:=Helper.position_hash01(rock.transform.origin,seed_value+9323)
+  if roll>.68:continue
+  var anchors:Array[Vector3]=[]
+  var triangles:PackedVector3Array=_definitions[rock.asset].green
+  for i in range(0,triangles.size(),3):
+   var a:Vector3=rock.transform*triangles[i];var b:Vector3=rock.transform*triangles[i+1];var c:Vector3=rock.transform*triangles[i+2]
+   var normal:Vector3=(c-a).cross(b-a).normalized()
+   if normal.y<.70:continue
+   var point:Vector3=(a+b+c)/3
+   if region!=null and TerrainSurfaceField.surface_y(region,point.x,point.z)>point.y-.12:continue
+   if water!=null and water.has_sources() and water.is_wet(Vector2(point.x,point.z)) and water.level_at(Vector2(point.x,point.z))>point.y-.25:continue
+   var clear:=true
+   for old:Vector3 in anchors:
+    if old.distance_to(point)<1.5:clear=false;break
+   if not clear:continue
+   # A neighboring overlapping rock may cover this moss shelf. Check actual
+   # triangles, not a broad box that would erase all plants in a cluster.
+   for other:Dictionary in neighbors:
+    if other.id==rock.id or not (other.bounds as AABB).grow(.01).has_point(point):continue
+    if _covered(other,point):clear=false;break
+   if not clear:continue
+   var scale_value:=lerpf(.30,.52,roll)
+   var pose:=Transform3D(Basis(Vector3.UP,roll*TAU).scaled(Vector3.ONE*scale_value),point-Vector3.UP*.1)
+   var box:AABB=pose*(_definitions[BUSH].bounds)
+   if features!=null and features.overlaps_clearance(FeatureGroundShape.axis_rect(_footprint(box)),.3):continue
+   anchors.append(point)
+   out.append({"id":rock.id+"/plant/%d"%i,"asset":BUSH,"kind":"foliage","transform":pose,"bounds":box,"support_id":rock.id})
+   if anchors.size()>=2:break
+ return out
+
+static func _covered(rock:Dictionary,point:Vector3)->bool:
+ var local:Vector3=(rock.transform as Transform3D).affine_inverse()*point
+ var faces:PackedVector3Array=_definitions[rock.asset].faces
+ var intersections:=0
+ for i in range(0,faces.size(),3):
+  var hit=Geometry3D.ray_intersects_triangle(local+Vector3.UP*.0001,Vector3.UP,faces[i],faces[i+1],faces[i+2])
+  if hit!=null:intersections+=1
+ return intersections%2==1
+
+static func _footprint(box:AABB)->Rect2:
+ return Rect2(Vector2(box.position.x,box.position.z),Vector2(box.size.x,box.size.z))
+
+static func build(data:Dictionary,_seed:int)->Node3D:
+ assert(OS.get_thread_caller_id()==OS.get_main_thread_id())
+ var root:=Node3D.new();root.name="CliffRockFormations"
+ var batches:Dictionary={}
+ for p:Dictionary in data.get("placements",[]):
+  if not batches.has(p.asset):batches[p.asset]=[]
+  batches[p.asset].append(p.transform)
+ for asset:StringName in batches:
+  for piece:EnvironmentVisualPiece in (_visuals[asset] as EnvironmentVisual).pieces:
+   var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=piece.mesh;mm.use_colors=true;mm.instance_count=batches[asset].size()
+   for i in mm.instance_count:
+    var pose:Transform3D=batches[asset][i]
+    mm.set_instance_transform(i,pose*piece.local_transform)
+    var tint:=BiomeRegistry.blended_foliage_tint(Helper.biome_weights5(pose.origin,_seed),"bush") if asset==BUSH else BiomeRegistry.ground_tint_at(pose.origin,_seed)
+    mm.set_instance_color(i,tint)
+   var instance:=MultiMeshInstance3D.new();instance.multimesh=mm;instance.material_override=piece.material_override
+   if asset==BUSH:instance.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+   else:instance.add_to_group("tactical_solid_earth",true)
+   root.add_child(instance)
+ return root

@@ -1,0 +1,58 @@
+{
+  "P05": {
+    "crosshair_height_offset": 9.13731384277344,
+    "feet": [
+      -443.600006103516,
+      38.6373138427734,
+      -266.0
+    ],
+    "original_feet": [
+      -443.600006103516,
+      29.5,
+      -266.0
+    ],
+    "reason": "Native ray-supported stance after outcrop widening"
+  },
+  "P12": {
+    "crosshair_height_offset": 5.7570686340332,
+    "feet": [
+      -439.600006103516,
+      37.7570686340332,
+      -297.5
+    ],
+    "original_feet": [
+      -439.600006103516,
+      32.0,
+      -297.5
+    ],
+    "reason": "Native ray-supported stance after outcrop widening"
+  },
+  "P17": {
+    "crosshair_height_offset": -1.61989212036133,
+    "feet": [
+      -443.899993896484,
+      30.3801078796387,
+      -247.899993896484
+    ],
+    "original_feet": [
+      -443.899993896484,
+      32.0,
+      -247.899993896484
+    ],
+    "reason": "Native ray-supported stance after outcrop widening"
+  },
+  "P20": {
+    "crosshair_height_offset": 0.0499992370605469,
+    "feet": [
+      -482.799987792969,
+      32.0499992370605,
+      -242.399993896484
+    ],
+    "original_feet": [
+      -482.799987792969,
+      32.0,
+      -242.399993896484
+    ],
+    "reason": "Native ray-supported stance after outcrop widening"
+  }
+}
