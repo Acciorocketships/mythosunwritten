@@ -52,9 +52,9 @@ static func design(kit: BuildingKit, nx: int, nz: int, dir: int,
 	mass.seed = seed
 	# Design inside the already reserved lot. A broad rear hall and a front
 	# wing make an L or T; the next floor can move its wing, leaving a usable
-	# terrace and a bracketed corner above the lower recess.
+	# terrace and a post-supported wing above the lower recess.
 	var storey_count := 2 if rng.randf() < 0.85 or mini(nx, nz) < 3 else 3
-	var shape := posmod(seed, 5)
+	var shape := posmod(seed, 8)
 	for s in storey_count:
 		var cells := _floorplate(nx, nz, dir, shape, s)
 		mass.add_storey(s * 2, cells, BuildingMass.MATERIAL_TIMBER)
@@ -69,6 +69,7 @@ static func design(kit: BuildingKit, nx: int, nz: int, dir: int,
 	BuildingDesigner.new(kit).articulate(mass, {"terrain_storey": 0, "terraced": true,
 		"roof_axis": dir % 2 if mini(nx, nz) >= 3 else -1})
 	_support_projections(mass)
+	_dress_terraces(mass)
 	return mass
 
 
@@ -84,13 +85,23 @@ static func _floorplate(nx: int, nz: int, dir: int, shape: int, floor: int) -> D
 	var left := 0
 	if shape == 1 or shape == 4:
 		left = width - wing_width
-	elif shape == 2:
+	elif shape == 2 or shape >= 5:
 		left = (width - wing_width) / 2
-	if floor > 0 and shape >= 3:
+	if floor > 0 and (shape == 3 or shape == 4):
 		left = width - wing_width if shape == 3 else 0
-	if shape == 0 and floor == 0:
+	if (shape == 0 or shape == 5) and floor == 0:
 		return cells
-	var cut_depth := 1 if shape >= 3 else maxi(1, depth - 2)
+	if shape == 6 and floor > 0:
+		return cells
+	var cut_depth := maxi(2, depth - 2)
+	# Long verandas and deep projecting wings, including the small 4x3 lots.
+	# Retain a connected rear hall; a third floor steps back independently.
+	if shape == 1 or shape == 2 or shape == 5 or floor == 2:
+		cut_depth = depth - 1
+	if floor == 0 and (shape == 1 or shape == 2):
+		cut_depth = maxi(1, cut_depth - 1)
+	if shape == 7 and floor > 0:
+		cut_depth = 1
 	for cell: Vector2i in cells.keys():
 		var u := cell.y if dir % 2 == 0 else cell.x
 		var v := cell.x if dir % 2 == 0 else cell.y
@@ -113,6 +124,49 @@ static func _support_projections(mass: BuildingMass) -> void:
 					"centre": Vector2(cell) + Vector2(0.5, 0.5)
 						+ Vector2(BuildingMass.DIRS[dir]) * 0.5,
 					"y_band": int(upper.floor_band)})
+
+		# Each convex corner of an unsupported room has a continuous bearing
+		# down to the nearest lower floor, or the reserved flat lot ground.
+		var vertices := {}
+		for cell: Vector2i in upper.cells:
+			for corner: Vector2i in [Vector2i.ZERO, Vector2i.RIGHT, Vector2i.ONE, Vector2i.DOWN]:
+				var vertex := cell + corner
+				vertices[vertex] = int(vertices.get(vertex, 0)) + 1
+		for vertex: Vector2i in vertices:
+			if int(vertices[vertex]) != 1: continue
+			var neighbours := [vertex, vertex - Vector2i.RIGHT,
+				vertex - Vector2i.DOWN, vertex - Vector2i.ONE]
+			var supported := false
+			for cell: Vector2i in neighbours:
+				if lower.has(cell): supported = true
+			if supported: continue
+			var from_band := 0
+			for j in range(i - 2, -1, -1):
+				var bearing: Dictionary = mass.storeys[j]
+				for cell: Vector2i in neighbours:
+					if bearing.cells.has(cell):
+						from_band = maxi(from_band, int(bearing.floor_band) + 2)
+			mass.decor.append({"kind": &"post", "dir": 0,
+				"centre": Vector2(vertex), "from_band": from_band,
+				"to_band": int(upper.floor_band)})
+
+
+static func _dress_terraces(mass: BuildingMass) -> void:
+	# Pots sit at the outside rail, leaving the centre and house doors clear.
+	for deck: Dictionary in mass.decks:
+		var count := 0
+		for cell: Vector2i in deck.cells:
+			for dir in 4:
+				var next := cell + BuildingMass.DIRS[dir]
+				if deck.cells.has(next) or deck.open_edges.has(BuildingMass.edge_key(cell, dir)):
+					continue
+				if posmod(cell.x * 7 + cell.y * 11 + mass.seed, 3) != 0: continue
+				mass.decor.append({"kind": &"planter", "dir": dir,
+					"centre": Vector2(cell) + Vector2(0.5, 0.5) + Vector2(BuildingMass.DIRS[dir]) * 0.32,
+					"y_band": int(deck.band)})
+				count += 1
+				break
+			if count >= 2: break
 
 
 static func _nearest_dir(v: Vector2) -> int:

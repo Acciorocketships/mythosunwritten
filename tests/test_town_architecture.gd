@@ -80,18 +80,31 @@ func test_balconies_and_roof_crowns_have_native_collision() -> void:
 	assert_gt(balconies, 0)
 
 
-func test_projecting_rooms_have_nearby_bearing_and_soffits() -> void:
+func test_large_projections_have_corner_posts_and_long_balconies() -> void:
 	var kit := SuntailBuildingKit.create()
-	for seed_value in range(1000, 1020):
-		var mass := KitStandaloneHouse.design(kit, 5, 4, 1, seed_value)
-		for i in range(1, mass.storeys.size()):
-			var lower: Dictionary = mass.storeys[i - 1].cells
-			for cell: Vector2i in mass.storeys[i].cells:
-				if lower.has(cell): continue
-				var supported := false
-				for dir: Vector2i in BuildingMass.DIRS:
-					supported = supported or lower.has(cell + dir)
-				assert_true(supported, "projection must stay within one module of bearing")
+	var long_decks := 0
+	var long_projections := 0
+	for dir in 4:
+		for seed_value in range(1000, 1020):
+			var mass := KitStandaloneHouse.design(kit, 5, 4, dir, seed_value)
+			for deck: Dictionary in mass.decks:
+				if deck.cells.size() >= 2: long_decks += 1
+			for i in range(1, mass.storeys.size()):
+				var upper: Dictionary = mass.storeys[i]
+				var lower: Dictionary = mass.storeys[i - 1].cells
+				var projected := 0
+				for cell: Vector2i in upper.cells:
+					if not lower.has(cell): projected += 1
+				if projected < 2: continue
+				long_projections += 1
+				var posts := 0
+				for item: Dictionary in mass.decor:
+					if item.kind == &"post" and item.to_band == upper.floor_band:
+						posts += 1
+						assert_lt(int(item.from_band), int(item.to_band))
+				assert_gt(posts, 0, "large projecting rooms need visible corner bearing")
+	assert_gt(long_decks, 40, "balconies should commonly span several cells")
+	assert_gt(long_projections, 20, "projecting wings should span several cells")
 
 
 func test_cross_gable_ridges_fit_below_their_host_roof() -> void:
@@ -136,3 +149,17 @@ func test_narrow_lots_keep_a_low_roof_along_the_long_axis() -> void:
 				var rect: Rect2i = roof.rect
 				var depth := rect.size.y if roof.axis == 0 else rect.size.x
 				assert_lte(depth, 2, "narrow lots must not acquire oversized roof walls")
+
+
+func test_each_balcony_component_has_its_own_house_door() -> void:
+	for dir in 4:
+		for seed_value in range(1000, 1020):
+			var mass := KitStandaloneHouse.design(SuntailBuildingKit.create(), 5, 4, dir, seed_value)
+			for deck: Dictionary in mass.decks:
+				var doors := 0
+				for storey: Dictionary in mass.storeys:
+					if storey.floor_band != deck.band: continue
+					for edge: Vector3i in storey.openings:
+						if storey.openings[edge] != BuildingMass.OPENING_DOOR: continue
+						if deck.cells.has(Vector2i(edge.x, edge.y) + BuildingMass.DIRS[edge.z]): doors += 1
+				assert_gt(doors, 0, "every separate terrace needs access")

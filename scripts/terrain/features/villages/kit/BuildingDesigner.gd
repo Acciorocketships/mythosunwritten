@@ -219,7 +219,8 @@ func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
 			continue
 		var wings: Array = []
 		for rect: Rect2i in decompose(exposed, ridge_axis):
-			if ridge_axis >= 0:
+			var preferred_depth := rect.size.y if ridge_axis == 0 else rect.size.x
+			if ridge_axis >= 0 and preferred_depth <= MAX_ROOF_DEPTH:
 				wings.append({"rect": rect, "axis": ridge_axis})
 			else:
 				wings.append_array(split_deep(rect, rng))
@@ -265,19 +266,32 @@ func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
 ## Shared edges belong to the house wall; only the exposed sides get rails.
 func _add_terrace(mass: BuildingMass, cells: Dictionary, covering: Dictionary,
 		band: int) -> void:
-	var open_edges := {}
+	# A T-shaped crown can leave two separate terraces. Each must get its
+	# own doorway rather than inheriting the first component's access.
+	var remaining := cells.duplicate()
 	var upper := _storey_at(mass, band)
-	var door_added := false
-	for cell: Vector2i in cells:
-		for dir in 4:
-			var next := cell + BuildingMass.DIRS[dir]
-			if not covering.has(next): continue
-			open_edges[BuildingMass.edge_key(cell, dir)] = true
-			if not door_added and not upper.is_empty():
-				upper.openings[BuildingMass.edge_key(next, (dir + 2) % 4)] = BuildingMass.OPENING_DOOR
-				door_added = true
-	mass.decks.append({"cells": cells, "band": band, "rails": true,
-		"open_edges": open_edges})
+	while not remaining.is_empty():
+		var component := {}
+		var pending: Array = [remaining.keys()[0]]
+		while not pending.is_empty():
+			var cell: Vector2i = pending.pop_back()
+			if not remaining.has(cell): continue
+			remaining.erase(cell)
+			component[cell] = true
+			for step: Vector2i in BuildingMass.DIRS:
+				if remaining.has(cell + step): pending.append(cell + step)
+		var open_edges := {}
+		var door_added := false
+		for cell: Vector2i in component:
+			for dir in 4:
+				var next := cell + BuildingMass.DIRS[dir]
+				if not covering.has(next): continue
+				open_edges[BuildingMass.edge_key(cell, dir)] = true
+				if not door_added and not upper.is_empty():
+					upper.openings[BuildingMass.edge_key(next, (dir + 2) % 4)] = BuildingMass.OPENING_DOOR
+					door_added = true
+		mass.decks.append({"cells": component, "band": band, "rails": true,
+			"open_edges": open_edges})
 
 
 func _roof_fits(mass: BuildingMass, rect: Rect2i, axis: int, eave_band: int) -> bool:
@@ -435,8 +449,8 @@ func _assign_dressing(mass: BuildingMass, rng: RandomNumberGenerator,
 	# corners and blank walls), others are plain: a per-house lushness.
 	var lush := rng.randf()
 	lush *= lush
-	var box_chance := 0.25 + 0.5 * lush
-	var ivy_chance := 0.18 + 0.45 * lush
+	var box_chance := (0.5 if context.get("terraced", false) else 0.25) + 0.5 * lush
+	var ivy_chance := (0.35 if context.get("terraced", false) else 0.18) + 0.45 * lush
 	for index in mass.storeys.size():
 		var storey: Dictionary = mass.storeys[index]
 		var y := float(int(storey.floor_band)) * band_h
