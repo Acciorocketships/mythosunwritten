@@ -139,7 +139,8 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 			var physical_edge_scale := _cliff_scale(region, anchor, footprint_radius,
 				cliff_edge_cache)
 			if not support.is_empty():
-				if support.y <= _surface_y(region,surface_cache,anchor.x,anchor.y)+.05:
+				if not support.get("over_ground",false) \
+						and support.y <= _surface_y(region,surface_cache,anchor.x,anchor.y)+.05:
 					support = {} # The higher ground hides this part of the native cap.
 				else:
 					physical_edge_scale = clampf((support.edge_distance-CLIFF_FOOTPRINT_MARGIN)/footprint_radius,0.0,1.0)

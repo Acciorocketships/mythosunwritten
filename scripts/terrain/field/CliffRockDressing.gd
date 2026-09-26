@@ -112,9 +112,12 @@ static func compute(region:HeightfieldRegion,lo_x:int,lo_z:int,cells:int,seed_va
  # collision, reservation or planting reads their faces.
  var slope:SLOPE_FIELD=null
  if STYLE.slopes and STYLE.subtle:
-  slope=SLOPE_FIELD.new(neighbors,seed_value,region,Rect2(Vector2(lo_x,lo_z)*24.0-Vector2(12,12),Vector2.ONE*cells*24.0))
-  for p:Dictionary in neighbors:
-   if p.get("native_crag",false):slope.apply(p)
+  slope=SLOPE_FIELD.new(neighbors,seed_value,region,Rect2(Vector2(lo_x,lo_z)*24.0-Vector2(12,12),Vector2.ONE*cells*24.0),features,water)
+  # Under `sheet` the formations are discarded below, so reshaping them
+  # around the slope would be wasted work.
+  if not STYLE.sheet_only:
+   for p:Dictionary in neighbors:
+    if p.get("native_crag",false):slope.apply(p)
  var placements:Array[Dictionary]=[]
  for p:Dictionary in neighbors:
   var owner:=Vector2i(floori((p.anchor.x+12)/24),floori((p.anchor.z+12)/24))
@@ -132,6 +135,8 @@ static func compute(region:HeightfieldRegion,lo_x:int,lo_z:int,cells:int,seed_va
   for vertex:Vector3 in _faces(p):collision.append(p.transform*vertex)
   if p.get("native_crag",false):p["render_arrays"]=CRAGS.mesh_arrays(p,region,seed_value)
  for p:Dictionary in neighbors:reservations.append(_footprint(p.bounds))
+ if STYLE.sheet_only and slope!=null:
+  reservations.append_array(slope.reservations(Rect2(Vector2(lo_x,lo_z)*24.0-Vector2(12,12),Vector2.ONE*cells*24.0).grow(4.0)))
  var terrace_pieces:Dictionary={}
  for terrace:Dictionary in terraces:
   reservations.append(KIT.footprint(terrace))
@@ -163,6 +168,8 @@ static func compute(region:HeightfieldRegion,lo_x:int,lo_z:int,cells:int,seed_va
   if not _footprint(rock.bounds).intersects(grass_core):continue
   if _wet_formation(rock,water):continue
   supports.append_array(ledge_grass_supports(rock,neighbors))
+ # The whole-wall slope grows the lawn's grass on its gentle ground.
+ if STYLE.sheet_only and slope!=null:supports.append(slope.grass_support(grass_core.grow(12.0)))
  placements.append_array(foliage)
  var slope_rocks:Dictionary={}
  if slope!=null:
@@ -170,7 +177,11 @@ static func compute(region:HeightfieldRegion,lo_x:int,lo_z:int,cells:int,seed_va
   for rock:Dictionary in slope.rocks(owned):
    if not slope_rocks.has(rock.piece):slope_rocks[rock.piece]=[]
    slope_rocks[rock.piece].append(rock)
- return {"placements":placements,"collision_faces":collision,"ground_reservations":reservations,"grass_supports":supports,"terraces":terrace_pieces,"slope_rocks":slope_rocks}
+ var result:={"placements":placements,"collision_faces":collision,"ground_reservations":reservations,"grass_supports":supports,"terraces":terrace_pieces,"slope_rocks":slope_rocks}
+ # The native wall and lip pieces the whole-wall slope covers are hidden
+ # (they poked through it); the mesher reads the slope surface for that.
+ if STYLE.sheet_only and slope!=null:result["sheet_cover"]=slope.envelope()
+ return result
 
 static func ledge_grass_supports(rock:Dictionary,neighbors:Array)->Array[Dictionary]:
  # Each actual turf elevation owns its native triangles. A horizontal section
@@ -497,4 +508,5 @@ static func build(data:Dictionary,_seed:int)->Node3D:
  if not (data.get("terraces",{}) as Dictionary).is_empty():root.add_child(KIT.build(data.terraces,_seed))
  if not (data.get("slope_rocks",{}) as Dictionary).is_empty():root.add_child(SLOPE_ROCKS.build(data.slope_rocks,_seed))
  return root
+
 

@@ -26,6 +26,7 @@ const RELOAD := [
 	"res://scripts/terrain/field/CliffVegetation.gd",
 	"res://scripts/terrain/field/CliffKitDressing.gd",
 	"res://scripts/terrain/field/CliffSlopeRocks.gd",
+	"res://scripts/terrain/field/CliffSlopeEnvelope.gd",
 	"res://scripts/terrain/field/CliffSlopeField.gd",
 ]
 const CRAG_SHADER := "res://terrain/materials/cliff_crag.gdshader"
@@ -40,6 +41,9 @@ var _views: Array[Dictionary] = []
 ## Art-direction variants rendered per iteration (CliffRockStyle.apply names).
 var _styles: PackedStringArray = []
 var _plain := false
+## Full mode: each iteration discards the framed terrain chunks (and their
+## grass) so the streamer rebuilds them whole with the current scripts.
+var _full := false
 var _streamer: FieldTerrainStreamer
 var _character: CharacterBody3D
 var _camera := Camera3D.new()
@@ -77,6 +81,14 @@ func _read_args() -> void:
 			"--output": _output_dir = next
 			"--styles": _styles = next.split(",", false)
 			"--plain": _plain = true
+			"--full": _full = true
+			"--shot":
+				# id:player:crosshair from the owner's F3 overlay; the tactical
+				# camera (26 m back, 16 m up, looking 1 m above the player).
+				var shot := next.split(":", false)
+				var player := _v3(shot[1])
+				_views.append({"id": shot[0], "position": ReviewCam.solve_cam(player, _v3(shot[2]), 26.0, 16.0, 1.0),
+					"target": player + Vector3.UP, "fov": 50.0, "player": player})
 			"--view":
 				var parts := next.split(":", false)
 				_views.append({"id": parts[0], "position": _v3(parts[1]), "target": _v3(parts[2]),
@@ -111,6 +123,14 @@ func _run() -> void:
 
 
 func _capture_iteration(iteration: int) -> void:
+	if _full:
+		for style: String in (_styles if not _styles.is_empty() else PackedStringArray([""])):
+			if not style.is_empty():
+				STYLE.apply(style)
+			if iteration > 0 or not style.is_empty():
+				await _rebuild_full()
+			await _capture_all(iteration, style)
+		return
 	if _styles.is_empty():
 		if iteration > 0:
 			_rebuild_rocks()
@@ -123,6 +143,58 @@ func _capture_iteration(iteration: int) -> void:
 		print("[cliff_site_review] style=%s rebuilt ms=%d" % [style, Time.get_ticks_msec() - started])
 		await _capture_all(iteration, style)
 	STYLE.apply("current")
+
+
+func _framed_chunks() -> Array:
+	var framed := {}
+	for view: Dictionary in _views:
+		var target: Vector3 = view.target
+		for dx in [-24.0, 0.0, 24.0]:
+			for dz in [-24.0, 0.0, 24.0]:
+				framed[FieldTerrainStreamer.chunk_of(target + Vector3(dx, 0, dz))] = true
+	return framed.keys()
+
+
+## Grass grows around the player: stand the (hidden) player at a shot and wait
+## for its tiles. Radius 0 keeps the move from requesting unloaded chunks.
+func _grass_at(player: Vector3) -> void:
+	_streamer.CHUNK_RADIUS = 0
+	_character.global_position = player + Vector3.UP * .5
+	var started := Time.get_ticks_msec()
+	var idle_since := -1
+	while Time.get_ticks_msec() - started < 90000:
+		var grass: GrassStreamer = _streamer._grass_streamer
+		if grass.pending_count() == 0 and grass._requested.is_empty():
+			if idle_since < 0:
+				idle_since = Time.get_ticks_msec()
+			elif Time.get_ticks_msec() - idle_since > 1500:
+				return
+		else:
+			idle_since = -1
+		await get_tree().create_timer(0.25).timeout
+
+
+func _rebuild_full() -> void:
+	_character.global_position = _at + Vector3.UP * 4.0
+	_streamer.CHUNK_RADIUS = _radius
+	var chunks := _framed_chunks()
+	var started := Time.get_ticks_msec()
+	_streamer.rebuild_terrain(chunks)
+	var idle_since := -1
+	while float(Time.get_ticks_msec() - started) / 1000.0 < WAIT_HARD_TIMEOUT_SECONDS:
+		var missing := chunks.filter(func(c: Vector2i) -> bool: return not _streamer._built.has(c))
+		var progress := _streamer.worker_progress_snapshot()
+		var active := bool(progress.get("active", false)) and StringName(progress.get("phase", &"idle")) != &"idle"
+		var grass_busy := _grass and int(_streamer._grass_streamer.pending_count()) > 0
+		if missing.is_empty() and not active and not grass_busy:
+			if idle_since < 0:
+				idle_since = Time.get_ticks_msec()
+			elif float(Time.get_ticks_msec() - idle_since) / 1000.0 >= 4.0:
+				break
+		else:
+			idle_since = -1
+		await get_tree().create_timer(0.25).timeout
+	print("[cliff_site_review] full rebuild chunks=%d ms=%d" % [chunks.size(), Time.get_ticks_msec() - started])
 
 
 func _collect_inputs() -> void:
@@ -215,6 +287,8 @@ func _capture_all(iteration: int, style := "") -> void:
 			_views.append({"id": parts[0], "position": _v3(parts[1]), "target": _v3(parts[2]),
 				"fov": float(parts[3]) if parts.size() > 3 else 62.0})
 	for view: Dictionary in _views:
+		if _grass and view.has("player"):
+			await _grass_at(view.player)
 		_camera.fov = float(view.fov)
 		var up := Vector3.FORWARD if String(view.id).begins_with("plan") else Vector3.UP
 		_camera.look_at_from_position(view.position, view.target, up)
@@ -233,6 +307,9 @@ func _capture_all(iteration: int, style := "") -> void:
 			await get_tree().process_frame
 			get_viewport().get_texture().get_image().save_png("%s/%s_%s.png" % [dir, String(view.id), mode])
 		_paint("")
+	if _grass:
+		_character.global_position = _at + Vector3.UP * 4.0
+		_streamer.CHUNK_RADIUS = _radius
 	print("[cliff_site_review] captured iteration=%d dir=%s" % [iteration, dir])
 
 

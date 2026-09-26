@@ -14,6 +14,9 @@ extends RefCounted
 ## rock, sit on it; the sheet swells in a smooth union to meet each rock.
 const CRAGS=preload("res://scripts/terrain/field/CliffRockCrags.gd")
 const ROCKS=preload("res://scripts/terrain/field/CliffSlopeRocks.gd")
+const ROCK_CAPS=preload("res://scripts/terrain/field/CliffSlopeRockCaps.gd")
+const ROCK_FRONTS=preload("res://scripts/terrain/field/CliffSlopeRockFronts.gd")
+const ENVELOPE=preload("res://scripts/terrain/field/CliffSlopeEnvelope.gd")
 ## Where the slope leaves the wall, outward from the native foot line.
 const ANCHOR:=.7
 ## Quarter superellipse: vertical at the top, tangent to the ground just below
@@ -47,8 +50,11 @@ var rock_list:Array[Dictionary]=[]
 ## `focus`: only rocks that can reach this rectangle are placed (a chunk
 ## computes its halo's lines too; placing their rocks there is wasted work).
 var _focus:=Rect2(-1e9,-1e9,2e9,2e9)
-func _init(formations:Array,seed_value:int,region:HeightfieldRegion=null,focus:=Rect2(-1e9,-1e9,2e9,2e9))->void:
- _seed=seed_value;_region=region;_focus=focus.grow(16.0)
+var _features:FeatureContext
+var _water:WaterFieldContext
+func _init(formations:Array,seed_value:int,region:HeightfieldRegion=null,focus:=Rect2(-1e9,-1e9,2e9,2e9),
+  features:FeatureContext=null,water:WaterFieldContext=null)->void:
+ _seed=seed_value;_region=region;_focus=focus.grow(16.0);_features=features;_water=water
  for form:Dictionary in formations:
   var recipe:Dictionary=form.get("replay_recipe",{})
   var pose:Transform3D=form.transform
@@ -514,59 +520,74 @@ func _stitch(columns:Array,owners:Array[bool],key:Variant)->Array[Dictionary]:
   "bounds":bounds,"anchor":bounds.get_center(),"top":bounds.end.y,"base":bounds.position.y,
   "id":"slope/%s/%s"%[key,faces[0]],"asset":&"cliff.native_crag","kind":"rock","native_crag":true,"slope_sheet":true}]
 
-## Rocks (eighth pass): a very rocky face. Two layers, one placement rule
-## (`_add_rock`): every rock sits on the combined surface, its middle sunk
-## into the slope, and the solid unions a smaller ellipsoid so the slope
-## swells into it.
-## - Outcrops: on 14 m slots along each merged foot line (~70%), 8-12 rocks
-##   packed around a 6-9 m core, from the foot up the slope.
-## - Face rocks: on 4 m slots (~85%), one or two 3.5-7 m rocks standing out
-##   of the steep face between 30% and 85% of the wall height.
-## Tall stratified masses where the slope is steep; flat layered rocks where
-## it is gentle.
-const GROUND_ROCKS:=["angry_01","angry_02","angry_03","angry_04","angry_05","polyart_flat"]
-const CLIFF_ROCKS:=["cliff_large_01","cliff_large_02","cliff_large_03","angry_01","angry_03"]
-const BUNCH_SPACING:=14.0
-const FACE_SPACING:=4.0
+## Broad, shallow boulder flanks follow the mid-slope tangent; lower
+## layered rocks collect near the foot. Both
+## retain deterministic cluster ownership and share the envelope surface.
+const GROUND_ROCKS:=["angry_01","angry_02","angry_03","angry_04","angry_05"]
+const CLIFF_ROCKS:=["face_meadow_01","face_meadow_02","face_meadow_03","face_meadow_04","face_meadow_05"]
+## Rocks come in small clusters of two or three, on slots spaced along every
+## cliff line (to its very ends) and one at every outer corner (owner,
+## September 25: giant outcrops left long bare stretches and bare corners).
+const CLUSTER_SPACING:=7.0
+const CLUSTER_CHANCE:=.75
 func _find_rocks()->void:
  for gi in _groups.size():
   var g:Dictionary=_groups[gi]
-  if g.has("arc") or float(g.u1)-float(g.u0)<4.0:continue
-  var line:=roundi(float(g.offset)*2.0)
-  # Outcrops.
-  for slot in range(floori(float(g.u0)/BUNCH_SPACING),floori(float(g.u1)/BUNCH_SPACING)+1):
-   var key:=Vector3(slot,line,roundi(float(g.base)))
-   if Helper.position_hash01(key,_seed+9201)>.7:continue
-   var u:=(slot+.5)*BUNCH_SPACING+(Helper.position_hash01(key,_seed+9203)-.5)*5.0
-   if u<float(g.u0)+2.5 or u>float(g.u1)-2.5:continue
-   if not _focus.has_point(t_of(g)*u+(g.n as Vector2)*float(g.offset)):continue
-   var core:=_sample(gi,snappedf(u,.0001))
+  # [position key (along the line, or angle round the corner), slot id]
+  var slots:Array=[]
+  if g.has("arc"):
+   var c:Vector2=g.arc.c
+   slots.append([PI*.25,Vector3(roundi(c.x*2.0),roundi(c.y*2.0),roundi(float(g.base))*2+1)])
+  else:
+   var line:=roundi(float(g.offset)*2.0)
+   for slot in range(floori(float(g.u0)/CLUSTER_SPACING),floori(float(g.u1)/CLUSTER_SPACING)+1):
+    var key:=Vector3(slot,line,roundi(float(g.base))*2)
+    var u:=(slot+.5+(Helper.position_hash01(key,_seed+9203)-.5)*.6)*CLUSTER_SPACING
+    if u<float(g.u0)-.5 or u>float(g.u1)+.5:continue
+    slots.append([clampf(u,float(g.u0),float(g.u1)),key])
+  for slot:Array in slots:
+   var key:Vector3=slot[1]
+   if Helper.position_hash01(key,_seed+9201)>CLUSTER_CHANCE:continue
+   var core:=_sample(gi,snappedf(float(slot[0]),.0001))
    if core.is_empty() or float(core.height)<2.5:continue
-   var main:=lerpf(6.0,9.0,Helper.position_hash01(key,_seed+9213))*clampf(float(core.height)/7.0,.6,1.2)
-   var count:=8+floori(Helper.position_hash01(key,_seed+9219)*4.99)
+   var bunch:Vector2=core.foot
+   if not _focus.has_point(bunch):continue
+   var main:=lerpf(2.5,4.5,Helper.position_hash01(key,_seed+9213))*clampf(float(core.height)/6.0,.7,1.3)
+   var count:=2+int(Helper.position_hash01(key,_seed+9219)>.5)
+   # Bedrock: the rock is the slope itself; loose rocks only at the foot.
+   var bedrock:=STYLE.sheet_study=="bedrock"
+   var basal:=bedrock or Helper.position_hash01(key,_seed+9241)<.28
+   var rise:=lerpf(.08,.16,Helper.position_hash01(key,_seed+9209)) if basal else lerpf(.44,.64,Helper.position_hash01(key,_seed+9209))
+   if bedrock:rise=lerpf(.02,.06,Helper.position_hash01(key,_seed+9209))
+   if basal:main=minf(6.4,main*1.25)
+   if not basal:main=lerpf(6.0,8.5,Helper.position_hash01(key,_seed+9213))
+   if not basal and g.has("arc"):main=4.5
+   # Study variants expose rock in the surface itself: only foot boulders.
+   var pool:Array=GROUND_ROCKS if basal else CLIFF_ROCKS
+   var first:=floori(Helper.position_hash01(key,_seed+9211)*pool.size())
+   var stride:=1 if Helper.position_hash01(key,_seed+9251)<.5 else pool.size()-1
+   var start:=rock_list.size()
+   var used:Array[String]=[]
    for k in count:
     var rk:=key+Vector3(0,k,0)
-    var size:=main if k==0 else main*lerpf(.35,.8,Helper.position_hash01(rk,_seed+9231))
-    var along:=u+(0.0 if k==0 else (Helper.position_hash01(rk,_seed+9233)-.5)*1.3*main)
-    var out:=lerpf(.3,.6,Helper.position_hash01(rk,_seed+9207)) if k==0 else lerpf(.08,.8,Helper.position_hash01(rk,_seed+9207))
-    _add_rock(gi,along,out,-1.0,size,rk,t_of(g)*u+(g.n as Vector2)*float(g.offset),"outcrop")
-  # Face rocks.
-  for slot in range(floori(float(g.u0)/FACE_SPACING),floori(float(g.u1)/FACE_SPACING)+1):
-   var key:=Vector3(slot,line,roundi(float(g.base))*2+1)
-   # Short walls carry fewer: a row of rocks under a 4 m lip reads as a line.
-   var line_height:float=_sample(gi,snappedf(clampf((slot+.5)*FACE_SPACING,float(g.u0),float(g.u1)),.0001)).get("height",0.0)
-   if Helper.position_hash01(key,_seed+9301)>.85*clampf((line_height-2.0)/6.0,.25,1.0):continue
-   var count:=1+int(Helper.position_hash01(key,_seed+9303)>.55)
-   for k in count:
-    var rk:=key+Vector3(0,k,0)
-    var along:=(slot+.5)*FACE_SPACING+(Helper.position_hash01(rk,_seed+9305)-.5)*3.0
-    if along<float(g.u0)+1.5 or along>float(g.u1)-1.5:continue
-    if not _focus.has_point(t_of(g)*along+(g.n as Vector2)*float(g.offset)):continue
-    var sample:=_sample(gi,snappedf(along,.0001))
-    if sample.is_empty() or float(sample.height)<3.0:continue
-    var size:=lerpf(3.5,7.0,Helper.position_hash01(rk,_seed+9307))*clampf(float(sample.height)/8.0,.6,1.3)
-    var rise:=lerpf(.15,.8,Helper.position_hash01(rk,_seed+9309))
-    _add_rock(gi,along,-1.0,rise,size,rk,t_of(g)*along+(g.n as Vector2)*float(g.offset),"face")
+    var size:=main if k==0 else maxf(MIN_ROCK,main*lerpf(.55,.85,Helper.position_hash01(rk,_seed+9231)))
+    if g.has("arc") and not basal:size=maxf(size,4.5)
+    var spread:=(Helper.position_hash01(rk,_seed+9233)-.5)*(0.0 if k==0 else 1.25*main)
+    # Round a corner, the spread is an angle (its arc is short).
+    var at:=float(slot[0])+(spread/maxf(2.0,float(core.height)) if g.has("arc") else spread)
+    if g.has("arc") and k>0:at=clampf(at+(.32 if k==1 else -.32),.12,PI*.5-.12)
+    var r:=clampf(rise+(Helper.position_hash01(rk,_seed+9207)-.5)*.12,.06,.72)
+    for attempt in pool.size()*(3 if g.has("arc") and not basal else 1):
+     var chosen:String=pool[(first+(k+attempt)*stride)%pool.size()]
+     if chosen in used:continue
+     var before:=rock_list.size()
+     var fit_rise:=clampf(r+floori(float(attempt)/pool.size())*.1,.3,.72) if not basal else r
+     _add_rock(gi,at,-1.0,fit_rise,size,rk,bunch,"basal" if basal else "face",chosen)
+     if rock_list.size()>before:
+      used.append(chosen)
+      break
+   # Never leave a singleton if a companion could not be embedded.
+   if rock_list.size()-start==1:rock_list.resize(start)
  for rock:Dictionary in rock_list:
   var foot:Vector2=rock.foot;var reach:=2.0*float(rock.ru)
   for bx in range(floori((foot.x-reach)/CELL),floori((foot.x+reach)/CELL)+1):
@@ -580,80 +601,150 @@ static func t_of(g:Dictionary)->Vector2:return g.t
 ## One rock on line group gi at `along`: either at a fraction `out` of the
 ## slope's run, or (out < 0) where the surface reaches the fraction `rise` of
 ## the wall height. Sits on the combined surface, sunk into it.
-func _add_rock(gi:int,along:float,out:float,rise:float,size:float,rk:Vector3,bunch:Vector2,kind:String)->void:
- var g:Dictionary=_groups[gi];var t:Vector2=g.t;var n:Vector2=g.n
- along=clampf(along,float(g.u0),float(g.u1))
+## Rocks smaller than this are not placed; each rock's swell (the mound the
+## slope raises to meet it) is this fraction of its size.
+const MIN_ROCK:=1.5
+const SWELL:=.6
+## A placed rock's base lies this far under the surface everywhere; at least
+## this fraction of its height must still show.
+const EMBED:=.25
+const MIN_EXPOSED:=.15
+func _add_rock(gi:int,along:float,out:float,rise:float,size:float,rk:Vector3,bunch:Vector2,kind:String,piece_name:String="")->void:
+ var g:Dictionary=_groups[gi];var t:Vector2;var n:Vector2;var foot:Vector2
+ if g.has("arc"):
+  # `along` is the angle round the corner.
+  var arc:Dictionary=g.arc
+  along=clampf(along,0.0,PI*.5)
+  n=((arc.n1 as Vector2)*cos(along)+(arc.n2 as Vector2)*sin(along)).normalized()
+  t=Vector2(n.y,-n.x);foot=(arc.c as Vector2)+n*float(arc.r)
+ else:
+  t=g.t;n=g.n
+  along=clampf(along,float(g.u0),float(g.u1))
+  foot=t*along+n*float(g.offset)
  var sample:=_sample(gi,snappedf(along,.0001))
  if sample.is_empty():return
- var foot:=t*along+n*float(g.offset)
- var reach:float=sample.reach;var crest:float=sample.crest
+ var crest:float=sample.crest;var run:=_extent(float(sample.height))
+ var env:=envelope()
  var surface:float;var height:float;var q:Vector2
  if out>=0.0:
-  surface=anchor()+reach*out
+  surface=1.0+run*out
  else:
-  # Walk out until the combined surface falls to the target height.
+  # Walk out until the surface falls to the target height.
   var target:=crest-float(sample.height)*(1.0-rise)
   # Bisection: the surface falls monotonically out from the lip.
-  var lo:=anchor();var hi:=anchor()+reach
-  for i in 7:
+  var lo:=.5;var hi:=1.5+run
+  for i in 8:
    var mid:=(lo+hi)*.5
-   if surface_height(_contributions(foot+n*mid),foot+n*mid)>target:lo=mid
+   if env.sample(foot+n*mid)>target:lo=mid
    else:hi=mid
   surface=(lo+hi)*.5
- q=foot+n*surface;height=surface_height(_contributions(q),q)
+ q=foot+n*surface;height=env.sample(q)
  var ground_y:=ground(q)
  # In a gully the slope meets the ground sooner: move up onto it.
- while height<ground_y+.4 and surface>anchor()+.6:
-  surface-=.5;q=foot+n*surface;height=surface_height(_contributions(q),q);ground_y=ground(q)
+ while height<ground_y+.4 and surface>1.1:
+  surface-=.5;q=foot+n*surface;height=env.sample(q);ground_y=ground(q)
  if height<ground_y+.2 or height>crest-1.0:return
- var d0:=surface_height(_contributions(foot+n*(surface-.3)),foot+n*(surface-.3))
- var d1:=surface_height(_contributions(foot+n*(surface+.3)),foot+n*(surface+.3))
- var slope:=.6/maxf(.01,d0-d1)
- var normal:=Vector3(n.x,slope,n.y).normalized()
- var steep:=slope<1.0
+ var grad:=Vector2(env.sample(q+Vector2(.3,0))-env.sample(q-Vector2(.3,0)),env.sample(q+Vector2(0,.3))-env.sample(q-Vector2(0,.3)))/.6
+ var normal:=Vector3(-grad.x,1,-grad.y).normalized()
+ var steep:=kind!="basal"
  var pool:Array=CLIFF_ROCKS if steep else GROUND_ROCKS
- var name:String=pool[floori(Helper.position_hash01(rk,_seed+9211)*pool.size())]
+ var name:String=piece_name if not piece_name.is_empty() else pool[floori(Helper.position_hash01(rk,_seed+9211)*pool.size())]
  var bounds:Vector3=ROCKS.PIECES[name][1]
  var scale:=size/maxf(bounds.x,maxf(bounds.y,bounds.z))
  # Never above the crest: shrink a rock that would stand over the lip.
  var top:=height+.5*scale*bounds.y
- if top>crest-.4:scale*=maxf(.4,(crest-.4-height)/(.5*scale*bounds.y))
- var radius:=.25*scale*(bounds.x+bounds.z)
- var cd:=surface-radius*(.5 if steep else .3)
+ if not steep and top>crest-.4:scale*=maxf(.4,(crest-.4-height)/(.5*scale*bounds.y))
+ # A rock under about a metre and a half shows only as a chip through its
+ # own swell.
+ if scale*maxf(bounds.x,maxf(bounds.y,bounds.z))<MIN_ROCK:return
  var yaw:=Helper.position_hash01(rk,_seed+9217)*TAU
- var axis:=Vector3.UP.cross(normal).normalized()
- var lean:=Basis(axis,Vector3.UP.angle_to(normal)*.5) if axis.length()>.5 and not steep else Basis()
- var point:=foot+n*surface;var middle:=foot+n*cd
- rock_list.append({"piece":name,"transform":Transform3D(lean*Basis(Vector3.UP,yaw).scaled(Vector3.ONE*scale),Vector3(middle.x,height,middle.y)),
-  "point":Vector3(point.x,height,point.y),"normal":normal,"ground":ground_y,"bunch":bunch,"kind":kind,
-  "foot":foot,"t":t,"n":n,"base":float(g.base),"y":height-float(g.base),"cd":cd,
-  "centre":Vector3(middle.x,height,middle.y),"axis_t":Vector3(t.x,0,t.y),"axis_n":Vector3(n.x,0,n.y),
+ # Shear the stone uphill while keeping every authored horizontal ledge level.
+ # Compression controls projection without tilting the grass toward the viewer.
+ var basis:=Basis(Vector3.UP,yaw).scaled(Vector3.ONE*scale)
+ if steep:
+  var up:=(Vector3.UP-normal*normal.y).normalized()
+  var across:=up.cross(normal).normalized()
+  var outward:=Vector3(normal.x,0,normal.z).normalized()
+  basis=Basis(across,up,outward)
+  var face_height:=minf(size*bounds.y/bounds.x,float(sample.height)*.8)
+  basis=basis*Basis.from_scale(Vector3(size/bounds.x,face_height/bounds.y,2.0/bounds.z))
+ # Face inclusions keep both recessed ends buried at their mid-slope anchor.
+ # Basal rocks bury their full footprint and may settle farther downhill.
+ var height_m:=scale*bounds.y
+ var exposure:=lerpf(.3,.6,Helper.position_hash01(rk,_seed+9219))*height_m
+ var placed:=false;var centre:=Vector3.ZERO;var along_out:=surface
+ if steep:
+  centre=Vector3(q.x,height,q.y)+normal*.25
+  # Bound the actual front samples against the rolling terrain.
+  var sink:=0.0
+  for local:Vector3 in ROCK_FRONTS.POINTS[name]:
+   var front:=centre+basis*local
+   sink=maxf(sink,front.y-env.sample(Vector2(front.x,front.z))-.8/maxf(.1,normal.y))
+  # Bury the true outer end bands. Interior authored ledges remain rock
+  # surfaces with Meadow grass tops; they are not the asset end caps.
+  for cap:Array in ROCK_CAPS.FACES[name]:
+   if maxf(absf((cap[1] as Vector3).y),maxf(absf((cap[2] as Vector3).y),absf((cap[3] as Vector3).y)))<bounds.y*.38:continue
+   for i in 4:
+    for j in range(4-i):
+     var local:Vector3=cap[1]+((cap[2] as Vector3)-cap[1])*(i/3.0)+((cap[3] as Vector3)-cap[1])*(j/3.0)
+     var p:=centre+basis*local
+     sink=maxf(sink,p.y-env.sample(Vector2(p.x,p.z))+.12)
+  centre.y-=sink
+  var visible_min:=INF;var visible_max:=-INF;var visible_count:=0
+  for local:Vector3 in ROCK_FRONTS.POINTS[name]:
+   var p:=centre+basis*local
+   if (p.y-env.sample(Vector2(p.x,p.z)))*normal.y<=.06:continue
+   visible_min=minf(visible_min,local.x);visible_max=maxf(visible_max,local.x);visible_count+=1
+  placed=visible_count>=6 and (visible_max-visible_min)*basis.x.length()>=maxf(1.2,size*.3)
+
+ else:
+  for shift:float in [0.0,.75,1.5,2.25,3.0]:
+   along_out=surface+shift
+   var point2:=foot+n*along_out
+   var ground_here:=env.sample(point2)
+   centre=Vector3(point2.x,ground_here,point2.y)
+   var sink:=0.0
+   for i in 12:
+    var a:=i*TAU/12.0
+    for r:float in [1.0,.6]:
+     var corner:=centre+basis*Vector3(cos(a)*bounds.x*.5*r,-bounds.y*.5,sin(a)*bounds.z*.5*r)
+     sink=maxf(sink,corner.y-(env.sample(Vector2(corner.x,corner.z))-EMBED))
+   centre.y-=sink
+   var shown:=(centre+basis*Vector3(0,bounds.y*.5,0)).y-ground_here
+   if shown>exposure:centre.y-=shown-exposure;shown=exposure
+   if shown>=MIN_EXPOSED*height_m:placed=true;break
+ if not placed:return
+ var point:=foot+n*along_out
+ var surface_y:=env.sample(point)
+ rock_list.append({"piece":name,"transform":Transform3D(basis,centre),
+  "point":Vector3(point.x,surface_y,point.y),"normal":normal,"ground":ground(point),"bunch":bunch,"kind":kind,
+  "foot":foot,"t":t,"n":n,"base":float(g.base),"y":surface_y-float(g.base),"cd":along_out,
+  "inverse":Transform3D(basis,centre).affine_inverse(),"zscale":basis.z.length(),
+  "reach":.55*maxf(bounds.x*basis.x.length(),bounds.y*basis.y.length())+1.0,
+  "centre":centre,"axis_t":basis.x.normalized(),"axis_y":basis.y.normalized(),"axis_n":basis.z.normalized(),
   # The swell stays inside the rock, which stands out of the mound.
-  "ru":radius*.75,"ry":.5*scale*bounds.y*.75,"ro":radius*(.45 if steep else .5)})
+  "ru":.5*bounds.x*basis.x.length()*SWELL,"ry":.5*bounds.y*basis.y.length()*SWELL,"ro":.5*bounds.z*basis.z.length()*SWELL})
 
 ## The rocks of every bunch whose centre lies in the owned rectangle.
 func rocks(owned:Rect2)->Array[Dictionary]:
  return rock_list.filter(func(rock:Dictionary)->bool:return owned.has_point(rock.bunch))
 
-## Whole-wall slope as one implicit solid (`sheet` style, seventh pass).
-## Each merged foot line and outer-corner arc defines a slope height as a
-## function of the horizontal distance d from its lip: near vertical under
-## the grass lip, then falling ever more gently, a*x^SLOPE_P, and it keeps
-## falling past any lower terrace edge until it meets real ground. A smooth
-## union of every slope and the ground (sunk 0.3 m) gives one surface, so
-## storeys, outer corners above inner corners and narrow terraces all flow
-## into one hillside with no per-column frame to disagree between columns.
-## Rocks are unioned ellipsoids. Surface nets meshes the result per chunk
-## on a world-aligned grid.
-const GRID:=.5
-const UNION:=3.0
-## Fillet radius where the slope meets the ground.
-const GROUND_FILLET:=1.4
-const BEHIND:=1.2
-const SLOPE_P:=.6
-## Slope of the straight tail below the bend.
-const TAIL_SLOPE:=.35
-const GROUND_SINK:=.3
+## Whole-wall slope (`sheet` style): the rounded terrain envelope
+## (CliffSlopeEnvelope), with the rocks' ellipsoid swells unioned in, meshed
+## per chunk by surface nets on the envelope's world-aligned grid.
+const GRID:=ENVELOPE.H
+## The solid tops out this far under the plateau grass and sinks under the
+## ground where the slope meets it, so no seam edge shows.
+const SINK:=.02
+## A slope counts where it stands this far above the ground; the solid also
+## covers MARGIN nodes around it (the lip band the native grass does not
+## draw, and the foot as it sinks under the terrain). Lower rises are the
+## envelope rounding the terrain's own level steps by a few centimetres: they
+## stay the terrain's, or the solid shows through it in speckled lines.
+const RAISED:=.15
+## 4 m: where the slope hides a lip, the terrain surface stops 2.5 m behind
+## the cell edge; a 2.5 m margin left a slit showing the void (September 26).
+const MARGIN:=8
 var _groups:Array[Dictionary]=[]
 var _group_cells:Dictionary={}
 var _samples:Dictionary={}
@@ -724,47 +815,9 @@ func _sample(gi:int,key:float)->Dictionary:
  if height>0.0 and fade>0.0:
   var reach:float=params(foot,height).y
   result={"crest":float(g.base)+height,"height":height,"reach":reach,
-   "a":height/pow(reach,SLOPE_P),"fade":fade,"ridge":_ridge(foot),"foot":foot}
+   "fade":fade,"foot":foot}
  _samples[id]=result
  return result
-
-## Warped two-octave ridge value along the wall, -1 gully .. 1 crest.
-func _ridge(foot:Vector2)->float:
- var p:=Vector3(snappedf(foot.x,.125),0,snappedf(foot.y,.125))
- var warp:=(Helper._value_noise01(p,_seed+9141,21.0)-.5)*10.0
- var q:=p+Vector3(warp,0,-warp)
- var r:=.65*(Helper._value_noise01(q,_seed+9143,8.0)*2.0-1.0)+.35*(Helper._value_noise01(q,_seed+9147,15.0)*2.0-1.0)
- return clampf(r*1.5,-1.0,1.0)
-
-## Height of one slope at horizontal distance d from its foot line. Behind
-## the lip it sits just under the native grass cap and tucks back into the
-## wall; in front it falls a*x^SLOPE_P. Ridges lift the whole face (the
-## contour at every height rolls), strongest mid-slope.
-func slope_height(sample:Dictionary,d:float)->float:
- var crest:float=sample.crest
- var x:=d-anchor()
- if x<=0.0:
-  # Flush with the plateau grass up to the lip (a gap left a dark strip of
-  # native rock showing between the grass and the moss), tucked back into
-  # the wall behind it.
-  return crest-TOP_GAP-.25*smoothstep(-.1,-.6,d)
- var reach:float=sample.reach
- # A quarter circle (vertical under the lip, bending evenly over the whole
- # run) plus a gentle straight tail: the bend is spread out rather than
- # concentrated just under the lip, and the tail keeps falling past lower
- # terrace edges so storeys merge.
- var height:float=sample.height
- var bend:=maxf(height*.3,height-TAIL_SLOPE*reach)
- var t:=clampf(x/reach,0.0,1.0)
- var fall:=(bend*sqrt(1.0-(1.0-t)*(1.0-t))+TAIL_SLOPE*x)/maxf(float(sample.fade),.05)
- var lift:=minf(2.2,float(sample.height)*.3)*float(sample.ridge)*pow(sin(PI*clampf(x/reach,0.0,1.0)),.6)
- var h:=crest-TOP_GAP-fall+lift
- # Sampled by height as well as distance: on the near-vertical upper face
- # the distance barely changes, and distance-only noise drew vertical flutes.
- var z:=h+x
- var p:=Vector3((sample.foot as Vector2).x+z*.53,0,(sample.foot as Vector2).y-z*.41)
- var bump:=((Helper._value_noise01(p,_seed+9301,2.4)-.5)*.44+(Helper._value_noise01(p*1.7,_seed+9307,1.1)-.5)*.16)*smoothstep(0.0,1.0,x)
- return h+bump
 
 ## Real ground at a column; without a region, the ground the cliffs imply
 ## (the crest of any cliff the point stands behind).
@@ -791,138 +844,242 @@ func ground(q:Vector2)->float:
  _grounds[key]=result
  return result
 
-## Contributions of every group at one column: [a, b, w, d].
-func _contributions(q:Vector2)->Array:
- var out:Array=[]
- for gi:int in _group_cells.get(Vector2i(floori(q.x/CELL),floori(q.y/CELL)),[]):
-  var g:Dictionary=_groups[gi];var d:float;var key:float;var step:float;var edge:float;var recede:=0.0
-  if g.has("arc"):
-   var arc:Dictionary=g.arc;var v:=q-(arc.c as Vector2)
-   if v.dot(arc.n1)<-.01 or v.dot(arc.n2)<-.01 or v.length()<.01:continue
-   d=v.length()-float(arc.r);key=atan2(v.dot(arc.n2),v.dot(arc.n1));step=PI/60.0
-   edge=smoothstep(0.0,.35,minf(key,PI*.5-key))
-  else:
-   d=q.dot(g.n)-float(g.offset);key=q.dot(g.t);step=.25
-   # An end that continues into a corner arc stops exactly there; any other
-   # end runs on past the wall, receding into it, rather than cutting the
-   # slope off in a vertical seam.
-   var lo_end:=.01 if g.get("arc_a",false) else END_RUN
-   var hi_end:=.01 if g.get("arc_b",false) else END_RUN
-   if key<float(g.u0)-lo_end or key>float(g.u1)+hi_end:continue
-   var beyond:=maxf(float(g.u0)-key,key-float(g.u1))
-   if beyond>0.0:
-    recede=smoothstep(0.0,END_RUN,beyond)
-    key=clampf(key,float(g.u0),float(g.u1))
-   edge=1.0
-   if g.get("arc_a",false):edge=minf(edge,smoothstep(0.0,2.0,key-float(g.u0)))
-   if g.get("arc_b",false):edge=minf(edge,smoothstep(0.0,2.0,float(g.u1)-key))
-   if beyond>0.0:edge=0.0
-  if d<-BEHIND or d>20.0:continue
-  var k0:=floorf(key/step)*step;var w:=(key-k0)/step
-  var a:=_sample(gi,snappedf(k0,.0001));var b:=_sample(gi,snappedf(k0+step,.0001))
-  if a.is_empty() and b.is_empty():continue
-  if a.is_empty():a=b
-  if b.is_empty():b=a
-  # Receding: evaluated farther out, so the slope shrinks back into the wall.
-  if recede>0.0:d+=recede*(anchor()+float(a.reach)+2.0)
-  out.append([a,b,w,d,edge,float(g.base)])
+## Horizontal run of the slope below a wall `height` tall: shoulder and
+## foot fillet at their widest.
+static func _extent(height:float)->float:
+ return sqrt(2.0*height*(ENVELOPE.SHOULDER.y+ENVELOPE.FOOT))
+
+## The terrain envelope over the focus (built once, on first use).
+var _env:ENVELOPE
+func envelope()->ENVELOPE:
+ if _env==null:
+  var rect:=_focus.grow(12.0) if _focus.size.x<1e8 else _line_bounds().grow(30.0)
+  _env=ENVELOPE.build(rect,_ground_sampler(),_exclusion(rect.grow(ENVELOPE.PAD+1.0)),_seed,_water_level()) as ENVELOPE
+ return _env
+
+func _line_bounds()->Rect2:
+ var r:=Rect2()
+ for s:Dictionary in _primitives:
+  var a:Vector2=s.c if s.arc else s.a
+  var b:Vector2=a if s.arc else a+(s.t as Vector2)*float(s.length)
+  r=Rect2(a,Vector2.ZERO) if r.size==Vector2.ZERO and r.position==Vector2.ZERO else r.expand(a)
+  r=r.expand(b)
+ return r
+
+## The terrain's own surface, per cell baked once (same values as ground()).
+func _ground_sampler()->Callable:
+ if _region==null:return ground_at if ground_at.is_valid() else ground
+ var baked:Dictionary={};var region:=_region
+ return func(q:Vector2)->float:
+  var cx:=TerrainSurfaceField._cell_of(q.x,region);var cz:=TerrainSurfaceField._cell_of(q.y,region)
+  var key:=Vector2i(cx,cz)
+  if not baked.has(key):baked[key]=TerrainSurfaceField.bake_cell(region,cx,cz)
+  return TerrainSurfaceField.sample_baked(baked[key],cx,cz,q.x,q.y,region)
+
+## Water level at a point (NAN where dry), queried only in or beside a carved
+## channel or basin: the slope runs into water and sinks under it.
+func _water_level()->Callable:
+ var water:=_water if _water!=null and _water.has_sources() else null
+ if water==null:return Callable()
+ var region:=_region;var cells:Dictionary={}
+ var tile:=TerrainSurfaceField.tile_size(region) if region!=null else 24.0
+ return func(q:Vector2)->float:
+  var cell:=Vector2i(roundi(q.x/tile),roundi(q.y/tile))
+  if not cells.has(cell):
+   var wet:=region==null
+   if region!=null:
+    for dz in range(-1,2):
+     for dx in range(-1,2):
+      if region.is_carved(cell.x+dx,cell.y+dz):wet=true
+   cells[cell]=wet
+  if not cells[cell] or not water.covers(q):return NAN
+  return water.level_at(q)
+
+## Ground the slope keeps off: roads, plazas and other painted surfaces and
+## graded (village) ground. Water is handled by _water_level.
+var excluded_at:Callable
+func _exclusion(_area:Rect2)->Callable:
+ if excluded_at.is_valid():return excluded_at
+ var features:=_features if _features!=null and _features.has_modified_surface() else null
+ var water=null
+ var region:=_region
+ var graded:=region!=null and not region.terrain_grades.is_empty()
+ if features==null and not graded:return Callable()
+ # Per terrain cell: the feature shapes that reach it, and whether water can
+ # (only in or beside a carved channel or basin). Point queries over a whole
+ # village's shapes, or water queries on dry hills, were most of the cost.
+ var cells:Dictionary={};var grades:Dictionary={}
+ var tile:=TerrainSurfaceField.tile_size(region)
+ return func(q:Vector2)->bool:
+  if graded:
+   var key:=Vector2i(floori(q.x/4.0),floori(q.y/4.0))
+   if not grades.has(key):grades[key]=region.has_grade_effect_in(Rect2(Vector2(key)*4.0,Vector2.ONE*4.0))
+   if grades[key]:return true
+  var cell:=Vector2i(roundi(q.x/tile),roundi(q.y/tile))
+  if not cells.has(cell):
+   var sampler:=features.ground_field().surface_sampler_in(Rect2(Vector2(cell)*tile-Vector2.ONE*tile*.5,Vector2.ONE*tile)) if features!=null else Callable()
+   var wet:=false
+   if water!=null:
+    if region==null:wet=true
+    else:
+     for dz in range(-1,2):
+      for dx in range(-1,2):
+       if region.is_carved(cell.x+dx,cell.y+dz):wet=true
+   cells[cell]=[sampler,wet]
+  var info:Array=cells[cell]
+  if (info[0] as Callable).is_valid() and int((info[0] as Callable).call(q))!=FeatureGroundField.NATURAL:return true
+  return info[1] and water.covers(q) and water.is_wet(q)
+
+## Ground the slope stands over (more than BURY above the terrain), as row
+## runs of 2 m tiles: ambient rocks and plants rooted on the terrain there
+## would be buried with their tips poking through the slope.
+const BURY:=.25
+func reservations(owned:Rect2)->Array[Rect2]:
+ var env:=envelope()
+ var out:Array[Rect2]=[]
+ var z:=floorf(owned.position.y/2.0)*2.0
+ while z<owned.end.y:
+  var run_start:=NAN
+  var x:=floorf(owned.position.x/2.0)*2.0
+  while x<=owned.end.x:
+   var raised:=false
+   if x<owned.end.x:
+    for o:Vector2 in [Vector2(1,1),Vector2(0,0),Vector2(2,0),Vector2(0,2),Vector2(2,2)]:
+     var q:=Vector2(x,z)+o
+     if env.at(q)-env.ground_node(q)>BURY:raised=true;break
+   if raised and is_nan(run_start):run_start=x
+   elif not raised and not is_nan(run_start):
+    out.append(Rect2(run_start,z,x-run_start,2.0));run_start=NAN
+   x+=2.0
+  z+=2.0
  return out
 
-## The surface height at a column: smooth union of every slope and the
-## (sunk) ground.
-## The union never rises above a lip (overlapping lip caps at an inner
-## corner would otherwise swell through the grass). The ground fillet fades
-## out where the ground is the plateau just behind a lip, for the same reason.
-## Blending fades out toward each piece's own ends (edge factor), so pieces
-## that adjoin (a corner arc and its arms, a wall and its continuation) join
-## exactly; slopes that cross round with a fillet, wider between storeys.
-const SAME_UNION:=1.4
-const END_RUN:=2.5
-func surface_height(contribs:Array,q:Vector2)->float:
- var h:=-INF;var cap:=-INF;var dom_edge:=0.0;var dom_base:=0.0
- for c:Array in contribs:
-  var v:=lerpf(slope_height(c[0],c[3]),slope_height(c[1],c[3]),c[2])
-  var cv:=lerpf(float(c[0].crest),float(c[1].crest),c[2])-TOP_GAP
-  if h==-INF:
-   h=v;dom_edge=c[4];dom_base=c[5]
-  else:
-   var k:=(UNION if absf(float(c[5])-dom_base)>.5 else SAME_UNION)*minf(dom_edge,float(c[4]))
-   var merged:=CRAGS._smax(h,v,k) if k>.01 else maxf(h,v)
-   if v>h:dom_edge=c[4];dom_base=c[5]
-   h=minf(merged,maxf(cap,cv))
-  cap=maxf(cap,cv)
- var g:=ground(q)-GROUND_SINK
- if h==-INF:return g
- # The native terrain cell under a plateau reaches past its wall line; in
- # the band just in front of a lip, ground at that lip's level is not a
- # floor for the slope (it held the top flat, then dropped it vertically
- # at the cell edge). The slope alone shapes the top there.
- for c:Array in contribs:
-  if float(c[3])<anchor()+2.0 and absf(g+GROUND_SINK-float(c[0].crest))<1.0:return h
- var k:=GROUND_FILLET*clampf((cap-g-1.0)/2.0,0.0,1.0)
- return CRAGS._smax(h,g,k) if k>.01 else maxf(h,g)
-
-## Signed inside value of the solid at a column and grid level.
-func _inside(contribs:Array,rocks:Array,q:Vector2,j:int,surface:=NAN)->float:
+## Signed inside value of the solid at a column and grid level: the slope
+## surface smoothly unioned with each rock's ellipsoid swell.
+func _inside(rocks:Array,q:Vector2,j:int,surface:float)->float:
  var y:=j*GRID
- if is_nan(surface):surface=surface_height(contribs,q)
  var f:=surface-y
  for r:Dictionary in rocks:
+  if r.kind=="face":
+   # Study stamp/blend: the rock's own front relief joins the slope solid by
+   # a smooth union, so the moss meets the stone tangentially. `blend` keeps
+   # the mesh in front (the solid's rock part 12 cm behind it).
+   if not STYLE.sheet_study in ["stamp","blend"]:continue # Embedded flanks do not grow a mound over themselves.
+   var local:=(r.inverse as Transform3D)*Vector3(q.x,y,q.y)
+   var d:=ROCKS.depth_at(ROCKS.depth_map(r.piece),Vector2(local.x,local.y))
+   if is_inf(d):continue
+   # Stamp: double the (compressed) front relief and stand it out a little.
+   var g:=(d*2.0-local.z)*float(r.zscale)+.3 if STYLE.sheet_study=="stamp" else (d-local.z)*float(r.zscale)-.1
+   f=CRAGS._smax(f,g,.9 if STYLE.sheet_study=="stamp" else .8)
+   continue
   var local:=Vector3(q.x,y,q.y)-(r.centre as Vector3)
-  var u:=Vector3(local.dot(r.axis_t),local.y,local.dot(r.axis_n))
+  var u:=Vector3(local.dot(r.axis_t),local.dot(r.axis_y),local.dot(r.axis_n))
   var e:=Vector3(u.x/float(r.ru),u.y/float(r.ry),u.z/float(r.ro))
   var g:=minf(float(r.ru),minf(float(r.ry),float(r.ro)))*(1.0-e.length())
-  f=CRAGS._smax(f,g,1.0)
+  # The blend scales with the rock: a fixed metre swallowed small rocks.
+  f=CRAGS._smax(f,g,clampf(.4*float(r.ry),.15,1.0))
  return f
+
+## Columns the solid covers in the owned rectangle: where the slope stands
+## above the ground, and around it where a slope nearby continues at this
+## column's height (the plateau band behind a lip, which the native grass
+## does not draw). A plateau beside a cut (a road at a cliff foot) keeps its
+## native wall instead of growing a vertical face.
+var _column_cache:Dictionary={}
+func _columns(owned:Rect2)->Dictionary:
+ if _column_cache.has(owned):return _column_cache[owned]
+ var env:=envelope()
+ var lo:=Vector2i(floori(owned.position.x/GRID)-1,floori(owned.position.y/GRID)-1)
+ var hi:=Vector2i(ceili(owned.end.x/GRID)+1,ceili(owned.end.y/GRID)+1)
+ var w:=hi.x-lo.x+1+2*MARGIN;var h:=hi.y-lo.y+1+2*MARGIN
+ var top:=PackedFloat64Array();top.resize(w*h);top.fill(-INF)
+ var grounds:=PackedFloat64Array();grounds.resize(w*h)
+ for k in h:
+  for i in w:
+   var q:=Vector2(lo.x-MARGIN+i,lo.y-MARGIN+k)*GRID
+   var s:float=env.at(q);var g:float=env.ground_node(q)
+   grounds[k*w+i]=g
+   if s-g>RAISED:top[k*w+i]=s
+ # Highest raised surface within MARGIN nodes (separable max filter).
+ var rows:=top.duplicate()
+ for k in h:
+  for i in w:
+   var m:=-INF
+   for d in range(maxi(0,i-MARGIN),mini(w,i+MARGIN+1)):m=maxf(m,top[k*w+d])
+   rows[k*w+i]=m
+ var cols:Dictionary={}
+ for k in range(MARGIN,h-MARGIN):
+  for i in range(MARGIN,w-MARGIN):
+   var m:=-INF
+   for d in range(k-MARGIN,k+MARGIN+1):m=maxf(m,rows[d*w+i])
+   if m>grounds[k*w+i]-.5:cols[Vector2i(lo.x-MARGIN+i,lo.y-MARGIN+k)]=true
+ _column_cache[owned]=cols
+ return cols
+
+## Grass on the slope: a heightfield support (GrassSupportSurfaces.at_grid)
+## over the solid's columns, clear of its rocks, so the lawn's blades carry
+## on over shoulders, benches and the foot instead of stopping at the lip.
+func grass_support(area:Rect2)->Dictionary:
+ var env:=envelope()
+ var cols:=_columns(area)
+ var lo:=Vector2i(floori(area.position.x/GRID),floori(area.position.y/GRID))
+ var hi:=Vector2i(ceili(area.end.x/GRID),ceili(area.end.y/GRID))
+ var w:=hi.x-lo.x+1;var h:=hi.y-lo.y+1
+ var heights:=PackedFloat32Array();heights.resize(w*h)
+ var flags:=PackedByteArray();flags.resize(w*h)
+ for k in h:
+  for i in w:
+   var key:=lo+Vector2i(i,k)
+   heights[k*w+i]=env.at(Vector2(key)*GRID)-SINK
+   # Where the slope has sunk under the terrain (its foot), the terrain's own
+   # grass grows; grass planted on the buried slope would be invisible.
+   if cols.has(key) and heights[k*w+i]>=env.ground_node(Vector2(key)*GRID)-.05:flags[k*w+i]=1
+ for r:Dictionary in rock_list:
+  var c:Vector3=r.centre;var reach:=maxf(float(r.ry),maxf(float(r.ru),float(r.ro)))/.75
+  for k in range(maxi(0,floori((c.z-reach)/GRID)-lo.y),mini(h,ceili((c.z+reach)/GRID)-lo.y+1)):
+   for i in range(maxi(0,floori((c.x-reach)/GRID)-lo.x),mini(w,ceili((c.x+reach)/GRID)-lo.x+1)):
+    if Vector2(lo.x+i,lo.y+k).distance_to(Vector2(c.x,c.z)/GRID)*GRID<reach:flags[k*w+i]=0
+ return {"grid":true,"origin":Vector2(lo)*GRID,"step":GRID,"w":w,"h":h,"heights":heights,"flags":flags,
+  "bounds":Rect2(Vector2(lo)*GRID,Vector2(w-1,h-1)*GRID),"id":"slope/%s"%area.position,"obstacles":[]}
 
 ## Surface-nets mesh of the solid for the owned rectangle.
 func solid(owned:Rect2)->Array[Dictionary]:
+ var env:=envelope()
  var rock_cells:Dictionary={}
  for r:Dictionary in rock_list:
-  var c:Vector3=r.centre;var reach:=maxf(float(r.ru),float(r.ro))
+  var c:Vector3=r.centre;var reach:=maxf(float(r.ry),maxf(float(r.ru),float(r.ro)))
+  if r.kind=="face" and STYLE.sheet_study in ["stamp","blend"]:reach=float(r.reach)
   for bx in range(floori((c.x-reach)/GRID)-1,floori((c.x+reach)/GRID)+2):
    for bz in range(floori((c.z-reach)/GRID)-1,floori((c.z+reach)/GRID)+2):
     var key:=Vector2i(bx,bz)
     if not rock_cells.has(key):rock_cells[key]=[]
     rock_cells[key].append(r)
- # Columns within the band of any group (plus one cell of halo).
- var lo:=Vector2i(floori(owned.position.x/GRID)-1,floori(owned.position.y/GRID)-1)
- var hi:=Vector2i(ceili(owned.end.x/GRID)+1,ceili(owned.end.y/GRID)+1)
- var cols:Dictionary={}
- for gi in _groups.size():
-  var g:Dictionary=_groups[gi]
-  var pts:Array[Vector2]=[]
-  if g.has("arc"):
-   var arc:Dictionary=g.arc
-   for ai in 61:
-    var ang:=ai/60.0*PI*.5
-    var dir:=((arc.n1 as Vector2)*cos(ang)+(arc.n2 as Vector2)*sin(ang)).normalized()
-    var r:=-BEHIND
-    while r<18.0:pts.append((arc.c as Vector2)+dir*(float(arc.r)+r));r+=GRID*.5
-  else:
-   var u:float=g.u0-.5
-   while u<=float(g.u1)+.5:
-    var r:=-BEHIND
-    while r<18.0:pts.append((g.t as Vector2)*u+(g.n as Vector2)*(float(g.offset)+r));r+=GRID*.5
-    u+=GRID*.5
-  for p:Vector2 in pts:
-   var key:=Vector2i(roundi(p.x/GRID),roundi(p.y/GRID))
-   if key.x<lo.x or key.x>hi.x or key.y<lo.y or key.y>hi.y or cols.has(key):continue
-   cols[key]=null
+ var cols:=_columns(owned)
+ for key:Vector2i in rock_cells:
+  var q:=Vector2(key)*GRID
+  if owned.grow(GRID*2.0).has_point(q):cols[key]=true
  # Evaluate every column over its level range.
  var field:Dictionary={}
  for key:Vector2i in cols:
   var q:=Vector2(key.x*GRID,key.y*GRID)
-  var contribs:=_contributions(q)
   var rocks:Array=rock_cells.get(key,[])
-  if contribs.is_empty() and rocks.is_empty():continue
-  var surface:=surface_height(contribs,q)
-  var jlo:=floori((minf(surface,ground(q))-2.4)/GRID);var jhi:=ceili(surface/GRID)+1
+  var g:float=env.ground_node(q)
+  var surface:float=env.at(q)-SINK
+  var jlo:=floori((minf(surface,g)-2.4)/GRID);var jhi:=ceili(surface/GRID)+1
   for r:Dictionary in rocks:
-   jhi=maxi(jhi,ceili(((r.centre as Vector3).y+float(r.ry))/GRID)+1)
+   jhi=maxi(jhi,ceili(((r.centre as Vector3).y+maxf(float(r.get("reach",0.0)),maxf(float(r.ry),maxf(float(r.ru),float(r.ro)))))/GRID)+1)
   var values:=PackedFloat32Array()
-  for j in range(jlo,jhi+1):values.append(_inside(contribs,rocks,q,j,surface))
-  field[key]=[jlo,values]
+  if rocks.is_empty():
+   for j in range(jlo,jhi+1):values.append(surface-j*GRID)
+  else:
+   for j in range(jlo,jhi+1):values.append(_inside(rocks,q,j,surface))
+  # Levels j where the sign changes between j and j+1 (above the range the
+  # solid ends), so meshing only visits the band around the surface.
+  var cmin:=1000000;var cmax:=-1000000
+  for idx in values.size():
+   var next:=values[idx+1] if idx+1<values.size() else -1.0
+   if (values[idx]>0.0)!=(next>0.0):cmin=mini(cmin,jlo+idx);cmax=maxi(cmax,jlo+idx)
+  field[key]=[jlo,values,cmin,cmax]
  # Below a column's range the solid continues (underground); above, it ends.
  var at:=func(i:int,j:int,k:int)->float:
   var col=field.get(Vector2i(i,k))
@@ -967,7 +1124,16 @@ func solid(owned:Rect2)->Array[Dictionary]:
   for dk:Vector2i in [Vector2i(1,0),Vector2i(0,1)]:
    var o:Vector2i=span.call(key+dk);r=Vector2i(mini(r.x,o.x),maxi(r.y,o.y))
   if r.x>r.y:continue
-  for j in range(r.x-1,r.y+1):
+  var j0:=r.x-1;var j1:=r.y+1
+  # With all three columns present, every sign change lies between their
+  # lowest and highest crossing (below it all are solid, above it all air).
+  var band:=Vector2i(1000000,-1000000)
+  for dk:Vector2i in [Vector2i(0,0),Vector2i(1,0),Vector2i(0,1)]:
+   var col=field.get(key+dk)
+   if col==null:band=Vector2i(j0,j1-1);break
+   band=Vector2i(mini(band.x,int(col[2])),maxi(band.y,int(col[3])))
+  j0=maxi(j0,band.x);j1=mini(j1,band.y+1)
+  for j in range(j0,j1):
    var f0:float=at.call(key.x,j,key.y)
    # Edges along x, y and z from this grid point, each shared by 4 cells.
    for axis in 3:
@@ -992,7 +1158,6 @@ func solid(owned:Rect2)->Array[Dictionary]:
      if (c-a).cross(b-a).dot(out)>0.0:faces.append_array(PackedVector3Array([a,b,c]))
      else:faces.append_array(PackedVector3Array([a,c,b]))
  faces=_drop_fragments(faces)
- if FileAccess.file_exists("res://.godot/solid_diag"):_diag_holes(faces,owned,field)
  if faces.is_empty():return []
  # Normals from the field's gradient (central differences on the grid,
  # trilinear at each vertex): facet normals of surface nets band into
@@ -1011,7 +1176,11 @@ func solid(owned:Rect2)->Array[Dictionary]:
    n+=grad.call(i+o.x,j+o.y,k+o.z)*w
   # The field grows inward; the outward normal is its negative gradient.
   n=-n
-  roots[p]=[n.normalized() if n.length()>1e-6 else Vector3.UP,0.0]
+  # Second slot: rock exposure (study variants), read by the shader as COLOR.a.
+  var exposure:=env.rock_at(Vector2(p.x,p.z))
+  # Study stamp: stone wherever the solid stands proud of the plain slope.
+  if STYLE.sheet_study=="stamp":exposure=maxf(exposure,smoothstep(.12,.5,p.y-env.sample(Vector2(p.x,p.z))))
+  roots[p]=[n.normalized() if n.length()>1e-6 else Vector3.UP,exposure]
  return [{"faces":faces,"green":PackedVector3Array(),"native_roots":roots,"transform":Transform3D.IDENTITY,
   "bounds":bounds,"anchor":bounds.get_center(),"top":bounds.end.y,"base":bounds.position.y,
   "id":"slope_solid/%s"%owned.position,"asset":&"cliff.native_crag","kind":"rock","native_crag":true,"slope_sheet":true}]
@@ -1041,23 +1210,3 @@ static func _drop_fragments(faces:PackedVector3Array)->PackedVector3Array:
  for t in parent.size():
   if int(size[find.call(t)])>=MIN_PIECE:kept.append_array(faces.slice(t*3,t*3+3))
  return kept
-
-func _diag_holes(faces:PackedVector3Array,owned:Rect2,field:Dictionary)->void:
- var count:Dictionary={}
- for i in range(0,faces.size(),3):
-  for k in 3:
-   var a:=faces[i+k];var b:=faces[i+(k+1)%3]
-   var key:=[a,b] if a<b else [b,a]
-   count[key]=count.get(key,0)+1
- var inner:=owned.grow(-1.0);var holes:=[]
- for e:Array in count:
-  if count[e]!=1:continue
-  var m:Vector3=(e[0]+e[1])*.5
-  if inner.has_point(Vector2(m.x,m.z)):holes.append(m)
- print("SOLID_DIAG owned=",owned," tris=",faces.size()/3," inner_boundary_edges=",holes.size()," sample=",holes.slice(0,6))
- for m:Vector3 in holes.slice(0,3):
-  var key:=Vector2i(roundi(m.x/GRID),roundi(m.z/GRID))
-  for dk:Vector2i in [Vector2i(0,0),Vector2i(1,0),Vector2i(0,1),Vector2i(-1,0),Vector2i(0,-1)]:
-   var col=field.get(key+dk)
-   var q:=Vector2((key+dk).x*GRID,(key+dk).y*GRID)
-   print("  col ",key+dk," ground=",ground(q)," range=",(col[0] if col!=null else "none")," n=",(col[1].size() if col!=null else 0)," surf=",surface_height(_contributions(q),q))

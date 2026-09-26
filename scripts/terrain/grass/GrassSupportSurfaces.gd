@@ -8,6 +8,11 @@ static func spatial_index(surfaces:Array)->Dictionary:
 	# Preserve source order in each bucket: coincident highest faces must make
 	# the same choice as the full scan, including at owner boundaries.
 	for surface:Dictionary in surfaces:
+		if surface.has("grid"):
+			# A heightfield support is looked up directly, not bucketed.
+			if not cells.has(&"grids"):cells[&"grids"]=[]
+			cells[&"grids"].append(surface)
+			continue
 		var bounds:Rect2=surface.bounds
 		for x in range(floori(bounds.position.x/INDEX_CELL_SIZE),floori(bounds.end.x/INDEX_CELL_SIZE)+1):
 			for z in range(floori(bounds.position.y/INDEX_CELL_SIZE),floori(bounds.end.y/INDEX_CELL_SIZE)+1):
@@ -17,7 +22,37 @@ static func spatial_index(surfaces:Array)->Dictionary:
 	return cells
 
 static func at_index(cells:Dictionary,point:Vector2)->Dictionary:
-	return at_point(cells.get(Vector2i(floori(point.x/INDEX_CELL_SIZE),floori(point.y/INDEX_CELL_SIZE)),[]),point)
+	var result:=at_point(cells.get(Vector2i(floori(point.x/INDEX_CELL_SIZE),floori(point.y/INDEX_CELL_SIZE)),[]),point)
+	for grid:Dictionary in cells.get(&"grids",[]):
+		var sample:=at_grid(grid,point)
+		if not sample.is_empty() and (result.is_empty() or float(sample.y)>float(result.y)):result=sample
+	return result
+
+## Heightfield support (the `sheet` style's whole-wall slope): grass grows on
+## its gentle ground and thins out as it steepens. `flags` marks the nodes the
+## slope covers (off under its rocks); `over_ground` lets it stand in for the
+## terrain it lies on, flush or above.
+const GRID_MIN_UP:=.62
+const GRID_FULL_UP:=.9
+static func at_grid(grid:Dictionary,point:Vector2)->Dictionary:
+	var step:float=grid.step
+	var p:Vector2=(point-(grid.origin as Vector2))/step
+	var i:=floori(p.x);var k:=floori(p.y)
+	var w:int=grid.w;var h:int=grid.h
+	if i<0 or k<0 or i>=w-1 or k>=h-1:return {}
+	var flags:PackedByteArray=grid.flags
+	if not (flags[k*w+i] and flags[k*w+i+1] and flags[(k+1)*w+i] and flags[(k+1)*w+i+1]):return {}
+	var heights:PackedFloat32Array=grid.heights
+	var a:=heights[k*w+i];var b:=heights[k*w+i+1];var c:=heights[(k+1)*w+i];var d:=heights[(k+1)*w+i+1]
+	var fx:=p.x-i;var fz:=p.y-k
+	var y:=lerpf(lerpf(a,b,fx),lerpf(c,d,fx),fz)
+	var gx:=(lerpf(b-a,d-c,fz))/step;var gz:=(lerpf(c-a,d-b,fx))/step
+	var normal:=Vector3(-gx,1.0,-gz).normalized()
+	# Too steep for grass still claims the point (edge distance 0 grows
+	# nothing): falling back to the terrain below let blades rooted under the
+	# slope poke their tips through it.
+	return {"y":y,"normal":normal,"edge_distance":4.0*smoothstep(GRID_MIN_UP,GRID_FULL_UP,normal.y),
+		"support_id":grid.id,"over_ground":true}
 
 # Detached native top triangles extend the ordinary grass sampler. Only flat
 # authored turf tops are eligible; bounding boxes never stand in for a cap.

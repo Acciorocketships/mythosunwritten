@@ -55,7 +55,7 @@ directional_shadow_blend_splits = true
 [node name="FieldTerrain" type="Node3D" parent="." node_paths=PackedStringArray("player", "terrain_parent")]
 script = ExtResource("10_field")
 SEED_OVERRIDE = 2697992464
-CLIFF_STYLE = "sheet"
+CLIFF_STYLE = "sheet_bedrock"
 player = NodePath("../Characters/Character")
 terrain_parent = NodePath(".")
 
@@ -78,7 +78,7 @@ player = NodePath("../Characters/Character")
 [node name="Characters" type="Node" parent="."]
 
 [node name="Character" parent="Characters" instance=ExtResource("1_nnsk1")]
-position = Vector3(0.5, 0, 0.5)
+position = Vector3(262, 24, 1045)
 controller = SubResource("Resource_rwgxs")
 
 [node name="CoordOverlay" type="CanvasLayer" parent="."]

@@ -1,0 +1,2054 @@
+[
+  {
+    "title": "Meadow \u00b7 individual rocks \u00b7 summer",
+    "file": "01-M-1.png",
+    "items": [
+      {
+        "id": "M01",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Summer/P_Rock_01_Summer.glb",
+        "name": "Rock_01_Summer",
+        "pack": "Meadow \u00b7 individual rocks \u00b7 summer"
+      },
+      {
+        "id": "M02",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Summer/P_Rock_02_Summer.glb",
+        "name": "Rock_02_Summer",
+        "pack": "Meadow \u00b7 individual rocks \u00b7 summer"
+      },
+      {
+        "id": "M03",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Summer/P_Rock_03_Summer.glb",
+        "name": "Rock_03_Summer",
+        "pack": "Meadow \u00b7 individual rocks \u00b7 summer"
+      },
+      {
+        "id": "M04",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Summer/P_Rock_04_Summer.glb",
+        "name": "Rock_04_Summer",
+        "pack": "Meadow \u00b7 individual rocks \u00b7 summer"
+      },
+      {
+        "id": "M05",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Summer/P_Rock_05_Summer.glb",
+        "name": "Rock_05_Summer",
+        "pack": "Meadow \u00b7 individual rocks \u00b7 summer"
+      },
+      {
+        "id": "M06",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Summer/P_Rock_06_Summer.glb",
+        "name": "Rock_06_Summer",
+        "pack": "Meadow \u00b7 individual rocks \u00b7 summer"
+      },
+      {
+        "id": "M07",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Summer/P_Rock_07_Summer.glb",
+        "name": "Rock_07_Summer",
+        "pack": "Meadow \u00b7 individual rocks \u00b7 summer"
+      },
+      {
+        "id": "M08",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Summer/P_Rock_08_Summer.glb",
+        "name": "Rock_08_Summer",
+        "pack": "Meadow \u00b7 individual rocks \u00b7 summer"
+      },
+      {
+        "id": "M09",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Summer/P_Rock_09_Summer.glb",
+        "name": "Rock_09_Summer",
+        "pack": "Meadow \u00b7 individual rocks \u00b7 summer"
+      },
+      {
+        "id": "M10",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Summer/P_Rock_10_Summer.glb",
+        "name": "Rock_10_Summer",
+        "pack": "Meadow \u00b7 individual rocks \u00b7 summer"
+      },
+      {
+        "id": "M11",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Summer/P_Rock_11_Summer.glb",
+        "name": "Rock_11_Summer",
+        "pack": "Meadow \u00b7 individual rocks \u00b7 summer"
+      },
+      {
+        "id": "M12",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Summer/P_Rock_12_Summer.glb",
+        "name": "Rock_12_Summer",
+        "pack": "Meadow \u00b7 individual rocks \u00b7 summer"
+      }
+    ]
+  },
+  {
+    "title": "Meadow \u00b7 assembled rock groups \u00b7 summer",
+    "file": "02-G-1.png",
+    "items": [
+      {
+        "id": "G01",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/RockGroup_-_Summer/P_RockGroup_01_Summer.glb",
+        "name": "RockGroup_01_Summer",
+        "pack": "Meadow \u00b7 assembled rock groups \u00b7 summer"
+      },
+      {
+        "id": "G02",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/RockGroup_-_Summer/P_RockGroup_02_Summer.glb",
+        "name": "RockGroup_02_Summer",
+        "pack": "Meadow \u00b7 assembled rock groups \u00b7 summer"
+      },
+      {
+        "id": "G03",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/RockGroup_-_Summer/P_RockGroup_03_Summer.glb",
+        "name": "RockGroup_03_Summer",
+        "pack": "Meadow \u00b7 assembled rock groups \u00b7 summer"
+      },
+      {
+        "id": "G04",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/RockGroup_-_Summer/P_RockGroup_04_Summer.glb",
+        "name": "RockGroup_04_Summer",
+        "pack": "Meadow \u00b7 assembled rock groups \u00b7 summer"
+      },
+      {
+        "id": "G05",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/RockGroup_-_Summer/P_RockGroup_05_Summer.glb",
+        "name": "RockGroup_05_Summer",
+        "pack": "Meadow \u00b7 assembled rock groups \u00b7 summer"
+      },
+      {
+        "id": "G06",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/RockGroup_-_Summer/P_RockGroup_06_Summer.glb",
+        "name": "RockGroup_06_Summer",
+        "pack": "Meadow \u00b7 assembled rock groups \u00b7 summer"
+      },
+      {
+        "id": "G07",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/RockGroup_-_Summer/P_RockGroup_07_Summer.glb",
+        "name": "RockGroup_07_Summer",
+        "pack": "Meadow \u00b7 assembled rock groups \u00b7 summer"
+      }
+    ]
+  },
+  {
+    "title": "Farmlands \u00b7 individual rocks and cliffs",
+    "file": "03-P-1.png",
+    "items": [
+      {
+        "id": "P01",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_Farm_Cliff_Flat_01.glb",
+        "name": "Cliff_Flat_01",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P02",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_Farm_Cliff_Large_01.glb",
+        "name": "Cliff_Large_01",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P03",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_Farm_Cliff_Large_02.glb",
+        "name": "Cliff_Large_02",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P04",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_Farm_Cliff_Large_03.glb",
+        "name": "Cliff_Large_03",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P05",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_Farm_RockMedium_01.glb",
+        "name": "RockMedium_01",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P06",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_Farm_RockMedium_02.glb",
+        "name": "RockMedium_02",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P07",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_Farm_RockMedium_03.glb",
+        "name": "RockMedium_03",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P08",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_Farm_RockMedium_04.glb",
+        "name": "RockMedium_04",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P09",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_Farm_RockMedium_05.glb",
+        "name": "RockMedium_05",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P10",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_Farm_RockMedium_06.glb",
+        "name": "RockMedium_06",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P11",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_Farm_RockMedium_07.glb",
+        "name": "RockMedium_07",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P12",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_PebblesGroup_01_Farm.glb",
+        "name": "PebblesGroup_01_Farm",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      }
+    ]
+  },
+  {
+    "title": "Farmlands \u00b7 individual rocks and cliffs",
+    "file": "04-P-2.png",
+    "items": [
+      {
+        "id": "P13",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_PebblesGroup_02_Farm.glb",
+        "name": "PebblesGroup_02_Farm",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P14",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_PebblesGroup_03_Farm.glb",
+        "name": "PebblesGroup_03_Farm",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P15",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_PebblesGroup_04_Farm.glb",
+        "name": "PebblesGroup_04_Farm",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P16",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_PebblesGroup_05_Farm.glb",
+        "name": "PebblesGroup_05_Farm",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      },
+      {
+        "id": "P17",
+        "path": "res://assets/Polyart/Models/Farmlands/Stones/PF_PebblesGroup_06_Farm.glb",
+        "name": "PebblesGroup_06_Farm",
+        "pack": "Farmlands \u00b7 individual rocks and cliffs"
+      }
+    ]
+  },
+  {
+    "title": "Suntail \u00b7 stones and mountain forms",
+    "file": "05-R-1.png",
+    "items": [
+      {
+        "id": "R01",
+        "path": "res://assets/Raygeas/Models/Mountains/Mountain_1.glb",
+        "name": "Mountain_1",
+        "pack": "Suntail \u00b7 stones and mountain forms"
+      },
+      {
+        "id": "R02",
+        "path": "res://assets/Raygeas/Models/Mountains/Mountain_2.glb",
+        "name": "Mountain_2",
+        "pack": "Suntail \u00b7 stones and mountain forms"
+      },
+      {
+        "id": "R03",
+        "path": "res://assets/Raygeas/Models/Mountains/Mountain_3.glb",
+        "name": "Mountain_3",
+        "pack": "Suntail \u00b7 stones and mountain forms"
+      },
+      {
+        "id": "R04",
+        "path": "res://assets/Raygeas/Models/Mountains/Mountain_4.glb",
+        "name": "Mountain_4",
+        "pack": "Suntail \u00b7 stones and mountain forms"
+      },
+      {
+        "id": "R05",
+        "path": "res://assets/Raygeas/Models/Nature/Stone_1.glb",
+        "name": "Stone_1",
+        "pack": "Suntail \u00b7 stones and mountain forms"
+      },
+      {
+        "id": "R06",
+        "path": "res://assets/Raygeas/Models/Nature/Stone_2.glb",
+        "name": "Stone_2",
+        "pack": "Suntail \u00b7 stones and mountain forms"
+      },
+      {
+        "id": "R07",
+        "path": "res://assets/Raygeas/Models/Nature/Stone_3.glb",
+        "name": "Stone_3",
+        "pack": "Suntail \u00b7 stones and mountain forms"
+      },
+      {
+        "id": "R08",
+        "path": "res://assets/Raygeas/Models/Nature/Stone_4.glb",
+        "name": "Stone_4",
+        "pack": "Suntail \u00b7 stones and mountain forms"
+      }
+    ]
+  },
+  {
+    "title": "Farmlands \u00b7 assemblies, caves and mountain forms",
+    "file": "06-F-1.png",
+    "items": [
+      {
+        "id": "F01",
+        "path": "res://assets/Polyart/Models/Farmlands/Assembled/PF_Cliff_CaveArea.glb",
+        "name": "Cliff_CaveArea",
+        "pack": "Farmlands \u00b7 assemblies, caves and mountain forms"
+      },
+      {
+        "id": "F02",
+        "path": "res://assets/Polyart/Models/Farmlands/Assembled/PF_Cliff_Group_Close.glb",
+        "name": "Cliff_Group_Close",
+        "pack": "Farmlands \u00b7 assemblies, caves and mountain forms"
+      },
+      {
+        "id": "F03",
+        "path": "res://assets/Polyart/Models/Farmlands/Assembled/PF_Cliff_Group_Far.glb",
+        "name": "Cliff_Group_Far",
+        "pack": "Farmlands \u00b7 assemblies, caves and mountain forms"
+      },
+      {
+        "id": "F04",
+        "path": "res://assets/Polyart/Models/Farmlands/Props/Cave/PF_Farm_CaveEntrance.glb",
+        "name": "CaveEntrance",
+        "pack": "Farmlands \u00b7 assemblies, caves and mountain forms"
+      },
+      {
+        "id": "F05",
+        "path": "res://assets/Polyart/Models/Farmlands/Props/Cave/PF_Farm_CaveOpenArea.glb",
+        "name": "CaveOpenArea",
+        "pack": "Farmlands \u00b7 assemblies, caves and mountain forms"
+      },
+      {
+        "id": "F06",
+        "path": "res://assets/Polyart/Models/Farmlands/Props/Cave/PF_Farm_CaveTunnel.glb",
+        "name": "CaveTunnel",
+        "pack": "Farmlands \u00b7 assemblies, caves and mountain forms"
+      },
+      {
+        "id": "F07",
+        "path": "res://assets/Polyart/Models/Farmlands/Props/Cave/PF_Farm_CollapsedRocks.glb",
+        "name": "CollapsedRocks",
+        "pack": "Farmlands \u00b7 assemblies, caves and mountain forms"
+      },
+      {
+        "id": "F08",
+        "path": "res://assets/Polyart/Models/Farmlands/Props/StoneFences/PF_Farm_StoneFence_Stone_01.glb",
+        "name": "StoneFence_Stone_01",
+        "pack": "Farmlands \u00b7 assemblies, caves and mountain forms"
+      },
+      {
+        "id": "F09",
+        "path": "res://assets/Polyart/Models/Farmlands/Props/StoneFences/PF_Farm_StoneFence_Stone_02.glb",
+        "name": "StoneFence_Stone_02",
+        "pack": "Farmlands \u00b7 assemblies, caves and mountain forms"
+      },
+      {
+        "id": "F10",
+        "path": "res://assets/Polyart/Models/Farmlands/Terrain/PF_Farm_Mountain_01.glb",
+        "name": "Mountain_01",
+        "pack": "Farmlands \u00b7 assemblies, caves and mountain forms"
+      },
+      {
+        "id": "F11",
+        "path": "res://assets/Polyart/Models/Farmlands/Terrain/PF_Farm_Mountain_02.glb",
+        "name": "Mountain_02",
+        "pack": "Farmlands \u00b7 assemblies, caves and mountain forms"
+      }
+    ]
+  },
+  {
+    "title": "Meadow \u00b7 autumn variants",
+    "file": "07-A-1.png",
+    "items": [
+      {
+        "id": "A01",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Autumn/P_Rock_01_Autumn.glb",
+        "name": "Rock_01_Autumn",
+        "pack": "Meadow \u00b7 autumn variants"
+      },
+      {
+        "id": "A02",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Autumn/P_Rock_02_Autumn.glb",
+        "name": "Rock_02_Autumn",
+        "pack": "Meadow \u00b7 autumn variants"
+      },
+      {
+        "id": "A03",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Autumn/P_Rock_03_Autumn.glb",
+        "name": "Rock_03_Autumn",
+        "pack": "Meadow \u00b7 autumn variants"
+      },
+      {
+        "id": "A04",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Autumn/P_Rock_04_Autumn.glb",
+        "name": "Rock_04_Autumn",
+        "pack": "Meadow \u00b7 autumn variants"
+      },
+      {
+        "id": "A05",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Autumn/P_Rock_05_Autumn.glb",
+        "name": "Rock_05_Autumn",
+        "pack": "Meadow \u00b7 autumn variants"
+      },
+      {
+        "id": "A06",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Autumn/P_Rock_06_Autumn.glb",
+        "name": "Rock_06_Autumn",
+        "pack": "Meadow \u00b7 autumn variants"
+      },
+      {
+        "id": "A07",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Autumn/P_Rock_07_Autumn.glb",
+        "name": "Rock_07_Autumn",
+        "pack": "Meadow \u00b7 autumn variants"
+      },
+      {
+        "id": "A08",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Autumn/P_Rock_08_Autumn.glb",
+        "name": "Rock_08_Autumn",
+        "pack": "Meadow \u00b7 autumn variants"
+      },
+      {
+        "id": "A09",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Autumn/P_Rock_09_Autumn.glb",
+        "name": "Rock_09_Autumn",
+        "pack": "Meadow \u00b7 autumn variants"
+      },
+      {
+        "id": "A10",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Autumn/P_Rock_10_Autumn.glb",
+        "name": "Rock_10_Autumn",
+        "pack": "Meadow \u00b7 autumn variants"
+      },
+      {
+        "id": "A11",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Autumn/P_Rock_11_Autumn.glb",
+        "name": "Rock_11_Autumn",
+        "pack": "Meadow \u00b7 autumn variants"
+      },
+      {
+        "id": "A12",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Autumn/P_Rock_12_Autumn.glb",
+        "name": "Rock_12_Autumn",
+        "pack": "Meadow \u00b7 autumn variants"
+      }
+    ]
+  },
+  {
+    "title": "Meadow \u00b7 winter variants",
+    "file": "08-W-1.png",
+    "items": [
+      {
+        "id": "W01",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/RockGroup_-_Winter/P_RockGroup_01_Winter.glb",
+        "name": "RockGroup_01_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W02",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/RockGroup_-_Winter/P_RockGroup_02_Winter.glb",
+        "name": "RockGroup_02_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W03",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/RockGroup_-_Winter/P_RockGroup_03_Winter.glb",
+        "name": "RockGroup_03_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W04",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/RockGroup_-_Winter/P_RockGroup_04_Winter.glb",
+        "name": "RockGroup_04_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W05",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/RockGroup_-_Winter/P_RockGroup_05_Winter.glb",
+        "name": "RockGroup_05_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W06",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/RockGroup_-_Winter/P_RockGroup_06_Winter.glb",
+        "name": "RockGroup_06_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W07",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/RockGroup_-_Winter/P_RockGroup_07_Winter.glb",
+        "name": "RockGroup_07_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W08",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Winter/P_Rock_01_Winter.glb",
+        "name": "Rock_01_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W09",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Winter/P_Rock_02_Winter.glb",
+        "name": "Rock_02_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W10",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Winter/P_Rock_03_Winter.glb",
+        "name": "Rock_03_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W11",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Winter/P_Rock_04_Winter.glb",
+        "name": "Rock_04_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W12",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Winter/P_Rock_05_Winter.glb",
+        "name": "Rock_05_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      }
+    ]
+  },
+  {
+    "title": "Meadow \u00b7 winter variants",
+    "file": "09-W-2.png",
+    "items": [
+      {
+        "id": "W13",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Winter/P_Rock_06_Winter.glb",
+        "name": "Rock_06_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W14",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Winter/P_Rock_07_Winter.glb",
+        "name": "Rock_07_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W15",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Winter/P_Rock_08_Winter.glb",
+        "name": "Rock_08_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W16",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Winter/P_Rock_09_Winter.glb",
+        "name": "Rock_09_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W17",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Winter/P_Rock_10_Winter.glb",
+        "name": "Rock_10_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W18",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Winter/P_Rock_11_Winter.glb",
+        "name": "Rock_11_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      },
+      {
+        "id": "W19",
+        "path": "res://assets/ANGRY MESH/Models/Stylized_Pack_-_Meadow_Environment/Rocks/Rocks_-_Winter/P_Rock_12_Winter.glb",
+        "name": "Rock_12_Winter",
+        "pack": "Meadow \u00b7 winter variants"
+      }
+    ]
+  },
+  {
+    "title": "Low Poly Fantasy Village \u00b7 rocks and mountains",
+    "file": "10-L-1.png",
+    "items": [
+      {
+        "id": "L01",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Landscape/Mountain_01.glb",
+        "name": "Mountain_01",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L02",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Landscape/Mountain_02.glb",
+        "name": "Mountain_02",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L03",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Landscape/Mountain_03.glb",
+        "name": "Mountain_03",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L04",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Landscape/Mountain_04.glb",
+        "name": "Mountain_04",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L05",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Landscape/Mountain_05.glb",
+        "name": "Mountain_05",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L06",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Landscape/Mountain_06.glb",
+        "name": "Mountain_06",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L07",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Nature/BigRock_01.glb",
+        "name": "BigRock_01",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L08",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Nature/BigRock_02.glb",
+        "name": "BigRock_02",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L09",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Nature/BigRock_03.glb",
+        "name": "BigRock_03",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L10",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_01.glb",
+        "name": "Rock_01",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L11",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_02.glb",
+        "name": "Rock_02",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L12",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_03.glb",
+        "name": "Rock_03",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      }
+    ]
+  },
+  {
+    "title": "Low Poly Fantasy Village \u00b7 rocks and mountains",
+    "file": "11-L-2.png",
+    "items": [
+      {
+        "id": "L13",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_04.glb",
+        "name": "Rock_04",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L14",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_05.glb",
+        "name": "Rock_05",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L15",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_06.glb",
+        "name": "Rock_06",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L16",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_07.glb",
+        "name": "Rock_07",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L17",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_08.glb",
+        "name": "Rock_08",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      },
+      {
+        "id": "L18",
+        "path": "res://assets/LowPolyFantasyVillage/Models/Nature/Rock_09.glb",
+        "name": "Rock_09",
+        "pack": "Low Poly Fantasy Village \u00b7 rocks and mountains"
+      }
+    ]
+  },
+  {
+    "title": "Quaternius \u00b7 Stylized Nature",
+    "file": "12-Q-1.png",
+    "items": [
+      {
+        "id": "Q01",
+        "path": "res://assets/StylizedNatureQuaternius/glTF/RockPath_Round_Small_1.gltf",
+        "name": "RockPath_Round_Small_1",
+        "pack": "Quaternius \u00b7 Stylized Nature"
+      },
+      {
+        "id": "Q02",
+        "path": "res://assets/StylizedNatureQuaternius/glTF/RockPath_Round_Small_2.gltf",
+        "name": "RockPath_Round_Small_2",
+        "pack": "Quaternius \u00b7 Stylized Nature"
+      },
+      {
+        "id": "Q03",
+        "path": "res://assets/StylizedNatureQuaternius/glTF/RockPath_Round_Small_3.gltf",
+        "name": "RockPath_Round_Small_3",
+        "pack": "Quaternius \u00b7 Stylized Nature"
+      },
+      {
+        "id": "Q04",
+        "path": "res://assets/StylizedNatureQuaternius/glTF/RockPath_Round_Thin.gltf",
+        "name": "RockPath_Round_Thin",
+        "pack": "Quaternius \u00b7 Stylized Nature"
+      },
+      {
+        "id": "Q05",
+        "path": "res://assets/StylizedNatureQuaternius/glTF/RockPath_Round_Wide.gltf",
+        "name": "RockPath_Round_Wide",
+        "pack": "Quaternius \u00b7 Stylized Nature"
+      },
+      {
+        "id": "Q06",
+        "path": "res://assets/StylizedNatureQuaternius/glTF/RockPath_Square_Small_1.gltf",
+        "name": "RockPath_Square_Small_1",
+        "pack": "Quaternius \u00b7 Stylized Nature"
+      },
+      {
+        "id": "Q07",
+        "path": "res://assets/StylizedNatureQuaternius/glTF/RockPath_Square_Small_2.gltf",
+        "name": "RockPath_Square_Small_2",
+        "pack": "Quaternius \u00b7 Stylized Nature"
+      },
+      {
+        "id": "Q08",
+        "path": "res://assets/StylizedNatureQuaternius/glTF/RockPath_Square_Small_3.gltf",
+        "name": "RockPath_Square_Small_3",
+        "pack": "Quaternius \u00b7 Stylized Nature"
+      },
+      {
+        "id": "Q09",
+        "path": "res://assets/StylizedNatureQuaternius/glTF/RockPath_Square_Thin.gltf",
+        "name": "RockPath_Square_Thin",
+        "pack": "Quaternius \u00b7 Stylized Nature"
+      },
+      {
+        "id": "Q10",
+        "path": "res://assets/StylizedNatureQuaternius/glTF/RockPath_Square_Wide.gltf",
+        "name": "RockPath_Square_Wide",
+        "pack": "Quaternius \u00b7 Stylized Nature"
+      },
+      {
+        "id": "Q11",
+        "path": "res://assets/StylizedNatureQuaternius/glTF/Rock_Medium_1.gltf",
+        "name": "Rock_Medium_1",
+        "pack": "Quaternius \u00b7 Stylized Nature"
+      },
+      {
+        "id": "Q12",
+        "path": "res://assets/StylizedNatureQuaternius/glTF/Rock_Medium_2.gltf",
+        "name": "Rock_Medium_2",
+        "pack": "Quaternius \u00b7 Stylized Nature"
+      }
+    ]
+  },
+  {
+    "title": "Quaternius \u00b7 Stylized Nature",
+    "file": "13-Q-2.png",
+    "items": [
+      {
+        "id": "Q13",
+        "path": "res://assets/StylizedNatureQuaternius/glTF/Rock_Medium_3.gltf",
+        "name": "Rock_Medium_3",
+        "pack": "Quaternius \u00b7 Stylized Nature"
+      }
+    ]
+  },
+  {
+    "title": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow",
+    "file": "14-U-1.png",
+    "items": [
+      {
+        "id": "U01",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_1.fbx",
+        "name": "Rock_1",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U02",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_2.fbx",
+        "name": "Rock_2",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U03",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_3.fbx",
+        "name": "Rock_3",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U04",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_4.fbx",
+        "name": "Rock_4",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U05",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_5.fbx",
+        "name": "Rock_5",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U06",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_6.fbx",
+        "name": "Rock_6",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U07",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_7.fbx",
+        "name": "Rock_7",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U08",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_Moss_1.fbx",
+        "name": "Rock_Moss_1",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U09",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_Moss_2.fbx",
+        "name": "Rock_Moss_2",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U10",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_Moss_3.fbx",
+        "name": "Rock_Moss_3",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U11",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_Moss_4.fbx",
+        "name": "Rock_Moss_4",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U12",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_Moss_5.fbx",
+        "name": "Rock_Moss_5",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      }
+    ]
+  },
+  {
+    "title": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow",
+    "file": "15-U-2.png",
+    "items": [
+      {
+        "id": "U13",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_Moss_6.fbx",
+        "name": "Rock_Moss_6",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U14",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_Moss_7.fbx",
+        "name": "Rock_Moss_7",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U15",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_Snow_1.fbx",
+        "name": "Rock_Snow_1",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U16",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_Snow_2.fbx",
+        "name": "Rock_Snow_2",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U17",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_Snow_3.fbx",
+        "name": "Rock_Snow_3",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U18",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_Snow_4.fbx",
+        "name": "Rock_Snow_4",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U19",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_Snow_5.fbx",
+        "name": "Rock_Snow_5",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U20",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_Snow_6.fbx",
+        "name": "Rock_Snow_6",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      },
+      {
+        "id": "U21",
+        "path": "res://assets/UltimateNaturePack/FBX/Rock_Snow_7.fbx",
+        "name": "Rock_Snow_7",
+        "pack": "Quaternius \u00b7 Ultimate Nature \u00b7 plain, moss and snow"
+      }
+    ]
+  },
+  {
+    "title": "BattlePackFBX \u00b7 nature rocks",
+    "file": "16-B-1.png",
+    "items": [
+      {
+        "id": "B01",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Mountain_001.fbx",
+        "name": "SFBMountain_001",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "B02",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_001.fbx",
+        "name": "SFBRock_001",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "B03",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_002.fbx",
+        "name": "SFBRock_002",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "B04",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_003.fbx",
+        "name": "SFBRock_003",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "B05",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_004.fbx",
+        "name": "SFBRock_004",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "B06",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_005.fbx",
+        "name": "SFBRock_005",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "B07",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_006.fbx",
+        "name": "SFBRock_006",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "B08",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_007.fbx",
+        "name": "SFBRock_007",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "B09",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_008.fbx",
+        "name": "SFBRock_008",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "B10",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_009.fbx",
+        "name": "SFBRock_009",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "B11",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_010.fbx",
+        "name": "SFBRock_010",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "B12",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_011.fbx",
+        "name": "SFBRock_011",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      }
+    ]
+  },
+  {
+    "title": "BattlePackFBX \u00b7 nature rocks",
+    "file": "17-B-2.png",
+    "items": [
+      {
+        "id": "B13",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_012.fbx",
+        "name": "SFBRock_012",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "B14",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_013.fbx",
+        "name": "SFBRock_013",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "B15",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_014.fbx",
+        "name": "SFBRock_014",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "B16",
+        "path": "res://assets/BattlePackFBX/FBX/General Props/Nature/SFBP_Rock_015.fbx",
+        "name": "SFBRock_015",
+        "pack": "BattlePackFBX \u00b7 nature rocks"
+      }
+    ]
+  },
+  {
+    "title": "CraftingFBX \u00b7 nature rocks",
+    "file": "18-C-1.png",
+    "items": [
+      {
+        "id": "C01",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_002.fbx",
+        "name": "SFWC_Rock_002",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "C02",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_003.fbx",
+        "name": "SFWC_Rock_003",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "C03",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_004.fbx",
+        "name": "SFWC_Rock_004",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "C04",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_005.fbx",
+        "name": "SFWC_Rock_005",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "C05",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_006.fbx",
+        "name": "SFWC_Rock_006",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "C06",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_007.fbx",
+        "name": "SFWC_Rock_007",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "C07",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_008.fbx",
+        "name": "SFWC_Rock_008",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "C08",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_009.fbx",
+        "name": "SFWC_Rock_009",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "C09",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_010.fbx",
+        "name": "SFWC_Rock_010",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "C10",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_011.fbx",
+        "name": "SFWC_Rock_011",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "C11",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_012.fbx",
+        "name": "SFWC_Rock_012",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "C12",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_013.fbx",
+        "name": "SFWC_Rock_013",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      }
+    ]
+  },
+  {
+    "title": "CraftingFBX \u00b7 nature rocks",
+    "file": "19-C-2.png",
+    "items": [
+      {
+        "id": "C13",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_014.fbx",
+        "name": "SFWC_Rock_014",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "C14",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_015.fbx",
+        "name": "SFWC_Rock_015",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      },
+      {
+        "id": "C15",
+        "path": "res://assets/CraftingFBX/FBX/General Props/Nature/SFWC_Rock_016.fbx",
+        "name": "SFWC_Rock_016",
+        "pack": "CraftingFBX \u00b7 nature rocks"
+      }
+    ]
+  },
+  {
+    "title": "FantasyMarketFBX \u00b7 nature rocks",
+    "file": "20-V-1.png",
+    "items": [
+      {
+        "id": "V01",
+        "path": "res://assets/FantasyMarketFBX/FBX/General Props/Nature/SFM_Mountain_001.fbx",
+        "name": "SFM_Mountain_001",
+        "pack": "FantasyMarketFBX \u00b7 nature rocks"
+      }
+    ]
+  },
+  {
+    "title": "KayKit Nature \u00b7 rocks \u00b7 one color per shape",
+    "file": "21-K-1.png",
+    "items": [
+      {
+        "id": "K01",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_A_Color1.gltf",
+        "name": "Rock_1_A",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K02",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_B_Color1.gltf",
+        "name": "Rock_1_B",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K03",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_C_Color1.gltf",
+        "name": "Rock_1_C",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K04",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_D_Color1.gltf",
+        "name": "Rock_1_D",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K05",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_E_Color1.gltf",
+        "name": "Rock_1_E",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K06",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_F_Color1.gltf",
+        "name": "Rock_1_F",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K07",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_G_Color1.gltf",
+        "name": "Rock_1_G",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K08",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_H_Color1.gltf",
+        "name": "Rock_1_H",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K09",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_I_Color1.gltf",
+        "name": "Rock_1_I",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K10",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_J_Color1.gltf",
+        "name": "Rock_1_J",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K11",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_K_Color1.gltf",
+        "name": "Rock_1_K",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K12",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_L_Color1.gltf",
+        "name": "Rock_1_L",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      }
+    ]
+  },
+  {
+    "title": "KayKit Nature \u00b7 rocks \u00b7 one color per shape",
+    "file": "22-K-2.png",
+    "items": [
+      {
+        "id": "K13",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_M_Color1.gltf",
+        "name": "Rock_1_M",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K14",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_N_Color1.gltf",
+        "name": "Rock_1_N",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K15",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_O_Color1.gltf",
+        "name": "Rock_1_O",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K16",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_P_Color1.gltf",
+        "name": "Rock_1",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K17",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_1_Q_Color1.gltf",
+        "name": "Rock_1_Q",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K18",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_2_A_Color1.gltf",
+        "name": "Rock_2_A",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K19",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_2_B_Color1.gltf",
+        "name": "Rock_2_B",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K20",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_2_C_Color1.gltf",
+        "name": "Rock_2_C",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K21",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_2_D_Color1.gltf",
+        "name": "Rock_2_D",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K22",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_2_E_Color1.gltf",
+        "name": "Rock_2_E",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K23",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_2_F_Color1.gltf",
+        "name": "Rock_2_F",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K24",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_2_G_Color1.gltf",
+        "name": "Rock_2_G",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      }
+    ]
+  },
+  {
+    "title": "KayKit Nature \u00b7 rocks \u00b7 one color per shape",
+    "file": "23-K-3.png",
+    "items": [
+      {
+        "id": "K25",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_2_H_Color1.gltf",
+        "name": "Rock_2_H",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K26",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_A_Color1.gltf",
+        "name": "Rock_3_A",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K27",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_B_Color1.gltf",
+        "name": "Rock_3_B",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K28",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_C_Color1.gltf",
+        "name": "Rock_3_C",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K29",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_D_Color1.gltf",
+        "name": "Rock_3_D",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K30",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_E_Color1.gltf",
+        "name": "Rock_3_E",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K31",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_F_Color1.gltf",
+        "name": "Rock_3_F",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K32",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_G_Color1.gltf",
+        "name": "Rock_3_G",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K33",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_H_Color1.gltf",
+        "name": "Rock_3_H",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K34",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_I_Color1.gltf",
+        "name": "Rock_3_I",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K35",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_J_Color1.gltf",
+        "name": "Rock_3_J",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K36",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_K_Color1.gltf",
+        "name": "Rock_3_K",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      }
+    ]
+  },
+  {
+    "title": "KayKit Nature \u00b7 rocks \u00b7 one color per shape",
+    "file": "24-K-4.png",
+    "items": [
+      {
+        "id": "K37",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_L_Color1.gltf",
+        "name": "Rock_3_L",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K38",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_M_Color1.gltf",
+        "name": "Rock_3_M",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K39",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_N_Color1.gltf",
+        "name": "Rock_3_N",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K40",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_O_Color1.gltf",
+        "name": "Rock_3_O",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K41",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_P_Color1.gltf",
+        "name": "Rock_3",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K42",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_Q_Color1.gltf",
+        "name": "Rock_3_Q",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K43",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_3_R_Color1.gltf",
+        "name": "Rock_3_R",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K44",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_4_A_Color1.gltf",
+        "name": "Rock_4_A",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K45",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_4_B_Color1.gltf",
+        "name": "Rock_4_B",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K46",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_4_C_Color1.gltf",
+        "name": "Rock_4_C",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K47",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_4_D_Color1.gltf",
+        "name": "Rock_4_D",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K48",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_4_E_Color1.gltf",
+        "name": "Rock_4_E",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      }
+    ]
+  },
+  {
+    "title": "KayKit Nature \u00b7 rocks \u00b7 one color per shape",
+    "file": "25-K-5.png",
+    "items": [
+      {
+        "id": "K49",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_4_F_Color1.gltf",
+        "name": "Rock_4_F",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K50",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_4_G_Color1.gltf",
+        "name": "Rock_4_G",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K51",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_4_H_Color1.gltf",
+        "name": "Rock_4_H",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K52",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_5_A_Color1.gltf",
+        "name": "Rock_5_A",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K53",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_5_B_Color1.gltf",
+        "name": "Rock_5_B",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K54",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_5_C_Color1.gltf",
+        "name": "Rock_5_C",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K55",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_5_D_Color1.gltf",
+        "name": "Rock_5_D",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K56",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_5_E_Color1.gltf",
+        "name": "Rock_5_E",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K57",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_5_F_Color1.gltf",
+        "name": "Rock_5_F",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K58",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_5_G_Color1.gltf",
+        "name": "Rock_5_G",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K59",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_5_H_Color1.gltf",
+        "name": "Rock_5_H",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K60",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_6_A_Color1.gltf",
+        "name": "Rock_6_A",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      }
+    ]
+  },
+  {
+    "title": "KayKit Nature \u00b7 rocks \u00b7 one color per shape",
+    "file": "26-K-6.png",
+    "items": [
+      {
+        "id": "K61",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_6_B_Color1.gltf",
+        "name": "Rock_6_B",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K62",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_6_C_Color1.gltf",
+        "name": "Rock_6_C",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K63",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_6_D_Color1.gltf",
+        "name": "Rock_6_D",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K64",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_6_E_Color1.gltf",
+        "name": "Rock_6_E",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K65",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_6_F_Color1.gltf",
+        "name": "Rock_6_F",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K66",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_6_G_Color1.gltf",
+        "name": "Rock_6_G",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      },
+      {
+        "id": "K67",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Rock_6_H_Color1.gltf",
+        "name": "Rock_6_H",
+        "pack": "KayKit Nature \u00b7 rocks \u00b7 one color per shape"
+      }
+    ]
+  },
+  {
+    "title": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape",
+    "file": "27-T-1.png",
+    "items": [
+      {
+        "id": "T01",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_A_InnerCorner_Color1.gltf",
+        "name": "Hill_Cliff_A_InnerCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T02",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_A_OuterCorner_Color1.gltf",
+        "name": "Hill_Cliff_A_OuterCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T03",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_B_Side_Color1.gltf",
+        "name": "Hill_Cliff_B_Side",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T04",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_C_InnerCorner_Color1.gltf",
+        "name": "Hill_Cliff_C_InnerCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T05",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_C_OuterCorner_Color1.gltf",
+        "name": "Hill_Cliff_C_OuterCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T06",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_D_Side_Color1.gltf",
+        "name": "Hill_Cliff_D_Side",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T07",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_E_Color1.gltf",
+        "name": "Hill_Cliff_E",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T08",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_F_Side_Color1.gltf",
+        "name": "Hill_Cliff_F_Side",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T09",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_G_InnerCorner_Color1.gltf",
+        "name": "Hill_Cliff_G_InnerCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T10",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_G_OuterCorner_Color1.gltf",
+        "name": "Hill_Cliff_G_OuterCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T11",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_H_Side_Color1.gltf",
+        "name": "Hill_Cliff_H_Side",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T12",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_I_InnerCorner_Color1.gltf",
+        "name": "Hill_Cliff_I_InnerCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      }
+    ]
+  },
+  {
+    "title": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape",
+    "file": "28-T-2.png",
+    "items": [
+      {
+        "id": "T13",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_I_OuterCorner_Color1.gltf",
+        "name": "Hill_Cliff_I_OuterCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T14",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_A_InnerCorner_Color1.gltf",
+        "name": "Hill_Cliff_Tall_A_InnerCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T15",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_A_OuterCorner_Color1.gltf",
+        "name": "Hill_Cliff_Tall_A_OuterCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T16",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_B_Side_Color1.gltf",
+        "name": "Hill_Cliff_Tall_B_Side",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T17",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_C_InnerCorner_Color1.gltf",
+        "name": "Hill_Cliff_Tall_C_InnerCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T18",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_C_OuterCorner_Color1.gltf",
+        "name": "Hill_Cliff_Tall_C_OuterCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T19",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_D_Side_Color1.gltf",
+        "name": "Hill_Cliff_Tall_D_Side",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T20",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_E_Color1.gltf",
+        "name": "Hill_Cliff_Tall_E",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T21",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_F_Side_Color1.gltf",
+        "name": "Hill_Cliff_Tall_F_Side",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T22",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_G_InnerCorner_Color1.gltf",
+        "name": "Hill_Cliff_Tall_G_InnerCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T23",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_G_OuterCorner_Color1.gltf",
+        "name": "Hill_Cliff_Tall_G_OuterCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T24",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_H_Side_Color1.gltf",
+        "name": "Hill_Cliff_Tall_H_Side",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      }
+    ]
+  },
+  {
+    "title": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape",
+    "file": "29-T-3.png",
+    "items": [
+      {
+        "id": "T25",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_I_InnerCorner_Color1.gltf",
+        "name": "Hill_Cliff_Tall_I_InnerCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      },
+      {
+        "id": "T26",
+        "path": "res://assets/KayKitNature/Assets/gltf/Color1/Hill_Cliff_Tall_I_OuterCorner_Color1.gltf",
+        "name": "Hill_Cliff_Tall_I_OuterCorner",
+        "pack": "KayKit Nature \u00b7 cliff terrain \u00b7 one color per shape"
+      }
+    ]
+  },
+  {
+    "title": "Project meshes \u00b7 CliffOutcrops",
+    "file": "30-O-1.png",
+    "items": [
+      {
+        "id": "O01",
+        "path": "res://assets/CliffOutcrops/boulder_0.glb",
+        "name": "boulder_0",
+        "pack": "Project meshes \u00b7 CliffOutcrops"
+      },
+      {
+        "id": "O02",
+        "path": "res://assets/CliffOutcrops/boulder_1.glb",
+        "name": "boulder_1",
+        "pack": "Project meshes \u00b7 CliffOutcrops"
+      },
+      {
+        "id": "O03",
+        "path": "res://assets/CliffOutcrops/boulder_2.glb",
+        "name": "boulder_2",
+        "pack": "Project meshes \u00b7 CliffOutcrops"
+      },
+      {
+        "id": "O04",
+        "path": "res://assets/CliffOutcrops/boulder_3.glb",
+        "name": "boulder_3",
+        "pack": "Project meshes \u00b7 CliffOutcrops"
+      },
+      {
+        "id": "O05",
+        "path": "res://assets/CliffOutcrops/boulder_4.glb",
+        "name": "boulder_4",
+        "pack": "Project meshes \u00b7 CliffOutcrops"
+      },
+      {
+        "id": "O06",
+        "path": "res://assets/CliffOutcrops/boulder_5.glb",
+        "name": "boulder_5",
+        "pack": "Project meshes \u00b7 CliffOutcrops"
+      }
+    ]
+  },
+  {
+    "title": "Project meshes \u00b7 CliffMossRocks",
+    "file": "31-D-1.png",
+    "items": [
+      {
+        "id": "D01",
+        "path": "res://assets/CliffMossRocks/moss_1.glb",
+        "name": "moss_1",
+        "pack": "Project meshes \u00b7 CliffMossRocks"
+      },
+      {
+        "id": "D02",
+        "path": "res://assets/CliffMossRocks/moss_10.glb",
+        "name": "moss_10",
+        "pack": "Project meshes \u00b7 CliffMossRocks"
+      },
+      {
+        "id": "D03",
+        "path": "res://assets/CliffMossRocks/moss_11.glb",
+        "name": "moss_11",
+        "pack": "Project meshes \u00b7 CliffMossRocks"
+      },
+      {
+        "id": "D04",
+        "path": "res://assets/CliffMossRocks/moss_12.glb",
+        "name": "moss_12",
+        "pack": "Project meshes \u00b7 CliffMossRocks"
+      },
+      {
+        "id": "D05",
+        "path": "res://assets/CliffMossRocks/moss_13.glb",
+        "name": "moss_13",
+        "pack": "Project meshes \u00b7 CliffMossRocks"
+      },
+      {
+        "id": "D06",
+        "path": "res://assets/CliffMossRocks/moss_14.glb",
+        "name": "moss_14",
+        "pack": "Project meshes \u00b7 CliffMossRocks"
+      },
+      {
+        "id": "D07",
+        "path": "res://assets/CliffMossRocks/moss_15.glb",
+        "name": "moss_15",
+        "pack": "Project meshes \u00b7 CliffMossRocks"
+      },
+      {
+        "id": "D08",
+        "path": "res://assets/CliffMossRocks/moss_16.glb",
+        "name": "moss_16",
+        "pack": "Project meshes \u00b7 CliffMossRocks"
+      },
+      {
+        "id": "D09",
+        "path": "res://assets/CliffMossRocks/moss_17.glb",
+        "name": "moss_17",
+        "pack": "Project meshes \u00b7 CliffMossRocks"
+      },
+      {
+        "id": "D10",
+        "path": "res://assets/CliffMossRocks/moss_2.glb",
+        "name": "moss_2",
+        "pack": "Project meshes \u00b7 CliffMossRocks"
+      },
+      {
+        "id": "D11",
+        "path": "res://assets/CliffMossRocks/moss_4.glb",
+        "name": "moss_4",
+        "pack": "Project meshes \u00b7 CliffMossRocks"
+      },
+      {
+        "id": "D12",
+        "path": "res://assets/CliffMossRocks/moss_7.glb",
+        "name": "moss_7",
+        "pack": "Project meshes \u00b7 CliffMossRocks"
+      }
+    ]
+  },
+  {
+    "title": "Project meshes \u00b7 MythosMountains",
+    "file": "32-H-1.png",
+    "items": [
+      {
+        "id": "H01",
+        "path": "res://assets/MythosMountains/buttress_tall.glb",
+        "name": "buttress_tall",
+        "pack": "Project meshes \u00b7 MythosMountains"
+      },
+      {
+        "id": "H02",
+        "path": "res://assets/MythosMountains/buttress_wide.glb",
+        "name": "buttress_wide",
+        "pack": "Project meshes \u00b7 MythosMountains"
+      },
+      {
+        "id": "H03",
+        "path": "res://assets/MythosMountains/pillar_crown.glb",
+        "name": "pillar_crown",
+        "pack": "Project meshes \u00b7 MythosMountains"
+      },
+      {
+        "id": "H04",
+        "path": "res://assets/MythosMountains/pillar_slender.glb",
+        "name": "pillar_slender",
+        "pack": "Project meshes \u00b7 MythosMountains"
+      },
+      {
+        "id": "H05",
+        "path": "res://assets/MythosMountains/pillar_split.glb",
+        "name": "pillar_split",
+        "pack": "Project meshes \u00b7 MythosMountains"
+      },
+      {
+        "id": "H06",
+        "path": "res://assets/MythosMountains/shelf_corner.glb",
+        "name": "shelf_corner",
+        "pack": "Project meshes \u00b7 MythosMountains"
+      },
+      {
+        "id": "H07",
+        "path": "res://assets/MythosMountains/shelf_end.glb",
+        "name": "shelf_end",
+        "pack": "Project meshes \u00b7 MythosMountains"
+      },
+      {
+        "id": "H08",
+        "path": "res://assets/MythosMountains/shelf_long.glb",
+        "name": "shelf_long",
+        "pack": "Project meshes \u00b7 MythosMountains"
+      }
+    ]
+  },
+  {
+    "title": "Project meshes \u00b7 MythosCliffSiding",
+    "file": "33-S-1.png",
+    "items": [
+      {
+        "id": "S01",
+        "path": "res://assets/MythosCliffSiding/inner_wall.glb",
+        "name": "inner_wall",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S02",
+        "path": "res://assets/MythosCliffSiding/outer_wall.glb",
+        "name": "outer_wall",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S03",
+        "path": "res://assets/MythosCliffSiding/wall.glb",
+        "name": "wall",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S04",
+        "path": "res://assets/MythosCliffSiding/wall_12x12.glb",
+        "name": "wall_12x12",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S05",
+        "path": "res://assets/MythosCliffSiding/wall_12x16.glb",
+        "name": "wall_12x16",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S06",
+        "path": "res://assets/MythosCliffSiding/wall_12x4.glb",
+        "name": "wall_12x4",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S07",
+        "path": "res://assets/MythosCliffSiding/wall_12x8.glb",
+        "name": "wall_12x8",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S08",
+        "path": "res://assets/MythosCliffSiding/wall_24x12.glb",
+        "name": "wall_24x12",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S09",
+        "path": "res://assets/MythosCliffSiding/wall_24x16.glb",
+        "name": "wall_24x16",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S10",
+        "path": "res://assets/MythosCliffSiding/wall_24x4.glb",
+        "name": "wall_24x4",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S11",
+        "path": "res://assets/MythosCliffSiding/wall_24x8.glb",
+        "name": "wall_24x8",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S12",
+        "path": "res://assets/MythosCliffSiding/wall_3x12.glb",
+        "name": "wall_3x12",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      }
+    ]
+  },
+  {
+    "title": "Project meshes \u00b7 MythosCliffSiding",
+    "file": "34-S-2.png",
+    "items": [
+      {
+        "id": "S13",
+        "path": "res://assets/MythosCliffSiding/wall_3x16.glb",
+        "name": "wall_3x16",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S14",
+        "path": "res://assets/MythosCliffSiding/wall_3x4.glb",
+        "name": "wall_3x4",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S15",
+        "path": "res://assets/MythosCliffSiding/wall_3x8.glb",
+        "name": "wall_3x8",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S16",
+        "path": "res://assets/MythosCliffSiding/wall_6x12.glb",
+        "name": "wall_6x12",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S17",
+        "path": "res://assets/MythosCliffSiding/wall_6x16.glb",
+        "name": "wall_6x16",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S18",
+        "path": "res://assets/MythosCliffSiding/wall_6x4.glb",
+        "name": "wall_6x4",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      },
+      {
+        "id": "S19",
+        "path": "res://assets/MythosCliffSiding/wall_6x8.glb",
+        "name": "wall_6x8",
+        "pack": "Project meshes \u00b7 MythosCliffSiding"
+      }
+    ]
+  }
+]

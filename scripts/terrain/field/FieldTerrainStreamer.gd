@@ -785,6 +785,26 @@ func _process(_delta: float) -> void:
 	_telemetry.timing(&"main/streamer", Time.get_ticks_usec() - profile_started)
 
 
+## Review harnesses only: discard these committed terrain chunks and their
+## grass so the ordinary pipeline rebuilds them with the current scripts.
+## Worker caches (regions, features, water) and feature blocks are kept.
+func rebuild_terrain(chunks: Array) -> void:
+	for c: Vector2i in chunks:
+		if not _built.has(c):
+			continue
+		_dressing_queue.invalidate_chunk(c)
+		_built[c].queue_free()
+		_built.erase(c)
+		_storey_snapshots.erase(c)
+		_dressing_trample_by_chunk.erase(c)
+		_static_trample_dirty = true
+		_terrain_generation[c] = int(_terrain_generation.get(c, 0)) + 1
+		if _grass_runtime_enabled:
+			for node: Node3D in _grass_streamer.discard_parent(c):
+				node.queue_free()
+	_requested_centre = Vector2i(1 << 30, 1 << 30)
+
+
 func _request_neighborhood(centre: Vector2i, lod_origin: Vector2,
 		startup_pending: bool) -> void:
 	# Requests retain ownership through queued, active, handoff and pending
@@ -1358,6 +1378,9 @@ static func _key_less(a: Vector2i, b: Vector2i) -> bool:
 
 func _exit_tree() -> void:
 	_restore_startup_render_limit()
+	# The cliff style is process-wide: leave the default (`chosen`) behind.
+	if not CLIFF_STYLE.is_empty():
+		preload("res://scripts/terrain/field/CliffRockStyle.gd").apply("chosen")
 	if _grass_work != null: _grass_work.stop()
 	if not _thread.is_started():
 		return
@@ -1437,6 +1460,14 @@ func _observe_stream_position(position: Vector3) -> void:
 		_arrival_support_chunks = support_chunks_at(position)
 		_telemetry.count(&"arrival_gates")
 	_last_stream_position = position
+
+## Main-thread status for review UI: whether the player is held, and how many
+## of the chunks a teleport (or spawn) waits for are ready.
+func arrival_status() -> Dictionary:
+	var ready := 0
+	for chunk: Vector2i in _arrival_support_chunks:
+		if _built.has(chunk) and _feature_square_ready(chunk): ready += 1
+	return {"frozen": _player_frozen, "ready": ready, "total": _arrival_support_chunks.size()}
 
 func _arrival_support_ready() -> bool:
 	if _arrival_support_chunks.is_empty(): return true

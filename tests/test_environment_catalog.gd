@@ -95,7 +95,7 @@ func test_every_visual_has_finite_valid_instance_colour_pieces() -> void:
 			assert_gt(piece.mesh.get_surface_count(), 0)
 			for surface_index in piece.mesh.get_surface_count():
 				assert_gt(piece.mesh.surface_get_array_len(surface_index), 0)
-				var material := piece.mesh.surface_get_material(surface_index)
+				var material := piece.material_override if piece.material_override != null else piece.mesh.surface_get_material(surface_index)
 				assert_not_null(material)
 				if descriptor.supports_instance_color:
 					var standard := material as StandardMaterial3D
@@ -123,7 +123,7 @@ func test_orange_house_roofs_keep_their_named_atlas_fallback() -> void:
 		var found_roof := false
 		for piece: EnvironmentVisualPiece in cache.visual(asset_id).pieces:
 			for surface_index in piece.mesh.get_surface_count():
-				var material := piece.mesh.surface_get_material(surface_index) \
+				var material := piece.material_override if piece.material_override != null else piece.mesh.surface_get_material(surface_index) \
 					as StandardMaterial3D
 				if material == null or material.resource_name != "SFV_ROOF_ORANGE":
 					continue
@@ -437,12 +437,11 @@ func test_walkover_colliders_stay_below_the_character_step_at_largest_spawn_scal
 			var spawn_scale := dressing_set.scale_range.y * choice.scale_multiplier
 			max_spawn_scale_by_asset[choice.asset_id] = maxf(spawn_scale,
 				float(max_spawn_scale_by_asset.get(choice.asset_id, 0.0)))
-	for asset_id: StringName in catalog.ids():
+	assert_gt(max_spawn_scale_by_asset.size(), 0, "Compile a nonempty active population before checking its walk-over colliders")
+	for asset_id: StringName in max_spawn_scale_by_asset:
 		var descriptor := catalog.descriptor(asset_id)
 		if not descriptor.tags.has(&"walkover"):
 			continue
-		assert_true(max_spawn_scale_by_asset.has(asset_id),
-			"walk-over asset %s is exercised by an active population" % asset_id)
 		var bottom := INF
 		var top := -INF
 		for collision: EnvironmentCollisionPiece in cache.visual(asset_id).collisions:

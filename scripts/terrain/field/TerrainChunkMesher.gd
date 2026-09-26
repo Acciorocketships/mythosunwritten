@@ -521,6 +521,11 @@ func compute_chunk(chunk: Vector2i, region: HeightfieldRegion,
 	var cliffs := CliffDressing.compute(region,lo_cx,lo_cz,CELLS_PER_CHUNK)
 	if phase_callback.is_valid(): phase_callback.call(chunk, &"cliff_formations")
 	var terraces := TERRACES.compute(region,lo_cx,lo_cz,CELLS_PER_CHUNK,_water_seed,features,water)
+	# The whole-wall slope (`sheet` style) hides the native pieces it covers.
+	if terraces.has("sheet_cover"):
+		cliffs = terraces.sheet_cover.uncovered(cliffs)
+		wall_arrays = terraces.sheet_cover.uncovered_faces(wall_arrays)
+		terraces.erase("sheet_cover")
 	if phase_callback.is_valid(): phase_callback.call(chunk, &"cliff_vegetation")
 	var vegetation := CLIFF_VEGETATION.compute(cliffs,terraces,region,_water_seed,features,water)
 	if phase_callback.is_valid(): phase_callback.call(chunk, &"graded_cliffs")

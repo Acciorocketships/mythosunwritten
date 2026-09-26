@@ -11,6 +11,9 @@ const DEFAULT_MAX_STEP_HEIGHT := 0.5
 @export var FRICTION := 500.0
 @export var JUMP_VELOCITY := 13.0
 @export var MAX_STEP_HEIGHT := DEFAULT_MAX_STEP_HEIGHT
+## Steepest ground the character walks up (owner, September 25: moderate
+## slopes, such as a one-storey cliff side, should be climbable).
+@export var MAX_WALK_SLOPE_DEGREES := 55.0
 
 # ---------- Swimming ----------
 # Water tiles expose an Area3D volume on WATER_LAYER. While the character's
@@ -105,6 +108,7 @@ func _ready() -> void:
 	body_model_base_pos = body_model_root.position
 	prev_body_global_y = global_position.y
 	floor_snap_length = MAX_STEP_HEIGHT + 0.01
+	floor_max_angle = deg_to_rad(MAX_WALK_SLOPE_DEGREES)
 
 # --------------------------------------------
 # Movement

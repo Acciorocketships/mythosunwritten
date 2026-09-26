@@ -134,6 +134,10 @@ static func _noise(x:float,salt:int)->float:
  return lerpf(Helper.position_hash01(Vector3(i,salt,0),salt),Helper.position_hash01(Vector3(i+1,salt,0),salt),t)
 
 static func make(pose:Transform3D,width:float,height:float,seed_value:int,region:HeightfieldRegion=null,left_end:bool=false,right_end:bool=false,ledge_joins:Array=[],foot_scale:float=SUBTLE_FOOT,abut:Vector2i=Vector2i.ZERO)->Array[Dictionary]:
+ if STYLE.sheet_only:
+  return [outline(pose,Vector3(-width*.5,0,-OUTLINE_BACK),Vector3(width*.5,height,OUTLINE_DEPTH),
+   {"kind":"wall","width":width,"height":height,"left_end":left_end,"right_end":right_end,"seed":seed_value,"abut":abut},
+   "worn_crag/%s/%s"%[pose.origin,pose.basis.z])]
  if _wall_depth.is_empty():prepare()
  var steps:=maxi(2,roundi(width/.25));var columns:Array=[];var column_bands:Array=[]
  var faces:=PackedVector3Array();var green:=PackedVector3Array();var broad_turf:Dictionary={}
@@ -421,6 +425,21 @@ static func make(pose:Transform3D,width:float,height:float,seed_value:int,region
   form.replay_recipe["ledge_joins"]=ledge_joins.duplicate(true)
  else:END_CAPS.rebuild(form)
  return [form]
+
+## Under `sheet` the slope replaces the rock, and a formation only locates
+## its foot line: a box standing in for it carries the recipe, pose and a
+## footprint for admission. Building the crag mesh was most of a chunk's cost.
+const OUTLINE_DEPTH:=4.0
+const OUTLINE_BACK:=.3
+static func outline(pose:Transform3D,lo:Vector3,hi:Vector3,recipe:Dictionary,id:String)->Dictionary:
+ var faces:=PackedVector3Array()
+ var c:=func(i:int)->Vector3:return Vector3(hi.x if i&1 else lo.x,hi.y if i&2 else lo.y,hi.z if i&4 else lo.z)
+ for quad:Array in [[0,2,6,4],[1,5,7,3],[0,4,5,1],[2,3,7,6],[0,1,3,2],[4,6,7,5]]:
+  faces.append_array(PackedVector3Array([c.call(quad[0]),c.call(quad[1]),c.call(quad[2]),c.call(quad[0]),c.call(quad[2]),c.call(quad[3])]))
+ var bounds:=pose*AABB(lo,hi-lo)
+ return {"faces":faces,"green":PackedVector3Array(),"bounds":bounds,"transform":pose,"anchor":pose.origin,
+  "replay_recipe":recipe,"id":id,"asset":&"cliff.native_crag","kind":"rock","native_crag":true,
+  "top":bounds.end.y,"base":bounds.position.y,"outline":true}
 
 static func _matched_bands(left:PackedVector3Array,right:PackedVector3Array,left_bands:Array,right_bands:Array)->Array:
  # Sampling-only cuts have no tread. They must not determine correspondence:
@@ -823,6 +842,9 @@ static func apply_moss(material:ShaderMaterial)->void:
  for key:String in moss:
   var value=moss[key]
   material.set_shader_parameter(key,load(value) if value is String else value)
+ # Study: rock exposed in the slope surface uses Meadow's authored stone.
+ material.set_shader_parameter("exposure_rock",STYLE.sheet_only and STYLE.sheet_study in ["bedrock","stamp"])
+ material.set_shader_parameter("rock_albedo",load("res://terrain/environment/textures/meadow/T_Rock_02_A.res"))
 
 static func mesh(rock:Dictionary)->ArrayMesh:
  assert(OS.get_thread_caller_id()==OS.get_main_thread_id())
@@ -842,6 +864,9 @@ static func mesh(rock:Dictionary)->ArrayMesh:
 ## No mesh, material, node or rendering-server resource is created here.
 ## `region` lets moss measure each vertex's height above the actual ground
 ## just outside the rock; without it the formation's local base plane is used.
+## Moss grade height per unit of (1 - normal.y) on the whole-wall slope: a
+## 20 degree slope stays mostly lawn, 35 degrees is moss.
+const SHEET_MOSS_RISE:=28.0
 static func mesh_arrays(rock:Dictionary,region:HeightfieldRegion=null,seed_value:int=0)->Array:
  var result:Array=[];var green:PackedVector3Array=rock.green
  var turf:Dictionary={}
@@ -859,15 +884,17 @@ static func mesh_arrays(rock:Dictionary,region:HeightfieldRegion=null,seed_value
   uv.fill(CliffDressing.ground_uv() if grass else Vector2.ZERO)
   arrays[Mesh.ARRAY_TEX_UV]=uv
   if not grass:
-   # The slope solid is smooth everywhere: its grid zigzags are not creases.
-   var normals:=_connected_normals(points,89.0 if rock.get("slope_sheet",false) else (24.0 if STYLE.facets else 50.0))
+   # The slope solid carries its own field-gradient normal at every vertex.
+   var sheet:bool=rock.get("slope_sheet",false)
+   var normals:=PackedVector3Array() if sheet else _connected_normals(points,24.0 if STYLE.facets else 50.0)
+   if sheet:normals.resize(points.size())
    var colors:=PackedColorArray();var tints:Dictionary={}
    var coordinate:float=rock.transform.origin.dot(rock.transform.basis.x)
    for i in points.size():
     var p:Vector3=points[i];var u:float=coordinate+p.x
-    var thickness:=p.z-_native_depth(u,p.y)
-    var independent:=smoothstep(.015,.18,thickness)
-    if rock.has("native_roots"):
+    var independent:=0.0 if sheet else smoothstep(.015,.18,p.z-_native_depth(u,p.y))
+    if sheet:normals[i]=rock.native_roots[p][0];independent=rock.native_roots[p][1]
+    elif rock.has("native_roots"):
      var root:Array=rock.native_roots[p]
      independent=root[1]
      normals[i]=root[0].lerp(normals[i],independent).normalized()
@@ -896,6 +923,10 @@ static func mesh_arrays(rock:Dictionary,region:HeightfieldRegion=null,seed_value
     top=-INF
     for p:Vector3 in rock.faces:top=maxf(top,(pose*p).y)
    for i in points.size():
+    # The whole-wall slope is a hillside: lawn where it is gentle (shoulders,
+    # benches, the foot), moss as it steepens. x stands for the height the
+    # moss grade reads, from the slope's steepness.
+    if sheet:rise[i]=Vector2(SHEET_MOSS_RISE*(1.0-normals[i].y),top);continue
     if region==null:rise[i]=Vector2(points[i].y,top-pose.origin.y);continue
     var world:=pose*points[i];var n:=pose.basis*normals[i]
     var out:=Vector2(n.x,n.z)

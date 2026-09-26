@@ -24,12 +24,22 @@ static var ledges := false
 static var sheet_only := false
 ## Moss detail source: raygeas | suntail | angry | polyart (CliffRockCrags.MOSS_TEXTURES).
 static var moss_texture := "raygeas"
+## Rock/slope study variant under `sheet` (owner, September 25 rethink):
+## "" = production, else the suffix of a `sheet_<variant>` style name.
+static var sheet_study := ""
+## Lip treatment study under `sheet` ("" = slope flush with the plateau;
+## `+underlip`: slope leaves the wall below a kept native lip; `+nolip`:
+## no native lips, the slope rounds straight off the plateau).
+static var lip_mode := ""
 
 
 static func apply(name: String) -> void:
 	subtle = name != "current"
-	slopes = name in ["slopes", "sheet"]
-	sheet_only = name == "sheet"
+	slopes = name == "slopes" or name.begins_with("sheet")
+	sheet_only = name.begins_with("sheet")
+	var parts := name.split("+")
+	sheet_study = parts[0].trim_prefix("sheet_") if parts[0].begins_with("sheet_") else ""
+	lip_mode = parts[1] if parts.size() > 1 else ""
 	ledges = name == "current"
 	facets = name in ["rocky", "chunky"]
 	chunky = name == "chunky"

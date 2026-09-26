@@ -30,34 +30,24 @@ uniform vec2 moss_mask_range = vec2(.0,1.0);
 // Prop mode: pack rocks set into the slopes keep their own facet texture as
 // value variation on the cliff stone, with moss on their upward faces.
 uniform bool prop_mode = false;
+uniform bool prop_inclusion = false;
 uniform sampler2D prop_albedo : source_color, filter_linear_mipmap, hint_default_white;
+// Study (September 25): rock exposed in the slope surface itself. COLOR.a is
+// the exposure; bare rock takes Meadow's authored stone, flat benches grass.
+uniform bool exposure_rock = false;
+uniform sampler2D rock_albedo : source_color, filter_linear_mipmap, repeat_enable, hint_default_white;
+uniform vec3 rock_tint = vec3(.5,.46,.42);
+uniform float rock_scale = .22;
 varying vec3 stone_position;
 varying vec2 stone_rise;
 varying vec3 stone_normal;
 // Prop mode: the slope plane under the rock (normal, offset) and ground height.
 varying vec4 prop_slope;
-vec3 triplanar(sampler2D t, vec3 p, vec3 n, float s){
- vec3 w=pow(abs(n),vec3(4.0));w/=(w.x+w.y+w.z);
- return texture(t,p.zy*s).rgb*w.x+texture(t,p.xz*s).rgb*w.y+texture(t,p.xy*s).rgb*w.z;
-}
-float moss_fbm(vec3 p){
- return .5*stone_colour_noise(p)+.3*stone_colour_noise(p*2.07+vec3(5.2,1.3,7.7))+.2*stone_colour_noise(p*4.3+vec3(2.9,8.1,3.3));
-}
-// Lawn to moss, graded by height above the ground across a wide, warped
-// boundary, with broad low-contrast patches of intermediate mixes and a
-// slow brightness/warmth drift: no bands, no hard edges.
-vec3 grown_colour(vec3 lawn,vec3 moss,float rise,vec3 p){
- float warp=(moss_fbm(p*vec3(.16,.28,.16)+vec3(3.1,7.9,1.7))-.5)*moss_blend_height;
- float low=1.0-smoothstep(-.25*moss_blend_height,1.15*moss_blend_height,rise+warp);
- float patch=moss_fbm(p*vec3(.11,.19,.11)+vec3(7.3,2.1,9.7));
- float t=clamp(low+(patch-.5)*moss_secondary*1.3,0.0,1.0);
- float drift=moss_fbm(p*vec3(.21,.3,.21)+vec3(1.9,4.4,6.2));
- return mix(moss,lawn,t)*mix(vec3(.94,.95,.97),vec3(1.06,1.05,1.0),drift);
-}
+#include "res://terrain/materials/slope_green.gdshaderinc"
 void vertex(){
  stone_position=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz;
  stone_rise=UV2;
- stone_normal=normalize((MODEL_MATRIX*vec4(NORMAL,0.0)).xyz);
+ stone_normal=normalize(MODEL_NORMAL_MATRIX*NORMAL);
  prop_slope=prop_mode?INSTANCE_CUSTOM:vec4(0.0);
 }
 void fragment(){
@@ -73,12 +63,6 @@ void fragment(){
  }
  if(moss_amount<=0.0){ALBEDO=stone;ROUGHNESS=1.0;SPECULAR=0.0;}
  else{
-  vec3 lawn=ground_style(stone_position.xz,texture(ground_palette_texture,grass_uv).rgb*COLOR.rgb);
-  vec3 detail=triplanar(moss_detail,stone_position,stone_normal,moss_detail_scale)/max(pow(moss_detail_mean,vec3(2.2)),vec3(.001));
-  detail=mix(vec3(1.0),clamp(detail,vec3(.4),vec3(1.8)),moss_detail_strength);
-  vec3 moss=lawn*moss_shade*detail;
-  // A lighter trace of the same grain keeps the lawn end from reading flat.
-  lawn*=mix(vec3(1.0),detail,.35);
   float up=smoothstep(.12,.8,stone_normal.y);
   float density;
   if(prop_mode){
@@ -87,7 +71,7 @@ void fragment(){
    // A crisp grass top on upward ledges, like the pack's own summer rocks,
    // and the slope's lawn growing over the buried base.
    float top=smoothstep(.6,.7,stone_normal.y+(noise-.5)*.25);
-   density=max(top,1.0-smoothstep(.05,.2+.3*noise,above_slope));
+   density=prop_inclusion ? 1.0-smoothstep(-.02,.08+.06*noise,above_slope) : max(top,1.0-smoothstep(.05,.2+.3*noise,above_slope));
   }
   else{
    // Relative height up this cliff; a minimum scale keeps short walls graded.
@@ -114,7 +98,23 @@ void fragment(){
    float edge=moss_fbm(stone_position*vec3(.45,.8,.45)+vec3(6.1,2.7,8.3))-.5;
    cover=max(cover,smoothstep(.35,.8,stone_normal.y+edge*.5)*moss_amount);
   }
-  ALBEDO=mix(stone,grown_colour(lawn,moss,rise,stone_position),cover);
+  if(exposure_rock&&!prop_mode){
+   vec3 w=pow(abs(stone_normal),vec3(4.0));w/=(w.x+w.y+w.z);
+   vec3 tex=texture(rock_albedo,stone_position.zy*rock_scale).rgb*w.x+texture(rock_albedo,stone_position.xz*rock_scale).rgb*w.y+texture(rock_albedo,stone_position.xy*rock_scale).rgb*w.z;
+   stone=clamp(mix(2.0*tex*rock_tint,1.0-2.0*(1.0-tex)*(1.0-rock_tint),step(vec3(.5),rock_tint)),vec3(0),vec3(1));
+   stone*=mix(.9,1.1,stone_colour_noise(stone_position*.14+vec3(17.3,3.1,29.7)));
+   float grain=moss_fbm(stone_position*vec3(.6,.9,.6)+vec3(1.3,7.7,3.1));
+   float fine=stone_colour_noise(stone_position*3.1+vec3(4.,2.,9.));
+   float bare=smoothstep(.46,.5,COLOR.a+(grain-.5)*.3+(fine-.5)*.06);
+   // Flat facets on bare rock: crisp block planes instead of smooth lighting.
+   vec3 facet=normalize(cross(dFdx(VERTEX),dFdy(VERTEX)));
+   if(dot(facet,NORMAL)<0.0)facet=-facet;
+   vec3 world_facet=normalize((INV_VIEW_MATRIX*vec4(facet,0.0)).xyz);
+   float tread=smoothstep(.8,.9,world_facet.y+(fine-.5)*.08);
+   NORMAL=normalize(mix(NORMAL,facet,bare*(1.0-tread)*.85));
+   cover=min(cover,max(1.0-bare,tread)*moss_amount);
+  }
+  ALBEDO=mix(stone,slope_green(stone_position,stone_normal,COLOR.rgb,rise),cover);
   ROUGHNESS=1.0;SPECULAR=0.0;
  }
 }

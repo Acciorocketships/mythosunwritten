@@ -36,7 +36,7 @@ func test_native_jagged_formation_population_uses_the_common_compiler() -> void:
 		assert_eq(set_data.spacing_group,&"natural_structural")
 		assert_gte(set_data.feature_clearance,2.0)
 		for choice:Dictionary in set_data.choices:
-			assert_true(choice.asset_id in [&"kaykit.rock.03",&"kaykit.rock.05"])
+			assert_true(choice.asset_id in [&"lpfv.big_rock.01",&"lpfv.big_rock.03"])
 			assert_false(choice.support_points.is_empty())
 			assert_lte(choice.ground_radius*choice.scale_multiplier*set_data.scale_range.y*2,choice.spacing_radius,"Maximum native base diameter fits shared structural spacing")
 	assert_true(found,"Jagged cliff rocks need an authored, shared-spacing population")

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_ty08d"]
+
+[resource]
+script = ExtResource("1_ty08d")
+id = &"meadow.rock.02"
+visual_path = "res://terrain/environment/visuals/meadow/rock_02.res"
+tags = Array[StringName]([&"nature", &"rock"])
+measured_aabb = AABB(-2.6689062, 0, -2.4569206, 5.3378124, 2.1148965, 4.9138412)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"ground"
+supports_instance_color = true
+provenance_id = &"angry_mesh:P_Rock_02_Summer"

@@ -6,7 +6,6 @@ const SIZES: Array[String] = ["2x2x2", "2x2x4", "2x2x8", "4x2x2", "4x2x4",
 	"4x2x8", "4x4x2", "4x4x4", "8x4x4"]
 const LAYER_SIZES: Array[String] = ["4x4x8", "8x4x2", "8x4x8", "12x6x2", "12x6x4", "12x6x8"]
 const BENCH_DEPTH := 3.5
-const ROCK := &"kaykit.rock.05"
 const TILE := 24.0
 const BURIAL := 0.12
 const WALK_DEPTH := 1.5
@@ -30,7 +29,7 @@ static func prepare() -> void:
 	_wall_recess = CliffDressing.PLACE+wall_min-TILE*.5
 	var catalog := EnvironmentCatalog.load_default()
 	var cache := EnvironmentRenderCache.new(catalog)
-	var ids: Array[StringName] = [ROCK]
+	var ids: Array[StringName] = []
 	for size: String in SIZES+LAYER_SIZES: ids.append(StringName("kaykit.terrace.%s" % size))
 	assert(cache.prepare(ids))
 	for id: StringName in ids:
@@ -44,11 +43,10 @@ static func prepare() -> void:
 		var bounds := catalog.descriptor(id).measured_aabb
 		var collision := faces
 		var cap_bounds := Rect2()
-		if id != ROCK:
-			var cap := NATIVE_CAP.measure({"id":id,"top":bounds.end.y,"transform":Transform3D.IDENTITY,"bounds":bounds},faces)
-			collision = NATIVE_CAP.collision_faces(cap,bounds.position.y)
-			cap_bounds = Rect2(cap.border[0],Vector2.ZERO)
-			for point: Vector2 in cap.border: cap_bounds = cap_bounds.expand(point)
+		var cap := NATIVE_CAP.measure({"id":id,"top":bounds.end.y,"transform":Transform3D.IDENTITY,"bounds":bounds},faces)
+		collision = NATIVE_CAP.collision_faces(cap,bounds.position.y)
+		cap_bounds = Rect2(cap.border[0],Vector2.ZERO)
+		for point: Vector2 in cap.border: cap_bounds = cap_bounds.expand(point)
 		_definitions[id] = {"bounds":bounds,"faces":faces,"collision_faces":collision,"cap_bounds":cap_bounds}
 
 static func compute(region: HeightfieldRegion, lo_x: int, lo_z: int, cells: int,
@@ -91,7 +89,6 @@ static func compute(region: HeightfieldRegion, lo_x: int, lo_z: int, cells: int,
 		if _wet_footprint(candidate.bounds,water): continue
 		var columns: Array[Dictionary] = [candidate]
 		columns.append_array(candidate.get("layers",[]))
-		var rock := _rock(region,columns.back(),world_seed)
 		for column: Dictionary in columns:
 			if crosses_grass:
 				var support := GRASS_SUPPORTS.from_native(column,_definitions[column.asset].faces)
@@ -99,16 +96,10 @@ static func compute(region: HeightfieldRegion, lo_x: int, lo_z: int, cells: int,
 					if upper.get("support_id","") != column.id: continue
 					var upper_box: AABB = upper.bounds
 					support.obstacles.append(Rect2(Vector2(upper_box.position.x,upper_box.position.z),Vector2(upper_box.size.x,upper_box.size.z)).grow(.05))
-				if not rock.is_empty():
-					var rock_box: AABB = rock.bounds
-					support.obstacles.append(Rect2(Vector2(rock_box.position.x,rock_box.position.z),Vector2(rock_box.size.x,rock_box.size.z)).grow(.05))
 				grass_supports.append(support)
 			if owned:
 				placements.append(column)
 				_append_collision_faces(faces,column.asset,column.transform)
-		if owned and not rock.is_empty():
-			placements.append(rock)
-			_append_collision_faces(faces,rock.asset,rock.transform)
 	return {"placements":placements,"collision_faces":faces,"grass_supports":grass_supports,"ground_reservations":ground_reservations}
 
 static func _wet_footprint(box: AABB, water: WaterFieldContext) -> bool:
@@ -280,19 +271,6 @@ static func _layers(region: HeightfieldRegion, base: Dictionary, anchor: Vector2
 		out.append(child)
 		parent = child
 	return out
-
-static func _rock(region: HeightfieldRegion, terrace: Dictionary, seed_value: int) -> Dictionary:
-	var box: AABB = terrace.bounds
-	var pose: Transform3D = terrace.transform
-	if minf(box.size.x,box.size.z) < 3.0 or Helper.position_hash01(pose.origin,seed_value+81503) > .16: return {}
-	var local: AABB = _definitions[ROCK].bounds
-	var scale_value := minf(box.size.x,box.size.z)*.28/maxf(local.size.x,local.size.z)
-	var point := Vector2(pose.origin.x,pose.origin.z)+(terrace.outward as Vector2)*minf(box.size.x,box.size.z)*.2
-	if TerrainSurfaceField.surface_y(region,point.x,point.y) >= terrace.top-.2: return {}
-	var rock_pose := Transform3D(Basis.from_scale(Vector3.ONE*scale_value),
-		Vector3(point.x,terrace.top-local.position.y*scale_value-.03,point.y))
-	return {"id":String(terrace.id)+"/rock","owner":terrace.owner,"kind":"rock",
-		"asset":ROCK,"transform":rock_pose,"bounds":rock_pose*local}
 
 static func _append_faces(out: PackedVector3Array, asset: StringName, pose: Transform3D) -> void:
 	for vertex: Vector3 in _definitions[asset].faces: out.append(pose*vertex)

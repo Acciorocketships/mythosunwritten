@@ -21,6 +21,8 @@ var _idx: int = -1
 var _label: Label
 var _label_until: float = 0.0
 var _snap_pending := false   # lift the player onto the ground once it streams
+var _spot_name := ""
+var _teleported_at := 0.0
 
 
 func _ready() -> void:
@@ -65,13 +67,29 @@ func _unhandled_input(event: InputEvent) -> void:
 		var l: Array = s["look"]
 		player.rotation.y = atan2(float(l[0]) - float(p[0]), float(l[1]) - float(p[2]))
 	_snap_pending = true
-	_label.text = "[%d/%d] %s" % [index + 1, _spots.size(), str(s.get("name", ""))]
+	_teleported_at = Time.get_ticks_msec() / 1000.0
+	_spot_name = "[%d/%d] %s" % [index + 1, _spots.size(), str(s.get("name", ""))]
+	_label.text = _spot_name
 	_label_until = Time.get_ticks_msec() / 1000.0 + LABEL_SECS
 
 
 func _process(_delta: float) -> void:
 	if _label.text != "" and Time.get_ticks_msec() / 1000.0 > _label_until:
 		_label.text = ""
+	if _spot_name != "" and player != null:
+		# The player stays held until every chunk around the arrival is ready,
+		# which can take minutes for an unvisited area; say so until then.
+		var streamer := get_parent().get_node_or_null("FieldTerrain")
+		if streamer != null and streamer.has_method("arrival_status"):
+			var status: Dictionary = streamer.arrival_status()
+			if status.frozen:
+				var waited := Time.get_ticks_msec() / 1000.0 - _teleported_at
+				_label.text = "%s\nloading terrain here: %d/%d areas ready, %ds. Movement unlocks when all are ready; F4 again moves on." % [
+					_spot_name, int(status.ready), maxi(int(status.total), int(status.ready)), int(waited)]
+				_label_until = Time.get_ticks_msec() / 1000.0 + LABEL_SECS
+			elif _label.text.contains("loading terrain here"):
+				_label.text = "%s\nready" % _spot_name
+				_label_until = Time.get_ticks_msec() / 1000.0 + LABEL_SECS
 	if not _snap_pending or player == null:
 		return
 	# Spot heights go stale as the terrain evolves: once the chunk under the

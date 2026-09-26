@@ -1,3 +1,78 @@
+> September 26 bedrock in game (owner chose it): `world.tscn` uses
+> `sheet_bedrock`. The slope fades to the terrain where the 14 m local relief is
+> under 2-3.2 m (level steps take no slope). Gentle slope uses the exact lawn
+> colour. Keep-out edges are resolved per node. Solid MARGIN is 4 m (no lip
+> slits). Steep slope claims its grass points (no blades poking through).
+> Slopes run 5 m into water, then sink; road/water cut faces are bedrock.
+> Only foot rocks. Lip options: `+underlip` rejected; default hides only
+> covered lips. Review: `cliff_site_review --full --shot`,
+> `FieldTerrainStreamer.rebuild_terrain`. See
+> `docs/qa/2026-09-26-bedrock-fixes/result.md`.
+
+> September 25 rock/slope rethink (study, production unchanged): four methods
+> compared at the massif under `sheet_<variant>` styles
+> (`CliffRockStyle.sheet_study`). Recommended: `sheet_bedrock`, rock exposed in
+> the slope surface itself (`CliffSlopeEnvelope._bedrock`, contour-stretched
+> Voronoi blocks with their own benches, splits and interior jut, fading to
+> nothing at each patch edge), with Meadow stone and facet normals in
+> `cliff_crag.gdshader`. Asset stamps (0.5 m solid melts the shape) and asset
+> fillets (smooth union swallows rocks) fall short. Studio:
+> `tests/harness/slope_study_review.gd`. See
+> `docs/qa/2026-09-25-rock-slope-rethink/result.md`.
+
+> September 25 outcrop direction: the owner rejected the new row-based procedural
+> exposure prototype immediately. It is removed from production. Use the older
+> `CliffRockCrags` broad masses and irregular ledges as the starting point (Git
+> `fa8b2e8b`, `5eb17926`), informed by the latest cliff reference images. Large
+> upright faces, uneven deep splits, intermittent horizontal shelves, chipped
+> edges; no repeated courses or brick wall. Meadow boulders stay at the foot.
+> Localized generated exposures, restored ledges and the reported dark green
+> terrain seams remain open. See `docs/qa/2026-09-25-outcrop-direction/result.md`.
+
+> September 25 Meadow implementation: all active landscape rock choices now use
+> Meadow 01–12 (portable catalog visuals plus convex ground-rock collision).
+> Mid-slope groups use distinct Meadow 01–05: large, compressed faces, recessed
+> outer ends, maximum roughly 0.8 m exposed projection. A shear follows the slope
+> while keeping authored grass ledges horizontal; bottom boulders remain upright.
+> Rock grass and slope share `slope_green.gdshaderinc` (palette, detail texture,
+> world mapping and grade); native warm stone stays separate. Broader envelope
+> shoulder contrast makes rolling ridges visible. Owner permits falling back to
+> dedicated cliff assets if the Meadow faces still look like ground boulders;
+> this visual choice remains subject to review. See
+> `docs/qa/2026-09-25-meadow-world/result.md`.
+
+> September 25 owner selection: use Meadow rocks. The owner likes the pack
+> store screenshot’s grass-topped summer rocks. Original Unity materials confirm
+> `S_Props.shader` blends rock albedo/normal with `T_Terrain_Grass_01_A/N/S`
+> on upward surfaces; autumn uses DryGrass, winter Snow. This shader layer
+> was omitted by the GLB converter, so the catalog’s bare-rock materials are
+> incomplete. The implementation above restores the layer with slope-matched green;
+> the bent Farmlands inclusion pass below was rejected for dark faces, repeated
+> shapes and green halos. The implementation above also adds rolling relief. See
+> `docs/qa/2026-09-25-rock-catalog/meadow-material.md`.
+
+> September 25 shallow-rock follow-up: the owner rejected the rectangular
+> Farmlands cliff masses and exposed shelves. Face inclusions now use five
+> irregular Farmlands RockMedium assets, 6–8.5 m primary widths (4.5 m at
+> tight corners, with anchor-height retries), shallow depth and recessed ends.
+> Distinct assets with substantial visible faces form each cluster (baked
+> `CliffSlopeRockFronts.gd` samples reject buried companions). Cap triangles, including
+> internal shelves, are fitted from worker-pure `CliffSlopeRockCaps.gd`
+> (bake: `tests/harness/bake_slope_rock_caps.gd`). Face moss swells are off;
+> join moss and inverse-transpose shading support the nonuniform scale.
+> 36 focused tests pass. See
+> `docs/qa/2026-09-25-shallow-rock-inclusions/result.md`.
+
+> September 25 slope outcrops: face clusters now anchor near mid-height,
+> with their long axes in the envelope tangent and tapered, buried ends;
+> basal clusters are 25% larger. Clusters retain two or three rocks, never
+> a failed singleton. The envelope is modestly wider (shoulder 1.8–4.8 m,
+> foot 3.6 m); tall relief retains a 0.7–1.4 m shoulder blend / 1.5 m foot
+> so rolling ridges survive. KayKit ambient/cliff-foot rocks are replaced
+> with LPFV choices and terrace-cap rocks are retired. Native cap checks
+> cover 4/8/16 m walls and corners. See
+> `docs/qa/2026-09-25-slope-outcrops/result.md`.
+
 > September 24 building kits (Suntail migration, branch `suntail-towns`):
 > village buildings are no longer drawn from the SFV/LPFV recipe art. A
 > pack-agnostic layer in `scripts/terrain/features/villages/kit/` realizes
@@ -105,7 +180,29 @@
 > grass. Plateau ground within 2 m in front of a lip is not a floor (the
 > terrain cell overhangs the wall line). Face rocks sit on 4 m slots and
 > outcrops are larger; placement is focused on the computed chunk. See
-> docs/qa/2026-09-23-manual/11-rocky-face/result.md.
+> docs/qa/2026-09-23-manual/11-rocky-face/result.md. In game: `world.tscn`
+> sets `FieldTerrainStreamer.CLIFF_STYLE = "sheet"` (restored to `chosen` on
+> exit), and the player spawns at the green massif (review spawn; F4 spot
+> C1 returns there). A first visit to any area waits minutes on cold road
+> planning, so spawning keeps that wait behind the loading screen. Under `sheet` the crag builders
+> return outline formations (recipe, pose, box footprint) and skip surface
+> lofts: nine massif chunks give byte-identical slope solids, with formation
+> time 4-68 s down to under 0.1 s per chunk
+> (`tests/harness/sheet_outline_compare.gd`). Ninth pass (September 25):
+> the `sheet` slope is a rounded envelope of the terrain itself
+> (`CliffSlopeEnvelope`: exact separable parabolic dilate/erode on a 0.5 m
+> world grid, 56 m pad), not per-line slopes, so it cannot stop and drop
+> anywhere. Ridges blend two shoulder widths by noise from each point's lip;
+> roads, graded ground and water cap it with a steep cut. Covered native
+> pieces and skirt quads are hidden; lawn/moss follows steepness and grass
+> grows on it (`GrassSupportSurfaces.at_grid`). Follow-up: radii tightened
+> (shoulder 1.5-4 m, foot 3 m) so slopes dress cliff sides only and flat
+> ground stays flat; rocks are sunk until their whole base is under the
+> surface; the character walks up 55 degrees. Rocks are 2-3-rock clusters on
+> 7 m slots to line ends and at outer corners; tall relief blends the
+> envelope to a tight profile so outer corners (diagonals drop two storeys
+> more) reach about as far as their edges. See
+> docs/qa/2026-09-23-manual/12-terrain-envelope/result.md.
 
 > September 22 cliff rock review (owner photos, seed 2697992464): four fixes.
 > (1) Water fronting a wall becomes its formation's support: waterline banks

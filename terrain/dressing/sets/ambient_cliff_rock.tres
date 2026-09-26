@@ -5,13 +5,13 @@
 
 [sub_resource type="Resource" id="Jagged"]
 script = ExtResource("1_choice")
-asset_id = &"kaykit.rock.03"
+asset_id = &"meadow.rock.01"
 weight = 0.5
 biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0, &"amber_heath": 1.0, &"jade_wetlands": 1.0}
 
 [sub_resource type="Resource" id="Blocky"]
 script = ExtResource("1_choice")
-asset_id = &"kaykit.rock.05"
+asset_id = &"meadow.rock.02"
 scale_multiplier = 0.75
 biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0, &"amber_heath": 1.0, &"jade_wetlands": 1.0}
 

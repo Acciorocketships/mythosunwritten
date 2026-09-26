@@ -66,6 +66,9 @@ static func corner_shift(u:float)->float:
  return 1.0-smoothstep(1.4,4.5,absf(u))
 
 static func make(pose:Transform3D,height:float,seed_value:int,region:HeightfieldRegion=null)->Dictionary:
+ if CRAGS.STYLE.sheet_only:
+  return CRAGS.outline(pose,Vector3(-6,0,-6),Vector3(CRAGS.OUTLINE_DEPTH,height,CRAGS.OUTLINE_DEPTH),
+   {"kind":"corner","height":height,"seed":seed_value},"corner_crag/%s/%s"%[pose.origin,pose.basis])
  prepare();CRAGS.prepare()
  var source:Dictionary=CRAGS.make(pose,12,height,seed_value,null,true,true,[],CRAGS.SUBTLE_CORNER_FOOT)[0]
  _repair_flat_end_caps(source)
@@ -284,6 +287,9 @@ static func _inner_native(u:float,y:float,_pose:Transform3D)->Array:
   _inner_normal[i].lerp(_inner_normal[i+1],tx).lerp(_inner_normal[i+INNER_COLUMNS].lerp(_inner_normal[i+INNER_COLUMNS+1],tx),ty).normalized()]
 
 static func make_inner(pose:Transform3D,height:float,seed_value:int,region:HeightfieldRegion=null)->Dictionary:
+ if CRAGS.STYLE.sheet_only:
+  return CRAGS.outline(pose,Vector3(-CRAGS.OUTLINE_BACK,0,-CRAGS.OUTLINE_BACK),Vector3(6,height,6),
+   {"kind":"inner_corner","height":height,"seed":seed_value},"inner_corner_crag/%s/%s"%[pose.origin,pose.basis])
  prepare();CRAGS.prepare()
  var source:Dictionary=CRAGS.make(pose,12,height,seed_value,null,true,true)[0]
  _repair_flat_end_caps(source)

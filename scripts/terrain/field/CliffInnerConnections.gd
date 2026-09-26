@@ -48,7 +48,7 @@ static func apply(forms:Array,region:HeightfieldRegion=null,features:FeatureCont
    fresh.replay_recipe.inner_connections.append(corner.anchor)
    if region==null:_restore_floor(fresh,original)
    candidates.append(fresh)
-  var ledges:=LEDGE_JOIN.controls(candidates,corner.anchor)
+  var ledges:=[] if CRAGS.STYLE.sheet_only else LEDGE_JOIN.controls(candidates,corner.anchor)
   for i in candidates.size():
    var fresh:Dictionary=candidates[i]
    if not ledges.is_empty():
@@ -63,6 +63,8 @@ static func apply(forms:Array,region:HeightfieldRegion=null,features:FeatureCont
   if not admitted:continue
   for i in parents.size():forms[parents[i][0]]=candidates[i]
   forms.erase(corner);changed+=2;connections+=1
+ # Surface lofts refine crag geometry, which the `sheet` slope replaces.
+ if CRAGS.STYLE.sheet_only:return {"connections":connections,"changed_walls":changed,"surface_connections":0,"step_surfaces":0}
  var surfaces:=SURFACE.apply(forms,region,features,reject)
  var steps:=preload("res://scripts/terrain/field/CliffStepSurface.gd").apply(forms,region,features,reject)
  return {"connections":connections+surfaces,"changed_walls":changed,"surface_connections":surfaces,"step_surfaces":steps}

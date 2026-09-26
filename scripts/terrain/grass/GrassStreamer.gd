@@ -315,6 +315,36 @@ func _evict_far() -> Array[Node3D]:
 	_pending = retained
 	return removed
 
+## Review harnesses: drop every tile of one terrain chunk so it is requested
+## again from that chunk's rebuilt sampling context.
+func discard_parent(chunk: Vector2i) -> Array[Node3D]:
+	var removed: Array[Node3D] = []
+	var tiles: Dictionary = {}
+	for tile: Vector2i in _built:
+		tiles[tile] = true
+	for tile: Vector2i in _requested:
+		tiles[tile] = true
+	for tile: Vector2i in _pending_tiles:
+		tiles[tile] = true
+	for tile: Vector2i in tiles:
+		if GrassField.parent_chunk(tile) != chunk:
+			continue
+		_generations[tile] = generation(tile) + 1
+		_requested.erase(tile)
+		_pending_tiles.erase(tile)
+		if _built.has(tile):
+			var node := _built[tile].node as Node3D
+			if node != null:
+				removed.append(node)
+			_built.erase(tile)
+	_pending = _pending.filter(func(item: Dictionary) -> bool:
+		if _pending_tiles.has(item.tile):
+			return true
+		_free_partial(item)
+		return false)
+	return removed
+
+
 static func _free_partial(item: Dictionary) -> void:
 	var node := item.get("node") as Node3D
 	if node != null:

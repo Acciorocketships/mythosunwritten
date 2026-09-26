@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DressingSet" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="DressingSet" load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingChoice.gd" id="1_choice"]
 [ext_resource type="Script" path="res://scripts/terrain/dressing/model/DressingSet.gd" id="2_set"]
@@ -6,12 +6,37 @@
 
 [sub_resource type="Resource" id="Choice_1"]
 script = ExtResource("1_choice")
-asset_id = &"kaykit.rock.01"
+asset_id = &"meadow.rock.06"
 biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0, &"amber_heath": 1.0, &"jade_wetlands": 1.0}
 
 [sub_resource type="Resource" id="Choice_2"]
 script = ExtResource("1_choice")
-asset_id = &"kaykit.rock.02"
+asset_id = &"meadow.rock.07"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0, &"amber_heath": 1.0, &"jade_wetlands": 1.0}
+
+[sub_resource type="Resource" id="Choice_3"]
+script = ExtResource("1_choice")
+asset_id = &"meadow.rock.08"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0, &"amber_heath": 1.0, &"jade_wetlands": 1.0}
+
+[sub_resource type="Resource" id="Choice_4"]
+script = ExtResource("1_choice")
+asset_id = &"meadow.rock.09"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0, &"amber_heath": 1.0, &"jade_wetlands": 1.0}
+
+[sub_resource type="Resource" id="Choice_5"]
+script = ExtResource("1_choice")
+asset_id = &"meadow.rock.10"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0, &"amber_heath": 1.0, &"jade_wetlands": 1.0}
+
+[sub_resource type="Resource" id="Choice_6"]
+script = ExtResource("1_choice")
+asset_id = &"meadow.rock.11"
+biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0, &"amber_heath": 1.0, &"jade_wetlands": 1.0}
+
+[sub_resource type="Resource" id="Choice_7"]
+script = ExtResource("1_choice")
+asset_id = &"meadow.rock.12"
 biome_affinity = {&"meadow": 1.0, &"deep_forest": 1.0, &"highland": 1.0, &"blossom_grove": 1.0, &"twilight_marsh": 1.0, &"amber_heath": 1.0, &"jade_wetlands": 1.0}
 
 [sub_resource type="Resource" id="Exposure"]
@@ -25,7 +50,7 @@ edge_softness = 0.1
 script = ExtResource("2_set")
 id = &"ambient.rock"
 feature_clearance = 2.0
-choices = Array[ExtResource("1_choice")]([SubResource("Choice_1"), SubResource("Choice_2")])
+choices = Array[ExtResource("1_choice")]([SubResource("Choice_1"), SubResource("Choice_2"), SubResource("Choice_3"), SubResource("Choice_4"), SubResource("Choice_5"), SubResource("Choice_6"), SubResource("Choice_7")])
 fill_per_cell = {&"meadow": 0.2, &"deep_forest": 0.18, &"highland": 0.75, &"blossom_grove": 0.12, &"twilight_marsh": 0.25, &"amber_heath": 0.2, &"jade_wetlands": 0.25}
 habitat_layers = Array[ExtResource("3_habitat")]([SubResource("Exposure")])
 community_channel = &"stone_species"
@@ -35,5 +60,5 @@ shore_distance_range = Vector2(0.5, 0.5)
 max_grade = 0.65
 spacing_group = &"natural_structural"
 spacing_radius = 0.6
-scale_range = Vector2(0.85, 1.15)
+scale_range = Vector2(1.6, 2.3)
 brightness_range = Vector2(0.9, 1.08)
