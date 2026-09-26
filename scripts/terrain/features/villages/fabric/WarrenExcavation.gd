@@ -52,6 +52,8 @@ var bridge_spans: Array[Array] = []
 ## measured optional flank columns. Written only by `WarrenMazeCarver
 ## ._select_bridge_spans`; another producer leaves it empty.
 var bridge_span_audit: Dictionary = {}
+## Short naturally bored passages retained independently of occupied skywalks.
+var tunnel_cells: Dictionary = {}
 var carved: Dictionary = {}
 ## Housing beside an authored street is reserved before later streets grow.
 ## These cells define the remaining construction domain, not an audit result.

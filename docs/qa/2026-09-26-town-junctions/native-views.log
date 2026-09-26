@@ -1,0 +1,16 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+TUNNELS 1 compact []
+ROOF_AUDIT { "clipped": 291, "removed": 31, "joins": 9 }
+TOWN 1 compact buildings=28 instances=1009 ms=2264
+BOUNDS cells=[P: (-36.0, 0.0, -18.0), S: (69.0, 11.25, 51.0)] payload=[P: (-37.755, -2.43, -21.0), S: (73.755, 25.53, 57.0)]
+TUNNELS 2 standard []
+ROOF_AUDIT { "clipped": 770, "removed": 37, "joins": 16 }
+TOWN 2 standard buildings=130 instances=2680 ms=10538
+BOUNDS cells=[P: (-42.0, 0.0, -30.0), S: (93.0, 24.75, 75.0)] payload=[P: (-45.0, -2.43, -31.755), S: (97.755, 34.38, 79.755)]
+TUNNELS 7 standard [(0, 0, 4)]
+ROOF_AUDIT { "clipped": 433, "removed": 18, "joins": 15 }
+TOWN 7 standard buildings=80 instances=2194 ms=5912
+BOUNDS cells=[P: (-42.0, 0.0, -30.0), S: (93.0, 24.75, 69.0)] payload=[P: (-49.5, -2.43, -31.755), S: (102.12, 34.53, 73.755)]
+REVIEW_DONE /tmp/town-junction-delivery

@@ -86,6 +86,7 @@ static func town_payload(spatial: WarrenSpatialPlan, fabric: SettlementFabricPla
 		payload = SettlementFabricAssembler.payload(fabric)
 	else:
 		var built := KitVillageBuildings.build(spatial, fabric, SuntailBuildingKit.create())
+		print("ROOF_AUDIT ", built.roof_audit)
 		payload = KitVillageBuildings.legacy_payload_without(fabric, built.replaced_units)
 		payload.append_from(built.payload)
 	payload.append_from(SettlementFabricAssembler.production_surface_bundle(
@@ -135,6 +136,7 @@ func _run() -> void:
 		if source == null:
 			print("PLAN_FAIL ", seed_value, " ", scale)
 			continue
+		print("TUNNELS ", seed_value, " ", scale, " ", source.excavation.tunnel_cells.keys())
 		var spatial := FROZEN.spatial(source, program)
 		var fabric := spatial.compiled_fabric_cache()
 		var payload := town_payload(spatial, fabric, _legacy)
@@ -222,6 +224,17 @@ func _run() -> void:
 					"%s_skywalk%d_below" % [tag, k], 70)
 				k += 1
 			print("SKYWALKS ", tag, " ", k)
+		if _views.has("tunnel"):
+			var index := 0
+			for cell: Vector3i in source.excavation.tunnel_cells:
+				var at := town.transform * (Vector3(cell.x * 2 + 0.5, cell.y, cell.z * 2 + 0.5) * FabricRecipe.CELL_SIZE)
+				for step: Vector3i in [Vector3i.RIGHT, Vector3i.BACK]:
+					if cell + step not in source.excavation.public_cells(): continue
+					var direction := Vector3(step)
+					await _shoot(stage, at - direction * 7 + Vector3.UP * 2.0,
+						at + direction * 4 + Vector3.UP * 2.7, "%s_tunnel%d" % [tag, index], 70)
+					index += 1
+
 		town.queue_free()
 		await process_frame
 	print("REVIEW_DONE ", _out)

@@ -1133,6 +1133,14 @@ static func _maze_flat_slab_cells(volume: WarrenVolumePlan) -> Dictionary:
 		as WarrenMazeSourcePlan
 	if source == null:
 		return out
+	# A deliberately bored tunnel has an owned ceiling, just as a stacked
+	# house has an owned bearing plate. Reserve the source-solid slab before
+	# residual-mass cleanup can mistake it for an uninhabited stone crown.
+	for walk: Vector3i in source.excavation.tunnel_cells:
+		var roof := source.passage_headroom_top(walk)
+		var macro := Vector3i(walk.x, roof, walk.z)
+		if source.solid_at(macro):
+			for fine: Vector3i in _fine_square(macro): out[fine] = true
 	var parents: Dictionary = {}
 	for parent_value: Variant in (WarrenMazeBlockPartitioner.stack_parents(
 			source)["parents"] as Dictionary).values():

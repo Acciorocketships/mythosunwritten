@@ -1,0 +1,14 @@
+{
+  "baseline_commit": "c82f40b6",
+  "unchanged_failing_tests": [
+    "test_the_spine_climbs_with_momentum_and_descends_past_the_summit",
+    "test_same_inputs_and_dictionary_reordering_keep_the_same_maze",
+    "test_one_pass_block_partition_uses_authored_parcel_contracts",
+    "test_add_plot_demands_a_real_door_for_a_house_or_an_asset",
+    "test_the_plaza_deck_is_a_room_not_a_lane",
+    "test_streets_keep_their_floor",
+    "test_flat_roof_parcels_relax_parity_for_every_maze_house",
+    "test_sloped_ground_seals_and_translates",
+    "test_deck_datums_equal_their_fronting_street_band"
+  ]
+}

@@ -66,13 +66,36 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 		if mass != null:
 			masses.append(mass)
 	masses.append_array(feature_masses)
+	var joins := preload("res://scripts/terrain/features/villages/kit/KitRoofJunctions.gd").join(masses,
+		func(cell: Vector2i, band: int) -> bool:
+			var p := Vector3i(cell.x, band, cell.y)
+			return not grid.contains(p) or grid.use_at(p) in [WarrenSpatialGrid.Use.OUTSIDE, WarrenSpatialGrid.Use.ALLOCATABLE])
+	var roofs: Array[Dictionary] = []
+	var walls: Array[Dictionary] = []
+	var union_script := preload("res://scripts/terrain/features/villages/kit/KitRoofMeshUnion.gd")
+	for mass: BuildingMass in masses:
+		for roof: Dictionary in mass.roofs:
+			roof.union_index = roofs.size()
+			roofs.append(roof)
+		for storey: Dictionary in mass.storeys:
+			for rect: Rect2i in BuildingDesigner.decompose(storey.cells):
+				walls.append(union_script.box_volume(AABB(Vector3(rect.position.x * kit.module_width,
+					storey.floor_band * kit.band_height(), rect.position.y * kit.module_width),
+					Vector3(rect.size.x * kit.module_width, int(storey.get("bands", 2)) * kit.band_height(), rect.size.y * kit.module_width))))
+	for floor_cell: Vector3i in spatial.route_floor_cells:
+		walls.append(union_script.box_volume(AABB(Vector3(floor_cell.x * kit.module_width,
+			floor_cell.y * kit.band_height(), floor_cell.z * kit.module_width),
+			Vector3(kit.module_width, WarrenVolumePlan.HEADROOM_BANDS * kit.band_height(), kit.module_width))))
+	var placements: Array[Dictionary] = []
 	for mass: BuildingMass in masses:
 		var own := StringName(String(mass.stable_id).trim_prefix("kit."))
 		var assembler := BuildingKitAssembler.new(kit)
 		assembler.external_blocked = func(cell: Vector2i, band: int) -> bool:
 			return _solid_other(grid, owner_at, own, Vector3i(cell.x, band, cell.y))
-		BuildingKitAssembler.append_to_payload(assembler.assemble(mass), map, payload)
-	return {"payload": payload, "replaced_units": replaced, "masses": masses}
+		placements.append_array(assembler.assemble(mass))
+	var roof_audit := union_script.append(placements, roofs, walls, kit, map, payload)
+	roof_audit["joins"] = joins
+	return {"payload": payload, "replaced_units": replaced, "masses": masses, "roof_audit": roof_audit}
 
 
 ## Balconies, overhang supports and skywalks as kit masses. Balconies also
@@ -90,8 +113,33 @@ static func _feature_masses(spatial: WarrenSpatialPlan, fabric: SettlementFabric
 				out.append(_support_mass(feature, grid, spatial.world_seed))
 	for span: Dictionary in SettlementFabricAssembler.maze_skywalk_spans(fabric):
 		out.append(_skywalk_mass(span, spatial.world_seed))
+	# The legacy fabric can classify a tunnel slab as a flat roof and subtract
+	# it from retained-terrain skin. Give those owned structural cells their
+	# own kit closure, independently of house roof/deck replacement.
+	if spatial.source_volume != null:
+		var source := spatial.source_volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
+		if source != null:
+			var ceilings := {}
+			for walk: Vector3i in source.excavation.tunnel_cells:
+				var roof := source.passage_headroom_top(walk)
+				for fine: Vector3i in WarrenVolumetricSolver._fine_square(Vector3i(walk.x, roof, walk.z)):
+					if grid.use_at(fine) == WarrenSpatialGrid.Use.STRUCTURAL_VOLUME and not fabric.retained_terrace_cells.has(fine):
+						ceilings[fine] = true
+			var tunnel := _retained_mass(ceilings, spatial.world_seed)
+			if tunnel != null:
+				tunnel.stable_id = &"kit.tunnel-ceilings"
+				for storey: Dictionary in tunnel.storeys:
+					storey.material = BuildingMass.MATERIAL_TIMBER
+					storey.default_opening = BuildingMass.OPENING_PLAIN
+					storey.soffit = true
+					tunnel.decks.append({"cells": storey.cells, "band": int(storey.floor_band) + int(storey.bands), "rails": false})
+				out.append(tunnel)
 	var retained := _retained_mass(fabric.retained_terrace_cells, spatial.world_seed)
 	if retained != null:
+		for storey: Dictionary in retained.storeys:
+			for cell: Vector2i in storey.cells:
+				if grid.use_at(Vector3i(cell.x, int(storey.floor_band) - 1, cell.y)) == WarrenSpatialGrid.Use.PUBLIC_AIR:
+					storey["soffit"] = true
 		out.append(retained)
 	return out
 

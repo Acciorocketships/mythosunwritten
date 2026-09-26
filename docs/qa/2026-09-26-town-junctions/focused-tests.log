@@ -1,0 +1,99 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_kit_roof_junctions.gd
+* test_neighbors_share_one_continuous_roof
+* test_join_respects_street_headroom_and_different_roof_datums
+* test_boring_retains_short_supported_tunnels_without_reducing_headroom
+* test_cross_house_wing_reaches_host_and_withdraws_buried_gable
+* test_triangle_subtraction_preserves_uv_and_removes_only_buried_geometry
+* test_native_cross_roof_triangles_are_trimmed_with_matching_collision
+* test_joined_native_roof_has_no_open_seam
+* test_stepped_parallel_roofs_have_no_open_seam
+8/8 passed.
+
+
+res://tests/test_town_architecture.gd
+* test_lot_houses_have_compound_and_changing_floorplates
+* test_all_frontages_keep_a_door_and_connected_rooms
+* test_balconies_and_roof_crowns_have_native_collision
+* test_large_projections_have_corner_posts_and_long_balconies
+* test_cross_gable_ridges_fit_below_their_host_roof
+* test_roof_finishes_use_wood_colour_and_board_normals
+* test_narrow_lots_keep_a_low_roof_along_the_long_axis
+* test_each_balcony_component_has_its_own_house_door
+* test_same_lot_varies_building_size_and_height
+* test_projecting_room_edges_have_floor_beams_and_sheltered_canopies
+* test_authored_canopy_roofs_do_not_intersect
+11/11 passed.
+
+
+res://tests/test_building_kit.gd
+* test_every_suntail_role_resolves_to_a_catalog_asset
+* test_world_frame_realizes_the_kit_metric
+* test_house_one_replica_matches_the_source_prefab_inventory
+* test_house_one_replica_places_the_ridge_top_where_the_prefab_does
+* test_assembly_is_deterministic
+* test_blocked_roof_turns_its_ridge_then_becomes_a_terrace
+* test_jetty_insets_every_wall_by_half_a_module
+* test_kit_town_replaces_every_building_room_unit
+8/8 passed.
+
+
+res://tests/test_september9_tunnel_arches.gd
+* test_frozen_covered_passage_receives_one_native_arch_at_its_mouth
+* test_native_collision_matches_the_frame_and_leaves_full_walking_headroom
+TUNNEL_NATIVE vertex_deviation=0.00007979211659 header=2.81519985198975 triangles=540
+* test_missing_jamb_or_ceiling_does_not_create_a_floating_arch
+* test_four_rotations_require_both_jambs_the_roof_and_real_bearings
+4/4 passed.
+
+
+res://tests/test_september10_hamlets.gd
+* test_default_population_includes_tiny_ground_settlements
+* test_small_square_has_complete_supported_houses_and_central_focus
+* test_crossroads_keep_all_real_road_handoffs_clear
+* test_canonical_records_publish_tiny_houses_without_a_second_outskirts_pass
+* test_distant_roads_do_not_enlarge_a_tiny_square
+5/5 passed.
+
+
+res://tests/test_environment_bake_geometry.gd
+* test_owned_horizontal_interface_retains_wall_sides_and_authored_channels
+* test_declared_wall_interface_tolerance_preserves_imported_source_coordinates
+* test_diagonal_corner_cut_preserves_channels_and_stays_inside_source
+* test_merge_bakes_transforms_and_combines_shared_material_surfaces
+* test_merge_keeps_distinct_materials_as_distinct_surfaces
+* test_merge_can_exclude_a_reviewed_source_mesh_by_stable_path
+* test_building_trimesh_uses_the_complete_merged_triangle_soup
+* test_axis_clip_keeps_authored_outer_end_and_opens_exact_party_seam
+* test_axis_mirror_reflects_joinery_without_a_negative_runtime_scale
+* test_ground_contacts_follow_disjoint_feet_not_the_full_visual_bounds
+* test_ramp_box_encodes_slope_in_rotation_not_nonuniform_transform_scale
+* test_resource_gates_report_the_exact_exceeded_metric
+* test_merge_preserves_unindexed_cap_after_indexed_surface_with_same_material
+* test_declared_hinge_pose_preserves_native_mesh_and_parent_transform
+14/14 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+Totals
+------
+Scripts               6
+Tests                50
+Passing Tests        50
+Asserts           13795
+Time              51.459s
+
+
+---- All tests passed! ----

@@ -280,6 +280,8 @@ func commit_mesh_visual(block: Node3D, mesh: Dictionary) -> void:
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = mesh.vertices as PackedVector3Array
 	arrays[Mesh.ARRAY_NORMAL] = mesh.normals as PackedVector3Array
+	if mesh.has("tangents"):
+		arrays[Mesh.ARRAY_TANGENT] = mesh.tangents as PackedFloat32Array
 	var uvs := mesh.uvs as PackedVector2Array
 	if bool(mesh.get("terrain_ground", false)):
 		uvs = PackedVector2Array()

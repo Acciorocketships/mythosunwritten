@@ -396,6 +396,16 @@ static func _world_surface_mesh(mesh: Dictionary, world_frame: Transform3D,
 		collision.append(world_frame * face_point)
 	out["vertices"] = vertices
 	out["normals"] = normals
+	if mesh.has("tangents"):
+		var tangents: PackedFloat32Array = mesh.tangents.duplicate()
+		for i in normals.size():
+			var tangent := world_frame.basis * Vector3(tangents[i * 4], tangents[i * 4 + 1], tangents[i * 4 + 2])
+			tangent = (tangent - normals[i] * tangent.dot(normals[i])).normalized()
+			tangents[i * 4] = tangent.x
+			tangents[i * 4 + 1] = tangent.y
+			tangents[i * 4 + 2] = tangent.z
+			tangents[i * 4 + 3] *= signf(world_frame.basis.determinant())
+		out["tangents"] = tangents
 	out["collision_faces"] = collision
 	if bool(mesh.get("terrain_ground", false)):
 		var colors := PackedColorArray()

@@ -1,0 +1,99 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+SOURCE 1 compact tunnels=0 bridges=0
+COMPILED 1 compact { "clipped": 291, "removed": 31, "joins": 9 }
+SOURCE 2 compact tunnels=0 bridges=3
+COMPILED 2 compact { "clipped": 198, "removed": 1, "joins": 9 }
+SOURCE 3 compact tunnels=0 bridges=0
+COMPILED 3 compact { "clipped": 220, "removed": 6, "joins": 11 }
+SOURCE 4 compact tunnels=0 bridges=0
+COMPILED 4 compact { "clipped": 172, "removed": 6, "joins": 6 }
+SOURCE 5 compact tunnels=0 bridges=1
+COMPILED 5 compact { "clipped": 258, "removed": 14, "joins": 3 }
+SOURCE 6 compact tunnels=0 bridges=4
+COMPILED 6 compact { "clipped": 346, "removed": 6, "joins": 14 }
+SOURCE 7 compact tunnels=0 bridges=0
+COMPILED 7 compact { "clipped": 267, "removed": 7, "joins": 12 }
+SOURCE 8 compact tunnels=0 bridges=0
+COMPILED 8 compact { "clipped": 59, "removed": 0, "joins": 3 }
+SOURCE 9 compact tunnels=0 bridges=1
+COMPILED 9 compact { "clipped": 268, "removed": 19, "joins": 7 }
+SOURCE 10 compact tunnels=0 bridges=3
+COMPILED 10 compact { "clipped": 381, "removed": 18, "joins": 21 }
+SOURCE 11 compact tunnels=0 bridges=0
+COMPILED 11 compact { "clipped": 120, "removed": 11, "joins": 3 }
+SOURCE 12 compact tunnels=0 bridges=0
+COMPILED 12 compact { "clipped": 111, "removed": 7, "joins": 1 }
+SOURCE 1 standard tunnels=1 bridges=4
+COMPILED 1 standard { "clipped": 570, "removed": 2, "joins": 20 }
+SOURCE 2 standard tunnels=0 bridges=3
+COMPILED 2 standard { "clipped": 772, "removed": 38, "joins": 16 }
+SOURCE 3 standard tunnels=0 bridges=3
+COMPILED 3 standard { "clipped": 426, "removed": 17, "joins": 9 }
+SOURCE 4 standard tunnels=0 bridges=0
+COMPILED 4 standard { "clipped": 232, "removed": 0, "joins": 11 }
+SOURCE 5 standard tunnels=0 bridges=5
+COMPILED 5 standard { "clipped": 662, "removed": 16, "joins": 25 }
+SOURCE 6 standard tunnels=0 bridges=2
+COMPILED 6 standard { "clipped": 548, "removed": 31, "joins": 10 }
+SOURCE 7 standard tunnels=1 bridges=2
+COMPILED 7 standard { "clipped": 433, "removed": 18, "joins": 15 }
+SOURCE 8 standard tunnels=1 bridges=1
+COMPILED 8 standard { "clipped": 346, "removed": 25, "joins": 11 }
+SOURCE 9 standard tunnels=2 bridges=3
+COMPILED 9 standard { "clipped": 414, "removed": 9, "joins": 17 }
+SOURCE 10 standard tunnels=0 bridges=2
+COMPILED 10 standard { "clipped": 322, "removed": 2, "joins": 10 }
+SOURCE 11 standard tunnels=0 bridges=1
+COMPILED 11 standard { "clipped": 492, "removed": 24, "joins": 14 }
+SOURCE 12 standard tunnels=0 bridges=2
+COMPILED 12 standard { "clipped": 349, "removed": 7, "joins": 9 }
+SOURCE 1 large tunnels=0 bridges=3
+COMPILED 1 large { "clipped": 732, "removed": 28, "joins": 20 }
+SOURCE 2 large tunnels=1 bridges=3
+COMPILED 2 large { "clipped": 511, "removed": 13, "joins": 12 }
+SOURCE 3 large tunnels=0 bridges=6
+COMPILED 3 large { "clipped": 655, "removed": 4, "joins": 10 }
+SOURCE 4 large tunnels=0 bridges=3
+COMPILED 4 large { "clipped": 451, "removed": 11, "joins": 13 }
+SOURCE 5 large tunnels=0 bridges=6
+COMPILED 5 large { "clipped": 804, "removed": 35, "joins": 29 }
+SOURCE 6 large tunnels=0 bridges=5
+COMPILED 6 large { "clipped": 743, "removed": 21, "joins": 17 }
+SOURCE 7 large tunnels=1 bridges=3
+COMPILED 7 large { "clipped": 570, "removed": 22, "joins": 15 }
+SOURCE 8 large tunnels=2 bridges=1
+COMPILED 8 large { "clipped": 389, "removed": 15, "joins": 13 }
+SOURCE 9 large tunnels=0 bridges=6
+COMPILED 9 large { "clipped": 744, "removed": 13, "joins": 26 }
+SOURCE 10 large tunnels=0 bridges=4
+COMPILED 10 large { "clipped": 627, "removed": 12, "joins": 18 }
+SOURCE 11 large tunnels=0 bridges=6
+COMPILED 11 large { "clipped": 621, "removed": 23, "joins": 16 }
+SOURCE 12 large tunnels=0 bridges=1
+COMPILED 12 large { "clipped": 224, "removed": 8, "joins": 7 }
+SOURCE 1 grand tunnels=0 bridges=6
+COMPILED 1 grand { "clipped": 1048, "removed": 29, "joins": 35 }
+SOURCE 2 grand tunnels=0 bridges=7
+COMPILED 2 grand { "clipped": 924, "removed": 35, "joins": 40 }
+SOURCE 3 grand tunnels=0 bridges=5
+COMPILED 3 grand { "clipped": 776, "removed": 28, "joins": 24 }
+SOURCE 4 grand tunnels=0 bridges=4
+COMPILED 4 grand { "clipped": 636, "removed": 20, "joins": 18 }
+SOURCE 5 grand tunnels=0 bridges=7
+COMPILED 5 grand { "clipped": 730, "removed": 33, "joins": 19 }
+SOURCE 6 grand tunnels=2 bridges=7
+COMPILED 6 grand { "clipped": 1017, "removed": 26, "joins": 36 }
+SOURCE 7 grand tunnels=3 bridges=6
+COMPILED 7 grand { "clipped": 505, "removed": 4, "joins": 14 }
+SOURCE 8 grand tunnels=0 bridges=2
+COMPILED 8 grand { "clipped": 907, "removed": 31, "joins": 31 }
+SOURCE 9 grand tunnels=0 bridges=7
+COMPILED 9 grand { "clipped": 770, "removed": 27, "joins": 18 }
+SOURCE 10 grand tunnels=1 bridges=3
+COMPILED 10 grand { "clipped": 707, "removed": 33, "joins": 18 }
+SOURCE 11 grand tunnels=0 bridges=3
+COMPILED 11 grand { "clipped": 597, "removed": 22, "joins": 20 }
+SOURCE 12 grand tunnels=0 bridges=4
+COMPILED 12 grand { "clipped": 553, "removed": 21, "joins": 25 }
+SURVEY total_tunnel_cells=15 covered=15 failures=0

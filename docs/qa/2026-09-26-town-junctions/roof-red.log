@@ -1,0 +1,46 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_kit_roof_junctions.gd
+* test_neighbors_share_one_continuous_roof
+    [Failed]:  [0] expected to equal [1]:
+      at line 10
+    [Failed]:  [2] expected to equal [1]:
+      at line 11
+    [Failed]:  [RECT2I([P: (0, 0), S: (4, 4)])] expected to equal [RECT2I([P: (0, 0), S: (8, 4)])]:
+      at line 12
+* test_join_respects_street_headroom_and_different_roof_datums
+1/2 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_kit_roof_junctions.gd
+- test_neighbors_share_one_continuous_roof
+    [Failed]:  [0] expected to equal [1]:
+          at line 10
+    [Failed]:  [2] expected to equal [1]:
+          at line 11
+    [Failed]:  [RECT2I([P: (0, 0), S: (4, 4)])] expected to equal [RECT2I([P: (0, 0), S: (8, 4)])]:
+          at line 12
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts             2/5
+Time              0.446s
+
+
+---- 1 failing tests ----

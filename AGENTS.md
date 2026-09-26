@@ -2495,6 +2495,16 @@
 > `docs/qa/2026-09-26-town-projections/result.md`; size/beam/canopy follow-up:
 > `docs/qa/2026-09-26-town-silhouettes/result.md`.
 
+> September 26 city junctions: `KitRoofJunctions` reconciles compatible roofs
+> across house ownership; `KitRoofMeshUnion` trims native triangles at roof,
+> wall and public-headroom intersections with matching collision. Unchanged
+> pieces remain instanced. Rebuild its worker data with
+> `tests/harness/suntail/bake_roof_geometry.gd` after kit geometry changes.
+> Boring retains short supported ground tunnels; owned ceiling slabs survive
+> composition and receive timber closures. Bridge-house quotas allow two more
+> supported spans per scale. These are geometry/seed rules, not site exceptions.
+> Review: `docs/qa/2026-09-26-town-junctions/result.md`.
+
 
 > September 7 support construction: cantilever courses select one authored
 > profile from previously reserved feature envelopes. They share one timber

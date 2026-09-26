@@ -25,7 +25,10 @@ func assemble(mass: BuildingMass) -> Array[Dictionary]:
 	for index in mass.storeys.size():
 		_assemble_storey(ctx, index)
 	for wing: Dictionary in mass.roofs:
+		var start := out.size()
 		_assemble_roof(ctx, wing)
+		for i in range(start, out.size()):
+			out[i]["roof_index"] = int(wing.get("union_index", -1))
 	for deck: Dictionary in mass.decks:
 		_assemble_deck(ctx, deck)
 	for item: Dictionary in mass.decor:
@@ -298,7 +301,7 @@ func _assemble_storey(ctx: Dictionary, index: int) -> void:
 						int(run.line), along), int(run.dir))] = true
 	var openings: Dictionary = storey.openings
 	var plain_every := int(storey.get("plain_every", 0))
-	if floor_band > mass.ground_band:
+	if floor_band > mass.ground_band or bool(storey.get("soffit", false)):
 		_assemble_soffit(ctx, storey, y)
 	var bands := int(storey.get("bands", 2))
 	var tint := storey.get("tint", Color.WHITE) as Color

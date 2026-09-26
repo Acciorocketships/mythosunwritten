@@ -11,12 +11,8 @@ const MAX_ALLEY_STRAIGHT_RUN := WarrenMazeSourcePlan.MAX_ALLEY_STRAIGHT_RUN
 const MIN_ALLEY_CELLS := 3
 const MAX_ALLEY_CELLS := 8
 const SPINE_VISIT_BUDGET := 40000
-## Controller ruling (2026-08-22, task-2 follow-up): a passage cell now
-## opens to sky by default -- the block-thickness heuristic that used to
-## gate this was starving bridge-span eligibility, since "would-be-open"
-## cells were concentrated at the massif's thin, peripheral edge where a
-## genuine two-block-connecting span is structurally rare. See
-## task-2-report.md for the before/after per-seed counts.
+## Bridge candidates are evaluated before daylight cuts. Short grounded
+## tunnels are retained afterwards without consuming the occupied-span quota.
 const MIN_LOOP_JOINS := 1
 const MAX_LOOP_JOINS := 2
 const MAX_LOOP_CONNECTOR_CELLS := 8
@@ -1340,12 +1336,9 @@ static func _alley_stride_is_legal(massif: WarrenMassif,
 static func _open_passages_to_air(world_seed: int, massif: WarrenMassif,
 		excavation: WarrenExcavation, market_zone: Array,
 		profile: WarrenVillageScaleProfile) -> void:
-	## Controller ruling (2026-08-22): a passage cell opens to sky by
-	## default now. The three exceptions that stay covered are the market
-	## (`market_zone`, forced covered rather than forced open), a
-	## `_column_is_public_facade` over/under crossing (opening it would erase
-	## a wall an earlier crossing already proved), and a seeded bridge span
-	## cell (its retained overhead mass is the skywalk deck itself).
+	## Keep daylight between short supported tunnels. Occupied skywalks retain
+	## their existing source proof; natural tunnels are selected afterwards and
+	## never consume a skywalk quota or change the authored walk/headroom.
 	var market_set: Dictionary = {}
 	for value: Variant in market_zone:
 		market_set[value as Vector3i] = true
@@ -1375,6 +1368,9 @@ static func _open_passages_to_air(world_seed: int, massif: WarrenMassif,
 	# forever, violating open-by-default.
 	var carve_cap := _build_bridge_carve_cap(bridged,
 		excavation.bridge_span_audit.get("seeded", []) as Array)
+	var tunnel_caps := _natural_tunnel_caps(world_seed, massif, excavation, market_set, bridged)
+	for column: Vector2i in tunnel_caps:
+		_tighten_carve_cap(carve_cap, column, tunnel_caps[column])
 	for cell: Vector3i in excavation.public_cells():
 		if bridged.has(cell):
 			continue
@@ -1389,6 +1385,58 @@ static func _open_passages_to_air(world_seed: int, massif: WarrenMassif,
 				ceiling = mini(ceiling, cap)
 		for band in range(cell.y, ceiling):
 			excavation.carved[Vector3i(cell.x, band, cell.z)] = true
+
+
+## Three-cell bays in nine-cell daylight intervals. Straight, level runs only;
+## two continuous side walls must bear the roof, and the whole headroom slot
+## remains carved. A capped column also protects the roof from lower crossings.
+static func _natural_tunnel_caps(seed_value: int, massif: WarrenMassif,
+		excavation: WarrenExcavation, excluded: Dictionary, bridged: Dictionary) -> Dictionary:
+	var caps := {}
+	excavation.tunnel_cells.clear()
+	var walks: Array = [excavation.route]
+	for lane: Dictionary in excavation.lanes: walks.append(lane.cells)
+	var phase := posmod(seed_value, 9)
+	for walk: Array in walks:
+		for i in range(1, walk.size() - 1):
+			if posmod(i + phase, 9) >= 3: continue
+			var cell: Vector3i = walk[i]
+			var step: Vector3i = cell - (walk[i - 1] as Vector3i)
+			if step.y != 0 or absi(step.x) + absi(step.z) != 1 or walk[i + 1] - cell != step: continue
+			if excluded.has(cell) or bridged.has(cell): continue
+			var column := Vector2i(cell.x, cell.z)
+			# Ground passages use the solid side walls. Elevated occupied
+			# crossings belong to the bridge-house support proof instead.
+			if cell.y != massif.base_at(column): continue
+			var side := Vector2i(-step.z, step.x)
+			var width: Array[Vector2i] = [column]
+			# Two-cell-wide streets need their outer jambs, not a fictitious
+			# wall in the middle of the walk. Retain both halves together.
+			for sign_value in [-1, 1]:
+				var neighbor: Vector3i = cell + Vector3i(side.x, 0, side.y) * sign_value
+				if neighbor in excavation.public_cells() and not excluded.has(neighbor) and not bridged.has(neighbor):
+					width.append(Vector2i(neighbor.x, neighbor.z))
+			if width.size() > 2: continue
+			var roof := cell.y + excavation.slot_bands(cell)
+			for c: Vector2i in width:
+				roof = maxi(roof, cell.y + excavation.slot_bands(Vector3i(c.x, cell.y, c.y)))
+			var supported := roof >= cell.y + WarrenExcavation.HEADROOM_BANDS
+			var jambs: Dictionary = {}
+			for c: Vector2i in width:
+				if massif.top_at(c) < roof + 2: supported = false
+				for y in range(roof, roof + 2):
+					if excavation.carved.has(Vector3i(c.x, y, c.y)): supported = false
+				for jamb: Vector2i in [c + side, c - side]:
+					if jamb not in width: jambs[jamb] = true
+			for jamb: Vector2i in jambs:
+				for y in range(cell.y, roof + 2):
+					if not _column_is_solid_at(massif, excavation, jamb, y): supported = false
+			if not supported: continue
+			for c: Vector2i in width:
+				excavation.tunnel_cells[Vector3i(c.x, cell.y, c.y)] = true
+				_tighten_carve_cap(caps, c, roof)
+			for jamb: Vector2i in jambs: _tighten_carve_cap(caps, jamb, cell.y)
+	return caps
 
 
 static func _build_bridge_carve_cap(bridged: Dictionary,
