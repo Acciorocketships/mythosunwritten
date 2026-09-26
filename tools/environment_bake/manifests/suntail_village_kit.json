@@ -44,15 +44,15 @@
    1.0
   ],
   "Roof_Red": [
-   0.9,
-   0.36,
-   0.22,
+   0.58,
+   0.4,
+   0.26,
    1.0
   ],
   "Roof_Blue": [
-   0.44,
-   0.56,
-   0.8,
+   0.4,
+   0.34,
+   0.27,
    1.0
   ],
   "FlowerPot": [
@@ -63,8 +63,8 @@
   ]
  },
  "material_roughness": {
-  "Roof_Red": 0.62,
-  "Roof_Blue": 0.58,
+  "Roof_Red": 0.85,
+  "Roof_Blue": 0.9,
   "Wall": 0.9,
   "Stone_Wall": 0.85,
   "Stone": 0.85,
@@ -2588,5 +2588,15 @@
    "max_collision_triangles": 0,
    "max_collision_pieces": 0
   }
- ]
+ ],
+ "material_textures": {
+  "Roof_Red": {
+   "albedo_texture": "res://assets/Raygeas/Textures/Building_Modules/Boards_AlbedoSmoothness.png",
+   "normal_texture": "res://assets/Raygeas/Textures/Building_Modules/Boards_Normal.png"
+  },
+  "Roof_Blue": {
+   "albedo_texture": "res://assets/Raygeas/Textures/Building_Modules/Boards_AlbedoSmoothness.png",
+   "normal_texture": "res://assets/Raygeas/Textures/Building_Modules/Boards_Normal.png"
+  }
+ }
 }

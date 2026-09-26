@@ -50,9 +50,13 @@ static func design(kit: BuildingKit, nx: int, nz: int, dir: int,
 	rng.seed = seed
 	var mass := BuildingMass.new()
 	mass.seed = seed
-	var cells := BuildingMass.rect_cells(Rect2i(0, 0, nx, nz))
+	# Design inside the already reserved lot. A broad rear hall and a front
+	# wing make an L or T; the next floor can move its wing, leaving a usable
+	# terrace and a bracketed corner above the lower recess.
 	var storey_count := 2 if rng.randf() < 0.85 or mini(nx, nz) < 3 else 3
+	var shape := posmod(seed, 5)
 	for s in storey_count:
+		var cells := _floorplate(nx, nz, dir, shape, s)
 		mass.add_storey(s * 2, cells, BuildingMass.MATERIAL_TIMBER)
 	var door_cell: Vector2i
 	match dir:
@@ -62,8 +66,53 @@ static func design(kit: BuildingKit, nx: int, nz: int, dir: int,
 		_: door_cell = Vector2i(nx / 2, 0)
 	var ground: Dictionary = mass.storeys[0]
 	ground.openings[BuildingMass.edge_key(door_cell, dir)] = BuildingMass.OPENING_DOOR
-	BuildingDesigner.new(kit).articulate(mass, {"terrain_storey": 0})
+	BuildingDesigner.new(kit).articulate(mass, {"terrain_storey": 0, "terraced": true,
+		"roof_axis": dir % 2 if mini(nx, nz) >= 3 else -1})
+	_support_projections(mass)
 	return mass
+
+
+static func _floorplate(nx: int, nz: int, dir: int, shape: int, floor: int) -> Dictionary:
+	var cells := BuildingMass.rect_cells(Rect2i(0, 0, nx, nz))
+	var width := nz if dir % 2 == 0 else nx
+	var depth := nx if dir % 2 == 0 else nz
+	if width < 3 or depth < 3:
+		return cells
+	# Keep the middle frontage cell (the planned entrance) on every floor.
+	# Two-module wings preserve room width and a complete gable profile.
+	var wing_width := maxi(2, width / 2 + 1)
+	var left := 0
+	if shape == 1 or shape == 4:
+		left = width - wing_width
+	elif shape == 2:
+		left = (width - wing_width) / 2
+	if floor > 0 and shape >= 3:
+		left = width - wing_width if shape == 3 else 0
+	if shape == 0 and floor == 0:
+		return cells
+	var cut_depth := 1 if shape >= 3 else maxi(1, depth - 2)
+	for cell: Vector2i in cells.keys():
+		var u := cell.y if dir % 2 == 0 else cell.x
+		var v := cell.x if dir % 2 == 0 else cell.y
+		if dir < 2:
+			v = depth - 1 - v
+		if v < cut_depth and (u < left or u >= left + wing_width):
+			cells.erase(cell)
+	return cells
+
+
+static func _support_projections(mass: BuildingMass) -> void:
+	for i in range(1, mass.storeys.size()):
+		var upper: Dictionary = mass.storeys[i]
+		var lower: Dictionary = mass.storeys[i - 1].cells
+		for cell: Vector2i in upper.cells:
+			if lower.has(cell): continue
+			for dir in 4:
+				if not lower.has(cell + BuildingMass.DIRS[dir]): continue
+				mass.decor.append({"kind": &"bracket", "dir": (dir + 2) % 4,
+					"centre": Vector2(cell) + Vector2(0.5, 0.5)
+						+ Vector2(BuildingMass.DIRS[dir]) * 0.5,
+					"y_band": int(upper.floor_band)})
 
 
 static func _nearest_dir(v: Vector2) -> int:

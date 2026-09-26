@@ -2478,6 +2478,18 @@
 
 # Project Instructions (AGENTS.md)
 
+> September 26 town architecture: lot houses use reserved-footprint L/T plans,
+> independently stepped upper floors, railed crown terraces with doors, and
+> bracketed one-module projections (`KitStandaloneHouse`). Their street-facing
+> main roof wing is selected before rear wings so cross gables cannot pierce
+> a lower host ridge. Sealed warren floor ownership stays planner-authored.
+> `BuildingDesigner` adds more canopies, flowers, ivy and roof details.
+> Suntail's historical red/blue roof IDs now bake warm/weathered wood board
+> albedo and normals through manifest `material_textures`; do not restore
+> coloured tile textures during a rebake. Review and validation are recorded
+> in `docs/qa/2026-09-26-town-architecture/result.md`.
+
+
 > September 7 support construction: cantilever courses select one authored
 > profile from previously reserved feature envelopes. They share one timber
 > frame and no longer enumerate 2^N course combinations or backtrack across

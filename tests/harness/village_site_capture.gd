@@ -13,6 +13,7 @@ const IDLE_SETTLE_SECONDS := 3.0
 
 var _seed := 2697992464
 var _at := Vector3(-552.0, 6.0, 1133.0)
+var _reported := false
 var _radius := 1
 var _grass := false
 var _show_character := false
@@ -58,6 +59,8 @@ func _read_args() -> void:
 				_at = _parse_v3(next)
 			"--radius":
 				_radius = int(next)
+			"--reported":
+				_reported = true
 			"--grass":
 				_grass = true
 			"--character":
@@ -107,6 +110,11 @@ func _ground_y(xz: Vector2) -> float:
 
 
 func _add_auto_views() -> void:
+	if _reported:
+		var player := Vector3(235.1, 12.0, 449.2)
+		var hit := Vector3(227.2, 12.0, 468.0)
+		_views.append({"id": "reported", "position": ReviewCam.solve_cam(player, hit, 26.0, 16.0, 1.0),
+			"target": player + Vector3.UP, "fov": 75.0})
 	var centre := Vector3(_at.x, _ground_y(Vector2(_at.x, _at.z)), _at.z)
 	if _orbit.x > 0.0:
 		for k in 8:

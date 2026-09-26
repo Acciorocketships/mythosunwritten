@@ -11,6 +11,9 @@ static func masses(set_name: String, count: int, seed: int,
 			out.append(deep_hall())
 			out.append(l_house())
 			out.append(tall_house())
+		"lots":
+			for i in count:
+				out.append(KitStandaloneHouse.design(kit, 4 + i % 2, 3 + (i / 2) % 2, 1, seed * 1000 + i))
 		"designer":
 			var designer := BuildingDesigner.new(kit)
 			for i in count:

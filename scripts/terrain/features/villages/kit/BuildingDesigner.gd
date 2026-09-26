@@ -62,6 +62,8 @@ func design_standalone(seed: int) -> BuildingMass:
 ## Articulate a mass whose footprints are fixed. `context`:
 ##   terrain_storey: index of the storey standing on the ground (-1 none)
 ##   colour: roof colour override
+##   terraced: exposed lower crowns become balconies
+##   roof_axis: prefer complete longitudinal wings along this axis (0/1)
 ##   street_edges: Array[Vector3i] ground-storey edges facing public ways
 func articulate(mass: BuildingMass, context: Dictionary) -> void:
 	var rng := _rng(hash([mass.seed, &"articulate"]))
@@ -75,7 +77,8 @@ func articulate(mass: BuildingMass, context: Dictionary) -> void:
 	_assign_jetties(mass, terrain_storey, rng)
 	_assign_facades(mass, rng, colour)
 	_assign_finish(mass, rng, colour)
-	_assign_roofs(mass, rng, colour)
+	_assign_roofs(mass, rng, colour, bool(context.get("terraced", false)),
+		int(context.get("roof_axis", -1)))
 	_assign_dressing(mass, rng, context)
 
 
@@ -103,15 +106,18 @@ func _assign_jetties(mass: BuildingMass, terrain_storey: int,
 			continue
 		if not _same_cells(storey.cells, above.cells):
 			continue
+		var bearing := _storey_at(mass, int(storey.floor_band) - 2)
+		if not bearing.is_empty() and not _same_cells(bearing.cells, storey.cells):
+			continue
 		if not _erodable(storey.cells):
 			continue
 		# A jetty on a two-module plan leaves a one-module stalk: a tower.
 		var extent := _bounds(storey.cells)
 		if mini(extent.size.x, extent.size.y) < 3:
 			continue
-		# The ground storey nearly always carries the jetty; higher storeys
+		# Ground storeys alternate flush canopy fronts with jetties; higher storeys
 		# jetty only when the one below did not (a single overhang reads best).
-		var chance := 0.9 if index == terrain_storey else 0.25
+		var chance := 0.55 if index == terrain_storey else 0.25
 		var below := _storey_at(mass, int(storey.floor_band) - 2)
 		if not below.is_empty() and bool(below.get("inset", false)):
 			chance = 0.0
@@ -191,7 +197,7 @@ func _bay_clear(_mass: BuildingMass, slot: Dictionary, band: int) -> bool:
 ## A wing whose roof volume would enter kept-clear space turns its ridge; if
 ## neither ridge fits, the crown becomes a railed timber roof terrace.
 func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
-		colour: StringName) -> void:
+		colour: StringName, terraced := false, ridge_axis := -1) -> void:
 	mass.roofs.clear()
 	mass.decks.clear()
 	for storey: Dictionary in mass.storeys:
@@ -208,9 +214,15 @@ func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
 			exposed[cell] = true
 		if exposed.is_empty():
 			continue
+		if terraced and not covering.is_empty():
+			_add_terrace(mass, exposed, covering, top_band)
+			continue
 		var wings: Array = []
-		for rect: Rect2i in decompose(exposed):
-			wings.append_array(split_deep(rect, rng))
+		for rect: Rect2i in decompose(exposed, ridge_axis):
+			if ridge_axis >= 0:
+				wings.append({"rect": rect, "axis": ridge_axis})
+			else:
+				wings.append_array(split_deep(rect, rng))
 		var main_rect := Rect2i()
 		var have_main := false
 		var main_axis := 0
@@ -241,11 +253,31 @@ func _assign_roofs(mass: BuildingMass, rng: RandomNumberGenerator,
 				main_rect = rect
 				main_axis = axis
 				have_main = true
-				wing.chimney = rng.randf() < 0.5
+				wing.chimney = rng.randf() < 0.65
+				wing.ridge_peaks = rng.randf() < 0.35
 				wing.chimney_end = rng.randi_range(0, 1)
 			else:
 				_join_cross_wing(wing, main_rect, main_axis)
 			_place_dormers(wing, rng)
+
+
+## Lower wings become accessible balconies when the next floor steps back.
+## Shared edges belong to the house wall; only the exposed sides get rails.
+func _add_terrace(mass: BuildingMass, cells: Dictionary, covering: Dictionary,
+		band: int) -> void:
+	var open_edges := {}
+	var upper := _storey_at(mass, band)
+	var door_added := false
+	for cell: Vector2i in cells:
+		for dir in 4:
+			var next := cell + BuildingMass.DIRS[dir]
+			if not covering.has(next): continue
+			open_edges[BuildingMass.edge_key(cell, dir)] = true
+			if not door_added and not upper.is_empty():
+				upper.openings[BuildingMass.edge_key(next, (dir + 2) % 4)] = BuildingMass.OPENING_DOOR
+				door_added = true
+	mass.decks.append({"cells": cells, "band": band, "rails": true,
+		"open_edges": open_edges})
 
 
 func _roof_fits(mass: BuildingMass, rect: Rect2i, axis: int, eave_band: int) -> bool:
@@ -403,8 +435,8 @@ func _assign_dressing(mass: BuildingMass, rng: RandomNumberGenerator,
 	# corners and blank walls), others are plain: a per-house lushness.
 	var lush := rng.randf()
 	lush *= lush
-	var box_chance := 0.04 + 0.5 * lush
-	var ivy_chance := 0.05 + 0.45 * lush
+	var box_chance := 0.25 + 0.5 * lush
+	var ivy_chance := 0.18 + 0.45 * lush
 	for index in mass.storeys.size():
 		var storey: Dictionary = mass.storeys[index]
 		var y := float(int(storey.floor_band)) * band_h
@@ -423,7 +455,7 @@ func _assign_dressing(mass: BuildingMass, rng: RandomNumberGenerator,
 					and (above.cells as Dictionary).has(Vector2i(slot.edge.x, slot.edge.y)) \
 					and StringName((above.openings as Dictionary).get(slot.edge, &"")) \
 						!= BuildingMass.OPENING_BAY
-				if flush_above and rng.randf() < 0.6 \
+				if flush_above and rng.randf() < 0.9 \
 						and _awning_room(slot, int(storey.floor_band)):
 					mass.decor.append({"kind": &"awning", "centre": centre,
 						"dir": dir, "y": y})
@@ -539,13 +571,15 @@ static func _bounds(cells: Dictionary) -> Rect2i:
 	return rect
 
 
-## Greedy decomposition of a cell set into rectangles, largest first.
-static func decompose(cells: Dictionary) -> Array[Rect2i]:
+## Greedy rectangle decomposition: largest area by default; with a ridge
+## axis, longest along that axis first, then largest area.
+static func decompose(cells: Dictionary, ridge_axis := -1) -> Array[Rect2i]:
 	var remaining := cells.duplicate()
 	var out: Array[Rect2i] = []
 	while not remaining.is_empty():
 		var best := Rect2i()
 		var best_area := 0
+		var best_span := 0
 		var keys := remaining.keys()
 		keys.sort()
 		for start: Vector2i in keys:
@@ -564,7 +598,12 @@ static func decompose(cells: Dictionary) -> Array[Rect2i]:
 				w_limit = row_w
 				h += 1
 				var area := w_limit * h
-				if area > best_area:
+				# A lot's front-facing wing runs the full house depth. Select it
+				# before the wider rear hall, whose shallower roof cannot bury
+				# that wing's ridge. Other callers retain largest-area packing.
+				var span := (w_limit if ridge_axis == 0 else h) if ridge_axis >= 0 else 0
+				if span > best_span or (span == best_span and area > best_area):
+					best_span = span
 					best_area = area
 					best = Rect2i(start, Vector2i(w_limit, h))
 		out.append(best)

@@ -18,6 +18,8 @@ var _canopy_assets: Dictionary = {}
 var _material_palette: Dictionary = {}
 ## Source material name -> roughness (removes converter mirror finishes).
 var _material_roughness: Dictionary = {}
+## Explicit source-texture replacement, keyed by vendor material name.
+var _material_textures: Dictionary = {}
 var _failed := false
 var _provenance_by_pack: Dictionary = {}
 
@@ -72,6 +74,7 @@ func _bake_manifest(path: String) -> void:
 	var default_scale = manifest.get("default_scale", [1.0, 1.0, 1.0])
 	_material_palette.clear()
 	_material_roughness.clear()
+	_material_textures = manifest.get("material_textures", {})
 	var roughness: Dictionary = manifest.get("material_roughness", {})
 	for material_name: String in roughness:
 		_material_roughness[StringName(material_name)] = float(roughness[material_name])
@@ -2206,6 +2209,16 @@ func _bake_material(source: Material, pack: String, asset_id: String, piece_inde
 		green_hue: float, fallback_albedo: Texture2D,
 		fallback_albedos_by_material: Dictionary = {}) -> Material:
 	var material := source.duplicate(true) as Material
+	var texture_overrides: Dictionary = _material_textures.get(source.resource_name, {})
+	for property: String in texture_overrides:
+		if property not in ["albedo_texture", "normal_texture"]:
+			_fail("Unsupported material texture property: %s" % property)
+			return null
+		var texture := load(String(texture_overrides[property])) as Texture2D
+		if texture == null:
+			_fail("Missing replacement texture for %s" % source.resource_name)
+			return null
+		material.set(property, texture)
 	if _material_palette.has(StringName(source.resource_name)) \
 			and material is StandardMaterial3D:
 		(material as StandardMaterial3D).albedo_color = \

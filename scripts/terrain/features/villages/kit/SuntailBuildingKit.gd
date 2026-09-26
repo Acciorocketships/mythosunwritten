@@ -9,6 +9,8 @@ extends RefCounted
 ## are the baked catalog entries from
 ## `tools/environment_bake/manifests/suntail_village_kit.json`.
 
+## Stable vendor IDs are retained; the manifest now bakes red as warm wood
+## and blue as weathered wood, including their bay and dormer roof surfaces.
 const ROOF_COLOURS: Array[StringName] = [&"red", &"blue"]
 
 
