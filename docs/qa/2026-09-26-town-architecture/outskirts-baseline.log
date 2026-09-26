@@ -1,0 +1,72 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_village_outskirts_construction.gd
+[0m* test_reported_town_builds_connected_nonoverlapping_ground_houses_once
+FRONTAGE_CONSTRUCTION ms=708 houses=9 branches=4
+[31m    [Failed]:  [0mhouse must not overlap the town path
+      at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+      at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+      at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+      at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+      at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+      at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+      at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+      at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+      at line 107
+* test_doorstep_contact_is_distinct_from_paint_inside_the_house
+[1m1/2 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_village_outskirts_construction.gd
+[0m- test_reported_town_builds_connected_nonoverlapping_ground_houses_once
+[31m    [Failed]:  [0mhouse must not overlap the town path
+          at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+          at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+          at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+          at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+          at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+          at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+          at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+          at line 107
+[31m    [Failed]:  [0mhouse must not overlap the town path
+          at line 107
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts           4090/4099
+Time              56.047s
+
+
+[31m---- 1 failing tests ----
+[0m
