@@ -392,7 +392,8 @@ static func from_volume(volume: WarrenVolumePlan,
 		bridge_compounds.get("private_cells", {}) as Dictionary,
 		bridge_compounds.get("additional_air", {}) as Dictionary)
 	if route_floors.is_empty():
-		last_failure = "public volume carve produced no route floor"
+		if last_failure.is_empty():
+			last_failure = "public volume carve produced no route floor"
 		return null
 	# Maze mode: a DECK plot is a PLAZA, and a plaza is paved public floor.
 	# Carved here, beside the bore's own streets and before any parcel or room
@@ -976,7 +977,10 @@ static func _carve_public_volume(grid: WarrenSpatialGrid,
 	var daylight: Dictionary = {}
 	for macro_cell: Vector3i in volume.daylight_void_cells:
 		for fine_cell: Vector3i in _fine_square(macro_cell):
-			daylight[fine_cell] = true
+			# A source void can overlap the fine route's open-to-sky air.
+			# That cell is already empty and belongs to the public route.
+			if grid.use_at(fine_cell) != WarrenSpatialGrid.Use.PUBLIC_AIR:
+				daylight[fine_cell] = true
 	if not daylight.is_empty():
 		var daylight_cells: Array[Vector3i] = []
 		daylight_cells.assign(daylight.keys())

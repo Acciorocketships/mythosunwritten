@@ -1,0 +1,14 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+TUNNELS 4 large [(-3, 0, 3)]
+ROOF_AUDIT { "clipped": 714, "removed": 27, "joins": 26 }
+TOWN 4 large buildings=108 instances=2670 ms=8621
+BOUNDS cells=[P: (-54.0, 0.0, -54.0), S: (81.0, 27.0, 99.0)] payload=[P: (-57.0, -2.43, -57.0), S: (87.0, 36.63, 103.71)]
+SKYWALKS 4_large 0
+TUNNELS 6 grand [(3, 0, 3)]
+ROOF_AUDIT { "clipped": 837, "removed": 26, "joins": 23 }
+TOWN 6 grand buildings=136 instances=4175 ms=16866
+BOUNDS cells=[P: (-72.0, 0.0, -42.0), S: (117.0, 31.5, 105.0)] payload=[P: (-75.0, -2.43, -61.5), S: (127.5, 41.13, 126.255)]
+SKYWALKS 6_grand 0
+REVIEW_DONE /tmp/town-final-underpasses

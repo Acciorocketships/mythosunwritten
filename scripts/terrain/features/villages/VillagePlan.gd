@@ -59,10 +59,9 @@ func _build(frame: VillageFrame) -> VillageRecord:
 	var terrain := VillageTerrainView.from_fields(_fields) \
 		if _fields != null else VillageTerrainView.from_region(
 			frame.region, frame.water)
-	var urban_fabric := VillageHamletConstruction.solve(terrain,
-		_warren_seed(frame), frame.settlement_id, frame.centre, street_axis,
-		theme, _program, frame.path_ground, _world_seed) if tier == &"hamlet" \
-		else VillageWarrenFabricSolver.solve(terrain,
+	# Population labels describe records and prop budgets, never a separate
+	# architectural generator. Every settlement starts from the same mass field.
+	var urban_fabric := VillageWarrenFabricSolver.solve(terrain,
 		_warren_seed(frame), frame.settlement_id, frame.centre, street_axis,
 		_program, _world_seed, frame.path_ground)
 	_stats["urban_usec"] = Time.get_ticks_usec() - stage_start

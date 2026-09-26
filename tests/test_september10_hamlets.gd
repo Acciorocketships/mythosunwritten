@@ -2,7 +2,7 @@ extends GutTest
 
 func test_default_population_includes_tiny_ground_settlements() -> void:
 	assert_eq(VillageProgram.production_tier(0.10), &"hamlet",
-		"a small house collection must not require the warren grammar")
+		"population labels remain available to gameplay")
 	assert_eq(VillageProgram.production_tier(0.70), &"village")
 	assert_eq(VillageProgram.production_tier(0.99), &"town")
 
@@ -55,7 +55,7 @@ func test_crossroads_keep_all_real_road_handoffs_clear() -> void:
 		if town.accepted:
 			assert_true(town.validate(program, &"hamlet"))
 
-func test_canonical_records_publish_tiny_houses_without_a_second_outskirts_pass() -> void:
+func test_canonical_small_population_records_use_the_shared_town_field() -> void:
 	var program := VillageProgram.compile({}, EnvironmentCatalog.load_default())
 	var heights: Dictionary = {}
 	for z in range(-24,25):
@@ -75,9 +75,10 @@ func test_canonical_records_publish_tiny_houses_without_a_second_outskirts_pass(
 		assert_true(record.validate(program), "world seed %d" % seed_value)
 		assert_true(record.urban_fabric.accepted, String(record.urban_fabric.reason))
 		assert_null(record.outskirts)
-		assert_between(record.urban_fabric.ground_settlement.placements.size(),3,6)
+		assert_null(record.urban_fabric.ground_settlement)
+		assert_not_null(record.urban_fabric.volumetric_spatial)
+		assert_eq(record.urban_fabric.generation_kind, VillageUrbanFabricPlan.GenerationKind.VOLUMETRIC_WARREN)
 		assert_gt(record.payload.instance_count,3)
-		assert_true(record.payload.batches.has(record.urban_fabric.fabric_audit.focal_asset))
 		checked += 1
 	assert_gt(checked,4)
 

@@ -79,7 +79,8 @@ static func to_volume_plan(massif: WarrenMassif,
 		excavation: WarrenExcavation,
 		typed_market_cells: Array[Vector3i] = [],
 		validate_result: bool = true,
-		additional_transitions: Array[WarrenVolumeTransition] = []) -> WarrenVolumePlan:
+		additional_transitions: Array[WarrenVolumeTransition] = [],
+		derived_voids: Array[Vector3i] = []) -> WarrenVolumePlan:
 	last_failure = ""
 	if massif == null or not massif.is_sealed():
 		last_failure = "massif missing or unsealed"
@@ -170,6 +171,11 @@ static func to_volume_plan(massif: WarrenMassif,
 			return null
 	if not _close_landing_turns(plan):
 		return null
+	# Derived room and stair envelopes may contain empty bands below their
+	# highest occupied cell. Preserve that source air before sealing.
+	for cell: Vector3i in derived_voids:
+		if not plan.has_public_air(cell):
+			plan.add_daylight_void(cell)
 	plan.mass_context = {&"massif": massif, &"excavation": excavation}
 	if validate_result:
 		if not plan.seal(excavation.portals[0]):

@@ -22,8 +22,14 @@ static func to_volume_plan(source: WarrenMazeSourcePlan,
 	var massif := _derived_massif(source, access_air)
 	if massif == null:
 		return null
+	var derived_voids: Array[Vector3i] = []
+	for column: Vector2i in massif.columns:
+		for band in range(massif.base_at(column), massif.top_at(column)):
+			var cell := Vector3i(column.x, band, column.y)
+			if not source.solid_at(cell):
+				derived_voids.append(cell)
 	var volume := WarrenExcavationVolumeAdapter.to_volume_plan(
-		massif, source.excavation, source.market_square_cells, false, access)
+		massif, source.excavation, source.market_square_cells, false, access, derived_voids)
 	if volume == null:
 		last_failure = WarrenExcavationVolumeAdapter.last_failure
 		return null
@@ -67,15 +73,16 @@ static func _derived_massif(source: WarrenMazeSourcePlan,
 	## town that was actually built inside it, and `solid_at` is the only
 	## authority on which of the two a band belongs to (rock under a plot,
 	## a plot, a rock shoulder, or air). This copy restates that authority as
-	## the one thing the existing excavation adapter reads: a per-column top.
+	## a per-column envelope top. Empty bands inside that envelope are carried
+	## separately as derived voids; only the source decides which bands are solid.
 	##
 	## `base` never moves -- terrain below `massif.base_at` is untouched
 	## ground, the rock a street itself stands on, and the carved cells above
 	## it are subtracted from the volume by WarrenExcavationVolumeAdapter
 	## straight out of `excavation.carved` regardless of what this copy says.
-	## The sealed stack invariant (solid is one contiguous run from terrain,
-	## minus carved cells) is what makes a single top per column EXACT rather
-	## than approximate; test_volume_matches_solid_at proves it cell by cell.
+	## Stair extensions and released bores may leave gaps below that top.
+	## `derived_voids` preserves those gaps before volume sealing;
+	## test_volume_matches_solid_at proves the result cell by cell.
 	##
 	## Only the column SET matters to WarrenMassif.seal() (single connected
 	## component, no interior hole) and this copy keeps every column the

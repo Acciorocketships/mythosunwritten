@@ -1,0 +1,43 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_town_depth.gd
+* test_long_walls_receive_spaced_bays
+* test_city_house_has_recessed_balconies_at_multiple_levels
+    [Failed]:  [0] expected to be >= than [2]:
+      at line 35
+    [Failed]:  [0] expected to be > than [0]:  at least one balcony has a room as its ceiling
+      at line 36
+1/2 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_town_depth.gd
+- test_city_house_has_recessed_balconies_at_multiple_levels
+    [Failed]:  [0] expected to be >= than [2]:
+          at line 35
+    [Failed]:  [0] expected to be > than [0]:  at least one balcony has a room as its ceiling
+          at line 36
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests         1
+Failing Tests         1
+Asserts             1/3
+Time              0.442s
+
+
+---- 1 failing tests ----
+

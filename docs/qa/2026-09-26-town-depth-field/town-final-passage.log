@@ -1,0 +1,21 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ROOF_AUDIT { "clipped": 202, "removed": 3, "joins": 7 }
+CEILING_PLAN (0, 0, -2) roof=3 source=true grid=5 retained=false
+PASSAGES 8/compact count=1
+ROOF_AUDIT { "clipped": 714, "removed": 27, "joins": 26 }
+CEILING_PLAN (-3, 0, 3) roof=3 source=true grid=5 retained=false
+PASSAGES 4/large count=1
+ROOF_AUDIT { "clipped": 597, "removed": 9, "joins": 18 }
+CEILING_PLAN (2, 0, 2) roof=3 source=true grid=5 retained=false
+PASSAGES 5/large count=1
+ROOF_AUDIT { "clipped": 909, "removed": 29, "joins": 29 }
+CEILING_PLAN (2, 0, 3) roof=3 source=true grid=5 retained=false
+PASSAGES 1/grand count=1
+ROOF_AUDIT { "clipped": 847, "removed": 36, "joins": 29 }
+CEILING_PLAN (2, 0, 2) roof=3 source=true grid=5 retained=false
+PASSAGES 5/grand count=1
+ROOF_AUDIT { "clipped": 837, "removed": 26, "joins": 23 }
+CEILING_PLAN (3, 0, 3) roof=3 source=true grid=5 retained=false
+PASSAGES 6/grand count=1
+PASSAGE_COLLISION checked=54 blocked=0

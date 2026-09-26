@@ -646,6 +646,17 @@ func _assemble_decor(ctx: Dictionary, item: Dictionary) -> void:
 			var top := float(int(item.to_band)) * kit.band_height()
 			_emit(ctx, &"post.timber", centre, bottom, yaw, pick,
 				Transform3D(Basis.from_scale(Vector3(1.2, top - bottom, 1.2))))
+		&"raker":
+			var from := item.from as Vector3
+			var to := item.to as Vector3
+			from *= Vector3(w, kit.band_height(), w)
+			to *= Vector3(w, kit.band_height(), w)
+			var delta := to - from
+			if delta.length() < 0.05: return
+			var basis := Basis(Quaternion(Vector3.UP, delta.normalized())).scaled(Vector3(0.8, delta.length(), 0.8))
+			_emit(ctx, &"post.timber", Vector2(from.x, from.z) / w, from.y, 0.0, pick,
+				Transform3D(basis, Vector3.ZERO))
+
 		&"bracket":
 			_emit(ctx, &"bracket.jetty", centre, y - kit.jetty_depth, yaw, pick)
 		&"planter":

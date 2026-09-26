@@ -1,0 +1,255 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_warren_maze_plots.gd
+* test_add_plot_enforces_support_and_headroom
+* test_solid_at_derives_rock_under_plots_and_air_above
+* test_add_plot_on_a_sealed_plan_changes_nothing
+* test_stack_invariant_rejects_a_floating_plot_at_seal
+* test_add_plot_rejects_a_plot_overlapping_one_already_standing
+* test_seal_rejects_a_plot_appended_straight_onto_the_array
+* test_add_plot_demands_a_real_door_for_a_house_or_an_asset
+* test_passage_headroom_is_a_per_cell_fact_not_a_constant
+    passage cells with a slot taller than HEADROOM_BANDS: 74 (74 probed)
+* test_signature_covers_plots
+* test_asset_templates_match_the_catalog
+    ASSET_TEMPLATES: 17 unique envelopes from the catalog
+* test_assets_sit_at_the_minimum_modification_site
+    asset site cost 46; cheapest 38, cheapest realisable 46 (realisable)
+    seed 12 compact: 1/6 assets placed, min cost 38
+* test_asset_clearance_reservation_survives_into_house_partitioning
+* test_outer_terrace_height_grows_one_storey_per_massif_ring
+* test_decks_are_flat_street_level_regions
+    decks across the four towns: 6 standing, 0 refused
+* test_the_plaza_deck_is_a_room_not_a_lane
+    seed 12/compact plaza: (2, 2) columns at datum 2, 4 cells
+    seed 4/compact plaza: (2, 2) columns at datum 2, 4 cells
+    seed 3/standard plaza: (2, 2) columns at datum 5, 4 cells
+    seed 9/standard plaza: (2, 2) columns at datum 2, 4 cells
+    [Failed]:  [4] expected to equal [3]:  4 of the four planner towns site a plaza; the pin is 3 -- a siting rule that stops finding sites leaves every other assertion in this file green
+      at line 1441
+* test_partition_fills_every_street_fronting_column
+    seed 12 compact: 9 houses, mean footprint 2.11 columns
+      5 single-column houses, 0 of them beside a same-floor peer
+      1 houses past BUILDING_CAP 4, 2 columns swept in
+    seed 4 compact: 10 houses, mean footprint 5.00 columns
+      4 single-column houses, 1 of them beside a same-floor peer
+      3 houses past BUILDING_CAP 4, 31 columns swept in
+    seed 3 standard: 18 houses, mean footprint 4.94 columns
+      6 single-column houses, 1 of them beside a same-floor peer
+      3 houses past BUILDING_CAP 5, 41 columns swept in
+    seed 9 standard: 25 houses, mean footprint 3.36 columns
+      10 single-column houses, 0 of them beside a same-floor peer
+      3 houses past BUILDING_CAP 5, 36 columns swept in
+    buildable columns in a plot: 191/202 = 0.946 (floor 0.91)
+    street-fronting (column, band) slots: 132/142 = 0.930 (floor 0.79)
+* test_houses_rise_to_meet_upper_streets
+    tiered houses across the four towns: 9 of 60 (0 skipped)
+* test_bridge_plots_sit_on_retained_spans
+    bridges across the four towns: 11 of 11 retained spans
+* test_planner_is_deterministic
+* test_local_skyline_peaks_are_complete_grounded_plots
+* test_streets_keep_their_floor
+    seed 1 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 2 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 3 compact: street_floor_gaps 0, the bore left 3, 0 house(s) refused to strand a street
+    [Failed]:  [0] expected to equal [3]:  seed 3 compact adds no floating street
+      at line 1922
+    seed 4 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 5 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 6 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 7 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 8 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 9 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 10 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 11 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 12 compact: street_floor_gaps 0, the bore left 0, 0 house(s) refused to strand a street
+    seed 1 standard: street_floor_gaps 2, the bore left 2, 0 house(s) refused to strand a street
+    seed 2 standard: street_floor_gaps 2, the bore left 2, 0 house(s) refused to strand a street
+    seed 3 standard: street_floor_gaps 1, the bore left 2, 0 house(s) refused to strand a street
+    [Failed]:  [1] expected to equal [2]:  seed 3 standard adds no floating street
+      at line 1922
+    seed 4 standard: street_floor_gaps 6, the bore left 6, 0 house(s) refused to strand a street
+    seed 5 standard: street_floor_gaps 6, the bore left 7, 0 house(s) refused to strand a street
+    [Failed]:  [6] expected to equal [7]:  seed 5 standard adds no floating street
+      at line 1922
+    seed 6 standard: street_floor_gaps 5, the bore left 5, 0 house(s) refused to strand a street
+    seed 7 standard: street_floor_gaps 4, the bore left 5, 0 house(s) refused to strand a street
+    [Failed]:  [4] expected to equal [5]:  seed 7 standard adds no floating street
+      at line 1922
+    seed 8 standard: street_floor_gaps 2, the bore left 2, 0 house(s) refused to strand a street
+    seed 9 standard: street_floor_gaps 5, the bore left 5, 0 house(s) refused to strand a street
+    seed 10 standard: street_floor_gaps 3, the bore left 3, 0 house(s) refused to strand a street
+    seed 11 standard: street_floor_gaps 5, the bore left 6, 0 house(s) refused to strand a street
+    [Failed]:  [5] expected to equal [6]:  seed 11 standard adds no floating street
+      at line 1922
+    seed 12 standard: street_floor_gaps 3, the bore left 3, 0 house(s) refused to strand a street
+    street floors: 24/24 towns checked, 0 skipped (); 0 houses refused corpus-wide to keep a street up
+MAZE_SLOPED_FLOORS_KEPT ramp 12/compact street_floor_gaps=0 bore=0 refused=0
+MAZE_SLOPED_FLOORS_KEPT ramp 3/standard street_floor_gaps=2 bore=2 refused=0
+MAZE_SLOPED_FLOORS_KEPT step 12/compact street_floor_gaps=0 bore=0 refused=0
+    [Failed]:  Expected [<RefCounted#-9223371373567532919>(WarrenMazeSourcePlan.gd)] to be NULL:  step 3/standard is a pinned sloped refusal and it sealed; take it out of SLOPED_REFUSED_ROWS
+      at line 1943
+* test_volume_matches_solid_at
+    seed 12 compact: 478 cells checked, 0 mismatched
+    seed 3 standard: 1109 cells checked, 6 mismatched
+    [Failed]:  [6] expected to equal [0]:  seed 3 standard volume mass is solid_at: (-1, 5, 1) mass=true solid=false; (-1, 6, 1) mass=true solid=false; (-1, 7, 1) mass=true solid=false; (-1, 5, 2) mass=true solid=false; (-1, 6, 2) mass=true solid=false; (-1, 7, 2) mass=true solid=false
+      at line 2055
+* test_translator_emits_one_parcel_group_per_building
+    seed 12 compact: 9 house plots, 9 parcels, 4 back rooms, 3 shrunk, 1 asset plots, 1 asset records
+      shrunk house.000: 4 columns at (1, 3): no authored door module serves the address
+      shrunk house.001: 2 columns at (0, 2): no authored door module serves the address
+      shrunk house.003: 2 columns at (0, -1): no authored door module serves the address
+    seed 3 standard: 18 house plots, 18 parcels, 10 back rooms, 5 shrunk, 2 asset plots, 2 asset records
+      shrunk house.018: 3 columns at (1, 4): no authored door module serves the address
+      shrunk house.020: 2 columns at (3, 6): no authored door module serves the address
+      shrunk house.023: 4 columns at (6, 4): no authored door module serves the address
+      shrunk house.010: 5 columns at (-7, 2): no authored door module serves the address
+      shrunk house.017: 2 columns at (1, 3): no authored door module serves the address
+* test_decks_and_bridges_translate_to_typed_records
+    typed records: 2 decks, 11 bridges
+* test_flat_roof_parcels_relax_parity_for_every_maze_house
+    [Failed]:  [0] expected to be > than [0]:  the town really has something standing on a roof
+      at line 2336
+* test_stacked_houses_declare_their_parent
+MAZE_STACKS seed 12/compact stacked=0 declared=0 slab_gap=0 partial=0 {  }
+MAZE_STACKS seed 4/compact stacked=0 declared=0 slab_gap=0 partial=0 {  }
+MAZE_STACKS seed 3/standard stacked=2 declared=2 slab_gap=0 partial=1 {  }
+MAZE_STACKS seed 9/standard stacked=2 declared=2 slab_gap=0 partial=3 {  }
+* test_corpus_translates
+    seed 1 compact: 18 parcels (5 shrunk), 86 back-room cells, 1 decks, 0 bridges, ownership 0.818 (328 owned of 401 solid, 73 rock)
+    seed 2 compact: 15 parcels (3 shrunk), 120 back-room cells, 0 decks, 2 bridges, ownership 0.846 (428 owned of 506 solid, 78 rock)
+    seed 3 compact: 6 parcels (3 shrunk), 152 back-room cells, 1 decks, 0 bridges, ownership 0.865 (346 owned of 400 solid, 54 rock)
+    seed 4 compact: 10 parcels (2 shrunk), 128 back-room cells, 1 decks, 0 bridges, ownership 0.832 (268 owned of 322 solid, 54 rock)
+    seed 5 compact: 12 parcels (5 shrunk), 72 back-room cells, 1 decks, 1 bridges, ownership 0.815 (304 owned of 373 solid, 69 rock)
+    seed 6 compact: 16 parcels (3 shrunk), 44 back-room cells, 1 decks, 1 bridges, ownership 0.812 (224 owned of 276 solid, 52 rock)
+    seed 7 compact: 8 parcels (5 shrunk), 80 back-room cells, 1 decks, 0 bridges, ownership 0.784 (152 owned of 194 solid, 42 rock)
+    seed 8 compact: 10 parcels (2 shrunk), 28 back-room cells, 1 decks, 0 bridges, ownership 0.679 (184 owned of 271 solid, 87 rock)
+    seed 9 compact: 15 parcels (2 shrunk), 36 back-room cells, 0 decks, 2 bridges, ownership 0.741 (232 owned of 313 solid, 81 rock)
+    seed 10 compact: 8 parcels (3 shrunk), 54 back-room cells, 1 decks, 1 bridges, ownership 0.671 (200 owned of 298 solid, 98 rock)
+    seed 11 compact: 15 parcels (3 shrunk), 40 back-room cells, 1 decks, 2 bridges, ownership 0.805 (210 owned of 261 solid, 51 rock)
+    seed 12 compact: 9 parcels (3 shrunk), 40 back-room cells, 1 decks, 0 bridges, ownership 0.783 (144 owned of 184 solid, 40 rock)
+    seed 1 standard: 32 parcels (9 shrunk), 304 back-room cells, 1 decks, 5 bridges, ownership 0.761 (686 owned of 901 solid, 215 rock)
+    seed 2 standard: 55 parcels (15 shrunk), 256 back-room cells, 1 decks, 5 bridges, ownership 0.765 (826 owned of 1080 solid, 254 rock)
+    seed 3 standard: 18 parcels (5 shrunk), 262 back-room cells, 2 decks, 0 bridges, ownership 0.798 (495 owned of 620 solid, 125 rock)
+    seed 4 standard: 35 parcels (7 shrunk), 138 back-room cells, 0 decks, 4 bridges, ownership 0.792 (484 owned of 611 solid, 127 rock)
+    seed 5 standard: 30 parcels (7 shrunk), 158 back-room cells, 2 decks, 4 bridges, ownership 0.739 (518 owned of 701 solid, 183 rock)
+    seed 6 standard: 26 parcels (8 shrunk), 156 back-room cells, 1 decks, 2 bridges, ownership 0.753 (452 owned of 600 solid, 148 rock)
+    seed 7 standard: 24 parcels (1 shrunk), 40 back-room cells, 1 decks, 2 bridges, ownership 0.727 (250 owned of 344 solid, 94 rock)
+    seed 8 standard: 28 parcels (8 shrunk), 114 back-room cells, 1 decks, 2 bridges, ownership 0.791 (458 owned of 579 solid, 121 rock)
+    seed 9 standard: 25 parcels (4 shrunk), 214 back-room cells, 2 decks, 1 bridges, ownership 0.691 (448 owned of 648 solid, 200 rock)
+    seed 10 standard: 27 parcels (2 shrunk), 72 back-room cells, 0 decks, 5 bridges, ownership 0.749 (370 owned of 494 solid, 124 rock)
+    seed 11 standard: 24 parcels (6 shrunk), 116 back-room cells, 1 decks, 5 bridges, ownership 0.724 (330 owned of 456 solid, 126 rock)
+    seed 12 standard: 24 parcels (5 shrunk), 108 back-room cells, 2 decks, 0 bridges, ownership 0.786 (326 owned of 415 solid, 89 rock)
+    corpus: 24/24 towns translate
+* test_carve_returns_an_unsealed_plan_for_the_phase_pipeline
+* test_stop_after_exposes_each_phase_uncontaminated
+* test_plan_rejects_an_unknown_stop_after_stage
+* test_site_planner_seals_the_corpus_one_pass
+    corpus: 24/24 towns seal one-pass
+* test_seal_merges_audit_instead_of_replacing_it
+* test_exterior_rock_ratio_is_pinned
+    seed 12 compact: exterior rock 29/167 = 0.1737 (plot 138, ceiling 0.38)
+    seed 4 compact: exterior rock 41/260 = 0.1577 (plot 219, ceiling 0.38)
+    seed 3 standard: exterior rock 59/439 = 0.1344 (plot 380, ceiling 0.38)
+    seed 9 standard: exterior rock 105/491 = 0.2138 (plot 386, ceiling 0.38)
+* test_stone_face_offsets_match_the_assembler_that_skins_them
+* test_nearest_datum_band_breaks_its_ties_deterministically
+* test_local_public_datum_is_the_nearest_street_in_range
+* test_exterior_stone_band_profile_is_pinned
+    seed 12 compact: stone faces 52, above 2 storeys 0 = 0.0000 (ceiling 0.05), of those 0 on raised shoulders; 0 faces read against bare ground, deepest -2, highest 3
+    seed 12 compact: per-band histogram { -2: 8, -1: 23, 0: 16, 1: 2, 3: 3 }
+    seed 12 compact: per-storey histogram { 0: 47, 1: 2, 2: 3 }
+    seed 4 compact: stone faces 66, above 2 storeys 0 = 0.0000 (ceiling 0.05), of those 0 on raised shoulders; 0 faces read against bare ground, deepest -2, highest 3
+    seed 4 compact: per-band histogram { -2: 12, -1: 33, 0: 6, 1: 8, 3: 7 }
+    seed 4 compact: per-storey histogram { 0: 51, 1: 8, 2: 7 }
+    seed 3 standard: stone faces 87, above 2 storeys 0 = 0.0000 (ceiling 0.05), of those 0 on raised shoulders; 28 faces read against bare ground, deepest -3, highest 2
+    seed 3 standard: per-band histogram { -3: 1, -2: 4, -1: 33, 0: 27, 1: 21, 2: 1 }
+    seed 3 standard: per-storey histogram { 0: 65, 1: 22 }
+    seed 9 standard: stone faces 174, above 2 storeys 0 = 0.0000 (ceiling 0.05), of those 0 on raised shoulders; 22 faces read against bare ground, deepest -2, highest 3
+    seed 9 standard: per-band histogram { -2: 20, -1: 57, 0: 43, 1: 31, 2: 11, 3: 12 }
+    seed 9 standard: per-storey histogram { 0: 120, 1: 42, 2: 12 }
+    worst planner town: 0.0000 (ceiling 0.05)
+* test_ownership_is_pinned_on_the_planner_seeds
+    seed 12 compact: ownership 0.7826 (floor 0.59) -- 144 owned of 184 solid, 40 rock
+    seed 4 compact: ownership 0.8323 (floor 0.60) -- 268 owned of 322 solid, 54 rock
+    seed 3 standard: ownership 0.7984 (floor 0.63) -- 495 owned of 620 solid, 125 rock
+    seed 9 standard: ownership 0.6914 (floor 0.54) -- 448 owned of 648 solid, 200 rock
+* test_sloped_ground_seals_and_translates
+MAZE_SLOPED ramp 12/compact relief=4 frontage=0.654 plots=15 parcels=14
+MAZE_SLOPED ramp 3/standard relief=5 frontage=0.523 plots=19 parcels=16
+    [Failed]:  [0.52272727272727] expected to be >= than [0.55]:  ramp 3/standard addresses only 0.523 of its passage cells
+      at line 3293
+MAZE_SLOPED step 12/compact relief=3 frontage=0.655 plots=17 parcels=15
+    [Failed]:  Expected [<RefCounted#-9223371373567532919>(WarrenMazeSourcePlan.gd)] to be NULL:  step 3/standard is a pinned sloped refusal and it carved; take it out of SLOPED_REFUSED_ROWS
+      at line 3271
+* test_no_plot_stands_inside_the_hillside
+MAZE_SLOPED_BURIED ramp 12/compact plots=15 buried_columns=0 deepest=0
+MAZE_SLOPED_BURIED ramp 3/standard plots=19 buried_columns=0 deepest=0
+MAZE_SLOPED_BURIED step 12/compact plots=17 buried_columns=0 deepest=0
+MAZE_SLOPED_BURIED step 3/standard plots=15 buried_columns=0 deepest=0
+* test_house_floors_follow_their_door_street_band
+MAZE_SLOPED_FLOORS ramp 12/compact houses=14 distinct_floor_bands=[1, 2, 3, 4]
+MAZE_SLOPED_FLOORS ramp 3/standard houses=16 distinct_floor_bands=[2, 4, 5, 6, 7, 8, 9]
+MAZE_SLOPED_FLOORS step 12/compact houses=15 distinct_floor_bands=[0, 1, 2, 3, 4]
+MAZE_SLOPED_FLOORS step 3/standard houses=11 distinct_floor_bands=[3, 4, 5, 7]
+* test_deck_datums_equal_their_fronting_street_band
+MAZE_SLOPED_DECKS ramp 12/compact decks=1 off_datum=0
+MAZE_SLOPED_DECKS ramp 3/standard decks=2 off_datum=0
+MAZE_SLOPED_DECKS step 12/compact decks=1 off_datum=0
+MAZE_SLOPED_DECKS step 3/standard decks=2 off_datum=0
+37/42 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_warren_maze_plots.gd
+- test_the_plaza_deck_is_a_room_not_a_lane
+    [Failed]:  [4] expected to equal [3]:  4 of the four planner towns site a plaza; the pin is 3 -- a siting rule that stops finding sites leaves every other assertion in this file green
+          at line 1441
+- test_streets_keep_their_floor
+    [Failed]:  [0] expected to equal [3]:  seed 3 compact adds no floating street
+          at line 1922
+    [Failed]:  [1] expected to equal [2]:  seed 3 standard adds no floating street
+          at line 1922
+    [Failed]:  [6] expected to equal [7]:  seed 5 standard adds no floating street
+          at line 1922
+    [Failed]:  [4] expected to equal [5]:  seed 7 standard adds no floating street
+          at line 1922
+    [Failed]:  [5] expected to equal [6]:  seed 11 standard adds no floating street
+          at line 1922
+    [Failed]:  Expected [<RefCounted#-9223371373567532919>(WarrenMazeSourcePlan.gd)] to be NULL:  step 3/standard is a pinned sloped refusal and it sealed; take it out of SLOPED_REFUSED_ROWS
+          at line 1943
+- test_volume_matches_solid_at
+    [Failed]:  [6] expected to equal [0]:  seed 3 standard volume mass is solid_at: (-1, 5, 1) mass=true solid=false; (-1, 6, 1) mass=true solid=false; (-1, 7, 1) mass=true solid=false; (-1, 5, 2) mass=true solid=false; (-1, 6, 2) mass=true solid=false; (-1, 7, 2) mass=true solid=false
+          at line 2055
+- test_flat_roof_parcels_relax_parity_for_every_maze_house
+    [Failed]:  [0] expected to be > than [0]:  the town really has something standing on a roof
+          at line 2336
+- test_sloped_ground_seals_and_translates
+    [Failed]:  [0.52272727272727] expected to be >= than [0.55]:  ramp 3/standard addresses only 0.523 of its passage cells
+          at line 3293
+    [Failed]:  Expected [<RefCounted#-9223371373567532919>(WarrenMazeSourcePlan.gd)] to be NULL:  step 3/standard is a pinned sloped refusal and it carved; take it out of SLOPED_REFUSED_ROWS
+          at line 3271
+
+Totals
+------
+Scripts               1
+Tests                42
+Passing Tests        37
+Failing Tests         5
+Asserts           2929/2940
+Time              22.705s
+
+
+---- 5 failing tests ----
+

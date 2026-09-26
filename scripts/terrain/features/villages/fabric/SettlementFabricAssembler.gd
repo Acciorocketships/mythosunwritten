@@ -1671,7 +1671,9 @@ static func close_borne_turf_corners(garden: Dictionary,
 				missing = cell
 		if member_count != 3 or additions.has(missing):
 			continue
-		if retained.get(missing, null) != MAZE_STONE_TAG \
+		var retained_tag: Variant = retained.get(missing)
+		if typeof(retained_tag) not in [TYPE_STRING_NAME, TYPE_STRING] \
+				or StringName(retained_tag) != MAZE_STONE_TAG \
 				or solids.has(missing + Vector3i.UP) \
 				or paved.has(missing + Vector3i.UP) \
 				or walked.has(missing + Vector3i.UP) \

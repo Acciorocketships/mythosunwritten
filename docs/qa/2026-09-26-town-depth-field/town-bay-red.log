@@ -1,0 +1,858 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/_test_bay_red.gd
+* test_long_walls_receive_spaced_bays
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+      at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+      at line 24
+0/1 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/_test_bay_red.gd
+- test_long_walls_receive_spaced_bays
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [0] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [1.0] expected to be > than [1.0]:  adjacent oriel roofs must leave a plain wall bay between them
+          at line 22
+    [Failed]:  [2] expected to equal [4]:  every unobstructed substantial upper face has depth
+          at line 24
+
+Totals
+------
+Scripts               1
+Tests                 1
+Passing Tests      none
+Failing Tests         1
+Asserts           256/462
+Time              0.483s
+
+
+---- 1 failing tests ----
+

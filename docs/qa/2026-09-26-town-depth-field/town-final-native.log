@@ -1,0 +1,20 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+Metal 3.2 - Forward+ - Using Device #0: Apple - Apple M1 Pro (Apple7)
+
+TUNNELS 3 standard []
+ROOF_AUDIT { "clipped": 607, "removed": 29, "joins": 20 }
+TOWN 3 standard buildings=68 instances=1891 ms=7494
+BOUNDS cells=[P: (-48.0, 0.0, -48.0), S: (93.0, 22.5, 93.0)] payload=[P: (-51.0, -2.43, -49.62), S: (99.0, 32.28, 97.62)]
+TUNNELS 16 grand []
+ROOF_AUDIT { "clipped": 952, "removed": 25, "joins": 31 }
+TOWN 16 grand buildings=191 instances=4724 ms=22202
+BOUNDS cells=[P: (-72.0, 0.0, -72.0), S: (147.0, 36.0, 165.0)] payload=[P: (-73.71, -2.43, -75.0), S: (150.465, 45.63, 171.0)]
+TUNNELS 6 grand [(3, 0, 3)]
+ROOF_AUDIT { "clipped": 837, "removed": 26, "joins": 23 }
+TOWN 6 grand buildings=136 instances=4178 ms=17280
+BOUNDS cells=[P: (-72.0, 0.0, -42.0), S: (117.0, 31.5, 105.0)] payload=[P: (-75.0, -2.43, -61.5), S: (127.5, 41.13, 126.255)]
+TUNNELS 16 compact []
+ROOF_AUDIT { "clipped": 275, "removed": 1, "joins": 13 }
+TOWN 16 compact buildings=45 instances=1436 ms=2900
+BOUNDS cells=[P: (-48.0, 0.0, -48.0), S: (69.0, 13.5, 105.0)] payload=[P: (-51.0, -2.43, -51.0), S: (103.5, 23.28, 109.71)]
+REVIEW_DONE /tmp/town-final-native

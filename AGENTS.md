@@ -73,6 +73,20 @@
 > cover 4/8/16 m walls and corners. See
 > `docs/qa/2026-09-25-slope-outcrops/result.md`.
 
+> September 26 town depth/shared field: all production settlements use the
+> same volumetric generator. `WarrenTownField` samples elliptical lobes,
+> clearings and low connecting shoulders before boring; population labels
+> no longer choose square hamlet versus warren architecture. Size budgets
+> remain. Upper faces gain spaced bays; `KitLoggias` recesses L/U balconies
+> into alternate storeys with real room floors/ceilings. Public platforms use
+> short wall braces, including corner bearing. Native kit roof joining stays
+> active. Source voids survive adapter envelopes; shared route air keeps its
+> owner. 71 focused tests pass; the 48-town corpus compiles after one repaired
+> row rerun, with 81 clear capsule probes and nine retained tunnel ceilings.
+> Five adjacent legacy planner tests also fail on the base revision; no clean
+> whole-suite or startup-speed claim. See
+> `docs/qa/2026-09-26-town-depth-field/result.md`.
+
 > September 24 building kits (Suntail migration, branch `suntail-towns`):
 > village buildings are no longer drawn from the SFV/LPFV recipe art. A
 > pack-agnostic layer in `scripts/terrain/features/villages/kit/` realizes

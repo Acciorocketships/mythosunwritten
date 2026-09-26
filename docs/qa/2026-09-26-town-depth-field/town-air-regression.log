@@ -1,0 +1,5 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+SOURCE 4 large tunnels=1 bridges=4
+COMPILED 4 large { "clipped": 711, "removed": 26, "joins": 26 }
+SURVEY total_tunnel_cells=1 covered=1 failures=0

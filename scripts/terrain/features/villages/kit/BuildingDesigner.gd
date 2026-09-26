@@ -75,10 +75,10 @@ func articulate(mass: BuildingMass, context: Dictionary) -> void:
 	var stone_ground := rng.randf() < float(context.get("stone_chance", 0.4))
 	_assign_materials(mass, terrain_storey, stone_ground)
 	_assign_jetties(mass, terrain_storey, rng)
-	_assign_facades(mass, rng, colour)
 	_assign_finish(mass, rng, colour)
 	_assign_roofs(mass, rng, colour, bool(context.get("terraced", false)),
 		int(context.get("roof_axis", -1)))
+	_assign_facades(mass, rng, colour)
 	_assign_dressing(mass, rng, context)
 
 
@@ -140,26 +140,28 @@ func _assign_facades(mass: BuildingMass, rng: RandomNumberGenerator,
 				storey.openings[slot.edge] = BuildingMass.OPENING_PLAIN
 		if storey.material != BuildingMass.MATERIAL_TIMBER or index == 0:
 			continue
-		# Bays on the shorter (gable/end) faces of upper timber storeys.
-		if rng.randf() > 0.55:
-			continue
-		var bounds := _bounds(storey.cells)
-		var short_x := bounds.size.x <= bounds.size.y
+		# Break up every long face with separated projecting oriels. The phase
+		# changes by floor and face; corners and doors keep their own vocabulary.
+		var phases := {}
+		var selected_runs := {}
 		for slot: Dictionary in slots:
 			var dir := int(slot.dir)
-			var on_end := (dir == 0 or dir == 2) == short_x
-			if not on_end or int(slot.count) < 2:
-				continue
-			if int(slot.index) == 0 or int(slot.index) == int(slot.count) - 1:
-				if int(slot.count) > 2:
-					continue
-			if not _bay_clear(mass, slot, int(storey.floor_band)):
-				continue
-			if storey.openings.has(slot.edge) \
-					and storey.openings[slot.edge] != BuildingMass.OPENING_PLAIN:
-				continue
-			if rng.randf() < 0.7:
+			if not phases.has(dir): phases[dir] = rng.randi_range(0, 2)
+			var position := int(slot.index)
+			var length := int(slot.count)
+			if length < 2: continue
+			if length > 2 and (position == 0 or position == length - 1): continue
+			var first := 0 if length == 2 else 1
+			var phase := int(phases[dir]) % mini(3, length - 2 if length > 2 else 2)
+			if posmod(position - first - phase, 3) != 0: continue
+			if not _bay_clear(mass, slot, int(storey.floor_band)): continue
+			var opening := StringName(storey.openings.get(slot.edge, BuildingMass.OPENING_WINDOW))
+			if opening not in [BuildingMass.OPENING_WINDOW, BuildingMass.OPENING_PLAIN]: continue
+			var centre := slot.centre as Vector2
+			var run := Vector2(dir, centre.x if dir % 2 == 0 else centre.y)
+			if not selected_runs.has(run) or rng.randf() < 0.75:
 				storey.openings[slot.edge] = BuildingMass.OPENING_BAY
+				selected_runs[run] = true
 
 
 ## The wall slots the assembler will build for this storey.
@@ -182,13 +184,13 @@ func _assign_finish(mass: BuildingMass, rng: RandomNumberGenerator,
 			else Color(0.97, 0.98, 1.0)
 
 
-func _bay_clear(_mass: BuildingMass, slot: Dictionary, band: int) -> bool:
-	if not forbidden.is_valid():
-		return true
+func _bay_clear(mass: BuildingMass, slot: Dictionary, band: int) -> bool:
 	for cell: Vector2i in slot.outside:
+		if mass.cells_at_band(band).has(cell): return false
+		for deck: Dictionary in mass.decks:
+			if int(deck.band) == band and deck.cells.has(cell): return false
 		for b in [band, band + 1]:
-			if bool(forbidden.call(cell, b)):
-				return false
+			if forbidden.is_valid() and bool(forbidden.call(cell, b)): return false
 	return true
 
 

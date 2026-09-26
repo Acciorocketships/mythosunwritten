@@ -227,26 +227,48 @@ static func _balcony_mass(feature: WarrenFeatureReservation, houses: Dictionary,
 					"direction": Vector3i(BuildingMass.DIRS[dir].x, 0,
 						BuildingMass.DIRS[dir].y), "balcony": true})
 				break
-	# Brackets under the edge against the house; posts to the ground under
-	# cells that stand away from any wall.
+	# Short wall-tied brackets carry the whole platform. A high balcony must
+	# not grow an isolated pole through several floors to reach the terrain.
 	for cell: Vector2i in deck:
-		var against_wall := false
-		for dir in 4:
-			var probe := Vector3i(cell.x + BuildingMass.DIRS[dir].x, band,
-				cell.y + BuildingMass.DIRS[dir].y)
-			if grid.contains(probe) and grid.use_at(probe) == WarrenSpatialGrid.Use.PRIVATE_VOLUME:
-				against_wall = true
-				mass.decor.append({"kind": &"bracket", "dir": (dir + 2) % 4,
-					"centre": Vector2(cell) + Vector2(0.5, 0.5) \
-						+ Vector2(BuildingMass.DIRS[dir]) * 0.5, "y_band": band})
-		if not against_wall:
-			var foot := _ground_band_below(grid, Vector3i(cell.x, band - 1, cell.y))
-			mass.decor.append({"kind": &"post", "dir": 1,
-				"centre": Vector2(cell) + Vector2(0.5, 0.5), "from_band": foot,
-				"to_band": band})
+		var support := _balcony_bearing(grid, deck, cell, band)
+		if support.is_empty(): continue
+		var wall := support.wall as Vector2
+		var outer := Vector2(cell) + Vector2(0.5, 0.5)
+		outer += (outer - wall).normalized() * 0.35
+		mass.decor.append({"kind": &"raker", "dir": 0, "centre": wall,
+			"from": Vector3(wall.x, band - 0.85, wall.y),
+			"to": Vector3(outer.x, band - 0.08, outer.y)})
+		mass.decor.append({"kind": &"raker", "dir": 0, "centre": wall,
+			"from": Vector3(wall.x, band - 0.08, wall.y),
+			"to": Vector3(outer.x, band - 0.08, outer.y)})
 	mass.decor.append({"kind": &"planter", "dir": 1,
 		"centre": Vector2(deck.keys()[0]) + Vector2(0.5, 0.5), "y_band": band})
 	return mass
+
+
+static func _balcony_bearing(grid: WarrenSpatialGrid, deck: Dictionary,
+		cell: Vector2i, band: int) -> Dictionary:
+	var centre := Vector2(cell) + Vector2(0.5, 0.5)
+	var best := {}
+	var nearest := INF
+	for dz in range(-3, 4):
+		for dx in range(-3, 4):
+			var probe := cell + Vector2i(dx, dz)
+			if deck.has(probe): continue
+			if grid.use_at(Vector3i(probe.x, band, probe.y)) != WarrenSpatialGrid.Use.PRIVATE_VOLUME: continue
+			var wall := centre.clamp(Vector2(probe), Vector2(probe + Vector2i.ONE))
+			var distance := centre.distance_to(wall)
+			if distance >= nearest or distance > 3.0: continue
+			var clear := true
+			for k in range(1, ceili(distance * 4.0) + 1):
+				var p := wall.lerp(centre, float(k) / ceili(distance * 4.0))
+				var between := Vector2i(floori(p.x), floori(p.y))
+				if not deck.has(between): clear = false
+				if grid.use_at(Vector3i(between.x, band - 1, between.y)) == WarrenSpatialGrid.Use.PUBLIC_AIR: clear = false
+			if clear:
+				nearest = distance
+				best = {"dir": 0, "wall": wall}
+	return best
 
 
 static func _support_mass(feature: WarrenFeatureReservation, grid: WarrenSpatialGrid,
@@ -597,7 +619,8 @@ static func _mass_for(house_id: StringName, house: Dictionary,
 			and not _walked(grid, probe)
 	designer.covered = func(cell: Vector2i, band: int) -> bool:
 		return _solid_other(grid, owner_at, house_id, Vector3i(cell.x, band, cell.y))
-	designer.articulate(mass, {"terrain_storey": terrain_storey,
+	preload("res://scripts/terrain/features/villages/kit/KitLoggias.gd").recess(mass, designer.forbidden, designer.walked)
+	designer.articulate(mass, {"terrain_storey": terrain_storey, "terraced": true,
 		"colour": _district_colour(world_seed, house.cells)})
 	return mass
 

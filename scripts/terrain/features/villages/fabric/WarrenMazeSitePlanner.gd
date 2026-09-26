@@ -50,6 +50,13 @@ static func plan(world_seed: int, ground_bands: Dictionary,
 	if stop_after == &"partition":
 		return source_plan
 
+	# Destination pruning can remove the street that originally set a roof
+	# height. Refresh its audit label from the final geometry.
+	var plots_by_id := {}
+	for plot: Dictionary in source_plan.plots: plots_by_id[plot.id] = plot
+	for record: Dictionary in source_plan.audit.get("plot_outcomes", {}).get("buildings", []):
+		if plots_by_id.has(record.id):
+			record.tiered = source_plan.plot_facts(plots_by_id[record.id]).tiered
 	source_plan.finish_construction(collect_diagnostics)
 	return source_plan
 
@@ -70,6 +77,14 @@ static func finish_ground_streets(source: WarrenMazeSourcePlan) -> void:
 			occupied[Vector2i(cell.x,cell.z)] = true
 	var directions: Array[Vector3i] = [Vector3i.LEFT,Vector3i.RIGHT,
 		Vector3i.FORWARD,Vector3i.BACK]
+	# A swept stair cell is walkable frontage, but is not a graph landing.
+	# Reclaimed ground can join only real transition endpoints.
+	var nodes := {}
+	var existing_transitions: Array = source.excavation.transitions.duplicate()
+	for lane: Dictionary in source.excavation.lanes: existing_transitions.append_array(lane.transitions)
+	for edge: Dictionary in existing_transitions:
+		nodes[edge.from] = true
+		nodes[edge.to] = true
 	var additions: Array[Vector3i] = []
 	for column: Vector2i in source.massif.columns:
 		if occupied.has(column): continue
@@ -77,7 +92,7 @@ static func finish_ground_streets(source: WarrenMazeSourcePlan) -> void:
 		if source.passage_kinds.has(cell): continue
 		var enclosed := true
 		for direction: Vector3i in directions:
-			if not source.passage_kinds.has(cell+direction):
+			if not nodes.has(cell+direction):
 				enclosed = false
 				break
 		if enclosed: additions.append(cell)
@@ -86,7 +101,7 @@ static func finish_ground_streets(source: WarrenMazeSourcePlan) -> void:
 	var old := source.excavation
 	var excavation := WarrenExcavation.new(old.world_seed)
 	for key: String in ["route","transitions","lanes","loop_edges","carved",
-			"covered","portals","bridge_spans","bridge_span_audit","frontage_reservations"]:
+			"covered","portals","bridge_spans","bridge_span_audit","frontage_reservations","tunnel_cells"]:
 		excavation.set(key,old.get(key).duplicate(true))
 	for cell: Vector3i in additions:
 		var lane: Array[Vector3i] = [cell]
@@ -208,6 +223,7 @@ static func finish_public_destinations(source: WarrenMazeSourcePlan) -> void:
 	excavation.carved = old.carved.duplicate()
 	excavation.covered = old.covered.duplicate()
 	excavation.portals.assign(old.portals)
+	excavation.tunnel_cells = old.tunnel_cells.duplicate()
 	excavation.bridge_spans.assign(old.bridge_spans)
 	excavation.bridge_span_audit = old.bridge_span_audit.duplicate(true)
 	excavation.frontage_reservations = old.frontage_reservations.duplicate()

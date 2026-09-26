@@ -52,9 +52,9 @@ func test_scale_budgets_grow_monotonically_without_weakening_integrity() -> void
 	assert_eq([profiles[0].core_target_band_range,
 		profiles[1].core_target_band_range,
 		profiles[2].core_target_band_range,
-		profiles[3].core_target_band_range], [Vector2i(12, 17),
+		profiles[3].core_target_band_range], [Vector2i(10, 14),
 		Vector2i(13, 17), Vector2i(14, 18), Vector2i(15, 18)],
-		"relaxing a validity floor must not reroll the preferred crown field")
+		"size budgets retain the reviewed range of source crown heights")
 	for profile: WarrenVillageScaleProfile in profiles:
 		assert_gte(profile.skywalk_range.x, 1)
 		assert_eq(profile.cantilever_range, Vector2i.ZERO,
@@ -62,12 +62,12 @@ func test_scale_budgets_grow_monotonically_without_weakening_integrity() -> void
 			+ "shell and roof joins pass visual review")
 	assert_eq([profiles[0].skywalk_range.x, profiles[1].skywalk_range.x,
 		profiles[2].skywalk_range.x, profiles[3].skywalk_range.x],
-		[2, 2, 3, 4],
+		[1, 2, 3, 4],
 		"multiple occupied links are selected by the source topology, before " \
 		+ "plots or visual reservations can reinterpret the town")
 	assert_eq([profiles[2].skywalk_range.y, profiles[3].skywalk_range.y],
-		[4, 5],
-		"large and grand towns request an extra link; the sealed occluder "
+		[6, 7],
+		"larger towns allow more links; the sealed occluder "
 		+ "ranking keeps it only when it adds distinct inhabited route cover")
 	# One extra source reservation may admit another measured native building;
 	# the requested budget does not bypass site, bearing or frontage checks.

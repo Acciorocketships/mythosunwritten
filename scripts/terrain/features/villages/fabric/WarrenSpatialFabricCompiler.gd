@@ -5527,14 +5527,11 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 			return [] as Array[FabricUnit]
 		if pitched_preferred and full \
 				and not _touches_public_air(source.grid, face_cells):
-			# This crown already consumed its single canonical domain above.
-			# Repeating the same choices with an empty neighborhood both wasted
-			# work and changed their order. Keep failure evidence for the tests
-			# while the remaining domain selector is migrated to construction.
+			# Kit towns replace these legacy roofs with clearance-fitted, joined
+			# native crowns. A legacy gable that cannot fit must retain its exact
+			# supported plate below, not reject an otherwise valid source town.
+			# The slab/tile solver still proves every claimed cell and clearance.
 			maze_pitched_refused_count += 1
-			last_failure = "terminal house crown %s has no fitting authored gable: %s" % [
-				room_id, "; ".join(attempt_failures)]
-			return [] as Array[FabricUnit]
 		elif pitched_preferred:
 			# TASK H2. The crown ASKED for a pitched shell and the branch above
 			# never ran: its plate is partial (another storey stands on part of

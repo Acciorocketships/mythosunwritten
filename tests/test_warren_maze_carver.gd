@@ -87,7 +87,10 @@ const ADDRESSED_COLUMN_FLOOR := 0.27
 ## cells with rock rather than a house beside them. Pinned a step under the
 ## measured worst so a COLLAPSE is still red; raising it back is a job for
 ## whoever scales the street program to the town.
-const CARVE_FRONTAGE_FLOOR := 0.65
+# September 26: the shared field intentionally opens gaps between clusters.
+# The four profile samples retain >=0.6078 frontage; pin 0.60 while the
+# independent addressed-column and source-retention floors stay unchanged.
+const CARVE_FRONTAGE_FLOOR := 0.60
 const PRODUCTION_CORPUS: Array[String] = [
 	"166029932451774690", "3910114991003307946", "6357506428441529412",
 	"3613595803240038080:standard", "7:standard",
@@ -114,6 +117,8 @@ func _plan(world_seed: int, profile_id: StringName) -> WarrenMazeSourcePlan:
 
 func _reordered(massif: WarrenMassif) -> WarrenMassif:
 	var out := WarrenMassif.new(massif.world_seed)
+	out.form_id = massif.form_id
+	out.open_court = massif.open_court.duplicate()
 	var keys: Array = massif.columns.keys()
 	keys.reverse()
 	for column_value: Variant in keys:

@@ -14,6 +14,19 @@ static func masses(set_name: String, count: int, seed: int,
 		"lots":
 			for i in count:
 				out.append(KitStandaloneHouse.design(kit, 4 + i % 2, 3 + (i / 2) % 2, 1, seed * 1000 + i))
+		"loggias-before":
+			var records: Array = str_to_var(FileAccess.get_file_as_string("res://tests/fixtures/town_depth_before_masses.var"))
+			for record: Dictionary in records:
+				var mass := BuildingMass.new()
+				for key: String in record: mass.set(key, record[key])
+				out.append(mass)
+		"loggias":
+			for i in count:
+				var house := {"storeys": {}, "cells": [], "doors": [], "terrain_band": 0}
+				for floor in 3 + i % 2:
+					house.storeys[floor * 2] = BuildingMass.rect_cells(Rect2i(0, 0, 6 + i % 2, 4))
+				out.append(KitVillageBuildings._mass_for(StringName("gallery.%d" % i), house,
+					WarrenSpatialGrid.new(Vector3i.ZERO, Vector3i.ONE), {}, seed, kit))
 		"designer":
 			var designer := BuildingDesigner.new(kit)
 			for i in count:

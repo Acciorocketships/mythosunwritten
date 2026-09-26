@@ -1,0 +1,104 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[INFO]:  using [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+
+
+res://tests/test_town_layout_field.gd
+* test_towns_share_a_continuously_varied_mass_field
+    [Failed]:  [STRING_NAME(ridge)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(courtyard)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(crescent)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(hill)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(ridge)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(courtyard)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(crescent)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(hill)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(ridge)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(courtyard)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(crescent)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(hill)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(ridge)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(courtyard)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(crescent)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+    [Failed]:  [STRING_NAME(hill)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+      at line 7
+* test_production_does_not_select_a_separate_hamlet_constructor
+    [Failed]:  all production settlements use the shared mass field
+      at line 17
+0/2 passed.
+
+
+
+
+==============================================
+= Run Summary
+==============================================
+
+res://tests/test_town_layout_field.gd
+- test_towns_share_a_continuously_varied_mass_field
+    [Failed]:  [STRING_NAME(ridge)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(courtyard)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(crescent)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(hill)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(ridge)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(courtyard)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(crescent)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(hill)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(ridge)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(courtyard)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(crescent)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(hill)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(ridge)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(courtyard)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(crescent)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+    [Failed]:  [STRING_NAME(hill)] expected to equal [STRING_NAME(mixture)]:  one field grammar instead of choosing a named town form
+          at line 7
+- test_production_does_not_select_a_separate_hamlet_constructor
+    [Failed]:  all production settlements use the shared mass field
+          at line 17
+
+Totals
+------
+Scripts               1
+Tests                 2
+Passing Tests      none
+Failing Tests         2
+Asserts           33/50
+Time              0.418s
+
+
+---- 2 failing tests ----
+

@@ -90,7 +90,7 @@ func _shoot(stage: Node3D, eye: Vector3, target: Vector3, name: String,
 	camera.current = true
 	for i in 10:
 		await process_frame
-	await RenderingServer.frame_post_draw
+	RenderingServer.force_draw(false)
 	get_root().get_texture().get_image().save_png("%s/%s.png" % [_out, name])
 	camera.queue_free()
 

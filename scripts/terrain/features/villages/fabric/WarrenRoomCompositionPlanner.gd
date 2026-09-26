@@ -3347,12 +3347,16 @@ static func _record_clearance_failure(grid: WarrenSpatialGrid,
 static func _new_projection_has_clearance(record: Dictionary,
 		source_columns: Dictionary, protected_owners: Dictionary,
 		claimed_cells: Dictionary, allowed_owner_ids: Dictionary) -> bool:
-	## Cell overlap and hero-feature reservations are proven by the exact grid
-	## checks immediately before this call. Neighbor distance is not clearance:
-	## dense cardinal contact becomes a typed PARTY_WALL, while diagonal/eave
-	## compatibility is decided later from the actual selected recipe envelopes.
-	## A blanket fine-cell halo (1.5 m) erased the negative-space street fabric
-	## and made the only legal upper construction a repeated vertical shaft.
+	# A new room projection needs the band beneath its floor for a short
+	# structural bracket. Prove that air at candidate selection, before the
+	# canopy and room have both committed. Party-wall contact is still legal.
+	var floor_band := (record.origin as Vector3i).y
+	for column: Vector2i in record.columns:
+		if source_columns.has(column): continue
+		var under := Vector3i(column.x, floor_band - 1, column.y)
+		for owner: StringName in protected_owners.get(under, {}):
+			if String(owner).begins_with("spatial.feature.") and not allowed_owner_ids.has(owner):
+				return false
 	return true
 
 
