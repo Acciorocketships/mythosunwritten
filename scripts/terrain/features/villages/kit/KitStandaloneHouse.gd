@@ -53,10 +53,12 @@ static func design(kit: BuildingKit, nx: int, nz: int, dir: int,
 	# Design inside the already reserved lot. A broad rear hall and a front
 	# wing make an L or T; the next floor can move its wing, leaving a usable
 	# terrace and a post-supported wing above the lower recess.
-	var storey_count := 2 if rng.randf() < 0.85 or mini(nx, nz) < 3 else 3
-	var shape := posmod(seed, 8)
+	var height_roll := rng.randf()
+	var storey_count := 1 if height_roll < 0.18 else (2 if height_roll < 0.73 or mini(nx, nz) < 3 else 3)
+	var shape := posmod(seed, 12)
 	for s in storey_count:
 		var cells := _floorplate(nx, nz, dir, shape, s)
+		_crop_to_size(cells, nx, nz, dir, seed)
 		mass.add_storey(s * 2, cells, BuildingMass.MATERIAL_TIMBER)
 	var door_cell: Vector2i
 	match dir:
@@ -66,8 +68,10 @@ static func design(kit: BuildingKit, nx: int, nz: int, dir: int,
 		_: door_cell = Vector2i(nx / 2, 0)
 	var ground: Dictionary = mass.storeys[0]
 	ground.openings[BuildingMass.edge_key(door_cell, dir)] = BuildingMass.OPENING_DOOR
+	var bounds := BuildingDesigner._bounds(ground.cells)
 	BuildingDesigner.new(kit).articulate(mass, {"terrain_storey": 0, "terraced": true,
-		"roof_axis": dir % 2 if mini(nx, nz) >= 3 else -1})
+		"roof_axis": dir % 2 if mini(bounds.size.x, bounds.size.y) >= 3 else -1})
+	_space_canopies(kit, mass)
 	_support_projections(mass)
 	_dress_terraces(mass)
 	return mass
@@ -89,10 +93,8 @@ static func _floorplate(nx: int, nz: int, dir: int, shape: int, floor: int) -> D
 		left = (width - wing_width) / 2
 	if floor > 0 and (shape == 3 or shape == 4):
 		left = width - wing_width if shape == 3 else 0
-	if (shape == 0 or shape == 5) and floor == 0:
-		return cells
-	if shape == 6 and floor > 0:
-		return cells
+	var full := ((shape == 0 or shape == 5 or shape == 8) and floor == 0) \
+			or (shape == 6 and floor > 0)
 	var cut_depth := maxi(2, depth - 2)
 	# Long verandas and deep projecting wings, including the small 4x3 lots.
 	# Retain a connected rear hall; a third floor steps back independently.
@@ -107,9 +109,64 @@ static func _floorplate(nx: int, nz: int, dir: int, shape: int, floor: int) -> D
 		var v := cell.x if dir % 2 == 0 else cell.y
 		if dir < 2:
 			v = depth - 1 - v
-		if v < cut_depth and (u < left or u >= left + wing_width):
+		if not full and v < cut_depth and (u < left or u >= left + wing_width):
+			cells.erase(cell)
+		# Rear setbacks make double-ended wings and compact upper towers,
+		# rather than repeating only a front recess on a full rear rectangle.
+		var core_left := maxi(0, width / 2 - 1)
+		if shape >= 8 and v == depth - 1 and (u < core_left or u >= core_left + 2):
+			cells.erase(cell)
+		if shape == 10 and floor > 0 and v >= maxi(2, depth - 1):
+			cells.erase(cell)
+		if shape == 11 and floor > 0 and (u < core_left or u >= core_left + 2):
 			cells.erase(cell)
 	return cells
+
+
+static func _crop_to_size(cells: Dictionary, nx: int, nz: int, dir: int, seed: int) -> void:
+	# A reservation is a maximum, not a mandate to fill it. Keep the planned
+	# frontage/door while varying the rear extent and side-to-side width.
+	var width := nz if dir % 2 == 0 else nx
+	var depth := nx if dir % 2 == 0 else nz
+	var size_variant := posmod(seed * 7, 5)
+	var rear := depth - 1 if size_variant in [1, 3] and depth > 3 else depth
+	var side := 1 if size_variant in [2, 3] and width > 3 else 0
+	for cell: Vector2i in cells.keys():
+		var u := cell.y if dir % 2 == 0 else cell.x
+		var v := cell.x if dir % 2 == 0 else cell.y
+		if dir < 2: v = depth - 1 - v
+		if u < side or v >= rear: cells.erase(cell)
+
+
+static func _space_canopies(kit: BuildingKit, mass: BuildingMass) -> void:
+	# Keep entrance porches first. Adjacent/perpendicular recess faces can
+	# compete for the same air: admit whole authored canopies without overlap.
+	var candidates: Array[Dictionary] = []
+	var retained: Array[Dictionary] = []
+	for item: Dictionary in mass.decor:
+		if item.kind == &"awning": candidates.append(item)
+		else: retained.append(item)
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return not a.get("sheltered", false) and b.get("sheltered", false))
+	var occupied: Array[Rect2] = []
+	for item: Dictionary in candidates:
+		# The same authored 3.6 m canopy and fit used by the assembler.
+		# Its measured width is 3.795 m; with the wall offset its front
+		# reaches 2.342 m. Round outwards to leave a small edge clearance.
+		var fit := (kit.storey_height - 0.2) / 3.6 / kit.module_width
+		var out := Vector2(BuildingMass.DIRS[int(item.dir)])
+		var right := Vector2(BuildingKitAssembler.right_of(int(item.dir)))
+		var centre: Vector2 = item.centre
+		var a := centre - right * (1.94 * fit)
+		var b := centre + right * (1.94 * fit) + out * (2.37 * fit)
+		var rect := Rect2(a.min(b), a.max(b) - a.min(b))
+		var clear := true
+		for other: Rect2 in occupied:
+			if rect.intersects(other): clear = false
+		if clear:
+			occupied.append(rect)
+			retained.append(item)
+	mass.decor = retained
 
 
 static func _support_projections(mass: BuildingMass) -> void:

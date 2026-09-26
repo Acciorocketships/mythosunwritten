@@ -84,9 +84,11 @@ func test_large_projections_have_corner_posts_and_long_balconies() -> void:
 	var kit := SuntailBuildingKit.create()
 	var long_decks := 0
 	var long_projections := 0
+	var multi_storey := 0
 	for dir in 4:
 		for seed_value in range(1000, 1020):
 			var mass := KitStandaloneHouse.design(kit, 5, 4, dir, seed_value)
+			if mass.storeys.size() >= 2: multi_storey += 1
 			for deck: Dictionary in mass.decks:
 				if deck.cells.size() >= 2: long_decks += 1
 			for i in range(1, mass.storeys.size()):
@@ -103,8 +105,8 @@ func test_large_projections_have_corner_posts_and_long_balconies() -> void:
 						posts += 1
 						assert_lt(int(item.from_band), int(item.to_band))
 				assert_gt(posts, 0, "large projecting rooms need visible corner bearing")
-	assert_gt(long_decks, 40, "balconies should commonly span several cells")
-	assert_gt(long_projections, 20, "projecting wings should span several cells")
+	assert_gt(float(long_decks), multi_storey * 0.5, "multi-storey houses commonly retain long balconies")
+	assert_gt(float(long_projections), multi_storey * 0.25, "multi-storey houses retain large projecting wings")
 
 
 func test_cross_gable_ridges_fit_below_their_host_roof() -> void:
@@ -163,3 +165,62 @@ func test_each_balcony_component_has_its_own_house_door() -> void:
 						if storey.openings[edge] != BuildingMass.OPENING_DOOR: continue
 						if deck.cells.has(Vector2i(edge.x, edge.y) + BuildingMass.DIRS[edge.z]): doors += 1
 				assert_gt(doors, 0, "every separate terrace needs access")
+
+
+func test_same_lot_varies_building_size_and_height() -> void:
+	var heights := {}
+	var footprints := {}
+	for seed_value in range(1000, 1064):
+		var mass := KitStandaloneHouse.design(SuntailBuildingKit.create(), 5, 4, 1, seed_value)
+		heights[mass.storeys.size()] = true
+		footprints[BuildingDesigner._bounds(mass.storeys[0].cells)] = true
+	assert_true(heights.has(1), "include low cottages")
+	assert_true(heights.has(3), "retain tall houses")
+	assert_gte(footprints.size(), 3, "a reserved lot must not force one building size")
+
+
+func test_projecting_room_edges_have_floor_beams_and_sheltered_canopies() -> void:
+	var kit := SuntailBuildingKit.create()
+	var sheltered := 0
+	var houses_with_recesses := 0
+	for seed_value in range(1000, 1020):
+		var mass := KitStandaloneHouse.design(kit, 5, 4, 1, seed_value)
+		var placements := BuildingKitAssembler.new(kit).assemble(mass)
+		for i in range(1, mass.storeys.size()):
+			var upper: Dictionary = mass.storeys[i]
+			var lower: Dictionary = mass.storeys[i - 1].cells
+			for slot: Dictionary in BuildingKitAssembler.wall_slots(upper.cells, false):
+				var cell := Vector2i(slot.edge.x, slot.edge.y)
+				if lower.has(cell): continue
+				var found := false
+				for entry: Dictionary in placements:
+					if entry.role not in [&"trim.floor_beam", &"trim.floor_beam_corner"]: continue
+					var at: Vector3 = entry.transform.origin
+					if Vector2(at.x, at.z).distance_to(slot.centre * kit.module_width) < 0.1 \
+							and absf(at.y - upper.floor_band * kit.band_height()) < 0.1: found = true
+				assert_true(found, "every exposed overhang edge needs a timber fascia")
+		if mass.storeys.size() < 2: continue
+		var has_recess := false
+		for slot: Dictionary in BuildingKitAssembler.wall_slots(mass.storeys[0].cells, false):
+			var outside := Vector2i(slot.edge.x, slot.edge.y) + BuildingMass.DIRS[slot.dir]
+			if not mass.storeys[1].cells.has(outside): continue
+			has_recess = true
+			for item: Dictionary in mass.decor:
+				if item.kind == &"awning" and item.centre == slot.centre: sheltered += 1
+		if has_recess: houses_with_recesses += 1
+	assert_gte(float(sheltered), houses_with_recesses * 0.5, "fitted sheltered canopies remain common")
+
+
+func test_authored_canopy_roofs_do_not_intersect() -> void:
+	var kit := SuntailBuildingKit.create()
+	var descriptor := load("res://terrain/environment/catalog/descriptors/suntail_decor_wooden_canopy_1.tres") as EnvironmentAssetDescriptor
+	for seed_value in range(1000, 1064):
+		var mass := KitStandaloneHouse.design(kit, 5, 4, 1, seed_value)
+		var boxes: Array[AABB] = []
+		for placement: Dictionary in BuildingKitAssembler.new(kit).assemble(mass):
+			if placement.role != &"awning": continue
+			var box: AABB = placement.transform * descriptor.measured_aabb
+			for other: AABB in boxes:
+				assert_false(box.grow(-0.02).intersects(other.grow(-0.02)),
+					"native canopy roofs intersect on seed %d" % seed_value)
+			boxes.append(box)

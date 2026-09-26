@@ -381,6 +381,15 @@ func _assemble_soffit(ctx: Dictionary, storey: Dictionary, y: float) -> void:
 			continue
 		_emit(ctx, &"deck.board", Vector2(cell) + Vector2(0.5, 0.5), y, 0.0)
 
+	if floor_band <= mass.ground_band: return
+	# Full-cell projections need the same continuous timber edge as jetties,
+	# but only the actual exposed rim receives trim (no internal grid seams).
+	for slot: Dictionary in wall_slots(storey.cells, false):
+		if below.has(Vector2i(slot.edge.x, slot.edge.y)): continue
+		if not _slot_exposed(mass, slot, floor_band, 2): continue
+		var role := &"trim.floor_beam_corner" if slot.left_convex else &"trim.floor_beam"
+		_emit(ctx, role, slot.centre, y, yaw_for_dir(slot.dir))
+
 
 ## True when a storey (this building or another) stands directly under the
 ## slot: a plinth there would band the top of that wall instead of meeting

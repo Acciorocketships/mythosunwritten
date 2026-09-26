@@ -461,6 +461,13 @@ func _assign_dressing(mass: BuildingMass, rng: RandomNumberGenerator,
 			var kind := StringName(storey.openings.get(slot.edge, storey.default_opening))
 			var centre := slot.centre as Vector2
 			var dir := int(slot.dir)
+			var sheltered := false
+			if grounded and context.get("terraced", false) and not above.is_empty():
+				var outside := Vector2i(slot.edge.x, slot.edge.y) + BuildingMass.DIRS[dir]
+				sheltered = above.cells.has(outside) and not storey.cells.has(outside)
+			if sheltered and rng.randf() < 0.85 and _front_open(slot, int(storey.floor_band)):
+				mass.decor.append({"kind": &"awning", "centre": centre,
+					"dir": dir, "y": y, "sheltered": true})
 			if kind == BuildingMass.OPENING_DOOR and grounded:
 				# A porch canopy needs a flush wall above it: under a jetty the
 				# brackets already shelter the door, under an eave there is no
@@ -469,7 +476,7 @@ func _assign_dressing(mass: BuildingMass, rng: RandomNumberGenerator,
 					and (above.cells as Dictionary).has(Vector2i(slot.edge.x, slot.edge.y)) \
 					and StringName((above.openings as Dictionary).get(slot.edge, &"")) \
 						!= BuildingMass.OPENING_BAY
-				if flush_above and rng.randf() < 0.9 \
+				if not sheltered and flush_above and rng.randf() < 0.9 \
 						and _awning_room(slot, int(storey.floor_band)):
 					mass.decor.append({"kind": &"awning", "centre": centre,
 						"dir": dir, "y": y})

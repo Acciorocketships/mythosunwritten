@@ -1,0 +1,296 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+---  GUT  ---
+[1m[INFO]:  [0musing [/Users/ryko/Library/Application Support/Godot/app_userdata/Story] for temporary output.
+Godot version:  4.5.1
+GUT version:  9.5.0
+[4m
+
+res://tests/test_town_architecture.gd
+[0m* test_lot_houses_have_compound_and_changing_floorplates
+* test_all_frontages_keep_a_door_and_connected_rooms
+* test_balconies_and_roof_crowns_have_native_collision
+* test_large_projections_have_corner_posts_and_long_balconies
+* test_cross_gable_ridges_fit_below_their_host_roof
+* test_roof_finishes_use_wood_colour_and_board_normals
+* test_narrow_lots_keep_a_low_roof_along_the_long_axis
+* test_each_balcony_component_has_its_own_house_door
+* test_same_lot_varies_building_size_and_height
+* test_projecting_room_edges_have_floor_beams_and_sheltered_canopies
+* test_authored_canopy_roofs_do_not_intersect
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1003
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1011
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1011
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1011
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1011
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1011
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1011
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1011
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1012
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1012
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1012
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1012
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1012
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1012
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1014
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1015
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1015
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1023
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1023
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1023
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1023
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1023
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1023
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1023
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1024
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1024
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1024
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1024
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1026
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1026
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1026
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1027
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1027
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1035
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1035
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1035
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1035
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1035
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1035
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1035
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1038
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1038
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1038
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1038
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1047
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1047
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1050
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1050
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1050
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1051
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1059
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1059
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1059
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1059
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1059
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1059
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1060
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1060
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1060
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1060
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1060
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1060
+      at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1060
+      at line 224
+[1m10/11 passed.
+[0m
+
+
+
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m[4m
+res://tests/test_town_architecture.gd
+[0m- test_authored_canopy_roofs_do_not_intersect
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1003
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1011
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1011
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1011
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1011
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1011
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1011
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1011
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1012
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1012
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1012
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1012
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1012
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1012
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1014
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1015
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1015
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1023
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1023
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1023
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1023
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1023
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1023
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1023
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1024
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1024
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1024
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1024
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1026
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1026
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1026
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1027
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1027
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1035
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1035
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1035
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1035
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1035
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1035
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1035
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1038
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1038
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1038
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1038
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1047
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1047
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1050
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1050
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1050
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1051
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1059
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1059
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1059
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1059
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1059
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1059
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1060
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1060
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1060
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1060
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1060
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1060
+          at line 224
+[31m    [Failed]:  [0mnative canopy roofs intersect on seed 1060
+          at line 224
+
+Totals
+------
+Scripts               1
+Tests                11
+Passing Tests        10
+Failing Tests         1
+Asserts           1647/1710
+Time              4.713s
+
+
+[31m---- 1 failing tests ----
+[0m
