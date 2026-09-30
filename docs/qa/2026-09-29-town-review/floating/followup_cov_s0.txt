@@ -1,0 +1,15 @@
+COVERED 1260018864828801968:compact tunnels=3 covered=3 walks_under=24/172
+COVERED 1998423929946073270:compact tunnels=3 covered=3 walks_under=48/200
+COVERED 1:compact tunnels=0 covered=0 walks_under=8/104
+COVERED 2:standard tunnels=0 covered=0 walks_under=44/300
+COVERED 3:standard tunnels=3 covered=3 walks_under=71/252
+COVERED 4:large tunnels=3 covered=3 walks_under=70/324
+COVERED 5:compact tunnels=0 covered=0 walks_under=25/104
+COVERED 6:compact tunnels=1 covered=1 walks_under=26/104
+COVERED 7:standard tunnels=2 covered=1 walks_under=43/156
+COVERED 8:compact tunnels=5 covered=5 walks_under=54/152
+COVERED 9:standard tunnels=3 covered=3 walks_under=46/204
+COVERED 10:compact tunnels=1 covered=1 walks_under=26/116
+COVERED 11:compact tunnels=2 covered=2 walks_under=35/168
+COVERED 12:grand tunnels=5 covered=5 walks_under=90/356
+COVERED_TOTAL tunnels=31 covered=30 walks_under=610

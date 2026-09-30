@@ -22,7 +22,9 @@ func test_scaled_stair_risers_reserve_the_ground_approach_clearance() -> void:
 			assert_almost_eq(heights[-1],1.5,0.0001,"the upper landing remains fixed")
 			var previous := -VillageWarrenFabricSolver.DATUM_GUARD
 			for height: float in heights.slice(1):
-				var world_height := height*VillageWorldScale.PRODUCTION_UNIFORM_SCALE
+				# Risers are vertical: the anisotropic frame scales them by its
+				# vertical factor, never the horizontal lattice scale.
+				var world_height := height*VillageWorldScale.VERTICAL_SCALE
 				assert_lte(world_height-previous,TraversalEnvelope.MAX_PLANNED_STEP+0.0001,"every real tread, including the ground handoff, fits the walking contract")
 				previous=world_height
 
@@ -32,16 +34,21 @@ func test_real_player_walks_from_ground_to_upper_landing_without_jump() -> void:
 	var body := StaticBody3D.new()
 	stage.add_child(body)
 	var payload := _stairs()
+	# The production frame: anisotropic horizontal/vertical lattice scale.
+	var frame := VillageWorldScale.frame_scale()
 	var faces := PackedVector3Array()
-	for point: Vector3 in payload.collision_faces: faces.append(point*2)
+	for point: Vector3 in payload.collision_faces: faces.append(point*frame)
 	var shape := ConcavePolygonShape3D.new()
 	shape.backface_collision=true
 	shape.set_faces(faces)
 	var collision := CollisionShape3D.new()
 	collision.shape=shape
 	body.add_child(collision)
-	_box(body,Vector3(1.5,-0.58,2),Vector3(6,1,5))
-	_box(body,Vector3(1.5,2.5,12),Vector3(6,1,3))
+	var flight_start := 2.25*frame.z
+	var flight_end := 5.25*frame.z
+	var top := 1.5*frame.y
+	_box(body,Vector3(1.5,-0.58,flight_start*0.5),Vector3(8,1,flight_start+1.0))
+	_box(body,Vector3(1.5,top-0.5,flight_end+1.5),Vector3(8,1,3))
 	var player := (load("res://characters/character.tscn") as PackedScene).instantiate() as CharacterBody3D
 	var controller := WalkController.new()
 	controller.direction=Vector2.ZERO
@@ -54,12 +61,12 @@ func test_real_player_walks_from_ground_to_upper_landing_without_jump() -> void:
 		player._physics_process(1.0/60)
 	assert_almost_eq(player.position.y,-0.08,0.005,"start on the real ground datum")
 	controller.direction=Vector2.DOWN
-	for tick in 150:
+	for tick in 240:
 		await get_tree().physics_frame
 		player._physics_process(1.0/60)
-		if player.position.z>11.3: break
-	assert_gt(player.position.z,11.3,"ordinary forward input reaches the upper landing")
-	assert_almost_eq(player.position.y,3.0,0.06,"the player climbs the whole 3 m flight")
+		if player.position.z>flight_end+0.8: break
+	assert_gt(player.position.z,flight_end+0.8,"ordinary forward input reaches the upper landing")
+	assert_almost_eq(player.position.y,top,0.06,"the player climbs the whole flight")
 	stage.queue_free()
 	await get_tree().process_frame
 

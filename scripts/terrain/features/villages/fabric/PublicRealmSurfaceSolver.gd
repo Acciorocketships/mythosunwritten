@@ -187,6 +187,12 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 	# carries the retained mass and the built solids the garden is derived from.
 	# A plan with no square names nothing and every guard stands where it did.
 	guard_boxes.append_array(SettlementFabricAssembler.maze_guard_wall_boxes(fabric_plan,result))
+	# A raised district's rim carries a stone parapet (WarrenTownPlatform):
+	# it is the fall guard there, not a timber rail.
+	if volume != null and volume.mass_context.get(&"massif") != null:
+		guard_boxes.append_array(WarrenTownPlatform.parapet_guard_boxes(
+			volume.mass_context.get(&"massif") as WarrenMassif,
+			fabric_plan.retained_terrace_cells))
 	var module_walls: Array[AABB] = []
 	var footprints := SettlementFabricAssembler.maze_module_footprints(fabric_plan)
 	for index in (footprints.boxes as Array).size():
@@ -196,6 +202,23 @@ static func solve(stable_id: StringName, realm: SectionalPublicRealmPlan,
 		if (asset.begins_with("sfv.fabric.wall.") and not ".door." in asset) \
 				or asset == String(SettlementFabricProgram.FLOOR):
 			module_walls.append(footprints.boxes[index])
+	# Kit buildings (KitVillageBuildings) redraw every room (and retained
+	# terrace) on its own cells, so a flight side flanked by one is closed by its wall
+	# whatever legacy module once stood there (doors and recessed returns
+	# included). Guarding such a side left short rail fragments standing
+	# against the kit wall. The room cells themselves are the authority.
+	var kit_cells := fabric_plan.transformed_cells(&"inhabited")
+	# The kit also dresses every retained terrace cell with its own wall.
+	kit_cells.merge(fabric_plan.retained_terrace_cells)
+	# Grown by the kit wall's outer-face projection, so a clipped rail ends on
+	# the visible wall face (where its end post then stands), not inside it.
+	var face := KitVillageBuildings.wall_face_lattice(SuntailBuildingKit.create())
+	for cell_value: Variant in kit_cells.keys():
+		var cell := cell_value as Vector3i
+		module_walls.append(AABB(Vector3(cell) * FabricRecipe.CELL_SIZE \
+			- Vector3(FabricRecipe.CELL_SIZE * 0.5 + face, 0.0, FabricRecipe.CELL_SIZE * 0.5 + face),
+			Vector3(FabricRecipe.CELL_SIZE + face * 2.0, FabricRecipe.CELL_SIZE,
+				FabricRecipe.CELL_SIZE + face * 2.0)))
 	if not result.finish_transition_guards(guard_boxes,module_walls): return null
 	if not result.seal(required, other_classified, guard_solids, entrances,
 			daylight_voids, transition_seams,

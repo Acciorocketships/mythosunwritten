@@ -168,6 +168,20 @@ static func from_volume(source: WarrenVolumePlan,
 				node_id
 			return null
 		edge_index += 1
+		# A court or deck opens onto every street square it meets level over a
+		# full two-lane seam: it is a place streets pass through, and no
+		# neighbouring square is left as a railed stub beside it.
+		for other: PublicRealmNode in realm.nodes:
+			var other_id := String(other.stable_id)
+			if other.stable_id == partner or other.stable_id == node_id \
+					or other_id.begins_with("volume.supplemental.") \
+					or other.surface_kind == PublicRealmSurfacePlan.SurfaceKind.STAIR:
+				continue
+			if _adjacent_lane_seams(other.surface_cells, surfaces, true).size() < 2:
+				continue
+			if _add_edge(realm, edge_index, other.stable_id, node_id,
+					PublicRealmEdge.TransitionKind.LEVEL, false):
+				edge_index += 1
 	for primary_index in range(source.primary_itinerary.size() - 1):
 		var from_cell := source.primary_itinerary[primary_index]
 		var to_cell := source.primary_itinerary[primary_index + 1]

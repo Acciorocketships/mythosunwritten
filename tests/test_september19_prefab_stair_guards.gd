@@ -23,7 +23,13 @@ func test_p15_rails_reach_the_lower_landing_outside_the_actual_prefab() -> void:
 			for fraction: float in [.52, 1.0]:
 				var point := Vector3(5.25, floor_y + WarrenTransitionSurfaceBuilder.GUARD_HEIGHT*fraction, z)
 				assert_true(_crosses(faces, point), "Roof-side rail must protect the actual exposed flight at %s" % point)
-		assert_true(_crosses(faces,Vector3(5.25,8.0,11.25)), "Lower end post must support the rail above its real landing")
+		# September 27: the kit redraws the landmark as a complete house whose
+		# timber wall starts on this corner (x=5.25, z>=11.25). The rail ends
+		# against that wall, so the end post may be withdrawn into it; either
+		# way the rail's lower end is carried.
+		var post := _crosses(faces,Vector3(5.25,8.0,11.25))
+		var walled := _plan().transformed_cells(&"inhabited").has(Vector3i(4, 5, 8))
+		assert_true(post or walled, "Lower rail end must meet a post or the house wall at its real landing")
 	assert_true(found)
 
 func test_photographed_rail_is_outside_every_native_prefab_part() -> void:

@@ -63,7 +63,7 @@ func _build(frame: VillageFrame) -> VillageRecord:
 	# architectural generator. Every settlement starts from the same mass field.
 	var urban_fabric := VillageWarrenFabricSolver.solve(terrain,
 		_warren_seed(frame), frame.settlement_id, frame.centre, street_axis,
-		_program, _world_seed, frame.path_ground)
+		_program, _world_seed, frame.path_ground, frame.road_masks)
 	_stats["urban_usec"] = Time.get_ticks_usec() - stage_start
 	stage_start = Time.get_ticks_usec()
 	if urban_fabric.accepted:

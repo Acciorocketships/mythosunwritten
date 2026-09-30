@@ -151,25 +151,29 @@ static func proposal_occupied_cells(proposal: Dictionary) -> Array[Vector3i]:
 	var yaw := int(proposal.get("yaw_quarters", 0))
 	var kind := StringName(proposal.get("kind", ""))
 	var minimum := ROOM_MINIMUM
-	var size := Vector3i(4, storeys * 2 + 2, 4)
+	# A flat-roofed plot's crown is its one-band slab: a house stacked on it
+	# owns the band above, so the envelope must not reserve a pitched roof's
+	# two bands there (the planner already proved the stack).
+	var roof_bands := 1 if bool(proposal.get("flat_roof", false)) else 2
+	var size := Vector3i(4, storeys * 2 + roof_bands, 4)
 	if kind == &"market":
 		minimum = MARKET_MINIMUM
 		size = MARKET_SIZE
 	elif kind == &"tower":
 		minimum = TOWER_MINIMUM
-		size = Vector3i(2, storeys * 2 + 2, 2)
+		size = Vector3i(2, storeys * 2 + roof_bands, 2)
 	elif kind == &"micro":
 		minimum = MICRO_MINIMUM
 		size = Vector3i(2, 4, 4)
 	elif kind == &"slim":
 		minimum = SLIM_MINIMUM
-		size = Vector3i(2, storeys * 2 + 2, 4)
+		size = Vector3i(2, storeys * 2 + roof_bands, 4)
 	elif kind == &"row":
 		minimum = ROW_MINIMUM
-		size = Vector3i(4, storeys * 2 + 2, 2)
+		size = Vector3i(4, storeys * 2 + roof_bands, 2)
 	elif kind == &"long":
 		minimum = LONG_MINIMUM
-		size = Vector3i(4, storeys * 2 + 2, 6)
+		size = Vector3i(4, storeys * 2 + roof_bands, 6)
 	var out: Array[Vector3i] = []
 	for local_cell: Vector3i in FabricRecipe.box_cells(minimum, size):
 		out.append(FabricRecipe.transform_cell(local_cell, origin, yaw))

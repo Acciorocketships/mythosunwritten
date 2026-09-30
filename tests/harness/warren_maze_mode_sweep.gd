@@ -45,6 +45,10 @@ extends SceneTree
 ## while `res://.godot` remains machine-local and travels with this checkout's
 ## exact source fingerprint.
 const SUMMARY_PATH := "res://.godot/warren_maze_mode_sweep.json"
+## Public-walk nodes leading nowhere over the whole 48-town matrix. Was 226
+## before the September 27 destination pruning. Zero: the pruning's
+## destinations are exactly the doors construction realizes.
+const DEAD_END_CORPUS_CEILING := 0
 
 ## The directory whose contents decide the matrix. A sweep summary is only
 ## evidence about the code that produced it, so it carries a fingerprint of
@@ -332,6 +336,9 @@ func _run() -> void:
 	print("SWEEP seeds=%d scales=%d" % [seeds.size(), scale_ids.size()])
 
 	var sealed_count := 0
+	var dead_end_nodes := 0
+	var worst_dead_end_town := 0
+	var dead_end_towns := PackedStringArray()
 	var attempted := 0
 	var total_ms := 0
 	var rows: Array[Dictionary] = []
@@ -408,10 +415,19 @@ func _run() -> void:
 				sealed_count += 1
 				sealed_by_scale[String(profile.scale_id)] = 1 + int(
 					sealed_by_scale.get(String(profile.scale_id), 0))
+				var fabric := plan.compiled_fabric_cache()
+				# September 27: public walks that lead nowhere, per town.
+				var walk := PublicWalkAudit.audit(fabric, plan)
+				dead_end_nodes += int(walk.summary.dead_end_nodes)
+				worst_dead_end_town = maxi(worst_dead_end_town,
+					int(walk.summary.dead_end_nodes))
+				if int(walk.summary.dead_end_nodes) > 0:
+					dead_end_towns.append("%d/%s" % [city_seed,
+						String(profile.scale_id)])
 				rows.append({"seed": city_seed,
 					"scale": String(profile.scale_id), "ms": elapsed,
-					"sealed": true, "gate": "", "failure": ""})
-				var fabric := plan.compiled_fabric_cache()
+					"sealed": true, "gate": "", "failure": "",
+					"dead_end_nodes": int(walk.summary.dead_end_nodes)})
 				print(("SWEEP seed=%d scale=%s ms=%d SEALED buildings=%d " \
 					+ "markets=%d open_skywalks=%d occupied_skywalks=%d " \
 					+ "enclosed=%d rooms=%s") % [
@@ -644,6 +660,17 @@ func _run() -> void:
 			int(attempted_by_scale[scale_name])])
 	per_scale.sort()
 	print("SWEEP RESULT per_scale %s" % " ".join(per_scale))
+	# September 27 owner review. Every public walk must lead somewhere
+	# (`PublicWalkAudit`). The source prunes every leaf without a destination;
+	# what is left is doorways the downstream composition drops after the
+	# source counted them (see docs/qa/2026-09-27-judging/layout/result.md).
+	# The ceiling is that MEASURED residual: a rise is a regression.
+	print("SWEEP RESULT dead_ends towns=%d nodes=%d worst_town=%d ceiling=%d [%s]" \
+		% [sealed_count, dead_end_nodes, worst_dead_end_town,
+			DEAD_END_CORPUS_CEILING, ", ".join(dead_end_towns)])
+	if dead_end_nodes > DEAD_END_CORPUS_CEILING:
+		print("SWEEP ERROR dead_ends %d public walk nodes lead nowhere, above the measured ceiling %d" \
+			% [dead_end_nodes, DEAD_END_CORPUS_CEILING])
 	# The corpus mean ruling 1 asks for: one ratio over every stone face in
 	# every town that compiled, not the mean of the per-town ratios, so a big
 	# town cannot be averaged away by a small one.

@@ -202,6 +202,12 @@ static func _append_side_guards(payload: Dictionary, start: Vector3,
 	var horizontal_length := Vector2(end.x - start.x,
 		end.z - start.z).length()
 	var post_intervals := maxi(1, ceili(horizontal_length / POST_SPACING))
+	# These generated members are the guard's collision authority. A building
+	# kit redraws their visual with its own railing (KitSubstitution) from two
+	# facts recorded here: the index range of the guard triangles and each
+	# exposed top-rail span with the foot line it stands on.
+	var guard_first_index := (payload.indices as PackedInt32Array).size()
+	var guard_spans: Array = payload.get("guard_spans", [])
 	for side_value: Variant in [-1.0, 1.0]:
 		var side := float(side_value)
 		var side_offset: Vector3 = lateral * MACRO_SIZE * 0.5 * side
@@ -214,6 +220,16 @@ static func _append_side_guards(payload: Dictionary, start: Vector3,
 				end + side_offset + Vector3.UP * GUARD_HEIGHT * fraction, wall_boxes)
 			rails.append_array(exposed)
 			if fraction == 1.0: upper_rails = exposed
+		var top_a := start + side_offset - inset + Vector3.UP * start_rail_height
+		var top_b := end + side_offset + Vector3.UP * GUARD_HEIGHT
+		for rail: PackedVector3Array in upper_rails:
+			var feet: Array[Vector3] = []
+			for point: Vector3 in rail:
+				var s := clampf((point - top_a).dot(top_b - top_a)
+					/ maxf((top_b - top_a).length_squared(), 0.000001), 0.0, 1.0)
+				feet.append(point + Vector3.DOWN * lerpf(start_rail_height, GUARD_HEIGHT, s))
+			guard_spans.append({"top_a": rail[0], "top_b": rail[1],
+				"foot_a": feet[0], "foot_b": feet[1], "lateral": lateral})
 		for rail: PackedVector3Array in rails:
 			_append_beam(payload,rail[0],rail[1],GUARD_BEAM)
 		var post_ratios: Array[float] = []
@@ -224,9 +240,18 @@ static func _append_side_guards(payload: Dictionary, start: Vector3,
 		# Clipping can create a new rail end between the original posts. Seat
 		# its support on the same flight, then clip it against the same building.
 		for rail: PackedVector3Array in upper_rails:
-			for tip: Vector3 in rail:
+			for tip_index in rail.size():
+				var tip := rail[tip_index]
 				var ratio := (tip-start-side_offset).dot(run)/maxf(run.length_squared(),0.000001)
 				if ratio <= 0.00001 or ratio >= 0.99999: continue
+				# The tip lies on whatever clipped it. Under a floor the post
+				# stands right below it; against a wall face the post at the tip
+				# would be clipped away with the wall, so it is seated just in
+				# front of the face on the exposed side instead.
+				if not _post_survives(start.lerp(end, ratio) + side_offset, rails, wall_boxes):
+					var other := rail[1 - tip_index]
+					var toward := signf((other-tip).dot(run))
+					ratio += toward * (END_POST_WIDTH*0.5+0.002) / maxf(horizontal_length,0.000001)
 				var supported := false
 				for existing: float in post_ratios:
 					if absf(existing-ratio)*horizontal_length < END_POST_WIDTH:
@@ -246,6 +271,20 @@ static func _append_side_guards(payload: Dictionary, start: Vector3,
 				# decorative head exposed. Keep only pieces joined to a rail.
 				if _post_meets_rail(post,rails,width):
 					_append_beam(payload,post[0],post[1],width)
+	var guard_ranges: Array = payload.get("guard_index_ranges", [])
+	guard_ranges.append(Vector2i(guard_first_index,
+		(payload.indices as PackedInt32Array).size()))
+	payload["guard_index_ranges"] = guard_ranges
+	payload["guard_spans"] = guard_spans
+
+
+static func _post_survives(foot: Vector3, rails: Array[PackedVector3Array],
+		wall_boxes: Array[AABB]) -> bool:
+	for post: PackedVector3Array in _exposed_guard_spans(foot,
+			foot + Vector3.UP * (GUARD_HEIGHT + END_POST_HEADROOM), wall_boxes):
+		if _post_meets_rail(post, rails, END_POST_WIDTH):
+			return true
+	return false
 
 
 static func _post_meets_rail(post: PackedVector3Array,

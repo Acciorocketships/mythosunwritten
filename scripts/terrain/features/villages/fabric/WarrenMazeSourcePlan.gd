@@ -34,8 +34,13 @@ const PLOT_HOUSE := &"house"
 const PLOT_ASSET := &"asset"
 const PLOT_DECK := &"deck"
 const PLOT_BRIDGE := &"bridge"
+## A house's storeys carried over a bored passage on its crown (September 29
+## tunnel-roof rule, `WarrenPlotPlanner.cover_tunnels`): the plot stands on
+## the passage's own columns, `building_id` and `host` name the adjacent house
+## plot whose storeys it continues, and its door is that house's door.
+const PLOT_OVER := &"over"
 const PLOT_KINDS: Array[StringName] = [
-	PLOT_HOUSE, PLOT_ASSET, PLOT_DECK, PLOT_BRIDGE,
+	PLOT_HOUSE, PLOT_ASSET, PLOT_DECK, PLOT_BRIDGE, PLOT_OVER,
 ]
 ## The minimum slab a COVERED passage keeps overhead: one band of retained
 ## mass between a tunnel's own headroom and whatever stands on it. A sealed
@@ -354,8 +359,22 @@ func add_plot(plot: Dictionary) -> bool:
 ## standing on the bench it actually belongs to. On flat input every column's
 ## base is zero and no plot floor is negative, so this is a no-op and the flat
 ## corpus is unchanged.
+## Indices into `plots` of every plot standing on `column`.
+func plots_at(column: Vector2i) -> Array:
+	return (_plot_columns.get(column, []) as Array).duplicate()
+
+
+## The shoulders sealing would derive from the plots standing now, so an open
+## plan answers `solid_at` for its no-plot columns as the finished town will
+## (the envelope otherwise). The next `add_plot` discards them again.
+func derive_rock_shoulders() -> void:
+	_rebuild_rock_shoulders()
+
+
 func plot_support_ok(cell: Vector2i, floor: int) -> bool:
-	if massif != null and floor < massif.base_at(cell):
+	# `bearing_at` is the ground, or the plinth top in a raised district: the
+	# platform's rock is never a plot's floor space.
+	if massif != null and floor < massif.bearing_at(cell):
 		return false
 	if not solid_at(Vector3i(cell.x, floor - 1, cell.y)):
 		return false
@@ -1006,9 +1025,12 @@ func _rebuild_rock_shoulders() -> void:
 		for member: Vector2i in region:
 			var derived := shoulder if shoulder >= 0 \
 				else massif.top_at(member)
-			_rock_shoulders[member] = maxi(maxi(derived,
+			# A raised district's plinth is permanent rock: a low town beside
+			# it never steps the platform down.
+			_rock_shoulders[member] = maxi(maxi(maxi(derived,
 				int(street_floors.get(member, derived))),
-				int(prefab_support_floors.get(member, derived)))
+				int(prefab_support_floors.get(member, derived))),
+				massif.bearing_at(member))
 
 
 func _prefab_support_rock_floors() -> Dictionary:
@@ -1159,6 +1181,9 @@ func _plot_placement_rejection(plot: Dictionary, self_index: int) -> String:
 					column.x, floor_band - 1, column.y)):
 				return ("bridge plot %s lacks its open bore below column %s at " \
 					+ "band %d") % [id, column, floor_band - 1]
+			if massif != null and floor_band < massif.bearing_at(column):
+				return ("bridge plot %s stands inside the raised district's " \
+					+ "plinth at column %s") % [id, column]
 		elif not plot_support_ok(column, floor_band):
 			if massif != null and floor_band < massif.base_at(column):
 				return ("plot %s breaks support rule 3 at column %s: its " \
@@ -1170,6 +1195,11 @@ func _plot_placement_rejection(plot: Dictionary, self_index: int) -> String:
 				return ("plot %s breaks support rule 1 at column %s: band %d " \
 					+ "below its floor is not solid") \
 					% [id, column, floor_band - 1]
+			if _first_carved_band(column, floor_band,
+					floor_band + MIN_HOUSE_BANDS) < 0:
+				return ("plot %s stands inside the raised district's plinth " \
+					+ "at column %s: floor %d below its top %d") % [id, column,
+						floor_band, massif.bearing_at(column)]
 			return ("plot %s breaks support rule 2 at column %s: carved air " \
 				+ "stands inside its clearance [%d, %d)") \
 				% [id, column, floor_band, floor_band + MIN_HOUSE_BANDS]
@@ -1402,9 +1432,21 @@ func _market_cell_count() -> int:
 	return cells.size()
 
 
+## Streets of a raised district (WarrenPlatformStreets) run along or on the
+## citadel's straight walls, so the alley straight-run cap does not apply.
+const DISTRICT_LANE_KINDS: Array[StringName] = [&"citadel_gate", &"upper_town",
+	&"wall_street"]
+
+
 func _max_alley_straight_run() -> int:
 	var out := 0
 	for lane: Dictionary in excavation.lanes:
+		# District lanes and the perimeter lane (which runs along the town's
+		# outer rings between two rows of houses) are not corridors through the
+		# mass the cap guards against.
+		if StringName(lane.get("feature_kind", &"")) in DISTRICT_LANE_KINDS \
+				or StringName(lane.get("feature_kind", &"")) == &"perimeter":
+			continue
 		var walk: Array[Vector3i] = [lane.anchor as Vector3i]
 		walk.append_array(lane.cells as Array[Vector3i])
 		out = maxi(out, _max_straight_run(walk))

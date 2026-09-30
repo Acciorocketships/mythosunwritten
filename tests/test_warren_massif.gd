@@ -82,8 +82,12 @@ func test_a_flat_site_still_builds_an_inhabited_town_mountain() \
 		# searched bore's requirement and nothing read it.
 		assert_gte(flat.core_top_bands,
 			WarrenVillageScaleProfile.review_fixture().minimum_core_bands)
-		assert_eq(flat.bearing_at(Vector2i.ZERO), flat.base_at(Vector2i.ZERO),
-			"the mountain is inhabited down to terrain")
+		# Off a raised district (WarrenTownPlatform, September 29) the
+		# mountain is inhabited down to terrain; on one, houses stand on its
+		# plinth.
+		var probe := Vector2i.ZERO
+		assert_eq(flat.bearing_at(probe), flat.base_at(probe) + flat.plinth_at(probe),
+			"the mountain is inhabited down to terrain or its district plinth")
 
 
 func test_every_profile_asks_for_a_buildable_core_band_range() -> void:
@@ -170,17 +174,27 @@ func test_gate_verdicts_are_invariant_under_the_ground_the_massif_stands_on() \
 			assert_eq(relief.core_top_bands, flat.core_top_bands,
 				"seed %d on %s ground: core bands are relief-relative already, "
 				% [world_seed, kind] + "so they must not move")
-			assert_eq(relief.terrace_levels(), flat.terrace_levels(),
-				"seed %d on %s ground: terrace levels moved" \
-				% [world_seed, kind])
-			assert_eq(relief.widest_plateau_cells(),
-				flat.widest_plateau_cells(),
-				"seed %d on %s ground: widest plateau moved" \
-				% [world_seed, kind])
+			# A raised district slides clear of the town mouth, and the mouth
+			# is chosen on the real ground (September 29): the terraced layer
+			# is relief-invariant everywhere OFF the district.
+			var raised := not flat.platform_columns().is_empty() \
+				or not relief.platform_columns().is_empty()
+			if flat.platform_columns() == relief.platform_columns():
+				assert_eq(relief.terrace_levels(), flat.terrace_levels(),
+					"seed %d on %s ground: terrace levels moved" \
+					% [world_seed, kind])
+				assert_eq(relief.widest_plateau_cells(),
+					flat.widest_plateau_cells(),
+					"seed %d on %s ground: widest plateau moved" \
+					% [world_seed, kind])
 			for column: Vector2i in flat.columns:
 				assert_true(relief.has_column(column),
 					"seed %d on %s ground: column %s vanished" \
 					% [world_seed, kind, column])
+				if raised and flat.platform_columns() != relief.platform_columns():
+					continue
+				if flat.is_platform(column):
+					continue
 				assert_eq(relief.layer_at(column), flat.layer_at(column),
 					"seed %d on %s ground: the layer at %s changed thickness" \
 					% [world_seed, kind, column])
@@ -280,8 +294,10 @@ func test_the_layer_cap_bounds_the_inhabited_mountain() -> void:
 			continue
 		for column: Vector2i in massif.columns:
 			measured += 1
-			assert_eq(massif.bearing_at(column), massif.base_at(column),
-				"seed %d: bearing must be the terrain datum" % world_seed)
+			assert_eq(massif.bearing_at(column),
+				massif.base_at(column) + massif.plinth_at(column),
+				"seed %d: bearing must be the terrain datum (or a district plinth)" \
+				% world_seed)
 			var storeys := maxi(0, (massif.layer_at(column)
 				- WarrenBuildingParcel.ROOF_RESERVATION_BANDS)
 				/ WarrenBuildingParcel.STOREY_BANDS)
@@ -320,9 +336,11 @@ func test_the_buildable_layer_is_derived_from_the_parcel_contract() -> void:
 		assert_lte(massif.layer_at(column), WarrenMassif.BUILDABLE_LAYER_BANDS,
 			"the layer at %s is thicker than one buildable layer" % column)
 		# No second construction datum: every authored band is inhabitable.
-		assert_eq(massif.bearing_at(column), massif.base_at(column),
-			"the bearing datum must be natural ground at %s: nothing the "
-			% column + "fabric authors stands below the buildable layer")
+		assert_eq(massif.bearing_at(column),
+			massif.base_at(column) + massif.plinth_at(column),
+			"the bearing datum must be natural ground at %s (or the raised "
+			% column + "district's plinth): nothing else stands below the "
+			+ "buildable layer")
 
 
 func test_the_rim_steps_down_to_the_ground_like_every_other_terrace() -> void:
@@ -348,6 +366,10 @@ func test_the_rim_steps_down_to_the_ground_like_every_other_terrace() -> void:
 				# LAYER, not absolute top: the ground step between two columns
 				# is the terrain's face to render, and charging it here is what
 				# the relief-relative wave removed.
+				# A raised district's plinth is the one deliberate wall
+				# (September 29): its faces are the citadel's, not a riser.
+				if massif.is_platform(column) or massif.is_platform(neighbor):
+					continue
 				var exposed := massif.layer_at(column) \
 					if not massif.has_column(neighbor) \
 					else massif.layer_at(column) - massif.layer_at(neighbor)
@@ -779,9 +801,14 @@ func test_the_maze_massif_is_deterministic_and_relief_neutral() -> void:
 			assert_true(sloped.has_column(column),
 				"%s: column %s vanished on sloped ground" % [
 					_planner_label(town), column])
-			assert_eq(sloped.layer_at(column), flat.layer_at(column),
-				("%s: the layer at %s changed thickness when the ground " \
-				+ "moved under it") % [_planner_label(town), column])
+			# A raised district slides clear of the town mouth, which the real
+			# ground picks (September 29): relief invariance holds where the
+			# district itself did not move, and off its plinth.
+			if flat.platform_columns() == sloped.platform_columns() \
+					and not flat.is_platform(column):
+				assert_eq(sloped.layer_at(column), flat.layer_at(column),
+					("%s: the layer at %s changed thickness when the ground " \
+					+ "moved under it") % [_planner_label(town), column])
 			assert_eq(sloped.base_at(column), int(bands[column]),
 				"%s: column %s did not take its own input ground as its base" \
 					% [_planner_label(town), column])

@@ -1,23 +1,29 @@
 extends GutTest
 
 
-func test_scale_distribution_boundaries_are_exact() -> void:
-	assert_eq(WarrenVillageScaleProfile.from_roll(0).scale_id,
-		WarrenVillageScaleProfile.COMPACT)
-	assert_eq(WarrenVillageScaleProfile.from_roll(6499).scale_id,
-		WarrenVillageScaleProfile.COMPACT)
-	assert_eq(WarrenVillageScaleProfile.from_roll(6500).scale_id,
-		WarrenVillageScaleProfile.STANDARD)
-	assert_eq(WarrenVillageScaleProfile.from_roll(8999).scale_id,
-		WarrenVillageScaleProfile.STANDARD)
-	assert_eq(WarrenVillageScaleProfile.from_roll(9000).scale_id,
-		WarrenVillageScaleProfile.LARGE)
-	assert_eq(WarrenVillageScaleProfile.from_roll(9799).scale_id,
-		WarrenVillageScaleProfile.LARGE)
-	assert_eq(WarrenVillageScaleProfile.from_roll(9800).scale_id,
-		WarrenVillageScaleProfile.GRAND)
-	assert_eq(WarrenVillageScaleProfile.from_roll(9999).scale_id,
-		WarrenVillageScaleProfile.GRAND)
+func test_every_town_is_a_sample_of_one_continuous_size_distribution() -> void:
+	# September 27 owner review: small and large towns are samples of ONE
+	# algorithm. The roll maps to a continuous size; named ids are reference
+	# points on the same curve, and the label is only the nearest one.
+	assert_eq(WarrenVillageScaleProfile.from_roll(0).size, 0.0)
+	assert_eq(WarrenVillageScaleProfile.from_roll(9999).size, 1.0)
+	for id: StringName in WarrenVillageScaleProfile.IDS:
+		var anchor := WarrenVillageScaleProfile.for_id(id)
+		assert_eq(anchor.scale_id, id)
+		assert_eq(WarrenVillageScaleProfile.from_size(anchor.size)
+			.deterministic_signature(), anchor.deterministic_signature())
+	var previous := WarrenVillageScaleProfile.from_size(0.0)
+	var distinct: Dictionary = {}
+	for step in range(1, 101):
+		var profile := WarrenVillageScaleProfile.from_size(float(step) / 100.0)
+		assert_true(profile.validate(), "size %.2f is a valid budget" % profile.size)
+		assert_gte(profile.radius_cells, previous.radius_cells)
+		assert_gte(profile.lane_cell_budget, previous.lane_cell_budget)
+		assert_gte(profile.room_volume_budget.y, previous.room_volume_budget.y)
+		assert_gte(profile.skywalk_range.y, previous.skywalk_range.y)
+		distinct[profile.deterministic_signature()] = true
+		previous = profile
+	assert_gt(distinct.size(), 20, "budgets vary continuously between the anchors")
 
 
 func test_scale_budgets_grow_monotonically_without_weakening_integrity() -> void:
@@ -83,13 +89,15 @@ func test_scale_budgets_grow_monotonically_without_weakening_integrity() -> void
 		WarrenVillageScaleProfile.LARGE)
 
 
-func test_town_macro_cell_maps_to_the_shared_six_metre_world_scale() -> void:
-	## The proof lattice retains authored asset measurements. One shared uniform
-	## production frame maps its 1.5 / 3 m fine/macro pair to 3 / 6 m in-world.
+func test_town_macro_cell_maps_to_the_shared_eight_metre_world_scale() -> void:
+	## The proof lattice retains authored asset measurements. The production
+	## frame (September 27: 4/3 of the former 3 / 6 m) maps its 1.5 / 3 m
+	## fine/macro pair to 4 / 8 m in-world and each 1.5 m band to 3 m.
 	assert_eq(FabricRecipe.CELL_SIZE * 2.0, 3.0)
 	assert_true(VillageWorldScale.validate())
-	assert_eq(VillageWorldScale.WORLD_FINE_CELL_M, 3.0)
-	assert_eq(VillageWorldScale.WORLD_MACRO_CELL_M, 6.0)
+	assert_almost_eq(VillageWorldScale.WORLD_FINE_CELL_M, 4.0, 1e-9)
+	assert_almost_eq(VillageWorldScale.WORLD_MACRO_CELL_M, 8.0, 1e-9)
+	assert_almost_eq(VillageWorldScale.WORLD_BAND_M, 3.0, 1e-9)
 	assert_eq([
 		WarrenVillageScaleProfile.for_id(WarrenVillageScaleProfile.COMPACT) \
 			.radius_cells,
@@ -105,11 +113,13 @@ func test_town_macro_cell_maps_to_the_shared_six_metre_world_scale() -> void:
 
 func test_town_scale_is_derived_from_terrain_and_live_player_dimensions() -> void:
 	## The explicit adapter scale is shared by render, collision, terrain sampling,
-	## and occupancy. The resulting 6 m macro cell divides terrain's 24 m field.
+	## and occupancy. The resulting 8 m macro cell divides terrain's 24 m field.
 	var macro := VillageWorldScale.WORLD_MACRO_CELL_M
-	assert_eq(fmod(TerrainSurfaceField.TILE, macro), 0.0)
-	assert_eq(roundi(TerrainSurfaceField.TILE / macro), 4,
-		"one terrain field cell is exactly four world town macro cells")
+	assert_almost_eq(fmod(TerrainSurfaceField.TILE, macro), 0.0, 1e-9)
+	assert_eq(roundi(TerrainSurfaceField.TILE / macro), 3,
+		"one terrain field cell is exactly three world town macro cells")
+	assert_almost_eq(fmod(TerrainSurfaceField.TILE, VillageWorldScale.WORLD_FINE_CELL_M),
+		0.0, 1e-9, "fine lanes stay on the terrain grid too")
 	assert_gt(macro, TraversalEnvelope.CAPSULE_HEIGHT,
 		"a complete world storey is taller than the shipped player capsule")
 	assert_gt(VillageWorldScale.WORLD_FINE_CELL_M,
@@ -129,14 +139,11 @@ func test_scale_selection_is_seed_stable_and_small_biased() -> void:
 			== repeated.deterministic_signature()
 		counts[first.scale_id] = int(counts.get(first.scale_id, 0)) + 1
 	assert_true(deterministic)
+	# Small towns stay common; big ones are the tail of the same curve.
 	assert_between(int(counts.get(WarrenVillageScaleProfile.COMPACT, 0)),
-		6200, 6800)
-	assert_between(int(counts.get(WarrenVillageScaleProfile.STANDARD, 0)),
-		2200, 2800)
-	assert_between(int(counts.get(WarrenVillageScaleProfile.LARGE, 0)),
-		600, 1000)
+		6000, 6800)
 	assert_between(int(counts.get(WarrenVillageScaleProfile.GRAND, 0)),
-		100, 300)
+		200, 700)
 	assert_gt(int(counts.get(WarrenVillageScaleProfile.COMPACT, 0)),
 		int(counts.get(WarrenVillageScaleProfile.LARGE, 0))
 		+ int(counts.get(WarrenVillageScaleProfile.GRAND, 0)))
@@ -308,3 +315,23 @@ func test_quota_floors_relax_only_downward() -> void:
 		assert_false(VillageUrbanFabricPlan._scale_feature_contract_matches(
 			short_columns),
 			"a town WITH a court still owes %s" % column_key)
+
+
+func test_no_generation_stage_branches_on_the_size_label() -> void:
+	# Stages read budgets (or `scaled()` tables); the nearest-anchor label is
+	# for audits only. A comparison against it would reintroduce size classes.
+	var offenders: Array[String] = []
+	for dir_path: String in ["res://scripts/terrain/features/villages/fabric",
+			"res://scripts/terrain/features/villages"]:
+		for file_name: String in DirAccess.get_files_at(dir_path):
+			if not file_name.ends_with(".gd") \
+					or file_name == "WarrenVillageScaleProfile.gd":
+				continue
+			var text := FileAccess.get_file_as_string(dir_path.path_join(file_name))
+			for pattern: String in ["scale_id ==", "scale_id in [",
+					"match profile.scale_id", "match scale_profile.scale_id",
+					".get(plan.scale_profile.scale_id",
+					"requires_elevated_courtyard:"]:
+				if text.contains(pattern):
+					offenders.append("%s: %s" % [file_name, pattern])
+	assert_eq(offenders, [] as Array[String])

@@ -1,0 +1,15 @@
+SURVEY 1260018864828801968:compact crowns=0 floating=0 skywalks=[] ms=1573
+SURVEY 1998423929946073270:compact crowns=0 floating=0 skywalks=[] ms=3701
+SURVEY 1:compact crowns=0 floating=0 skywalks=[] ms=1571
+SURVEY 2:standard crowns=0 floating=0 skywalks=[] ms=4803
+SURVEY 3:standard crowns=0 floating=0 skywalks=[] ms=7408
+SURVEY 4:large crowns=0 floating=0 skywalks=[] ms=3387
+SURVEY 5:compact crowns=0 floating=0 skywalks=[] ms=1849
+SURVEY 6:compact crowns=0 floating=0 skywalks=[] ms=1377
+SURVEY 7:standard crowns=0 floating=0 skywalks=[] ms=3006
+SURVEY 8:compact crowns=0 floating=0 skywalks=[] ms=1250
+SURVEY 9:standard crowns=0 floating=0 skywalks=[] ms=2733
+SURVEY 10:compact crowns=0 floating=0 skywalks=[] ms=1532
+SURVEY 11:compact crowns=0 floating=0 skywalks=[] ms=2670
+SURVEY 12:grand crowns=0 floating=0 skywalks=[] ms=9552
+SURVEY_TOTAL 0

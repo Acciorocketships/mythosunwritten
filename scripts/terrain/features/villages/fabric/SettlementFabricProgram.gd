@@ -1243,7 +1243,6 @@ static func compile(catalog: EnvironmentCatalog) -> SettlementFabricProgram:
 	#   centre features would not, and a village green whose well never streamed
 	#   is the blank-town failure this list exists to stop.
 	var adapter_assets: Array[StringName] = [
-		&"sfv.fabric.tunnel_arch.001",
 		WOOD_PLAIN,
 		ROCK_PLAIN,
 		RAILING_MEDIUM,

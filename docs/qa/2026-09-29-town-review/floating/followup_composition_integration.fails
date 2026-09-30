@@ -1,0 +1,84 @@
+    [Failed]:  ["{ -4: 4, -3: 9, -2: 66, -1: 115, 0: 45, 1: 24 }"] expected to equal ["{ -4: 4, -3: 9, -2: 66, -1: 116, 0: 45, 1: 24 }"]:  seed 9/standard per-band histogram
+    [Failed]:  [0.05769230769231] expected to be <= than [0.04]:  seed 9/compact: 0.0577 of the profiled wall faces are ashlar standing more than one band over their own local street, past the pinned ceiling
+    [Failed]:  [0.54385964912281] expected to be <= than [0.36]:  seed 9/compact leaves 0.544 of its plot mass unroomed
+    [Failed]:  [0] expected to be < than [0]:  seed 12/compact must pair its passage-roof caps for the same reason
+    [Failed]:  [0] expected to be < than [0]:  seed 9/compact must pair its passage-roof caps for the same reason
+    [Failed]:  [0] expected to be < than [0]:  seed 9/standard must pair its passage-roof caps for the same reason
+    [Failed]:  [0] expected to be > than [0]:  no planner seed yielded a single facade to a mandatory room shell
+    [Failed]:  [0] expected to be > than [0]:  seed 12/compact bored passages must get a stone roof, or a street looks up through the mountain
+    [Failed]:  [0] expected to be > than [0]:  seed 12/compact must break tall timber/plaster banks with authored masonry courses
+    [Failed]:  [0] expected to be > than [0]:  seed 12/compact must clad its tall banks in building storeys -- with no natural rock left, a zero here means the mass is bare
+    [Failed]:  [0] expected to be > than [0]:  seed 12/compact renders no overhang bracket at all
+    [Failed]:  [0] expected to be > than [0]:  seed 9/compact bored passages must get a stone roof, or a street looks up through the mountain
+    [Failed]:  [0] expected to be > than [0]:  seed 9/compact renders no overhang bracket at all
+    [Failed]:  [0] expected to be > than [0]:  seed 9/standard bored passages must get a stone roof, or a street looks up through the mountain
+    [Failed]:  [0] expected to be > than [0]:  the corpus must exercise the matching terrain wall/lip seam
+    [Failed]:  [0] expected to equal [1]:  seed 9/standard audited green treatment count must equal the shell's
+    [Failed]:  [0] expected to equal [1]:  the pinned sloped refusals are ["step/3/standard"] and [] actually refused; a row that started composing is a re-pin
+    [Failed]:  [0] expected to equal [6]:  seed 9/compact audited tall-course mismatches must equal the payload's
+    [Failed]:  [10] expected to equal [16]:  seed 9/compact audited above-ground stone must equal the alternating courses
+    [Failed]:  [10] expected to equal [16]:  seed 9/compact audited tall-bank masonry must equal the payload's
+    [Failed]:  [10] expected to equal [4]:  seed 9/compact audited facade panel count must equal the payload's
+    [Failed]:  [10] expected to equal [4]:  seed 9/compact every clad mass face belongs to exactly one district family
+    [Failed]:  [11] expected to equal [0]:  seed 9/standard must alternate facade and masonry storeys on tall banks
+    [Failed]:  [11] expected to equal [3]:  seed 9/standard audited undercroft stone caps must equal the payload's -- the exception the free-bench pin above allows is only as honest as this count
+    [Failed]:  [13] expected to equal [2]:  seed 9/standard audited facade panel count must equal the payload's
+    [Failed]:  [13] expected to equal [2]:  seed 9/standard every clad mass face belongs to exactly one district family
+    [Failed]:  [145] expected to equal [165]:  seed 9/standard every panel of the shell wears exactly one module
+    [Failed]:  [14] expected to equal [24]:  seed 9/standard audited above-ground stone must equal the alternating courses
+    [Failed]:  [14] expected to equal [24]:  seed 9/standard audited tall-bank masonry must equal the payload's
+    [Failed]:  [152] expected to equal [142]:  seed 9/standard audited masonry panel count must equal the payload's
+    [Failed]:  [15] expected to equal [18]:  seed 9/standard audited rim count must equal the payload's
+    [Failed]:  [160] expected to equal [165]:  seed 9/standard must hand the renderer exactly the panels it audited
+    [Failed]:  [19] expected to equal [18]:  seed 3/standard audited planting count must equal the payload's
+    [Failed]:  [19] expected to equal [1]:  seed 3/standard audited undercroft stone caps must equal the payload's -- the exception the free-bench pin above allows is only as honest as this count
+    [Failed]:  [1] expected to be < than [1]:  seed 3/standard must pair its passage-roof caps for the same reason
+    [Failed]:  [1] expected to equal [0]:  lpfv.fabric.prop.bench.01 bakes a collider its clearance row does not carry
+    [Failed]:  [1] expected to equal [0]:  lpfv.fabric.prop.bench.01 has started baking colliders; DECOR_CLEARANCE is the VISUAL envelope alone and must become the larger of the two
+    [Failed]:  [1] expected to equal [0]:  lpfv.fabric.prop.bench.02 bakes a collider its clearance row does not carry
+    [Failed]:  [1] expected to equal [0]:  lpfv.fabric.prop.bench.02 has started baking colliders; DECOR_CLEARANCE is the VISUAL envelope alone and must become the larger of the two
+    [Failed]:  [1] expected to equal [0]:  seed 1/large leaves 1 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.005.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01)
+    [Failed]:  [1] expected to equal [0]:  seed 9/compact audited undercroft stone caps must equal the payload's -- the exception the free-bench pin above allows is only as honest as this count
+    [Failed]:  [1] expected to equal [0]:  seed 9/compact lays 1 rim(s) on a face that is neither a panel nor a level walked junction; the rim would take the boundary and the stand-off would mean nothing
+    [Failed]:  [1] expected to equal [0]:  seed 9/grand leaves 1 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.007.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01)
+    [Failed]:  [1] expected to equal [0]:  seed 9/grand stands 1 collider(s) in a walked body lane: sfv.deck.pillar.001@(-4, 3, 3) rise=1.500
+    [Failed]:  [1] expected to equal [11]:  seed 9/standard audited tall-course mismatches must equal the payload's
+    [Failed]:  [1] expected to equal [45]:  seed 3/standard audited tall-course mismatches must equal the payload's
+    [Failed]:  [211] expected to equal [229]:  seed 3/standard audited masonry panel count must equal the payload's
+    [Failed]:  [22] expected to equal [20]:  seed 3/standard audited closed masonry crowns must equal the payload's
+    [Failed]:  [23] expected to equal [16]:  seed 9/standard audited closed masonry crowns must equal the payload's
+    [Failed]:  [23] expected to equal [24]:  seed 9/standard terrain-ground audit must equal the procedural mesh
+    [Failed]:  [24] expected to equal [23]:  seed 9/standard audited garden cell count must equal the payload's
+    [Failed]:  [251] expected to equal [278]:  seed 3/standard every panel of the shell wears exactly one module
+    [Failed]:  [263] expected to equal [264]:  seed 9/standard profiled face count
+    [Failed]:  [264] expected to equal [263]:  seed 9/standard audited exposed-face count must equal the shell derived from the sealed plan alone
+    [Failed]:  [271] expected to equal [278]:  seed 3/standard must hand the renderer exactly the panels it audited
+    [Failed]:  [2] expected to equal [0]:  seed 3/standard lays 2 rim(s) on a face that is neither a panel nor a level walked junction; the rim would take the boundary and the stand-off would mean nothing
+    [Failed]:  [2] expected to equal [0]:  seed 9/standard leaves 2 authored dressing module(s) inside its own masonry -- first spatial.fabric.spatial.parcel.maze.house.015.part00.room00/south/lantern (lpfv.fabric.prop.lantern.table.01). That is the user's plant in the wall
+    [Failed]:  [32] expected to equal [56]:  the sloped rows skipped 32 unproved flank neighbour(s) against the pinned 56; a rise means `_stamp_maze_bridges` is catching spans the carver used to refuse at seed time
+    [Failed]:  [36] expected to equal [40]:  seed 12/compact every panel of the shell wears exactly one module
+    [Failed]:  [36] expected to equal [40]:  seed 12/compact must hand the renderer exactly the panels it audited
+    [Failed]:  [39] expected to equal [45]:  seed 3/standard audited rim count must equal the payload's
+    [Failed]:  [3] expected to be >= than [4]:  seed 1/large dresses its yards with 3 distinct piece(s) out of 5 planted; the three pools carry 23 between them
+    [Failed]:  [3] expected to equal [0]:  seed 9/standard lays 3 rim(s) on a face that is neither a panel nor a level walked junction; the rim would take the boundary and the stand-off would mean nothing
+    [Failed]:  [40] expected to equal [34]:  seed 9/compact mirror tally must account for every site it tested
+    [Failed]:  [40] expected to equal [36]:  seed 12/compact audited masonry panel count must equal the payload's
+    [Failed]:  [41] expected to equal [44]:  seed 9/compact audited masonry panel count must equal the payload's
+    [Failed]:  [45] expected to be >= than [50]:  seed 1/large built 45 buildings; a big town is big
+    [Failed]:  [45] expected to equal [0]:  seed 3/standard must alternate facade and masonry storeys on tall banks
+    [Failed]:  [48] expected to equal [51]:  seed 9/compact every panel of the shell wears exactly one module
+    [Failed]:  [49] expected to equal [51]:  seed 9/compact must hand the renderer exactly the panels it audited
+    [Failed]:  [4] expected to equal [2]:  4 of the four planner towns site a plaza deck; the pin is 2
+    [Failed]:  [4] expected to equal [3]:  every sloped row except the pinned refusals must compose
+    [Failed]:  [56] expected to be >= than [64]:  the corpus projects 56 safe facade panels through wide bays/bump-outs; the rendered panel floor is 64
+    [Failed]:  [5] expected to equal [3]:  seed 9/standard audited decor type count must equal the payload's
+    [Failed]:  [5] expected to equal [3]:  seed 9/standard audited planting count must equal the payload's
+    [Failed]:  [60] expected to equal [48]:  seed 12/compact mirror tally must account for every site it tested
+    [Failed]:  [65] expected to be >= than [70]:  seed 9/grand built 65 buildings; a big town is big
+    [Failed]:  [65] expected to equal [109]:  seed 3/standard audited above-ground stone must equal the alternating courses
+    [Failed]:  [65] expected to equal [109]:  seed 3/standard audited tall-bank masonry must equal the payload's
+    [Failed]:  [65] expected to equal [20]:  seed 3/standard audited facade panel count must equal the payload's
+    [Failed]:  [65] expected to equal [20]:  seed 3/standard every clad mass face belongs to exactly one district family
+    [Failed]:  [6] expected to equal [0]:  seed 9/compact must alternate facade and masonry storeys on tall banks
+    [Failed]:  [8] expected to equal [1]:  the realisation mirror accepts 8 of 146 sites it tested; it accepted 1 when this was measured
+    [Failed]:  seed 12/compact must stand at least one plot on another

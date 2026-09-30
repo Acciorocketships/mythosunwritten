@@ -105,9 +105,10 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 		last_failure = "missing mutable grid, source volume, buildings, or supports"
 		return [] as Array[WarrenFeatureReservation]
 	var out: Array[WarrenFeatureReservation] = []
-	var scale_profile := WarrenVillageScaleProfile.for_id(StringName(
+	var scale_profile := WarrenVillageScaleProfile.from_record(StringName(
 		source.mass_context.get(&"scale_profile_id",
-			WarrenVillageScaleProfile.LARGE)))
+			WarrenVillageScaleProfile.LARGE)),
+		source.mass_context.get(&"scale_profile_size"))
 	if scale_profile == null:
 		last_failure = "spatial features have an invalid scale profile"
 		return [] as Array[WarrenFeatureReservation]
@@ -270,7 +271,7 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	# distinction is latent — which is the reason to write it down rather than
 	# rely on it.
 	var courtyard_bridge: WarrenFeatureReservation
-	if scale_profile.requires_elevated_courtyard:
+	if not source.courtyard_cells.is_empty():
 		if not preplanned_courtyard_bridge.is_empty() \
 				and (preplanned_courtyard_bridge.get("owner_parcel_ids", []) \
 					as Array).is_empty():
@@ -296,7 +297,7 @@ static func solve(grid: WarrenSpatialGrid, source: WarrenVolumePlan,
 	# datum, daylight, underbuilt-support, side-address or reservation gates
 	# inside `_reserve_courtyard` is still fatal, and those gates are untouched.
 	var court: WarrenFeatureReservation
-	if scale_profile.requires_elevated_courtyard:
+	if not source.courtyard_cells.is_empty():
 		if source.courtyard_cells.is_empty():
 			WarrenVolumetricSolver.last_advisory_shortfalls[
 				"elevated_courtyards"] = 0

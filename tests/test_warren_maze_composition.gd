@@ -377,6 +377,7 @@ const BRIDGE_STAMPED_FLOOR := 0.95
 ## same drift `ADVISORY_SHORTFALL_KEYS` exists to catch.
 const BRIDGE_RELEASE_REASONS: Array[String] = [
 	"source bridge has no sealed two-endpoint compound",
+	WarrenVolumetricSolver.BRIDGE_YIELDS_TO_DOORWAY,
 	"span is not a one-storey tower or slim shell",
 	"span mass is already spent or feature-reserved",
 	"span footprint is not an authored shell",
@@ -1316,6 +1317,10 @@ func test_unroomed_plot_mass_is_bounded() -> void:
 			"maze_released_singleton_derived_rock_cells", -1))
 		var released_singleton_unroomed := int(plan.audit.get(
 			"maze_released_singleton_unroomed_plot_cells", -1))
+		# September 29: an unroomed plot cell that would be a crown over a
+		# street carrying nothing is released, not retained.
+		var released_unborne_unroomed := int(plan.audit.get(
+			"maze_released_unborne_crown_unroomed_plot_cells", 0))
 		var released_singleton_roof_band := int(plan.audit.get(
 			"maze_released_singleton_roof_band_cells", -1))
 		var refused_trims := int(plan.audit.get(
@@ -1362,9 +1367,9 @@ func test_unroomed_plot_mass_is_bounded() -> void:
 				% _label(outcome))
 		assert_between(unroomed - retained_unroomed,
 			trimmed + released_asset + released_required_roof_unroomed \
-				+ released_singleton_unroomed,
+				+ released_singleton_unroomed + released_unborne_unroomed,
 			trimmed + released_asset + released_required_roof_unroomed \
-				+ released_singleton_unroomed \
+				+ released_singleton_unroomed + released_unborne_unroomed \
 				+ int(plan.audit.get(
 				"maze_retained_rock_skipped_reserved", -1)),
 			("%s retains %d of the %d plot cells it left unroomed, having " \
@@ -1708,7 +1713,16 @@ func test_bridges_become_rooms_decks_or_audited_releases() -> void:
 		if records.is_empty():
 			continue
 		measured += 1
-		var share := float(stamped) / float(records.size())
+		# September 27 (layout, second pass): a bridge whose measured body or
+		# endpoint eaves would take a planned house's doorway storey yields
+		# (named reason) so the doorway its street was pruned around is built.
+		# That is a decided outcome, neither silent loss nor blind stamping, so
+		# it leaves the share's denominator.
+		var yielded := 0
+		for record_value: Variant in outcomes:
+			yielded += int(String((record_value as Dictionary).get("reason", "")) \
+				== WarrenVolumetricSolver.BRIDGE_YIELDS_TO_DOORWAY)
+		var share := float(stamped) / float(maxi(1, records.size() - yielded))
 		print("MAZE_BRIDGES %s stamped=%d/%d share=%.3f released=%d %s" % [
 			_label(outcome), stamped, records.size(), share, released,
 			outcomes])
@@ -5130,9 +5144,38 @@ func test_retained_stone_is_skinned() -> void:
 		assert_gt(tops, 0,
 			("%s open shoulder must be capped, or the mountain is a hollow " \
 				+ "shell") % _label(outcome))
-		assert_gt(bottoms, 0,
-			("%s bored passages must get a stone roof, or a street looks up " \
-				+ "through the mountain") % _label(outcome))
+		# September 29 (floating): a passage crown exists only where
+		# construction stands on it (`WarrenVolumetricSolver
+		# .unborne_crown_cells`), and the building kit -- not the legacy stone
+		# skin, whose `maze-stone` panels production withdraws -- closes it:
+		# every CARRIED crown cell over a street is a `kit.tunnel-ceilings`
+		# course with a soffit, so no street looks up through the mountain.
+		var crown_cells: Array[Vector3i] = []
+		for cell: Vector3i in plan.grid.cells_with_use(
+				WarrenSpatialGrid.Use.STRUCTURAL_VOLUME):
+			if plan.grid.owner_name_at(cell) \
+					== WarrenVolumetricSolver.MAZE_STONE_FEATURE_ID \
+					and plan.grid.use_at(cell + Vector3i.DOWN) \
+						== WarrenSpatialGrid.Use.PUBLIC_AIR:
+				crown_cells.append(cell)
+		if not crown_cells.is_empty():
+			var closed: Dictionary = {}
+			for mass: BuildingMass in KitVillageBuildings.build(plan, fabric,
+					SuntailBuildingKit.create()).masses:
+				if not String(mass.stable_id).begins_with("kit.tunnel") \
+						and not String(mass.stable_id).begins_with("kit.retained"):
+					continue
+				for storey: Dictionary in mass.storeys:
+					if not bool(storey.get("soffit", false)):
+						continue
+					for column: Vector2i in storey.cells:
+						closed[Vector3i(column.x, int(storey.floor_band),
+							column.y)] = true
+			for cell: Vector3i in crown_cells:
+				assert_true(closed.has(cell),
+					("%s carried passage crown %s must be closed by a kit " \
+						+ "soffit, or a street looks up through the mountain") \
+						% [_label(outcome), cell])
 		# FIX 1, CRITICAL 1. The 3 m module laid flat spans TWO cells, so a
 		# slab per exposed cap face put two coplanar slabs over every adjacent
 		# pair. Measured off the transforms themselves.
@@ -5142,9 +5185,10 @@ func test_retained_stone_is_skinned() -> void:
 		assert_lt(top_slabs, tops,
 			("%s must PAIR its top caps: a flat 3 m module covers two cells, " \
 				+ "so slabs must be fewer than capped cells") % _label(outcome))
-		assert_lt(bottom_slabs, bottoms,
-			("%s must pair its passage-roof caps for the same reason") \
-				% _label(outcome))
+		if bottoms > 1:
+			assert_lt(bottom_slabs, bottoms,
+				("%s must pair its passage-roof caps for the same reason") \
+					% _label(outcome))
 		# FIX 1, IMPORTANT 2. Two different modules in one plane is the
 		# artefact; the stone starts below a building's plinth instead.
 		assert_eq(stone_plinth_same_face_overlap, 0,
@@ -6286,8 +6330,7 @@ func test_the_town_gets_its_life() -> void:
 			fabric)
 		var public_floors := SettlementFabricAssembler.public_floor_cells(
 			fabric.surface_plan)
-		var construction_crowns := SettlementFabricAssembler \
-			.maze_construction_crown_cells(fabric)
+		var inhabited := fabric.transformed_cells(&"inhabited")
 		var exterior_network := SettlementFabricAssembler.maze_exterior_network(
 			fabric, {}, true)
 		var spans := exterior_network.spans as Array[Dictionary]
@@ -6333,11 +6376,16 @@ func test_the_town_gets_its_life() -> void:
 				# overlap and clearance checks below.
 				if lane_index < walk_width:
 					if private_connection:
-						# Both passage ends are roof crowns belonging to complete,
-						# independently ground-borne building components. They are
-						# intentionally absent from public circulation.
-						unborne += int(not construction_crowns.has(lane))
-						unborne += int(not construction_crowns.has(far))
+						# Both passage ends are the bridge storey of two different
+						# buildings (September 29: a passage-house meets a wall over
+						# its full storey, never a roof crown it merely sits on).
+						# They are intentionally absent from public circulation.
+						var near_owner: Variant = inhabited.get(lane)
+						var far_owner: Variant = inhabited.get(far)
+						unborne += int(near_owner == null \
+							or inhabited.get(lane + Vector3i.UP) != near_owner)
+						unborne += int(far_owner == null or far_owner == near_owner \
+							or inhabited.get(far + Vector3i.UP) != far_owner)
 					else:
 						unborne += int(not (deck_cells.has(lane) or walked.has(lane)))
 						unborne += int(not (deck_cells.has(far) or walked.has(far)))
@@ -9762,17 +9810,15 @@ func test_large_and_grand_towns_exist() -> void:
 			shortfalls.size(),
 			"%s's shortfall count must match the shortfalls it published" \
 				% _label(outcome))
-		# The three courtyard shortfalls, two-sided. A value that MOVES means the
-		# corpus drifted under the flip -- either these towns started forming a
-		# court (delete the pin and say so) or they lost something else.
-		for pinned: Array in [["elevated_courtyards", 0],
-				["courtyard_bridge_houses", 0], ["courtyard_bridges", 0],
-				["courtyard_parcel_sides", 0], ["composed_courtyard_sides", 0],
-				["composed_courtyard_sides_target",
-					WarrenSpatialFeatureSolver.MIN_COURT_SIDE_COUNT]]:
-			assert_eq(int(shortfalls.get(String(pinned[0]), -1)),
-				int(pinned[1]), "%s must publish %s = %d" % [_label(outcome),
-					String(pinned[0]), int(pinned[1])])
+		# September 27 (one size distribution): the authored elevated courtyard
+		# is no longer a large/grand OBLIGATION -- it runs only where a source
+		# authors courtyard cells, which the maze never does -- and these towns
+		# may form the route-connected rooftop court like any other. The
+		# courtyard shortfalls therefore are not published at all.
+		for key: String in ["elevated_courtyards", "courtyard_bridge_houses",
+				"courtyard_bridges", "courtyard_parcel_sides"]:
+			assert_false(shortfalls.has(key),
+				"%s owes no authored courtyard: %s" % [_label(outcome), key])
 		# ...and the audit agrees with them. A town that publishes "no court" and
 		# also claims one in its own contract is the one thing this flip could
 		# have broken.

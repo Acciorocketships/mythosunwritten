@@ -46,8 +46,15 @@ static func build(world_seed: int, ground_bands: Dictionary = {},
 	var open_court: Dictionary = field.air
 
 	var massif := _terraced_massif(world_seed, raw_at, ground_bands)
+	var platform := WarrenTownPlatform.clear_forecourt(
+		field.get("platform", {}) as Dictionary, massif, profile, world_seed)
+	_raise_platform(massif, platform)
 	massif.form_id = &"mixture"
 	massif.open_court = open_court
+	var crown_centre: Vector2 = (field.lobes[0] as Dictionary).centre
+	massif.crown_column = Vector2i(roundi(crown_centre.x), roundi(crown_centre.y))
+	if not platform.is_empty():
+		massif.crown_column = WarrenTownPlatform.crown_column(platform)
 	massif.core_top_bands = 0
 	for column: Vector2i in massif.columns:
 		massif.core_top_bands = maxi(massif.core_top_bands,
@@ -68,6 +75,59 @@ static func _terraced_massif(world_seed: int, raw_at: Dictionary,
 		var layer: int = int(terraces[column]) * TERRACE_BANDS
 		massif.columns[column] = {"base": base, "top": base + layer, "terrace": layer}
 	return massif
+
+
+static func _raise_platform(massif: WarrenMassif, platform: Dictionary) -> void:
+	## The town field's raised district (WarrenTownPlatform): each of its
+	## columns bears on a rock plinth `bands` above its ground, and keeps
+	## enough envelope above the plinth for an upper street and its houses.
+	if platform.is_empty():
+		return
+	var bands := int(platform.bands)
+	for column: Vector2i in platform.columns:
+		if not massif.columns.has(column):
+			continue
+		var record: Dictionary = massif.columns[column]
+		var base := int(record.base)
+		record["plinth"] = bands
+		record["top"] = maxi(int(record.top),
+			base + bands + WarrenTownPlatform.ABOVE_PLINTH_BANDS)
+		record["terrace"] = int(record.top) - base
+		massif.platform_bands = bands
+	# The lower town huddles at the plinth's foot: its envelope there stops
+	# at the plinth top (WarrenTownPlatform.huddle_top)...
+	var order: Array[Vector2i] = []
+	order.assign(massif.columns.keys())
+	order.sort()
+	for column: Vector2i in order:
+		var cap := WarrenTownPlatform.huddle_top(massif, column)
+		if cap == 2147483647:
+			continue
+		var record: Dictionary = massif.columns[column]
+		record["top"] = maxi(int(record.base) + MIN_COLUMN_BANDS,
+			mini(int(record.top), cap))
+		record["terrace"] = int(record.top) - int(record.base)
+	# ...and the town beyond steps down to it by the ordinary riser limit
+	# (no column more than MAX_NEIGHBOR_STEP_BANDS of layer above a
+	# neighbour off the platform), so the huddle is a terraced descent to the
+	# wall's foot rather than a moat below a cliff of houses.
+	var changed := true
+	while changed:
+		changed = false
+		for column: Vector2i in order:
+			if massif.is_platform(column):
+				continue
+			var record: Dictionary = massif.columns[column]
+			var cap := 2147483647
+			for direction: Vector2i in DIRECTIONS:
+				var neighbor := column + direction
+				if massif.columns.has(neighbor) and not massif.is_platform(neighbor):
+					cap = mini(cap, massif.layer_at(neighbor) + MAX_NEIGHBOR_STEP_BANDS)
+			var layer := int(record.top) - int(record.base)
+			if layer > cap and layer > MIN_COLUMN_BANDS:
+				record["top"] = int(record.base) + maxi(MIN_COLUMN_BANDS, cap)
+				record["terrace"] = int(record.top) - int(record.base)
+				changed = true
 
 
 static func plateau_cap(column_count: int) -> int:

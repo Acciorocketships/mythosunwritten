@@ -64,8 +64,23 @@ var form_id: StringName = &"hill"
 ## Intentional open ground, authored before streets and plots. This is distinct
 ## from an accidental missing construction column.
 var open_court: Dictionary = {}
+## The column the town field designed as its crown (its tallest lobe's
+## centre). The spine climbs toward it.
+var crown_column := Vector2i.ZERO
+## Plinth height of the town's raised district (WarrenTownPlatform) in bands,
+## zero when the town has none. Per-column membership is the column record's
+## "plinth" entry; `bearing_at` is the one reader downstream stages use.
+var platform_bands: int = 0
 var last_rejection := ""
 var _sealed := false
+## September 29 town review (edges): the outermost GRADE_RINGS rings of the
+## footprint are ground-level territory. Optional streets (alleys, loops, the
+## spine's descent) are never bored above a column's ground there
+## (`WarrenPassageLatticeRules.raises_edge`), so the edge is at-grade lanes and
+## single-storey houses on the lawn, not raised streets whose houses stand on
+## a storey of retaining rock.
+const GRADE_RINGS := 2
+var _ring_depths: Dictionary = {}
 
 
 func _init(p_world_seed: int) -> void:
@@ -122,6 +137,46 @@ func is_sealed() -> bool:
 
 func has_column(column: Vector2i) -> bool:
 	return columns.has(column)
+
+
+func ring_depth(column: Vector2i) -> int:
+	## Rings from the footprint boundary: 1 for a column with a cardinal
+	## neighbour outside the massif, 0 outside it. Cached once sealed.
+	if not columns.has(column):
+		return 0
+	if _ring_depths.is_empty() or not _sealed:
+		var depths := _compute_ring_depths()
+		if not _sealed:
+			return int(depths.get(column, 0))
+		_ring_depths = depths
+	return int(_ring_depths.get(column, 0))
+
+
+func _compute_ring_depths() -> Dictionary:
+	var depth: Dictionary = {}
+	var frontier: Array[Vector2i] = []
+	var order: Array[Vector2i] = []
+	order.assign(columns.keys())
+	order.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		return a.y < b.y if a.y != b.y else a.x < b.x)
+	for column: Vector2i in order:
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.UP,
+				Vector2i.DOWN]:
+			if not columns.has(column + direction):
+				depth[column] = 1
+				frontier.append(column)
+				break
+	var index := 0
+	while index < frontier.size():
+		var column: Vector2i = frontier[index]
+		index += 1
+		for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.UP,
+				Vector2i.DOWN]:
+			var next := column + direction
+			if columns.has(next) and not depth.has(next):
+				depth[next] = int(depth[column]) + 1
+				frontier.append(next)
+	return depth
 
 
 func top_at(column: Vector2i) -> int:
@@ -184,7 +239,54 @@ func bearing_at(column: Vector2i) -> int:
 	## The whole envelope is inhabitable construction.  Houses descend to the
 	## sampled terrain rather than stopping on an abstract terrace, so a tall
 	## centre becomes stacked rooms and roofs instead of a stone podium.
-	return base_at(column)
+	## The one exception is the town's raised district: there houses stand on
+	## the platform's rock plinth, `plinth_at` bands above the ground.
+	return base_at(column) + plinth_at(column)
+
+
+func plinth_at(column: Vector2i) -> int:
+	## Bands of platform rock under the raised district; zero elsewhere.
+	return int((columns.get(column, {}) as Dictionary).get("plinth", 0))
+
+
+func is_platform(column: Vector2i) -> bool:
+	return plinth_at(column) > 0
+
+
+func platform_rim_depth(column: Vector2i) -> int:
+	## Rings in from the district's rim: 1 on an edge column, 2 just inside;
+	## 0 off the platform. Chebyshev, so a corner's diagonal neighbour is 2.
+	if not is_platform(column):
+		return 0
+	for ring in range(1, 64):
+		for dz in range(-ring, ring + 1):
+			for dx in range(-ring, ring + 1):
+				if maxi(absi(dx), absi(dz)) == ring and ring > 0 \
+						and not is_platform(column + Vector2i(dx, dz)) \
+						and (ring > 1 or dx == 0 or dz == 0):
+					return ring
+	return 64
+
+
+func is_platform_edge(column: Vector2i) -> bool:
+	## A platform column on the district's rim (a cardinal neighbour is not
+	## raised): its plinth face is the retaining wall.
+	if not is_platform(column):
+		return false
+	for direction: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.UP,
+			Vector2i.DOWN]:
+		if not is_platform(column + direction):
+			return true
+	return false
+
+
+func platform_columns() -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for column: Vector2i in columns:
+		if plinth_at(column) > 0:
+			out.append(column)
+	out.sort()
+	return out
 
 
 func terrace_levels() -> Array[int]:

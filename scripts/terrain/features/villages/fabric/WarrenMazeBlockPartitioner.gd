@@ -75,6 +75,20 @@ static func partition(source: WarrenMazeSourcePlan,
 				decks.append(_deck_record(plot))
 			WarrenMazeSourcePlan.PLOT_BRIDGE:
 				bridges.append(_bridge_record(plot))
+			WarrenMazeSourcePlan.PLOT_OVER:
+				# The host's storeys continued over a bored passage: back rooms
+				# of the host parcel from the plot's own floor. A host that did
+				# not translate leaves the plot unroomed (its crown is then
+				# released as carrying nothing), never a failed town.
+				var host_outcome := house_outcomes.get(StringName(plot.get(
+					"host", &"")), {}) as Dictionary
+				var host_parcel := host_outcome.get("parcel") \
+					as WarrenBuildingParcel
+				if host_parcel == null:
+					continue
+				var over := _over_room_record(plot, host_parcel)
+				if not over.is_empty():
+					back_rooms.append(over)
 			WarrenMazeSourcePlan.PLOT_ASSET:
 				var kind_id := StringName(recipe_by_asset.get(
 					StringName(plot["id"]), &""))
@@ -719,6 +733,29 @@ static func _back_room_record(plot: Dictionary,
 		"cells": cells,
 		"floor": int(plot["floor"]),
 		"top": int(plot["top"]),
+	}
+
+
+static func _over_room_record(plot: Dictionary,
+		host: WarrenBuildingParcel) -> Dictionary:
+	## The host's storeys that stand at or above the over plot's floor, as back
+	## rooms of the host parcel on the bored columns.
+	var skipped := (int(plot["floor"]) - host.base_band) \
+		/ WarrenBuildingParcel.STOREY_BANDS
+	var storeys := host.storey_count() - skipped
+	if storeys <= 0 or (int(plot["floor"]) - host.base_band) \
+			% WarrenBuildingParcel.STOREY_BANDS != 0:
+		return {}
+	return {
+		"building_id": StringName(plot["building_id"]),
+		"parcel_id": host.stable_id,
+		"cells": (plot["cells"] as Array[Vector2i]).duplicate(),
+		"floor": int(plot["floor"]),
+		"top": int(plot["top"]),
+		"storeys": storeys,
+		"over_passage": true,
+		"crown": int(plot.get("crown", int(plot["floor"]) - 1)),
+		"jambs": (plot.get("jambs", []) as Array).duplicate(),
 	}
 
 

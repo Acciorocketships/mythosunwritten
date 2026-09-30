@@ -1,0 +1,56 @@
+# roof_defect_survey.gd, 50 towns (seeds 1-12 x compact/standard/large/grand + 2 photo towns)
+# columns: job | BASELINE db59f0c8 | AFTER
+1260018864828801968:compact roofs=31 tiny=3 beside=0 open=12/12 gables=3/50 air=0/0 eaves_cut=1	roofs=29 tiny=0 beside=0 open=0/10 gables=0/48 air=0/1 eaves_cut=0
+85830433957479026:compact roofs=30 tiny=5 beside=5 open=4/14 gables=4/46 air=0/0 eaves_cut=2	roofs=24 tiny=0 beside=0 open=0/11 gables=0/37 air=0/6 eaves_cut=0
+1:compact roofs=38 tiny=6 beside=5 open=9/18 gables=2/58 air=0/0 eaves_cut=2	roofs=32 tiny=0 beside=0 open=0/12 gables=0/52 air=0/4 eaves_cut=0
+2:compact roofs=47 tiny=9 beside=5 open=11/22 gables=1/72 air=0/0 eaves_cut=3	roofs=37 tiny=0 beside=0 open=0/13 gables=0/61 air=0/6 eaves_cut=0
+3:compact roofs=29 tiny=6 beside=6 open=6/15 gables=5/43 air=0/0 eaves_cut=3	roofs=23 tiny=0 beside=0 open=0/13 gables=0/33 air=0/5 eaves_cut=0
+4:compact roofs=30 tiny=4 beside=2 open=6/14 gables=7/46 air=0/0 eaves_cut=7	roofs=26 tiny=0 beside=0 open=0/14 gables=0/38 air=0/3 eaves_cut=0
+5:compact roofs=27 tiny=1 beside=0 open=6/11 gables=4/43 air=0/0 eaves_cut=8	roofs=24 tiny=1 beside=0 open=0/8 gables=0/40 air=0/3 eaves_cut=0
+6:compact roofs=28 tiny=3 beside=3 open=5/11 gables=5/45 air=0/0 eaves_cut=6	roofs=26 tiny=1 beside=1 open=0/8 gables=0/44 air=0/2 eaves_cut=0
+7:compact roofs=15 tiny=0 beside=0 open=5/7 gables=1/23 air=0/0 eaves_cut=4	roofs=15 tiny=0 beside=0 open=0/7 gables=0/23 air=0/0 eaves_cut=0
+8:compact roofs=23 tiny=6 beside=3 open=9/11 gables=4/35 air=0/0 eaves_cut=5	roofs=17 tiny=0 beside=0 open=0/7 gables=0/27 air=0/3 eaves_cut=0
+9:compact roofs=38 tiny=8 beside=5 open=10/14 gables=3/62 air=0/0 eaves_cut=3	roofs=32 tiny=1 beside=1 open=0/7 gables=0/57 air=0/4 eaves_cut=0
+10:compact roofs=19 tiny=3 beside=0 open=4/8 gables=0/30 air=0/0 eaves_cut=5	roofs=15 tiny=0 beside=0 open=0/4 gables=0/26 air=0/2 eaves_cut=0
+11:compact roofs=24 tiny=5 beside=3 open=1/5 gables=3/43 air=0/0 eaves_cut=3	roofs=20 tiny=0 beside=0 open=0/4 gables=0/36 air=0/3 eaves_cut=0
+12:compact roofs=18 tiny=1 beside=1 open=3/7 gables=2/29 air=0/0 eaves_cut=1	roofs=16 tiny=0 beside=0 open=0/5 gables=0/27 air=0/1 eaves_cut=0
+1:standard roofs=56 tiny=4 beside=3 open=8/13 gables=6/99 air=0/0 eaves_cut=15	roofs=52 tiny=1 beside=0 open=0/11 gables=0/93 air=0/2 eaves_cut=0
+2:standard roofs=77 tiny=15 beside=11 open=16/20 gables=5/134 air=0/0 eaves_cut=3	roofs=66 tiny=3 beside=3 open=0/9 gables=0/123 air=0/5 eaves_cut=0
+3:standard roofs=47 tiny=6 beside=5 open=11/22 gables=9/72 air=0/0 eaves_cut=7	roofs=41 tiny=0 beside=0 open=0/20 gables=0/62 air=0/5 eaves_cut=0
+4:standard roofs=53 tiny=11 beside=5 open=9/16 gables=3/90 air=0/0 eaves_cut=2	roofs=45 tiny=2 beside=1 open=0/8 gables=0/82 air=0/4 eaves_cut=0
+5:standard roofs=57 tiny=3 beside=0 open=4/9 gables=4/105 air=0/0 eaves_cut=8	roofs=53 tiny=0 beside=0 open=0/6 gables=0/100 air=0/3 eaves_cut=0
+6:standard roofs=46 tiny=3 beside=3 open=13/19 gables=7/73 air=0/0 eaves_cut=5	roofs=42 tiny=0 beside=0 open=0/17 gables=1/67 air=0/3 eaves_cut=0
+7:standard roofs=29 tiny=0 beside=0 open=5/5 gables=0/53 air=0/0 eaves_cut=7	roofs=29 tiny=0 beside=0 open=0/5 gables=0/53 air=0/0 eaves_cut=0
+8:standard roofs=45 tiny=8 beside=5 open=11/14 gables=5/76 air=0/0 eaves_cut=2	roofs=40 tiny=2 beside=2 open=0/9 gables=0/71 air=0/3 eaves_cut=0
+9:standard roofs=40 tiny=5 beside=4 open=14/20 gables=2/60 air=0/0 eaves_cut=0	roofs=37 tiny=1 beside=1 open=0/18 gables=0/56 air=0/2 eaves_cut=0
+10:standard roofs=42 tiny=2 beside=2 open=6/12 gables=4/72 air=0/0 eaves_cut=5	roofs=40 tiny=0 beside=0 open=0/11 gables=0/69 air=0/3 eaves_cut=0
+11:standard roofs=36 tiny=0 beside=0 open=7/8 gables=1/64 air=0/0 eaves_cut=4	roofs=36 tiny=0 beside=0 open=0/9 gables=0/63 air=0/1 eaves_cut=0
+12:standard roofs=28 tiny=5 beside=2 open=5/5 gables=7/51 air=0/0 eaves_cut=5	roofs=24 tiny=0 beside=0 open=0/3 gables=0/45 air=0/2 eaves_cut=0
+1:large roofs=64 tiny=9 beside=5 open=17/23 gables=6/105 air=0/0 eaves_cut=0	roofs=56 tiny=0 beside=0 open=0/20 gables=0/92 air=0/5 eaves_cut=0
+2:large roofs=99 tiny=21 beside=12 open=12/27 gables=12/171 air=0/0 eaves_cut=6	roofs=83 tiny=3 beside=1 open=0/16 gables=0/150 air=0/11 eaves_cut=0
+3:large roofs=57 tiny=10 beside=6 open=25/27 gables=9/87 air=0/0 eaves_cut=4	roofs=50 tiny=1 beside=1 open=0/21 gables=1/79 air=0/4 eaves_cut=0
+4:large roofs=61 tiny=2 beside=2 open=17/21 gables=10/101 air=0/0 eaves_cut=8	roofs=58 tiny=0 beside=0 open=0/21 gables=1/95 air=0/2 eaves_cut=0
+5:large roofs=58 tiny=8 beside=5 open=13/18 gables=3/98 air=0/0 eaves_cut=1	roofs=50 tiny=1 beside=1 open=0/11 gables=0/89 air=0/4 eaves_cut=0
+6:large roofs=76 tiny=16 beside=8 open=14/26 gables=5/126 air=0/0 eaves_cut=9	roofs=65 tiny=4 beside=0 open=0/15 gables=0/115 air=0/5 eaves_cut=0
+7:large roofs=25 tiny=5 beside=1 open=6/6 gables=4/44 air=0/0 eaves_cut=6	roofs=21 tiny=0 beside=0 open=0/2 gables=0/40 air=0/1 eaves_cut=0
+8:large roofs=66 tiny=8 beside=3 open=9/16 gables=5/116 air=0/0 eaves_cut=9	roofs=60 tiny=2 beside=0 open=0/11 gables=0/109 air=0/3 eaves_cut=0
+9:large roofs=48 tiny=11 beside=7 open=9/17 gables=4/79 air=0/0 eaves_cut=5	roofs=40 tiny=1 beside=1 open=0/12 gables=0/68 air=0/6 eaves_cut=0
+10:large roofs=76 tiny=8 beside=4 open=18/26 gables=6/126 air=0/0 eaves_cut=8	roofs=73 tiny=3 beside=2 open=0/20 gables=0/126 air=0/3 eaves_cut=0
+11:large roofs=65 tiny=22 beside=6 open=17/19 gables=4/111 air=0/0 eaves_cut=3	roofs=50 tiny=3 beside=1 open=0/6 gables=0/94 air=0/7 eaves_cut=0
+12:large roofs=43 tiny=13 beside=4 open=13/16 gables=3/70 air=0/0 eaves_cut=3	roofs=35 tiny=2 beside=1 open=0/7 gables=0/63 air=0/6 eaves_cut=0
+1:grand roofs=81 tiny=8 beside=7 open=19/25 gables=11/137 air=0/0 eaves_cut=7	roofs=73 tiny=0 beside=0 open=0/20 gables=0/126 air=0/4 eaves_cut=0
+2:grand roofs=103 tiny=14 beside=7 open=18/32 gables=7/174 air=0/0 eaves_cut=7	roofs=89 tiny=0 beside=0 open=0/20 gables=1/158 air=0/9 eaves_cut=0
+3:grand roofs=42 tiny=7 beside=2 open=11/13 gables=2/71 air=0/0 eaves_cut=4	roofs=35 tiny=1 beside=0 open=0/8 gables=0/62 air=0/4 eaves_cut=0
+4:grand roofs=89 tiny=22 beside=11 open=25/30 gables=9/148 air=0/0 eaves_cut=8	roofs=75 tiny=3 beside=2 open=0/22 gables=0/128 air=0/7 eaves_cut=0
+5:grand roofs=77 tiny=9 beside=8 open=12/21 gables=7/133 air=0/0 eaves_cut=7	roofs=71 tiny=1 beside=1 open=0/19 gables=0/123 air=0/4 eaves_cut=0
+6:grand roofs=80 tiny=16 beside=4 open=17/24 gables=8/136 air=0/0 eaves_cut=9	roofs=72 tiny=5 beside=0 open=0/19 gables=0/125 air=0/7 eaves_cut=0
+7:grand roofs=42 tiny=1 beside=1 open=4/10 gables=7/74 air=0/0 eaves_cut=4	roofs=40 tiny=0 beside=0 open=0/6 gables=0/74 air=0/1 eaves_cut=0
+8:grand roofs=100 tiny=8 beside=5 open=16/20 gables=8/180 air=0/0 eaves_cut=10	roofs=96 tiny=4 beside=3 open=0/20 gables=0/172 air=0/2 eaves_cut=0
+9:grand roofs=77 tiny=4 beside=4 open=13/17 gables=5/137 air=0/0 eaves_cut=10	roofs=74 tiny=3 beside=3 open=0/12 gables=0/136 air=0/1 eaves_cut=0
+10:grand roofs=79 tiny=9 beside=5 open=21/26 gables=7/132 air=0/0 eaves_cut=8	roofs=74 tiny=4 beside=3 open=0/20 gables=0/128 air=0/3 eaves_cut=0
+11:grand roofs=77 tiny=13 beside=2 open=19/24 gables=8/130 air=0/0 eaves_cut=15	roofs=70 tiny=3 beside=0 open=0/16 gables=0/124 air=0/5 eaves_cut=0
+12:grand roofs=72 tiny=13 beside=8 open=18/21 gables=11/123 air=0/0 eaves_cut=15	roofs=68 tiny=7 beside=3 open=0/17 gables=0/119 air=0/2 eaves_cut=0
+
+BASELINE          TOTAL { "towns": 50, "roofs": 2610, "tiny": 379, "tiny_beside": 205, "open_ends": 837, "open_exposed": 563, "gable_ends": 4383, "gable_holes": 258, "air_roofs": 0, "air_unsupported": 0, "eaves_cut": 282 }
+FIRST PASS 1c506d29 TOTAL { "towns": 50, "roofs": 2317, "tiny": 56, "tiny_beside": 28, "open_ends": 603, "open_exposed": 0, "gable_ends": 4031, "gable_holes": 4, "air_roofs": 198, "air_unsupported": 198, "eaves_cut": 287 }
+AFTER             TOTAL { "towns": 50, "roofs": 2319, "tiny": 63, "tiny_beside": 32, "open_ends": 610, "open_exposed": 0, "gable_ends": 4028, "gable_holes": 4, "air_roofs": 182, "air_unsupported": 0, "eaves_cut": 0 }

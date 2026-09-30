@@ -163,7 +163,8 @@ static func _scale_feature_contract_matches(audit: Dictionary) -> bool:
 	## large-showcase counts rejected legitimate compact and standard villages
 	## after every topology, construction, and support proof had already passed.
 	var scale_id := StringName(audit.get("scale_profile_id", ""))
-	var profile := WarrenVillageScaleProfile.for_id(scale_id)
+	var profile := WarrenVillageScaleProfile.from_record(scale_id,
+		audit.get("scale_profile_size"))
 	if profile == null or String(audit.get("scale_profile_signature", "")) \
 			!= profile.deterministic_signature():
 		return false

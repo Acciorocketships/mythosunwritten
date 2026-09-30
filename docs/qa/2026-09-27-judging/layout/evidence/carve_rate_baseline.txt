@@ -1,0 +1,1 @@
+CARVE_RATE ok=1000/1000 { &"compact": [663, 663], &"standard": [240, 240], &"large": [72, 72], &"grand": [25, 25] }

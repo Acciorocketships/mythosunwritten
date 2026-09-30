@@ -13,6 +13,10 @@ var kit: BuildingKit
 ## outside this mass is already solid (a neighbouring building), so a wall
 ## facing it would be sandwiched and is omitted.
 var external_blocked: Callable = Callable()
+## Native scale of player-sized props (doorstep clutter, deck pots) inside
+## this kit's frame; the production adapters keep them at their pre-upscale
+## world size (`VillageWorldScale.kit_human_prop_scale`).
+var prop_scale := 1.0
 
 
 func _init(p_kit: BuildingKit) -> void:
@@ -29,6 +33,7 @@ func assemble(mass: BuildingMass) -> Array[Dictionary]:
 		_assemble_roof(ctx, wing)
 		for i in range(start, out.size()):
 			out[i]["roof_index"] = int(wing.get("union_index", -1))
+		_assemble_attic_ceiling(ctx, wing)
 	for deck: Dictionary in mass.decks:
 		_assemble_deck(ctx, deck)
 	for item: Dictionary in mass.decor:
@@ -159,11 +164,18 @@ static func _inside_cell(dir: int, line: int, along: int) -> Vector2i:
 
 static func _run(cells: Dictionary, dir: int, line: int, start: int,
 		end: int) -> Dictionary:
-	# A run end is convex when the inside cell just beyond it is empty.
+	# A run end is convex when the inside cell just beyond it is empty, and
+	# concave when the face turns outward there (the cell beyond and outside
+	# it is part of the footprint).
+	var out := BuildingMass.DIRS[dir]
 	return {
 		"dir": dir, "line": line, "start": start, "end": end,
 		"start_convex": not cells.has(_inside_cell(dir, line, start - 1)),
 		"end_convex": not cells.has(_inside_cell(dir, line, end)),
+		"start_concave": cells.has(_inside_cell(dir, line, start - 1)) \
+			and cells.has(_inside_cell(dir, line, start - 1) + out),
+		"end_concave": cells.has(_inside_cell(dir, line, end)) \
+			and cells.has(_inside_cell(dir, line, end) + out),
 		"exposed": true,
 	}
 
@@ -228,11 +240,14 @@ static func wall_slots(cells: Dictionary, inset: bool,
 			var right_is_forward := dir == 1 or dir == 2
 			var start_corner := k == 0 and bool(run.start_convex)
 			var end_corner := k == count - 1 and bool(run.end_convex)
+			var start_inner := k == 0 and bool(run.start_concave)
+			var end_inner := k == count - 1 and bool(run.end_concave)
 			slots.append({
 				"centre": centre, "dir": dir,
 				"edge": BuildingMass.edge_key(inside, dir),
 				"right_convex": end_corner if right_is_forward else start_corner,
 				"left_convex": start_corner if right_is_forward else end_corner,
+				"right_concave": end_inner if right_is_forward else start_inner,
 				"outside": outside, "index": k, "count": count,
 				"inset": float(run.shift) > 0.0,
 			})
@@ -299,12 +314,16 @@ func _assemble_storey(ctx: Dictionary, index: int) -> void:
 				for along in range(int(run.start), int(run.end)):
 					below_inset[BuildingMass.edge_key(_inside_cell(int(run.dir),
 						int(run.line), along), int(run.dir))] = true
+	if bool(storey.get("fortified", false)) and kit.has_role(&"wall.fort"):
+		_assemble_fortified(ctx, storey)
+		return
 	var openings: Dictionary = storey.openings
 	var plain_every := int(storey.get("plain_every", 0))
 	if floor_band > mass.ground_band or bool(storey.get("soffit", false)):
 		_assemble_soffit(ctx, storey, y)
 	var bands := int(storey.get("bands", 2))
 	var tint := storey.get("tint", Color.WHITE) as Color
+	var retaining := bool(storey.get("retaining", false))
 	var pent_colour := StringName(storey.get("pent_colour", &""))
 	var pent_slots: Dictionary = {}
 	var above_openings: Dictionary = {}
@@ -317,8 +336,17 @@ func _assemble_storey(ctx: Dictionary, index: int) -> void:
 		if not _slot_exposed(mass, slot, floor_band, bands):
 			continue
 		if bands == 1:
-			_emit(ctx, &"wall.stone.course", slot.centre as Vector2, y,
-				yaw_for_dir(int(slot.dir)))
+			var sunk := bool(storey.get("sunk", false)) and kit.has_role(&"wall.stone.retaining")
+			if sunk:
+				# Standing on the ground: a full storey panel whose lower band
+				# is buried, so the course keeps the storeys' masonry.
+				_emit(ctx, &"wall.stone.retaining", slot.centre as Vector2,
+					y - kit.band_height(), yaw_for_dir(int(slot.dir)))
+				_emit_corner_post(ctx, slot, y - kit.band_height(), 2, kit.wall_face)
+			else:
+				_emit(ctx, &"wall.stone.course", slot.centre as Vector2, y,
+					yaw_for_dir(int(slot.dir)))
+				_emit_corner_post(ctx, slot, y, 1, kit.wall_face)
 			continue
 		var dir := int(slot.dir)
 		var yaw := yaw_for_dir(dir)
@@ -339,9 +367,13 @@ func _assemble_storey(ctx: Dictionary, index: int) -> void:
 				continue
 			kind = BuildingMass.OPENING_WINDOW
 		var role := StringName("wall.%s.%s" % [material, kind])
+		if retaining and kit.has_role(StringName("wall.%s.retaining" % material)):
+			# Retaining faces (terrace skins) stay flush with the lawn above.
+			role = StringName("wall.%s.retaining" % material)
 		if not kit.has_role(role):
 			role = StringName("wall.%s.window" % material)
 		_emit(ctx, role, centre, y, yaw, pick, Transform3D.IDENTITY, tint)
+		_emit_corner_post(ctx, slot, y, bands, kit.face_of(material, retaining))
 		if pent_colour != &"" and _covered_above(mass, slot, floor_band + bands) \
 				and StringName(above_openings.get(slot.edge, &"")) != BuildingMass.OPENING_BAY:
 			pent_slots[centre] = slot
@@ -349,6 +381,33 @@ func _assemble_storey(ctx: Dictionary, index: int) -> void:
 			_emit(ctx, &"plinth.stone", centre, y - kit.plinth_height, yaw, pick)
 		_emit_jetty_trim(ctx, slot, y, yaw, jettied, pick)
 	_emit_pent_eaves(ctx, pent_slots, pent_colour, y + float(bands) * kit.band_height())
+
+
+## Two wall panels meeting at a convex corner each end at their own module:
+## the top beams stop short of one another and the edge posts stand side by
+## side, leaving a stepped notch. The slot owning the corner at its right end
+## (exactly one per corner) closes it with one post flush with both outer
+## faces, rising to the panels' top beam.
+## `face` is the panels' outer-face distance: a deep masonry storey closes
+## its thicker corner with a post grown to cover both faces.
+func _emit_corner_post(ctx: Dictionary, slot: Dictionary, y: float, bands: int,
+		face: float) -> void:
+	# Deep masonry also leaves the square [0, face]^2 open at an inner corner
+	# (both panels stop at the corner line); the same post fills it.
+	var inner := bool(slot.get("right_concave", false)) and face > kit.wall_face + 0.001
+	if not (bool(slot.right_convex) or inner) or kit.corner_post_half <= 0.0:
+		return
+	var dir := int(slot.dir)
+	var out := Vector2(BuildingMass.DIRS[dir])
+	var right := Vector2(right_of(dir))
+	# The post covers the corner square [0, face] of both faces.
+	var half := maxf(kit.corner_post_half, face * 0.5 + 0.02)
+	var inset := (face - half) / kit.module_width
+	var at := (slot.centre as Vector2) + right * 0.5 + (out + right) * inset
+	var height := float(bands) * kit.band_height() + (0.074 if bands >= 2 else 0.0)
+	var girth := half / kit.corner_post_half
+	_emit(ctx, &"post.timber", at, y, yaw_for_dir(dir), 0,
+		Transform3D(Basis.from_scale(Vector3(girth, height, girth)), Vector3.ZERO))
 
 
 ## A pent eave course runs along consecutive slots of one face; lone slots are
@@ -377,21 +436,51 @@ func _assemble_soffit(ctx: Dictionary, storey: Dictionary, y: float) -> void:
 	var mass: BuildingMass = ctx.mass
 	var floor_band := int(storey.floor_band)
 	var below := mass.cells_at_band(floor_band - 1)
+	# A storey at the house datum hangs over air only where its adapter says so
+	# (`soffit_cells`: a bridge-house over a lane); elsewhere it stands.
+	var datum := floor_band <= mass.ground_band
+	var overhang: Dictionary = storey.get("soffit_cells", {})
+	var boarded: Dictionary = {}
+	# Cells of a compound's member standing on its own (higher) ground.
+	var grounded: Dictionary = storey.get("grounded", {})
 	for cell: Vector2i in storey.cells:
-		if below.has(cell):
+		if below.has(cell) or grounded.has(cell):
 			continue
 		if external_blocked.is_valid() and bool(external_blocked.call(cell, floor_band - 1)):
 			continue
+		if datum and not overhang.is_empty() and not overhang.has(cell):
+			continue
+		boarded[cell] = true
 		_emit(ctx, &"deck.board", Vector2(cell) + Vector2(0.5, 0.5), y, 0.0)
 
-	if floor_band <= mass.ground_band: return
-	# Full-cell projections need the same continuous timber edge as jetties,
-	# but only the actual exposed rim receives trim (no internal grid seams).
+	if datum and overhang.is_empty(): return
+	# Every overhanging rim needs the same continuous timber edge as jetties
+	# (and only the actual exposed rim: no internal grid seams). Without it the
+	# wall panels' plaster bottoms met the boards' outer edge in one plane and
+	# flickered along a bridge-house's underside (September 29 photo 8).
 	for slot: Dictionary in wall_slots(storey.cells, false):
-		if below.has(Vector2i(slot.edge.x, slot.edge.y)): continue
+		if not boarded.has(Vector2i(slot.edge.x, slot.edge.y)): continue
 		if not _slot_exposed(mass, slot, floor_band, 2): continue
 		var role := &"trim.floor_beam_corner" if slot.left_convex else &"trim.floor_beam"
 		_emit(ctx, role, slot.centre, y, yaw_for_dir(slot.dir))
+
+
+## Roof over free air (a loggia recessed into the top storey, a porch) would
+## open the hollow attic to the street: roof boards, gable walls from behind,
+## a chimney base. Boards close it at the eave, as the floor of a storey above
+## closes a lower loggia (September 29 photo 9, "no roof").
+func _assemble_attic_ceiling(ctx: Dictionary, wing: Dictionary) -> void:
+	var mass: BuildingMass = ctx.mass
+	var eave := int(wing.eave_band)
+	var below := mass.cells_at_band(eave - 1)
+	var level := mass.cells_at_band(eave)
+	for cell: Vector2i in BuildingMass.rect_cells(wing.rect as Rect2i):
+		if below.has(cell) or level.has(cell):
+			continue
+		if external_blocked.is_valid() and bool(external_blocked.call(cell, eave - 1)):
+			continue
+		_emit(ctx, &"deck.board", Vector2(cell) + Vector2(0.5, 0.5),
+			float(eave) * kit.band_height(), 0.0)
 
 
 ## True when a storey (this building or another) stands directly under the
@@ -563,6 +652,26 @@ func _assemble_gable(ctx: Dictionary, axis: int, end: int, u: int, v0: int,
 
 # --- decks and dressing ------------------------------------------------------
 
+## Height/depth fit of the canonical awning under one storey line.
+static func awning_fit(p_kit: BuildingKit) -> float:
+	return (p_kit.storey_height - 0.2) / p_kit.awning_height \
+		if p_kit.awning_height > 0.0 else 1.0
+
+
+## Plan footprint (module cells) of an awning decor item: exactly what the
+## assembler builds, so designers can reserve the ground its posts stand on.
+static func awning_footprint(p_kit: BuildingKit, item: Dictionary) -> Rect2:
+	var dir := int(item.dir)
+	var out := Vector2(BuildingMass.DIRS[dir])
+	var right := Vector2(right_of(dir))
+	var centre := item.centre as Vector2
+	var near := (p_kit.wall_face + float(item.get("proud", 0.0))) / p_kit.module_width
+	var far := near + p_kit.awning_depth * awning_fit(p_kit) / p_kit.module_width
+	var half := p_kit.awning_width * 0.5
+	var a := centre - right * half + out * near
+	var b := centre + right * half + out * far
+	return Rect2(a.min(b), (a - b).abs())
+
 func _assemble_deck(ctx: Dictionary, deck: Dictionary) -> void:
 	var y := float(int(deck.band)) * kit.band_height()
 	var cells: Dictionary = deck.cells
@@ -603,31 +712,34 @@ func _assemble_decor(ctx: Dictionary, item: Dictionary) -> void:
 	var pick := _hash(mass, int(centre.x * 4.0), int(centre.y * 4.0), dir)
 	var out := Vector2(BuildingMass.DIRS[dir])
 	var w := kit.module_width
+	# Items on a deep masonry storey stand on its (prouder) outer face.
+	var proud := float(item.get("proud", 0.0)) / w
 	match kind:
 		&"awning":
-			# The pack's canopy stands 3.6 m on its legs; fit it under the
-			# storey line with the back beam against the wall.
-			var fit := (kit.storey_height - 0.2) / 3.6
-			_emit(ctx, &"awning", centre + out * (0.86 * fit / w), y, yaw, pick,
-				Transform3D(Basis.from_scale(Vector3.ONE * fit), Vector3.ZERO))
+			# One module wide (the role anchor), fitted under the storey line,
+			# its back posts on the wall's outer face.
+			var fit := awning_fit(kit)
+			_emit(ctx, &"awning", centre + out * (kit.wall_face / w + proud), y, yaw, pick,
+				Transform3D(Basis.from_scale(Vector3(1.0, fit, fit)), Vector3.ZERO))
 		&"window_box":
 			_emit(ctx, &"window_box", centre + out * (0.17 / w), y + 0.75, yaw, pick)
 		&"ivy_corner":
 			# Seated at the corner of the slot's right end (pack placement:
 			# 0.08 m proud of the face, 0.12 m past the corner).
 			var right := Vector2(right_of(dir))
-			_emit(ctx, &"ivy.corner", centre + right * (0.5 + 0.12 / w) \
-				+ out * (0.08 / w), y, yaw, pick)
+			_emit(ctx, &"ivy.corner", centre + right * (0.5 + 0.12 / w + proud) \
+				+ out * (0.08 / w + proud), y, yaw, pick)
 		&"ivy":
-			_emit(ctx, &"ivy.wall", centre + out * (0.14 / w), y, yaw, pick)
+			_emit(ctx, &"ivy.wall", centre + out * (0.14 / w + proud), y, yaw, pick)
 		&"doorstep":
 			# A few loose props against the wall beside the door; visual only
 			# so they never narrow a walked lane.
 			var right := Vector2(right_of(dir))
 			for i in int(item.get("count", 1)):
 				var along := float(item.get("side", 1.0)) * (0.36 + 0.2 * float(i))
-				_emit(ctx, &"prop.doorstep", centre + right * along + out * (0.22 + 0.08 * float(i)),
-					y, yaw + float(i) * 0.7, pick + i * 7)
+				_emit(ctx, &"prop.doorstep", centre + right * along + out * (0.22 + 0.08 * float(i) + proud),
+					y, yaw + float(i) * 0.7, pick + i * 7,
+					Transform3D(Basis.from_scale(Vector3.ONE * prop_scale), Vector3.ZERO))
 				(ctx.out as Array).back()["collision"] = false
 		&"entry_stair":
 			_emit(ctx, &"stair.entry", centre + out * (1.0 / w), y, yaw, pick)
@@ -660,4 +772,160 @@ func _assemble_decor(ctx: Dictionary, item: Dictionary) -> void:
 		&"bracket":
 			_emit(ctx, &"bracket.jetty", centre, y - kit.jetty_depth, yaw, pick)
 		&"planter":
-			_emit(ctx, &"prop.pot", centre, y + 0.13, yaw, pick)
+			_emit(ctx, &"prop.pot", centre, y + 0.13, yaw, pick,
+				Transform3D(Basis.from_scale(Vector3.ONE * prop_scale), Vector3.ZERO))
+
+
+# --- fortification (September 29, WarrenTownPlatform) ----------------------
+# A raised district's plinth is a fortification, not a house's stone ground
+# floor: continuous plain coursed stone (no timber frame, no corner posts),
+# a battered foot course, stone piers at its convex corners rising into
+# turrets, a crenellated parapet along every rim edge the upper town leaves
+# open, and a stone-framed gate (two piers and a lintel) where the gate
+# flight enters the district. Built from `wall.fort` alone.
+
+## Native metres (the kit's own frame; the town frame scales them).
+const FORT_PARAPET_HEIGHT := WarrenTownPlatform.PARAPET_HEIGHT
+const FORT_MERLON_HEIGHT := 0.55
+const FORT_MERLON_WIDTH := 0.55
+const FORT_FOOT_HEIGHT := 0.9
+const FORT_FOOT_DEPTH := 4.0
+const FORT_PIER_SIZE := 0.7
+const FORT_GATE_PIER_SIZE := 1.0
+const FORT_TURRET_SIZE := 1.3
+const FORT_TURRET_RISE := 1.5
+const FORT_GATE_RISE := 5.8
+const FORT_LINTEL_HEIGHT := 1.2
+## The `wall.fort` panel's measured native size (Suntail plain stone wall).
+const FORT_PANEL_HEIGHT := 3.0
+const FORT_PANEL_DEPTH := 0.188
+## A gate spans one macro street cell: two module cells.
+const FORT_GATE_SPAN := 2
+
+
+func _assemble_fortified(ctx: Dictionary, storey: Dictionary) -> void:
+	var mass: BuildingMass = ctx.mass
+	var floor_band := int(storey.floor_band)
+	var bands := int(storey.get("bands", 2))
+	var y := float(floor_band) * kit.band_height()
+	var height := float(bands) * kit.band_height()
+	var panel_height := _fort_panel_height()
+	var top_band := floor_band + bands
+	var above := mass.cells_at_band(top_band)
+	var is_foot := floor_band <= mass.ground_band
+	var gates: Dictionary = storey.get("gates", {})
+	for slot: Dictionary in wall_slots(storey.cells, false,
+			_edge_exposure(mass, floor_band, bands)):
+		var dir := int(slot.dir)
+		var yaw := yaw_for_dir(dir)
+		var centre := slot.centre as Vector2
+		var edge := slot.edge as Vector3i
+		var inside := Vector2i(edge.x, edge.y)
+		var exposed := _slot_exposed(mass, slot, floor_band, bands)
+		if exposed:
+			_emit(ctx, &"wall.fort", centre, y, yaw, 0,
+				Transform3D(Basis.from_scale(Vector3(1.0, height / panel_height, 1.0)),
+					Vector3.ZERO))
+			if is_foot:
+				_emit(ctx, &"wall.fort", centre, y, yaw, 0,
+					Transform3D(Basis.from_scale(Vector3(1.0,
+						FORT_FOOT_HEIGHT / panel_height, FORT_FOOT_DEPTH)), Vector3.ZERO))
+		var rim := not above.has(inside)
+		var gate := gates.has(edge)
+		if rim and gate:
+			continue
+		var built_on := rim and external_blocked.is_valid() \
+			and bool(external_blocked.call(inside, top_band))
+		if rim and not built_on:
+			_emit_parapet(ctx, centre, y + height, yaw)
+		if bool(slot.right_convex):
+			var right := Vector2(right_of(dir))
+			var corner := centre + right * 0.5
+			var out := Vector2(BuildingMass.DIRS[dir])
+			if rim:
+				# A turret: a stone tower on the corner, standing forward of
+				# both faces from the foot of the wall.
+				var at := corner + (out + right) * (FORT_TURRET_SIZE * 0.5 - 0.05) \
+					/ kit.module_width
+				_emit_pier(ctx, at, float(mass.ground_band) * kit.band_height(),
+					y + height + FORT_TURRET_RISE, FORT_TURRET_SIZE)
+			elif exposed:
+				_emit_pier(ctx, corner, y, y + height, FORT_PIER_SIZE)
+	for key: Variant in gates:
+		var edge := key as Vector3i
+		if not bool(gates[key]):
+			continue
+		_emit_gate(ctx, edge, y + height)
+
+
+func _fort_panel_height() -> float:
+	return FORT_PANEL_HEIGHT
+
+
+## A plain stone parapet course with merlons, facing outward over one module.
+func _emit_parapet(ctx: Dictionary, centre: Vector2, y: float, yaw: float) -> void:
+	var panel_height := _fort_panel_height()
+	_emit(ctx, &"wall.fort", centre, y, yaw, 0,
+		Transform3D(Basis.from_scale(Vector3(1.0, FORT_PARAPET_HEIGHT / panel_height,
+			1.6)), Vector3.ZERO))
+	var width := kit.module_width
+	for along: float in [-0.25, 0.25]:
+		_emit(ctx, &"wall.fort", centre, y + FORT_PARAPET_HEIGHT, yaw, 0,
+			Transform3D(Basis.from_scale(Vector3(FORT_MERLON_WIDTH / width,
+				FORT_MERLON_HEIGHT / panel_height, 1.6)), Vector3(along * width, 0.0, 0.0)))
+
+
+## A square stone pier centred on `at` (cells) from `bottom` to `top` (native
+## metres): four plain faces and a stone cap, crowned with merlons.
+func _emit_pier(ctx: Dictionary, at: Vector2, bottom: float, top: float,
+		size: float) -> void:
+	var panel_height := _fort_panel_height()
+	var width := kit.module_width
+	var half := size * 0.5 / width
+	for dir in 4:
+		var face := at + Vector2(BuildingMass.DIRS[dir]) * half
+		_emit(ctx, &"wall.fort", face, bottom, yaw_for_dir(dir), 0,
+			Transform3D(Basis.from_scale(Vector3(size / width,
+				(top - bottom) / panel_height, 1.0)), Vector3.ZERO))
+	# Cap: a panel laid flat across the pier's top.
+	_emit(ctx, &"wall.fort", at, top, 0.0, 0,
+		Transform3D(Basis(Vector3.RIGHT, -PI * 0.5) * Basis.from_scale(Vector3(
+			size / width, size / panel_height, 1.0)), Vector3(0.0, 0.0, size * 0.5)))
+	for dir in 4:
+		var face := at + Vector2(BuildingMass.DIRS[dir]) * half
+		_emit(ctx, &"wall.fort", face, top, yaw_for_dir(dir), 0,
+			Transform3D(Basis.from_scale(Vector3(size * 0.34 / width,
+				FORT_MERLON_HEIGHT / panel_height, 1.0)), Vector3.ZERO))
+
+
+## The gate into the district over one rim edge: two stone piers at its ends
+## rising past the walk's headroom, joined by a lintel.
+func _emit_gate(ctx: Dictionary, edge: Vector3i, rim_y: float) -> void:
+	var dir := edge.z
+	var inside := Vector2i(edge.x, edge.y)
+	var out := Vector2(BuildingMass.DIRS[dir])
+	var right := Vector2(right_of(dir))
+	var line := Vector2(inside) + Vector2(0.5, 0.5) + out * 0.5
+	var span := float(FORT_GATE_SPAN)
+	# `edge` is the gate's left cell (seen from outside); it spans `span` cells.
+	var left_end := line - right * 0.5
+	var right_end := left_end + right * span
+	var panel_height := _fort_panel_height()
+	var width := kit.module_width
+	# Gate piers stand just inside the rim at the opening's two ends (clear
+	# of the flight arriving outside), joined by a deep lintel carrying a
+	# crenellated parapet across the opening.
+	var pier := FORT_GATE_PIER_SIZE
+	var inset := pier * 0.5 / width
+	var ends: Array[Vector2] = [left_end + right * inset - out * inset,
+		right_end - right * inset - out * inset]
+	for end: Vector2 in ends:
+		_emit_pier(ctx, end, rim_y, rim_y + FORT_GATE_RISE, pier)
+	var middle := (left_end + right_end) * 0.5 - out * inset
+	_emit(ctx, &"wall.fort", middle, rim_y + FORT_GATE_RISE - FORT_LINTEL_HEIGHT,
+		yaw_for_dir(dir), 0, Transform3D(Basis.from_scale(Vector3(span,
+			FORT_LINTEL_HEIGHT / panel_height, pier / FORT_PANEL_DEPTH)), Vector3.ZERO))
+	for along: float in [-0.5, 0.5]:
+		_emit_parapet(ctx, middle + right * along + out * inset,
+			rim_y + FORT_GATE_RISE, yaw_for_dir(dir))
+

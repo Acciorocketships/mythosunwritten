@@ -62,6 +62,11 @@ var _owner_index_by_name: Dictionary = {&"": 0}
 var _reservation_owners: Dictionary = {}
 var _face_claims: Dictionary = {}
 var _sealed := false
+## Fine column (x, z) -> first band a room may not project into from OUTSIDE
+## air. The town's edge-ring height profile (`WarrenPlotPlanner.EDGE_RINGS`)
+## bounds every plot; this carries it to composition so an upper floorplate
+## shifting outward cannot stand over a one-storey rim house (September 29).
+var profile_ceiling: Dictionary = {}
 
 
 func _init(p_minimum: Vector3i, p_size: Vector3i) -> void:
@@ -234,6 +239,9 @@ func commit_transaction(transaction: WarrenSpatialTransaction) -> bool:
 		return false
 	if not _validate_faces(transaction.face_records):
 		return false
+	if not _validate_releases(transaction.releases):
+		return false
+	_apply_releases(transaction.releases)
 	_apply_assignments(transaction.assignments)
 	_apply_reservations(transaction.reservations)
 	_apply_faces(transaction.face_records)
@@ -351,6 +359,33 @@ func _validate_faces(records: Array[Dictionary]) -> bool:
 				owner_id])
 		staged[key] = {"kind": kind, "owner_id": owner_id}
 	return true
+
+
+func _validate_releases(releases: Dictionary) -> bool:
+	for index_value: Variant in releases.keys():
+		var index := int(index_value)
+		if index < 0 or index >= _use_by_cell.size():
+			return _reject("release leaves the grid")
+		if _owner_names[int(_owner_by_cell[index])] != StringName(releases[index]):
+			return _reject("release of a cell another owner holds at %s" \
+				% cell_for_index(index))
+	return true
+
+
+func _apply_releases(releases: Dictionary) -> void:
+	for index_value: Variant in releases.keys():
+		var index := int(index_value)
+		var owner_index := _owner_index(StringName(releases[index]))
+		_use_by_cell[index] = Use.OUTSIDE
+		_owner_by_cell[index] = 0
+		for bit: int in _individual_bits(int(_reservation_bits_by_cell[index])):
+			var key := _reservation_key(index, bit)
+			var owners := _reservation_owners.get(key, {}) as Dictionary
+			owners.erase(owner_index)
+			if owners.is_empty():
+				_reservation_owners.erase(key)
+				_reservation_bits_by_cell[index] = \
+					int(_reservation_bits_by_cell[index]) & ~bit
 
 
 func _apply_assignments(assignments: Dictionary) -> void:

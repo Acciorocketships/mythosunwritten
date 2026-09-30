@@ -42,6 +42,7 @@ static func to_volume_plan(source: WarrenMazeSourcePlan,
 	# the existing excavation adapter proved.
 	volume.mass_context[&"maze_source_plan"] = source
 	volume.mass_context[&"scale_profile_id"] = source.scale_profile.scale_id
+	volume.mass_context[&"scale_profile_size"] = source.scale_profile.size
 	volume.mass_context[&"scale_profile_signature"] = \
 		source.scale_profile.deterministic_signature()
 	return volume
@@ -108,6 +109,9 @@ static func _derived_massif(source: WarrenMazeSourcePlan,
 		source.massif.core_top_bands)
 	derived.form_id = source.massif.form_id
 	derived.open_court = source.massif.open_court.duplicate()
+	# The raised district travels in the column records ("plinth"); its
+	# height with them.
+	derived.platform_bands = source.massif.platform_bands
 	# Mirrors WarrenMassifBuilder.build's own derivation: core_top_bands is the
 	# deepest authored layer over any column, and deriving a column's top from
 	# the town standing on it can change which column is deepest.

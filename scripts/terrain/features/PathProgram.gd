@@ -55,10 +55,16 @@ static func filleted_path_shapes(points: Array[Vector2], half_width: float,
 					for step in range(33):
 						arc.append(centre + (end - centre).rotated(
 							incoming.cross(outgoing) * PI * 0.5 * float(step) / 32.0))
-		if start.distance_to(end) > 0.001:
-			out.append(FeatureGroundShape.oriented_rect((start + end) * 0.5,
-				Vector2(start.distance_to(end) * 0.5, half_width),
-				(end - start).angle(), surface, priority,
+		# A turn without a fillet is a square joint: the incoming run continues
+		# half a width past the vertex so the outer corner is painted (the next
+		# run starts at the vertex; alone the two butt ends leave a notch).
+		var reach := end
+		if arc.is_empty() and index + 1 < line.size():
+			reach += (line[index] - line[index - 1]).normalized() * half_width
+		if start.distance_to(reach) > 0.001:
+			out.append(FeatureGroundShape.oriented_rect((start + reach) * 0.5,
+				Vector2(start.distance_to(reach) * 0.5, half_width),
+				(reach - start).angle(), surface, priority,
 				StringName("%s.straight.%d" % [stable_id, index])))
 		for step in range(1, arc.size()):
 			out.append(FeatureGroundShape.capsule(arc[step - 1], arc[step],

@@ -1,0 +1,2 @@
+CARVE_FAIL i=1290 seed=4036073264766519105 size=0.088 label=compact why=single spine DFS exhausted 40011 visits
+CARVE_RATE ok=1399/1400 { &"grand": [70, 70], &"compact": [898, 899], &"large": [153, 153], &"standard": [278, 278] }

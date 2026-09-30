@@ -1,0 +1,8 @@
+LANES 1260018864828801968/compact samples=640 blocked=8
+LANES 85830433957479026/compact samples=520 blocked=40
+LANES 2/compact samples=680 blocked=12
+LANES 4/compact samples=560 blocked=36
+LANES 3/standard samples=860 blocked=36
+LANES 7/standard samples=900 blocked=0
+LANES 5/large samples=1580 blocked=43
+LANES_TOTAL samples=5740 blocked=175
