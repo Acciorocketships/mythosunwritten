@@ -11,7 +11,7 @@ func _init() -> void:
 		for direction: Vector2i in paths._DIRS:
 			var a := Vector2(cell)*HeightfieldPlan.CELL
 			var b := Vector2(cell+direction)*HeightfieldPlan.CELL
-			var row := {"cell":str(cell),"direction":str(direction),"height_a":paths._ground(a),"height_b":paths._ground(b),"walkable":TerrainSurfaceField.is_walkable_edge(fields.region_at((a+b)*.5),cell,direction),"planning_intervals":str(paths._planning_intervals_cells(cell,cell+direction)),"planning_distance":paths._planning_distance(cell)}
+			var row := {"cell":str(cell),"direction":str(direction),"height_a":paths._ground(a),"height_b":paths._ground(b),"walkable":PathProgram.is_route_edge_walkable(fields.region_at((a+b)*.5),cell,direction),"planning_intervals":str(paths._planning_intervals_cells(cell,cell+direction)),"planning_distance":paths._planning_distance(cell)}
 			var region := fields.region_at((a+b)*.5)
 			var gaps := []
 			for lateral: float in [-2.0,0.0,2.0]:

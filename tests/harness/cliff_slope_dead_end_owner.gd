@@ -22,7 +22,7 @@ func run(review:Node3D)->void:
  var graded:HeightfieldRegion=input.region
  for pair in [[Vector2i(49,22),Vector2i.LEFT],[Vector2i(48,22),Vector2i.LEFT],[Vector2i(50,22),Vector2i.LEFT]]:
   out.append("edge %s %s natural storeys %d->%d walkable(natural,hw)=%s walkable(graded,hw)=%s natural_y %.2f/%.2f graded_y %.2f/%.2f"%[pair[0],pair[1],natural.storey_at(pair[0].x,pair[0].y),natural.storey_at(pair[0].x+pair[1].x,pair[0].y),
-   TerrainSurfaceField.is_walkable_edge(natural,pair[0],pair[1],PathProgram.PATH_HALF_WIDTH),TerrainSurfaceField.is_walkable_edge(graded,pair[0],pair[1],PathProgram.PATH_HALF_WIDTH),
+   PathProgram.is_route_edge_walkable(natural,pair[0],pair[1]),PathProgram.is_route_edge_walkable(graded,pair[0],pair[1]),
    TerrainSurfaceField.surface_y(natural,Vector2(pair[0]).x*24,Vector2(pair[0]).y*24),TerrainSurfaceField.surface_y(natural,Vector2(pair[0]+pair[1]).x*24,Vector2(pair[0]).y*24),
    TerrainSurfaceField.surface_y(graded,Vector2(pair[0]).x*24,Vector2(pair[0]).y*24),TerrainSurfaceField.surface_y(graded,Vector2(pair[0]+pair[1]).x*24,Vector2(pair[0]).y*24)])
  out.append("grades %d native controls %d"%[graded.terrain_grades.size(),graded.native_control_heights.size()])

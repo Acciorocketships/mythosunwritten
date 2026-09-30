@@ -45,12 +45,14 @@ func _init() -> void:
 
 static func audit(grade: TerrainGradePatch, heightfield: HeightfieldPlan,
 		world: WorldFeaturePlan) -> Array:
-	var tile := HeightfieldPlan.CELL
+	# Terrain on 12 m lattice points; roads on 24 m route cells (cell c = point 2c).
+	var point := HeightfieldPlan.POINT
+	var tile := PathProgram.ROUTE_CELL
 	var area := grade.bounds.grow(TerrainGradePatch.NATIVE_CONTROL_MARGIN + tile)
 	var lo := Vector2i(floori(area.position.x / tile), floori(area.position.y / tile))
 	var hi := Vector2i(ceili(area.end.x / tile), ceili(area.end.y / tile))
-	var mid := (lo + hi) / 2
-	var natural := heightfield.compute_region(mid.x, mid.y, maxi(hi.x - lo.x, hi.y - lo.y) / 2 + 3)
+	var mid := lo + hi   # (lo + hi) / 2 in cells = lo + hi in points
+	var natural := heightfield.compute_region(mid.x, mid.y, maxi(hi.x - lo.x, hi.y - lo.y) + 6)
 	var graded := natural.with_terrain_grades([grade] as Array[TerrainGradePatch])
 	var masks: Dictionary = {}
 	var blocks: Dictionary = {}
@@ -75,30 +77,32 @@ static func audit(grade: TerrainGradePatch, heightfield: HeightfieldPlan,
 	bare._continuous_datum = grade._continuous_datum
 	var without := natural.with_terrain_grades([bare] as Array[TerrainGradePatch])
 	var ramped := []
-	for z in range(lo.y, hi.y + 1):
-		for x in range(lo.x, hi.x + 1):
+	for z in range(lo.y * 2, hi.y * 2 + 1):
+		for x in range(lo.x * 2, hi.x * 2 + 1):
 			if graded.surface_height(x, z) != without.surface_height(x, z):
 				ramped.append("%s %.0f->%.0f" % [Vector2i(x, z), without.surface_height(x, z), graded.surface_height(x, z)])
-	out.append("sealed=%d unsealed_in_reach=%d ramped=%s" % [grade.road_masks.size(), unsealed, str(ramped)])
+	# Road edges the bare town grade (no road grading) would break: the
+	# September 27 defect class, used to pin equivalent current sites.
+	var bare_broken := []
 	for cell: Vector2i in masks:
 		for arm: Array in [[1, Vector2i.RIGHT], [4, Vector2i(0, 1)]]:
 			if (int(masks[cell]) & int(arm[0])) == 0: continue
 			var d: Vector2i = arm[1]
-			var nat := TerrainSurfaceField.is_walkable_edge(natural, cell, d, PathProgram.PATH_HALF_WIDTH)
-			var fin := TerrainSurfaceField.is_walkable_edge(graded, cell, d, PathProgram.PATH_HALF_WIDTH)
+			if PathProgram.is_route_edge_walkable(natural, cell, d) \
+					and not PathProgram.is_route_edge_walkable(without, cell, d):
+				bare_broken.append("%s->%s" % [cell, cell + d])
+	out.append("sealed=%d unsealed_in_reach=%d bare_broken=%s ramped=%s" % [grade.road_masks.size(),
+		unsealed, str(bare_broken), str(ramped)])
+	for cell: Vector2i in masks:
+		for arm: Array in [[1, Vector2i.RIGHT], [4, Vector2i(0, 1)]]:
+			if (int(masks[cell]) & int(arm[0])) == 0: continue
+			var d: Vector2i = arm[1]
+			var nat := PathProgram.is_route_edge_walkable(natural, cell, d)
+			var fin := PathProgram.is_route_edge_walkable(graded, cell, d)
 			if nat and not fin:
-				if OS.get_cmdline_user_args().has("--dump"):
-					var rows := []
-					for z in range(cell.y - 3, cell.y + 4):
-						var row := "z%d:" % z
-						for x in range(cell.x - 4, cell.x + 5):
-							row += " %2d%s%2d%s" % [natural.storey_at(x, z),
-								"/" , graded.storey_at(x, z),
-								"*" if masks.has(Vector2i(x, z)) else " "]
-						rows.append(row)
-					print("DUMP around %s (x %d..%d) natural/graded storeys, * road\n%s" % [
-						cell, cell.x - 4, cell.x + 4, "\n".join(rows)])
-				out.append("%s->%s nat %.0f/%.0f fin %.0f/%.0f" % [cell, cell + d,
-					natural.surface_height(cell.x, cell.y), natural.surface_height(cell.x + d.x, cell.y + d.y),
-					graded.surface_height(cell.x, cell.y), graded.surface_height(cell.x + d.x, cell.y + d.y)])
+				var heights := []
+				for k in 3:
+					var p: Vector2i = cell * PathProgram.POINTS_PER_ROUTE_CELL + d * k
+					heights.append("%.0f/%.0f" % [natural.surface_height(p.x, p.y), graded.surface_height(p.x, p.y)])
+				out.append("%s->%s natural/graded points %s" % [cell, cell + d, str(heights)])
 	return out

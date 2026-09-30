@@ -33,7 +33,8 @@ func test_category_snapshot_flags_exactly_the_graded_cells() -> void:
 		for x in 16:
 			var expected := 1.0 if graded.native_control_heights.has(Vector2i(x, z)) else 0.0
 			assert_eq(values[(z * 16 + x) * 2 + 1], expected, "point (%d, %d) graded flag" % [x, z])
-	assert_eq(values[(0 * 16 + 4) * 2 + 1], 1.0, "the pad point is graded")
+	# The pad (world x 70..122) owns every corner it touches: points 5..11.
+	assert_eq(values[(0 * 16 + 6) * 2 + 1], 1.0, "the pad point is graded")
 	assert_eq(values[(6 * 16 + 0) * 2 + 1], 0.0, "untouched natural ground is not graded")
 
 
@@ -55,11 +56,15 @@ static func _broken_road_edges(natural: HeightfieldRegion, graded: HeightfieldRe
 		for arm: Array in [[1, Vector2i.RIGHT], [4, Vector2i(0, 1)]]:
 			if (int(masks[cell]) & int(arm[0])) == 0: continue
 			var d: Vector2i = arm[1]
-			if not natural.has_surface_point(cell.x + d.x, cell.y + d.y): continue
-			if TerrainSurfaceField.is_walkable_edge(natural, cell, d, PathProgram.PATH_HALF_WIDTH) \
-					and not TerrainSurfaceField.is_walkable_edge(graded, cell, d, PathProgram.PATH_HALF_WIDTH):
-				broken.append("%s->%s %.0f/%.0f" % [cell, cell + d,
-					graded.surface_height(cell.x, cell.y), graded.surface_height(cell.x + d.x, cell.y + d.y)])
+			var far: Vector2i = (cell + d) * PathProgram.POINTS_PER_ROUTE_CELL
+			if not natural.has_surface_point(far.x, far.y): continue
+			if PathProgram.is_route_edge_walkable(natural, cell, d) \
+					and not PathProgram.is_route_edge_walkable(graded, cell, d):
+				var heights := []
+				for k in 3:
+					var p: Vector2i = cell * PathProgram.POINTS_PER_ROUTE_CELL + d * k
+					heights.append("%.0f" % graded.surface_height(p.x, p.y))
+				broken.append("%s->%s %s" % [cell, cell + d, "/".join(heights)])
 	return broken
 
 
@@ -73,14 +78,30 @@ func _graded(path: String) -> Array:
 ## The collar's rounded blend put road cell (12,20) at 13 m next to (13,20)
 ## at 20 m: a two-storey wall across the road. Regrading lowered (13,20) to
 ## 17 m and pushed the wall one cell out (17 m against 24 m): the divot.
+## Dual-grid re-freeze (September 30): the same three towns re-frozen on 12 m
+## points by tests/harness/road_grade_freeze.gd. The resampled geography no
+## longer exhibits the divot (the bare town grade breaks no road edge, here or
+## in any of the 23 towns of the radius-2 road_grade_walkability_probe), so
+## the cell pins are retired; the reported town keeps the invariant over all
+## of its naturally walkable road edges, and road edges step at most one
+## storey per 12 m point.
 func test_reported_road_keeps_its_natural_climb_out_of_the_town() -> void:
 	var r := _graded(DIVOT_FIXTURES[0])
+	var natural: HeightfieldRegion = r[1]
 	var graded: HeightfieldRegion = r[2]
-	assert_eq(_broken_road_edges(r[1], graded, r[0].road_masks), [], "no wall across the road")
-	for x in range(11, 16):
-		assert_lte(absi(graded.storey_at(x + 1, 20) - graded.storey_at(x, 20)), 1,
-			"road cell (%d,20) -> (%d,20) stays a slope" % [x, x + 1])
-	assert_eq(graded.surface_height(13, 20), 20.0, "the road beyond the collar keeps its natural 20 m")
+	assert_eq(_broken_road_edges(natural, graded, r[0].road_masks), [], "no wall across the road")
+	var walkable := 0
+	for cell: Vector2i in r[0].road_masks:
+		for arm: Array in [[1, Vector2i.RIGHT], [4, Vector2i(0, 1)]]:
+			if (int(r[0].road_masks[cell]) & int(arm[0])) == 0: continue
+			if not PathProgram.is_route_edge_walkable(natural, cell, arm[1]): continue
+			walkable += 1
+			for half: Array in PathProgram.route_point_edges(cell, arm[1]):
+				var a: Vector2i = half[0]
+				var b: Vector2i = a + (arm[1] as Vector2i)
+				assert_lte(absi(graded.storey_at(b.x, b.y) - graded.storey_at(a.x, a.y)), 1,
+					"road point %s -> %s stays a slope" % [a, b])
+	assert_gt(walkable, 10, "the fixture exercises the town's country roads")
 
 
 func test_town_grades_leave_every_natural_road_edge_walkable() -> void:
@@ -96,12 +117,13 @@ func test_road_grading_moves_only_road_cells() -> void:
 		var bare := natural.with_terrain_grades([Frozen.grade(d.grade)] as Array[TerrainGradePatch])
 		var r := _graded(path)
 		var graded: HeightfieldRegion = r[2]
-		var cells: Rect2i = d.cells
-		for z in range(cells.position.y, cells.end.y + 1):
-			for x in range(cells.position.x, cells.end.x + 1):
-				if d.road_masks.has(Vector2i(x, z)): continue
+		var roads := NativeGrade.road_points(r[0].grade_patch)
+		var points: Rect2i = d.points
+		for z in range(points.position.y, points.end.y + 1):
+			for x in range(points.position.x, points.end.x + 1):
+				if roads.has(Vector2i(x, z)): continue
 				assert_eq(graded.surface_height(x, z), bare.surface_height(x, z),
-					"%s: non-road cell (%d,%d) keeps the town's grade" % [path, x, z])
+					"%s: non-road point (%d,%d) keeps the town's grade" % [path, x, z])
 
 
 const _STYLE := preload("res://scripts/terrain/field/CliffRockStyle.gd")
@@ -201,8 +223,9 @@ func test_sheet_moss_depends_on_steepness_alone() -> void:
 ## the collar's rounded blend put a cell a storey down beside natural ground
 ## (e.g. 4 -> 10 m beside 0 m), and pad support lifted one 8 m beside a 12 m
 ## neighbour. The envelope rounded each into a stray mound. A natural slope
-## between two free cells stays a slope after grading; pad owners, pad
-## support and regraded roads are construction and may keep retaining edges.
+## between two free points stays a slope after grading; pad owners (every
+## corner a pad touches) and regraded road points are construction and may
+## keep retaining edges.
 func test_town_grades_make_no_new_cliffs_between_free_cells() -> void:
 	for path: String in DIVOT_FIXTURES:
 		var r := _graded(path)
@@ -210,17 +233,17 @@ func test_town_grades_make_no_new_cliffs_between_free_cells() -> void:
 		var graded: HeightfieldRegion = r[2]
 		var owners := NativeGrade.construction_cells(r[0].grade_patch, natural)
 		assert_false(owners.is_empty(), "the grade reports its construction cells")
-		var cells: Rect2i = r[0].cells
+		var points: Rect2i = r[0].points
 		var broken := []
-		for z in range(cells.position.y, cells.end.y):
-			for x in range(cells.position.x, cells.end.x):
+		for z in range(points.position.y, points.end.y):
+			for x in range(points.position.x, points.end.x):
 				for d: Vector2i in [Vector2i.RIGHT, Vector2i(0, 1)]:
 					var a := Vector2i(x, z)
 					var b := a + d
 					var grade: TerrainGradePatch = r[0].grade_patch
 					if not (NativeGrade.is_free(grade, owners, a) and NativeGrade.is_free(grade, owners, b)): continue
-					if TerrainSurfaceField.is_cliff_edge(natural, a.x, a.y, d): continue
-					if TerrainSurfaceField.is_cliff_edge(graded, a.x, a.y, d):
+					if TerrainTileField.is_cliff_edge(natural, a, d): continue
+					if TerrainTileField.is_cliff_edge(graded, a, d):
 						broken.append("%s-%s %.0f/%.0f" % [a, b, graded.surface_height(a.x, a.y),
 							graded.surface_height(b.x, b.y)])
 		assert_eq(broken, [], path)
