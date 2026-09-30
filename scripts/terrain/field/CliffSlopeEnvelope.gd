@@ -172,14 +172,17 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  var walls:=_walls(env,g,ground_at,wet_level)
  # Nodes a channel-fitted bank reaches (see CHANNEL_CORE).
  var channel:=PackedByteArray();channel.resize(n)
- var narrow:=_close_walls(g,walls,env.w,env.h,sh.x,foot,channel)
+ # Each rounding also says how far along its walls it reaches (see the
+ # fillet below), blended exactly as the roundings are.
+ var along_narrow:=PackedFloat64Array();along_narrow.resize(n)
+ var along_wide:=PackedFloat64Array();along_wide.resize(n)
+ var along_tight:=PackedFloat64Array();along_tight.resize(n)
+ var along_tight_wide:=PackedFloat64Array();along_tight_wide.resize(n)
+ var narrow:=_close_walls(g,walls,env.w,env.h,sh.x,foot,channel,along_narrow)
  var wide_dilated:=_dilate(g,env.w,env.h,sh.y+foot)
- # The wide rounding also says how far along its walls each face reaches
- # (see the fillet below).
- var along:=PackedFloat64Array();along.resize(n)
- var wide:=_close_walls(g,walls,env.w,env.h,sh.y,foot,channel,along)
- var tight:=_close_walls(g,walls,env.w,env.h,tight_sh,tight_foot,channel)
- var tight_wide:=_close_walls(g,walls,env.w,env.h,6.4,tight_foot,channel)
+ var wide:=_close_walls(g,walls,env.w,env.h,sh.y,foot,channel,along_wide)
+ var tight:=_close_walls(g,walls,env.w,env.h,tight_sh,tight_foot,channel,along_tight)
+ var tight_wide:=_close_walls(g,walls,env.w,env.h,6.4,tight_foot,channel,along_tight_wide)
  # Local relief: highest reach minus lowest reach nearby; continuous even
  # across the terrain's own cliffs, so the blend never opens a step.
  var floor_level:=_erode(g,env.w,env.h,SHOULDER.y+FOOT)
@@ -203,10 +206,12 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  var t:=_ridges(env,narrow,wide,wide_dilated,seed_value)
  mark.call("ridges")
  env.surface.resize(n)
+ var along:=PackedFloat64Array();along.resize(n)
  for idx in n:
   var tall:=smoothstep(RELIEF.x,RELIEF.y,relief[idx])
   var ridge:=lerpf(PLAIN,t[idx],smoothstep(VARIED.x,VARIED.y,drop[idx]))
   env.surface[idx]=lerpf(lerpf(narrow[idx],wide[idx],ridge),lerpf(tight[idx],tight_wide[idx],ridge),tall)
+  along[idx]=lerpf(lerpf(along_narrow[idx],along_wide[idx],ridge),lerpf(along_tight[idx],along_tight_wide[idx],ridge),tall)
  # Fillet the concave creases where wall faces meet (see JUMP).
  # Only where walls are being rounded: the ground's own concave bends
  # (a slope's foot, a valley between two banks) keep their surface. Where a
@@ -396,7 +401,7 @@ static func _walls(env,g:PackedFloat64Array,ground_at:Callable,wet:=PackedFloat6
 ## this is the former stamp.
 ## `along`, when given (sized like g), receives each wall's lift carried
 ## along the wall (dilated by the foot radius in the wall's own direction).
-static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:float,foot:float,channel:=PackedByteArray(),along=null)->PackedFloat64Array:
+static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:float,foot:float,channel:=PackedByteArray(),along:=PackedFloat64Array())->PackedFloat64Array:
  var out:=g.duplicate()
  for axis in 2:
   var crest:PackedFloat64Array=walls[axis][0];var drop:PackedFloat64Array=walls[axis][1]
@@ -446,7 +451,7 @@ static func _close_walls(g:PackedFloat64Array,walls:Array,w:int,h:int,shoulder:f
     q+=toward[idx]
   var closed:=_envelope_axis(spread,w,h,H*H/(2.0*foot),axis==0)
   for idx in out.size():out[idx]=maxf(out[idx],maxf(closed[idx],fitted[idx]) if any_fitted else closed[idx])
-  if along!=null:
+  if not along.is_empty():
    # Walls of axis 0 run along x (rows), of axis 1 along z (columns).
    var lift:=PackedFloat64Array();lift.resize(g.size())
    for idx in g.size():lift[idx]=-maxf(closed[idx]-g[idx],0.0)

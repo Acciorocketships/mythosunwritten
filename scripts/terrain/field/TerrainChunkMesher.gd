@@ -575,6 +575,11 @@ func _mesh_from_arrays(arrays: Array, material: Material) -> ArrayMesh:
 ## the two owners of a slope seam name the same normal; a vertex on a wall
 ## belongs to the lattice point whose pinned surface it lies on.
 const NORMAL_STEP := 0.25
+## The steepest ordinary slope: one storey plus three levels over one tile, at
+## the smootherstep's peak. A half-step steeper than WALL_LIKE times it is no
+## tile's slope but a drop (a wall, or the ramp at a cliff's end).
+const STEEPEST_SLOPE := 1.875 * (TerrainTileField.STOREY + 3.0) / TerrainTileField.SPACING
+const WALL_LIKE := 1.5
 static func field_normals(vertices: PackedVector3Array, region,
 		baked_cache: Dictionary = {}) -> PackedVector3Array:
 	var normals := PackedVector3Array()
@@ -599,11 +604,25 @@ static func _field_slope(region, baked_cache: Dictionary, owner: Vector2i, v: Ve
 	var baked: PackedFloat32Array = baked_cache[owner]
 	var plus := _slope_sample(region, baked_cache, baked, owner, v, axis, 1, spacing)
 	var minus := _slope_sample(region, baked_cache, baked, owner, v, axis, -1, spacing)
+	var centre := TerrainTileField.sample_baked(baked, owner, v.x, v.z, region)
+	# A half-step that drops like a wall while the other half-step is ordinary
+	# ground: the vertex stands on the lip, so its slope is the ground's side.
+	# At a cliff's end the neighbour's surface agrees with the vertex, yet
+	# 0.25 m on stands on the ramp's middle, metres lower: the plateau corner
+	# leaned into the ramp and lit a dark tick at every wall end.
+	var limit := WALL_LIKE * STEEPEST_SLOPE * NORMAL_STEP
+	if not is_nan(plus) and not is_nan(minus):
+		var plus_wall := absf(plus - centre) > limit
+		var minus_wall := absf(centre - minus) > limit
+		if plus_wall != minus_wall:
+			if plus_wall:
+				plus = NAN
+			else:
+				minus = NAN
 	if not is_nan(plus) and not is_nan(minus):
 		return (plus - minus) / (2.0 * NORMAL_STEP)
 	if is_nan(plus) and is_nan(minus):
 		return 0.0
-	var centre := TerrainTileField.sample_baked(baked, owner, v.x, v.z, region)
 	return (plus - centre) / NORMAL_STEP if not is_nan(plus) else (centre - minus) / NORMAL_STEP
 
 

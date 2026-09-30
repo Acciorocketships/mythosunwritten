@@ -51,6 +51,7 @@ const CASES := [
 	{"id": "mixed_e1", "label": "cliff end E1\n(blend inside tile)", "c": Vector2i(21, 26), "az": 20.0, "r": 40.0},
 	{"id": "cliff_saddle", "label": "cliff saddle", "c": Vector2i(27, 19), "az": 135.0, "r": 40.0},
 	{"id": "terrace_hill", "label": "terrace hill", "c": Vector2i(40, 16), "az": 20.0, "r": 75.0},
+	{"id": "cliff_stacked", "label": "stacked cliffs\n(8 m + 8 m, 12 m terrace)", "c": Vector2i(40, 3), "az": 20.0, "r": 38.0},
 ]
 
 var _output := "/tmp/tile_gallery"
@@ -185,6 +186,10 @@ static func _case_height(id: String, dx: int, dz: int) -> float:
 			return 8.0 if box.call(-2, 0, -2, 0) or box.call(1, 3, 1, 3) else 0.0
 		"cliff_3storey":
 			return 12.0 if box.call(-1, 1, -2, 1) else 0.0
+		"cliff_stacked":
+			# Two 8 m walls, one behind the other, with one 12 m terrace row between.
+			if box.call(-3, 3, -3, -1): return 16.0
+			return 8.0 if box.call(-3, 3, -3, 0) else 0.0
 		"mixed_e1", "mixed_e2":
 			# An 8 m plateau: its west side walls straight down to 0 (cliff); its
 			# east side steps 8 -> 4 -> 0 over a one-storey ring (slopes). The

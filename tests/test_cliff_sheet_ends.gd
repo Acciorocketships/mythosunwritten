@@ -128,3 +128,45 @@ func test_e1_rounding_shrinks_toward_the_end_without_a_blob() -> void:
 			if rise > worst.rise:
 				worst = {"rise": rise, "at": a}
 	assert_lt(worst.rise, 0.05, "the rounding grows %.2f m toward the end at %s" % [worst.rise, worst.at])
+
+## Points z <= 0 at storey 5; for "stacked" z <= -1 at storey 7 (a 12 m
+## terrace behind the lower wall); z >= 1 at storey 3.
+static func _straight(stacked: bool) -> HeightfieldRegion:
+	var storeys: Dictionary = {}
+	var levels: Dictionary = {}
+	for z in range(-24, 41):
+		for x in range(-24, 41):
+			storeys[Vector2i(x, z)] = (7 if stacked and z <= -1 else 5) if z <= 0 else 3
+			levels[Vector2i(x, z)] = 0
+	return HeightfieldRegion.new(storeys, levels)
+
+func test_walls_without_an_end_keep_their_rounding() -> void:
+	# Review of the cliff-end fillet: carried along a wall, the fillet's reach
+	# must follow the rounding the surface actually has (narrow valleys, wide
+	# ridges), or it opened at feet and terraces the rounding never raised.
+	# Frozen from the envelope before the cliff-end change: a straight wall and
+	# a stacked terrace have no end, so their rounding is unchanged.
+	var frozen := {false: [16811.506183, 104621.807001], true: [35260.266472, 220539.313697]}
+	for stacked: bool in [false, true]:
+		var env = _envelope(_straight(stacked))
+		var total := 0.0
+		var squares := 0.0
+		for zi in range(-32, 80):
+			for xi in range(-60, 100):
+				var lift := _lift(env, Vector2(xi * H, zi * H))
+				total += lift
+				squares += lift * lift
+		assert_almost_eq(total, float(frozen[stacked][0]), 0.01, "stacked=%s: summed rounding" % stacked)
+		assert_almost_eq(squares, float(frozen[stacked][1]), 0.01, "stacked=%s: summed squared rounding" % stacked)
+
+func test_wall_end_lip_is_lit_level() -> void:
+	# The sliver at every E2 wall end: the plateau vertex on the wall's last
+	# corner (6, 20, 6) took its +x gradient sample on the neighbour's
+	# surface, which agrees with it at the vertex but 0.25 m on stands on the
+	# ramp's middle, 3 m lower: its normal leaned 10 degrees into the ramp.
+	TerrainTileField.cliff_end = TerrainTileField.CliffEnd.E2
+	var region := _ending_cliff()
+	var vertices := PackedVector3Array([Vector3(6.0, 20.0, 6.0), Vector3(4.0, 20.0, 6.0), Vector3(6.0, 20.0, 4.0)])
+	var normals := TerrainChunkMesher.field_normals(vertices, region, {})
+	for i in vertices.size():
+		assert_gt(normals[i].y, 0.999, "the plateau at %s is lit level (normal %s)" % [vertices[i], normals[i]])
