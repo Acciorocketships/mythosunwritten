@@ -1,541 +1,93 @@
 extends RefCounted
-## External closed rock formations on canonical native cliff faces. Baked
-## resources are prepared on the main thread; workers consume detached arrays.
+## Cliff dressing of one chunk: the whole-wall slope solid over every cliff
+## (CliffSlopeField.solid, its render arrays and collision), the Meadow rock
+## clusters at the cliff foot lines with their ground skirts, grass supports
+## on the gentle slope, and the ground the slope and its rocks reserve against
+## ambient dressing. The foot lines are the terrain's own walls
+## (TerrainTileField.wall_segments); a chunk owns the walls, slope and rocks of
+## its lattice points' dual cells. Baked resources are prepared on the main
+## thread; workers consume detached arrays.
 const CRAGS=preload("res://scripts/terrain/field/CliffRockCrags.gd")
-const INNER_CONNECTIONS=preload("res://scripts/terrain/field/CliffInnerConnections.gd")
-const CORNERS=preload("res://scripts/terrain/field/CliffCornerCrags.gd")
-const RELIEF=preload("res://scripts/terrain/field/CliffRockRelief.gd")
-const PANELS=preload("res://scripts/terrain/field/CliffSiding.gd")
-const STYLE=preload("res://scripts/terrain/field/CliffRockStyle.gd")
-const KIT=preload("res://scripts/terrain/field/CliffKitDressing.gd")
 const SLOPE_ROCKS=preload("res://scripts/terrain/field/CliffSlopeRocks.gd")
 const SLOPE_FIELD=preload("res://scripts/terrain/field/CliffSlopeField.gd")
-const PLANTS:=[&"quaternius.cliff.fern", &"native.cliff.groundplant_1", &"native.cliff.groundplant_3"]
-const FORMS:=[0,1,2,3,4,5]
-static var _definitions:Dictionary={}
-static var _visuals:Dictionary={}
-static var _wall_crags:Array[Dictionary]=[]
+const POINTS_PER_CHUNK:=16
+## Foot lines are gathered this far around the owned rectangle: a rock cluster
+## or the slope it shapes can reach into the chunk from a wall beyond it.
+const WALL_HALO:=24.0
 
 static func prepare()->void:
- CRAGS.prepare();CORNERS.prepare();KIT.prepare()
- if not _definitions.is_empty():return
- assert(OS.get_thread_caller_id()==OS.get_main_thread_id())
- var catalog:=EnvironmentCatalog.load_default();var cache:=EnvironmentRenderCache.new(catalog)
- var ids:Array[StringName]=[]
- ids.assign(PLANTS)
- for form:int in FORMS:ids.append(StringName("cliff.outcrop.%d"%form))
- assert(cache.prepare(ids))
- var wall:=cache.visual(&"kaykit.cliff.wall")
- var native_wall:=PackedVector3Array()
- for piece:EnvironmentVisualPiece in wall.pieces:
-  for point:Vector3 in piece.mesh.get_faces():native_wall.append(piece.local_transform*point)
- _wall_crags=RELIEF.crags(native_wall)
- for id:StringName in ids:
-  var visual:=cache.visual(id);var faces:=PackedVector3Array();var green:=PackedVector3Array()
-  for piece:EnvironmentVisualPiece in visual.pieces:
-   var source:=piece.mesh.get_faces()
-   for p:Vector3 in source:faces.append(piece.local_transform*p)
-   for surface in piece.mesh.get_surface_count():
-    var material:Material=piece.material_override if piece.material_override!=null else piece.mesh.surface_get_material(surface)
-    if not material is StandardMaterial3D:continue
-    var color:Color=material.albedo_color
-    if color.g<=color.r*1.15:continue
-    var part:=ArrayMesh.new();part.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,piece.mesh.surface_get_arrays(surface))
-    for p:Vector3 in part.get_faces():green.append(piece.local_transform*p)
-  var feet:Dictionary={}
-  for p:Vector3 in faces:feet[Vector3(p.x,0,p.z).snapped(Vector3.ONE*.00001)]=true
-  _definitions[id]={"feet":feet.keys(),"bounds":catalog.descriptor(id).measured_aabb,"faces":faces,"green":green}
-  if id not in PLANTS:
-   visual=visual.duplicate(true)
-   for piece:EnvironmentVisualPiece in visual.pieces:
-    piece.mesh=piece.mesh.duplicate()
-    for surface in piece.mesh.get_surface_count():
-     var material:=piece.mesh.surface_get_material(surface) as StandardMaterial3D
-     if material!=null and material.albedo_color.g>material.albedo_color.r*1.15:
-      var arrays:=piece.mesh.surface_get_arrays(surface)
-      var uv:=PackedVector2Array();uv.resize((arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size());uv.fill(CliffDressing.ground_uv())
-      arrays[Mesh.ARRAY_TEX_UV]=uv
-      var rebuilt:=ArrayMesh.new()
-      for section in piece.mesh.get_surface_count():
-       rebuilt.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays if section==surface else piece.mesh.surface_get_arrays(section))
-       rebuilt.surface_set_material(section,CliffDressing.shared_material() if section==surface else piece.mesh.surface_get_material(section))
-      piece.mesh=rebuilt
-     elif material!=null:
-      var stone:=ShaderMaterial.new();stone.shader=load("res://terrain/materials/field_rock.gdshader")
-      stone.set_shader_parameter("use_texture",false)
-      stone.set_shader_parameter("instance_variation",false)
-      piece.mesh.surface_set_material(surface,stone)
-  else:
-   visual=visual.duplicate(true)
-   for piece:EnvironmentVisualPiece in visual.pieces:
-    # The native fern carries a grayscale vertex channel that its original
-    # material ignores. Clear that unused channel before COLOR carries the
-    # biome instance tint; otherwise the leaves become nearly black.
-    var native_mesh:=piece.mesh
-    piece.mesh=ArrayMesh.new()
-    for section in native_mesh.get_surface_count():
-     var arrays:=native_mesh.surface_get_arrays(section)
-     arrays[Mesh.ARRAY_COLOR]=null
-     piece.mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
-     piece.mesh.surface_set_material(section,native_mesh.surface_get_material(section))
-    for section in piece.mesh.get_surface_count():
-     var source:=piece.mesh.surface_get_material(section) as StandardMaterial3D
-     if source==null:continue
-     var leaves:=ShaderMaterial.new();leaves.shader=load("res://terrain/materials/cliff_vine.gdshader")
-     leaves.set_shader_parameter("albedo_texture",source.albedo_texture)
-     leaves.set_shader_parameter("base_color",source.albedo_color)
-     leaves.set_shader_parameter("grass_palette",CliffDressing.ground_texture())
-     leaves.set_shader_parameter("grass_uv",CliffDressing.ground_uv())
-     piece.mesh.surface_set_material(section,leaves)
-  _visuals[id]=visual
+ SLOPE_ROCKS.prepare()
 
-static func compute(region:HeightfieldRegion,lo_x:int,lo_z:int,cells:int,seed_value:int,
+## The world rectangle of the dual cells of a chunk's lattice points
+## (16 k .. 16 k + 15): the half-open ownership of its walls, slope and rocks.
+static func owned_rect(chunk:Vector2i)->Rect2:
+ var s:=TerrainTileField.SPACING
+ return Rect2(Vector2(chunk*POINTS_PER_CHUNK)*s-Vector2.ONE*s*.5,Vector2.ONE*POINTS_PER_CHUNK*s)
+
+static func compute(region:HeightfieldRegion,chunk:Vector2i,seed_value:int,
   features:FeatureContext=null,water:WaterFieldContext=null)->Dictionary:
- var cliffs:=CliffDressing.compute(region,lo_x-1,lo_z-1,cells+2)
- # Inner-corner terraces add native wall rows that this pipeline dresses.
- var terraces:Array[Dictionary]=[]
- # The inner-corner platforms were built for the rock dressing; the whole-wall
- # sheet buries them to a line, so the sheet style leaves them out for now.
- if STYLE.terraces and not STYLE.sheet_only:terraces=KIT.terraces(cliffs,region,seed_value,features,water)
- for terrace:Dictionary in terraces:
-  cliffs.wall.append_array(terrace.rows.wall);cliffs.outer_wall.append_array(terrace.rows.outer_wall)
- # Halo geometry is also a conservative plant/grass reservation. Water
- # admission applies only after ownership, inside the prepared query margin.
- var neighbors:=formations(cliffs.wall,seed_value,region,features,water)
- neighbors.append_array(CORNERS.formations(cliffs.outer_wall,seed_value,region,features,false,water))
- neighbors.append_array(CORNERS.formations(cliffs.inner_wall,seed_value,region,features,true,water))
- # Join the canonical dry geometry before publication. Hydraulic admission
- # belongs to each complete owned solid below; checking both halo parents
- # here can escape the prepared water domain and make joins query-dependent.
- INNER_CONNECTIONS.apply(neighbors,region,features)
- # One shared mossy slope over every formation, halo included, before any
- # collision, reservation or planting reads their faces.
- var slope:SLOPE_FIELD=null
- if STYLE.slopes and STYLE.subtle:
-  slope=SLOPE_FIELD.new(neighbors,seed_value,region,Rect2(Vector2(lo_x,lo_z)*24.0-Vector2(12,12),Vector2.ONE*cells*24.0),features,water)
-  # Under `sheet` the formations are discarded below, so reshaping them
-  # around the slope would be wasted work.
-  if not STYLE.sheet_only:
-   for p:Dictionary in neighbors:
-    if p.get("native_crag",false):slope.apply(p)
- var placements:Array[Dictionary]=[]
- for p:Dictionary in neighbors:
-  var owner:=Vector2i(floori((p.anchor.x+12)/24),floori((p.anchor.z+12)/24))
-  if owner.x>=lo_x and owner.x<lo_x+cells and owner.y>=lo_z and owner.y<lo_z+cells:
-   if not _wet_formation(p,water):placements.append(p)
- # Under `sheet` the slope replaces the crag formations outright; they only
- # located the foot lines. The slope sheets this chunk owns render and
- # collide like formations.
- if STYLE.sheet_only:placements.clear()
- if slope!=null:
-  var owned_rect:=Rect2(Vector2(lo_x,lo_z)*24.0-Vector2(12,12),Vector2.ONE*cells*24.0)
-  var sheets:Array[Dictionary]=slope.solid(owned_rect) if STYLE.sheet_only else slope.sheets(owned_rect)
-  # Basal rocks stand in the ground, which swells to meet them: the skirt
-  # over the sheet joins the sheet's own mesh.
-  if STYLE.sheet_only and not sheets.is_empty():slope.add_skirts(sheets[0],owned_rect)
-  placements.append_array(sheets)
- var collision:=PackedVector3Array();var reservations:Array[Rect2]=[]
+ var owned:=owned_rect(chunk)
+ var walls:=TerrainTileField.wall_segments(region,owned.grow(WALL_HALO))
+ var slope:=SLOPE_FIELD.new(walls,seed_value,region,owned,features,water)
+ var placements:Array[Dictionary]=slope.solid(owned)
+ # Basal rocks stand in the ground, which swells to meet them: the skirt over
+ # the sheet joins the sheet's own mesh.
+ if not placements.is_empty():slope.add_skirts(placements[0],owned)
+ var collision:=PackedVector3Array()
  for p:Dictionary in placements:
-  for vertex:Vector3 in _faces(p):collision.append(p.transform*vertex)
-  if p.get("native_crag",false):p["render_arrays"]=CRAGS.mesh_arrays(p,region,seed_value)
- for p:Dictionary in neighbors:reservations.append(_footprint(p.bounds))
- if STYLE.sheet_only and slope!=null:
-  # Cover every ambient rock base in the chunk core, which is offset half a
-  # cell from this owned rectangle.
-  reservations.append_array(slope.reservations(Rect2(Vector2(lo_x,lo_z)*24.0-Vector2(12,12),Vector2.ONE*cells*24.0).grow(16.0)))
+  for vertex:Vector3 in p.faces:collision.append(p.transform*vertex)
+  p["render_arrays"]=CRAGS.mesh_arrays(p,region,seed_value)
+ # Ambient rock and plant bases under the slope would be buried with their
+ # tips poking through it; the chunk core is offset half a point from the
+ # owned rectangle, so the reservation reaches past it.
+ var reservations:Array[Rect2]=slope.reservations(owned.grow(16.0))
+ # Every wall's own foot: the crest band and the first metres in front of it.
+ for wall:Dictionary in walls:
+  var a:Vector2=wall.a;var b:Vector2=wall.b;var n:Vector2=wall.normal
+  reservations.append(Rect2(a-n*RESERVE_BACK,Vector2.ZERO).expand(b-n*RESERVE_BACK).expand(a+n*RESERVE_OUT).expand(b+n*RESERVE_OUT))
  # Ambient rocks never land on a slope rock (owner, September 27: stacked).
- if slope!=null:
-  for rock:Dictionary in slope.rock_list:
-   var r:=SLOPE_FIELD._base_radius(rock)
-   reservations.append(Rect2(SLOPE_FIELD._base_centre(rock)-Vector2.ONE*r,Vector2.ONE*2.0*r))
- var terrace_pieces:Dictionary={}
- for terrace:Dictionary in terraces:
-  reservations.append(KIT.footprint(terrace))
-  var owner:Vector2i=terrace.owner
-  if owner.x<lo_x or owner.x>=lo_x+cells or owner.y<lo_z or owner.y>=lo_z+cells:continue
-  collision.append_array(KIT.collision(terrace))
-  var owned:=KIT.pieces(terrace)
-  for name:String in owned:
-   if not terrace_pieces.has(name):terrace_pieces[name]=[]
-   terrace_pieces[name].append_array(owned[name])
- # The whole-wall sheet has no crevices yet, and the native wall plants sit
- # behind it; the sheet style plants nothing for now.
- var foliage:Array[Dictionary]=[]
- if not STYLE.sheet_only:foliage=plants(placements,region,seed_value,features,water,neighbors)
- for wall:Transform3D in [] if STYLE.sheet_only else cliffs.wall:
-  var owner:=Vector2i(floori((wall.origin.x+12)/24),floori((wall.origin.z+12)/24))
-  if owner.x<lo_x or owner.x>=lo_x+cells or owner.y<lo_z or owner.y>=lo_z+cells:continue
-  if Helper.position_hash01(wall.origin,seed_value+9401)>.24:continue
-  var anchors:Array[Dictionary]=[]
-  for crag:Dictionary in _wall_crags:
-   if crag.point.y<.3 or crag.point.y>3.7:continue
-   anchors.append({"point":wall*crag.point,"normal":wall.basis*crag.normal,"kind":"wall_crag"})
-  var wall_plants:=_plant_anchors(anchors,"wall/%s"%wall.origin,region,seed_value,features,water,neighbors,1)
-  for plant:Dictionary in wall_plants:plant["anchor"]=wall.origin
-  foliage.append_array(wall_plants)
- var supports:Array[Dictionary]=[]
- var grass_core:=Rect2(Vector2(lo_x,lo_z)*24.0,Vector2.ONE*cells*24.0)
- for rock:Dictionary in neighbors:
-  if not _footprint(rock.bounds).intersects(grass_core):continue
-  if _wet_formation(rock,water):continue
-  supports.append_array(ledge_grass_supports(rock,neighbors))
+ for rock:Dictionary in slope.rock_list:
+  var r:=SLOPE_FIELD._base_radius(rock)
+  reservations.append(Rect2(SLOPE_FIELD._base_centre(rock)-Vector2.ONE*r,Vector2.ONE*2.0*r))
  # The whole-wall slope grows the lawn's grass on its gentle ground.
- if STYLE.sheet_only and slope!=null:supports.append(slope.grass_support(grass_core.grow(12.0)))
- placements.append_array(foliage)
+ var grass_core:=Rect2(Vector2(chunk)*TerrainChunkMesher.CHUNK_WORLD,Vector2.ONE*TerrainChunkMesher.CHUNK_WORLD)
+ var supports:Array[Dictionary]=[slope.grass_support(grass_core.grow(12.0))]
  var slope_rocks:Dictionary={}
- if slope!=null:
-  var owned:=Rect2(Vector2(lo_x,lo_z)*24.0-Vector2(12,12),Vector2.ONE*cells*24.0)
-  var skirted:=slope.skirts()
-  for rock:Dictionary in slope.rocks(owned):
-   if not slope_rocks.has(rock.piece):slope_rocks[rock.piece]=[]
-   # A skirted rock grows the ground's colour up from its mound, not from the
-   # buried ground under it.
-   var entry:=rock
-   if skirted.has(rock):
-    entry=rock.duplicate();entry.point=Vector3(rock.point.x,float(skirted[rock].top),rock.point.z)
-   slope_rocks[rock.piece].append(entry)
-  # Every rock skirt reaching this chunk lends grass support; its owner
-  # renders it (the sheet and terrain parts).
-  for rock:Dictionary in skirted:
-   if grass_core.grow(RockSkirt.WIDTH_MAX+8.0).has_point(SLOPE_FIELD._base_centre(rock)):
-    supports.append(skirted[rock].grass_support)
- var result:={"placements":placements,"collision_faces":collision,"ground_reservations":reservations,"grass_supports":supports,"terraces":terrace_pieces,"slope_rocks":slope_rocks,
-  "rock_skirts":slope.skirt_terrain(Rect2(Vector2(lo_x,lo_z)*24.0-Vector2(12,12),Vector2.ONE*cells*24.0)) if slope!=null else []}
- # The native wall and lip pieces the whole-wall slope covers are hidden
- # (they poked through it); the mesher reads the slope surface for that.
- if STYLE.sheet_only and slope!=null:result["sheet_cover"]=slope.envelope()
- return result
+ var skirted:=slope.skirts()
+ for rock:Dictionary in slope.rocks(owned):
+  if not slope_rocks.has(rock.piece):slope_rocks[rock.piece]=[]
+  # A skirted rock grows the ground's colour up from its mound, not from the
+  # buried ground under it.
+  var entry:=rock
+  if skirted.has(rock):
+   entry=rock.duplicate();entry.point=Vector3(rock.point.x,float(skirted[rock].top),rock.point.z)
+  slope_rocks[rock.piece].append(entry)
+ # Every rock skirt reaching this chunk lends grass support; its owner
+ # renders it (the sheet and terrain parts).
+ for rock:Dictionary in skirted:
+  if grass_core.grow(RockSkirt.WIDTH_MAX+8.0).has_point(SLOPE_FIELD._base_centre(rock)):
+   supports.append(skirted[rock].grass_support)
+ return {"placements":placements,"collision_faces":collision,"ground_reservations":reservations,
+  "grass_supports":supports,"slope_rocks":slope_rocks,"rock_skirts":slope.skirt_terrain(owned),
+  # The mesher withdraws the rock skirt faces this slope buries.
+  "sheet_cover":slope.envelope()}
 
-static func ledge_grass_supports(rock:Dictionary,neighbors:Array)->Array[Dictionary]:
- # Each actual turf elevation owns its native triangles. A horizontal section
- # of higher stone excludes buried roots and keeps complete patches off risers.
- if rock.has("faces"):return RELIEF.grass_supports(rock,neighbors)
- var green:PackedVector3Array=_green(rock)
- var levels:Dictionary={}
- for i in range(0,green.size(),3):
-  if maxf(green[i].y,maxf(green[i+1].y,green[i+2].y))-minf(green[i].y,minf(green[i+1].y,green[i+2].y))>.0001:continue
-  levels[snappedf(green[i].y,.0001)]=true
- var result:Array[Dictionary]=[]
- for level:float in levels:
-  var placement:Dictionary=rock.duplicate()
-  placement.top=(rock.transform*Vector3(0,level,0)).y
-  var support:=GrassSupportSurfaces.from_native(placement,green)
-  if support.triangles.is_empty():continue
-  support["foliage_managed"]=true # The outcrop plant pass owns these ledges.
-  support["polygon_obstacles"]=[]
-  for other:Dictionary in neighbors:
-   if not (other.bounds as AABB).intersects(rock.bounds):continue
-   var section:=_horizontal_section(other,placement.top+.08)
-   if section.size()>=3:support.polygon_obstacles.append(section)
-  result.append(support)
- return result
+## A wall's reservation reaches this far out in front of its line and this far
+## back over its crest.
+const RESERVE_OUT:=4.0
+const RESERVE_BACK:=.3
 
-static func _horizontal_section(rock:Dictionary,height:float)->PackedVector2Array:
- var bounds:AABB=rock.bounds
- if height<=bounds.position.y or height>=bounds.end.y:return PackedVector2Array()
- var intersections:=PackedVector2Array()
- var faces:PackedVector3Array=_faces(rock)
- for i in range(0,faces.size(),3):
-  for edge in 3:
-   var a:Vector3=rock.transform*faces[i+edge]
-   var b:Vector3=rock.transform*faces[i+(edge+1)%3]
-   if (a.y<height)==(b.y<height) or absf(a.y-b.y)<.00001:continue
-   var p:=a.lerp(b,(height-a.y)/(b.y-a.y))
-   intersections.append(Vector2(p.x,p.z))
- # Convex containment is deliberately conservative at narrow rock creases;
- # it cannot admit grass inside a concave stone section.
- return Geometry2D.convex_hull(intersections) if intersections.size()>=3 else PackedVector2Array()
-
-static func formations(walls:Array,seed_value:int,region:HeightfieldRegion=null,features:FeatureContext=null,water:WaterFieldContext=null)->Array[Dictionary]:
- assert(not _definitions.is_empty())
- var out:Array[Dictionary]=[]
- var panels:=RELIEF.panels(walls)
- for record:Dictionary in panels:
-  # A narrow panel continuing a collinear wall of another height is dressed
-  # (skipping it left bare strips, September 23); an isolated remnant is not,
-  # or it would grow a freestanding fin.
-  if record.width<6 and not (record.get("left_abut",false) or record.get("right_abut",false)):continue
-  var half:float=record.width*.5
-  var support:=waterline(record.pose,water,[Vector3(-half,0,2),Vector3(0,0,2),Vector3(half,0,2),Vector3(-half,0,4),Vector3(0,0,4),Vector3(half,0,4)])
-  var pose:Transform3D=record.pose;var height:float=record.height;var width:float=record.width
-  # Under subtle, continue into an abutting neighbour at least as tall and
-  # fade across the overlap: the two rocks cross-fade instead of cracking.
-  var extend:=Vector2i(1 if record.get("left_extend",false) else 0,1 if record.get("right_extend",false) else 0) if STYLE.subtle else Vector2i.ZERO
-  if extend!=Vector2i.ZERO:
-   width+=CRAGS.JOINT_OVERLAP*(extend.x+extend.y)
-   pose.origin+=pose.basis.x*CRAGS.JOINT_OVERLAP*.5*(extend.y-extend.x)
-  if is_finite(support):
-   # A bank formation stands on its waterline, not on the channel bed.
-   if height-support<WATERLINE_MIN_HEIGHT:continue
-   pose.origin.y+=support;height-=support
-  # Abut codes: 1 = short joint fade, 2 = fade across the continued overlap.
-  var abut:=Vector2i(2 if extend.x else (1 if record.get("left_abut",false) else 0),2 if extend.y else (1 if record.get("right_abut",false) else 0))
-  for rock:Dictionary in CRAGS.make(pose,width,height,seed_value,null if is_finite(support) else region,record.left_end,record.right_end,[],CRAGS.SUBTLE_FOOT,abut):
-   if is_finite(support):_submerge(rock,support)
-   var footprint:=_footprint(rock.bounds)
-   if region!=null and region.has_grade_effect_in(footprint.grow(.1)):continue
-   if features!=null and features.overlaps_clearance(FeatureGroundShape.axis_rect(footprint),.3,false):
-    # A reservation in front of the wall limits how far its rock may reach;
-    # it does not strip the whole face back to bare native tiles.
-    rock=_fit_reach(rock,features)
-    if rock.is_empty():continue
-   out.append(rock)
- return out
-
-static func _offer(out:Array[Dictionary],form:int,pose:Transform3D,anchor:Vector3,
-  region:HeightfieldRegion,features:FeatureContext)->void:
- var asset:=StringName("cliff.outcrop.%d"%form)
- var local:AABB=_definitions[asset].bounds
- var box:AABB=pose*local
- if region!=null:
-  # Extend each entire solid to its real exposed foot. Upper face bands may
-  # never turn into hanging slabs when the visible cliff is taller than 16 m.
-  var floor_y:=box.position.y
-  for vertex:Vector3 in _definitions[asset].feet:
-   var point:=pose*vertex
-   floor_y=minf(floor_y,TerrainSurfaceField.surface_y(region,point.x,point.z)-.15)
-  if floor_y<box.position.y-.01:
-   var top:=box.end.y;var old_height:=box.size.y
-   pose.origin.y-=box.position.y-floor_y
-   pose.basis.y*= (top-floor_y)/old_height
-   box=pose*local
-  if region.has_grade_effect_in(_footprint(box).grow(.1)):return
- if features!=null and features.overlaps_clearance(FeatureGroundShape.axis_rect(_footprint(box)),.3,false):return
- out.append({"id":"rock/%s/%d/%s"%[anchor,form,pose.origin],"asset":asset,"transform":pose,"bounds":box,
-  "kind":"rock","top":box.end.y,"base":box.position.y,"anchor":anchor})
-
-## Depth of a bank formation's foot below the adjoining water surface.
-const WATERLINE_DEPTH:=1.0
-const WATERLINE_MIN_HEIGHT:=3.0
-## Local height at which a formation must stand when water fronts its wall, or
-## -INF on dry ground. Water deeper than the foot becomes the formation's
-## support: rock clothes the visible bank without filling the channel.
-static func waterline(pose:Transform3D,water:WaterFieldContext,samples:Array)->float:
- if water==null or not water.has_sources():return -INF
- var level:=-INF
- for local:Vector3 in samples:
-  var world:=pose*local;var point:=Vector2(world.x,world.z)
-  if not water.covers(point):return -INF
-  var value:=water.level_at(point)
-  if is_finite(value):level=maxf(level,value)
- var support:=level-WATERLINE_DEPTH-pose.origin.y
- return support if support>.3 else -INF
-
-const MIN_RESERVED_REACH:=1.2
-## Compress a straight formation's projection to the clear strip in front of
-## its wall. Returns {} when less than a thin covering skin fits.
-static func _fit_reach(rock:Dictionary,features:FeatureContext)->Dictionary:
- var faces:PackedVector3Array=rock.faces;var reach:=0.0
- for p:Vector3 in faces:reach=maxf(reach,p.z)
- var half:float=float(rock.replay_recipe.width)*.5
- var clear:=func(depth:float)->bool:
-  var box:=AABB(Vector3(-half,0,-1.2),Vector3(half*2,1,depth+1.2))
-  return not features.overlaps_clearance(FeatureGroundShape.axis_rect(_footprint(rock.transform*box)),.3,false)
- if not clear.call(MIN_RESERVED_REACH):return {}
- var low:=MIN_RESERVED_REACH;var high:=reach
- for i in 10:
-  var middle:=(low+high)*.5
-  if clear.call(middle):low=middle
-  else:high=middle
- var scale_z:=low/reach
- var result:=rock.duplicate()
- for key:String in ["faces","green"]:
-  var values:PackedVector3Array=(rock[key] as PackedVector3Array).duplicate()
-  for i in values.size():
-   if values[i].z>0.0:values[i].z*=scale_z
-  result[key]=values
- var box:=AABB(result.faces[0],Vector3.ZERO)
- for p:Vector3 in result.faces:box=box.expand(p)
- result.bounds=rock.transform*box;result.top=result.bounds.end.y;result.base=result.bounds.position.y
- result.replay_recipe=rock.replay_recipe.duplicate();result.replay_recipe["reach_scale"]=scale_z
- return result
-
-static func _submerge(rock:Dictionary,support:float)->void:
- # Turf never grows below the water surface of a bank formation.
- rock.replay_recipe["waterline"]=support
- var green:PackedVector3Array=rock.green;var dry:=PackedVector3Array()
- for i in range(0,green.size(),3):
-  if minf(green[i].y,minf(green[i+1].y,green[i+2].y))>=WATERLINE_DEPTH+.3:dry.append_array(PackedVector3Array([green[i],green[i+1],green[i+2]]))
- rock.green=dry
-
-static func _faces(rock:Dictionary)->PackedVector3Array:
- return rock.faces if rock.has("faces") else _definitions[rock.asset].faces
-
-static func _green(rock:Dictionary)->PackedVector3Array:
- return rock.green if rock.has("green") else _definitions[rock.asset].green
-
-static func _wet_formation(rock:Dictionary,water:WaterFieldContext)->bool:
- # Rock may meet water at a bank, but never fills the channel below its
- # waterline foot. Deeper wet vertices mean the formation stands in water.
- if water==null or not water.has_sources():return false
- var box:AABB=rock.bounds;var pose:Transform3D=rock.transform
- assert(water.coverage().encloses(_footprint(box)),"Owned rock exceeds the prepared water margin")
- var levels:Dictionary={}
- for vertex:Vector3 in _faces(rock):
-  var point:=pose*vertex;var key:=Vector2(point.x,point.z).snapped(Vector2.ONE*.5)
-  if not levels.has(key):levels[key]=water.level_at(key) if water.is_wet(key) else NAN
-  var level:float=levels[key]
-  if is_finite(level) and point.y<level-WATERLINE_DEPTH-.5:return true
- return false
-
-static func _wet_rock(asset:StringName,pose:Transform3D,box:AABB,water:WaterFieldContext)->bool:
- # Rock dressing cannot displace the authoritative water field. Test the
- # complete projected solid, including its interior, before emitting either
- # visual geometry or collision. Dry bank faces and submerged native walls
- # remain; no replacement water plane is invented around a decorative rock.
- if water!=null and water.has_sources():
-  assert(water.coverage().encloses(_footprint(box)),"Owned rock exceeds the prepared water margin")
-  for vertex:Vector3 in _definitions[asset].feet:
-   var point:=pose*vertex
-   if water.is_wet(Vector2(point.x,point.z)):return true
-  var footprint:=_footprint(box)
-  var nx:=maxi(1,ceili(footprint.size.x/1.5));var nz:=maxi(1,ceili(footprint.size.y/1.5))
-  var inverse:=pose.affine_inverse()
-  for z in nz+1:
-   for x in nx+1:
-    var p:Vector2=footprint.position+footprint.size*Vector2(float(x)/nx,float(z)/nz)
-    if not water.is_wet(p):continue
-    var start:Vector3=inverse*Vector3(p.x,box.end.y+1,p.y)
-    var direction:Vector3=inverse.basis*Vector3.DOWN
-    var faces:PackedVector3Array=_definitions[asset].faces
-    for j in range(0,faces.size(),3):
-     if Geometry3D.ray_intersects_triangle(start,direction,faces[j],faces[j+1],faces[j+2])!=null:return true
- return false
-
-static func plants(rocks:Array,region:HeightfieldRegion,seed_value:int,features:FeatureContext=null,
-  water:WaterFieldContext=null,neighbors:Array=[])->Array[Dictionary]:
- var out:Array[Dictionary]=[]
- if neighbors.is_empty():neighbors=rocks
- var owned:Dictionary={}
- for rock:Dictionary in rocks:owned[rock.id]=true
- var proposals:Array[Dictionary]=[]
- # Resolve canopy competition against the same canonical halo on either side
- # of an owner boundary. Water admission follows ownership, so no halo query
- # escapes the caller's prepared hydraulic domain.
- for rock:Dictionary in neighbors:
-  var candidates:Array[Dictionary]=[]
-  for crag:Dictionary in RELIEF.crags(_faces(rock)):
-   candidates.append({"point":rock.transform*crag.point,"normal":(rock.transform.basis.inverse().transposed()*crag.normal).normalized(),"kind":"rock_crag"})
-  var green:=_green(rock)
-  for i in range(0,green.size(),3):
-   var a:Vector3=rock.transform*green[i];var b:Vector3=rock.transform*green[i+1];var c:Vector3=rock.transform*green[i+2]
-   candidates.append({"point":(a+b+c)/3,"normal":(c-a).cross(b-a).normalized(),"kind":"ledge"})
-  proposals.append_array(_plant_anchors(candidates,rock.id,region,seed_value,features,null,neighbors,6))
- for proposal:Dictionary in proposals:
-  if not owned.has(proposal.support_id):continue
-  var rank:=Helper.position_hash01(proposal.support_point,seed_value+9383)
-  var clear:=true
-  for other:Dictionary in proposals:
-   if other.id==proposal.id:continue
-   var other_rank:=Helper.position_hash01(other.support_point,seed_value+9383)
-   if other_rank<rank or (other_rank==rank and String(other.id)<String(proposal.id)):
-    if _canopies_crowd(proposal.bounds,other.bounds):clear=false;break
-  if not clear:continue
-  var point:Vector3=proposal.support_point
-  if water!=null and water.has_sources() and water.is_wet(Vector2(point.x,point.z)) and water.level_at(Vector2(point.x,point.z))>point.y-.3:continue
-  out.append(proposal)
- return out
-
-static func _canopies_crowd(a:AABB,b:AABB)->bool:
- # Permit light leaf interleaving, while keeping the bulk of each native
- # canopy readable. Roots alone cannot measure a rotated fern's spread.
- return a.intersection(b).get_volume()>.15*minf(a.get_volume(),b.get_volume())
-
-static func _plant_anchors(candidates:Array[Dictionary],owner:String,region:HeightfieldRegion,seed_value:int,
- features:FeatureContext,water:WaterFieldContext,neighbors:Array,limit:int)->Array[Dictionary]:
- var out:Array[Dictionary]=[];var anchors:Array[Vector3]=[]
- candidates.sort_custom(func(a:Dictionary,b:Dictionary)->bool:
-  # Crevices receive first choice; random stable order avoids always picking
-  # the first edge of each source mesh or lining plants up across a ledge.
-  if (a.kind=="ledge")!=(b.kind=="ledge"):return a.kind!="ledge"
-  return Helper.position_hash01(a.point,seed_value+9323)<Helper.position_hash01(b.point,seed_value+9323))
- for candidate:Dictionary in candidates:
-  var point:Vector3=candidate.point;var normal:Vector3=candidate.normal
-  if normal.y<-.5:continue
-  var roll:=Helper.position_hash01(point,seed_value+9341)
-  if roll>.42:continue
-  var exposed_probe:Vector3=point if candidate.kind=="ledge" else point+Vector3(normal.x,0,normal.z).normalized()*1.6
-  if region!=null and TerrainSurfaceField.surface_y(region,exposed_probe.x,exposed_probe.z)>point.y-.3:continue
-  if water!=null and water.has_sources() and water.is_wet(Vector2(point.x,point.z)) and water.level_at(Vector2(point.x,point.z))>point.y-.3:continue
-  var clear:=true
-  for prior:Vector3 in anchors:
-   if prior.distance_to(point)<2.0:clear=false;break
-  if not clear:continue
-  if not _exposed_root(point,normal,owner,neighbors):continue
-  var asset:StringName=PLANTS[0] if candidate.kind!="ledge" else PLANTS[1 if roll<.21 else 2]
-  var scale_value:=lerpf(.52,.95,roll/.42) if asset==PLANTS[0] else lerpf(1.1,1.8,roll/.42)
-  var up:Vector3=Vector3.UP.lerp(normal,.55).normalized()
-  var x:=Vector3.RIGHT-up*up.x
-  if x.length_squared()<.01:x=Vector3.FORWARD-up*up.z
-  x=x.normalized()
-  var basis:=Basis(x,up,x.cross(up))*Basis(Vector3.UP,roll*TAU/.42)
-  var local_bounds:AABB=_definitions[asset].bounds
-  var pose:=Transform3D(basis.scaled(Vector3.ONE*scale_value),point-normal*.07-up*local_bounds.position.y*scale_value)
-  var box:AABB=pose*local_bounds
-  if features!=null and features.overlaps_clearance(FeatureGroundShape.axis_rect(_footprint(box)),.3,false):continue
-  anchors.append(point)
-  out.append({"id":owner+"/plant/%s"%point,"asset":asset,"kind":"foliage","attachment":candidate.kind,
-   "support_point":point,"support_normal":normal,"transform":pose,"bounds":box,"support_id":owner})
-  if out.size()>=limit:break
- return out
-
-static func _exposed_root(point:Vector3,normal:Vector3,owner:String,neighbors:Array)->bool:
- # Test immediately outside the root. A long probe can pass through a thin
- # adjoining rock and incorrectly expose a root still buried behind its face.
- for other:Dictionary in neighbors:
-  if other.id==owner or not (other.bounds as AABB).grow(.01).has_point(point):continue
-  if _covered(other,point+normal*.005):return false
- return true
-
-static func _covered(rock:Dictionary,point:Vector3)->bool:
- var local:Vector3=(rock.transform as Transform3D).affine_inverse()*point
- var faces:PackedVector3Array=_faces(rock)
- var intersections:=0
- for i in range(0,faces.size(),3):
-  var hit=Geometry3D.ray_intersects_triangle(local+Vector3.UP*.0001,Vector3.UP,faces[i],faces[i+1],faces[i+2])
-  if hit!=null:intersections+=1
- return intersections%2==1
-
-static func _footprint(box:AABB)->Rect2:
- return Rect2(Vector2(box.position.x,box.position.z),Vector2(box.size.x,box.size.z))
-
-static func build(data:Dictionary,_seed:int)->Node3D:
+static func build(data:Dictionary,seed_value:int)->Node3D:
  assert(OS.get_thread_caller_id()==OS.get_main_thread_id())
  var root:=Node3D.new();root.name="CliffRockFormations"
- var batches:Dictionary={}
  for p:Dictionary in data.get("placements",[]):
-  if p.has("faces"):
-   var mesh:=CRAGS.mesh(p) if p.get("native_crag",false) else RELIEF.mesh(p)
-   var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=mesh;mm.use_colors=true;mm.instance_count=1
-   # Native crags and the slope sheet carry their biome tint per vertex (as
-   # the terrain does); the instance colour multiplies COLOR, so a second
-   # tint from the placement's anchor darkened the whole sheet by a
-   # per-chunk constant (September 27 judging: rocks and slope disagreed).
-   mm.set_instance_transform(0,p.transform);mm.set_instance_color(0,Color.WHITE if p.get("native_crag",false) else BiomeRegistry.ground_tint_at(p.anchor,_seed))
-   var node:=MultiMeshInstance3D.new();node.multimesh=mm;node.set_meta("cliff_asset",p.asset)
-   node.set_meta("relief_green",p.green);node.set_meta("relief_faces",p.faces)
-   if p.has("replay_recipe"):node.set_meta("relief_recipe",p.replay_recipe)
-   node.add_to_group("tactical_solid_earth",true);root.add_child(node)
-   continue
-  if not batches.has(p.asset):batches[p.asset]=[]
-  batches[p.asset].append(p.transform)
- for asset:StringName in batches:
-  for piece:EnvironmentVisualPiece in (_visuals[asset] as EnvironmentVisual).pieces:
-   var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=piece.mesh;mm.use_colors=true;mm.instance_count=batches[asset].size()
-   for i in mm.instance_count:
-    var pose:Transform3D=batches[asset][i]
-    mm.set_instance_transform(i,pose*piece.local_transform)
-    var tint:=BiomeRegistry.ground_tint_at(pose.origin,_seed)
-    mm.set_instance_color(i,tint)
-   var instance:=MultiMeshInstance3D.new();instance.multimesh=mm;instance.material_override=piece.material_override
-   instance.set_meta("cliff_asset",asset)
-   if asset in PLANTS:instance.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-   else:instance.add_to_group("tactical_solid_earth",true)
-   root.add_child(instance)
- if not (data.get("terraces",{}) as Dictionary).is_empty():root.add_child(KIT.build(data.terraces,_seed))
- if not (data.get("slope_rocks",{}) as Dictionary).is_empty():root.add_child(SLOPE_ROCKS.build(data.slope_rocks,_seed))
+  var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=CRAGS.mesh(p);mm.use_colors=true;mm.instance_count=1
+  # The slope sheet carries its biome tint per vertex (as the terrain does);
+  # the instance colour multiplies COLOR, so it stays white.
+  mm.set_instance_transform(0,p.transform);mm.set_instance_color(0,Color.WHITE)
+  var node:=MultiMeshInstance3D.new();node.multimesh=mm;node.set_meta("cliff_asset",p.asset)
+  node.add_to_group("tactical_solid_earth",true);root.add_child(node)
+ if not (data.get("slope_rocks",{}) as Dictionary).is_empty():root.add_child(SLOPE_ROCKS.build(data.slope_rocks,seed_value))
  # Terrain-covering parts of the basal rocks' ground skirts.
  RockSkirt.commit(root,data.get("rock_skirts",[]))
  return root
-
-

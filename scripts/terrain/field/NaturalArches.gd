@@ -1,13 +1,17 @@
 extends RefCounted
 
-## A 96 m source parcel owns a complete cardinal or diagonal rock arch.
-## Its minimum 27 m inset exceeds ordinary dressing's 26 m query margin, so no
-## neighboring chunk can lose a reservation when this owner is projected.
-const SPACING_CELLS := 4
+## A 96 m source parcel owns a complete cardinal or diagonal rock arch. Its
+## centre is the lattice point 8 i + 4 (world 96 i + 48), its abutments the
+## points two steps (24 m) away along the arch's axis. The minimum 27 m inset
+## exceeds ordinary dressing's 26 m query margin, so no neighboring chunk can
+## lose a reservation when this owner is projected.
+const SPACING_POINTS := 8
+const ABUTMENT_STEPS := 2
 const HALF_SPAN := 18.0
 const HALF_WIDTH := 3.5
 
-static func compute(region: HeightfieldRegion, lo_x: int, lo_z: int, cells: int,
+## Arches owned by the lattice points [lo_x, lo_x + points) x [lo_z, lo_z + points).
+static func compute(region: HeightfieldRegion, lo_x: int, lo_z: int, points: int,
 		seed_value: int, features: FeatureContext, stone_uv: Vector2) -> Dictionary:
 	var placements: Array[Dictionary] = []
 	var clearance: Array[FeatureGroundShape] = []
@@ -15,9 +19,9 @@ static func compute(region: HeightfieldRegion, lo_x: int, lo_z: int, cells: int,
 	var normals := PackedVector3Array()
 	var uvs := PackedVector2Array()
 	var colors := PackedColorArray()
-	for z in range(lo_z,lo_z+cells):
-		for x in range(lo_x,lo_x+cells):
-			if posmod(x,SPACING_CELLS)!=2 or posmod(z,SPACING_CELLS)!=2: continue
+	for z in range(lo_z,lo_z+points):
+		for x in range(lo_x,lo_x+points):
+			if posmod(x,SPACING_POINTS)!=SPACING_POINTS/2 or posmod(z,SPACING_POINTS)!=SPACING_POINTS/2: continue
 			for axis: Vector2i in [Vector2i.RIGHT,Vector2i.DOWN,Vector2i(1,1),Vector2i(1,-1)]:
 				var record := _site(region,Vector2i(x,z),axis,features)
 				if record.is_empty(): continue
@@ -34,17 +38,26 @@ static func compute(region: HeightfieldRegion, lo_x: int, lo_z: int, cells: int,
 		arrays[Mesh.ARRAY_COLOR] = colors
 	return {"placements":placements,"clearance":clearance,"arrays":arrays,"collision_faces":vertices}
 
+## A lattice point whose whole dual cell is flat at its own height (a cliff
+## top stays flat right up to its walls).
+static func _flat_point(region: HeightfieldRegion, p: Vector2i) -> bool:
+	var s := TerrainTileField.SPACING
+	var bounds := TerrainTileField.height_bounds_on_side(region,
+		Rect2(Vector2(p) * s - Vector2.ONE * s * 0.5, Vector2.ONE * s), p)
+	var h := region.surface_height(p.x, p.y)
+	return is_equal_approx(bounds.x, h) and is_equal_approx(bounds.y, h)
+
 static func _site(region: HeightfieldRegion, cell: Vector2i, axis: Vector2i,
 		features: FeatureContext) -> Dictionary:
-	var a := cell-axis
-	var b := cell+axis
-	if not TerrainSurfaceField.is_flat_cell(region,a.x,a.y) or not TerrainSurfaceField.is_flat_cell(region,b.x,b.y): return {}
+	var a := cell-axis*ABUTMENT_STEPS
+	var b := cell+axis*ABUTMENT_STEPS
+	if not _flat_point(region,a) or not _flat_point(region,b): return {}
 	var low := region.surface_height(cell.x,cell.y)
 	var top_a := region.surface_height(a.x,a.y)
 	var top_b := region.surface_height(b.x,b.y)
 	var top := minf(top_a,top_b)
 	if absf(top_a-top_b)>4.0 or top-low<8.0 or top-low>24.0: return {}
-	var center := Vector2(cell)*24
+	var center := Vector2(cell)*TerrainTileField.SPACING
 	var along := Vector2(axis).normalized()
 	var side := Vector2(-along.y,along.x)
 	var half_span := HALF_SPAN if axis.x==0 or axis.y==0 else 26.0
@@ -59,11 +72,12 @@ static func _site(region: HeightfieldRegion, cell: Vector2i, axis: Vector2i,
 		for inset: float in [0,1,2]:
 			for lateral: float in [-HALF_WIDTH*1.05,0,HALF_WIDTH*1.05]:
 				var p := center+along*sign_value*(half_span-inset)+side*lateral
-				if absf(TerrainSurfaceField.surface_y(region,p.x,p.y)-end_height)>.15: return {}
-	for distance: float in [-6,0,6]:
+				if absf(TerrainTileField.surface_y(region,p.x,p.y)-end_height)>.15: return {}
+	# The opening: the centre point's own dual cell (inside its 6 m half).
+	for distance: float in [-5,0,5]:
 		for lateral: float in [-HALF_WIDTH,0,HALF_WIDTH]:
 			var p := center+along*distance+side*lateral
-			if TerrainSurfaceField.surface_y(region,p.x,p.y)>top-6: return {}
+			if TerrainTileField.surface_y(region,p.x,p.y)>top-6: return {}
 	return {"owner":cell,"axis":axis,"center":center,"low":low,"top":top,
 		"top_a":top_a,"top_b":top_b,"half_span":half_span,"footprint":footprint}
 

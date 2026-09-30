@@ -1,50 +1,34 @@
 extends RefCounted
-## Shared mossy slope (owner trial, September 23, third pass). One smooth
-## surface for all formations instead of one fillet per formation: its reach
-## at a height comes from the distance to the nearest cliff foot (wall runs,
-## outer-corner arcs, inner-corner arms). Collinear runs therefore join
-## without a crease, outer corners become cones reaching as far as the walls
-## and inner corners valleys. Every formation's lower vertices are pushed out
-## onto it; crag relief survives only in a band below the slope top.
-## Parameters are world-space functions of the foot position, so neighbouring
-## formations and chunks agree exactly. Worker-pure plain data.
-## `sheet` style (owner, September 24, fourth pass): the sheet IS the wall.
-## No crag dressing; one slope leaves the wall vertically just under the
-## native lip and flattens to the ground. Rock bunches, one rule for every
-## rock, sit on it; the sheet swells in a smooth union to meet each rock.
-const CRAGS=preload("res://scripts/terrain/field/CliffRockCrags.gd")
+## The whole-wall cliff slope (`sheet` style, owner September 24-25): the
+## rounded terrain envelope (CliffSlopeEnvelope) meshed as one solid
+## (`solid`), with Meadow rock clusters along the cliff foot lines. The foot
+## lines are the terrain's own walls: TerrainTileField.wall_segments, the
+## exact dual-cell borders (x or z = 12 i + 6) where two lattice points'
+## surfaces differ, each with its top (high side) and bottom (low side)
+## heights. Parameters are world-space functions of the foot position, so
+## neighbouring chunks agree exactly. Worker-pure plain data.
 const ROCKS=preload("res://scripts/terrain/field/CliffSlopeRocks.gd")
 const ROCK_CAPS=preload("res://scripts/terrain/field/CliffSlopeRockCaps.gd")
 const ROCK_FRONTS=preload("res://scripts/terrain/field/CliffSlopeRockFronts.gd")
 const ENVELOPE=preload("res://scripts/terrain/field/CliffSlopeEnvelope.gd")
-## Where the slope leaves the wall, outward from the native foot line.
-const ANCHOR:=.7
-## Quarter superellipse: vertical at the top, tangent to the ground just below
-## the base (FOOT).
-const POWER:=1.4
-const FOOT:=-.05
-## Smooth-union radius with the rock at the junction; below ROCK_BAND under the
-## top the surface is the slope alone.
-const BLEND:=.9
-const ROCK_BAND:=2.0
-## Free cliff ends taper the slope to nothing over this run.
-const FREE_TAPER:=3.5
-const CELL:=6.0
 const STYLE=preload("res://scripts/terrain/field/CliffRockStyle.gd")
-## Under the `sheet` style the slope tops out this far below the crest, just
-## under the native grass lip.
+const CRAGS=preload("res://scripts/terrain/field/CliffRockCrags.gd")
+## Free cliff ends taper the rock slots' wall height to nothing over this run.
+const FREE_TAPER:=3.5
+## Spatial hash of foot lines and rocks.
+const CELL:=6.0
+## The slope tops out this far below the crest.
 const LIP_GAP:=.3
-## The whole-wall solid tops out this far under the plateau grass.
-const TOP_GAP:=.02
-## The whole-wall sheet leaves the wall further out, over the native lip's
-## rocky teeth, which otherwise hang like icicles above the slope.
-const SHEET_ANCHOR:=1.0
+## A wall segment is split where its top or bottom height changes by more than
+## this along it: every foot-line primitive has one base and one height.
+const WALL_SPLIT:=.25
+## Spacing of the height samples along a wall segment.
+const WALL_SAMPLE:=.5
 
 var _seed:int
 var _region:HeightfieldRegion
 var _primitives:Array[Dictionary]=[]
 var _buckets:Dictionary={}
-var _reach:Dictionary={}
 var rock_list:Array[Dictionary]=[]
 
 ## `focus`: only rocks that can reach this rectangle are placed (a chunk
@@ -52,52 +36,82 @@ var rock_list:Array[Dictionary]=[]
 var _focus:=Rect2(-1e9,-1e9,2e9,2e9)
 var _features:FeatureContext
 var _water:WaterFieldContext
-func _init(formations:Array,seed_value:int,region:HeightfieldRegion=null,focus:=Rect2(-1e9,-1e9,2e9,2e9),
+## `walls`: wall segments as TerrainTileField.wall_segments returns them
+## ({a, b: segment ends, normal: unit direction from the high toward the low
+## side, top / bottom: Vector2 heights at a and b on the high / low side,
+## high / low: the owning lattice points}). Synthetic walls may omit the
+## owners; their heights are then linear between the ends.
+func _init(walls:Array,seed_value:int,region:HeightfieldRegion=null,focus:=Rect2(-1e9,-1e9,2e9,2e9),
   features:FeatureContext=null,water:WaterFieldContext=null)->void:
  _seed=seed_value;_region=region;_focus=focus.grow(16.0);_features=features;_water=water
- for form:Dictionary in formations:
-  var recipe:Dictionary=form.get("replay_recipe",{})
-  var pose:Transform3D=form.transform
-  match recipe.get("kind",""):
-   "wall":
-    var abut:Vector2i=recipe.get("abut",Vector2i.ZERO);var half:float=float(recipe.width)*.5
-    _segment(pose*Vector3(-half,0,0),pose*Vector3(half,0,0),pose.basis.z,pose.origin.y,recipe.height,
-     recipe.left_end and abut.x==0,recipe.right_end and abut.y==0)
-   "corner":
-    _segment(pose*Vector3(-6,0,0),pose*Vector3(-1.5,0,0),pose.basis.z,pose.origin.y,recipe.height)
-    _segment(pose*Vector3(0,0,-6),pose*Vector3(0,0,-1.5),pose.basis.x,pose.origin.y,recipe.height)
-    var c:=pose*Vector3(-1.5,0,-1.5)
-    _add({"arc":true,"c":Vector2(c.x,c.z),"r":1.5,"n1":_flat(pose.basis.z),"n2":_flat(pose.basis.x),
-     "base":pose.origin.y,"height":float(recipe.height)},[Vector2(c.x,c.z)])
-   "inner_corner":
-    _segment(pose.origin,pose*Vector3(6,0,0),pose.basis.z,pose.origin.y,recipe.height)
-    _segment(pose.origin,pose*Vector3(0,0,6),pose.basis.x,pose.origin.y,recipe.height)
+ for wall:Dictionary in walls:_add_wall(wall)
+ _add_outer_corners(walls)
  _find_open_ends()
  _build_groups()
  _find_rocks()
- _diagnose(formations)
 
-## Temporary review aid: `res://.godot/slope_diag` holding "x,z,r" logs the
-## formations and primitives near that point.
-func _diagnose(formations:Array)->void:
- if not FileAccess.file_exists("res://.godot/slope_diag"):return
- var spec:=FileAccess.get_file_as_string("res://.godot/slope_diag").strip_edges().split(",")
- var at:=Vector2(float(spec[0]),float(spec[1]));var r:=float(spec[2])
- for form:Dictionary in formations:
-  var o:Vector3=(form.transform as Transform3D).origin
-  if Vector2(o.x,o.z).distance_to(at)>r:continue
-  print("SLOPE_DIAG form ",form.get("replay_recipe",{}).get("kind","?")," o=",o," z=",(form.transform as Transform3D).basis.z," rec=",form.get("replay_recipe",{}))
- for s:Dictionary in _primitives:
-  var p:Vector2=s.c if s.arc else s.a
-  if p.distance_to(at)>r:continue
-  print("SLOPE_DIAG prim arc=",s.arc," a=",s.get("a",s.get("c"))," len=",s.get("length",0)," n=",s.get("n",s.get("n1"))," base=",s.base," h=",s.height," free=",s.get("free_a"),s.get("free_b"))
+## A straight synthetic wall for tests and studies: the high side is behind
+## `a`-`b` (against `normal`), `top` over ground `bottom`.
+static func straight_wall(a:Vector2,b:Vector2,normal:Vector2,top:float,bottom:=0.0)->Dictionary:
+ return {"a":a,"b":b,"normal":normal.normalized(),"top":Vector2(top,top),"bottom":Vector2(bottom,bottom)}
 
-static func _flat(v:Vector3)->Vector2:return Vector2(v.x,v.z).normalized()
+## Splits a wall segment where its heights change by more than WALL_SPLIT
+## and adds each piece as a foot-line primitive.
+func _add_wall(wall:Dictionary)->void:
+ var a:Vector2=wall.a;var b:Vector2=wall.b
+ var steps:=maxi(1,ceili(a.distance_to(b)/WALL_SAMPLE))
+ var tops:=PackedFloat64Array();var bottoms:=PackedFloat64Array()
+ var sampled:=_region!=null and wall.has("high") and wall.has("low")
+ for k in steps+1:
+  var f:=float(k)/steps
+  if k==0 or k==steps or not sampled:
+   tops.append(lerpf(float(wall.top.x),float(wall.top.y),f))
+   bottoms.append(lerpf(float(wall.bottom.x),float(wall.bottom.y),f))
+  else:
+   var p:=a.lerp(b,f)
+   tops.append(TerrainTileField.surface_y_on_side(_region,p.x,p.y,wall.high))
+   bottoms.append(TerrainTileField.surface_y_on_side(_region,p.x,p.y,wall.low))
+ var start:=0
+ for k in range(1,steps+1):
+  if k<steps and absf(tops[k]-tops[start])<=WALL_SPLIT and absf(bottoms[k]-bottoms[start])<=WALL_SPLIT:continue
+  var top:=0.0;var base:=0.0
+  for j in range(start,k+1):top+=tops[j];base+=bottoms[j]
+  top/=k-start+1;base/=k-start+1
+  if top-base>.05:
+   _segment(a.lerp(b,float(start)/steps),a.lerp(b,float(k)/steps),wall.normal,base,top-base)
+  start=k
 
-## A slope tapers wherever its foot line stops without a continuation: no
-## collinear run, corner arc or crossing foot line at that end. A full-size
-## slope cut there shows as a vertical blade. Formation end flags are not
-## enough: a step to another base or a joined formation leaves them unset.
+## An outer (convex) corner where two walls meet at a shared end with
+## perpendicular normals, each running away from the side the other faces:
+## a zero-radius arc lets the foot line turn the corner (a rock slot there).
+func _add_outer_corners(walls:Array)->void:
+ var ends:Dictionary={}
+ for i in walls.size():
+  for end:int in 2:
+   var p:Vector2=walls[i].a if end==0 else walls[i].b
+   if not ends.has(p):ends[p]=[]
+   ends[p].append([i,end])
+ for c:Vector2 in ends:
+  var list:Array=ends[c]
+  for x in list.size():
+   for y in range(x+1,list.size()):
+    var w1:Dictionary=walls[list[x][0]];var w2:Dictionary=walls[list[y][0]]
+    var n1:Vector2=w1.normal;var n2:Vector2=w2.normal
+    if absf(n1.dot(n2))>.01:continue
+    var o1:Vector2=w1.b if list[x][1]==0 else w1.a
+    var o2:Vector2=w2.b if list[y][1]==0 else w2.a
+    if (o1-c).dot(n2)>=0.0 or (o2-c).dot(n1)>=0.0:continue
+    var top1:float=w1.top.x if list[x][1]==0 else w1.top.y
+    var top2:float=w2.top.x if list[y][1]==0 else w2.top.y
+    var bottom1:float=w1.bottom.x if list[x][1]==0 else w1.bottom.y
+    var bottom2:float=w2.bottom.x if list[y][1]==0 else w2.bottom.y
+    if absf(bottom1-bottom2)>.5:continue
+    var base:=(bottom1+bottom2)*.5;var height:=(top1+top2)*.5-base
+    if height<=.05:continue
+    _add({"arc":true,"c":c,"r":0.0,"n1":n1,"n2":n2,"base":base,"height":height},[c])
+
+## A foot-line run tapers wherever it stops without a continuation: no
+## collinear run, corner arc or crossing foot line at that end.
 func _find_open_ends()->void:
  for s:Dictionary in _primitives:
   if s.arc:continue
@@ -126,16 +140,14 @@ func _continued(s:Dictionary,point:Vector2,end:int)->bool:
   elif along>=-.3 and along<=float(o.length)+.3:return true
  return false
 
-func _segment(a:Vector3,b:Vector3,normal:Vector3,base:float,height:float,free_a:=false,free_b:=false)->void:
- var n:=_flat(normal)
+func _segment(pa:Vector2,pb:Vector2,n:Vector2,base:float,height:float)->void:
+ n=n.normalized()
  # The tangent follows the normal, so collinear runs share one coordinate.
  var t:=Vector2(n.y,-n.x)
- var pa:=Vector2(a.x,a.z);var pb:=Vector2(b.x,b.z)
  if (pb-pa).dot(t)<0.0:
   var swap:=pa;pa=pb;pb=swap
-  var f:=free_a;free_a=free_b;free_b=f
  _add({"arc":false,"a":pa,"t":t,"n":n,"length":(pb-pa).dot(t),"base":base,"height":height,
-  "free_a":free_a,"free_b":free_b},[pa,pb])
+  "free_a":false,"free_b":false},[pa,pb])
 
 func _add(primitive:Dictionary,points:Array)->void:
  _primitives.append(primitive)
@@ -148,377 +160,24 @@ func _add(primitive:Dictionary,points:Array)->void:
    if not _buckets.has(key):_buckets[key]=[]
    _buckets[key].append(_primitives.size()-1)
 
-## Top (slope height above the base) and reach at a foot point. Mini ridges
-## and valleys run along the wall at about a 5 m wavelength.
+## Slope top (height above the base) and reach at a foot point: vertical under
+## the lip, the run growing more slowly than the height so tall walls stay
+## steep; ridges and valleys wander in two warped octaves.
 var _params:Dictionary={}
 func params(foot:Vector2,height:float)->Vector3:
  var key:=[foot.snapped(Vector2.ONE*.125),height]
  if _params.has(key):return _params[key]
  var p:=Vector3(snappedf(foot.x,.125),0,snappedf(foot.y,.125))
- var ripple:=Helper._value_noise01(p,_seed+9121,5.0)*2.0-1.0
  var broad:=Helper._value_noise01(p,_seed+9127,16.0)*2.0-1.0
- var top:=minf(height*.5,3.8*(1.0+.08*broad))*(1.0+.1*ripple)
- var reach:=top*1.8*(1.0+.08*broad)*(1.0+.22*ripple)
- var power:=POWER
- if STYLE.sheet_only:
-  # The whole wall: vertical under the lip, the run growing more slowly than
-  # the height so tall walls stay steep rather than spreading 15 m out.
-  top=height-LIP_GAP
-  # Rolling ridges and valleys: two warped octaves, so they wander rather
-  # than repeat.
-  var warp:=(Helper._value_noise01(p,_seed+9131,23.0)-.5)*12.0
-  var q:=p+Vector3(warp,0,-warp)
-  var ridge:=.6*(Helper._value_noise01(q,_seed+9133,6.5)*2.0-1.0)+.4*(Helper._value_noise01(q,_seed+9137,13.0)*2.0-1.0)
-  # Sharpened so crests and gullies read as ridges, not a gentle wobble.
-  ridge=clampf(signf(ridge)*pow(absf(ridge)*1.6,.7),-1.0,1.0)
-  reach=(.85*top+1.6)*(1.0+.06*broad)*(1.0+.45*ridge)
-  # Crests bulge out full; gullies sag concave. Walking along the slope at
-  # one distance from the wall therefore rises over ridges and dips into
-  # valleys, rather than holding one height.
-  power=lerpf(2.3,1.3,ridge*.5+.5)
- _params[key]=Vector3(clampf(top,0.0,maxf(0.0,height-LIP_GAP)),minf(reach,10.0 if STYLE.sheet_only else 7.0),power)
+ var top:=height-LIP_GAP
+ var warp:=(Helper._value_noise01(p,_seed+9131,23.0)-.5)*12.0
+ var q:=p+Vector3(warp,0,-warp)
+ var ridge:=.6*(Helper._value_noise01(q,_seed+9133,6.5)*2.0-1.0)+.4*(Helper._value_noise01(q,_seed+9137,13.0)*2.0-1.0)
+ # Sharpened so crests and gullies read as ridges, not a gentle wobble.
+ ridge=clampf(signf(ridge)*pow(absf(ridge)*1.6,.7),-1.0,1.0)
+ var reach:=(.85*top+1.6)*(1.0+.06*broad)*(1.0+.45*ridge)
+ _params[key]=Vector3(clampf(top,0.0,maxf(0.0,height-LIP_GAP)),minf(reach,10.0),lerpf(2.3,1.3,ridge*.5+.5))
  return _params[key]
-
-## Outward offset of the slope from its anchor at height y above the base.
-static func offset(y:float,top:float,reach:float,power:=-1.0)->float:
- if y>=top or top<=0.0:return 0.0
- var b:=(y-FOOT)/(top-FOOT)
- if b<=0.0:return reach+(FOOT-y)*.25
- if power<0.0:power=sheet_power()
- return reach*(1.0-pow(1.0-pow(1.0-b,power),1.0/power))
-
-## The whole-wall sheet holds a near-vertical band under the lip before it
-## swings out; the lower-wall slope is a gentler, more even curve.
-## Gentle bumps and divots on the sheet, a subtle echo of the rock
-## dressing: two octaves in a skewed (foot, height) plane, faded out at the
-## ground (keeping the tangent foot) and at the lip.
-func _bump(foot:Vector2,y:float,top:float)->float:
- if not STYLE.sheet_only:return 0.0
- var p:=Vector3(foot.x+y*.53,0,foot.y-y*.41)
- var b:=(Helper._value_noise01(p,_seed+9301,2.4)-.5)*.44+(Helper._value_noise01(p*1.7,_seed+9307,1.1)-.5)*.16
- return b*smoothstep(.2,1.2,y)*smoothstep(top+.1,top-.8,y)
-
-static func anchor()->float:return SHEET_ANCHOR if STYLE.sheet_only else ANCHOR
-
-static func sheet_power()->float:return 1.7 if STYLE.sheet_only else POWER
-
-## Foot candidates of `q` at the same base: distance and direction out from
-## the foot line, the foot point, taper and slope parameters.
-func _candidates(q:Vector2,base:float)->Array[Dictionary]:
- var result:Array[Dictionary]=[]
- var key:=Vector2i(floori(q.x/CELL),floori(q.y/CELL))
- for index:int in _buckets.get(key,[]):
-  var s:Dictionary=_primitives[index]
-  if absf(float(s.base)-base)>.5:continue
-  var d:float;var dir:Vector2;var foot:Vector2;var fade:=1.0
-  if s.arc:
-   var v:Vector2=q-(s.c as Vector2)
-   if v.dot(s.n1)<0.0 or v.dot(s.n2)<0.0 or v.length()<.01:continue
-   dir=v.normalized();d=v.length()-float(s.r);foot=(s.c as Vector2)+dir*float(s.r)
-  else:
-   var along:float=(q-(s.a as Vector2)).dot(s.t)
-   if along<-.05 or along>float(s.length)+.05:continue
-   dir=s.n;d=(q-(s.a as Vector2)).dot(dir);foot=(s.a as Vector2)+(s.t as Vector2)*along
-   if s.free_a:fade*=smoothstep(0.0,FREE_TAPER,along)
-   if s.free_b:fade*=smoothstep(0.0,FREE_TAPER,float(s.length)-along)
-  if d<-.9 or fade<.02:continue
-  var shape:=_shape(foot,dir,s.height,base)
-  result.append({"d":d,"dir":dir,"foot":foot,"fade":fade,"top":shape.x,"reach":shape.y,"base":float(s.base),"arc":s.arc,"c":s.get("c",Vector2.ZERO),"r":float(s.get("r",0.0))})
- return result
-
-func _supported(foot:Vector2,dir:Vector2,base:float,limit:float)->float:
- if _region==null:return INF
- var key:=[foot.snapped(Vector2.ONE*.5),dir.snapped(Vector2.ONE*.05),snappedf(base,.5)]
- if _reach.has(key):return _reach[key]
- var depth:=ANCHOR
- var result:=INF
- while depth<limit:
-  var p:=foot+dir*(depth+.5)
-  if TerrainSurfaceField.surface_y(_region,p.x,p.y)<base-CRAGS.SUPPORT_DROP:result=depth;break
-  depth+=.5
- _reach[key]=result
- return result
-
-## Outward distance of the slope surface for a candidate at height y above
-## its base, including the swell meeting any rock.
-func target(c:Dictionary,y:float)->float:
- # A faded slope sinks just behind the wall face rather than onto it.
- var d:=_with_rocks(c.foot,c.dir,float(c.base),y,anchor()+offset(y,c.top,c.reach))
- return d*float(c.fade)-.3*(1.0-float(c.fade))
-
-## The slope swells to meet each rock: a smooth union with an ellipsoid a
-## little smaller than the rock, so the rock stands just proud of a mound
-## that curves into it instead of breaking the slope.
-const ROCK_BLEND:=.8
-var _rock_cells:Dictionary={}
-func _with_rocks(foot:Vector2,dir:Vector2,base:float,y:float,d:float)->float:
- for rock:Dictionary in _rock_cells.get(Vector2i(floori(foot.x/CELL),floori(foot.y/CELL)),[]):
-  if (rock.n as Vector2).dot(dir)<.7:continue
-  var du:=(foot-(rock.foot as Vector2)).dot(rock.t)/float(rock.ru)
-  # World heights: sheet columns hang to their own ground, so bases differ.
-  var dy:=(base+y-float(rock.base)-float(rock.y))/float(rock.ry)
-  if absf(du)>2.0 or absf(dy)>2.0:continue
-  var q:=1.0-du*du-dy*dy
-  # Signed, so the swell stays continuous across the ellipsoid's rim.
-  var e:=float(rock.cd)+float(rock.ro)*signf(q)*sqrt(absf(q))
-  d=CRAGS._smax(d,e,ROCK_BLEND)
- return d
-
-## The candidate whose slope most encloses the point (a union of slopes).
-## Only feet on the formation's own base count: a storey above or below has
-## its own slope on its own ground.
-func _enclosing(w:Vector3,base:float)->Dictionary:
- var best:Dictionary={};var slack:=-INF
- for c:Dictionary in _candidates(Vector2(w.x,w.z),base):
-  var y:=w.y-float(c.base)
-  if y>float(c.top)+.6:continue
-  var s:=target(c,y)-float(c.d)
-  if s>slack:slack=s;best=c
- return best
-
-## Formations keep their own rock. Below the rock band nothing may stand out
-## of the slope sheet: protruding rock is pulled just inside it, so the sheet
-## alone forms the slope and no formation end can show through it. Turf close
-## to the slope is dropped (a pale tread across the junction reads as a band).
-const INSIDE:=.3
-func apply(form:Dictionary)->void:
- var pose:Transform3D=form.transform;var inverse:=pose.affine_inverse()
- var faces:PackedVector3Array=form.faces
- var moved:Dictionary={};var clear:Dictionary={}
- for i in faces.size():
-  var p:=faces[i]
-  if moved.has(p):faces[i]=moved[p];continue
-  var w:=pose*p
-  var c:=_enclosing(w,pose.origin.y)
-  var result:=p
-  if not c.is_empty():
-   var y:=w.y-float(c.base);var d:float=c.d
-   clear[p]=y-float(c.top)
-   var inside:=target(c,y)-INSIDE
-   var z:=lerpf(d,minf(d,inside),1.0-smoothstep(float(c.top)-ROCK_BAND,float(c.top)-ROCK_BAND+1.0,y))
-   if z<d-.0001:
-    var q:Vector2
-    if c.arc:q=(c.c as Vector2)+(c.dir as Vector2)*(float(c.r)+z)
-    else:q=Vector2(w.x,w.z)+(c.dir as Vector2)*(z-d)
-    result=(inverse*Vector3(q.x,w.y,q.y)).snapped(Vector3.ONE*.0001)
-  moved[p]=result;faces[i]=result
- var kept:=PackedVector3Array()
- for i in range(0,faces.size(),3):
-  if (faces[i+1]-faces[i]).cross(faces[i+2]-faces[i]).length_squared()>1e-12:
-   kept.append_array(PackedVector3Array([faces[i],faces[i+1],faces[i+2]]))
- form.faces=kept
- var green:PackedVector3Array=form.get("green",PackedVector3Array())
- var turf:=PackedVector3Array()
- for i in range(0,green.size(),3):
-  var ok:=true
-  for j in 3:
-   var p:=green[i+j]
-   if moved.get(p,p)!=p or float(clear.get(p,INF))<2.5:ok=false
-  if ok:turf.append_array(PackedVector3Array([green[i],green[i+1],green[i+2]]))
- form.green=turf
- if form.has("native_roots"):
-  var roots:Dictionary=form.native_roots
-  for p:Vector3 in moved:
-   var q:Vector3=moved[p]
-   if q!=p and roots.has(p):roots[q]=[roots[p][0],1.0]
- var bounds:=AABB(kept[0],Vector3.ZERO)
- for p:Vector3 in kept:bounds=bounds.expand(p)
- form.bounds=pose*bounds;form.top=(pose*bounds).end.y;form.base=(pose*bounds).position.y
-
-## The slope itself: one sheet per straight foot line (collinear walls and
-## corner arms merged) and one per outer-corner arc, sampled on world-aligned
-## columns so neighbouring chunks share their edge vertices. Rows follow the
-## quarter superellipse evenly in angle, with a skirt buried below the ground
-## and a lip curling back into the wall above the top, so no sheet edge shows.
-const STEP:=.5
-const ROWS:=18
-func sheets(owned:Rect2)->Array[Dictionary]:
- var result:Array[Dictionary]=[]
- var lines:Dictionary={}
- for s:Dictionary in _primitives:
-  if s.arc:continue
-  var n:Vector2=s.n
-  var key:=[snappedf((s.a as Vector2).dot(n),.5),n.snapped(Vector2.ONE*.01),snappedf(float(s.base),.5)]
-  if not lines.has(key):lines[key]=[]
-  lines[key].append(s)
- for key:Array in lines:
-  var group:Array=lines[key]
-  var first:Dictionary=group[0];var t:Vector2=first.t;var n:Vector2=first.n
-  var offset_line:float=key[0]
-  # Union of the runs along the line, with their exact ends as samples.
-  var intervals:Array=[]
-  for s:Dictionary in group:
-   var u0:float=(s.a as Vector2).dot(t);intervals.append([u0,u0+float(s.length)])
-  intervals.sort_custom(func(a:Array,b:Array)->bool:return a[0]<b[0])
-  var merged:Array=[]
-  for iv:Array in intervals:
-   if merged.is_empty() or float(iv[0])>float(merged[-1][1])+.01:merged.append(iv.duplicate())
-   else:merged[-1][1]=maxf(float(merged[-1][1]),float(iv[1]))
-  for iv:Array in merged:
-   var us:Array[float]=[float(iv[0])]
-   var u:=ceilf(float(iv[0])/STEP+.001)*STEP
-   while u<float(iv[1])-.001:us.append(u);u+=STEP
-   us.append(float(iv[1]))
-   var columns:Array=[];var owners:Array[bool]=[]
-   for value:float in us:
-    var foot:=t*value+n*offset_line
-    columns.append(_column(foot,n,group,value,float(first.base)))
-    owners.append(owned.has_point(foot))
-   result.append_array(_stitch(columns,owners,key))
- for s:Dictionary in _primitives:
-  if not s.arc or not owned.has_point(s.c):continue
-  var columns:Array=[];var owners:Array[bool]=[]
-  for j in 9:
-   var angle:=j/8.0*PI*.5
-   var dir:=((s.n1 as Vector2)*cos(angle)+(s.n2 as Vector2)*sin(angle)).normalized()
-   columns.append(_column((s.c as Vector2)+dir*float(s.r),dir,[s],NAN,float(s.base)))
-   owners.append(true)
-  result.append_array(_stitch(columns,owners,[s.c]))
- return result
-
-## Under the sheet style a column hangs from the lip and runs down to the
-## lowest ground along its run, not to its formation's base: at a stepped
-## corner the upper cone wraps down to the lower ground and meets the tall
-## face's slope instead of standing as a cut edge. Returns [base, shape].
-func _frame(foot:Vector2,dir:Vector2,height:float,base:float)->Array:
- if STYLE.sheet_only:
-  var run:=anchor()+params(foot,height).y
-  var low:=_lowest_line(foot,dir,base,run)
-  if _region!=null:low=minf(low,_lowest(foot,dir,base,run))
-  if low<base-.5:height+=base-low;base=low
- return [base,_shape(foot,dir,height,base)]
-
-func _lowest(foot:Vector2,dir:Vector2,base:float,run:float)->float:
- var key:=[foot.snapped(Vector2.ONE*.5),dir.snapped(Vector2.ONE*.05),snappedf(base,.5),snappedf(run,.5)]
- if _low.has(key):return _low[key]
- var low:=base;var depth:=.5
- while depth<=run:
-  var p:=foot+dir*depth
-  low=minf(low,TerrainSurfaceField.surface_y(_region,p.x,p.y))
-  depth+=.5
- # Only whole storeys count: small dips in the ground are not a step.
- low=base if low>base-1.5 else maxf(low,base-12.0)
- _low[key]=low
- return low
-var _low:Dictionary={}
-
-## The ground steps down exactly at a lower cliff's foot line: a run that
-## crosses one (facing the same way) continues down to that cliff's base.
-func _lowest_line(foot:Vector2,dir:Vector2,base:float,run:float)->float:
- var low:=base
- var seen:Dictionary={}
- for q:Vector2 in [foot,foot+dir*run]:
-  for index:int in _buckets.get(Vector2i(floori(q.x/CELL),floori(q.y/CELL)),[]):
-   if seen.has(index):continue
-   seen[index]=true
-   var o:Dictionary=_primitives[index]
-   if o.arc or float(o.base)>base-1.0:continue
-   var facing:=(o.n as Vector2).dot(dir)
-   if facing<.3:continue
-   var t:=((o.a as Vector2)-foot).dot(o.n)/facing
-   if t<.3 or t>run:continue
-   var along:=(foot+dir*t-(o.a as Vector2)).dot(o.t)
-   if along<-1.0 or along>float(o.length)+1.0:continue
-   low=minf(low,float(o.base))
- return low
-
-## Slope top and reach at a foot, limited by its own terrace: before a lower
-## cliff edge the slope steepens, and on a narrow tier it vanishes.
-func _shape(foot:Vector2,dir:Vector2,height:float,base:float)->Vector3:
- var shape:=params(foot,height)
- var limit:=_supported(foot,dir,base,anchor()+shape.y+.5)-anchor()-.4
- if limit<shape.y:
-  shape.y=maxf(0.0,limit)
-  # The ordinary slope lowers its top; the whole-wall sheet keeps its top
-  # under the lip and steepens instead.
-  if not STYLE.sheet_only:shape.x=minf(shape.x,shape.y*1.2)
- return shape
-
-## One column of sheet points at a foot (world xz) facing `dir`: heights and
-## outward distances bottom to top, from the covering runs' parameters.
-func _column(foot:Vector2,dir:Vector2,group:Array,u:float,base:float)->Array:
- var height:=0.0;var fade:=0.0
- for s:Dictionary in group:
-  var f:=1.0
-  if not s.arc:
-   var along:float=u-(s.a as Vector2).dot(s.t)
-   if along<-.01 or along>float(s.length)+.01:continue
-   if s.free_a:f*=smoothstep(0.0,FREE_TAPER,along)
-   if s.free_b:f*=smoothstep(0.0,FREE_TAPER,float(s.length)-along)
-  height=maxf(height,float(s.height));fade=maxf(fade,f)
- var frame:=_frame(foot,dir,height,base)
- base=frame[0];var shape:Vector3=frame[1]
- var c:={"foot":foot,"dir":dir,"base":base,"top":shape.x,"reach":shape.y,"fade":fade}
- var rows:Array=[]
- # Skirt, buried below the ground.
- for y:float in [-2.3,-1.0]:rows.append([y,target(c,y)])
- for k in ROWS+1:
-  var phi:=PI*.5*(1.0-float(k)/ROWS)
-  var a:=1.0-pow(cos(phi),2.0/sheet_power());var b:=1.0-pow(sin(phi),2.0/sheet_power())
-  var y:=FOOT+b*(shape.x-FOOT)
-  rows.append([y,_with_rocks(foot,dir,base,y,anchor()+shape.y*a+_bump(foot,y,shape.x))*fade-.3*(1.0-fade)])
- # Lip curling back into the wall, hidden behind the rock (or, as the whole
- # wall, the native grass lip) above the top.
- var curl:=Vector2(.1,.25) if STYLE.sheet_only else Vector2(.5,1.0)
- rows.append([shape.x+curl.x,(anchor()-.35)*fade-.3*(1.0-fade)])
- rows.append([shape.x+curl.y,-.3])
- if STYLE.sheet_only:_round_inner_corners(rows,foot,dir,group,base,shape.x)
- var points:=PackedVector3Array()
- for row:Array in rows:
-  var q:=foot+dir*float(row[1])
-  points.append(Vector3(q.x,base+float(row[0]),q.y).snapped(Vector3.ONE*.0001))
- return [points,dir]
-
-## Two walls meeting at an inner corner: their slopes simply intersect in a
-## hard V. Near the corner each column bends into a round fillet of radius
-## FILLET (narrowing toward the lip) with the crossing wall's slope, as in a
-## smooth union; both walls' sheets follow the same round.
-const FILLET:=2.5
-func _round_inner_corners(rows:Array,foot:Vector2,dir:Vector2,group:Array,base:float,top:float)->void:
- var own:float=group[0].base if not group.is_empty() else base
- for o:Dictionary in _primitives:
-  if o.arc or absf(float(o.base)-own)>.5 or absf((o.n as Vector2).dot(dir))>.2:continue
-  # The crossing wall runs out in front of this one, from near its foot line.
-  var a0:=((o.a as Vector2)-foot).dot(dir);var a1:=((o.a as Vector2)+(o.t as Vector2)*float(o.length)-foot).dot(dir)
-  if minf(a0,a1)>.6 or maxf(a0,a1)<1.0:continue
-  var across:=(foot-(o.a as Vector2)).dot(o.n)
-  if across<-.5 or across>FILLET+9.5:continue
-  var other_foot:=foot-(o.n as Vector2)*across
-  var frame:=_frame(other_foot,o.n,o.height,o.base)
-  var other_base:float=frame[0];var other:Vector2=frame[1]
-  for row:Array in rows:
-   var y:float=row[0]
-   if y<-.5 or y>top:continue
-   var k:=FILLET*(1.0-smoothstep(top*.6,top,y))+.3
-   var reach_other:=anchor()+offset(base+y-other_base,other.x,other.y)
-   var gap:=across-reach_other
-   if gap>=k:continue
-   var d:float=row[1]
-   # Faded in from the crossing wall's own line: where this wall continues
-   # past it (a step, not a corner) the push must not start as a blade.
-   row[1]=d+(k-(sqrt(maxf(0.0,k*k-(k-gap)*(k-gap))) if gap>0.0 else 0.0))*smoothstep(-.5,1.0,across)
-
-## Quads between neighbouring columns, owned by the column they start from;
-## winding faces out of the cliff.
-func _stitch(columns:Array,owners:Array[bool],key:Variant)->Array[Dictionary]:
- var faces:=PackedVector3Array();var roots:Dictionary={}
- for i in columns.size()-1:
-  if not owners[i]:continue
-  var a:PackedVector3Array=columns[i][0];var b:PackedVector3Array=columns[i+1][0]
-  var out:=Vector3((columns[i][1] as Vector2).x,0,(columns[i][1] as Vector2).y)
-  for k in a.size()-1:
-   for tri:Array in [[a[k],b[k],a[k+1]],[b[k],b[k+1],a[k+1]]]:
-    if (tri[1]-tri[0]).cross(tri[2]-tri[0]).length_squared()<1e-12:continue
-    if (tri[2]-tri[0]).cross(tri[1]-tri[0]).dot(out)>0:faces.append_array(PackedVector3Array([tri[0],tri[1],tri[2]]))
-    else:faces.append_array(PackedVector3Array([tri[0],tri[2],tri[1]]))
- if faces.is_empty():return []
- var bounds:=AABB(faces[0],Vector3.ZERO)
- for p:Vector3 in faces:
-  bounds=bounds.expand(p)
-  roots[p]=[Vector3.UP,1.0]
- return [{"faces":faces,"green":PackedVector3Array(),"native_roots":roots,"transform":Transform3D.IDENTITY,
-  "bounds":bounds,"anchor":bounds.get_center(),"top":bounds.end.y,"base":bounds.position.y,
-  "id":"slope/%s/%s"%[key,faces[0]],"asset":&"cliff.native_crag","kind":"rock","native_crag":true,"slope_sheet":true}]
 
 ## Broad, shallow boulder flanks follow the mid-slope tangent; lower
 ## layered rocks collect near the foot. Both
@@ -623,13 +282,6 @@ func _find_rocks()->void:
       break
    for i in range(start,rock_list.size()):rock_list[i]["key"]=Helper.position_hash01(key,_seed+9261)
  _thin_rocks()
- for rock:Dictionary in rock_list:
-  var foot:Vector2=rock.foot;var reach:=2.0*float(rock.ru)
-  for bx in range(floori((foot.x-reach)/CELL),floori((foot.x+reach)/CELL)+1):
-   for bz in range(floori((foot.y-reach)/CELL),floori((foot.y+reach)/CELL)+1):
-    var cell:=Vector2i(bx,bz)
-    if not _rock_cells.has(cell):_rock_cells[cell]=[]
-    _rock_cells[cell].append(rock)
 
 ## No rock rests on another (owner, September 27: stacked pairs). Clusters,
 ## not single rocks, compete for ground: a companion closer to its own
@@ -969,15 +621,16 @@ func _solid_top(env:ENVELOPE,q:Vector2)->float:
  return e+(_mesh_height(q)-g)*(1.0-raised)+COVER*(1.0-raised)-SINK*raised
 
 var _mesh_cells:Dictionary={}
-## Height of the rendered terrain sheet (TerrainChunkMesher's pinned 2 m
-## quads, split along their (x0,z0)-(x1,z1) diagonal).
+## Height of the rendered terrain sheet (TerrainChunkMesher's 2 m quads, each
+## pinned to the lattice point owning its centre, split along their
+## (x0,z0)-(x1,z1) diagonal).
 func _mesh_height(q:Vector2)->float:
  var step:=TerrainChunkMesher.STEP
  var x0:=floorf(q.x/step)*step;var z0:=floorf(q.y/step)*step
- var cell:=Vector2i(TerrainSurfaceField._cell_of(x0+step*.5),TerrainSurfaceField._cell_of(z0+step*.5))
- if not _mesh_cells.has(cell):_mesh_cells[cell]=TerrainSurfaceField.bake_cell(_region,cell.x,cell.y)
- var baked:PackedFloat32Array=_mesh_cells[cell]
- var y:=func(x:float,z:float)->float:return TerrainSurfaceField.sample_baked(baked,cell.x,cell.y,x,z,_region)
+ var point:=Vector2i(TerrainTileField.point_of(x0+step*.5,_region),TerrainTileField.point_of(z0+step*.5,_region))
+ if not _mesh_cells.has(point):_mesh_cells[point]=TerrainTileField.bake_point(_region,point)
+ var baked:PackedFloat32Array=_mesh_cells[point]
+ var y:=func(x:float,z:float)->float:return TerrainTileField.sample_baked(baked,point,x,z,_region)
  var fx:=(q.x-x0)/step;var fz:=(q.y-z0)/step
  var y00:float=y.call(x0,z0);var y11:float=y.call(x0+step,z0+step)
  if fx>=fz:
@@ -1067,7 +720,7 @@ func ground(q:Vector2)->float:
  var key:=q.snapped(Vector2.ONE*.25)
  if _grounds.has(key):return _grounds[key]
  var result:float
- if _region!=null:result=TerrainSurfaceField.surface_y(_region,q.x,q.y)
+ if _region!=null:result=TerrainTileField.surface_y(_region,q.x,q.y)
  elif ground_at.is_valid():result=ground_at.call(q)
  else:
   result=INF
@@ -1107,15 +760,15 @@ func _line_bounds()->Rect2:
   r=r.expand(b)
  return r
 
-## The terrain's own surface, per cell baked once (same values as ground()).
+## The terrain's own surface, per lattice point baked once (same values as
+## ground()). A query on a wall line resolves to the point that owns it.
 func _ground_sampler()->Callable:
  if _region==null:return ground_at if ground_at.is_valid() else ground
  var baked:Dictionary={};var region:=_region
  return func(q:Vector2)->float:
-  var cx:=TerrainSurfaceField._cell_of(q.x,region);var cz:=TerrainSurfaceField._cell_of(q.y,region)
-  var key:=Vector2i(cx,cz)
-  if not baked.has(key):baked[key]=TerrainSurfaceField.bake_cell(region,cx,cz)
-  return TerrainSurfaceField.sample_baked(baked[key],cx,cz,q.x,q.y,region)
+  var key:=Vector2i(TerrainTileField.point_of(q.x,region),TerrainTileField.point_of(q.y,region))
+  if not baked.has(key):baked[key]=TerrainTileField.bake_point(region,key)
+  return TerrainTileField.sample_baked(baked[key],key,q.x,q.y,region)
 
 ## Water level at a point (NAN where dry), queried only in or beside a carved
 ## channel or basin: the slope runs into water and sinks under it.
@@ -1123,7 +776,7 @@ func _water_level()->Callable:
  var water:=_water
  if water==null:return Callable()
  var region:=_region;var cells:Dictionary={}
- var tile:=TerrainSurfaceField.tile_size(region) if region!=null else 24.0
+ var tile:=TerrainTileField.spacing(region)
  # A context's halo may disagree with its neighbour's independently filled
  # halo. Always select the water domain by the queried world point, so both
  # cliff chunks use identical constraints throughout their shared mesh halo.
@@ -1162,7 +815,7 @@ func _exclusion(_area:Rect2)->Callable:
  # (only in or beside a carved channel or basin). Point queries over a whole
  # village's shapes, or water queries on dry hills, were most of the cost.
  var cells:Dictionary={};var grades:Dictionary={}
- var tile:=TerrainSurfaceField.tile_size(region)
+ var tile:=TerrainTileField.spacing(region)
  return func(q:Vector2)->int:
   if graded:
    var key:=Vector2i(floori(q.x/4.0),floori(q.y/4.0))

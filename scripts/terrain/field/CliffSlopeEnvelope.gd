@@ -44,14 +44,15 @@ const RELIEF_SPREAD:=25.0
 ## hillsides. A wall keeps exactly its former rounding; continuous ground,
 ## however steep, keeps its own surface.
 ##
-## Walls are cell edges, so they run along a grid axis. Each wall is closed
+## Walls lie on dual-cell borders (the 12 m tile midlines x = 12 i + 6), so
+## they run along a grid axis. Each wall is closed
 ## ACROSS itself only (1-D, along the other axis): where its top descends
 ## along the wall (a crest stepping down, a cliff ending in a hillside) an
 ## isotropic dilation spilled along the wall, over the sloping top beside it
 ## and above the crest in front, a raised darker curled nose. Across-only
 ## closing gives c(x) - y^2/(2 SHOULDER) in front of a crest c(x) and the
 ## ground itself behind. A wall found by the terrain itself (its two owners
-## differ at a cell boundary) counts down to any height, so an ending cliff's
+## differ at a dual-cell border) counts down to any height, so an ending cliff's
 ## rounding reaches its very end; below LOW (metres) its shoulder widens as
 ## LOW/H (at most WIDEN times), so the face keeps its plan width almost to
 ## the end and closes there in a round blob instead of a spike (a cliff ends
@@ -63,7 +64,7 @@ const RELIEF_SPREAD:=25.0
 ## preserves planes and convex shapes, so it neither lifts slopes nor
 ## spills. Off cell boundaries (synthetic grounds, graded edits) a JUMP
 ## between 0.5 m nodes counts as a wall.
-const CELL:=24.0
+const CELL:=TerrainTileField.SPACING
 const LOW:=3.0
 const WIDEN:=20.0
 const JUMP:=2.0
@@ -97,20 +98,9 @@ var moss_grade:=PackedFloat64Array()
 ## Keep-out nodes (roads, plazas, graded ground): painted ground the solid
 ## must never cover.
 var excluded:=PackedByteArray()
-## Populated by the original surface-net mesher. Only native grass lips are
-## retired by projected coverage; wall/backing geometry keeps its burial rule.
+## Solid columns of the bedrock surface net (CliffSlopeField.solid): a
+## mesher skirt point is buried only under a full neighbourhood of them.
 var replacement_columns:Dictionary={}
-
-func replaces_lip(key:String,pose:Transform3D)->bool:
- if replacement_columns.is_empty() or not CliffDressing._cpu_pieces.has(key):return false
- var source:Dictionary=CliffDressing._cpu_pieces[key]
- var transform:Transform3D=pose*source.local
- for vertex:Vector3 in source.vertices:
-  var p:=transform*vertex
-  var q:=Vector2i((Vector2(p.x,p.z)/H).floor())
-  for offset:Vector2i in [Vector2i.ZERO,Vector2i(1,0),Vector2i(0,1),Vector2i(1,1)]:
-   if not replacement_columns.has(q+offset):return false
- return true
 
 const STYLE=preload("res://scripts/terrain/field/CliffRockStyle.gd")
 
@@ -174,15 +164,11 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  var wet_level:=_levels(env,water_at)
  var any_wet:=not wet_level.is_empty()
  mark.call("exclusion")
- # `+underlip`: the slope leaves the wall LIP_DROP under the kept native lip,
- # nearly vertical there (small shoulders), so the lip is the edge again.
- var under:=STYLE.lip_mode=="underlip"
- var g:=_under_lip(env) if under else env.ground
- # The optional underlip study retains its intentionally narrow profile.
- var sh:=Vector2(.36,.96) if under else SHOULDER
- var foot:=3.6 if under else FOOT
- var tight_sh:=.28 if under else TIGHT.x
- var tight_foot:=1.5 if under else TIGHT.y
+ var g:=env.ground
+ var sh:=SHOULDER
+ var foot:=FOOT
+ var tight_sh:=TIGHT.x
+ var tight_foot:=TIGHT.y
  var walls:=_walls(env,g,ground_at,wet_level)
  # Nodes a channel-fitted bank reaches (see CHANNEL_CORE).
  var channel:=PackedByteArray();channel.resize(n)
@@ -190,7 +176,7 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
  var wide_dilated:=_dilate(g,env.w,env.h,sh.y+foot)
  var wide:=_close_walls(g,walls,env.w,env.h,sh.y,foot,channel)
  var tight:=_close_walls(g,walls,env.w,env.h,tight_sh,tight_foot,channel)
- var tight_wide:=_close_walls(g,walls,env.w,env.h,.68 if under else 6.4,tight_foot,channel)
+ var tight_wide:=_close_walls(g,walls,env.w,env.h,6.4,tight_foot,channel)
  # Local relief: highest reach minus lowest reach nearby; continuous even
  # across the terrain's own cliffs, so the blend never opens a step.
  var floor_level:=_erode(g,env.w,env.h,SHOULDER.y+FOOT)
@@ -219,16 +205,15 @@ static func build(rect:Rect2,ground_at:Callable,excluded_at:Callable,seed_value:
   var ridge:=lerpf(PLAIN,t[idx],smoothstep(VARIED.x,VARIED.y,drop[idx]))
   env.surface[idx]=lerpf(lerpf(narrow[idx],wide[idx],ridge),lerpf(tight[idx],tight_wide[idx],ridge),tall)
  # Fillet the concave creases where wall faces meet (see JUMP).
- if not under:
-  # Only where walls are being rounded: the ground's own concave bends
-  # (a cliff's end corner, a slope's foot) keep their surface.
-  # In a fitted channel never above the water: filleting the valley between
-  # opposing banks dammed the channel they were fitted to leave open.
-  var filleted:=_erode(_dilate(env.surface,env.w,env.h,FOOT),env.w,env.h,FOOT)
-  for idx in n:
-   var fill:=filleted[idx]
-   if channel[idx] and _deep(wet_level,env.ground,idx):fill=minf(fill,wet_level[idx]-.3)
-   env.surface[idx]=lerpf(env.surface[idx],maxf(env.surface[idx],fill),smoothstep(0.0,.5,env.surface[idx]-g[idx]))
+ # Only where walls are being rounded: the ground's own concave bends
+ # (a cliff's end corner, a slope's foot) keep their surface.
+ # In a fitted channel never above the water: filleting the valley between
+ # opposing banks dammed the channel they were fitted to leave open.
+ var filleted:=_erode(_dilate(env.surface,env.w,env.h,FOOT),env.w,env.h,FOOT)
+ for idx in n:
+  var fill:=filleted[idx]
+  if channel[idx] and _deep(wet_level,env.ground,idx):fill=minf(fill,wet_level[idx]-.3)
+  env.surface[idx]=lerpf(env.surface[idx],maxf(env.surface[idx],fill),smoothstep(0.0,.5,env.surface[idx]-g[idx]))
  var uncut:=env.surface.duplicate()
  # Only a road's cut face is bare rock: the underwater bank keeps its moss.
  var shaped:=env.surface.duplicate()
@@ -533,37 +518,6 @@ static func _slide(f:PackedFloat64Array,r:int,highest:bool)->PackedFloat64Array:
   out[i]=maxf(a,b) if highest else minf(a,b)
  return out
 
-## Lip study `+underlip`: ground for the envelope with every cliff top
-## lowered along its front band (the terrain cell's overhang, OVERHANG in
-## front of the visible wall line): LIP_DROP at the wall line, falling
-## steeply to the cell edge. The envelope then starts LIP_DROP under the lip.
-const LIP_DROP:=1.2
-const OVERHANG:=1.5
-static func _under_lip(env)->PackedFloat64Array:
- var w:int=env.w;var h:int=env.h;var n:=w*h
- # Nodes at least a storey-ish below something within reach are "low".
- var high:=PackedFloat64Array();high.resize(n)
- var r:=ceili(2.5/H)
- var rows:=PackedFloat64Array();rows.resize(n)
- for k in h:
-  for i in w:
-   var m:=-INF
-   for d in range(maxi(0,i-r),mini(w,i+r+1)):m=maxf(m,env.ground[k*w+d])
-   rows[k*w+i]=m
- for k in h:
-  for i in w:
-   var m:=-INF
-   for d in range(maxi(0,k-r),mini(h,k+r+1)):m=maxf(m,rows[d*w+i])
-   high[k*w+i]=m
- var low:=PackedByteArray();low.resize(n)
- for idx in n:low[idx]=1 if env.ground[idx]<high[idx]-2.0 else 0
- var dist:=_distance(low,w,h)
- var out:PackedFloat64Array=env.ground.duplicate()
- for idx in n:
-  if low[idx]==0 and dist[idx]<OVERHANG+H:
-   out[idx]-=LIP_DROP+3.0*maxf(0.0,OVERHANG-dist[idx])
- return out
-
 ## Value at a world point on the grid (nearest node; exact at grid points).
 func at(q:Vector2)->float:
  var i:=clampi(roundi((q.x-origin.x)/H),0,w-1);var k:=clampi(roundi((q.y-origin.y)/H),0,h-1)
@@ -605,10 +559,9 @@ func sample(q:Vector2)->float:
 func contains(q:Vector2)->bool:
  return q.x>=origin.x and q.y>=origin.y and q.x<=origin.x+(w-1)*H and q.y<=origin.y+(h-1)*H
 
-## Whether the slope covers a native cliff piece at `origin` whose top is
-## `top`: on every low side (ground over a metre below the top, `far` out)
-## the slope just past the lip (`near` out) stands at least at that top.
-## Covered pieces are hidden; they otherwise poke through the slope.
+## Whether the slope covers a wall point at `origin` whose top is `top`: on
+## every low side (ground more than `drop` below the top, `far` out) the slope
+## just past the crest (`near` out) stands at least at that top.
 func covers_piece(origin:Vector3,top:float,near:=1.6,far:=2.6,drop:=1.0)->bool:
  var low:=false
  var p:=Vector2(origin.x,origin.z)
@@ -620,27 +573,7 @@ func covers_piece(origin:Vector3,top:float,near:=1.6,far:=2.6,drop:=1.0)->bool:
   if at(p+dir*near)<top-.3:return false
  return low
 
-## Native cliff pieces (CliffDressing data) the slope does not cover. Wall
-## rows span a storey above their origin; lips sit at the crest.
-func uncovered(pieces:Dictionary)->Dictionary:
- var out:={}
- for key:Variant in pieces:
-  if not (pieces[key] is Array):
-   out[key]=pieces[key];continue
-  var lip:=String(key).ends_with("lip")
-  var kept:Array[Transform3D]=[]
-  # `+underlip` keeps every lip; walls count as covered below the lip band.
-  var under:=STYLE.lip_mode=="underlip"
-  for t:Transform3D in pieces[key]:
-   if lip and not under and replaces_lip(String(key),t):continue
-   # Under the lip the slope stands off the wall: a wall panel is hidden
-   # wherever the slope reaches a metre up it (the skirt shows as the band).
-   if (lip and under) or not covers_piece(t.origin,t.origin.y+(.1 if lip else (1.3 if under else 4.0))):kept.append(t)
-  out[key]=kept
- return out
-
-## A buried backstop can leave its top 2 cm above the sunken sheet once
-## its old lip is withdrawn. Require a full grid neighbourhood above every
+## A buried skirt can leave its top 2 cm above the sunken sheet. Require a full grid neighbourhood above every
 ## tested point, so exposed cut walls keep their backing.
 func _buried_skirt_point(p:Vector3)->bool:
  if replacement_columns.is_empty():return false
@@ -652,24 +585,19 @@ func _buried_skirt_point(p:Vector3)->bool:
    if not replacement_columns.has(key) or not contains(point) or at(point)<p.y-.03:return false
  return true
 
-## Skirt triangles (the native rock backstop) the slope does not cover,
-## checked at every corner and the centre. A skirt stands 1.3 m behind the
-## cell edge under a native wall, or on the edge itself where no wall piece
-## dresses it (a cliff side whose top descends into a slope side). Coverage
-## is measured from the edge in both cases: tested from the skirt itself, an
-## unrecessed skirt read as uncovered and its top showed as a dark line
-## along the crest, a sinking margin above the slope under it.
+## Skirt triangles (the mesher's vertical rock faces) the slope does not
+## cover, checked at every corner and the centre. Every skirt stands on its
+## wall line (a dual-cell border, x or z = 12 i + 6); coverage is measured from
+## that line.
 const SEAM_NEAR:=.1
 const SEAM_FAR:=.6
 static func _on_seam(p:Vector3,a:Vector3,b:Vector3,c:Vector3)->Vector3:
- var tile:=TerrainSurfaceField.TILE
+ var tile:=TerrainTileField.SPACING
  if absf(a.x-b.x)+absf(a.x-c.x)<.001:return Vector3((roundf(p.x/tile-.5)+.5)*tile,p.y,p.z)
  if absf(a.z-b.z)+absf(a.z-c.z)<.001:return Vector3(p.x,p.y,(roundf(p.z/tile-.5)+.5)*tile)
  return p
 func uncovered_faces(arrays:Array)->Array:
- # `+underlip`: the skirt shows as the rock band under the lip; below it
- # stands inside the slope.
- if arrays.is_empty() or STYLE.lip_mode=="underlip":return arrays
+ if arrays.is_empty():return arrays
  var vertices:PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
  var indices:=PackedInt32Array(arrays[Mesh.ARRAY_INDEX]) if arrays[Mesh.ARRAY_INDEX]!=null else PackedInt32Array()
  if indices.is_empty():
@@ -694,7 +622,7 @@ func uncovered_faces(arrays:Array)->Array:
   for k in 4:
    var p:Vector3=tri[k] if k<3 else (a+b+c)/3.0
    var col:Vector2=spans[k] if k<3 else centre
-   var drop:=clampf(.5*(col.y-col.x-TerrainChunkMesher.SKIRT_UNDERHANG),.05,1.0)
+   var drop:=clampf(.5*(col.y-col.x),.05,1.0)
    if not _buried_skirt_point(p) and not covers_piece(_on_seam(p,a,b,c),col.y,SEAM_NEAR,SEAM_FAR,drop):covered=false;break
   if not covered:kept.append_array(PackedInt32Array([indices[t],indices[t+1],indices[t+2]]))
  if kept.size()==indices.size():return arrays

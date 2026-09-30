@@ -143,13 +143,6 @@ static func footprint_scale(cells:Dictionary,point:Vector2,support:Dictionary,ra
 		if clear:return scale
 	return 0.0
 
-# Detached native top triangles extend the ordinary grass sampler. Only flat
-# authored turf tops are eligible; bounding boxes never stand in for a cap.
-static func from_native(placement: Dictionary, faces: PackedVector3Array) -> Dictionary:
-	var surface := preload("res://scripts/terrain/field/NativeTerrainCap.gd").measure(placement, faces)
-	surface["obstacles"] = []
-	return surface
-
 static func at_point(surfaces:Array, point:Vector2)->Dictionary:
 	var result:Dictionary={}
 	for surface:Dictionary in surfaces:

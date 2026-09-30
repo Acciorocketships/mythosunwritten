@@ -18,7 +18,7 @@ const CHUNK_WORLD := 192.0   # TerrainChunkMesher.CHUNK_WORLD
 const STARTUP_SUPPORT_HALF_EXTENT := CHUNK_WORLD
 const TERRAIN_PREFETCH_RADIUS := CHUNK_WORLD * 0.5
 const PREFETCH_SECONDS := 30.0
-const PRIORITY_FOCUS_STEP := TerrainChunkMesher.TILE / 3.0
+const PRIORITY_FOCUS_STEP := 8.0
 ## Keep the production spawn just inside one chunk instead of exactly on the
 ## four-way world-origin seam so the player capsule has one collision owner.
 ## The startup environment gate still includes all nearby visible quadrants.
@@ -1418,7 +1418,8 @@ func _exit_tree() -> void:
 	_restore_startup_render_limit()
 	# The cliff style is process-wide: leave the default (`chosen`) behind.
 	if not CLIFF_STYLE.is_empty():
-		preload("res://scripts/terrain/field/CliffRockStyle.gd").apply("chosen")
+		var style := preload("res://scripts/terrain/field/CliffRockStyle.gd")
+		style.apply(style.PRODUCTION)
 	if _grass_work != null: _grass_work.stop()
 	if not _thread.is_started():
 		return
