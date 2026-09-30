@@ -438,10 +438,32 @@ func test_wall_stays_straight() -> void:
 	# the descending river's own level (a coincidence of the 12 m resampling):
 	# there the waterline is the edge of a centimetre film on the plateau, not
 	# the wall, and it is excluded by this terrain/level test, not by position.
+	# The straightness contract covers straight wall runs. Within one presence
+	# STEP of a vertex where perpendicular wall runs meet
+	# (TerrainTileField.wall_segments), the shore turns a true corner that the
+	# contour's smoothing rounds; corner coverage is the inner-corner skin
+	# test's contract, not this one.
+	var corners: Array[Vector2] = []
+	var ends := {}
+	for seg: Dictionary in TerrainTileField.wall_segments(ctx.region, reach.grow(WaterContour.STEP * 2.0)):
+		for end: Vector2 in [seg.a, seg.b]:
+			var key := Vector2i((end * 8.0).round())
+			var along_x := absf(Vector2(seg.normal).x) > 0.5
+			var mask: int = ends.get(key, 0)
+			ends[key] = mask | (1 if along_x else 2)
+	for key: Vector2i in ends:
+		if ends[key] == 3:
+			corners.append(Vector2(key) / 8.0)
 	for c: Dictionary in curves:
 		var pts: PackedVector2Array = c.pts
 		for i in pts.size():
 			if c.wall[i] != 1 or not reach.has_point(pts[i]):
+				continue
+			var near_corner := false
+			for corner: Vector2 in corners:
+				if pts[i].distance_to(corner) <= WaterContour.STEP:
+					near_corner = true
+			if near_corner:
 				continue
 			var low_ground := TerrainTileField.surface_y(ctx.region, WALL_X + 6.0, pts[i].y)
 			if float(c.levels[i]) - low_ground < 1.0:

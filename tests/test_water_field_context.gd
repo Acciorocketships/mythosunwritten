@@ -74,6 +74,6 @@ func test_context_matches_water_field_and_has_canonical_dry_nan() -> void:
 				assert_between(-context.shore_distance_at(point), 0.0, 4.0)
 				assert_between(context.signed_depth_at(point), 0.05, 3.2)
 				assert_almost_eq(transform.origin.y,
-					TerrainSurfaceField.surface_y(region, point.x, point.y), 0.001)
+					TerrainTileField.surface_y(region, point.x, point.y), 0.001)
 	assert_gt(lilies, 0, "floating lily pads qualify from the shared water surface")
 	assert_gt(reeds, 0, "reeds qualify in the canonical wet inward-shore band")
