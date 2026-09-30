@@ -50,13 +50,12 @@ func region_covering(world_rect: Rect2) -> HeightfieldRegion:
 	var cached := region_at(world_rect.get_center())
 	if _region_covers_surface_rect(cached, world_rect):
 		return cached
-	var centre_cell := Vector2i(roundi(world_rect.get_center().x \
-		/ TerrainSurfaceField.TILE), roundi(world_rect.get_center().y \
-		/ TerrainSurfaceField.TILE))
-	var half_cells := ceili(maxf(world_rect.size.x, world_rect.size.y) \
-		* 0.5 / TerrainSurfaceField.TILE) + 2
-	var expanded := _plan.compute_region(centre_cell.x, centre_cell.y,
-		half_cells)
+	var spacing := HeightfieldPlan.POINT
+	var centre := Vector2i(roundi(world_rect.get_center().x / spacing),
+		roundi(world_rect.get_center().y / spacing))
+	var half_points := ceili(maxf(world_rect.size.x, world_rect.size.y) \
+		* 0.5 / spacing) + 2
+	var expanded := _plan.compute_region(centre.x, centre.y, half_points)
 	assert(_region_covers_surface_rect(expanded, world_rect),
 		"Explicit field region does not cover its requested surface rectangle")
 	return expanded
@@ -74,12 +73,13 @@ func region(key: Vector2i) -> HeightfieldRegion:
 		region_hit_count += 1
 		_touch(key, entry)
 		return entry.region
-	var centre := key * TerrainChunkMesher.CELLS_PER_CHUNK \
-		+ Vector2i.ONE * (TerrainChunkMesher.CELLS_PER_CHUNK / 2)
+	# The block owns points 16 k .. 16 k + 15; the region keeps a 96 m
+	# (eight point) margin around them for the clamp, walls and dressing.
+	var points := TerrainChunkMesher.POINTS_PER_CHUNK
+	var centre := key * points + Vector2i.ONE * (points / 2)
 	var started := Time.get_ticks_usec()
 	if profile_callback.is_valid(): profile_callback.call(&"begin", &"region", key, 0)
-	entry.region = _plan.compute_region(centre.x, centre.y,
-		TerrainChunkMesher.CELLS_PER_CHUNK)
+	entry.region = _plan.compute_region(centre.x, centre.y, points)
 	var elapsed := Time.get_ticks_usec() - started
 	region_build_usec += elapsed
 	if profile_callback.is_valid(): profile_callback.call(&"end", &"region", key, elapsed)
@@ -157,19 +157,15 @@ static func _key_less(a: Vector2i, b: Vector2i) -> bool:
 
 static func _region_covers_surface_rect(region_value: HeightfieldRegion,
 		world_rect: Rect2) -> bool:
-	# height_bounds() bakes every intersected patch; each bake reads one ring of
-	# cardinal/diagonal neighbours. Prove that complete read set here instead of
-	# relying on HeightfieldRegion's intentional zero default outside coverage.
-	var minimum := Vector2i(
-		ceili((world_rect.position.x - TerrainSurfaceField.HALF) \
-			/ TerrainSurfaceField.TILE) - 1,
-		ceili((world_rect.position.y - TerrainSurfaceField.HALF) \
-			/ TerrainSurfaceField.TILE) - 1)
-	var maximum := Vector2i(
-		floori((world_rect.end.x + TerrainSurfaceField.HALF) \
-			/ TerrainSurfaceField.TILE) + 1,
-		floori((world_rect.end.y + TerrainSurfaceField.HALF) \
-			/ TerrainSurfaceField.TILE) + 1)
+	# A 12 m tile depends only on its four corner points, so a rectangle reads
+	# the tile corners floor(x0 / 12) .. floor(x1 / 12) + 1. Prove that complete
+	# read set instead of relying on HeightfieldRegion's zero default outside
+	# its coverage.
+	var spacing := HeightfieldPlan.POINT
+	var minimum := Vector2i(floori(world_rect.position.x / spacing),
+		floori(world_rect.position.y / spacing))
+	var maximum := Vector2i(floori(world_rect.end.x / spacing) + 1,
+		floori(world_rect.end.y / spacing) + 1)
 	return region_value.has_surface_point(minimum.x, minimum.y) \
 		and region_value.has_surface_point(maximum.x, minimum.y) \
 		and region_value.has_surface_point(minimum.x, maximum.y) \

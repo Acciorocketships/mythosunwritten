@@ -1,16 +1,30 @@
 # scripts/terrain/tools/TerrainCategoryOverlay.gd
 # Debug view (F9): colour-codes the terrain field's own categories on every
-# rendered surface, so a screenshot shows which cell edges are slopes, level
-# steps or cliffs, where the storey/level contours run, and
-# where the rendered ground departs from the standard slope kernel (the
-# rounded cliff envelope, bedrock, rocks, road/water cuts, town grade).
-# Main-thread only: reads the immutable per-chunk cell snapshots published by
+# rendered surface, so a screenshot shows which 12 m lattice edges are flat,
+# level steps, slopes or cliffs, where the storey/level contours and the walls
+# (dual-cell borders) run, and where the rendered ground departs from the tile
+# kernel (the rounded cliff envelope, bedrock, rocks, road/water cuts, town
+# grade). The shader carries a GPU port of TerrainTileField, including the
+# selected cliff-end rule.
+# Main-thread only: reads the immutable per-chunk point snapshots published by
 # FieldTerrainStreamer and draws one full-screen deferred-decal quad.
 extends CanvasLayer
 
 const SHADER := preload("res://terrain/materials/debug/terrain_category_overlay.gdshader")
-const SIZE := 64                 # cells per side of the data window (1.5 km)
+const SIZE := 128                # lattice points per side of the data window (1.5 km)
 const REFRESH_SECONDS := 0.5
+
+const LEGEND := "TERRAIN CATEGORIES (F9)\n" \
+	+ "each 12 m lattice edge colours the diamond around its midpoint:\n" \
+	+ "grey    flat edge: same height\n" \
+	+ "blue    level edge: same storey, 1-3 m apart (slope)\n" \
+	+ "green   slope edge: 1 storey (4 m) apart\n" \
+	+ "red     cliff edge: 2+ storeys (wall on the tile midline)\n" \
+	+ "magenta rendered ABOVE the tile kernel (cliff envelope, bedrock, rocks)\n" \
+	+ "cyan    rendered BELOW the tile kernel (road/water cut, recess)\n" \
+	+ "yellow stripes  town grade (points a town, its streets or its road ramps moved)\n" \
+	+ "thin dark lines: 1 m contours   white: 4 m storey contours\n" \
+	+ "black: tile grid (points, 12 m)   faint orange: wall lines (12 i + 6)   blue: chunk border (192 m)"
 
 @export var enabled := false
 
@@ -37,29 +51,20 @@ func _ready() -> void:
 	_quad.custom_aabb = AABB(Vector3.ONE * -1e6, Vector3.ONE * 2e6)
 	_image = Image.create(SIZE, SIZE, false, Image.FORMAT_RGF)
 	_texture = ImageTexture.create_from_image(_image)
-	_material.set_shader_parameter("cells", _texture)
-	_material.set_shader_parameter("cells_size", SIZE)
-	_material.set_shader_parameter("tile", TerrainSurfaceField.TILE)
+	_material.set_shader_parameter("points", _texture)
+	_material.set_shader_parameter("points_size", SIZE)
+	_material.set_shader_parameter("spacing", TerrainTileField.SPACING)
 	_material.set_shader_parameter("storey_height", HeightfieldRegion.STOREY_HEIGHT)
+	_material.set_shader_parameter("chunk_points", float(TerrainChunkMesher.POINTS_PER_CHUNK))
 	_legend = Label.new()
 	_legend.add_theme_font_size_override("font_size", 15)
 	_legend.add_theme_color_override("font_outline_color", Color.BLACK)
 	_legend.add_theme_constant_override("outline_size", 6)
-	_legend.text = "\n".join([
-		"TERRAIN CATEGORIES (F9)",
-		"grey    flat plateau (cell centre)",
-		"green   slope edge: 1 storey (4 m) apart",
-		"blue    level edge: same storey, 1-3 m apart",
-		"red     cliff edge: 2+ storeys (wall)",
-		"magenta rendered ABOVE the slope kernel (cliff envelope, bedrock, rocks)",
-		"cyan    rendered BELOW the kernel (road/water cut, recess)",
-		"yellow stripes  town grade (native controls moved by a town, its streets or its road ramps)",
-		"thin dark lines: 1 m contours   white: 4 m storey contours   black: cell grid   blue: chunk border",
-	])
+	_legend.text = LEGEND
 	_legend.anchor_top = 1.0
 	_legend.anchor_bottom = 1.0
 	_legend.offset_left = 10.0
-	_legend.offset_top = -210.0
+	_legend.offset_top = -250.0
 	add_child(_legend)
 	_apply()
 
@@ -104,21 +109,27 @@ func _process(delta: float) -> void:
 	var streamer := _streamer()
 	if camera == null or streamer == null:
 		return
-	var tile := TerrainSurfaceField.TILE
-	var centre := Vector2i(roundi(camera.global_position.x / tile), roundi(camera.global_position.z / tile))
+	var spacing := TerrainTileField.SPACING
+	var centre := Vector2i(roundi(camera.global_position.x / spacing),
+		roundi(camera.global_position.z / spacing))
 	var origin := centre - Vector2i.ONE * (SIZE / 2)
 	_refresh -= delta
 	if origin == _origin and _refresh > 0.0:
 		return
 	_origin = origin
 	_refresh = REFRESH_SECONDS
+	var data := PackedFloat32Array()
+	data.resize(SIZE * SIZE * 2)
 	for z in SIZE:
 		for x in SIZE:
-			var value: Variant = streamer.loaded_cell_at(origin + Vector2i(x, z))
+			var value: Variant = streamer.loaded_point_at(origin + Vector2i(x, z))
 			var v: Vector2 = value if value != null else Vector2(-1e7, 0.0)
-			_image.set_pixel(x, z, Color(v.x, v.y, 0.0))
+			data[(z * SIZE + x) * 2] = v.x
+			data[(z * SIZE + x) * 2 + 1] = v.y
+	_image.set_data(SIZE, SIZE, false, Image.FORMAT_RGF, data.to_byte_array())
 	_texture.update(_image)
-	_material.set_shader_parameter("origin_cell", origin)
+	_material.set_shader_parameter("origin_point", origin)
+	_material.set_shader_parameter("cliff_end", TerrainTileField.cliff_end)
 
 
 func _streamer() -> FieldTerrainStreamer:

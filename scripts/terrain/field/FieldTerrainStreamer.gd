@@ -10,7 +10,7 @@
 class_name FieldTerrainStreamer
 extends Node3D
 
-const CHUNK_WORLD := 192.0   # TerrainChunkMesher.CHUNK_WORLD
+const CHUNK_WORLD := TerrainChunkMesher.CHUNK_WORLD   # 192 m, 16 x 16 lattice points
 ## A camera-sized loading boundary can release the runner seconds before an
 ## unbuilt seam. The surrounding ring supplies at least 192 m of initial
 ## travel in every direction while the worker prepares the next crossings.
@@ -99,8 +99,8 @@ var _grass_runtime_enabled := false
 var _dressing_trample_by_chunk: Dictionary = {} # Vector2i -> Array[Dictionary]
 var _static_trample_dirty := false
 var _built: Dictionary = {}        # Vector2i -> Node3D          (main thread only)
-var _storey_snapshots: Dictionary = {} # Vector2i -> PackedInt32Array (main thread only)
-var _cell_snapshots: Dictionary = {} # Vector2i -> PackedFloat32Array (height, graded) per cell (main thread only)
+var _storey_snapshots: Dictionary = {} # Vector2i -> PackedInt32Array per lattice point (main thread only)
+var _point_snapshots: Dictionary = {} # Vector2i -> PackedFloat32Array (height, graded) per lattice point (main thread only)
 var _feature_ready: Dictionary = {} # Vector2i -> generation, including empty blocks
 var _feature_nodes: Dictionary = {} # Vector2i -> non-empty Node3D
 var _terrain_generation: Dictionary = {}
@@ -497,7 +497,7 @@ func _worker() -> void:
 			_set_startup_worker_progress(c, 0.67)
 			var core := Rect2(Vector2(c) * CHUNK_WORLD, Vector2.ONE * CHUNK_WORLD)
 			result["storeys"] = _storey_snapshot(c, region)
-			result["cells"] = _cell_snapshot(c, region)
+			result["points"] = _point_snapshot(c, region)
 			_begin_worker_phase(c, &"terrain_mesh")
 			result["terrain"] = _mesher.compute_chunk(c, region, water_context,
 				features)
@@ -770,7 +770,7 @@ func _process(_delta: float) -> void:
 			_built[c].queue_free()
 			_built.erase(c)
 			_storey_snapshots.erase(c)
-			_cell_snapshots.erase(c)
+			_point_snapshots.erase(c)
 			if _dressing_trample_by_chunk.erase(c):
 				_static_trample_dirty = true
 			_terrain_generation[c] = int(_terrain_generation.get(c, 0)) + 1
@@ -805,7 +805,7 @@ func rebuild_terrain(chunks: Array) -> void:
 		_built[c].queue_free()
 		_built.erase(c)
 		_storey_snapshots.erase(c)
-		_cell_snapshots.erase(c)
+		_point_snapshots.erase(c)
 		_dressing_trample_by_chunk.erase(c)
 		_static_trample_dirty = true
 		_terrain_generation[c] = int(_terrain_generation.get(c, 0)) + 1
@@ -1037,7 +1037,7 @@ func _integrate_pending_terrain(centre: Vector2i) -> void:
 			node.set_meta(&"grass_sampling", result.grass_sampling)
 		_built[c] = node
 		_storey_snapshots[c] = result.storeys
-		_cell_snapshots[c] = result.get("cells", PackedFloat32Array())
+		_point_snapshots[c] = result.get("points", PackedFloat32Array())
 		_dressing_trample_by_chunk[c] = _dressing_trample_stamps(result.dressing)
 		_static_trample_dirty = true
 		var generation: int = result.terrain_generation
@@ -1090,45 +1090,46 @@ func _dressing_trample_stamps(payload: EnvironmentInstancePayload) -> Array[Dict
 			})
 	return out
 
-## Main-thread debug query over immutable data delivered with each committed
-## chunk. This deliberately never reaches into the worker-owned plan or its
-## mutable terrain/water caches.
-func loaded_storey_at(cell: Vector2i) -> Variant:
-	var side := TerrainChunkMesher.CELLS_PER_CHUNK
-	var chunk := Vector2i(floori(float(cell.x) / side), floori(float(cell.y) / side))
+## Main-thread debug queries over immutable data delivered with each committed
+## chunk, keyed by 12 m lattice point (chunk k owns points 16 k .. 16 k + 15).
+## They deliberately never reach into the worker-owned plan or its mutable
+## terrain/water caches.
+func loaded_storey_at(point: Vector2i) -> Variant:
+	var side := TerrainChunkMesher.POINTS_PER_CHUNK
+	var chunk := Vector2i(floori(float(point.x) / side), floori(float(point.y) / side))
 	var values: PackedInt32Array = _storey_snapshots.get(chunk, PackedInt32Array())
 	if values.size() != side * side:
 		return null
-	var local := cell - chunk * side
+	var local := point - chunk * side
 	return values[local.y * side + local.x]
 
-## Surface height and graded flag of a loaded cell (the terrain category
-## overlay's input), or null. Same immutable-snapshot contract as above.
-func loaded_cell_at(cell: Vector2i) -> Variant:
-	var side := TerrainChunkMesher.CELLS_PER_CHUNK
-	var chunk := Vector2i(floori(float(cell.x) / side), floori(float(cell.y) / side))
-	var values: PackedFloat32Array = _cell_snapshots.get(chunk, PackedFloat32Array())
+## Surface height and graded flag of a loaded lattice point (the terrain
+## category overlay's input), or null. Same immutable-snapshot contract.
+func loaded_point_at(point: Vector2i) -> Variant:
+	var side := TerrainChunkMesher.POINTS_PER_CHUNK
+	var chunk := Vector2i(floori(float(point.x) / side), floori(float(point.y) / side))
+	var values: PackedFloat32Array = _point_snapshots.get(chunk, PackedFloat32Array())
 	if values.size() != side * side * 2:
 		return null
-	var local := cell - chunk * side
+	var local := point - chunk * side
 	var i := (local.y * side + local.x) * 2
 	return Vector2(values[i], values[i + 1])
 
-static func _cell_snapshot(chunk: Vector2i, region: HeightfieldRegion) -> PackedFloat32Array:
-	var side := TerrainChunkMesher.CELLS_PER_CHUNK
+static func _point_snapshot(chunk: Vector2i, region: HeightfieldRegion) -> PackedFloat32Array:
+	var side := TerrainChunkMesher.POINTS_PER_CHUNK
 	var values := PackedFloat32Array()
 	values.resize(side * side * 2)
 	var first := chunk * side
 	for z in side:
 		for x in side:
-			var cell := first + Vector2i(x, z)
-			values[(z * side + x) * 2] = region.surface_height(cell.x, cell.y)
-			# A town grade reaches the terrain only as native lattice controls.
-			values[(z * side + x) * 2 + 1] = 1.0 if region.native_control_heights.has(cell) else 0.0
+			var point := first + Vector2i(x, z)
+			values[(z * side + x) * 2] = region.surface_height(point.x, point.y)
+			# A town grade reaches the terrain only as per-point native controls.
+			values[(z * side + x) * 2 + 1] = 1.0 if region.native_control_heights.has(point) else 0.0
 	return values
 
 static func _storey_snapshot(chunk: Vector2i, region: HeightfieldRegion) -> PackedInt32Array:
-	var side := TerrainChunkMesher.CELLS_PER_CHUNK
+	var side := TerrainChunkMesher.POINTS_PER_CHUNK
 	var values := PackedInt32Array()
 	values.resize(side * side)
 	var first := chunk * side

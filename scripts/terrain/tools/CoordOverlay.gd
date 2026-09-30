@@ -1,11 +1,12 @@
 # scripts/terrain/tools/CoordOverlay.gd
-# Debug HUD: a screen-centre crosshair + a readout of world/cell coordinates so a screenshot
-# alone pins down exactly where a terrain issue is. Shows the seed, the player's cell, the cell
-# the crosshair is aimed at (raycast onto the terrain), and the 3×3 grid of storey heights
-# around that cell (so cliff/corner configs are legible at a glance). Toggle with F3.
+# Debug HUD: a screen-centre crosshair + a readout of world/lattice coordinates so a screenshot
+# alone pins down exactly where a terrain issue is. Shows the seed, the player's 12 m lattice
+# point, and for the crosshair (raycast onto the terrain) its point, the 12 m tile under it with
+# its 2×2 corner storeys/levels and its four lattice-edge categories (so cliff/slope/saddle
+# configs are legible at a glance). Reads only the streamer's committed snapshots. Toggle F3.
 extends CanvasLayer
 
-const TILE := 24.0
+const EDGE_NAMES := ["flat", "level", "slope", "cliff"]   # TerrainTileField.EdgeCategory
 
 var _label: Label
 var _cross: Control
@@ -38,8 +39,51 @@ func _draw_cross() -> void:
 	_cross.draw_line(c - Vector2(10, 0), c + Vector2(10, 0), col, 2.0)
 	_cross.draw_line(c - Vector2(0, 10), c + Vector2(0, 10), col, 2.0)
 
-func _cell_of(v: float) -> int:
-	return int(round(v / TILE))
+## Committed-snapshot view with the region API TerrainTileField.edge_category reads.
+class LoadedPoints extends RefCounted:
+	var source
+	func _init(p_source) -> void:
+		source = p_source
+	func storey_at(i: int, j: int) -> int:
+		return int(source.loaded_storey_at(Vector2i(i, j)))
+	func surface_height(i: int, j: int) -> float:
+		return (source.loaded_point_at(Vector2i(i, j)) as Vector2).x
+
+
+## The tile under world xz: its index floor(v / 12), its corners a (-x -z),
+## b (+x -z), d (-x +z), c (+x +z) as storey/level, and its four lattice-edge
+## categories. `source` answers loaded_storey_at / loaded_point_at by point.
+static func tile_lines(source, world_xz: Vector2) -> Array[String]:
+	var s := TerrainTileField.SPACING
+	var tile := Vector2i(floori(world_xz.x / s), floori(world_xz.y / s))
+	var lines: Array[String] = ["tile (%d, %d)  corners storey/level (+z down):" % [tile.x, tile.y]]
+	for dz in 2:
+		var row := " "
+		for dx in 2:
+			var p := tile + Vector2i(dx, dz)
+			var storey: Variant = source.loaded_storey_at(p)
+			var point: Variant = source.loaded_point_at(p)
+			var label: String = ["a", "b", "d", "c"][dz * 2 + dx]
+			if storey == null or point == null:
+				row += "  %s --/-" % label
+			else:
+				var level := roundi((point as Vector2).x - float(storey) * HeightfieldRegion.STOREY_HEIGHT)
+				row += "  %s s%d/l%d" % [label, int(storey), level]
+		lines.append(row)
+	for dz in 2:
+		for dx in 2:
+			if source.loaded_storey_at(tile + Vector2i(dx, dz)) == null \
+					or source.loaded_point_at(tile + Vector2i(dx, dz)) == null:
+				lines.append("  edges: (corners not loaded)")
+				return lines
+	var view := LoadedPoints.new(source)
+	var edges := [["-z a-b", tile, Vector2i(1, 0)], ["+x b-c", tile + Vector2i(1, 0), Vector2i(0, 1)],
+		["+z d-c", tile + Vector2i(0, 1), Vector2i(1, 0)], ["-x a-d", tile, Vector2i(0, 1)]]
+	var parts: Array[String] = []
+	for edge: Array in edges:
+		parts.append("%s %s" % [edge[0], EDGE_NAMES[TerrainTileField.edge_category(view, edge[1], edge[2])]])
+	lines.append("  edges: " + "   ".join(parts))
+	return lines
 
 func _process(_dt: float) -> void:
 	if not _enabled:
@@ -54,7 +98,8 @@ func _process(_dt: float) -> void:
 	lines.append("seed %s   (F3 to toggle)" % str(wseed))
 	if player != null:
 		var pp: Vector3 = player.global_position
-		lines.append("player  world (%.1f, %.1f, %.1f)  cell (%d, %d)" % [pp.x, pp.y, pp.z, _cell_of(pp.x), _cell_of(pp.z)])
+		lines.append("player  world (%.1f, %.1f, %.1f)  point (%d, %d)" % [pp.x, pp.y, pp.z,
+			TerrainTileField.point_of(pp.x), TerrainTileField.point_of(pp.z)])
 		if wseed != 0:
 			var w5 := Helper.biome_weights5(pp, int(wseed))
 			var parts: Array[String] = []
@@ -79,15 +124,7 @@ func _process(_dt: float) -> void:
 		lines.append("crosshair: (no terrain hit)")
 	else:
 		var wp: Vector3 = hit.position
-		var cx := _cell_of(wp.x)
-		var cz := _cell_of(wp.z)
-		lines.append("crosshair world (%.1f, %.1f, %.1f)  cell (%d, %d)" % [wp.x, wp.y, wp.z, cx, cz])
-		lines.append("storeys (3×3 around crosshair cell, +z down):")
-		for dz in [-1, 0, 1]:
-			var row := "  "
-			for dx in [-1, 0, 1]:
-				var s: Variant = ft.loaded_storey_at(Vector2i(cx + dx, cz + dz))
-				var value := "%2d" % int(s) if s != null else "--"
-				row += ("[%s]" % value) if (dx == 0 and dz == 0) else (" %s " % value)
-			lines.append(row)
+		lines.append("crosshair world (%.1f, %.1f, %.1f)  point (%d, %d)" % [wp.x, wp.y, wp.z,
+			TerrainTileField.point_of(wp.x), TerrainTileField.point_of(wp.z)])
+		lines.append_array(tile_lines(ft, Vector2(wp.x, wp.z)))
 	_label.text = "\n".join(lines)

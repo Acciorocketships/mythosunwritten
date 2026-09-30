@@ -28,13 +28,13 @@ func test_category_snapshot_flags_exactly_the_graded_cells() -> void:
 	var pad := _sunken_pad()
 	var graded: HeightfieldRegion = (pad[0] as HeightfieldRegion).with_terrain_grades(
 		[pad[1]] as Array[TerrainGradePatch])
-	var values := FieldTerrainStreamer._cell_snapshot(Vector2i.ZERO, graded)
-	for z in 8:
-		for x in 8:
+	var values := FieldTerrainStreamer._point_snapshot(Vector2i.ZERO, graded)
+	for z in 16:
+		for x in 16:
 			var expected := 1.0 if graded.native_control_heights.has(Vector2i(x, z)) else 0.0
-			assert_eq(values[(z * 8 + x) * 2 + 1], expected, "cell (%d, %d) graded flag" % [x, z])
-	assert_eq(values[(0 * 8 + 4) * 2 + 1], 1.0, "the pad cell is graded")
-	assert_eq(values[(6 * 8 + 0) * 2 + 1], 0.0, "untouched natural ground is not graded")
+			assert_eq(values[(z * 16 + x) * 2 + 1], expected, "point (%d, %d) graded flag" % [x, z])
+	assert_eq(values[(0 * 16 + 4) * 2 + 1], 1.0, "the pad point is graded")
+	assert_eq(values[(6 * 16 + 0) * 2 + 1], 0.0, "untouched natural ground is not graded")
 
 
 const Frozen := preload("res://tests/fixtures/frozen_road_grade.gd")
