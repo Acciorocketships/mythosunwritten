@@ -263,6 +263,14 @@ const SHORE_RADIUS_CELLS := 4   # BUCKET=3.0m cells; safely covers an 8.0m clamp
 const SWELL_SHORE_FADE := 4.0
 const SWELL_TROUGH_BOUND := 1.40 # 0.51m ambient + 0.48m packets + 0.375m interactive ripple, rounded up
 const SWELL_BED_COVER := 0.02    # clearance above the visible terrain envelope
+# What covers the tile surface at the waterline: the cliff sheet solid lies ON
+# the terrain's 2 m mesh chords plus CliffSlopeField.COVER (0.01 m), and those
+# chords themselves rise above the exact tile surface that height_bounds
+# bounds. On a one-level (1 m) smootherstep step the 2 m-quad diagonal
+# (2.83 m) sags at most 1 m * max S'' (5.77) * 2.83^2 / (8 * 12^2) = 0.04 m.
+# 0.01 + 0.04 = 0.05 m of cover a wave trough must not uncover (it replaces
+# the retired native lip lift, which was also 0.05 m).
+const SHEET_COVER := 0.05
 
 # --- Rim normals (controller addition) — curl-rotation angle per rim row,
 # about the curve tangent, sweeping from UP toward the curve's own outward
@@ -601,10 +609,11 @@ static func _swell_scale(st: Dictionary, p: Vector2, water_y: float, shore_dist:
 				var centre := Vector2(corner) * STEP
 				st.wave_ground_bounds[corner] = TerrainTileField.height_bounds(st.region,
 					Rect2(centre-Vector2.ONE*reach,Vector2.ONE*reach*2.0)).y
-			# World terrain has no native lip pieces lifted above the
-			# heightfield any more: the bound is the tile surface itself.
+			# The cliff sheet (and the terrain's own mesh chords) cover the tile
+			# surface by up to SHEET_COVER. Both the mesh and buoyancy sampler
+			# reserve that lift.
 			var room: float = maxf(0.0,water_y-float(st.wave_ground_bounds[corner])
-				-SWELL_BED_COVER)
+				-SHEET_COVER-SWELL_BED_COVER)
 			var weight: float = (fraction.x if x==1 else 1.0-fraction.x) \
 				*(fraction.y if z==1 else 1.0-fraction.y)
 			depth_scale += clampf(room/SWELL_TROUGH_BOUND,0.0,1.0)*weight
