@@ -80,7 +80,7 @@ func test_hillside_route_uses_only_rendered_walkable_slopes() -> void:
 		var b: Vector2i = connection.b
 		var midpoint := (Vector2(a) + Vector2(b)) \
 			* HeightfieldPlan.CELL * 0.5
-		assert_true(TerrainSurfaceField.is_walkable_edge(
+		assert_true(PathProgram.is_route_edge_walkable(
 			fields.region_at(midpoint), a, b - a),
 			"a path can climb rendered slopes but never crosses an exposed cliff face")
 
@@ -100,3 +100,33 @@ func test_route_never_cuts_through_an_exposed_cliff_face() -> void:
 		{"id": &"cliff-high", "cell": Vector2i(32, 0)})
 	assert_true(route.is_empty(),
 		"an exposed 12 m face is rejected rather than hidden under a path")
+
+## Routes stay on the 24 m lattice while terrain is sampled on 12 m points: a
+## route edge c -> c + d crosses the point edges 2c -> 2c+d and 2c+d -> 2c+2d.
+## A cliff on either half (in particular the odd one, between points 2c+1 and
+## 2c+2, which no route cell centre touches) blocks the whole route edge.
+static func _step_region(high_below: int) -> HeightfieldRegion:
+	var storeys: Dictionary = {}
+	var levels: Dictionary = {}
+	for z in range(-3, 4):
+		for x in range(-3, 8):
+			storeys[Vector2i(x, z)] = 5 if x < high_below else 2
+			levels[Vector2i(x, z)] = 0
+	return HeightfieldRegion.new(storeys, levels)
+
+func test_a_route_edge_across_an_odd_point_cliff_is_not_walkable() -> void:
+	assert_eq(PathProgram.ROUTE_CELL, 2.0 * HeightfieldPlan.POINT,
+		"a route cell spans exactly two lattice tiles")
+	var odd := _step_region(2)     # cliff between points 1 and 2
+	assert_true(TerrainTileField.is_walkable_edge(odd, Vector2i(0, 0), Vector2i.RIGHT),
+		"the first half of route edge 0 -> 1 is flat")
+	assert_false(PathProgram.is_route_edge_walkable(odd, Vector2i(0, 0), Vector2i.RIGHT),
+		"the odd-point cliff (points 1 -> 2) blocks route edge 0 -> 1")
+	assert_false(PathProgram.is_route_edge_walkable(odd, Vector2i(1, 0), Vector2i.LEFT),
+		"in both directions")
+	var even := _step_region(1)    # cliff between points 0 and 1
+	assert_false(PathProgram.is_route_edge_walkable(even, Vector2i(0, 0), Vector2i.RIGHT))
+	assert_true(PathProgram.is_route_edge_walkable(even, Vector2i(1, 0), Vector2i.RIGHT),
+		"route edge 1 -> 2 (points 2 -> 4) lies wholly on the low side")
+	assert_true(PathProgram.is_route_edge_walkable(odd, Vector2i(0, 0), Vector2i(0, 1)),
+		"a route along the cliff top stays walkable")

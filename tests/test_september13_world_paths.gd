@@ -18,12 +18,14 @@ func test_real_hillside_node_keeps_its_walkable_narrow_exit() -> void:
 	var route := paths._compute_route(a,b,"hill-town|hill-exit")
 	assert_false(route.is_empty(),"The road's centre is continuous; its outer edge has only a 14 cm step")
 	# Per edge (owner, September 27): its other two faces are walkable exactly
-	# when they are not cliff edges; a one-storey side of a cliff cell is an
-	# ordinary slope, and a two-storey side remains forbidden.
-	var region := fields.region_at(Vector2(cell)*HeightfieldPlan.CELL)
+	# when neither of their 12 m point edges is a cliff edge; a one-storey
+	# step is an ordinary slope, and a two-storey step remains forbidden.
+	var region := fields.region_at(Vector2(cell)*PathProgram.ROUTE_CELL)
 	for d: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN]:
-		assert_eq(TerrainSurfaceField.is_walkable_edge(region,cell,d,PathProgram.PATH_HALF_WIDTH),
-			not TerrainSurfaceField.is_cliff_edge(region,cell.x,cell.y,d), "face %s" % d)
+		var cliff := false
+		for edge: Array in PathProgram.route_point_edges(cell, d):
+			cliff = cliff or TerrainTileField.is_cliff_edge(region, edge[0], edge[1])
+		assert_eq(PathProgram.is_route_edge_walkable(region,cell,d), not cliff, "face %s" % d)
 
 func test_route_goes_around_a_finite_cliff_without_crossing_it() -> void:
 	var seed_value := 2697992464
@@ -44,8 +46,8 @@ func test_route_goes_around_a_finite_cliff_without_crossing_it() -> void:
 		if route.is_empty(): continue
 		var detoured := false
 		for edge: Dictionary in route.connections:
-			var p := (Vector2(edge.a)+Vector2(edge.b))*HeightfieldPlan.CELL*.5
-			assert_true(TerrainSurfaceField.is_walkable_edge(fields.region_at(p),edge.a,edge.b-edge.a))
+			var p := (Vector2(edge.a)+Vector2(edge.b))*PathProgram.ROUTE_CELL*.5
+			assert_true(PathProgram.is_route_edge_walkable(fields.region_at(p),edge.a,edge.b-edge.a))
 			detoured = detoured or Vector2(edge.a).cross(Vector2(direction)) != 0
 		assert_true(detoured,"The road follows ground around the obstacle")
 		assert_eq(paths.route_for(b,a),route,"Both towns share the same canonical connection")
@@ -67,9 +69,8 @@ func test_road_can_climb_between_towns_in_the_current_height_range() -> void:
 	if not route.is_empty():
 		assert_eq(route.connections.size(),32)
 		for edge: Dictionary in route.connections:
-			var p := (Vector2(edge.a)+Vector2(edge.b))*HeightfieldPlan.CELL*.5
-			assert_true(TerrainSurfaceField.is_walkable_edge(fields.region_at(p),edge.a,edge.b-edge.a,
-				PathProgram.PATH_HALF_WIDTH))
+			var p := (Vector2(edge.a)+Vector2(edge.b))*PathProgram.ROUTE_CELL*.5
+			assert_true(PathProgram.is_route_edge_walkable(fields.region_at(p),edge.a,edge.b-edge.a))
 
 func test_solver_revisits_cells_after_a_detour_instead_of_using_a_dag_order() -> void:
 	# The only route is 0 -> 3 -> 1 -> 2 -> 4. A monotone pass visits 1
@@ -142,17 +143,23 @@ func test_accepted_road_width_has_no_hidden_step_between_boundary_controls() -> 
 	var heights := TerrainWorldTuning.make_heightfield(2697992464)
 	var accepted := 0
 	for cell:Vector2i in [Vector2i(-20,-13),Vector2i(-9,-41),Vector2i(10,-16),Vector2i(21,-49),Vector2i(38,45),Vector2i(19,32)]:
-		var region := heights.compute_region(cell.x,cell.y,2)
+		# Route cell c is lattice point 2c; its route edges cross two point edges,
+		# each through one dual-cell border the 4 m road straddles.
+		var centre := cell*PathProgram.POINTS_PER_ROUTE_CELL
+		var region := heights.compute_region(centre.x,centre.y,4)
 		for direction:Vector2i in [Vector2i.RIGHT,Vector2i.DOWN,Vector2i.LEFT,Vector2i.UP]:
-			if not TerrainSurfaceField.is_walkable_edge(region,cell,direction,PathProgram.PATH_HALF_WIDTH): continue
+			if not PathProgram.is_route_edge_walkable(region,cell,direction): continue
 			accepted += 1
-			var boundary := (Vector2(cell)+Vector2(direction)*.5)*HeightfieldPlan.CELL
-			var tangent := Vector2(-direction.y,direction.x)
-			for index in 81:
-				var point := boundary+tangent*lerpf(-2.0,2.0,float(index)/80.0)
-				var a := TerrainSurfaceField.surface_y_in_cell(region,point.x,point.y,cell.x,cell.y)
-				var b := TerrainSurfaceField.surface_y_in_cell(region,point.x,point.y,cell.x+direction.x,cell.y+direction.y)
-				assert_lte(absf(a-b),TerrainSurfaceField.EXPOSE_EPS+.000001)
+			for edge: Array in PathProgram.route_point_edges(cell,direction):
+				var p: Vector2i = edge[0]
+				var q: Vector2i = p+direction
+				var boundary := (Vector2(p)+Vector2(direction)*.5)*HeightfieldPlan.POINT
+				var tangent := Vector2(-direction.y,direction.x)
+				for index in 81:
+					var point := boundary+tangent*lerpf(-2.0,2.0,float(index)/80.0)
+					var a := TerrainTileField.surface_y_on_side(region,point.x,point.y,p)
+					var b := TerrainTileField.surface_y_on_side(region,point.x,point.y,q)
+					assert_lte(absf(a-b),TerrainSurfaceField.EXPOSE_EPS+.000001)
 	assert_gt(accepted,8,"The dense audit must inspect legal crossings, not only reject walls")
 
 func test_graph_search_matches_exhaustive_simple_paths_with_detours() -> void:
