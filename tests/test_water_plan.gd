@@ -90,14 +90,15 @@ func test_pond_level_at_or_below_ring_minimum() -> void:
 		return
 	var pond: PondStamp = t.pond
 	var min_h: float = INF
-	# Every 12 m terrain lattice point over the footprint and a one-point (12 m) ring.
+	# Original oracle: the footprint plus a 24 m ring. Sampled at every 12 m
+	# terrain point (a superset of the original 24 m samples, so at least as strict).
 	var pitch := HeightfieldPlan.POINT
-	var r_cells: int = int(ceil((pond.bound_radius() + HeightfieldPlan.POINT) / pitch))
+	var r_cells: int = int(ceil((pond.bound_radius() + WaterPlan.TILE) / pitch))
 	var cc: Vector2i = Vector2i(roundi(pond.center.x / pitch), roundi(pond.center.y / pitch))
 	for dz in range(-r_cells, r_cells + 1):
 		for dx in range(-r_cells, r_cells + 1):
 			var p: Vector2 = Vector2(float(cc.x + dx) * pitch, float(cc.y + dz) * pitch)
-			if pond.footprint_t(p) <= 1.0 + HeightfieldPlan.POINT / pond.radius:
+			if pond.footprint_t(p) <= 1.0 + WaterPlan.TILE / pond.radius:
 				min_h = minf(min_h, plan.noise_h(p))
 	# maxf mirrors _pond_level's floor of storey 1 (beds must stay above y=0);
 	# lowland basins can floor to storey 0 and still get a level-1 pond.
@@ -172,8 +173,9 @@ func test_source_pool_never_overtops_its_ring() -> void:
 		if t == null:
 			continue
 		var pool: PondStamp = t.source_pool
-		var bound: float = pool.bound_radius() + HeightfieldPlan.POINT
-		# Every 12 m terrain lattice point: an odd point can be the lowest rim.
+		var bound: float = pool.bound_radius() + WaterPlan.TILE
+		# Original 24 m ring, sampled at every 12 m terrain point (a superset of
+		# the original 24 m samples): an odd point can be the lowest rim.
 		var pitch := HeightfieldPlan.POINT
 		var r_cells: int = int(ceil(bound / pitch))
 		var cc: Vector2i = Vector2i(roundi(pool.center.x / pitch), roundi(pool.center.y / pitch))

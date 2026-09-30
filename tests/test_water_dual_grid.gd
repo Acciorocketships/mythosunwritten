@@ -143,34 +143,42 @@ func test_wall_face_is_the_measured_dual_border() -> void:
 		"the face is 1 m out, on the border x = 6")
 
 
-## A pond's bank storey is the minimum of the pre-carve field over EVERY 12 m
-## terrain point of its footprint and a one-point ring: the corners of every
-## tile its shore can cross, so the water stays below every rendered bank.
-## Guard on a live plan (seed 2697992464, amplitude 22, super-cell (6, 3)).
+## A pond's bank storey never exceeds the pre-carve ground at any 12 m
+## terrain point within its maximum wobble radius plus 24 m: a shore point's
+## tile has corners up to 12 * sqrt(2) m away, and a tile never rises above
+## its corners. Independent brute force over the bounding box of lattice
+## points (not the code's enumeration), across every pool and pond of two
+## seeds' central source windows. At seed 2697992464 (amplitude 22, super-cell
+## (6, 3)) an odd point 15.6 m high lies under a storey-4 level that a 24 m-
+## pitch or 12 m-ring survey allowed.
 func test_pond_level_respects_every_twelve_metre_point() -> void:
-	var plan := WaterPlan.new(2697992464, 22.0, 8)
-	var t := plan.river_for(Vector2i(6, 3), 0)
-	assert_not_null(t, "the pinned river exists")
-	if t == null:
-		return
 	var checked := 0
-	for pool: PondStamp in [t.source_pool, t.pond]:
-		if pool == null:
-			continue
-		var bound: float = pool.bound_radius() + HeightfieldPlan.POINT
-		var pitch := HeightfieldPlan.POINT
-		var r := int(ceil(bound / pitch))
-		var cc := Vector2i(roundi(pool.center.x / pitch), roundi(pool.center.y / pitch))
-		var min_h := INF
-		for dz in range(-r, r + 1):
-			for dx in range(-r, r + 1):
-				var p := Vector2(cc + Vector2i(dx, dz)) * pitch
-				if p.distance_to(pool.center) <= bound:
-					min_h = minf(min_h, plan.noise_h(p))
-		checked += 1
-		assert_lte(float(pool.level) * WaterPlan.STOREY, maxf(min_h, WaterPlan.STOREY) + 0.0001,
-			"pool at %s: bank storey %d over the lowest 12 m point %.3f" % [pool.center, pool.level, min_h])
-	assert_gt(checked, 0)
+	for seed_value: int in [2697992464, 991177]:
+		var plan := WaterPlan.new(seed_value, 22.0, 8)
+		for sz in range(-6, 7):
+			for sx in range(-6, 7):
+				if not plan.has_source(Vector2i(sx, sz)):
+					continue
+				var t := plan.river_for(Vector2i(sx, sz), 0)
+				if t == null:
+					continue
+				for pool: PondStamp in [t.source_pool, t.pond]:
+					if pool == null:
+						continue
+					var bound: float = pool.radius * (1.0 + PondStamp.WOBBLE) + 24.0
+					var lo := Vector2i(((pool.center - Vector2.ONE * bound) / 12.0).floor())
+					var hi := Vector2i(((pool.center + Vector2.ONE * bound) / 12.0).ceil())
+					var min_h := INF
+					for j in range(lo.y, hi.y + 1):
+						for i in range(lo.x, hi.x + 1):
+							var p := Vector2(i * 12.0, j * 12.0)
+							if p.distance_to(pool.center) <= bound:
+								min_h = minf(min_h, plan.noise_h(p))
+					checked += 1
+					assert_lte(float(pool.level) * WaterPlan.STOREY, maxf(min_h, WaterPlan.STOREY) + 0.0001,
+						"seed %d pool at %s: bank storey %d over the lowest 12 m point %.3f" % [
+							seed_value, pool.center, pool.level, min_h])
+	assert_gt(checked, 10, "enough pools checked")
 
 
 ## Review focus 5: at 12 m sampling, every lattice point whose dual cell the

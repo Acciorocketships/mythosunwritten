@@ -464,17 +464,19 @@ func _make_pond(p: Vector2, arc: float, incoming_bed := INF) -> PondStamp:
 
 
 ## Bank storey for a pond at p: storey-quantized minimum of the PRE-CARVE
-## field at every 12 m terrain lattice point over the footprint ∪ a one-point
-## (12 m) ring: those points are the corners of every tile the shore can cross,
-## and a tile never rises above its corners, so the water stays below its
-## banks. Endpoints already sit in local lows, so this is a safety clamp.
+## field at every 12 m terrain lattice point within the footprint's maximum
+## wobble radius plus a 24 m ring. A shore point's tile has corners up to
+## 12 * sqrt(2) = 16.97 m away, and a tile never rises above its corners, so
+## the 24 m ring holds every corner of every tile the shore can cross (with
+## slack): the water stays below its banks. Endpoints already sit in local
+## lows, so this is a safety clamp.
 ## FLOOR, never round: rounding UP put the level (and so the surface) half a
 ## storey above the lowest rim ground — the whole pool overtopped its banks
 ## and spilled a waterfall on every side (summit tarns especially).
 ## Floor of 1 keeps beds above y=0.
 func _pond_level(center: Vector2, radius: float) -> int:
 	var pitch := HeightfieldPlan.POINT
-	var bound: float = radius * (1.0 + PondStamp.WOBBLE) + pitch
+	var bound: float = radius * (1.0 + PondStamp.WOBBLE) + TILE
 	var r_points: int = int(ceil(bound / pitch))
 	var cc: Vector2i = Vector2i(roundi(center.x / pitch), roundi(center.y / pitch))
 	var min_h: float = INF
@@ -669,7 +671,11 @@ func _contour_step(t: RiverTrace, visited: Dictionary, p: Vector2,
 ## monotone via prev, floored at BED_MIN. Banks are the natural pre-carve
 ## field just past the feather on each side of the flow, sampled at two rings
 ## one 12 m terrain point apart, so a lattice point never slips between the
-## probes.
+## probes. The survey keeps FEATHER (8 m), not CARVE_FEATHER (4 m): it reads
+## the natural PRE-carve field, so where the partial carve ends does not move
+## the bank it measures; starting past the wider band keeps both rings clear of
+## any partially carved point under either feather, and keeps live river beds
+## (a hydraulic plan independent of the terrain lattice) unchanged.
 func _contained_bed(prev_bed: float, p: Vector2, dir: Vector2, half_w: float) -> float:
 	var n: Vector2 = Vector2(-dir.y, dir.x)
 	var pitch := HeightfieldPlan.POINT
