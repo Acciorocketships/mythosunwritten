@@ -64,7 +64,7 @@ func _ready() -> void:
 	_legend.anchor_top = 1.0
 	_legend.anchor_bottom = 1.0
 	_legend.offset_left = 10.0
-	_legend.offset_top = -250.0
+	_legend.offset_top = -290.0
 	add_child(_legend)
 	_apply()
 
