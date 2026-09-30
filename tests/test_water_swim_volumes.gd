@@ -224,13 +224,17 @@ func test_sampler_level_at_tracks_the_field() -> void:
 ## sampler must retain it after the worker context/terrain region disappear.
 ## This is the exact submerged passage from the 2026-07-21 inner-corner
 ## screenshot; the old native-6m-only snapshot returned NaN here.
+## Re-pinned with test_water_field's sub-lattice passage (dual-grid terrain):
+## the rescued 3 m sample (-204,-795) in chunk (-2,-5) lies between two dry
+## 6 m fill nodes; the old (-17,-20) passage does not survive the 12 m
+## resampling of the frozen field.
 func test_sampler_preserves_reported_sub_lattice_rescue() -> void:
-	var chunk := Vector2i(-3, -3)
+	var chunk := Vector2i(-2, -5)
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, chunk)
 	var ctx: Dictionary = WaterField.ctx(water, chunk, region)
 	var skin: Dictionary = WaterSkin.build(water, chunk, region)
-	var p := Vector2(-402.0981, -489.6676)
+	var p := Vector2(-204.0, -795.0)
 	var truth: float = WaterField.level_at(ctx, p)
 	var got: float = skin.sampler.level_at(p)
 	assert_true(WaterField.wet(ctx, region, p),

@@ -317,6 +317,12 @@ func test_steep_chute() -> void:
 ## separated rendered bathymetry from the hydraulic trace bed; it now has
 ## 3m of static cover and must honestly classify SWIM. The load-bearing
 ## invariant remains static-field parity: swell never enters the depth gate.
+## Re-pinned (dual-grid terrain, 2026-09-30): the 12 m resampling of the
+## frozen field moved the I4 wall from x = 36 to the dual-cell border x = 42,
+## putting the old pin (36.4,-1108.7) on the cliff top (static depth -8.9).
+## Scanning the same transect z = -1108.7 eastward, the first point with the
+## stated 3 m static cover is the wall line x = 42.0 (3.12 m); the pin sits
+## 1 m into the river, off the wall line, at (43.0,-1108.7).
 func test_i4_waterline_pin() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
@@ -325,7 +331,7 @@ func test_i4_waterline_pin() -> void:
 	assert_false(skin.is_empty(), "site chunk builds a skin")
 	if skin.is_empty():
 		return
-	var p := Vector2(36.4, -1108.7)
+	var p := Vector2(43.0, -1108.7)
 	var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
 	var lvl: float = WaterField.level_at(ctx, p)
 	var depth: float = lvl - g
@@ -335,7 +341,7 @@ func test_i4_waterline_pin() -> void:
 		"reported river pin keeps genuinely swimmable static depth (%.4f > 0.8)" % depth)
 	var got: String = _character_class(skin, Vector3(p.x, g, p.y))
 	assert_eq(got, "SWIM",
-		"I4 (36.4,-1108.7) matches its genuinely deep static field through the real trigger+sampler path")
+		"I4 (43.0,-1108.7) matches its genuinely deep static field through the real trigger+sampler path")
 
 
 ## --- Class 5: plunge pool centre (controller addition 3) ---
@@ -422,7 +428,9 @@ func test_sloped_reach_mid_channel() -> void:
 	for zz in [1.0, 4.0, 7.0, 10.0, 13.0, 16.0, 19.0, 22.0]:
 		for xx in [13.0, 15.0]:
 			verts.append(Vector3(xx, WaterField.level_at(ctx, Vector2(xx, zz)), zz))
-	var st: Dictionary = {"verts": verts, "region": region, "ctx": ctx}
+	# The fixture is chunk (0,0): triggers cover only its own tiles.
+	var st: Dictionary = {"verts": verts, "region": region, "ctx": ctx,
+		"rect": Rect2(Vector2.ZERO, Vector2.ONE * WaterField.CHUNK)}
 	var triggers: Array = WaterSkin._triggers(st)
 	# r3 Task 12b: the spread gate (whole-tile + sub-tile suppression) is
 	# RETIRED — triggers are now simple wet-tile coverage, so a legal sloped

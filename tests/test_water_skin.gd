@@ -16,6 +16,15 @@ extends GutTest
 
 const SEED := 2697992464
 const SITE_CHUNK := Vector2i(0, -6)
+## Isolated source-pool chunk. Re-pinned for the dual-grid terrain (12 m
+## resampling of the frozen reported field): the old pool chunk (-4,-18) now
+## joins its pool to its outflow river, so it carries no closed curve. A scan
+## of every pool/pond chunk of the frozen seed (tests/test_water_dual_grid
+## notes in the task report) found (-1,-6): the source pool at (-84,-1048)
+## (r = 26 m, surface 7.0) yields one closed curve of 133 points, 45 of them
+## >= 18 m from any river -- the same "closed pond bowl with a calm window"
+## precondition these tests state.
+const POND_CHUNK := Vector2i(-1, -6)
 
 
 ## Actual surface waves need several render vertices per wavelength. The old
@@ -57,11 +66,15 @@ func test_free_meniscus_has_no_concave_inflection() -> void:
 
 # --- Task 5 rim classification (mirrors WaterSkin's outer-row numeric
 # structure, not its reach/pinch formula — see _on_rim_outer_row) ---
-const RIM_MAX_REACH := WaterField.FILL_STEP \
-	+ (WaterField.TILE * 0.5 - CliffDressing.PLACE) + 2.0
+# The visible wall face stands exactly on the dual-cell border where the
+# terrain surface jumps (TerrainTileField): no recess behind the measured
+# contact (the retired KayKit wall pieces sat 1.5m inside the high cell).
+const _FACE_RECESS := 0.0
+const RIM_MAX_REACH := WaterField.FILL_STEP + _FACE_RECESS + 2.0
 # A wall-turn miter may sit one 6m fill cell beyond a contour column, plus the
-# independently-derived 1.5m KayKit recess and local curl slack. This bound is
-# intentionally geometric, not copied from WaterSkin's miter limit.
+# independently-derived face recess (none on the dual grid) and local curl
+# slack. This bound is intentionally geometric, not copied from WaterSkin's
+# miter limit.
 const RIM_OUTER_Y_GATE := 0.60 # strictly between row4's -0.55 and row5's -0.65
 const RIM_BURY_GATE := 0.25   # brief's own "test_rim_outer_row_is_buried ... >= 0.25"
 
@@ -378,6 +391,20 @@ static func _field_wet_reach(ctx: Dictionary, region, p: Vector2,
 	return last_wet
 
 
+## Distance along the outward normal from contour point p to the first ground
+## above `level` (the visible wall face), scanned independently of
+## WaterSkin's own contact probe; INF when the column never rises within one
+## 6 m fill cell.
+static func _face_distance(region, p: Vector2, nrm: Vector2, level: float) -> float:
+	var d := 0.0
+	while d <= WaterField.FILL_STEP + 0.0001:
+		var q: Vector2 = p + nrm * d
+		if TerrainTileField.surface_y(region, q.x, q.y) > level:
+			return d
+		d += 0.05
+	return INF
+
+
 ## Returns the nearest contour sample to a reported world-space failure pin.
 ## The test deliberately discovers the sample instead of copying a production
 ## curve index, so contour reshaping cannot make the pin silently inspect an
@@ -493,32 +520,46 @@ static func _synthetic_free_rim() -> Dictionary:
 ## land on that bulb before it reaches the adjoining inner cliff corner.  This
 ## is a contact/join, so the visible surface must remain at the neighbouring
 ## contour level; satisfying the probe with the lower curl is the bug.
+## Re-pinned (dual-grid terrain, 2026-09-30): the photographed (-17,-20)
+## corner does not survive the 12 m resampling of the frozen field. The same
+## configuration -- water meeting an inner cliff corner -- is found in the same
+## chunk programmatically: contour columns whose own outward column confirms a
+## wall (WaterSkin._wall_contacts), with both neighbours confirmed too and the
+## wall normal turning by >= 20 degrees across them (8 such columns; nearest
+## to the old site (-401,-487): (-413.66,-510.24)). Pins lie halfway to each
+## corner's measured face and must be covered at the contour's own level.
 func test_reported_inner_corner_minus17_keeps_level_contact() -> void:
 	var chunk := Vector2i(-3, -3)
 	var region = _region(SEED, chunk)
 	var ctx: Dictionary = WaterField.ctx(_water(SEED), chunk, region)
 	var curves: Array = WaterContour.curves(ctx, _rect(chunk))
 	var skin: Dictionary = WaterSkin.build(_water(SEED), chunk, region)
-	var pins: Array[Vector2] = [
-		Vector2(-401.5849, -488.5688),
-		Vector2(-401.0370, -486.5928),
-		Vector2(-399.6116, -485.2105),
-	]
-	for pin: Vector2 in pins:
-		var nearest: Dictionary = _nearest_curve_sample(curves, pin)
+	var corners: Array = []
+	for c: Dictionary in curves:
+		var contact: Dictionary = WaterSkin._wall_contacts({"region": region}, c)
+		for i in range(1, c.pts.size() - 1):
+			if contact.flags[i - 1] != 1 or contact.flags[i] != 1 or contact.flags[i + 1] != 1:
+				continue
+			if absf(Vector2(c.normals[i - 1]).angle_to(c.normals[i + 1])) < deg_to_rad(20.0):
+				continue
+			var p: Vector2 = c.pts[i]
+			var face: float = _face_distance(region, p, c.normals[i], c.levels[i])
+			if face == INF:
+				continue
+			corners.append({"d": p.distance_to(Vector2(-401.0, -487.0)),
+				"pin": p + Vector2(c.normals[i]) * (0.5 * face), "level": c.levels[i]})
+	corners.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a.d < b.d)
+	assert_gte(corners.size(), 3, "the chunk still has inner cliff corners meeting water (site precondition)")
+	for k in mini(3, corners.size()):
+		var pin: Vector2 = corners[k].pin
+		var level: float = corners[k].level
 		var skin_y: float = _skin_y_at(skin.arrays, pin)
-		var ground: float = TerrainSurfaceField.surface_y(region, pin.x, pin.y)
-		var field: float = WaterField.level_at(ctx, pin)
-		var side: float = (pin - Vector2(nearest.point)).dot(Vector2(nearest.normal))
-		var contact: Dictionary = WaterSkin._wall_contacts(
-			{"region": region}, curves[nearest.curve])
-		print("MEAS 2026-07-21 inner-corner p=%s ground=%.3f field=%.3f skin=%.3f contour=%s normal=%s level=%.3f dist=%.3f side=%.3f wall=%d contact=%d reach=%.3f" % [
-			pin, ground, field, skin_y, nearest.point, nearest.normal,
-			nearest.level, nearest.distance, side, nearest.wall,
-			contact.flags[nearest.index], contact.face_reach[nearest.index]])
-		assert_true(skin_y >= float(nearest.level) - 0.10,
+		print("MEAS inner-corner contact p=%s ground=%.3f field=%.3f skin=%.3f level=%.3f" % [
+			pin, TerrainTileField.surface_y(region, pin.x, pin.y), WaterField.level_at(ctx, pin),
+			skin_y, level])
+		assert_true(skin_y >= level - 0.10,
 			"inner-corner water reaches its contact at level at %s (skin %.3f, level %.3f)" % [
-				pin, skin_y, float(nearest.level)])
+				pin, skin_y, level])
 
 
 ## Exact 2026-07-21 owner view at cell (-9,-31).  The middle screen ray is
@@ -690,29 +731,14 @@ func test_reported_chute_faces_never_bridge_dry_ground_or_underrun_the_bed() -> 
 ## leave the owner's visible slot.  At the wall point nearest the literal F3
 ## pin, require the emitted rim to reach that independently-derived visual
 ## face inset.
+## RETIRED (dual-grid terrain, 2026-09-30): the recessed KayKit face this pin
+## measured is gone from world terrain (walls are vertical skirts exactly on
+## the dual border, RIM_WALL_REACH 0), and the photographed long bank already
+## had no contour within 5 m on the baseline. "The rim reaches the wall face"
+## is exercised by test_wall_rim_reaches_the_face (re-pinned) and
+## test_water_dual_grid's test_wall_face_is_the_measured_dual_border.
 func test_reported_exact_bank_rim_reaches_recessed_cliff_face() -> void:
-	var chunk := Vector2i(0, -6)
-	var region = _region(SEED, chunk)
-	var ctx: Dictionary = WaterField.ctx(_water(SEED), chunk, region)
-	var curves: Array = WaterContour.curves(ctx, _rect(chunk))
-	var hint := Vector2(60.0, -1130.3)
-	var sample: Dictionary = _nearest_curve_sample(curves, hint)
-	assert_true(sample.distance < 5.0,
-		"a contour sample exists at the exact long-bank wall (nearest %.2fm)" % sample.distance)
-	if sample.distance >= 5.0:
-		return
-	var skin: Dictionary = WaterSkin.build(_water(SEED), chunk, region)
-	assert_false(skin.is_empty(), "exact long-bank chunk builds water")
-	if skin.is_empty():
-		return
-	var reach: float = _max_outward_reach(skin.arrays[Mesh.ARRAY_VERTEX],
-		sample.point, sample.normal, 0.02)
-	var visible_face_inset: float = WaterField.TILE * 0.5 - CliffDressing.PLACE
-	print("MEAS exact bank contour=%s normal=%s distance=%.3f rim_reach=%.3f visual_face_inset=%.3f" % [
-		sample.point, sample.normal, sample.distance, reach, visible_face_inset])
-	assert_true(reach >= visible_face_inset,
-		"water rim reaches the recessed KayKit cliff face: %.3fm >= %.3fm" % [
-			reach, visible_face_inset])
+	pending("retired: its subject, the recessed KayKit wall face, no longer exists on world terrain")
 
 
 ## Exact 19:30 corner view: the dark triangular wedge is centred on the
@@ -783,13 +809,15 @@ func test_reported_exact_corner_wet_region_has_connected_skin_coverage() -> void
 	if corner_sample.distance < 4.0:
 		var corner_reach: float = _max_outward_reach(
 			skin.arrays[Mesh.ARRAY_VERTEX], corner_sample.point, corner_sample.normal, 0.05)
-		var visible_face_inset: float = WaterField.TILE * 0.5 - CliffDressing.PLACE
-		print("MEAS exact corner contour=%s normal=%s distance=%.3f rim_reach=%.3f visual_face_inset=%.3f" % [
+		# The visible face is the first high ground of the column (the rock
+		# skirt on the dual border), not a recessed KayKit piece.
+		var face: float = _face_distance(region, corner_sample.point,
+			corner_sample.normal, float(corner_sample.level)) + _FACE_RECESS
+		print("MEAS exact corner contour=%s normal=%s distance=%.3f rim_reach=%.3f face=%.3f" % [
 			corner_sample.point, corner_sample.normal, corner_sample.distance,
-			corner_reach, visible_face_inset])
-		assert_true(corner_reach >= visible_face_inset,
-			"corner meniscus reaches beneath the recessed cliff face: %.3fm >= %.3fm" % [
-				corner_reach, visible_face_inset])
+			corner_reach, face])
+		assert_true(corner_reach >= face,
+			"corner meniscus reaches the cliff face: %.3fm >= %.3fm" % [corner_reach, face])
 
 
 ## Exact 2026-07-14 16:45 view: player (180.9,4,-1184.4), crosshair
@@ -797,27 +825,14 @@ func test_reported_exact_corner_wet_region_has_connected_skin_coverage() -> void
 ## notch lands on the low apron at this world point, behind the x=181.3 cliff
 ## face. It must be covered at the neighbouring river level; covering it by
 ## flooding the y=4 cliff top would be the wrong fix.
+## RETIRED (dual-grid terrain, 2026-09-30): after the 12 m resampling of the
+## frozen field chunk (0,-7) has no inner cliff corner with a confirmed wall
+## contact on both sides (scan: zero such contour columns), so this apron no
+## longer exists. The same invariant -- the top water surface stays at the
+## contour level up to a corner's wall -- is re-pinned in
+## test_reported_inner_corner_minus17_keeps_level_contact.
 func test_reported_corner_181_inner_apron_stays_water_covered() -> void:
-	var chunk := Vector2i(0, -7)
-	var region = _region(SEED, chunk)
-	var ctx: Dictionary = WaterField.ctx(_water(SEED), chunk, region)
-	var curves: Array = WaterContour.curves(ctx, _rect(chunk))
-	var skin: Dictionary = WaterSkin.build(_water(SEED), chunk, region)
-	# Intersect the failing screen ray with y=3, the neighbouring water body,
-	# rather than reusing its later collision with the apron at y=0.
-	var pin := Vector2(178.8354, -1186.913)
-	var ground: float = TerrainSurfaceField.surface_y(region, pin.x, pin.y)
-	var level: float = WaterField.level_at(ctx, pin)
-	var skin_y: float = _skin_y_at(skin.arrays, pin)
-	var nearest: Dictionary = _nearest_curve_sample(curves, pin)
-	print("MEAS exact corner-181 apron p=%s ground=%.3f field=%.3f skin=%.3f nearest=%s n=%s level=%.3f dist=%.3f" % [
-		pin, ground, level, skin_y, nearest.point, nearest.normal,
-		nearest.level, nearest.distance])
-	assert_true(level - ground >= 0.08,
-		"the exposed inner apron remains part of the continuous river field")
-	assert_true(skin_y >= float(nearest.level) - 0.10,
-		"top water contact covers the inner apron at river level (skin %.3f, water %.3f)" % [
-			skin_y, float(nearest.level)])
+	pending("retired: the photographed corner-181 apron does not exist on the 12 m terrain")
 
 
 ## The matched-angle render still exposed a dark triangular shard after the
@@ -866,34 +881,13 @@ func test_reported_corner_chunk_has_no_visible_free_edge_holes() -> void:
 ## notch. Require the TOP contact surface to stay within 10cm of the nearest
 ## contour level until it meets the wall. The point and tolerance come from the
 ## matched camera/terrain, not from WaterSkin's row/reach implementation.
+## RETIRED (dual-grid terrain, 2026-09-30): both pins are KayKit geometry --
+## the straight-wall ray hit the recessed piece and the second pin is the
+## KayKit corner itself (cell centre + CliffDressing.PLACE). Native pieces are
+## gone from world terrain; the level-contact invariant at a corner is
+## re-pinned in test_reported_inner_corner_minus17_keeps_level_contact.
 func test_reported_normal_corner_rim_reaches_recessed_turn() -> void:
-	var chunk := Vector2i(0, -7)
-	var region = _region(SEED, chunk)
-	var ctx: Dictionary = WaterField.ctx(_water(SEED), chunk, region)
-	var curves: Array = WaterContour.curves(ctx, _rect(chunk))
-	var skin: Dictionary = WaterSkin.build(_water(SEED), chunk, region)
-	# The first pin is the literal straight-wall ray from the matched camera.
-	# The second is the actual KayKit corner: cell (6,-51)'s centre plus the
-	# independently defined 10.5m dressing placement on both axes. The old
-	# one-pin test passed while this real corner still visibly descended.
-	var pins: Array[Vector2] = [
-		Vector2(154.28436, -1212.0),
-		Vector2(6.0 * WaterField.TILE + CliffDressing.PLACE,
-			-51.0 * WaterField.TILE + CliffDressing.PLACE),
-	]
-	for pin: Vector2 in pins:
-		var ground: float = TerrainSurfaceField.surface_y(region, pin.x, pin.y)
-		var level: float = WaterField.level_at(ctx, pin)
-		var skin_y: float = _skin_y_at(skin.arrays, pin)
-		var nearest: Dictionary = _nearest_curve_sample(curves, pin)
-		var to_gap: Vector2 = pin - nearest.point
-		print("MEAS exact normal-corner shelf p=%s ground=%.3f field=%.3f skin=%.3f nearest=%s n=%s dist=%.3f along=%.3f cross=%.3f" % [
-			pin, ground, level, skin_y, nearest.point, nearest.normal,
-			nearest.distance, to_gap.dot(nearest.normal),
-			absf(to_gap.dot(Vector2(-nearest.normal.y, nearest.normal.x)))])
-		assert_true(skin_y >= float(nearest.level) - 0.10,
-			"water stays level through the literal recessed corner instead of reaching it only with a downward curl at %s (skin %.3f, water %.3f)" % [
-				pin, skin_y, float(nearest.level)])
+	pending("retired: its subject, the recessed KayKit corner piece, no longer exists on world terrain")
 
 
 ## Falsification barrier for the owner's reported corpus: a first-dry field
@@ -1354,7 +1348,7 @@ func test_interior_rides_field() -> void:
 ## membership at the border exit — this task's report has the traces); this
 ## test pins all three.
 func test_skin_handles_closed_and_border_exit_curves() -> void:
-	var pond_chunk := Vector2i(-4, -18)
+	var pond_chunk := POND_CHUNK
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, pond_chunk)
 	var ctx: Dictionary = WaterField.ctx(water, pond_chunk, region)
@@ -1575,7 +1569,7 @@ func test_slope_is_continuous() -> void:
 ## below) rather than every vertex in the chunk, which would wrongly include
 ## the inlet's own river-engaged points.
 func test_pond_frames_are_calm() -> void:
-	var pond_chunk := Vector2i(-4, -18)
+	var pond_chunk := POND_CHUNK
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, pond_chunk)
 	var ctx: Dictionary = WaterField.ctx(water, pond_chunk, region)
@@ -1739,10 +1733,14 @@ func test_rim_normals_curl_outward() -> void:
 ## owner's own R5-B frame (player (129.6,4.0,-1166.1) crosshair
 ## (129.7,4.2,-1165.8); owner complaint: "water still not going all the way
 ## up to the edges of the terrain," a visible slot between the sheet and the
-## bank), the rim's own outer-row verts must reach the visible wall at
-## TILE/2-CliffDressing.PLACE = 1.5m PAST the heightfield waterline. Earlier
-## 0.3-0.6m overshoot values still left the owner's visible slot because the
-## KayKit wall itself is recessed from the cell boundary.
+## bank), the rim's own outer-row verts must reach the visible wall. On the
+## dual-grid terrain (2026-09-30) that wall is the vertical rock skirt on the
+## dual-cell border, i.e. the first ground above the water along the column
+## (measured independently by _face_distance); the retired KayKit wall sat
+## 1.5m further inside the high cell. Re-pinned: after the 12 m resampling of
+## the frozen field the R5-B wall moved; the nearest contour column whose own
+## outward column confirms a wall (WaterSkin._wall_contacts) is at
+## (66.50,-1125.16) (scan of SITE_CHUNK, 195 confirmed wall columns).
 ## Site precondition scanned directly against WaterContour's own curve
 ## output (own ground probe at 1.0m along n̂, comparing against the curve's
 ## own baked level) — NOT via WaterSkin's own _rising_flags — so confirming
@@ -1766,7 +1764,7 @@ func test_wall_rim_reaches_the_face() -> void:
 	# survives future curve reshaping (same discipline
 	# test_pond_frames_are_calm's own "select the calm window DYNAMICALLY"
 	# note documents for the identical reason).
-	var hint := Vector2(129.6, -1138.5)
+	var hint := Vector2(66.5, -1125.16)
 	var best_p := Vector2.ZERO
 	var best_nrm := Vector2.ZERO
 	var best_lvl := 0.0
@@ -1807,12 +1805,12 @@ func test_wall_rim_reaches_the_face() -> void:
 		return
 	var verts: PackedVector3Array = skin.arrays[Mesh.ARRAY_VERTEX]
 	var reach: float = _max_outward_reach(verts, best_p, best_nrm, 0.02)
-	var visible_face_inset: float = WaterField.TILE * 0.5 - CliffDressing.PLACE
-	print("MEAS test_wall_rim_reaches_the_face: max outward reach=%.4f (visible face inset=%.4f)" % [
-		reach, visible_face_inset])
-	assert_true(reach >= visible_face_inset,
-		"the rim reaches the recessed wall face at %s (measured %.4f >= %.4f) — no visible slot" % [
-			best_p, reach, visible_face_inset])
+	var face: float = _face_distance(region, best_p, best_nrm, best_lvl) + _FACE_RECESS
+	print("MEAS test_wall_rim_reaches_the_face: max outward reach=%.4f (visible face=%.4f)" % [
+		reach, face])
+	assert_true(reach >= face,
+		"the rim reaches the wall face at %s (measured %.4f >= %.4f) — no visible slot" % [
+			best_p, reach, face])
 
 	# Free-edge invariant unaffected by the overshoot — same class, same
 	# assertion shape as test_free_edges_only_buried_rim_or_border, re-run
@@ -1957,7 +1955,9 @@ func test_no_trigger_where_unswimmably_steep() -> void:
 		Vector3(1.5, 9.0, 1.5), Vector3(4.5, 9.0, 1.5),        # steep tile (0,0)
 		Vector3(101.5, 3.0, 1.5), Vector3(104.5, 3.0, 1.5),    # calm control tile (4,0) — no trace nearby
 	])
-	var st: Dictionary = {"verts": verts, "region": region, "ctx": ctx}
+	# The fixture is chunk (0,0): triggers cover only its own tiles.
+	var st: Dictionary = {"verts": verts, "region": region, "ctx": ctx,
+		"rect": Rect2(Vector2.ZERO, Vector2.ONE * WaterField.CHUNK)}
 	var triggers: Array = WaterSkin._triggers(st)
 	var by_cell: Dictionary = {}
 	for t: Dictionary in triggers:
@@ -2104,7 +2104,9 @@ func test_legal_sloped_reach_keeps_its_trigger() -> void:
 	for zz in [1.0, 4.0, 7.0, 10.0, 13.0, 16.0, 19.0, 22.0]:
 		for xx in [13.0, 15.0]:
 			verts.append(Vector3(xx, WaterField.level_at(ctx, Vector2(xx, zz)), zz))
-	var st: Dictionary = {"verts": verts, "region": region, "ctx": ctx}
+	# The fixture is chunk (0,0): triggers cover only its own tiles.
+	var st: Dictionary = {"verts": verts, "region": region, "ctx": ctx,
+		"rect": Rect2(Vector2.ZERO, Vector2.ONE * WaterField.CHUNK)}
 	var triggers: Array = WaterSkin._triggers(st)
 	print("MEAS test_legal_sloped_reach_keeps_its_trigger: %d trigger(s) emitted (expect 1 — whole-tile coverage, no sub-tile splitting left to reconcile)" % triggers.size())
 	assert_eq(triggers.size(), 1, "the legal sloped reach gets exactly one whole-tile trigger — grade 0.2 is nowhere near STEEP_UNSWIMMABLE(0.45)")

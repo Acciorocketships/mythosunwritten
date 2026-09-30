@@ -450,14 +450,27 @@ func test_level_continuous_without_region_keeps_old_jumps() -> void:
 ## reported chute. Its rendered bed is now a continuous excavated reach, so
 ## it must not be classified as a separate fall face. Genuine fall detection
 ## remains covered by the hand-built 12m cliff immediately below.
+## Re-pinned (dual-grid terrain, 2026-09-30): on the 12 m resampling of the
+## frozen field this chute's excavated bed follows the frozen trace closely
+## enough to render the trace's own steep descent near (52.5,-1065) as a real
+## >4 m drop (terrain drop 8.1 m, water profile 13.39 -> 7.16 m over the
+## span). A FALSE span is one whose water does not itself fall: every span in
+## the chute must carry a hydraulic descent of at least FALL_DROP_MIN, the
+## system's own fall threshold; a stale uncarved gap under a gentle reach
+## would still fail.
 func test_reported_site_continuous_bathymetry_has_no_false_fall_span() -> void:
 	var water: WaterPlan = _water(SEED)
 	var region = _region(SEED, SITE_CHUNK)
 	var ctx: Dictionary = WaterField.ctx(water, SITE_CHUNK, region)
 	var rect := Rect2(Vector2(0, -1152), Vector2(192, 192))
 	var spans: Array = WaterField.steep_spans(ctx, rect)
-	assert_true(spans.is_empty(),
-		"the reported continuous chute has no stale rendered-terrain fall span: %s" % str(spans))
+	var false_spans: Array = []
+	for span: Dictionary in spans:
+		if float(span.top) - float(span.bottom) < WaterField.FALL_DROP_MIN:
+			false_spans.append(span)
+	print("MEAS reported chute spans=%d false=%d %s" % [spans.size(), false_spans.size(), str(spans)])
+	assert_true(false_spans.is_empty(),
+		"the reported continuous chute has no stale rendered-terrain fall span: %s" % str(false_spans))
 
 
 ## Non-degenerate steep_spans() integration test: a hand-built
@@ -748,31 +761,36 @@ func test_no_dry_holes_inside_water() -> void:
 ## endpoint dry. A hydrostatic surface cannot terminate over demonstrably
 ## connected submerged ground; doing so forces WaterSkin to draw the large
 ## exposed terminal curtain visible in the owner's exact camera.
+## Re-pinned (dual-grid terrain, 2026-09-30): after the 12 m resampling of
+## the frozen field no sub-lattice passage remains in the 3x3 chunks around
+## (-3,-3). Scanning the frozen seed's river chunks for a 3 m fill sample off
+## the wall lines, wet by at least 0.3 m, whose two bracketing 6 m fill nodes
+## are both dry found (-204,-795) in chunk (-2,-5): lake level 3.0 over
+## ground 0.41, between the dry 6 m nodes (-204,-798) and (-204,-792).
 func test_reported_inner_corner_has_no_false_dry_sub_lattice_passage() -> void:
-	var chunk := Vector2i(-3, -3)
+	var chunk := Vector2i(-2, -5)
 	var region = _region(SEED, chunk)
 	var ctx: Dictionary = WaterField.ctx(_water(SEED), chunk, region)
-	var wet_start := Vector2(-401.0702, -489.2760)
-	var outward := Vector2(-0.934489, -0.355992)
-	var target: Vector2 = wet_start + outward * 1.10
-	var level: float = WaterField.level_at(ctx, wet_start)
+	var target := Vector2(-204.0, -795.0)
+	var m1 := WaterField.FILL_M + 1
+	var coarse := func(p: Vector2) -> float:
+		var ij := Vector2i(((p - ctx.fill_base) / WaterField.FILL_STEP).round())
+		return ctx.fill.levels[ij.y * m1 + ij.x]
 	var rescued := 0
 	for sub_level: float in ctx.fill.sub_levels:
 		if sub_level != -INF:
 			rescued += 1
-	assert_true(WaterField.wet(ctx, region, wet_start),
-		"reported contour-side start is wet")
-	assert_true(_ground_clear_line(region, wet_start, target, level),
-		"the entire 1.1m passage remains below the connected water level")
-	var target_ground: float = TerrainSurfaceField.surface_y(
-		region, target.x, target.y)
+	var target_ground: float = TerrainTileField.surface_y(region, target.x, target.y)
 	var target_level: float = WaterField.level_at(ctx, target)
-	print("MEAS 2026-07-21 inner false-dry start=%s level=%.3f target=%s ground=%.3f field=%s rescued=%d/%d" % [
-		wet_start, level, target, target_ground, str(target_level), rescued,
-		ctx.fill.sub_levels.size()])
+	print("MEAS sub-lattice passage target=%s ground=%.3f field=%s rescued=%d/%d" % [
+		target, target_ground, str(target_level), rescued, ctx.fill.sub_levels.size()])
+	assert_eq(coarse.call(target + Vector2(0.0, -3.0)), -INF,
+		"the 6 m lattice node south of the passage is dry (site precondition)")
+	assert_eq(coarse.call(target + Vector2(0.0, 3.0)), -INF,
+		"the 6 m lattice node north of the passage is dry (site precondition)")
 	assert_true(WaterField.wet(ctx, region, target),
-		"hydrostatic fill crosses the submerged sub-lattice passage (ground %.3f, source level %.3f)" % [
-			target_ground, level])
+		"hydrostatic fill crosses the submerged sub-lattice passage (ground %.3f, level %s)" % [
+			target_ground, str(target_level)])
 	# Wider banks may make this passage coarse-connected already; requiring
 	# a positive repair count would reject that complete, hole-free result.
 	assert_true(rescued < ctx.fill.sub_levels.size() / 4,

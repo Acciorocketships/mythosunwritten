@@ -18,6 +18,13 @@ extends GutTest
 
 const SEED := 2697992464
 const SITE_CHUNK := Vector2i(0, -6)
+## Isolated source-pool chunk. Re-pinned for the dual-grid terrain (12 m
+## resampling of the frozen reported field): the old pool chunk (-4,-18) now
+## joins its pool to its outflow river and carries no closed curve. Scanning
+## every pool/pond chunk of the frozen seed found (-1,-6): the source pool at
+## (-84,-1048) (r = 26 m, surface 7.0) yields one closed curve (133 points,
+## 45 of them >= 18 m from any river), comfortably inside its chunk.
+const POND_CHUNK := Vector2i(-1, -6)
 
 static var _plans: Dictionary = {}
 static var _waters: Dictionary = {}
@@ -189,7 +196,7 @@ static func _curve_spacing_range(c: Dictionary) -> Vector2:
 ## test_no_triangle_bridges_a_fall_except_legitimate_steep_terrain
 ## (test_water_mesher.gd) already used to find its own steep-chunk site.
 func test_pond_yields_smooth_closed_curve() -> void:
-	var pond_chunk := Vector2i(-4, -18)
+	var pond_chunk := POND_CHUNK
 	var ctx: Dictionary = _ctx(SEED, pond_chunk)
 	var curves: Array = WaterContour.curves(ctx, _rect(pond_chunk))
 	assert_false(curves.is_empty(), "isolated-pond chunk builds real water")
@@ -409,7 +416,11 @@ func test_border_curves_weld() -> void:
 
 
 ## test_wall_stays_straight — the I4 wall reach (a genuine sheer vertical
-## cliff at x=36). The old oracle used a broad 24x32m box and flattened every
+## cliff). Re-pinned for the dual-grid terrain (12 m resampling of the frozen
+## field): walls stand exactly on dual-cell borders x = 12 i + 6, and the I4
+## wall is now the border x = 42 (between points 3 and 4); a scan of SITE_CHUNK
+## finds 20 wall-flagged contour points on x = 42.00 over z -1108..-1074. It
+## was x = 36 on the 24 m kernel. The old oracle used a broad 24x32m box and flattened every
 ## wall point from every contour into one array. That box also contains the
 ## separate perpendicular wall at z=-1092, so it incorrectly demanded that
 ## an intentional L-shaped cliff be globally collinear. Pin the actual
@@ -418,7 +429,8 @@ func test_border_curves_weld() -> void:
 func test_wall_stays_straight() -> void:
 	var ctx: Dictionary = _ctx(SEED, SITE_CHUNK)
 	var curves: Array = WaterContour.curves(ctx, _rect(SITE_CHUNK))
-	var reach := Rect2(Vector2(35.0, -1108.0), Vector2(2.0, 32.0))
+	const WALL_X := 42.0   # dual-cell border 12 * 3 + 6
+	var reach := Rect2(Vector2(WALL_X - 1.0, -1108.0), Vector2(2.0, 32.0))
 	var wall_pts: Array = []
 	for c: Dictionary in curves:
 		var pts: PackedVector2Array = c.pts
@@ -432,13 +444,13 @@ func test_wall_stays_straight() -> void:
 	var max_dev := 0.0
 	var offenders: Array = []
 	for p: Vector2 in wall_pts:
-		var dev: float = absf(p.x - 36.0)
+		var dev: float = absf(p.x - WALL_X)
 		max_dev = maxf(max_dev, dev)
 		if dev > 0.75:
 			offenders.append("%s dev=%.3f" % [p, dev])
 	print("MEAS test_wall_stays_straight: max x deviation = %.4f m (threshold 0.75)" % max_dev)
 	assert_true(max_dev <= 0.75,
-		"vertical I4 wall points stay aligned to x=36 within the rounded-corner allowance: %s" % str(offenders))
+		"vertical I4 wall points stay aligned to x=%.0f within the rounded-corner allowance: %s" % [WALL_X, str(offenders)])
 
 
 ## test_curve_levels_match_field — every curve point's baked `levels[i]` must
@@ -450,7 +462,7 @@ func test_wall_stays_straight() -> void:
 func test_curve_levels_match_field() -> void:
 	var sites := [
 		{"seed": SEED, "chunk": SITE_CHUNK},
-		{"seed": SEED, "chunk": Vector2i(-4, -18)},
+		{"seed": SEED, "chunk": POND_CHUNK},
 	]
 	var total_checked := 0
 	var max_err := 0.0
@@ -537,20 +549,30 @@ func test_reported_saddle_outward_frame_does_not_reverse() -> void:
 ## an inward frame sees six metres of pond water and makes the renderer build
 ## a bogus long shelf instead of the compact outer meniscus.
 func test_outward_frame_points_to_the_drier_side() -> void:
-	var chunk := Vector2i(-4, -18)
+	# Re-pinned (dual-grid terrain): the old pool pin at (-633.98,-3394.64)
+	# is gone with its closed curve. The pin is now chosen by the fixture's
+	# own definition -- a free-drop (non-wall) point of the isolated pool's
+	# closed curve -- taking the one farthest from any river sample.
+	var chunk := POND_CHUNK
 	var ctx: Dictionary = _ctx(SEED, chunk)
 	var curves: Array = WaterContour.curves(ctx, _rect(chunk))
-	var hint := Vector2(-633.9844, -3394.641)
-	var nearest := {"distance": INF}
+	var nearest := {"distance": INF, "clear": -INF}
 	for ci in curves.size():
 		var c: Dictionary = curves[ci]
+		if not c.closed:
+			continue
 		for i in c.pts.size():
-			var d: float = Vector2(c.pts[i]).distance_to(hint)
-			if d < nearest.distance:
-				nearest = {"distance": d, "curve": ci, "index": i,
+			if c.wall[i] == 1:
+				continue
+			var clear := INF
+			for tr: RiverTrace in ctx.rivers:
+				for k in tr.points.size():
+					clear = minf(clear, Vector2(c.pts[i]).distance_to(tr.points[k]) - tr.widths[k])
+			if clear > nearest.clear:
+				nearest = {"distance": 0.0, "clear": clear, "curve": ci, "index": i,
 					"point": c.pts[i], "normal": c.normals[i]}
 	assert_true(nearest.distance < 0.2,
-		"stable isolated-pond contour pin still exists (distance %.3f)" % nearest.distance)
+		"the isolated pool's closed curve has a free-drop point (site precondition)")
 	if nearest.distance >= 0.2:
 		return
 	var p: Vector2 = nearest.point
