@@ -1,7 +1,10 @@
 class_name GrassField
 extends RefCounted
 
-const TILE_WORLD := TerrainChunkMesher.TILE
+## A grass tile is one 24 m square, independent of the terrain lattice (12 m
+## points): tile identity, jitter lattices and payload ownership never change
+## with the terrain kernel.
+const TILE_WORLD := 24.0
 ## Collection 5 is a complete broad 311-blade patch rather than one small
 ## tuft. An 18×18 primary lattice closes saturated beds while the bake's broad
 ## root spread keeps neighbouring patches from reading as repeated clumps.
@@ -36,8 +39,10 @@ const FOOTPRINT_DIRECTIONS := [
 	Vector2(0.70710678, 0.70710678), Vector2(0.70710678, -0.70710678),
 	Vector2(-0.70710678, 0.70710678), Vector2(-0.70710678, -0.70710678),
 ]
-const CARDINALS := [Vector2i(1, 0), Vector2i(-1, 0),
-	Vector2i(0, 1), Vector2i(0, -1)]
+## Walls are queried over the tile grown by this margin: a wall further than
+## the taper distance plus the widest patch radius (and the gradient stencil)
+## cannot change any anchor of the tile.
+const WALL_QUERY_MARGIN := 8.0
 ## Uniformly shrink a patch at any grass-bed edge. Ecological coverage supplies
 ## the general edge factor; exposed upper cliff lips supply the physical factor.
 ## The minimum wins, and inverse-area supplemental density keeps the smaller
@@ -396,24 +401,9 @@ static func _footprint_overlaps_feature_surface(features: FeatureContext,
 static func _cliff_scale(region: HeightfieldRegion,
 		anchor: Vector2, footprint_radius: float,
 		edge_cache: Dictionary = {}) -> float:
-	var cell := Vector2i(roundi(anchor.x / TerrainSurfaceField.TILE),
-		roundi(anchor.y / TerrainSurfaceField.TILE))
-	var local := anchor - Vector2(cell) * TerrainSurfaceField.TILE
-	var high_edge_distance := INF
-	var low_edge_distance := INF
-	var masks := _cliff_masks(region, cell, edge_cache)
-	var boundary_mask := masks.x
-	var high_mask := masks.y
-	for index in CARDINALS.size():
-		if (boundary_mask & (1 << index)) == 0:
-			continue
-		var direction: Vector2i = CARDINALS[index]
-		var centre_distance := TerrainSurfaceField.HALF \
-			- local.dot(Vector2(direction))
-		if (high_mask & (1 << index)) != 0:
-			high_edge_distance = minf(high_edge_distance, centre_distance)
-		else:
-			low_edge_distance = minf(low_edge_distance, centre_distance)
+	var walls := _owner_walls(region, anchor, edge_cache)
+	var high_edge_distance := _wall_distance(walls.high, anchor)
+	var low_edge_distance := _wall_distance(walls.low, anchor)
 	var edge_distance := minf(high_edge_distance, low_edge_distance)
 	if is_inf(edge_distance):
 		return 1.0
@@ -436,41 +426,75 @@ static func _tile_has_coverage_edge(tile_fields: Array[Dictionary]) -> bool:
 		has_less_than_full = has_less_than_full or projected < 0.999
 	return has_grass and has_less_than_full
 
+## Any wall within reach of the tile (every wall has a high side).
 static func _tile_has_cliff_lip(region: HeightfieldRegion, origin: Vector2,
 		edge_cache: Dictionary) -> bool:
-	var first := Vector2i(roundi(origin.x / TerrainSurfaceField.TILE),
-		roundi(origin.y / TerrainSurfaceField.TILE))
-	var last_point := origin + Vector2.ONE * (TILE_WORLD - 0.001)
-	var last := Vector2i(roundi(last_point.x / TerrainSurfaceField.TILE),
-		roundi(last_point.y / TerrainSurfaceField.TILE))
-	for z in range(first.y, last.y + 1):
-		for x in range(first.x, last.x + 1):
-			if _cliff_masks(region, Vector2i(x, z), edge_cache).y != 0:
+	return bool(_wall_index(region, tile_of(origin), edge_cache).any)
+
+## The walls of one 24 m grass tile (grown by WALL_QUERY_MARGIN), from the
+## terrain kernel's exact wall outline: {any: bool, owners: {lattice point ->
+## {high: PackedVector2Array, low: PackedVector2Array}}}. Segment ends are
+## stored flat (a0, b0, a1, b1, ...). A lattice point's walls are the
+## half-segments on its dual cell's border where it is the HIGH owner (its
+## ground is exposed, the upper lip) or the LOW owner (the foot, which the
+## rock face hides). Both sides need one-sided gradient sampling; only the
+## high side tapers and needs footprint containment.
+static func _wall_index(region: HeightfieldRegion, tile: Vector2i,
+		edge_cache: Dictionary) -> Dictionary:
+	if edge_cache.has(tile):
+		return edge_cache[tile] as Dictionary
+	var rect := Rect2(Vector2(tile) * TILE_WORLD,
+		Vector2.ONE * TILE_WORLD).grow(WALL_QUERY_MARGIN)
+	var owners: Dictionary = {}
+	var any := false
+	for wall: Dictionary in TerrainTileField.wall_segments(region, rect):
+		any = true
+		for side: String in ["high", "low"]:
+			var point: Vector2i = wall[side]
+			if not owners.has(point):
+				owners[point] = {"high": PackedVector2Array(), "low": PackedVector2Array()}
+			var entry: Dictionary = owners[point]
+			var ends: PackedVector2Array = entry[side]
+			ends.append(wall.a)
+			ends.append(wall.b)
+			entry[side] = ends
+	var index := {"any": any, "owners": owners}
+	edge_cache[tile] = index
+	return index
+
+## The walls on the borders of the dual cell that owns `anchor`.
+static func _owner_walls(region: HeightfieldRegion, anchor: Vector2,
+		edge_cache: Dictionary) -> Dictionary:
+	var index := _wall_index(region, tile_of(anchor), edge_cache)
+	var point := Vector2i(TerrainTileField.point_of(anchor.x, region),
+		TerrainTileField.point_of(anchor.y, region))
+	var owners: Dictionary = index.owners
+	if owners.has(point):
+		return owners[point] as Dictionary
+	return {"high": PackedVector2Array(), "low": PackedVector2Array()}
+
+static func _wall_distance(segments: PackedVector2Array, anchor: Vector2) -> float:
+	var nearest := INF
+	for index in range(0, segments.size(), 2):
+		nearest = minf(nearest, Geometry2D.get_closest_point_to_segment(
+			anchor, segments[index], segments[index + 1]).distance_to(anchor))
+	return nearest
+
+## True when the axis-aligned stencil segment from -> to meets a wall (ends
+## included). Walls are axis-aligned half-segments on dual-cell borders.
+static func _stencil_crosses_wall(walls: Dictionary, from: Vector2, to: Vector2) -> bool:
+	var low := Vector2(minf(from.x, to.x), minf(from.y, to.y))
+	var high := Vector2(maxf(from.x, to.x), maxf(from.y, to.y))
+	for side: String in ["high", "low"]:
+		var segments: PackedVector2Array = walls[side]
+		for index in range(0, segments.size(), 2):
+			var a := segments[index]
+			var b := segments[index + 1]
+			var lo := Vector2(minf(a.x, b.x), minf(a.y, b.y))
+			var hi := Vector2(maxf(a.x, b.x), maxf(a.y, b.y))
+			if lo.x <= high.x and hi.x >= low.x and lo.y <= high.y and hi.y >= low.y:
 				return true
 	return false
-
-## Returns (symmetric boundary mask, high-side mask). Both sides need one-sided
-## gradient sampling at the discontinuity. Only the exposed owner tapers and
-## needs footprint containment; lower-side blades terminate against the wall.
-static func _cliff_masks(region: HeightfieldRegion, cell: Vector2i,
-		edge_cache: Dictionary) -> Vector2i:
-	if edge_cache.has(cell):
-		return edge_cache[cell] as Vector2i
-	var boundary_mask := 0
-	var high_mask := 0
-	for index in CARDINALS.size():
-		var direction: Vector2i = CARDINALS[index]
-		var high_here := TerrainSurfaceField.is_wall_edge(
-			region, cell.x, cell.y, direction)
-		var high_there := TerrainSurfaceField.is_wall_edge(region,
-			cell.x + direction.x, cell.y + direction.y, -direction)
-		if high_here or high_there:
-			boundary_mask |= 1 << index
-		if high_here:
-			high_mask |= 1 << index
-	var masks := Vector2i(boundary_mask, high_mask)
-	edge_cache[cell] = masks
-	return masks
 
 ## A centred derivative crossing a vertical discontinuity falsely classifies a
 ## metre-wide strip as over-grade. At a cliff boundary, use the sample on the
@@ -479,50 +503,38 @@ static func _cliff_masks(region: HeightfieldRegion, cell: Vector2i,
 static func _surface_gradient(region: HeightfieldRegion, anchor: Vector2,
 		surface_cache: Dictionary, edge_cache: Dictionary = {}) -> Vector2:
 	var step := DressingCompiler.SURFACE_STENCIL
-	var cell := Vector2i(roundi(anchor.x / TerrainSurfaceField.TILE),
-		roundi(anchor.y / TerrainSurfaceField.TILE))
-	var local := anchor - Vector2(cell) * TerrainSurfaceField.TILE
-	var boundary_mask := _cliff_masks(region, cell, edge_cache).x
+	var walls := _owner_walls(region, anchor, edge_cache)
 	var centre := _surface_y(region, surface_cache, anchor.x, anchor.y)
-	var left_crosses := (boundary_mask & (1 << 1)) != 0 \
-		and local.x - step < -TerrainSurfaceField.HALF
-	var right_crosses := (boundary_mask & (1 << 0)) != 0 \
-		and local.x + step > TerrainSurfaceField.HALF
-	var back_crosses := (boundary_mask & (1 << 3)) != 0 \
-		and local.y - step < -TerrainSurfaceField.HALF
-	var front_crosses := (boundary_mask & (1 << 2)) != 0 \
-		and local.y + step > TerrainSurfaceField.HALF
+	var left := anchor - Vector2(step, 0.0)
+	var right := anchor + Vector2(step, 0.0)
+	var back := anchor - Vector2(0.0, step)
+	var front := anchor + Vector2(0.0, step)
 	var gradient_x: float
-	if left_crosses:
-		gradient_x = (_surface_y(region, surface_cache,
-			anchor.x + step, anchor.y) - centre) / step
-	elif right_crosses:
-		gradient_x = (centre - _surface_y(region, surface_cache,
-			anchor.x - step, anchor.y)) / step
+	if _stencil_crosses_wall(walls, left, anchor):
+		gradient_x = (_surface_y(region, surface_cache, right.x, right.y) - centre) / step
+	elif _stencil_crosses_wall(walls, anchor, right):
+		gradient_x = (centre - _surface_y(region, surface_cache, left.x, left.y)) / step
 	else:
-		gradient_x = (_surface_y(region, surface_cache,
-			anchor.x + step, anchor.y) - _surface_y(region, surface_cache,
-			anchor.x - step, anchor.y)) / (2.0 * step)
+		gradient_x = (_surface_y(region, surface_cache, right.x, right.y)
+			- _surface_y(region, surface_cache, left.x, left.y)) / (2.0 * step)
 	var gradient_z: float
-	if back_crosses:
-		gradient_z = (_surface_y(region, surface_cache,
-			anchor.x, anchor.y + step) - centre) / step
-	elif front_crosses:
-		gradient_z = (centre - _surface_y(region, surface_cache,
-			anchor.x, anchor.y - step)) / step
+	if _stencil_crosses_wall(walls, back, anchor):
+		gradient_z = (_surface_y(region, surface_cache, front.x, front.y) - centre) / step
+	elif _stencil_crosses_wall(walls, anchor, front):
+		gradient_z = (centre - _surface_y(region, surface_cache, back.x, back.y)) / step
 	else:
-		gradient_z = (_surface_y(region, surface_cache,
-			anchor.x, anchor.y + step) - _surface_y(region, surface_cache,
-			anchor.x, anchor.y - step)) / (2.0 * step)
+		gradient_z = (_surface_y(region, surface_cache, front.x, front.y)
+			- _surface_y(region, surface_cache, back.x, back.y)) / (2.0 * step)
 	return Vector2(gradient_x, gradient_z)
 
+## Height of the point bake of the lattice point that owns (x, z).
 static func _surface_y(region: HeightfieldRegion, cache: Dictionary,
 		x: float, z: float) -> float:
-	var cell := Vector2i(roundi(x / TerrainSurfaceField.TILE),
-		roundi(z / TerrainSurfaceField.TILE))
-	if not cache.has(cell):
-		cache[cell] = TerrainSurfaceField.bake_cell(region, cell.x, cell.y)
-	return TerrainSurfaceField.sample_baked(cache[cell], cell.x, cell.y, x, z, region)
+	var point := Vector2i(TerrainTileField.point_of(x, region),
+		TerrainTileField.point_of(z, region))
+	if not cache.has(point):
+		cache[point] = TerrainTileField.bake_point(region, point)
+	return TerrainTileField.sample_baked(cache[point], point, x, z, region)
 
 static func _biome_dot(values: PackedFloat32Array, weights: Dictionary) -> float:
 	var total := 0.0
