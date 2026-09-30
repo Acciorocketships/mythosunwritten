@@ -225,6 +225,9 @@ static func ctx(water: WaterPlan, chunk: Vector2i, region = null) -> Dictionary:
 		var base := Vector2(chunk.x, chunk.y) * CHUNK - Vector2.ONE * (FILL_MARGIN * FILL_STEP + FILL_OFFSET)
 		out["fill_base"] = base
 		out["fill"] = _build_fill(out, region, base)
+		# Lazy per-node ground memo for the fill evaluator (INF = unsampled).
+		var node_ground := PackedFloat64Array(); node_ground.resize((FILL_M + 1) * (FILL_M + 1)); node_ground.fill(INF)
+		out["node_ground"] = node_ground
 	return out
 
 
@@ -699,12 +702,12 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 	var queued := PackedByteArray()
 	queued.resize(sub_n * sub_rows)
 	var surface_samples := PackedFloat64Array(); surface_samples.resize(sub_levels.size()); surface_samples.fill(INF)
-	var dry_ground := PackedFloat64Array(); dry_ground.resize(coarse_levels.size()); dry_ground.fill(INF)
+	var node_ground := PackedFloat64Array(); node_ground.resize(coarse_levels.size()); node_ground.fill(INF)
 	var coarse_ctx := {
 		"fill_base": base,
 		"fill_size": coarse_n,
 		"surface_samples": surface_samples,
-		"dry_ground": dry_ground,
+		"node_ground": node_ground,
 		"fill": {"levels": coarse_levels},
 		"region": region,
 	}
@@ -2130,77 +2133,115 @@ static func _fill_bilinear_coarse(c: Dictionary, p: Vector2,
 		var cnr: Array = corners[k]
 		var lvl: float = levels[cnr[1] * m1 + cnr[0]]
 		if lvl == -INF:
-			var q: Vector2 = base + Vector2(cnr[0], cnr[1]) * FILL_STEP
-			var ground: float
-			if c.has("dry_ground"):
-				var memo: PackedFloat64Array = c.dry_ground
-				var index: int = cnr[1] * m1 + cnr[0]
-				if memo[index] == INF: memo[index] = TerrainTileField.surface_y(c.region, q.x, q.y)
-				ground = memo[index]
-			else:
-				ground = TerrainTileField.surface_y(c.region, q.x, q.y)
+			var ground := _node_ground(c, cnr[0], cnr[1], m1)
 			dry_heights[k] = ground
 			wet[k] = false
 			lvl = minf(wet_ref, ground + EPS - SHORE_DRY_DEPTH)
 		values[k] = lvl
-	# Fill nodes sit off the walls (FILL_OFFSET), so every other cell straddles
-	# a dual-cell border in x and/or z. Each row, then the column, is
-	# interpolated per side of a real cliff there (_wall_span).
 	var x0 := base.x + float(i0) * FILL_STEP
 	var z0 := base.y + float(j0) * FILL_STEP
 	var px := clampf(p.x, x0, x0 + FILL_STEP)
 	var pz := clampf(p.y, z0, z0 + FILL_STEP)
-	# Walls are probed at the query's own coordinates (pz for the rows, px for
-	# the column): a cliff the query does not face cannot bend its surface.
-	var row0 := _wall_span(c.region, values[0], values[1], wet[0], wet[1], x0, px, pz, 0)
-	var row1 := _wall_span(c.region, values[2], values[3], wet[2], wet[3], x0, px, pz, 0)
-	var acc := _wall_span(c.region, row0, row1, wet[0] or wet[1], wet[2] or wet[3], z0, pz, px, 1)
+	var acc: float
+	if _may_straddle_a_cliff(c, i0, j0, m1):
+		# Fill nodes sit off the walls (FILL_OFFSET), so every other cell
+		# straddles a dual-cell border in x and/or z. Rows, then the column,
+		# are interpolated per side of a real cliff there (_wall_span), probed
+		# at the query's own coordinates (pz for the rows, px for the column):
+		# a cliff the query does not face cannot bend its surface.
+		# The column counts a row wet when either of its nodes is: a row that
+		# already met an x-wall carries the wet side's value there, and a row
+		# whose only wet node lies across that wall holds the dry substitute
+		# (<= wet_ref, <= ground + EPS - SHORE_DRY_DEPTH), which sits below
+		# any crown and so never admits a spill. A strict flag (both nodes wet)
+		# would switch the column's rule at the x-wall itself and break the
+		# surface there (measured in round 2 on the chute site at x = 54).
+		var pitch := TerrainTileField.spacing(c.region)
+		var row0 := _wall_span(c.region, pitch, values[0], values[1], wet[0], wet[1], x0, px, pz, 0)
+		var row1 := _wall_span(c.region, pitch, values[2], values[3], wet[2], wet[3], x0, px, pz, 0)
+		acc = _wall_span(c.region, pitch, row0, row1, wet[0] or wet[1], wet[2] or wet[3], z0, pz, px, 1)
+	else:
+		acc = lerpf(lerpf(values[0], values[1], tx), lerpf(values[2], values[3], tx), tz)
 	if wet_weight >= 1.0 - 0.000001 or not apply_shore_bound:
 		return acc
 	return _shore_support_level(c, p, acc, wet_ref,
 		base + Vector2(i0, j0) * FILL_STEP, FILL_STEP, dry_heights)
 
 
+## Ground at fill node (i, j), memoized in the context's `node_ground`
+## (INF = not yet sampled) when the context carries one.
+static func _node_ground(c: Dictionary, i: int, j: int, m1: int) -> float:
+	var q: Vector2 = (c.fill_base as Vector2) + Vector2(i, j) * FILL_STEP
+	if not c.has("node_ground"):
+		return TerrainTileField.surface_y(c.region, q.x, q.y)
+	var memo: PackedFloat64Array = c.node_ground
+	var index := j * m1 + i
+	if memo[index] == INF:
+		memo[index] = TerrainTileField.surface_y(c.region, q.x, q.y)
+	return memo[index]
+
+
+## A cell can only face a cliff (a drop of FALL_DROP_MIN, walls start at two
+## storeys) if its four nodes' grounds differ by at least WALL_GATE: a node
+## sits 3 m from each border it straddles, on the flat or sloped top of its
+## own dual cell. Cells that cannot face one skip the wall probes entirely.
+const WALL_GATE := 1.0
+static func _may_straddle_a_cliff(c: Dictionary, i0: int, j0: int, m1: int) -> bool:
+	var lo := INF
+	var hi := -INF
+	for d: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+		var g := _node_ground(c, i0 + d.x, j0 + d.y, m1)
+		lo = minf(lo, g)
+		hi = maxf(hi, g)
+	return hi - lo >= WALL_GATE
+
+
 ## Interpolation from node value `a` (at s0) to `b` (at s0 + FILL_STEP) at
 ## coordinate `s` along `axis` (0 = x, 1 = z; `across` is the other
 ## coordinate). Plain linear unless the span straddles a dual-cell border
-## (12 i + 6) where a real cliff stands (the two sides differ by FALL_DROP_MIN
-## or more). Across a cliff, water never interpolates through the rock:
+## (12 i + 6) where the two sides differ: across a cliff, water does not
+## interpolate through the rock.
 ## - both ends wet, upper water above the crown and receiving water below it:
 ##   a SPILL. Each side runs toward a crest held ON the wall at
 ##   crown + DESCENT_CLAMP (never above the upper water): the upper pool stays
 ##   wet to the lip and the fall starts there, down to the receiving node.
-## - both ends wet otherwise (a submerged wall, or a film at the crown
-##   pouring down): one continuous surface, plain linear.
 ## - one end dry: each side keeps its own node's value up to the wall, so a
 ##   pool meets its cliff and no sheet hangs from a lip over dry ground.
-static func _wall_span(region, a: float, b: float, wet_a: bool, wet_b: bool, s0: float,
-		s: float, across: float, axis: int) -> float:
-	var t := (s - s0) / FILL_STEP
+## - otherwise (a submerged wall, a film at the crown): plain linear.
+## Every switch is a smooth weight, never a threshold, so the surface stays
+## continuous where a cliff ends and its drop tapers to a slope (E2): the cliff
+## weight rises from 0 at a drop of FALL_DROP_MIN / 2 to 1 at FALL_DROP_MIN,
+## the spill weight with the upper water from the crown to crown +
+## DESCENT_CLAMP and with the receiving water from crown - DESCENT_CLAMP down.
+static func _wall_span(region, pitch: float, a: float, b: float, wet_a: bool, wet_b: bool,
+		s0: float, s: float, across: float, axis: int) -> float:
+	var linear := lerpf(a, b, (s - s0) / FILL_STEP)
 	if absf(a - b) <= EPS:
-		return lerpf(a, b, t)
+		return linear
 	var wall := s0 + FILL_STEP * 0.5
-	var pitch := TerrainTileField.spacing(region)
 	var phase := fposmod(wall - pitch * 0.5, pitch)
 	if minf(phase, pitch - phase) > 0.001:
-		return lerpf(a, b, t)   # this cell holds a lattice point line, not a border
+		return linear   # this cell holds a lattice point line, not a border
 	var qa := Vector2(wall - 0.001, across) if axis == 0 else Vector2(across, wall - 0.001)
 	var qb := Vector2(wall + 0.001, across) if axis == 0 else Vector2(across, wall + 0.001)
 	var ga := TerrainTileField.surface_y(region, qa.x, qa.y)
 	var gb := TerrainTileField.surface_y(region, qb.x, qb.y)
-	if absf(ga - gb) < FALL_DROP_MIN:
-		return lerpf(a, b, t)
+	var cliff := smoothstep(FALL_DROP_MIN * 0.5, FALL_DROP_MIN, absf(ga - gb))
+	if cliff <= 0.0:
+		return linear
+	if not (wet_a and wet_b):
+		return lerpf(linear, a if s < wall else b, cliff)
 	var crown := maxf(ga, gb)
 	var upper := a if ga > gb else b
 	var lower := b if ga > gb else a
-	if not (wet_a and wet_b):
-		return a if s < wall else b
-	if lower < crown - EPS and upper > crown + EPS:
-		var crest := minf(upper, crown + DESCENT_CLAMP)
-		if s < wall:
-			return lerpf(a, crest, (s - s0) / (wall - s0))
-		return lerpf(crest, b, (s - wall) / (s0 + FILL_STEP - wall))
-	return lerpf(a, b, t)
+	var weight := cliff * smoothstep(crown, crown + DESCENT_CLAMP, upper) \
+		* (1.0 - smoothstep(crown - DESCENT_CLAMP, crown, lower))
+	if weight <= 0.0:
+		return linear
+	var crest := minf(upper, crown + DESCENT_CLAMP)
+	var spill := lerpf(a, crest, (s - s0) / (wall - s0)) if s < wall \
+		else lerpf(crest, b, (s - wall) / (s0 + FILL_STEP - wall))
+	return lerpf(linear, spill, weight)
 
 
 ## Signed-depth interpolation within one 3m cell touched by an actual rescue.

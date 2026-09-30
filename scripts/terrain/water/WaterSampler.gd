@@ -94,8 +94,9 @@ static func build(ctx: Dictionary, region, origin: Vector2, step: float, nx: int
 			fill["sub_levels"] = PackedFloat32Array(ctx.fill.sub_levels)
 			fill["sub_ground"] = PackedFloat32Array(ctx.fill.sub_ground)
 		var window := Rect2(s._fill_origin, Vector2.ONE * float(s._fill_n - 1) * WaterField.FILL_STEP)
+		var node_ground := PackedFloat64Array(); node_ground.resize(s._fill_levels.size()); node_ground.fill(INF)
 		s._fill_ctx = {"fill_base": s._fill_origin, "fill_size": s._fill_n, "fill": fill,
-			"region": WaterGroundSnapshot.capture(region, window)}
+			"region": WaterGroundSnapshot.capture(region, window), "node_ground": node_ground}
 	else:
 		# Legacy/synthetic no-fill context: retain the older mesh-grid snapshot
 		# as a safe fallback. Production chunk contexts always take the exact,

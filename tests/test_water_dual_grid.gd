@@ -135,6 +135,44 @@ func test_wet_crest_spill_reaches_the_lip_in_every_orientation() -> void:
 		assert_almost_eq(lip, lips[0], 0.0001, "the lip is identical in every orientation")
 
 
+## Where a cliff ends (E2: its drop tapers into a slope inside one tile) the
+## water surface stays continuous: the spill/linear switch is a smooth weight
+## of the drop, not a threshold. Fixture: an x-wall on x = 6 between an 8 m
+## top (j <= 0) and the low side, ending into a one-storey slope for j >= 1;
+## an upper pool at 8.5 spills into water at 0.5. Scanned along z at 1 mm on
+## both sides of the wall and on it, across the cliff end. The E2 ramp itself
+## is steep here (the drop falls from 5.9 to 2.3 m within 12 cm of z), so the
+## bound is per millimetre: a threshold switch jumped 0.46 m at any step.
+func test_spill_surface_is_continuous_where_the_cliff_ends() -> void:
+	var storeys := {}
+	var levels_map := {}
+	for j in range(-6, 7):
+		for i in range(-6, 7):
+			storeys[Vector2i(i, j)] = (2 if j <= 0 else 1) if i <= 0 else 0
+			levels_map[Vector2i(i, j)] = 0
+	var region := HeightfieldRegion.new(storeys, levels_map)
+	var base := Vector2(-15.0, -15.0)
+	var n := 6
+	var ground := WaterField._sample_ground_lattice(region, base, n, 6.0)
+	var water := PackedFloat32Array(); water.resize(n * n)
+	for k in n * n:
+		water[k] = 8.5 if ground[k] >= 3.9 else 0.5
+	var ctx := {"fill_base": base, "fill_size": n, "fill": {"levels": water}, "region": region}
+	for x: float in [5.5, 6.0, 6.5, 7.5]:
+		var worst := 0.0
+		var at := 0.0
+		var prev: float = WaterField._fill_bilinear(ctx, Vector2(x, 4.0))
+		var z := 4.001
+		while z <= 8.0:
+			var l: float = WaterField._fill_bilinear(ctx, Vector2(x, z))
+			if absf(l - prev) > worst:
+				worst = absf(l - prev)
+				at = z
+			prev = l
+			z += 0.001
+		assert_lt(worst, 0.05, "no tear along z at x = %.1f (%.3f m within 1 mm at z = %.3f)" % [x, worst, at])
+
+
 func test_water_code_has_no_native_cliff_piece_dependency() -> void:
 	var dir := DirAccess.open("res://scripts/terrain/water")
 	var offenders: Array = []

@@ -735,13 +735,14 @@ func test_reported_chute_faces_never_bridge_dry_ground_or_underrun_the_bed() -> 
 			var ground: float = TerrainTileField.surface_y(region, p.x, p.y)
 			checked += 1
 			# Film-level ground: where the settled water surface stands at the
-			# ground's own level (both field and face within WaterField.FILM of
-			# it) the water is a film over a flat top at the river's own level,
-			# wet or dry at centimetre scale; a face there is hidden under the
-			# ground by at most FILM and bridges nothing. (On the 12 m field the
-			# reported chute passes such a plateau: faces 2-21 cm under 8.00.)
+			# ground's own level (the field within WaterField.FILM of it) the
+			# water is a film over a flat top at the river's own level, wet or
+			# dry at centimetre scale. A face there that lies UNDER the ground by
+			# at most FILM is hidden and bridges nothing (on the 12 m field the
+			# reported chute passes such a plateau: faces 2-21 cm under 8.00);
+			# a face above dry ground is still an offender.
 			if level != -INF and absf(level - ground) <= WaterField.FILM \
-					and absf(p3.y - ground) <= WaterField.FILM:
+					and p3.y <= ground and ground - p3.y <= WaterField.FILM:
 				continue
 			if level == -INF or level <= ground + 0.02 or p3.y < ground + 0.02:
 				if offenders.size() < 20:

@@ -16,7 +16,7 @@ func test_reported_connected_river_clears_the_upper_lip_before_falling() -> void
 	for x: float in [-246,-240,-234]:
 		for offset in range(1,61):
 			var p := Vector2(x,-1476+offset*.1)
-			var ground := TerrainSurfaceField.surface_y(region,p.x,p.y)
+			var ground := TerrainTileField.surface_y(region,p.x,p.y)
 			var level := WaterField.level_at(field.raw_context(),p)
 			worst_depth=minf(worst_depth,level-ground)
 			if not field.is_wet(p): missing+=1
@@ -72,11 +72,20 @@ func test_ordinary_slopes_keep_their_existing_water_profile() -> void:
 		assert_almost_eq(WaterField._fill_bilinear_coarse(f.ctx,p),WaterField._fill_untapered_level(f.ctx,p),0.00001,
 			"a continuous native slope has no cliff crest: plain interpolation at "+str(p))
 
+## Re-pinned (dual-grid terrain, 2026-09-30): the photographed second lip at
+## (-229,-1432) no longer carries water on the 12 m field. Scan criteria: in
+## the four chunks around the reported lips, every TerrainTileField
+## wall_segments half-segment whose field is wet 1 m on both sides, with the
+## upper water above the wall top by more than EPS and the receiving water
+## below it (a supplied spill); the one nearest the old lip, excluding the
+## first lip's reach at z = -1470..-1476, is the z = -1446 wall at
+## x = -234..-228 (top 8.00, upper water 8.10, fall below at 7.17). The points
+## run from 4 m up the approach, across the lip, 2 m down the fall.
 func test_the_other_reported_lip_retains_its_incoming_water() -> void:
-	var field:=_water_fields().water_at(Vector2(-229,-1432))
+	var field:=_water_fields().water_at(Vector2(-231,-1446))
 	var missing:=0
-	for z in [-1436,-1434,-1432,-1430,-1428]:
-		for x in [-229.5,-229.0,-228.5,-228.0]:
+	for z in [-1442,-1444,-1445.5,-1446.5,-1448]:
+		for x in [-232.5,-231.5,-230.5,-229.5]:
 			if not field.is_wet(Vector2(x,z)):
 				missing+=1
 	assert_eq(missing,0,"the supplied upper flow crosses the left-hand lip as well")
@@ -102,8 +111,11 @@ func test_spill_and_receiving_water_match_the_detached_physics_sampler() -> void
 	var sampler:=WaterSampler.build(ctx,ctx.region,Vector2(-250,-1485),3,13,23)
 	var worst:=0.0
 	var dry:=0
+	# The second line crosses the re-pinned second lip (z = -1446, see
+	# test_the_other_reported_lip_retains_its_incoming_water) from 6 m up its
+	# approach to 6 m down its fall.
 	for line:Array in [[Vector2(-240,-1470),Vector2(0,-.125),89],
-			[Vector2(-234,-1434),Vector2(.125,0),97]]:
+			[Vector2(-231,-1440),Vector2(0,-.125),97]]:
 		for i in line[2]:
 			var p:Vector2=line[0]+line[1]*i
 			var expected:=WaterField.level_at(ctx,p)
@@ -115,12 +127,15 @@ func test_spill_and_receiving_water_match_the_detached_physics_sampler() -> void
 
 func test_one_sided_bounds_keep_the_actual_corner_owner_and_real_ridges() -> void:
 	var f:=_cliff_fixture(Vector2i.LEFT,2,Vector2i(-10,-62))
-	# A taller flat neighbor touches the approach at z=-1476. It is a
+	# A taller flat neighbor touches the approach at z = -738. It is a
 	# different crown, not a ridge inside the supplied upper water's tile.
 	# (Per edge, September 27: two storeys taller, so it walls down to the
 	# approach; a one-storey neighbour would meet it on one shared slope.)
+	# 12 m points (dual-grid terrain): the approach line lies on the dual-cell
+	# border z = -61.5 * 12 between points (-10,-62) (8 m) and (-10,-61), inside
+	# point -10's dual cell in x.
 	f.region._storeys[Vector2i(-10,-61)]=4
-	var line:=Rect2(Vector2(-234,-1476),Vector2(5.99,0))
-	assert_eq(TerrainSurfaceField.height_bounds_in_cell(f.region,line,Vector2i(-10,-62)),Vector2(8,8))
-	assert_eq(TerrainSurfaceField.height_bounds(f.region,line).y,16.0,"unowned closed bounds retain both neighboring crowns")
-	assert_eq(TerrainSurfaceField.height_bounds_in_cell(f.region,line,Vector2i(-10,-61)).y,16.0,"a real high owner must never be omitted")
+	var line:=Rect2(Vector2(-120,-738),Vector2(5.99,0))
+	assert_eq(TerrainTileField.height_bounds_on_side(f.region,line,Vector2i(-10,-62)),Vector2(8,8))
+	assert_eq(TerrainTileField.height_bounds(f.region,line).y,16.0,"unowned closed bounds retain both neighboring crowns")
+	assert_eq(TerrainTileField.height_bounds_on_side(f.region,line,Vector2i(-10,-61)).y,16.0,"a real high owner must never be omitted")
