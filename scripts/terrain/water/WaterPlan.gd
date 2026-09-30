@@ -464,16 +464,17 @@ func _make_pond(p: Vector2, arc: float, incoming_bed := INF) -> PondStamp:
 
 
 ## Bank storey for a pond at p: storey-quantized minimum of the PRE-CARVE
-## field at every 12 m terrain lattice point over the footprint ∪ a 24 m ring
-## (every point whose tile can touch the shore). Endpoints already sit in
-## local lows, so this is a safety clamp guaranteeing water below its banks.
+## field at every 12 m terrain lattice point over the footprint ∪ a one-point
+## (12 m) ring: those points are the corners of every tile the shore can cross,
+## and a tile never rises above its corners, so the water stays below its
+## banks. Endpoints already sit in local lows, so this is a safety clamp.
 ## FLOOR, never round: rounding UP put the level (and so the surface) half a
 ## storey above the lowest rim ground — the whole pool overtopped its banks
 ## and spilled a waterfall on every side (summit tarns especially).
 ## Floor of 1 keeps beds above y=0.
 func _pond_level(center: Vector2, radius: float) -> int:
-	var bound: float = radius * (1.0 + PondStamp.WOBBLE) + TILE
 	var pitch := HeightfieldPlan.POINT
+	var bound: float = radius * (1.0 + PondStamp.WOBBLE) + pitch
 	var r_points: int = int(ceil(bound / pitch))
 	var cc: Vector2i = Vector2i(roundi(center.x / pitch), roundi(center.y / pitch))
 	var min_h: float = INF
