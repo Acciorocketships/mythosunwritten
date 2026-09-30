@@ -17,12 +17,13 @@
 # terrain twin. The independent 3m flow/wave grid remains separate; it is not
 # used to reconstruct static water height.
 #
-# PRECISION: level_at evaluates the native 6m surface plus WaterField's sparse
-# topology-only 3m rescue, using the exact same signed-depth interpolation at
-# both resolutions. An earlier sampler resampled static height onto another
-# grid; across wet/dry cells that second interpolation changed levels by up to
-# 0.44m and could classify a dry/wading point as swimming. Freezing the actual
-# dual-resolution field is bit-for-bit faithful to WaterField.level_at.
+# PRECISION: level_at runs WaterField's OWN fill evaluator
+# (WaterField._fill_bilinear: native 6m surface, sparse 3m rescue, the
+# shoreline support correction and the wall-aware crest) over a frozen copy of
+# the fill arrays and a WaterGroundSnapshot of the window's point heights, so
+# it is the same function as WaterField.level_at, not a hand-copy. (A hand-copy
+# once omitted the shoreline support correction and classified dry film on a
+# bank as wading.)
 #
 # FLOW PAYLOAD: alongside the legacy curvilinear frame, build() stores the
 # continuous world-XZ current and its vorticity/compression diagnostics on
@@ -47,9 +48,9 @@ var _h: PackedFloat32Array   # nx*nz, row-major (j*_nx+i), NAN where field-dry
 var _fill_origin: Vector2
 var _fill_n: int
 var _fill_levels: PackedFloat32Array # native WaterField fill snapshot; empty only for legacy no-fill fixtures
-var _fill_ground: PackedFloat32Array # native terrain heights for the mixed wet/dry taper
-var _fill_sub_levels: PackedFloat32Array # sparse 3m topology rescues, -INF elsewhere
-var _fill_sub_ground: PackedFloat32Array # frozen one-ring terrain for rescued cells
+# Frozen evaluator input for WaterField._fill_bilinear: fill arrays plus a
+# WaterGroundSnapshot standing in for the evicted region (plain data only).
+var _fill_ctx: Dictionary = {}
 var _fs: PackedFloat32Array      # nx*nz, arc length s (r3 Task 9)
 var _fd: PackedFloat32Array      # nx*nz, cross distance d
 var _fslope: PackedFloat32Array  # nx*nz, profile slope
@@ -86,18 +87,15 @@ static func build(ctx: Dictionary, region, origin: Vector2, step: float, nx: int
 	# this remains scene-free and safe after the streamer evicts its build ctx.
 	if ctx.has("fill") and ctx.has("fill_base"):
 		s._fill_origin = ctx.fill_base
-		s._fill_n = WaterField.FILL_M + 1
+		s._fill_n = ctx.get("fill_size", WaterField.FILL_M + 1)
 		s._fill_levels = PackedFloat32Array(ctx.fill.levels)
+		var fill := {"levels": s._fill_levels}
 		if ctx.fill.has("sub_levels"):
-			s._fill_sub_levels = PackedFloat32Array(ctx.fill.sub_levels)
-			s._fill_sub_ground = PackedFloat32Array(ctx.fill.sub_ground)
-		s._fill_ground = PackedFloat32Array()
-		s._fill_ground.resize(s._fill_n * s._fill_n)
-		for j in s._fill_n:
-			for i in s._fill_n:
-				var p: Vector2 = s._fill_origin + Vector2(i, j) * WaterField.FILL_STEP
-				s._fill_ground[j * s._fill_n + i] = \
-					TerrainTileField.surface_y(region, p.x, p.y)
+			fill["sub_levels"] = PackedFloat32Array(ctx.fill.sub_levels)
+			fill["sub_ground"] = PackedFloat32Array(ctx.fill.sub_ground)
+		var window := Rect2(s._fill_origin, Vector2.ONE * float(s._fill_n - 1) * WaterField.FILL_STEP)
+		s._fill_ctx = {"fill_base": s._fill_origin, "fill_size": s._fill_n, "fill": fill,
+			"region": WaterGroundSnapshot.capture(region, window)}
 	else:
 		# Legacy/synthetic no-fill context: retain the older mesh-grid snapshot
 		# as a safe fallback. Production chunk contexts always take the exact,
@@ -194,118 +192,12 @@ func level_at(xz: Vector2) -> float:
 	return acc / wsum
 
 
-## Exact frozen equivalent of WaterField._fill_bilinear. `xz` has already
-## passed the chunk-snapshot bounds gate in level_at; the native fill itself
-## extends another 30m around that chunk, so these indices are always valid.
+## WaterField._fill_bilinear over the frozen fill and ground snapshot. `xz`
+## has already passed the chunk-snapshot bounds gate in level_at; the native
+## fill extends another 42m around that chunk. NAN where the field is dry.
 func _native_fill_level_at(xz: Vector2) -> float:
-	var coarse: float = _native_coarse_fill_level_at(xz)
-	if _fill_sub_levels.is_empty():
-		return coarse
-	var sub_n := WaterField.FILL_SUB_M + 1
-	var fx: float = (xz.x - _fill_origin.x) / WaterField.FILL_SUB_STEP
-	var fz: float = (xz.y - _fill_origin.y) / WaterField.FILL_SUB_STEP
-	var i0: int = clampi(int(floor(fx)), 0, WaterField.FILL_SUB_M - 1)
-	var j0: int = clampi(int(floor(fz)), 0, WaterField.FILL_SUB_M - 1)
-	var touched := false
-	for d: Vector2i in [Vector2i(0, 0), Vector2i(1, 0),
-			Vector2i(0, 1), Vector2i(1, 1)]:
-		if _fill_sub_levels[(j0 + d.y) * sub_n + i0 + d.x] != -INF:
-			touched = true
-			break
-	if not touched:
-		return coarse
-	return _native_sub_fill_level_at(xz, i0, j0, fx, fz)
-
-
-func _native_coarse_fill_level_at(xz: Vector2) -> float:
-	var fx: float = (xz.x - _fill_origin.x) / WaterField.FILL_STEP
-	var fz: float = (xz.y - _fill_origin.y) / WaterField.FILL_STEP
-	var i0: int = clampi(int(floor(fx)), 0, _fill_n - 2)
-	var j0: int = clampi(int(floor(fz)), 0, _fill_n - 2)
-	var tx: float = clampf(fx - float(i0), 0.0, 1.0)
-	var tz: float = clampf(fz - float(j0), 0.0, 1.0)
-	var native_corners: Array = [
-		[i0, j0, (1.0 - tx) * (1.0 - tz)],
-		[i0 + 1, j0, tx * (1.0 - tz)],
-		[i0, j0 + 1, (1.0 - tx) * tz],
-		[i0 + 1, j0 + 1, tx * tz],
-	]
-	var wet_weight := 0.0
-	var wet_acc := 0.0
-	for cnr: Array in native_corners:
-		var h: float = _fill_levels[cnr[1] * _fill_n + cnr[0]]
-		if h == -INF:
-			continue
-		wet_acc += h * cnr[2]
-		wet_weight += cnr[2]
-	if wet_weight <= 0.0:
-		return NAN
-	if wet_weight >= 1.0 - 0.000001:
-		return wet_acc
-	var wet_ref: float = wet_acc / wet_weight
-	var acc := 0.0
-	for cnr: Array in native_corners:
-		var idx: int = cnr[1] * _fill_n + cnr[0]
-		var h: float = _fill_levels[idx]
-		if h == -INF:
-			h = minf(wet_ref,
-				_fill_ground[idx] + WaterField.EPS - WaterField.SHORE_DRY_DEPTH)
-		acc += h * cnr[2]
-	return acc
-
-
-## Frozen equivalent of WaterField._fill_bilinear_sub. Only cells touching
-## a sparse topology rescue take this path; all other samples retain the
-## native 6m evaluation above exactly.
-func _native_sub_fill_level_at(xz: Vector2, i0: int, j0: int,
-		fx: float, fz: float) -> float:
-	var sub_n := WaterField.FILL_SUB_M + 1
-	var tx: float = clampf(fx - float(i0), 0.0, 1.0)
-	var tz: float = clampf(fz - float(j0), 0.0, 1.0)
-	var corners := [
-		[i0, j0, (1.0 - tx) * (1.0 - tz)],
-		[i0 + 1, j0, tx * (1.0 - tz)],
-		[i0, j0 + 1, (1.0 - tx) * tz],
-		[i0 + 1, j0 + 1, tx * tz],
-	]
-	var corner_levels := PackedFloat32Array()
-	corner_levels.resize(4)
-	var corner_ground := PackedFloat32Array()
-	corner_ground.resize(4)
-	var wet_weight := 0.0
-	var wet_acc := 0.0
-	for k in corners.size():
-		var cnr: Array = corners[k]
-		var idx: int = cnr[1] * sub_n + cnr[0]
-		var ground: float = _fill_sub_ground[idx]
-		if ground == INF:
-			# WaterField freezes a complete one-ring around every rescue. An
-			# absent value means this is not a valid refined cell; preserve the
-			# canonical coarse answer rather than inventing terrain at runtime.
-			return _native_coarse_fill_level_at(xz)
-		var h: float = _fill_sub_levels[idx]
-		if h == -INF:
-			var q: Vector2 = _fill_origin \
-				+ Vector2(cnr[0], cnr[1]) * WaterField.FILL_SUB_STEP
-			h = _native_coarse_fill_level_at(q)
-		corner_levels[k] = h
-		corner_ground[k] = ground
-		if not is_nan(h) and h > ground + WaterField.EPS:
-			wet_acc += h * cnr[2]
-			wet_weight += cnr[2]
-	if wet_weight <= 0.0:
-		return NAN
-	if wet_weight >= 1.0 - 0.000001:
-		return wet_acc
-	var wet_ref: float = wet_acc / wet_weight
-	var acc := 0.0
-	for k in corners.size():
-		var h: float = corner_levels[k]
-		if is_nan(h) or h <= corner_ground[k] + WaterField.EPS:
-			h = minf(wet_ref, corner_ground[k] + WaterField.EPS \
-				- WaterField.SHORE_DRY_DEPTH)
-		acc += h * corners[k][2]
-	return acc
+	var level: float = WaterField._fill_bilinear(_fill_ctx, xz)
+	return NAN if level == -INF else level
 
 
 ## Flow frame (arc length s, cross distance d, profile slope), packed as

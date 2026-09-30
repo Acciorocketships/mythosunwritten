@@ -361,7 +361,6 @@ static func _source_fill(c: Dictionary, region) -> Dictionary:
 	if profile_source_cost: print("WATER_SOURCE_STAGE spill ",Time.get_ticks_msec())
 	_smooth_fill_surface(owned, base, m1, levels, ground, rivers, water_ceilings)
 	_reconcile_connected_surface(levels, ground, m1, FILL_STEP)
-	_support_wet_cliff_crests(owned, base, levels, ground, m1, FILL_STEP)
 	var smooth_finished := Time.get_ticks_usec() if profile_source_cost else 0
 	if profile_source_cost: print("WATER_SOURCE_STAGE smooth ",Time.get_ticks_msec())
 	var dry_banks := rivers.duplicate()
@@ -490,68 +489,6 @@ static func _reconcile_connected_surface(levels: PackedFloat32Array,
 			queue.push([next, levels[next]], levels[next])
 	queue.free()
 	return initial_offers
-
-
-## Carry an existing upper flow to the actual native cliff crest. Fill nodes
-## sit off the wall lines (FILL_OFFSET), so a cliff lies BETWEEN two adjacent
-## nodes: bilinear interpolation between the upper pool and the receiving
-## water below would dip under the crown and dry the upper water short of the
-## lip. The first node past the wall is lifted to the crown's own spill height
-## (crown + DESCENT_CLAMP, never above the upper water), so the upper surface
-## stays wet to the lip and the fall begins beyond it. Admit it only between
-## supplied upper and lower water, across an entirely submerged approach, at a
-## real immediate drop on the dual-cell border between the two nodes. An
-## unsupplied bank, dry ridge or empty receiving basin cannot create water.
-## Original inputs make this a single bounded support operation, independent
-## of traversal order.
-static func _support_wet_cliff_crests(region, base: Vector2,
-		levels: PackedFloat32Array, ground: PackedFloat32Array,
-		columns: int, step: float) -> void:
-	var rows := int(levels.size() / columns)
-	var original := levels.duplicate()
-	for index in levels.size():
-		if not is_finite(original[index]) or not is_finite(ground[index]) \
-				or original[index] <= ground[index] + EPS: continue
-		var x := index % columns
-		var z := int(index / columns)
-		for direction: Vector2i in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
-			var nx := x + direction.x
-			var nz := z + direction.y
-			if nx < 0 or nz < 0 or nx >= columns or nz >= rows: continue
-			var receiving := nz * columns + nx
-			if not is_finite(original[receiving]) or not is_finite(ground[receiving]) \
-					or original[receiving] <= ground[receiving] + EPS: continue
-			if ground[index] - ground[receiving] < FALL_DROP_MIN: continue
-			var cap := minf(original[index],ground[index]+DESCENT_CLAMP)
-			if original[receiving] >= cap: continue
-			# The wall stands on the dual-cell border midway between the nodes.
-			var a := base + Vector2(x,z) * step
-			var p := a + Vector2(direction) * step * 0.5
-			var inside := p - Vector2(direction) * 0.01
-			var outside := p + Vector2(direction) * 0.01
-			var crown := TerrainTileField.surface_y(region,inside.x,inside.y)
-			var foot := TerrainTileField.surface_y(region,outside.x,outside.y)
-			if crown - foot < FALL_DROP_MIN or crown > original[index] - EPS: continue
-			# Use the tiles' conservative extrema, not a sparse ground probe
-			# which could step over a real intervening ridge.
-			var footprint := Rect2(a,inside-a).abs()
-			var span := TerrainTileField.spacing(region)
-			var owner := _crest_owner(inside, region)
-			var owner_bounds := Rect2(Vector2(owner)*span-Vector2.ONE*span*0.5,Vector2.ONE*span)
-			# A wall on the dual border belongs to both owners. Bound only the
-			# approached crown's own side, so a taller neighbour touching this
-			# line with zero area cannot veto the spill.
-			var approach := TerrainTileField.height_bounds_on_side(region,footprint,owner) \
-				if owner_bounds.encloses(footprint) else TerrainTileField.height_bounds(region,footprint)
-			if approach.y >= original[index] - EPS: continue
-			levels[receiving] = maxf(levels[receiving],minf(original[index],crown+DESCENT_CLAMP))
-
-
-## Lattice point whose dual cell holds the crest's approach side: the same
-## owner TerrainTileField.surface_y resolves `inside` to (a dual-cell midline
-## belongs to the higher-index point).
-static func _crest_owner(inside: Vector2, region = null) -> Vector2i:
-	return Vector2i(TerrainTileField.point_of(inside.x, region), TerrainTileField.point_of(inside.y, region))
 
 
 static func _build_fill(c: Dictionary, region, base: Vector2) -> Dictionary:
@@ -934,7 +871,6 @@ static func _build_sub_lattice_rescue(region, base: Vector2,
 			connected[idx] = _rescue_coarse_level(coarse_ctx, p)
 	var original_connected := connected.duplicate()
 	_reconcile_connected_surface(connected, sub_ground, sub_n, FILL_SUB_STEP)
-	_support_wet_cliff_crests(region, base, connected, sub_ground, sub_n, FILL_SUB_STEP)
 	for idx in connected.size():
 		if connected[idx] != original_connected[idx]:
 			sub_levels[idx] = connected[idx]
@@ -2186,10 +2122,9 @@ static func _fill_bilinear_coarse(c: Dictionary, p: Vector2,
 		wet_weight += cnr[2]
 	if wet_weight <= 0.0:
 		return -INF
-	if wet_weight >= 1.0 - 0.000001:
-		return wet_acc
 	var wet_ref: float = wet_acc / wet_weight
-	var acc := 0.0
+	var values := PackedFloat32Array([0.0, 0.0, 0.0, 0.0])
+	var wet: Array[bool] = [true, true, true, true]
 	var dry_heights := PackedFloat32Array([INF, INF, INF, INF])
 	for k in corners.size():
 		var cnr: Array = corners[k]
@@ -2205,11 +2140,67 @@ static func _fill_bilinear_coarse(c: Dictionary, p: Vector2,
 			else:
 				ground = TerrainTileField.surface_y(c.region, q.x, q.y)
 			dry_heights[k] = ground
+			wet[k] = false
 			lvl = minf(wet_ref, ground + EPS - SHORE_DRY_DEPTH)
-		acc += lvl * cnr[2]
-	if not apply_shore_bound: return acc
+		values[k] = lvl
+	# Fill nodes sit off the walls (FILL_OFFSET), so every other cell straddles
+	# a dual-cell border in x and/or z. Each row, then the column, is
+	# interpolated per side of a real cliff there (_wall_span).
+	var x0 := base.x + float(i0) * FILL_STEP
+	var z0 := base.y + float(j0) * FILL_STEP
+	var px := clampf(p.x, x0, x0 + FILL_STEP)
+	var pz := clampf(p.y, z0, z0 + FILL_STEP)
+	# Walls are probed at the query's own coordinates (pz for the rows, px for
+	# the column): a cliff the query does not face cannot bend its surface.
+	var row0 := _wall_span(c.region, values[0], values[1], wet[0], wet[1], x0, px, pz, 0)
+	var row1 := _wall_span(c.region, values[2], values[3], wet[2], wet[3], x0, px, pz, 0)
+	var acc := _wall_span(c.region, row0, row1, wet[0] or wet[1], wet[2] or wet[3], z0, pz, px, 1)
+	if wet_weight >= 1.0 - 0.000001 or not apply_shore_bound:
+		return acc
 	return _shore_support_level(c, p, acc, wet_ref,
 		base + Vector2(i0, j0) * FILL_STEP, FILL_STEP, dry_heights)
+
+
+## Interpolation from node value `a` (at s0) to `b` (at s0 + FILL_STEP) at
+## coordinate `s` along `axis` (0 = x, 1 = z; `across` is the other
+## coordinate). Plain linear unless the span straddles a dual-cell border
+## (12 i + 6) where a real cliff stands (the two sides differ by FALL_DROP_MIN
+## or more). Across a cliff, water never interpolates through the rock:
+## - both ends wet, upper water above the crown and receiving water below it:
+##   a SPILL. Each side runs toward a crest held ON the wall at
+##   crown + DESCENT_CLAMP (never above the upper water): the upper pool stays
+##   wet to the lip and the fall starts there, down to the receiving node.
+## - both ends wet otherwise (a submerged wall, or a film at the crown
+##   pouring down): one continuous surface, plain linear.
+## - one end dry: each side keeps its own node's value up to the wall, so a
+##   pool meets its cliff and no sheet hangs from a lip over dry ground.
+static func _wall_span(region, a: float, b: float, wet_a: bool, wet_b: bool, s0: float,
+		s: float, across: float, axis: int) -> float:
+	var t := (s - s0) / FILL_STEP
+	if absf(a - b) <= EPS:
+		return lerpf(a, b, t)
+	var wall := s0 + FILL_STEP * 0.5
+	var pitch := TerrainTileField.spacing(region)
+	var phase := fposmod(wall - pitch * 0.5, pitch)
+	if minf(phase, pitch - phase) > 0.001:
+		return lerpf(a, b, t)   # this cell holds a lattice point line, not a border
+	var qa := Vector2(wall - 0.001, across) if axis == 0 else Vector2(across, wall - 0.001)
+	var qb := Vector2(wall + 0.001, across) if axis == 0 else Vector2(across, wall + 0.001)
+	var ga := TerrainTileField.surface_y(region, qa.x, qa.y)
+	var gb := TerrainTileField.surface_y(region, qb.x, qb.y)
+	if absf(ga - gb) < FALL_DROP_MIN:
+		return lerpf(a, b, t)
+	var crown := maxf(ga, gb)
+	var upper := a if ga > gb else b
+	var lower := b if ga > gb else a
+	if not (wet_a and wet_b):
+		return a if s < wall else b
+	if lower < crown - EPS and upper > crown + EPS:
+		var crest := minf(upper, crown + DESCENT_CLAMP)
+		if s < wall:
+			return lerpf(a, crest, (s - s0) / (wall - s0))
+		return lerpf(crest, b, (s - wall) / (s0 + FILL_STEP - wall))
+	return lerpf(a, b, t)
 
 
 ## Signed-depth interpolation within one 3m cell touched by an actual rescue.

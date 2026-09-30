@@ -77,13 +77,6 @@ func test_source_fill_control_domain_is_in_points() -> void:
 			assert_true(domain.has_point(point), "domain %s holds tile corner %s of %s" % [domain, point, p])
 
 
-func test_wet_crest_owner_is_the_point_that_owns_the_approach_side() -> void:
-	# The midline of a dual cell belongs to the higher-index point, exactly as
-	# TerrainTileField.surface_y resolves it (round-half-away would flip x = -6).
-	assert_eq(WaterField._crest_owner(Vector2(-6.0, 6.0)), Vector2i(0, 1))
-	assert_eq(WaterField._crest_owner(Vector2(5.99, -6.01)), Vector2i(0, -1))
-
-
 ## Fill nodes sit off every discontinuity: at 12 i +- 3, midway between a
 ## lattice point and a dual-cell border, in chunk windows and source solves.
 func test_fill_nodes_sit_off_walls_and_points() -> void:
@@ -102,11 +95,14 @@ func test_fill_nodes_sit_off_walls_and_points() -> void:
 
 
 ## A supplied upper pool spilling over a cliff into supplied water below stays
-## wet up to the lip (the wall on the dual border between two fill nodes) in
-## every orientation: high side at -x, +x, -z and +z. The lattice is the offset
-## fill lattice (nodes at 12 i +- 3), 5 x 5 nodes around a wall on x or z = 6
-## (or -6), cliff top storey 3 (12 m) over storey 0.
+## wet up to the lip -- the wall on the dual border between two fill nodes --
+## and falls from there: the fill is evaluated per side of the wall, toward a
+## crest held on the wall at crown + DESCENT_CLAMP, with no node lifted. Every
+## orientation (high side at -x, +x, -z, +z) behaves identically. The lattice
+## is the offset fill lattice (nodes at 12 i +- 3), 6 x 6 nodes around a wall
+## on the border at -6 * high, cliff top storey 3 (12 m) over storey 0.
 func test_wet_crest_spill_reaches_the_lip_in_every_orientation() -> void:
+	var lips: Array[float] = []
 	for high: Vector2i in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
 		var storeys := {}
 		var levels_map := {}
@@ -122,17 +118,21 @@ func test_wet_crest_spill_reaches_the_lip_in_every_orientation() -> void:
 		var water := PackedFloat32Array(); water.resize(n * n)
 		for k in n * n:
 			water[k] = 12.5 if ground[k] >= 12.0 else 0.5
-		WaterField._support_wet_cliff_crests(region, base, water, ground, n, 6.0)
 		var ctx := {"fill_base": base, "fill_size": n, "fill": {"levels": water}, "region": region}
+		var wall := -Vector2(high) * 6.0
 		for k in 25:
-			# Points on the high side from 3 m inside up to 1 cm before the wall.
-			var d := 3.0 - k * 0.12
-			var p := -Vector2(high) * 6.0 + Vector2(high) * maxf(d, 0.01)
+			# The high side from 3 m inside up to 1 cm before the wall.
+			var p := wall + Vector2(high) * maxf(3.0 - k * 0.12, 0.01)
 			var depth: float = WaterField._fill_bilinear_coarse(ctx, p) - TerrainTileField.surface_y(region, p.x, p.y)
 			assert_gt(depth, WaterField.EPS, "high side %s stays wet to the lip at %s" % [high, p])
-		var before := water.duplicate()
-		WaterField._support_wet_cliff_crests(region, base, water, ground, n, 6.0)
-		assert_eq(water, before, "crest support is idempotent (%s)" % high)
+		# The fall starts at the lip: 2 m past the wall the water is already
+		# below the 12 m crown (no shelf hanging in front of the cliff).
+		var past := wall - Vector2(high) * 2.0
+		assert_lt(WaterField._fill_bilinear_coarse(ctx, past), 12.0,
+			"low side %s falls below the crown within 2 m of the wall" % high)
+		lips.append(WaterField._fill_bilinear_coarse(ctx, wall - Vector2(high) * 0.01))
+	for lip: float in lips:
+		assert_almost_eq(lip, lips[0], 0.0001, "the lip is identical in every orientation")
 
 
 func test_water_code_has_no_native_cliff_piece_dependency() -> void:
@@ -380,6 +380,42 @@ func test_chunk_line_cuts_keep_contour_spacing() -> void:
 			if arc < 1.0 - 0.0001:
 				var whole_piece := (out[k - 1] in cuts or k - 1 == 0) and (out[k] in cuts or k == out.size() - 1)
 				assert_true(whole_piece, "a short arc %.3f m is a whole piece between exact ends" % arc)
+
+
+## The frozen sampler IS the field: WaterSampler runs WaterField's own fill
+## evaluator (shore support, rescue, wall-aware crest) over frozen arrays and a
+## point-height snapshot. Checked on a 1 m grid across the reported chunk,
+## including (44.32,-1091.24) where a hand-copied evaluator without the shore
+## support read 8.063 (wading) over ground 8.002 while the field read 8.030.
+func test_sampler_matches_the_field_everywhere_in_the_chunk() -> void:
+	var water := preload("res://tests/fixtures/ReportedWaterPlan.gd").new(2697992464)
+	var plan := water.make_heightfield()
+	var chunk := Vector2i(0, -6)
+	var region := plan.compute_region(chunk.x * 16 + 8, chunk.y * 16 + 8, 16)
+	var ctx: Dictionary = WaterField.ctx(water, chunk, region)
+	var origin := Vector2(chunk) * WaterField.CHUNK
+	var sampler := WaterSampler.build(ctx, region, origin, 3.0, 65, 65)
+	var worst := 0.0
+	var mismatched := 0
+	var checked := 0
+	var probes: Array[Vector2] = [Vector2(44.32, -1091.24)]
+	for j in 193:
+		for i in 193:
+			probes.append(origin + Vector2(i, j))
+	for p: Vector2 in probes:
+		var truth: float = WaterField.level_at(ctx, p)
+		var got: float = sampler.level_at(p)
+		checked += 1
+		if truth == -INF:
+			if not is_nan(got):
+				mismatched += 1
+			continue
+		if is_nan(got):
+			mismatched += 1
+			continue
+		worst = maxf(worst, absf(got - truth))
+	assert_eq(mismatched, 0, "wet/dry agree at every probe")
+	assert_lt(worst, 0.00001, "levels agree (worst %.6f over %d probes)" % [worst, checked])
 
 
 ## Whether lattice point `point` is excavated at least to the bed of the

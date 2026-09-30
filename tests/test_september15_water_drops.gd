@@ -25,45 +25,52 @@ func test_reported_connected_river_clears_the_upper_lip_before_falling() -> void
 	assert_true(field.is_wet(Vector2(-240,-1477)),"the downstream receiving water remains")
 	assert_false(field.is_wet(Vector2(-260,-1500)),"the neighboring high dry bank stays dry")
 
+## Synthetic cliff on 12 m lattice points (dual-grid terrain): storey
+## `storeys` where x*dir.x + z*dir.y >= 0, so the wall stands on the dual-cell
+## border 6 m from the origin point. The 9x9 fill lattice uses the offset fill
+## phase (nodes at 12 i +- 3), so the wall lies between two nodes; there is
+## no node on the crest and no node is lifted: WaterField evaluates the cell
+## per side of the wall toward a crest at crown + DESCENT_CLAMP.
 func _cliff_fixture(direction: Vector2i, storeys: int = 2, offset: Vector2i = Vector2i.ZERO) -> Dictionary:
 	var controls: Dictionary = {}
 	for z in range(-5,6):
 		for x in range(-5,6):
 			controls[Vector2i(x,z)+offset] = storeys if (x*direction.x+z*direction.y)>=0 else 0
 	var region := HeightfieldRegion.new(controls,{})
-	var base := Vector2(-24,-24)+Vector2(offset)*24
+	var base := Vector2(-27,-27)+Vector2(offset)*12
 	var ground := WaterField._sample_ground_lattice(region,base,9,6)
 	var levels := ground.duplicate()
 	for i in levels.size(): levels[i]=maxf(2,ground[i]+WaterField.DESCENT_CLAMP)
-	return {"region":region,"base":base,"ground":ground,"levels":levels}
+	var ctx := {"fill_base":base,"fill_size":9,"fill":{"levels":levels},"region":region}
+	return {"region":region,"base":base,"ground":ground,"levels":levels,"ctx":ctx,
+		"wall":Vector2(offset)*12-Vector2(direction)*6}
 
 func test_native_cliff_spill_is_supported_in_all_four_directions() -> void:
 	for direction: Vector2i in [Vector2i.LEFT,Vector2i.RIGHT,Vector2i.UP,Vector2i.DOWN]:
 		var f := _cliff_fixture(direction)
 		WaterField._reconcile_connected_surface(f.levels,f.ground,9,6)
-		WaterField._support_wet_cliff_crests(f.region,f.base,f.levels,f.ground,9,6)
-		var ctx := {"fill_base":f.base,"fill_size":9,"fill":{"levels":f.levels},"region":f.region}
+		# From 3 m inside the cliff top across the wall to 3 m below it.
 		for i in 49:
-			var p := Vector2(direction)*(-18+i*.25)
-			var depth := WaterField._fill_bilinear_coarse(ctx,p)-TerrainSurfaceField.surface_y(f.region,p.x,p.y)
+			var p: Vector2 = f.wall+Vector2(direction)*(3.0-i*.125)
+			var depth := WaterField._fill_bilinear_coarse(f.ctx,p)-TerrainTileField.surface_y(f.region,p.x,p.y)
 			assert_gt(depth,WaterField.EPS,"continuous wet spill "+str(direction)+" at "+str(p))
-		var before: PackedFloat32Array = f.levels.duplicate()
-		WaterField._support_wet_cliff_crests(f.region,f.base,f.levels,f.ground,9,6)
-		assert_eq(f.levels,before,"crest support is idempotent")
 
 func test_cliff_support_does_not_fill_a_dry_upper_bank() -> void:
 	var f := _cliff_fixture(Vector2i.RIGHT)
 	for i in f.levels.size():
 		if f.ground[i]>2: f.levels[i]=-INF
-	var before: PackedFloat32Array = f.levels.duplicate()
-	WaterField._support_wet_cliff_crests(f.region,f.base,f.levels,f.ground,9,6)
-	assert_eq(f.levels,before,"a lower river cannot climb an unsupplied bank")
+	for d in [0.5,1.0,2.0,3.0]:
+		var p: Vector2 = f.wall+Vector2(d,0)
+		var level := WaterField._fill_bilinear_coarse(f.ctx,p)
+		assert_true(level==-INF or level<=TerrainTileField.surface_y(f.region,p.x,p.y)+WaterField.EPS,
+			"a lower river cannot climb an unsupplied bank at "+str(p))
 
 func test_ordinary_slopes_keep_their_existing_water_profile() -> void:
 	var f := _cliff_fixture(Vector2i.RIGHT,1)
-	var before: PackedFloat32Array = f.levels.duplicate()
-	WaterField._support_wet_cliff_crests(f.region,f.base,f.levels,f.ground,9,6)
-	assert_eq(f.levels,before,"continuous native slopes have no cliff crest to repair")
+	for i in 49:
+		var p: Vector2 = f.wall+Vector2(3.0-i*.125,0)
+		assert_almost_eq(WaterField._fill_bilinear_coarse(f.ctx,p),WaterField._fill_untapered_level(f.ctx,p),0.00001,
+			"a continuous native slope has no cliff crest: plain interpolation at "+str(p))
 
 func test_the_other_reported_lip_retains_its_incoming_water() -> void:
 	var field:=_water_fields().water_at(Vector2(-229,-1432))
@@ -76,19 +83,18 @@ func test_the_other_reported_lip_retains_its_incoming_water() -> void:
 
 func test_a_supplied_dry_crest_connects_only_to_existing_receiving_water() -> void:
 	var f:=_cliff_fixture(Vector2i.LEFT,2,Vector2i(-10,-62))
-	# Relative x=12 is owned by the upper tile at this negative world edge.
-	var crest:=4*9+6
-	assert_eq(f.ground[crest],8.0)
-	f.levels[crest]=-INF
-	var dry:PackedFloat32Array=f.levels.duplicate()
-	WaterField._support_wet_cliff_crests(f.region,f.base,f.levels,f.ground,9,6)
-	assert_gt(f.levels[crest],8.05,"supplied film reaches its physical spill crest")
-	f.levels=dry.duplicate()
+	# Supplied upper water spills over the negative-world wall to the lip.
+	var lip: Vector2 = f.wall+Vector2(0.01,0)
+	assert_gt(WaterField._fill_bilinear_coarse(f.ctx,lip)-TerrainTileField.surface_y(f.region,lip.x,lip.y),
+		WaterField.EPS,"supplied film reaches its physical spill crest")
+	# Without receiving water the crest is not a spill: the low side stays dry.
 	for i in f.levels.size():
 		if f.ground[i]<4: f.levels[i]=-INF
-	var without_receiver:PackedFloat32Array=f.levels.duplicate()
-	WaterField._support_wet_cliff_crests(f.region,f.base,f.levels,f.ground,9,6)
-	assert_eq(f.levels,without_receiver,"this support pass cannot invent a lower body or hanging outlet")
+	for d in [1.0,2.0,3.0]:
+		var p: Vector2 = f.wall+Vector2(d,0)
+		var level := WaterField._fill_bilinear_coarse(f.ctx,p)
+		assert_true(level==-INF or level<=TerrainTileField.surface_y(f.region,p.x,p.y)+WaterField.EPS,
+			"no lower body or hanging outlet is invented at "+str(p))
 
 func test_spill_and_receiving_water_match_the_detached_physics_sampler() -> void:
 	var field:=_water_fields().water_at(Vector2(-240,-1473))
