@@ -158,7 +158,7 @@ func test_pond_level_respects_every_twelve_metre_point() -> void:
 	for pool: PondStamp in [t.source_pool, t.pond]:
 		if pool == null:
 			continue
-		var bound: float = pool.bound_radius() + WaterPlan.TILE
+		var bound: float = pool.bound_radius() + HeightfieldPlan.POINT
 		var pitch := HeightfieldPlan.POINT
 		var r := int(ceil(bound / pitch))
 		var cc := Vector2i(roundi(pool.center.x / pitch), roundi(pool.center.y / pitch))
@@ -252,6 +252,32 @@ func test_contour_resample_welds_on_chunk_borders() -> void:
 	for k in mini(got[0].size(), got[1].size()):
 		assert_lt((got[0][k] as Vector2).distance_to(got[1][k]), 0.0001,
 			"border crossing %d welds: %s vs %s" % [k, got[0][k], got[1][k]])
+
+
+## An open contour ending on a chunk border with a LEVEL shelf (wall contact
+## or still-wet column: rows 0..4 all at the water level along one normal) has
+## a straight ladder end. Its end cap must still pair every band edge: found
+## at the shallow border crossings (+-67.4, -1152) of the reported lake, where
+## a row0-apex fan degenerated to one triangle and left a T-junction.
+func test_rim_end_cap_closes_a_level_shelf_ladder() -> void:
+	var st := {"verts": PackedVector3Array(), "idx": PackedInt32Array()}
+	var reaches := [0.0, 0.12, 0.30, 0.48, 0.60, 0.64]
+	var ids: Array[int] = []
+	for k in 6:
+		var y := 3.0 - (0.65 if k == 5 else 0.0)
+		st.verts.append(Vector3(reaches[k], y, 0.0))
+		ids.append(k)
+	WaterSkin._rim_end_cap(st, ids[0], ids[1], ids[2], ids[3], ids[4], ids[5])
+	var count := {}
+	for t in range(0, st.idx.size(), 3):
+		for k in 3:
+			var a: int = st.idx[t + k]
+			var b: int = st.idx[t + (k + 1) % 3]
+			var key := Vector2i(mini(a, b), maxi(a, b))
+			count[key] = int(count.get(key, 0)) + 1
+	for k in 5:
+		assert_eq(int(count.get(Vector2i(k, k + 1), 0)), 1,
+			"ladder edge row%d-row%d is closed by the cap" % [k, k + 1])
 
 
 ## Whether lattice point `point` is excavated at least to the bed of the

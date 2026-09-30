@@ -1598,13 +1598,16 @@ static func _rim(st: Dictionary, c: Dictionary) -> void:
 ## Four-triangle fan closing the six-point rim ladder at an open contour
 ## endpoint. It pairs each of the five band-end edges and leaves only the
 ## row0-row5 diagonal, which is accounted for by the endpoint's exact chunk
-## border plus the outer-row invariant.
+## border plus the outer-row invariant. The fan's apex is row5, the buried
+## outer row: a level shelf (wall contact or still-wet column) puts rows 0..4
+## on one straight line at the water level, where a row0 apex degenerates to
+## a single face and leaves a T-junction along the ladder.
 static func _rim_end_cap(st: Dictionary, i0: int, i1: int, i2: int, i3: int,
 		i4: int, i5: int) -> void:
-	_emit_tri(st, i0, i1, i2)
-	_emit_tri(st, i0, i2, i3)
-	_emit_tri(st, i0, i3, i4)
-	_emit_tri(st, i0, i4, i5)
+	_emit_tri(st, i5, i0, i1)
+	_emit_tri(st, i5, i1, i2)
+	_emit_tri(st, i5, i2, i3)
+	_emit_tri(st, i5, i3, i4)
 
 
 ## Tent-filtered (0.25/0.5/0.25) copy of a per-point PackedByteArray flag
