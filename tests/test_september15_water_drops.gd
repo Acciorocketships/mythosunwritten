@@ -111,8 +111,10 @@ func test_one_sided_bounds_keep_the_actual_corner_owner_and_real_ridges() -> voi
 	var f:=_cliff_fixture(Vector2i.LEFT,2,Vector2i(-10,-62))
 	# A taller flat neighbor touches the approach at z=-1476. It is a
 	# different crown, not a ridge inside the supplied upper water's tile.
-	f.region._storeys[Vector2i(-10,-61)]=3
+	# (Per edge, September 27: two storeys taller, so it walls down to the
+	# approach; a one-storey neighbour would meet it on one shared slope.)
+	f.region._storeys[Vector2i(-10,-61)]=4
 	var line:=Rect2(Vector2(-234,-1476),Vector2(5.99,0))
 	assert_eq(TerrainSurfaceField.height_bounds_in_cell(f.region,line,Vector2i(-10,-62)),Vector2(8,8))
-	assert_eq(TerrainSurfaceField.height_bounds(f.region,line).y,12.0,"unowned closed bounds retain both neighboring crowns")
-	assert_eq(TerrainSurfaceField.height_bounds_in_cell(f.region,line,Vector2i(-10,-61)).y,12.0,"a real high owner must never be omitted")
+	assert_eq(TerrainSurfaceField.height_bounds(f.region,line).y,16.0,"unowned closed bounds retain both neighboring crowns")
+	assert_eq(TerrainSurfaceField.height_bounds_in_cell(f.region,line,Vector2i(-10,-61)).y,16.0,"a real high owner must never be omitted")

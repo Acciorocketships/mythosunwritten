@@ -22,7 +22,8 @@ const _CARDINAL_QUARTERS := 4
 static func solve(terrain: VillageTerrainView, city_seed: int,
 		stable_id: StringName, centre: Vector2, street_axis: Vector2,
 		program: VillageProgram, world_seed: int = 0,
-		canonical_ground: FeatureGroundField = null) -> VillageUrbanFabricPlan:
+		canonical_ground: FeatureGroundField = null,
+		road_masks: Dictionary = {}) -> VillageUrbanFabricPlan:
 	assert(terrain != null and not stable_id.is_empty() and centre.is_finite())
 	assert(street_axis.is_normalized() and program != null)
 	if program.settlement_fabric_program == null:
@@ -47,6 +48,10 @@ static func solve(terrain: VillageTerrainView, city_seed: int,
 	placement["local_bounds"] = _local_bounds(preview_fabric)
 	var result := _materialize(terrain, stable_id, preview, preview_fabric,
 		placement, program, world_seed)
+	# The accepted country roads were routed on natural ground. They are part
+	# of the sealed grade before any construction samples the finished field.
+	if result.terrain_grade != null:
+		result.terrain_grade.road_masks = road_masks
 	_connect_world_roads(result, terrain, stable_id, centre, street_axis, canonical_ground)
 	return result
 
@@ -289,8 +294,16 @@ static func _append_terrain_handoffs(result: VillageUrbanFabricPlan,
 		var angle := (b - a).angle()
 		var id := StringName("%s.handoff.%s" % [district_id, spec.stable_suffix])
 		if bool(geometry.has_stairs):
-			var mesh := WarrenTransitionSurfaceBuilder.build_gate_approach(id,geometry)
-			result.surface_meshes.append(_world_surface_mesh(mesh,result.world_transform,district_id,0))
+			# The gate flight is drawn in the kit's timber like every other flight.
+			var drawn := KitSubstitution.redraw_public_surface(
+				WarrenTransitionSurfaceBuilder.build_gate_approach(id,geometry))
+			result.surface_meshes.append(_world_surface_mesh(drawn.mesh,result.world_transform,district_id,0))
+			for rail: Dictionary in drawn.rails:
+				result.entries.append({"asset_id": rail.asset_id,
+					"visibility_owner": AABB(),
+					"transform": result.world_transform * (rail.transform as Transform3D),
+					"color": Color.WHITE, "collision_enabled": false,
+					"stable_id": StringName("%s/%s" % [district_id, rail.stable_id])})
 			result.entrance_stair_count += 1
 			result.volumes.append(VillageOccupancyVolume.new(
 				VillageOccupancy.Role.WALK_SURFACE,centre,half_extents,angle,
@@ -856,8 +869,11 @@ static func _append_ground_supports(payload: EnvironmentInstancePayload,
 		var owner_cells := anchor.cells as Array[Vector3i]
 		var surface_band := (owner_cells[0] as Vector3i).y
 		var support_base := 2147483647
+		var envelope_base := 2147483647
 		for owner: Vector3i in owner_cells:
 			support_base = mini(support_base,
+				SettlementFabricAssembler.effective_support_base(fabric, owner))
+			envelope_base = mini(envelope_base,
 				fabric.surface_plan.support_base_at(owner))
 		if surface_band - support_base == 1 \
 				or SettlementFabricAssembler._support_anchor_crosses_public_lane(
@@ -873,6 +889,10 @@ static func _append_ground_supports(payload: EnvironmentInstancePayload,
 		var world_point3 := world_frame * local_point
 		var terrain_y := terrain.surface_y(Vector2(world_point3.x,
 			world_point3.z))
+		if support_base > envelope_base:
+			# A retained terrace beneath the court bears the post, not terrain.
+			terrain_y = maxf(terrain_y, (world_frame * Vector3(local_point.x,
+				float(support_base) * FabricRecipe.CELL_SIZE, local_point.z)).y)
 		var drop := world_point3.y - terrain_y
 		if drop <= TraversalEnvelope.MAX_PLANNED_STEP:
 			continue

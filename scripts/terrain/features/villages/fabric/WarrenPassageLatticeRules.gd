@@ -62,11 +62,14 @@ static func stride_slot_bands(rise: int, run: int, offset: int) -> int:
 
 static func stride_cells(massif: WarrenMassif,
 		excavation: WarrenExcavation, occupied: Dictionary,
-		current: Vector3i, direction: Vector2i, rise: int, run: int) \
-		-> Array[Vector3i]:
+		current: Vector3i, direction: Vector2i, rise: int, run: int,
+		open_foot: bool = false, upper_town: bool = false) -> Array[Vector3i]:
 	## Returns the complete physical stride, or an empty array when any part
 	## leaves the solid, collides with previous excavation, revisits public
 	## ground, or closes an accidental same-datum 2x2 public square.
+	## `open_foot` lets the flight run open to the sky over the low huddle at
+	## a raised district's foot; `upper_town` lets it step onto the
+	## district's grade (both see `slot_is_borable`).
 	var out: Array[Vector3i] = []
 	var trial := occupied.duplicate()
 	for offset in range(1, run + 1):
@@ -75,7 +78,8 @@ static func stride_cells(massif: WarrenMassif,
 			current.y + span.x, current.z + direction.y * offset)
 		var bands := span.y - span.x + HEADROOM_BANDS
 		if trial.has(cell) or not slot_is_borable(massif, excavation, cell,
-				bands) or completes_public_square(trial, cell):
+				bands, open_foot, upper_town) \
+				or completes_public_square(trial, cell):
 			return [] as Array[Vector3i]
 		trial[cell] = true
 		out.append(cell)
@@ -83,20 +87,53 @@ static func stride_cells(massif: WarrenMassif,
 
 
 static func slot_is_borable(massif: WarrenMassif,
-		excavation: WarrenExcavation, cell: Vector3i, bands: int) -> bool:
+		excavation: WarrenExcavation, cell: Vector3i, bands: int,
+		open_foot: bool = false, upper_town: bool = false) -> bool:
 	var column := Vector2i(cell.x, cell.z)
 	if massif == null or excavation == null or not massif.has_column(column):
 		return false
 	# Ground streets have open sky even when the low edge has less masonry
 	# than a complete bore. Elevated passages still need the full solid slot.
+	# At a raised district's foot the lower town is held under the plinth top
+	# (WarrenTownPlatform.huddle_top); a flight climbing along the wall there
+	# runs open to the sky above that low mass rather than bored through it.
+	var foot := open_foot and WarrenTownPlatform.huddle_top(massif, column) \
+		!= 2147483647 and cell.y <= massif.top_at(column)
 	if cell.y < massif.base_at(column) or (cell.y != massif.base_at(column) \
-			and cell.y + bands > massif.top_at(column)):
+			and cell.y + bands > massif.top_at(column) and not foot):
 		return false
+	# A raised district's plinth is solid rock below its bearing surface and
+	# that surface is the upper town's grade: nothing climbs on above the
+	# grade, and the grade is laid only by the upper town's street stages
+	# (`upper_town`, WarrenPlatformStreets), so no alley, loop or wandering
+	# spine eats the district its houses stand on.
+	if massif.is_platform(column):
+		var bearing := massif.bearing_at(column)
+		if cell.y > bearing or cell.y == bearing and not upper_town:
+			return false
+		# The plinth is never bored: the way up is an open flight climbing
+		# along its wall through the low huddle at its foot, entering the
+		# district at a gate on its rim.
+		if cell.y < bearing:
+			return false
 	# Keep a full solid separator between vertically crossing passages.
 	for band in range(cell.y - 1, cell.y + bands + 1):
 		if excavation.carved.has(Vector3i(cell.x, band, cell.z)):
 			return false
 	return true
+
+
+static func raises_edge(massif: WarrenMassif, stride: Array[Vector3i]) -> bool:
+	## True when a stride would put a street above its column's ground on the
+	## town's edge rings (`WarrenMassif.GRADE_RINGS`). Optional growth (alleys,
+	## loops, the descent) keeps the edge at grade; the spine may still climb
+	## there when it must.
+	for cell: Vector3i in stride:
+		var column := Vector2i(cell.x, cell.z)
+		if cell.y > massif.base_at(column) \
+				and massif.ring_depth(column) <= WarrenMassif.GRADE_RINGS:
+			return true
+	return false
 
 
 static func completes_public_square(occupied: Dictionary,

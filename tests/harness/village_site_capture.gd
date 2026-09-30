@@ -9,6 +9,7 @@ extends Node3D
 ##     --seed 2697992464 --at -552,6,1133 --radius 1 --output DIR \
 ##     --view entry:-552,7,1148:-552,5,1131[:fov]
 const WAIT_HARD_TIMEOUT_SECONDS := 900.0
+var _timeout := WAIT_HARD_TIMEOUT_SECONDS
 const IDLE_SETTLE_SECONDS := 3.0
 
 var _seed := 2697992464
@@ -59,6 +60,8 @@ func _read_args() -> void:
 				_at = _parse_v3(next)
 			"--radius":
 				_radius = int(next)
+			"--timeout":
+				_timeout = float(next)
 			"--reported":
 				_reported = true
 			"--grass":
@@ -140,7 +143,7 @@ func _wait_for_site() -> bool:
 	var last_report := 0
 	while true:
 		var elapsed := float(Time.get_ticks_msec() - started) / 1000.0
-		if elapsed >= WAIT_HARD_TIMEOUT_SECONDS:
+		if elapsed >= _timeout:
 			print("[village_site_capture] TIMEOUT missing=", _missing(wanted))
 			return false
 		var missing := _missing(wanted)

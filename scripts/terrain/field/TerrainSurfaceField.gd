@@ -1,10 +1,10 @@
 # scripts/terrain/field/TerrainSurfaceField.gd
 # Pure walkable-surface height reconstructed from a HeightfieldRegion. Each cell
 # quadrant is a smootherstep patch through four SHARED controls: its centre, the
-# minima at its two edge midpoints, and the minimum of the four cells meeting at
-# its corner. Adjacent cell owners therefore evaluate the exact same boundary
-# curve. Only deliberate flat cliff/inner-corner tops are multi-valued; their
-# vertical difference is filled by the rock skirt.
+# controls at its two edge midpoints, and its corner control. Classification is
+# per EDGE: a cliff edge (two or more storeys) keeps each owner's height and is
+# the only multi-valued seam (the rock skirt fills it); every other edge is an
+# ordinary slope whose owners evaluate the exact same boundary curve.
 class_name TerrainSurfaceField
 extends RefCounted
 
@@ -47,34 +47,75 @@ static func transition_weight(distance: float, width: float = HALF) -> float:
 
 const _DIAGONALS := [Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]
 
-# A cell is a CLIFF TOP if any neighbour — cardinal OR diagonal — sits ≥2 storeys below it.
-# A cliff top is drawn FLAT across its whole surface, so the KayKit grass lip that sits on its
-# edge is always backed by flat terrain at the same height (never overhanging into midair or
-# undercut by a slope behind it). Slopes live on the ADJACENT (non-cliff) cells, which ramp up
-# to meet the flat cliff top — see surface_y.
+## Terrain is classified per EDGE, not per tile (owner, September 27 judging
+## pass). Two cardinal neighbours two or more storeys apart meet at a CLIFF
+## edge: each keeps its own height up to that seam and the vertical rock face
+## between them is a wall. Every other edge, including a one-storey side of a
+## cell that walls elsewhere, is the ordinary smootherstep slope with one
+## shared boundary curve. Diagonal differences never wall by themselves; they
+## meet through the shared corner control below.
+static func is_cliff_edge(region, cx: int, cz: int, d: Vector2i) -> bool:
+	return absi(int(region.storey_at(cx, cz)) - int(region.storey_at(cx + d.x, cz + d.y))) >= 2
+
+# A cell is a CLIFF TOP when at least one cardinal side is the high side of a
+# cliff edge. It is no longer drawn flat as a whole: only its cliff sides keep
+# the cell height; its slope sides ramp like any other cell.
 static func _is_cliff_top(region, cx: int, cz: int) -> bool:
-	var s: int = region.storey_at(cx, cz)
-	for d in (_CARDINALS + _DIAGONALS):
-		var nb_s: int = int(region.storey_at(cx + d.x, cz + d.y))
-		if s - nb_s >= 2:
+	for d in _CARDINALS:
+		if _is_wall_edge(region, cx, cz, d):
 			return true
 	return false
 
-# Whether the edge of cliff top (cx,cz) toward `d` carries a rock wall + grass lip. A CLIFF TOP is
-# a flat plateau drawn level to its edges, so EVERY storey drop off it is a vertical wall — nothing
-# ramps the lower ground up to meet it. Non-cliff cells never wall; they only slope (surface_y ramps
-# them DOWN to their lower neighbours, so a ≤1-storey drop between them is a walkable slope).
+# Whether the edge of (cx,cz) toward `d` is the HIGH side of a cliff edge:
+# the only edges that carry a vertical rock face.
 static func _is_wall_edge(region, cx: int, cz: int, d: Vector2i) -> bool:
-	if not _is_cliff_top(region, cx, cz):
-		return false
-	return int(region.storey_at(cx, cz)) - int(region.storey_at(cx + d.x, cz + d.y)) >= 1
+	return int(region.storey_at(cx, cz)) - int(region.storey_at(cx + d.x, cz + d.y)) >= 2
+
+## Public name of the per-edge wall fact (renderer skirts, grass, walkability).
+static func is_wall_edge(region, cx: int, cz: int, d: Vector2i) -> bool:
+	return _is_wall_edge(region, cx, cz, d)
+
+# Edge-midpoint control of (cx,cz) toward cardinal d. A slope edge uses the
+# pairwise minimum, which both owners name identically; a cliff edge keeps
+# each owner's own height (the lower owner's minimum is its own height too).
+# There is no special cliff-end profile (owner, September 29): where a cliff's
+# corner ring is slope-connected, the corner control meets the hillside and
+# the end quadrant blends to it like every other quadrant. Lowering the edge
+# midpoint toward that corner (September 27) dented the plateau beside it.
+static func _edge_control(region, cx: int, cz: int, d: Vector2i, h: float) -> float:
+	if not is_cliff_edge(region, cx, cz, d):
+		return minf(h, region.surface_height(cx + d.x, cz + d.y))
+	return h
+
+# Corner control of the quadrant of (cx,cz) toward (sx,sz). The four cells
+# around the corner form a ring A-X-D-Z; cells joined through slope edges
+# must name one corner height, so the corner is the minimum over the slope-
+# connected component of A in that ring. Components separated by cliff edges
+# keep their own corners (the wall between them). Every member computes the
+# same component, so the corner is single-valued wherever a seam is.
+static func _corner_control(region, cx: int, cz: int, sx: int, sz: int, h: float) -> float:
+	var ring: Array[Vector2i] = [Vector2i(cx, cz), Vector2i(cx + sx, cz),
+		Vector2i(cx + sx, cz + sz), Vector2i(cx, cz + sz)]
+	var linked: Array[bool] = []
+	for i in 4:
+		var a: Vector2i = ring[i]
+		var b: Vector2i = ring[(i + 1) % 4]
+		linked.append(not is_cliff_edge(region, a.x, a.y, b - a))
+	var corner := h
+	for k in range(1, 4):          # forward: A -> X -> D -> Z
+		if not linked[k - 1]:
+			break
+		corner = minf(corner, region.surface_height(ring[k].x, ring[k].y))
+	for k in range(3, 0, -1):      # backward: A -> Z -> D -> X
+		if not linked[k]:
+			break
+		corner = minf(corner, region.surface_height(ring[k].x, ring[k].y))
+	return corner
 
 # A concave INNER CORNER: the diagonal `cdir` neighbour is lower, BOTH adjoining cardinal arms
-# sit at this cell's level, and each arm walls the drop into that diagonal pocket. Then this cell
-# is the high corner of a clean cliff pocket — it must read as a vertical inner-corner cliff (flat
-# top + inner-corner piece), NOT a diagonal slope dipping into the notch. Mirrors the old tile
-# system's rule (HeightfieldVariant.missing_from_heights: a diagonal is an inner-corner notch only
-# when its neighbour is lower AND both adjoining cardinals are connected/level).
+# sit at this cell's level, and each arm walls the drop into that diagonal pocket. The corner
+# control then keeps this cell at its height (the pocket is a separate component), and the
+# legacy dressing places an inner-corner piece there.
 static func _is_inner_corner(region, cx: int, cz: int, cdir: Vector2i) -> bool:
 	var s := int(region.storey_at(cx, cz))
 	if int(region.storey_at(cx + cdir.x, cz + cdir.y)) >= s:
@@ -86,18 +127,10 @@ static func _is_inner_corner(region, cx: int, cz: int, cdir: Vector2i) -> bool:
 	if int(region.storey_at(cx + az.x, cz + az.y)) != s:
 		return false
 	# each level arm must itself wall the drop into the diagonal (so the pocket is a real cliff)
-	if not _arm_walls(region, cx + ax.x, cz + ax.y, az):
-		return false
-	if not _arm_walls(region, cx + az.x, cz + az.y, ax):
-		return false
-	return true
+	return _is_wall_edge(region, cx + ax.x, cz + ax.y, az) \
+		and _is_wall_edge(region, cx + az.x, cz + az.y, ax)
 
-# A corner in another quadrant does not make this arm flat. Only the
-# cliff-top rule holds its descending cardinal edge at the upper height.
-static func _arm_walls(region, ax: int, az: int, d: Vector2i) -> bool:
-	return _is_wall_edge(region, ax, az, d)
-
-# Whether the cell is the high corner of any inner-corner pocket (so it must stay flat + be dressed).
+# Whether the cell is the high corner of any inner-corner pocket.
 static func has_inner_corner(region, cx: int, cz: int) -> bool:
 	for d in _DIAGONALS:
 		if _is_inner_corner(region, cx, cz, d):
@@ -106,19 +139,31 @@ static func has_inner_corner(region, cx: int, cz: int) -> bool:
 
 const EXPOSE_EPS := 0.25   # a neighbour surface this far below the flat top exposes the boundary
 
-# A cell that renders FLAT at its cell height: a cliff top, or the high corner of an
-# inner-corner pocket (kept flat so its corner piece is backed).
+# A cell rendered completely FLAT at its height that walls at least one side
+# or owns an inner corner. Only these cells carry the legacy native wall/lip
+# pieces; a cliff cell whose slope sides ramp has bare rock skirts on its
+# cliff edges (the sheet slope covers them).
 static func is_flat_cell(region, cx: int, cz: int) -> bool:
-	return _is_cliff_top(region, cx, cz) or has_inner_corner(region, cx, cz)
+	if not (_is_cliff_top(region, cx, cz) or has_inner_corner(region, cx, cz)):
+		return false
+	var baked := bake_cell(region, cx, cz)
+	return baked[0] > 0.5
 
 # The neighbour's pinned surface sampled along the shared edge of cell (cx,cz) toward d — the
 # profile a cliff face on this edge must cover. Returns samples+1 heights ordered along
 # pdir=(d.y,d.x) from the -pdir end to the +pdir end (the same along-edge axis the mesher grid
-# and the dressing slots use). Where this falls below the cell's flat height the boundary face
-# is exposed: a storey drop, a same-storey SLOPE neighbour descending along the edge toward its
-# own lower ground, or both — cell-centre storey differences alone miss the slope cases (owner's
-# see-through voids next to slopes).
+# and the dressing slots use).
 static func edge_profile(region, cx: int, cz: int, d: Vector2i, samples: int) -> PackedFloat32Array:
+	return _boundary_profile(region, cx, cz, d, samples, Vector2i(cx + d.x, cz + d.y))
+
+## The cell's OWN boundary profile along its edge toward d (same ordering as
+## edge_profile). Where the two differ the edge is a wall: the face spans
+## from this profile down to the neighbour's.
+static func own_edge_profile(region, cx: int, cz: int, d: Vector2i, samples: int) -> PackedFloat32Array:
+	return _boundary_profile(region, cx, cz, d, samples, Vector2i(cx, cz))
+
+static func _boundary_profile(region, cx: int, cz: int, d: Vector2i, samples: int,
+		owner: Vector2i) -> PackedFloat32Array:
 	var span := tile_size(region)
 	var half := span * 0.5
 	var bx := float(cx) * span + float(d.x) * half
@@ -126,23 +171,16 @@ static func edge_profile(region, cx: int, cz: int, d: Vector2i, samples: int) ->
 	var out := PackedFloat32Array()
 	for i in samples + 1:
 		var t := (float(i) / float(samples)) * 2.0 - 1.0
-		out.append(surface_y_in_cell(region, bx + float(d.y) * half * t, bz + float(d.x) * half * t, cx + d.x, cz + d.y))
+		out.append(surface_y_in_cell(region, bx + float(d.y) * half * t, bz + float(d.x) * half * t, owner.x, owner.y))
 	return out
 
-# Is the cell's OWN surface flat at its cell height along this edge? A cliff top always is; a
-# has_inner_corner cell that is not a cliff top ramps down toward its lower cardinals, and those
-# edges must not carry walls/lips pinned at the flat height.
+# Is the cell's OWN surface flat at its cell height along this edge? A cliff
+# edge whose ends meet a slope side descends toward that corner, and such an
+# edge must not carry native lips pinned at the flat height.
 static func own_edge_flat(region, cx: int, cz: int, d: Vector2i) -> bool:
-	if _is_cliff_top(region, cx, cz):
-		return true
 	var h: float = region.surface_height(cx, cz)
-	var span := tile_size(region)
-	var half := span * 0.5
-	var bx := float(cx) * span + float(d.x) * half
-	var bz := float(cz) * span + float(d.y) * half
-	for i in 9:
-		var t := (float(i) / 8.0) * 2.0 - 1.0
-		if surface_y_in_cell(region, bx + float(d.y) * half * t, bz + float(d.x) * half * t, cx, cz) < h - 0.01:
+	for f in own_edge_profile(region, cx, cz, d, 8):
+		if f < h - 0.01:
 			return false
 	return true
 
@@ -155,8 +193,8 @@ static func is_higher_flat(region, cx: int, cz: int, d: Vector2i) -> bool:
 		and is_flat_cell(region, cx + d.x, cz + d.y)
 
 # The boundary face of flat cell (cx,cz) toward d is EXPOSED: the cell's own edge is flat at its
-# height while the neighbour's surface falls below it somewhere along the shared edge.
-# Generalises _is_wall_edge (a ≥1-storey drop off a cliff top) to same-storey slope neighbours.
+# height while the neighbour's surface falls below it somewhere along the shared edge. This is
+# the dressable subset of the wall edges (native wall + lip pieces).
 static func is_exposed_edge(region, cx: int, cz: int, d: Vector2i) -> bool:
 	if not is_flat_cell(region, cx, cz):
 		return false
@@ -169,10 +207,9 @@ static func is_exposed_edge(region, cx: int, cz: int, d: Vector2i) -> bool:
 	return false
 
 # Traversal uses the same boundary fact as rendering: a cardinal edge is
-# walkable exactly when neither owner exposes a vertical face there. Ordinary
-# storey/level slopes remain legal, while cliffs, inner-corner walls, diagonal
-# cliff shoulders, and edges facing a higher flat cell are rejected without a
-# second terrain classifier that could drift from the mesh.
+# walkable exactly when it is not a cliff edge, the only seams with a
+# vertical face. Ordinary storey/level slopes remain legal without a second
+# terrain classifier that could drift from the mesh.
 static func is_walkable_edge(region, cell: Vector2i, d: Vector2i,
 		half_width: float = -1.0) -> bool:
 	assert(absi(d.x) + absi(d.y) == 1, "walkability requires a cardinal unit direction")
@@ -191,8 +228,7 @@ static func is_walkable_edge(region, cell: Vector2i, d: Vector2i,
 			if absf(a - b) > EXPOSE_EPS:
 				return false
 		return true
-	return not is_exposed_edge(region, cell.x, cell.y, d) \
-		and not is_exposed_edge(region, cell.x + d.x, cell.y + d.y, -d)
+	return not is_cliff_edge(region, cell.x, cell.y, d)
 
 
 ## Proves that a grid-aligned strip crosses no rendered wall. Village streets,
@@ -303,31 +339,9 @@ static func _natural_height_bounds(region, footprint: Rect2, owner: Variant = nu
 	assert(minimum != INF and maximum != -INF)
 	return Vector2(minimum, maximum)
 
-# Shared four-cell minimum, except an explicitly dressed inner corner.
-# A higher cardinal by itself cannot hold this corner up: the ordinary slope
-# across the other edge still uses the minimum and would leave a vertical hole.
-static func _quadrant_corner_height(region, cx: int, cz: int,
-		dx_sign: int, dz_sign: int, h: float, edge_x: float, edge_z: float) -> float:
-	var diag: float = region.surface_height(cx + dx_sign, cz + dz_sign)
-	var corner := minf(minf(h, edge_x), minf(edge_z, diag))
-	if corner >= h - 0.0001 or edge_x < h - 0.0001 or edge_z < h - 0.0001:
-		return corner
-	# A same-height cliff arm owns an actually flat boundary. Preserve that
-	# contact only when neither of this quadrant's edges needs to descend.
-	if (is_equal_approx(region.surface_height(cx + dx_sign, cz), h) \
-			and _is_cliff_top(region, cx + dx_sign, cz) \
-			and region.surface_height(cx, cz + dz_sign) > h + 0.0001) \
-			or (is_equal_approx(region.surface_height(cx, cz + dz_sign), h) \
-			and _is_cliff_top(region, cx, cz + dz_sign) \
-			and region.surface_height(cx + dx_sign, cz) > h + 0.0001):
-		return h
-	if _is_inner_corner(region, cx, cz, Vector2i(dx_sign, dz_sign)):
-		return h
-	return corner
-
 # Surface height at (x,z) evaluated as if the point belongs to cell (cx,cz) — even past the cell's
-# edge. The mesher pins each quad to its own cell so a cliff top renders FLAT right up to its
-# boundary (no slanted face); the vertical drop to the lower cell is then a separate rock skirt.
+# edge. The mesher pins each quad to its own cell so a cliff side stays at the cell height right
+# up to its boundary (no slanted face); the vertical drop to the lower cell is then a rock skirt.
 # For a point inside its natural cell this is identical to surface_y.
 static func surface_y_in_cell(region, x: float, z: float, cx: int, cz: int) -> float:
 	return _apply_grade(region, x, z, _natural_surface_y_in_cell(region, x, z, cx, cz))
@@ -339,9 +353,6 @@ static func _apply_grade(region, x: float, z: float, height: float) -> float:
 static func _natural_surface_y_in_cell(region, x: float, z: float,
 		cx: int, cz: int) -> float:
 	var h: float = region.surface_height(cx, cz)
-	# A cliff top is FLAT (its lip needs flat backing); the KayKit tile draws its edges.
-	if _is_cliff_top(region, cx, cz):
-		return h
 	var span := tile_size(region)
 	var half := span * 0.5
 	var lx := x - float(cx) * span
@@ -350,15 +361,13 @@ static func _natural_surface_y_in_cell(region, x: float, z: float,
 	var dz_sign := 1 if lz >= 0.0 else -1
 	var a := _edge_weight(lx * float(dx_sign), half)            # weight toward facing x-edge
 	var b := _edge_weight(lz * float(dz_sign), half)            # weight toward facing z-edge
-	# Shared controls. Edge midpoint heights are pairwise minima: a higher cell
-	# ramps down, a lower cell never ramps up, and BOTH owners nevertheless name
-	# the same seam value. The corner is the corresponding four-cell minimum.
-	# Bilerping the controls with smootherstep coordinates preserves the old 1-D
-	# slope profile while making every 2-D seam profile single-valued.
-	var edge_x := minf(h, region.surface_height(cx + dx_sign, cz))
-	var edge_z := minf(h, region.surface_height(cx, cz + dz_sign))
-	var corner := _quadrant_corner_height(
-		region, cx, cz, dx_sign, dz_sign, h, edge_x, edge_z)
+	# Shared controls: per-edge midpoints and the slope-connected corner.
+	# Bilerping them with smootherstep coordinates preserves the 1-D slope
+	# profile while making every slope seam single-valued; a cliff edge keeps
+	# each owner's height and the rock skirt fills the difference.
+	var edge_x := _edge_control(region, cx, cz, Vector2i(dx_sign, 0), h)
+	var edge_z := _edge_control(region, cx, cz, Vector2i(0, dz_sign), h)
+	var corner := _corner_control(region, cx, cz, dx_sign, dz_sign, h)
 	var near_edge := lerpf(h, edge_x, a)
 	var far_edge := lerpf(edge_z, corner, a)
 	return lerpf(near_edge, far_edge, b)
@@ -372,7 +381,7 @@ static func _natural_surface_y_in_cell(region, x: float, z: float,
 # for every point — guarded by test_baked_sampler_matches_surface_y_in_cell.
 #
 # Layout (PackedFloat32Array, 10 floats):
-#   [0]      1.0 = cliff top (surface is the constant [1])
+#   [0]      1.0 = flat cell (surface is the constant [1])
 #   [1]      h, the cell surface height
 #   [2..3]   drop toward the x neighbour, sign - / +   (>= 0)
 #   [4..5]   drop toward the z neighbour, sign - / +
@@ -383,23 +392,18 @@ static func bake_cell(region, cx: int, cz: int) -> PackedFloat32Array:
 	out.resize(10)
 	var h: float = region.surface_height(cx, cz)
 	out[1] = h
-	if _is_cliff_top(region, cx, cz):
-		out[0] = 1.0
-		return out
+	var any_drop := false
 	for i in 2:
 		var sgn := -1 if i == 0 else 1
-		out[2 + i] = maxf(0.0, h - region.surface_height(cx + sgn, cz))
-		out[4 + i] = maxf(0.0, h - region.surface_height(cx, cz + sgn))
+		out[2 + i] = h - _edge_control(region, cx, cz, Vector2i(sgn, 0), h)
+		out[4 + i] = h - _edge_control(region, cx, cz, Vector2i(0, sgn), h)
 	for ix in 2:
 		for iz in 2:
-			var k := ix * 2 + iz
-			var dxs := -1 if ix == 0 else 1
-			var dzs := -1 if iz == 0 else 1
-			var edge_x := h - out[2 + ix]
-			var edge_z := h - out[4 + iz]
-			var corner := _quadrant_corner_height(
-				region, cx, cz, dxs, dzs, h, edge_x, edge_z)
-			out[6 + k] = h - corner
+			out[6 + ix * 2 + iz] = h - _corner_control(region, cx, cz,
+				-1 if ix == 0 else 1, -1 if iz == 0 else 1, h)
+	for i in range(2, 10):
+		any_drop = any_drop or out[i] > 0.0
+	out[0] = 0.0 if any_drop else 1.0
 	return out
 
 

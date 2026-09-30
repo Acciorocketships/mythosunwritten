@@ -17,7 +17,7 @@ vec3 grown_colour(vec3 lawn,vec3 moss,float rise,vec3 p){
  float drift=moss_fbm(p*vec3(.21,.3,.21)+vec3(1.9,4.4,6.2));
  return mix(moss,lawn,t)*mix(vec3(.94,.95,.97),vec3(1.06,1.05,1.0),drift);
 }
-vec3 slope_green(vec3 p,vec3 n,vec3 tint,float rise){
+vec3 slope_green_grade(vec3 p,vec3 n,vec3 tint,float rise,float grade){
  vec3 exact=ground_style(p.xz,texture(ground_palette_texture,grass_uv).rgb*tint);
  vec3 lawn=exact;
  vec3 detail=triplanar(moss_detail,p,n,moss_detail_scale)/max(pow(moss_detail_mean,vec3(2.2)),vec3(.001));
@@ -27,5 +27,9 @@ vec3 slope_green(vec3 p,vec3 n,vec3 tint,float rise){
  // Gentle ground is exactly the terrain's lawn (the same function the
  // terrain uses): moss, detail and drift come in only as the slope steepens
  // (about 18 to 40 degrees), so no light/dark seam where the two meet.
- return mix(exact,grown_colour(lawn,moss,rise,p),smoothstep(.05,.24,1.0-n.y));
+ return mix(exact,grown_colour(lawn,moss,rise,p),smoothstep(.05,.24,grade));
+}
+
+vec3 slope_green(vec3 p,vec3 n,vec3 tint,float rise){
+ return slope_green_grade(p,n,tint,rise,1.0-n.y);
 }

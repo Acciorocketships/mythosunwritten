@@ -129,14 +129,25 @@ static func compute(region:HeightfieldRegion,lo_x:int,lo_z:int,cells:int,seed_va
  if STYLE.sheet_only:placements.clear()
  if slope!=null:
   var owned_rect:=Rect2(Vector2(lo_x,lo_z)*24.0-Vector2(12,12),Vector2.ONE*cells*24.0)
-  placements.append_array(slope.solid(owned_rect) if STYLE.sheet_only else slope.sheets(owned_rect))
+  var sheets:Array[Dictionary]=slope.solid(owned_rect) if STYLE.sheet_only else slope.sheets(owned_rect)
+  # Basal rocks stand in the ground, which swells to meet them: the skirt
+  # over the sheet joins the sheet's own mesh.
+  if STYLE.sheet_only and not sheets.is_empty():slope.add_skirts(sheets[0],owned_rect)
+  placements.append_array(sheets)
  var collision:=PackedVector3Array();var reservations:Array[Rect2]=[]
  for p:Dictionary in placements:
   for vertex:Vector3 in _faces(p):collision.append(p.transform*vertex)
   if p.get("native_crag",false):p["render_arrays"]=CRAGS.mesh_arrays(p,region,seed_value)
  for p:Dictionary in neighbors:reservations.append(_footprint(p.bounds))
  if STYLE.sheet_only and slope!=null:
-  reservations.append_array(slope.reservations(Rect2(Vector2(lo_x,lo_z)*24.0-Vector2(12,12),Vector2.ONE*cells*24.0).grow(4.0)))
+  # Cover every ambient rock base in the chunk core, which is offset half a
+  # cell from this owned rectangle.
+  reservations.append_array(slope.reservations(Rect2(Vector2(lo_x,lo_z)*24.0-Vector2(12,12),Vector2.ONE*cells*24.0).grow(16.0)))
+ # Ambient rocks never land on a slope rock (owner, September 27: stacked).
+ if slope!=null:
+  for rock:Dictionary in slope.rock_list:
+   var r:=SLOPE_FIELD._base_radius(rock)
+   reservations.append(Rect2(SLOPE_FIELD._base_centre(rock)-Vector2.ONE*r,Vector2.ONE*2.0*r))
  var terrace_pieces:Dictionary={}
  for terrace:Dictionary in terraces:
   reservations.append(KIT.footprint(terrace))
@@ -174,10 +185,22 @@ static func compute(region:HeightfieldRegion,lo_x:int,lo_z:int,cells:int,seed_va
  var slope_rocks:Dictionary={}
  if slope!=null:
   var owned:=Rect2(Vector2(lo_x,lo_z)*24.0-Vector2(12,12),Vector2.ONE*cells*24.0)
+  var skirted:=slope.skirts()
   for rock:Dictionary in slope.rocks(owned):
    if not slope_rocks.has(rock.piece):slope_rocks[rock.piece]=[]
-   slope_rocks[rock.piece].append(rock)
- var result:={"placements":placements,"collision_faces":collision,"ground_reservations":reservations,"grass_supports":supports,"terraces":terrace_pieces,"slope_rocks":slope_rocks}
+   # A skirted rock grows the ground's colour up from its mound, not from the
+   # buried ground under it.
+   var entry:=rock
+   if skirted.has(rock):
+    entry=rock.duplicate();entry.point=Vector3(rock.point.x,float(skirted[rock].top),rock.point.z)
+   slope_rocks[rock.piece].append(entry)
+  # Every rock skirt reaching this chunk lends grass support; its owner
+  # renders it (the sheet and terrain parts).
+  for rock:Dictionary in skirted:
+   if grass_core.grow(RockSkirt.WIDTH_MAX+8.0).has_point(SLOPE_FIELD._base_centre(rock)):
+    supports.append(skirted[rock].grass_support)
+ var result:={"placements":placements,"collision_faces":collision,"ground_reservations":reservations,"grass_supports":supports,"terraces":terrace_pieces,"slope_rocks":slope_rocks,
+  "rock_skirts":slope.skirt_terrain(Rect2(Vector2(lo_x,lo_z)*24.0-Vector2(12,12),Vector2.ONE*cells*24.0)) if slope!=null else []}
  # The native wall and lip pieces the whole-wall slope covers are hidden
  # (they poked through it); the mesher reads the slope surface for that.
  if STYLE.sheet_only and slope!=null:result["sheet_cover"]=slope.envelope()
@@ -484,7 +507,11 @@ static func build(data:Dictionary,_seed:int)->Node3D:
   if p.has("faces"):
    var mesh:=CRAGS.mesh(p) if p.get("native_crag",false) else RELIEF.mesh(p)
    var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=mesh;mm.use_colors=true;mm.instance_count=1
-   mm.set_instance_transform(0,p.transform);mm.set_instance_color(0,BiomeRegistry.ground_tint_at(p.anchor,_seed))
+   # Native crags and the slope sheet carry their biome tint per vertex (as
+   # the terrain does); the instance colour multiplies COLOR, so a second
+   # tint from the placement's anchor darkened the whole sheet by a
+   # per-chunk constant (September 27 judging: rocks and slope disagreed).
+   mm.set_instance_transform(0,p.transform);mm.set_instance_color(0,Color.WHITE if p.get("native_crag",false) else BiomeRegistry.ground_tint_at(p.anchor,_seed))
    var node:=MultiMeshInstance3D.new();node.multimesh=mm;node.set_meta("cliff_asset",p.asset)
    node.set_meta("relief_green",p.green);node.set_meta("relief_faces",p.faces)
    if p.has("replay_recipe"):node.set_meta("relief_recipe",p.replay_recipe)
@@ -507,6 +534,8 @@ static func build(data:Dictionary,_seed:int)->Node3D:
    root.add_child(instance)
  if not (data.get("terraces",{}) as Dictionary).is_empty():root.add_child(KIT.build(data.terraces,_seed))
  if not (data.get("slope_rocks",{}) as Dictionary).is_empty():root.add_child(SLOPE_ROCKS.build(data.slope_rocks,_seed))
+ # Terrain-covering parts of the basal rocks' ground skirts.
+ RockSkirt.commit(root,data.get("rock_skirts",[]))
  return root
 
 

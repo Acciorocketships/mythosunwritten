@@ -32,18 +32,16 @@ uniform vec2 moss_mask_range = vec2(.0,1.0);
 uniform bool prop_mode = false;
 uniform bool prop_inclusion = false;
 uniform sampler2D prop_albedo : source_color, filter_linear_mipmap, hint_default_white;
-// Study (September 25): rock exposed in the slope surface itself. COLOR.a is
-// the exposure; bare rock takes Meadow's authored stone, flat benches grass.
+// Bedrock (September 25): rock exposed in the slope surface itself. COLOR.a
+// is the exposure; bare rock takes the Meadow stone, flat benches grass.
 uniform bool exposure_rock = false;
-uniform sampler2D rock_albedo : source_color, filter_linear_mipmap, repeat_enable, hint_default_white;
-uniform vec3 rock_tint = vec3(.5,.46,.42);
-uniform float rock_scale = .22;
 varying vec3 stone_position;
 varying vec2 stone_rise;
 varying vec3 stone_normal;
 // Prop mode: the slope plane under the rock (normal, offset) and ground height.
 varying vec4 prop_slope;
 #include "res://terrain/materials/slope_green.gdshaderinc"
+#include "res://terrain/materials/meadow_stone.gdshaderinc"
 void vertex(){
  stone_position=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz;
  stone_rise=UV2;
@@ -99,22 +97,28 @@ void fragment(){
    cover=max(cover,smoothstep(.35,.8,stone_normal.y+edge*.5)*moss_amount);
   }
   if(exposure_rock&&!prop_mode){
-   vec3 w=pow(abs(stone_normal),vec3(4.0));w/=(w.x+w.y+w.z);
-   vec3 tex=texture(rock_albedo,stone_position.zy*rock_scale).rgb*w.x+texture(rock_albedo,stone_position.xz*rock_scale).rgb*w.y+texture(rock_albedo,stone_position.xy*rock_scale).rgb*w.z;
-   stone=clamp(mix(2.0*tex*rock_tint,1.0-2.0*(1.0-tex)*(1.0-rock_tint),step(vec3(.5),rock_tint)),vec3(0),vec3(1));
-   stone*=mix(.9,1.1,stone_colour_noise(stone_position*.14+vec3(17.3,3.1,29.7)));
-   float grain=moss_fbm(stone_position*vec3(.6,.9,.6)+vec3(1.3,7.7,3.1));
-   float fine=stone_colour_noise(stone_position*3.1+vec3(4.,2.,9.));
-   float bare=smoothstep(.46,.5,COLOR.a+(grain-.5)*.3+(fine-.5)*.06);
+   stone=bedrock_stone(stone_position,stone_normal);
+   float bare=bedrock_bare(stone_position,COLOR.a);
    // Flat facets on bare rock: crisp block planes instead of smooth lighting.
+   // Bedrock benches vary only down the fall line, so a facet keeps just its
+   // tilt in the vertical plane of the smooth normal: its tilt along the
+   // contour belongs to the surface net's triangulation, whose small
+   // triangles along a diagonal bench lip otherwise alternate light and dark
+   // as saw teeth (owner, September 27 judging: tiny triangle glitches).
    vec3 facet=normalize(cross(dFdx(VERTEX),dFdy(VERTEX)));
    if(dot(facet,NORMAL)<0.0)facet=-facet;
-   vec3 world_facet=normalize((INV_VIEW_MATRIX*vec4(facet,0.0)).xyz);
-   float tread=smoothstep(.8,.9,world_facet.y+(fine-.5)*.08);
+   vec3 contour=cross(VIEW_MATRIX[1].xyz,NORMAL);
+   if(dot(contour,contour)>1e-4){contour=normalize(contour);facet=normalize(facet-dot(facet,contour)*contour);}
+   // Coverage follows the continuous hillside normal. Per-triangle tread
+   // masks painted isolated green triangles into otherwise solid rock.
+   float tread=bedrock_tread(stone_position,stone_normal.y);
    NORMAL=normalize(mix(NORMAL,facet,bare*(1.0-tread)*.85));
    cover=min(cover,max(1.0-bare,tread)*moss_amount);
   }
-  ALBEDO=mix(stone,slope_green(stone_position,stone_normal,COLOR.rgb,rise),cover);
+  vec3 green=exposure_rock&&!prop_mode
+   ? slope_green_grade(stone_position,stone_normal,COLOR.rgb,rise,clamp(rise/28.0,0.0,1.0))
+   : slope_green(stone_position,stone_normal,COLOR.rgb,rise);
+  ALBEDO=mix(stone,green,cover);
   ROUGHNESS=1.0;SPECULAR=0.0;
  }
 }

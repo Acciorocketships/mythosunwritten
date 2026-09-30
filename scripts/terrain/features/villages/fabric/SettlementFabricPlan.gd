@@ -17,8 +17,6 @@ const CONVEX_POST_WIDTH := 0.32
 const DOOR_RETURN_POST_DEPTH := 0.40
 const DOOR_RETURN_POST_PROUD := 0.08
 var facade_corner_placements: Array[Dictionary] = []
-## Native frames owned by complete supported tunnel mouths.
-var tunnel_arch_placements: Array[Dictionary] = []
 var wall_cap_surfaces: Array[Dictionary] = []
 var volume_plan: FabricVolumePlan
 var solid_void_plan: FabricSolidVoidPlan
@@ -1160,7 +1158,6 @@ func asset_ids() -> Array[StringName]:
 			unique[StringName(placement.asset_id)] = true
 	for asset: StringName in unique.keys():
 		if DOOR_LANTERNS.supports(asset): unique[DOOR_LANTERNS.ASSET]=true
-	for arch in tunnel_arch_placements: unique[arch.asset_id]=true
 	var out: Array[StringName] = []
 	out.assign(unique.keys())
 	out.sort_custom(func(a: StringName, b: StringName) -> bool:
@@ -1224,7 +1221,6 @@ func expanded_placements() -> Array[Dictionary]:
 		if not lamp.is_empty(): lamps.append(lamp)
 	out.append_array(lamps)
 	out.append_array(facade_corner_placements)
-	out.append_array(tunnel_arch_placements)
 	if continuous_roof_plan != null:
 		out = continuous_roof_plan.apply_to(out)
 		for placement: Dictionary in out:
@@ -1936,8 +1932,6 @@ func construction_signature() -> String:
 			unit_value.stable_id, unit_value.recipe_id, origin.x, origin.y,
 			origin.z, unit_value.yaw_quarters, ",".join(parent_ids),
 			",".join(bond_records), suppression_suffix])
-	for arch in tunnel_arch_placements:
-		records.append("%s:%s@%s" % [arch.stable_id,arch.asset_id,str(arch.transform)])
 	records.sort()
 	return "|".join(records).sha256_text()
 

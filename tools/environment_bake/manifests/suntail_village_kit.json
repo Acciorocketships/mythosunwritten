@@ -322,6 +322,56 @@
    "max_collision_pieces": 1
   },
   {
+   "id": "suntail.stone.stone_wall_plain",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stone",
+    "building",
+    "fortification"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1,
+   "exclude_materials": [
+    "Wooden_Planks"
+   ]
+  },
+  {
+   "id": "suntail.stone.stone_wall_deep",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stone",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1,
+   "masonry_depth": {
+    "depth": 0.2,
+    "setback": 0.06,
+    "body_paths": [
+     "Stone_Wall"
+    ],
+    "opening_paths": []
+   }
+  },
+  {
    "id": "suntail.stone.stone_wall_d",
    "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D.glb",
    "merge_pieces": true,
@@ -339,6 +389,35 @@
    "collision_profile": "building_trimesh",
    "max_collision_triangles": 12000,
    "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.stone.stone_wall_d_deep",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stone",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1,
+   "masonry_depth": {
+    "depth": 0.2,
+    "setback": 0.06,
+    "body_paths": [
+     "Stone_Wall_D"
+    ],
+    "opening_paths": [
+     "Stone_Wall_D/Wooden_Door_1"
+    ]
+   }
   },
   {
    "id": "suntail.stone.stone_wall_d_1",
@@ -360,6 +439,35 @@
    "max_collision_pieces": 1
   },
   {
+   "id": "suntail.stone.stone_wall_d_1_deep",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D_1.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stone",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1,
+   "masonry_depth": {
+    "depth": 0.2,
+    "setback": 0.06,
+    "body_paths": [
+     "Stone_Wall_D_1"
+    ],
+    "opening_paths": [
+     "Stone_Wall_D_1/Wooden_Door_1_W"
+    ]
+   }
+  },
+  {
    "id": "suntail.stone.stone_wall_w",
    "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_W.glb",
    "merge_pieces": true,
@@ -377,6 +485,35 @@
    "collision_profile": "building_trimesh",
    "max_collision_triangles": 12000,
    "max_collision_pieces": 1
+  },
+  {
+   "id": "suntail.stone.stone_wall_w_deep",
+   "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_W.glb",
+   "merge_pieces": true,
+   "tags": [
+    "village",
+    "suntail_kit",
+    "stone",
+    "building"
+   ],
+   "tint_group": "identity",
+   "supports_instance_color": true,
+   "max_mesh_bytes": 8388608,
+   "max_visual_triangles": 12000,
+   "max_surfaces": 6,
+   "collision_profile": "building_trimesh",
+   "max_collision_triangles": 12000,
+   "max_collision_pieces": 1,
+   "masonry_depth": {
+    "depth": 0.2,
+    "setback": 0.06,
+    "body_paths": [
+     "Stone_Wall_W"
+    ],
+    "opening_paths": [
+     "Stone_Wall_W/Window_1"
+    ]
+   }
   },
   {
    "id": "suntail.roof.roof_1_cornice_red",

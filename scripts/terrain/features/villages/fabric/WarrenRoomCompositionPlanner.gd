@@ -316,6 +316,17 @@ static func _merge_base_tower_pairs(lineages: Dictionary,
 						continue
 					var primary := left if primary_is_left else right
 					var secondary := right if primary_is_left else left
+					# The secondary's doorway disappears into the merged room, so
+					# the pair may merge only when that doorway opens onto the
+					# primary's own landing: the planner kept the secondary's
+					# street because of that door, and a door it relied on can
+					# not silently vanish.
+					if _block_has_address_in_band(secondary.block as Dictionary) \
+							and (not _block_has_address_in_band(
+								primary.block as Dictionary)
+							or _address_landing(secondary.block as Dictionary)
+								!= _address_landing(primary.block as Dictionary)):
+						continue
 					if not _candidate_matches_address(StringName(stamp.kind),
 							stamp.origin as Vector3i,
 							int(stamp.yaw_quarters),
@@ -834,6 +845,16 @@ static func _block_has_address_in_band(block: Dictionary) -> bool:
 	var origin := block.origin as Vector3i
 	return threshold.y >= origin.y \
 		and threshold.y < origin.y + WarrenSpatialGrid.STOREY_CELLS
+
+
+static func _address_landing(block: Dictionary) -> Vector3i:
+	## The macro street landing a block's doorway opens onto.
+	var threshold := block.address_threshold as Vector3i
+	var frontage: Variant = block.get("address_frontage", Vector3i.ZERO)
+	var step := Vector3i((frontage as Vector2i).x, 0, (frontage as Vector2i).y) \
+		if frontage is Vector2i else frontage as Vector3i
+	var landing := threshold + step
+	return Vector3i(floori(landing.x / 2.0), landing.y, floori(landing.z / 2.0))
 
 
 static func _block_has_non_address_identity(block: Dictionary) -> bool:
@@ -1818,7 +1839,8 @@ static func _record_is_clear_for_participants(grid: WarrenSpatialGrid,
 		var use := grid.use_at(cell)
 		if not grid.contains(cell) \
 				or use != WarrenSpatialGrid.Use.ALLOCATABLE \
-				and use != WarrenSpatialGrid.Use.OUTSIDE:
+				and use != WarrenSpatialGrid.Use.OUTSIDE \
+				or _above_edge_profile(grid, cell, use):
 			return false
 		for owner_value: Variant in (protected_owners.get(cell, {}) \
 				as Dictionary).keys():
@@ -1887,7 +1909,8 @@ static func _pair_record_is_clear(grid: WarrenSpatialGrid,
 		var use := grid.use_at(cell)
 		if not grid.contains(cell) \
 				or use != WarrenSpatialGrid.Use.ALLOCATABLE \
-				and use != WarrenSpatialGrid.Use.OUTSIDE:
+				and use != WarrenSpatialGrid.Use.OUTSIDE \
+				or _above_edge_profile(grid, cell, use):
 			return false
 		for owner_value: Variant in (protected_owners.get(cell, {}) \
 				as Dictionary).keys():
@@ -3460,6 +3483,15 @@ static func _candidate_has_facade_endpoint(kind: StringName,
 	return FabricRecipe.transform_cell(local_cell, cell_origin, yaw) == endpoint
 
 
+static func _above_edge_profile(grid: WarrenSpatialGrid, cell: Vector3i,
+		use: int) -> bool:
+	## Outside air above the town's edge-ring profile stays sky: a shifted or
+	## repartitioned upper floorplate may not overhang a low rim house or the
+	## perimeter lane (September 29). Every record clearance test asks it.
+	return use == WarrenSpatialGrid.Use.OUTSIDE and cell.y >= int(
+		grid.profile_ceiling.get(Vector2i(cell.x, cell.z), 2147483647))
+
+
 static func _cell_is_clear_for_lineage(grid: WarrenSpatialGrid,
 		protected_owners: Dictionary, claimed_cells: Dictionary,
 		cell: Vector3i, lineage_id: StringName) -> bool:
@@ -3470,6 +3502,8 @@ static func _cell_is_clear_for_lineage(grid: WarrenSpatialGrid,
 	if not grid.contains(cell) \
 			or use != WarrenSpatialGrid.Use.ALLOCATABLE \
 			and use != WarrenSpatialGrid.Use.OUTSIDE:
+		return false
+	if _above_edge_profile(grid, cell, use):
 		return false
 	if claimed_cells.has(cell) and claimed_cells[cell] != lineage_id:
 		return false

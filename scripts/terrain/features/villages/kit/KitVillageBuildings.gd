@@ -21,6 +21,11 @@ static func native_to_lattice(kit: BuildingKit) -> Transform3D:
 		Vector3(-FabricRecipe.CELL_SIZE * 0.5, 0.0, -FabricRecipe.CELL_SIZE * 0.5))
 
 
+## Lattice metres a kit wall's outer face stands proud of its cell edge.
+static func wall_face_lattice(kit: BuildingKit) -> float:
+	return kit.wall_face * FabricRecipe.CELL_SIZE / kit.module_width
+
+
 ## Feature kinds whose legacy recipe units are superseded by kit buildings.
 const REPLACED_FEATURE_KINDS: Array[StringName] = [
 	&"facade_bay", &"prefab_landmark", &"balcony", &"room_overhang_support",
@@ -44,7 +49,8 @@ static func house_id_for(building_id: StringName) -> StringName:
 
 
 ## Returns {payload: EnvironmentInstancePayload (town-local lattice frame),
-## replaced_units: Dictionary unit stable_id -> true, masses: Array}.
+## replaced_units: Dictionary unit stable_id -> true, masses: Array, plus the
+## native-frame roof union inputs placements / roofs / walls}.
 static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 		kit: BuildingKit) -> Dictionary:
 	var grid := spatial.grid
@@ -54,17 +60,30 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 		for cell: Vector3i in (houses[house_id] as Dictionary).cells:
 			owner_at[cell] = house_id
 	var replaced := _replaced_units(spatial, fabric)
-	var feature_masses := _feature_masses(spatial, fabric, houses, grid, owner_at)
+	var spans := SettlementFabricAssembler.maze_skywalk_spans(fabric)
+	var passages := _passage_house_claims(spans, houses, owner_at)
+	var feature_masses := _feature_masses(spatial, fabric, houses, grid, spans)
+	# Adjacent lots on one ground become one building (after the balconies
+	# have opened their doors in their owner lots).
+	houses = merge_houses(houses, spatial.world_seed)
+	owner_at.clear()
+	for house_id: StringName in houses:
+		for cell: Vector3i in (houses[house_id] as Dictionary).cells:
+			owner_at[cell] = house_id
 	var payload := EnvironmentInstancePayload.new()
 	var map := native_to_lattice(kit)
 	var masses: Array[BuildingMass] = []
-	var ids := houses.keys()
-	ids.sort()
+	var ids := sorted_ids(houses.keys())
+	var flights := flight_columns(spatial, fabric)
+	var canopy_claims: Array = []
+	var podium := _podium_cells(feature_masses)
 	for house_id: StringName in ids:
 		var house: Dictionary = houses[house_id]
-		var mass := _mass_for(house_id, house, grid, owner_at, spatial.world_seed, kit)
+		var mass := _mass_for(house_id, house, grid, owner_at, spatial.world_seed, kit,
+			flights, canopy_claims, podium, passages)
 		if mass != null:
 			masses.append(mass)
+	var house_masses := masses.duplicate()
 	masses.append_array(feature_masses)
 	var joins := preload("res://scripts/terrain/features/villages/kit/KitRoofJunctions.gd").join(masses,
 		func(cell: Vector2i, band: int) -> bool:
@@ -82,26 +101,39 @@ static func build(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
 				walls.append(union_script.box_volume(AABB(Vector3(rect.position.x * kit.module_width,
 					storey.floor_band * kit.band_height(), rect.position.y * kit.module_width),
 					Vector3(rect.size.x * kit.module_width, int(storey.get("bands", 2)) * kit.band_height(), rect.size.y * kit.module_width))))
+	# Walkers' clearance above a public floor, in native metres: an eave is
+	# trimmed only where it would actually reach a walker's head. Trimming it
+	# to the planner's two-band headroom cut the flared eave off at the wall
+	# line and left a see-through slot under the roof (September 27 photo 11).
+	var clearance := TraversalEnvelope.MIN_HEADROOM / VillageWorldScale.VERTICAL_SCALE \
+		* kit.band_height() / WarrenVolumePlan.VERTICAL_BAND_SIZE_M
 	for floor_cell: Vector3i in spatial.route_floor_cells:
-		walls.append(union_script.box_volume(AABB(Vector3(floor_cell.x * kit.module_width,
+		# Public headroom is open air: it trims eaves hanging into a lane but
+		# never a gable wall standing on its own wall line (a hole).
+		var headroom := union_script.box_volume(AABB(Vector3(floor_cell.x * kit.module_width,
 			floor_cell.y * kit.band_height(), floor_cell.z * kit.module_width),
-			Vector3(kit.module_width, WarrenVolumePlan.HEADROOM_BANDS * kit.band_height(), kit.module_width))))
+			Vector3(kit.module_width, clearance, kit.module_width)))
+		headroom["open"] = true
+		walls.append(headroom)
 	var placements: Array[Dictionary] = []
 	for mass: BuildingMass in masses:
 		var own := StringName(String(mass.stable_id).trim_prefix("kit."))
 		var assembler := BuildingKitAssembler.new(kit)
+		assembler.prop_scale = VillageWorldScale.kit_human_prop_scale()
 		assembler.external_blocked = func(cell: Vector2i, band: int) -> bool:
 			return _solid_other(grid, owner_at, own, Vector3i(cell.x, band, cell.y))
 		placements.append_array(assembler.assemble(mass))
 	var roof_audit := union_script.append(placements, roofs, walls, kit, map, payload)
 	roof_audit["joins"] = joins
-	return {"payload": payload, "replaced_units": replaced, "masses": masses, "roof_audit": roof_audit}
+	return {"payload": payload, "replaced_units": replaced, "masses": masses, "houses": house_masses,
+		"roof_audit": roof_audit, "placements": placements, "roofs": roofs, "walls": walls}
 
 
 ## Balconies, overhang supports and skywalks as kit masses. Balconies also
 ## open a door in their owner house, so this runs before houses are designed.
 static func _feature_masses(spatial: WarrenSpatialPlan, fabric: SettlementFabricPlan,
-		houses: Dictionary, grid: WarrenSpatialGrid, owner_at: Dictionary) -> Array[BuildingMass]:
+		houses: Dictionary, grid: WarrenSpatialGrid,
+		spans: Array[Dictionary]) -> Array[BuildingMass]:
 	var out: Array[BuildingMass] = []
 	for feature: WarrenFeatureReservation in spatial.features:
 		match feature.kind:
@@ -111,36 +143,141 @@ static func _feature_masses(spatial: WarrenSpatialPlan, fabric: SettlementFabric
 					out.append(balcony)
 			&"room_overhang_support", &"arcade_overhang_support":
 				out.append(_support_mass(feature, grid, spatial.world_seed))
-	for span: Dictionary in SettlementFabricAssembler.maze_skywalk_spans(fabric):
+	for span: Dictionary in spans:
 		out.append(_skywalk_mass(span, spatial.world_seed))
-	# The legacy fabric can classify a tunnel slab as a flat roof and subtract
-	# it from retained-terrain skin. Give those owned structural cells their
-	# own kit closure, independently of house roof/deck replacement.
+	# The legacy fabric can classify a passage crown as a flat roof and
+	# subtract it from retained-terrain skin. Every crown -- a bored tunnel's
+	# ceiling or a rock shoulder left over a street -- gets its own kit closure
+	# here. A crown survives the plan only while it carries a room or walk
+	# (`WarrenVolumetricSolver.unborne_crown_cells`), so it is drawn as its
+	# whole stone run up to that construction: its lowest band alone left the
+	# rest invisible and the slab floating under the house it bears.
 	if spatial.source_volume != null:
 		var source := spatial.source_volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
 		if source != null:
 			var ceilings := {}
-			for walk: Vector3i in source.excavation.tunnel_cells:
-				var roof := source.passage_headroom_top(walk)
-				for fine: Vector3i in WarrenVolumetricSolver._fine_square(Vector3i(walk.x, roof, walk.z)):
-					if grid.use_at(fine) == WarrenSpatialGrid.Use.STRUCTURAL_VOLUME and not fabric.retained_terrace_cells.has(fine):
-						ceilings[fine] = true
+			for crown: Vector3i in grid.cells_with_use(WarrenSpatialGrid.Use.STRUCTURAL_VOLUME):
+				if fabric.retained_terrace_cells.has(crown) \
+						or grid.owner_name_at(crown) != WarrenVolumetricSolver.MAZE_STONE_FEATURE_ID \
+						or grid.use_at(crown + Vector3i.DOWN) != WarrenSpatialGrid.Use.PUBLIC_AIR:
+					continue
+				var fine := crown
+				while grid.use_at(fine) == WarrenSpatialGrid.Use.STRUCTURAL_VOLUME \
+						and grid.owner_name_at(fine) == WarrenVolumetricSolver.MAZE_STONE_FEATURE_ID \
+						and not fabric.retained_terrace_cells.has(fine):
+					ceilings[fine] = true
+					fine += Vector3i.UP
 			var tunnel := _retained_mass(ceilings, spatial.world_seed)
 			if tunnel != null:
 				tunnel.stable_id = &"kit.tunnel-ceilings"
+				# No deck of its own: the room or public floor it carries
+				# already closes its top.
 				for storey: Dictionary in tunnel.storeys:
 					storey.material = BuildingMass.MATERIAL_TIMBER
 					storey.default_opening = BuildingMass.OPENING_PLAIN
 					storey.soffit = true
-					tunnel.decks.append({"cells": storey.cells, "band": int(storey.floor_band) + int(storey.bands), "rails": false})
 				out.append(tunnel)
-	var retained := _retained_mass(fabric.retained_terrace_cells, spatial.world_seed)
-	if retained != null:
-		for storey: Dictionary in retained.storeys:
+	# A raised district's plinth is its own coursed-stone retaining wall; the
+	# rest of the retained massif keeps the ordinary treatment.
+	var split := _split_platform_cells(spatial, fabric.retained_terrace_cells)
+	var retained := _retained_mass(split.rest, spatial.world_seed)
+	var platform := _platform_wall_mass(split.platform, spatial.world_seed,
+		_platform_gate_edges(spatial))
+	var envelope := spatial.source_volume.envelope if spatial.source_volume != null else null
+	for wall: BuildingMass in [retained, platform]:
+		if wall == null:
+			continue
+		for storey: Dictionary in wall.storeys:
+			var floor := int(storey.floor_band)
+			# A one-band foot course whose every cell stands at or below its
+			# column's ground datum sinks a full panel into the ground.
+			var sunk := int(storey.get("bands", 2)) == 1
 			for cell: Vector2i in storey.cells:
-				if grid.use_at(Vector3i(cell.x, int(storey.floor_band) - 1, cell.y)) == WarrenSpatialGrid.Use.PUBLIC_AIR:
+				if grid.use_at(Vector3i(cell.x, floor - 1, cell.y)) == WarrenSpatialGrid.Use.PUBLIC_AIR:
 					storey["soffit"] = true
-		out.append(retained)
+				var ground := envelope.ground_at(Vector2i(floori(cell.x / 2.0),
+					floori(cell.y / 2.0))) if envelope != null else 0
+				sunk = sunk and floor <= ground
+			storey["sunk"] = sunk
+		out.append(wall)
+	return out
+
+
+## Retained cells split into the raised district's plinth (fine cells of a
+## platform column below its bearing surface, `WarrenMassif.bearing_at`) and
+## the rest. A town without a platform has an empty plinth.
+static func _split_platform_cells(spatial: WarrenSpatialPlan,
+		retained: Dictionary) -> Dictionary:
+	var massif: WarrenMassif = null
+	if spatial.source_volume != null:
+		massif = spatial.source_volume.mass_context.get(&"massif") as WarrenMassif
+	if massif == null or massif.platform_columns().is_empty():
+		return {"platform": {}, "rest": retained}
+	var platform: Dictionary = {}
+	var rest: Dictionary = {}
+	for cell: Vector3i in retained:
+		var column := Vector2i(floori(cell.x / 2.0), floori(cell.z / 2.0))
+		if massif.is_platform(column) and cell.y < massif.bearing_at(column):
+			platform[cell] = retained[cell]
+		else:
+			rest[cell] = retained[cell]
+	return {"platform": platform, "rest": rest}
+
+
+## The plinth of a raised district (WarrenTownPlatform): coursed stone from
+## the ground to the platform's bearing surface, whatever its height -- the
+## one place a town wears a tall stone wall. Windowless and flush, like any
+## retaining course; the houses standing on it stay timber and plaster.
+static func _platform_wall_mass(cells: Dictionary, world_seed: int,
+		gates: Dictionary = {}) -> BuildingMass:
+	var mass := _retained_mass(cells, world_seed)
+	if mass == null:
+		return null
+	mass.stable_id = &"kit.platform-wall"
+	for storey: Dictionary in mass.storeys:
+		storey.material = BuildingMass.MATERIAL_STONE
+		# A fortification (BuildingKitAssembler._assemble_fortified), not a
+		# retaining course: plain stone, parapet, turrets and gate.
+		storey["fortified"] = true
+		storey["gates"] = gates
+	return mass
+
+
+## Module-cell rim edges where a gate flight (WarrenPlatformStreets
+## .carve_gate) enters the raised district: edge key -> true on the gate's
+## left cell (seen from outside), false on the other.
+static func _platform_gate_edges(spatial: WarrenSpatialPlan) -> Dictionary:
+	var out: Dictionary = {}
+	if spatial.source_volume == null:
+		return out
+	var source := spatial.source_volume.mass_context.get(&"maze_source_plan") \
+		as WarrenMazeSourcePlan
+	if source == null or source.excavation == null:
+		return out
+	for lane: Dictionary in source.excavation.lanes:
+		if StringName(lane.get("feature_kind", &"")) != &"citadel_gate":
+			continue
+		for transition: Dictionary in lane.transitions:
+			var gate := transition.to as Vector3i
+			var from := transition.from as Vector3i
+			if not source.massif.is_platform(Vector2i(gate.x, gate.z)) \
+					or source.massif.is_platform(Vector2i(from.x, from.z)):
+				continue
+			var step := Vector2i(from.x - gate.x, from.z - gate.z)
+			var dir := BuildingMass.DIRS.find(step)
+			if dir < 0:
+				continue
+			var right := BuildingKitAssembler.right_of(dir)
+			var cells: Array[Vector2i] = []
+			for dz in 2:
+				for dx in 2:
+					var fine := Vector2i(gate.x * 2 + dx, gate.z * 2 + dz)
+					var ahead := fine + step
+					if Vector2i(floori(ahead.x / 2.0), floori(ahead.y / 2.0)) \
+							!= Vector2i(gate.x, gate.z):
+						cells.append(fine)
+			for fine: Vector2i in cells:
+				out[BuildingMass.edge_key(fine, dir)] = not cells.has(fine - right)
 	return out
 
 
@@ -191,7 +328,11 @@ static func _retained_mass(retained: Dictionary, world_seed: int) -> BuildingMas
 			else BuildingMass.MATERIAL_TIMBER
 		var storey := mass.add_storey(key.x, layers[key], material)
 		storey.bands = key.y
-		storey.plain_every = 3
+		# Retained ground is solid earth behind its face: a retaining wall or
+		# podium has no rooms, so it never shows windows or doors, and its
+		# masonry stays flush under the lawn it retains.
+		storey.default_opening = BuildingMass.OPENING_PLAIN
+		storey.retaining = true
 	return mass
 
 
@@ -229,18 +370,24 @@ static func _balcony_mass(feature: WarrenFeatureReservation, houses: Dictionary,
 				break
 	# Short wall-tied brackets carry the whole platform. A high balcony must
 	# not grow an isolated pole through several floors to reach the terrain.
+	# Each bracket bears on a wall-module joint (a cell vertex on the wall
+	# line) and runs square to the wall: a module's window or door is centred
+	# between two joints, so no bracket ever crosses an opening.
+	var braced: Dictionary = {}
 	for cell: Vector2i in deck:
 		var support := _balcony_bearing(grid, deck, cell, band)
 		if support.is_empty(): continue
-		var wall := support.wall as Vector2
-		var outer := Vector2(cell) + Vector2(0.5, 0.5)
-		outer += (outer - wall).normalized() * 0.35
-		mass.decor.append({"kind": &"raker", "dir": 0, "centre": wall,
-			"from": Vector3(wall.x, band - 0.85, wall.y),
-			"to": Vector3(outer.x, band - 0.08, outer.y)})
-		mass.decor.append({"kind": &"raker", "dir": 0, "centre": wall,
-			"from": Vector3(wall.x, band - 0.08, wall.y),
-			"to": Vector3(outer.x, band - 0.08, outer.y)})
+		var normal := support.normal as Vector2
+		for joint: Vector2 in support.joints:
+			if braced.has(joint): continue
+			braced[joint] = true
+			var outer: Vector2 = joint + normal * float(support.reach)
+			mass.decor.append({"kind": &"raker", "dir": 0, "centre": joint,
+				"from": Vector3(joint.x, band - 0.85, joint.y),
+				"to": Vector3(outer.x, band - 0.08, outer.y)})
+			mass.decor.append({"kind": &"raker", "dir": 0, "centre": joint,
+				"from": Vector3(joint.x, band - 0.08, joint.y),
+				"to": Vector3(outer.x, band - 0.08, outer.y)})
 	mass.decor.append({"kind": &"planter", "dir": 1,
 		"centre": Vector2(deck.keys()[0]) + Vector2(0.5, 0.5), "y_band": band})
 	return mass
@@ -268,6 +415,22 @@ static func _balcony_bearing(grid: WarrenSpatialGrid, deck: Dictionary,
 			if clear:
 				nearest = distance
 				best = {"dir": 0, "wall": wall}
+	if best.is_empty():
+		return best
+	# The bearing point on the wall face, moved along the face to the module
+	# joints either side of it (a wall corner already is a joint).
+	var wall: Vector2 = best.wall
+	var normal := (centre - wall).normalized()
+	var joints: Array[Vector2] = []
+	if absf(normal.x) > 0.99:
+		joints = [Vector2(wall.x, floorf(wall.y)), Vector2(wall.x, ceilf(wall.y))]
+	elif absf(normal.y) > 0.99:
+		joints = [Vector2(floorf(wall.x), wall.y), Vector2(ceilf(wall.x), wall.y)]
+	else:
+		joints = [wall]
+	best.normal = normal
+	best.joints = joints
+	best.reach = nearest + 0.35
 	return best
 
 
@@ -282,15 +445,20 @@ static func _support_mass(feature: WarrenFeatureReservation, grid: WarrenSpatial
 		high = maxi(high, cell.y + 1)
 		cells[Vector2i(cell.x, cell.z)] = true
 	var rect := BuildingDesigner._bounds(cells)
-	for corner: Vector2i in [rect.position, Vector2i(rect.end.x - 1, rect.position.y),
-			Vector2i(rect.position.x, rect.end.y - 1), rect.end - Vector2i.ONE]:
+	# Each post stands on one of the overhang's outer corner vertices: a
+	# wall-module joint of every wall on either line through it, like a
+	# balcony raker's. A module's window or door is centred between two
+	# joints, so a post on a joint never stands in front of an opening (the
+	# former corner-cell point, pushed diagonally outward, could).
+	for vertex: Vector2i in [rect.position, Vector2i(rect.end.x, rect.position.y),
+			Vector2i(rect.position.x, rect.end.y), rect.end]:
+		var corner := Vector2i(mini(vertex.x, rect.end.x - 1),
+			mini(vertex.y, rect.end.y - 1))
 		# A post stands only on ground or structure, never in a public way.
 		var landing := _post_landing(grid, Vector3i(corner.x, low - 1, corner.y))
 		if landing == 1 << 20:
 			continue
-		var centre := Vector2(corner) + Vector2(0.5, 0.5) \
-			+ (Vector2(corner) - Vector2(rect.get_center()) + Vector2(0.5, 0.5)).normalized() * 0.3
-		mass.decor.append({"kind": &"post", "dir": 1, "centre": centre,
+		mass.decor.append({"kind": &"post", "dir": 1, "centre": Vector2(vertex),
 			"from_band": landing, "to_band": high})
 	return mass
 
@@ -323,11 +491,20 @@ static func _skywalk_mass(span: Dictionary, world_seed: int) -> BuildingMass:
 		for key: Vector3i in open_edges:
 			storey.openings[key] = BuildingMass.OPENING_NONE
 		var rect := BuildingDesigner._bounds(cells)
-		var axis := 0 if step.x != 0 else 1
+		# The ridge runs along the span when the bridge is two modules wide.
+		# A one-module-wide bridge-house instead turns its ridge across the
+		# span: a roof one module deep is a lone ridge-top strip (the owner's
+		# "tiny roof"), while the transverse roof is `gap` modules deep, its
+		# slopes running into the two endpoint houses (trimmed inside their
+		# walls) and its gables facing the lane it crosses, like a gatehouse.
+		var along := 0 if step.x != 0 else 1
+		var axis := along if width >= 2 else 1 - along
 		var colour := &"blue" if absi(hash([world_seed, cell])) % 2 == 0 else &"red"
-		var wing := mass.add_roof(rect, axis, cell.y + 2, colour)
-		wing.open_min = true
-		wing.open_max = true
+		# Closed gables: an end meeting a taller endpoint house is trimmed
+		# inside its walls; one standing clear of a lower endpoint stays a
+		# finished gable (an unconditionally open end was see-through).
+		# KitRoofJunctions still opens an end into a same-eave host roof.
+		mass.add_roof(rect, axis, cell.y + 2, colour)
 		# Timber portal posts frame each open end.
 		for key: Vector3i in open_edges:
 			var c := Vector2(key.x, key.y) + Vector2(0.5, 0.5) \
@@ -344,6 +521,33 @@ static func _skywalk_mass(span: Dictionary, world_seed: int) -> BuildingMass:
 		mass.decks.append({"cells": cells, "band": cell.y, "rails": true,
 			"open_edges": open_edges})
 	return mass
+
+
+## A bridge-house spans between two building storeys (see
+## `SettlementFabricAssembler._maze_passage_house_candidates`). Each endpoint
+## house opens a door onto the passage at the bridge floor, and the passage's
+## body and roof air is kept clear of the houses' own articulation (jetties,
+## bays, canopies) so nothing grows into it. Returns the reserved cells.
+static func _passage_house_claims(spans: Array[Dictionary],
+		houses: Dictionary, owner_at: Dictionary) -> Dictionary:
+	var reserved: Dictionary = {}
+	for span: Dictionary in spans:
+		if not bool(span.get("enclosed", false)):
+			continue
+		var step := span.step as Vector3i
+		var lanes := SettlementFabricAssembler._skywalk_candidate_lanes(span)
+		var near := lanes[0]
+		var far := near + step * (int(span.gap) + 1)
+		for end: Array in [[near, step], [far, -step]]:
+			var house_id: Variant = owner_at.get(end[0])
+			if house_id != null and houses.has(house_id):
+				(houses[house_id].doors as Array).append({"cell": end[0],
+					"direction": end[1], "passage": true})
+		for lane: Vector3i in lanes:
+			for index in range(1, int(span.gap) + 1):
+				for rise in 4:
+					reserved[lane + step * index + Vector3i.UP * rise] = true
+	return reserved
 
 
 static func _layer_is_low(columns: Dictionary, cells: Dictionary, floor: int) -> bool:
@@ -389,9 +593,16 @@ static func _houses(spatial: WarrenSpatialPlan) -> Dictionary:
 	var houses: Dictionary = {}
 	for building: WarrenBuildingVolume in spatial.buildings:
 		var house_id := house_id_for(building.stable_id)
+		# A maze back room (or passage cover) is its parcel's own room: the
+		# planner's one building, not a separate house beside it (which stood
+		# as a twin gable against its host).
+		for room: WarrenRoomStamp in building.room_records:
+			var host := StringName(room.audit.get("back_room_parcel_id", &""))
+			if not host.is_empty():
+				house_id = StringName("spatial.%s" % host)
 		if not houses.has(house_id):
 			houses[house_id] = {"cells": [], "storeys": {}, "doors": [],
-				"terrain_band": 1 << 20, "landmark": false}
+				"terrain_band": 1 << 20, "landmark": false, "grounded": {}}
 		var house: Dictionary = houses[house_id]
 		(house.cells as Array).append_array(building.private_cells)
 		for room: WarrenRoomStamp in building.room_records:
@@ -403,14 +614,217 @@ static func _houses(spatial: WarrenSpatialPlan) -> Dictionary:
 			_add_storey_cells(house, floor, room.private_cells)
 			if room.terrain_bearing:
 				house.terrain_band = mini(int(house.terrain_band), floor)
+				# Cells resting on the ground at this floor (a room on higher
+				# ground than the house's lowest one): footing, not soffit.
+				if not (house.grounded as Dictionary).has(floor):
+					house.grounded[floor] = {}
+				for cell: Vector3i in room.private_cells:
+					if cell.y == floor:
+						(house.grounded[floor] as Dictionary)[Vector2i(cell.x, cell.z)] = true
 		for threshold: Dictionary in building.thresholds:
 			(house.doors as Array).append({"cell": threshold.private_cell,
 				"direction": threshold.direction})
+	var source: WarrenMazeSourcePlan = null
+	if spatial.source_volume != null:
+		source = spatial.source_volume.mass_context.get(&"maze_source_plan") as WarrenMazeSourcePlan
 	for feature: WarrenFeatureReservation in spatial.features:
 		if feature.kind != &"prefab_landmark" or feature.reserved_cells.is_empty():
 			continue
-		houses[feature.stable_id] = _landmark_house(feature)
+		houses[feature.stable_id] = _landmark_house(feature, source)
 	return houses
+
+
+## `ids` (StringNames) in lexicographic order. `Array.sort()` orders
+## StringNames by their interned pointers, not their text, so the order (and
+## every order-dependent choice after it: shared canopy claims, roof joins,
+## merges) changed with whatever the process had interned before; a town
+## was not a pure function of its seed (September 29 review).
+static func sorted_ids(ids: Array) -> Array:
+	var out := ids.duplicate()
+	out.sort_custom(func(a: Variant, b: Variant) -> bool: return String(a) < String(b))
+	return out
+
+
+## Compound buildings (September 29 town review, photo 11). The planner
+## parcels a town into one-macro-cell lots; built one by one they read as a
+## row of identical little gabled boxes. Neighbouring lots standing on the
+## same ground merge, by a seeded choice per shared wall, into one building
+## of at most MERGE_MAX_CELLS modules and MERGE_MAX_SPAN across, so its crown
+## is designed as a whole: a side-gabled range, an L or T with a main ridge
+## and wings, a block stepping up the slope (grounds one storey apart) or
+## a taller part beside a lower one that keeps its own roof. Occupancy,
+## doors and bearing stay the planner's; only the kit's building identity
+## (walls, roofs, colour) changes. A lot bearing a building that does not
+## stand on the ground (a bridge-house, an upper room on its roof or beside
+## it) keeps its own identity: that building's seams are coordinated with it.
+const MERGE_CHANCE := 0.5
+const RANGE_MERGE_CHANCE := 1.0
+const MERGE_MAX_CELLS := 24
+const MERGE_MAX_SPAN := 8
+
+
+static func merge_houses(houses: Dictionary, world_seed: int) -> Dictionary:
+	var ids := sorted_ids(houses.keys())
+	var owner: Dictionary = {}
+	for house_id: StringName in ids:
+		for cell: Vector3i in (houses[house_id] as Dictionary).cells:
+			owner[cell] = house_id
+	# Lots that may merge: whole storeys on their own base (terrain, a terrace
+	# or another lot), keyed by their lowest storey.
+	var ground: Dictionary = {}
+	for house_id: StringName in ids:
+		var house: Dictionary = houses[house_id]
+		if bool(house.landmark) or int(house.terrain_band) >= (1 << 20):
+			continue
+		var floors: Array = (house.storeys as Dictionary).keys()
+		floors.sort()
+		if int(floors[0]) != int(house.terrain_band):
+			continue
+		var phase_ok := true
+		for floor: int in floors:
+			phase_ok = phase_ok and posmod(floor - int(house.terrain_band), 2) == 0
+		if phase_ok:
+			ground[house_id] = house.storeys[floors[0]]
+	# A lot touching a building that cannot merge (a bridge-house, a
+	# landmark, a split-level room) keeps its identity: that building's
+	# seams are coordinated with it.
+	var bearing: Dictionary = {}
+	var stacked: Dictionary = {}
+	for cell: Vector3i in owner:
+		var house_id: StringName = owner[cell]
+		var below: StringName = owner.get(cell + Vector3i.DOWN, &"")
+		if below != &"" and below != house_id:
+			stacked[[below, house_id]] = true
+			if not ground.has(house_id): bearing[below] = true
+			if not ground.has(below): bearing[house_id] = true
+		if ground.has(house_id):
+			continue
+		for step: Vector3i in [Vector3i(1, 0, 0), Vector3i(-1, 0, 0), Vector3i(0, 0, 1),
+				Vector3i(0, 0, -1)]:
+			var other: StringName = owner.get(cell + step, &"")
+			if other != &"" and other != house_id:
+				bearing[other] = true
+	var pairs: Array = []
+	# A lineage standing on another lot is one building with it (a tower
+	# of one-storey lots): always merged, before any neighbour.
+	for pair: Array in stacked:
+		var lower: StringName = pair[0]
+		var upper: StringName = pair[1]
+		if not ground.has(lower) or not ground.has(upper) \
+				or bearing.has(lower) or bearing.has(upper):
+			continue
+		if posmod(int(houses[upper].terrain_band) - int(houses[lower].terrain_band), 2) != 0:
+			continue
+		pairs.append([-1000.0, lower, upper])
+	for a: StringName in ids:
+		if not ground.has(a) or bearing.has(a): continue
+		for b: StringName in ids:
+			if String(b) <= String(a) or not ground.has(b) or bearing.has(b): continue
+			# Lots whose grounds differ by at most one storey (a house stepping
+			# up the slope), on the same storey phase.
+			var rise := int(houses[b].terrain_band) - int(houses[a].terrain_band)
+			if absi(rise) > 2 or rise % 2 != 0: continue
+			# They share at least one whole wall module of one storey (two
+			# modules, two bands), never a corner touch.
+			var shared := 0
+			for cell: Vector3i in houses[a].cells:
+				for step: Vector3i in [Vector3i(1, 0, 0), Vector3i(-1, 0, 0),
+						Vector3i(0, 0, 1), Vector3i(0, 0, -1)]:
+					if owner.get(cell + step, &"") == b: shared += 1
+			if shared < 4: continue
+			# Two lots whose union is one rectangle would otherwise stand as
+			# side-by-side copies (twin gables, the photo-11 sawtooth): they
+			# usually become one range and merge first. Other contacts make
+			# L/T compounds less often.
+			var union: Dictionary = (ground[a] as Dictionary).duplicate()
+			union.merge(ground[b])
+			var box := BuildingDesigner._bounds(union)
+			var range_pair := box.get_area() == union.size() \
+				and int(houses[a].terrain_band) == int(houses[b].terrain_band)
+			var roll := float(absi(hash([world_seed, a, b, &"merge"])) % 10000) / 10000.0
+			if roll < (RANGE_MERGE_CHANCE if range_pair else MERGE_CHANCE):
+				# Ranges first, longest shared wall first (twins sharing a long
+				# side before a lot extending a row), then the seeded roll.
+				pairs.append([(0.0 if range_pair else 1000.0) - float(shared) + roll, a, b])
+	pairs.sort_custom(func(p: Array, q: Array) -> bool:
+		return p[0] < q[0] or (p[0] == q[0] and String(p[1]) + String(p[2]) < String(q[1]) + String(q[2])))
+	var root: Dictionary = {}
+	var members: Dictionary = {}
+	for house_id: StringName in ids:
+		root[house_id] = house_id
+		members[house_id] = [house_id]
+	for pair: Array in pairs:
+		var ra: StringName = root[pair[1]]
+		var rb: StringName = root[pair[2]]
+		if ra == rb: continue
+		var cells: Dictionary = {}
+		for member: StringName in (members[ra] as Array) + (members[rb] as Array):
+			for cell: Vector3i in houses[member].cells:
+				cells[Vector2i(cell.x, cell.z)] = true
+		var extent := BuildingDesigner._bounds(cells)
+		if cells.size() > MERGE_MAX_CELLS or maxi(extent.size.x, extent.size.y) > MERGE_MAX_SPAN:
+			continue
+		var keep := ra if String(ra) < String(rb) else rb
+		var gone := rb if keep == ra else ra
+		(members[keep] as Array).append_array(members[gone])
+		for member: StringName in members[gone]:
+			root[member] = keep
+		members.erase(gone)
+	var out: Dictionary = {}
+	for keep: StringName in members:
+		var group: Array = members[keep]
+		if group.size() == 1:
+			out[keep] = houses[keep]
+			continue
+		group = sorted_ids(group)
+		var merged := {"cells": [], "storeys": {}, "doors": [], "terrain_band": 1 << 20,
+			"landmark": false, "roof_crowns": {}, "grounded": {}, "crown_parts": {},
+			"members": group}
+		var tops: Dictionary = {}
+		for member: StringName in group:
+			var house: Dictionary = houses[member]
+			(merged.cells as Array).append_array(house.cells)
+			(merged.doors as Array).append_array(house.doors)
+			merged.terrain_band = mini(int(merged.terrain_band), int(house.terrain_band))
+			var base := int(house.terrain_band)
+			if not (merged.grounded as Dictionary).has(base):
+				merged.grounded[base] = {}
+			(merged.grounded[base] as Dictionary).merge(house.storeys[base])
+			for floor: int in house.get("grounded", {}):
+				if not (merged.grounded as Dictionary).has(floor):
+					merged.grounded[floor] = {}
+				(merged.grounded[floor] as Dictionary).merge(house.grounded[floor])
+			var top := -(1 << 20)
+			for floor: int in house.storeys:
+				top = maxi(top, floor)
+				if not (merged.storeys as Dictionary).has(floor):
+					merged.storeys[floor] = {}
+				(merged.storeys[floor] as Dictionary).merge(house.storeys[floor])
+			tops[member] = top
+		# Each member's own top is roofed in the compound unless another
+		# member stands directly on it; crowns beneath the compound's own
+		# upper storeys (a stepped plan, a recessed loggia) keep the house's
+		# terrace rule.
+		var solid: Dictionary = {}
+		for member: StringName in group:
+			for cell: Vector3i in houses[member].cells:
+				solid[cell] = true
+		for member: StringName in group:
+			var top: int = tops[member]
+			if not (merged.roof_crowns as Dictionary).has(top):
+				merged.roof_crowns[top] = {}
+			for cell: Vector2i in houses[member].storeys[top]:
+				if not solid.has(Vector3i(cell.x, top + 2, cell.y)):
+					(merged.roof_crowns[top] as Dictionary)[cell] = true
+		# Every member's footprint per storey: the designer may fall back to
+		# the members' own crown packing.
+		for member: StringName in group:
+			for floor: int in houses[member].storeys:
+				if not (merged.crown_parts as Dictionary).has(floor):
+					merged.crown_parts[floor] = []
+				(merged.crown_parts[floor] as Array).append(houses[member].storeys[floor])
+		out[keep] = merged
+	return out
 
 
 static func _add_storey_cells(house: Dictionary, floor: int,
@@ -425,10 +839,14 @@ static func _add_storey_cells(house: Dictionary, floor: int,
 
 ## A reserved landmark becomes a kit house on its terrain-rooted footprint:
 ## storeys fill the reserved height below a two-band roof allowance.
-static func _landmark_house(feature: WarrenFeatureReservation) -> Dictionary:
+static func _landmark_house(feature: WarrenFeatureReservation,
+		source: WarrenMazeSourcePlan = null) -> Dictionary:
 	# The reservation is the measured shell ring of a complete prefab; the
 	# house is its whole rectangle. Landmarks are the village's large houses:
-	# two or three storeys whatever the prefab's height was.
+	# two or three storeys whatever the prefab's height was -- except on the
+	# town's edge rings, where they keep the same one-storey-per-ring profile
+	# as every other house (September 29 edges; a landmark on the rim is a
+	# long one-storey hall, not a three-storey wall on the lawn).
 	var base := 1 << 20
 	var top := -(1 << 20)
 	var ring: Dictionary = {}
@@ -440,6 +858,13 @@ static func _landmark_house(feature: WarrenFeatureReservation) -> Dictionary:
 			ring[Vector2i(cell.x, cell.z)] = true
 	var rect := BuildingDesigner._bounds(ring)
 	var storey_count := clampi((top - base) / 2, 2, 3)
+	if source != null:
+		var columns: Array = []
+		for cell: Vector2i in ring:
+			columns.append(Vector2i(floori(cell.x / 2.0), floori(cell.y / 2.0)))
+		var cap := WarrenPlotPlanner.edge_storey_cap(source, columns, base)
+		if cap >= 0:
+			storey_count = clampi(cap, 1, storey_count)
 	var house := {"cells": [], "storeys": {}, "doors": [], "terrain_band": base,
 		"landmark": true}
 	for s in storey_count:
@@ -451,6 +876,13 @@ static func _landmark_house(feature: WarrenFeatureReservation) -> Dictionary:
 				layer.append(Vector3i(x, floor + 1, z))
 		(house.cells as Array).append_array(layer)
 		_add_storey_cells(house, floor, layer)
+	# The reserved volume above a capped landmark stays its own air: its roof
+	# may rise into it (it is not another owner's space to keep clear).
+	var own_air: Dictionary = {}
+	for cell: Vector3i in feature.reserved_cells:
+		if cell.y >= base + storey_count * 2:
+			own_air[cell] = true
+	house["own_air"] = own_air
 	var entrance := feature.audit.get("landmark_entrance_cell", Vector3i.ZERO) as Vector3i
 	var landing := feature.audit.get("landmark_public_landing_cell", entrance) as Vector3i
 	if entrance != landing:
@@ -579,9 +1011,74 @@ static func _walked(grid: WarrenSpatialGrid, cell: Vector3i) -> bool:
 		and int(claim.get("kind", -1)) == WarrenSpatialGrid.FaceKind.PUBLIC_FLOOR
 
 
+## Plan columns (fine cells) crossed by a public flight: every STAIR claim
+## (a sloped transition, its bands) and every raised gate's exterior approach
+## flight (any band: it descends to the ground outside the town). Values are
+## the claimed bands; gate approaches use an empty list meaning "all bands".
+static func flight_columns(spatial: WarrenSpatialPlan,
+		fabric: SettlementFabricPlan) -> Dictionary:
+	var out: Dictionary = {}
+	if fabric == null or fabric.surface_plan == null:
+		return out
+	for cell: Vector3i in fabric.surface_plan.cells_for_kind(
+			PublicRealmSurfacePlan.SurfaceKind.STAIR):
+		var column := Vector2i(cell.x, cell.z)
+		if not out.has(column):
+			out[column] = [cell.y]
+		else:
+			(out[column] as Array).append(cell.y)
+	var size := FabricRecipe.CELL_SIZE
+	for spec: Dictionary in VillageWarrenFabricSolver.terrain_contact_specs(spatial, fabric):
+		var geometry := VillageWarrenFabricSolver.terrain_contact_local_geometry(spec)
+		if not bool(geometry.get("has_stairs", false)):
+			continue
+		var a := geometry.inner_centre as Vector3
+		var b := geometry.outer_centre as Vector3
+		var lateral := Vector3(spec.lateral) * float(geometry.half_width)
+		var rect := Rect2(Vector2(a.x, a.z), Vector2.ZERO)
+		for p: Vector3 in [a - lateral, a + lateral, b - lateral, b + lateral]:
+			rect = rect.expand(Vector2(p.x, p.z))
+		for x in range(floori(rect.position.x / size + 0.5 + 0.01),
+				floori(rect.end.x / size + 0.5 - 0.01) + 1):
+			for z in range(floori(rect.position.y / size + 0.5 + 0.01),
+					floori(rect.end.y / size + 0.5 - 0.01) + 1):
+				out[Vector2i(x, z)] = []
+	return out
+
+
+## True when a flight crosses `cell` within the bands a floor-standing
+## feature at `band` would occupy (its floor, its height, one band below).
+static func crosses_flight(flights: Dictionary, cell: Vector2i, band: int) -> bool:
+	if not flights.has(cell):
+		return false
+	var bands: Array = flights[cell]
+	if bands.is_empty():
+		return true
+	for claimed: int in bands:
+		if claimed >= band - 1 and claimed <= band + 2:
+			return true
+	return false
+
+
+## Cells walled by the retained massif's own courses (terraces and tunnel
+## ceilings): the podium houses may stand on.
+static func _podium_cells(feature_masses: Array[BuildingMass]) -> Dictionary:
+	var podium: Dictionary = {}
+	for mass: BuildingMass in feature_masses:
+		if mass.stable_id not in [&"kit.retained", &"kit.tunnel-ceilings", &"kit.platform-wall"]:
+			continue
+		for storey: Dictionary in mass.storeys:
+			var floor := int(storey.floor_band)
+			for cell: Vector2i in storey.cells:
+				for band in range(floor, floor + int(storey.get("bands", 2))):
+					podium[Vector3i(cell.x, band, cell.y)] = true
+	return podium
+
+
 static func _mass_for(house_id: StringName, house: Dictionary,
 		grid: WarrenSpatialGrid, owner_at: Dictionary, world_seed: int,
-		kit: BuildingKit) -> BuildingMass:
+		kit: BuildingKit, flights: Dictionary = {}, canopy_claims: Array = [],
+		podium: Dictionary = {}, passages: Dictionary = {}) -> BuildingMass:
 	var storeys_by_band: Dictionary = house.storeys
 	if storeys_by_band.is_empty():
 		return null
@@ -596,7 +1093,38 @@ static func _mass_for(house_id: StringName, house: Dictionary,
 	for floor: int in floors:
 		if floor == terrain_band:
 			terrain_storey = mass.storeys.size()
-		mass.add_storey(floor, storeys_by_band[floor], BuildingMass.MATERIAL_TIMBER)
+		var storey := mass.add_storey(floor, storeys_by_band[floor], BuildingMass.MATERIAL_TIMBER)
+		if house.has("roof_crowns"):
+			storey["roofed"] = (house.roof_crowns as Dictionary).get(floor, {})
+			storey["crown_parts"] = (house.crown_parts as Dictionary).get(floor, [])
+		# A part standing on higher ground than the house's lowest one (a
+		# compound member, a back room up the slope): its cells on the
+		# terrain or a retained terrace rest on the ground (a footing
+		# course, no soffit), not over air.
+		if floor != terrain_band:
+			var grounded := {}
+			for cell: Vector2i in (house.get("grounded", {}) as Dictionary).get(floor, {}):
+				var under := Vector3i(cell.x, floor - 1, cell.y)
+				if not grid.contains(under) \
+						or grid.use_at(under) == WarrenSpatialGrid.Use.STRUCTURAL_VOLUME:
+					grounded[cell] = true
+			if not grounded.is_empty():
+				storey["grounded"] = grounded
+		# A storey at or below the house's datum still closes its underside
+		# where it hangs over public air (a bridge-house over a lane has no
+		# terrain-bearing room, so its lowest floor IS the datum). Without it
+		# the lane looked up into the empty room: inner walls, gable timbers
+		# and sky between them.
+		if floor <= mass.ground_band:
+			var overhang: Dictionary = {}
+			for cell: Vector2i in storeys_by_band[floor]:
+				var under := Vector3i(cell.x, floor - 1, cell.y)
+				if grid.contains(under) and grid.use_at(under) in [
+						WarrenSpatialGrid.Use.PUBLIC_AIR, WarrenSpatialGrid.Use.DAYLIGHT_AIR]:
+					overhang[cell] = true
+			if not overhang.is_empty():
+				storey["soffit"] = true
+				storey["soffit_cells"] = overhang
 	for door: Dictionary in house.doors:
 		var private_cell := door.cell as Vector3i
 		var direction := door.direction as Vector3i
@@ -608,9 +1136,21 @@ static func _mass_for(house_id: StringName, house: Dictionary,
 			continue
 		storey.openings[BuildingMass.edge_key(Vector2i(private_cell.x,
 			private_cell.z), dir)] = BuildingMass.OPENING_DOOR
+		if bool(door.get("passage", false)):
+			# A passage-house abuts this wall line: the storey stays flush
+			# (an inset storey recedes half a module, leaving a gap and the
+			# passage's corner posts standing in front of its openings).
+			storey["abutted"] = true
+		if bool(door.get("balcony", false)):
+			# The balcony's rakers bear on the wall below this storey at its
+			# module joints; the designer keeps that wall flush (no jetty).
+			storey["bears_balcony"] = true
 	var designer := BuildingDesigner.new(kit)
+	var own_air: Dictionary = house.get("own_air", {})
 	designer.forbidden = func(cell: Vector2i, band: int) -> bool:
-		return _keep_clear(grid, owner_at, house_id, Vector3i(cell.x, band, cell.y))
+		return passages.has(Vector3i(cell.x, band, cell.y)) \
+			or (not own_air.has(Vector3i(cell.x, band, cell.y)) \
+			and _keep_clear(grid, owner_at, house_id, Vector3i(cell.x, band, cell.y)))
 	designer.walked = func(cell: Vector2i, band: int) -> bool:
 		return _walked(grid, Vector3i(cell.x, band, cell.y))
 	designer.public_air = func(cell: Vector2i, band: int) -> bool:
@@ -619,9 +1159,28 @@ static func _mass_for(house_id: StringName, house: Dictionary,
 			and not _walked(grid, probe)
 	designer.covered = func(cell: Vector2i, band: int) -> bool:
 		return _solid_other(grid, owner_at, house_id, Vector3i(cell.x, band, cell.y))
+	designer.flight = func(cell: Vector2i, band: int) -> bool:
+		return crosses_flight(flights, cell, band)
+	designer.canopy_claims = canopy_claims
 	preload("res://scripts/terrain/features/villages/kit/KitLoggias.gd").recess(mass, designer.forbidden, designer.walked)
-	designer.articulate(mass, {"terrain_storey": terrain_storey, "terraced": true,
-		"colour": _district_colour(world_seed, house.cells)})
+	var context := {"terrain_storey": terrain_storey, "terraced": true,
+		"colour": _district_colour(world_seed, house.cells)}
+	# A house standing on the retained podium already has its masonry base:
+	# the podium's course. A stone storey on it would stack a second, deeper
+	# stone wall on the course (a 0.2 m jog, offset corner posts, two brick
+	# fields; September 29 photo 7), so its ground storey is timber-framed.
+	# Likewise beside it: a podium course abutting the ground storey runs
+	# its flush face on the same wall line as the storey's deep masonry (a
+	# merged compound's range can end against a terrace).
+	if terrain_storey >= 0:
+		for cell: Vector2i in storeys_by_band[terrain_band]:
+			var near := podium.has(Vector3i(cell.x, terrain_band - 1, cell.y))
+			for step: Vector2i in BuildingMass.DIRS:
+				near = near or podium.has(Vector3i(cell.x + step.x, terrain_band, cell.y + step.y))
+			if near:
+				context["stone_chance"] = 0.0
+				break
+	designer.articulate(mass, context)
 	return mass
 
 

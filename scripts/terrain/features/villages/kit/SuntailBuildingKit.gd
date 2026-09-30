@@ -23,18 +23,36 @@ static func create() -> BuildingKit:
 	kit.roof_row_rise = 3.0
 	kit.roof_top_rise = 1.62
 	kit.jetty_depth = 1.0
+	# Frame_Wall_* outer faces stand 0.157 m proud of their pivot line.
+	kit.wall_face = 0.157
+	# Support_3 is 0.2586 m square.
+	kit.corner_post_half = 0.1293
 	var r := kit.roles
 	r[&"wall.timber.plain"] = [&"suntail.frame.frame_wall_2", &"suntail.frame.frame_wall_1"]
 	r[&"wall.timber.window"] = [&"suntail.frame.frame_wall_1_w", &"suntail.frame.frame_wall_2_w"]
 	r[&"wall.timber.door"] = [&"suntail.frame.frame_wall_1_d", &"suntail.frame.frame_wall_1_d_1"]
-	r[&"wall.stone.plain"] = [&"suntail.stone.stone_wall"]
-	r[&"wall.stone.window"] = [&"suntail.stone.stone_wall_w"]
-	r[&"wall.stone.door"] = [&"suntail.stone.stone_wall_d", &"suntail.stone.stone_wall_d_1"]
+	# Storey masonry is the pack's stone panels baked 0.2 m thicker in front
+	# (`masonry_depth` in the bake manifest): windows and doors keep their
+	# frames in the original plane, sunk into deep reveals, and the stone
+	# storey stands proud of the timber storey above it. Retaining courses
+	# keep the flush source panel.
+	kit.masonry_depth = 0.2
+	r[&"wall.stone.plain"] = [&"suntail.stone.stone_wall_deep"]
+	r[&"wall.stone.window"] = [&"suntail.stone.stone_wall_w_deep"]
+	r[&"wall.stone.door"] = [&"suntail.stone.stone_wall_d_deep", &"suntail.stone.stone_wall_d_1_deep"]
+	r[&"wall.stone.retaining"] = [&"suntail.stone.stone_wall"]
 	r[&"plinth.stone"] = [&"suntail.stone.stone_base"]
-	# One band of coursed stone: the plinth stretched from 1.12 m to 1.5 m.
-	r[&"wall.stone.course"] = [&"suntail.stone.stone_base"]
+	# Fortification (a raised district's plinth): plain coursed stone, the
+	# kit's stone wall with its timber frame baked away.
+	r[&"wall.fort"] = [&"suntail.stone.stone_wall_plain"]
+	# One band of coursed stone: the flush storey masonry panel at half height.
+	# (Stone_Base is a corner plinth: its taller corner pier repeated at every
+	# module and jutted past run ends, a gap-toothed wall.) Courses standing on
+	# the ground instead sink a full panel one band (`sunk`), keeping the
+	# storeys' brick proportions.
+	r[&"wall.stone.course"] = [&"suntail.stone.stone_wall"]
 	kit.anchors[&"wall.stone.course"] = Transform3D(
-		Basis.from_scale(Vector3(1.0, 1.5 / 1.12, 1.0)), Vector3.ZERO)
+		Basis.from_scale(Vector3(1.0, 1.5 / 3.0742, 1.0)), Vector3.ZERO)
 	# Chimneys: the pack's rubble chimney block, stacked, with its hollow top.
 	# Both pivot on their back face; the anchors centre them on the stack axis.
 	r[&"chimney.course"] = [&"suntail.chimney.fireplace_2"]
@@ -67,6 +85,16 @@ static func create() -> BuildingKit:
 	r[&"post.timber"] = [&"suntail.decor.support_3"]
 	r[&"post.base"] = [&"suntail.decor.support_3_base"]
 	r[&"awning"] = [&"suntail.decor.wooden_canopy_1"]
+	# Wooden_Canopy_1 is a free-standing four-post lean-to, 3.795 m wide
+	# (x -1.875..1.919), 2.293 m deep (z -0.811..1.482) and 3.602 m tall. The
+	# anchor makes it canonical: one wall module wide (minus a hairline so
+	# neighbouring porches never share a post), centred, back posts on z = 0.
+	kit.awning_width = 0.96
+	kit.awning_depth = 2.293
+	kit.awning_height = 3.602
+	var canopy_x := kit.module_width * kit.awning_width / 3.794629
+	kit.anchors[&"awning"] = Transform3D(Basis.from_scale(Vector3(canopy_x, 1.0, 1.0)),
+		Vector3(-(-1.8753132 + 3.794629 * 0.5) * canopy_x, 0.0, 0.8112094))
 	r[&"window_box"] = [&"suntail.decor.flovers_1", &"suntail.decor.flovers_2"]
 	# Ivy grows from the ground: anchors seat each mesh's lowest leaves at y 0.
 	# `ivy.wall` is a flat climbing patch for a blank wall; `ivy.corner` wraps

@@ -44,8 +44,10 @@ static func plan(world_seed: int, ground_bands: Dictionary,
 	if stop_after == &"reserve":
 		return source_plan
 
-	WarrenPlotPlanner.partition(source_plan, profile)
+	WarrenPlotPlanner.partition(source_plan, profile, false)
 	finish_public_destinations(source_plan)
+	WarrenPlotPlanner.allocate_bridges(source_plan)
+	WarrenPlotPlanner.cover_tunnels(source_plan)
 	finish_ground_streets(source_plan)
 	if stop_after == &"partition":
 		return source_plan
@@ -123,118 +125,179 @@ static func finish_ground_streets(source: WarrenMazeSourcePlan) -> void:
 
 
 static func finish_public_destinations(source: WarrenMazeSourcePlan) -> void:
-	## Plot allocation supplies actual destinations. Before sealing the source,
-	## withdraw a terminal climb above all of them, together with its optional
-	## empty lookout. A level tail beyond the final destination can withdraw too.
-	## Preserve complete flights and every connecting route.
+	## Plot allocation supplies actual destinations. Before sealing, every
+	## public walk must lead somewhere: to a doorway, a town portal, the market,
+	## a bridge-house, or around a genuine loop. The walk graph's nodes are
+	## transition landings (a stair's swept cells travel with its flight, so a
+	## flight withdraws whole); an empty 2x2 lookout collapses to one node, since
+	## a square with nothing on it is a deck, not a loop. Leaves without a
+	## destination are peeled repeatedly. This covers terminal climbs, lane and
+	## descent tails, and empty lookouts alike -- whatever their height.
 	if source == null or source.is_sealed() or source.plots.is_empty():
 		return
 	var old := source.excavation
 	if old == null or old.transitions.is_empty():
 		return
-	var highest: int = old.route.front().y
-	var protected: Dictionary = {}
+	var destinations: Dictionary = {}
+	for cell: Vector3i in old.portals + source.market_zone + source.market_square_cells:
+		destinations[cell] = true
+	var edges := old.walk_edges()
+	# A doorway on a flight's treads is closed by construction: only landings
+	# are destinations. Bridges are allocated after this pruning, so a bridge
+	# span is never a reason to keep a street; a span over a withdrawn street
+	# is withdrawn with it.
+	var flights := old.flight_cells()
+	# Doorways address landings (WarrenPlotPlanner never seeds one on a
+	# flight's treads). A deck joins the realm through its address.
+	var landings: Dictionary = {}
+	for edge: Dictionary in edges:
+		landings[edge.a] = true
+		landings[edge.b] = true
 	for plot: Dictionary in source.plots:
 		var door: Vector3i = plot.door_walk
-		highest = maxi(highest, door.y)
-		protected[door] = true
-		# A reserved public deck is an intentional destination even when its
-		# address is on a lower connecting flight.
-		if plot.get("kind", &"") == WarrenMazeSourcePlan.PLOT_DECK:
-			highest = maxi(highest, int(plot.floor))
-	for cell: Vector3i in old.portals + source.market_zone + source.market_square_cells:
-		protected[cell] = true
-	var lookout: Dictionary = {}
+		if plot.kind == WarrenMazeSourcePlan.PLOT_BRIDGE:
+			continue
+		if plot.kind != WarrenMazeSourcePlan.PLOT_DECK:
+			if not flights.has(door):
+				destinations[door] = true
+			continue
+		# A deck addressed beside a flight is entered from the top of its own
+		# access flight, else from a level landing beside it, else (no other
+		# way in) from that flight after all.
+		var entries: Array[Vector3i] = []
+		if plot.has("access_transition"):
+			entries.append(plot.access_transition.to as Vector3i)
+		for column: Vector2i in plot.cells:
+			for direction: Vector2i in WarrenPassageLatticeRules.DIRECTIONS:
+				var landing := Vector3i(column.x + direction.x, int(plot.floor),
+					column.y + direction.y)
+				if landings.has(landing) and entries.is_empty():
+					entries.append(landing)
+		if entries.is_empty():
+			entries.append(door)
+		for cell: Vector3i in entries:
+			destinations[cell] = true
+	# One group per landing; an empty lookout square is one group.
+	var group_of: Dictionary = {}
+	for edge: Dictionary in edges:
+		group_of[edge.a] = edge.a
+		group_of[edge.b] = edge.b
 	for stamp: Dictionary in source.feature_stamps:
-		for cell: Vector3i in stamp.get("cells", []):
-			if stamp.kind == &"terminal_lookout":
-				lookout[cell] = true
-			else:
-				protected[cell] = true
-	for lane: Dictionary in old.lanes:
-		if lane.get("feature_kind", &"") == &"terminal_lookout":
-			continue
-		protected[lane.anchor] = true
-		for cell: Vector3i in lane.cells:
-			protected[cell] = true
-	for edge: Dictionary in old.loop_edges:
-		if lookout.has(edge.from) and lookout.has(edge.to):
-			continue
-		protected[edge.from] = true
-		protected[edge.to] = true
-	for span: Array in old.bridge_spans:
-		for cell: Vector3i in span:
-			protected[cell] = true
-	# A lookout reached by another lane or used by a plot cannot be withdrawn
-	# with the spine's last flight: it is now a real part of the public network.
-	for cell: Vector3i in lookout:
-		if protected.has(cell):
-			for other: Vector3i in lookout:
-				protected[other] = true
-			break
-	var cut := old.route.size()
-	var transition_count := old.transitions.size()
-	while transition_count > 0:
-		var edge: Dictionary = old.transitions[transition_count - 1]
-		var level_tail := (edge.from as Vector3i).y == (edge.to as Vector3i).y
-		if (edge.to as Vector3i).y <= highest and not level_tail:
-			break
-		var start := old.route.find(edge.from)
-		if start < 0:
-			break
-		var can_withdraw := true
-		for index in range(start + 1, cut):
-			if protected.has(old.route[index]):
-				can_withdraw = false
-				break
-		if not can_withdraw:
-			break
-		cut = start + 1
-		transition_count -= 1
-	if cut == old.route.size() or cut < 2:
-		return
+		if stamp.kind != &"terminal_lookout": continue
+		var cells: Array = stamp.cells
+		for cell: Vector3i in cells:
+			group_of[cell] = cells[0]
+	var members: Dictionary = {}
+	for cell: Vector3i in group_of:
+		var group: Vector3i = group_of[cell]
+		if not members.has(group): members[group] = [] as Array[Vector3i]
+		(members[group] as Array[Vector3i]).append(cell)
+	var useful: Dictionary = {}
+	for cell: Vector3i in group_of:
+		if destinations.has(cell): useful[group_of[cell]] = true
+	var incident: Dictionary = {}
+	for edge_index in edges.size():
+		var edge: Dictionary = edges[edge_index]
+		var a: Vector3i = group_of[edge.a]
+		var b: Vector3i = group_of[edge.b]
+		if a == b: continue
+		for group: Vector3i in [a, b]:
+			if not incident.has(group): incident[group] = []
+			(incident[group] as Array).append(edge_index)
+	var removed_edges: Dictionary = {}
 	var removed: Dictionary = {}
-	for cell: Vector3i in old.route.slice(cut):
-		removed[cell] = true
-	var stamps: Array[Dictionary] = []
-	for stamp: Dictionary in source.feature_stamps:
-		var withdraw := false
-		if stamp.kind == &"terminal_lookout":
-			for cell: Vector3i in stamp.cells:
-				if removed.has(cell):
-					withdraw = true
-		if withdraw:
-			for cell: Vector3i in stamp.cells:
-				removed[cell] = true
-		else:
-			stamps.append(stamp)
+	var queue: Array[Vector3i] = []
+	queue.assign(members.keys())
+	queue.sort_custom(WarrenMazeSourcePlan._cell_less)
+	while not queue.is_empty():
+		var group: Vector3i = queue.pop_back()
+		if useful.has(group) or removed.has(members[group][0]): continue
+		var live: Array = (incident.get(group, []) as Array).filter(
+			func(e: int) -> bool: return not removed_edges.has(e))
+		if live.size() > 1: continue
+		for cell: Vector3i in members[group]: removed[cell] = true
+		for edge_index: int in live:
+			removed_edges[edge_index] = true
+			var edge: Dictionary = edges[edge_index]
+			for cell: Vector3i in edge.swept: removed[cell] = true
+			var other: Vector3i = group_of[edge.b] if group_of[edge.a] == group \
+				else group_of[edge.a]
+			queue.append(other)
+	if removed.is_empty():
+		return
 	# Make a fresh construction value rather than mutate a sealed excavation.
-	# Its existing negative space remains released; no new rock may fill the
-	# discarded stair's swept headroom beside already allocated native houses.
 	var excavation := WarrenExcavation.new(old.world_seed)
+	var cut := old.route.size()
+	for index in old.route.size():
+		if removed.has(old.route[index]):
+			cut = index
+			break
 	excavation.route.assign(old.route.slice(0, cut))
-	excavation.transitions.assign(old.transitions.slice(0, transition_count))
+	for edge: Dictionary in old.transitions:
+		if not removed.has(edge.from) and not removed.has(edge.to):
+			excavation.transitions.append(edge)
 	for lane: Dictionary in old.lanes:
-		if not removed.has(lane.anchor):
-			excavation.lanes.append(lane)
+		if removed.has(lane.anchor): continue
+		var kept: Array[Vector3i] = []
+		for cell: Vector3i in lane.cells:
+			if removed.has(cell): break
+			kept.append(cell)
+		if kept.is_empty(): continue
+		var trimmed := lane.duplicate()
+		trimmed.cells = kept
+		var transitions: Array[Dictionary] = []
+		for edge: Dictionary in lane.transitions:
+			if not removed.has(edge.from) and not removed.has(edge.to):
+				transitions.append(edge)
+		trimmed.transitions = transitions
+		excavation.lanes.append(trimmed)
 	for edge: Dictionary in old.loop_edges:
 		if not removed.has(edge.from) and not removed.has(edge.to):
 			excavation.loop_edges.append(edge)
 	excavation.carved = old.carved.duplicate()
+	# A withdrawn bore open to the sky stays open ground. One under a house or
+	# rock returns to rock, so nothing above it loses its bearing.
+	for cell: Vector3i in removed:
+		var run: Array[Vector3i] = []
+		var band := Vector3i(cell.x, cell.y, cell.z)
+		while old.carved.has(band) and (band == cell or not source.passage_kinds.has(band)):
+			run.append(band)
+			band += Vector3i.UP
+		if not source.passage_kinds.has(band) and source.solid_at(band):
+			for air: Vector3i in run:
+				excavation.carved.erase(air)
 	excavation.covered = old.covered.duplicate()
 	excavation.portals.assign(old.portals)
 	excavation.tunnel_cells = old.tunnel_cells.duplicate()
-	excavation.bridge_spans.assign(old.bridge_spans)
 	excavation.bridge_span_audit = old.bridge_span_audit.duplicate(true)
+	var seeded := old.bridge_span_audit.get("seeded", []) as Array
+	var kept_proofs: Array = []
+	for index in old.bridge_spans.size():
+		var span := old.bridge_spans[index] as Array
+		if span.any(func(cell: Vector3i) -> bool: return removed.has(cell)):
+			continue
+		excavation.bridge_spans.append(span)
+		if index < seeded.size():
+			kept_proofs.append(seeded[index])
+	if excavation.bridge_span_audit.has("seeded"):
+		excavation.bridge_span_audit["seeded"] = kept_proofs
 	excavation.frontage_reservations = old.frontage_reservations.duplicate()
 	for cell: Vector3i in removed:
 		source.passage_kinds.erase(cell)
 		excavation.covered.erase(cell)
+		excavation.tunnel_cells.erase(cell)
 	excavation.finish_construction()
 	source.excavation = excavation
+	var stamps: Array[Dictionary] = []
+	for stamp: Dictionary in source.feature_stamps:
+		var cells: Array = stamp.get("cells", [])
+		if cells.is_empty() or not removed.has(cells[0]):
+			stamps.append(stamp)
 	source.feature_stamps = stamps
 	source.summit_cell = excavation.route.front()
 	for cell: Vector3i in excavation.route:
 		if cell.y > source.summit_cell.y:
 			source.summit_cell = cell
-	source.audit["withdrawn_terminal_public_cells"] = removed.keys()
+	var withdrawn: Array = removed.keys()
+	withdrawn.sort_custom(WarrenMazeSourcePlan._cell_less)
+	source.audit["withdrawn_terminal_public_cells"] = withdrawn

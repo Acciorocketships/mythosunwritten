@@ -6,6 +6,14 @@ func _historical_free_shore() -> Dictionary:
 	# outlet is now fully wet and no longer has this inland shoreline.
 	# Only field inputs are frozen: every query below uses production code.
 	var data:Dictionary=FileAccess.open("res://tests/fixtures/september15/water-drops/shore_before.bin",FileAccess.READ).get_var()
+	# The fill was frozen over the tile-era flat ledge (29,-72). Per edge
+	# (September 27) that ledge's two-storey lip dies at its south-west
+	# corner, where (29,-71) one storey lower closes a slope ring, and the
+	# lip would fade along its whole side, no longer the ground the frozen
+	# fill was solved for. Raising that one cell to the ledge's storey keeps
+	# the frozen fill's ground exactly: the tested rows lie on the ledge's
+	# north quadrant, which is then flat at 16 m as before.
+	data.storeys[Vector2i(29,-71)]=4
 	return {"region":HeightfieldRegion.new(data.storeys,data.levels,data.carved),
 		"fill":data.fill,"fill_base":data.fill_base}
 
@@ -118,7 +126,10 @@ func test_photo16_supplied_outlet_now_crosses_its_crest_without_wetting_the_high
 	var field:=preload("res://tests/fixtures/September10WaterFields.gd").get_fields().water(Vector2i(3,-10))
 	var missing:=0
 	var worst_step:=0.0
-	for z in [-1739.0,-1737.0,-1734.0]:
+	# Per edge (September 27) the lip's cliff dies toward the south: the
+	# outlet crosses where the lip has faded (z >= -1734); the 3-6 m band
+	# beside the higher north bank is dry sloping ground (as its crown is).
+	for z in [-1734.0,-1731.0,-1728.0]:
 		var previous:=NAN
 		for i in 1501:
 			var p:=Vector2(678+i*.01,z)

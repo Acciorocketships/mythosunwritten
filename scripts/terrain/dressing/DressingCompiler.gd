@@ -10,6 +10,15 @@ const GROUND_BAND_MIN := 0.35
 const GROUND_BAND_MAX := 1.0
 const GROUND_BAND_HEIGHT_FRACTION := 0.12
 const SUPPORT_DIRECTION_COUNT := 16
+## Embedded rocks nestle into each other (owner, September 27 judging: rocks
+## too spaced out; they should slightly overlap, in clusters). Two bases may
+## overlap, but the smaller rock's centre always stays outside the larger
+## rock, BASE_NESTLE of its own radius beyond it: never swallowed, never
+## stacked. Shared by ambient colonies and slope foot clusters (radii are the
+## bases' horizontal half-extents).
+const BASE_NESTLE := 0.25
+static func nestle_distance(a: float, b: float) -> float:
+	return maxf(a, b) + BASE_NESTLE * minf(a, b)
 
 static func compile(index: DressingCatalogIndex,
 		environment_catalog: EnvironmentCatalog) -> DressingProgram:
@@ -23,6 +32,7 @@ static func compile(index: DressingCatalogIndex,
 	var referenced: Dictionary = {}
 	var group_radius: Dictionary = {}
 	var support_cache: Dictionary = {}
+	var embedded_groups: Dictionary = {}
 	for set_resource: DressingSet in authored:
 		var compiled := _compile_set(set_resource, environment_catalog, support_cache)
 		if compiled.is_empty():
@@ -33,6 +43,8 @@ static func compile(index: DressingCatalogIndex,
 		program.sets.append(compiled)
 		group_radius[compiled.spacing_group] = maxf(
 			float(group_radius.get(compiled.spacing_group, 0.0)), compiled.spacing_radius)
+		if compiled.embed_fraction > 0.0:
+			embedded_groups[compiled.spacing_group] = true
 		program.maximum_spacing_radius = maxf(program.maximum_spacing_radius,
 			compiled.spacing_radius)
 		program.maximum_feature_clearance = maxf(program.maximum_feature_clearance,
@@ -48,6 +60,14 @@ static func compile(index: DressingCatalogIndex,
 				# _ground_support_points is cached per asset, so repeated choices
 				# share one deterministic resource-free outline.
 				program.ground_stencil_by_asset[choice.asset_id] = choice.support_points
+	# A footprint conflict can reach two maximal bases apart.
+	var base_reach: Dictionary = {}
+	for compiled: Dictionary in program.sets:
+		base_reach[compiled.spacing_group] = maxf(float(base_reach.get(compiled.spacing_group, 0.0)),
+			compiled.base_radius_max)
+	for group: StringName in embedded_groups:
+		group_radius[group] = maxf(float(group_radius[group]),
+			nestle_distance(float(base_reach[group]), float(base_reach[group])))
 	for compiled: Dictionary in program.sets:
 		compiled["group_radius"] = float(group_radius[compiled.spacing_group])
 		# _eligible_for_set rejects every jittered anchor outside core grown by
@@ -129,6 +149,18 @@ static func _compile_set(source: DressingSet,
 			or (source.relief_radius > 0.0 and source.surface_mode == DressingSet.SurfaceMode.WATER_SURFACE):
 		_fail("Dressing set %s requires a bounded ground relief habitat" % set_id)
 		return {}
+	if not is_finite(source.embed_fraction) or source.embed_fraction < 0.0 \
+			or source.embed_fraction >= 0.6 \
+			or (source.embed_fraction > 0.0 and source.surface_mode == DressingSet.SurfaceMode.WATER_SURFACE):
+		_fail("Dressing set %s has an invalid embed fraction" % set_id)
+		return {}
+	var embedded := source.embed_fraction > 0.0
+	if not is_finite(source.colony_radius) or source.colony_radius < 0.0 \
+			or source.colony_radius > PROPOSAL_HALF \
+			or (source.colony_radius > 0.0) != (source.colony_members >= 1.0) \
+			or not is_finite(source.colony_members):
+		_fail("Dressing set %s colony radius and members (>= 1) must be authored together" % set_id)
+		return {}
 	var biome_ids := BiomeRegistry.biome_ids()
 	var fill := _affinity_array(source.fill_per_cell, biome_ids, "set %s fill" % set_id)
 	if fill.is_empty() or _maximum(fill) <= 0.0:
@@ -163,6 +195,7 @@ static func _compile_set(source: DressingSet,
 	var compiled_spacing_radius := source.spacing_radius
 	var query_support_radius := maxf(source.support_radius,source.relief_radius)
 	var query_feature_radius := 0.0
+	var base_radius_max := 0.0
 	var authored_choices: Array[DressingChoice] = source.choices.duplicate()
 	authored_choices.sort_custom(func(a: DressingChoice, b: DressingChoice) -> bool:
 		return String(a.asset_id) < String(b.asset_id))
@@ -189,8 +222,12 @@ static func _compile_set(source: DressingSet,
 			return {}
 		var choice_spacing := maxf(source.spacing_radius, choice_resource.spacing_radius)
 		compiled_spacing_radius = maxf(compiled_spacing_radius, choice_spacing)
-		var support_points := _ground_support_points(descriptor, support_cache, source.visual_ground_support)
+		var support_points := _ground_support_points(descriptor, support_cache,
+			source.visual_ground_support or embedded)
 		var ground_radius := _maximum_radius(support_points)
+		if embedded and support_points.is_empty():
+			_fail("Embedded dressing asset %s has no base outline" % choice_resource.asset_id)
+			return {}
 		var feature_centre := Vector2(
 			descriptor.measured_aabb.get_center().x,
 			descriptor.measured_aabb.get_center().z)
@@ -205,6 +242,11 @@ static func _compile_set(source: DressingSet,
 		var maximum_scale := choice_resource.scale_multiplier * source.scale_range.y
 		query_support_radius = maxf(query_support_radius,
 			ground_radius * maximum_scale)
+		base_radius_max = maxf(base_radius_max, ground_radius * maximum_scale)
+		if embedded:
+			# The ground skirt samples the terrain out to its buried rim.
+			query_support_radius = maxf(query_support_radius,
+				ground_radius * maximum_scale + RockSkirt.WIDTH_MAX + 0.5)
 		query_feature_radius = maxf(query_feature_radius,
 			(feature_centre.length() + feature_half_extents.length()) \
 				* maximum_scale)
@@ -222,6 +264,8 @@ static func _compile_set(source: DressingSet,
 			# crowns may overhang natural cliffs, but never authored space.
 			"feature_footprint_centre": feature_centre,
 			"feature_footprint_half_extents": feature_half_extents,
+			# Assets are baked with their authored base on the placement datum.
+			"visual_height": descriptor.measured_aabb.end.y,
 		})
 	if choices.is_empty():
 		_fail("Dressing set %s has no choices" % set_id)
@@ -237,7 +281,9 @@ static func _compile_set(source: DressingSet,
 		if not available:
 			_fail("Dressing set %s enables %s without an eligible choice" % [set_id, biome_ids[biome_index]])
 			return {}
-	var slot_count := maxi(1, int(ceil(_maximum(fill))))
+	# A colony draws twice its mean membership; each slot joins at even odds.
+	var slot_count := maxi(2, int(ceil(2.0 * source.colony_members))) \
+		if source.colony_radius > 0.0 else maxi(1, int(ceil(_maximum(fill))))
 	var resolved_group := source.spacing_group if not source.spacing_group.is_empty() else source.id
 	var shore_limit := maxf(absf(source.shore_distance_range.x), absf(source.shore_distance_range.y))
 	return {
@@ -265,6 +311,10 @@ static func _compile_set(source: DressingSet,
 		"relief_radius": source.relief_radius,
 		"relief_range": source.relief_range,
 		"feature_clearance": source.feature_clearance,
+		"embed_fraction": source.embed_fraction,
+		"colony_radius": source.colony_radius,
+		"colony_members": source.colony_members,
+		"base_radius_max": base_radius_max,
 		"spacing_group": resolved_group,
 		"spacing_radius": compiled_spacing_radius,
 		"scale_range": source.scale_range,

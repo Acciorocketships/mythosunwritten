@@ -17,10 +17,13 @@ func test_real_hillside_node_keeps_its_walkable_narrow_exit() -> void:
 	var b := {"id":&"hill-exit","cell":cell+Vector2i.LEFT}
 	var route := paths._compute_route(a,b,"hill-town|hill-exit")
 	assert_false(route.is_empty(),"The road's centre is continuous; its outer edge has only a 14 cm step")
-	# The other two faces really are four-metre cliffs and remain forbidden.
+	# Per edge (owner, September 27): its other two faces are walkable exactly
+	# when they are not cliff edges; a one-storey side of a cliff cell is an
+	# ordinary slope, and a two-storey side remains forbidden.
 	var region := fields.region_at(Vector2(cell)*TerrainSurfaceField.TILE)
-	assert_false(TerrainSurfaceField.is_walkable_edge(region,cell,Vector2i.RIGHT,PathProgram.PATH_HALF_WIDTH))
-	assert_false(TerrainSurfaceField.is_walkable_edge(region,cell,Vector2i.DOWN,PathProgram.PATH_HALF_WIDTH))
+	for d: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN]:
+		assert_eq(TerrainSurfaceField.is_walkable_edge(region,cell,d,PathProgram.PATH_HALF_WIDTH),
+			not TerrainSurfaceField.is_cliff_edge(region,cell.x,cell.y,d), "face %s" % d)
 
 func test_route_goes_around_a_finite_cliff_without_crossing_it() -> void:
 	var seed_value := 2697992464

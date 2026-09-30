@@ -1377,8 +1377,10 @@ static func structural_support_payload(plan: SettlementFabricPlan) \
 		var occupied := false
 		for cell: Vector3i in owner_cells:
 			support_base = mini(support_base,
-				plan.surface_plan.support_base_at(cell))
+				effective_support_base(plan, cell))
 			occupied = occupied or _column_is_occupied_below(plan, solids, cell)
+		support_base = _anchor_retained_base(plan, anchor.point as Vector3,
+			support_base, surface_band)
 		if surface_band <= support_base or surface_band - support_base == 1 \
 				or occupied \
 				or _support_anchor_crosses_public_lane(anchor.point as Vector3,
@@ -1469,6 +1471,25 @@ static func structural_support_anchors(surface_cells: Dictionary) \
 	return out
 
 
+static func _anchor_retained_base(plan: SettlementFabricPlan, point: Vector3,
+		base_band: int, top_band: int) -> int:
+	## A post has thickness on both sides of its outline vertex, so it bears on
+	## the highest retained terrace in ANY of the four columns sharing that
+	## vertex -- not only under the court cells that own the vertex. A retained
+	## lawn beside the court (common where a court meets a terrace step) would
+	## otherwise be pierced by a post stopping at the envelope ground.
+	var x0 := floori(point.x / FabricRecipe.CELL_SIZE)
+	var z0 := floori(point.z / FabricRecipe.CELL_SIZE)
+	var out := base_band
+	for z in [z0, z0 + 1]:
+		for x in [x0, x0 + 1]:
+			for y in range(top_band - 1, out - 1, -1):
+				if plan.retained_terrace_cells.has(Vector3i(x, y, z)):
+					out = maxi(out, y + 1)
+					break
+	return out
+
+
 static func _support_anchor_crosses_public_lane(point: Vector3,
 		base_band: int, top_band: int, walked: Dictionary) -> bool:
 	## A post has thickness on both sides of an outline vertex. If any of the four
@@ -1483,6 +1504,23 @@ static func _support_anchor_crosses_public_lane(point: Vector3,
 				if walked.has(Vector3i(x, y, z)):
 					return true
 	return false
+
+
+static func effective_support_base(plan: SettlementFabricPlan,
+		cell: Vector3i) -> int:
+	## The band a structural court actually bears on. The surface plan records
+	## the envelope ground datum, which is decided before retained terraces are
+	## finalized; a raised lawn or plinth left beneath the court is a nearer
+	## bearing surface. Posts must stop on it, and a court one band above it is
+	## a crawl-height gap that its retaining skirt closes, exactly as over
+	## terrain. Without this, posts pierced the lawn and the band between the
+	## lawn and the deck stayed open.
+	var base := plan.surface_plan.support_base_at(cell) \
+		if plan.surface_plan.has_support_base(cell) else 0
+	for y in range(cell.y - 1, base - 1, -1):
+		if plan.retained_terrace_cells.has(Vector3i(cell.x, y, cell.z)):
+			return y + 1
+	return base
 
 
 static func low_retaining_payload(plan: SettlementFabricPlan) \
@@ -1505,7 +1543,7 @@ static func low_retaining_payload(plan: SettlementFabricPlan) \
 			PublicRealmSurfacePlan.SurfaceKind.STRUCTURAL_COURT):
 		structural[cell] = true
 		if plan.surface_plan.has_support_base(cell) \
-				and cell.y - plan.surface_plan.support_base_at(cell) == 1:
+				and cell.y - effective_support_base(plan, cell) == 1:
 			low_drop[cell] = true
 	var solids := plan.transformed_cells(&"solid")
 	var ordered: Array[Vector3i] = []
@@ -7066,15 +7104,14 @@ static func _maze_skywalk_network_from(plan: SettlementFabricPlan,
 				var crosses_street := _skywalk_site_holds(cell, step, gap,
 					stand, solids, retained, occluders, paved, walked_bands, true)
 				var candidate := {"cell": cell, "step": step, "gap": gap,
-					# A bridge-house is a run of complete authored 3 m gallery
-					# bays. An odd 1.5 m remainder keeps the exact same structural
-					# span but selects the tiled open-timber form instead of scaling
-					# or clipping a house.
-					"enclosed": gap >= SKYWALK_GALLERY_BAY_CELLS \
-						and gap % SKYWALK_GALLERY_BAY_CELLS == 0 \
-						and _skywalk_enclosure_clear(
-						cell, step, gap, stand, solids, retained, occluders, paved,
-						walked_bands),
+					# A public span lands on open walk surfaces (a deck, a roof
+					# crown, a street floor), so no building wall can meet either
+					# end of a house shell here: it is always the open timber
+					# bridge. Bridge-houses span between building storeys and are
+					# selected by `_maze_passage_house_candidates` (September 29
+					# photo 4: a gabled house floating over a lane, touching the
+					# town only along its floor edges).
+					"enclosed": false,
 					"crosses_street": crosses_street,
 					"order": _face_noise(Vector4i(cell.x, cell.y, cell.z,
 						index), SKYWALK_ORDER_SALT)}
@@ -7090,28 +7127,13 @@ static func _maze_skywalk_network_from(plan: SettlementFabricPlan,
 	var candidates: Array[Dictionary] = []
 	candidates.assign(street_candidates)
 	candidates.append_array(air_candidates)
-	# Two adjacent one-lane candidates form one exact 3 m x 3 m gallery bay.
-	# Promote that rectangle before arbitration: it is the authored bridge-house
-	# footprint, whereas treating the lanes independently can only produce two
-	# parallel rail bridges and makes each lane falsely block the other's wall.
-	candidates.append_array(_maze_paired_skywalk_candidates(candidates, stand,
-		solids, retained, occluders, paved, walked_bands))
-	var enclosed_candidate_count := 0
-	var private_candidate_count := 0
-	var private_candidates: Array[Dictionary] = []
-	for candidate: Dictionary in candidates if collect_diagnostics else []:
-		if not bool(candidate.enclosed):
-			continue
-		enclosed_candidate_count += 1
-		var candidate_cell := candidate.cell as Vector3i
-		var candidate_far := candidate_cell + (candidate.step as Vector3i) \
-			* (int(candidate.gap) + 1)
-		if construction.has(candidate_cell) \
-			and construction.has(candidate_far) \
-			and StringName(construction[candidate_cell]) \
-				!= StringName(construction[candidate_far]):
-			private_candidate_count += 1
-			private_candidates.append(candidate)
+	# Two adjacent public lanes over the same gap are one 3 m open bridge:
+	# treating them independently laid two railed bridges side by side with a
+	# rail down the middle.
+	candidates.append_array(_maze_paired_open_skywalk_candidates(candidates))
+	var passage_candidates := _maze_passage_house_candidates(
+		plan.transformed_cells(&"inhabited"), stand, solids, retained,
+		occluders, paved, walked_bands)
 	# Preserve all real street crossings first, then prefer a complete
 	# bridge-house for the single supplementary upper-air lane. This changes only
 	# which valid disjoint span wins; every clearance and bearing fact was already
@@ -7119,8 +7141,8 @@ static func _maze_skywalk_network_from(plan: SettlementFabricPlan,
 	candidates.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
 		if bool(left.crosses_street) != bool(right.crosses_street):
 			return bool(left.crosses_street)
-		if bool(left.enclosed) != bool(right.enclosed):
-			return bool(left.enclosed)
+		if int(left.get("width", 1)) != int(right.get("width", 1)):
+			return int(left.get("width", 1)) > int(right.get("width", 1))
 		if not is_equal_approx(float(left.order), float(right.order)):
 			return float(left.order) < float(right.order)
 		return _cell_before(left.cell as Vector3i, right.cell as Vector3i))
@@ -7169,17 +7191,10 @@ static func _maze_skywalk_network_from(plan: SettlementFabricPlan,
 	# and public graph are sealed but before facade outcroppings reserve the same
 	# air. This is the connectivity stage; its endpoint/component facts, not a
 	# seed exception, decide which otherwise isolated masses become one city.
-	for candidate_index in candidates.size():
+	for candidate: Dictionary in passage_candidates:
 		if out.size() >= MIN_CITY_SKYWALK_CONNECTIONS:
 			break
-		if accepted.has(candidate_index):
-			continue
-		var candidate := candidates[candidate_index]
-		if not bool(candidate.enclosed):
-			continue
-		if _maze_accept_private_skywalk(candidate, claimed, construction,
-				component_by_cell, out):
-			accepted[candidate_index] = true
+		_maze_accept_private_skywalk(candidate, claimed, out)
 	out.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
 		var a := left.cell as Vector3i
 		var b := right.cell as Vector3i
@@ -7188,111 +7203,142 @@ static func _maze_skywalk_network_from(plan: SettlementFabricPlan,
 		return SKYWALK_STEPS.find(left.step as Vector3i) \
 			< SKYWALK_STEPS.find(right.step as Vector3i))
 	return {"terrace_cells": reachable_terraces, "spans": out,
-		"candidate_count": candidates.size(),
-		"enclosed_candidate_count": enclosed_candidate_count,
-		"private_candidate_count": private_candidate_count,
-		"private_candidates": private_candidates}
+		"candidate_count": candidates.size() + passage_candidates.size(),
+		"enclosed_candidate_count": passage_candidates.size(),
+		"private_candidate_count": passage_candidates.size(),
+		"private_candidates": passage_candidates if collect_diagnostics else []}
 
 
-static func _maze_paired_skywalk_candidates(
-		singles: Array[Dictionary], stand: Dictionary, solids: Dictionary,
-		retained: Dictionary, occluders: Dictionary, paved: Dictionary,
-		walked_bands: Dictionary) -> Array[Dictionary]:
-	## A bridge-house is two adjacent 1.5 m lanes, not a one-lane bridge with a
-	## 3 m shell overhanging two unclassified neighbours. The second lane need
-	## not itself be public: the complete floorplate may cantilever one fine cell
-	## sideways from a narrower landing. That is a typed structural form, not a
-	## floating room: its public lane still bears at both longitudinal ends, its
-	## 1.5 m lateral extension is shorter than the authored 1.94 m corbel under
-	## each end, and the entire companion lane is reserved as air. When both lanes
-	## are walked candidates they are promoted together; otherwise only the
-	## original lane joins the reachable graph. In both cases the complete
-	## rectangular shell is reserved atomically before open bridges arbitrate.
+static func _maze_paired_open_skywalk_candidates(
+		singles: Array[Dictionary]) -> Array[Dictionary]:
+	## Two adjacent one-lane candidates with the same step and gap: every
+	## clearance fact was proved per lane, so the pair is the same bridge twice
+	## as wide. Canonical from the lattice-first lane (cross = +perpendicular).
 	var lookup: Dictionary = {}
 	for candidate: Dictionary in singles:
 		lookup[_skywalk_candidate_key(candidate.cell as Vector3i,
 			candidate.step as Vector3i, int(candidate.gap))] = candidate
 	var out: Array[Dictionary] = []
-	var emitted: Dictionary = {}
 	for candidate: Dictionary in singles:
 		var cell := candidate.cell as Vector3i
 		var step := candidate.step as Vector3i
 		var gap := int(candidate.gap)
-		if gap < SKYWALK_GALLERY_BAY_CELLS \
-				or gap % SKYWALK_GALLERY_BAY_CELLS != 0:
+		var cross := Vector3i(step.z, 0, step.x)
+		var mate := lookup.get(_skywalk_candidate_key(cell + cross, step, gap),
+			{}) as Dictionary
+		if mate.is_empty():
 			continue
-		var perpendicular := Vector3i(step.z, 0, step.x)
-		for cross: Vector3i in [perpendicular, -perpendicular]:
-			var companion_cell := cell + cross
-			var mate := lookup.get(_skywalk_candidate_key(companion_cell, step,
-				gap), {}) as Dictionary
-			var companion := {} as Dictionary
-			if mate.is_empty():
-				companion = _skywalk_structural_companion_lane(companion_cell,
-					step, gap, stand, solids, retained, occluders, paved,
-					walked_bands)
-				if companion.is_empty():
-					continue
-			if not _skywalk_paired_enclosure_clear(cell, step, gap, cross,
-					stand, solids, retained, occluders, paved, walked_bands):
-				continue
-			var shell_cell := cell
-			var shell_cross := cross
-			var walk_width := 1
-			var order := float(candidate.order)
-			var crosses_street := bool(candidate.crosses_street) \
-				or bool(companion.get("crosses_street", false))
-			if not mate.is_empty():
-				walk_width = 2
-				order = minf(order, float(mate.order))
-				crosses_street = crosses_street or bool(mate.crosses_street)
-				# Canonicalize a two-public-lane shell so visiting its mate later
-				# cannot emit the same rectangle with the opposite cross vector.
-				if _cell_before(companion_cell, cell):
-					shell_cell = companion_cell
-					shell_cross = -cross
-			var shell_key := _skywalk_candidate_key(shell_cell, step, gap) \
-				+ "/%d/%d" % [shell_cross.x, shell_cross.z]
-			if emitted.has(shell_key):
-				continue
-			emitted[shell_key] = true
-			out.append({"cell": shell_cell, "step": step, "gap": gap,
-				"width": 2, "walk_width": walk_width,
-				"cross": shell_cross, "enclosed": true,
-				"crosses_street": crosses_street, "order": order})
+		out.append({"cell": cell, "step": step, "gap": gap, "width": 2,
+			"walk_width": 2, "cross": cross, "enclosed": false,
+			"crosses_street": bool(candidate.crosses_street) \
+				or bool(mate.crosses_street),
+			"order": minf(float(candidate.order), float(mate.order))})
 	return out
 
 
-static func _skywalk_structural_companion_lane(cell: Vector3i,
-		step: Vector3i, gap: int, stand: Dictionary, solids: Dictionary,
-		retained: Dictionary, occluders: Dictionary, paved: Dictionary,
-		walked_bands: Dictionary) -> Dictionary:
-	## The cantilevered half of a 3 m bridge-house. Its GAP must remain clear
-	## air. Its two end cells deliberately are not classified: the shell ends on
-	## their boundary, so either borne mass may meet that seam or the side bay may
-	## finish as a corbelled half-width overhang. The parallel public lane owns
-	## both longitudinal bearings; one native 1.94 m cross-corbel at each end
-	## bears this 1.5 m extension. This is deliberately narrower than the general
-	## room jetty allowance and follows the same parent-to-ground ancestry.
-	var crosses_street := false
-	for index in range(1, gap + 1):
-		var mid := cell + step * index
-		if stand.has(mid) or solids.has(mid) or retained.has(mid) \
-				or occluders.has(mid) or paved.has(mid):
-			return {}
-		for drop in range(1, SKYWALK_UNDERCUT_BANDS + 1):
-			var under := mid - Vector3i.UP * drop
-			if solids.has(under) or retained.has(under):
-				return {}
-		for band_value: Variant in walked_bands.get(
-				Vector2i(mid.x, mid.z), []):
-			var band := int(band_value)
-			if band >= cell.y:
+static func _maze_passage_house_candidates(inhabited: Dictionary,
+		stand: Dictionary, solids: Dictionary, retained: Dictionary,
+		occluders: Dictionary, paved: Dictionary,
+		walked_bands: Dictionary) -> Array[Dictionary]:
+	## A bridge-house is an inhabited storey spanning air between two
+	## buildings. Each end lane is a room cell of a different unit whose storey
+	## floor is the bridge floor (`cell.y` and the band above are that unit's,
+	## the band below is not), so both open ends of the house meet a real wall
+	## over its full storey. The gap is air over its whole storey, keeps a
+	## street's headroom and carries the same shell/roof clearance as any
+	## enclosed form. Only complete 3 m gallery bays qualify: nothing is scaled.
+	## Two adjacent lanes joining the same two units form the full 3 m house.
+	var singles: Array[Dictionary] = []
+	var cells: Array[Vector3i] = []
+	cells.assign(inhabited.keys())
+	cells.sort_custom(_cell_before)
+	for cell: Vector3i in cells:
+		var owner: Variant = inhabited[cell]
+		if inhabited.get(cell + Vector3i.UP) != owner \
+				or inhabited.get(cell + Vector3i.DOWN) == owner:
+			continue
+		# SKYWALK_STEPS point along +x/+z, so every site is found once, from
+		# its lattice-first end.
+		for index in SKYWALK_STEPS.size():
+			var step := SKYWALK_STEPS[index]
+			var gap := _passage_house_gap(cell, step, inhabited, stand,
+				solids, retained, occluders, paved)
+			if gap < SKYWALK_GALLERY_BAY_CELLS \
+					or gap % SKYWALK_GALLERY_BAY_CELLS != 0:
 				continue
-			if cell.y - band < SKYWALK_MIN_HEADROOM_BANDS:
-				return {}
-			crosses_street = true
-	return {"crosses_street": crosses_street}
+			var far := cell + step * (gap + 1)
+			var far_owner: Variant = inhabited.get(far)
+			if far_owner == null or far_owner == owner \
+					or inhabited.get(far + Vector3i.UP) != far_owner \
+					or inhabited.get(far + Vector3i.DOWN) == far_owner:
+				continue
+			if not _skywalk_site_holds(cell, step, gap, {far: true},
+					solids, retained, occluders, paved, walked_bands, false):
+				continue
+			singles.append({"cell": cell, "step": step, "gap": gap,
+				"owners": [owner, far_owner],
+				"crosses_street": _skywalk_site_holds(cell, step, gap,
+					{far: true}, solids, retained, occluders, paved,
+					walked_bands, true),
+				"order": _face_noise(Vector4i(cell.x, cell.y, cell.z,
+					index), SKYWALK_ORDER_SALT)})
+	var by_key: Dictionary = {}
+	for single: Dictionary in singles:
+		by_key[_skywalk_candidate_key(single.cell as Vector3i,
+			single.step as Vector3i, int(single.gap))] = single
+	var out: Array[Dictionary] = []
+	for single: Dictionary in singles:
+		var cell := single.cell as Vector3i
+		var step := single.step as Vector3i
+		var gap := int(single.gap)
+		var cross := Vector3i(step.z, 0, step.x)
+		var mate := by_key.get(_skywalk_candidate_key(cell + cross, step, gap),
+			{}) as Dictionary
+		var record := {"cell": cell, "step": step, "gap": gap, "width": 1,
+			"walk_width": 1, "cross": Vector3i.ZERO, "enclosed": true,
+			"crosses_street": bool(single.crosses_street),
+			"order": float(single.order)}
+		if not mate.is_empty() and mate.owners == single.owners \
+				and _skywalk_paired_enclosure_clear(cell, step, gap, cross,
+					stand, solids, retained, occluders, paved, walked_bands):
+			var paired := record.duplicate()
+			paired.width = 2
+			paired.walk_width = 2
+			paired.cross = cross
+			paired.crosses_street = bool(single.crosses_street) \
+				or bool(mate.crosses_street)
+			out.append(paired)
+		if _skywalk_enclosure_clear(cell, step, gap, stand, solids, retained,
+				occluders, paved, walked_bands):
+			out.append(record)
+	# Street crossings first, then the complete 3 m house, then the seed.
+	out.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		if bool(left.crosses_street) != bool(right.crosses_street):
+			return bool(left.crosses_street)
+		if int(left.width) != int(right.width):
+			return int(left.width) > int(right.width)
+		if not is_equal_approx(float(left.order), float(right.order)):
+			return float(left.order) < float(right.order)
+		return _cell_before(left.cell as Vector3i, right.cell as Vector3i))
+	return out
+
+
+static func _passage_house_gap(cell: Vector3i, step: Vector3i,
+		inhabited: Dictionary, stand: Dictionary, solids: Dictionary,
+		retained: Dictionary, occluders: Dictionary, paved: Dictionary) -> int:
+	## Cells of free air over a whole storey in front of `cell` before the next
+	## inhabited cell along `step`; -1 when anything else closes the run first.
+	for index in range(1, SKYWALK_MAX_GAP + 2):
+		var mid := cell + step * index
+		if inhabited.has(mid):
+			return index - 1
+		for rise in 2:
+			var probe := mid + Vector3i.UP * rise
+			if inhabited.has(probe) or stand.has(probe) or solids.has(probe) \
+					or retained.has(probe) or occluders.has(probe) \
+					or paved.has(probe):
+				return -1
+	return -1
 
 
 static func _skywalk_candidate_key(cell: Vector3i, step: Vector3i,
@@ -7403,23 +7449,13 @@ static func _maze_accept_skywalk(candidate: Dictionary, claimed: Dictionary,
 
 
 static func _maze_accept_private_skywalk(candidate: Dictionary,
-		claimed: Dictionary, construction: Dictionary,
-		_component_by_cell: Dictionary, out: Array[Dictionary]) -> bool:
-	## A private connection must join two different complete authored units.
-	## Geometric roof components are deliberately NOT the identity here: houses in
-	## a warren commonly share a party-wall or touch roofs elsewhere, yet an air
-	## gap between two of those houses is still exactly where a passage-house
-	## belongs. `construction[cell]` is the sealed unit owner, derived from the
-	## bearing DAG, so both endpoints already inherit a path to terrain. The link
-	## does not mutate `reachable` or public terrace ownership.
+		claimed: Dictionary, out: Array[Dictionary]) -> bool:
+	## An occupied passage-house (`_maze_passage_house_candidates`) joins two
+	## different buildings' storeys. It is private building mass: it does not
+	## mutate `reachable` or public terrace ownership.
 	var cell := candidate.cell as Vector3i
 	var step := candidate.step as Vector3i
 	var gap := int(candidate.gap)
-	var far := cell + step * (gap + 1)
-	if not construction.has(cell) or not construction.has(far):
-		return false
-	if StringName(construction[cell]) == StringName(construction[far]):
-		return false
 	if not _skywalk_volume_clear(candidate, out):
 		return false
 	var lanes := _skywalk_candidate_lanes(candidate)

@@ -9,7 +9,10 @@ PACKS = {
     "Raygeas": ("Raygeas/Suntail Village", "Raygeas — Suntail Village (stylized village: buildings, modules, props, nature, audio)"),
     "Polyart": ("Polyart/PolyartStudio", "Polyart Studio — Farmlands + Dreamscape Castle (props, building modules, crops, animals/Gobold characters)"),
     "ANGRY MESH": ("ANGRY MESH", "ANGRY MESH — Stylized Pack: Meadow Environment (trees, grass, flowers, rocks, props in summer/autumn/winter)"),
+    "PureVillage": ("BK/Pure_Village", "BK — Pure Village (realistic European village: modular architecture, whole houses, props, furniture, garden, plants, trees)"),
 }
+# PACKS limited to the outNames present in this staging run (GODOT_EXPORT_PACKS).
+PACKS = {k: v for k, v in PACKS.items() if os.path.isdir(os.path.join(STAGE, k))}
 DOCS = [
     "Polyart/PolyartStudio/README.txt",
     "Polyart/PolyartStudio/Farmlands/FarmReadme.pdf",
@@ -21,7 +24,7 @@ manifest = json.load(open(os.path.join(STAGE, "export_manifest.json")))
 
 # Audio (Raygeas only ships sound).
 audio_root = os.path.join(A, "Raygeas/Suntail Village/Assets/Audio")
-for dp, _, fs in os.walk(audio_root):
+for dp, _, fs in (os.walk(audio_root) if "Raygeas" in PACKS else []):
     for f in fs:
         if f.lower().endswith((".wav", ".ogg", ".mp3")):
             rel = os.path.relpath(os.path.join(dp, f), audio_root)
@@ -30,7 +33,9 @@ for dp, _, fs in os.walk(audio_root):
             shutil.copyfile(os.path.join(dp, f), dst)
 
 for d in DOCS:
-    pack = next(k for k, v in PACKS.items() if d.startswith(v[0]))
+    pack = next((k for k, v in PACKS.items() if d.startswith(v[0])), None)
+    if pack is None:
+        continue
     dst = os.path.join(STAGE, pack, "Docs", os.path.basename(d).replace(" ", "_"))
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     shutil.copyfile(os.path.join(A, d), dst)
@@ -55,6 +60,17 @@ for pack, (src_root, title) in PACKS.items():
         "- `Textures/` — every source texture as PNG/JPG (TIF/TGA/PSD converted). Models reference these by",
         "  relative path, so keep `Models/` and `Textures/` side by side.",
     ]
+    if pack == "PureVillage":
+        lines += [
+            "",
+            "Pure Village model groups: `Architecture/` modular wall/roof/window/door/balcony pieces",
+            "(names carry their size in cm, e.g. `_60x30`), `BigModules/` large roof and tower modules,",
+            "`Houses/` whole houses assembled from those modules, `HousesMerge/` the same houses as merged",
+            "meshes, `HouseWarp/` hand-warped (crooked) house variants, `Doors/` separate door/shutter/lid",
+            "leaves, plus `Props/`, `Furniture/`, `Garden/`, `Plants/`, `Trees/`, `Structures/`, `Rocks/`,",
+            "`Mountains/`. The pack's BK Standard Layered shader adds a world-space moss/dirt layer",
+            "(`Stone_*` vs `Stone_*_nomoss`); only its base maps are converted.",
+        ]
     if pack == "Raygeas":
         lines.append("- `Audio/` — the pack's WAV sound effects (doors, items, fire, footsteps, forest, water).")
     if os.path.isdir(os.path.join(STAGE, pack, "Docs")):

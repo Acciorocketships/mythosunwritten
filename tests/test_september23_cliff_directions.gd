@@ -354,18 +354,14 @@ func test_rocks_come_in_small_spaced_clusters()->void:
  var field=FIELD.new([_wall(Transform3D(Basis(),Vector3(0,0,30)),80,8),corner],SEED)
  var bunches:Dictionary={}
  for rock:Dictionary in field.rock_list:bunches[rock.bunch]=bunches.get(rock.bunch,[])+[rock]
- assert_gt(bunches.size(),6,"An 80 m wall holds many clusters")
- var along:Array[float]=[]
+ # Owner (September 27) superseded the no-bare-stretch rule: clusters are
+ # colonial (CliffSlopeField.colony01), with genuinely empty foot between.
+ # September 27 judging: fewer, fuller clusters of up to four nestled rocks.
+ assert_gt(bunches.size(),1,"An 80 m wall holds clusters")
  for bunch:Vector2 in bunches:
-  assert_between((bunches[bunch] as Array).size(),2,3,"Clusters of two or three")
+  assert_between((bunches[bunch] as Array).size(),2,4,"Clusters of two to four")
   for rock:Dictionary in bunches[bunch]:
    assert_lt((rock.foot as Vector2).distance_to(bunch),8.0,"Kept together")
-  along.append(bunch.x)
- along.sort()
- for i in range(1,along.size()):
-  assert_lt(along[i]-along[i-1],21.0,"No long bare stretch between %.0f and %.0f"%[along[i-1],along[i]])
- var near_corner:Array=field.rock_list.filter(func(r:Dictionary)->bool:return (r.foot as Vector2).distance_to(Vector2(-40,30))<8.0)
- assert_gt(near_corner.size(),0,"The corner carries rocks too")
  for rock:Dictionary in field.rock_list:
   var bounds:Vector3=preload("res://scripts/terrain/field/CliffSlopeRocks.gd").PIECES[rock.piece][1]
   var extents:=bounds*(rock.transform as Transform3D).basis.get_scale()
@@ -497,7 +493,8 @@ func test_basal_rocks_are_embedded_with_their_tops_showing()->void:
  STYLE.apply("sheet")
  var field=FIELD.new([_wall(POSE,80,8),{"replay_recipe":{"kind":"corner","height":8.0},"transform":Transform3D(Basis(),Vector3(-28.5,0,31.5))}],SEED)
  var env=field.envelope()
- assert_gt(field.rock_list.size(),10,"The wall still carries rocks")
+ # September 27: colonies leave bare stretches; fewer rocks per wall.
+ assert_gt(field.rock_list.size(),3,"The wall still carries rocks")
  for rock:Dictionary in field.rock_list:
   if rock.kind!="basal":continue
   var t:Transform3D=rock.transform
@@ -566,7 +563,7 @@ func test_midface_rocks_follow_slope_and_bury_both_ends()->void:
   for end:float in [-1.0,1.0]:
    var p:=t*Vector3(0,end*bounds.y*.5,-bounds.z)
    assert_lt(p.y,float(env.sample(Vector2(p.x,p.z)))-.15,"Both ends buried")
- assert_gt(count,8,"Visible cliff clusters remain")
+ assert_gt(count,1,"Visible cliff clusters remain")
 
 func test_rejected_kaykit_rocks_are_catalog_only()->void:
  var catalog:=EnvironmentCatalog.load_default()

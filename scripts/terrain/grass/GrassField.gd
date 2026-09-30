@@ -142,6 +142,8 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 				if not support.get("over_ground",false) \
 						and support.y <= _surface_y(region,surface_cache,anchor.x,anchor.y)+.05:
 					support = {} # The higher ground hides this part of the native cap.
+				elif float(support.get("lift",INF)) < SUPPORT_MIN_LIFT and not support.get("blocked",false):
+					support = {} # The slope only covers the terrain here: its grass grows.
 				else:
 					physical_edge_scale = clampf((support.edge_distance-CLIFF_FOOTPRINT_MARGIN)/footprint_radius,0.0,1.0)
 			if support_layer and support.is_empty():
@@ -176,6 +178,10 @@ static func compute(program: GrassProgram, world_seed: int, tile: Vector2i,
 				continue
 			var edge_scale := minf(float(surface.physical_edge_scale),
 				_coverage_edge_scale(coverage))
+			if support.get("mesh_support",false):
+				edge_scale *= GrassSupportSurfaces.footprint_scale(support_index,anchor,support,footprint_radius*edge_scale,
+					func(q:Vector2)->float:return _surface_y(region,surface_cache,q.x,q.y))
+				if edge_scale < CLIFF_MIN_VISIBLE_SCALE:continue
 			var actual_extra := _density_extra(edge_scale,
 				float(surface.area_extra))
 			var actual_weight := 1.0 if layer == 0 \
@@ -244,6 +250,10 @@ static func _density_extra(edge_scale: float, surface_area_extra: float) -> floa
 static func _supplement_weight(total_extra: float, layer: int) -> float:
 	assert(layer > 0)
 	return clampf(total_extra - float(layer - 1), 0.0, 1.0)
+
+## A slope standing less than this over the terrain ground grows the
+## terrain's own grass (see CliffSlopeField.grass_support).
+const SUPPORT_MIN_LIFT := 0.1
 
 static func _support_weight(edge_scale: float, surface_area_extra: float) -> float:
 	var needed := (1.0 + surface_area_extra) / maxf(edge_scale * edge_scale, 0.000001)
@@ -450,9 +460,9 @@ static func _cliff_masks(region: HeightfieldRegion, cell: Vector2i,
 	var high_mask := 0
 	for index in CARDINALS.size():
 		var direction: Vector2i = CARDINALS[index]
-		var high_here := TerrainSurfaceField.is_exposed_edge(
+		var high_here := TerrainSurfaceField.is_wall_edge(
 			region, cell.x, cell.y, direction)
-		var high_there := TerrainSurfaceField.is_exposed_edge(region,
+		var high_there := TerrainSurfaceField.is_wall_edge(region,
 			cell.x + direction.x, cell.y + direction.y, -direction)
 		if high_here or high_there:
 			boundary_mask |= 1 << index

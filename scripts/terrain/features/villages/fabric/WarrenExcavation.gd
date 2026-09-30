@@ -415,6 +415,43 @@ func public_cells() -> Array[Vector3i]:
 	return out
 
 
+func walk_edges() -> Array[Dictionary]:
+	## Every public connection as {a, b, swept}: route and lane transitions plus
+	## loop joins. `swept` lists the walk cells strictly between a flight's two
+	## landings (its treads); level steps and loop joins sweep nothing.
+	var out: Array[Dictionary] = []
+	var paths: Array = [route]
+	var steps: Array = [transitions]
+	for lane: Dictionary in lanes:
+		var path: Array[Vector3i] = [lane.anchor as Vector3i]
+		path.append_array(lane.cells as Array[Vector3i])
+		paths.append(path)
+		steps.append(lane.transitions)
+	for index in paths.size():
+		var path: Array = paths[index]
+		for step: Dictionary in steps[index]:
+			var from_index := path.find(step.from)
+			var to_index := path.find(step.to)
+			var swept: Array[Vector3i] = []
+			if from_index >= 0 and to_index > from_index:
+				for cell: Vector3i in path.slice(from_index + 1, to_index):
+					swept.append(cell)
+			out.append({"a": step.from, "b": step.to, "swept": swept})
+	for step: Dictionary in loop_edges:
+		out.append({"a": step.from, "b": step.to, "swept": [] as Array[Vector3i]})
+	return out
+
+
+func flight_cells() -> Dictionary:
+	## Walk cells that are a flight's treads rather than a landing. A doorway
+	## beside one is closed by construction, so nothing is addressed there.
+	var out: Dictionary = {}
+	for edge: Dictionary in walk_edges():
+		for cell: Vector3i in edge.swept:
+			out[cell] = true
+	return out
+
+
 func covered_ratio() -> float:
 	if route.is_empty():
 		return 0.0

@@ -5,8 +5,8 @@ extends Node3D
 ## Touch `<output>/reload` to hot-reload the cliff rock scripts, recompute the
 ## rock formations and cliff vegetation of every loaded chunk from the same
 ## worker regions/features/water, and capture again into the next iteration
-## folder. Touch `<output>/quit` to exit. Terrain, water and grass are not
-## regenerated; only the rock layer changes between iterations.
+## folder. Touch `<output>/quit` to exit. Without --full only the rock layer changes. With --full, terrain,
+## collision and grass are regenerated for the framed chunks.
 ##
 ##   Godot --path . res://tests/harness/cliff_site_review.tscn -- \
 ##     --seed 2697992464 --at 300,20,995 --output DIR \
@@ -25,9 +25,15 @@ const RELOAD := [
 	"res://scripts/terrain/field/CliffRockDressing.gd",
 	"res://scripts/terrain/field/CliffVegetation.gd",
 	"res://scripts/terrain/field/CliffKitDressing.gd",
+	"res://scripts/terrain/dressing/RockSkirt.gd",
 	"res://scripts/terrain/field/CliffSlopeRocks.gd",
 	"res://scripts/terrain/field/CliffSlopeEnvelope.gd",
 	"res://scripts/terrain/field/CliffSlopeField.gd",
+	"res://scripts/terrain/grass/GrassSupportSurfaces.gd",
+	"res://scripts/terrain/grass/GrassField.gd",
+	"res://scripts/terrain/field/TerrainSurfaceField.gd",
+	"res://scripts/terrain/field/TerrainChunkMesher.gd",
+	"res://scripts/terrain/water/WaterSkin.gd",
 ]
 const CRAG_SHADER := "res://terrain/materials/cliff_crag.gdshader"
 const STYLE = preload("res://scripts/terrain/field/CliffRockStyle.gd")
@@ -38,9 +44,12 @@ var _radius := 1
 var _grass := false
 var _output_dir := "/tmp/mythos-cliff-site-review"
 var _views: Array[Dictionary] = []
+var _walks: Array[Dictionary] = []
 ## Art-direction variants rendered per iteration (CliffRockStyle.apply names).
 var _styles: PackedStringArray = []
 var _plain := false
+## Also capture each view with the terrain category overlay (F9 view).
+var _categories := false
 ## Full mode: each iteration discards the framed terrain chunks (and their
 ## grass) so the streamer rebuilds them whole with the current scripts.
 var _full := false
@@ -81,14 +90,34 @@ func _read_args() -> void:
 			"--output": _output_dir = next
 			"--styles": _styles = next.split(",", false)
 			"--plain": _plain = true
+			"--categories": _categories = true
 			"--full": _full = true
-			"--shot":
+			"--override":
+				# res://path=/abs/source: start from another revision of a
+				# reloadable script (a matched before/after in one process).
+				var pair := next.split("=")
+				var script := load(pair[0]) as GDScript
+				script.source_code = FileAccess.get_file_as_string(pair[1])
+				assert(script.reload(false) == OK)
+			"--shot", "--mouse-shot":
 				# id:player:crosshair from the owner's F3 overlay; the tactical
 				# camera (26 m back, 16 m up, looking 1 m above the player).
 				var shot := next.split(":", false)
 				var player := _v3(shot[1])
 				_views.append({"id": shot[0], "position": ReviewCam.solve_cam(player, _v3(shot[2]), 26.0, 16.0, 1.0),
 					"target": player + Vector3.UP, "fov": 50.0, "player": player})
+				if args[index] == "--mouse-shot":
+					var pivot := player + Vector3.UP * CameraMouseView.PIVOT_HEIGHT
+					var delta := _v3(shot[2]) - pivot
+					var pitch := atan2(-delta.y, Vector2(delta.x,delta.z).length())
+					var boom := CameraMouseView.BOOM_LENGTH
+					_views[-1].position = ReviewCam.solve_cam(player,_v3(shot[2]),
+						boom*cos(pitch),CameraMouseView.PIVOT_HEIGHT+boom*sin(pitch),CameraMouseView.PIVOT_HEIGHT)
+					_views[-1].target = pivot
+					_views[-1].fov = 75.0
+			"--walk":
+				var parts := next.split(":",false)
+				_walks.append({"id":parts[0],"start":_v3(parts[1]),"direction":_v3(parts[2]),"distance":float(parts[3])})
 			"--view":
 				var parts := next.split(":", false)
 				_views.append({"id": parts[0], "position": _v3(parts[1]), "target": _v3(parts[2]),
@@ -107,16 +136,32 @@ func _run() -> void:
 	_collect_inputs()
 	var iteration := 0
 	await _capture_iteration(iteration)
+	await _run_walks(iteration)
 	while true:
+		# Test-only probes can inspect the settled native world between reviews.
+		if FileAccess.file_exists(_output_dir + "/probe"):
+			var path:=FileAccess.get_file_as_string(_output_dir+"/probe").strip_edges()
+			DirAccess.remove_absolute(_output_dir+"/probe")
+			assert(path.begins_with("res://tests/"))
+			var script:=GDScript.new();script.source_code=FileAccess.get_file_as_string(path)
+			if script.reload()==OK:
+				await script.new().run(self)
+			else:
+				push_error("Review probe failed to parse: %s" % path)
 		if FileAccess.file_exists(_output_dir + "/quit"):
 			DirAccess.remove_absolute(_output_dir + "/quit")
 			break
+		if FileAccess.file_exists(_output_dir + "/recapture"):
+			DirAccess.remove_absolute(_output_dir + "/recapture")
+			iteration += 1
+			await _capture_all(iteration)
 		if FileAccess.file_exists(_output_dir + "/reload"):
 			DirAccess.remove_absolute(_output_dir + "/reload")
 			iteration += 1
 			var started := Time.get_ticks_msec()
 			_reload_scripts()
 			await _capture_iteration(iteration)
+			await _run_walks(iteration)
 			print("[cliff_site_review] iteration=%d ms=%d" % [iteration, Time.get_ticks_msec() - started])
 		await get_tree().create_timer(0.3).timeout
 	get_tree().quit(0)
@@ -218,12 +263,22 @@ func _reload_scripts() -> void:
 	for path: String in RELOAD:
 		var script := load(path) as GDScript
 		script.source_code = FileAccess.get_file_as_string(path)
-		var error := script.reload(false)
+		# Live instances (the streamer's mesher) keep their state across a reload.
+		var error := script.reload(true)
 		if error != OK:
 			push_error("reload failed: %s (%d)" % [path, error])
-	# Shared crag shader: every material holding this Shader recompiles.
+	# Shared includes first (cached ShaderIncludes keep their old code), then
+	# the crag shader: every material holding this Shader recompiles.
+	for file: String in DirAccess.get_files_at("res://terrain/materials/"):
+		if file.ends_with(".gdshaderinc"):
+			var include := load("res://terrain/materials/" + file) as ShaderInclude
+			include.code = FileAccess.get_file_as_string("res://terrain/materials/" + file)
 	var shader := load(CRAG_SHADER) as Shader
 	shader.code = FileAccess.get_file_as_string(CRAG_SHADER)
+	var meadow := load("res://terrain/materials/meadow_rock.gdshader") as Shader
+	meadow.code = FileAccess.get_file_as_string("res://terrain/materials/meadow_rock.gdshader")
+	var grass_shader := load("res://terrain/grass/grass.gdshader") as Shader
+	grass_shader.code = FileAccess.get_file_as_string("res://terrain/grass/grass.gdshader")
 	load("res://scripts/terrain/field/CliffRockDressing.gd").prepare()
 	load("res://scripts/terrain/field/CliffVegetation.gd").prepare()
 
@@ -299,6 +354,15 @@ func _capture_all(iteration: int, style := "") -> void:
 		await get_tree().process_frame
 		var image := get_viewport().get_texture().get_image()
 		image.save_png("%s/%s.png" % [dir, String(view.id)])
+		var overlay := get_tree().root.find_child("TerrainCategoryOverlay", true, false)
+		if _categories and overlay != null:
+			overlay.set_enabled(true)
+			for unused in 4:
+				await get_tree().process_frame
+			RenderingServer.force_draw()
+			await get_tree().process_frame
+			get_viewport().get_texture().get_image().save_png("%s/%s_categories.png" % [dir, String(view.id)])
+			overlay.set_enabled(false)
 		for mode: String in ([] if _plain else ["kinds", "ids"]):
 			_paint(mode)
 			for unused in 3:
@@ -349,3 +413,53 @@ func _paint(mode: String) -> void:
 			material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
 			instance.material_override = material
 			index += 1
+
+
+class WalkController extends CharacterController:
+	var direction:=Vector2.ZERO
+	func get_move_vector(_body:CharacterBody3D,_dt:float)->Vector2:return direction
+
+func _run_walks(iteration:int)->void:
+	if _walks.is_empty():return
+	var original:CharacterController=_character.controller
+	var controller:=WalkController.new()
+	_character.controller=controller
+	_character.set_physics_process(false)
+	_streamer.CHUNK_RADIUS=0
+	var rows:=[]
+	for walk:Dictionary in _walks:
+		await _grass_at(walk.start)
+		# Camera teleports can demand an arrival halo beyond the review's loaded
+		# set. Walk only through verified loaded chunks, with streaming paused;
+		# retain the production character, controller and collision unchanged.
+		for distance in range(0,ceili(float(walk.distance))+2):
+			var point:Vector3=walk.start+walk.direction.normalized()*distance
+			assert(_streamer._built.has(FieldTerrainStreamer.chunk_of(point)))
+		_streamer.set_process(false)
+		_streamer._freeze_player(false)
+		await get_tree().physics_frame
+		_character.global_position=walk.start+Vector3.UP*.06
+		_character.velocity=Vector3.ZERO
+		controller.direction=Vector2.ZERO
+		for tick in 30:
+			await get_tree().physics_frame
+			_character._physics_process(1.0/60.0)
+		var start:=_character.global_position
+		var direction:Vector3=(walk.direction as Vector3).normalized()
+		controller.direction=Vector2(direction.x,direction.z)
+		var trace:=[];var contacts:={}
+		for tick in 360:
+			await get_tree().physics_frame
+			_character._physics_process(1.0/60.0)
+			if tick%15==0:trace.append([_character.position.x,_character.position.y,_character.position.z])
+			for index in _character.get_slide_collision_count():
+				var hit:=_character.get_slide_collision(index)
+				contacts[str(hit.get_normal().snapped(Vector3.ONE*.05))]=true
+			if (_character.position-start).dot(direction)>=float(walk.distance):break
+		var finish:=_character.global_position
+		rows.append({"id":walk.id,"start":[start.x,start.y,start.z],"end":[finish.x,finish.y,finish.z],"travel":(finish-start).dot(direction),"rise":finish.y-start.y,"on_floor":_character.is_on_floor(),"passed":(finish-start).dot(direction)>=float(walk.distance),"trace":trace,"contacts":contacts.keys()})
+		controller.direction=Vector2.ZERO
+		_streamer.set_process(true)
+	_character.controller=original
+	FileAccess.open("%s/%02d/walks.json"%[_output_dir,iteration],FileAccess.WRITE).store_string(JSON.stringify(rows,"  "))
+	print("[cliff_site_review] walks ",JSON.stringify(rows))

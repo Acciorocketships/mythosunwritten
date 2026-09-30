@@ -46,7 +46,9 @@ func test_program_rejects_unbounded_reach_and_record_sorts_semantics() -> void:
 	var program := VillageProgram.compile({"max_asset_reach": 12.0,
 		"max_ground_shape_reach": 8.0})
 	assert_not_null(program)
-	assert_eq(program.max_record_radius, 156.0)
+	# Anchor reach 144 + 12 m assets, widened to the volumetric town's
+	# settlement-inset reach (September 27 frame).
+	assert_eq(program.max_record_radius, maxf(156.0, VillageProgram.WARREN_RECORD_REACH))
 	var canonical_bound := program.record_bound(Vector2.ZERO)
 	var surfaces: Array[FeatureGroundShape] = [
 		FeatureGroundShape.circle(Vector2.ZERO, 2.0,

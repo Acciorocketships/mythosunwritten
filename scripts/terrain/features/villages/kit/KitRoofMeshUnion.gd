@@ -11,6 +11,9 @@ static func roof_volume(wing: Dictionary, kit: BuildingKit) -> Dictionary:
 	var axis := int(wing.axis)
 	var u0 := float(r.position[axis] - int(wing.extend_min)) * kit.module_width - 1.0
 	var u1 := float(r.end[axis] + int(wing.extend_max)) * kit.module_width + 1.0
+	# A branch clipped at its host's ridge ends there (see KitRoofJunctions).
+	if wing.has("clip_min"): u0 = maxf(u0, float(wing.clip_min) * kit.module_width)
+	if wing.has("clip_max"): u1 = minf(u1, float(wing.clip_max) * kit.module_width)
 	var v0 := float(r.position[1 - axis]) * kit.module_width
 	var v1 := float(r.end[1 - axis]) * kit.module_width
 	var y := float(wing.eave_band) * kit.band_height()
@@ -33,51 +36,134 @@ static func roof_volume(wing: Dictionary, kit: BuildingKit) -> Dictionary:
 	var hi := u * u1 + v * (v1 + 0.6) + Vector3.UP * (y + (v1 - v0) * rise * 0.5 + 0.12)
 	return {"planes": planes, "bounds": AABB(lo, hi - lo)}
 
+## The attic a wing encloses: inside its own walls (the rectangle, not its
+## verge overhang or a branch's run into its host), under its skin. Gable
+## walls are trimmed only by this: a gable is removed only where another
+## building's walls and roof close it in, never under a neighbour's open
+## overhang (which left see-through holes).
+static func enclosed_volume(wing: Dictionary, kit: BuildingKit) -> Dictionary:
+	var r: Rect2i = wing.rect
+	var axis := int(wing.axis)
+	var w := kit.module_width
+	var u0 := float(r.position[axis]) * w
+	var u1 := float(r.end[axis]) * w
+	var v0 := float(r.position[1 - axis]) * w
+	var v1 := float(r.end[1 - axis]) * w
+	var y := float(wing.eave_band) * kit.band_height()
+	var rise := kit.roof_row_rise / w
+	var u := Vector3.RIGHT if axis == 0 else Vector3.BACK
+	var v := Vector3.BACK if axis == 0 else Vector3.RIGHT
+	var planes: Array[Plane] = [Plane(u, u1), Plane(-u, -u0), Plane(v, v1), Plane(-v, -v0),
+		Plane(Vector3.DOWN, -y + 0.2)]
+	var n := Vector3.UP - v * rise
+	planes.append(Plane(n.normalized(), (y - v0 * rise) / n.length()))
+	n = Vector3.UP + v * rise
+	planes.append(Plane(n.normalized(), (y + v1 * rise) / n.length()))
+	var lo := u * u0 + v * v0 + Vector3.UP * (y - 0.2)
+	var hi := u * u1 + v * v1 + Vector3.UP * (y + (v1 - v0) * rise * 0.5)
+	return {"planes": planes, "bounds": AABB(lo, hi - lo)}
+
+
+## Half-spaces beyond a wing's clip planes: its own pieces end there.
+static func clip_volumes(wing: Dictionary, kit: BuildingKit) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var axis := int(wing.axis)
+	const FAR := 100000.0
+	for key: String in ["clip_min", "clip_max"]:
+		if not wing.has(key): continue
+		var at := float(wing[key]) * kit.module_width
+		var lo := Vector3(-FAR, -FAR, -FAR)
+		var hi := Vector3(FAR, FAR, FAR)
+		if key == "clip_min": hi[0 if axis == 0 else 2] = at
+		else: lo[0 if axis == 0 else 2] = at
+		out.append(box_volume(AABB(lo, hi - lo)))
+	return out
+
+
 static func box_volume(box: AABB) -> Dictionary:
 	return {"bounds": box, "planes": [Plane(Vector3.RIGHT, box.end.x),
 		Plane(Vector3.LEFT, -box.position.x), Plane(Vector3.UP, box.end.y),
 		Plane(Vector3.DOWN, -box.position.y), Plane(Vector3.BACK, box.end.z),
 		Plane(Vector3.FORWARD, -box.position.z)]}
 
+## Shared cutter context for `realize`: roof volumes, wall boxes, bake data.
+static func prepare(roofs: Array[Dictionary], walls: Array[Dictionary],
+		kit: BuildingKit) -> Dictionary:
+	var volumes: Array[Dictionary] = []
+	var enclosed: Array[Dictionary] = []
+	var clips: Array = []
+	for roof: Dictionary in roofs:
+		volumes.append(roof_volume(roof, kit))
+		enclosed.append(enclosed_volume(roof, kit))
+		clips.append(clip_volumes(roof, kit))
+	return {"data": FileAccess.open(DATA_PATH, FileAccess.READ).get_var(),
+		"roofs": roofs, "walls": walls, "kit": kit, "volumes": volumes,
+		"enclosed": enclosed, "clips": clips}
+
+
+## The final surfaces of one roof placement: {} when it stays an instance
+## (not a roof piece, or nothing cuts it), else {surfaces, meshes} where each
+## mesh is the trimmed triangle soup of the matching baked surface, in the
+## placement's (native building) frame.
+static func realize(placement: Dictionary, ctx: Dictionary) -> Dictionary:
+	var roof_index := int(placement.get("roof_index", -1))
+	var data: Dictionary = ctx.data
+	if roof_index < 0 or not data.has(placement.asset_id):
+		return {}
+	var kit: BuildingKit = ctx.kit
+	var transform: Transform3D = placement.transform
+	var surfaces: Array = data[placement.asset_id]
+	var bounds := AABB()
+	var first := true
+	for surface: Dictionary in surfaces:
+		for v: Vector3 in surface.vertices:
+			var p := transform * v
+			bounds = AABB(p, Vector3.ZERO) if first else bounds.expand(p)
+			first = false
+	var cutters: Array[Dictionary] = []
+	# Roof skins and their trims are trimmed by every other roof's skin
+	# volume (valleys, buried boards) and by public headroom; gable walls
+	# only where another building encloses them.
+	var gable := String(placement.get("role", "")).begins_with("gable.")
+	var volumes: Array = ctx.enclosed if gable else ctx.volumes
+	for i in volumes.size():
+		if i != roof_index and bounds.intersects(volumes[i].bounds): cutters.append(volumes[i])
+	cutters.append_array(ctx.clips[roof_index])
+	var eave := float(ctx.roofs[roof_index].eave_band) * kit.band_height()
+	for wall: Dictionary in ctx.walls:
+		var open := bool(wall.get("open", false))
+		if gable and open: continue
+		# Walls cut only roofs they rise above; open walking clearance cuts
+		# whatever reaches into it.
+		if (open or wall.bounds.end.y > eave + 0.2) and bounds.intersects(wall.bounds):
+			cutters.append(wall)
+	if cutters.is_empty():
+		return {}
+	var results: Array[Dictionary] = []
+	var changed := false
+	for surface: Dictionary in surfaces:
+		var mesh := trim_surface(surface, transform, cutters)
+		results.append(mesh)
+		changed = changed or bool(mesh.changed)
+	if not changed:
+		return {}
+	return {"surfaces": surfaces, "meshes": results}
+
+
 static func append(placements: Array[Dictionary], roofs: Array[Dictionary],
 		walls: Array[Dictionary], kit: BuildingKit, map: Transform3D,
 		payload: EnvironmentInstancePayload) -> Dictionary:
-	var data: Dictionary = FileAccess.open(DATA_PATH, FileAccess.READ).get_var()
-	var volumes: Array[Dictionary] = []
-	for roof: Dictionary in roofs: volumes.append(roof_volume(roof, kit))
+	var ctx := prepare(roofs, walls, kit)
 	var clipped := 0
 	var removed := 0
 	for placement: Dictionary in placements:
-		var roof_index := int(placement.get("roof_index", -1))
-		if roof_index < 0 or not data.has(placement.asset_id):
+		var realized := realize(placement, ctx)
+		if realized.is_empty():
 			BuildingKitAssembler.append_to_payload([placement], map, payload)
 			continue
+		var surfaces: Array = realized.surfaces
+		var results: Array = realized.meshes
 		var transform: Transform3D = placement.transform
-		var surfaces: Array = data[placement.asset_id]
-		var bounds := AABB()
-		var first := true
-		for surface: Dictionary in surfaces:
-			for v: Vector3 in surface.vertices:
-				var p := transform * v
-				bounds = AABB(p, Vector3.ZERO) if first else bounds.expand(p)
-				first = false
-		var cutters: Array[Dictionary] = []
-		for i in volumes.size():
-			if i != roof_index and bounds.intersects(volumes[i].bounds): cutters.append(volumes[i])
-		for wall: Dictionary in walls:
-			if wall.bounds.end.y > float(roofs[roof_index].eave_band) * kit.band_height() + 0.2 and bounds.intersects(wall.bounds): cutters.append(wall)
-		if cutters.is_empty():
-			BuildingKitAssembler.append_to_payload([placement], map, payload)
-			continue
-		var results: Array[Dictionary] = []
-		var changed := false
-		for surface: Dictionary in surfaces:
-			var mesh := trim_surface(surface, transform, cutters)
-			results.append(mesh)
-			changed = changed or bool(mesh.changed)
-		if not changed:
-			BuildingKitAssembler.append_to_payload([placement], map, payload)
-			continue
 		clipped += 1
 		for surface_index in surfaces.size():
 			var surface: Dictionary = surfaces[surface_index]

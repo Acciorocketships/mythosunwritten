@@ -10,6 +10,8 @@ var requirements: Dictionary = {}
 var assignments: Dictionary = {}
 var reservations: Array[Dictionary] = []
 var face_records: Array[Dictionary] = []
+## Grid index -> owner id withdrawing its own claim (see `release`).
+var releases: Dictionary = {}
 var last_rejection := ""
 var _closed := false
 
@@ -68,6 +70,21 @@ func assign_use(cells: Array[Vector3i], use_value: int,
 	return true
 
 
+func release(cells: Array[Vector3i], owner_id: StringName) -> bool:
+	## An owner withdraws cells it claimed itself before the grid seals: the
+	## cells return to OUTSIDE and lose every reservation bit that owner holds.
+	## The grid refuses the release of a cell some other owner holds, so no
+	## feature can free another's construction.
+	if not _can_stage() or cells.is_empty() or owner_id.is_empty():
+		return false
+	for cell: Vector3i in cells:
+		var index := grid.index_for(cell)
+		if index < 0 or assignments.has(index):
+			return false
+		releases[index] = owner_id
+	return true
+
+
 func reserve(cells: Array[Vector3i], bits: int,
 		owner_id: StringName) -> bool:
 	if not _can_stage() or cells.is_empty() or bits <= 0 or owner_id.is_empty():
@@ -119,6 +136,7 @@ func rollback() -> void:
 	assignments.clear()
 	reservations.clear()
 	face_records.clear()
+	releases.clear()
 	_closed = true
 
 

@@ -176,12 +176,15 @@ func test_volumetric_warren_approach_gets_a_ground_house_without_legacy_graphs()
 func test_perimeter_grid_follows_a_concave_urban_union_not_its_bounds() -> void:
 	var urban := VillageUrbanFabricPlan.new()
 	urban.accepted = true
+	# Authored on the 3 m lattice; expressed in outskirts grid steps so the L
+	# keeps its cell-exact shape in any production frame.
+	var k := VillageWorldScale.WORLD_FINE_CELL_M / 3.0
 	urban.volumes = [
 		VillageOccupancyVolume.new(VillageOccupancy.Role.SOLID,
-			Vector2(3.0, 0.0), Vector2(6.0, 1.5), 0.0, 0.0, 4.0,
+			Vector2(3.0, 0.0) * k, Vector2(6.0, 1.5) * k, 0.0, 0.0, 4.0,
 			&"horizontal", &"urban"),
 		VillageOccupancyVolume.new(VillageOccupancy.Role.SOLID,
-			Vector2(0.0, 3.0), Vector2(1.5, 6.0), 0.0, 0.0, 4.0,
+			Vector2(0.0, 3.0) * k, Vector2(1.5, 6.0) * k, 0.0, 0.0, 4.0,
 			&"vertical", &"urban"),
 	]
 	var grid := VillageOutskirtsSolver._urban_perimeter_grid(urban,

@@ -38,12 +38,24 @@ func test_boring_retains_short_supported_tunnels_without_reducing_headroom() -> 
 		for cell: Vector3i in span: bridge_cells[cell] = true
 	var covered := 0
 	var open := 0
+	var run := 0
+	var longest := 0
 	for cell: Vector3i in excavation.route:
 		for y in 3: assert_true(excavation.carved.has(cell + Vector3i.UP * y))
-		if not excavation.carved.has(cell + Vector3i.UP * 3) and not bridge_cells.has(cell): covered += 1
+		var bored := not excavation.carved.has(cell + Vector3i.UP * 3)
+		if bored and not bridge_cells.has(cell): covered += 1
 		if excavation.carved.has(cell + Vector3i.UP * 11): open += 1
+		run = run + 1 if bored else 0
+		longest = maxi(longest, run)
 	assert_gte(covered, 3, "natural tunnels remain independently of bridge-house quotas")
-	assert_gt(open, covered, "daylit street breaks separate the short tunnels")
+	# September 27 judging (layout): the owner asked for streets that twist
+	# through tunnels, so a street under a massif tall enough everywhere now
+	# bores wherever it can, with one daylit cell between runs. The short-tunnel
+	# rule is the run cap, not a majority of daylight: on this fully tall
+	# fixture most of the street is bored (was: open > covered).
+	assert_gt(open, 0, "daylit street breaks separate the tunnels")
+	assert_lte(longest, WarrenMazeCarver.MAX_TUNNEL_RUN,
+		"no tunnel runs longer than the cap (bridge-house spans count as bored)")
 
 func test_cross_house_wing_reaches_host_and_withdraws_buried_gable() -> void:
 	var a := BuildingMass.new()
@@ -53,7 +65,10 @@ func test_cross_house_wing_reaches_host_and_withdraws_buried_gable() -> void:
 	var masses: Array[BuildingMass] = [a, b]
 	assert_eq(JOIN.join(masses), 1)
 	assert_true(b.roofs[0].open_min)
-	assert_eq(b.roofs[0].extend_min, 2)
+	# The branch runs into its host up to the host's ridge line (z = 2) and is
+	# clipped there, so its end section is always buried (September 27).
+	assert_eq(b.roofs[0].extend_min, 3)
+	assert_almost_eq(float(b.roofs[0].clip_min), 2.0, 0.001)
 	assert_eq(b.roofs[0].colour, &"red")
 
 func test_triangle_subtraction_preserves_uv_and_removes_only_buried_geometry() -> void:

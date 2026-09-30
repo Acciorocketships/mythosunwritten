@@ -369,7 +369,6 @@ static func generate(source: WarrenSpatialPlan,
 			FabricSolidVoidClassifier.last_failure
 		return null
 	stage_ms = _trace_stage("solid_void", stage_ms)
-	result.tunnel_arch_placements = preload("res://scripts/terrain/features/villages/fabric/WarrenTunnelArches.gd").placements(source)
 	var lineage := source.audit.duplicate(true)
 	lineage.merge(source.construction_plan.audit, true)
 	lineage.merge(room_audit, true)
@@ -5519,7 +5518,11 @@ static func compile_roof_units(source: WarrenSpatialPlan,
 		# exposed-face partition below remains a complete, lossless roof transaction.
 		# Let that finite solver try native sheds/gables rather than rejecting the
 		# town for a roof volume that covers cells the source never exposed.
-		if requires_atomic_neighborhood and not plate_pitched:
+		# A maze plot crown keeps its flat vocabulary below (the kit replaces
+		# legacy roofs with its own joined crowns), so a joined gable that cannot
+		# fit falls back to the slab like any refused preferred gable instead of
+		# rejecting the whole town.
+		if requires_atomic_neighborhood and not plate_pitched and not plot_flat:
 			var campaign := _roof_neighborhood_component(
 				roof_proposal_by_room, room_id)
 			last_failure = "atomic roof neighborhood for %s rejected (campaign %s): %s" % [
@@ -6852,8 +6855,13 @@ static func _tile_flat_plate(source: WarrenSpatialPlan,
 	var tiles: Array[FabricUnit] = []
 	var public_faces: Dictionary = {}
 	for face: Vector3i in face_cells:
+		# A face whose gable band is public air (a street or flight passing
+		# low over the crown) takes the one-band plank cap too: the gable
+		# would stand in that air, the cap stays below it.
 		public_faces[face] = _supports_public_floor(source.grid, face) \
-			or _supports_upper_room_floor(unit_by_private_cell, face)
+			or _supports_upper_room_floor(unit_by_private_cell, face) \
+			or source.grid.use_at(face + Vector3i.UP * 2) \
+				== WarrenSpatialGrid.Use.PUBLIC_AIR
 	# A private one-cell-deep remainder is roofed with exact 3 m x 1.5 m halves
 	# of the authored compact gable. The source plate decides the exact cells;
 	# the district decides only its palette, and both outward gable ends remain
@@ -10056,8 +10064,19 @@ static func shared_facade_entrance_owners(source: WarrenSpatialPlan,
 			var ax := a.threshold_cell.x * along.x + a.threshold_cell.z * along.z
 			var bx := b.threshold_cell.x * along.x + b.threshold_cell.z * along.z
 			return ax < bx if ax != bx else String(a.stable_id) < String(b.stable_id))
-		var owner: StringName = candidates[(candidates.size()-1)/2].stable_id
-		for room: WarrenRoomStamp in candidates: owners[room.stable_id] = owner
+		# One entrance per street square the joined front faces: a square the
+		# source street reaches for a doorway keeps a door of its own.
+		var by_square: Dictionary = {}
+		for room: WarrenRoomStamp in candidates:
+			var landing := room.threshold_cell + room.frontage_direction
+			var square := Vector3i(floori(landing.x / 2.0), landing.y,
+				floori(landing.z / 2.0))
+			if not by_square.has(square): by_square[square] = []
+			(by_square[square] as Array).append(room)
+		for square: Vector3i in by_square:
+			var group: Array = by_square[square]
+			var owner: StringName = group[(group.size() - 1) / 2].stable_id
+			for room: WarrenRoomStamp in group: owners[room.stable_id] = owner
 	return owners
 
 

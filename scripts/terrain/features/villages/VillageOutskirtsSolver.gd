@@ -11,7 +11,9 @@ const SURVEY_LIMIT := 256
 const OUTSKIRTS_GRID_STEP := VillageWorldScale.WORLD_FINE_CELL_M
 const PATH_HALF_WIDTH := PathProgram.PATH_HALF_WIDTH
 const PATH_CLEARANCE := PATH_HALF_WIDTH + 0.5
-const BRANCH_CORRIDOR_HALF_WIDTH := VillageProgram.MODULE * 4.0
+## Two town lanes either side of a branch (6 m at the former 3 m lattice):
+## the corridor follows the frame so upscaled prefabs keep the same fit.
+const BRANCH_CORRIDOR_HALF_WIDTH := OUTSKIRTS_GRID_STEP * 2.0
 const PARCEL_PATH_MARGIN := 0.25
 const DOOR_BRANCH_ALIGNMENT_MIN := 0.85
 const PERIMETER_ROOTS_PER_SIDE := 6

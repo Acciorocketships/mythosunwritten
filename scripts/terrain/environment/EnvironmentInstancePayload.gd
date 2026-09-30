@@ -17,6 +17,9 @@ var collision_boxes: Array[Dictionary] = []
 ## entry carries its own collision faces and a world anchor for half-open
 ## block ownership; the commit adapter alone turns them into resources.
 var surface_meshes: Array[Dictionary] = []
+## Ground skirts of embedded natural rocks (RockSkirt.build plain arrays),
+## owned like their rock by a world anchor.
+var ground_skirts: Array[Dictionary] = []
 
 
 func add_surface_mesh(mesh: Dictionary) -> void:
@@ -138,6 +141,12 @@ func append_from(other: EnvironmentInstancePayload,
 				Vector2(anchor.x, anchor.z)):
 			continue
 		add_surface_mesh(mesh)
+	for skirt: Dictionary in other.ground_skirts:
+		var anchor := skirt.anchor as Vector3
+		if filter_by_owner and not _half_open_has_point(ownership,
+				Vector2(anchor.x, anchor.z)):
+			continue
+		ground_skirts.append(skirt)
 	for box: Dictionary in other.collision_boxes:
 		var transform := box.transform as Transform3D
 		var anchor := Vector2(transform.origin.x, transform.origin.z)

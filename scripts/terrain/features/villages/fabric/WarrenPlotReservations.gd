@@ -281,7 +281,17 @@ const PLAZA_LEVEL_BANDS := 4
 ## 11/grand's 12-band site is refused, that town keeps the corridor fallback --
 ## and it already had a 35-cell green with ten entrances, so it lost nothing --
 ## and the scale comes back inside the round's stop condition.
-const PLAZA_CUT_BUDGET_BANDS := 2
+##
+## THREE since the September 29 perimeter lane. The edge rings now stay at
+## grade (a raised rim street was the photo-7 rampart), so the flat band a
+## square used to take -- a raised rim terrace fronted by a raised street -- is
+## gone, and a square beside an at-grade street is cut one terrace deeper into
+## the rim (rings 1-3 stand 2-4 bands above the lane). At two, towns with a
+## square on a 12-town probe (planner + bridge seeds, 1/7 compact, 2/5 large,
+## 6 grand) fell 11 -> 4 and the bridge corpus had none; at three, 6 (the
+## at-grade squares of 4/compact and 11/standard come back). The per-column
+## bound (PLAZA_LEVEL_BANDS) is unchanged.
+const PLAZA_CUT_BUDGET_BANDS := 3
 ## How many refused sites the plaza will walk past before giving up. The source
 ## plan can still refuse a rectangle every column of `_deck_column_ok` accepted
 ## -- disjointness and the seal's own placement rules are its business, not
@@ -389,20 +399,7 @@ static func _place_assets(plan: WarrenMazeSourcePlan,
 	var records: Array[Dictionary] = []
 	var clearance_reservations: Array[Dictionary] = []
 	var used_templates: Dictionary = {}
-	var street_volume := WarrenExcavationVolumeAdapter.to_volume_plan(
-		plan.massif, plan.excavation, plan.market_square_cells, false)
-	assert(street_volume != null, WarrenExcavationVolumeAdapter.last_failure)
-	var public_air: Dictionary = {}
-	for macro_cell: Vector3i in street_volume.public_air_cells:
-		for fine_cell: Vector3i in WarrenVolumetricSolver._fine_square(macro_cell):
-			public_air[fine_cell] = true
-	for floor_cell: Vector3i in street_volume.exact_route_surface_cells():
-		for band in WarrenVolumePlan.HEADROOM_BANDS:
-			public_air[floor_cell + Vector3i.UP * band] = true
-	for transition: WarrenVolumeTransition in street_volume.transitions:
-		for cell: Vector3i in transition.clearance_air_cells():
-			public_air[cell] = true
-	var door_access := {"volume": street_volume, "cache": {}, "air": public_air}
+	var door_access := door_access_for(plan)
 	var quota := WarrenPlotPlanner.roll(plan, ASSET_QUOTA_SALT,
 		plan.summit_cell, 0, profile.landmark_range)
 	var columns: Array[Vector2i] = []
@@ -475,6 +472,25 @@ static func _new_mirror_tally() -> Dictionary:
 		"lone_raised_level": 0}
 
 
+static func door_access_for(plan: WarrenMazeSourcePlan) -> Dictionary:
+	## The street network's exact route surfaces and public air, in fine cells:
+	## what `_site_realises` checks a prefab doorway and body against.
+	var street_volume := WarrenExcavationVolumeAdapter.to_volume_plan(
+		plan.massif, plan.excavation, plan.market_square_cells, false)
+	assert(street_volume != null, WarrenExcavationVolumeAdapter.last_failure)
+	var public_air: Dictionary = {}
+	for macro_cell: Vector3i in street_volume.public_air_cells:
+		for fine_cell: Vector3i in WarrenVolumetricSolver._fine_square(macro_cell):
+			public_air[fine_cell] = true
+	for floor_cell: Vector3i in street_volume.exact_route_surface_cells():
+		for band in WarrenVolumePlan.HEADROOM_BANDS:
+			public_air[floor_cell + Vector3i.UP * band] = true
+	for transition: WarrenVolumeTransition in street_volume.transitions:
+		for cell: Vector3i in transition.clearance_air_cells():
+			public_air[cell] = true
+	return {"volume": street_volume, "cache": {}, "air": public_air}
+
+
 static func _best_asset_site(plan: WarrenMazeSourcePlan, streets: Dictionary,
 		columns: Array[Vector2i], blocked: Dictionary,
 		refused: Dictionary, mirror: Dictionary = {},
@@ -483,6 +499,7 @@ static func _best_asset_site(plan: WarrenMazeSourcePlan, streets: Dictionary,
 	## architectural variety and a stable geometric tie break. Only candidates
 	## whose doorway, complete body and bearing fit become source reservations.
 	var best: Dictionary = {}
+	var landings := WarrenPlotPlanner.street_bands(plan, true)
 	for template_index in ASSET_TEMPLATES.size():
 		var template := ASSET_TEMPLATES[template_index] as Dictionary
 		var height := int(template["height_bands"])
@@ -494,7 +511,7 @@ static func _best_asset_site(plan: WarrenMazeSourcePlan, streets: Dictionary,
 				var cells := _footprint(plan, anchor, width, depth, blocked)
 				if cells.is_empty():
 					continue
-				var doors := _fronting_door_candidates(cells, streets)
+				var doors := _fronting_door_candidates(cells, landings)
 				var bands: Array = doors.keys()
 				bands.sort()
 				for datum: int in bands:
@@ -832,12 +849,22 @@ static func _fine_box_bears(plan: WarrenMazeSourcePlan, doorway: Vector2i,
 	## calls its own, because that solid is the derived rock Task C5 retains
 	## and Task C5b draws. Below natural ground is never accepted -- there the
 	## heightfield owns the ground and the prefab would be buried.
+	## A prefab never sits astride a raised district's wall: its body stands
+	## wholly on the plinth or wholly off it (September 29, WarrenTownPlatform).
+	var plinth := -1
 	for step in range(0, forward + 1):
 		for across in range(-right, left + 1):
 			var column := _macro_column(doorway + side * step \
 				+ lateral * across)
 			if not plan.massif.has_column(column):
 				return false
+			if plinth >= 0 and plan.massif.plinth_at(column) != plinth:
+				return false
+			# ...and never in the low huddle at its foot, which stays under
+			# the plinth top (WarrenTownPlatform.huddle_top).
+			if WarrenTownPlatform.huddle_top(plan.massif, column) != 2147483647:
+				return false
+			plinth = plan.massif.plinth_at(column)
 			support_columns[column] = true
 			var ground := plan.massif.bearing_at(column)
 			if ground == datum:
@@ -997,7 +1024,9 @@ static func _best_plaza_site(plan: WarrenMazeSourcePlan, streets: Dictionary,
 	## beside it. `_deck_column_ok` is asked of each member, so a plaza column
 	## is a deck column in exactly the sense the ordinary quota means -- the
 	## shape rule is the only thing this adds.
-	var cap := int(DECK_MAX.get(plan.scale_profile.scale_id, DECK_MIN))
+	var cap: int = plan.scale_profile.scaled(DECK_MAX)
+	# A plaza is entered from a level landing, never from a flight's side.
+	var landings := WarrenPlotPlanner.street_bands(plan, true)
 	var heart := Vector2i(plan.summit_cell.x, plan.summit_cell.z)
 	var columns: Array[Vector2i] = []
 	columns.assign(plan.massif.columns.keys())
@@ -1008,7 +1037,7 @@ static func _best_plaza_site(plan: WarrenMazeSourcePlan, streets: Dictionary,
 			var cells := _plaza_footprint(plan, anchor, shape, blocked)
 			if cells.is_empty():
 				continue
-			var doors := _fronting_doors(cells, streets)
+			var doors := _fronting_doors(cells, landings)
 			var bands: Array = doors.keys()
 			bands.sort()
 			for datum: int in bands:
@@ -1118,9 +1147,8 @@ static func _grow_decks(plan: WarrenMazeSourcePlan, streets: Dictionary,
 	## and an explicit same-band street threshold. A refused rectangle leaves no
 	## partial floor and the next complete site is considered.
 	var records: Array[Dictionary] = []
-	var scale := plan.scale_profile.scale_id
 	var quota := WarrenPlotPlanner.roll(plan, DECK_QUOTA_SALT,
-		plan.summit_cell, 0, DECK_QUOTA.get(scale, Vector2i(1, 1)))
+		plan.summit_cell, 0, plan.scale_profile.scaled(DECK_QUOTA))
 	var accepted := claimed
 	var refused: Dictionary = {}
 	while accepted < quota:
@@ -1145,6 +1173,9 @@ static func _grow_decks(plan: WarrenMazeSourcePlan, streets: Dictionary,
 		records.append(record)
 	outcomes["decks"] = records
 	outcomes["decks_short"] = quota - accepted
+	# The quota's roll cell. Destination pruning can later withdraw the climb
+	# to the summit, so the final summit need not be the cell rolled here.
+	outcomes["deck_quota_cell"] = plan.summit_cell
 
 
 static func _deck_column_ok(plan: WarrenMazeSourcePlan, column: Vector2i,

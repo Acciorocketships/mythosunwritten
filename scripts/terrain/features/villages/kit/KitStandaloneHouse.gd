@@ -34,7 +34,9 @@ static func entries(kit: BuildingKit, spec: VillageAssetSpec,
 		* Transform3D(Basis.IDENTITY, Vector3(-float(nx) * w * 0.5, 0.0,
 			-float(nz) * w * 0.5))
 	var out: Array[Dictionary] = []
-	for placement: Dictionary in BuildingKitAssembler.new(kit).assemble(mass):
+	var assembler := BuildingKitAssembler.new(kit)
+	assembler.prop_scale = VillageWorldScale.kit_human_prop_scale()
+	for placement: Dictionary in assembler.assemble(mass):
 		out.append({"asset_id": placement.asset_id,
 			"stable_id": placement.stable_id,
 			"transform": native_to_world * (placement.transform as Transform3D),
@@ -71,7 +73,6 @@ static func design(kit: BuildingKit, nx: int, nz: int, dir: int,
 	var bounds := BuildingDesigner._bounds(ground.cells)
 	BuildingDesigner.new(kit).articulate(mass, {"terrain_storey": 0, "terraced": true,
 		"roof_axis": dir % 2 if mini(bounds.size.x, bounds.size.y) >= 3 else -1})
-	_space_canopies(kit, mass)
 	_support_projections(mass)
 	_dress_terraces(mass)
 	return mass
@@ -138,49 +139,25 @@ static func _crop_to_size(cells: Dictionary, nx: int, nz: int, dir: int, seed: i
 		if u < side or v >= rear: cells.erase(cell)
 
 
-static func _space_canopies(kit: BuildingKit, mass: BuildingMass) -> void:
-	# Keep entrance porches first. Adjacent/perpendicular recess faces can
-	# compete for the same air: admit whole authored canopies without overlap.
-	var candidates: Array[Dictionary] = []
-	var retained: Array[Dictionary] = []
-	for item: Dictionary in mass.decor:
-		if item.kind == &"awning": candidates.append(item)
-		else: retained.append(item)
-	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return not a.get("sheltered", false) and b.get("sheltered", false))
-	var occupied: Array[Rect2] = []
-	for item: Dictionary in candidates:
-		# The same authored 3.6 m canopy and fit used by the assembler.
-		# Its measured width is 3.795 m; with the wall offset its front
-		# reaches 2.342 m. Round outwards to leave a small edge clearance.
-		var fit := (kit.storey_height - 0.2) / 3.6 / kit.module_width
-		var out := Vector2(BuildingMass.DIRS[int(item.dir)])
-		var right := Vector2(BuildingKitAssembler.right_of(int(item.dir)))
-		var centre: Vector2 = item.centre
-		var a := centre - right * (1.94 * fit)
-		var b := centre + right * (1.94 * fit) + out * (2.37 * fit)
-		var rect := Rect2(a.min(b), a.max(b) - a.min(b))
-		var clear := true
-		for other: Rect2 in occupied:
-			if rect.intersects(other): clear = false
-		if clear:
-			occupied.append(rect)
-			retained.append(item)
-	mass.decor = retained
-
-
 static func _support_projections(mass: BuildingMass) -> void:
 	for i in range(1, mass.storeys.size()):
 		var upper: Dictionary = mass.storeys[i]
 		var lower: Dictionary = mass.storeys[i - 1].cells
+		# Brackets bear on the wall-module joints of the storey below (never
+		# across the window centred between two joints), one per joint.
+		var braced := {}
 		for cell: Vector2i in upper.cells:
 			if lower.has(cell): continue
 			for dir in 4:
 				if not lower.has(cell + BuildingMass.DIRS[dir]): continue
-				mass.decor.append({"kind": &"bracket", "dir": (dir + 2) % 4,
-					"centre": Vector2(cell) + Vector2(0.5, 0.5)
-						+ Vector2(BuildingMass.DIRS[dir]) * 0.5,
-					"y_band": int(upper.floor_band)})
+				var edge := Vector2(cell) + Vector2(0.5, 0.5) + Vector2(BuildingMass.DIRS[dir]) * 0.5
+				var along := Vector2(BuildingMass.DIRS[(dir + 1) % 4]) * 0.5
+				for joint: Vector2 in [edge - along, edge + along]:
+					var key := Vector3(joint.x, joint.y, dir)
+					if braced.has(key): continue
+					braced[key] = true
+					mass.decor.append({"kind": &"bracket", "dir": (dir + 2) % 4,
+						"centre": joint, "y_band": int(upper.floor_band)})
 
 		# Each convex corner of an unsupported room has a continuous bearing
 		# down to the nearest lower floor, or the reserved flat lot ground.
@@ -215,7 +192,7 @@ static func _dress_terraces(mass: BuildingMass) -> void:
 		for cell: Vector2i in deck.cells:
 			for dir in 4:
 				var next := cell + BuildingMass.DIRS[dir]
-				if deck.cells.has(next) or deck.open_edges.has(BuildingMass.edge_key(cell, dir)):
+				if deck.cells.has(next) or (deck.get("open_edges", {}) as Dictionary).has(BuildingMass.edge_key(cell, dir)):
 					continue
 				if posmod(cell.x * 7 + cell.y * 11 + mass.seed, 3) != 0: continue
 				mass.decor.append({"kind": &"planter", "dir": dir,

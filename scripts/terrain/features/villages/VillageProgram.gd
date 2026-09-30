@@ -8,6 +8,9 @@ const MODULE := 1.5
 const STOREY := 3.0
 const MAX_ANCHOR_RADIUS := 144.0
 const SETTLEMENT_INSET := 192.0
+## World reach of a volumetric town (plus its grade collar) from its site:
+## the whole settlement inset. Record discovery honours it.
+const WARREN_RECORD_REACH := SETTLEMENT_INSET
 const DECK_TIERS := Vector2(3.7, 4.8)
 const ALLEY_WIDTHS: Array[float] = [3.0, 4.5, 6.0]
 const THEMES: Array[StringName] = [&"blue", &"orange"]
@@ -754,8 +757,13 @@ static func compile(authored: Dictionary = {},
 		if not is_finite(value) or value < 0.0:
 			push_error("VillageProgram reaches must be finite and non-negative")
 			return null
-	program.max_record_radius = MAX_ANCHOR_RADIUS + maxf(
-		program.max_asset_reach, program.max_ground_shape_reach)
+	# Volumetric towns grow away from their entry (the site centre) across
+	# their whole massif, so discovery must reach the settlement's complete
+	# inset reservation, not only the legacy layout anchors. At the September
+	# 27 frame (8 m macro cells) the largest measured towns reach ~190 m.
+	program.max_record_radius = maxf(MAX_ANCHOR_RADIUS + maxf(
+		program.max_asset_reach, program.max_ground_shape_reach),
+		WARREN_RECORD_REACH)
 	if program.max_record_radius > SETTLEMENT_INSET:
 		push_error("VillageProgram record radius exceeds settlement inset")
 		return null
@@ -901,8 +909,8 @@ static func compile(authored: Dictionary = {},
 		if program.elevated_program != null:
 			program.layout_anchor_radius = maxf(program.layout_anchor_radius,
 				program.elevated_program.maximum_local_reach(tier))
-	program.layout_record_radius = program.layout_anchor_radius \
-		+ program.max_asset_reach
+	program.layout_record_radius = maxf(program.layout_anchor_radius \
+		+ program.max_asset_reach, WARREN_RECORD_REACH)
 	return program
 
 func assets_for_tier(tier: StringName) -> Array[VillageAssetSpec]:

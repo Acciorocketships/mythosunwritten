@@ -20,7 +20,7 @@ func _run() -> void:
 		var payload := REVIEW.town_payload(spatial, spatial.compiled_fabric_cache(), false)
 		var town := Node3D.new()
 		get_root().add_child(town)
-		town.transform = Transform3D(Basis.from_scale(Vector3(2, 1.5, 2)), Vector3.ZERO)
+		town.transform = Transform3D(Basis.from_scale(VillageWorldScale.frame_scale()), Vector3.ZERO)
 		var queue := FeatureCommitQueue.new(cache)
 		queue.enqueue(Vector2i.ZERO, 1, town, payload)
 		while queue.pending_count() > 0:

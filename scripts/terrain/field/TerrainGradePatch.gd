@@ -65,6 +65,12 @@ var _continuous_datum := 0.0
 const SURFACE_CACHE_LIMIT := 32768
 var _surface_cache: Dictionary = {}
 var native_control_cache: Dictionary = {}
+## Construction cells (NativeTerrainGrade.construction_cells) per plan.
+var native_construction_cache: Dictionary = {}
+## Accepted country-road lattice around this construction (cell -> connection
+## mask), sealed with it. Native controls grade those roads into the pads
+## instead of leaving a new cliff across them (NativeTerrainGrade).
+var road_masks: Dictionary = {}
 
 
 ## Road reservations inherit an already reconstructed continuous field. Their
@@ -74,6 +80,7 @@ func with_continuous_extension(heights: Dictionary, datum: float) -> TerrainGrad
 	result._continuous_source = self
 	result._continuous_cells = heights.duplicate()
 	result._continuous_datum = datum
+	result.road_masks = road_masks
 	return result
 
 
@@ -82,6 +89,7 @@ func with_continuous_extension(heights: Dictionary, datum: float) -> TerrainGrad
 func with_fixed_extension(heights: Dictionary) -> TerrainGradePatch:
 	var result := TerrainGradePatch.new(stable_id, heights, _origin, _targets.pitch)
 	result._continuous_source = self
+	result.road_masks = road_masks
 	for cell: Vector2i in heights:
 		if _claims.has(cell) and float(_claims[cell]) == float(heights[cell]):
 			result._continuous_cells[cell] = true
@@ -301,8 +309,11 @@ func with_foundation_pads(pads: Array[Dictionary], preserve_claims := false) -> 
 						and not is_equal_approx(float(claims[key]), float(pad.height)):
 					return null # A later parcel may not invalidate sealed ground.
 				claims[key] = minf(float(claims.get(key, pad.height)), float(pad.height))
-	return with_fixed_extension(claims) if _continuous_source != null \
-		else TerrainGradePatch.new(stable_id, claims, _origin, pitch)
+	if _continuous_source != null:
+		return with_fixed_extension(claims)
+	var result := TerrainGradePatch.new(stable_id, claims, _origin, pitch)
+	result.road_masks = road_masks
+	return result
 
 
 ## Interval composition is conservative even where the fine grading controls

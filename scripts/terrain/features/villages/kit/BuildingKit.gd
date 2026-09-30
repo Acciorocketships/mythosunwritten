@@ -27,6 +27,22 @@ var roof_row_rise := 3.0
 var roof_top_rise := 1.5
 ## Native outward projection of a jetty (upper storey beyond the one below).
 var jetty_depth := 0.0
+## Native outward distance from a wall piece's pivot line to its outer face.
+var wall_face := 0.0
+## Extra native thickness the storey masonry (`wall.stone.plain/window/door`)
+## carries in front of the timber wall plane: its openings sit that much
+## deeper and the stone storey stands that much proud of timber above.
+## Retaining courses (`wall.stone.retaining`, `wall.stone.course`) stay flush.
+var masonry_depth := 0.0
+## The `awning` role's canonical size after its anchor: exactly
+## `awning_width` modules wide, centred on x = 0, its back posts at z = 0 and
+## `awning_depth` / `awning_height` native metres deep / tall before fitting.
+## Half width of the `post.timber` role (native metres), used to close
+## convex wall corners flush with both outer faces.
+var corner_post_half := 0.0
+var awning_width := 1.0
+var awning_depth := 0.0
+var awning_height := 0.0
 var kit_id: StringName = &""
 ## role (StringName) -> Array[StringName] of interchangeable asset ids.
 var roles: Dictionary = {}
@@ -57,6 +73,12 @@ func asset_anchor(asset_id: StringName) -> Transform3D:
 	return asset_anchors.get(asset_id, Transform3D.IDENTITY)
 
 
+## Outer-face distance of a storey wall of `material` (see masonry_depth).
+func face_of(material: StringName, retaining := false) -> float:
+	return wall_face + (masonry_depth if material == BuildingMass.MATERIAL_STONE \
+		and not retaining else 0.0)
+
+
 func band_height() -> float:
 	return storey_height * 0.5
 
@@ -67,8 +89,7 @@ func all_asset_ids() -> Array[StringName]:
 		for id: StringName in options:
 			seen[id] = true
 	var out: Array[StringName] = []
-	out.assign(seen.keys())
-	out.sort()
+	out.assign(KitVillageBuildings.sorted_ids(seen.keys()))
 	return out
 
 

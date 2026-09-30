@@ -94,7 +94,12 @@ func test_cliff_top_walls_every_drop_off_its_edge() -> void:
 		if cx == 1 and cz == 0: return 12.0    # +x neighbour one storey down — a flat shelf
 		return 16.0)
 	var r = plan.compute_region(0, 0, 8)
-	assert_true(Field._is_wall_edge(r, 0, 0, Vector2i(1, 0)), "cliff top walls its 1-storey drop (a vertical cliff)")
+	# Per edge (owner, September 27 judging pass): the one-storey side is the
+	# ordinary slope, not a wall, even though (0,0) walls elsewhere.
+	assert_false(Field._is_wall_edge(r, 0, 0, Vector2i(1, 0)), "a cliff cell's 1-storey side is a slope")
+	for z in range(-12, 13, 3):
+		assert_almost_eq(Field.surface_y_in_cell(r, 12.0, float(z), 0, 0),
+			Field.surface_y_in_cell(r, 12.0, float(z), 1, 0), 0.0001, "one shared seam at z=%d" % z)
 
 func test_one_storey_drop_to_a_funnel_cell_is_walled() -> void:
 	# Owner: inner corners must be clean vertical cliffs. The +x neighbour here is a FUNNEL — one
@@ -106,7 +111,8 @@ func test_one_storey_drop_to_a_funnel_cell_is_walled() -> void:
 		if cx == 1 and cz == 0: return 12.0    # +x neighbour one storey down AND above the (1,1) pit → a funnel
 		return 16.0)
 	var r = plan.compute_region(0, 0, 8)
-	assert_true(Field._is_wall_edge(r, 0, 0, Vector2i(1, 0)), "1-storey drop to a funnel cell is a wall (terraced inner corner)")
+	# Per edge (September 27) the one-storey side toward the funnel is a slope.
+	assert_false(Field._is_wall_edge(r, 0, 0, Vector2i(1, 0)), "1-storey drop to a funnel cell is a slope")
 
 # --- issue 4 (gap): the low ground tucks flat to the cliff wall base ----------
 func test_low_ground_reaches_the_cliff_wall_base() -> void:
@@ -166,13 +172,14 @@ func test_inner_corner_lip_is_rotated_180_from_its_wall() -> void:
 	# OPPOSITE diagonal from the inner wall, so the lip yaw must be the wall yaw + 180°.
 	var plan := Plan.new(0, 32.0, 8, "mean", 3)
 	plan.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 1: return 8.0
+		if cx == 1 and cz == 1: return 4.0    # a two-storey pocket (per edge, September 27)
 		if cx == 2 and cz == 1: return 0.0
 		if cx == 1 and cz == 2: return 0.0
 		if cx == 2 and cz == 2: return 0.0
 		return 12.0)
 	var data = Dress.compute(plan.compute_region(0, 0, 8), 0, 0, 1)
 	assert_gt((data["inner_wall"] as Array).size(), 0, "the test region has an inner corner")
+	if (data["inner_wall"] as Array).is_empty() or (data["inner_lip"] as Array).is_empty(): return
 	var wf: Vector3 = ((data["inner_wall"][0] as Transform3D).basis) * Vector3(0, 0, 1)
 	var lf: Vector3 = ((data["inner_lip"][0] as Transform3D).basis) * Vector3(0, 0, 1)
 	assert_lt(wf.dot(lf), -0.9, "inner lip faces opposite the inner wall (180° apart)")
@@ -194,9 +201,11 @@ func test_inner_corner_notch_gets_inner_piece() -> void:
 		if cx == 2 and cz == 2: return 0.0     # notch (1,1) drops ≥2 here → notch is a cliff top
 		return 12.0)                            # (0,0) and its level arms
 	var r = plan.compute_region(0, 0, 8)
-	assert_true(Field._is_inner_corner(r, 0, 0, Vector2i(1, 1)), "the level-armed 1-storey pocket is an inner corner")
+	# Per edge (owner, September 27 judging pass) supersedes the (-4,-3) ruling: a
+	# one-storey notch is the ordinary corner slope, not an inner-corner cliff.
+	assert_false(Field._is_inner_corner(r, 0, 0, Vector2i(1, 1)), "a level-armed 1-storey pocket is a slope dip")
 	var data = Dress.compute(r, 0, 0, 1)
-	assert_gt((data["inner_wall"] as Array).size(), 0, "the inner-corner cell gets a modeled inner piece")
+	assert_eq((data["inner_wall"] as Array).size(), 0, "no modeled inner piece on a slope")
 	assert_eq((data["outer_wall"] as Array).size(), 0, "and not an outer/step corner")
 
 func test_open_one_storey_diagonal_is_not_an_inner_corner() -> void:
@@ -344,34 +353,20 @@ func _region_slope_beside_cliff():
 	return plan.compute_region(1, 1, 8)
 
 func test_cliff_wraps_around_to_the_slope_facing_side() -> void:
-	var data = Dress.compute(_region_slope_beside_cliff(), 1, 1, 1)   # dress only C=(1,1)
-	# (a) WEST-FACING lips appear on C's west edge where the slope has dipped (northern half)...
-	# (facing matters: the north edge's end pieces also sit at x=13.5 but face north)
-	var north_lips := 0
-	var south_lips := 0
-	for t in (data["lip"] as Array):
-		var xf := t as Transform3D
-		if (xf.basis * Vector3(0, 0, 1)).x > -0.9:
-			continue   # not west-facing
-		if xf.origin.z < 22.0: north_lips += 1
-		if xf.origin.z > 30.0: south_lips += 1
-	assert_gt(north_lips, 0, "west edge gets lip pieces where the neighbouring slope descends")
-	# (b) ...but NOT on the flush south half (same height, no exposed face — no lip spam)
-	assert_eq(south_lips, 0, "no lips where the same-storey neighbour is flush with the cliff top")
-	# (c) a west-facing wall row covers the exposed face (profile dips to 8 → one row at y=8)
-	var wall_found := false
-	for t in (data["wall"] as Array):
-		var xf := t as Transform3D
-		if (xf.basis * Vector3(0, 0, 1)).x < -0.9 and absf(xf.origin.y - 8.0) < 0.1 and xf.origin.z < 22.0:
-			wall_found = true
-	assert_true(wall_found, "west edge gets wall rows under the lip (down past the slope's dip)")
-	# (d) the NW corner (wall edge meets the wrapped edge) gets an outer corner piece
-	var corner_found := false
+	# Per edge (September 27): the same-storey west side is an ordinary slope that C shares
+	# with W, so nothing is exposed there and it takes no lip, wall or corner piece.
+	var region = _region_slope_beside_cliff()
+	for z in range(12, 37, 3):
+		assert_almost_eq(Field.surface_y_in_cell(region, 12.0, float(z), 1, 1),
+			Field.surface_y_in_cell(region, 12.0, float(z), 0, 1), 0.0001, "C and W share their seam at z=%d" % z)
+	var data = Dress.compute(region, 1, 1, 1)   # dress only C=(1,1)
+	for key in ["lip", "wall"]:
+		for t in (data[key] as Array):
+			var xf := t as Transform3D
+			assert_false((xf.basis * Vector3(0, 0, 1)).x < -0.9, "no west-facing %s on the welded slope side" % key)
 	for t in (data["outer_lip"] as Array):
 		var o := (t as Transform3D).origin
-		if absf(o.x - 13.5) < 0.1 and absf(o.z - 13.5) < 0.1:
-			corner_found = true
-	assert_true(corner_found, "an outer corner piece caps the turn from the north wall to the west edge")
+		assert_false(absf(o.x - 13.5) < 0.1 and absf(o.z - 13.5) < 0.1, "no corner cap at the slope side")
 
 # --- owner (2026-07-01 round 2): extend tiles at the current level UNDER higher tiles -------
 # C=(1,1) storey 2 (h=8) walls south (low ground at cz>=2). Its WEST neighbour W=(0,1) is
@@ -382,7 +377,7 @@ func test_cliff_wraps_around_to_the_slope_facing_side() -> void:
 func _region_terrace():
 	var plan := Plan.new(0, 64.0, 12, "mean", 4)
 	plan.set_raw_height_override(func(cx, cz):
-		if cx == 0 and cz == 1: return 12.0
+		if cx == 0 and cz == 1: return 16.0   # two storeys over C (per edge, September 27)
 		if cz >= 2: return 0.0
 		return 8.0)
 	return plan.compute_region(1, 1, 8)
@@ -406,8 +401,8 @@ func test_junction_into_a_continuing_higher_wall_is_owned_by_its_corner() -> voi
 			if absf(o.x - 10.5) < 0.1 and absf(o.z - 34.5) < 0.1:
 				row_ys.append(o.y)
 	row_ys.sort()
-	assert_eq(row_ys.size(), 3, "W's SE corner column has one wall piece per storey row (no doubles)")
-	if row_ys.size() == 3:
+	assert_eq(row_ys.size(), 4, "W's SE corner column has one wall piece per storey row (no doubles)")
+	if row_ys.size() == 4:
 		assert_almost_eq(float(row_ys[0]), 0.0, 0.1, "W's SE corner column reaches the low ground, covering the junction")
 
 func test_flush_step_run_ends_in_an_outer_corner_into_the_taller_wall() -> void:
@@ -496,9 +491,10 @@ func test_flush_junction_wall_rows_tile_the_plane_with_straight_modules() -> voi
 		if absf(xf.origin.x - 10.5) < 0.1 and absf(xf.origin.z - 34.5) < 0.1:
 			w_straight_rows.append(xf.origin.y)
 			assert_gt((xf.basis * Vector3(0, 0, 1)).z, 0.5, "W's buried-arm rows face south, in the run's plane")
-	assert_eq(w_corner_rows.size(), 1, "W keeps the corner module only where both faces show")
-	if w_corner_rows.size() == 1:
-		assert_almost_eq(float(w_corner_rows[0]), 8.0, 0.01, "W's corner module is the top row (8..12)")
+	w_corner_rows.sort()
+	assert_eq(w_corner_rows.size(), 2, "W keeps the corner module only where both faces show")
+	if w_corner_rows.size() == 2:
+		assert_almost_eq(float(w_corner_rows[0]), 8.0, 0.01, "W's corner modules are the rows above C (8..16)")
 	w_straight_rows.sort()
 	assert_eq(w_straight_rows.size(), 2, "W's two descending rows below C's top are straight modules")
 	if w_straight_rows.size() == 2:
@@ -511,11 +507,12 @@ func test_run_into_a_continuing_perpendicular_wall_is_straight() -> void:
 	# same face line) — an outer cap's 0.5 corner inset left a bright slit beside it ("this is
 	# an outer corner and it leaves a gap. it should just be straight"). The run continues with
 	# a STRAIGHT module into the wall instead; the cap remains only for free-standing run ends.
-	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	var plan := Plan.new(0, 64.0, 12, "mean", 8)
 	plan.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 1: return 12.0   # R: the run's ledge, walls east 12→8
-		if cx == 1 and cz == 0: return 16.0   # H: taller cliff north of R (flush toward D)
-		if cx == 2 and cz == 0: return 16.0   # D: continues the perpendicular wall line 16→8
+		# (Per edge, September 27: every intended wall is two storeys or more.)
+		if cx == 1 and cz == 1: return 16.0   # R: the run's ledge, walls east 16→8
+		if cx == 1 and cz == 0: return 24.0   # H: taller cliff north of R (flush toward D)
+		if cx == 2 and cz == 0: return 24.0   # D: continues the perpendicular wall line 24→8
 		if cx == 2 and cz == 2: return 0.0    # R's cliff-maker (SE diagonal)
 		return 8.0)
 	var r = plan.compute_region(1, 1, 8)
@@ -523,11 +520,11 @@ func test_run_into_a_continuing_perpendicular_wall_is_straight() -> void:
 	var straight := false
 	for t in (data["lip"] as Array):
 		var o := (t as Transform3D).origin
-		if absf(o.x - 34.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - 12.05) < 0.05:
+		if absf(o.x - 34.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - 16.05) < 0.05:
 			straight = true
 	for t in (data["outer_lip"] as Array):
 		var o := (t as Transform3D).origin
-		assert_false(absf(o.x - 34.5) < 0.1 and absf(o.z - 10.5) < 0.1 and o.y < 14.0,
+		assert_false(absf(o.x - 34.5) < 0.1 and absf(o.z - 10.5) < 0.1 and o.y < 18.0,
 			"no outer cap at a straight-into-the-wall junction (its inset leaves a slit)")
 	assert_true(straight, "the run continues with a straight module into the perpendicular wall")
 	# Owner (round 8): "the wall should be an inner corner that merges the cliff outcropping
@@ -538,9 +535,9 @@ func test_run_into_a_continuing_perpendicular_wall_is_straight() -> void:
 	var merge_rows := 0
 	for t in (data["inner_wall"] as Array):
 		var o := (t as Transform3D).origin
-		if absf(o.x - 34.5) < 0.1 and absf(o.z - 10.5) < 0.1 and o.y < 12.0:
+		if absf(o.x - 34.5) < 0.1 and absf(o.z - 10.5) < 0.1 and o.y < 16.0:
 			merge_rows += 1
-	assert_eq(merge_rows, 1, "inner wall rows merge the straight run end with the perpendicular taller wall")
+	assert_eq(merge_rows, 2, "inner wall rows merge the straight run end with the perpendicular taller wall")
 
 func test_corner_caps_sit_exactly_flush_with_straight_lips() -> void:
 	# Owner (rounds 5-6): corner caps floated above the straight lip modules they butt against —
@@ -559,10 +556,10 @@ func test_terraced_step_junction_is_owned_by_the_higher_outer_corner() -> void:
 	# corner owns such junctions: the run keeps its end module, holds its clip, and emits NO
 	# corner piece of its own. The concave crevice fill remains ONLY where the taller wall truly
 	# continues down to (within one storey of) the run's ground.
-	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	var plan := Plan.new(0, 64.0, 12, "mean", 8)
 	plan.set_raw_height_override(func(cx, cz):
 		if cx == 1 and cz == 1: return 20.0   # L: the run's ledge (storey 5), walls south 20→8
-		if cx == 2 and cz == 1: return 24.0   # H: taller cliff east of L, walls south 24→16
+		if cx == 2 and cz == 1: return 28.0   # H: taller cliff east of L, walls south 28→16 (two storeys over L)
 		if cx == 2 and cz == 2: return 16.0   # D: the terrace plateau at the junction's foot
 		return 8.0)
 	var r = plan.compute_region(1, 1, 8)
@@ -580,7 +577,7 @@ func test_terraced_step_junction_is_owned_by_the_higher_outer_corner() -> void:
 	var end_module := false
 	for t in (data["outer_lip"] as Array):
 		var o := (t as Transform3D).origin
-		if absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y > 23.9:
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y > 27.9:
 			h_corner = true
 		if absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1 and absf(o.y - (20.0 + Dress.CORNER_LIP_LIFT)) < 0.03:
 			run_cap = true
@@ -588,7 +585,7 @@ func test_terraced_step_junction_is_owned_by_the_higher_outer_corner() -> void:
 		var o := (t as Transform3D).origin
 		if absf(o.x - 34.5) < 0.1 and absf(o.z - 34.5) < 0.1 and absf(o.y - (20.0 + Dress.LIP_LIFT)) < 0.03:
 			end_module = true
-	assert_true(h_corner, "H's own outer corner (at 24) stands at the junction")
+	assert_true(h_corner, "H's own outer corner (at 28) stands at the junction")
 	assert_true(end_module, "L's run keeps its straight end module up to the boundary (round 9)")
 	assert_true(run_cap, "L's turned cap LIP sits one slot into H, at H's corner column (round 9)")
 
@@ -637,8 +634,8 @@ func test_lip_run_into_a_higher_cliff_continues_straight_into_its_wall() -> void
 	# module (lip + wall) one slot into the higher cell, ending buried behind its wall face.
 	var plan := Plan.new(0, 64.0, 12, "mean", 4)
 	plan.set_raw_height_override(func(cx, cz):
-		if cx <= -1: return 4.0               # W's cliff-maker (west drop 2)
-		if cx == 0: return 12.0               # W's column: storey 3, flush to its south
+		if cx <= -1: return 8.0               # W's cliff-maker (west drop 2)
+		if cx == 0: return 16.0               # W's column: storey 4, two over C (per edge)
 		if cz >= 2: return 0.0                # low ground south of C
 		return 8.0)                            # C=(1,1) and backdrop
 	var r = plan.compute_region(1, 1, 8)
@@ -660,11 +657,11 @@ func test_ghost_inner_corner_joins_walls_over_a_terraced_pocket() -> void:
 	# TERRACED pocket. The classic inner-corner rule needs the arms level with the diagonal,
 	# so nothing joined N's and W's walls where they meet over C — a vertical slit. An inner
 	# corner piece must join them, spanning the [h(C), min(h(N),h(W))] band.
-	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	var plan := Plan.new(0, 64.0, 12, "mean", 8)
 	plan.set_raw_height_override(func(cx, cz):
-		if cx == 0 and cz == 0: return 16.0   # NW, storey 4
-		if cx == 1 and cz == 0: return 12.0   # N, storey 3 (cliff via (2,0))
-		if cx == 0 and cz == 1: return 12.0   # W, storey 3 (cliff via (0,2))
+		if cx == 0 and cz == 0: return 32.0   # NW, storey 8 (two-storey steps, per edge)
+		if cx == 1 and cz == 0: return 24.0   # N, storey 6 (cliff via (2,0))
+		if cx == 0 and cz == 1: return 24.0   # W, storey 6 (cliff via (0,2))
 		if cx == 2 and cz == 0: return 0.0
 		if cx == 0 and cz == 2: return 0.0
 		return 8.0)                            # C=(1,1) and backdrop
@@ -687,13 +684,15 @@ func test_ghost_inner_corner_joins_walls_over_a_terraced_pocket() -> void:
 # Diagonal-descent config mirroring the owner's screenshot (storeys 3/2/1 stepping SW):
 # D=(2,0)=12 flat; arms N=(1,0)=8 and E=(2,1)=8 flat; pocket P=(1,1)=4 is a SLOPE.
 func _region_diagonal_descent():
-	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	# (Per edge, September 27: two-storey steps, so the arms are flat cliff cells;
+	# the pocket keeps one-storey sides toward the ground below it.)
+	var plan := Plan.new(0, 64.0, 12, "mean", 8)
 	plan.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 0: return 8.0
-		if cx == 2 and cz == 1: return 8.0
-		if cx == 1 and cz == 1: return 4.0
-		if (cx == 0 and cz == 1) or (cx == 1 and cz == 2) or (cx == 0 and cz == 2): return 0.0
-		return 12.0)
+		if cx == 1 and cz == 0: return 16.0
+		if cx == 2 and cz == 1: return 16.0
+		if cx == 1 and cz == 1: return 8.0
+		if (cx == 0 and cz == 1) or (cx == 1 and cz == 2) or (cx == 0 and cz == 2): return 4.0
+		return 24.0)
 	return plan.compute_region(1, 1, 8)
 
 func test_slope_pocket_gets_a_ghost_inner_corner() -> void:
@@ -706,7 +705,7 @@ func test_slope_pocket_gets_a_ghost_inner_corner() -> void:
 	var lip_found := false
 	for t in (data["inner_wall"] as Array):
 		var o := (t as Transform3D).origin
-		if absf(o.x - 37.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - 4.0) < 0.1:
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - 8.0) < 0.1:
 			wall_found = true
 	for t in (data["inner_lip"] as Array):
 		var o := (t as Transform3D).origin
@@ -726,13 +725,14 @@ func _region_saddle():
 	# west over P; N=(1,0)=20 walls south over P and east over NE; NE=(2,0)=16 is a PLAIN cell
 	# whose surface dips at its far (SE) corner toward (3,1)=12 — so E's north edge is
 	# "exposed" edge-wide while FLUSH at the junction corner itself.
-	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	# (Per edge, September 27: storey steps doubled, so each intended wall is two+.)
+	var plan := Plan.new(0, 64.0, 12, "mean", 8)
 	plan.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 1: return 12.0   # P: the pocket
-		if cx == 1 and cz == 0: return 20.0   # N: taller arm
-		if cx == 3 and cz == 1: return 12.0   # NE's diagonal dip-maker
-		if cx == 2 and cz == 2: return 8.0    # E's cliff-maker (south, 2 storeys)
-		return 16.0)                           # E=(2,1), NE=(2,0) and backdrop
+		if cx == 1 and cz == 1: return 16.0   # P: the pocket
+		if cx == 1 and cz == 0: return 32.0   # N: taller arm
+		if cx == 3 and cz == 1: return 16.0   # NE's diagonal dip-maker
+		if cx == 2 and cz == 2: return 8.0    # E's cliff-maker (south)
+		return 24.0)                           # E=(2,1), NE=(2,0) and backdrop
 	return plan.compute_region(1, 1, 8)
 
 func test_unequal_arm_pocket_gets_an_inner_corner_at_the_lower_arms_top() -> void:
@@ -742,32 +742,32 @@ func test_unequal_arm_pocket_gets_an_inner_corner_at_the_lower_arms_top() -> voi
 	var wall := false
 	for t in (data["inner_lip"] as Array):
 		var o := (t as Transform3D).origin
-		if absf(o.x - 37.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - (16.0 + Dress.CORNER_LIP_LIFT)) < 0.03:
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - (24.0 + Dress.CORNER_LIP_LIFT)) < 0.03:
 			lip = true
 	for t in (data["inner_wall"] as Array):
 		var o := (t as Transform3D).origin
-		if absf(o.x - 37.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - 12.0) < 0.1:
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 10.5) < 0.1 and absf(o.y - 16.0) < 0.1:
 			wall = true
-	assert_true(lip, "an inner lip joins the two arms' walls at the LOWER arm's top (16)")
-	assert_true(wall, "with inner wall rows spanning the pocket band (12..16)")
+	assert_true(lip, "an inner lip joins the two arms' walls at the LOWER arm's top (24)")
+	assert_true(wall, "with inner wall rows spanning the pocket band (16..24)")
 
 func test_no_inner_corner_where_a_taller_diagonal_owns_the_slot() -> void:
 	# The round-6 guard, kept: pocket (1,2)=8 with arms L=20 and D=16 (unequal) but the
 	# DIAGONAL H=24 is taller than both — H's own convex corner column stands on the ghost's
 	# slot, and a concave piece there gouges it ("this is an inner corner but it should just
 	# be an edge").
-	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	var plan := Plan.new(0, 64.0, 12, "mean", 8)
 	plan.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 1: return 20.0   # L
-		if cx == 2 and cz == 1: return 24.0   # H
-		if cx == 2 and cz == 2: return 16.0   # D
+		if cx == 1 and cz == 1: return 32.0   # L (steps doubled, per edge)
+		if cx == 2 and cz == 1: return 40.0   # H
+		if cx == 2 and cz == 2: return 24.0   # D
 		return 8.0)
 	var r = plan.compute_region(1, 1, 8)
 	var data = Dress.compute(r, 1, 2, 1)   # dress the pocket (1,2)
 	var gouges := 0
 	for t in (data["inner_lip"] as Array):
 		var o := (t as Transform3D).origin
-		if absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 22.0:
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 34.5) < 0.1 and o.y < 38.0:
 			gouges += 1
 	assert_eq(gouges, 0, "no concave piece where the taller diagonal's own corner column owns the slot")
 
@@ -786,9 +786,9 @@ func test_run_end_at_a_level_neighbour_under_a_taller_diagonal_stays_plain() -> 
 	var end_module := false
 	for t in (data["lip"] as Array):
 		var o := (t as Transform3D).origin
-		assert_false(absf(o.x - 37.5) < 0.1 and absf(o.z - 13.5) < 0.1 and o.y > 16.5,
+		assert_false(absf(o.x - 37.5) < 0.1 and absf(o.z - 13.5) < 0.1 and o.y > 24.5,
 			"no corner-lip clutter above the strip")
-		if absf(o.x - 37.5) < 0.1 and absf(o.z - 13.5) < 0.1 and absf(o.y - (16.0 + Dress.LIP_LIFT)) < 0.03:
+		if absf(o.x - 37.5) < 0.1 and absf(o.z - 13.5) < 0.1 and absf(o.y - (24.0 + Dress.LIP_LIFT)) < 0.03:
 			end_module = true
 	for t in (data["outer_lip"] as Array):
 		var o := (t as Transform3D).origin
@@ -807,7 +807,7 @@ func test_outer_corner_does_not_dive_below_its_arms() -> void:
 		var o := (t as Transform3D).origin
 		if absf(o.x - 37.5) < 0.1 and absf(o.z - 10.5) < 0.1:
 			any = true
-			assert_gt(o.y, 7.9, "D's outer corner stops with its arms (8..12); the pocket's inner piece owns the band below")
+			assert_gt(o.y, 15.9, "D's outer corner stops with its arms (16..24); the pocket's inner piece owns the band below")
 	assert_true(any, "D still gets its outer corner")
 
 # --- issue 1: edges keep full coverage; the corner overlaps (no gap) ----------
@@ -846,7 +846,8 @@ func _region_inner_corner_arm():
 func test_another_inner_corner_does_not_make_a_sloping_arm_a_wall() -> void:
 	var r = _region_inner_corner_arm()
 	assert_false(Field._is_cliff_top(r, 2, 2))
-	assert_true(Field.has_inner_corner(r, 2, 2), "the arm holds a different corner")
+	# Per edge (September 27) one-storey pockets are slopes: no inner corner anywhere here.
+	assert_false(Field.has_inner_corner(r, 2, 2), "a one-storey pocket holds no inner corner")
 	assert_false(Field.own_edge_flat(r, 2, 2, Vector2i.LEFT),
 		"its edge toward this pocket still descends")
 	var flags := Dress.corner_flags(r, 2, 1)
@@ -892,15 +893,16 @@ func test_registered_inner_corner_holds_the_arm_clips_no_drape_notch() -> void:
 # "smooth curve" up close. The seam now gets inner WALL rows (no lip), from the pocket
 # surface up to the lower arm's top, never above any walkable top.
 func test_continuing_taller_wall_junction_gets_seam_walls_but_no_lip() -> void:
-	var plan := Plan.new(0, 64.0, 12, "mean", 4)
+	# (Per edge, September 27: steps doubled so each intended wall is two+ storeys.)
+	var plan := Plan.new(0, 64.0, 12, "mean", 8)
 	plan.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 1: return 16.0   # D: taller diagonal, continues the west arm's line
-		if cx == 2 and cz == 1: return 8.0    # N arm (lower)
+		if cx == 1 and cz == 1: return 32.0   # D: taller diagonal, continues the west arm's line
+		if cx == 2 and cz == 1: return 16.0   # N arm (lower)
 		if cx == 3 and cz == 1: return 0.0    # N's cliff-maker
-		if cx == 1 and cz == 2: return 12.0   # W arm (taller)
-		if cx == 2 and cz == 2: return 4.0    # P: the pocket (slope-class)
-		if cx == 1 and cz == 3: return 4.0    # W's cliff-maker
-		return 0.0)
+		if cx == 1 and cz == 2: return 24.0   # W arm (taller)
+		if cx == 2 and cz == 2: return 8.0    # P: the pocket (slope-class)
+		if cx == 1 and cz == 3: return 8.0    # W's cliff-maker
+		return 4.0)
 	var r = plan.compute_region(2, 2, 8)
 	assert_true(Field.is_flat_cell(r, 1, 2), "west arm is flat (fixture shape)")
 	assert_true(Field.is_flat_cell(r, 2, 1), "north arm is flat (fixture shape)")
@@ -910,7 +912,7 @@ func test_continuing_taller_wall_junction_gets_seam_walls_but_no_lip() -> void:
 	var lips := 0
 	for t in (data["inner_wall"] as Array):
 		var o := (t as Transform3D).origin
-		if absf(o.x - 34.5) < 0.1 and absf(o.z - 34.5) < 0.1 and absf(o.y - 4.0) < 0.1:
+		if absf(o.x - 34.5) < 0.1 and absf(o.z - 34.5) < 0.1 and absf(o.y - 8.0) < 0.1:
 			walls += 1
 	for t in (data["inner_lip"] as Array):
 		var o := (t as Transform3D).origin
@@ -963,7 +965,9 @@ func test_land_pocket_with_level_diagonal_keeps_full_corner() -> void:
 		for x in range(-2, 3):
 			storeys[Vector2i(x, z)] = 2
 	storeys[Vector2i(0, 0)] = 0        # land pocket (low cell)
-	storeys[Vector2i(0, 1)] = 3        # taller arm (south); east arm stays 2
+	storeys[Vector2i(0, 1)] = 4        # taller arm (south); east arm stays 2
+	# (Per edge, September 27: the taller arm stands two storeys over the level
+	# diagonal, so its side toward it is a cliff and the arm stays flat.)
 	var levels: Dictionary = {}
 	for cell in storeys:
 		levels[cell] = 0
@@ -1146,8 +1150,12 @@ func test_carved_run_end_into_taller_wall_gets_the_turned_cap() -> void:
 	# module + the turned ext_outer cap one slot into the taller cell.
 	var region := _region_owner_junction()
 	var flags: Dictionary = CliffDressing.corner_flags(region, 1, 0)
-	assert_eq(str(flags.get(Vector2i(-1, 1), "")), "ext_outer",
-		"the run end into the taller wall carries the turned corner cap")
+	# Per edge (September 27): the diagonal (1,1)=6 now slopes to the south arm
+	# (5) and its cliff side toward the run descends into that corner, so it has
+	# no native wall column for a turned cap. What stays is the owner's point:
+	# no spurious inner corner at the run's end.
+	assert_ne(str(flags.get(Vector2i(-1, 1), "")), "inner",
+		"the run end into the taller wall is not a spurious inner corner")
 
 ## X-JUNCTION with UNEQUAL plateaus (owner, seed 2697992464 corner point
 ## (12,-1044), cells 3/4/5/6): two plateaus of DIFFERENT storeys touch only at

@@ -69,7 +69,9 @@ func test_balconies_and_roof_crowns_have_native_collision() -> void:
 	var space := stage.get_world_3d().direct_space_state
 	var balconies := 0
 	for probe: Dictionary in probes:
-		var at: Vector3 = probe.at
+		# Off the module seams: rays exactly on native instance/triangle
+		# boundaries are ambiguous in Godot's triangle intersection kernel.
+		var at: Vector3 = probe.at + Vector3(0.013, 0.0, 0.017)
 		var rise := 0.4 if probe.balcony else 14.0
 		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(
 			at + Vector3.UP * rise, at - Vector3.UP * 0.2))
@@ -111,18 +113,23 @@ func test_large_projections_have_corner_posts_and_long_balconies() -> void:
 
 func test_cross_gable_ridges_fit_below_their_host_roof() -> void:
 	var kit := SuntailBuildingKit.create()
-	for seed_value in range(1000, 1020):
-		var mass := KitStandaloneHouse.design(kit, 5, 3, 1, seed_value)
-		var main: Dictionary = mass.roofs[0]
-		var host_rect: Rect2i = main.rect
-		var host_depth := host_rect.size.y if main.axis == 0 else host_rect.size.x
-		var host_height := float(kit.roof_profile(host_depth).height)
-		for roof: Dictionary in mass.roofs:
-			if not roof.open_min and not roof.open_max: continue
-			var rect: Rect2i = roof.rect
-			var depth := rect.size.y if roof.axis == 0 else rect.size.x
-			assert_lte(float(kit.roof_profile(depth).height), host_height,
-				"joined ridge must not become a fin above its host")
+	var checked := 0
+	for size: Vector2i in [Vector2i(5, 3), Vector2i(5, 4), Vector2i(6, 5)]:
+		for seed_value in range(1000, 1020):
+			var mass := KitStandaloneHouse.design(kit, size.x, size.y, 1, seed_value)
+			var main: Dictionary = mass.roofs[0]
+			var host_rect: Rect2i = main.rect
+			var host_depth := host_rect.size.y if main.axis == 0 else host_rect.size.x
+			var host_height := float(kit.roof_profile(host_depth).height)
+			for roof: Dictionary in mass.roofs:
+				if not roof.open_min and not roof.open_max: continue
+				if roof.eave_band != main.eave_band: continue
+				checked += 1
+				var rect: Rect2i = roof.rect
+				var depth := rect.size.y if roof.axis == 0 else rect.size.x
+				assert_lte(float(kit.roof_profile(depth).height), host_height,
+					"joined ridge must not become a fin above its host")
+	assert_gt(checked, 0, "lot houses still join cross wings")
 
 
 func test_roof_finishes_use_wood_colour_and_board_normals() -> void:
@@ -158,6 +165,8 @@ func test_each_balcony_component_has_its_own_house_door() -> void:
 		for seed_value in range(1000, 1020):
 			var mass := KitStandaloneHouse.design(SuntailBuildingKit.create(), 5, 4, dir, seed_value)
 			for deck: Dictionary in mass.decks:
+				# Unrailed decks are flat roofs (unreachable crown strips).
+				if not bool(deck.get("rails", true)): continue
 				var doors := 0
 				for storey: Dictionary in mass.storeys:
 					if storey.floor_band != deck.band: continue

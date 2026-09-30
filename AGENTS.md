@@ -1,3 +1,399 @@
+> September 29 town review (stabilize, after merging the six streams). A
+> storey touching another building is never jetty-inset
+> (`BuildingDesigner._touches_other`; the inset left a 1 m dead slot and put
+> the neighbour's corner post in front of a window, 7/standard). A maze back
+> room / passage cover is its parcel's own room: the stamp records
+> `room.audit.back_room_parcel_id` and `KitVillageBuildings._houses` builds it
+> into that parcel's kit house (it stood as a twin gable beside its host);
+> parts on higher ground are `grounded` in every house. Squares beside the
+> at-grade lane may cut one terrace deeper (`PLAZA_CUT_BUDGET_BANDS` 2 -> 3).
+> Re-pinned with history in the tests: `BUILDABLE_COVERAGE_FLOOR` 0.89,
+> stacking corpus `STACK_PLANNER_SEEDS` (+10/standard), roofline minority
+> 0.34, Town A compound > 0. A stale `.godot` uid cache (missing entries)
+> shows up as "invalid UID" test errors: delete
+> `.godot/editor/filesystem_cache10` and re-run `--import`. Open: bridges and
+> full stacks fell with the citadel and the lane (27 -> 5 bridges, 19 -> 6
+> stacks on probes); the lane keeps the reported-seed hamlet's public realm to
+> one storey (`test_village_plan` span 2 < 3, left red for an owner call). See
+> `docs/qa/2026-09-29-town-review/final/result.md`.
+
+> September 29 town review (tiers): multi-level towns. A seed-rolled share of
+> towns (~1/3 at production sizes) raise a citadel district on a two-storey
+> rock plinth: `WarrenTownPlatform` is a component of the town field
+> (rounded rectangle on the crown lobe, >= 3 rings inside, slid clear of the
+> mouth, >= 9 columns), and `WarrenMassif.bearing_at` = ground + plinth is the
+> one datum downstream reads. The plinth is never bored; no natural tunnel on
+> it or within two rings of it. Within two rings of the wall the lower town
+> stays under the plinth top (`huddle_top`, ground-relative, composed with the
+> edges envelope in `WarrenPlotPlanner._building_top`). One open `citadel_gate`
+> flight climbs along the wall from the spine's summit through a stone gate;
+> upper-town lanes serve every platform column; a wall street runs round the
+> foot. The plinth renders as a fortification (`BuildingKitAssembler.
+> _assemble_fortified`: plain stone `suntail.stone.stone_wall_plain`, baked
+> with the new `exclude_materials` option; batter, parapet with merlons,
+> turrets, gate piers/lintel; the parapet replaces timber rails). Non-platform
+> towns are byte-identical. Tests: `test_september29_town_platform`. Probe:
+> `tests/harness/suntail/town_platform_probe.gd`; views: `kit_town_review
+> --views platform`. See `docs/qa/2026-09-29-town-review/tiers/result.md`.
+
+> September 29 town review (materials; photos 3, 5, 7, Town A). Generated
+> public timber belongs to the kit: `KitSubstitution.redraw_public_surface`
+> draws flights, ramps, landings, gate approaches and the structural deck
+> skin with the kit deck board's material (boards across flights, tangents),
+> removes a flight's generated guard beams from the render (collision kept)
+> and rails it with sheared kit railings from the builder's `guard_spans` /
+> `guard_index_ranges`. The legacy plank shader stays for legacy renders only.
+> Tunnel-mouth arches (`WarrenTunnelArches`, Sept 9) are removed. A house
+> standing on the retained podium (`kit.retained`/`kit.tunnel-ceilings`) has
+> no stone ground storey: the course is its plinth (no flush/deep masonry
+> jog, no offset corner posts). Test `test_september29_town_materials`. See
+> `docs/qa/2026-09-29-town-review/materials/result.md`.
+
+> September 29 town review (skywalks; owner photos 4, 8, 9, seed 2697992464).
+> A bridge-house spans between two building STOREYS: exterior spans landing on
+> walk surfaces (decks, crowns, floors) are always the open timber bridge (two
+> adjacent lanes = one 3 m bridge); enclosed spans come only from
+> `SettlementFabricAssembler._maze_passage_house_candidates` (both ends are room
+> cells of different units at the bridge floor, whole 3 m bays), and each
+> endpoint house opens a door onto it (`KitVillageBuildings._passage_house_claims`)
+> on a flush storey (`abutted`: never inset, so no gap and no post before a window).
+> Every overhanging storey rim (including a datum storey over air, recorded as
+> `soffit_cells`) carries the floor beam (no plaster/board z-fight); roof over free
+> air (loggia, porch) closes the attic with boards at the eave
+> (`BuildingKitAssembler._assemble_attic_ceiling`). Tests:
+> `test_september29_skywalks`. See `docs/qa/2026-09-29-town-review/skywalks/result.md`.
+
+> September 29 town review (floating): the owner's floating stone boxes and
+> "L-shaped skywalk" (photos 1, 2, 6, 10) were CROWNS -- bored-tunnel ceilings
+> and rock shoulders left over a lane with open sky above (the plot model never
+> builds on a passage column). Rule: stone resting on public air exists only as
+> the bearing of a building room or walked floor on its column
+> (`WarrenVolumetricSolver.unborne_crown_cells`); uncarried crowns are released
+> after composition (`WarrenSpatialTransaction.release`, owner-only) and not
+> retained, so the lane opens to the sky. A carried tunnel ceiling is drawn as
+> its whole stone run up to the room it bears, with no deck of its own. Corpus
+> invariant: `KitFloatingMassAudit` == 0 (`test_september29_floating_masses`).
+> Tunnel-roof rule (`WarrenPlotPlanner.cover_tunnels`, plot kind `PLOT_OVER`):
+> a bore whose crown bears on two real jambs is covered by the adjacent house
+> storey just above the crown, stamped as that house's back room and re-proved
+> on the built town (`_over_passage_is_borne`); covers are whole or absent.
+> It restores little (9 -> 9 covered bores on the 14-town survey): most bores
+> have no standing jambs or no house storey over the crown; carving and
+> partition must co-decide covered passages. See
+> `docs/qa/2026-09-29-town-review/floating/result.md`.
+
+> September 29 town review (variety, photo 11: same roofs, same level, same
+> direction). Root cause in the kit layer: every planner lot (mostly 2x2
+> modules) was built as its own house and every square crown ran its ridge
+> along X. `KitVillageBuildings.merge_houses` now merges neighbouring lots into
+> compound buildings (stacked lineages always; rectangular unions, the twin
+> gable rows, always and first; L/T contacts at 0.5; <= 24 modules, 8 across;
+> lots touching bridge-houses/landmarks/split levels stay separate); each
+> member's own top is roofed (`storey.roofed`), higher-ground members get
+> `storey.grounded`, notched crowns fall back to members' own packing.
+> Square crowns choose gable- or eave-to-street per house
+> (`BuildingDesigner._square_axis`); a deep crown whose tall roof would not
+> fit becomes a double pile before a flat terrace. Metric
+> `tests/fixtures/roofline_variety.gd`, survey
+> `tests/harness/suntail/roofline_variety_survey.gd`; 17 towns: minority
+> ridge axis 0.26 -> 0.45, twin gables 0.24 -> 0.15 of touching pairs,
+> compound houses 2% -> 20%; roof audit unchanged. Test
+> `test_september29_roofline_variety`. See
+> `docs/qa/2026-09-29-town-review/variety/result.md`. Determinism: GDScript
+> `Array.sort()` orders StringNames by interned pointer, not text; sort ids
+> with `KitVillageBuildings.sorted_ids` (`test_september29_town_build_order`
+> rebuilds a town after others and compares payloads).
+
+> September 29 town review (edges): towns met the lawn with 3-4 storey walls
+> (photo 7). The massif does descend to a one-storey rim, but houses were not
+> held to it: `_outer_terrace_top` exempted any parcel whose deeper
+> neighbour was its own column, skyline peaks stood on the rim, kit landmarks
+> were always 2-3 storeys, and a shifted upper floorplate could overhang a rim
+> house. Now (`WarrenPlotPlanner.EDGE_RINGS` = 2): every parcel rises at most
+> one storey per massif ring above its floor, and on the two edge rings walls
+> stand at most `ring + 1` storeys above the column's ground (the +1 is the
+> rim terrace a house may stand on); columns that cannot host a storey leave
+> the footprint; no skyline peak on an edge ring; kit landmarks take the same
+> cap (`edge_storey_cap`, own reserved air kept for their roof);
+> `WarrenSpatialGrid.profile_ceiling` stops composition projecting OUTSIDE
+> cells above the profile. Metric: `tests/fixtures/town_perimeter_profile.gd`,
+> harness `tests/harness/layout_judging/perimeter_profile.gd`, test
+> `test_september29_town_edges`. Follow-up (the one-storey stone "rampart"
+> under rim houses): a PERIMETER LANE at grade runs along the second massif
+> ring (`WarrenMazeCarver._lay_perimeter_lanes`, laid after the spine and
+> market, before loops/alleys, around the previewed plaza site), so cottages
+> stand at grade on the rim with houses across the lane; optional streets
+> (alleys, loops, descent) never rise above ground on the two edge rings
+> (`WarrenPassageLatticeRules.raises_edge`, `WarrenMassif.ring_depth`); the
+> covered market never displaces a walk leaf's only doorway; maze stone left
+> standing on air carrying nothing is released after rock retention; tunnel
+> covers sit on their crown (`TUNNEL_OVER_MAX_LIFT` 1). Corpus 38/38 vs
+> f1e5f619: rampart edges 288 -> 91, multi-storey rim houses 26 -> 0, houses
+> 765 -> 1165. Second follow-up (landmarks 58 -> 20: the lane took their
+> flat edge band): `_preview_reserved_columns` holds the landmark sites the
+> plot reservation would choose (profile's `landmark_range.x`, at grade on
+> the edge rings) and their measured reach (also kept from bridge endpoints);
+> the lane walks round them (`_perimeter_detour`, rings 1-5); the plaza is
+> held only if a throwaway lane lay shows it strands no part of the ring
+> (`_perimeter_ring_cover`) -- a raised rim square that does is the photo-7
+> rampart. Composition's pair/participant records obey the edge profile
+> too. Corpus: landmarks 52 (f1e5f619 58), rampart 34, decks 34 -> 20 (open).
+> The plots-test asset oracle now tries every landing door, as the planner
+> does (`WarrenPlotReservations.door_access_for`). See
+> `docs/qa/2026-09-29-town-review/edges/result.md`.
+
+> September 29 terrain review (owner photos 1-11, seed 2697992464). F9's
+> "yellow" was never grading: a graded region carries its town grade only as
+> `native_control_heights` (its `terrain_grades` list is empty), so the old
+> bounds test never fired and the yellow was the overlay averaging orange
+> (dying cliff) with green (slope). `_cell_snapshot` now flags exactly the
+> cells whose native control a town moved (drawn as yellow STRIPES); the
+> stronger edge owns a quadrant's colour. The deformed ground there was the
+> September 27 "dying cliff" rule (a cliff ending in a hillside lowered its
+> edge midpoint halfway toward that corner, denting the plateau beside it).
+> Owner: standardize (supersedes the September 27 cliff-end rule). No special case: every edge is flat,
+> a one-storey smootherstep slope, or a full-height cliff, and a cliff whose
+> corner ring is slope-connected ends through the ordinary corner blend in
+> its last half cell (`TerrainSurfaceField._edge_control`; F9 has no dying
+> category). The envelope's low-wall widening and the mesher's turf skirt
+> below `LOW_WALL` are general height rules and remain. Sheet colour is a
+> function of steepness alone (`CliffRockCrags.SHEET_LAWN_STEEPNESS`, the
+> steepest ordinary slope, 47.6 deg: lawn below, moss by 60 deg); the Sep 28
+> lift gate made a cliff's end ramp lawn beside its mossy face.
+> Seams: grass on the slope sheet must keep its root plane within
+> `GrassSupportSurfaces.FOOTPRINT_FLOAT` (0.2 m, what terrain grass floats
+> over the kernel's own bends; was 6 cm), so grass carries over a rounded
+> crest instead of ending on a line at the wall line. Road divots: the town
+> collar rounded a road cell a storey down and `_grade_roads` pushed the new
+> wall one cell out; roads are now relaxed along accepted road EDGES, last,
+> after pad support (lower to one storey above, then raise to one storey
+> below; only free road cells in reach move). Corpus 5 -> 0 broken road
+> edges. Off the road, the collar's rounded blend also made cliffs between
+> free cells (stray mounds near towns): `NativeTerrainGrade._relax_free`
+> pulls free cells back toward natural, never past it, until every natural
+> slope between free cells is a slope again; pad owners, pad support and
+> regraded roads are construction (`construction_cells`) and keep their
+> retaining edges. Corpus (radius 2, 23 towns): 40 -> 0. Tests: `test_september29_terrain_review` (frozen towns
+> `tests/fixtures/september29-road-divot-*`). See
+> `docs/qa/2026-09-29-terrain-review/result.md`.
+
+> September 28 ground seams, inner-corner cut-outs, water spikes (owner photos
+> 1-5, seed 2697992464). SEAMS: the terrain sheet lights with the exact field
+> gradient (`TerrainChunkMesher.field_normals`), not per-chunk facet averages
+> (they broke at every 192 m chunk border and disagreed with the slope solid).
+> The `sheet` solid lies ON the terrain's 2 m chords (+`CliffSlopeField.COVER`)
+> where it does not raise the ground and hands over to the exact envelope as
+> its lift grows, so it joins the terrain tangentially instead of emerging
+> along a crease at RAISED; painted ground (`CliffSlopeEnvelope.excluded`)
+> keeps the old sunk backing. Moss grade on the solid is scaled by its lift
+> (`native_roots[3]`): ground it merely covers is lawn, like the terrain. Grass
+> on slope supports standing < `GrassField.SUPPORT_MIN_LIFT` (0.1 m) over the
+> terrain grows the terrain's own grass (the grass-less strip at every foot).
+> Tints on both use the terrain's 24 m cell-centre lattice. The across-wall
+> shoulder starts at the wall line (`_walls` `lead`), not half a grid step early.
+> WATER: the water never cuts the envelope. Removed: WATER_REACH planar caps,
+> receivers, bank dilation, the 2 m block wet mask (levels are per node at the
+> shore and at level changes, `_levels`). Walls do not round from a wet crest
+> (water pouring over it). A wall facing a corridor at least 2 `CHANNEL_CORE`
+> wide is fitted: its analytic closed profile is squeezed across the wall
+> (`_channel_scale`, smoothed along the wall) so the bank goes under the water
+> a quarter core short of mid-channel; the crease fillet never rises above the
+> water in fitted channels; no bedrock benches under water. Narrower pockets
+> are absorbed by the bank (Sep 26 rule). DIAGNOSTIC VIEW: F9
+> (`TerrainCategoryOverlay`, screen-space decal over every surface, from
+> `FieldTerrainStreamer.loaded_cell_at` snapshots): grey plateau, green 1-storey
+> slope edge, blue 1-3 m level edge, red cliff edge, orange dying cliff,
+> magenta/cyan rendered above/below the slope kernel, yellow graded, 1 m / 4 m
+> contours, cell grid, blue 192 m chunk borders. Harness: `cliff_site_review
+> --categories`. Tests: `test_september28_ground_seams`,
+> `test_september28_category_overlay`. P03 ledge count now counts dry ground
+> only (the fixture's 11 m tarn held 19 benches the old envelope built in the
+> water). The water mesh itself still follows the kernel (square cell falls).
+> See `docs/qa/2026-09-28-ground-seams/result.md`.
+
+> September 27 judging pass (owner photos 1-13, seed 2697992464; five parallel
+> streams merged on branch `judging-2026-09-27`; per-stream write-ups under
+> `docs/qa/2026-09-27-judging/<stream>/result.md`, evidence JPGs on disk only).
+> SLOPES: slope vs cliff is decided per EDGE, not per tile. A cardinal side whose
+> storeys differ by two or more is a cliff edge (`TerrainSurfaceField.is_cliff_edge`
+> / `is_wall_edge`); every other side, including the one-storey side of a cell
+> that walls elsewhere, is the ordinary smootherstep slope with no envelope
+> dressing. Slope edges take the pairwise minimum, cliff edges keep each owner's
+> height, corners take the minimum over their slope-connected component, so seams
+> stay single-valued. A cliff whose corner ring is slope-connected dies there: its
+> high side lowers the edge midpoint halfway toward that corner so the wall fades
+> along the whole edge. The `sheet` envelope closes only the crests of real
+> discontinuities (`CliffSlopeEnvelope._close_walls`, each wall across itself,
+> convex corners isotropically, below 3 m the shoulder widens so a dying face ends
+> in a round blob); closing the whole ground had lifted every slope 0.57 m and
+> roads cut it back (photo-9 strips), and the photo-12 divot was a one-storey wall.
+> `LOCAL_RELIEF` is gone. Supersedes "a one-storey notch is an inner corner", "a
+> cliff top walls every drop" and "every storey cliff takes the envelope".
+> ROCKS: one stone colour, `rock_style.MEADOW_STONE_TINT` (.52,.475,.40), for
+> bedrock, Meadow rocks and native cliff stone. A slope rock matches its substrate
+> (exposure, moss grade, tint) only in a soft 0.3 m band above its contact plane
+> (`meadow_stone.gdshaderinc`, shared with `cliff_crag`); above it keeps stone
+> sides and grass tops. The sheet no longer multiplies a second anchor tint.
+> Bedrock facets keep only their fall-line tilt (no saw-tooth triangles). Rocks
+> nestle: `DressingCompiler.nestle_distance(a,b) = max(a,b) + 0.25 min(a,b)` (bases
+> overlap, smaller centre outside the larger rock; supersedes "bases never
+> interpenetrate"); slope clusters are 3-4 rocks round the main rock.
+> ROOFS (kit layer): `KitRoofJunctions` is the one branch rule, also within a
+> house; perpendicular branches stop at the host ridge (`clip_min/max`). Gables are
+> trimmed only by an enclosed attic or solid wall, never by padded skins or public
+> headroom; walking clearance over public floors is `TraversalEnvelope.MIN_HEADROOM`.
+> No roof wing is one module deep (`BuildingDesigner._absorb_slivers`); roof over
+> free air is a posted porch (`_porch_posts`) or the merge is rejected. Corpus of
+> 50 towns: open wing ends 563 -> 0, holed gables 258 -> 4, eaves cut 282 -> 0.
+> DETAILS: stone storeys are baked 0.2 m deeper (`masonry_depth`,
+> `suntail.stone.*_deep`) so openings sit in reveals (retaining courses stay
+> flush); `KitSubstitution` only redraws `stall`-tagged, non-`support` stalls;
+> `PathProgram.filleted_path_shapes` paints the outer corner of an unfilleted
+> turn; balcony/projection braces bear on wall-module joints, not across windows;
+> porch canopies are arbitrated town-wide.
+> LAYOUT: destination-owned pruning peels every walk leaf without a real
+> destination, and destinations are exactly the doors construction builds
+> (bridges allocated after pruning, `BRIDGE_YIELDS_TO_DOORWAY`, blocked houses
+> shortened not dropped); `PublicWalkAudit` ceiling is 0 dead ends (baseline 215
+> corpus / 813 rolled). Town size is one continuous draw (`size = roll^4`) with
+> interpolated budgets; no stage compares size labels. `WarrenTownField` = crown
+> lobe + 1-5 satellites + 0-3 clearings. Loop joins are reserved during carving
+> and tunnels may turn/climb: cycle rank 1.42 -> 4.12, tunnel cells 0.19 -> 2.65
+> per town. Rolled towns 300/300 build (baseline 298/300). Open: walks under rooms
+> 13.4% (Sep 10 had 24%); 32 cross-house one-module roofs; lot houses skip the
+> roof mesh union; one-storey table islands become mounds in lakes.
+
+> September 27 dead-end road, root fix (seed 2697992464, player
+> 1177.8,24,527): the town at (51,22) flattened its perimeter/handoff street
+> to its datum beside the country road, a storey below natural, so road cell
+> (48,22) became a cliff top and the accepted edge (48,22)->(49,22) an 8 m
+> wall. Towns now seal their accepted incident roads
+> (`PathPlan.accepted_road_masks_for_node` -> `VillageFrame.road_masks` ->
+> `TerrainGradePatch.road_masks`, kept by every grade extension).
+> `NativeTerrainGrade._grade_roads` lowers an unclaimed road cell that became
+> a new cliff top to one storey above its lowest neighbour (finite lowering
+> fixpoint, within one tile of the grade bounds): the road is graded down
+> into the town and its paint stays continuous. The envelope's road-crossing
+> carry (`excluded_at` kind 2, `RAMP_REACH`) is removed. Invariant: every
+> accepted road edge walkable on natural ground stays walkable after grading
+> (`test_september27_road_grade.gd`; corpus probe
+> `tests/harness/road_grade_walkability_probe.gd`). Raised towns (road below
+> the pad) and sinks deeper than the ramp's reach are not handled. See
+> `docs/qa/2026-09-27-slope-ledges/result.md` section E.
+
+> September 27 slope ledges / slope versus cliff / dead-end road (owner
+> review, seed 2697992464). Bedrock treads never rise outward: the jut is
+> gone. Tread levels (n*step-phase) no longer depend on the riser share. A
+> final `_level_outward` pass caps each carved node by the surface one grid
+> line uphill on its backing's fall line, so treads may tilt side to side
+> but never lip. Jaggedness came from sub-grid treads and creases: the bench
+> is now a tent-filtered cell average with rounded corners, tread >=1.75 m
+> and riser >=1 m, and all neighbouring blocks are blended over 3 m. Split
+> grooves and the fin filter are removed; cut faces keep their stone colour
+> but are not benched. Ridges, bumps and bedrock need a real cliff: they
+> fade in with relief from 4.5 to 8 m (`VARIED`), measured to the water
+> surface, so a one-storey drop (or bank) is one uniform narrow-shoulder
+> slope. The dead-end road's envelope mitigation was later replaced by the
+> town-grade root fix below. See `docs/qa/2026-09-27-slope-ledges/result.md`.
+
+> September 27 rock placement (owner: rocks scattered evenly, too many on
+> the mountaintop, stacked pairs, sitting on the ground like separate
+> objects). Probed at seed 2697992464 chunk (1,4): 94 of the 105 rocks in the
+> reported 1.1 ha were bedrock slope foot rocks (`CliffSlopeField._find_rocks`,
+> 75% of 7 m slots, 104 base-overlapping pairs); the isolated boulders on the
+> flat top were `ambient.rock_large`. Slope clusters now occupy 10 m slots only
+> where one coherent colony field (`colony01`, 56 m) allows, companions lie
+> beside the main rock, and clusters compete as units (Matern II on cluster
+> keys; no singletons). Rock `DressingSet`s may be colonies (`colony_radius`,
+> `colony_members`: one Neyman-Scott parent per 24 m cell); boulders need a
+> 1.5 m rise within 9 m; embedded bases never interpenetrate (`BASE_NESTLE`).
+> `embed_fraction` sinks the whole compiled base outline below the ground and
+> `RockSkirt` raises a ground mound that meets the rock. The mound is the
+> surface it covers, swollen: each vertex takes that surface's own normal,
+> tint, moss grade and exposure (only height differs). Over terrain it uses
+> the terrain material with cell-pinned mesher heights/normals; over the
+> bedrock sheet its triangles join `solid(owned)[0]` itself (same mesh, moss
+> scale and collision). A tilted-normal or separate-placement mound read as a
+> pale pad with an outline (follow-up review). Owned with the rock (seam-free);
+> mesh-backed grass supports (no blades under the rock). Slope ground rocks gained catalog hull
+> collision. Chunk: slope 389 -> 99, ambient 30 -> 9 rocks. See
+> `docs/qa/2026-09-27-rock-placement/result.md`.
+
+> September 27 mountain water: a spring fires only if its raw contour walk
+> (`WaterPlan._walk`) ends beyond `SUMMIT_REACH` (96 m). About 10% of summit
+> sources circled a narrow peak and stopped at 11 samples; their flank lake
+> dug up to 79 m, so the storey clamp cut 12 m steps and water ran out of the
+> mountainside (reported site: super-cell (0,1)). All other traces are
+> unchanged. The slope envelope treats water no deeper than `WATER_SINK` as a
+> film: neither a shore nor a cut. Previously a river's 0.1 m sill film grew a
+> rounded bank over its own cascade. `_water_level` now returns films too.
+> Three red-first tests; water suite otherwise matches baseline. The live P03
+> crater is gone. See `docs/qa/2026-09-27-mountain-water/result.md`.
+
+> September 26 ledge restoration / slope-normal follow-up: the 0.25 m
+> recess cap had erased the bench geometry. Bedrock now shifts its complete
+> block profile outside the continuous backing (original 3.5–6.5 m spacing,
+> occasional 15% taller blocks), bounded below the local crest. Faces take
+> 60–75% of the fall-line run so they lean with the hill; treads stay level.
+> Dry banks permit relief, while roads and submerged channels remain clear.
+> Keep the 8 m wet-core rule, 3–7 m crown guard and 0.25 m inward limit.
+> 37 tests / 615 assertions; nine native chunks, six player walks, 526 ledge
+> contacts, 170 surface contacts and 175 grass roots checked with no misses.
+> Median face-normal deviation from the hillside falls from 16.81° to 11.05°.
+> Front/side/above and neutral-material before/after/pixel diffs inspected.
+> See `docs/qa/2026-09-26-rock-ledge-restoration/result.md`.
+
+> September 26 circled mountain cut-outs: the owner's latest image exposed
+> two actual geometry regressions. Water receiver cuts now require an 8 m
+> wet-core radius (narrow wet pockets are absorbed by the bank; the broad
+> opposing-bank channel still passes). Bedrock may recess only 0.25 m into
+> the uncarved hill, while keeping up to 1.25 m outward relief. Normal
+> gradients use the complete height envelope, never sparse-band +/-1
+> classification sentinels. Original moss colours/blend retained; the
+> recolouring-only candidate was rejected. 34 tests / 613 assertions, six
+> actual-player walks through the three large circled areas, nine rebuilt
+> chunks and front/side/overhead pixel comparisons pass. 152 surface and
+> 185 grass-root samples have no misses; 208 shared normals match exactly.
+> See `docs/qa/2026-09-26-p03-crown-colour/result.md`.
+
+> September 26 P03 continuity (second owner reopening): fixed water cuts
+> that overrode rounded crowns. Tall banks use relief-dependent parabolic
+> runout, with submerged receivers between opposing banks; 5 m is no longer
+> a hard maximum for tall slopes. Bedrock protects 3–7 m around crowns,
+> unbenched blocks follow the hill, neighboring phases blend, displacement
+> is bounded to 1.25 m, and artificial single-cell reversals are removed.
+> Fitted foot assets no longer add redundant terrain mounds. Grass coverage
+> follows continuous normals, not triangle facets. 48 tests / 689 assertions,
+> six actual crown walks, nine rebuilt chunks and four matched pixel-diff
+> pairs checked. Additional front/side views expose the right-hand geometry.
+> P03 itself is foreground-occluded; do not use it alone as art acceptance.
+> Narrow lower rock risers remain steep; original global art scope stays open.
+> See `docs/qa/2026-09-26-p03-continuity/result.md`.
+
+> September 26 P03 follow-up: the owner reopened the restoration after
+> marking a remaining void, sharp crest, steep slopes, floating grass and a
+> pale ledge stripe. That newer request authorizes gentler rounded profiles
+> and continuous moss grading while retaining the surface-net rock style.
+> Canonical water domains keep adjacent envelopes identical; shallow films
+> cannot cut away the shoulder, and water caps cannot excavate ground.
+> Cut walls retain backing; the surface-net gradient needs a three-column
+> halo. Grass uses rendered triangles plus whole-clump support. Rock treads
+> inherit uncarved hillside moss grade. 40 tests pass; native P03 has 242
+> identical shared normals, 1,449 matching height samples and no sampled
+> grass/surface contact misses. Nine rebuilt chunks and five matched image /
+> pixel-diff comparisons reviewed. This supersedes the narrow restoration;
+> broader original issues remain open. See
+> `docs/qa/2026-09-26-p03-followup/result.md`.
+
+> September 26 owner correction: the manual-cliff pass was REJECTED,
+> especially p03's disconnected flat tops and angular stone. Preserve the
+> original surface-net slope/rock style, original radii, palette and grass.
+> Do not replace it with a direct heightfield or recolour/widen it. The repair
+> is limited to omitted bedrock columns, consistent triangle winding, and
+> removal of covered old grass lips/buried skirt edges while retaining exposed
+> wall backing. 23 tests / 381 assertions and 526 sampled surface contacts pass.
+> Current review: `docs/qa/2026-09-26-cliff-style-restoration/result.md`.
+
 > September 26 bedrock in game (owner chose it): `world.tscn` uses
 > `sheet_bedrock`. The slope fades to the terrain where the 14 m local relief is
 > under 2-3.2 m (level steps take no slope). Gentle slope uses the exact lawn
@@ -73,6 +469,34 @@
 > cover 4/8/16 m walls and corners. See
 > `docs/qa/2026-09-25-slope-outcrops/result.md`.
 
+> September 27 town scale, canopies and closures: the owner found towns too
+> small. `VillageWorldScale` is 4/3 larger and still on the terrain grid:
+> 4 m fine / 8 m macro cells (three per 24 m terrain cell), 3 m bands / 6 m
+> storeys, Suntail at a uniform 2x (`KIT_WORLD_SCALE`); every consumer reads
+> the frame constants (stairs add treads: `MAX_STAIR_RISE` divides by
+> `VERTICAL_SCALE`). Warren record discovery covers the whole 192 m inset
+> (`VillageProgram.WARREN_RECORD_REACH`); measured large/grand towns reach up
+> to ~190 m including the grade collar, a measurement, not a proof. Porch
+> canopies are one wall module wide (role anchor), back posts on the wall
+> face, admitted only on level public floor at the storey band, clear of
+> STAIR claims and raised gate flights (`KitVillageBuildings.flight_columns`)
+> and of each other. Retained terrace walls, and facades whose lower band is
+> backed by ground or another building, carry no windows. A court bears on
+> the retained terrace beneath it (`SettlementFabricAssembler
+> .effective_support_base`): one band above it the retaining skirt closes the
+> gap and posts never pierce the lawn. Flight guards clip against inhabited
+> room and retained cells (kit walls, grown by the wall face); a clipped rail
+> end gets its end post seated in front of the face. Second pass: a storey
+> hanging over public air closes its underside even at the house datum (the
+> bridge-house over the lane was floorless); one-band retained courses are
+> flush masonry (sunk storey panel on the ground, never the corner-piered
+> Stone_Base plinth); every exposed convex kit wall corner gets one corner
+> post (`BuildingKitAssembler._emit_corner_post`); player-sized props keep
+> their pre-upscale world size (`VillageWorldScale.HUMAN_PROP_*`,
+> `KitSubstitution.HUMAN_PREFIXES`, assembler `prop_scale`). Tests:
+> `test_town_canopies`, `test_town_court_enclosure`, `test_town_closures`.
+> See `docs/qa/2026-09-27-town-scale-gaps/result.md` (open items there).
+
 > September 26 town depth/shared field: all production settlements use the
 > same volumetric generator. `WarrenTownField` samples elliptical lobes,
 > clearings and low connecting shoulders before boring; population labels
@@ -101,9 +525,9 @@
 > withdraws the legacy units/families it replaces; `KitSubstitution` redraws
 > remaining legacy public pieces by measured bounds (tiled) and swaps props;
 > `KitStandaloneHouse` draws hamlet lots. The world frame follows the kit
-> metric: `VillageWorldScale` is anisotropic (x2 horizontal, x1.5 vertical
-> on the 1.5 m lattice) so Suntail renders at a uniform 1.5x with 4.5 m
-> storeys; ask `scale_of` (horizontal) or `vertical_scale_of`. New packs add
+> metric: `VillageWorldScale` is anisotropic (x8/3 horizontal, x2 vertical
+> on the 1.5 m lattice since September 27) so Suntail renders at a uniform
+> 2x with 6 m storeys; ask `scale_of` (horizontal) or `vertical_scale_of`. New packs add
 > a kit + bake manifest (`material_palette`/`material_roughness` restore
 > vendor shader tints). Review: `tests/harness/suntail/kit_town_review.gd`
 > (flat-ground towns by city seed), `building_gallery.gd`, and
@@ -3273,8 +3697,8 @@ with sibling **WaterSkin** and **DressingField** payloads, driven per-chunk by
   7/8/9/11 footprints again dominated the character and surrounding world. Planning diameters are
   51/57/63/69 m in the production frame. The source macro lattice remains the authored 3 m
   module and its 1.5 m two-lane proof grid; `VillageWorldScale` maps the entire sealed transaction
-  uniformly to a 6 m world macro / 3 m world fine lattice. One immutable 24 m terrain-field cell
-  therefore contains exactly four town macro cells. The frame scales meshes, collision, semantic
+  to an 8 m world macro / 4 m world fine lattice with 3 m bands (September 27; formerly 6 / 3 m).
+  One immutable 24 m terrain-field cell therefore contains exactly three town macro cells. The frame scales meshes, collision, semantic
   occupancy, route widths, supports, and terrain samples together; individual assets are never
   resized to repair a fit. Town extent changes only by admitting more procedural massif, street,
   plot, and outskirts opportunities.** Total
