@@ -42,6 +42,7 @@ const MEANDER_SCALE := 180.0
 const STEEP_HI := 0.10
 const SELF_AVOID_R := 76.0
 const SELF_AVOID_SKIP := 10
+const SUMMIT_REACH := TILE * 4.0  # the walk's free first loop; outward drift starts here
 # Arc length may grow without growing the source-discovery dependency halo.
 const TRACE_REACH := 2400.0
 const GRAD_EPS := 6.0             # finite-difference step for the gradient
@@ -349,7 +350,15 @@ func _has_source_uncached(sc: Vector2i) -> bool:
 		return false
 	if grad(p).length() >= SOURCE_PEAK_EPS:
 		return false   # never converged — a vast flank; another cell owns this summit
-	return _ring_prominence(p) >= PROMINENCE_MIN   # plateau tops never fire
+	if _ring_prominence(p) < PROMINENCE_MIN:
+		return false   # plateau tops never fire
+	# A spring feeds a river only if its walk leaves the summit. Within
+	# SUMMIT_REACH the walk may circle freely; on a narrow peak that first
+	# loop boxed it in (about 11 steps), leaving a terminal lake on the flank
+	# that spilled far below the summit and excavated a stepped crater: water
+	# ran out of the mountainside (owner, September 27).
+	var walk := _walk(sc)
+	return walk.points[-1].distance_to(walk.points[0]) > SUMMIT_REACH
 
 
 # ---------------------------------------------------------------
@@ -472,6 +481,16 @@ func _trace(sc: Vector2i, depth: int,
 		return null
 	if depth > 0:
 		return _joined_trace(sc, depth, progress_start, progress_end)
+	return _walk(sc, progress_start, progress_end)
+
+
+## The raw contour walk from a summit, before junctions. has_source() reads
+## how it ends, so it is cached separately from the validated traces.
+var _walk_cache: Dictionary = {}
+
+func _walk(sc: Vector2i, progress_start := -1.0, progress_end := -1.0) -> RiverTrace:
+	if _walk_cache.has(sc):
+		return _walk_cache[sc]
 	var t: RiverTrace = RiverTrace.new()
 	t.source_cell = sc
 	t.priority = priority_of(sc)
@@ -514,6 +533,7 @@ func _trace(sc: Vector2i, depth: int,
 	_shape_alluvial_reach(t)
 	t.pond = _make_pond(p, arc, t.beds[-1])
 	_fit_terminal_land(t)
+	_memo_insert(_walk_cache, sc, t, SOURCE_MEMO_LIMIT)
 	return t
 
 
@@ -612,7 +632,7 @@ func _contour_step(t: RiverTrace, visited: Dictionary, p: Vector2,
 			continue
 		# A gentle outward drift leaves room for the next turn around the hill.
 		# It prevents the contour walk from sealing itself inside its first loop.
-		if p.distance_to(source) > TILE * 4.0 and heading.dot(outward) < 0.15:
+		if p.distance_to(source) > SUMMIT_REACH and heading.dot(outward) < 0.15:
 			continue
 		var clearance := SELF_AVOID_R
 		for old: Vector2 in nearby:
