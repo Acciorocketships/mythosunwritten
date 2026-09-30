@@ -61,6 +61,7 @@ static func _copy_grade(source: TerrainGradePatch, grades: Dictionary) -> Terrai
 	grades[id] = result
 	result._continuous_cells = source._continuous_cells.duplicate()
 	result._continuous_datum = source._continuous_datum
+	result.road_masks = source.road_masks.duplicate()
 	if source._continuous_source != null:
 		result._continuous_source = _copy_grade(source._continuous_source,grades)
 	return result

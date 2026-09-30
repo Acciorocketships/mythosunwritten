@@ -117,9 +117,11 @@ func frame_for(super_cell: Vector2i) -> VillageFrame:
 		node = site
 	var point := Vector2(node.cell) * TerrainSurfaceField.TILE
 	var block := WorldFieldBlockCache.key_of(point)
+	var roads := _paths.accepted_road_masks_for_node(super_cell)
 	var frame := VillageFrame.build(node, _paths.context_for(block),
 		_fields.region(block), _fields.water(block),
-		_paths.accepted_mask_for_node(super_cell))
+		int(roads.get(node.cell, 0)))
+	frame.road_masks = roads
 	_frames[super_cell] = frame
 	return frame
 

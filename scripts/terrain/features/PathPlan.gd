@@ -136,13 +136,19 @@ func route_for(node_a: Dictionary, node_b: Dictionary) -> Dictionary:
 ## backbone/loop decision used by block contexts, without constructing an
 ## unrelated 192 m feature block merely to discover a village frame.
 func accepted_mask_for_node(super_cell: Vector2i) -> int:
+	var node := node_for(super_cell)
+	return 0 if node.is_empty() else int(accepted_road_masks_for_node(super_cell).get(node.cell, 0))
+
+## Complete lattice (cell -> connection mask) of this settlement's accepted
+## incident roads. The settlement's grade keeps exactly these roads walkable.
+func accepted_road_masks_for_node(super_cell: Vector2i) -> Dictionary:
 	if _accepted_masks.has(super_cell):
 		_touch(_accepted_mask_stamps, super_cell)
-		return int(_accepted_masks[super_cell])
+		return _accepted_masks[super_cell]
 	_evict_lru(_accepted_masks, _accepted_mask_stamps,
 		_program.NODE_CACHE_CAP)
 	var node := node_for(super_cell)
-	var mask := 0
+	var masks: Dictionary = {}
 	if not node.is_empty():
 		for direction: Vector2i in _DIRS:
 			var other_super := super_cell + direction
@@ -158,10 +164,11 @@ func accepted_mask_for_node(super_cell: Vector2i) -> int:
 				< PathProgram.LOOP_EDGE_PROBABILITY
 			if loop or bool(_route_preferred_at(super_cell, route)) \
 				or bool(_route_preferred_at(other_super, route)):
-				mask |= _route_endpoint_mask(route, node.cell)
-	_accepted_masks[super_cell] = mask
+				for connection: Dictionary in route.connections:
+					_add_connection(masks, connection.a, connection.b)
+	_accepted_masks[super_cell] = masks
 	_touch(_accepted_mask_stamps, super_cell)
-	return mask
+	return masks
 
 
 static func _route_endpoint_mask(route: Dictionary, cell: Vector2i) -> int:

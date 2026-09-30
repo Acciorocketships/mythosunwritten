@@ -20,6 +20,9 @@ var connection_signature: StringName
 var region: HeightfieldRegion
 var water: WaterFieldContext
 var path_ground: FeatureGroundField
+## Canonical lattice of the settlement's accepted incident roads (cell ->
+## connection mask); its terrain grade must keep them walkable.
+var road_masks: Dictionary = {}
 
 static func build(node: Dictionary, context: FeatureContext,
 		p_region: HeightfieldRegion,
