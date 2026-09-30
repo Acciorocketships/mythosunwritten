@@ -25,9 +25,9 @@ func _plan():
 	return p
 
 func _region_for(plan, chunk: Vector2i) -> HeightfieldRegion:
-	var centre := chunk * Mesher.CELLS_PER_CHUNK \
-		+ Vector2i.ONE * (Mesher.CELLS_PER_CHUNK / 2)
-	return plan.compute_region(centre.x, centre.y, Mesher.CELLS_PER_CHUNK)
+	var centre := chunk * Mesher.POINTS_PER_CHUNK \
+		+ Vector2i.ONE * (Mesher.POINTS_PER_CHUNK / 2)
+	return plan.compute_region(centre.x, centre.y, Mesher.POINTS_PER_CHUNK)
 
 
 func test_structural_terrain_uses_the_world_slope_kernel_at_its_own_scale() -> void:
@@ -400,14 +400,14 @@ func test_chunk_has_collision():
 	node.free()
 
 func test_no_floating_water_planes():
-	# Owner screenshot (seed 3846192678, cell (1,-4)): the per-chunk water quads sat at y=2 over
+	# Owner screenshot (seed 3846192678): the per-chunk water quads sat at y=2 over
 	# flat storey-0 ground with no basin around them, textured with the ground-material fallback
 	# (water.tres doesn't exist) — reading as weird floating brown planes. The owner asked to
 	# remove them; the global WaterSurface scene is the water visual instead.
 	var m := Mesher.new()
 	m.set_seed(3846192678)
 	var p := Plan.new(3846192678, 22.0, 8, "mean", 3)
-	var node: Node3D = m.build_chunk(p, Vector2i(0, -1))   # covers cells (2,-4),(3,-4): water there
+	var node: Node3D = m.build_chunk(p, Vector2i(0, -1))
 	var water := node.find_child("Water", true, false) as MeshInstance3D
 	assert_true(water == null or water.mesh == null, "chunks emit no floating water quads")
 	node.free()
@@ -418,229 +418,290 @@ func test_terrain_mesher_does_not_own_dressing():
 		"visual dressing is a sibling streamer payload, not terrain geometry")
 	node.free()
 
-func test_adjacent_chunks_share_boundary_height():
-	# The shared edge between chunk (0,0) and chunk (1,0) must sample identical heights
-	# (gap-free property): the field is single-valued, so the last column of chunk 0
-	# equals the first column of chunk 1.
-	const Field := preload("res://scripts/terrain/field/TerrainSurfaceField.gd")
-	var p = _plan()
-	var r = p.compute_region(0, 0, 64)
-	var boundary_x := float(Mesher.CELLS_PER_CHUNK) * 24.0 * 0.5  # right edge of chunk (0,0) in world x
-	var a := Field.surface_y(r, boundary_x, 3.0)
-	var b := Field.surface_y(r, boundary_x, 3.0)
-	assert_eq(a, b, "field is single-valued at the shared boundary")
+# --- point-lattice fixtures ------------------------------------------------------
+# Heights live on 12 m lattice points (dual-grid terrain tiles). A chunk's sheet
+# is its 192 m square; its walls are those of points 16k .. 16k+15.
 
-func test_chunk_emits_cliff_wall():
-	# The cliff face is now a VERTICAL rock SKIRT (separate "CliffFaces" mesh) — not a slanted part
-	# of the walkable surface — PLUS overlaid KayKit dressing + a collision wall. Verify: (a) the
-	# CliffFaces skirt has rock-UV triangles, (b) a collision wall blocks it, (c) dressing.
-	const Atlas := preload("res://scripts/terrain/tools/SlopeAtlas.gd")
-	var cliff_uv: Vector2 = Atlas.cliff_uv()
-	var p := Plan.new(11, 32.0, 8, "mean", 3)
-	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)  # cliff between cell 3 and 4
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
-	assert_not_null(faces, "a CliffFaces rock-skirt mesh is emitted at the cliff")
-	var uvs: PackedVector2Array = faces.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
-	var grass := 0
-	for uv in uvs:
-		if uv.is_equal_approx(Atlas.grass_uv()): grass += 1
-	assert_eq(grass, 0, "the cliff skirt is rock (KayKit wall texel), never grass")
-	# the walkable surface itself must carry NO rock (cliff faces are not slanted into it anymore)
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var suv: PackedVector2Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
-	var surf_rock := 0
-	for uv in suv:
-		if uv.is_equal_approx(cliff_uv): surf_rock += 1
-	assert_eq(surf_rock, 0, "walkable surface is all grass; the cliff face is the separate skirt")
-	# A second collision shape (the invisible wall) stops the player at the cliff.
+## A region from explicit point heights (metres; storey = floor(h/4)), over a
+## window comfortably larger than chunks (0,0)/(1,0) and their halos.
+static func _points(heights: Callable) -> HeightfieldRegion:
+	var storeys := {}
+	var levels := {}
+	for j in range(-24, 41):
+		for i in range(-24, 57):
+			var h: float = heights.call(i, j)
+			storeys[Vector2i(i, j)] = floori(h / 4.0)
+			levels[Vector2i(i, j)] = floori(fposmod(h, 4.0))
+	return HeightfieldRegion.new(storeys, levels)
+
+## A plateau 3 storeys high west of the wall x = 12*7 + 6 = 90, with an
+## outer corner at z = 12*9 + 6 = 114, a one-storey slope step on its top,
+## an E2 cliff end into a slope and a level step: every wall/slope case.
+static func _mixed_region() -> HeightfieldRegion:
+	return _points(func(i: int, j: int) -> float:
+		if i <= 7 and j <= 9:
+			if i == 3 and j == 3: return 16.0   # one-storey bump on the plateau (slope)
+			return 12.0
+		if i == 8 and j == 10: return 4.0      # slope beside the wall's low side (E2 end)
+		if i >= 20: return 1.0                 # level step east
+		return 0.0)
+
+static func _cliff_region() -> HeightfieldRegion:
+	return _points(func(i: int, _j: int) -> float: return 12.0 if i <= 7 else 0.0)
+
+## Heights compare as the float32 vertex components hold them.
+static func _f32(value: float) -> float:
+	return Vector3(value, 0.0, 0.0).x
+
+func _mesher() -> TerrainChunkMesher:
+	var m := Mesher.new()
+	m.prepare_resources()
+	return m
+
+static func _sheet_triangles(arrays: Array) -> Array:
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	var out: Array = []
+	for t in range(0, idx.size(), 3):
+		out.append([verts[idx[t]], verts[idx[t + 1]], verts[idx[t + 2]]])
+	return out
+
+## The walls a chunk owns: wall segments whose high owner is one of its points.
+static func _owned_walls(region, chunk: Vector2i) -> Array:
+	var lo := chunk * Mesher.POINTS_PER_CHUNK
+	var owned := Rect2i(lo, Vector2i.ONE * Mesher.POINTS_PER_CHUNK)
+	var rect := Rect2(Vector2(lo) * 12.0 - Vector2.ONE * 6.0, Vector2.ONE * 192.0)
+	var out: Array = []
+	for wall: Dictionary in TerrainTileField.wall_segments(region, rect):
+		if owned.has_point(wall.high):
+			out.append(wall)
+	return out
+
+## Required (task 4): along every wall the skirt's top welds the high owner's
+## sheet and its bottom the low owner's sheet: both are bit-identical sheet
+## boundary vertices at every 2 m sample of the wall line.
+func test_skirt_top_welds_the_high_sheet_and_bottom_the_low_sheet_along_every_wall() -> void:
+	for region: HeightfieldRegion in [_mixed_region(), _cliff_region()]:
+		var data := _mesher().compute_chunk(Vector2i.ZERO, region)
+		var sheet: Dictionary = {}
+		for v: Vector3 in (data.surface_arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array):
+			var key := Vector2(v.x, v.z)
+			if not sheet.has(key): sheet[key] = {}
+			sheet[key][v.y] = true
+		var skirt: Dictionary = {}
+		for v: Vector3 in (data.wall_collision_arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array):
+			var key := Vector2(v.x, v.z)
+			if not skirt.has(key): skirt[key] = {}
+			skirt[key][v.y] = true
+		var walls := _owned_walls(region, Vector2i.ZERO)
+		assert_gt(walls.size(), 0, "fixture has walls")
+		var checked := 0
+		for wall: Dictionary in walls:
+			var a: Vector2 = wall.a
+			var b: Vector2 = wall.b
+			var along := (b - a).normalized()
+			for k in 4:
+				var p := a + along * (2.0 * k)
+				var top := _f32(TerrainTileField.surface_y_on_side(region, p.x, p.y, wall.high))
+				var bottom := _f32(TerrainTileField.surface_y_on_side(region, p.x, p.y, wall.low))
+				if top <= bottom + 0.001:
+					continue
+				assert_true(skirt.has(p) and skirt[p].has(top) and skirt[p].has(bottom),
+					"skirt spans %s..%s at %s" % [bottom, top, p])
+				if p.x >= 0.0 and p.x <= 192.0 and p.y >= 0.0 and p.y <= 192.0:
+					assert_true(sheet.has(p) and sheet[p].has(top), "high sheet welds the skirt top at %s" % p)
+					assert_true(sheet.has(p) and sheet[p].has(bottom), "low sheet welds the skirt bottom at %s" % p)
+					checked += 1
+		assert_gt(checked, 10, "wall samples inside the sheet were checked")
+
+## Required: no sheet triangle straddles a wall. Every triangle lies in one
+## lattice point's dual cell and every vertex is that point's own surface.
+func test_no_sheet_triangle_straddles_a_wall() -> void:
+	var region := _mixed_region()
+	var data := _mesher().compute_chunk(Vector2i.ZERO, region)
+	var bad := 0
+	for tri: Array in _sheet_triangles(data.surface_arrays):
+		var c: Vector3 = (tri[0] + tri[1] + tri[2]) / 3.0
+		var owner := Vector2i(TerrainTileField.point_of(c.x), TerrainTileField.point_of(c.z))
+		for v: Vector3 in tri:
+			var inside := absf(v.x - owner.x * 12.0) <= 6.0 and absf(v.z - owner.y * 12.0) <= 6.0
+			if not inside or v.y != _f32(TerrainTileField.surface_y_on_side(region, v.x, v.z, owner)):
+				bad += 1
+	assert_eq(bad, 0, "every sheet vertex is its triangle's owner surface, inside its dual cell")
+
+## Required: seam equality between adjacent chunks. Their sheets share every
+## border vertex exactly, and each wall is skirted by exactly one of them.
+func test_adjacent_chunks_share_border_vertices_and_each_wall_once() -> void:
+	var region := _points(func(i: int, j: int) -> float:
+		# Walls cross the chunk border x = 192 (points 15|16) along z = 12*5+6,
+		# and stand right on the dual border x = 186 (points 15|16 at i = 15.5).
+		if j <= 5 and i >= 10 and i <= 22: return 12.0
+		if i == 15 and j >= 10: return 20.0
+		return 0.0)
+	var m := _mesher()
+	var left := m.compute_chunk(Vector2i(0, 0), region)
+	var right := m.compute_chunk(Vector2i(1, 0), region)
+	var border := func(data: Dictionary) -> Dictionary:
+		var out := {}
+		for v: Vector3 in (data.surface_arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array):
+			if v.x == 192.0:
+				out[v] = true
+		return out
+	var a: Dictionary = border.call(left)
+	var b: Dictionary = border.call(right)
+	assert_gt(a.size(), 96, "the border column is present")
+	assert_eq(a.keys().size(), b.keys().size(), "same border vertex count")
+	for v: Vector3 in a:
+		assert_true(b.has(v), "right chunk has the left chunk's border vertex %s" % v)
+	var quads := {}
+	var duplicated := 0
+	for data: Dictionary in [left, right]:
+		var verts: PackedVector3Array = data.wall_collision_arrays[Mesh.ARRAY_VERTEX]
+		var seen := {}
+		for t in range(0, verts.size(), 12):
+			var key := [verts[t], verts[t + 1], verts[t + 2]]
+			key.sort()
+			if seen.has(key):
+				continue
+			seen[key] = true
+			if quads.has(key):
+				duplicated += 1
+			quads[key] = true
+	assert_eq(duplicated, 0, "no wall face is emitted by both chunks")
+	# Every wall of both chunks' points is skirted somewhere.
+	for chunk: Vector2i in [Vector2i(0, 0), Vector2i(1, 0)]:
+		for wall: Dictionary in _owned_walls(region, chunk):
+			var p: Vector2 = wall.a
+			var covered := false
+			for key: Array in quads:
+				for v: Vector3 in key:
+					covered = covered or Vector2(v.x, v.z) == p
+			assert_true(covered, "wall at %s is skirted" % p)
+
+## Required: the collision sheet covers the visual sheet (no lip clip: the
+## visible ground and the walkable ground are the same triangles).
+func test_collision_covers_the_sheet() -> void:
+	var data := _mesher().compute_chunk(Vector2i.ZERO, _mixed_region())
+	var collision := {}
+	var faces: PackedVector3Array = data.collision_faces
+	for t in range(0, faces.size(), 3):
+		var key := [faces[t], faces[t + 1], faces[t + 2]]
+		key.sort()
+		collision[key] = true
+	var missing := 0
+	var tris := _sheet_triangles(data.surface_arrays)
+	for tri: Array in tris:
+		var key := tri.duplicate()
+		key.sort()
+		if not collision.has(key):
+			missing += 1
+	assert_eq(tris.size(), faces.size() / 3, "one collision triangle per sheet triangle")
+	assert_eq(missing, 0, "every visible sheet triangle is walkable collision")
+
+func test_chunk_emits_a_rock_cliff_wall_without_native_pieces():
+	var m := _mesher()
+	var data := m.compute_chunk(Vector2i.ZERO, _cliff_region())
+	# (The visual skirt faces the slope sheet buries are withdrawn; the
+	# collision arrays keep every face with the same UVs.)
+	var uvs: PackedVector2Array = data.wall_collision_arrays[Mesh.ARRAY_TEX_UV]
+	assert_gt(uvs.size(), 0)
+	for uv: Vector2 in uvs:
+		assert_true(uv.is_equal_approx(m._skirt_uv), "the three-storey skirt is rock, never grass")
+	var node := m.commit_chunk(data)
 	var body := node.find_child("Body", true, false) as StaticBody3D
 	assert_not_null(body.get_node_or_null("CollisionShape3D_walls"), "collision wall present")
-	# KayKit cliff dressing produced rock-wall pieces for the cliff.
-	var cliffs := node.find_child("Cliffs", true, false)
-	var walls := cliffs.find_child("Walls", true, false) as MultiMeshInstance3D
-	assert_gt(walls.multimesh.instance_count, 0, "cliff dressing produced wall pieces")
+	assert_null(node.find_child("Cliffs", true, false), "world terrain places no KayKit wall/lip pieces")
+	assert_null(node.find_child("Aprons", true, false), "no aprons: nothing is recessed to seal")
 	node.free()
 
-func test_cliff_skirt_is_vertical_at_the_boundary_no_cap():
-	# The rock cliff-face skirt (CliffFaces) is a plain VERTICAL wall on a single plane just behind the
-	# cell boundary (SKIRT_RECESS behind the KayKit wall, which reaches the boundary and is the visible
-	# face) — NO horizontal cap and NO overhang. The old cap+overhang produced protruding planes and
-	# left the boundary drop unfilled (see-through voids). Cliff at cell 3|4 → E-edge boundary x=84, so
-	# every skirt vertex sits on x = 84 - SKIRT_RECESS and every triangle is near-vertical (no cap).
-	var p := Plan.new(11, 32.0, 8, "mean", 3)
-	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
-	assert_not_null(faces, "CliffFaces skirt present")
-	var verts: PackedVector3Array = faces.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	assert_gt(verts.size(), 0, "skirt has geometry")
-	var horiz := 0
-	var plane_x := 84.0 - Mesher.SKIRT_RECESS
-	for t in range(0, verts.size(), 3):
-		var a := verts[t]; var b := verts[t + 1]; var c := verts[t + 2]
-		var n := (b - a).cross(c - a).normalized()
-		if absf(n.y) > 0.3:
-			horiz += 1
-		for v in [a, b, c]:
-			assert_almost_eq(v.x, plane_x, 0.01, "skirt vertex on the single recessed boundary plane")
-	assert_eq(horiz, 0, "no horizontal cap triangles (those were the protruding planes)")
-	node.free()
+func test_cliff_skirt_stands_on_the_wall_line_with_no_cap():
+	# The 3-storey cliff between points 7 and 8 stands on x = 90, the dual border.
+	var data := _mesher().compute_chunk(Vector2i.ZERO, _cliff_region())
+	for key: String in ["wall_arrays", "wall_collision_arrays"]:
+		if (data[key] as Array).is_empty():
+			assert_eq(key, "wall_arrays", "only the visual skirt may be wholly buried by the slope")
+			continue
+		var verts: PackedVector3Array = data[key][Mesh.ARRAY_VERTEX]
+		assert_gt(verts.size(), 0)
+		var horizontal := 0
+		for t in range(0, verts.size(), 3):
+			var n := (verts[t + 1] - verts[t]).cross(verts[t + 2] - verts[t])
+			if n.length() > 0.0 and absf(n.normalized().y) > 0.3: horizontal += 1
+			for v: Vector3 in [verts[t], verts[t + 1], verts[t + 2]]:
+				assert_eq(v.x, 90.0, "%s vertex on the wall line" % key)
+				assert_true(v.y == 12.0 or v.y == 0.0, "%s spans exactly the two owners' surfaces" % key)
+		assert_eq(horizontal, 0, "no horizontal cap triangles")
 
-func test_skirt_stops_short_of_a_perpendicular_wall_no_fin():
-	# Owner screenshot (seed 2827641023 cell (1,-4)): at an outer corner the two rock skirts each
-	# spanned their FULL cell edge, so each one ran SKIRT_RECESS past the other's plane and poked
-	# out through the perpendicular KayKit wall face as a thin vertical fin. Where a cell also
-	# walls the perpendicular direction, the skirt must stop at the perpendicular skirt plane.
-	var p := Plan.new(11, 32.0, 8, "mean", 3)
-	p.set_raw_height_override(func(cx, cz): return 12.0 if (cx <= 0 and cz <= 0) else 0.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
-	assert_not_null(faces, "CliffFaces skirt present")
-	var verts: PackedVector3Array = faces.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	var lim := 12.0 - Mesher.SKIRT_RECESS + 0.01
-	for v in verts:
-		if absf(v.x - (12.0 - Mesher.SKIRT_RECESS)) < 0.01:   # cell (0,0)'s east skirt plane
-			assert_lte(v.z, lim, "east skirt stops at the south skirt plane (no fin through the south wall)")
-		if absf(v.z - (12.0 - Mesher.SKIRT_RECESS)) < 0.01:   # cell (0,0)'s south skirt plane
-			assert_lte(v.x, lim, "south skirt stops at the east skirt plane (no fin through the east wall)")
-	node.free()
+func test_outer_corner_skirts_meet_at_the_corner_point():
+	# Plateau x <= 7, z <= 9: walls x = 90 (z <= 114) and z = 114 (x <= 90).
+	var region := _points(func(i: int, j: int) -> float: return 12.0 if i <= 7 and j <= 9 else 0.0)
+	var verts: PackedVector3Array = _mesher().compute_chunk(Vector2i.ZERO, region).wall_collision_arrays[Mesh.ARRAY_VERTEX]
+	var east_max_z := -INF
+	var south_max_x := -INF
+	for v: Vector3 in verts:
+		if v.x == 90.0: east_max_z = maxf(east_max_z, v.z)
+		if v.z == 114.0: south_max_x = maxf(south_max_x, v.x)
+	assert_eq(east_max_z, 114.0, "the east face ends at the corner (no fin past it)")
+	assert_eq(south_max_x, 90.0, "the south face ends at the corner")
 
 func test_skirt_follows_a_dipping_neighbour_slope():
-	# Owner screenshot (2827641023 cell (2,4)): the rock skirt stopped at the neighbour's
-	# cell-centre height, but the neighbouring SLOPE surface descends further along the shared
-	# edge — leaving a see-through void under the wall. The skirt bottom must follow the
-	# neighbour's actual boundary surface, down to y=0 at the dipped corner here.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 2 and cz == 1: return 4.0
-		if cx == 2 and cz == 0: return 0.0
-		return 12.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
-	assert_not_null(faces)
-	var verts: PackedVector3Array = faces.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	var plane_x := 36.0 - Mesher.SKIRT_RECESS   # C=(1,1)'s east skirt plane
-	var min_y := 1e9
-	for v in verts:
-		if absf(v.x - plane_x) < 0.01 and v.z > 12.0 and v.z < 36.0:
-			min_y = minf(min_y, v.y)
-	assert_lt(min_y, 0.5, "east skirt reaches the dipped neighbour surface (y≈0), not the storey line (y=4)")
-	node.free()
+	# The low side of the x = 90 wall slopes down along the wall (point (8,5)
+	# is a storey below its neighbours): the skirt bottom follows it to y = 0.
+	var region := _points(func(i: int, j: int) -> float:
+		if i <= 7: return 12.0
+		if i == 8 and j == 5: return 0.0
+		return 4.0)
+	var verts: PackedVector3Array = _mesher().compute_chunk(Vector2i.ZERO, region).wall_collision_arrays[Mesh.ARRAY_VERTEX]
+	var lowest := INF
+	for v: Vector3 in verts:
+		if v.x == 90.0 and absf(v.z - 60.0) < 6.5:
+			lowest = minf(lowest, v.y)
+	assert_eq(lowest, 0.0, "the skirt reaches the dipped neighbour surface, not the storey line")
 
-func test_level_step_is_continuous_without_a_vertical_wall():
-	# Same minimal T-junction as test_level_t_junction_has_one_shared_seam_profile.
-	# A level transition is a short walkable slope, not a miniature cliff. Its two
-	# surface owners must meet directly; emitting a grass-textured backing wall only
-	# changes a crack into the visible lip from the owner's screenshots.
-	var p := Plan.new(0, 64.0, 12, "mean")
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 0 and cz == 1: return 4.1    # C: storey 1, level 0
-		if cx == 1 and cz == 1: return 4.9    # B: storey 1, level 1
-		return 5.6)                           # A=(1,0) and the rest: storey 1, level 2
-	var m := Mesher.new()
-	m.set_seed(0)
-	m.prepare_resources()
-	var data: Dictionary = m.compute_chunk(Vector2i(0, 0),
-		_region_for(p, Vector2i(0, 0)))
-	var wall: Array = data["wall_arrays"]
-	assert_true(wall.is_empty(), "pure level slopes meet as one sheet; no vertical lip wall exists")
+func test_level_and_one_storey_steps_are_continuous_without_a_vertical_wall():
+	var region := _points(func(i: int, j: int) -> float:
+		if i == 3 and j == 3: return 4.1   # level steps
+		if i == 4 and j == 3: return 4.9
+		if i >= 6: return 1.6             # one storey below: a slope
+		return 5.6)
+	var data := _mesher().compute_chunk(Vector2i.ZERO, region)
+	assert_true((data.wall_arrays as Array).is_empty(), "slopes meet as one sheet; no wall exists")
+	assert_true((data.wall_collision_arrays as Array).is_empty())
 
-func test_slope_facing_side_of_a_cliff_cell_is_welded_not_skirted():
-	# Owner screenshot (2827641023 cell (4,12)): a SAME-storey slope neighbour descended along a
-	# flat cliff top's side boundary, exposing a see-through vertical face. Per edge (September
-	# 27) that side is an ordinary slope: both owners share one boundary and nothing is skirted.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 2 and cz == 1: return 4.0
-		if cx == 1 and cz == 0: return 8.0
-		if cx == 0 and cz == 0: return 8.0
-		return 12.0)
-	var region := _region_for(p, Vector2i(0, 0))
-	for z in range(12, 37, 2):
-		assert_almost_eq(TerrainSurfaceField.surface_y_in_cell(region, 12.0, float(z), 1, 1),
-			TerrainSurfaceField.surface_y_in_cell(region, 12.0, float(z), 0, 1), 0.0001,
-			"C and its west neighbour share the boundary at z=%d" % z)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
-	var verts: PackedVector3Array = faces.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] if faces != null else PackedVector3Array()
-	for v in verts:
-		assert_false(absf(v.x - 12.0) < 1.4 and v.z > 12.5 and v.z < 35.5,
-			"no skirt stands on the welded slope side: %s" % v)
-	node.free()
-
-
-func test_higher_cardinal_does_not_split_an_ordinary_shared_slope() -> void:
-	var p := Plan.new(0, 64.0, 12, "mean", 3)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 1: return 12.0
-		if cx == 2 and cz == 1: return 12.0
-		if cx == 2 and cz == 0: return 8.0
-		return 20.0)
-	var region = _region_for(p, Vector2i.ZERO)
-	assert_false(TerrainSurfaceField.own_edge_flat(region, 1, 1, Vector2i.RIGHT))
-	for z in range(12, 25):
-		assert_almost_eq(TerrainSurfaceField.surface_y_in_cell(region, 36.0,
-			float(z), 1, 1), TerrainSurfaceField.surface_y_in_cell(region,
-			36.0, float(z), 2, 1), 0.0001,
-			"both owners must use the same boundary instead of manufacturing a cliff")
-
-# C=(1,1) storey 2 (h=8) is a cliff top (its south neighbour row cz>=2 is storey 0). Its WEST
-# neighbour W=(0,1) is storey 3 — HIGHER, and itself a cliff top. The junction band between C's
-# terrain and W's recessed south wall used to show see-through slits (owner's terrace gaps).
-func _terrace_plan():
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 0 and cz == 1: return 16.0   # W: cliff top two storeys above C
-		if cz >= 2: return 0.0                # low ground south of everything
-		return 8.0)                            # C=(1,1) and the flat backdrop
-	return p
-
-func test_collision_wall_is_flush_with_the_boundary_no_pocket():
-	# Owner (round 7): "when i jump i often get stuck in the wall — is this an issue with the
-	# collision shapes?" It was: the collision wall reused the VISUAL skirt mesh, recessed
-	# SKIRT_RECESS behind the boundary while the collision sheet keeps its full extent to the
-	# boundary — an overhang pocket under the lip band that wedged a jumping capsule, plus
-	# zigzag profile edges to catch on. The collision wall is now its own FLAT plane ON the
-	# boundary with its top flush at the cliff top, meeting the sheet collision in a clean
-	# convex edge. The visual skirt keeps its recess.
-	var p := Plan.new(11, 32.0, 8, "mean", 3)
-	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var body := node.find_child("Body", true, false) as StaticBody3D
-	var cs := body.get_node("CollisionShape3D_walls") as CollisionShape3D
+func test_collision_wall_is_flush_with_the_wall_line_no_pocket():
+	var node := _mesher().commit_chunk(_mesher().compute_chunk(Vector2i.ZERO, _cliff_region()))
+	var cs := node.find_child("Body", true, false).get_node("CollisionShape3D_walls") as CollisionShape3D
 	var faces: PackedVector3Array = (cs.shape as ConcavePolygonShape3D).get_faces()
 	assert_gt(faces.size(), 0, "collision wall has geometry")
 	var top := -1e9
 	for v in faces:
-		assert_almost_eq(v.x, 84.0, 0.01, "collision wall sits ON the cell boundary plane")
+		assert_eq(v.x, 90.0, "collision wall sits ON the wall line")
 		top = maxf(top, v.y)
-	assert_almost_eq(top, 12.0, 0.01, "collision wall reaches the cliff top (no pocket under the lip band)")
+	assert_eq(top, 12.0, "collision wall reaches the cliff top")
 	node.free()
 
-func test_sheet_skirt_and_pieces_share_one_material():
-	# Owner (round 8): "the cliff lip, the skirt, and the slope are all different colours...
-	# it would be nice if they all used the same [texture] (so we could even change all of
-	# them at once in the future)". Every surface now uses the dedicated runtime
-	# ground-palette material itself, with per-vertex/instance tinting layered on
-	# top, so the palette stays visually continuous and globally retintable.
-	var p := Plan.new(11, 32.0, 8, "mean", 3)
-	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
+func test_cliff_top_sheet_and_collision_reach_the_wall_line():
+	var data := _mesher().compute_chunk(Vector2i.ZERO, _cliff_region())
+	var visual := false
+	for v: Vector3 in (data.surface_arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array):
+		visual = visual or (v.y == 12.0 and v.x == 90.0)
+	var walkable := false
+	for v: Vector3 in (data.collision_faces as PackedVector3Array):
+		walkable = walkable or (v.y == 12.0 and v.x == 90.0)
+	assert_true(visual, "the visible cliff top runs flat to its wall (no lip clip)")
+	assert_true(walkable, "collision covers the cliff top to the wall line")
+
+func test_sheet_and_skirt_share_one_material():
+	# One shared runtime ground-palette material for sheet and skirt.
+	var mesher := _mesher()
+	var node := mesher.commit_chunk(mesher.compute_chunk(Vector2i.ZERO, _cliff_region()))
 	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
 	var sheet_mat := mi.mesh.surface_get_material(0) as ShaderMaterial
-	var cliff_mat := faces.mesh.surface_get_material(0) as ShaderMaterial
-	assert_same(sheet_mat, cliff_mat, "sheet and skirt share the complete ground style")
+	assert_same(sheet_mat, mesher._skirt_material, "sheet and skirt share the complete ground style")
 	assert_same(sheet_mat.get_shader_parameter("ground_palette_texture"), CliffDressing.ground_texture(),
 		"one palette remains the source for turf, paths and rock")
-	var walls := node.find_child("Walls", true, false) as MultiMeshInstance3D
-	var lips := node.find_child("Lips", true, false) as MultiMeshInstance3D
-	assert_same(walls.material_override, cliff_mat)
-	assert_same(lips.material_override, cliff_mat)
 	# the sheet's grass texel comes from the lip piece's grass top, not the terrain atlas
-	var lip_mesh := CliffDressing._pieces["lip"][0] as Mesh
-	var arr = lip_mesh.surface_get_arrays(0)
+	var arr = (CliffDressing._pieces["lip"][0] as Mesh).surface_get_arrays(0)
 	var lverts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
 	var lnorms: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
 	var luvs: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV]
@@ -654,432 +715,14 @@ func test_sheet_skirt_and_pieces_share_one_material():
 	node.free()
 
 func test_skirt_material_has_no_specular_sheen():
-	# Owner (round 7): "from some angles the skirt is a very different colour than the
-	# surrounding slopes" — the big flat skirt caught the wall material's specular sheen
-	# (roughness 0.6 / specular 0.5) that the curved modules never show at one angle. The
-	# skirt uses a de-sheened DUPLICATE of the wall material.
 	var m := Mesher.new()
 	m._ensure_skirt_style()
 	var mat := m._skirt_material as ShaderMaterial
 	assert_true(mat.shader.code.contains("ROUGHNESS = 1.0"), "matte ground")
 	assert_true(mat.shader.code.contains("SPECULAR = 0.0"), "no angle-dependent sheen")
 
-func test_cliff_top_visual_plane_stops_at_the_lip_back():
-	# Owner: "there is still a plane on the cliff top that extends past the cliff edge/corner
-	# lips. it should only go up to the back of the cliff edge lips" — like the old tiles, whose
-	# ground Center ends 0.9 behind the 10.5 lip line (i.e. at 9.6). The VISUAL top sheet of a
-	# cliff top must stop at 9.6 on lipped edges; the KayKit lip is the edge from there out.
-	var p := Plan.new(11, 32.0, 8, "mean", 3)
-	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 0 else 0.0)  # E cliff at x=12
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	for v in verts:
-		if v.y > 11.9:   # the cliff-top plane of the column-0 cells
-			assert_lt(v.x, 9.7, "cliff-top plane stops at the back of the lip (9.6), not the boundary")
-	node.free()
-
-func test_cliff_top_collision_still_reaches_the_boundary():
-	# The clip is VISUAL only — the lip band must stay walkable, so the collision trimesh keeps
-	# the full flat top out to the cell boundary.
-	var p := Plan.new(11, 32.0, 8, "mean", 3)
-	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 0 else 0.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var body := node.find_child("Body", true, false) as StaticBody3D
-	var cs := body.get_node("CollisionShape3D") as CollisionShape3D
-	var faces: PackedVector3Array = (cs.shape as ConcavePolygonShape3D).get_faces()
-	var reaches := false
-	for v in faces:
-		if v.y > 11.9 and v.x > 11.9:
-			reaches = true
-			break
-	assert_true(reaches, "collision still covers the lip band out to the boundary")
-	node.free()
-
-func test_ground_apron_extends_under_higher_neighbour():
-	# Owner: "even if a cliff tile is higher, we still need to extend the tile at the current
-	# level underneath it" — C's ground continues APRON deep into W's footprint at C's height,
-	# sealing the slot floor behind W's recessed wall face.
-	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
-	var aprons := node.find_child("Aprons", true, false) as MeshInstance3D
-	assert_not_null(aprons, "chunk emits ground aprons under higher neighbours")
-	var found := false
-	if aprons != null and aprons.mesh != null:
-		for v in (aprons.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
-			if absf(v.y - 8.0) < 0.1 and v.x < 12.0 and v.x > 9.4 and v.z > 12.0 and v.z < 36.0:
-				found = true
-				break
-	assert_true(found, "C's storey-2 ground extends west under W's overhang (apron at y=8)")
-	node.free()
-
-func test_skirt_extends_under_higher_neighbour():
-	# Terraced pocket: C=(1,1) storey 2, N=(1,0) and W=(0,1) storey 3, NW=(0,0) storey 4. N's
-	# south skirt and W's east skirt are perpendicular and each used to stop at its own cell
-	# edge — leaving an open 1.3×1.3 chimney at the junction over C's corner. N's skirt must
-	# continue west INTO the higher NW cell so the two skirts cross behind the corner piece.
-	# (Per edge, September 27: each step is two storeys, so every side walls.)
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 0 and cz == 0: return 20.0
-		if cx == 1 and cz == 0: return 12.0
-		if cx == 0 and cz == 1: return 12.0
-		return 4.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
-	var verts: PackedVector3Array = faces.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	var plane_z := 12.0 - Mesher.SKIRT_RECESS   # N=(1,0)'s south skirt plane (z=10.7)
-	var min_x := 1e9
-	for v in verts:
-		# N's skirt band (below NW's own skirt); x>0 excludes trimmed endpoints of
-		# perpendicular skirts that coincidentally land on this z
-		if absf(v.z - plane_z) < 0.01 and v.y < 10.9 and v.x > 0.0:
-			min_x = minf(min_x, v.x)
-	assert_lt(min_x, 11.0, "N's south skirt extends west under the higher NW (closes the chimney)")
-	node.free()
-
-func test_clip_uses_the_dipped_half_of_a_north_edge_not_its_mirror():
-	# Owner (round 3, seed 78498630): on north/west edges the clip's slot mask was looked up
-	# with the RAW axis coordinate, but the mask is ordered along pdir=(dir.y,dir.x) — mirrored
-	# for negative pdir. C=(1,1) was a flat cliff top whose NORTH neighbour dipped on its WEST
-	# half only. Per edge (September 27) C's one-storey sides are slopes, so C itself descends
-	# into that corner and both owners share the boundary: nothing is clipped and no hole opens.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 0: return 8.0                # west column: storey 2 → the slope dips west
-		if cx == 1 and cz == 2: return 0.0    # C's cliff-maker (south drop 3)
-		return 12.0)
-	var region := _region_for(p, Vector2i(0, 0))
-	for x in range(12, 37, 2):
-		assert_almost_eq(TerrainSurfaceField.surface_y_in_cell(region, float(x), 12.0, 1, 1),
-			TerrainSurfaceField.surface_y_in_cell(region, float(x), 12.0, 1, 0), 0.0001,
-			"C's north boundary is welded at x=%d" % x)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	for v in verts:
-		assert_false(v.y > 11.9 and absf(v.z - 14.4) < 0.05 and v.x > 13.5 and v.x < 35.0,
-			"C's north edge is not pulled back to a lip line: %s" % v)
-	node.free()
-
-func test_clip_tapers_to_zero_at_a_neighbour_that_does_not_clip():
-	# Owner (round 3, seed 186412979): A clips its lipped south edge; its east neighbour B is
-	# a PLAIN cell with an unclipped south edge. A's pulled corner vertex tore away from B's
-	# sheet, opening a triangular hole at the seam. Per edge (September 27) A's one-storey south
-	# side is a slope, so the lip run (and its clip) is gone; the seam must stay welded.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 0 and cz == 1: return 4.0    # A's cliff-maker (west drop 2)
-		if cx == 1 and cz == 2: return 8.0    # the pocket: A's south dip
-		return 12.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	var torn := false
-	for v in verts:
-		if v.y > 11.9 and absf(v.x - 36.0) < 0.01 and v.z > 33.5 and v.z < 33.8:
-			torn = true   # A's SE corner vert pulled away from the seam with B
-	assert_false(torn, "A's corner vertex stays on the seam (B does not clip its colinear edge)")
-	var region := _region_for(p, Vector2i(0, 0))
-	for z in range(12, 37, 2):
-		assert_almost_eq(TerrainSurfaceField.surface_y_in_cell(region, 36.0, float(z), 1, 1),
-			TerrainSurfaceField.surface_y_in_cell(region, 36.0, float(z), 2, 1), 0.0001,
-			"A and B share their seam at z=%d" % z)
-	node.free()
-
-func test_apron_is_clamped_by_the_higher_cells_own_clip():
-	# Owner (round 3, seed 78498630): the apron strip spanned its cell's full edge width, so its
-	# ends poked out through the higher cell's PERPENDICULAR wall faces as floating green planes.
-	# The strip must pull back where the higher cell's own top sheet is clipped — HERE the apron
-	# (y=8) is level with W's south wall span (12→0), so poking past the clip would show.
-	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
-	var aprons := node.find_child("Aprons", true, false) as MeshInstance3D
-	assert_not_null(aprons)
-	var max_z := -1e9
-	for v in (aprons.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
-		if absf(v.y - 8.0) < 0.2 and v.x > 9.4 and v.x < 12.1:
-			max_z = maxf(max_z, v.z)
-	# At a capped run-end corner the strip now floors the recess right up to the
-	# wall-face line (SKIRT_RECESS behind the boundary, 0.05 behind the deepest
-	# scallop plane at 34.75) — stopping at the sheet clip line left a bare slot
-	# sliver at water flush-steps. Past 34.75 it would poke through the wall face.
-	assert_lt(max_z, 34.74, "apron stays behind W's south wall face, not at z=36")
-	node.free()
-
-func test_buried_apron_end_is_not_clamped_no_ground_gap():
-	# Owner (round 9, seed 320048332, corner (-84,-84)): "there is a gap in the ground right
-	# here". The low shelf's apron tucks under the tall cell B; at the junction corner its end
-	# verts were pulled back by B's SOUTH sheet clip even though the apron (y=4) runs far BELOW
-	# B's south wall span (12→8) — buried inside the plateau D's solid ground. The height-blind
-	# clamp collapsed the last apron quad, opening a triangular hole at the corner point. An
-	# apron end below the across-cell's surface is buried and must NOT be clamped.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		# (Per edge, September 27: two storeys per step so every side walls.)
-		if cx == 1 and cz == 0: return 20.0   # B: tall cell, walls west over the shelf
-		if cx == 1 and cz == 1: return 12.0   # D: plateau south of B (flush west walls)
-		return 4.0)                            # the shelf west of both, and backdrop
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var am := node.find_child("Aprons", true, false) as MeshInstance3D
-	assert_not_null(am, "chunk has aprons")
-	var covered := false
-	if am != null:
-		var arrays := am.mesh.surface_get_arrays(0)
-		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
-		var idx = arrays[Mesh.ARRAY_INDEX]   # Nil on non-indexed meshes
-		var tri_ids := []
-		if idx == null or (idx as PackedInt32Array).is_empty():
-			for i in range(0, verts.size() - 2, 3):
-				tri_ids.append([i, i + 1, i + 2])
-		else:
-			for i in range(0, (idx as PackedInt32Array).size() - 2, 3):
-				tri_ids.append([idx[i], idx[i + 1], idx[i + 2]])
-		# probe inside the previously-collapsed zone: the shelf's apron band under B
-		# (x∈[12,14.4]) in the last 2.4 before the corner (z∈[9.6,12], B's south clip zone)
-		var probe := Vector2(13.5, 11.5)
-		for t in tri_ids:
-			var a: Vector3 = verts[t[0]]
-			var b: Vector3 = verts[t[1]]
-			var c: Vector3 = verts[t[2]]
-			if absf(a.y - 4.0) > 0.3 or absf(b.y - 4.0) > 0.3 or absf(c.y - 4.0) > 0.3:
-				continue
-			if _tri_covers_xz(probe, a, b, c):
-				covered = true
-				break
-	assert_true(covered, "the buried apron end reaches the corner (no ground gap)")
-	node.free()
-
-func test_apron_seals_the_base_slit_next_to_a_same_storey_slope():
-	# Owner (round 3): "gap between slope and cliff at the same level" — the recess band between
-	# a flat cell's wall face and its boundary needed a floor at the SLOPE neighbour's descending
-	# surface. Per edge (September 27) that same-storey side is an ordinary slope: N and W share
-	# one boundary and N has no recessed face (so no slit) on it.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 2 and cz == 1: return 4.0    # N's cliff drop (east)
-		if cx == 1 and cz == 0: return 8.0    # N's north: storey 2
-		if cx == 0 and cz == 0: return 8.0    # W's north: storey 2 → W slopes down north
-		return 12.0)
-	var region := _region_for(p, Vector2i(0, 0))
-	for z in range(12, 37, 2):
-		assert_almost_eq(TerrainSurfaceField.surface_y_in_cell(region, 12.0, float(z), 1, 1),
-			TerrainSurfaceField.surface_y_in_cell(region, 12.0, float(z), 0, 1), 0.0001,
-			"N and W share their boundary at z=%d" % z)
-	assert_false(TerrainSurfaceField.is_wall_edge(region, 1, 1, Vector2i(-1, 0)), "no wall faces W")
-
-func test_apron_normals_are_vertical():
-	# Owner (round 3, seed 3674690878): "skirt a different colour than ground" — the apron was
-	# indexed+generate_normals'd as double-sided geometry, welding opposing faces into ~zero
-	# normals (broken lighting, wrong colour). Normals must be explicit verticals.
-	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
-	var aprons := node.find_child("Aprons", true, false) as MeshInstance3D
-	assert_not_null(aprons)
-	var normals: PackedVector3Array = aprons.mesh.surface_get_arrays(0)[Mesh.ARRAY_NORMAL]
-	assert_gt(normals.size(), 0)
-	for n in normals:
-		assert_gt(absf(n.y), 0.9, "apron normal is vertical (no zero-normal welding)")
-	node.free()
-
-func test_flat_cell_edge_welds_onto_a_sub_lip_dip():
-	# Round 3 residue: where the neighbouring slope has dipped LESS than EXPOSE_EPS there is no
-	# lip/clip/apron — a sub-25cm slit opened at the boundary (dark dashes where a slope
-	# flattens out). The flat cell's visual edge must blend down (capped at the eps) to weld
-	# exactly onto the neighbour's surface across that band.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 0: return 8.0                # west column low → the north slope dips westward
-		if cx == 1 and cz == 2: return 0.0    # C=(1,1)'s cliff-maker
-		return 12.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	# C=(1,1)'s north boundary (z=12): every vertex still ON the boundary line must agree in
-	# height with the other side (clipped columns have left the line and are exempt). The old
-	# behaviour left C's verts at 12.0 over the neighbour's 11.75..12 sub-eps dips.
-	var ys := {}
-	for v in verts:
-		if absf(v.z - 12.0) > 0.01 or v.x < 12.5 or v.x > 35.5 or v.y < 10.0 or v.y > 12.2:
-			continue
-		var key := int(roundf(v.x))
-		if not ys.has(key):
-			ys[key] = []
-		ys[key].append(v.y)
-	var worst := 0.0
-	for key in ys:
-		var lo = 1e9
-		var hi = -1e9
-		for y in ys[key]:
-			lo = minf(lo, y)
-			hi = maxf(hi, y)
-		worst = maxf(worst, hi - lo)
-	assert_lt(worst, 0.06, "flat edge welds onto the neighbour where its dip is below the lip threshold")
-	node.free()
-
-func test_skirt_uses_the_kaykit_wall_material():
-	# Owner (round 3): "the skirts are a different colour than the ground/walls" — the skirt
-	# rendered with the terrain atlas rock texel, visibly mismatching the KayKit wall pieces it
-	# peeks out between. It must use the wall piece's own material so every peek-through blends.
-	var p := Plan.new(11, 32.0, 8, "mean", 3)
-	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 0 else 0.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var faces := node.find_child("CliffFaces", true, false) as MeshInstance3D
-	assert_not_null(faces)
-	var wall_mat := (CliffDressing._pieces["wall"][0] as Mesh).surface_get_material(0) as StandardMaterial3D
-	assert_not_null(wall_mat, "the KayKit wall piece has a material")
-	# a de-sheened DUPLICATE of the wall material (round 7): same albedo texture, no specular
-	var skirt_mat := faces.mesh.surface_get_material(0) as ShaderMaterial
-	assert_eq(skirt_mat.get_shader_parameter("ground_palette_texture"), wall_mat.albedo_texture, "the skirt shares the KayKit wall texture")
-	node.free()
-
-func test_apron_top_faces_use_the_sheet_winding():
-	# Owner (round 4): aprons rendered DARK — the winding of the "up" side was backwards for
-	# half the directions, so the face visible from above was the down-normal copy. The sheet's
-	# up-facing triangles wind with a right-hand geometric normal pointing DOWN (Godot front =
-	# clockwise); every apron triangle lit as UP must use the same winding.
-	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
-	var aprons := node.find_child("Aprons", true, false) as MeshInstance3D
-	assert_not_null(aprons)
-	var arr = aprons.mesh.surface_get_arrays(0)
-	var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
-	var normals: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
-	var up_faces := 0
-	for t in range(0, verts.size(), 3):
-		if normals[t].y > 0.9:
-			up_faces += 1
-			var n_geo := (verts[t + 1] - verts[t]).cross(verts[t + 2] - verts[t])
-			assert_lt(n_geo.y, 0.0, "an UP-lit apron face must wind like the sheet's top faces")
-	assert_gt(up_faces, 0, "aprons have up-lit faces")
-	node.free()
-
-func test_aprons_have_collision():
-	# Owner (round 4): "I think it's missing a collision shape (the player falls through)" —
-	# where the apron is the only floor (the recess band beyond the cell boundary), the player
-	# needs collision under their feet.
-	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
-	var body := node.find_child("Body", true, false) as StaticBody3D
-	var cs := body.get_node_or_null("CollisionShape3D_aprons") as CollisionShape3D
-	assert_not_null(cs, "aprons carry a collision shape")
-	if cs != null:
-		var found := false
-		for v in (cs.shape as ConcavePolygonShape3D).get_faces():
-			if absf(v.y - 8.0) < 0.3 and v.x > 9.4 and v.x < 12.1:
-				found = true
-				break
-		assert_true(found, "the apron band under the higher neighbour is walkable")
-	node.free()
-
-func test_taper_edge_drapes_onto_the_dipping_neighbour():
-	# Owner (round 4): where a lipped edge's clip weight tapers to 0 (at a step to an unclipped
-	# neighbour cell), the sheet flared back out to the boundary at FULL height — hovering over
-	# the drop as a "ground plane sticking out". The flared band must drape down to the
-	# neighbour's surface instead (A's own wall modules back the descending fold).
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 0 and cz == 1: return 4.0    # A=(1,1)'s cliff-maker (west drop 2)
-		if cx == 1 and cz == 2: return 8.0    # A's south dip (lipped edge, dip 4)
-		return 12.0)                           # B=(2,1) stays a PLAIN cell: the end is UNCAPPED
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	var draped := false
-	var hovering := false
-	for v in verts:
-		# A's boundary vert one grid step before the seam corner: previously it hovered at
-		# y=12 over the drop; draped it descends toward the dipping neighbour's surface (B's
-		# corner sags to ~8 via the diagonal rule, so the weld sits low on the fold).
-		if absf(v.x - 36.0) < 0.01 and absf(v.z - 34.0) < 0.01:
-			if v.y > 7.5 and v.y < 11.7:
-				draped = true
-			elif v.y > 11.9:
-				hovering = true
-	assert_true(draped, "the taper edge drapes down the step instead of hovering at the top")
-	assert_false(hovering, "no flared vert hovers at full height over the drop")
-	node.free()
-
-func test_capped_corner_holds_the_clip_no_draped_flap():
-	# Owner (round 4, seed 1450085760 cell (16,-1) SE corner — "slight gap"): where a cliff top's
-	# lip line TURNS at an outer-corner cap (east: flat lower cliff top; south: same-storey slope
-	# dipping at the shared corner via the diagonal), the clip weight tapered to 0 at that corner —
-	# BOTH edges' colinear continuations are unlipped — so the sheet draped into a steep flap
-	# through/behind the corner cap: a dark slit along the lip back plus a needle sliver poking
-	# out of the wall. A corner PIECE occupies that slot: the run does not END there, it TURNS,
-	# so the clip must hold its weight across the capped corner.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 0: return 0.0    # C's cliff-maker (3-storey north drop)
-		if cx == 2 and cz == 0: return 0.0    # E's cliff-maker (2-storey north drop)
-		if cx == 2 and cz == 1: return 8.0    # E: flat cliff top one storey below C
-		return 12.0)                           # C=(1,1); S=(1,2) slopes via the diagonal dip to E
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	# C's SE corner slot, strictly inside the cell (boundary columns x=36 / z=36 belong to E / S).
-	# Clipped, every C vert here sits at the lifted top (≈12.04); the bug's flap left verts at
-	# intermediate heights descending behind the cap. E's top is 8.0 and S's slope only reaches
-	# the box at its exact boundary, so the (8.5, 11.9) band is unique to the flap.
-	for v in verts:
-		if v.x > 33.0 and v.x < 35.9 and v.z > 33.0 and v.z < 35.9:
-			assert_false(v.y > 8.5 and v.y < 11.9,
-				"sheet vert drapes behind the SE corner cap (the owner's 'slight gap'): %s" % v)
-	node.free()
-
-func test_arm_lip_run_holds_at_a_classic_inner_corner_no_flap():
-	# Owner (round 4, seed 1450085760 cell (8,-2) SW junction — "ground plane sticking out of
-	# inner corner lip"): at a CLASSIC inner corner the piece is owned by the DIAGONAL cell D,
-	# while the walling arms' lip runs end on the same corner point. Each arm's colinear
-	# continuation (one of D's flush edges) is unlipped, so the arm's clip tapered to 0 there
-	# and its sheet draped into a flap poking out through the inner piece. The cap check must
-	# consider ALL FOUR cells sharing the point, not just the run's own cell.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 0 and cz == 0: return 0.0    # arm N=(1,1)'s cliff-maker (NW diagonal)
-		if cx == 1 and cz == 3: return 0.0    # arm E=(2,2)'s cliff-maker (SW diagonal)
-		if cx == 1 and cz == 2: return 4.0    # P: the pocket, one storey below the arms
-		return 8.0)                            # arms N/E at 8; D=(2,1) owns the inner corner
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	# Around the shared corner point (36,36): the arms' sheets sit clipped at ~8.04, P's slope
-	# at ~4, D's flat top at 8.0 — only a draped flap leaves verts at intermediate heights.
-	# EXCEPTION: the corner-point vertex itself legitimately DIPS 0.6 under the piece's front
-	# (the sliver fix — an XZ tuck tore the cell boundaries open); a real flap leaves a TRAIL
-	# of intermediate verts along the taper, never just the single corner point.
-	for v in verts:
-		if v.x > 33.5 and v.x < 38.5 and v.z > 33.5 and v.z < 38.5:
-			if absf(v.x - 36.0) < 0.05 and absf(v.z - 36.0) < 0.05:
-				continue
-			assert_false(v.y > 4.6 and v.y < 7.9,
-				"an arm's sheet drapes through the inner corner piece (the owner's protruding plane): %s" % v)
-	node.free()
-
-func test_run_end_at_a_higher_flat_neighbour_holds_the_clip():
-	# Owner (round 5, seed 1751195249 cell (-7,-5) NW junction — the "weird glitch" fold and the
-	# "gap next to skirt"): where a lipped run ends against a HIGHER flat neighbour, the dressing
-	# caps the junction with an extension corner one module into that cell — but the clip's
-	# corner check didn't know extension caps exist, so the sheet tapered to 0 and draped a
-	# crumpled fold through the cap, dipping away from the higher wall's base apron. Junction
-	# caps must hold the clip exactly like classic corner pieces.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		# (Per edge, September 27: H stands two storeys over L so it walls L.)
-		if cx == 0 and cz == 0: return 0.0    # the NW diagonal
-		if cx == 2 and cz == 0: return 0.0    # L=(2,1)'s cliff-maker and exposed north edge
-		if cx == 2 and cz == 1: return 8.0    # L: lower cliff top, its run ends against H
-		return 16.0)                           # H=(1,1) higher flat; (1,0)=16 keeps H's north flush
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var verts: PackedVector3Array = mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	# L's NW junction box: held, L's verts sit clipped at ~8.04; the fold left verts draped to
-	# intermediate heights. The 0-ground's own verts are at ~0 and H's top at 12 — outside the band.
-	for v in verts:
-		if v.x > 35.9 and v.x < 38.5 and v.z > 11.5 and v.z < 14.5:
-			assert_false(v.y > 0.5 and v.y < 7.9,
-				"sheet vert drapes through the junction cap (the owner's fold): %s" % v)
-	node.free()
-
 func test_surface_is_gap_free_for_any_heightfield():
-	# The owner's requirement: gap-free terrain for ANY heightmap. The surface renders EVERY
-	# grid quad (grass or rock), so the triangle count is always GRID*GRID*2 — no quad skipped,
-	# no hole — even on wild, steep, cliff-riddled heightfields. Checked over several seeds.
+	# Every grid quad is rendered (two triangles), on wild cliff-riddled fields.
 	var expected := Mesher.GRID * Mesher.GRID * 2
 	for seed in [1, 7, 42, 999]:
 		var p := Plan.new(seed, 40.0, 12, "mean", 3)
@@ -1089,263 +732,24 @@ func test_surface_is_gap_free_for_any_heightfield():
 		assert_eq(idx.size() / 3, expected, "seed %d: every quad rendered (gap-free surface)" % seed)
 		node.free()
 
-func test_cliff_face_is_rock_not_climbing_grass():
-	# The surface is continuous (gap-free for any heightfield), but a boundary-straddling cliff
-	# face must be textured ROCK, not grass (the old "grass climbs the cliff" bug). So every
-	# STEEP triangle (large vertical extent over a tiny footprint) must carry the rock UV, and
-	# no grass-UV triangle may span more than a gentle slope.
-	const Atlas := preload("res://scripts/terrain/tools/SlopeAtlas.gd")
-	var grass_uv: Vector2 = Atlas.grass_uv()
-	var p := Plan.new(11, 32.0, 8, "mean", 3)
-	p.set_raw_height_override(func(cx, cz): return 12.0 if cx <= 3 else 0.0)  # 3-storey cliff at cell 3|4
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var arr = mi.mesh.surface_get_arrays(0)
-	var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
-	var uvs: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV]
-	var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
-	var worst_grass := 0.0
-	for t in range(0, idx.size(), 3):
-		var a := verts[idx[t]]; var b := verts[idx[t + 1]]; var c := verts[idx[t + 2]]
-		var y_ext: float = maxf(maxf(a.y, b.y), c.y) - minf(minf(a.y, b.y), c.y)
-		var is_grass := uvs[idx[t]].is_equal_approx(grass_uv)
-		if is_grass:
-			worst_grass = maxf(worst_grass, y_ext)
-	assert_lt(worst_grass, 6.0, "no GRASS triangle spans a cliff's height (cliff faces are rock)")
-	node.free()
+func test_no_grass_triangle_spans_a_cliff():
+	var data := _mesher().compute_chunk(Vector2i.ZERO, _cliff_region())
+	var worst := 0.0
+	for tri: Array in _sheet_triangles(data.surface_arrays):
+		worst = maxf(worst, maxf(maxf(tri[0].y, tri[1].y), tri[2].y) - minf(minf(tri[0].y, tri[1].y), tri[2].y))
+	assert_lt(worst, 6.0, "no sheet triangle spans a cliff's height (cliff faces are the skirt)")
 
-func test_steep_upramp_slope_is_grass_not_rock():
-	# Owner's grey diamonds: a cell one storey below a cliff top ramps UP to meet it — a steep but
-	# WALKABLE slope. Its quads must be classified grass, NOT rock (textured grey). Only a real
-	# cliff face (≥2 cell drop, or a 1-storey step between two cliff tops) is rock.
-	var p := Plan.new(0, 32.0, 8, "mean", 3)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 0: return 8.0    # cliff top (drops ≥2 to (2,0)=0)
-		if cx == 0 and cz == 0: return 4.0    # one storey below it → ramps up to meet it
-		return 0.0)
-	var region = p.compute_region(0, 0, 8)
-	var m = Mesher.new()
-	# a quad straddling cell (0,0)→(1,0): the up-ramp reaches the cliff-top height here (steep),
-	# but it's a walkable slope, so it must be grass.
-	assert_false(m._is_cliff_quad(region, 10.0, 12.0, -2.0, 0.0), "steep up-ramp slope quad is grass, not rock")
-	# the actual ≥2 cliff face (cell (1,0) storey 2 → (2,0) storey 0) IS rock.
-	assert_true(m._is_cliff_quad(region, 34.0, 36.0, -2.0, 0.0), "the ≥2 cliff face is rock")
-
-func _tri_covers_xz(p: Vector2, a: Vector3, b: Vector3, c: Vector3) -> bool:
-	var a2 := Vector2(a.x, a.z)
-	var b2 := Vector2(b.x, b.z)
-	var c2 := Vector2(c.x, c.z)
-	var d1 := (b2 - a2).cross(p - a2)
-	var d2 := (c2 - b2).cross(p - b2)
-	var d3 := (a2 - c2).cross(p - c2)
-	return (d1 >= -0.001 and d2 >= -0.001 and d3 >= -0.001) or (d1 <= 0.001 and d2 <= 0.001 and d3 <= 0.001)
-
-func test_no_drape_dip_where_a_run_ends_at_a_level_neighbour_under_a_taller_diagonal():
-	# Owner (round 10, seed 1408162484): "there is a weird dip right here that shouldn't be
-	# there". A=(1,1)=20 walls east over a plain 16m cell; at A's NE corner the plateau
-	# continues LEVEL onto (1,0)=20 while the taller diagonal (2,0)=24 walls across the run's
-	# line. Nothing registered a corner there, so the sheet clip TAPERED to w=0 at the run's
-	# end and the flared band DRAPED 4m down onto the walkable plateau top — the dip. The
-	# corner now registers as "abut" (clip held), so the top stays flat.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 1 and cz == 1: return 20.0   # A: the run's plateau
-		if cx == 1 and cz == 0: return 20.0   # level continuation north of A
-		if cx == 1 and cz == -1: return 8.0   # its cliff-maker (keeps it a FLUSH cliff top)
-		if cx == 2 and cz == 0: return 24.0   # the taller diagonal walling across the line
-		if cx == 1 and cz == 2: return 8.0    # A's cliff-maker
-		return 16.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var dipped := 0
-	for v in (mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
-		if v.x > 33.5 and v.x < 36.2 and v.z > 8.5 and v.z < 12.2 and v.y > 16.3 and v.y < 19.5:
-			dipped += 1
-	assert_eq(dipped, 0, "no draped fold gouges A's walkable top at the run's end corner")
-	node.free()
-
-func test_aprons_stay_at_ground_level_no_floating_shelf():
-	# Owner (rounds 12-13, seed 613274262): "a plane sticking out just below the cliff lip"
-	# / "that shelf is just below the lip... can you remove it". Round 11's lip shelf — a
-	# second apron strip up under the lip front — read as a jutting plane from any low angle
-	# at tall cliffs and is GONE. Every apron vertex must sit at the LOWER ground's level
-	# (the boundary-profile floor it welds to), never up at the higher cell's lip.
-	var node := Mesher.new().build_chunk(_terrace_plan(), Vector2i(0, 0))
-	var aprons := node.find_child("Aprons", true, false) as MeshInstance3D
-	var floating := 0
-	for v in (aprons.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
-		# highest ground any apron welds to in this fixture is C=(1,1)'s 8.0
-		if v.y > 8.2:
-			floating += 1
-	assert_eq(floating, 0, "no apron geometry floats above the ground it welds to")
-	node.free()
-
-func test_inner_corner_pulls_the_diagonal_sheet_corner_under_the_piece():
-	# Owner (round 11, seed 3960904676): "corner of plane sticking out of cliff lip inner
-	# corner". The flat cell that OWNS a classic inner corner (its diagonal is the pocket)
-	# has no dressed edge of its own at that corner, so its bare sheet ran flat to the very
-	# corner point and poked out through the rounded front of the inner-corner piece as a
-	# green flap over the pocket. The corner zone must get the same TOP_CLIP tuck the
-	# straight lips get — tucked diagonally under the piece — ending the sheet inside the
-	# piece's rounded front. C=(1,1)@12 owns the corner; arms (2,1),(1,2)@12 wall (2,2)@4.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 2 and cz == 2: return 4.0
-		return 12.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var in_zone := 0
-	var near_zone := false
-	for v in (mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
-		if v.y < 11.9:
-			continue
-		if v.x > 35.0 and v.x < 36.05 and v.z > 35.0 and v.z < 36.05:
-			in_zone += 1
-		elif v.x > 32.0 and v.x < 34.9 and v.z > 32.0 and v.z < 34.9:
-			near_zone = true
-	assert_eq(in_zone, 0, "no bare sheet vert survives within 1.0 of the inner corner point")
-	assert_true(near_zone, "the sheet still reaches up to the tuck line outside the corner")
-	node.free()
-
-
-func test_inner_corner_sheet_corner_sits_below_the_rounded_lip_front():
-	# Exact 2026-07-13 22:00 ownership view: the protrusion is the same
-	# classic-inner-corner Surface corner this fixture isolates.  Merely moving
-	# it below 11.9 made the old broad test green while its 11.4m triangle still
-	# showed beneath the rounded lip.  The lip front descends about 0.65m; keep
-	# the sheet another 0.15m below that visual silhouette.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 2 and cz == 2: return 4.0
-		return 12.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var corner_max := -INF
-	for v in (mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array):
-		if v.x > 35.0 and v.x < 36.05 and v.z > 35.0 and v.z < 36.05:
-			corner_max = maxf(corner_max, v.y)
-	print("MEAS classic inner-corner sheet max y=%.3f (top=12, required <=11.2)" % corner_max)
-	assert_true(corner_max > -INF, "fixture emits the inner-corner sheet vertex")
-	assert_true(corner_max <= 11.20,
-		"inner-corner sheet is hidden below the rounded lip front (got %.3f)" % corner_max)
-	node.free()
-
-
-func test_inner_corner_exposed_tuck_uses_rock_backing_not_grass():
-	# Exact same local triangle as the remaining red Surface shard in the
-	# 2026-07-13 22:00 owner render. Its vertices were measured at
-	# (156,4,-1214), (158,4,-1212), (156,3.1,-1212); sampling 5cm/36cm from
-	# the corner still read y=3.283 above the y=3 water and remained visible.
-	# Translate that camera-ray sample to this isolated fixture. The full visual
-	# and collision sheets stay watertight, but this dipped backing triangle is
-	# part of the cliff and must use rock rather than bright grass.
-	var p := Plan.new(0, 64.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		if cx == 2 and cz == 2: return 4.0
-		return 12.0)
-	var node := Mesher.new().build_chunk(p, Vector2i(0, 0))
-	var mi := node.find_child("Surface", true, false) as MeshInstance3D
-	var sample := Vector2(35.95, 35.64)
-	var sample_y: float = _surface_y_at(mi, sample)
-	var sample_uv: Vector2 = _surface_uv_at(mi, sample)
-	var rock_uv: Vector2 = SlopeAtlas.cliff_uv()
-	print("MEAS exact inner-corner backing sample y=%.3f uv=%s rock=%s" % [
-		sample_y, sample_uv, rock_uv])
-	assert_true(sample_y > -INF, "visual sheet stays watertight under the corner piece")
-	assert_true(sample_uv.is_equal_approx(rock_uv),
-		"the reported exposed corner backing blends into the rock wall, never grass")
-	node.free()
-
-# The walkable collision sheet must cover the full chunk extent with exactly
-# two triangles per grid quad, tracking the pinned surface heights.
 func test_collision_sheet_faces_cover_full_grid():
 	var p := HeightfieldPlan.new(4242, 40.0, 8, "mean")
-	var m := TerrainChunkMesher.new()
-	var node := m.build_chunk(p, Vector2i(0, 0))
-	var cs: CollisionShape3D = node.get_node("Body/CollisionShape3D")
-	var faces: PackedVector3Array = (cs.shape as ConcavePolygonShape3D).get_faces()
-	assert_eq(faces.size(), TerrainChunkMesher.GRID * TerrainChunkMesher.GRID * 6,
-		"2 triangles (6 vertices) per grid quad, full extent")
-	# spot-check: the first quad's first vertex sits at the pinned surface height
-	var region = p.compute_region(4, 4, 8)
-	var qcx := TerrainSurfaceField._cell_of(TerrainChunkMesher.STEP * 0.5)
-	var qcz := TerrainSurfaceField._cell_of(TerrainChunkMesher.STEP * 0.5)
-	var expect := TerrainSurfaceField.surface_y_in_cell(region, 0.0, 0.0, qcx, qcz)
-	assert_almost_eq(faces[0].y, expect, 0.001, "collision tracks the pinned surface")
-	node.free()
+	var region := p.compute_region(8, 8, 16)
+	var data := _mesher().compute_chunk(Vector2i.ZERO, region)
+	var faces: PackedVector3Array = data.collision_faces
+	assert_eq(faces.size(), Mesher.GRID * Mesher.GRID * 6, "2 triangles (6 vertices) per grid quad, full extent")
+	var owner := Vector2i(TerrainTileField.point_of(Mesher.STEP * 0.5), TerrainTileField.point_of(Mesher.STEP * 0.5))
+	assert_eq(faces[0].y, TerrainTileField.surface_y_on_side(region, 0.0, 0.0, owner),
+		"collision tracks the pinned surface")
 
-func test_ground_has_no_slivers_beside_inner_corner_pieces():
-	# Owner (batch 2): "there are tiny gaps in the ground next to inner corner
-	# tiles." The inner-corner sheet tuck pulled the shared corner-point vertex
-	# diagonally OFF both cell boundaries; the piece arms roof only 1.25 of the
-	# vacated 1.5, so two hairline slivers opened along the boundaries beside
-	# the piece. Every point of the flat top around the corner (outside the
-	# piece's own 3x3 box) must be covered by top-facing ground triangles.
-	# max_step 4: the default trickle-down clamp smooths a 2-storey step into
-	# 1-storey terraces and no inner corner forms (same as the cliff fixtures).
-	var p = Plan.new(7, 56.0, 12, "mean", 4)
-	p.set_raw_height_override(func(cx, cz):
-		return 0.0 if (cx >= 1 and cz >= 1) else 8.0)
-	var m := Mesher.new()
-	var node: Node3D = m.build_chunk(p, Vector2i(0, 0))
-	var tris: Array = []
-	for child_name in ["Surface", "Aprons"]:
-		var mi := node.find_child(child_name, true, false) as MeshInstance3D
-		if mi == null:
-			continue
-		var arr: Array = mi.mesh.surface_get_arrays(0)
-		var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
-		var idx_v = arr[Mesh.ARRAY_INDEX]   # Nil on non-indexed meshes (Aprons)
-		var idx: PackedInt32Array = idx_v if idx_v != null else PackedInt32Array()
-		var order: Array = []
-		if idx.is_empty():
-			for i in verts.size():
-				order.append(i)
-		else:
-			for i in idx.size():
-				order.append(idx[i])
-		for i in range(0, order.size(), 3):
-			var a: Vector3 = verts[order[i]]
-			var b: Vector3 = verts[order[i + 1]]
-			var c: Vector3 = verts[order[i + 2]]
-			var nrm: Vector3 = (b - a).cross(c - a)
-			if absf(nrm.y) >= 0.3 * nrm.length():
-				tris.append([a, b, c])
-	# Inner corner of cell (0,0) is at (12,12); the piece covers ~[9.2,11.8]^2.
-	# Sample the two boundary-adjacent strips beside the piece on the flat top.
-	var holes: Array = []
-	for t_along in range(0, 19):
-		var along := 9.2 + 0.15 * float(t_along)   # 9.2 .. 11.9
-		for t_cross in range(0, 4):
-			var cross := 11.82 + 0.05 * float(t_cross)   # 11.82 .. 11.97
-			for pt: Vector2 in [Vector2(cross, along), Vector2(along, cross)]:
-				if maxf(pt.x, pt.y) > 11.99:
-					continue
-				if not _point_covered(tris, pt, 8.0):
-					holes.append(pt)
-	assert_eq(holes.size(), 0,
-		"ground beside the inner corner piece must be watertight (holes at %s)" % [holes])
-	node.free()
-
-func _point_covered(tris: Array, p: Vector2, h: float) -> bool:
-	for t: Array in tris:
-		var a: Vector3 = t[0]
-		var b: Vector3 = t[1]
-		var c: Vector3 = t[2]
-		if p.x < minf(a.x, minf(b.x, c.x)) - 0.01 or p.x > maxf(a.x, maxf(b.x, c.x)) + 0.01:
-			continue
-		if p.y < minf(a.z, minf(b.z, c.z)) - 0.01 or p.y > maxf(a.z, maxf(b.z, c.z)) + 0.01:
-			continue
-		var d1 := _tri_sign(p, Vector2(a.x, a.z), Vector2(b.x, b.z))
-		var d2 := _tri_sign(p, Vector2(b.x, b.z), Vector2(c.x, c.z))
-		var d3 := _tri_sign(p, Vector2(c.x, c.z), Vector2(a.x, a.z))
-		var has_neg := d1 < -0.0001 or d2 < -0.0001 or d3 < -0.0001
-		var has_pos := d1 > 0.0001 or d2 > 0.0001 or d3 > 0.0001
-		if has_neg and has_pos:
-			continue
-		if maxf(a.y, maxf(b.y, c.y)) >= h - 0.8 and minf(a.y, minf(b.y, c.y)) <= h + 0.3:
-			return true
-	return false
-
-func _tri_sign(p: Vector2, a: Vector2, b: Vector2) -> float:
-	return (p.x - b.x) * (a.y - b.y) - (a.x - b.x) * (p.y - b.y)
+func test_vertex_owner_candidates_tie_on_the_dual_border():
+	assert_eq(Mesher._owner_candidates(90.0, 12.0), [8, 7] as Array[int], "x = 90 lies between points 7 and 8")
+	assert_eq(Mesher._owner_candidates(-6.0, 12.0), [-1, 0] as Array[int])
+	assert_eq(Mesher._owner_candidates(88.0, 12.0), [7] as Array[int])
