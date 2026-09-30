@@ -333,6 +333,19 @@ func _bake_asset(pack: String, license_label: String, entry: Dictionary,
 		_fail("Asset %s cannot combine merge_pieces with ribbon simplifiers" % asset_id)
 		root.free()
 		return {}
+	if entry.has("masonry_depth"):
+		if not entry.masonry_depth is Dictionary \
+				or not EnvironmentBakeGeometry.deepen_masonry(visual_root, entry.masonry_depth):
+			_fail("Invalid masonry depth declaration: %s" % asset_id)
+			root.free()
+			return {}
+	if entry.has("exclude_materials"):
+		if not entry.exclude_materials is Array \
+				or not EnvironmentBakeGeometry.drop_material_surfaces(visual_root,
+					entry.exclude_materials):
+			_fail("Invalid material exclusion: %s" % asset_id)
+			root.free()
+			return {}
 	if entry.has("mesh_poses"):
 		var poses: Variant = entry.mesh_poses
 		if not poses is Array or not EnvironmentBakeGeometry.pose_meshes(visual_root,poses):

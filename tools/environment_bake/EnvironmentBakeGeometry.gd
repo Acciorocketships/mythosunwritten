@@ -32,6 +32,88 @@ static func pose_meshes(source_root: Node, poses: Array) -> bool:
 	return true
 
 
+static func drop_material_surfaces(source_root: Node, materials: Array) -> bool:
+	## Removes every mesh surface whose material resource name is listed
+	## (e.g. a masonry panel's timber frame, leaving the plain coursed stone).
+	## Applied before both the visual and the collision bake. False when no
+	## surface matched, so a renamed source material fails the bake loudly.
+	var names: Dictionary = {}
+	for value: Variant in materials:
+		names[String(value)] = true
+	var dropped := 0
+	var stack: Array[Node] = [source_root]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		stack.append_array(node.get_children())
+		var instance := node as MeshInstance3D
+		if instance == null or not instance.mesh is ArrayMesh:
+			continue
+		var source := instance.mesh as ArrayMesh
+		var out := ArrayMesh.new()
+		for surface in source.get_surface_count():
+			var material := source.surface_get_material(surface)
+			if material != null and names.has(material.resource_name):
+				dropped += 1
+				continue
+			out.add_surface_from_arrays(source.surface_get_primitive_type(surface),
+				source.surface_get_arrays(surface))
+			out.surface_set_material(out.get_surface_count() - 1, material)
+		instance.mesh = out
+	return dropped > 0
+
+
+static func deepen_masonry(source_root: Node, declaration: Dictionary) -> bool:
+	## Gives a thin authored masonry panel real wall thickness before it is
+	## merged. Every vertex of the named body meshes in front of the panel's
+	## mid-plane (source-space z > 0) moves `depth` outward along +Z: the stone
+	## face, its timber frame and every aperture reveal deepen together while
+	## faces, winding and UVs are kept. The named opening pieces (window frame
+	## and glass, door leaf) stay in the original wall plane, set back
+	## `setback`, so they read sunk into the thicker wall. Applied before both
+	## the visual and the collision bake.
+	var depth := float(declaration.get("depth", NAN))
+	var setback := float(declaration.get("setback", 0.0))
+	var bodies: Variant = declaration.get("body_paths", [])
+	var openings: Variant = declaration.get("opening_paths", [])
+	if not is_finite(depth) or depth <= 0.0 or not is_finite(setback) or setback < 0.0 \
+			or not bodies is Array or (bodies as Array).is_empty() or not openings is Array:
+		return false
+	var resolved: Array[Dictionary] = []
+	for value: Variant in bodies:
+		var node := source_root.get_node_or_null(NodePath(String(value))) as MeshInstance3D
+		if node == null or not node.mesh is ArrayMesh: return false
+		resolved.append({"node": node, "body": true})
+	for value: Variant in openings:
+		var node := source_root.get_node_or_null(NodePath(String(value))) as MeshInstance3D
+		if node == null: return false
+		resolved.append({"node": node, "body": false})
+	for item: Dictionary in resolved:
+		var node := item.node as MeshInstance3D
+		var to_root := relative_transform(node, source_root)
+		if not bool(item.body):
+			node.transform = relative_transform(node.get_parent() as Node3D, source_root) \
+				.affine_inverse() * Transform3D(Basis.IDENTITY, Vector3(0.0, 0.0, -setback)) * to_root
+			continue
+		var from_root := to_root.affine_inverse()
+		var source := node.mesh as ArrayMesh
+		var out := ArrayMesh.new()
+		for surface in source.get_surface_count():
+			var arrays := source.surface_get_arrays(surface)
+			var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+			for i in vertices.size():
+				var point := to_root * vertices[i]
+				if point.z > 0.0:
+					vertices[i] = from_root * (point + Vector3(0.0, 0.0, depth))
+			arrays[Mesh.ARRAY_VERTEX] = vertices
+			# Tangents follow the changed side faces; normals of a translated
+			# front and of stretched axis-aligned sides are unchanged.
+			arrays[Mesh.ARRAY_TANGENT] = null
+			out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+			out.surface_set_material(surface, source.surface_get_material(surface))
+		node.mesh = out
+	return true
+
+
 static func merge_pieces(source_root: Node,
 		correction: Transform3D,
 		excluded_paths: Array[String] = []) -> ArrayMesh:

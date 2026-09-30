@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnvironmentAssetDescriptor" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain/environment/model/EnvironmentAssetDescriptor.gd" id="1_r0hty"]
+
+[resource]
+script = ExtResource("1_r0hty")
+id = &"suntail.stone.stone_wall_plain"
+visual_path = "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_plain.tres"
+tags = Array[StringName]([&"building", &"fortification", &"stone", &"suntail_kit", &"village"])
+measured_aabb = AABB(-1, 1.19209275e-07, -0.09359441, 1.9999998, 2.9999995, 0.18804505)
+ground_contact_points = PackedVector2Array()
+collision_piece_count = 1
+tint_group = &"identity"
+supports_instance_color = true
+provenance_id = &"suntail_village_kit:suntail.stone.stone_wall_plain"

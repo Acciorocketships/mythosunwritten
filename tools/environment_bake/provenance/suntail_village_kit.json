@@ -6606,6 +6606,234 @@
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_d_1.tres"
     },
     {
+      "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_d_1_deep.tres",
+      "id": "suntail.stone.stone_wall_d_1_deep",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1805,
+        "measured_aabb": {
+          "position": [
+            -1.1600261926651,
+            0.000000119209275339927,
+            -0.188845485448837
+          ],
+          "size": [
+            2.16002607345581,
+            3.07419681549072,
+            0.545878767967224
+          ]
+        },
+        "mesh_bytes": 71938,
+        "surface_count": 4,
+        "visual_piece_count": 1,
+        "visual_triangles": 1805
+      },
+      "pack": "suntail_village_kit",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "suntail.stone.stone_wall_d_1_deep",
+        "masonry_depth": {
+          "body_paths": [
+            "Stone_Wall_D_1"
+          ],
+          "depth": 0.2,
+          "opening_paths": [
+            "Stone_Wall_D_1/Wooden_Door_1_W"
+          ],
+          "setback": 0.06
+        },
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 6.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D_1.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "suntail_kit",
+          "stone",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D_1.glb",
+      "source_sha256": "9c5ae44a5cc6f70ca9395dc20fbab6fa4e88b3c3545a50f433c6c349699f8d5e",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_d_1_deep.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_d_deep.tres",
+      "id": "suntail.stone.stone_wall_d_deep",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 1512,
+        "measured_aabb": {
+          "position": [
+            -1.1600261926651,
+            0.000000119209275339927,
+            -0.163705468177795
+          ],
+          "size": [
+            2.16002607345581,
+            3.07419681549072,
+            0.52073872089386
+          ]
+        },
+        "mesh_bytes": 61573,
+        "surface_count": 3,
+        "visual_piece_count": 1,
+        "visual_triangles": 1512
+      },
+      "pack": "suntail_village_kit",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "suntail.stone.stone_wall_d_deep",
+        "masonry_depth": {
+          "body_paths": [
+            "Stone_Wall_D"
+          ],
+          "depth": 0.2,
+          "opening_paths": [
+            "Stone_Wall_D/Wooden_Door_1"
+          ],
+          "setback": 0.06
+        },
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 6.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "suntail_kit",
+          "stone",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_D.glb",
+      "source_sha256": "d9fe2dcdf5bdec651face96b51adb95583d0a6343e4d78d35f1db9fd7cef5806",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_d_deep.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_deep.tres",
+      "id": "suntail.stone.stone_wall_deep",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 64,
+        "measured_aabb": {
+          "position": [
+            -1.15302515029907,
+            0.000000119209275339927,
+            -0.161410361528397
+          ],
+          "size": [
+            2.15302491188049,
+            3.07448959350586,
+            0.513669013977051
+          ]
+        },
+        "mesh_bytes": 4328,
+        "surface_count": 2,
+        "visual_piece_count": 1,
+        "visual_triangles": 64
+      },
+      "pack": "suntail_village_kit",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "suntail.stone.stone_wall_deep",
+        "masonry_depth": {
+          "body_paths": [
+            "Stone_Wall"
+          ],
+          "depth": 0.2,
+          "opening_paths": [],
+          "setback": 0.06
+        },
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 6.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "suntail_kit",
+          "stone",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall.glb",
+      "source_sha256": "2330c3d111a76e2ff4f47c45dcbb5088c822c527348b203a7e0d39b3ae50b2ec",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_deep.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_plain.tres",
+      "id": "suntail.stone.stone_wall_plain",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 8,
+        "measured_aabb": {
+          "position": [
+            -1.0,
+            0.000000119209275339927,
+            -0.0935944095253944
+          ],
+          "size": [
+            1.99999976158142,
+            2.99999952316284,
+            0.188045054674149
+          ]
+        },
+        "mesh_bytes": 1306,
+        "surface_count": 1,
+        "visual_piece_count": 1,
+        "visual_triangles": 8
+      },
+      "pack": "suntail_village_kit",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "exclude_materials": [
+          "Wooden_Planks"
+        ],
+        "id": "suntail.stone.stone_wall_plain",
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 6.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "suntail_kit",
+          "stone",
+          "building",
+          "fortification"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall.glb",
+      "source_sha256": "2330c3d111a76e2ff4f47c45dcbb5088c822c527348b203a7e0d39b3ae50b2ec",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_plain.tres"
+    },
+    {
       "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_w.tres",
       "id": "suntail.stone.stone_wall_w",
       "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
@@ -6653,6 +6881,65 @@
       "source_sha256": "b65c80f5ac4e8fd011f1ce268bb92bc82e896bad4847463116cdf7b9fc01e3fd",
       "tool_version": 38,
       "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_w.tres"
+    },
+    {
+      "descriptor": "res://terrain/environment/catalog/descriptors/suntail_stone_stone_wall_w_deep.tres",
+      "id": "suntail.stone.stone_wall_w_deep",
+      "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
+      "metrics": {
+        "collision_piece_count": 1,
+        "collision_triangles": 440,
+        "measured_aabb": {
+          "position": [
+            -1.15747106075287,
+            0.000000119209268234499,
+            -0.188936859369278
+          ],
+          "size": [
+            2.15747308731079,
+            3.06882953643799,
+            0.54386568069458
+          ]
+        },
+        "mesh_bytes": 20141,
+        "surface_count": 3,
+        "visual_piece_count": 1,
+        "visual_triangles": 440
+      },
+      "pack": "suntail_village_kit",
+      "parameters": {
+        "collision_profile": "building_trimesh",
+        "id": "suntail.stone.stone_wall_w_deep",
+        "masonry_depth": {
+          "body_paths": [
+            "Stone_Wall_W"
+          ],
+          "depth": 0.2,
+          "opening_paths": [
+            "Stone_Wall_W/Window_1"
+          ],
+          "setback": 0.06
+        },
+        "max_collision_pieces": 1.0,
+        "max_collision_triangles": 12000.0,
+        "max_mesh_bytes": 8388608.0,
+        "max_surfaces": 6.0,
+        "max_visual_triangles": 12000.0,
+        "merge_pieces": true,
+        "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_W.glb",
+        "supports_instance_color": true,
+        "tags": [
+          "village",
+          "suntail_kit",
+          "stone",
+          "building"
+        ],
+        "tint_group": "identity"
+      },
+      "source": "res://assets/Raygeas/Models/Building_Modules/Stone_Modules/Stone_Wall_W.glb",
+      "source_sha256": "b65c80f5ac4e8fd011f1ce268bb92bc82e896bad4847463116cdf7b9fc01e3fd",
+      "tool_version": 38,
+      "visual": "res://terrain/environment/visuals/suntail_village_kit/suntail_stone_stone_wall_w_deep.tres"
     }
   ],
   "license": "Unity Asset Store Standard EULA (Raygeas Suntail Village)",
