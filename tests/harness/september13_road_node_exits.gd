@@ -13,12 +13,17 @@ func _init() -> void:
 			var b := Vector2(cell+direction)*HeightfieldPlan.CELL
 			var row := {"cell":str(cell),"direction":str(direction),"height_a":paths._ground(a),"height_b":paths._ground(b),"walkable":PathProgram.is_route_edge_walkable(fields.region_at((a+b)*.5),cell,direction),"planning_intervals":str(paths._planning_intervals_cells(cell,cell+direction)),"planning_distance":paths._planning_distance(cell)}
 			var region := fields.region_at((a+b)*.5)
+			# The route edge crosses two 12 m point edges (route cell c = point 2c);
+			# sample each one's dual-cell border from both owning points.
 			var gaps := []
-			for lateral: float in [-2.0,0.0,2.0]:
-				var boundary := (a+b)*.5+Vector2(-direction.y,direction.x)*lateral
-				var first := TerrainSurfaceField.surface_y_in_cell(region,boundary.x,boundary.y,cell.x,cell.y)
-				var last := TerrainSurfaceField.surface_y_in_cell(region,boundary.x,boundary.y,cell.x+direction.x,cell.y+direction.y)
-				gaps.append({"offset":lateral,"a":first,"b":last,"gap":absf(first-last)})
+			for edge: Array in PathProgram.route_point_edges(cell,direction):
+				var p: Vector2i = edge[0]
+				var q: Vector2i = p+direction
+				for lateral: float in [-2.0,0.0,2.0]:
+					var boundary := (Vector2(p)+Vector2(direction)*.5)*HeightfieldPlan.POINT+Vector2(-direction.y,direction.x)*lateral
+					var first := TerrainTileField.surface_y_on_side(region,boundary.x,boundary.y,p)
+					var last := TerrainTileField.surface_y_on_side(region,boundary.x,boundary.y,q)
+					gaps.append({"point":str(p),"offset":lateral,"a":first,"b":last,"gap":absf(first-last)})
 			row["seam_samples"] = gaps
 			rows.append(row)
 			print(JSON.stringify(row))

@@ -204,6 +204,13 @@ static func construction_cells(grade: TerrainGradePatch, source: HeightfieldRegi
 ## every other control near the grade is free. Where claims at different
 ## datums share a tile corner, the lower datum owns it: the lower pad controls
 ## the transition, and the higher claim may stand over it.
+## LIMIT: one 12 m tile cannot hold two datums. A pad whose tiles also touch a
+## lower-datum claim is not flat: its native ground ramps (one storey) or
+## steps (a cliff at the tile midline) down toward the lower datum inside the
+## pad. The lower datum wins so that no pad is ever buried: inside any pad the
+## native ground never rises above that pad's datum, and the lowest pad of a
+## cluster is flat. TerrainGradePatch.height_bounds reports the patch target,
+## which stays flat there (see VillageOutskirtsSolver's pad gate).
 static func pad_owners(grade: TerrainGradePatch) -> Dictionary:
 	var owners: Dictionary = {}
 	var fixed := fixed_claims(grade)

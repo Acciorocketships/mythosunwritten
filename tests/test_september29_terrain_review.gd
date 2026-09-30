@@ -41,10 +41,14 @@ func test_category_snapshot_flags_exactly_the_graded_cells() -> void:
 const Frozen := preload("res://tests/fixtures/frozen_road_grade.gd")
 ## Three real towns near the reported road (photos 8/9, player 310.8,16.9,477.8)
 ## frozen by tests/harness/road_grade_freeze.gd with their natural terrain and
-## the accepted country-road lattice around them.
+## the accepted country-road lattice around them. Dual-grid re-freeze: the
+## town at super cell (1, -1) no longer seals any country road on 12 m points,
+## so its fixture (september29-road-divot-1-m1) was vacuous and is replaced by
+## the town at (-1, 0) (23 sealed road cells in the radius-2 probe), frozen
+## the same way. Every fixture must exercise at least one road edge.
 const DIVOT_FIXTURES := ["res://tests/fixtures/september29-road-divot-0-0.var.gz",
 	"res://tests/fixtures/september29-road-divot-0-m2.var.gz",
-	"res://tests/fixtures/september29-road-divot-1-m1.var.gz"]
+	"res://tests/fixtures/september29-road-divot-m1-0.var.gz"]
 
 
 static func _broken_road_edges(natural: HeightfieldRegion, graded: HeightfieldRegion,
@@ -107,6 +111,13 @@ func test_reported_road_keeps_its_natural_climb_out_of_the_town() -> void:
 func test_town_grades_leave_every_natural_road_edge_walkable() -> void:
 	for path: String in DIVOT_FIXTURES:
 		var r := _graded(path)
+		var walkable := 0
+		for cell: Vector2i in r[0].road_masks:
+			for arm: Array in [[1, Vector2i.RIGHT], [4, Vector2i(0, 1)]]:
+				if (int(r[0].road_masks[cell]) & int(arm[0])) != 0 \
+						and PathProgram.is_route_edge_walkable(r[1], cell, arm[1]):
+					walkable += 1
+		assert_gt(walkable, 0, "%s exercises at least one naturally walkable road edge" % path)
 		assert_eq(_broken_road_edges(r[1], r[2], r[0].road_masks), [], path)
 
 

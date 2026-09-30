@@ -169,3 +169,70 @@ func test_two_separate_pads_at_different_datums_are_each_flat() -> void:
 	var grade := TerrainGradePatch.new(&"two.pads", claims, Vector2(-30, -5), 4.0)
 	var graded := natural.with_terrain_grades([grade] as Array[TerrainGradePatch])
 	assert_eq(_pad_variation(graded, grade), 0.0, "each pad keeps its own datum")
+
+
+## The mixed-datum contract (review probe, September 30): one 12 m tile cannot
+## hold two datums, so where two pads share a tile corner the LOWER datum owns
+## it. The higher pad then ramps (one storey) or steps (a cliff at the tile
+## midline) toward the lower datum inside itself, and the patch's height_bounds
+## (its target) still reports it flat. What always holds: inside any pad the
+## native ground never rises above that pad's datum (no pad is buried), and the
+## lowest pad of a cluster is flat.
+static func _flat_ground(storey: int) -> HeightfieldRegion:
+	var storeys: Dictionary = {}
+	var levels: Dictionary = {}
+	for z in range(-10, 11):
+		for x in range(-10, 11):
+			storeys[Vector2i(x, z)] = storey
+			levels[Vector2i(x, z)] = 0
+	return HeightfieldRegion.new(storeys, levels)
+
+## Worst excess of the native ground over each claim's datum, and the
+## variation over the claims at `flat_datum`, sampled at 1 m inside each square.
+static func _pad_extrema(graded: HeightfieldRegion, grade: TerrainGradePatch,
+		flat_datum: float) -> Vector2:
+	var above := 0.0
+	var variation := 0.0
+	for cell: Vector2i in grade._claims:
+		var datum := float(grade._claims[cell])
+		var low: Vector2 = grade._origin + (Vector2(cell) - Vector2.ONE * 0.5) * grade._targets.pitch
+		for dz in int(grade._targets.pitch) + 1:
+			for dx in int(grade._targets.pitch) + 1:
+				var p := low + Vector2(dx, dz)
+				var y := TerrainTileField.surface_y(graded, p.x, p.y)
+				above = maxf(above, y - datum)
+				if datum == flat_datum:
+					variation = maxf(variation, absf(y - datum))
+	return Vector2(above, variation)
+
+func test_mixed_datum_pads_never_bury_a_pad_and_keep_the_lowest_flat() -> void:
+	var natural := _flat_ground(4)   # flat 16 m ground
+	# Low pad at 12 m on world x [-2, 10]; high pad adjacent ([10, 22]) at 15 m
+	# (a one-storey ramp inside it) or 21 m (a cliff inside it), or 8 m away
+	# ([18, 30]) at 15 m. Every case shares 12 m tile corners with the low pad.
+	var cases := [[3, 15.0], [3, 21.0], [5, 15.0]]
+	for case: Array in cases:
+		var claims: Dictionary = {}
+		for z in range(-2, 3):
+			for x in range(0, 3):
+				claims[Vector2i(x, z)] = 12.0
+				claims[Vector2i(int(case[0]) + x, z)] = float(case[1])
+		var grade := TerrainGradePatch.new(&"mixed", claims, Vector2.ZERO, 4.0)
+		var graded := natural.with_terrain_grades([grade] as Array[TerrainGradePatch])
+		var extrema := _pad_extrema(graded, grade, 12.0)
+		assert_lte(extrema.x, 0.00001,
+			"high pad from fine x %d at %.0f m: no pad's native ground rises above its datum" % case)
+		assert_eq(extrema.y, 0.0, "the lowest pad (12 m) is flat at every 1 m sample")
+		# The documented limit: the high pad is NOT flat on its native ground,
+		# although the patch target (height_bounds) reports it flat.
+		var high_low := INF
+		for cell: Vector2i in claims:
+			if float(claims[cell]) == 12.0: continue
+			var p := Vector2(cell) * 4.0
+			for dx: float in [-2.0, 0.0, 1.999]:
+				high_low = minf(high_low, TerrainTileField.surface_y(graded, p.x + dx, p.y))
+		assert_lt(high_low, float(case[1]) - 0.5, "the high pad dips toward the lower datum")
+		# The middle high claim: its whole target neighbourhood is at its datum.
+		var middle_high := Vector2(int(case[0]) + 1, 0) * 4.0
+		assert_eq(grade.height_bounds(Rect2(middle_high - Vector2.ONE * 2.0, Vector2.ONE * 4.0),
+			Vector2(16, 16)), Vector2(case[1], case[1]), "while the patch target reports it flat")

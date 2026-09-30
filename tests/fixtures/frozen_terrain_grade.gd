@@ -12,6 +12,11 @@ static func grade(data: Dictionary) -> TerrainGradePatch:
 ## cell round(p / 2) (its odd points on a cell border take the upper cell, a
 ## fixed deterministic tie). This re-freezes the recorded geography at 12 m
 ## without inventing heights; the town grades are world-space and unchanged.
+## Because odd points take the upper cell, cell i now spans points 2i-1..2i,
+## i.e. dual cells over world [24i - 18, 24i + 6] instead of the old cell's
+## [24i - 12, 24i + 12]: the re-frozen geography sits 6 m toward -x/-z relative
+## to the old cells. Acceptable: grades are world-space, and the tests assert
+## invariants of the graded field, not the old cell heights.
 static func region(path: String) -> HeightfieldRegion:
 	var data: Dictionary=str_to_var(FileAccess.get_file_as_string(path))
 	var storeys := _points(data.storeys)
