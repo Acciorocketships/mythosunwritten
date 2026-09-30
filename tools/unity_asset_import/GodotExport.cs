@@ -21,6 +21,7 @@ public static class GodotExport
         new Pack { root = "Assets/Raygeas/Suntail Village", outName = "Raygeas" },
         new Pack { root = "Assets/Polyart/PolyartStudio", outName = "Polyart" },
         new Pack { root = "Assets/ANGRY MESH", outName = "ANGRY MESH" },
+        new Pack { root = "Assets/BK/Pure_Village", outName = "PureVillage" },
     };
 
     // Demo content, Unity-only systems and effect/duplicate folders.
@@ -31,11 +32,14 @@ public static class GodotExport
         "/Terrain Data/", "/Terrain Layers/", "NavMesh", "/Controller.prefab", "/ASP Global Settings/",
         "/Interaction/", "/Skyboxes/", "/ShaderGraph/", "/Shaders/", "/ImportPresets/",
         // Collision proxies, distance impostors, placeholders and shader-only water effects.
-        "_COLL.", "TreeCollision", "/Billboards/", "_impostor", "/SM_Cube", "SM_WaterPlane", "/Waterfalls/",
+        "_COLL.", "TreeCollision", "/Billboards/", "_impostor", "_Impostor", "/SM_Cube", "SM_WaterPlane", "/Waterfalls/",
+        // BK Pure Village: smoke/star particles; LOD3 bake textures only serve dropped distance LODs.
+        "/Fx/", "/LOD3_Textures/",
     };
     static readonly string[] TextureExcluded =
     {
         "/Demo/", "/Scenes/", "/Settings/", "/SRP Templates/", "/Post Processing/", "/Skyboxes/", "/Terrain Data/",
+        "/LOD3_Textures/", "_Impostor_",
     };
     static readonly HashSet<string> DropSegments = new HashSet<string> { "Assets", "Prefabs", "Meshes", "Models", "Sources", "Textures", "PolyartStudio" };
 
@@ -56,8 +60,11 @@ public static class GodotExport
         string only = Environment.GetEnvironmentVariable("GODOT_EXPORT_ONLY"); // optional path substring filter
         Directory.CreateDirectory(OutRoot);
 
+        // Optional: GODOT_EXPORT_PACKS=PureVillage,Raygeas limits the run to those outNames.
+        string packFilter = Environment.GetEnvironmentVariable("GODOT_EXPORT_PACKS");
         foreach (var pack in Packs)
         {
+            if (packFilter != null && !packFilter.Split(',').Contains(pack.outName)) continue;
             var covered = new HashSet<Mesh>();
             AnimLibrary = CollectAnimationLibrary(pack);
 
@@ -163,6 +170,7 @@ public static class GodotExport
     }
 
     // op: copy | ms (unity metallic R + smoothness A) | aa (smoothness in albedo A) | smae (ANGRY MESH S,M,A,E)
+    //     | mos (unity metallic R, occlusion G, smoothness A)
     static string TextureOut(Pack pack, string src, string op, float[] args)
     {
         string suffix = op == "copy" ? "" : "_" + op.ToUpperInvariant() + (args == null ? "" : "_" + string.Join("_", args.Select(a => Mathf.RoundToInt(a * 100).ToString())));
@@ -621,6 +629,11 @@ public static class GodotExport
             {
                 tint = Color.Lerp(mp.Col("_Color_Base").Value, mp.Col("_Color_Top").Value, 0.5f); tintProp = "_Color_Base/_Color_Top";
             }
+            else if (mp.Has("_Color01") && mp.Has("_Color02"))
+            {
+                // BK Pure Village grass/flowers: noise blend between two tints.
+                tint = Color.Lerp(mp.Col("_Color01").Value, mp.Col("_Color02").Value, 0.5f); tintProp = "_Color01/_Color02";
+            }
             else if (mp.Has("_Foliage_Color_Top") && mp.Has("_Foliage_Color_Bottom"))
             {
                 tint = Color.Lerp(mp.Col("_Foliage_Color_Bottom").Value, mp.Col("_Foliage_Color_Top").Value, 0.5f); tintProp = "_Foliage_Color_Bottom/_Foliage_Color_Top";
@@ -633,12 +646,12 @@ public static class GodotExport
 
             // Alpha mode
             int queue = m.renderQueue;
-            // Foliage shaders (Suntail, ANGRY MESH, Polyart) clip albedo alpha in-shader at opaque queue.
-            bool clip = m.IsKeywordEnabled("_ALPHATEST_ON") || (mp.Flt("_AlphaClip") ?? 0) > 0.5f || (mp.Flt("_BUILTIN_AlphaClip") ?? 0) > 0.5f
-                || mp.Flt("_AlphaCutoff", "_CutOff", "_BaseOpacityCutoff", "_Alpha_Clip", "_AlphaClipThreshold").HasValue;
+            // Foliage shaders (Suntail, ANGRY MESH, Polyart, BK) clip albedo alpha in-shader at opaque queue.
+            bool clip = sn == "BK/Grass" || sn == "BK/Vegetation Leaves" || m.IsKeywordEnabled("_ALPHATEST_ON") || (mp.Flt("_AlphaClip") ?? 0) > 0.5f || (mp.Flt("_BUILTIN_AlphaClip") ?? 0) > 0.5f
+                || mp.Flt("_AlphaCutoff", "_CutOff", "_BaseOpacityCutoff", "_Alpha_Clip", "_AlphaClipThreshold", "_AlphaClippingTreshold").HasValue;
             string alphaMode = queue >= 3000 ? "BLEND" : (queue >= 2450 || clip) ? "MASK" : "OPAQUE";
             if (alphaMode != "OPAQUE" && albedoProp == null && tint.a >= 0.999f) alphaMode = "OPAQUE";
-            if (alphaMode == "MASK") mat["alphaCutoff"] = (double)Mathf.Clamp(mp.Flt("_Cutoff", "_AlphaCutoff", "_CutOff", "_BaseOpacityCutoff", "_Alpha_Clip", "_AlphaClipThreshold") ?? 0.5f, 0.01f, 0.99f);
+            if (alphaMode == "MASK") mat["alphaCutoff"] = (double)Mathf.Clamp(mp.Flt("_Cutoff", "_AlphaCutoff", "_CutOff", "_BaseOpacityCutoff", "_Alpha_Clip", "_AlphaClipThreshold", "_AlphaClippingTreshold") ?? 0.5f, 0.01f, 0.99f);
             if (alphaMode != "OPAQUE") mat["alphaMode"] = alphaMode;
             float cull = mp.Flt("_Cull", "_CullMode", "_BUILTIN_CullMode", "_RenderFace") ?? 2f;
             if (cull < 0.5f || alphaMode == "MASK") mat["doubleSided"] = true;
@@ -660,7 +673,7 @@ public static class GodotExport
 
             // Normal
             string normalProp = mp.FirstTex("_BaseNormal", "_Normal", "_NormalMap", "_Normal_Map", "_BumpMap", "_Layer_01_Normal");
-            float nScale = mp.Flt("_BaseNormalIntensity", "_NormalScale", "_BumpScale", "_Normal_Intensity", "_NormalIntensity", "_Layer_01_Normal_Strength") ?? 1f;
+            float nScale = mp.Flt("_BaseNormalIntensity", "_NormalPower", "_NormalScale", "_BumpScale", "_Normal_Intensity", "_NormalIntensity", "_Layer_01_Normal_Strength") ?? 1f;
             if (normalProp != null && nScale > 0.01f)
                 mat["normalTexture"] = TexInfo(TextureOut(pack, mp.TexPath(normalProp), "copy", null), xf, "scale", Mathf.Clamp(nScale, 0f, 2f));
             report["normal"] = normalProp;
@@ -677,6 +690,24 @@ public static class GodotExport
                 pbr["roughnessFactor"] = (double)Mathf.Clamp01(mp.Flt("_RoughnessIntensity", "_Roughness_Intensity", "_Layer_01_Roughness") ?? 1f);
                 mat["occlusionTexture"] = TexInfo(TextureOut(pack, mp.TexPath(ormProp), "copy", null), xf, "strength", Mathf.Clamp01(mp.Flt("_AOIntensity", "_AO_Intensity", "_Layer_01_AO") ?? 1f));
                 report["mr"] = ormProp + " (ORM)";
+            }
+            else if (msProp != null && (sn == "BK/Standard Layered"
+                || (sn == "Universal Render Pipeline/Lit" && m.IsKeywordEnabled("_METALLICSPECGLOSSMAP") && (mp.Flt("_SmoothnessTextureChannel") ?? 0f) < 0.5f)))
+            {
+                // Unity metallic map: R metallic, G occlusion, A smoothness. BK Pure Village's
+                // layered shader reads occlusion from G of the same map; URP Lit uses a separate
+                // _OcclusionMap slot, combined here only when it names the same texture.
+                bool bk = sn == "BK/Standard Layered";
+                float s = Mathf.Clamp01((bk ? mp.Flt("_SmoothnessPower") : mp.Flt("_Smoothness")) ?? 0.5f);
+                string occProp = bk ? msProp : mp.FirstTex("_OcclusionMap");
+                bool occ = occProp != null && mp.TexPath(occProp) == mp.TexPath(msProp);
+                float occStrength = occ ? Mathf.Clamp01((bk ? mp.Flt("_OcclusionPower") : mp.Flt("_OcclusionStrength")) ?? 1f) : 0f;
+                var outTex = TextureOut(pack, mp.TexPath(msProp), "mos", new[] { s, occStrength });
+                pbr["metallicRoughnessTexture"] = TexInfo(outTex, xf);
+                pbr["metallicFactor"] = (double)(bk ? Mathf.Clamp01(mp.Flt("_MetallicPower") ?? 0f) : 1f);
+                pbr["roughnessFactor"] = 1.0;
+                if (occStrength > 0.01f) mat["occlusionTexture"] = TexInfo(outTex, xf, "strength", 1f);
+                report["mr"] = msProp + $" (MOS smoothness x{s}, AO x{occStrength})";
             }
             else if (msProp != null && mp.Has("_SurfaceSmoothness"))
             {

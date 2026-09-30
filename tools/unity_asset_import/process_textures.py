@@ -1,7 +1,8 @@
 """Materialize texture jobs from export_manifest.json into the staging tree.
 
 ops: copy (convert non png/jpg to png), ms (Unity metallic R + smoothness A * s),
-aa (smoothness = albedo A * s), smae (ANGRY MESH: R smooth, G metal, B AO; smoothness remapped
+aa (smoothness = albedo A * s), mos (Unity metallic R, occlusion G at strength o,
+smoothness A * s), smae (ANGRY MESH: R smooth, G metal, B AO; smoothness remapped
 lerp(min,max,R)). Derived textures follow glTF: R = occlusion, G = roughness, B = metallic.
 """
 import json, os, shutil, subprocess, sys, tempfile
@@ -61,6 +62,11 @@ def job(j):
         o = np.ones((h, w, 3), np.float32)
         if op == "ms":
             s = args[0]
+            o[..., 1] = 1.0 - rgba[..., 3] * s
+            o[..., 2] = rgba[..., 0]
+        elif op == "mos":
+            s, occ = args
+            o[..., 0] = 1.0 - occ * (1.0 - rgba[..., 1])
             o[..., 1] = 1.0 - rgba[..., 3] * s
             o[..., 2] = rgba[..., 0]
         elif op == "aa":
