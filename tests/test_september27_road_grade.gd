@@ -5,17 +5,21 @@ extends GutTest
 ## storey below natural, so road cell (48,22) stood two storeys above them:
 ## a cliff top whose 8 m wall ended the road.
 ##
-## Dual-grid re-freeze (September 30): the fixture is the same town (super
-## cell (1, 0)) re-frozen by tests/harness/road_grade_freeze.gd on 12 m points.
-## The resampled geography no longer exhibits the defect: its bare grade (no
-## road grading) breaks none of its 11 naturally walkable road edges, and the
-## radius-2 corpus probe (tests/harness/road_grade_walkability_probe.gd, 23
-## towns) found no town whose bare grade breaks a road edge, so no equivalent
-## current site exists to re-pin. The reported town keeps the invariant; the
-## mechanism (a road graded one storey per point into a sunken pad, through a
-## route edge's middle point) is pinned by the synthetic tests below.
+## Dual-grid re-freeze (September 30): FIXTURE is the same town (super cell
+## (1, 0)) re-frozen by tests/harness/road_grade_freeze.gd on 12 m points. Its
+## resampled geography no longer exhibits the defect (the bare grade breaks
+## none of its 11 naturally walkable road edges), and neither does any of the
+## 23 towns of the radius-2 road_grade_walkability_probe on this seed. The
+## equivalent current site, found by the same probe on seed 1 radius 2 (the
+## only one of 24 towns whose bare grade breaks a road edge), is REPINNED:
+## seed 1, super cell (2, -2), settlement.28501a6c73992eaf, route edge
+## (67,-44) -> (68,-44) = points (134..136, -88). Natural ground 8/12/12 m; the
+## town's pad owner point 136 stands at 24 m, three storeys over the ODD middle
+## point 135: an odd-point cliff across the road. Road grading raises the road
+## one storey per point into the (raised) town: 16/20/24.
 
 const FIXTURE := "res://tests/fixtures/september27-dead-end-grade.var.gz"
+const REPINNED := "res://tests/fixtures/september30-road-ramp-seed1-2-m2.var.gz"
 const Frozen := preload("res://tests/fixtures/frozen_road_grade.gd")
 const NativeGrade := preload("res://scripts/terrain/field/NativeTerrainGrade.gd")
 
@@ -63,11 +67,42 @@ func test_reported_town_grade_keeps_its_country_road_walkable() -> void:
 			assert_eq(graded.surface_height(x, z), bare.surface_height(x, z),
 				"Non-road point (%d,%d) is not regraded by the road" % [x, z])
 
+func test_repinned_town_grade_ramps_its_road_through_an_odd_point() -> void:
+	var d := Frozen.load_fixture(REPINNED)
+	var natural: HeightfieldRegion = d.region
+	var bare := natural.with_terrain_grades([Frozen.grade(d.grade)] as Array[TerrainGradePatch])
+	var cell := Vector2i(67, -44)
+	assert_true(PathProgram.is_route_edge_walkable(natural, cell, Vector2i.RIGHT),
+		"The route was accepted on natural ground")
+	assert_false(PathProgram.is_route_edge_walkable(bare, cell, Vector2i.RIGHT),
+		"Without road grading the town's pad walls the road off at the odd point")
+	assert_eq(_broken_edges(natural, bare, d.road_masks), ["(67, -44)->(68, -44)"])
+	var grade: TerrainGradePatch = d.grade_patch
+	grade.road_masks = d.road_masks
+	var graded := natural.with_terrain_grades([grade] as Array[TerrainGradePatch])
+	assert_eq(_broken_edges(natural, graded, d.road_masks), [],
+		"Every accepted road edge stays walkable on the final graded field")
+	assert_eq(graded.surface_height(136, -88), 24.0, "The town's pad keeps its datum")
+	assert_eq(graded.surface_height(135, -88), 20.0, "The odd middle point steps one storey below it")
+	assert_eq(graded.surface_height(134, -88), 16.0, "and the route cell one more")
+	assert_eq(graded.surface_height(133, -88), 12.0, "and the next point one more")
+	var roads := NativeGrade.road_points(grade)
+	var points: Rect2i = d.points
+	for z in range(points.position.y, points.end.y + 1):
+		for x in range(points.position.x, points.end.x + 1):
+			if roads.has(Vector2i(x, z)): continue
+			assert_eq(graded.surface_height(x, z), bare.surface_height(x, z),
+				"Non-road point (%d,%d) is not regraded by the road" % [x, z])
+
 func test_a_grade_without_roads_is_unchanged() -> void:
+	var d := Frozen.load_fixture(REPINNED)
+	var natural: HeightfieldRegion = d.region
+	var graded := natural.with_terrain_grades([d.grade_patch] as Array[TerrainGradePatch])
+	assert_eq(graded.surface_height(135, -88), 12.0, "Roads are an explicit construction input")
 	# The sunken pad below without its road: nothing regrades the approach, so
 	# the road point beside the pad keeps its natural 20 m (a cliff remains).
 	var pad := _sunken_pad()
-	var graded := (pad[0] as HeightfieldRegion).with_terrain_grades([pad[1]] as Array[TerrainGradePatch])
+	graded = (pad[0] as HeightfieldRegion).with_terrain_grades([pad[1]] as Array[TerrainGradePatch])
 	assert_eq(graded.surface_height(5, 0), 20.0, "Roads are an explicit construction input")
 
 static func _sunken_pad() -> Array:
@@ -122,7 +157,7 @@ func test_road_masks_survive_every_grade_extension() -> void:
 		assert_eq(patch.road_masks, grade.road_masks, "Road constraints are sealed with the town")
 
 func test_native_road_ramp_is_independent_of_query_order() -> void:
-	var d := Frozen.load_fixture(FIXTURE)
+	var d := Frozen.load_fixture(REPINNED)
 	var natural: HeightfieldRegion = d.region
 	var first: TerrainGradePatch = d.grade_patch
 	first.road_masks = d.road_masks
