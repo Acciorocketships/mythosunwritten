@@ -79,8 +79,8 @@ const _RING: Array[Vector2] = [
 
 static func _ring_wall(region, p: Vector2, lvl: float) -> bool:
 	for d: Vector2 in _RING:
-		var g05: float = TerrainSurfaceField.surface_y(region, p.x + d.x * 0.5, p.y + d.y * 0.5)
-		var g15: float = TerrainSurfaceField.surface_y(region, p.x + d.x * 1.5, p.y + d.y * 1.5)
+		var g05: float = TerrainTileField.surface_y(region, p.x + d.x * 0.5, p.y + d.y * 0.5)
+		var g15: float = TerrainTileField.surface_y(region, p.x + d.x * 1.5, p.y + d.y * 1.5)
 		if (g05 - lvl) / 0.5 > WaterContour.WALL_SLOPE or (g15 - lvl) / 1.5 > WaterContour.WALL_SLOPE:
 			return true
 	return false
@@ -432,11 +432,21 @@ func test_wall_stays_straight() -> void:
 	const WALL_X := 42.0   # dual-cell border 12 * 3 + 6
 	var reach := Rect2(Vector2(WALL_X - 1.0, -1108.0), Vector2(2.0, 32.0))
 	var wall_pts: Array = []
+	# The wall holds back real water only where its low side (the 12 m point
+	# column east of the border, x = 48) lies at least 1 m under the water.
+	# Between z = -1098 and -1086 that side is a flat 8 m plateau standing at
+	# the descending river's own level (a coincidence of the 12 m resampling):
+	# there the waterline is the edge of a centimetre film on the plateau, not
+	# the wall, and it is excluded by this terrain/level test, not by position.
 	for c: Dictionary in curves:
 		var pts: PackedVector2Array = c.pts
 		for i in pts.size():
-			if c.wall[i] == 1 and reach.has_point(pts[i]):
-				wall_pts.append(pts[i])
+			if c.wall[i] != 1 or not reach.has_point(pts[i]):
+				continue
+			var low_ground := TerrainTileField.surface_y(ctx.region, WALL_X + 6.0, pts[i].y)
+			if float(c.levels[i]) - low_ground < 1.0:
+				continue
+			wall_pts.append(pts[i])
 	print("MEAS test_wall_stays_straight: %d wall-flagged points in the I4 reach" % wall_pts.size())
 	assert_true(wall_pts.size() >= 4, "at least 4 wall-flagged points found along the vertical I4 reach")
 	if wall_pts.size() < 4:
@@ -582,10 +592,10 @@ func test_outward_frame_points_to_the_drier_side() -> void:
 	var inward: Vector2 = p - nrm * probe
 	var out_level: float = WaterField.level_at(ctx, outward)
 	var in_level: float = WaterField.level_at(ctx, inward)
-	var out_depth: float = out_level - TerrainSurfaceField.surface_y(
+	var out_depth: float = out_level - TerrainTileField.surface_y(
 		ctx.region, outward.x, outward.y) \
 		if out_level != -INF else -INF
-	var in_depth: float = in_level - TerrainSurfaceField.surface_y(
+	var in_depth: float = in_level - TerrainTileField.surface_y(
 		ctx.region, inward.x, inward.y) \
 		if in_level != -INF else -INF
 	print("MEAS pond outward-frame p=%s n=%s out_depth=%.3f in_depth=%.3f curve=%d index=%d" % [

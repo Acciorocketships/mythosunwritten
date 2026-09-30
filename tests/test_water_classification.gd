@@ -70,7 +70,7 @@ static func _rect(chunk: Vector2i) -> Rect2:
 ## only (0.8 swim, 0.05 wade) — a single-shot classification has no previous
 ## frame to hold a hysteresis band open, so EXIT thresholds don't apply here.
 static func _field_truth_class(ctx: Dictionary, region, p: Vector2) -> String:
-	var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+	var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 	var lvl: float = WaterField.level_at(ctx, p)
 	if lvl == -INF:
 		return "DRY"
@@ -128,7 +128,7 @@ func _assert_parity(label: String, skin: Dictionary, ctx: Dictionary, region, po
 	var offenders: Array = []
 	var class_counts: Dictionary = {"SWIM": 0, "WADE": 0, "DRY": 0}
 	for p: Vector2 in points:
-		var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+		var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 		var gp := Vector3(p.x, g, p.y)
 		var truth: String = _field_truth_class(ctx, region, p)
 		var got: String = _character_class(skin, gp)
@@ -166,7 +166,7 @@ func test_deep_interior() -> void:
 		var p := Vector2(v.x, v.z)
 		if _dist_to_curves(curves, p) < 1.5:
 			continue
-		var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+		var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 		var lvl: float = WaterField.level_at(ctx, p)
 		if lvl == -INF or lvl - g <= 2.0:
 			continue
@@ -228,7 +228,7 @@ func test_dry_bank() -> void:
 		for i in range(0, pts.size(), 3):
 			for k: float in [3.0, 5.0, 8.0]:
 				var p: Vector2 = pts[i] + normals[i] * k
-				var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+				var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 				var lvl: float = WaterField.level_at(ctx, p)
 				if lvl != -INF and lvl - g > 0.05:
 					continue   # still genuinely wet this far out (a wide body) — not a fair dry-bank sample
@@ -297,7 +297,7 @@ func test_steep_chute() -> void:
 		var x := 44.0
 		while x <= 58.0 + 0.001:
 			var p := Vector2(x, z)
-			var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+			var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 			var lvl: float = WaterField.level_at(ctx, p)
 			if lvl != -INF and lvl - g > 0.5:
 				candidates.append(p)
@@ -332,7 +332,7 @@ func test_i4_waterline_pin() -> void:
 	if skin.is_empty():
 		return
 	var p := Vector2(43.0, -1108.7)
-	var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+	var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 	var lvl: float = WaterField.level_at(ctx, p)
 	var depth: float = lvl - g
 	print("MEAS test_i4_waterline_pin: field level=%.4f ground=%.4f static depth=%.4f" % [
@@ -366,7 +366,7 @@ func test_plunge_pool_centre() -> void:
 			for jj in range(0, 9):
 				for ii in range(0, 9):
 					var p: Vector2 = lo + Vector2(ii, jj) * 3.0
-					var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+					var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 					var lvl: float = WaterField.level_at(ctx, p)
 					if lvl == -INF or lvl - g <= 0.8:
 						continue
@@ -393,7 +393,7 @@ func test_plunge_pool_centre() -> void:
 	# therefore joins the class's deep candidates instead of retaining its
 	# stale pre-bathymetry WADE expectation.
 	var pool_centre := Vector2(56.0, -1101.0)
-	var g2: float = TerrainSurfaceField.surface_y(region, pool_centre.x, pool_centre.y)
+	var g2: float = TerrainTileField.surface_y(region, pool_centre.x, pool_centre.y)
 	var lvl2: float = WaterField.level_at(ctx, pool_centre)
 	print("MEAS test_plunge_pool_centre: third pin (56,-1101) level=%.4f ground=%.4f static depth=%.4f" % [
 		lvl2, g2, lvl2 - g2])

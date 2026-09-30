@@ -295,7 +295,7 @@ func test_sampler_covers_the_shoreline_band() -> void:
 				if not covered.has(cell):
 					continue   # steep-gated/unbuilt tile: no trigger box is responsible here
 				var truth: float = WaterField.level_at(ctx, p)
-				var g: float = TerrainSurfaceField.surface_y(region, p.x, p.y)
+				var g: float = TerrainTileField.surface_y(region, p.x, p.y)
 				if truth == -INF or truth <= g + 0.02:
 					continue   # not genuinely wet per the field (bend/normal cases) — not a fair band sample
 				checked += 1
