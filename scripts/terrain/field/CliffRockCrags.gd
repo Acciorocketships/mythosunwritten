@@ -6,9 +6,6 @@ extends RefCounted
 ## tiles, September 30). Worker-pure until mesh(), which runs on the main thread.
 const STYLE=preload("res://scripts/terrain/field/CliffRockStyle.gd")
 
-## Ground more than this below a foot line belongs to a lower cliff.
-const SUPPORT_DROP:=2.5
-
 ## Moss detail from the owner's asset packs (September 23): each pack's own
 ## rock-moss layer. Colour textures act relative to their mean colour, so the
 ## biome-derived moss tone still leads; masks break coverage into patches.

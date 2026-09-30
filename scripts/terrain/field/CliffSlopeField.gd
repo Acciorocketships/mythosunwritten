@@ -56,7 +56,9 @@ static func straight_wall(a:Vector2,b:Vector2,normal:Vector2,top:float,bottom:=0
  return {"a":a,"b":b,"normal":normal.normalized(),"top":Vector2(top,top),"bottom":Vector2(bottom,bottom)}
 
 ## Splits a wall segment where its heights change by more than WALL_SPLIT
-## and adds each piece as a foot-line primitive.
+## and adds each piece as a foot-line primitive with the heights of its first
+## sample: every sample of a piece but its last (where the next piece starts)
+## lies within WALL_SPLIT of them.
 func _add_wall(wall:Dictionary)->void:
  var a:Vector2=wall.a;var b:Vector2=wall.b
  var steps:=maxi(1,ceili(a.distance_to(b)/WALL_SAMPLE))
@@ -64,7 +66,7 @@ func _add_wall(wall:Dictionary)->void:
  var sampled:=_region!=null and wall.has("high") and wall.has("low")
  for k in steps+1:
   var f:=float(k)/steps
-  if k==0 or k==steps or not sampled:
+  if not sampled:
    tops.append(lerpf(float(wall.top.x),float(wall.top.y),f))
    bottoms.append(lerpf(float(wall.bottom.x),float(wall.bottom.y),f))
   else:
@@ -74,9 +76,7 @@ func _add_wall(wall:Dictionary)->void:
  var start:=0
  for k in range(1,steps+1):
   if k<steps and absf(tops[k]-tops[start])<=WALL_SPLIT and absf(bottoms[k]-bottoms[start])<=WALL_SPLIT:continue
-  var top:=0.0;var base:=0.0
-  for j in range(start,k+1):top+=tops[j];base+=bottoms[j]
-  top/=k-start+1;base/=k-start+1
+  var top:=tops[start];var base:=bottoms[start]
   if top-base>.05:
    _segment(a.lerp(b,float(start)/steps),a.lerp(b,float(k)/steps),wall.normal,base,top-base)
   start=k

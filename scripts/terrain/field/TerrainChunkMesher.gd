@@ -583,13 +583,44 @@ static func field_normals(vertices: PackedVector3Array, region,
 	for i in vertices.size():
 		var v := vertices[i]
 		var owner := _vertex_owner(region, baked_cache, v, spacing)
-		var baked: PackedFloat32Array = baked_cache[owner]
-		var gx := (TerrainTileField.sample_baked(baked, owner, v.x + NORMAL_STEP, v.z, region)
-			- TerrainTileField.sample_baked(baked, owner, v.x - NORMAL_STEP, v.z, region)) / (2.0 * NORMAL_STEP)
-		var gz := (TerrainTileField.sample_baked(baked, owner, v.x, v.z + NORMAL_STEP, region)
-			- TerrainTileField.sample_baked(baked, owner, v.x, v.z - NORMAL_STEP, region)) / (2.0 * NORMAL_STEP)
+		var gx := _field_slope(region, baked_cache, owner, v, Vector2i(1, 0), spacing)
+		var gz := _field_slope(region, baked_cache, owner, v, Vector2i(0, 1), spacing)
 		normals[i] = Vector3(-gx, 1.0, -gz).normalized()
 	return normals
+
+
+## The owner surface's slope at v along `axis` (a central difference). A
+## sample beyond the owner's dual cell continues on the neighbour's surface
+## where the border is not a wall there (one continuous tile), and otherwise
+## the difference is one-sided: an owner's pinned sampler clamps at its
+## border, which would flatten half the difference at every 12 m seam.
+static func _field_slope(region, baked_cache: Dictionary, owner: Vector2i, v: Vector3,
+		axis: Vector2i, spacing: float) -> float:
+	var ys: Array[float] = []
+	for sign_value: int in [1, -1]:
+		var x := v.x + float(axis.x * sign_value) * NORMAL_STEP
+		var z := v.z + float(axis.y * sign_value) * NORMAL_STEP
+		var along := (x - float(owner.x) * spacing) if axis.x != 0 else (z - float(owner.y) * spacing)
+		var y := NAN
+		if absf(along) <= spacing * 0.5:
+			y = TerrainTileField.sample_baked(baked_cache[owner], owner, x, z, region)
+		else:
+			var neighbour := owner + axis * sign_value
+			if not baked_cache.has(neighbour):
+				baked_cache[neighbour] = TerrainTileField.bake_point(region, neighbour)
+			var mine := TerrainTileField.sample_baked(baked_cache[owner], owner, v.x, v.z, region)
+			var theirs := TerrainTileField.sample_baked(baked_cache[neighbour], neighbour, v.x, v.z, region)
+			if absf(mine - theirs) < 0.0001:
+				y = TerrainTileField.sample_baked(baked_cache[neighbour], neighbour, x, z, region)
+		ys.append(y)
+	var centre := TerrainTileField.sample_baked(baked_cache[owner], owner, v.x, v.z, region)
+	if not is_nan(ys[0]) and not is_nan(ys[1]):
+		return (ys[0] - ys[1]) / (2.0 * NORMAL_STEP)
+	if not is_nan(ys[0]):
+		return (ys[0] - centre) / NORMAL_STEP
+	if not is_nan(ys[1]):
+		return (centre - ys[1]) / NORMAL_STEP
+	return 0.0
 
 
 ## The lattice point whose pinned surface holds a sheet vertex. Interior
