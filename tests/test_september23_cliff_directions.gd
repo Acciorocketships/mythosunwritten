@@ -1,233 +1,34 @@
 extends GutTest
-## September 23 owner review: subtle rock (fuller straight/inner feet than
-## convex corners), ground-up moss, and storey-quantised inner terraces.
-const CRAGS=preload("res://scripts/terrain/field/CliffRockCrags.gd")
-const CORNERS=preload("res://scripts/terrain/field/CliffCornerCrags.gd")
-const KIT=preload("res://scripts/terrain/field/CliffKitDressing.gd")
+## Whole-wall slope sheet (owner reviews September 23-27), on synthetic foot
+## lines. The procedural crag, terrace and native-piece tests of this review
+## were retired with those styles (dual-grid terrain tiles, September 30); the
+## sheet's foot lines are wall segments (TerrainTileField.wall_segments form).
 const STYLE=preload("res://scripts/terrain/field/CliffRockStyle.gd")
+const FIELD=preload("res://scripts/terrain/field/CliffSlopeField.gd")
 const SEED:=2697992464
 const POSE:=Transform3D(Basis.IDENTITY,Vector3(12,0,30))
 
-func before_all()->void:CRAGS.prepare();CORNERS.prepare()
-func after_each()->void:STYLE.apply("chosen")
+func after_each()->void:STYLE.apply("sheet_bedrock")
 
-func _foot(faces:PackedVector3Array)->float:
- var columns:Dictionary={}
- for p:Vector3 in faces:
-  if p.y>=0.0 and p.y<1.0:columns[p.x]=maxf(columns.get(p.x,0.0),p.z)
- var depths:=columns.values();depths.sort()
- return depths[depths.size()/2]
+## A straight wall along x centred on the pose origin, `width` long, its
+## plateau behind it (z below the origin), `height` above the origin's ground.
+func _wall(pose:Transform3D,width:float,height:float)->Dictionary:
+ var o:=pose.origin
+ return FIELD.straight_wall(Vector2(o.x-width*.5,o.z),Vector2(o.x+width*.5,o.z),Vector2(0,1),o.y+height,o.y)
 
-func test_subtle_foot_stays_close_to_the_wall()->void:
- # The unconstrained foot measured 6-9 m on a 4 m wall (a talus apron).
- for height:float in [4.0,8.0,16.0]:
-  STYLE.apply("current")
-  var old:=_foot(CRAGS.make(POSE,24,height,SEED)[0].faces)
-  STYLE.apply("chosen")
-  var now:=_foot(CRAGS.make(POSE,24,height,SEED)[0].faces)
-  assert_lt(now,3.0,"A %d m wall's foot stays within 3 m"%height)
-  assert_gt(now,1.5,"The foot still carries a real rock base")
-  assert_lt(now,old*.45,"Subtle removes most of the pooled foot")
+## An outer (convex) corner at the pose origin: the plateau lies at lower x and
+## z; walls facing +z and +x meet at the corner.
+func _corner(pose:Transform3D,height:float)->Array:
+ var o:=pose.origin
+ return [FIELD.straight_wall(Vector2(o.x-12,o.z),Vector2(o.x,o.z),Vector2(0,1),o.y+height,o.y),
+  FIELD.straight_wall(Vector2(o.x,o.z-12),Vector2(o.x,o.z),Vector2(1,0),o.y+height,o.y)]
 
-func test_convex_corners_keep_a_tighter_foot_than_straight_faces()->void:
- # Ledge lips were part of the fuller straight foot; with ledges off (owner,
- # September 24) the two feet measure alike, so compare with them on.
- STYLE.ledges=true
- assert_lt(CRAGS.SUBTLE_CORNER_FOOT,CRAGS.SUBTLE_FOOT)
- var wall:=_foot(CRAGS.make(POSE,24,8,SEED,null,false,false,[],CRAGS.SUBTLE_FOOT)[0].faces)
- var corner:=_foot(CRAGS.make(POSE,24,8,SEED,null,false,false,[],CRAGS.SUBTLE_CORNER_FOOT)[0].faces)
- assert_lt(corner,wall-.3,"The corner source foot is tighter")
-
-func test_subtle_keeps_the_crown_and_most_wall_turf()->void:
- STYLE.apply("current")
- var old:Dictionary=CRAGS.make(POSE,24,8,SEED)[0]
- STYLE.apply("chosen")
- # Ledges are off for now (owner, September 24); compare like with like.
- STYLE.ledges=true
- var now:Dictionary=CRAGS.make(POSE,24,8,SEED)[0]
- var crown:Dictionary={}
- for p:Vector3 in old.faces:
-  if p.y>=6.4:crown[p]=true
- var kept:=0;var total:=0
- for p:Vector3 in now.faces:
-  if p.y>=6.4:
-   total+=1
-   if crown.has(p):kept+=1
- assert_gt(total,0)
- assert_eq(kept,total,"The upper fifth keeps the native crown exactly")
- assert_gt(now.green.size(),old.green.size()*.5,"Straight faces keep most ledge turf")
-
-func test_moss_reads_height_and_lawn_tint()->void:
- var rock:Dictionary=CRAGS.make(POSE,24,8,SEED)[0]
- var arrays:Array=CRAGS.mesh_arrays(rock,null,SEED)[0]
- var rise:PackedVector2Array=arrays[Mesh.ARRAY_TEX_UV2]
- var colors:PackedColorArray=arrays[Mesh.ARRAY_COLOR]
- var vertices:PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
- assert_eq(rise.size(),vertices.size())
- assert_almost_eq(rise[0].x,vertices[0].y,.0001,"Without terrain, rise is the local base height")
- assert_ne(Color(colors[0].r,colors[0].g,colors[0].b),Color(1,1,1),"Moss carries the lawn's biome tint")
-
-func test_terrace_turf_sits_on_a_storey_band()->void:
- # 8 m corner: one storey below the crest, one above the pocket.
- assert_almost_eq(KIT.terrace_cap(24.0,16.0,16.2,.9),20.0,.0001)
- # 12 m corner: either whole-storey band, never half-height.
- for roll:float in [0.0,.49,.51,.99]:
-  var cap:=KIT.terrace_cap(28.0,16.0,16.3,roll)
-  assert_true(is_equal_approx(cap,24.0) or is_equal_approx(cap,20.0),"cap %f"%cap)
- # The lowest lip-to-ground height (one storey) has no terrace.
- assert_true(is_nan(KIT.terrace_cap(20.0,16.0,16.1,.5)))
- # An uneven pocket cannot carry a flat terrace.
- assert_true(is_nan(KIT.terrace_cap(28.0,16.0,18.0,.5)))
-
-func test_collinear_panels_of_different_heights_abut_instead_of_fading()->void:
- # The ground steps a storey along one face: a 16 m and a 12 m run meet.
- # Both were treated as free ends and faded, leaving a bare native column.
- const RELIEF=preload("res://scripts/terrain/field/CliffRockRelief.gd")
- var walls:=[]
- for x:float in [-10.5,-7.5,-4.5]:
-  for y in 4:walls.append(Transform3D(Basis.IDENTITY,Vector3(x,12+y*4,10.5)))
- for x:float in [-1.5,1.5]:
-  for y in 3:walls.append(Transform3D(Basis.IDENTITY,Vector3(x,16+y*4,10.5)))
- var panels:=RELIEF.panels(walls)
- assert_eq(panels.size(),2)
- for panel:Dictionary in panels:
-  var towards_step:bool=(panel.pose as Transform3D).origin.x<-3.0
-  assert_true(panel.right_abut if towards_step else panel.left_abut,"The storey step is a joint")
-  assert_false(panel.left_abut if towards_step else panel.right_abut,"The far end stays free")
- assert_lt(CRAGS._end_fade(9.0,1),CRAGS._end_fade(9.0,0),"A joint fades less than a free end")
- for panel:Dictionary in panels:
-  assert_true(bool(panel.right_extend or panel.left_extend),"Equal crests continue into each other")
- # A lower crest continues into its taller neighbour, never the reverse.
- var stepped:=[]
- for x:float in [-10.5,-7.5,-4.5]:
-  for y in 4:stepped.append(Transform3D(Basis.IDENTITY,Vector3(x,12+y*4,10.5)))
- for x:float in [-1.5,1.5]:
-  for y in 2:stepped.append(Transform3D(Basis.IDENTITY,Vector3(x,12+y*4,10.5)))
- for panel:Dictionary in RELIEF.panels(stepped):
-  var lower:bool=float(panel.height)<16.0
-  assert_eq(bool(panel.right_extend or panel.left_extend),lower,"Only the lower crest continues")
-
-## Front depth of the finished formation at column x, height y.
-func _depth(faces:PackedVector3Array,x:float,y:float)->float:
- var z:=-INF
- for p:Vector3 in faces:
-  if absf(p.x-x)<.13 and absf(p.y-y)<.3:z=maxf(z,p.z)
- return z
-
-const FIELD=preload("res://scripts/terrain/field/CliffSlopeField.gd")
-
-func _sloped(form:Dictionary,others:Array=[])->Dictionary:
- var field=FIELD.new([form]+others,SEED)
- field.apply(form)
- return form
-
-func test_ledges_are_off_for_now()->void:
- # Owner (September 24): ledge treads and their turf added slivers and bands.
- STYLE.apply("chosen")
- assert_true(CRAGS.make(POSE,24,8,SEED)[0].green.is_empty(),"No ledge turf")
-
-## One sheet column's (height, outward distance) samples through x = `x`.
-func _profile(sheet:Dictionary,x:float)->Array:
- var column:Dictionary={}
- for p:Vector3 in sheet.faces:
-  if absf(p.x-x)<.01:column[p.y]=maxf(column.get(p.y,-INF),p.z-POSE.origin.z)
- var ys:=column.keys();ys.sort()
- return ys.map(func(y:float)->Vector2:return Vector2(y,column[y]))
-
-func test_mossy_slope_is_one_smooth_sheet_meeting_ground_and_wall()->void:
- # Owner (slopes passes 2-4): a smooth, gently rolling slope that blends into
- # the ground and the cliff face.
- STYLE.apply("slopes")
- var form:Dictionary=CRAGS.make(POSE,24,8,SEED)[0]
- var field=FIELD.new([form],SEED)
- # The plain slope: rocks and their swells have their own test.
- field.rock_list.clear();field._rock_cells.clear()
- var sheets:Array=field.sheets(Rect2(-100,-100,300,300))
- assert_eq(sheets.size(),1,"One sheet for the wall")
- for x:float in [9.0,12.0,15.0]:
-  var profile:=_profile(sheets[0],x)
-  var ground:Vector2=profile.filter(func(p:Vector2)->bool:return p.x>=0.0)[0]
-  var next:Vector2=profile[profile.find(ground)+1]
-  assert_lt((next.x-ground.x)/(ground.y-next.y),tan(deg_to_rad(20.0)),"x=%s: nearly tangent to the ground"%x)
-  for i in range(1,profile.size()):
-   assert_lt(profile[i].y,profile[i-1].y+.001,"x=%s: recedes monotonically up the slope"%x)
-  assert_lt(profile[-1].y,0.0,"x=%s: the lip curls back into the wall"%x)
-
-func test_rock_never_stands_out_of_the_lower_slope()->void:
- # Formation ends inside the slope used to show as vertical blades.
- STYLE.apply("slopes")
- var form:Dictionary=CRAGS.make(POSE,24,8,SEED,null,false,false)[0]
- var field=FIELD.new([form],SEED)
- field.apply(form)
- for p:Vector3 in form.faces:
-  var w:=POSE*p
-  var c:Dictionary=field._enclosing(w,POSE.origin.y)
-  if c.is_empty() or w.y-float(c.base)>float(c.top)-FIELD.ROCK_BAND:continue
-  assert_lt(float(c.d),field.target(c,w.y-float(c.base))-.2,"Rock stays inside the slope at %s"%w)
-
-func test_slope_tapers_only_at_free_ends()->void:
- STYLE.apply("slopes")
- var form:Dictionary=CRAGS.make(POSE,24,8,SEED,null,true,true)[0]
- var sheets:Array=FIELD.new([form],SEED).sheets(Rect2(-100,-100,300,300))
- assert_gt(_profile(sheets[0],12.0)[2].y,2.0,"The slope stands out mid-wall")
- for x:float in [0.0,24.0]:
-  for sample:Vector2 in _profile(sheets[0],x):
-   assert_lt(sample.y,0.0,"No slope at the free end x=%s"%x)
-
-func test_collinear_formations_share_one_sheet()->void:
- # Each formation used to build its own slope; neighbours crossed as blades.
- STYLE.apply("slopes")
- var a:Dictionary=CRAGS.make(POSE,24,8,SEED,null,true,false)[0]
- var b:Dictionary=CRAGS.make(POSE.translated(Vector3(21,0,0)),24,4,SEED,null,false,true)[0]
- var sheets:Array=FIELD.new([a,b],SEED).sheets(Rect2(-100,-100,300,300))
- assert_eq(sheets.size(),1,"Overlapping collinear walls share one continuous sheet")
-
-func test_neighbouring_chunks_share_sheet_edges()->void:
- STYLE.apply("slopes")
- var form:Dictionary=CRAGS.make(POSE,24,8,SEED)[0]
- var field=FIELD.new([form],SEED)
- var left:Array=field.sheets(Rect2(-100,-100,112,300))
- var right:Array=field.sheets(Rect2(12,-100,200,300))
- var a:={};var b:={}
- for p:Vector3 in left[0].faces:a[p]=true
- for p:Vector3 in right[0].faces:b[p]=true
- var shared:=a.keys().filter(func(p:Vector3)->bool:return b.has(p))
- assert_eq(shared.size(),ROWS_PER_COLUMN,"One full shared column at the chunk boundary")
-
-const ROWS_PER_COLUMN:=FIELD.ROWS+5
-
-func test_slope_reaches_as_far_around_an_outer_corner()->void:
- # The corner body is compressed; its slope used to be too, so the slope fell
- # short around corners. The shared slope is a cone at the full reach.
- STYLE.apply("slopes")
- var corner:={"replay_recipe":{"kind":"corner","height":8.0},"transform":POSE}
- var field=FIELD.new([corner],SEED)
- var centre:=POSE*Vector3(-1.5,0,-1.5)
- for angle:float in [.2,.785,1.3]:
-  var dir:=POSE.basis*Vector3(sin(angle),0,cos(angle))
-  var q:=centre+dir*3.0
-  var c:Dictionary=field._enclosing(Vector3(q.x,POSE.origin.y+.5,q.z),POSE.origin.y)
-  assert_false(c.is_empty(),"The corner wedge has a slope at %s rad"%angle)
-  assert_true(c.arc,"It is the corner's cone")
-  assert_almost_eq(float(c.reach),field.params(c.foot,8.0).y,.001,"At full reach, as along the walls")
-
-func test_slope_tapers_where_its_foot_line_stops()->void:
- # A wall end not flagged as an end (a step to another base, a joined
- # formation) still has nothing continuing its slope; cut at full size there
- # the sheet stood out as a vertical blade.
- STYLE.apply("slopes")
- var wall:Dictionary=CRAGS.make(POSE,24,8,SEED,null,false,false)[0]
- var higher:Dictionary=CRAGS.make(POSE.translated(Vector3(24,4,0)),24,4,SEED,null,false,false)[0]
- var sheets:Array=FIELD.new([wall,higher],SEED).sheets(Rect2(-100,-100,300,300))
- var low:Array=sheets.filter(func(s:Dictionary)->bool:return s.base<POSE.origin.y)
- assert_eq(low.size(),1)
- for sample:Vector2 in _profile(low[0],24.0):
-  assert_lt(sample.y,0.0,"The lower slope has tapered where its foot line stops")
-
-## Sheet style: the slope is one implicit solid. Its surface height at a
-## world point is the highest grid level still inside.
-func _wall(pose:Transform3D,width:float,height:float,ends:=Vector2i(1,1))->Dictionary:
- return {"replay_recipe":{"kind":"wall","width":width,"height":height,"left_end":ends.x==1,"right_end":ends.y==1,"abut":Vector2i.ZERO},"transform":pose}
+## An inner (concave) corner at the pose origin: the low ground lies at higher
+## x and z, walled on both arms.
+func _inner_corner(pose:Transform3D,height:float)->Array:
+ var o:=pose.origin
+ return [FIELD.straight_wall(Vector2(o.x,o.z),Vector2(o.x+6,o.z),Vector2(0,1),o.y+height,o.y),
+  FIELD.straight_wall(Vector2(o.x,o.z),Vector2(o.x,o.z+6),Vector2(1,0),o.y+height,o.y)]
 
 ## Steepest rise between neighbouring points 0.5 m apart on a cliff side
 ## (about 75 degrees, the tallest drops); a sheer drop is a storey in one step.
@@ -309,22 +110,19 @@ func test_stacked_cliffs_merge_into_one_hillside()->void:
 
 func test_outer_corners_wrap_at_full_size()->void:
  STYLE.apply("sheet")
- var corner:={"replay_recipe":{"kind":"corner","height":8.0},"transform":POSE}
- var field=FIELD.new([corner],SEED)
- var centre:=POSE*Vector3(-1.5,0,-1.5)
+ var field=FIELD.new(_corner(POSE,8.0),SEED)
+ var centre:=Vector2(POSE.origin.x,POSE.origin.z)
  var heights:Array[float]=[]
  for i in 13:
   var angle:=i/12.0*PI*.5
-  var dir:=POSE.basis*Vector3(sin(angle),0,cos(angle))
-  heights.append(_surface(field,Vector2(centre.x,centre.z)+Vector2(dir.x,dir.z)*(1.5+3.0)))
+  heights.append(_surface(field,centre+Vector2(sin(angle),cos(angle))*3.0))
  for i in range(1,heights.size()):
   assert_lt(absf(heights[i]-heights[i-1]),.8,"The slope wraps the corner without a step")
  assert_gt(heights.min(),1.0,"It stays a full slope all the way round")
 
 func test_inner_corners_fill_round()->void:
  STYLE.apply("sheet")
- var corner:={"replay_recipe":{"kind":"inner_corner","height":8.0},"transform":POSE}
- var field=FIELD.new([corner],SEED)
+ var field=FIELD.new(_inner_corner(POSE,8.0),SEED)
  # At the bisector the slope sits at least as high as out along an arm.
  var bisector:=POSE*(Vector3(1,0,1).normalized()*4.0)
  var arm:=POSE*Vector3(4.0/sqrt(2.0),0,6.0)
@@ -333,7 +131,7 @@ func test_inner_corners_fill_round()->void:
 func test_solid_chunks_share_their_seam()->void:
  # Each chunk builds the envelope over its own window; values must agree.
  STYLE.apply("sheet")
- var forms:=[_wall(Transform3D(Basis(),Vector3(12,0,30)),24,8),{"replay_recipe":{"kind":"corner","height":8.0},"transform":Transform3D(Basis(),Vector3(27,0,30))}]
+ var forms:=[_wall(Transform3D(Basis(),Vector3(12,0,30)),24,8)]+_corner(Transform3D(Basis(),Vector3(24,0,30)),8.0)
  var a=FIELD.new(forms,SEED,null,Rect2(-12,0,24,60))
  var b=FIELD.new(forms,SEED,null,Rect2(12,0,24,60))
  for z in range(0,120):
@@ -350,8 +148,7 @@ func test_rocks_come_in_small_spaced_clusters()->void:
  # Owner (September 25): giant clusters with long bare stretches and bare
  # corners; wanted clusters of two or three, spaced out a bit.
  STYLE.apply("sheet")
- var corner:={"replay_recipe":{"kind":"corner","height":8.0},"transform":Transform3D(Basis(),Vector3(-38.5,0,31.5))}
- var field=FIELD.new([_wall(Transform3D(Basis(),Vector3(0,0,30)),80,8),corner],SEED)
+ var field=FIELD.new([_wall(Transform3D(Basis(),Vector3(0,0,30)),80,8)]+_corner(Transform3D(Basis(),Vector3(40,0,30)),8.0),SEED)
  var bunches:Dictionary={}
  for rock:Dictionary in field.rock_list:bunches[rock.bunch]=bunches.get(rock.bunch,[])+[rock]
  # Owner (September 27) superseded the no-bare-stretch rule: clusters are
@@ -372,9 +169,7 @@ func test_upper_outer_corner_flows_into_lower_inner_corner()->void:
  # Owner (X in review photo): an outer corner one storey up, directly above
  # an inner corner below, must be one continuous slope down both storeys.
  STYLE.apply("sheet")
- var upper:={"replay_recipe":{"kind":"corner","height":4.0},"transform":Transform3D(Basis(),Vector3(-3,4,-3))}
- var lower:={"replay_recipe":{"kind":"inner_corner","height":4.0},"transform":Transform3D(Basis(),Vector3(0,0,0))}
- var field=FIELD.new([upper,lower],SEED)
+ var field=FIELD.new(_corner(Transform3D(Basis(),Vector3(-3,4,-3)),4.0)+_inner_corner(Transform3D.IDENTITY,4.0),SEED)
  field.ground_at=func(q:Vector2)->float:
   if q.x<-3.0 and q.y<-3.0:return 8.0
   return 0.0 if q.x>0.0 and q.y>0.0 else 4.0
@@ -425,29 +220,12 @@ func test_slope_cuts_back_cleanly_at_a_road()->void:
    assert_lt(absf(previous-h),STEEPEST+.1,"x=%s: a cut, not a wall, at %s m"%[x,i*.5])
    previous=h
 
-func test_covered_native_pieces_are_hidden()->void:
- # Owner: little grey triangles — the native wall poking through the slope.
- STYLE.apply("sheet")
- var field=FIELD.new([_wall(POSE,40,8)],SEED)
- var wall:=Transform3D(Basis(),Vector3(12,4,POSE.origin.z-1.5))
- var lip:=Transform3D(Basis(),Vector3(12,8,POSE.origin.z-1.5))
- var kept:Dictionary=field.envelope().uncovered({"wall":[wall],"lip":[lip]})
- assert_eq((kept.wall as Array).size(),0,"A wall row under the slope is hidden")
- assert_eq((kept.lip as Array).size(),0,"The lip under the slope is hidden")
- var cut=FIELD.new([_wall(POSE,40,8)],SEED)
- cut.excluded_at=func(q:Vector2)->bool:return q.y>POSE.origin.z+.5
- cut._env=null
- kept=cut.envelope().uncovered({"wall":[wall],"lip":[lip]})
- assert_eq((kept.wall as Array).size(),1,"Where a road cuts the slope back, the native wall stays")
-
 func test_solid_has_no_visible_holes()->void:
  # A short column beside a tall one left the tall one's side faces open:
  # the native wall showed through in vertical bars.
  STYLE.apply("sheet")
- var upper:={"replay_recipe":{"kind":"corner","height":4.0},"transform":Transform3D(Basis(),Vector3(-3,4,-3))}
- var lower:={"replay_recipe":{"kind":"inner_corner","height":4.0},"transform":Transform3D(Basis(),Vector3(0,0,0))}
  var wall:=_wall(Transform3D(Basis(),Vector3(-15,4,-3)),18,4)
- var field=FIELD.new([upper,lower,wall],SEED)
+ var field=FIELD.new(_corner(Transform3D(Basis(),Vector3(-3,4,-3)),4.0)+_inner_corner(Transform3D.IDENTITY,4.0)+[wall],SEED)
  field.ground_at=func(q:Vector2)->float:
   if q.x<-3.0 and q.y<-3.0:return 8.0
   return 0.0 if q.x>0.0 and q.y>0.0 else 4.0
@@ -468,30 +246,10 @@ func test_solid_has_no_visible_holes()->void:
   if owned.grow(-1.0).has_point(Vector2(m.x,m.z)) and m.y>field.ground(Vector2(m.x,m.z))+.1:open+=1
  assert_eq(open,0,"No open edges above ground inside the chunk")
 
-func test_sheet_builds_outlines_with_the_same_slope()->void:
- # The sheet slope reads only a formation's recipe and pose; building the
- # crag meshes it discards was most of a chunk's cost (in-game teleports froze).
- STYLE.apply("sheet")
- var poses:=[Transform3D(Basis(),Vector3(0,0,0)),Transform3D(Basis(Vector3.UP,PI*.5),Vector3(20,4,0))]
- var slopes:Array=[]
- for full:bool in [true,false]:
-  STYLE.sheet_only=not full
-  var forms:Array=[]
-  for pose:Transform3D in poses:forms.append_array(CRAGS.make(pose,12,8,SEED,null,true,true))
-  forms.append(CORNERS.make(Transform3D(Basis(),Vector3(-9,0,-9)),8,SEED))
-  forms.append(CORNERS.make_inner(Transform3D(Basis(),Vector3(9,0,-9)),8,SEED))
-  if not full:
-   for f:Dictionary in forms:assert_true(f.get("outline",false),"sheet formations are outlines")
-  STYLE.sheet_only=true
-  slopes.append(FIELD.new(forms,SEED))
- assert_eq(str(slopes[1]._primitives),str(slopes[0]._primitives),"same foot lines")
- var owned:=Rect2(-24,-24,60,48)
- assert_eq(hash(slopes[1].solid(owned)[0].faces),hash(slopes[0].solid(owned)[0].faces),"same slope solid")
-
 func test_basal_rocks_are_embedded_with_their_tops_showing()->void:
  # Owner (September 25): rock undersides showed, with air beneath them.
  STYLE.apply("sheet")
- var field=FIELD.new([_wall(POSE,80,8),{"replay_recipe":{"kind":"corner","height":8.0},"transform":Transform3D(Basis(),Vector3(-28.5,0,31.5))}],SEED)
+ var field=FIELD.new([_wall(POSE,80,8)]+_corner(Transform3D(Basis(),Vector3(52,0,30)),8.0),SEED)
  var env=field.envelope()
  # September 27: colonies leave bare stretches; fewer rocks per wall.
  assert_gt(field.rock_list.size(),3,"The wall still carries rocks")
@@ -585,7 +343,7 @@ func test_native_outcrop_caps_are_inside_the_slope()->void:
  rocks.prepare()
  var checked:=0;var exposed:=0
  for height:float in [4.0,8.0,16.0]:
-  var field=FIELD.new([_wall(POSE,80,height),{"replay_recipe":{"kind":"corner","height":height},"transform":Transform3D(Basis(),Vector3(-28.5,0,31.5))}],SEED)
+  var field=FIELD.new([_wall(POSE,80,height)]+_corner(Transform3D(Basis(),Vector3(52,0,30)),height),SEED)
   for rock:Dictionary in field.rock_list:
    if rock.kind!="face":continue
    var piece:Array=rocks._pieces[rock.piece]

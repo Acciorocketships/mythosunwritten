@@ -15,20 +15,8 @@ func test_shallow_water_trough_keeps_the_actual_native_turf_covered()->void:
 	for node:MeshInstance3D in ground.find_children("*","MeshInstance3D",true,false):
 		for surface in node.mesh.get_surface_count():
 			terrain.append_array(_triangles(node.mesh.surface_get_arrays(surface),local,node.global_transform,0))
-	# Use the detached placement data, which remains real in the headless
-	# renderer too; its MultiMesh transform readback is only a dummy identity.
-	var native_count:=0
-	for role:String in terrain_data.cliffs:
-		var piece:Array=CliffDressing._pieces[role]
-		var mesh:Mesh=piece[0]
-		for placement:Transform3D in terrain_data.cliffs[role]:
-			var transform:Transform3D=placement*piece[1]
-			var bounds:=transform*mesh.get_aabb()
-			if not Rect2(Vector2(bounds.position.x,bounds.position.z),Vector2(bounds.size.x,bounds.size.z)).intersects(local,true):continue
-			for surface in mesh.get_surface_count():
-				var triangles:=_triangles(mesh.surface_get_arrays(surface),local,transform,0)
-				native_count+=triangles.size();terrain.append_array(triangles)
-	assert_gt(native_count,0,"the check includes actual native cliff triangles")
+	# (World terrain places no native KayKit cliff pieces since the dual-grid
+	# tiles: the committed chunk meshes are the whole terrain.)
 	var wet:=_triangles(skin.arrays,local,Transform3D.IDENTITY,0)
 	var trough:=_triangles(skin.arrays,local,Transform3D.IDENTITY,-WaterSkin.SWELL_TROUGH_BOUND)
 	var moderate:=_triangles(skin.arrays,local,Transform3D.IDENTITY,-.5)

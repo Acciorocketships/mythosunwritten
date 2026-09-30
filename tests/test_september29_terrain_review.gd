@@ -112,14 +112,14 @@ static func _grass_bands(z0: float, bands: int) -> PackedFloat64Array:
 	_STYLE.apply("sheet_bedrock")
 	_ROCKS.prepare()
 	var plan := HeightfieldPlan.new(17, 64, 12, "mean", 4)
-	# A 16 m cliff whose plateau (z <= 0) ends at the wall line z = 12.
-	plan.set_raw_height_override(func(_x: int, z: int) -> float: return 16.0 if z <= 0 else 0.0)
-	var region := plan.compute_region(4, 4, 12)
+	# A 16 m cliff whose plateau (points z <= 1) ends at the wall line z = 18.
+	plan.set_raw_height_override(func(_x: int, z: int) -> float: return 16.0 if z <= 1 else 0.0)
+	var region := plan.compute_region(8, 8, 24)
 	var water := WaterFieldContext.new()
 	water._region = region; water._coverage = Rect2(-48, -48, 288, 288)
 	water._ctx = {"ponds": [], "rivers": [], "buckets": {}, "region": region}
 	water._shore_curves_ready = true; water._shore_limit = .3
-	var data: Dictionary = _ROCKS.compute(region, 0, 0, 8, 99, null, null)
+	var data: Dictionary = _ROCKS.compute(region, Vector2i.ZERO, 99, null, null)
 	var catalog := EnvironmentCatalog.load_default()
 	var program := GrassProgram.compile(load("res://terrain/grass/settings.tres"), catalog,
 		EnvironmentRenderCache.new(catalog))
@@ -143,7 +143,7 @@ static func _grass_bands(z0: float, bands: int) -> PackedFloat64Array:
 ## Terrain grass ran dense to the wall line and the slope sheet's rounded
 ## crest carried quarter-size clumps: a line in the grass (photos 1, 3, 10).
 func test_grass_carries_over_a_rounded_crest_without_a_line() -> void:
-	var bands := _grass_bands(4.0, 12)   # z 4..16: plateau 4..8, crest 12..15
+	var bands := _grass_bands(10.0, 12)   # z 10..22: plateau 10..14, crest 18..21
 	var plateau := (bands[0] + bands[1] + bands[2] + bands[3]) / 4.0
 	var crest := (bands[8] + bands[9] + bands[10]) / 3.0
 	gut.p("crest/plateau grass area %.3f" % (crest / plateau))

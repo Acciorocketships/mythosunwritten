@@ -68,25 +68,6 @@ func test_rock_shape_and_stone_exposure_away_from_the_hole_are_unchanged()->void
   if fixed.has(p):assert_eq(fixed[p][1],old[p][1],"Original stone exposure is retained")
  assert_gt(checked,80,"Covers a substantial original face, not a single control point")
 
-func test_native_lips_are_removed_but_uncovered_backing_walls_stay()->void:
- CliffDressing.prepare(EnvironmentRenderCache.new(EnvironmentCatalog.load_default()))
- var env=ENVELOPE.new();env.origin=Vector2(-12,-12);env.w=49;env.h=49
- env.ground.resize(49*49);env.surface.resize(49*49);env.surface.fill(2.0)
- var field=FIELD.new([],SEED,null,Rect2(-8,-8,16,16));field._env=env
- field.solid(Rect2(-8,-8,16,16))
- var pose:=Transform3D(Basis.IDENTITY,Vector3(0,4,0))
- var kept:Dictionary=env.uncovered({"lip":[pose],"wall":[pose]})
- assert_eq((kept.lip as Array).size(),0,"Covered old grass lip is withdrawn")
- assert_eq((kept.wall as Array).size(),1,"Exposed backing is preserved: no unsupported flat tops")
- var outside:=Transform3D(Basis.IDENTITY,Vector3(100,4,100))
- assert_eq((env.uncovered({"lip":[outside]}).lip as Array).size(),1,"No replacement means no removal")
-
-func test_lip_removal_requires_full_footprint_coverage()->void:
- CliffDressing.prepare(EnvironmentRenderCache.new(EnvironmentCatalog.load_default()))
- var env=ENVELOPE.new()
- env.replacement_columns[Vector2i.ZERO]=true
- assert_false(env.replaces_lip("lip",Transform3D.IDENTITY),"One covered corner cannot withdraw a whole native lip")
-
 # The owner subsequently requested gentler slopes. Their quantitative profile
 # and crest continuity checks now live in test_p03_cliff_followup.gd.
 

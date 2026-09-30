@@ -3,18 +3,19 @@ extends GutTest
 func _ground() -> HeightfieldRegion:
 	var plan := HeightfieldPlan.new(1)
 	plan.set_raw_height_override(func(_x: int, _z: int) -> float: return 0)
-	return plan.compute_region(2,2,8).with_terrain_grades([
+	return plan.compute_region(4,4,16).with_terrain_grades([
 		TerrainGradePatch.new(&"flat_pad", {Vector2i.ZERO:1.08}, Vector2(49.5,49.5), 3)])
 
 func _faces(region: HeightfieldRegion, x: float, z: float) -> Array[Vector3]:
 	var mesh := TerrainChunkMesher.new()
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var cell := Vector2i(roundi((x+1)/24),roundi((z+1)/24))
+	var owner := Vector2i(TerrainTileField.point_of(x+1),TerrainTileField.point_of(z+1))
+	var road := Vector2i(roundi((x+1)/24),roundi((z+1)/24))
 	var faces: Array[Vector3] = []
-	mesh._emit_path_surface(surface, region, null, null, cell, x, z, {},
+	mesh._emit_path_surface(surface, region, null, null, owner, road, x, z,
 		[Color.WHITE,Color.WHITE,Color.WHITE,Color.WHITE],
-		TerrainSurfaceField.bake_cell(region,cell.x,cell.y), faces)
+		TerrainTileField.bake_point(region,owner), faces)
 	return faces
 
 func test_constant_pad_keeps_exact_extent_and_height_with_two_collision_triangles() -> void:
