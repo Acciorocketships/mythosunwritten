@@ -216,6 +216,44 @@ func test_carve_is_continuous_along_a_trace_at_twelve_metre_points() -> void:
 	assert_gt(checked, 200, "enough centreline points checked")
 
 
+## Chunk borders: two neighbouring chunks see the same shoreline through
+## different MARGIN windows (and may chain it in opposite directions). The
+## smoothed, resampled curve must still cross the shared border at the
+## identical point, however tightly the 12 m terrain bends it there.
+func test_contour_resample_welds_on_chunk_borders() -> void:
+	var border := WaterField.CHUNK   # x = 192
+	var centre := Vector2(border - 3.0, -1100.0)
+	# One shoreline: the same presence-grid vertices in both chunks.
+	var shore := PackedVector2Array()
+	for k in 101:
+		var a := lerpf(-2.8, 2.8, float(k) / 100.0)
+		shore.append(centre + Vector2(cos(a), sin(a)) * 14.0)
+	var left := Rect2(Vector2(0.0, -1152.0), Vector2(border, 192.0))
+	var right := Rect2(Vector2(border, -1152.0), Vector2(192.0, 192.0))
+	# Chunk A's window cuts the curve in one place, chunk B's in another, and B
+	# chains it the other way round.
+	var a_pts: PackedVector2Array = shore.slice(7, 90)
+	var b_pts: PackedVector2Array = shore.slice(16, 97)
+	b_pts.reverse()
+	var got := []
+	for item: Array in [[a_pts, left], [b_pts, right]]:
+		var pts: PackedVector2Array = item[0]
+		pts = WaterContour._chaikin(WaterContour._chaikin(pts, false), false)
+		pts = WaterContour._resample(pts, false, WaterContour.SPACING)
+		var on_border := []
+		for piece: PackedVector2Array in WaterContour._clip_to_rect(pts, false, item[1]).pieces:
+			for p: Vector2 in [piece[0], piece[piece.size() - 1]]:
+				if absf(p.x - border) < 0.0001:
+					on_border.append(p)
+		on_border.sort_custom(func(p: Vector2, q: Vector2) -> bool: return p.y < q.y)
+		got.append(on_border)
+	assert_eq(got[0].size(), 2, "the arc crosses the border twice")
+	assert_eq(got[1].size(), got[0].size(), "both chunks see the same crossings")
+	for k in mini(got[0].size(), got[1].size()):
+		assert_lt((got[0][k] as Vector2).distance_to(got[1][k]), 0.0001,
+			"border crossing %d welds: %s vs %s" % [k, got[0][k], got[1][k]])
+
+
 ## Whether lattice point `point` is excavated at least to the bed of the
 ## nearest segment of `t` (or is exempt: spawn disk, retained bar, outside the
 ## core). Memoized per point.
